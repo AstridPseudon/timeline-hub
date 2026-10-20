@@ -2,8 +2,13 @@
 from __future__ import annotations
 
 import copy
+import json
 
+import pytest
+
+from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._shot_commands import capture_shot_set
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.native_voiceover import capture_draft_voiceover
 from astrid.sdk.timeline.rebase import replay
@@ -68,3 +73,38 @@ def test_original_voiceover_outcome_lowers_to_audio_and_metadata_commands_with_i
         prepared["candidate"]["shots"]["shot-shared"]["payload"]["metadata"][vo.KEY]
     assert replay(plan, authored, verified_media=verified).records == plan.records
     assert inverse(plan.bundle, plan.records).bundle == before
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "WC5 needs an occurrence-owned nested padding leaf carrier; whole "
+    "draft_voiceover replacement drops authored siblings"))
+def test_original_prepared_padding_has_a_leaf_only_roundtrip_carrier():
+    authored, prepared = _voiceover_bundle_and_outcome()
+    authored_shot = next(iter(authored["shots"].values()))
+    existing = {
+        "owner": "video_editing.sync_draft_voiceover",
+        "opaque": {"keep": [None, True]},
+    }
+    authored_shot["payload"]["metadata"]["draft_voiceover"] = copy.deepcopy(existing)
+    padding = prepared["padding_seconds"]
+
+    # This is the smallest intended write shape. The current closed shot.set
+    # carrier records metadata.draft_voiceover as one object leaf, so this
+    # assertion exposes the missing nested scalar carrier without changing it.
+    command = capture_shot_set(
+        authored, "occurrence:occ-1/shot",
+        values={"metadata": {"draft_voiceover": {"padding_seconds": padding}}})
+    plan = execute(authored, [command])
+    draft = State(plan.bundle).entity("occurrence:occ-1/shot")["payload"]["metadata"][
+        "draft_voiceover"]
+
+    # The scalar itself survives the existing authored image and a serialized
+    # compile/reload round trip; only the leaf-only sibling guarantee is absent.
+    assert draft["padding_seconds"] == padding
+    reloaded = json.loads(json.dumps(plan.bundle))
+    publication = compile_authoring_candidate(reloaded).publication
+    published = next(row for row in publication["shot_revisions"]
+                     if row["shot_id"] == State(reloaded).occurrence(
+                         "occurrence:occ-1")["shot_id"])
+    assert published["payload"]["metadata"]["draft_voiceover"]["padding_seconds"] == padding
+    assert draft == {**existing, "padding_seconds": padding}
