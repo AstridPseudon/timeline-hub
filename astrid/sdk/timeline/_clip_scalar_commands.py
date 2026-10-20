@@ -6,8 +6,15 @@ import math
 
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
-from ._command_state import CommandError
-from ._scalar_commands import _capture, _changes, _clip_basis, _target
+from ._command_state import CommandError, equal, present
+from ._scalar_commands import (
+    _capture,
+    _changes,
+    _clip_basis,
+    _selected_schema,
+    _target,
+    _validate_param_values,
+)
 from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occurrence_start, rate
 
 
@@ -81,10 +88,79 @@ def _hold_extent(ctx, ref, values, clear):
     return duration_paths, duration
 
 
+def _transition_set(ctx, command, ref, values, identity):
+    from astrid.core.element.catalog import (
+        list_element_descriptors,
+        list_transition_ids,
+        read_transition_schema,
+    )
+
+    transition = values['transition']
+    number(transition['duration'], 'transition.duration', positive=True)
+    selected = values.get('elementRef', identity['elementRef'] or identity['element_ref'])
+    if selected is not None:
+        if (not isinstance(selected, dict) or selected.get('kind') != 'transition'
+                or selected.get('id') != transition['type']
+                or ('revision' in transition and transition['revision'] != selected.get('revision'))):
+            raise CommandError('transition requires its matching selected reference', ref=ref)
+    before = ctx.read(ref, ['transition'])
+    same = isinstance(before, dict) and before.get('type') == transition['type']
+    same = same and equal(selected, identity['elementRef'] or identity['element_ref'])
+    changed = {key: value for key, value in transition.get('params', {}).items()
+               if not same or not equal(present(value), ctx.state.get(ref, ['transition', 'params', key]))}
+    builtin = next((item for item in list_element_descriptors('transitions')
+                    if selected and all(item[key] == selected.get(key)
+                                        for key in ('id', 'kind', 'revision', 'packId'))), None)
+    if builtin is not None:
+        if 'schema_source' in command['args']:
+            raise CommandError('builtin transition does not use schema_source', ref=ref)
+        schema = builtin['schema']
+    elif isinstance(selected, dict) and selected.get('packId'):
+        schema = (_selected_schema(ctx, command, ref, selected)
+                  if changed or not same or 'schema_source' in command['args'] else {})
+    else:
+        if 'schema_source' in command['args']:
+            raise CommandError('schema_source requires a selected project pack transition', ref=ref)
+        if selected:
+            raise CommandError('selected transition declaration is unavailable', ref=ref)
+        schema = read_transition_schema(transition['type']) if transition['type'] in list_transition_ids() else {}
+    _validate_param_values(ref, changed, schema)
+    owner = ref.rsplit('/', 1)[0]
+    if identity['clipType'] == 'effect-layer':
+        raise CommandError('effect layers cannot own incoming transitions', ref=ref)
+    lane = ctx.read(ref, ['track'])
+    if not isinstance(lane, str) or not lane:
+        raise CommandError('transition requires an owning track', ref=ref)
+    ctx.read(owner + '/track:' + lane, ['id'])
+    fps = rate(ctx.read('parent', ['config', 'output', 'fps']))
+    frames = transition['duration'] * float(fps)
+    if not math.isfinite(frames) or frames < .5 or frames >= 2**53 - .5:
+        raise CommandError('transition requires positive safe whole frames', ref=ref)
+    if owner != 'parent':
+        for path in MAP_FIELDS:
+            ctx.read(owner, path)
+    for neighbor in [ref, *ctx.select('transition.predecessor', ref)]:
+        basis = _clip_basis(ctx, neighbor)
+        asset = basis['asset'] or basis['asset_id']
+        if isinstance(asset, str):
+            ctx.read(owner + '/registry', ['assets', asset, 'content_sha256'])
+        for key in CLIP_FIELDS:
+            ctx.read(neighbor, [key])
+        for prefix in ([], ['app'], ['app', 'astrid']):
+            for key in RELATIONS:
+                ctx.read(neighbor, prefix + [key])
+
+
 def clip_set(ctx, command):
     ref = _target(ctx, command, 'clip')
     values, clear = _changes(command)
-    _clip_basis(ctx, ref)
+    identity = _clip_basis(ctx, ref)
+    if 'elementRef' in values and 'transition' not in values:
+        raise CommandError('elementRef requires transition SET', ref=ref)
+    if 'transition' in values:
+        _transition_set(ctx, command, ref, values, identity)
+    elif 'schema_source' in command['args']:
+        raise CommandError('schema_source requires transition SET', ref=ref)
     row = ctx.state.entity(ref)
     if 'asset' in clear:
         for key in ('asset_id', 'media_id', 'object_id'):
@@ -103,6 +179,8 @@ def clip_set(ctx, command):
         ctx.clear(ref, [key])
 
 
-def capture_clip_set(bundle, select, *, values=None, clear=()):
-    """Capture source hold set/clear and explicit raw asset/transition removal."""
-    return _capture(bundle, 'clip.set', select, values, clear)
+def capture_clip_set(bundle, select, *, values=None, clear=(), schema_source=None,
+                     schema_inputs=(), realm_id=None):
+    """Capture source hold, incoming transition SET, or explicit raw field removal."""
+    return _capture(bundle, 'clip.set', select, values, clear, schema_source=schema_source,
+                    schema_inputs=schema_inputs, realm_id=realm_id)

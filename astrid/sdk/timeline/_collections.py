@@ -105,6 +105,17 @@ def arrange(state, owner, kind, expected):
 
 
 def selection_overlap(selected, write):
+    if selected['key'] == 'transition.predecessor':
+        scope, lane = selected['boundaries'][0].rsplit('/track:', 1)
+        if write['ref'] in selected['order']:
+            return not write['path'] or write['path'] in (['id'], ['track'], ['at'])
+        if write['ref'].startswith(scope + '/clip:'):
+            for tag in ('before', 'after'):
+                value = write.get(tag, {}).get('value')
+                if (not write['path'] and isinstance(value, dict) and value.get('track') == lane
+                        or write['path'] == ['track'] and value == lane):
+                    return True
+        return False
     if selected['key'] == 'placement.owners':
         if (write['ref'].startswith('occurrence:') and '/' not in write['ref']
                 and write['path'] in ([], ['shot_id'])):

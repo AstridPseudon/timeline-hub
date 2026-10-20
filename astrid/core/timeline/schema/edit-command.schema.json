@@ -1222,6 +1222,66 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "description": "Positive finite source seconds; timeline duration is hold/speed."
+            },
+            "transition": {
+              "type": "object",
+              "required": [
+                "type",
+                "duration"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "duration": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "params": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                },
+                "id": false,
+                "durationFrames": false,
+                "align": false,
+                "incomingPolicy": false
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/JSON"
+              }
+            },
+            "elementRef": {
+              "type": "object",
+              "required": [
+                "id",
+                "kind",
+                "revision"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "const": "transition"
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "packId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -1236,6 +1296,9 @@
             ]
           },
           "uniqueItems": true
+        },
+        "schema_source": {
+          "$ref": "#/$defs/DocumentPin"
         }
       },
       "required": [
@@ -1259,7 +1322,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set source hold or canonical incoming transition; elementRef is allowed only with a matching transition SET. Clear removes hold, asset or transition presence, never sets null/empty. Asset assignment requires occurrence.swap-media. Selected pack parameters require an exact schema_source."
     },
     "ClipTrimArgs": {
       "type": "object",

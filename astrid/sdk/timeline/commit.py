@@ -350,7 +350,7 @@ def _hydrate(port, bundle, calls=()):
     pins = copy.deepcopy(document["dependency_manifest"]["documents"])
     for call in calls:
         pin = call.get('args', {}).get('schema_source')
-        if call['op'] == 'clip.set-params' and pin is not None:
+        if call['op'] in ('clip.set-params', 'clip.set') and pin is not None:
             pin = _document_pin(pin)
             if pin not in pins:
                 pins.append(pin)
@@ -398,9 +398,10 @@ def _schema_resolver(port, inputs, inverse_records):
     def resolve(ctx):
         command = ctx.record['command']
         required = []
-        if command['op'] == 'clip.set-params' and 'schema_source' in command['args']:
+        if command['op'] in ('clip.set-params', 'clip.set') and 'schema_source' in command['args']:
             row = ctx.state.entity(command['select'])
-            selected = row.get('elementRef') or row.get('element_ref')
+            selected = command['args'].get('values', {}).get(
+                'elementRef', row.get('elementRef') or row.get('element_ref'))
             if isinstance(selected, dict) and selected.get('packId'):
                 required.append((command['args']['schema_source'], selected))
         elif command['op'] == 'timeline.inverse':

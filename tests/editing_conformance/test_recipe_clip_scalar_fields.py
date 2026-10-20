@@ -122,7 +122,7 @@ def test_hold_set_requires_positive_finite_source_seconds(value):
 
 @pytest.mark.parametrize('values,clear', [({'hold': 2}, ['hold']), ({'asset': 'anything'}, []),
     ({'asset': ''}, []), ({'asset': None}, []), ({'transition': None}, []),
-    ({'transition': {'type': 'crossfade', 'duration': 0.5}}, []), ({'params': {}}, []),
+    ({'transition': {'type': 'crossfade'}}, []), ({'params': {}}, []),
     ({}, ['speed']), ({}, ['hold', 'hold']), ({}, [])])
 def test_closed_bounded_fields_and_disjoint_set_clear(values, clear):
     with pytest.raises(CommandError):
