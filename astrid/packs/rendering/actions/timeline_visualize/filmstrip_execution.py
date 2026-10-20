@@ -26,6 +26,7 @@ from .filmstrip_cards import (
 )
 from .filmstrip_options import filmstrip_options
 from .inspection_contract import canonical_clip_identity, compact_render_receipt, project_input_window
+from .scene_only import execute_scene_only
 from .provenance import snapshot_label
 from .shot_selector import resolve_shot_selector
 
@@ -1681,6 +1682,10 @@ def _materialized_asset_files(registry_path) -> dict[str, str]:
     }
 
 
+def _execute_scene_only(args, authority):
+    return execute_scene_only(args, authority, label_snapshot=snapshot_label)
+
+
 def execute_filmstrip(args, *, authority=None):
     started_at = time.time()
     if getattr(args, "view", None) == "diff":
@@ -1707,8 +1712,10 @@ def execute_filmstrip(args, *, authority=None):
             except (OSError, json.JSONDecodeError) as exc:
                 raise ValueError("filmstrip authority handoff is not valid JSON") from exc
         authority = parsed_authority
-    if not isinstance(authority, dict) or authority.get('mode') not in {'filmstrip', 'input_only', 'composed_capture'}:
+    if not isinstance(authority, dict) or authority.get('mode') not in {'filmstrip', 'input_only', 'composed_capture', 'scene_only'}:
         raise ValueError('Rendered filmstrips require managed SDK admission.')
+    if authority.get("mode") == "scene_only":
+        return _execute_scene_only(args, authority)
     if authority.get('mode') == 'input_only':
         return execute_input_only(args, authority)
     capture_mode = (

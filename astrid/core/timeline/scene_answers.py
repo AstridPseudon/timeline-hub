@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import Any
 
 from astrid.core.env_vars import ASTRID_PACKS_PATH
@@ -114,3 +115,86 @@ def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
     declarations = element_coverage({c.get("clipType", "") for c in clips})
     roles = {c["id"]: role_of(c, c.get("track"), declarations) for c in clips}
     return _query({"props": dict(props), "basis": dict(basis), "roles": roles}, frames)
+
+
+def _prepared_host_frames_at(
+    timeline_path: Path,
+    assets_path: Path,
+    frames: Iterable[int],
+    *,
+    staged_video: Path,
+    provenance_out_path: Path,
+    project_dir: Path,
+    composition_id: str,
+    theme_path: Path | None,
+    min_free_gb: float | None,
+    frame_output_dir: Path,
+    review: Mapping[str, Any] | None = None,
+    materialized_root: Path | None = None,
+    staging_parent: Path | None = None,
+    materialized_objects: Mapping[str, str] | None = None,
+    composition_clip_types: frozenset[str] = frozenset(),
+    encode_aac_at_stitch: bool = False,
+    composition_duration_frames: int | None = None,
+) -> list[dict[str, Any]]:
+    """Query the public Scene while the normal prepared Root remains alive.
+
+    This read-only adapter consumes the host-retained source and the existing
+    Remotion preparation context. It does not admit inputs, construct a
+    fallback registry/theme, or launch a renderer.
+    """
+    requested = tuple(frames)
+    try:
+        from astrid.core.rendering.profile import resolve_render_profile
+        from astrid.core.rendering.verified_source import inherited_source
+        from astrid.packs.rendering.rendering.renderers.remotion import lock
+        from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (
+            _prepared_remotion_root,
+        )
+
+        runtime = remotion_runtime_status(require_explicit_project=True)
+        if (not runtime.available or runtime.project_dir is None
+                or runtime.project_dir.resolve() != project_dir.resolve()):
+            raise SceneQueryUnavailable("prepared Root differs from admitted scene host")
+        source = inherited_source(timeline_path, assets_path)
+        if source is None:
+            raise SceneQueryUnavailable("exact retained Runtime source required")
+        with lock.remotion_render_lock(), _prepared_remotion_root(
+            timeline_path,
+            assets_path,
+            staged_video,
+            provenance_out_path=provenance_out_path,
+            project_dir=project_dir,
+            composition_id=composition_id,
+            theme_path=theme_path,
+            min_free_gb=min_free_gb,
+            review=review,
+            materialized_root=materialized_root,
+            staging_parent=staging_parent,
+            materialized_objects=materialized_objects,
+            composition_clip_types=composition_clip_types,
+            encode_aac_at_stitch=encode_aac_at_stitch,
+            frame_numbers=requested,
+            frame_output_dir=frame_output_dir,
+            composition_duration_frames=composition_duration_frames,
+        ) as prepared:
+            props = prepared[0]
+            profile = resolve_render_profile(
+                props["timeline"], props["assets"], theme=props["theme"],
+            )
+            basis = {
+                "width": profile.width,
+                "height": profile.height,
+                "fps": profile.fps_rational[0] / profile.fps_rational[1],
+            }
+            source.validate(timeline_path, assets_path)
+            answers = host_frames_at(props, basis, requested)
+            source.validate(timeline_path, assets_path)
+            if any(answer.get("width") != profile.width or answer.get("height") != profile.height
+                   for answer in answers):
+                raise SceneQueryUnavailable("prepared scene basis mismatch")
+            return answers
+    except SceneQueryUnavailable:
+        raise
+    except (OSError, RuntimeError, TypeError, ValueError, KeyError) as exc:
+        raise SceneQueryUnavailable(f"scene preparation unavailable: {exc}") from exc
