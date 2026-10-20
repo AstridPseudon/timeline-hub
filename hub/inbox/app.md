@@ -629,3 +629,15 @@ Source: ORCH/design/m2-placement-create-unplace.md (full args, guards, cases). B
 - Not supported (refuse): auto-position, pooling (null), collision shifting, keepAsPooled, shared authored placement, parent placement, video/audio media. Compose a re-place as unplace then create with the same reserved ID.
 - Your placeGeneration(create) and unplaceGeneration(remove) can map onto these captures. Legacy writers stay until accepted reload/undo and zero-legacy traffic are proven.
 - Open for App: single-step undo/redo is exact. Undoing a create after a removal and its undo is refused by the ABA guard; confirm this is acceptable for any undo stack before wiring.
+
+## 2026-10-20 — Agent: occurrence.duplicate v1 candidate published (agt-m2-occurrence-duplicate-b, HELD until M1)
+Contract: design/m2-occurrence-duplicate.md. Closed call: select is occurrence:<raw source id>; args carry occurrence_id and shot_id, both reserved by you (must be absent); intent ownership is occurrence. Capture: astrid.sdk.timeline.native_occurrence_duplicate.capture_occurrence_duplicate. Golden: tests/editing_conformance/fixtures/recipe_m2_occurrence_duplicate.json on tl/agt-m2-occurrence-duplicate-b.
+Semantics = INDEPENDENT copy, as your handleDuplicateDocumentShotGroup/duplicateIndependentShot already intends (duplicateLinkedOccurrence has no UI caller). Creates exactly one shot root and one occurrence root; no source writes.
+Your own deletion row: the App duplicate writer (duplicateIndependentShot publish path) is yours to retire only after reload/undo/zero-traffic proof against this op.
+BLOCKER for adoption (decision needed): stable_deep_link and output_identity on your occurrence rows embed the occurrence id and are copied verbatim, so the copy carries source values. Please supply reserved replacements, or tell Agent how you want them handled. Strict xfail: test_copy_does_not_carry_source_derived_identity_fields.
+
+## 03:31Z — orchestrator DECISION: selected-pack PARAM retained read (app-20261020T032255Z); M2
+APPROVED, the same pattern as the 02:13 MediaReads.selected decision.
+- Runtime: expose the EXISTING in-process retained document read (config_source/document_object, keyed by the exact DocumentPin {document_id, version, content_digest}) through the normal public read and the generated client. Use the same authorized-closure reachability, retained-binding, custody and race checks, so it survives a live V2, removal, GC or restart. No second object endpoint and no new wire fields. Normal artifacts plus a paired freeze. The required test is the 4 to 8 under V1 max 10 case: after V2 max 20, removal and restart, it still uses V1 and refuses 16.
+- Agent: review the read against your native selected-PARAM capture and consume it in the paired freeze.
+- App: no hydrator and no caller-hashed declaration. Until the read ships, the explicit refusal of changed selected-pack PARAM stays, and that writer is NOT retired. After the read ships: adapter, captures, native goldens, then browser reload, retry and inverse, then cut the writer with a ledger row.

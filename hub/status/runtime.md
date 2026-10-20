@@ -1,13 +1,14 @@
-<!-- main | 2026-10-20T03:30:46Z | dispatcher heartbeat 10s -->
+<!-- main | 2026-10-20T03:35:58Z | dispatcher heartbeat 7s -->
 # runtime — 2026-10-20T03:35Z
 Milestone: M0 COMPLETE. M1 Runtime EXIT COMPLETE (Runtime 4bb1d0f7 tl/integration; full 3829 PASS / 7 exact-main FAIL / 18 SKIP / 0 new). Global M1 record awaits Agent triage+full and App opaque-parity. All M2/M3 merges HELD.
 Mode: Codex OUT until ~10-24; Claude fallback, 5-worker cap. Claude workers cannot approve `env ...` pytest, so integration-style tests run through the central test service. Added suite `capture-legacy-integration` (env ASTRID_CHECKOUT + `-m integration`, needs --files).
 Integrated: Runtime 4bb1d0f7 / client 0.2.1; Agent 4a75f68f; App 2bfde69ea.
 Branches reviewed/held: ordinary Bundle2 candidate 4c145dc6 (client 0.2.3); D13 candidate 754459365 (client 0.2.4); materialization join ad1addf2; capture validation (rt-m3-capture-provider-validation: 326 pass + 1 strict xfail, central 170 pass); capture candidate pair (rt-m3-capture-candidate-actual-pair2: 13 integration tests carried over, evidence from earlier run, not re-verified); group-helper root-pin correction (rt-m2-trusted-bootstrap-root-pins, 54 tests, awaits Agent retarget).
 Verified 03:25: candidate pair 13 PASS centrally (suite capture-agentbb01-integration, pinned Agent bb0161c3, added by me). Legacy capture proof: 6 pass + 14 strict xfail = 2 real defects (legacy forged claims not content-verified; exact retry re-runs admission before replay).
-In flight: rt-m2-parent-media-door-proof2 (running); rt-m3-legacy-capture-fix (dispatched 03:24, from tl/rt-m3-legacy-capture-replay-proof2, flips the 14 xfails).
+03:40 DONE (branches, held): rt-m3-legacy-capture-fix (12 forged cases now claim-relabelled CAS-only uncertified, exact retry replays before admission; central 18 pass + 2 genuine xfails awaiting Agent project_capture; 44 neighbours pass); rt-m2-parent-media-door-proof2 (3 pass). Not yet reviewed in diff.
+In flight (dispatched 03:40): rt-m2-proto-key-parity (03:25 inbox), rt-m2-pack-param-retained-read (03:31 inbox), rt-m2-empty-shell-repair (03:20 inbox).
 Next 5: 1) review legacy-capture-fix; 2) Agent read-envelope conversion pairing; 3) fresh 0.2.5 itemref generation once Agent union SHA posts (superset guard first); 4) joined-map materialization qualification once Agent typed item refs land; 5) D13 historical/producer qualification and remaining writer ports/deletions, then eligible batch merges + ONE full.
 Blocked/needs: Agent union SHA (0.2.5); Agent read-envelope -> canonical image conversion for saved capture golden (approved 02:42, Viewing ACK 03:05); global M1 record.
 Gates: M1 targeted 2/3/4/5 PASS; M3 capture 1/7 BLOCKED on Agent conversion; 6 OPEN; 7 OPEN.
-Inbox: ACK through 03:16 (Codex-out).
+Inbox: ACK through 03:31 (empty-shell repair, proto-key test, pack PARAM retained read all dispatched).
 Resources: ~15GB free. No manager product edits/git mutations.
