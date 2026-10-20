@@ -238,7 +238,13 @@ class _RecordingTimelines:
         )
         key = idempotency_key or "generated-key"
         return DomainResult.success(
-            {"timeline_id": "T-1", "status": "active", "changed": True},
+            {
+                "slug": ref,
+                "timeline_id": "T-1",
+                "archived": False,
+                "head_revision_id": "head-1",
+                "document_digest": "sha256:document",
+            },
             receipt=_receipt("timeline.recover", key),
             idempotency_key=key,
         )
@@ -1758,7 +1764,11 @@ def test_timelines_list_and_recover_are_one_sdk_call(capsys) -> None:
             {"project": "demo", "ref": "main", "idempotency_key": None},
         )
     ]
-    assert json.loads(capsys.readouterr().out)["data"]["status"] == "active"
+    envelope = json.loads(capsys.readouterr().out)
+    assert envelope["ok"] is True
+    assert envelope["data"]["archived"] is False
+    assert envelope["data"]["head_revision_id"] == "head-1"
+    assert envelope["data"]["document_digest"] == "sha256:document"
 
 
 def test_timelines_history_is_one_sdk_call(capsys) -> None:

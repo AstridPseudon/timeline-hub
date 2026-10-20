@@ -60,6 +60,34 @@ class _SelectedNativeTransport(_NativeTransport):
         }
 
 
+class _CatalogTransport(_SelectedNativeTransport):
+    def __init__(self) -> None:
+        super().__init__()
+        self.recover_calls = []
+        self.catalog_version = 7
+
+    def list_timelines(self, project, *, cursor=None, limit=50):
+        assert project == "project-1"
+        return [[{
+            "timeline_id": "tl-1",
+            "slug": "main",
+            "version": self.catalog_version,
+            "archived": True,
+            "head_revision_id": "head-7",
+            "document_digest": "sha256:document",
+        }], None]
+
+    def recover_timeline(self, timeline_id, *, expected_version, version, idempotency_key):
+        self.recover_calls.append((timeline_id, expected_version, version, idempotency_key))
+        return {
+            "timeline_id": timeline_id,
+            "archived": False,
+            "version": 8,
+            "head_revision_id": "head-7",
+            "document_digest": "sha256:document",
+        }
+
+
 def test_remote_show_uses_runtime_current_project_and_project_default() -> None:
     transport = _SelectedNativeTransport()
     result = RemoteTimelines(transport).show(None, None)
@@ -92,6 +120,103 @@ def test_remote_default_timeline_must_belong_to_selected_project() -> None:
         "project": "project-1",
         "ref": "other-project-timeline",
     }
+
+
+def test_catalog_recover_without_version_unarchives_current_entry_preserving_film() -> None:
+    transport = _CatalogTransport()
+    result = RemoteTimelines(transport).recover(
+        "project-1", "main", idempotency_key="catalog-recover"
+    )
+
+    assert result.ok
+    assert transport.recover_calls == [("tl-1", 7, 7, "catalog-recover")]
+    assert result.data == {
+        "timeline_id": "tl-1",
+        "archived": False,
+        "version": 8,
+        "head_revision_id": "head-7",
+        "document_digest": "sha256:document",
+    }
+
+    replay = RemoteTimelines(transport).recover(
+        "project-1", "main", version=7, idempotency_key="catalog-recover"
+    )
+    assert replay.ok
+    assert replay.data == result.data
+    assert transport.recover_calls[-1] == ("tl-1", 7, 7, "catalog-recover")
+
+
+def test_catalog_recover_current_version_unarchives_current_entry() -> None:
+    transport = _CatalogTransport()
+    result = RemoteTimelines(transport).recover(
+        "project-1", "main", version=7, idempotency_key="catalog-current"
+    )
+
+    assert result.ok
+    assert transport.recover_calls == [("tl-1", 7, 7, "catalog-current")]
+    assert result.data["archived"] is False
+    assert result.data["head_revision_id"] == "head-7"
+    assert result.data["document_digest"] == "sha256:document"
+
+
+def test_catalog_recover_exact_retry_forwards_original_version_after_catalog_advance() -> None:
+    transport = _CatalogTransport()
+    first = RemoteTimelines(transport).recover(
+        "project-1", "main", expected_version=7, version=7,
+        idempotency_key="catalog-recover-retry",
+    )
+    transport.catalog_version = 8
+
+    replay = RemoteTimelines(transport).recover(
+        "project-1", "main", expected_version=7, version=7,
+        idempotency_key="catalog-recover-retry",
+    )
+
+    assert first.ok and replay.ok
+    assert replay.data == first.data
+    assert transport.recover_calls == [
+        ("tl-1", 7, 7, "catalog-recover-retry"),
+        ("tl-1", 7, 7, "catalog-recover-retry"),
+    ]
+
+
+def test_legacy_timeline_recover_refuses_non_current_from_runtime_without_writes() -> None:
+    # Forward fresh historical requests too: Runtime's ledger must distinguish
+    # them from an exact accepted replay before refusing without film writes.
+    class RuntimeRefusesHistorical(_CatalogTransport):
+        def recover_timeline(self, timeline_id, *, expected_version, version, idempotency_key):
+            self.recover_calls.append((timeline_id, expected_version, version, idempotency_key))
+            raise WorkspaceClientError(
+                410,
+                "retired_route",
+                "legacy timeline recover cannot restore a historical film version; restore a revision with timeline.restore",
+                {
+                    "status": "refused",
+                    "reason": "timeline_restore_required",
+                    "replacement": "timeline.restore",
+                    "requested_version": version,
+                    "current_version": self.catalog_version,
+                },
+            )
+
+    transport = RuntimeRefusesHistorical()
+    result = RemoteTimelines(transport).recover(
+        "project-1", "main", expected_version=7, version=6,
+        idempotency_key="legacy-recover",
+    )
+    assert not result.ok
+    assert result.idempotency_key == "legacy-recover"
+    assert result.error.code == "retired_route"
+    assert result.error.details == {
+        "status": "refused",
+        "reason": "timeline_restore_required",
+        "replacement": "timeline.restore",
+        "requested_version": 6,
+        "current_version": 7,
+    }
+    assert "timeline.restore" in result.error.message
+    assert "version" in result.error.message
+    assert transport.recover_calls == [("tl-1", 7, 6, "legacy-recover")]
 
 
 def test_remote_open_composition_uses_runtime_inspection_authority() -> None:

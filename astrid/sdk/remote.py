@@ -1637,11 +1637,33 @@ class RemoteTimelines(_RemoteFamily):
         return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key)
     def recover(self, project, ref, *, expected_version=None, version=None, idempotency_key=None):
         key = idempotency_key or uuid.uuid4().hex
+        resolved = self._resolve_timeline(project, ref)
+        if not resolved.ok or not isinstance(resolved.data, Mapping):
+            return DomainResult.failure(resolved.error, idempotency_key=key)
+        timeline_id = resolved.data.get("timeline_id")
+        if not isinstance(timeline_id, str) or not timeline_id:
+            return DomainResult.failure(
+                ErrorObject("protocol_error", "timeline listing has no canonical identity", {}),
+                idempotency_key=key,
+            )
         try:
-            current_version = self._version(project, ref, expected_version)
-        except WorkspaceClientError as exc:
-            return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
-        return self._typed("recover_timeline", ref, key=key, expected_version=current_version, version=int(version) if version is not None else max(1, current_version - 1), idempotency_key=key)
+            value = resolved.data.get("version", resolved.data.get("config_version", 1))
+            current_version = int(value)
+            expected = int(expected_version) if expected_version is not None else current_version
+            target = current_version if version is None else int(version)
+        except (TypeError, ValueError):
+            return DomainResult.failure(
+                ErrorObject("protocol_error", "Runtime timeline listing has no valid version", {}),
+                idempotency_key=key,
+            )
+        return self._typed(
+            "recover_timeline",
+            timeline_id,
+            key=key,
+            expected_version=expected,
+            version=target,
+            idempotency_key=key,
+        )
 
 
 class RemoteMedia(_RemoteFamily):
