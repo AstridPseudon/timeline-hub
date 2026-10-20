@@ -1,0 +1,12 @@
+# Flat handoff manifest for the worker patch.
+# The harness commits the exact worktree diff from branch
+# tl/vw-m3-frame-native-retained-fixture-port. The changed paths are listed in
+# handoff-vw-m3-frame-native-retained-fixture-port-FILES.md; the executable
+# helper source is copied beside this manifest. No product source, Runtime API,
+# player-export-frame-parity.spec.ts, or tab instrumentation was changed.
+
+tests/e2e/local/support/harness.ts
+tests/e2e/timeline/viewing-parity/fixture.ts
+tests/e2e/timeline/viewing-parity/harness.ts
+tests/e2e/timeline/viewing-parity/native-fixture-helper.py
+tests/e2e/timeline/viewing-parity/native-fixture.integration.test.ts

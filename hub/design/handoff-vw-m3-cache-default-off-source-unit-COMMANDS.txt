@@ -1,0 +1,4 @@
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_scene_cache_payload.py tests/packs/rendering/test_scene_source_carry.py -k 'transport'
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/packs/rendering/test_composed_frame_capture.py tests/packs/rendering/test_bounds_plumbing.py tests/packs/rendering/test_scene_cache_payload.py tests/packs/rendering/test_scene_source_carry.py -k 'not native'
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/ruff check --no-cache astrid/packs/rendering/actions/timeline_visualize/composed_frame.py tests/packs/rendering/test_scene_cache_payload.py tests/packs/rendering/test_scene_source_carry.py
+git diff --check

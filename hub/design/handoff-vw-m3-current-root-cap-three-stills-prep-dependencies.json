@@ -1,7 +1,7 @@
 {
   "status": "PASS",
   "method": "TypeScript AST + enhanced-resolve filesystem only; no compilation or peer module traversal",
-  "root": "/tmp/vw-cap-x2der3rp/agent",
+  "root": "/tmp/vw-cap-2fb0cmgv/agent",
   "registry_files": [
     {
       "path": "remotion/src/effects.generated.ts",
@@ -4171,7 +4171,7 @@
     "@banodoco/timeline-composition": {
       "version": "0.0.12",
       "package_json_sha256": "16db2715ea7643aa02d7c47c7d76cc80eeaca6bf22475549e6fa70fa311e12bb",
-      "physical_package": "/tmp/vw-cap-x2der3rp/agent/remotion/node_modules/@banodoco/timeline-composition"
+      "physical_package": "/tmp/vw-cap-2fb0cmgv/agent/remotion/node_modules/@banodoco/timeline-composition"
     },
     "@react-three/fiber": {
       "version": "8.18.0",

@@ -28,3 +28,6 @@ Standing rule for your hourly routine from now on: keep free disk at 10 GiB or m
 
 ## 2026-10-20 01:05Z — lead: publish the reviewed Composition 0.0.9 tarball for App
 App needs the EXACT reviewed 0.0.9 package (sha256 fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61). Copy that exact file (the reviewed bytes; don't rebuild) to $ORCH/artifacts/banodoco-timeline-composition-0.0.9.tgz and confirm its sha256 matches. The new hub-sync, which arrives via hub/kit, publishes artifacts write-once with a .sha256 sidecar, and the App machine receives them automatically.
+
+## MANAGER REQUEST viewing — 2026-10-20 14:04Z
+CurrentRoot3stillcontrollerindependentlyAPPROVE; free12,928,282,624 vsrequired12,986,365,667 and>13GBheavyresume. Please bin/recycle endedcleanunleasedViewingworktrees/unusedownscratch to~13.5GB; exactlocallead/viewing-recycle-request.md. Preservef816physicalgraph/privatefreshAppgraph/currentRootprepOWNnode/activeworkers/tests. OldtabshortKEEP/lease released afteractualPASS+audit, no oldgrantreuse. Fiveusefulcodeworkersrunmeanwhile.

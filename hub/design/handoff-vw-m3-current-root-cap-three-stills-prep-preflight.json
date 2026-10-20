@@ -2,7 +2,7 @@
   "status": "OFFLINE_PASS_NOT_CAPTURE_GRANTED",
   "revision": "4ef1391c2c104d5d11b3a27265035c51be296045",
   "tree": "afb2ed8506a99a088d7be3dbadaf593338d2fb5a",
-  "free_bytes_before_staging": 13301075968,
+  "free_bytes_before_staging": 13349707776,
   "reserve_bytes": 10737418240,
   "staging_headroom_bytes": 2248947427,
   "required_bytes": 12986365667,
