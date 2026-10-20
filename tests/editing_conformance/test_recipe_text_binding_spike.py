@@ -11,7 +11,8 @@ it stands in for (design/m2-text-binding-contract.md section 4):
 * G-INV1: a removed keyed row is restored by assignment, not by `create`, which needs
   a collection (`Recording.create`, reached from `inverse.apply_inverse`).
 
-The Runtime-dependent part is a strict xfail with its reason (G-RT1).
+The Runtime port presence check runs in the integration lane; acceptance is
+covered by test_commit_runtime_text_binding.py.
 """
 from __future__ import annotations
 
@@ -319,11 +320,11 @@ def test_replay_refuses_changed_guard_and_rebases_disjoint_key(original):
     assert row_of(rebased) == row_of(plan.bundle)
 
 
-@pytest.mark.xfail(strict=True, raises=(ImportError, AssertionError), reason=(
-    "Runtime gap G-RT1 (design/m2-text-binding-contract.md section 6): no scoped exact UTF-8 text "
-    "selection exists. Runtime selected_media rejects text/plain and zero-byte objects (seam note C1). "
-    "This presence check does not prove acceptance; it flips only when the port method lands."))
+@pytest.mark.integration
 def test_runtime_port_declares_exact_text_selection():
+    from tests.helpers.runtime import use_runtime
+
+    use_runtime()
     import runtime_protocol.timeline_commit as port
 
     assert 'def text_selection(' in Path(port.__file__).read_text()

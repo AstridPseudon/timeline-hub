@@ -9,6 +9,8 @@ import sys
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+from astrid.core.env_vars import ASTRID_PACKS_PATH
+
 
 def remotion_runtime_status(*args, **kwargs):
     """Resolve renderer admission only when a native scene query is requested."""
@@ -66,8 +68,8 @@ def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any
         environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
         # Status validated this selector as part of the renderer's registry
         # context. The alias resolver must see that same admitted pack set.
-        if "ASTRID_PACKS_PATH" in os.environ:
-            environment["ASTRID_PACKS_PATH"] = os.environ["ASTRID_PACKS_PATH"]
+        if ASTRID_PACKS_PATH in os.environ:
+            environment[ASTRID_PACKS_PATH] = os.environ[ASTRID_PACKS_PATH]
         result = subprocess.run(
             [str(runtime.node_executable), str(helper), str(runtime.project_dir)],
             input=json.dumps(payload, allow_nan=False),
