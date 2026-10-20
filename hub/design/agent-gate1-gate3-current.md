@@ -331,3 +331,57 @@ These do not touch the Agent commit/undo/rebase implementation or the current
 renderer-independent save nodes, so no additional Gate1/Gate3 replay was
 needed. Current heads: Agent `1b526ce05`, Runtime `9d1c43c`, App `e9d04f4bf`,
 Composition `ac918bb`.
+
+At 2026-10-20T23:04:48Z Agent advanced to `d97f57810` with the approved
+admitted-theme rendering export task adapter and its direct tests (5 passed in
+the worker report). This is downstream render-task adapter code, not the
+timeline edit/commit path or Gate3 renderer-independent save/preflight nodes,
+so no Gate1/Gate3 replay was needed. Current heads are Agent `d97f57810`,
+Runtime `9d1c43c`, App `e9d04f4bf`, Composition `ac918bb`.
+
+At 2026-10-20T23:05:31Z App advanced to `ce6deafa3` with public export-alias
+cleanup and viewing-parity native canvas fixture updates. These are App/Vite
+and viewing fixture changes, with no Agent timeline edit or renderer-independent
+save-path dependency, so no Agent Gate1/Gate3 replay was needed. Current heads:
+Agent `d97f57810`, Runtime `9d1c43c`, App `ce6deafa3`, Composition `ac918bb`.
+
+The `agt-m2-upstream497-current-merge` worker reported a pending upstream
+merge candidate with 92 Gate1 tests passing and a broader conformance run
+blocked by an incompatible shared Runtime checkout. It has not changed Agent
+integration (`d97f57810`) and therefore is not current Gate evidence; no
+replay was requested. If merged, its Timeline semantic delta requires a fresh
+affected-node classification, and its reported Runtime incompatibility must be
+resolved before any Gate3 claim.
+
+## Incremental watch: RemoteTimelines extraction
+
+Date: 2026-10-20T23:09:09Z
+
+Agent integration advanced to `01ee5b958` (`00d84bc4d`), extracting
+`RemoteTimelines` revision operations into the private `_remote_timeline.py`
+adapter while preserving the public facade. This is a relevant SDK adapter
+change because two existing Gate3 workspace-client nodes and two adjacent
+RemoteTimelines scope nodes use the moved operations.
+
+Bounded central check on actual integration:
+
+- Suite: `targeted`, invoked as `integration:agent`
+- Run: `agent-targeted-1020230856-15828`
+- Agent source tree: `c9a44b4b6f17cbf689ee6e3fddb49485697b5d03`
+- Result: **4 passed in 0.32s**, exit 0
+- Nodes: `test_workspace_client_commit_preserves_preview_null_receipt`,
+  `test_workspace_client_absent_commit_method_is_actionable`,
+  `test_remote_timelines_commit_and_history_are_scoped`, and
+  `test_remote_timelines_commit_rejects_body_scope_mismatch` from
+  `tests/sdk/test_workspace_client_timeline_commit.py`.
+
+No full/full* suite or unrelated Gate1/Gate3 node was run. Live heads at this
+check: Agent `01ee5b958`, Runtime `9d1c43c`, App `ce6deafa3`, Composition
+`ac918bb`.
+
+The pending `agt-m2-parent-afterclip-guarded-source` candidate reports 7
+focused and 267 neighboring tests passing, but remains before App2/Runtime
+review and is not merged; no Gate replay was requested. The managed-scene
+authority review separately returned REQUEST CHANGES (EOF hygiene and a real
+host negative-control gap); it is also unmerged and does not alter current
+Gate evidence.
