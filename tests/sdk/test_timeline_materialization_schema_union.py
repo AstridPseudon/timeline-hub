@@ -18,6 +18,8 @@ PRIVATE_S2_SHA256 = 'f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a33220
 PRIVATE_CARRIER_SHA256 = '613123b2760150f9f33e23485516d757359c3eaebfe02d552bc97155309aaad3'
 PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d5f769e0d317429d'
 PRIVATE_GROUP_SHA256 = '27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb'
+PRIVATE_GROUP_TRANSITION_SHA256 = '3e21c26271c9478123e29ac0b7f363e161c59cb37197a98a7f6fb563d21d450a'
+PRIVATE_FULL_MUTE_SHA256 = '21f313a7005f94a2525013ab9fd628afa626a7886bc098840a73ac012c0fcac2'
 
 
 def without_groups(schema):
@@ -30,8 +32,24 @@ def without_groups(schema):
     return schema
 
 
+def without_mute(schema):
+    """Reconstruct the reviewed group+transition source without mute."""
+    args = schema['$defs']['TrackSetArgs']
+    args['properties']['values']['properties'].pop('muted', None)
+    clear = args['properties']['clear']['items']
+    if 'enum' in clear:
+        assert clear['enum'] == ['label', 'muted']
+        clear.clear()
+        clear['const'] = 'label'
+    args['description'] = (
+        'Set raw track.label or explicitly remove it. Null is not a label. '
+        'Unmentioned fields survive.')
+    return schema
+
+
 def without_transition(schema):
-    """Reconstruct a pre-transition floor without adding a copied snapshot."""
+    """Reconstruct the pre-transition floor without adding a copied snapshot."""
+    without_mute(schema)
     args = schema['$defs']['ClipSetArgs']
     args['properties']['values']['properties'].pop('transition', None)
     args['properties']['values']['properties'].pop('elementRef', None)
@@ -90,7 +108,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
     assert len(_SCHEMA['$defs']) == 58
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
-    assert compatibility_errors(ordinary, _SCHEMA) == []
+    assert compatibility_errors(ordinary, without_mute(copy.deepcopy(_SCHEMA))) == []
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
@@ -124,6 +142,17 @@ def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
     assert len(_SCHEMA['$defs']) == 58
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
+
+
+def test_stripping_only_mute_reconstructs_reviewed_group_transition_source():
+    candidate = without_mute(copy.deepcopy(_SCHEMA))
+    raw = (json.dumps(candidate, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_TRANSITION_SHA256
+
+
+def test_full_private_mute_schema_has_the_composed_source_hash():
+    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_FULL_MUTE_SHA256
 
 
 def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
