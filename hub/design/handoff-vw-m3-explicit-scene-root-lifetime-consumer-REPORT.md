@@ -7,9 +7,10 @@ accepts the caller's already-retained timeline/assets paths and invocation
 paths, acquires the existing Remotion lock, enters the integrated
 `_prepared_remotion_root` context with the exact requested frame sequence, and
 calls the existing `host_frames_at` query while the prepared Root props,
-materialized assets, staged effects, and other invocation resources remain
-live. The canonical profile/basis comes from those prepared Root props. No
-renderer is launched, no capture is certified, and missing preparation is
+  materialized assets, staged effects, and other invocation resources remain
+  live. The canonical profile/basis comes from those prepared Root props.
+  Frame-mode preserves the existing scene-query behavior and skips video PCM
+  work. No renderer is launched, no capture is certified, and missing preparation is
 reported as `SceneQueryUnavailable` rather than an empty/GAP answer.
 
 The adapter is private and does not create a source factory, DTO, fallback

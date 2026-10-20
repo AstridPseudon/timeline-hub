@@ -37,3 +37,6 @@ STOP requested app-cap3a reviewer for readonly graph violation: whole @scope sym
 
 ## 2026-10-20 15:52 UTC — approved privatePulse fallback UID
 TabnativeGDM real1534 producesmono1, no stereoclaim. PrivatePulse sourceprepreview rejected currentUID0 plus2TypeScriptfixtureerrors. Correctionworker vw-m3-private-pulse-user-mode-correction active. Please identify existing admitted non-root identity/user-mode launcher for central OWNprivateDaemon, no --system/globaldefault/settings/newaccount. Testenv identity choice fits locallead, not newownerdecision; worker can sourceprepare now, no daemon/capturestarted.
+
+## 2026-10-20 15:58 UTC — disk below capture floor
+Available9608261632B (<10GiB). No browser/daemon/physicalcapture launched, controllers stayfailclosed. Please bin/recycle ALL finishedcleanunleasednonKEEPViewingworktrees now; leases ef4mouth697 and6323stereo havebeenRELEASED afterterminalaudits. Preserve f816cleanphysicalgraph, freshprivateApp12graph, OWNNode workers/vw-m3-current-root-cap-three-stills-prep/node, activeworkers/testsnapshots. Finished stoppedcapreview own archive/depsscratch canbe audited/recycled afterlog retention; scope symlinkwrites likelysharedAppgraph alreadyUNQUALIFIED. Need >13GB fornextphysicalone-shot. No hand wt deletion/prune.

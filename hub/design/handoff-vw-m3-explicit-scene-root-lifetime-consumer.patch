@@ -10,7 +10,7 @@ index 1d3f0879f..fd8176c50 100644
  from typing import Any
  
  from astrid.core.env_vars import ASTRID_PACKS_PATH
-@@ -114,3 +115,74 @@ def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
+@@ -114,3 +115,75 @@ def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
      declarations = element_coverage({c.get("clipType", "") for c in clips})
      roles = {c["id"]: role_of(c, c.get("track"), declarations) for c in clips}
      return _query({"props": dict(props), "basis": dict(basis), "roles": roles}, frames)
@@ -41,8 +41,9 @@ index 1d3f0879f..fd8176c50 100644
 +    The caller supplies the already-retained render inputs and invocation paths;
 +    this adapter does not admit a source, construct a fallback registry/theme,
 +    or launch a renderer.  ``host_frames_at`` runs before the preparation
-+    context closes, so its asset URLs, staged effects and PCM attempt (when the
-+    shared preparer selects one) have the same lifetime as a normal render.
++    context closes, so its asset URLs and staged effects have the same lifetime
++    as a normal render. Frame-mode keeps the existing query behavior and skips
++    video PCM work.
 +    """
 +    requested = tuple(frames)
 +    try:
