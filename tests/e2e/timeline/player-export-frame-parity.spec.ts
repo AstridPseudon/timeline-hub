@@ -6,7 +6,8 @@ import type { ManagedOutput, Task } from '../../../src/integrations/runtime/gene
 import type { DirectHarness } from '../local/support/harness';
 import { assertTaskAuthority, record } from './viewing-parity/authority';
 import { waitForRenderAdmission } from './viewing-parity/admission';
-import { test, readyRenderCapability, sourceVersions } from './viewing-parity/harness';
+import { collectPageDiagnostics } from './viewing-parity/diagnostics';
+import { test as parityTest, readyRenderCapability, sourceVersions } from './viewing-parity/harness';
 import { mediaHash, readFrameMarker, VIDEO_START_FRAME } from './viewing-parity/media';
 import {
   assertPinnedFrameParityFixture, PARITY_FPS, PARITY_FRAMES, PARITY_HEIGHT, PARITY_WIDTH,
@@ -18,12 +19,17 @@ import {
 
 const exec = promisify(execFile);
 
-function collectPageLogs(page: Page): string[] {
-  const logs: string[] = [];
-  page.on('pageerror', error => logs.push(`[pageerror] ${error.message}`));
-  page.on('console', message => { if (message.type() === 'error') logs.push(`[console.error] ${message.text()}`); });
-  return logs;
-}
+const test = parityTest.extend<{ pageLogs: ReturnType<typeof collectPageDiagnostics> }>({
+  pageLogs: [async ({ page, harness, fixture }, provide, testInfo) => {
+    const logs = collectPageDiagnostics(page, harness.doorBase, fixture.projectId);
+    try { await provide(logs); } finally {
+      logs.stop();
+      const diagnostics = await logs.result();
+      await saveEvidence(testInfo, 'page-diagnostics', diagnostics);
+      expect(diagnostics.failures).toEqual([]);
+    }
+  }, { auto: true }],
+});
 
 async function saveEvidence(testInfo: TestInfo, name: string, value: unknown): Promise<void> {
   await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
@@ -163,8 +169,7 @@ async function compareAllFrames(page: Page, exportPath: string, testInfo: TestIn
 }
 
 test.describe('ordinary media: mounted App Player versus real task export', () => {
-  test('normal App Render action downloads a valid native-size MP4 without a parity comparison', async ({ page, harness, fixture }, testInfo) => {
-    const logs = collectPageLogs(page);
+  test('normal App Render action downloads a valid native-size MP4 without a parity comparison', async ({ page, harness, fixture, pageLogs }, testInfo) => {
     await openParityEditor(page, harness, fixture);
     const render = await renderAndDownload(page, harness, fixture, testInfo);
     const firstFrame = await decodeExportFrame(render.exportPath, 0);
@@ -172,7 +177,7 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     expect(firstFrame.height).toBe(PARITY_HEIGHT);
     expect(firstFrame.bytes).toHaveLength(PARITY_WIDTH * PARITY_HEIGHT * 3);
     await assertRenderUnchanged(harness, fixture, render);
-    expect(logs).toEqual([]);
+    expect((await pageLogs.result()).failures).toEqual([]);
     await saveEvidence(testInfo, 'normal-render-action', {
       proof: 'normal App Render route and downloaded MP4 only; no Player/frame/audio parity or source-policy claim',
       revision: fixture.headRevisionId, taskId: render.taskId, authority: render.authority,
@@ -180,8 +185,7 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     });
   });
 
-  test('fixture readiness seeks actual managed Player video and captures native frames without export', async ({ page, browser, harness, fixture }, testInfo) => {
-    const logs = collectPageLogs(page);
+  test('fixture readiness seeks actual managed Player video and captures native frames without export', async ({ page, browser, harness, fixture, pageLogs }, testInfo) => {
     const requests: Array<{ url: string; status: number }> = [];
     page.on('response', response => {
       if (decodeURIComponent(response.url()).includes(fixture.sourceVideoMediaId)) requests.push({ url: response.url(), status: response.status() });
@@ -197,23 +201,21 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     expect(new Set(captures.filter(capture => capture.frame >= VIDEO_START_FRAME).map(capture => capture.hash)).size).toBe(5);
     expect(requests.some(request => [200, 206].includes(request.status)), 'actual App managed video fetch').toBe(true);
     await assertPinnedFrameParityFixture(harness, fixture);
-    expect(logs).toEqual([]);
+    expect((await pageLogs.result()).failures).toEqual([]);
     await saveEvidence(testInfo, 'fixture-readiness', { proof: 'fixture readiness only; no export comparison',
       fixture, versions: await sourceVersions(), browser: browser.version(), captures, requests });
   });
 
-  test('compares native-size actual Player frames with decoded real CPU Remotion task output', async ({ page, harness, fixture }, testInfo) => {
-    const logs = collectPageLogs(page);
+  test('compares native-size actual Player frames with decoded real CPU Remotion task output', async ({ page, harness, fixture, pageLogs }, testInfo) => {
     await openParityEditor(page, harness, fixture);
     const render = await renderAndDownload(page, harness, fixture, testInfo);
     const { exportPath } = render;
     await compareAllFrames(page, exportPath, testInfo);
     await assertRenderUnchanged(harness, fixture, render);
-    expect(logs).toEqual([]);
+    expect((await pageLogs.result()).failures).toEqual([]);
   });
 
-  test('picture-only one-host patch is reported as a mismatch after the full passing baseline', async ({ page, harness, fixture }, testInfo) => {
-    const logs = collectPageLogs(page);
+  test('picture-only one-host patch is reported as a mismatch after the full passing baseline', async ({ page, harness, fixture, pageLogs }, testInfo) => {
     await openParityEditor(page, harness, fixture);
     const render = await renderAndDownload(page, harness, fixture, testInfo);
     const { exportPath } = render;
@@ -238,7 +240,7 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     expect(comparison.pixelsOutsideBound).toBeGreaterThan(0);
     expect(comparison.outsideBoundFraction).toBeGreaterThan(0.001);
     expect(comparison.maxChannelError).toBeGreaterThan(2);
-    expect(logs).toEqual([]);
+    expect((await pageLogs.result()).failures).toEqual([]);
     await saveEvidence(testInfo, 'negative-comparison', { revision: fixture.headRevisionId, selectedFrame, baseline, exportHash, comparison });
   });
 });

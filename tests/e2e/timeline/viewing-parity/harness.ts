@@ -98,7 +98,7 @@ export async function verifyFileGraph(root: string, expected: FileManifest, labe
 }
 
 function archiveMembers(archive: string): string[] {
-  return execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' }).trim().split('\n')
+  return execFileSync('tar', ['-tzf', archive], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim().split('\n')
     .filter(name => name && !name.endsWith('/')).map(name => {
       if (!name.startsWith('package/')) throw new Error(`unexpected public package member ${name}`);
       const path = name.slice('package/'.length);
@@ -117,7 +117,7 @@ async function compositionManifest(archive: string): Promise<FileManifest> {
     throw new Error(`Composition artifact must contain exactly ${COMPOSITION_FILE_COUNT} files, found ${members.length}`);
   }
   return Object.fromEntries(members.map(path => [path,
-    mediaHash(execFileSync('tar', ['-xOf', archive, `package/${path}`]))]));
+    mediaHash(execFileSync('tar', ['-xOf', archive, `package/${path}`], { stdio: ['ignore', 'pipe', 'pipe'] }))]));
 }
 
 async function verifyCompositionPackage(artifact: string, packageRoot: string, consumer: string) {
@@ -165,7 +165,7 @@ export async function sourceVersions() {
   }
   return {
     revisions: Object.fromEntries(Object.entries(roots).map(([name, root]) => [name,
-      execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()])),
+      execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()])),
     roots, remotionProject, artifacts, hashes, installedCompositionHashes, compositionFiles, renderGraphHashes,
     selectedInstalls: {
       app: resolve(roots.app, 'node_modules'),
