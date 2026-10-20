@@ -43,7 +43,7 @@ second session registry.
 
 ## Agent readiness and selection
 
-The New chat menu reads `GET /acp/agents` whenever it opens and when the window
+The chat menu (the header's top-left dropdown, which also switches chats) reads `GET /acp/agents` whenever it opens and when the window
 regains focus. The bridge finds `claude`, `codex`, and `hermes` on the person's login-shell
 PATH (`$SHELL -lic`), then falls back to its own PATH. It asks
 `claude auth status` (with a text fallback) and `codex login status` whether
@@ -52,8 +52,9 @@ CLI login, including ChatGPT. Unknown sign-in counts as ready. Status errors
 and child diagnostics never cross into the App.
 
 The service reports one state per agent: **Ready**, **Sign in**, or
-**Not installed**. A ready row opens its service-owned model catalog. The main
-New button repeats the service's last successful agent and model. Each command
+**Not installed**. A ready row starts a chat with that agent's service default
+model, shown on the row; → (or the row's chevron) opens its service-owned model
+catalog. Each command
 inside a non-ready row has a **Copy command** button; only the command is copied.
 Install and sign-in lines come from the service, including the installed Astrid
 launcher and platform-specific Hermes instructions.
@@ -78,8 +79,10 @@ chat starts, the menu reports **Getting Claude Code ready…** (or the chosen
 agent); a failed start shows **Claude Code didn't start.**, its details, and
 **Try again**.
 
-The header shows the fixed agent and model, with an information tooltip for the
-chosen thinking level. Model choice is available only in the New chat menu.
+Under the chat menu, a small line shows the chat's fixed agent, model and thinking
+level. It opens the chat's thinking level, which can change between replies, and
+**New chat with another model**, which opens the chat menu on that agent's models:
+model choice happens only when a chat starts.
 The service owns each catalog and its defaults, bootstrapping discovery when
 needed; the browser does not keep another model list or model preference.
 Models expose a thinking-level submenu only after that exact model has advertised

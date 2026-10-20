@@ -190,14 +190,14 @@ describe('real panel → real hooks → owned ACP transport', () => {
     const firstId = fixture.seed('p1');
     fixture.chat('p1').main_session_id = firstId;
     const view = mount();
-    const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
+    const selector = await screen.findByRole('button', { name: /^Chat: / });
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
+    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
     if (choice === 'main') {
-      fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+      fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     } else {
-      fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
       if (choice === 'agent') {
-        fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Choose a Codex model' }));
         fireEvent.click(await screen.findByRole('option', { name: /Model A/ }));
       }
       else {
@@ -218,8 +218,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
     view.unmount();
     await freshModules();
     mount();
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Chat 2'));
-    fireEvent.click(screen.getByRole('combobox', { name: 'Project chat session' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Chat: / })).toHaveTextContent('Chat 2'));
+    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
     expect(await screen.findByRole('option', { name: /^Chat 2/ })).toHaveTextContent('Main');
     expect(fixture.calls.filter(c => c.route.endsWith('/sessions'))).toHaveLength(1);
   });
@@ -228,16 +228,16 @@ describe('real panel → real hooks → owned ACP transport', () => {
     const id = fixture.seed('p1');
     fixture.chat('p1').main_session_id = id;
     const view = mount();
-    fireEvent.click(await screen.findByRole('combobox', { name: 'Project chat session' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Chat: / }));
     fireEvent.click(await screen.findByRole('button', { name: 'Rename Chat 1' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Chat name' }), { target: { value: '  Launch plan  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Launch plan'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Chat: / })).toHaveTextContent('Launch plan'));
     expect(fixture.calls).toContainEqual({ route: '/acp/projects/p1/chat', body: { expected_revision: 0, session_id: id, title: 'Launch plan' } });
     view.unmount();
     await freshModules();
     mount();
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Launch plan'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Chat: / })).toHaveTextContent('Launch plan'));
   });
 
   it('recovers a restarted bridge while keeping restored messages paused and the draft intact', async () => {
@@ -448,7 +448,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
     const ensure = fixture.calls.find(c => c.route.endsWith('/sessions'))!;
     expect(ensure).toMatchObject({ route: '/acp/projects/p1/chat/sessions', body: { mode: 'ensure', connection_id: 'connection-1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     await waitFor(() => expect(fixture.calls.filter(c => c.route.endsWith('/sessions'))).toHaveLength(2));
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === fixture.chat('p1').selected_session_id)).toBe(true));
     expect(fixture.calls.filter(c => c.route.endsWith('/sessions'))[1].body).toMatchObject({ mode: 'new', operation_id: expect.any(String) });
@@ -477,9 +478,9 @@ describe('real panel → real hooks → owned ACP transport', () => {
     mount();
     await screen.findByText('Change only the cube color to teal.');
     await screen.findByText('Done.');
-    // Omitted creation choices have no reported connection agent. Release those temporary hosts;
-    // explicitly connect to the saved chat's original agent for loading/prompting and after reload.
-    expect(fixture.calls.filter(c => c.route === '/acp/connect').map(c => c.body)).toEqual([{}, { agent: 'astrid' }, {}, { agent: 'astrid' }]);
+    // The first (ensure) chat has no agent choice; the two New chats pick the Astrid row, which names its agent.
+    // Each temporary host is released, and the saved chat reconnects to its original agent after reload.
+    expect(fixture.calls.filter(c => c.route === '/acp/connect').map(c => c.body)).toEqual([{}, { agent: 'astrid' }, { agent: 'astrid' }, { agent: 'astrid' }]);
     expect(fixture.calls.filter(c => c.route.endsWith('/prompt'))).toHaveLength(1);
     expect(fixture.chat('p1').sessions).toHaveLength(2);
   });
@@ -618,7 +619,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
     });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Draft for the new conversation' } });
     await waitFor(() => expect(delayed).toBe(true));
-    fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe('session-p1'));
     const newId = fixture.chat('p1').selected_session_id;
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === newId)).toBe(true));
@@ -640,7 +642,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
     mount();
     await send('Old session operation');
     await waitFor(() => expect(fixture.calls.some(c => c.route.endsWith('/prompt'))).toBe(true));
-    fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe('session-p1'));
     const newId = fixture.chat('p1').selected_session_id;
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === newId)).toBe(true));
