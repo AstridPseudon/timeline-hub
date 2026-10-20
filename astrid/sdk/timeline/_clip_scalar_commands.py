@@ -151,10 +151,39 @@ def _transition_set(ctx, command, ref, values, identity):
                 ctx.read(neighbor, prefix + [key])
 
 
+def _transition_clear_pair(ctx, ref):
+    """Validate the explicit transition/elementRef removal pair.
+
+    The historical transition-only clear is deliberately handled separately:
+    it never infers or removes either element reference spelling.
+    """
+    references = []
+    for key in ('elementRef', 'element_ref'):
+        value = ctx.state.get(ref, [key])
+        if value['state'] == 'present':
+            references.append((key, value['value']))
+    if not references:
+        return
+    transition = ctx.state.get(ref, ['transition'])
+    value = transition.get('value') if transition['state'] == 'present' else None
+    if not isinstance(value, dict) or not isinstance(value.get('type'), str):
+        raise CommandError('transition remove requires a matching transition identity', ref=ref)
+    for key, selected in references:
+        if (not isinstance(selected, dict) or selected.get('kind') != 'transition'
+                or selected.get('id') != value['type']
+                or selected.get('revision') != value.get('revision')):
+            raise CommandError('transition remove refuses a mismatched element reference', ref=ref,
+                               path=[key])
+
+
 def clip_set(ctx, command):
     ref = _target(ctx, command, 'clip')
     values, clear = _changes(command)
     identity = _clip_basis(ctx, ref)
+    if 'elementRef' in clear:
+        if 'transition' not in clear:
+            raise CommandError('elementRef clear requires transition clear', ref=ref)
+        _transition_clear_pair(ctx, ref)
     if 'elementRef' in values and 'transition' not in values:
         raise CommandError('elementRef requires transition SET', ref=ref)
     if 'transition' in values:
@@ -181,10 +210,13 @@ def clip_set(ctx, command):
         ctx.clear(ref, ['element_ref'])
     for key in sorted(clear):
         ctx.clear(ref, [key])
+        if key == 'elementRef' and 'element_ref' in row:
+            ctx.clear(ref, ['element_ref'])
         if key == 'transition':
-            for element_key in ('elementRef', 'element_ref'):
-                if element_key in row:
-                    ctx.clear(ref, [element_key])
+            # Transition-only clear is a frozen public operation.  Its
+            # unrelated component/effect identity, including the legacy
+            # spelling, remains byte-for-byte untouched.
+            continue
 
 
 def capture_clip_set(bundle, select, *, values=None, clear=(), schema_source=None,

@@ -1770,7 +1770,8 @@
             "enum": [
               "hold",
               "asset",
-              "transition"
+              "transition",
+              "elementRef"
             ]
           },
           "uniqueItems": true
@@ -1800,7 +1801,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds or atomically set an incoming transition with its matching elementRef; explicitly remove hold, asset or transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media. Selected pack transitions require an exact schema_source."
+      "description": "Bounded raw clip fields. Set hold in source seconds or atomically set an incoming transition with its matching elementRef; explicitly remove hold, asset or transition, or remove a transition and its matching elementRef as a closed pair. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media. Selected pack transitions require an exact schema_source."
     },
     "ClipTrimArgs": {
       "type": "object",

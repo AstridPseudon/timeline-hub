@@ -400,11 +400,69 @@ def test_private_transition_set_update_remove_pairs_element_ref_and_roundtrips()
     assert clip(changed.bundle, PARENT)['transition'] == updated
     assert clip(changed.bundle, PARENT)['elementRef'] == element
     removed = execute(changed.bundle, [capture_clip_set(changed.bundle, PARENT,
-        clear=['transition'])])
+        clear=['transition', 'elementRef'])])
     assert all(key not in clip(removed.bundle, PARENT) for key in ('transition', 'elementRef', 'element_ref'))
     assert {tuple(write['path']) for write in removed.records[0]['writes']} == {
         ('transition',), ('elementRef',)}
     assert inverse(removed.bundle, removed.records).bundle == changed.bundle
+
+
+@pytest.mark.parametrize('field', ['elementRef', 'element_ref'])
+def test_transition_only_clear_preserves_unrelated_element_identity(field):
+    original = app_bundle()
+    selected = {'id': 'rocket', 'kind': 'effect', 'revision': 'r1'}
+    clip(original, PARENT)['transition'] = {'type': 'cross-fade', 'duration': .5}
+    clip(original, PARENT)[field] = copy.deepcopy(selected)
+    before = copy.deepcopy(original)
+    plan = execute(original, [capture_clip_set(original, PARENT, clear=['transition'])])
+    assert clip(plan.bundle, PARENT)[field] == selected
+    assert 'transition' not in clip(plan.bundle, PARENT)
+    assert plan.records[0]['writes'] == [
+        {'ref': PARENT, 'path': ['transition'],
+         'before': present({'type': 'cross-fade', 'duration': .5}), 'after': {'state': 'absent'}}]
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
+@pytest.mark.parametrize('field,value', [
+    ('elementRef', {'id': 'cross-fade', 'kind': 'transition', 'revision': 'r1'}),
+    ('element_ref', {'id': 'cross-fade', 'kind': 'transition', 'revision': 'r1'}),
+])
+def test_explicit_transition_remove_clears_matching_legacy_spelling_exactly(field, value):
+    original = app_bundle()
+    clip(original, PARENT)['transition'] = {'type': 'cross-fade', 'duration': .5, 'revision': 'r1'}
+    clip(original, PARENT)[field] = copy.deepcopy(value)
+    before = copy.deepcopy(original)
+    plan = execute(original, [capture_clip_set(original, PARENT,
+                                                clear=['transition', 'elementRef'])])
+    assert all(key not in clip(plan.bundle, PARENT) for key in ('transition', 'elementRef', 'element_ref'))
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
+@pytest.mark.parametrize('presence', [ABSENT, present(None), present(''),
+                                      present({'opaque': [None, False, 0]})])
+def test_explicit_transition_remove_roundtrips_exact_legacy_transition_presence(presence):
+    original = app_bundle()
+    State(original).set(PARENT, ['transition'], presence)
+    before = copy.deepcopy(original)
+    plan = execute(original, [capture_clip_set(original, PARENT,
+                                                clear=['transition', 'elementRef'])])
+    assert 'transition' not in clip(plan.bundle, PARENT)
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
+@pytest.mark.parametrize('value', [
+    {'id': 'rocket', 'kind': 'effect', 'revision': 'r1'},
+    {'id': 'cross-fade', 'kind': 'transition', 'revision': 'wrong'},
+    'opaque legacy reference',
+])
+def test_explicit_transition_remove_refuses_unsafe_identity_and_keeps_draft(value):
+    original = app_bundle()
+    clip(original, PARENT)['transition'] = {'type': 'cross-fade', 'duration': .5, 'revision': 'r1'}
+    clip(original, PARENT)['element_ref'] = copy.deepcopy(value)
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        capture_clip_set(original, PARENT, clear=['transition', 'elementRef'])
+    assert original == before
 
 
 @pytest.mark.parametrize('values', [

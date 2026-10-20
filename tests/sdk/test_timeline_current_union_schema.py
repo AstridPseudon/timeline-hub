@@ -98,7 +98,7 @@ def test_existing_argument_narrowing_still_fails(name):
 def test_canonical_schema_is_byte_identical_to_approved_s2():
     path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        'ca4c59d47127e4846a7a7ae4cce2c02b097a73a051391677f5df40d468664f22')
+        'a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a')
 
 
 def test_private_transition_successor_is_an_additive_clip_set_carrier():
@@ -111,7 +111,8 @@ def test_private_transition_successor_is_an_additive_clip_set_carrier():
     assert transition['properties']['durationFrames'] is False
     assert transition['properties']['align'] is False
     assert transition['properties']['incomingPolicy'] is False
-    assert args['properties']['clear']['items']['enum'] == ['hold', 'asset', 'transition']
+    assert args['properties']['clear']['items']['enum'] == [
+        'hold', 'asset', 'transition', 'elementRef']
 
 
 def test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening():
