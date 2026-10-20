@@ -1,0 +1,4 @@
+Base SHA: 157eef8cf1151db09310153c10856d45d8590c87
+Targeted command:
+node node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --configLoader bundle --no-cache src/tools/video-editor/compositions/TimelineRenderer.test.tsx src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx
+Result: 3 files, 64 tests passed.

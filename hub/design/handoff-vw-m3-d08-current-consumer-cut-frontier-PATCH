@@ -1,0 +1,80 @@
+diff --git a/src/tools/video-editor/compositions/VisualClip.tsx b/src/tools/video-editor/compositions/VisualClip.tsx
+index ca6f96788..78047c644 100644
+--- a/src/tools/video-editor/compositions/VisualClip.tsx
++++ b/src/tools/video-editor/compositions/VisualClip.tsx
+@@ -1,13 +1,12 @@
+ import { useMemo, useState, type CSSProperties, type FC, type ReactNode } from 'react';
+ import { AbsoluteFill, Freeze, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
+-import { queryDrawFrame, type DrawPlan } from '@banodoco/timeline-composition/evaluation';
++import { getSanitizedPlaybackRate, queryDrawFrame, type DrawPlan } from '@banodoco/timeline-composition/evaluation';
+ import { ReadinessImage } from '@astrid/packs/rendering/shared/readiness-image';
+ import { ReadinessVideo } from './ReadinessVideo.tsx';
+ import {
+   getClipDurationInFrames,
+   getSanitizedMediaSrc,
+   getSanitizedMediaTrimProps,
+-  getSanitizedPlaybackRate,
+   getSanitizedVolume,
+   parseResolution,
+   secondsToFrames,
+diff --git a/src/tools/video-editor/compositions/playerEvaluation.ts b/src/tools/video-editor/compositions/playerEvaluation.ts
+index 5b5de1132..0c332d9d3 100644
+--- a/src/tools/video-editor/compositions/playerEvaluation.ts
++++ b/src/tools/video-editor/compositions/playerEvaluation.ts
+@@ -2,12 +2,13 @@ import { compileCanonicalTransitions, prepareCompositionScene, toRuntimeTheme }
+ import {
+   clipOpacity,
+   declareAppTransition,
++  getSanitizedPlaybackRate,
+   prepareScene,
+   type DrawPlan,
+   type CompiledCanonicalTransitions,
+   type TransitionSpec,
+ } from '@banodoco/timeline-composition/evaluation';
+-import { getClipTimelineDuration, getSanitizedPlaybackRate } from '../lib/config-utils.ts';
++import { getClipTimelineDuration } from '../lib/config-utils.ts';
+ import { resolveTimelineRenderTheme } from './installed-themes.ts';
+ import { projectOutputTimelineConfig } from '../data/timelineOutputProjection.ts';
+ import { materializeResolvedSequenceConfig } from '../sequences/materialize.ts';
+diff --git a/src/tools/video-editor/lib/config-utils.test.ts b/src/tools/video-editor/lib/config-utils.test.ts
+index 2d3e7b1b8..3feccf163 100644
+--- a/src/tools/video-editor/lib/config-utils.test.ts
++++ b/src/tools/video-editor/lib/config-utils.test.ts
+@@ -1,5 +1,5 @@
+ import { describe, expect, it } from 'vitest';
+-import { computeMediaTrim } from '@banodoco/timeline-composition/evaluation';
++import { computeMediaTrim, getSanitizedPlaybackRate } from '@banodoco/timeline-composition/evaluation';
+ import {
+   getConfigSignature,
+   getClipDurationInFrames,
+@@ -7,7 +7,6 @@ import {
+   getSanitizedAssetFile,
+   getSanitizedMediaSrc,
+   getSanitizedMediaTrimProps,
+-  getSanitizedPlaybackRate,
+   getStableConfigSignature,
+   getSanitizedVolume,
+   getTimelineDurationInFrames,
+diff --git a/src/tools/video-editor/lib/config-utils.ts b/src/tools/video-editor/lib/config-utils.ts
+index 55b586a2e..ae462efde 100644
+--- a/src/tools/video-editor/lib/config-utils.ts
++++ b/src/tools/video-editor/lib/config-utils.ts
+@@ -14,7 +14,6 @@ import {
+   type TimelineConfigSignatureInput,
+ } from '@/sdk/video/timeline/configSignature.ts';
+ import {
+-  getCanonicalClipPlaybackRate,
+   getConfigTimelineClipDuration,
+   getConfigTimelineClipSourceDuration,
+ } from './timeline-domain.ts';
+@@ -42,10 +41,6 @@ export const getClipTimelineDuration = (clip: TimelineClip): number => {
+ 
+ export { computeMediaTrim as getSanitizedMediaTrimProps } from '@banodoco/timeline-composition/evaluation';
+ 
+-export const getSanitizedPlaybackRate = (speed: TimelineClip['speed']): number => {
+-  return getCanonicalClipPlaybackRate(speed);
+-};
+-
+ export const getSanitizedVolume = (volume: number | undefined, fallback = 1): number => {
+   return typeof volume === 'number' && Number.isFinite(volume)
+     ? Math.max(0, volume)

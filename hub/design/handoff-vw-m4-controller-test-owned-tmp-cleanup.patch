@@ -1,0 +1,51 @@
+--- a/tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
++++ b/tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+@@ -62,7 +62,7 @@
+ }
+ 
+ function createOwnedTempDirectory() {
+-  const privateTmpdir = realpathSync(tmpdir());
++  const privateTmpdir = realpathSync(process.env.TAB_AUDIO_TASK_TMPDIR ?? tmpdir());
+   const directory = mkdtempSync(path.join(privateTmpdir, 'timeline-controller-test-'));
+   if (path.dirname(directory) !== privateTmpdir || path.resolve(directory) !== directory) {
+     rmSync(directory, { recursive: true, force: true });
+@@ -185,6 +185,39 @@
+   assert.equal(existsSync(failedDirectory), false);
+ });
+ 
++test('controller fixture cleanup uses the per-run temp carrier for tiny fake trees', () => {
++  const carrier = mkdtempSync(path.join(realpathSync(tmpdir()), 'timeline-controller-carrier-'));
++  const carrierRoot = realpathSync(carrier);
++  const previousCarrier = process.env.TAB_AUDIO_TASK_TMPDIR;
++  process.env.TAB_AUDIO_TASK_TMPDIR = carrier;
++  let successful;
++  let failedDirectory;
++  try {
++    successful = createOwnedTempDirectory();
++    assert.equal(path.dirname(successful.directory), realpathSync(carrier));
++    writeFileSync(path.join(successful.directory, 'fake-tree'), 'controller cleanup fixture\n');
++  } finally {
++    if (successful) removeOwnedTempDirectory(successful);
++  }
++  assert.equal(existsSync(successful.directory), false);
++
++  try {
++    assert.throws(() => createExactGraphFixtures({
++      afterDirectoryCreated(directory) {
++        failedDirectory = directory;
++        writeFileSync(path.join(directory, 'fake-tree'), 'controller setup failure fixture\n');
++        throw new Error('forced fixture setup failure');
++      },
++    }), /forced fixture setup failure/);
++  } finally {
++    if (previousCarrier === undefined) delete process.env.TAB_AUDIO_TASK_TMPDIR;
++    else process.env.TAB_AUDIO_TASK_TMPDIR = previousCarrier;
++    rmSync(carrier, { recursive: true, force: true });
++  }
++  assert.equal(path.dirname(failedDirectory), carrierRoot);
++  assert.equal(existsSync(failedDirectory), false);
++});
++
+ test('leaf accepts the actual current App owner base lineage and tree', () => {
+   assert.deepEqual(assertAppOwnerBase(process.cwd(), {
+     source: CURRENT_APP_SOURCE,
