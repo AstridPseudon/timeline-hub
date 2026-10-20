@@ -25,4 +25,4 @@ Private Runtime source is immutable `2c4ac180c2220bdad966bc01e95ad230e99ce26a`. 
 
 The custom command is accepted by the actual current validator/provider/port path. No new production operation or endpoint is required. Public 0.2.13 bytes, shared dependencies, shared caches and integration worktrees receive no writes. No full/full*, localhost, browser, App, released-pair, renderer, owner-film or macOS qualification is claimed.
 
-Exact commands, final results, diagnostic iterations and reproduction script: [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-media-manifest-fixture-current/notes/report.md).
+Final evidence: **155 targeted service tests passed**, including both migrated positives; **130 portable neighbors passed**. Lint, whitespace and public artifact checks pass. No blocker remains. Exact commands, diagnostic iterations and reproduction script: [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-tests-media-manifest-fixture-current/notes/report.md).
