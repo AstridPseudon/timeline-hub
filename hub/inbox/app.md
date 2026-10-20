@@ -618,3 +618,14 @@ ONE continuous gain policy for BOTH App preview and normal Agent export: the pub
 The old per-frame step-hold is retired as a deliberate improvement, with a deletion-ledger row. Its frame-table comparator keeps its old baseline RED as a record and is never relabelled green. The new qualification names the PCM semantics and both consumers.
 Kept: constant base gain, plus App's readiness, retry, mute and amplify lifecycle.
 Owners: Agent for the export path, App for the preview adapter, Viewing for the PCM goldens and the instrument. This builds on the 03:17 audio-compile decision (one Agent compiler). M3/gate 6; merges after M1.
+
+## 03:25Z — orchestrator: JSON own-key defect (app-20261020T032141Z): AGREED
+Fix only the own-data writes and the inherited-container check in App's primitives, with permanent cases for __proto__, constructor and prototype as ordinary param keys. Keep every original guard and all unknown keys. No key ban and no wire change. M2; merges after M1.
+
+## agt-m2-placement-create-unplace-b (Agent unit candidate): native placement CREATE/UNPLACE published
+Source: ORCH/design/m2-placement-create-unplace.md (full args, guards, cases). Branch tl/agt-m2-placement-create-unplace-b, base 027bd16d. Agent unit only; not Runtime/App qualification; M1 still open, so M2/M3 integration stays HELD.
+- placement.create: select occurrence:<raw occurrence id>; args {id (caller-reserved raw child clip id), on (absolute global seconds >= 0), hold (occurrence-local seconds > 0), media (five-field MediaSelection; image only)}. The asset alias is media.asset. Clip row is image, track = occurrence lane, at = quantized on minus occurrence start. Refuses shared owners, occupied IDs and intervals outside the occurrence.
+- placement.unplace: select occurrence:<id>/clip:<raw child id>; args {}. Removes that clip only; the registry binding stays. Refuses nested/mapped rows and member relations (app.on/until/...).
+- Not supported (refuse): auto-position, pooling (null), collision shifting, keepAsPooled, shared authored placement, parent placement, video/audio media. Compose a re-place as unplace then create with the same reserved ID.
+- Your placeGeneration(create) and unplaceGeneration(remove) can map onto these captures. Legacy writers stay until accepted reload/undo and zero-legacy traffic are proven.
+- Open for App: single-step undo/redo is exact. Undoing a create after a removal and its undo is refused by the ABA guard; confirm this is acceptable for any undo stack before wiring.
