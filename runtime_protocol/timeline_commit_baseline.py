@@ -289,9 +289,6 @@ def _verify(connection, project_id, timeline_id, read_object):
     last_seq, latest = publications[-1]
     latest_payload = _json(latest["payload_json"])
     _require(latest_payload["new_head"] == head["revision_id"], "latest_publication_does_not_select_head")
-    # Display-only renames do not change the authored closure. All other later
-    # stream events are unknown writes until an acceptance adapter accounts for them.
-    _require(all(event["kind"] == "timeline.renamed" for event in events[last_seq:]), "later_unaccounted_timeline_write")
     commands = connection.execute(
         "SELECT * FROM command_idempotency WHERE command_kind='parent_composition.publish' AND aggregate_id=?", (timeline_id,)
     ).fetchall()
@@ -339,9 +336,11 @@ def _verify(connection, project_id, timeline_id, read_object):
     internal_ids = {image["timeline_id"] for image in current_document["internal_timeline_revisions"]}
     scope = {timeline_id, "timeline:" + timeline_id, *shot_ids, *internal_ids}
     last_project_seq = latest_entry["receipt"]["project_seq"][1]
+    from .timeline_catalog import verify_catalog_tail
+    catalog_receipts = verify_catalog_tail(connection, project_id, timeline_id, events, last_seq, last_project_seq, legacy=True)
     for command in connection.execute("SELECT * FROM command_idempotency WHERE last_project_seq > ? OR last_project_seq IS NULL", (last_project_seq,)):
         kind = command["command_kind"]
-        if kind == "timeline.rename":
+        if command["txn_id"] in catalog_receipts or kind == "timeline.rename":
             continue
         if kind == "timeline.create" and _json(command["event_ids_json"]) == [str(latest["id"])]:
             continue  # Empty-shell adoption: the create receipt names the publication it installed.

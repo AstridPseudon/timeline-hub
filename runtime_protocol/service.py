@@ -1352,19 +1352,8 @@ class RuntimeService:
         return {"project_id": value["id"], "realm_id": value["realm_id"], "slug": value["slug"], "name": value["name"], "metadata": value.get("metadata", {}), "version": value["version"], "created_at": value["created_at"], "updated_at": value["updated_at"], "archived": False}
 
     def _timeline_resource(self, timeline_id):
-        row = self.store.conn.execute("SELECT * FROM timelines WHERE id=?", (timeline_id,)).fetchone()
-        if not row: raise NotFoundError("timeline not found")
-        shots = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_shots WHERE timeline_id=?", (timeline_id,))]
-        refs = [dict(x) for x in self.store.conn.execute("SELECT * FROM timeline_references WHERE timeline_id=?", (timeline_id,))]
-        head = self.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, row["project_id"])).fetchone()
-        result = {"timeline_id": row["id"], "project_id": row["project_id"], "version": row["version"], "name": row["name"], "head_revision_id": head["revision_id"] if head else None, "archived": bool(row["archived_at"]), "shots": [{"shot_id": x["id"], "start_ms": x["start_ms"], "duration_ms": x["duration_ms"], "reference_ids": json.loads(x["reference_ids_json"])} for x in shots], "references": [{"reference_id": x["id"], "object_id": x["object_id"], **({"role": x["role"]} if x["role"] else {})} for x in refs]}
-        result["head_publication_id"] = head["publication_id"] if head else None
-        document = self.store.conn.execute("SELECT content_json, version FROM project_documents WHERE id=? AND project_id=?", (f"timeline:{timeline_id}", row["project_id"])).fetchone()
-        if document:
-            content = json.loads(document["content_json"])
-            if isinstance(content, dict):
-                result.update({"slug": content.get("slug", timeline_id), "config_version": int(document["version"]), "config": content.get("config", {}), "registry": content.get("registry", {})})
-        return result
+        from .timeline_catalog import timeline_resource
+        return timeline_resource(self.store.conn, timeline_id)
 
     def _timeline_public_resource(self, timeline_id):
         """Expose timeline identity/head metadata without legacy document bytes."""
