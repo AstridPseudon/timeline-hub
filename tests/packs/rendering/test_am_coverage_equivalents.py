@@ -1,7 +1,8 @@
 """Real AM drawing and public scene answers; no media-alpha or pixel claim.
 
 These exercise the supported incoming transition representation and the exact
-legacy independent-fades film, whose DIP also occurs in main's drawing.
+legacy independent-fades film against the selected public artifact. MAIN's
+locked 0.0.6 renderer has not qualified this candidate golden.
 """
 import hashlib
 import json
@@ -114,7 +115,7 @@ def test_actual_am_public_incoming_crossfade_stays_covered(am_coverage_query):
     assert 0 < overlap["layers"][1]["opacity"] < 1
 
 
-def test_actual_am_legacy_independent_fades_match_main_render_backed_dip(am_coverage_query):
+def test_actual_am_legacy_independent_fades_have_a_public_artifact_dip(am_coverage_query):
     config = _independent_fades_config()
     result = am_coverage_query("legacy-crossfade", timeline=config)
     assert result["props"]["timeline"] == config

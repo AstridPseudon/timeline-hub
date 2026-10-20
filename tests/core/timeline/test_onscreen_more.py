@@ -39,9 +39,9 @@ def _independent_fades_config():
     ])
 
 
-# Main's drawing and the registered native renderer agree: independent clip
-# fades expose the canvas. The named public incoming-crossfade test stays covered.
-def test_independent_full_plate_fades_have_a_render_backed_dip():
+# Candidate native8 golden only. Approval remains held until MAIN's locked
+# 0.0.6 Root proves the same DIP; component SSR under native8 is insufficient.
+def test_native8_independent_full_plate_fades_have_a_dip():
     config = _independent_fades_config()
     spans = coverage(config, FPS, CANVAS, ELEMENTS, end_frame=45)
     assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [
