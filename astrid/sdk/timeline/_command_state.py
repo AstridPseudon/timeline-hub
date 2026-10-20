@@ -367,6 +367,9 @@ class State:
             return
         value = self.entity(ref)
         for key in path[:-1]:
+            if (state['state'] == 'absent' and isinstance(value, dict)
+                    and (key not in value or value[key] is None)):
+                return
             if not isinstance(value, dict) or key not in value or not isinstance(value[key], dict):
                 raise CommandError("write requires recorded container creation", ref=ref, path=path)
             value = value[key]

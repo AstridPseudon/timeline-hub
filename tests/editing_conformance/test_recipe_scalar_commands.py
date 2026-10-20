@@ -87,9 +87,6 @@ def test_original_param_basis_refuses_new_admitted_schema(admitted_param_revisio
 
 
 @pytest.mark.parametrize('container', [ABSENT, present(None)])
-# Requirement: clear-only writes must preserve absent/null params without
-# widening to the container. The shared State.set clear primitive still needs it.
-@pytest.mark.xfail(strict=True, reason='clear-only params silently creates an object container')
 def test_clear_only_params_preserves_nonobject_presence_and_leaf_intent(container):
     original = bundle()
     if container != ABSENT:
@@ -100,10 +97,39 @@ def test_clear_only_params_preserves_nonobject_presence_and_leaf_intent(containe
     assert command['expect'] == {REF + '::params.missing': ABSENT}
     assert plan.records[0]['writes'] == [
         {'ref': REF, 'path': ['params', 'missing'], 'before': ABSENT, 'after': ABSENT}]
-    assert inverse(plan.bundle, plan.records).bundle == original
+    assert {'ref': REF, 'path': ['params'], 'state': container} in command['reads']
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
     assert replay(plan, original).records == plan.records
+    for changed in (ABSENT, present(None), present({}), present(False)):
+        if changed == container:
+            continue
+        head = copy.deepcopy(original)
+        State(head).set(REF, ['params'], changed)
+        with pytest.raises(CommandError):
+            replay(plan, head)
+        with pytest.raises(CommandError):
+            inverse(head, plan.records)
     with pytest.raises(CommandError, match='intervening'):
         replay(plan, original, intervening_records=[later(REF, ['params', 'missing'], None)])
+
+
+@pytest.mark.parametrize('container', [ABSENT, present(None)])
+# Requirement: exact generic batch undo must preserve a no-op clear's ancestor
+# when a later command creates that container. inverse._patch still normalizes it.
+@pytest.mark.xfail(strict=True, reason='inverse coalescing normalizes absent/null ancestors')
+def test_clear_then_set_batch_preserves_exact_absent_or_null_inverse(container):
+    original = bundle()
+    if container != ABSENT:
+        clip(original, REF)['params'] = copy.deepcopy(container['value'])
+    commands = [capture_clip_set_params(original, REF, clear=['missing']),
+                capture_clip_set_params(original, REF, values={'x': 1})]
+    plan = execute(original, commands)
+    assert replay(plan, original).records == plan.records
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
 
 
 def test_registered_sprite_strip_binding_refuses_selected_registry_retarget():

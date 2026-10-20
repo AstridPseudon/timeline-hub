@@ -75,7 +75,8 @@ def clip_set_params(ctx, command):
             errors = list(Draft202012Validator(properties[key]).iter_errors(value))
             if errors:
                 raise CommandError(errors[0].message, ref=ref, path=['params', key])
-    ctx.object(ref, ['params'])
+    if values:
+        ctx.object(ref, ['params'])
     for key in sorted(values):
         ctx.write(ref, ['params', key], values[key])
     for key in sorted(clear):

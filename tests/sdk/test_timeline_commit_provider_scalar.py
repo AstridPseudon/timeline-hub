@@ -58,11 +58,7 @@ def test_provider_refuses_old_param_basis_after_admitted_element_update(admitted
     assert (realm.head, realm.entries, realm.documents) == before
 
 
-@pytest.mark.parametrize('container', [ABSENT, present(None)])
-# Requirement: a clear of an absent param must preserve the literal container
-# and record only that leaf, including across provider reload and inverse.
-@pytest.mark.xfail(strict=True, reason='clear-only params silently creates an object container')
-def test_provider_clear_only_preserves_absent_or_null_container(container):
+def clear_realm(container):
     from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
     document = document_fixture()
@@ -71,14 +67,47 @@ def test_provider_clear_only_preserves_absent_or_null_container(container):
         if container != ABSENT:
             rows[0]['params'] = copy.deepcopy(container['value'])
     document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
-    realm = DetachedRealm(document)
+    return DetachedRealm(document)
+
+
+@pytest.mark.parametrize('container', [ABSENT, present(None)])
+def test_provider_clear_only_preserves_absent_or_null_container(container):
+    realm = clear_realm(container)
     ref = 'parent/clip:clip-a'
     before = copy.deepcopy(State(current(realm)).entity(ref))
+    revision = realm.head['revision_id']
     accepted = realm.call([capture_clip_set_params(current(realm), ref, clear=['missing'])])
     assert State(current(realm)).entity(ref) == before
+    assert realm.head['revision_id'] == revision
     assert accepted['data']['commands'][0]['expect'] == {ref + '::params.missing': ABSENT}
-    realm.call([inverse([accepted['receipt']['receipt_id']])])
+    record = realm.entries[-1]['records']['commands'][0]
+    assert record['writes'] == [
+        {'ref': ref, 'path': ['params', 'missing'], 'before': ABSENT, 'after': ABSENT}]
+    assert {'ref': ref, 'path': ['params'], 'state': container} in record['reads']
+    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
     assert State(current(realm)).entity(ref) == before
+    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+
+
+@pytest.mark.parametrize('container', [ABSENT, present(None)])
+@pytest.mark.parametrize('aba', [False, True])
+def test_provider_absent_leaf_clear_retains_publication_and_aba_intent(container, aba):
+    realm = clear_realm(container)
+    ref = 'parent/clip:clip-a'
+    first = realm.call([capture_clip_set_params(current(realm), ref, clear=['missing'])])
+    revision = realm.head['revision_id']
+    if aba:
+        away = realm.call([capture_clip_set_params(current(realm), ref, values={'missing': None})])
+        realm.call([inverse([away['receipt']['receipt_id']])])
+    last = realm.call([capture_clip_set_params(current(realm), ref, clear=['missing'])])
+    assert realm.head['revision_id'] == revision
+    assert last['receipt']['receipt_id'] != first['receipt']['receipt_id']
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([first['receipt']['receipt_id']])])
+    assert error.value.failure['details']['reason'] == 'intervening_write'
+    assert (realm.head, realm.entries, realm.documents) == before
 
 
 @pytest.mark.parametrize('registry_location', ['direct', 'config', 'both'])

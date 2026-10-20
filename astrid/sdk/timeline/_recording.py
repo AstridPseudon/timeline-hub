@@ -80,6 +80,13 @@ class Recording:
                                             "pin": copy.deepcopy(pin), "policy": "exact"})
 
     def assign(self, ref, path, after):
+        if after['state'] == 'absent':
+            for end in range(1, len(path)):
+                ancestor = self.state.get(ref, path[:end])
+                if ancestor == ABSENT or ancestor == present(None):
+                    # A missing leaf must not erase its ancestor's tagged presence.
+                    self.read(ref, path[:end])
+                    break
         before = self.state.get(ref, path)
         self.record['writes'].append({"ref": ref, "path": list(path),
                                        "before": before, "after": copy.deepcopy(after)})
