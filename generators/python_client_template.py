@@ -979,15 +979,6 @@ class WorkspaceClient:
         payload = {"expected_version": expected_version, "version": version}
         return self._mutation_json(self._request("POST", f"/v1/timelines/{_path_part(timeline_id)}/recover", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
-    def update_timeline(self, timeline_id: str, *, expected_version: int, idempotency_key: str, shots: list[Mapping[str, Any]] | None = None, references: list[Mapping[str, Any]] | None = None) -> MutationResult:
-        payload: dict[str, Any] = {"expected_version": expected_version}
-        if shots is not None: payload["shots"] = shots
-        if references is not None: payload["references"] = references
-        return self._mutation_json(self._request("PATCH", f"/v1/timelines/{_path_part(timeline_id)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
-
-    def create_shot(self, timeline_id: str, shot: Mapping[str, Any], *, idempotency_key: str) -> MutationResult:
-        return self._json(self._request("POST", f"/v1/timelines/{_path_part(timeline_id)}/shots", body=json.dumps(dict(shot), separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
-
     def get_shot(self, shot_id: str) -> Mapping[str, Any]:
         return self._json(self._request("GET", f"/v1/shots/{_path_part(shot_id)}")[2])
 
@@ -1052,24 +1043,6 @@ class WorkspaceClient:
         body = {"media_id": media_id, "expected_head": expected_head}
         return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/shot-text-bindings/{_path_part(binding_id)}/rebind", body=json.dumps(body, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
-    def update_shot(self, shot_id: str, *, expected_version: int, start_ms: int | None = None, duration_ms: int | None = None, reference_ids: list[str] | None = None, idempotency_key: str | None = None) -> Mapping[str, Any]:
-        payload: dict[str, Any] = {"expected_version": expected_version}
-        if start_ms is not None: payload["start_ms"] = start_ms
-        if duration_ms is not None: payload["duration_ms"] = duration_ms
-        if reference_ids is not None: payload["reference_ids"] = reference_ids
-        headers = {"Content-Type": "application/json"}
-        if idempotency_key: headers["Idempotency-Key"] = idempotency_key
-        return self._json(self._request("PATCH", f"/v1/shots/{_path_part(shot_id)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers=headers)[2])
-
-    def archive_shot(self, shot_id: str, *, expected_version: int, idempotency_key: str) -> Mapping[str, Any]:
-        return self._json(self._request("POST", f"/v1/shots/{_path_part(shot_id)}/archive", body=json.dumps({"expected_version": expected_version}).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
-
-    def recover_shot(self, shot_id: str, *, expected_version: int, idempotency_key: str) -> Mapping[str, Any]:
-        return self._json(self._request("POST", f"/v1/shots/{_path_part(shot_id)}/recover", body=json.dumps({"expected_version": expected_version}).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
-
-    def create_reference(self, timeline_id: str, reference: Mapping[str, Any], *, idempotency_key: str) -> MutationResult:
-        return self._json(self._request("POST", f"/v1/timelines/{_path_part(timeline_id)}/references", body=json.dumps(dict(reference), separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200, 201))[2])
-
     def get_reference(self, reference_id: str) -> Mapping[str, Any]:
         return self._json(self._request("GET", f"/v1/references/{_path_part(reference_id)}")[2])
 
@@ -1106,20 +1079,6 @@ class WorkspaceClient:
 
     def link_references(self, project_id: str, link: Mapping[str, Any], *, idempotency_key: str) -> MutationResult:
         return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/reference-links", body=json.dumps(dict(link), separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
-
-    def update_reference(self, reference_id: str, *, expected_version: int, object_id: str | None = None, role: str | None = None, idempotency_key: str | None = None) -> Mapping[str, Any]:
-        payload: dict[str, Any] = {"expected_version": expected_version}
-        if object_id is not None: payload["object_id"] = object_id
-        if role is not None: payload["role"] = role
-        headers = {"Content-Type": "application/json"}
-        if idempotency_key: headers["Idempotency-Key"] = idempotency_key
-        return self._json(self._request("PATCH", f"/v1/references/{_path_part(reference_id)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers=headers)[2])
-
-    def archive_reference(self, reference_id: str, *, expected_version: int, idempotency_key: str) -> Mapping[str, Any]:
-        return self._json(self._request("POST", f"/v1/references/{_path_part(reference_id)}/archive", body=json.dumps({"expected_version": expected_version}).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
-
-    def recover_reference(self, reference_id: str, *, expected_version: int, idempotency_key: str) -> Mapping[str, Any]:
-        return self._json(self._request("POST", f"/v1/references/{_path_part(reference_id)}/recover", body=json.dumps({"expected_version": expected_version}).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
     def list_projects(self, *, cursor: str | None = None, limit: int = 50) -> tuple[list[Project], str | None]:
         query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")

@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 from astrid_runtime_client import ApiError, WorkspaceClient
+from http_helpers import legacy_call
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import RetiredRouteError
 from runtime_protocol.service import RuntimeService
@@ -230,10 +231,10 @@ def test_generated_python_client_timeline_publication_is_retired_pending_commit_
         project = client.create_project("Domain Project", idempotency_key="domain-project")
         timeline = client.create_timeline(project.project_id, "timeline-1", idempotency_key="timeline-1")
         assert timeline["version"] == 1
-        saved = client.update_timeline("timeline-1", expected_version=1, idempotency_key="timeline-1-update", shots=[{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}])
+        saved = legacy_call(client, "PATCH", "/v1/timelines/timeline-1", {"expected_version": 1, "shots": [{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}]}, key="timeline-1-update")
         assert saved["version"] == 2 and saved["shots"][0]["shot_id"] == "shot-1"
         with pytest.raises(ApiError) as stale_timeline:
-            client.update_timeline("timeline-1", expected_version=1, idempotency_key="timeline-1-stale", shots=[])
+            legacy_call(client, "PATCH", "/v1/timelines/timeline-1", {"expected_version": 1, "shots": []}, key="timeline-1-stale")
         assert stale_timeline.value.status == 409
     finally:
         daemon.stop()
@@ -369,7 +370,7 @@ def test_generated_timeline_recovery_is_retired_pending_commit_replacement(tmp_p
         project = client.create_project("Settings", idempotency_key="project", slug="settings", metadata={"theme": "dark"})
         object_row = client.ingest_project_object(project.project_id, b"managed", media_type="application/octet-stream", idempotency_key="media", filename="managed.bin")
         timeline = client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
-        saved = client.update_timeline("timeline", expected_version=1, idempotency_key="timeline-update", shots=[{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}])
+        saved = legacy_call(client, "PATCH", "/v1/timelines/timeline", {"expected_version": 1, "shots": [{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}]}, key="timeline-update")
         history, _ = client.list_timeline_history("timeline")
         assert [item["version"] for item in history] == [1, 2]
         assert client.diff_timeline("timeline", from_version=1, to_version=2)["changes"]["shots"]["added"]
@@ -377,21 +378,21 @@ def test_generated_timeline_recovery_is_retired_pending_commit_replacement(tmp_p
         recovered = client.recover_timeline("timeline", expected_version=archived["version"], version=saved["version"], idempotency_key="recover")
         assert archived["archived"] is True and recovered["archived"] is False and recovered["shots"] == saved["shots"]
 
-        shot = client.create_shot("timeline", {"shot_id": "shot-mounted", "start_ms": 0, "duration_ms": 100, "reference_ids": []}, idempotency_key="shot")
-        reference = client.create_reference("timeline", {"reference_id": "reference-mounted", "object_id": object_row.object_id, "role": "source"}, idempotency_key="reference")
+        shot = legacy_call(client, "POST", "/v1/timelines/timeline/shots", {"shot_id": "shot-mounted", "start_ms": 0, "duration_ms": 100, "reference_ids": []}, key="shot")
+        reference = legacy_call(client, "POST", "/v1/timelines/timeline/references", {"reference_id": "reference-mounted", "object_id": object_row.object_id, "role": "source"}, key="reference")
         shots, _ = client.list_project_shots(project.project_id)
         references, _ = client.list_project_references(project.project_id)
         assert all(item["shot_id"] != shot["shot_id"] for item in shots)
         assert all(item["reference_id"] != reference["reference_id"] for item in references)
-        shot = client.update_shot("shot-mounted", expected_version=1, duration_ms=200)
-        reference = client.update_reference("reference-mounted", expected_version=1, role="hero")
-        shot = client.archive_shot("shot-mounted", expected_version=shot["version"], idempotency_key="archive-shot")
-        reference = client.archive_reference("reference-mounted", expected_version=reference["version"], idempotency_key="archive-reference")
+        shot = legacy_call(client, "PATCH", "/v1/shots/shot-mounted", {"expected_version": 1, "duration_ms": 200})
+        reference = legacy_call(client, "PATCH", "/v1/references/reference-mounted", {"expected_version": 1, "role": "hero"})
+        shot = legacy_call(client, "POST", "/v1/shots/shot-mounted/archive", {"expected_version": shot["version"]}, key="archive-shot")
+        reference = legacy_call(client, "POST", "/v1/references/reference-mounted/archive", {"expected_version": reference["version"]}, key="archive-reference")
         assert shot["archived"] is True and reference["archived"] is True
         assert all(item["shot_id"] != "shot-mounted" for item in client.list_project_shots(project.project_id)[0])
         assert all(item["shot_id"] != "shot-mounted" for item in client.list_project_shots(project.project_id, include_archived=True)[0])
-        shot = client.recover_shot("shot-mounted", expected_version=shot["version"], idempotency_key="recover-shot")
-        reference = client.recover_reference("reference-mounted", expected_version=reference["version"], idempotency_key="recover-reference")
+        shot = legacy_call(client, "POST", "/v1/shots/shot-mounted/recover", {"expected_version": shot["version"]}, key="recover-shot")
+        reference = legacy_call(client, "POST", "/v1/references/reference-mounted/recover", {"expected_version": reference["version"]}, key="recover-reference")
         assert shot["archived"] is False and reference["archived"] is False
     finally:
         daemon.stop()
