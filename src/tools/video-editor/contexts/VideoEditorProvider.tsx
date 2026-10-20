@@ -911,7 +911,7 @@ function VideoEditorProviderInstance({
 }: VideoEditorProviderProps) {
   const [imagePlacementHost, setImagePlacementHost] = useState<EditorImagePlacementHost>();
   const taskQueries = useQueryClient();
-  useRuntimeTaskEvents(imagePlacementHost ? projectId ?? null : null);
+  useRuntimeTaskEvents(imagePlacementHost ? projectId ?? null : null, imagePlacementHost?.operation);
   useEffect(() => {
     setImagePlacementHost(undefined);
     if (!projectId) return;
@@ -919,7 +919,7 @@ function VideoEditorProviderInstance({
     let current = true;
     void bindEditorImagePlacementHost(operationHost, projectId).then((bound) => {
       if (current) setImagePlacementHost({ ...bound,
-        taskEventsReady: () => readyRuntimeTaskEvents(taskQueries, projectId),
+        taskEventsReady: () => readyRuntimeTaskEvents(taskQueries, projectId, bound.operation),
         subscribe: (notify) => subscribeRuntimeTaskUpdates(taskQueries, projectId, notify),
       });
       else bound.retire?.();

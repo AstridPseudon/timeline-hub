@@ -250,6 +250,7 @@ export class RuntimeOperationHost {
         getManagedOutput: (...args: Parameters<AstridRuntimeClient['getManagedOutput']>) => run(() => client.getManagedOutput(...args)),
         getProjectMediaSelection: (...args: Parameters<AstridRuntimeClient['getProjectMediaSelection']>) => run(() => client.getProjectMediaSelection(...args)),
         getProjectVerifiedMedia: (...args: Parameters<WorkspaceClient['getProjectVerifiedMedia']>) => run(() => generated.getProjectVerifiedMedia(...args)),
+        listEvents: (...args: Parameters<AstridRuntimeClient['listEvents']>) => run(() => client.listEvents(...args)),
         listCapabilities: (...args: Parameters<WorkspaceClient['listCapabilities']>) => run(() => generated.listCapabilities(...args)),
         listProjectObjects: (...args: Parameters<WorkspaceClient['listProjectObjects']>) => run(() => generated.listProjectObjects(...args)),
         getObject: (...args: Parameters<AstridRuntimeClient['getObject']>) => run(() => client.getObject(...args)),

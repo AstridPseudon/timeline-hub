@@ -4,7 +4,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import type { Event as RuntimeEvent, Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
-import { runtimeTaskQueryKey, useRuntimeTaskEvents } from './useRuntimeTaskEvents';
+import { readyRuntimeTaskEvents, runtimeTaskQueryKey, useRuntimeTaskEvents } from './useRuntimeTaskEvents';
 
 const task = (id: string, projectId = 'project-a', version = 1): RuntimeTask => ({
   task_id: id, project_id: projectId, state: 'running', version,
@@ -116,6 +116,34 @@ describe('useRuntimeTaskEvents', () => {
     expect(listEvents).toHaveBeenCalledTimes(2);
 
     hook.unmount();
+    queryClient.clear();
+  });
+
+  it('uses the editor operation for the readiness cursor', async () => {
+    const ambient = vi.spyOn(AstridRuntimeClient.prototype, 'listEvents');
+    const operation = {
+      listEvents: vi.fn().mockResolvedValue(page([], 'operation-cursor')),
+      getTask: vi.fn(),
+    };
+    const replacementOperation = {
+      listEvents: vi.fn().mockResolvedValue(page([], 'replacement-cursor')),
+      getTask: vi.fn(),
+    };
+    const queryClient = new QueryClient();
+    const hook = renderHook(() => useRuntimeTaskEvents('project-a', operation), { wrapper: wrapper(queryClient) });
+    const replacementHook = renderHook(() => useRuntimeTaskEvents('project-a', replacementOperation), { wrapper: wrapper(queryClient) });
+
+    const ready = readyRuntimeTaskEvents(queryClient, 'project-a', operation);
+    const replacementReady = readyRuntimeTaskEvents(queryClient, 'project-a', replacementOperation);
+    await advance(0);
+    await ready;
+    await replacementReady;
+    expect(operation.listEvents).toHaveBeenCalledWith(undefined, true);
+    expect(replacementOperation.listEvents).toHaveBeenCalledWith(undefined, true);
+    expect(ambient).not.toHaveBeenCalled();
+
+    hook.unmount();
+    replacementHook.unmount();
     queryClient.clear();
   });
 });

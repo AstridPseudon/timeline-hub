@@ -23,7 +23,7 @@ export function subscribeRuntimeTaskUpdates(queryClient: QueryClient, projectId:
   });
 }
 
-type EventClient = Pick<AstridRuntimeClient, 'listEvents' | 'getTask'>;
+export type RuntimeTaskEventClient = Pick<AstridRuntimeClient, 'listEvents' | 'getTask'>;
 type Timer = ReturnType<typeof setTimeout>;
 
 interface TaskEventPoller {
@@ -33,12 +33,17 @@ interface TaskEventPoller {
   stop(): void;
 }
 
-const pollers = new WeakMap<QueryClient, Map<string, TaskEventPoller>>();
+interface ProjectPollers {
+  ambient?: TaskEventPoller;
+  operations: Map<RuntimeTaskEventClient, TaskEventPoller>;
+}
+
+const pollers = new WeakMap<QueryClient, Map<string, ProjectPollers>>();
 
 function createTaskEventPoller(
   queryClient: QueryClient,
   projectId: string,
-  client: EventClient,
+  client: RuntimeTaskEventClient,
 ): TaskEventPoller {
   const queryKey = runtimeTaskQueryKey(projectId);
   const pendingIds = new Set<string>();
@@ -194,41 +199,66 @@ function createTaskEventPoller(
   };
 }
 
-function taskEventPoller(queryClient: QueryClient, projectId: string): TaskEventPoller {
+function taskEventPoller(
+  queryClient: QueryClient,
+  projectId: string,
+  client?: RuntimeTaskEventClient,
+): TaskEventPoller {
   let byProject = pollers.get(queryClient);
   if (!byProject) {
     byProject = new Map();
     pollers.set(queryClient, byProject);
   }
-  let poller = byProject.get(projectId);
+  let projectPollers = byProject.get(projectId);
+  if (!projectPollers) {
+    projectPollers = { operations: new Map() };
+    byProject.set(projectId, projectPollers);
+  }
+  const operationBound = client !== undefined;
+  let poller = operationBound ? projectPollers.operations.get(client) : projectPollers.ambient;
   if (!poller) {
-    poller = createTaskEventPoller(queryClient, projectId, new AstridRuntimeClient());
-    byProject.set(projectId, poller);
+    poller = createTaskEventPoller(queryClient, projectId, client ?? new AstridRuntimeClient());
+    if (operationBound) projectPollers.operations.set(client, poller);
+    else projectPollers.ambient = poller;
   }
   return poller;
 }
 
 /** Fence the first full-list snapshot behind a feed cursor so admission cannot fall into a startup gap. */
-export function readyRuntimeTaskEvents(queryClient: QueryClient, projectId: string): Promise<void> {
-  const poller = taskEventPoller(queryClient, projectId);
+export function readyRuntimeTaskEvents(
+  queryClient: QueryClient,
+  projectId: string,
+  client?: RuntimeTaskEventClient,
+): Promise<void> {
+  const poller = taskEventPoller(queryClient, projectId, client);
   poller.start();
-  return poller.ready;
+  if (!client) return poller.ready;
+  // The operation poller may already have an in-flight first read; fence admission
+  // on this operation-owned response instead of a readiness promise tied to that loop.
+  return client.listEvents(undefined, true).then((page) => {
+    if (!page.next_cursor) throw new Error('Workspace Runtime event feed did not return a polling cursor');
+  });
 }
 
-/** One cursor and request loop per project and QueryClient, shared by all consumers. */
-export function useRuntimeTaskEvents(projectId: string | null): void {
+/** One cursor and request loop per project/client lifetime, shared by consumers of that client. */
+export function useRuntimeTaskEvents(projectId: string | null, client?: RuntimeTaskEventClient): void {
   const queryClient = useQueryClient();
   useEffect(() => {
     if (!projectId) return;
-    const poller = taskEventPoller(queryClient, projectId);
+    const poller = taskEventPoller(queryClient, projectId, client);
+    const projectPollers = pollers.get(queryClient)?.get(projectId);
     poller.refs += 1;
     poller.start();
     return () => {
       poller.refs -= 1;
       if (poller.refs === 0) {
         poller.stop();
-        pollers.get(queryClient)?.delete(projectId);
+        if (projectPollers) {
+          if (client) projectPollers.operations.delete(client);
+          else projectPollers.ambient = undefined;
+          if (!projectPollers.ambient && projectPollers.operations.size === 0) pollers.get(queryClient)?.delete(projectId);
+        }
       }
     };
-  }, [projectId, queryClient]);
+  }, [projectId, queryClient, client]);
 }
