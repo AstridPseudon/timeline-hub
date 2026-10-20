@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
 import type { AstridElementDescriptor } from '@/tools/video-editor/runtime/astrid-element-host.ts';
 import type { ResolvedTimelineClip, ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { ElementCapturePort } from '@/tools/video-editor/commands/elementGesture.ts';
 import { AstridElementParams } from './AstridElementParams.tsx';
 import type { ClipPanelProps } from './ClipPanelBody.tsx';
 import { resolveAstridElementParamDescriptor } from './astrid-element-param-descriptor.ts';
@@ -13,12 +14,21 @@ const runtimeState = vi.hoisted(() => ({
   descriptors: [] as AstridElementDescriptor[],
   timelineEditability: undefined as TimelineEditability | undefined,
 }));
+const editorState = vi.hoisted(() => ({
+  data: null as unknown,
+  element: undefined as ElementCapturePort | undefined,
+}));
 
 vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
   useVideoEditorRuntime: () => ({
     astridElementHost: { descriptors: runtimeState.descriptors },
     timelineEditability: runtimeState.timelineEditability,
   }),
+}));
+
+vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
+  useTimelineEditorDataSafe: () => editorState.data,
+  useTimelineEditorOpsSafe: () => editorState.element ? { element: editorState.element } : null,
 }));
 
 const descriptor: AstridElementDescriptor = {
@@ -61,7 +71,7 @@ function renderForm({
   readOnly?: boolean;
   onChange?: ClipPanelProps['onChange'];
 } = {}) {
-  runtimeState.descriptors = [descriptor];
+  runtimeState.descriptors = [reference.packId === undefined ? { ...descriptor, packId: undefined } : descriptor];
   return {
     ...render(
       <AstridElementParams
@@ -102,6 +112,47 @@ describe('AstridElementParams', () => {
     expect(onChange).toHaveBeenLastCalledWith({
       params: { selectedSegmentIndex: 1, futureParam: 'keep-me' },
     });
+  });
+
+  it('keeps selected-pack edits on the existing producer without native capture', () => {
+    const capture = vi.fn(() => { throw new Error('selected-pack native capture must not run'); });
+    editorState.data = { data: {} };
+    editorState.element = { capture, finish: vi.fn(), submit: vi.fn() } as unknown as ElementCapturePort;
+    const { onChange } = renderForm({ params: { selectedSegmentIndex: 2 } });
+
+    fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
+
+    expect(capture).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenLastCalledWith({ params: { selectedSegmentIndex: 1 } });
+  });
+
+  it('routes a literal existing-clip edit through the mounted native port without legacy onChange', () => {
+    const literal = { ...descriptor, packId: undefined };
+    const edit = { params: { values: { selectedSegmentIndex: 1 }, clear: [] } };
+    const command = {
+      schema_version: 1, op: 'clip.set-params', version: '1', select: 'parent/clip:clip-v3-glow',
+      args: edit.params,
+    };
+    const preview = {
+      version: 1, source: 'timeline.native-existing-element',
+      operations: [{ op: 'clip.update', target: 'clip-v3-glow', payload: { params: { selectedSegmentIndex: 1 } } }],
+    };
+    const capture = vi.fn(() => ({
+      clipId: 'clip-v3-glow', select: command.select, edit, capture: {}, before: {},
+      localGeneration: 0, localBasis: {}, previewVersion: 1,
+    }));
+    const finish = vi.fn(() => ({ command, preview }));
+    const submit = vi.fn();
+    editorState.data = { data: {} };
+    editorState.element = { capture, finish, submit } as unknown as ElementCapturePort;
+    const onChange = vi.fn();
+    renderForm({ reference: literal, onChange });
+
+    fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
+
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('does not expose the form for read-only timelines or stale host registrations', () => {
