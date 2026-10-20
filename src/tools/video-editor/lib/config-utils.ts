@@ -15,7 +15,6 @@ import {
   type TimelineConfigSignatureInput,
 } from '@/sdk/video/timeline/configSignature.ts';
 import {
-  getCanonicalClipPlaybackRate,
   getConfigTimelineClipDuration,
   getConfigTimelineClipSourceDuration,
 } from './timeline-domain.ts';
@@ -42,10 +41,6 @@ export const getClipTimelineDuration = (clip: TimelineClip): number => {
 };
 
 export { computeMediaTrim as getSanitizedMediaTrimProps } from '@banodoco/timeline-composition/evaluation';
-
-export const getSanitizedPlaybackRate = (speed: TimelineClip['speed']): number => {
-  return getCanonicalClipPlaybackRate(speed);
-};
 
 export const getSanitizedVolume = (volume: number | undefined, fallback = 1): number => {
   return typeof volume === 'number' && Number.isFinite(volume)
