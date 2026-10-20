@@ -11,11 +11,15 @@ import zlib
 import pytest
 from PIL import Image
 
-from astrid.core.timeline import Timeline
-from astrid.core.timeline import scene_answers
+from astrid.core.timeline import Timeline, scene_answers
 from astrid.packs.rendering.actions.timeline_visualize import composed_frame
 from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
-from tests.packs.rendering.test_scene_source_carry import cards, provider, saved, source_query
+from tests.packs.rendering.test_scene_source_carry import (  # noqa: F401
+    cards,
+    provider,
+    saved,
+    source_query,
+)
 
 pytestmark = [pytest.mark.usefixtures("source_query"),
               pytest.mark.parametrize("source_query", ["transport"], indirect=True)]
@@ -31,12 +35,15 @@ def captured(tmp_path, monkeypatch):
     p.close()
 
 
-def another(p, *, snapshot=None, cache=None):
+_DEFAULT_CACHE = object()
+
+
+def another(p, *, snapshot=None, cache=_DEFAULT_CACHE):
     return composed_frame.RemotionFrameProvider(
         copy.deepcopy(p.snapshot if snapshot is None else snapshot),
         timeline_path=p.timeline_path, assets_path=p.assets_path, project_dir=p.project_dir,
         materialized_root=p.materialized_root, materialized_objects=p.materialized_objects,
-        theme_path=p.theme_path, cache=p.cache if cache is None else cache,
+        theme_path=p.theme_path, cache=p.cache if cache is _DEFAULT_CACHE else cache,
     )
 
 
@@ -81,6 +88,31 @@ def test_new_provider_reuses_rows_without_query_or_private_visibility(captured, 
     assert q.scene_for_frame(0).frame(0, source_identity=q.source_identity) == payload["scene"]["answer"]
     with pytest.raises(scene_answers.SceneQueryUnavailable, match="cannot mint"):
         q.cache.write(key, png, scene=q.scene_for_frame(0), frame=0)
+    q.close()
+
+
+def test_default_provider_keeps_png_only_cache_reusable_across_owners(tmp_path, monkeypatch):
+    snapshot, _ = saved(monkeypatch)
+    monkeypatch.setenv("ASTRID_TIMELINE_FRAME_CACHE", str(tmp_path / "cache"))
+    p, calls = provider(tmp_path, monkeypatch, snapshot, cache=None)
+    first = tmp_path / "first"
+    p.capture(cards(0), first)
+    key = composed_frame.frame_cache_key(p.snapshot, 0, None)
+    path = p.cache.path_for(key)
+    png, payload = composed_frame._split_scene_entry(path.read_bytes())
+    assert payload is None
+    p.close()
+
+    monkeypatch.setattr(scene_answers, "host_frames_at", lambda *a: pytest.fail("default cache query"))
+    q = another(p, cache=None)
+    second = tmp_path / "second"
+    info = q.capture(cards(0), second)
+    assert info["cached_frames"] == 1 and info["fresh_frames"] == 0
+    assert len(calls) == 1
+    assert (first / "frames/0.png").read_bytes() == png == (second / "frames/0.png").read_bytes()
+    assert q.scene_for_frame(0) is None
+    receipt = attach_frame_addresses({"cards": [{}]}, q.snapshot, cards(0), frame_provider=q)
+    assert receipt["cards"][0]["addresses"] == ["c08.title"]
     q.close()
 
 

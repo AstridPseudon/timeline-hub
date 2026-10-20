@@ -131,7 +131,11 @@ def paths(tmp_path, snapshot):
     return timeline, assets
 
 
-def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None, theme_path=None):
+_DEFAULT_CACHE = object()
+
+
+def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None, theme_path=None,
+            cache=_DEFAULT_CACHE):
     timeline, assets = paths(tmp_path, snapshot)
     calls = []
     materialized_root = tmp_path / "materialized"
@@ -182,7 +186,9 @@ def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None
     result = composed_frame.RemotionFrameProvider(
         snapshot, timeline_path=timeline, assets_path=assets, project_dir=tmp_path,
         theme_path=theme_path, materialized_root=materialized_root,
-        materialized_objects={"object-image": str(image)}, cache=composed_frame.FrameCaptureCache(tmp_path / "cache"),
+        materialized_objects={"object-image": str(image)},
+        cache=(composed_frame.FrameCaptureCache(tmp_path / "cache")
+               if cache is _DEFAULT_CACHE else cache),
     )
     return result, calls
 

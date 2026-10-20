@@ -739,7 +739,12 @@ class RemotionFrameProvider:
             self.snapshot["fps_rational"] = snapshot["fps_rational"]
             self.snapshot["duration_frames"] = snapshot["duration_frames"]
             self.snapshot["resolved_theme"] = self._theme
-        self.cache = cache or FrameCaptureCache()
+        # A caller that retains an existing cache owner may opt into the
+        # source-bound rows.  The normal provider creates a fresh owner and
+        # keeps the established PNG-only cache format so a later provider can
+        # reuse its bytes without pretending to trust persisted rows.
+        self._cache_scene_payloads = cache is not None
+        self.cache = cache if cache is not None else FrameCaptureCache()
         if renderer is None:
             renderer = _acquire_shared_remotion_handle(
                 context={
@@ -924,7 +929,11 @@ class RemotionFrameProvider:
                     self.scene_capture = self._pending_scene
                     self.fresh_scene_frames = set(produced)
                 for frame, key, destination in misses:
-                    self.cache.write(key, destination.read_bytes(), scene=self._pending_scene, frame=frame)
+                    self.cache.write(
+                        key, destination.read_bytes(),
+                        scene=self._pending_scene if self._cache_scene_payloads else None,
+                        frame=frame,
+                    )
         except BaseException as operation_error:
             # Cleanup is still mandatory, but its failure must not replace the
             # original native request error (including its structured reply).
