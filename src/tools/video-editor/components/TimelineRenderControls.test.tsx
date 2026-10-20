@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimelineRenderControls } from './TimelineRenderControls';
 
@@ -21,6 +21,7 @@ function chrome(overrides: Record<string, unknown> = {}) {
     activeRenderTaskId: null,
     startRender: vi.fn(),
     cancelRender: vi.fn(),
+    downloadRenderResult: vi.fn(async () => undefined),
     setRenderDestination: vi.fn(),
     ...overrides,
   };
@@ -62,7 +63,7 @@ describe('TimelineRenderControls', () => {
     expect(video.hasAttribute('controls')).toBe(true);
     expect(video.getAttribute('preload')).toBe('metadata');
     expect(screen.getByText(/Timeline version 7/)).toBeTruthy();
-    // Download is an explicit link; nothing was clicked automatically.
+    // The explicit link retains the admitted object identity; no automatic download.
     const link = screen.getByRole('link', { name: /Download/ });
     expect(link.getAttribute('href')).toBe('/api/astrid/v1/objects/render.mp4');
     expect(link.getAttribute('download')).toBe('render.mp4');
@@ -72,6 +73,71 @@ describe('TimelineRenderControls', () => {
     fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
     expect(screen.getByTestId('timeline-render-player')).toBeTruthy();
     anchorClick.mockRestore();
+  });
+
+  it('uses the bound download callback, prevents navigation, and keeps playback/retry after a refusal', async () => {
+    const downloadRenderResult = vi.fn()
+      .mockRejectedValueOnce(new Error('Could not download render: HTTP 403'))
+      .mockResolvedValueOnce(undefined);
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({ downloadRenderResult }));
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+    fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
+    const link = screen.getByRole('link', { name: 'Download' });
+
+    expect(fireEvent.click(link)).toBe(false);
+    expect(downloadRenderResult).toHaveBeenCalledOnce();
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('HTTP 403'));
+    expect(screen.getByTestId('timeline-render-player')).toHaveAttribute('src', '/api/astrid/v1/objects/render.mp4');
+    expect(link).toHaveAttribute('href', '/api/astrid/v1/objects/render.mp4');
+    expect(link).toHaveAttribute('download', 'render.mp4');
+
+    expect(fireEvent.click(link)).toBe(false);
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+    expect(downloadRenderResult).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not issue a second download while its binary read is pending', async () => {
+    let complete!: () => void;
+    const downloadRenderResult = vi.fn(() => new Promise<void>((resolve) => { complete = resolve; }));
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({ downloadRenderResult }));
+    render(<TimelineRenderControls previewActionButtonClass="" />);
+    fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
+    fireEvent.click(screen.getByRole('link', { name: 'Download' }));
+    const pending = screen.getByRole('link', { name: 'Downloading…' });
+    expect(pending).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(pending);
+    expect(downloadRenderResult).toHaveBeenCalledOnce();
+    await act(async () => { complete(); });
+    expect(screen.getByRole('link', { name: 'Download' })).toBeTruthy();
+  });
+
+  it('keeps the new result download available and ignores an older download failure', async () => {
+    let rejectOld!: (error: Error) => void;
+    let completeNew!: () => void;
+    const downloadRenderResult = vi.fn(() => new Promise<void>((_resolve, reject) => { rejectOld = reject; }));
+    const nextDownload = vi.fn(() => new Promise<void>((resolve) => { completeNew = resolve; }));
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      downloadRenderResult, renderResultInfo: { revision: 7, completedAt: 1000 },
+    }));
+    const { rerender } = render(<TimelineRenderControls previewActionButtonClass="" />);
+    fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
+    fireEvent.click(screen.getByRole('link', { name: 'Download' }));
+    expect(downloadRenderResult).toHaveBeenCalledOnce();
+
+    mocks.useTimelineChromeContext.mockReturnValue(chrome({
+      downloadRenderResult: nextDownload,
+      renderResultUrl: '/api/astrid/v1/objects/next.mp4',
+      renderResultInfo: { revision: 8, completedAt: 2000 },
+    }));
+    rerender(<TimelineRenderControls previewActionButtonClass="" />);
+    fireEvent.click(screen.getByRole('link', { name: 'Download' }));
+    expect(nextDownload).toHaveBeenCalledOnce();
+
+    await act(async () => { rejectOld(new Error('The old render result changed.')); });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Downloading…' })).toHaveAttribute('aria-disabled', 'true');
+    await act(async () => { completeNew(); });
+    expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('aria-disabled', 'false');
   });
 
   it('keeps cancellation visible for an active render', () => {

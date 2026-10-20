@@ -422,7 +422,7 @@ function useTimelineChromeContextValue({
   schemaIncompatible: ReturnType<typeof useTimelineSave>['schemaIncompatible'];
   loadError: Error | null;
   retryLoad: () => void;
-  render: Pick<RenderStateHook, 'renderStatus' | 'renderLog' | 'renderDirty' | 'renderProgress' | 'renderResultUrl' | 'renderResultFilename' | 'renderResultInfo' | 'activeRenderTaskId' | 'renderDestination' | 'setRenderDestination' | 'cancelRender' | 'visualSeamReport' | 'canDeclareSeamsAsHardCuts' | 'declareSeamsAsHardCuts' | 'canAcknowledgeVisualCues' | 'acknowledgeVisualCuesAsSynchronized'>;
+  render: Pick<RenderStateHook, 'renderStatus' | 'renderLog' | 'renderDirty' | 'renderProgress' | 'renderResultUrl' | 'renderResultFilename' | 'renderResultInfo' | 'downloadRenderResult' | 'activeRenderTaskId' | 'renderDestination' | 'setRenderDestination' | 'cancelRender' | 'visualSeamReport' | 'canDeclareSeamsAsHardCuts' | 'declareSeamsAsHardCuts' | 'canAcknowledgeVisualCues' | 'acknowledgeVisualCuesAsSynchronized'>;
   queuedRender: TimelineQueuedRender;
   renderRequest: TimelineRenderRequest;
   history: Pick<TimelineHistoryHook, 'undo' | 'redo' | 'canUndo' | 'canRedo' | 'historyPausedForUploads' | 'checkpoints' | 'jumpToCheckpoint' | 'createManualCheckpoint' | 'canonicalHistory' | 'canonicalHistorySupported' | 'canonicalHistoryError' | 'refreshCanonicalHistory' | 'restoringCanonicalRevisionId' | 'restoreCanonicalRevision'>;
@@ -458,6 +458,7 @@ function useTimelineChromeContextValue({
     renderResultUrl: render.renderResultUrl,
     renderResultFilename: render.renderResultFilename,
     renderResultInfo: render.renderResultInfo,
+    downloadRenderResult: render.downloadRenderResult,
     activeRenderTaskId: render.activeRenderTaskId,
     renderDestination: render.renderDestination,
     setRenderDestination: render.setRenderDestination,
@@ -522,6 +523,7 @@ function useTimelineChromeContextValue({
     render.renderProgress,
     render.renderResultFilename,
     render.renderResultInfo,
+    render.downloadRenderResult,
     render.renderResultUrl,
     render.renderStatus,
     render.visualSeamReport,
@@ -734,6 +736,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     renderResultUrl,
     renderResultFilename,
     renderResultInfo,
+    downloadRenderResult,
     activeRenderTaskId,
     renderDestination,
     setRenderDestination,
@@ -1256,6 +1259,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       renderResultUrl,
       renderResultFilename,
       renderResultInfo,
+      downloadRenderResult,
       activeRenderTaskId,
       renderDestination,
       setRenderDestination,

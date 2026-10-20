@@ -379,6 +379,7 @@ function createInitialChromeSlice(): TimelineChromeContextValue {
     renderResultUrl: null,
     renderResultFilename: null,
     renderResultInfo: null,
+    downloadRenderResult: noopAsync,
     activeRenderTaskId: null,
     renderDestination: 'download',
     setRenderDestination: noop,
