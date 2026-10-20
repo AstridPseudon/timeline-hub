@@ -733,12 +733,130 @@ class TimelineCommitStore:
                         "accepted_revision_id": candidate["canonical_document"]["parent_revision"]["revision_id"],
                         "rebased_onto": None if previous == base else previous, **candidate, "publisher": context["publisher"],
                         **{k: request[k] for k in _METADATA if k in request}}
+                reference_projection = self._prepare_reference_projection(
+                    candidate["canonical_document"], prepared["records"],
+                )
                 self._persist_closure(candidate["canonical_document"])
                 result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"])
+                self._apply_reference_projection(reference_projection)
                 self._project_text_bindings(candidate["canonical_document"], prepared["records"], result["receipt"]["receipt_id"])
                 if inputs is not None:
                     inputs.persist(prepared, result["receipt"]["receipt_id"], data["accepted_revision_id"])
                 return result
+
+    def _prepare_reference_projection(self, document, _records):
+        """Resolve occurrence reference roles from the accepted closure only.
+
+        The provenance binding names an occurrence-owned registry alias.  The
+        registry entry and the exact accepted media manifest are the only
+        authorities used to derive the legacy timeline reference object
+        identity.
+        """
+        project_id, timeline_id = document["project_id"], document["timeline_id"]
+        internals = {image["revision_id"]: image for image in document["internal_timeline_revisions"]}
+        shots = {(image["shot_id"], image["revision_id"]): image for image in document["shot_revisions"]}
+        manifest = document["dependency_manifest"]["media"]
+        desired = {}
+        for occurrence in document["parent_revision"]["payload"]["occurrences"]:
+            provenance = occurrence.get("provenance", {})
+            if not isinstance(provenance, dict):
+                reject("reference_binding_ambiguous", "occurrence provenance is not an object", status=422)
+            astrid = provenance.get("astrid")
+            if astrid is None:
+                continue
+            if not isinstance(astrid, dict):
+                reject("reference_binding_ambiguous", "occurrence astrid provenance is not an object", status=422)
+            binding = astrid.get("timeline_reference")
+            if binding is None:
+                continue
+            if (not isinstance(binding, dict)
+                    or set(binding) != {"version", "reference_id", "role", "asset"}
+                    or type(binding["version"]) is not int or binding["version"] != 1
+                    or binding["role"] != "source"
+                    or not isinstance(binding["reference_id"], str) or not binding["reference_id"]
+                    or not isinstance(binding["asset"], str) or not binding["asset"]):
+                reject("reference_binding_ambiguous", "timeline reference binding is malformed", status=422)
+            shot = shots.get((occurrence["shot_id"], occurrence["shot_revision_id"]))
+            internal = internals.get(shot["internal_timeline_revision_id"]) if shot else None
+            assets = ((internal or {}).get("payload", {}).get("registry", {})
+                      if internal else {})
+            assets = assets.get("assets") if isinstance(assets, dict) else None
+            entry = assets.get(binding["asset"]) if isinstance(assets, dict) else None
+            if not isinstance(entry, dict) or not isinstance(entry.get("media_id"), str) or not entry["media_id"]:
+                reject("reference_binding_missing", "timeline reference asset binding is unavailable", status=422)
+            raw_media_id = entry["media_id"]
+            media_id = raw_media_id if raw_media_id.startswith("sha256:") else "sha256:" + raw_media_id
+            content_sha256 = entry.get("content_sha256")
+            if (content_sha256 is not None
+                    and (not isinstance(content_sha256, str)
+                         or content_sha256.removeprefix("sha256:") != media_id.removeprefix("sha256:"))):
+                reject("reference_binding_ambiguous", "timeline reference asset identities disagree", status=422)
+            manifest_matches = [pin for pin in manifest if pin.get("media_id") == media_id]
+            if len(manifest_matches) != 1 or manifest_matches[0].get("content_digest") != media_id:
+                reject("reference_binding_out_of_manifest", "timeline reference asset is outside accepted media custody", status=422)
+            reference = {"reference_id": binding["reference_id"], "object_id": media_id, "role": "source"}
+            prior = desired.get(binding["reference_id"])
+            if prior is not None and prior != reference:
+                reject("reference_binding_ambiguous", "timeline reference identity has conflicting bindings", status=422)
+            desired[binding["reference_id"]] = reference
+
+        existing = {row["id"]: dict(row) for row in self.conn.execute(
+            "SELECT * FROM timeline_references WHERE timeline_id=?", (timeline_id,)
+        )}
+        for reference_id, reference in desired.items():
+            occupied = self.conn.execute(
+                "SELECT timeline_id, object_id, role FROM timeline_references WHERE id=?", (reference_id,)
+            ).fetchone()
+            if occupied is not None and (occupied["timeline_id"] != timeline_id
+                                         or occupied["object_id"] != reference["object_id"]
+                                         or occupied["role"] != reference["role"]):
+                reject("reference_projection_occupied", "timeline reference identity is already occupied")
+
+        snapshot = self.conn.execute(
+            "SELECT references_json FROM timeline_revisions WHERE timeline_id=? ORDER BY version DESC LIMIT 1",
+            (timeline_id,),
+        ).fetchone()
+        try:
+            previous = json.loads(snapshot["references_json"]) if snapshot else []
+        except (TypeError, ValueError):
+            reject("history_unavailable")
+        if not isinstance(previous, list) or any(
+                not isinstance(item, dict) or not isinstance(item.get("reference_id"), str)
+                for item in previous):
+            reject("history_unavailable")
+        owned = {item["reference_id"] for item in previous}
+        removed = sorted(owned - desired.keys())
+        retained = [row for reference_id, row in existing.items() if reference_id not in removed]
+        projected = {row["id"]: {"reference_id": row["id"], "object_id": row["object_id"],
+                                  **({"role": row["role"]} if row["role"] else {})}
+                     for row in retained}
+        projected.update(desired)
+        timeline = self.conn.execute("SELECT version FROM timelines WHERE id=? AND project_id=?",
+                                     (timeline_id, project_id)).fetchone()
+        if timeline is None:
+            reject("history_unavailable")
+        return {"timeline_id": timeline_id, "version": int(timeline["version"]) + 1,
+                "desired": desired, "removed": removed,
+                "references": [projected[key] for key in sorted(projected)]}
+
+    def _apply_reference_projection(self, projection):
+        """Apply the preflighted reference rows and its legacy snapshot."""
+        timeline_id, version = projection["timeline_id"], projection["version"]
+        current = self.conn.execute("SELECT version FROM timelines WHERE id=?", (timeline_id,)).fetchone()
+        if current is None or int(current["version"]) != version:
+            reject("history_unavailable")
+        for reference_id in projection["removed"]:
+            self.conn.execute("DELETE FROM timeline_reference_state WHERE id=?", (reference_id,))
+            self.conn.execute("DELETE FROM timeline_references WHERE id=? AND timeline_id=?",
+                              (reference_id, timeline_id))
+        for reference in projection["desired"].values():
+            self.conn.execute("INSERT OR IGNORE INTO timeline_references(id, timeline_id, object_id, role) VALUES (?, ?, ?, ?)",
+                              (reference["reference_id"], timeline_id, reference["object_id"], reference["role"]))
+        shots = [{"shot_id": row["id"], "start_ms": row["start_ms"], "duration_ms": row["duration_ms"],
+                  "reference_ids": json.loads(row["reference_ids_json"])}
+                 for row in self.conn.execute("SELECT * FROM timeline_shots WHERE timeline_id=?", (timeline_id,))]
+        self.conn.execute("INSERT INTO timeline_revisions(timeline_id, version, shots_json, references_json, created_at) VALUES (?, ?, ?, ?, ?)",
+                          (timeline_id, version, canonical_json(shots), canonical_json(projection["references"]), now()))
 
     def _project_text_bindings(self, document, records, publication_id):
         """Derive live text-binding rows and events from the accepted recorder's writes.
