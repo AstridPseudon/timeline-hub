@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import copy
 import json
 
 import pytest
 
 from astrid_runtime_client import ApiError, WorkspaceClient
 from http_helpers import Api, legacy_call
+from runtime_protocol.errors import InvalidRequestError, RuntimeErrorBase
 from runtime_protocol.daemon import RuntimeDaemon
+from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 
 
@@ -78,47 +81,116 @@ def test_project_reference_creation_is_keyed_durable_and_non_overwriting(tmp_pat
         restarted.stop()
 
 
-# Timeline shot and timeline reference writers are retired (RT02); this keeps the original expectations until their commit replacements exist.
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02 held: direct shot writes are retired (410); the reference half is the KEPT catalog (RK01)")
+@pytest.mark.integration
 def test_timeline_shot_and_reference_creation_are_keyed_durable_and_non_overwriting(tmp_path):
-    root = tmp_path / "realm"
-    support = tmp_path / "support"
-    RealmStore.initialize(root).close()
-    daemon = RuntimeDaemon(root, support_root=support).start()
-    project_id = None
-    try:
-        client = WorkspaceClient(daemon.endpoint, daemon.token)
-        project = client.create_project("Exact Timeline", idempotency_key="exact-project")
-        project_id = project.project_id
-        client.create_timeline(project_id, "exact-timeline", idempotency_key="exact-timeline")
-        shot = {"shot_id": "exact-shot", "start_ms": 0, "duration_ms": 100, "reference_ids": []}
-        reference = {"reference_id": "exact-reference", "object_id": "object-digest", "role": "source"}
-        with pytest.raises(ApiError) as missing_shot:
-            client._request("POST", "/v1/timelines/exact-timeline/shots", body=b'{"shot_id":"exact-shot","start_ms":0,"duration_ms":100,"reference_ids":[]}', headers={"Content-Type": "application/json"})
-        assert missing_shot.value.status == 400
-        first_shot = legacy_call(client, "POST", "/v1/timelines/exact-timeline/shots", shot, key="exact-shot-key")
-        first_reference = legacy_call(client, "POST", "/v1/timelines/exact-timeline/references", reference, key="exact-reference-key")
-    finally:
-        daemon.stop()
+    # The public 0.2.13 schema does not contain occurrence.create.  The native
+    # helpers select the unchanged ordinary014 staging candidate, whose exact
+    # contract identity is qualified separately; published013 remains intact.
+    from test_timeline_clip_replacement import (
+        _native_bootstrap_commands,
+        _native_body,
+        _native_commit,
+        _native_empty_document,
+        _native_import_media,
+        _native_imports,
+    )
 
-    restarted = RuntimeDaemon(root, support_root=support).start()
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    native = _native_imports()
+    service = RuntimeService(root)
     try:
-        client = WorkspaceClient(restarted.endpoint, restarted.token)
-        assert legacy_call(client, "POST", "/v1/timelines/exact-timeline/shots", shot, key="exact-shot-key") == first_shot
-        assert legacy_call(client, "POST", "/v1/timelines/exact-timeline/references", reference, key="exact-reference-key") == first_reference
-        with pytest.raises(ApiError) as changed_shot:
-            legacy_call(client, "POST", "/v1/timelines/exact-timeline/shots", {**shot, "duration_ms": 101}, key="exact-shot-key")
-        assert changed_shot.value.status == 409
-        with pytest.raises(ApiError) as changed_reference:
-            legacy_call(client, "POST", "/v1/timelines/exact-timeline/references", {**reference, "role": "target"}, key="exact-reference-key")
-        assert changed_reference.value.status == 409
-        with pytest.raises(ApiError) as overwrite_shot:
-            legacy_call(client, "POST", "/v1/timelines/exact-timeline/shots", {**shot, "duration_ms": 200}, key="different-shot-key")
-        assert overwrite_shot.value.status == 409
-        with pytest.raises(ApiError) as overwrite_reference:
-            legacy_call(client, "POST", "/v1/timelines/exact-timeline/references", {**reference, "role": "target"}, key="different-reference-key")
-        assert overwrite_reference.value.status == 409
-        assert restarted.service.store.conn.execute("SELECT duration_ms FROM timeline_shots WHERE id='exact-shot'").fetchone()[0] == 100
-        assert restarted.service.store.conn.execute("SELECT role FROM timeline_references WHERE id='exact-reference'").fetchone()[0] == "source"
+        project = service.create_project({"slug": "exact-timeline", "name": "Exact Timeline"})
+        project_id = project["id"]
+        service.register_timeline_commit_provider(native.load_timeline_commit_provider("astrid"))
+        service.create_timeline(project_id, "film", idempotency_key="exact-timeline")
+        media, verified_media = _native_import_media(service, project_id, alias="exact")
+        body = _native_body(
+            service,
+            project_id,
+            _native_bootstrap_commands(
+                native,
+                _native_empty_document(service, project_id),
+                media,
+                verified_media,
+            ),
+        )
+        before_missing = (
+            service.get_project_timeline(project_id, "film"),
+            service.list_project_shots(project_id),
+            service.list_project_objects(project_id),
+        )
+        with pytest.raises(InvalidRequestError) as missing_key:
+            _native_commit(service, project_id, body, None)
+        assert missing_key.value.status == 400
+        assert (
+            service.get_project_timeline(project_id, "film"),
+            service.list_project_shots(project_id),
+            service.list_project_objects(project_id),
+        ) == before_missing
+
+        first = _native_commit(service, project_id, body, "exact-creation-key")
+        assert first["data"]["status"] == "accepted"
+        document = first["data"]["canonical_document"]
+        assert document["shot_revisions"][0]["shot_id"] == "native-shot"
+        assert document["parent_revision"]["payload"]["occurrences"] == [{
+            "duration_ms": 5000.0,
+            "gain": 1,
+            "occurrence_id": "native-occurrence",
+            "placement": {"start_ms": 0.0, "track": "picture"},
+            "shot_id": "native-shot",
+            "shot_revision_id": document["shot_revisions"][0]["revision_id"],
+            "source_offset": 0,
+            "speed": 1,
+            "track": "picture",
+        }]
+        shots = service.list_project_shots(project_id)["items"]
+        assert len(shots) == 1
+        assert shots[0]["project_id"] == project_id
+        assert shots[0]["shot_id"] == "native-shot"
+        assert shots[0]["name"] == "Native chapter"
+        catalog = service.list_project_objects(project_id)["items"]
+        assert len(catalog) == 1
+        assert catalog[0]["object_id"] == media["object_id"]
+        assert catalog[0]["digest"] == media["object_id"]
+        assert document["parent_revision"]["payload"]["registry"]["assets"][media["asset"]]["media_id"] == media["object_id"]
+        before_restart = (
+            service.get_project_timeline(project_id, "film"),
+            service.list_project_shots(project_id),
+            service.list_project_objects(project_id),
+        )
     finally:
-        restarted.stop()
+        service.close()
+
+    restarted = RuntimeService(root)
+    try:
+        restarted.register_timeline_commit_provider(native.load_timeline_commit_provider("astrid"))
+        assert _native_commit(restarted, project_id, body, "exact-creation-key") == first
+        assert (
+            restarted.get_project_timeline(project_id, "film"),
+            restarted.list_project_shots(project_id),
+            restarted.list_project_objects(project_id),
+        ) == before_restart
+
+        changed = copy.deepcopy(body)
+        occurrence = next(command for command in changed["commands"] if command["op"] == "occurrence.create")
+        occurrence["args"]["name"] = "Changed"
+        before_refusal = (
+            restarted.get_project_timeline(project_id, "film"),
+            restarted.list_project_shots(project_id),
+            restarted.list_project_objects(project_id),
+        )
+        with pytest.raises(RuntimeErrorBase) as changed_request:
+            _native_commit(restarted, project_id, changed, "exact-creation-key")
+        assert changed_request.value.status == 409
+        assert changed_request.value.details["reason"] == "idempotency_mismatch"
+        with pytest.raises(RuntimeErrorBase) as overwrite:
+            _native_commit(restarted, project_id, changed, "different-creation-key")
+        assert overwrite.value.status == 409
+        assert (
+            restarted.get_project_timeline(project_id, "film"),
+            restarted.list_project_shots(project_id),
+            restarted.list_project_objects(project_id),
+        ) == before_refusal
+    finally:
+        restarted.close()
