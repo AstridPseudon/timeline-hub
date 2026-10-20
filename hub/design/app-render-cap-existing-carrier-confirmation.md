@@ -1,0 +1,21 @@
+# Stored render cap: STEP1 handoff — Viewing review REQUIRED
+
+**App source finding: no existing verified carrier reaches the entire command-config seam on finalRoot `b1ef4b9b910ba72375c34cf319692f90d22edc25`. Viewing has NOT reviewed or approved this finding. No implementation authorized by this handoff.** Scope: owner 13:08 relay / 13:15 decision; stored-4000 policy remains settled.
+
+Paths below are relative to `/home/user/work/wt/app-m3-render-cap-existing-carrier-confirmation/src/tools/video-editor/`.
+
+| Trace | What survives |
+| --- | --- |
+| `data/shotCompositionAdapter.ts:224` → `data/shotCompositionProjection.ts:503–527` | The verified prepared occurrence has original `durationMs=4000`. Before `projectClip`, `effectiveOccurrence` replaces it with content-derived 5000. This is the exact producer point that still knows both values. |
+| Projection `:427–435`, `:582–587`; `lib/timeline-data.ts:86–129,457–503` | `canonicalTiming.durationMs` is child source duration; `occurrenceDurationMs` is effective duration (both 5000). Canonical IDs/maps and root provenance carry identities, not the cap. Config, rows/meta, signatures, registry and duration-neutral source lanes supply no lost value. No hidden own symbol/accessor carrier exists in the captured outputs. |
+| `hooks/useTimelineCommandSession.ts:70–113,124–141` | Accepted/bootstrap project the verified graph but keep only its config. Local preview patches installed data; recovery rebuilds its original basis then replays patches. `editProjection` carries head/base/generation only. Original graph remains upstream in the session/outbox basis, not on the displayed fact/config. |
+| `components/PreviewPanel/useVideoEditorPreviewComposition.ts:29–39` → `useVideoEditorPreviewSurface.tsx:41–49` | Complete command output returns `timelineData.resolvedConfig`, bypassing graph resolution. Fact pairing is config object identity. Runtime shot graph/draft/occurrence context is separately adopted/polled; adoption is omitted for pending previews. It is not verified against this local/recovered displayed fact. No existing config→original-graph symbol/cache lookup bridges this gap. |
+| `lib/canonicalRenderBounds.ts:23–33`; `components/PreviewPanel/RemotionPreview.tsx:152,263–289` | Existing bound helper receives effective5000. Delivered config/vector/revision and Player extent cannot recover stored4000. Merely returning a bounded config copy also breaks the current identity pairing. |
+
+**Pure collision proof:** change only prepared occurrence duration from 4000 to 4500, leaving identities fixed as a controlled diagnostic. Entire flattened configs are strictly equal; graph resolver output, command assembly, local move and recovery replay output also remain equal, including facts and own-property checks. Thus no downstream function of those inputs can distinguish the caps. This is NOT two validated accepted revisions sharing one immutable head. Source tracing establishes the real command/recovery call paths; probes invoke their pure producer functions, not mounted hooks.
+
+**Evidence:** private12, 4 files / 49 tests PASS (48 existing neighbors + one private diagnostic). Captured regression assertions unchanged: 1 test RED, hold5≠4, f105 opacity1≠0.5, frame120 still present. No product/test-contract/pin changes; no renderConfig or store.
+
+**Conditional smallest scalar:** `clip.app.canonicalTiming.storedOccurrenceDurationMs`, taken from the original verified occurrence before effective-duration substitution. Viewing must review the no-carrier finding and consumer seam BEFORE implementation. Any later unit must recompute on graph/local/recovery/accepted paths, strip it from authored/wire/storage with a regression, and bind bounded config, original fact provenance, compiled vector and extent atomically; preserve editor/read and original 2000→next4000 positives. Required later proof: captured RED→GREEN plus distinct correct 4000/4500 render bounds. App's read-only audit is not Viewing approval.
+
+Commands, fuller reference trace and limits: [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-render-cap-existing-carrier-confirmation/report.md). Next: Viewing manager records its review of this exact handoff; implementation remains held.
