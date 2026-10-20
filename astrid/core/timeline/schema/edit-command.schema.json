@@ -874,6 +874,50 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.move"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)occurrence:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceMoveArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ripple": {
+                    "const": "none"
+                  },
+                  "anchor": {
+                    "const": "fixed"
+                  },
+                  "position": {
+                    "const": "absolute"
+                  },
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -911,6 +955,23 @@
         "type": "string"
       },
       "description": "Normalized property tokens, not entity collection positions. Empty array means the whole entity. Numeric array tokens use canonical decimal strings; provider validates pinned parent-container types before traversal."
+    },
+    "OccurrenceMoveArgs": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "number",
+          "minimum": 0
+        },
+        "track": {
+          "type": "string",
+          "pattern": "^(?!.*::)parent/track:[^/]+$"
+        }
+      },
+      "required": [
+        "on"
+      ],
+      "additionalProperties": false
     }
   }
 }

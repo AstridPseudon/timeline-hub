@@ -37,7 +37,9 @@ def operations():
     from ._scalar_commands import clip_set_params, track_set
     from .capture import MOVE_INTENT, move, track_create
     from .native_placement_commands import placement_move
+    from .occurrence_commands import OCCURRENCE_MOVE_INTENT, occurrence_move
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'occurrence.move': Operation(_SCHEMA['$defs']['OccurrenceMoveArgs'], occurrence_move, OCCURRENCE_MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
@@ -111,7 +113,8 @@ def _verify_claims(ctx, command):
     for read in command.get('reads', []):
         guard(ctx.state, read['ref'], read['path'], read['state'])
     for selected in command.get('selections', []):
-        actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
+        actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'],
+                           boundaries=selected['boundaries'])
         if not equal(actual, selected):
             raise CommandError("original selection membership/order changed", kind='selection_changed', ref=selected['owner'])
 

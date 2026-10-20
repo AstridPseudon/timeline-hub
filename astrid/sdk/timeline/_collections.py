@@ -116,7 +116,7 @@ def selection_overlap(selected, write):
                 if isinstance(shot, str) and 'shot:' + shot in selected['boundaries']:
                     return True
         return write['ref'] == 'parent' and write['path'] == ['occurrences']
-    kind = KINDS.get(selected['key'])
+    kind = 'clip' if selected['key'] == 'occurrence.members' else KINDS.get(selected['key'])
     if kind is None:
         return False
     if kind in ('occurrence', 'shot') and write['ref'].startswith(kind + ':'):

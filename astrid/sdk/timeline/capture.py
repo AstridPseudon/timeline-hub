@@ -100,6 +100,17 @@ def _provenance(ctx, owner):
     ctx.dependency('move.images', 'entity', pin)
 
 
+def quantized_start(on, fps):
+    on = number(on, 'on')
+    if on < 0:
+        raise CommandError('on must not be negative')
+    try:
+        frame = clip_start_frame({'at': on, 'hold': 1}, float(fps))
+    except (ValueError, OverflowError) as exc:
+        raise CommandError(str(exc), kind='unsupported_timing') from exc
+    return Fraction(frame, 1) / fps
+
+
 def move(ctx, command):
     ref = command['select']
     if not isinstance(ref, str) or '/clip:' not in ref or '::' in ref:
@@ -157,14 +168,7 @@ def move(ctx, command):
     ctx.dependency('move.quantization', 'time-map', {'numerator': fps.numerator,
                                                    'denominator': fps.denominator,
                                                    'rounding': 'half-toward-positive-infinity'})
-    on = number(command['args']['on'], 'on')
-    if on < 0:
-        raise CommandError("on must not be negative")
-    try:
-        frame = clip_start_frame({'at': on, 'hold': 1}, float(fps))
-    except (ValueError, OverflowError) as exc:
-        raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
-    quantized = Fraction(frame, 1) / fps
+    quantized = quantized_start(command['args']['on'], fps)
     try:
         duration = _duration(clip)
     except ValueError as exc:

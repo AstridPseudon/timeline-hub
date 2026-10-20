@@ -90,7 +90,7 @@ def coalesce(records):
     return result
 
 
-def check_intervening(records, intervening_records, *, include_reads=True):
+def check_intervening(records, intervening_records, *, include_reads=True, head=None):
     if intervening_records is None:
         raise CommandError('complete intervening history is required', kind='history_unavailable')
     guarded = []
@@ -130,6 +130,37 @@ def check_intervening(records, intervening_records, *, include_reads=True):
                 if any(ref.startswith(write['ref'] + '/') for ref, _ in guarded):
                     raise CommandError("an intervening publication replaced an owner",
                                        kind='intervening_write', ref=address[0])
+    queries = [s for s in selections if s['key'] == 'occurrence.move.blockers']
+    if queries and intervening_records:
+        if head is None:
+            raise CommandError('lane predicate history requires an accepted head', kind='history_unavailable')
+        scratch = State(copy.deepcopy(head.bundle))
+        for record in reversed(intervening_records):
+            before = [selection(scratch, s['key'], s['owner'], boundaries=s['boundaries']) for s in queries]
+            mirrored = Recording(scratch.bundle, {}, 0)
+            for write in reversed(record['writes']):
+                ref, path = logical_address(write['ref'], write['path'])
+                predicate = ('track', 'placement', 'enabled', 'active', 'disabled', 'hidden', 'deleted', 'occurrence_id')
+                relevant = ((ref.startswith('occurrence:') and (not path or path[0] in predicate))
+                            or (ref == 'parent' and (not path or path[0] in ('clips', 'config', 'occurrences'))))
+                if not relevant:
+                    continue
+                if 'before' not in write:
+                    raise CommandError('complete predicate history is required', kind='history_unavailable')
+                if ref == 'parent' and path[:1] == ('occurrences',):
+                    raise CommandError('an intervening publication replaced lane membership', kind='intervening_write', ref=ref)
+                # Recorder history contains authored writes, not mirror updates.
+                # Replay aliases through the current primary clip collection.
+                target_path = list(write['path'])
+                if write['ref'] == 'parent' and target_path[:2] == ['config', 'clips']:
+                    target_path = [*scratch.parent_clip_path, *target_path[2:]]
+                scratch.set(write['ref'], target_path, write['before'])
+            # Track and placement aliases change together in an atomic record.
+            mirrored.compile_mirrors()
+            after = [selection(scratch, s['key'], s['owner'], boundaries=s['boundaries']) for s in queries]
+            if not equal(before, after):
+                raise CommandError('an intervening publication changed lane membership',
+                                   kind='intervening_write', ref=queries[0]['owner'])
 
 
 def _dependents(state, ref):
@@ -202,7 +233,8 @@ def _validate_inputs(state, record, records):
             raise CommandError('original inverse read changed', kind='inverse_dependency_changed',
                                ref=read['ref'], path=read['path'])
     for selected in record['selections']:
-        actual = selection(state, selected['key'], selected['owner'], selected['members'])
+        actual = selection(state, selected['key'], selected['owner'], selected['members'],
+                           boundaries=selected['boundaries'])
         if equal(actual, selected):
             continue
         if legacy is None:
@@ -221,7 +253,7 @@ def apply_inverse(ctx, records, intervening_records):
         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
     if any(not isinstance(record, dict) or 'writes' not in record for record in records):
         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
-    check_intervening(records, intervening_records)
+    check_intervening(records, intervening_records, head=ctx.state)
     changes = coalesce(records)
     orders = restoration_orders(records)
     for (owner, kind), (_, expected) in orders.items():
@@ -262,7 +294,7 @@ def apply_inverse(ctx, records, intervening_records):
         for read in record['reads']:
             ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
-            ctx.select(selected['key'], selected['owner'], selected['members'])
+            ctx.select(selected['key'], selected['owner'], selected['members'], boundaries=selected['boundaries'])
     for write in reversed(changes):
         ctx.read(write['ref'], write['path'])
         if not write['path'] and write['after'] == ABSENT:

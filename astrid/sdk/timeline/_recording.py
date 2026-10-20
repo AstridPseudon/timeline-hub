@@ -13,12 +13,24 @@ def active(row):
             and not any(row.get(key) is True for key in ('disabled', 'hidden', 'deleted')))
 
 
-def selection(state, key, owner, members=()):
-    boundaries = None
+def selection(state, key, owner, members=(), *, boundaries=None):
+    if key != 'occurrence.move.blockers':
+        boundaries = None
     if key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
     elif key in KINDS:
         result = order(state, owner, KINDS[key])
+    elif key == 'occurrence.members':
+        result = order(state, owner, 'clip')
+    elif key == 'occurrence.move.blockers':
+        from .occurrence_commands import lane
+        if not boundaries or len(boundaries) != 1 or not boundaries[0].startswith('parent/track:'):
+            raise CommandError('destination lane query requires its captured boundary')
+        target = boundaries[0].removeprefix('parent/track:')
+        result = [ref for ref in order(state, 'parent', 'clip')
+                  if active(state.entity(ref)) and state.entity(ref).get('track') == target]
+        result += [ref for ref in order(state, 'parent', 'occurrence')
+                   if ref != owner and active(state.entity(ref)) and lane(state.entity(ref)) == target]
     elif key == 'placement.owners':
         shot = state.occurrence(owner)['shot_id']
         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
@@ -66,8 +78,8 @@ class Recording:
             self.record['reads'].append(read)
         return copy.deepcopy(value.get('value'))
 
-    def select(self, key, owner, members=()):
-        value = selection(self.input_state or self.state, key, owner, members)
+    def select(self, key, owner, members=(), *, boundaries=None):
+        value = selection(self.input_state or self.state, key, owner, members, boundaries=boundaries)
         if value not in self.record['selections']:
             if key.startswith('collection.'):
                 self.read(owner + '/collection:' + KINDS[key])

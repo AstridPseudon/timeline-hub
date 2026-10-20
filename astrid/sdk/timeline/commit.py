@@ -477,6 +477,7 @@ class RuntimeCommitService:
         from runtime_protocol.timeline_commit import CommitRejected, StaleHead
 
         from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._command_state import State
         from astrid.sdk.timeline.commands import CommandError, execute
         from astrid.sdk.timeline.inverse import check_intervening
         from astrid.sdk.timeline.rebase import replay
@@ -557,7 +558,7 @@ class RuntimeCommitService:
                         check_intervening(_records([entry], CommitRejected, base, current),
                                           _records([later for later in ordered[index + 1:]
                                                     if later['publication_id'] not in undo_of],
-                                                   CommitRejected, base, current))
+                                                   CommitRejected, base, current), head=State(bundle))
             closures, restored_from = {}, None
             if restore:
                 from astrid.sdk.timeline.commands import validate_command
