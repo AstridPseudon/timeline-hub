@@ -16,6 +16,7 @@ from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, captur
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
 from astrid.sdk.timeline.capture import capture_move, occurrence_start
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
 from astrid.sdk.timeline_address import element_schema
 
 
@@ -76,6 +77,78 @@ def _capture(factory, ref, *args, **kwargs):
 
 def _changed_keys(before, after):
     return {key for key in set(before) | set(after) if not equal(before.get(key), after.get(key))}
+
+
+def _asset_rows(timeline):
+    registry = timeline.get("registry", {}) if isinstance(timeline, Mapping) else {}
+    assets = registry.get("assets", {}) if isinstance(registry, Mapping) else {}
+    return assets if isinstance(assets, Mapping) else {}
+
+
+def _same_alias_changes(before_timeline, after_timeline, *, owner):
+    before, after = _asset_rows(before_timeline), _asset_rows(after_timeline)
+    if set(before) != set(after):
+        raise DocumentDiffError(f"{owner} registry alias membership/order is held by the document view")
+    changes = {}
+    managed = {"media_id", "type", "generationId", "variantId"}
+    for alias in before:
+        old, new = before[alias], after[alias]
+        if not isinstance(old, Mapping) or not isinstance(new, Mapping):
+            raise DocumentDiffError(f"{owner}/asset:{alias} registry binding is malformed")
+        changed = _changed_keys(old, new)
+        if not changed:
+            continue
+        if not changed <= managed or old.get("media_id") == new.get("media_id"):
+            raise DocumentDiffError(f"{owner}/asset:{alias} registry edits are held by the document view")
+        changes[alias] = (old, new)
+    return changes
+
+
+def _replace_known_payload_media(payload, replacements):
+    """Normalize only the payload mirrors that the media planner rewrites."""
+    value = copy.deepcopy(payload)
+    for row in value.get("items", []) if isinstance(value.get("items"), list) else ():
+        if isinstance(row, dict) and isinstance(row.get("media_id"), str):
+            for old, new in replacements.items():
+                if row["media_id"].removeprefix("sha256:") == new.removeprefix("sha256:"):
+                    row["media_id"] = old
+    for row in value.get("assets", []) if isinstance(value.get("assets"), list) else ():
+        if not isinstance(row, dict):
+            continue
+        for container in (row, row.get("source")):
+            if not isinstance(container, dict):
+                continue
+            for key in ("object_id", "media_id", "digest", "content_digest", "content_sha256"):
+                selected = container.get(key)
+                if not isinstance(selected, str):
+                    continue
+                for old, new in replacements.items():
+                    if selected.removeprefix("sha256:") == new.removeprefix("sha256:"):
+                        container[key] = old.removeprefix("sha256:") if key == "content_sha256" else old
+    for row in value.get("audio_bindings", []) if isinstance(value.get("audio_bindings"), list) else ():
+        if not isinstance(row, dict):
+            continue
+        for key in ("object_id", "media_id"):
+            selected = row.get(key)
+            if not isinstance(selected, str):
+                continue
+            for old, new in replacements.items():
+                if selected.removeprefix("sha256:") == new.removeprefix("sha256:"):
+                    row[key] = old
+    return value
+
+
+def _replace_registry_media(registry, replacements):
+    value = copy.deepcopy(registry)
+    assets = value.get("assets", {}) if isinstance(value, Mapping) else {}
+    for alias, (old, new) in replacements.items():
+        entry = assets.get(alias) if isinstance(assets, Mapping) else None
+        if not isinstance(entry, dict):
+            continue
+        for key in ("media_id", "type", "generationId", "variantId"):
+            if key in new and entry.get(key) == new.get(key):
+                entry[key] = old.get(key)
+    return value
 
 
 def _check_clip_shape(before, after, *, owner, clip_id):
@@ -221,7 +294,8 @@ def _validate_pinned_bundle(candidate, base):
                       f"candidate.shots[{shot_id!r}].base_internal_timeline is not the pinned source")
 
 
-def document_diff_to_commands(candidate, base):
+def document_diff_to_commands(candidate, base, *, media_selections=None, verified_media=(),
+                              defer_media=False):
     """Translate the supported raw document-view slice to captured commands.
 
     ``base`` is the exact Runtime closure at ``candidate.base_parent``.  Every
@@ -255,6 +329,43 @@ def document_diff_to_commands(candidate, base):
             _check_clip_shape(before, after, owner=owner, clip_id=clip_id)
             working, emitted = _emit_clip_commands(working, owner, before, after)
             commands.extend(emitted)
+
+        media_changes = _same_alias_changes(
+            canonical_shots[shot_id]["internal_timeline"], shot["internal_timeline"], owner=owner
+        )
+        deferred = set()
+        for alias, (old_entry, new_entry) in media_changes.items():
+            if sum(row["shot_id"] == shot_id for row in base["placements"]) != 1:
+                raise DocumentDiffError(f"{owner}/asset:{alias} shared placement scope is ambiguous")
+            affected = [clip_id for clip_id, row in before_rows.items() if row.get("asset") == alias]
+            if not affected or any(after_rows[clip_id].get("asset") != alias for clip_id in affected):
+                raise DocumentDiffError(f"{owner}/asset:{alias} media consumers changed identity")
+            pair = (media_selections or {}).get((owner, alias))
+            if pair is None:
+                if not defer_media:
+                    raise DocumentDiffError(
+                        f"{owner}/asset:{alias} requires an exact Runtime media selection"
+                    )
+                deferred.add(alias)
+                continue
+            try:
+                old_media, new_media = pair["old"], pair["new"]
+                command = capture_occurrence_swap_media(
+                    working, _clip_ref(owner, affected[0]), old_media, new_media,
+                    verified_media=verified_media,
+                )
+            except (CommandError, KeyError, TypeError) as exc:
+                raise DocumentDiffError(
+                    f"{owner}/asset:{alias} native same-alias media rebind is held: {exc}"
+                ) from exc
+            try:
+                result = execute(working, [command], verified_media=verified_media)
+            except CommandError as exc:
+                raise DocumentDiffError(
+                    f"{owner}/asset:{alias} native same-alias media rebind is held: {exc}"
+                ) from exc
+            commands.append(command)
+            working = result.bundle
         _require_explicit_rows(
             shot["internal_timeline"].get("clips", []),
             working["shots"][shot_id]["internal_timeline"].get("clips", []),
@@ -266,11 +377,40 @@ def document_diff_to_commands(candidate, base):
         _require_same(shot["internal_timeline"].get("tracks"),
                       shot["base_internal_timeline"].get("tracks"),
                       f"{owner} track edits are held by the document view")
-        _require_same(shot["internal_timeline"].get("registry"),
-                      shot["base_internal_timeline"].get("registry"),
-                      f"{owner} registry/media edits are held by the document view")
-        _require_same(shot.get("payload"), shot.get("base_payload"),
-                      f"{owner} shot payload/narration edits are held by the document view")
+        if not media_changes:
+            _require_same(shot["internal_timeline"].get("registry"),
+                          shot["base_internal_timeline"].get("registry"),
+                          f"{owner} registry/media edits are held by the document view")
+            _require_same(shot.get("payload"), shot.get("base_payload"),
+                          f"{owner} shot payload/narration edits are held by the document view")
+        else:
+            if deferred:
+                deferred_changes = {
+                    alias: media_changes[alias] for alias in deferred
+                }
+                _require_same(
+                    _replace_registry_media(shot["internal_timeline"].get("registry"), deferred_changes),
+                    shot["base_internal_timeline"].get("registry"),
+                    f"{owner} registry contains unsupported media fields",
+                )
+            else:
+                _require_same(shot["internal_timeline"].get("registry"),
+                              working["shots"][shot_id]["internal_timeline"].get("registry"),
+                              f"{owner} registry/media differs from the native command result")
+            if deferred:
+                replacements = {
+                    old.get("media_id"): new.get("media_id")
+                    for alias, (old, new) in media_changes.items()
+                    if alias in deferred
+                }
+                _require_same(
+                    _replace_known_payload_media(shot.get("payload"), replacements),
+                    shot.get("base_payload"),
+                    f"{owner} payload contains unsupported media or narration edits",
+                )
+            else:
+                _require_same(shot.get("payload"), working["shots"][shot_id]["payload"],
+                              f"{owner} payload differs from the native command result")
         for key in set(shot["internal_timeline"]) - {"clips", "tracks", "registry"}:
             _require_same(shot["internal_timeline"].get(key), shot["base_internal_timeline"].get(key),
                           f"{owner} internal field {key!r} is held by the document view")

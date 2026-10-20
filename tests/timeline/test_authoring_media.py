@@ -224,10 +224,6 @@ def test_import_failure_cannot_reach_publication(tmp_path):
         import_authoring_media(plan, catalog)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="WC6 native document view does not yet express legacy same-alias media replacement; retain this positive requirement until a bounded media command does",
-)
 def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypatch):
     import sys
     from contextlib import nullcontext
@@ -239,13 +235,57 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     spec.loader.exec_module(helper)
     path = picture(tmp_path)
     work = bundle()
+    work["base_parent"]["publication_id"] = "publication-1"
+    work["placements"][0].update(source_offset=0, speed=1)
+    work["base_placements"]["occ-1"].update(source_offset=0, speed=1)
+    old_entry = next(iter(work["shots"].values()))["base_internal_timeline"]["registry"]["assets"]["old-picture"]
+    old_entry.update(generationId="generation-old", variantId="variant-old")
+    next(iter(work["shots"].values()))["internal_timeline"]["registry"]["assets"]["old-picture"].update(
+        generationId="generation-old", variantId="variant-old"
+    )
     edit(work, path.name)
     document = tmp_path / "timeline.json"
     document.write_text(json.dumps(work))
     shown = SimpleNamespace(ok=True, data={"summary": {"head_revision_id": "advanced-head"}})
     client = SimpleNamespace(timelines=SimpleNamespace(open_composition=lambda *args: shown))
     class StaleWorkspace(Catalog):
-        def publish_parent_composition(self, *args, **kwargs):
+        def get_project_media_selection(self, _project_id, selection):
+            if selection["generation_id"] == "generation-old":
+                object_id = OLD
+            else:
+                object_id = self.calls[0][1] and self.calls[0][2]["expected_digest"]
+            return {
+                "asset": selection["asset"], "generation_id": selection["generation_id"],
+                "variant_id": selection["variant_id"], "object_id": object_id,
+                "catalog_digest": "sha256:" + "c" * 64,
+            }
+
+        def get_project_verified_media(self, _project_id, selection):
+            return {"selection": selection, "media_type": "image/png", "size": 78,
+                    "width": 16, "height": 12}
+
+    class Session:
+        def _state(self):
+            return {"base": {"revision_id": "parent-1", "publication_id": "publication-1"},
+                    "pending": [], "flight": None}
+
+        def _bundle(self, _state):
+            original = bundle()
+            original["base_parent"]["publication_id"] = "publication-1"
+            original["placements"][0].update(source_offset=0, speed=1)
+            original["base_placements"]["occ-1"].update(source_offset=0, speed=1)
+            original_shot = next(iter(original["shots"].values()))
+            original_shot["base_internal_timeline"]["registry"]["assets"]["old-picture"].update(
+                generationId="generation-old", variantId="variant-old"
+            )
+            original_shot["internal_timeline"]["registry"]["assets"]["old-picture"].update(
+                generationId="generation-old", variantId="variant-old"
+            )
+            return original
+
+        def commit_many(self, commands, **kwargs):
+            assert [command["op"] for command in commands] == ["occurrence.swap-media"]
+            assert kwargs["base"] == {"revision_id": "parent-1", "publication_id": "publication-1"}
             raise RuntimeError("parent composition head is stale")
 
     stale_workspace = StaleWorkspace()
@@ -255,6 +295,7 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     monkeypatch.setattr(
         helper, "workspace", lambda: stale_workspace
     )
+    monkeypatch.setattr(helper.TimelineSession, "open", lambda *args, **kwargs: Session())
     monkeypatch.setattr(
         sys,
         "argv",

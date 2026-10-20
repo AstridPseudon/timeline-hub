@@ -264,6 +264,7 @@ class WorkspaceClient:
                 "list_project_runs", "list_run_events", "list_managed_outputs",
                 "list_events",  # Includes the from_=latest polling cursor.
                 "get_managed_output", "list_generations",
+                "get_project_media_selection", "get_project_verified_media",
                 "get_generation", "list_variants", "attach_variant_thumbnail",
                 "get_source_frame_thumbnail", "ensure_source_frame_thumbnail",
                 "mark_variant_viewed", "mark_generation_variants_viewed",
@@ -809,6 +810,14 @@ class WorkspaceClient:
             expected_digest=expected_digest, width=width, height=height,
             duration_seconds=duration_seconds,
         )
+
+    def get_project_media_selection(self, project_id: str, selection: Mapping[str, Any]) -> Any:
+        """Read one exact project-owned media selection for a native command."""
+        return self._call_generated("get_project_media_selection", project_id, dict(selection))
+
+    def get_project_verified_media(self, project_id: str, selection: Mapping[str, Any]) -> Any:
+        """Read the Runtime-verified media metadata for a native command."""
+        return self._call_generated("get_project_verified_media", project_id, dict(selection))
 
     def get_project_media_import(self, project_id: str, import_operation_id: str) -> Any:
         return self._call_generated("get_project_media_import", project_id, import_operation_id)

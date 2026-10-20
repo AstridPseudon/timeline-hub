@@ -168,7 +168,7 @@ def test_document_view_adapter_holds_narration_and_same_alias_media_changes():
     work = bundle()
     shot = next(iter(work["shots"].values()))
     shot["internal_timeline"]["registry"]["assets"]["old-picture"]["media_id"] = NEW
-    with pytest.raises(DocumentDiffError, match="registry/media"):
+    with pytest.raises(DocumentDiffError, match="exact Runtime media selection"):
         document_diff_to_commands(work, bundle())
 
 

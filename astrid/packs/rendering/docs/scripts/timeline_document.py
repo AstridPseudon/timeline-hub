@@ -32,6 +32,49 @@ def data(response):
     return response.get("data", response)
 
 
+def resolve_media_rebinds(transport, project_id, candidate, base):
+    """Resolve exact old/new pins for the document's same-alias rebinds."""
+    selections, verified = {}, []
+    for shot_id, shot in candidate.get("shots", {}).items():
+        before_assets = base["shots"][shot_id]["internal_timeline"].get("registry", {}).get("assets", {})
+        after_assets = shot["internal_timeline"].get("registry", {}).get("assets", {})
+        for alias, old_entry in before_assets.items():
+            new_entry = after_assets.get(alias)
+            if not isinstance(old_entry, dict) or not isinstance(new_entry, dict):
+                continue
+            if old_entry.get("media_id") == new_entry.get("media_id"):
+                continue
+            owner = next(
+                "occurrence:" + row["occurrence_id"]
+                for row in base["placements"]
+                if row["shot_id"] == shot_id
+            )
+
+            def read_pin(entry):
+                generation = entry.get("generationId") or entry.get("generation_id")
+                variant = entry.get("variantId") or entry.get("variant_id")
+                if not isinstance(generation, str) or not isinstance(variant, str):
+                    raise RuntimeError(
+                        f"{owner}/asset:{alias} lacks an exact generation/variant pin; "
+                        "re-check out the document before publishing"
+                    )
+                selection = data(transport.get_project_media_selection(
+                    project_id,
+                    {"asset": alias, "generation_id": generation, "variant_id": variant},
+                ))
+                if selection.get("asset") != alias or selection.get("object_id") != entry.get("media_id"):
+                    raise RuntimeError(f"{owner}/asset:{alias} Runtime selection does not match the document")
+                return selection
+
+            old_media, new_media = read_pin(old_entry), read_pin(new_entry)
+            selections[(owner, alias)] = {"old": old_media, "new": new_media}
+            for pin in (old_media, new_media):
+                value = data(transport.get_project_verified_media(project_id, pin))
+                if value not in verified:
+                    verified.append(value)
+    return selections, verified
+
+
 def dump(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
@@ -229,15 +272,24 @@ def main():
         else:
             base = session._bundle(session_state)
         try:
-            native = document_diff_to_commands(plan["candidate"], base)
+            # Same-alias media needs a post-import Runtime selection, but all
+            # other document shape is still checked before catalog mutation.
+            document_diff_to_commands(plan["candidate"], base, defer_media=True)
         except DocumentDiffError as exc:
             raise RuntimeError(f"document publish is held: {exc}") from exc
         imported = import_authoring_media(plan, transport)
         # Media planning may rewrite the detached candidate after the initial
         # structural check. Re-run the bounded adapter on that exact prepared
         # candidate; it must still capture from the same pinned base.
+        media_selections, verified_media = resolve_media_rebinds(
+            transport, candidate["project_id"], imported["candidate"], base
+        )
         try:
-            native = document_diff_to_commands(imported["candidate"], base)
+            native = document_diff_to_commands(
+                imported["candidate"], base,
+                media_selections=media_selections,
+                verified_media=verified_media,
+            )
         except DocumentDiffError as exc:
             raise RuntimeError(f"document publish is held: {exc}") from exc
     # Save the durable rewrite separately; preserve the editable source file for

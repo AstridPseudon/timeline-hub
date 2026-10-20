@@ -62,6 +62,48 @@ def _binding(pin, kind):
             'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
 
 
+def _same_object(value, object_id):
+    return isinstance(value, str) and value.removeprefix('sha256:') == object_id.removeprefix('sha256:')
+
+
+def _replace_payload_media(ctx, owner, old_object_id, new_object_id):
+    """Update only the bounded payload mirrors of an occurrence selection."""
+    payload = ctx.read(owner + '/shot', ['payload'])
+    if not isinstance(payload, dict):
+        raise CommandError('media edit requires an authored shot payload', kind='unsupported_media')
+
+    items = payload.get('items')
+    if isinstance(items, list):
+        for index, row in enumerate(items):
+            if isinstance(row, dict) and _same_object(row.get('media_id'), old_object_id):
+                ctx.write(owner + '/shot', ['payload', 'items', str(index), 'media_id'], new_object_id)
+
+    assets = payload.get('assets')
+    if isinstance(assets, list):
+        for index, row in enumerate(assets):
+            if not isinstance(row, dict):
+                continue
+            for key in ('object_id', 'media_id', 'digest', 'content_digest', 'content_sha256'):
+                if _same_object(row.get(key), old_object_id):
+                    replacement = new_object_id.removeprefix('sha256:') if key == 'content_sha256' else new_object_id
+                    ctx.write(owner + '/shot', ['payload', 'assets', str(index), key], replacement)
+            source = row.get('source')
+            if isinstance(source, dict):
+                for key in ('object_id', 'media_id', 'digest', 'content_digest', 'content_sha256'):
+                    if _same_object(source.get(key), old_object_id):
+                        replacement = new_object_id.removeprefix('sha256:') if key == 'content_sha256' else new_object_id
+                        ctx.write(owner + '/shot', ['payload', 'assets', str(index), 'source', key], replacement)
+
+    bindings = payload.get('audio_bindings')
+    if isinstance(bindings, list):
+        for index, row in enumerate(bindings):
+            if not isinstance(row, dict):
+                continue
+            for key in ('object_id', 'media_id'):
+                if _same_object(row.get(key), old_object_id):
+                    ctx.write(owner + '/shot', ['payload', 'audio_bindings', str(index), key], new_object_id)
+
+
 def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     identity = pin['asset'] if alias is None else alias
     if not isinstance(identity, str) or not re.fullmatch(r'(?!.*::)[^/]+', identity):
@@ -158,9 +200,29 @@ def swap_media(ctx, command):
     value, kind = _verified(ctx, pin)
     if old_kind != kind:
         raise CommandError('media swap preserves media kind', kind='unsupported_media')
-    _clip(ctx, owner, row, limit, kind, [previous, value])
-    _registry(ctx, owner, old, kind, alias=row['asset'])
-    _registry(ctx, owner, pin, kind, create=True)
+    alias = row['asset']
+    same_alias = old['asset'] == pin['asset'] == alias
+    if same_alias:
+        # A same-alias replacement is a rebind, not an alias birth.  Validate
+        # every clip consuming the alias so one registry write cannot leave an
+        # unsupported source window or kind hidden behind another consumer.
+        members = ctx.select('collection.clips', owner)
+        affected = []
+        for member in members:
+            candidate = ctx.read(member)
+            if isinstance(candidate, dict) and candidate.get('asset') == alias:
+                _clip(ctx, owner, candidate, limit, kind, [previous, value])
+                affected.append(member)
+        if not affected:
+            raise CommandError('media alias has no affected consumers', kind='identity_conflict')
+        _registry(ctx, owner, old, kind, alias=alias)
+        for key, replacement in _binding(pin, kind).items():
+            ctx.write(owner + '/asset:' + alias, [key], replacement)
+        _replace_payload_media(ctx, owner, old['object_id'], pin['object_id'])
+    else:
+        _clip(ctx, owner, row, limit, kind, [previous, value])
+        _registry(ctx, owner, old, kind, alias=alias)
+        _registry(ctx, owner, pin, kind, create=True)
     ctx.bind('media.target', ref, dependencies=['media.old', 'media.new'])
     ctx.write(ref, ['asset'], pin['asset'])
 

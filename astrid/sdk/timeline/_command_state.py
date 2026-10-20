@@ -429,12 +429,24 @@ class State:
             if (state['state'] == 'absent' and isinstance(value, dict)
                     and (key not in value or value[key] is None)):
                 return
-            if not isinstance(value, dict) or key not in value or not isinstance(value[key], dict):
+            if isinstance(value, dict):
+                if key not in value or not isinstance(value[key], (dict, list)):
+                    raise CommandError("write requires recorded container creation", ref=ref, path=path)
+                value = value[key]
+            elif isinstance(value, list) and key.isdecimal() and int(key) < len(value):
+                value = value[int(key)]
+            else:
                 raise CommandError("write requires recorded container creation", ref=ref, path=path)
-            value = value[key]
-        if not isinstance(value, dict):
+        if not isinstance(value, (dict, list)):
             raise CommandError("property parent must be an object", ref=ref, path=path)
-        if state["state"] == "absent":
-            value.pop(path[-1], None)
+        if isinstance(value, dict):
+            if state["state"] == "absent":
+                value.pop(path[-1], None)
+            else:
+                value[path[-1]] = copy.deepcopy(state["value"])
+        elif path[-1].isdecimal() and int(path[-1]) < len(value):
+            if state["state"] == "absent":
+                raise CommandError("list members cannot be cleared", ref=ref, path=path)
+            value[int(path[-1])] = copy.deepcopy(state["value"])
         else:
-            value[path[-1]] = copy.deepcopy(state["value"])
+            raise CommandError("list member is outside the recorded collection", ref=ref, path=path)
