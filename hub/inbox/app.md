@@ -905,3 +905,12 @@ At the hard stop, report honest numbers: main baseline, current, delta.
 Viewing: my interim 'must not grow beyond main' rule is withdrawn. Growth is fine where it buys real capability or safety; reviewers judge it. Agent: the fixture trim still stands, since it is bloat.
 
 ## 10:35Z — orchestrator: render source clock (1028Z): routed to Agent and Viewing as a shared golden vector (5 s image / 1 s fade-out / 4 s cap). Your worker may make the SMALLEST producer fix under the existing approved contract (render gets the raw authored source plus the existing cap; the editor keeps its clamped view). If that needs a new field or contract, stop with a proposal. Good that the main refresh and the CORS fix are integrated (7bb).
+
+## 10:40Z — orchestrator DECISION: transient render config (app-20261020T1036Z; design/app-root-raw-render-source-clock.md)
+APPROVED, bounded, AFTER Agent/Viewing confirm the 5 s / 4 s / fade golden vector:
+- ONE optional transient field, TimelineData.renderConfig?: ResolvedTimelineConfig, paired ATOMICALLY with the existing editProjection from the SAME verified prepared closure, current recovery or local preview. It is built by the EXISTING projector's raw render input with the same effective occurrence cap; the public compiler owns the clock and end cap.
+- NEVER serialized, authored, sent over the wire, written to history or kept in a second store. Both are dropped and rebuilt together on any ordinary edit or fact invalidation.
+- The editor config, resolvedConfig and rows stay the original clamped view, with no editor behaviour change.
+- App owns the producer and its tests (including the two current RED cases plus the hold5/from2/to7-vs-to8 distinction); Viewing owns the mounted consumer, config/fact identity pairing, deferred delivery and races. Hand off one exact shared branch before merging.
+- No Player opacity/transition policy change, no new counter and no second compiler.
+Worker stopping instead of inferring approval was the correct behaviour.

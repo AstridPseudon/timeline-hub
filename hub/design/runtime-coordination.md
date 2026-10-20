@@ -1527,4 +1527,52 @@ HostedabsoluteRuntime-door/pairedpaths remainUNSUPPORTEDbythisagreement. Existin
 ## Runtime release review status — 2026-10-20T10:32:34Z
 MainrefreshMERGEDa5a4f6b preservingoriginmain29d0954ancestryandF1/F2;ordinary387PASS+commit9PASS+marked14PASS/5knownAgentcapturehostgaps(unchangedcapturecode, M3gateOPEN). ProducerrecordcurrentgateMERGED8609333: independentreviewAPPROVE,223ordinary+9commit+5REALAgent0aPASS(--runxfail). Rechecking3lanesagainstactualmain+producerintegration now, no standalonefinaltupleclaim.
 Viewscope9dbREJECTEDONLYforsecondTSconformancegeneratorstillkeyless; server/serviceauthority+retainedviewsemanticsAPPROVED. Fixworker rt-m2-views-conformance-key ownsnormalgenerator+output+realtype/transportregressions; releasecomposerMUSTWAITforapprovedsuccessor beforeportingviewscope. Fullunion438independentAPPROVE; connector78independentAPPROVE; releasecomposerworkeractiveonnewmainbranch forONEfinalnormal013candidate, no consumerpin yet.
+
+## Runtime view-key successor APPROVED — 2026-10-20
+
+Final read-only review approves corrected successor `44bf74420c1276aae86928f6b2416190fc97b1c7` (tree `914d0ac3b0268696f9a43a9091e11b32415982ec`) relative to rejected view-scope `9db719c2f8bc24308c2506c3b61d4620bb1c6b2e` (tree `b7993c7d87913874ad28683a961adaa2ff6aa780`). The authoritative `tools/generate_typescript_conformance.mjs` now requires/forwards `idempotencyKey`; normal `conformance/typescript/generated.ts` output matches it. Exact old transport probe is now 2/2 PASS for package and conformance clients; exact old conformance type probe is exit 0, with keyed four-argument acceptance and missing-key rejection. Corrected generator check, normal output comparison, conformance TypeScript compile/smoke, Python generator/artifact checks, and diff check pass. Same-tree evidence reused: 11 targeted + 78 generated/parity/release + 18 package TypeScript tests pass. Raw OpenAPI/schema/version/artifact inputs remain unchanged; no server/service/body/response change.
+
+Release composer: consume `44bf744` as the approved successor replacing rejected `9db719c2`; do not consume the rejected commit. This is a narrow generator/client successor approval only. It does **not** claim final composed server readiness, Agent caller readiness, App copied-client/pin readiness, or final consumer pin readiness. Final composition must include this successor with the separately reviewed current Runtime inputs and rerun its composed checks before publication; no consumer pin moved here. Full details: `design/runtime-view-key-successor-review.md`.
 Capturebasis082actualfrozenAgent92427pair141PASS+41ordinary, finalindependentreviewactive. F3outerlegacyaliasaa784 finalizedbyorchestratorafterharnessbug; finalindependentreviewactive. Agentverifierstillintact; RenderRequest/SDKearlyguardrequirementsremainOPEN.
+
+
+## rt-m2-text-binding-clear — exact event/presence ACK request
+
+
+Proposed representation, awaiting Agent ACK before coupled implementation:
+- Keep `shot_text_bindings` as the existing stream anchor: identity, non-null
+  `media_digest` = last present media, monotonically increasing `head_seq`.
+- Append existing kind `shot.text_binding.rebound` for clear and resurrection;
+  first birth remains `shot.text_binding.created`. No migration/new event kind.
+- Event payload is the existing `{binding_id,project_id,shot_id,kind,slot,
+  media_id,content_hash,byte_size,mime_type,publication_id}` plus
+  `state: "absent" | "present"`. Missing state in old events means present.
+  A clear's media fields retain the last present descriptor as an anchor, NOT
+  a live binding. The state is included in the existing event hash chain.
+- A recorded present->absent clear compares the exact prior semantic descriptor,
+  appends once in the acceptance transaction, then live GET returns not found
+  and list omits it. Absent->present restores the recorded descriptor and advances
+  the same stream. Present->same-present remains an event no-op; accepted history
+  still records the write. Empty UTF-8 remains present even when size is zero.
+- Canonical shot payload removes/restores its exact row and list position through
+  Agent records/inverse; Runtime never sorts that list or derives film meaning
+  from the anchor. Historical shot reuse without a recorded write changes no
+  live binding. A pin to an absent event refuses; earlier present pins stay valid.
+
+Reader census (all SQL references plus authored descriptor readers):
+`timeline_commit_store._project_text_binding` (presence + exact before compare);
+`service._text_binding_resource`, get/list (validated chain + live presence);
+`service._validate_published_text_bindings` (selected event presence independently
+of current state); `timeline_commit_baseline._text_bindings` (selected historical
+head presence); shot GET/inspect/view consume immutable payload membership,
+not anchor existence (`service.get_project_shot`, `timeline_inspection`,
+`timeline_view`). `backup.export` exports anchor + every raw event including state;
+backup/restore/doctor integrity must preserve these, not reinterpret as live rows.
+Existing accepted media-input/history roots + project objects retain bytes through
+GC; verify clear/restart/GC and old pinned head. No new retention store.
+
+Qualification: existing real Runtime acceptance fixture (`bind`/`accept`) is
+approved for projection proof; native Agent command+inverse pair only if its
+source/schema is ready and ACKed. No fake provider/native end-to-end claim.
+
+Agent owner: please ACK this exact JSON state/retained-anchor representation or give a direct compatible correction here. Runtime source base8609333; no public DTO/schema/API or Agent edits. Native source/schema readiness and exact accepted test source also requested.

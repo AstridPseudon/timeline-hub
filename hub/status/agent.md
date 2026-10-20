@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T10:40:22Z | dispatcher heartbeat 7s -->
+<!-- main | 2026-10-20T10:45:46Z | dispatcher heartbeat 4s -->
 # agent — 2026-10-20 10:09 UTC
 Milestone: M1 RECORDED; M2 active, M3 source/viewing active. Gates1/6/7 OPEN; no current-tuple release, normalPCM or foundation-complete claim.
 Integrated: Agent tl/integrationdf2739f9. Public12ed60bf15 (47owner+292readinessPASS, exact0a7b6152/58444B/sharedlock/runtime941pin unchanged); identity5c3f0c99 (3pinned+3current regressionsPASS); auto timing/owner correctionefb96034 (1911targeted+173review/matrix); ordinarydeleteequalstate26c3b0a8 (269PASS; inverseABAstrictkept); D07deleted76737ca2 (-206helpers, unitsrelocated, native/compiler+facadereplacements36/90/4PASS); pool+legacyoriginalreadguardsdf2739f9 (348PASS/36redbefore).
@@ -38,3 +38,7 @@ Resources:17Gfree; target5–7ACTUALmodels. Optionalemptymerge-parentfilesharmle
 2026-10-20 10:30 UTC: ACK10:24capacityredirect: listedauto/delete/D07/pool/fixtureworkalreadyMERGED(nowba5f2756), trim/capture/viewreadyunderreview/pair, len6f688mergeQUEUED. Actualworkersdroppedto3afterburst; dispatchedvideo-unplace(existingops), nativeordinarySheet, nativekepttextbinding to6. Independentcorebacklogadvanced, no redispatchofcompletedtasks. Auto+fixturereductionphysicallymergedba5f2756 (23cases,571/556PASS,12strictcanonicalreconstructionproofs). Viewcallerheldwithfinalpinonly.
 
 2026-10-20 10:32 UTC: trimreviewBLOCKEDhugeint9007199254740995→9007199254740996.0, agt-m2-trim-raw-integer-bound ownsraw-before-coercion+postrepresentationinteriorfix; noAppmirrorqualificationyet. KernelgatePASS51critical+hygiene, puremodules/docs-onlydefaultunchanged; mergeQUEUED. WordnativeDONE50actual/12portable/441neighbors, mustcomposekernel+S2fullschema beforefreeze. Currentrootinventoryrestoration MERGEDc10a301d(80central). Actualsix+newtrimfix=7.
+
+2026-10-20 10:41 UTC: Kernelpureport MERGED43d567f9, defaulttimingunchanged. ACK10:31textchoicesapproved/clearRuntimeassigned;10:34OWNERsizeguide(notgate)PLANreread, nobudget-drivenfeaturecuts. Refilled4→7models: parentactual2gapfix(absentcontainer/unrelatedtransition), pristineinitializer(03:20authorized; realApppaths/pristineguard), independentwordanchorreview(50actualsourceclaims/fullS2floor). OldparentrealproofBLOCKEDpositivespreserved, notqualifiedcompletion.
+
+2026-10-20 10:45 UTC: RuntimeSTATUS10:35 confirmsF1/F2+producerrecord fixesintegrated8609333;141capturecaseson924PASSbutfinalreviewpending. ItsreleasefieldstillS1; expliciturgentS2handoff/escalation1044 topreventclosedClipSetElementArgs rejectingnewpin. Newcapturecurrentgate narrowportsapproved924+8cWITHOUTrepo notes/report orverifierdeletion (avoidscircularRuntimebasiswait); finaltrim-integerindependentreviewdispatched. Sevenactualtarget.

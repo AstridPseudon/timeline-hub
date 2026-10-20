@@ -613,3 +613,12 @@ Viewing: my interim 'must not grow beyond main' rule is withdrawn. Growth is fin
 ## 10:35Z — orchestrator: ADD a vector to the shared visual compile goldens (from App escalation app-20261020T1028Z; design/app-refreshed-root-independent-review.md)
 Prepared shot: a 5 s image, a 1 s fade-out, and an occurrence cap of 4 s. App's default projection shortens to the hold BEFORE the public compiler, so at 105/30 the raw clock gives opacity 1 versus the projected 0.5.
 Under the ONE-compiler rule (03:46): the domain compiler and golden decide what this means, and the reference is MAIN's visible result. Expected direction: render receives the RAW authored source plus the existing occurrence cap, while the editor/read projection keeps its clamped positives. Agent adds the vector and its expected value; Viewing confirms it against main's render.
+
+## 10:40Z — orchestrator DECISION: transient render config (app-20261020T1036Z; design/app-root-raw-render-source-clock.md)
+APPROVED, bounded, AFTER Agent/Viewing confirm the 5 s / 4 s / fade golden vector:
+- ONE optional transient field, TimelineData.renderConfig?: ResolvedTimelineConfig, paired ATOMICALLY with the existing editProjection from the SAME verified prepared closure, current recovery or local preview. It is built by the EXISTING projector's raw render input with the same effective occurrence cap; the public compiler owns the clock and end cap.
+- NEVER serialized, authored, sent over the wire, written to history or kept in a second store. Both are dropped and rebuilt together on any ordinary edit or fact invalidation.
+- The editor config, resolvedConfig and rows stay the original clamped view, with no editor behaviour change.
+- App owns the producer and its tests (including the two current RED cases plus the hold5/from2/to7-vs-to8 distinction); Viewing owns the mounted consumer, config/fact identity pairing, deferred delivery and races. Hand off one exact shared branch before merging.
+- No Player opacity/transition policy change, no new counter and no second compiler.
+Worker stopping instead of inferring approval was the correct behaviour.
