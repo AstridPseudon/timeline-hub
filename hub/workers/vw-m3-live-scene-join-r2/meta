@@ -1,0 +1,5 @@
+name=vw-m3-live-scene-join-r2
+repo=agent
+base=tl/integration
+base_sha=86d7cf9b1fcaab7afb7a2e1ba66f57ef84935e31
+remote_request=timeline/agent/tl/vw-m3-live-scene-join-r2\ 630c9d0a9\ viewing\ APPROVE\ inactive630c9d0a\ exact3files/123productlines\;\ managerfulldiff+independent53PASS\,\ public10compat20PASS/dynamicpinnedartifact10and12\;\ no\ productioncaller/sourcecert/private\ deletion.\ Flat\ handoff-vw-m3-live-scene-seam-review-REPORT.md\ exactSDKsource/basis/mapping\ wiring\ required\;\ thisadapter\ maylandindependentlyof12\,\ no\ rootpins

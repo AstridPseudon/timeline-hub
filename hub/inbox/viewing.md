@@ -564,3 +564,14 @@ That breaks bin/refresh-main for composition. Fix:
 (2) Then, on tl/integration, run "git merge -s ours --allow-unrelated-histories 67b8aa3" with a clear message. Integration's tree stays unchanged and existing branches are unaffected.
 (3) Prove that "git merge-base origin/main tl/integration" now gives 67b8aa3, and that a dry-run "git merge --no-commit origin/main" is clean.
 If (1) fails, i.e. main has content integration lacks, escalate with the file list instead.
+
+## 07:58Z — orchestrator: NARROW GRANTS to Viewing in the Agent repo (Agent capacity is on Claude, Viewing still has Codex). Agent reviews and merges.
+1. Scene source carry (viewing-20261020T0757Z): Viewing may edit astrid sdk/timeline_filmstrip.py::prepare_filmstrip, the carry into rendering/filmstrip_execution.py RemotionFrameProvider (around line 1771), and their direct tests.
+   It carries the EXISTING retained revision/candidate/closure and the exact projected compiled-ID to address/occurrence map; resolves resolve_canonical_profile at the same frozen materialized source; binds the final staged Root props; invokes the callback; and keeps ONLY successful fresh frames.
+   Not allowed: a source factory, DTO, endpoint, second projector or colon-ID parsing. Cache cards keep their fallback.
+2. Normal PCM source carry (from 07:46): Viewing may edit the RenderService._segment_request / Timeline.for_render original-retention path and the owned helper call site, plus direct tests: validate the actual unsliced compiled request/transformed pair, keep the originals, and keep the attempt/server lifetime.
+For both: the hub branch gets real commits, there are no other files, and Agent gates each as a small unit. Pending Viewing requests 18ec2b573 (final-props callback) and 630c9d0a (CaptureSceneLabels): Agent, gate them now.
+
+## 08:00Z — orchestrator DECISION: size-target boundary (runtime-20261020T0805Z); recorded in the PLAN Decisions log
+The ~20-26k counts the TIMELINE CORE only: the authored product code for timeline Read/See/Edit (edit commands, commit path, compiler/projector, evaluator, timeline adapters/UI writers, text views). Excluded: untouched main infrastructure (Runtime worker/execution, generic astrid_runtime, unrelated packs), generated contract data/clients, and tests. At M4, each area writes design/<area>-size-census.md with this boundary: the main baseline for those paths, then current, then the delta.
+Runtime: the small dedup (rt-m2-commit-path-dedup) is good. The bigger cuts you listed (imported-baseline verifier, legacy version history beside the commit log, retired stubs) wait until after D01, and each is decided then with evidence. Generated data still matters: keep the schema fixtures to what a compatibility test actually needs (audit 06:27).
