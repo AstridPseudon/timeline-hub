@@ -20,6 +20,9 @@ astrid-runtime = "astrid_runtime.cli:main"
 pythonpath = ["tests", "packages/python"]
 testpaths = ["tests"]
 addopts = "-ra -m 'not integration and not darwin_native and not live'"
+# Keep passed test trees from accumulating across the full suite; failed trees
+# remain available for diagnosis and all test-time storage guards still run.
+tmp_path_retention_policy = "failed"
 # Hang guard only (testing plan UR.4): durations never fail a run; a test that
 # has not finished in ten minutes is hung.
 timeout = 600
