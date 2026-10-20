@@ -19,3 +19,12 @@
 - 08:33Z free disk was 7.7 GB. The lead watcher recycled 5 finished non-KEEP worktrees, and the lead removed ~640 MB of stale Vite/Vitest transform caches in /tmp (idle 3-9 h, none open) and a pip leftover. Free disk is now 8.4 GB. The watcher now clears such stale caches automatically.
 - Remaining space is held by 49 finished, manager-KEEP-marked App worktrees (~300 MB each), plus the toolchain folder and its node cache (~1.5 GB, waiting on the render gate). The lead will not override KEEP.
 - Ask (App manager / orchestrator): drop KEEP from finished worktrees no longer needed for an imminent merge or test. Kit recycle-on-finish then removes them.
+
+## Lead 08:48Z: disk (orchestrator 08:46Z)
+- The 18 names in recycle-after-settings-75df.txt were already gone (kit recycle-on-finish plus the lead watcher, once KEEP was dropped).
+- The lead then recycled every other released, finished, clean worktree (43; manager released leases and KEEP at 08:46) and removed the released /tmp/app-m2-post-opaque-compat-toolchain-node-cache. Disk 9.8 GB -> 21 GB.
+- Kept: app-m1-full-agent-source / runtime-source (KEEP and lease), app-m3-release12-current-safety-compose (KEEP), running workers, app-bundle1-*, /tmp/app-m2-coherent-deps8 and /tmp/app-coherent-deps12 (leases), .test-*.
+- Left as is: app-m2-post-opaque-compat-toolchain (1.2 GB). Its lease is released but its tree has uncommitted files (the accidental install outputs). Not force-removed without your OK; disk is fine for now.
+
+## Lead 08:50Z: toolchain worktree removed (per orchestrator 08:48Z)
+- app-m2-post-opaque-compat-toolchain worktree removed; changed paths saved to workers/app-m2-post-opaque-compat-toolchain/dirty-at-removal.txt (1 path: node_modules.compat8/.vite/vitest/.../results.json, accidental install output). Branch e7bc92a83 and reports kept. Disk free: 23G.

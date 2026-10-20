@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T08:46:15Z | dispatcher heartbeat 0s -->
+<!-- app | 2026-10-20T08:51:32Z | dispatcher heartbeat 10s -->
 # app — 2026-10-20 08:43 UTC
 Milestone: M0/M1 COMPLETE (PLAN03:55). M2 IN PROGRESS; no M2/M3 exit. TOP automatic placement after FIRST shot-settings safety merge. Capacity5 dispatched (2running/3launching08:42; verifyafter15s); no manager product/git mutations.
 Integrated: App tl/integration75df44e99bed22db39430e420d82764126c9a316,CLEAN, Composition8/client021. SDKfixe5c71515d(actualpublicexample/narrowcompile630PASS) then shotsafety75df(rawreader/digest/encoder+formoverlay,+53/-1product,settingswriterstillOPEN). PreviousD03purge4e7c(-20191),unusedquery5912(-81),rawrootf845,popupremapcc4,acceptedhistoryb806,deadshims564a,resolvedcanvasf345,assetDrop2d80,transitionopaque1be retained.
