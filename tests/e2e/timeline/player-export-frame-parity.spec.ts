@@ -54,7 +54,7 @@ async function openParityEditor(page: Page, harness: DirectHarness, fixture: Fra
 }
 
 async function renderAndDownload(page: Page, harness: DirectHarness, fixture: FrameParityFixture, testInfo: TestInfo) {
-  const versions = await sourceVersions();
+  const versions = await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile);
   await assertPinnedFrameParityFixture(harness, fixture);
   const capability = await readyRenderCapability(harness);
   const polls: string[] = [];
@@ -156,7 +156,7 @@ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: Fr
     // Normal Agent output_policy uses 48kHz AAC; the managed source is 44.1kHz.
     expect(metadata.streams.find(stream => stream.codec_type === 'audio')).toMatchObject({ codec_name: 'aac', sample_rate: '48000', channels: 2 });
     await assertPinnedFrameParityFixture(harness, fixture);
-    expect(await sourceVersions()).toEqual(versions);
+    expect(await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile)).toEqual(versions);
     const { stdout: ffmpeg } = await exec('ffmpeg', ['-version']);
     await saveEvidence(testInfo, 'real-render', { versions, ffmpeg: ffmpeg.split('\n')[0], capability,
       taskId: admitted.task_id, authority: frozen, outputs: outputs.items, provenance, metadata, downloadHash: mediaHash(bytes),
@@ -174,7 +174,7 @@ async function assertRenderUnchanged(harness: DirectHarness, fixture: FrameParit
   await assertPinnedFrameParityFixture(harness, fixture);
   const task = await readRuntimeJson<Task>(harness, `/v1/tasks/${encodeURIComponent(render.taskId)}`);
   expect(assertTaskAuthority(task, fixture, render.capabilityDigest)).toEqual(render.authority);
-  expect(await sourceVersions()).toEqual(render.versions);
+  expect(await sourceVersions(render.versions.playerBrowser.profile)).toEqual(render.versions);
 }
 
 async function compareAllFrames(page: Page, exportPath: string, testInfo: TestInfo) {
@@ -228,7 +228,7 @@ test.describe('ordinary media: mounted App Player versus real task export', () =
     await assertPinnedFrameParityFixture(harness, fixture);
     expect((await pageLogs.result()).failures).toEqual([]);
     await saveEvidence(testInfo, 'fixture-readiness', { proof: 'fixture readiness only; no export comparison',
-      fixture, versions: await sourceVersions(), browser: browser.version(), captures, requests });
+      fixture, versions: await sourceVersions(testInfo.project.metadata.viewingParityBrowserProfile), browser: browser.version(), captures, requests });
   });
 
   test('compares native-size actual Player frames with decoded real CPU Remotion task output', async ({ page, harness, fixture, pageLogs }, testInfo) => {

@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
 import { mediaHash } from './media';
+import { playerBrowserProfile } from './browser-profile';
 
 async function fixture(files: Record<string, string>): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'viewing-parity-graph-'));
@@ -71,6 +72,8 @@ test('fails postflight when a declared dependency graph changes', () => {
   const before = {
     compositionFiles: { app: { 'package/index.js': 'sha256:composition' } },
     renderGraphHashes: { app: { 'node_modules/remotion.js': 'sha256:app' } },
+    playerBrowser: playerBrowserProfile(),
+    exportBrowserHash: 'sha256:export',
   } as const;
   assertSourceVersionsUnchanged(before, before);
   assert.throws(
@@ -80,4 +83,17 @@ test('fails postflight when a declared dependency graph changes', () => {
     }),
     /source dependency graph changed during browser fixture: renderGraphHashes/,
   );
+});
+
+test('fails postflight when the selected browser profile or executable bytes change', () => {
+  const before = {
+    compositionFiles: {}, renderGraphHashes: {}, playerBrowser: playerBrowserProfile(), exportBrowserHash: 'export',
+  };
+  for (const after of [
+    { ...before, playerBrowser: playerBrowserProfile('native-codec-chrome155') },
+    { ...before, playerBrowser: { ...before.playerBrowser, sha256: 'changed' } },
+    { ...before, exportBrowserHash: 'changed' },
+  ]) {
+    assert.throws(() => assertSourceVersionsUnchanged(before, after), /source dependency graph changed/);
+  }
 });

@@ -8,9 +8,11 @@ import { startRealPackHost } from './bootstrap';
 import { prepareFrameParityFixture, type FrameParityFixture, readRuntimeJson } from './fixture';
 import { mediaHash } from './media';
 import type { Capability } from '../../../../src/integrations/runtime/generated';
+import { browserExecutableHash, playerBrowserProfile, verifyPlayerBrowser } from './browser-profile';
 
 export const INSTALLED_BROWSER = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell';
-export const PLAYER_BROWSER = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+export const PLAYER_BROWSER = playerBrowserProfile().executablePath;
+const EXPORT_BROWSER_HASH = '63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4';
 const COMPOSITION_HASH = 'sha256:93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa';
 const COMPOSITION_FILE_COUNT = 77;
 const EXPECTED_PACKAGE_VERSIONS = {
@@ -131,7 +133,10 @@ function requiredEnv(name: string): string {
   return resolve(value);
 }
 
-export async function sourceVersions() {
+export async function sourceVersions(profile?: unknown) {
+  const playerBrowser = await verifyPlayerBrowser(profile);
+  const exportBrowserHash = await browserExecutableHash(INSTALLED_BROWSER);
+  deepStrictEqual(exportBrowserHash, EXPORT_BROWSER_HASH, 'CPU export browser bytes changed');
   const roots = {
     app: REPO_ROOT, agent: requiredEnv('ASTRID_CHECKOUT'), runtime: requiredEnv('ASTRID_RUNTIME_CHECKOUT'),
     composition: requiredEnv('TIMELINE_COMPOSITION_CHECKOUT'),
@@ -173,16 +178,17 @@ export async function sourceVersions() {
     },
     renderGraphProvenance: Object.fromEntries(Object.entries(EXPECTED_RENDER_GRAPHS)
       .map(([consumer, graph]) => [consumer, graph.provenance])),
-    packages, browserExecutable: INSTALLED_BROWSER, playerBrowserExecutable: PLAYER_BROWSER, node: process.version,
+    packages, browserExecutable: INSTALLED_BROWSER, exportBrowserHash,
+    playerBrowserExecutable: playerBrowser.executablePath, playerBrowser, node: process.version,
   };
 }
 
 export type SourceVersionGraph = Pick<Awaited<ReturnType<typeof sourceVersions>>,
-  'compositionFiles' | 'renderGraphHashes'>;
+  'compositionFiles' | 'renderGraphHashes' | 'playerBrowser' | 'exportBrowserHash'>;
 
 /** Keep the release-declared package files and Remotion/Player targets immutable during browser setup/use. */
 export function assertSourceVersionsUnchanged(before: SourceVersionGraph, after: SourceVersionGraph): void {
-  for (const field of ['compositionFiles', 'renderGraphHashes'] as const) {
+  for (const field of ['compositionFiles', 'renderGraphHashes', 'playerBrowser', 'exportBrowserHash'] as const) {
     try {
       deepStrictEqual(after[field], before[field]);
     } catch {
@@ -212,10 +218,10 @@ export const test = base.extend<object, {
   harness: DirectHarness; fixture: FrameParityFixture; browser: Browser;
 }>({
   // eslint-disable-next-line no-empty-pattern
-  harness: [async ({}, provide) => {
+  harness: [async ({}, provide, workerInfo) => {
     const reason = harnessUnavailableReason();
     if (reason) throw new Error(reason);
-    await sourceVersions();
+    await sourceVersions(workerInfo.project.metadata.viewingParityBrowserProfile);
     const harness = await new DirectHarness().start();
     try { await provide(harness); } finally { await harness.stop(); }
   }, { scope: 'worker', timeout: 240_000 }],
@@ -229,14 +235,16 @@ export const test = base.extend<object, {
       await provide(fixture);
     } finally { await host.stop(); }
   }, { scope: 'worker', timeout: 240_000 }],
-  browser: [async ({ harness, fixture }, provide) => {
+  browser: [async ({ harness, fixture }, provide, workerInfo) => {
     void fixture;
-    const preflight = await sourceVersions();
+    const profile = workerInfo.project.metadata.viewingParityBrowserProfile;
+    const preflight = await sourceVersions(profile);
     let browser: Browser | undefined;
     let failure: unknown;
     try {
-      browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: PLAYER_BROWSER });
-      console.log('[viewing-parity] Player browser', browser.version(), PLAYER_BROWSER);
+      browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: preflight.playerBrowserExecutable });
+      deepStrictEqual(browser.version(), preflight.playerBrowser.version, 'selected Player browser version changed');
+      console.log('[viewing-parity] Player browser', preflight.playerBrowser.profile, browser.version(), preflight.playerBrowserExecutable);
       await provide(browser);
     } catch (error) {
       failure = error;
@@ -245,7 +253,7 @@ export const test = base.extend<object, {
       if (failure === undefined) failure = error;
     }
     try {
-      assertSourceVersionsUnchanged(preflight, await sourceVersions());
+      assertSourceVersionsUnchanged(preflight, await sourceVersions(profile));
     } catch (error) {
       if (failure === undefined) failure = error;
     }

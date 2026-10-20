@@ -1,4 +1,4 @@
 {
   "extends": "../../../../tsconfig.node.json",
-  "include": ["*.ts", "../player-export-frame-parity.spec.ts", "../../../../playwright.viewing-parity.config.ts"]
+  "include": ["*.ts", "../player-export-frame-parity.spec.ts", "../../../../playwright.viewing-parity*.config.ts"]
 }
