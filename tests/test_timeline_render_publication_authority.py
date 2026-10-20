@@ -292,7 +292,13 @@ def native_target_isolation(tmp_path, astrid_importable):
 
         producer_spec = {
             "runtime_dependencies": {
-                "publication": {"admitted_target": target},
+                "publication": {"admitted_target": target, "render": {
+                    "capability_id": render_capability,
+                    "capability_digest": render_digest,
+                    "spec": {"family": "render", "params": {
+                        "timeline_ref": "timelineB", "selector": "rendering.remotion",
+                    }, "inputs": {"output_name": "target-isolation.mp4"}},
+                }},
                 "edges": [{"from_task_id": child, "to": "self", "requires_event": "task.succeeded",
                             "fence": "runtime_task"} for child in children],
                 "aggregation": {"kind": "ordered_cas_inputs"},
