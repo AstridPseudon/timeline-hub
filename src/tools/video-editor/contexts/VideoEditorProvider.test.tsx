@@ -48,7 +48,7 @@ import {
   useTimelineCommandsService,
   useTimelineCommandsServiceSafe,
 } from '@/tools/video-editor/hooks/useTimelineCommandsService';
-import type { ParentClipAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession';
+import type { ParentClipAddMediaCapturePort, ParentClipSwapMediaCapturePort } from '@/tools/video-editor/commands/commitSession';
 import type { EditCommand, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types';
 import {
   createTimelineStore,
@@ -630,6 +630,7 @@ function buildCommandTestStore(overrides?: {
   data?: TimelineData;
   mounted?: boolean;
   parentClipAddMedia?: ParentClipAddMediaCapturePort;
+  parentClipSwapMedia?: ParentClipSwapMediaCapturePort;
 }) {
   const baseStore = createTimelineStore();
   const current = overrides?.data ?? buildCommandTimelineData();
@@ -649,6 +650,7 @@ function buildCommandTestStore(overrides?: {
       patchRegistry: overrides?.patchRegistry ?? vi.fn(),
       unpatchRegistry: overrides?.unpatchRegistry ?? vi.fn(),
       parentClipAddMedia: overrides?.parentClipAddMedia,
+      parentClipSwapMedia: overrides?.parentClipSwapMedia,
     },
   });
   if (overrides?.mounted === false) {
@@ -2361,6 +2363,59 @@ describe('VideoEditorProvider', () => {
     expect(verifierSelection).toEqual(originalSelection);
     resolveVerified({ selection: structuredClone(originalSelection), media_type: 'video/mp4', size: 123, duration_seconds: 2 });
     await expect(pending).resolves.toEqual({ ok: true, data: { clipId: expect.any(String), trackId: 'V1' } });
+    expect(finish).toHaveBeenCalledOnce();
+    expect(submit).toHaveBeenCalledOnce();
+    expect(store.getState().ops.applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('routes a qualified prepared replacement through the native parent swap callback', async () => {
+    const selection: MediaSelection = {
+      asset: 'asset-dup',
+      generation_id: 'generation-dup',
+      variant_id: 'variant-dup',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const originalSelection = structuredClone(selection);
+    const preview = { version: 1, source: 'test.native-parent-media-swap', operations: [] } as const;
+    const capture = vi.fn((input: { clipId: string; media: MediaSelection }) => ({
+      clipId: input.clipId,
+      media: structuredClone(input.media),
+      localGeneration: 0,
+      localBasis: { head: { revisionId: 'r0', publicationId: 'p0' } },
+      displayHead: { revisionId: 'r0', publicationId: 'p0' },
+    } as never));
+    const finish = vi.fn((_basis: unknown, verified: VerifiedMedia) => {
+      expect(verified.selection).toEqual(originalSelection);
+      return { command: { schema_version: 1, op: 'clip.swap-media', version: '1', select: 'parent/clip:clip-1',
+        args: { old_media: originalSelection, media: originalSelection }, intent: { ownership: 'parent' } } as EditCommand, preview };
+    });
+    const submit = vi.fn();
+    const parentClipSwapMedia = { capture, finish, submit } as unknown as ParentClipSwapMediaCapturePort;
+    const store = buildCommandTestStore({ parentClipSwapMedia, applyEdit: vi.fn() });
+    let resolveVerified!: (value: VerifiedMedia) => void;
+    let verifierSelection: MediaSelection | undefined;
+    const getProjectVerifiedMedia = vi.fn((_projectId: string, received: MediaSelection) => {
+      verifierSelection = received;
+      return new Promise<VerifiedMedia>((resolve) => { resolveVerified = resolve; });
+    });
+    const commands = createTimelineCommands(store, {
+      parentMediaRuntime: { projectId: 'project-1', getProjectVerifiedMedia },
+    });
+    const pending = commands.addClip({
+      preparedAsset: {
+        assetKey: selection.asset, mediaType: 'video', durationSeconds: 2, source: 'registered',
+        entry: { file: 'https://example.com/dup.mp4', type: 'video/mp4', duration: 2, generationId: selection.generation_id },
+        mediaSelection: selection,
+      },
+      replaceClipId: 'clip-1',
+    });
+
+    expect(capture).toHaveBeenCalledWith(expect.objectContaining({ clipId: 'clip-1', media: originalSelection }));
+    selection.catalog_digest = 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc';
+    expect(verifierSelection).toEqual(originalSelection);
+    resolveVerified({ selection: structuredClone(originalSelection), media_type: 'video/mp4', size: 123, duration_seconds: 2 });
+    await expect(pending).resolves.toEqual({ ok: true, data: { clipId: 'clip-1', trackId: 'V1' } });
     expect(finish).toHaveBeenCalledOnce();
     expect(submit).toHaveBeenCalledOnce();
     expect(store.getState().ops.applyEdit).not.toHaveBeenCalled();

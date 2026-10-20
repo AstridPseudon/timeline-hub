@@ -471,14 +471,33 @@ export function createTimelineCommands(
             return failure('unsupported_asset_type', 'Native prepared parent media currently accepts video assets only.');
           }
           if (input.afterClipId || input.removeClipId || input.removeClipIds?.length
-            || input.replaceClipId || input.pinnedShotGroupsOverride !== undefined) {
-            return failure('invalid_argument', 'Native prepared parent media only supports a new manual clip.');
+            || input.pinnedShotGroupsOverride !== undefined) {
+            return failure('invalid_argument', 'Native prepared parent media only supports one raw parent clip operation.');
+          }
+          const swapPort = state.ops.parentClipSwapMedia;
+          const runtime = options?.parentMediaRuntime;
+          if (input.replaceClipId !== undefined) {
+            if (!swapPort || !runtime) {
+              return failure('mutation_failed', 'Native parent media replacement requires the durable command session and Runtime verification.');
+            }
+            const target = current.config.clips.find((clip) => clip.id === input.replaceClipId);
+            if (!target || target.asset !== undefined && typeof target.asset !== 'string') {
+              return failure('clip_not_found', `Parent clip '${input.replaceClipId}' was not found in the raw parent timeline.`);
+            }
+            try {
+              const basis = swapPort.capture({ clipId: input.replaceClipId, media: suppliedSelection, current });
+              const verifiedMedia = await runtime.getProjectVerifiedMedia(runtime.projectId, basis.media);
+              const captured = swapPort.finish(basis, verifiedMedia);
+              swapPort.submit(captured);
+              return success({ clipId: input.replaceClipId, trackId: target.track });
+            } catch (cause) {
+              return failure('mutation_failed', cause instanceof Error ? cause.message : 'Native parent media replacement was refused.', { cause });
+            }
           }
           if (typeof input.time !== 'number' || !Number.isFinite(input.time) || input.time < 0) {
             return failure('invalid_argument', 'A native prepared asset requires a non-negative target time.');
           }
           const port = state.ops.parentClipAddMedia;
-          const runtime = options?.parentMediaRuntime;
           if (!port || !runtime) {
             return failure('mutation_failed', 'Native prepared media requires the durable command session and Runtime verification.');
           }

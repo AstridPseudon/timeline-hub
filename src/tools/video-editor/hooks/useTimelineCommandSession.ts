@@ -172,6 +172,15 @@ export function useTimelineCommandSession(options: {
           finish(basis, verifiedMedia) { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.finish(basis, verifiedMedia); },
           submit(input) { requireCleanParentClipAddMedia(); parentClipAddMediaPort.submit(input); },
         };
+        const parentClipSwapMediaPort = session.parentClipSwapMediaPort;
+        const requireCleanParentClipSwapMedia = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before swapping parent media');
+        };
+        session.parentClipSwapMediaPort = {
+          capture(input) { requireCleanParentClipSwapMedia(); return parentClipSwapMediaPort.capture(input); },
+          finish(basis, verifiedMedia) { requireCleanParentClipSwapMedia(); return parentClipSwapMediaPort.finish(basis, verifiedMedia); },
+          submit(input) { requireCleanParentClipSwapMedia(); parentClipSwapMediaPort.submit(input); },
+        };
         const realElementPort = session.elementPort;
         session.elementPort = {
           capture(input) {
@@ -291,6 +300,7 @@ export function useTimelineCommandSession(options: {
     trackLabelPort: sessionRef.current?.trackLabelPort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
     parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
+    parentClipSwapMediaPort: sessionRef.current?.parentClipSwapMediaPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>

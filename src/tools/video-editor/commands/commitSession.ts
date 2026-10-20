@@ -27,6 +27,7 @@ import {
   type GenericPatchCapturePort,
 } from './genericPatchCapture.ts';
 import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
+import { captureParentClipSwapMedia, finishParentClipSwapMedia } from './parentClipSwapCapture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 
@@ -44,6 +45,21 @@ export type ParentClipAddMediaCaptureBasis = {
 export interface ParentClipAddMediaCapturePort {
   capture(input: { row: Record<string, JSON>; media: MediaSelection; current: TimelineData }): ParentClipAddMediaCaptureBasis;
   finish(basis: ParentClipAddMediaCaptureBasis, verifiedMedia: VerifiedMedia): { command: EditCommand; preview: TimelinePatch };
+  submit(input: { command: EditCommand; preview: TimelinePatch }): void;
+}
+
+export type ParentClipSwapMediaCaptureBasis = {
+  readonly bundle: AuthoredBundle;
+  readonly clipId: string;
+  readonly media: MediaSelection;
+  readonly localGeneration: number;
+  readonly localBasis: OutboxBasis;
+  readonly displayHead: OutboxHead;
+};
+
+export interface ParentClipSwapMediaCapturePort {
+  capture(input: { clipId: string; media: MediaSelection; current: TimelineData }): ParentClipSwapMediaCaptureBasis;
+  finish(basis: ParentClipSwapMediaCaptureBasis, verifiedMedia: VerifiedMedia): { command: EditCommand; preview: TimelinePatch };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
 }
 export type CommandSessionState = {
@@ -326,6 +342,57 @@ export async function createTimelineCommandSession(options: Options) {
       if (command.op !== 'clip.add-media' || !entry || entry.generation !== localGeneration
         || !equal(entry.payload.before, bundle) || !equal(entry.payload.preview, preview)) {
         throw new Error('Parent clip.add-media was not captured by this session or the timeline changed');
+      }
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
+  const parentClipSwapMediaPort: ParentClipSwapMediaCapturePort = {
+    capture({ clipId, media, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      if (!current.config.clips.some((clip) => clip.id === clipId)) {
+        throw new Error('Parent clip.swap-media target is not displayed');
+      }
+      return freezeJson({
+        bundle: copy(bundle),
+        clipId,
+        media: copy(media),
+        localGeneration,
+        localBasis: copy(lastIntent ? { after: lastIntent } : { head: known.head }),
+        displayHead: copy(displayHead),
+      }) as ParentClipSwapMediaCaptureBasis;
+    },
+    finish(basis, verifiedMedia) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration || !sameHead(basis.displayHead, displayHead)
+        || !equal(basis.bundle, bundle)) {
+        throw new Error('Timeline changed during parent clip.swap-media');
+      }
+      const captured = captureParentClipSwapMedia(basis.bundle, basis.clipId, basis.media);
+      const result = finishParentClipSwapMedia(captured, verifiedMedia);
+      const preview: TimelinePatch = {
+        version: 1,
+        source: 'timeline.native-parent-media-swap',
+        operations: [{ op: 'clip.update', target: basis.clipId, payload: { asset: basis.media.asset } }],
+      };
+      prepared.set(JSON.stringify(result.command), {
+        payload: { commands: [result.command], before: basis.bundle, after: result.bundle, preview },
+        generation: localGeneration,
+        basis: basis.localBasis,
+      });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.swap-media' || !entry || entry.generation !== localGeneration
+        || !equal(entry.payload.before, bundle) || !equal(entry.payload.preview, preview)) {
+        throw new Error('Parent clip.swap-media was not captured by this session or the timeline changed');
       }
       prepared.delete(key);
       enqueue(entry.payload, preview, entry.basis);
@@ -698,6 +765,7 @@ export async function createTimelineCommandSession(options: Options) {
     genericPatchPort,
     trackLabelPort,
     parentClipAddMediaPort,
+    parentClipSwapMediaPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
