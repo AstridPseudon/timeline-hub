@@ -174,6 +174,10 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing clip parameters');
         };
         session.clipParamsPort = {
+          submittedInput(input) {
+            if (disposed || sessionRef.current !== session) return;
+            return paramsPort.submittedInput?.(input);
+          },
           capture(input) { requireCleanParamsEdit(); return paramsPort.capture(input); },
           invalidatePrefetch() { paramsPort.invalidatePrefetch(); },
           async prefetch(basis, pin) {

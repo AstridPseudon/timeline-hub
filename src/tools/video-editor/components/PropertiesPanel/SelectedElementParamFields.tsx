@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Input } from '@/shared/components/ui/input.tsx';
 import type { ClipSetParamsArgs, DocumentPin } from '@/integrations/runtime/timeline-commit-types.ts';
-import type { TimelineOps } from '@/sdk/video/timeline/timelineOps.ts';
+import type { SubmittedClipParamsInput, TimelineOps } from '@/sdk/video/timeline/timelineOps.ts';
 import type { CommandSessionState } from '../../commands/commitSession.ts';
 import { equal } from '../../commands/clipMovePrimitives.ts';
 import type { ResolvedTimelineClip } from '../../types/index.ts';
@@ -33,23 +33,24 @@ export function SelectedElementParamFields({ clip, descriptor, retainedDocumentP
   const edits = useRef(new Map<string, number>());
   useEffect(() => () => { request.current?.abort(); }, []);
   const [drafts, setDrafts] = useState<Record<string, string>>(() => pending ? inputDrafts(pending.args) : {});
-  const [submitted, setSubmitted] = useState<{ id: string; drafts: Record<string, string>; edits: Map<string, number> } | null>(() =>
-    pending ? { id: pending.id, drafts: inputDrafts(pending.args), edits: new Map() } : null);
+  const [submitted, setSubmitted] = useState<{ input: SubmittedClipParamsInput; drafts: Record<string, string>; edits: Map<string, number> } | null>(() =>
+    pending ? { input: pending, drafts: inputDrafts(pending.args), edits: new Map() } : null);
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
+  const accepted = submitted?.input.accepted;
   useEffect(() => {
-    if (!submitted || !input?.accepted || input.id !== submitted.id) return;
+    if (!submitted || !accepted) return;
     setDrafts((current) => Object.fromEntries(Object.entries(current).filter(([name, value]) =>
       !Object.hasOwn(submitted.drafts, name) || submitted.drafts[name] !== value || submitted.edits.get(name) !== edits.current.get(name))));
     setSubmitted(null);
-  }, [input, submitted]);
+  }, [accepted, submitted]);
   useEffect(() => {
-    if (!pending || pending.id === submitted?.id) return;
+    if (!pending || pending.id === submitted?.input.id) return;
     const restored = inputDrafts(pending.args);
     originalPin.current = structuredClone(pending.args.schema_source!);
     setDrafts((current) => ({ ...restored, ...current }));
-    setSubmitted({ id: pending.id, drafts: restored, edits: new Map() });
-  }, [pending, submitted?.id]);
+    setSubmitted({ input: pending, drafts: restored, edits: new Map() });
+  }, [pending, submitted?.input.id]);
   const properties = (descriptor.schema as { properties: Record<string, { title?: string; description?: string }> }).properties;
   const apply = async () => {
     setError(null);
@@ -67,7 +68,7 @@ export function SelectedElementParamFields({ clip, descriptor, retainedDocumentP
       request.current = controller;
       await timelineOps.setClipParams(clip.id, args, controller.signal);
       const queued = timelineOps.getSubmittedClipParams?.(clip.id);
-      if (queued) setSubmitted({ id: queued.id, drafts, edits: submittedEdits });
+      if (queued) setSubmitted({ input: queued, drafts, edits: submittedEdits });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : String(failure));
     } finally {

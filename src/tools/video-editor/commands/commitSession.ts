@@ -100,6 +100,9 @@ export async function createTimelineCommandSession(options: Options) {
     && entry.intent === 'recorded' && entry.records) : undefined;
   const undos: string[] = latestOwn ? [latestOwn.publication_id] : [];
   const prepared = new Map<string, { payload: Payload; generation: number; basis: OutboxBasis }>();
+  // Only outstanding UI observations; accepted/cancelled entries leave this map.
+  const paramOutcomes = new Map<string, { accepted: boolean }>();
+  const localId = (id: string) => [...intentIds].find(([, durable]) => durable === id)?.[0] ?? id;
   let state: CommandSessionState = { status: 'loading', error: null, ownerId: null, recoverableOwners: [], canUndo: false };
   function rejected() {
     return !!box && !resolving && !persistenceFailed && !pendingAppends.length
@@ -232,6 +235,10 @@ export async function createTimelineCommandSession(options: Options) {
         });
         if (stopped) return;
         if (record.accepted && record.accepted.intentId !== priorAccepted) {
+          const id = localId(record.accepted.intentId);
+          const outcome = paramOutcomes.get(id);
+          if (outcome) outcome.accepted = true;
+          paramOutcomes.delete(id);
           const result = record.accepted.value as unknown as TimelineCommitResult;
           acceptedBasis = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
           acceptedBundle = await authoringBundleFromDocument(result.canonicalDocument) as AuthoredBundle;
@@ -411,9 +418,13 @@ export async function createTimelineCommandSession(options: Options) {
         ...pendingAppends.map((entry) => ({ id: entry.localId, payload: entry.payload })),
       ];
       const entry = entries.reverse().find(({ payload }) => payload.selectedParams && payload.commands[0]?.select === select);
-      const localId = (id: string) => [...intentIds].find(([, durable]) => durable === id)?.[0] ?? id;
-      if (entry) return freezeJson({ id: localId(entry.id), args: copy(entry.payload.commands[0].args) as ClipSetParamsArgs,
-        basis: copy(entry.payload.selectedParams!.basis), accepted: false });
+      if (entry) {
+        const id = localId(entry.id);
+        const outcome = paramOutcomes.get(id) ?? { accepted: false };
+        paramOutcomes.set(id, outcome);
+        return freezeJson({ id, args: copy(entry.payload.commands[0].args) as ClipSetParamsArgs,
+          basis: copy(entry.payload.selectedParams!.basis), get accepted() { return outcome.accepted; } });
+      }
       const accepted = record?.accepted;
       const result = accepted?.value as unknown as TimelineCommitResult | undefined;
       const command = result?.response.data.commands.find((command) => command.op === 'clip.set-params' && command.select === select);
@@ -554,6 +565,7 @@ export async function createTimelineCommandSession(options: Options) {
       appendedGeneration = localGeneration;
       lastIntent = record.intents[0]?.id;
       prepared.clear();
+      paramOutcomes.clear();
       intentIds.clear();
       bundle = payload?.after ?? before;
       known = fresh;
@@ -665,6 +677,7 @@ export async function createTimelineCommandSession(options: Options) {
       if (record.intents.length) {
         const tail = record.intents[record.intents.length - 1];
         await box!.cancel(tail.id);
+        paramOutcomes.delete(localId(tail.id));
         record = await box!.read();
         bundle = workingBundle();
         lastIntent = record.intents[record.intents.length - 1]?.id;
@@ -702,6 +715,7 @@ export async function createTimelineCommandSession(options: Options) {
     },
     dispose() {
       stopped = true;
+      paramOutcomes.clear();
       closing ??= (async () => {
         try {
           // Drain accepted gestures, never wait for an unknown network outcome.

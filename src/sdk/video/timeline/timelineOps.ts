@@ -29,6 +29,7 @@ export interface SubmittedClipParamsInput {
   readonly id: string;
   readonly args: ClipSetParamsArgs;
   readonly basis?: Readonly<Record<string, unknown>>;
+  /** Monotonic outcome of this exact input, retained across later acknowledgements. */
   readonly accepted: boolean;
 }
 
