@@ -44,6 +44,8 @@ import type {
   CanonicalShotTimelinePublication,
   CanonicalShotTimelineScope,
 } from '@/tools/video-editor/runtime/ports.ts';
+import type { ShotSetCapturePort, CapturedShotSetEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
+import { captureShotNameEdit, submitShotNameEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import {
   enqueueCanonicalShotPublish,
   updateCanonicalShotName,
@@ -72,6 +74,8 @@ interface ShotEditorViewProps {
   canonicalOccurrence?: Pick<LocalTimelineShotModel, 'occurrenceId' | 'shotId' | 'revisionId' | 'parentDocumentId' | 'stableDeepLink' | 'outputIdentity'> & { projectId?: string | null };
   /** The same adapter used by the overview; embedded canonical mode can publish shot revisions. */
   canonicalShotComposition?: ShotCompositionAdapter;
+  /** Mounted parent command-session authority for canonical shot name edits. */
+  shotSetPort?: ShotSetCapturePort;
   /** Prepared canonical graph shared by the overview and the shot-local preview. */
   canonicalComposition?: PreparedShotComposition;
   /** Optional embedded-mode close action; avoids navigating the parent route. */
@@ -102,6 +106,7 @@ export function ShotEditorView({
   shotSortMode = 'ordered',
   canonicalOccurrence,
   canonicalShotComposition,
+  shotSetPort,
   canonicalComposition,
   onClose,
   onCanonicalCompositionPublished,
@@ -271,6 +276,39 @@ export function ShotEditorView({
   }, []);
 
   const nameClickRef = useRef<(() => void) | null>(null);
+  const capturedNameEditRef = useRef<CapturedShotSetEdit | null>(null);
+  const nameScopeRef = useRef(shotToEdit.id);
+  nameScopeRef.current = shotToEdit.id;
+  const mountedRef = useRef(true);
+  const [pendingCanonicalName, setPendingCanonicalName] = useState<string | null>(null);
+  const displayedShot = pendingCanonicalName !== null && shotToEdit.name !== pendingCanonicalName
+    ? { ...shotToEdit, name: pendingCanonicalName }
+    : shotToEdit;
+  useEffect(() => {
+    if (pendingCanonicalName !== null && shotToEdit.name === pendingCanonicalName) setPendingCanonicalName(null);
+  }, [pendingCanonicalName, shotToEdit.name]);
+  useEffect(() => {
+    capturedNameEditRef.current = null;
+    setPendingCanonicalName(null);
+  }, [shotToEdit.id]);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
+  const handleBeforeNameEdit = useCallback(() => {
+    if (!shotSetPort || !canonicalComposition || !canonicalOccurrence) return;
+    try {
+      capturedNameEditRef.current = captureShotNameEdit(
+        shotSetPort,
+        canonicalComposition,
+        canonicalOccurrence.occurrenceId,
+      );
+    } catch (error) {
+      normalizeAndPresentError(error, {
+        context: 'canonical-shot:capture-name',
+        toastTitle: 'Shot name draft kept',
+      });
+      throw error;
+    }
+  }, [canonicalComposition, canonicalOccurrence, shotSetPort]);
 
   const stickyHeader = useStickyHeader({
     headerRef: headerContainerRef,
@@ -325,6 +363,36 @@ export function ShotEditorView({
   }, [sortedShots, shotToEdit, navigateToNextShot]);
 
   const handleUpdateShotName = useCallback((newName: string) => {
+    if (capturedNameEditRef.current) {
+      if (!shotSetPort) throw new Error('Mounted shot.set name authority is unavailable; draft kept.');
+      const captured = capturedNameEditRef.current;
+      const scopeId = shotToEdit.id;
+      try {
+        const completion = submitShotNameEdit(captured, newName);
+        return Promise.resolve(completion).then(
+          () => {
+            if (!mountedRef.current || nameScopeRef.current !== scopeId) return;
+            capturedNameEditRef.current = null;
+            setPendingCanonicalName(newName);
+          },
+          (error: unknown) => {
+            if (mountedRef.current && nameScopeRef.current === scopeId) {
+              normalizeAndPresentError(error, {
+                context: 'canonical-shot:update-name',
+                toastTitle: 'Shot name draft kept',
+              });
+            }
+            throw error;
+          },
+        );
+      } catch (error) {
+        normalizeAndPresentError(error, {
+          context: 'canonical-shot:update-name',
+          toastTitle: 'Shot name draft kept',
+        });
+        throw error;
+      }
+    }
     if (canonicalSettingsPersistence && canonicalShotComposition && canonicalComposition && canonicalOccurrence) {
       const editingBase = canonicalComposition;
       void enqueueCanonicalShotPublish(
@@ -354,7 +422,7 @@ export function ShotEditorView({
       newName: newName,
       projectId: selectedProjectId,
     });
-  }, [canonicalComposition, canonicalOccurrence, canonicalSettingsPersistence, canonicalShotComposition, onCanonicalCompositionPublished, selectedProjectId, shotToEdit.id]);
+  }, [canonicalComposition, canonicalOccurrence, canonicalSettingsPersistence, canonicalShotComposition, onCanonicalCompositionPublished, selectedProjectId, shotSetPort, shotToEdit.id]);
 
   const handleShotImagesUpdate = useCallback(async () => {
     invalidateGenerations(shotToEdit.id, {
@@ -405,7 +473,7 @@ export function ShotEditorView({
           <VideoTravelSettingsProvider
             projectId={selectedProjectId}
             shotId={shotToEdit.id}
-            selectedShot={shotToEdit}
+            selectedShot={displayedShot}
             availableLoras={availableLoras}
             updateShotMode={updateShotMode}
             shotSettingsPersistence={canonicalSettingsPersistence}
@@ -413,7 +481,7 @@ export function ShotEditorView({
             <SettingsAutoDisable shotId={shotToEdit.id} isCloudGenerationEnabled={isCloudGenerationEnabled} readOnly={editorReadOnly} />
             <ShotSettingsEditor
               // Core identifiers
-              selectedShotId={shotToEdit.id}
+              selectedShotId={displayedShot.id}
               projectId={selectedProjectId}
               canonicalOnly={Boolean(canonicalComposition && canonicalOccurrence)}
               optimisticShotData={isNewlyCreatedShot ? shotFromState : undefined}
@@ -433,6 +501,7 @@ export function ShotEditorView({
               hasPrevious={hasPrevious}
               hasNext={hasNext}
               onUpdateShotName={editorReadOnly ? undefined : handleUpdateShotName}
+              onBeforeNameEdit={editorReadOnly ? undefined : handleBeforeNameEdit}
               readOnly={editorReadOnly}
               // Loading and cache
               getFinalVideoCount={getFinalVideoCount}
@@ -453,7 +522,7 @@ export function ShotEditorView({
           shouldShowShotEditor: true,
           readOnly: editorReadOnly,
           stickyHeader,
-          shotToEdit,
+          shotToEdit: displayedShot,
           isMobile,
           isShotsPaneLocked,
           shotsPaneWidth,

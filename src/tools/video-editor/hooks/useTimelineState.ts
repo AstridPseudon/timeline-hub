@@ -135,6 +135,7 @@ function useTimelineEditorContextValue({
   externalDrop,
   trackManagement,
   trackLabelPort,
+  shotSetPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -178,6 +179,7 @@ function useTimelineEditorContextValue({
   externalDrop: ExternalDropHook;
   trackManagement: TimelineTrackManagementHook;
   trackLabelPort?: TrackLabelCapturePort;
+  shotSetPort?: import('@/tools/video-editor/commands/shotSetGesture.ts').ShotSetCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -203,6 +205,7 @@ function useTimelineEditorContextValue({
 
   return useMemo<TimelineEditorContextValue>(() => ({
     trackLabel: trackLabelPort,
+    shotSet: shotSetPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -381,6 +384,7 @@ function useTimelineEditorContextValue({
     moveSelectedClipsToTrack,
     trackScaleMap,
     trackLabelPort,
+    shotSetPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -1077,6 +1081,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     externalDrop,
     trackManagement,
     trackLabelPort: save.commands.trackLabelPort,
+    shotSetPort: save.commands.shotSetPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1164,6 +1169,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const editorOps = useMemo(() => ({
     clipMove: save.commands.port,
     trackLabel: save.commands.trackLabelPort,
+    shotSet: save.commands.shotSetPort,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -1222,7 +1228,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.shotSetPort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,
