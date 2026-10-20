@@ -3,6 +3,7 @@ import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
 import { memo, useEffect, useMemo, useRef, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { BulkClipPanel } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanel.tsx';
+import { TrackInspector } from './TrackInspector.tsx';
 import { ClipPanel, getVisibleClipTabs, NO_EFFECT } from '@/tools/video-editor/components/PropertiesPanel/ClipPanel.tsx';
 import { OpaqueDataItemInspector } from '@/tools/video-editor/components/PropertiesPanel/OpaqueDataItemInspector';
 import type { DataItemInspectorProps } from '@/sdk/video/families/dataKind';
@@ -12,6 +13,7 @@ import { ShaderInspector } from '@/tools/video-editor/components/ShaderInspector
 import {
   useTimelineEditorData,
   useTimelineEditorOps,
+  useTimelineChromeContext,
   useTimelinePlaybackContext,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/ShaderEffectRegistryContext.tsx';
@@ -182,11 +184,13 @@ function ShotOccurrenceInspectorSection({ target }: { target: NonNullable<Timeli
 }
 
 export interface PropertiesPanelProps {
+  /** Retained panels can reopen without changing the selected clip. */
+  visible?: boolean;
   /** @deprecated Kept for host compatibility; the editor no longer renders an Assets panel. */
   assetPanel?: ReactNode;
 }
 
-function PropertiesPanelComponent(_props: PropertiesPanelProps) {
+function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
   useRenderDiagnostic('PropertiesPanel');
   const {
     data,
@@ -203,12 +207,16 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     inspectorTarget,
   } = useTimelineEditorData();
   const { currentTime } = useTimelinePlaybackContext();
+  const { handleAddTrack } = useTimelineChromeContext();
+  const trackReadOnly = useOptionalVideoEditorRuntime()?.timelineEditability?.checkTimeline?.().allowed === false;
   const {
     clearSelection,
     handleUpdateClips,
     handleUpdateClipsDeep,
     handleDeleteClip,
     handleDeleteClips,
+    handleTrackPopoverChange,
+    handleRemoveTrack,
     handleSelectedClipChange,
     handleResetClipPosition,
     handleResetClipsPosition,
@@ -232,9 +240,9 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     patchRegistry,
   });
   const { addVariantAsGenerationAfterClip, isPending: isAddingVariantAsGenerationPending } = useAddVariantAsGeneration();
-  // At a desk the panel stays mounted and a new clip is a change it sees. On touch the clip sheet
-  // mounts the panel for the clip just tapped, so that clip counts as new and opens on its own tab.
+  // Touch starts on the clip's own tab, including an initial selection in the retained panel.
   const prevClipIdRef = useRef(deviceClass === 'desktop' ? selectedClip?.id : undefined);
+  const wasVisibleRef = useRef(false);
   const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
   // dataKind V2: resolve lane items from the SAME patched lane plane the
@@ -384,6 +392,8 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
   const bulkTransitionDuration = getSharedValue(bulkSelectedClips.map((clip) => clip.transition?.duration ?? 0.5));
 
   useEffect(() => {
+    const reopenedOnTouch = deviceClass !== 'desktop' && visible && !wasVisibleRef.current;
+    wasVisibleRef.current = visible;
     if (selectedClipIds.size > 1) {
       if (!bulkVisibleTabs.includes(preferences.activeClipTab)) {
         setActiveClipTab('effects');
@@ -394,7 +404,7 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     const nextVisibleTabs = getVisibleClipTabs(selectedClip, selectedTrack);
     const isClipChange = selectedClip?.id !== prevClipIdRef.current;
 
-    if (isClipChange && selectedClip) {
+    if ((isClipChange || reopenedOnTouch) && selectedClip) {
       setActiveClipTab(getSelectionDefaultClipTab(selectedClip, selectedTrack, deviceClass !== 'desktop'));
     } else if (!nextVisibleTabs.includes(preferences.activeClipTab)) {
       setActiveClipTab(getFallbackClipTab(preferences.activeClipTab, nextVisibleTabs));
@@ -409,12 +419,23 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     selectedClipIds.size,
     selectedTrack,
     setActiveClipTab,
+    visible,
   ]);
+
+  // Touch: a new pick starts at its top (header and actions), not where the last one was scrolled.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const pickKey = `${inspectorSelectionTarget.kind}:${selectedClip?.id ?? ('trackId' in inspectorSelectionTarget ? inspectorSelectionTarget.trackId : '')}`;
+  useEffect(() => {
+    if (deviceClass !== 'desktop' && scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [deviceClass, pickKey]);
 
   if (!data) {
     return null;
   }
   const trackMoves = getTrackMoveTargets(resolvedConfig?.tracks ?? [], selectedClip?.track);
+  const inspectedTrack = deviceClass !== 'desktop' && inspectorSelectionTarget.kind === 'track'
+    ? resolvedConfig?.tracks.find((track) => track.id === inspectorSelectionTarget.trackId)
+    : undefined;
 
   const hasSelection = selectedClipIds.size + selectedDataItems.length > 0;
   const readOnlyItemSelection = selectedDataItems.length > 0 && selectedDataItems.length + selectedClipIds.size > 1;
@@ -465,9 +486,10 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
         </div>
       )}
       {!readOnlyItemSelection && <InspectorRegistrySections placement="before-default" selection={inspectorSelectionTarget} />}
-      {/* On touch the clip sheet is the surface; a card inside it would be a box in a box. */}
-      <div className={deviceClass !== 'desktop'
-        ? 'min-h-0 flex-1 overflow-auto'
+      {/* Touch uses the shared panel frame without a second card inside it, and scrolls up
+          to the tab row's edge (the frame pads only the sides). */}
+      <div ref={scrollRef} className={deviceClass !== 'desktop'
+        ? 'min-h-0 flex-1 overflow-auto py-3'
         : `min-h-0 flex-1 overflow-auto rounded-xl border bg-card/80 p-3 transition-colors ${hasSelection ? 'border-[color:var(--video-editor-accent-border)] ring-1 ring-[var(--video-editor-accent-ring)]' : 'border-border'}`}>
         {/* dataKind V1 rework R3c: a data target owns the body — the data
             inspector / lane summary renders INSTEAD of the clip panels. The
@@ -483,6 +505,16 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
           />
         ) : selectedDataLaneView ? (
           <DataLaneSummarySection lane={selectedDataLaneView} />
+        ) : inspectedTrack ? (
+          <TrackInspector
+            key={inspectedTrack.id}
+            track={inspectedTrack}
+            hasClips={resolvedConfig?.clips.some((clip) => clip.track === inspectedTrack.id) ?? false}
+            readOnly={trackReadOnly}
+            onChange={handleTrackPopoverChange}
+            onAddTrack={handleAddTrack}
+            onRemove={handleRemoveTrack}
+          />
         ) : selectedClipIds.size > 1 ? (
           <BulkClipPanel
             clips={bulkSelectedClips}
@@ -527,7 +559,11 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
             onChange={handleSelectedClipChange}
             onResetPosition={handleResetClipPosition}
             onClose={clearSelection}
-            onDelete={selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}
+            onDelete={selectedClip ? () => {
+              handleDeleteClip(selectedClip.id);
+              // Touch: a deleted clip is done with, like a closed one; its track stays unpicked.
+              if (deviceClass !== 'desktop') clearSelection();
+            } : undefined}
             onToggleMute={handleToggleMute}
             onDetachAudio={selectedClip ? () => handleDetachAudioClip(selectedClip.id) : undefined}
             onSplitAtPlayhead={() => {

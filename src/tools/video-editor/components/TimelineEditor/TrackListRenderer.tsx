@@ -125,7 +125,6 @@ interface SortableRowProps {
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   onRemoveTrack: (trackId: string) => void;
-  onAddTrack?: (kind: 'visual' | 'audio') => void;
 }
 
 interface RowActionLayerProps {
@@ -164,7 +163,6 @@ interface TrackListRendererProps {
   onSelectTrack: (trackId: string) => void;
   onTrackChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   onRemoveTrack: (trackId: string) => void;
-  onAddTrack?: (kind: 'visual' | 'audio') => void;
   onTrackDragEnd: (event: DragEndEvent) => void;
   trackSensors: ReturnType<typeof useSensors>;
   readOnly?: boolean;
@@ -189,7 +187,6 @@ function SortableRow({
   onSelectTrack,
   onTrackChange,
   onRemoveTrack,
-  onAddTrack,
 }: SortableRowProps) {
   useRenderBudget('SortableRow', 4);
   const sortableId = `track-${track.id}`;
@@ -243,7 +240,6 @@ function SortableRow({
           onSelect={onSelectTrack}
           onChange={onTrackChange}
           onRemove={onRemoveTrack}
-          onAddTrack={onAddTrack}
           readOnly={readOnly}
           rowDragging={sortable.isDragging}
           dragListeners={sortable.listeners}
@@ -379,7 +375,6 @@ function areSortableRowPropsEqual(left: SortableRowProps, right: SortableRowProp
     && left.readOnly === right.readOnly
     && left.onTrackChange === right.onTrackChange
     && left.onRemoveTrack === right.onRemoveTrack
-    && left.onAddTrack === right.onAddTrack
   );
 }
 
@@ -407,7 +402,6 @@ export function TrackListRenderer({
   onSelectTrack,
   onTrackChange,
   onRemoveTrack,
-  onAddTrack,
   onTrackDragEnd,
   trackSensors,
   readOnly = false,
@@ -446,7 +440,6 @@ export function TrackListRenderer({
         onSelectTrack={onSelectTrack}
         onTrackChange={onTrackChange}
         onRemoveTrack={onRemoveTrack}
-        onAddTrack={onAddTrack}
       />
     );
   };

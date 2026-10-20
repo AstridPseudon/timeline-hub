@@ -1,10 +1,11 @@
 /**
- * Phone timeline: browse, tap-to-sheet and the armed move/trim gestures under
+ * Phone timeline: browse, tap-to-Inspector and the armed move/trim gestures under
  * real touch input.
  *
  * Ported from the untracked `node_modules/.probe/mobile.mjs` device probe.
- * The phone rests in browse (drag pans, tap opens the clip sheet). Move and trim
- * are armed from the sheet's action grid and released with Done in the toolbar.
+ * The phone rests in browse (drag pans, tap selects a clip and switches the
+ * picture-area tab surface to Inspector). Move and trim are armed from the
+ * Inspector's clip actions and released with Done in the toolbar.
  * Every step runs against one live page in sequence — each arm/release is state
  * the next step depends on — so this is a single test with named `test.step`s
  * rather than independent tests.
@@ -28,7 +29,7 @@ test.describe('timeline phone gestures', () => {
     deviceScaleFactor: 2,
   });
 
-  test('phone browse, sheet and armed gestures survive real touch input', async ({ context, page }, testInfo) => {
+  test('phone browse, Inspector and armed gestures survive real touch input', async ({ context, page }, testInfo) => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
@@ -94,7 +95,7 @@ test.describe('timeline phone gestures', () => {
 
     await shot('m0-base');
 
-    const sheet = page.getByTestId('timeline-clip-sheet');
+    const surface = page.getByTestId('video-editor-right-panel-dock');
     const armedBar = page.locator('[data-armed-gesture]');
 
     async function tapLocator(target: ReturnType<typeof page.locator>): Promise<void> {
@@ -103,19 +104,18 @@ test.describe('timeline phone gestures', () => {
       await touch.tap(box.x + box.width / 2, box.y + box.height / 2);
     }
 
-    /** Tap a clip; on phone that opens the clip sheet. */
-    async function tapClipForSheet(clipSelector: string): Promise<void> {
+    /** Tap a clip; on phone that selects it and switches the tab surface to Inspector. */
+    async function tapClipForInspector(clipSelector: string): Promise<void> {
       const box = await page.locator(clipSelector).first().boundingBox();
       if (!box) throw new Error(`no clip for ${clipSelector}`);
       await touch.tap(box.x + box.width / 2, box.y + box.height / 2);
-      await expect(sheet).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator('[data-surface-tab="inspector"]')).toHaveAttribute('aria-selected', 'true', { timeout: 5_000 });
     }
 
-    /** Tap a clip, then Move/Trim in its sheet: the sheet closes and the gesture arms. */
+    /** Tap a clip, then Move/Trim in its Inspector: the gesture arms and the Inspector stays visible. */
     async function armGesture(clipSelector: string, gesture: 'move' | 'trim'): Promise<boolean> {
-      await tapClipForSheet(clipSelector);
-      await tapLocator(sheet.getByRole('button', { name: gesture === 'move' ? 'Move' : 'Trim', exact: true }));
-      await expect(sheet).toBeHidden({ timeout: 5_000 });
+      await tapClipForInspector(clipSelector);
+      await tapLocator(surface.getByRole('button', { name: gesture === 'move' ? 'Move' : 'Trim', exact: true }));
       try {
         await expect(armedBar).toHaveAttribute('data-armed-gesture', gesture, { timeout: 5_000 });
         return true;
@@ -165,27 +165,27 @@ test.describe('timeline phone gestures', () => {
     });
     await page.waitForTimeout(300);
 
-    // --- 2. browse: tap selects the clip and opens the sheet ----------------
+    // --- 2. browse: tap selects the clip and opens the Inspector ------------
     const c1Selector = CLIP_BODY_SELECTOR as string;
-    await tapClipForSheet(c1Selector);
+    await tapClipForInspector(c1Selector);
     const selCount1 = await countSelectedClips(page);
-    await test.step('browse: tap selects clip and opens the clip sheet', async () => {
+    await test.step('browse: tap selects clip and opens the Inspector', async () => {
       expect(selCount1, `${selCount1} selected`).toBeGreaterThanOrEqual(1);
-      await expect(sheet.getByRole('button', { name: 'Move', exact: true })).toBeVisible();
-      await expect(sheet.getByRole('button', { name: 'Trim', exact: true })).toBeVisible();
+      await expect(surface.getByRole('button', { name: 'Move', exact: true })).toBeVisible();
+      await expect(surface.getByRole('button', { name: 'Trim', exact: true })).toBeVisible();
     });
 
-    await shot('m2-sheet');
+    await shot('m2-inspector');
 
-    await tapLocator(sheet.getByRole('button', { name: 'Close clip' }));
-    await test.step('Close clip closes the sheet', async () => {
-      await expect(sheet).toBeHidden({ timeout: 5_000 });
+    await tapLocator(surface.getByRole('button', { name: 'Close clip' }));
+    await test.step('Close clip clears the selection and returns to Video', async () => {
+      await expect(page.locator('[data-surface-tab="video"]')).toHaveAttribute('aria-selected', 'true', { timeout: 5_000 });
     });
 
     // --- 3. armed move: touch drag moves clip ------------------------------
     const moveClipSelector = `${CLIP_BODY_SELECTOR}[data-clip-id="clip-video"]`;
     const moveArmed = await armGesture(moveClipSelector, 'move');
-    await test.step('sheet Move arms the move gesture (Done shown)', async () => {
+    await test.step('Inspector Move arms the move gesture (Done shown)', async () => {
       expect(moveArmed).toBe(true);
       await expect(page.locator('[data-toolbar-layout="touch"]').getByRole('button', { name: 'Done', exact: true })).toBeVisible();
     });
@@ -234,7 +234,7 @@ test.describe('timeline phone gestures', () => {
 
     // --- 4. armed trim: expanded handles, edge drag resizes ----------------
     const trimArmed = await armGesture(c1Selector, 'trim');
-    await test.step('sheet Trim arms the trim gesture (Done shown)', async () => {
+    await test.step('Inspector Trim arms the trim gesture (Done shown)', async () => {
       expect(trimArmed).toBe(true);
     });
     await page.waitForTimeout(300);
@@ -346,9 +346,10 @@ test.describe('timeline phone gestures', () => {
     // --- 7. phone chrome that no longer exists -----------------------------
     const absent = await page.evaluate(() => {
       const buttonNamed = (re: RegExp) => Array.from(document.querySelectorAll('button'))
+        .filter((b) => b.getAttribute('role') !== 'tab')
         .filter((b) => re.test((b.getAttribute('aria-label') || b.textContent || '').trim())).length;
       return {
-        dock: document.querySelectorAll('[data-testid="video-editor-right-panel-dock"]').length,
+        tabSurface: document.querySelectorAll('[data-testid="video-editor-right-panel-dock"]').length,
         floatingTools: document.querySelectorAll(
           '[aria-label="New text at playhead"], [aria-label="New effect layer at playhead"], [aria-label="Create animation sequence"]',
         ).length,
@@ -359,9 +360,9 @@ test.describe('timeline phone gestures', () => {
       };
     });
 
-    await test.step('phone has no dock, tool cluster or per-track/per-clip buttons', async () => {
+    await test.step('phone has one picture-area tab surface, no tool cluster or per-track/per-clip buttons', async () => {
       expect(absent, JSON.stringify(absent)).toEqual({
-        dock: 0, floatingTools: 0, panelButtons: 0, trackButtons: 0, clipOverflow: 0, playbackRow: 1,
+        tabSurface: 1, floatingTools: 0, panelButtons: 0, trackButtons: 0, clipOverflow: 0, playbackRow: 1,
       });
     });
 

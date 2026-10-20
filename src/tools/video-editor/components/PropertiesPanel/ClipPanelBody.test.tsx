@@ -110,3 +110,26 @@ describe('ClipPanelBody media duration', () => {
     expect(onChange).toHaveBeenLastCalledWith({ to: 6 });
   });
 });
+
+
+describe('ClipPanelBody touch Inspector', () => {
+  it.each(['phone', 'tablet'] as const)('leads with the existing action grid before property tabs on %s', (deviceClass) => {
+    const onSetInteractionMode = vi.fn();
+    const setActiveTab = vi.fn();
+    render(<ClipPanelBody {...bodyProps()} deviceClass={deviceClass} onSetInteractionMode={onSetInteractionMode} setActiveTab={setActiveTab} />);
+    const actions = screen.getByRole('group', { name: 'Clip actions' });
+    const tabs = screen.getByRole('tablist');
+    expect(actions.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }));
+    expect(onSetInteractionMode).toHaveBeenCalledWith('move');
+    expect(setActiveTab).toHaveBeenCalledWith('timing');
+    fireEvent.click(screen.getByRole('button', { name: 'Trim' }));
+    expect(onSetInteractionMode).toHaveBeenCalledWith('trim');
+  });
+
+  it('says how to reach the Inspector on touch with no clip selected', () => {
+    render(<ClipPanelBody {...bodyProps()} deviceClass="phone" clip={null} />);
+    expect(screen.getByText("Tap a clip, or a track's name, to edit it.")).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Clip actions' })).toBeNull();
+  });
+});

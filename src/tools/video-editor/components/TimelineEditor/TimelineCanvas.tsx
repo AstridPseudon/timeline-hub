@@ -1413,7 +1413,6 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
             onSelectTrack={onSelectTrack}
             onTrackChange={onTrackChange}
             onRemoveTrack={onRemoveTrack}
-            onAddTrack={onAddTrack}
             onTrackDragEnd={(event) => onTrackDragEnd(event, laneDataForDisplay?.dataLanes ?? [])}
             trackSensors={trackSensors}
           />
