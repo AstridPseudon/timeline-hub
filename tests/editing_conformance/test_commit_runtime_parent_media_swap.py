@@ -206,9 +206,39 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
 
     # The WC3 SDK adapter submits the original head pair and selected pins.
     # Use an already existing alias after redo: no new allocation is needed.
+    from astrid.sdk.contracts import DomainResult
     class Transport:
+        _last_handshake = {'realm_id': 'realm-1', 'actor_id': 'parent-editor'}
+
         def list_timelines(self, project, *, cursor=None, limit=50):
             return ([{'project_id': project, 'timeline_id': 'film', 'slug': 'film'}], None)
+
+        def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+            return editing.service._timeline_commits()[0].revision_closure(
+                project_id, timeline_id, revision)['parent_revision']
+
+        def get_project_shot_revision(self, project_id, shot_id, revision):
+            closure = editing.service._timeline_commits()[0].revision_closure(
+                project_id, 'film', head['base_revision_id'])
+            return next(row for row in closure['shot_revisions']
+                        if row['shot_id'] == shot_id and row['revision_id'] == revision)
+
+        def get_project_timeline_revision(self, project_id, timeline_id, revision):
+            closure = editing.service._timeline_commits()[0].revision_closure(
+                project_id, timeline_id, head['base_revision_id'])
+            return next(row for row in closure['internal_timeline_revisions']
+                        if row['revision_id'] == revision)
+
+        def get_project_media_selection(self, project_id, selector):
+            for pin in (editing.old, editing.new):
+                if all(pin.get(key) == selector.get(key) for key in (
+                        'asset', 'generation_id', 'variant_id')):
+                    return copy.deepcopy(pin)
+            raise KeyError(selector)
+
+        def get_project_verified_media(self, project_id, selection):
+            return editing.service.get_project_verified_media(
+                project_id, selection, authorize=editing.authorize)
 
         def publish_parent_composition(self, *args, **kwargs):
             pytest.fail('selected SDK adapter published a whole closure')
@@ -218,6 +248,11 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
             return commit(editing, request, idempotency_key)
 
     head = body(editing)
+    monkeypatch.setattr(RemoteTimelines, 'open_composition', lambda self, *args, **kwargs: DomainResult.success({
+        'native_inspection': {'project_id': editing.project, 'timeline_id': 'film',
+                              'head_revision_id': head['base_revision_id']},
+        'summary': {'head_revision_id': head['base_revision_id']},
+    }))
     result = RemoteTimelines(Transport()).replace_parent_media(
         editing.project, 'film', occurrence_id=None, clip_id='clip-a',
         source_object_id=editing.old['object_id'], expected_head=head['base_revision_id'],
