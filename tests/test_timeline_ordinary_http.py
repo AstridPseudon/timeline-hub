@@ -23,9 +23,10 @@ from tests.door_helpers import HOSTED, PRODUCT_ACTOR, DoorWorld, write_owner_onl
 pytestmark = pytest.mark.integration
 
 
-def test_ordinary_http_empty_bootstrap_must_be_reachable(
-    tmp_path, monkeypatch, astrid_importable,
+def _run_ordinary_http_hold_clear_case(
+    tmp_path, monkeypatch, astrid_importable, *, row, expect_hold_clear,
 ):
+    """Run the ordinary sequence against the supplied authored clip row."""
     def forbidden(*args, **kwargs):
         raise AssertionError("ordinary editing called a legacy writer or renderer")
 
@@ -189,8 +190,6 @@ def test_ordinary_http_empty_bootstrap_must_be_reachable(
         track = {"id": "picture", "kind": "visual", "role": "output", "opaque": [None, False]}
         tracked = commit(capture_track_create(bundle, "parent", track), "track-create")
         assert tracked["parent_revision"]["payload"]["config"]["tracks"] == [track]
-        row = {"id": "title", "clipType": "text", "track": "picture", "at": 0, "hold": 4,
-               "params": {"text": "Ordinary HTTP"}, "opaque": [None, False, 0, {}, []]}
         created = commit(capture_clip_add(agent.bundle_from_document(tracked), "parent", row), "clip-add")
         assert created["parent_revision"]["payload"]["clips"] == [row]
         assert created["parent_revision"]["payload"]["config"]["clips"] == [row]
@@ -201,16 +200,49 @@ def test_ordinary_http_empty_bootstrap_must_be_reachable(
         # Continue on the film created through the public API. A source or
         # registry seeded through a legacy writer would hide this boundary.
         before = tuple(daemon.service.store.conn.iterdump())
+        head_before = client.list_timeline_commits(project, "film", limit=100)["head"]
+        draft = agent.bundle_from_document(held)
         clear_error = None
         try:
-            cleared = capture_clip_set(agent.bundle_from_document(held), "parent/clip:title", clear=["hold"])
+            cleared = capture_clip_set(draft, "parent/clip:title", clear=["hold"])
         except CommandError as error:
             clear_error = error
         assert tuple(daemon.service.store.conn.iterdump()) == before
-        assert clear_error is None, (
-            "ordinary_http_hold_clear_after_native_creation_must_be_capturable: "
-            f"public empty timeline -> track.create -> clip.add -> hold set -> hold clear: {clear_error}"
-        )
-        commit(cleared, "hold-clear")
+        if expect_hold_clear:
+            assert clear_error is None, (
+                "ordinary_http_hold_clear_with_authored_source_window_must_be_capturable: "
+                f"public empty timeline -> track.create -> clip.add -> hold set -> hold clear: {clear_error}"
+            )
+            commit(cleared, "hold-clear")
+        else:
+            assert isinstance(clear_error, CommandError)
+            assert clear_error.kind == "unsupported_timing"
+            assert "surviving source window" in str(clear_error)
+            # The held document remains the caller's draft, and capture failed
+            # before a command could reach the Runtime or alter accepted head.
+            assert draft["parent"]["clips"] == [{**row, "hold": 3}]
+            assert held["parent_revision"]["payload"]["clips"] == [{**row, "hold": 3}]
+            assert client.list_timeline_commits(project, "film", limit=100)["head"] == head_before
     finally:
         world.stop()
+
+
+def test_ordinary_http_empty_bootstrap_must_be_reachable(
+    tmp_path, monkeypatch, astrid_importable,
+):
+    row = {"id": "title", "clipType": "text", "track": "picture", "at": 0, "hold": 4,
+           "params": {"text": "Ordinary HTTP"}, "opaque": [None, False, 0, {}, []]}
+    _run_ordinary_http_hold_clear_case(
+        tmp_path, monkeypatch, astrid_importable, row=row, expect_hold_clear=False,
+    )
+
+
+def test_ordinary_http_authored_source_window_hold_clear_preserves_timing(
+    tmp_path, monkeypatch, astrid_importable,
+):
+    row = {"id": "title", "clipType": "text", "track": "picture", "at": 0,
+           "from": 0, "to": 4, "hold": 4, "params": {"text": "Ordinary HTTP"},
+           "opaque": [None, False, 0, {}, []]}
+    _run_ordinary_http_hold_clear_case(
+        tmp_path, monkeypatch, astrid_importable, row=row, expect_hold_clear=True,
+    )
