@@ -1,53 +1,38 @@
-# app lead - 2026-10-20T02:16Z (hourly check-in)
+# app lead - 2026-10-20T03:17Z (hourly check-in)
 
 ## Health
-- Dispatcher heartbeat 12s (pid 311, running with PLAYWRIGHT_BROWSERS_PATH env). hub-syncd alive (pid 310); last "hub-sync app" commit on origin/main 02:09:37Z (~6 min old, within cadence); no rebase-merge in the hub clone. Codex: "Logged in using ChatGPT".
-- Disk: 7.8 GB free on /home/user (81% used; below the 8 GB floor). Another lead subagent is recycling worktrees; I recycled nothing. /home/user/work/wt is 18 GB (66 worktrees). Mem 14.9 GB available, load ~2.
-- Lead watcher (scratchpad/lead-watch.sh): NOT running (count 0). It is a one-shot ~55 min monitor owned by the lead session; the container restart and its 01:49Z exit explain it. Its auto-recycle (<10 GB) and manager auto-restart therefore are not active until the lead session re-arms it. I did not start it detached because its output would go nowhere.
+- Dispatcher heartbeat 11s (pid 310, up ~40 min, started with PLAYWRIGHT_BROWSERS_PATH). hub-syncd alive (pid 311). Last "hub-sync app" commit on origin/main 03:12:27Z (~5 min old); no rebase-merge in the hub clone. (Push-negotiation warnings in hub-sync.log are harmless; pushes land.)
+- Codex: "Logged in using ChatGPT". Lead watcher (lead-watch.sh, pid 4705) running again since the 02:34Z recovery.
+- Disk: 20 GB free on /home/user (51% used). Mem 14 GB available, load ~1. No recycling by me this hour.
+- Leased worktrees present, clean, KEEP-marked: app-m1-full-agent-source at 4a75f68f, app-m1-full-runtime-source at 4bb1d0f7.
 
 ## Manager
-- Model gpt-6.1-sol/high, no fallback, no Codex rate-limit/auth errors. Alive (codex exec pid 4123, 26 min old, round 20261020T0148Z log still growing, 958 KB) and ACTIVE: it was writing briefs at 02:14Z (scalar-ingress-map, parent-delete-real-spec). No restart done by me this hour (last restart 01:49Z, see lead-manager-restarts.log).
-- Workers running: 3 (app-m1-opaque-move-parity 02:09Z, app-m2-params-null-session 02:11Z, app-m2-scalar-owner-binding 02:11Z). Below the 5-7 target; two new briefs were just written and dispatch should follow, and free disk (7.8 GB) is a plausible limit. Watch at the next check: if still <5 for 30 min (from ~02:18Z) without a stated blocker, restart.
-- No failed (nonzero exit) workers; none stuck. queue/pending and held are empty. queue/refused holds 3 old items (app-m1-bounded-log-classify, recovery-core-local, recovery-ui-local) plus one old test request; unchanged and known.
-- Integration sha of /home/user/work/app: ea3461e0c6945e50e4e80539ead92ed2fbc7efe7 (in sync with hub/tl/integration).
+- Model gpt-6.1-sol/high, no fallback, no rate-limit/auth errors. Alive (timeout 7d codex exec pid 352, round 20261020T0234Z, started 02:34Z, running marker present). ACTIVE, not idle: STATUS refreshed 03:12Z and two new workers were dispatched at 03:13Z.
+- Workers running: 2 (app-m2-ordinary-core-qualify, app-m2-parent-track-create-capture; both started 03:13Z). Below the 5-7 target: six workers finished between 03:07 and 03:12Z and the manager is mid-dispatch; briefs for app-m2-empty-bootstrap-seam, controls-source-compose and others are written. No test running; queue pending/held empty. If still <5 at ~03:45Z without a stated blocker, the watcher/I will restart the manager.
+- Six interrupted M2 workers (exit=137): four were re-dispatched as -r1 and finished (placement-native-parity-r1, scalar-controls-r1, trim-ingress-map-r1, writer-contract-refresh-r1; plus scalar-control-owner-fix and ordinary core results are in STATUS). ordinary-session-compose and outbox-upgrade-proof have no -r1; STATUS lists their results (ordinary f5e438652, outbox upgrade 9 cases) as completed UNRUN, and ordinary-core-qualify is now running. No failed or stuck workers. queue/refused: the 3 old items plus 1 old test, unchanged.
+- Corrected-environment App full: requested and COMPLETE (app-full-m1-opaque-integration-1020025341-10022): 18336 PASS / 6 exact-baseline FAIL / 3 expected, all 1459 files executed, 991 s, failing set equal to the accepted baseline, ZERO new. Used the restored lease sources. 26543 stays recorded as INVALID ENVIRONMENT.
+- Integration sha of /home/user/work/app: c8566f12d114c538db8136b8c580a1e663af1ad1 (merged 02:17:58Z, app-m1-opaque-move-parity; only new merge since 02:16Z).
 
-## Milestone (STATUS.md, 02:12Z)
-M1 App parity port LANDED (opaque-remap port merged at ea3461e0c, 02:06:47Z, the only new merge since 00:33Z); M0 COMPLETE. Global M1 remains unrecorded in PLAN.md (gate record has only Checkpoint A and "Hard stop: NOT YET"); waiting on the Runtime null-speed fix (Agent a610 fix already merged). All M2/M3 integration merges HELD. Not COMPLETE, not blocked on infrastructure.
+## Milestone (STATUS.md, 03:12Z)
+M0 COMPLETE; APP M1 EXIT COMPLETE (parity full 10022 zero new); global M1 NOT RECORDED in PLAN.md (gate record still only Checkpoint A + "Hard stop: NOT YET"). All M2/M3 integration merges HELD. Not COMPLETE, no infrastructure blocker. Quiet window ended; targeted core tests allowed.
 
 ## Lead instructions / inbox items seen and acted on
-- Container restart recovery ~01:18Z: dispatcher (with PLAYWRIGHT_BROWSERS_PATH), hub-syncd, manager and watcher were restored; manager restarted 01:18Z.
-- Final M1 fulls 12729 and 2755 both showed exactly the 6 baseline failures (18301 PASS / 6 baseline FAIL / 3 expected, 1458 files executed). Orchestrator accepted App's final full at 01:58Z and approved parity.
-- Manager restart 01:49Z (round 20261020T0148Z) for "full speed on M2 branch work, only merges wait".
-- hub/lead/app.md items since last-seen (00:10Z OOM check on full 24066, 00:15Z bundle1 read-only worktrees, 00:55Z quiet window, 00:50Z release held jobs): all done earlier (full retried and finished, bundle1 leases exist and are protected, held queue is empty). No new lead instruction after 00:55Z.
-- New hub/inbox/app.md items through 02:07Z (opaque-remap-parity, native group delete gap, opaque-native-expectations APPROVED, label-initial-release-batch APPROVED) are all present in managers/app/INBOX.md and reflected in STATUS.md (opaque native expectations merged 02:06Z, opaque-move-parity worker active, release compose done). The 02:07Z label-initial-release item is acknowledged only implicitly in STATUS (combined release composer); manager will see it as INBOX.md already holds it.
-- Escalations: app-20261020T0202Z-opaque-native-expectations, T0203Z-label-initial-release-batch, T0205Z-popup-media-read-gap are on origin/main hub/escalations (the first two answered at 02:07Z). Open for the orchestrator/Runtime: T0205Z popup-media-read-gap (Runtime/Agent decision on production read for popup ADD/SWAP).
-- Merge requests from Viewing (vw-m3-app-pure-opacity df6ba7120, vw-m3-flat-compiled-source b23108926): PENDING owner review, HOLD until M1 record; no action.
-- Disk cleanup in progress by another lead subagent (recycle log last entries: render-requester-map, opaque-native-expectations, opaque-remap-parity).
+- hub/lead/app.md: no new items after 00:55Z (file unchanged). Earlier items all done.
+- 02:32Z container restart: recovered by lead-recover.sh (dispatcher, hub-syncd, manager, watcher); six M2 workers marked exit=137 INTERRUPTED; full 17106 marked interrupted.
+- 02:49Z orchestrator decision (leased sources recycled): 26543 cancelled INVALID ENVIRONMENT; 02:58Z leased-worktree fix done: both worktrees recreated (Agent 4a75f68f, Runtime 4bb1d0f7), lease notes updated, workers/<w>/KEEP set. One corrected-environment full authorized and completed (10022, above). The kit bin/recycle (refuses KEEP / *.lease / *ACTIVE* names) is in hub/kit and $ORCH/bin/recycle is byte-identical to it. The lead's own recycler follows the RECYCLE RULE (recyclable-finished-clean.txt or merged App workers, under flock).
+- New hub/inbox/app.md items through Runtime 02:59 (popup decision 02:12, Runtime 02:16 and 02:33 notes, Agent 02:39 Bundle2 FROZEN, orchestrator 02:49 and 02:54, Runtime 02:59 M1 final) are all in managers/app/INBOX.md; manager STATUS ACKs the 02:49 full authorization/recycler fix, Agent 02:39, Runtime 02:33/02:12/02:07.
+- Closed escalations since last check: popup-media-read-gap, leased-full-sources-recycled, remaining-writer-contracts (all answered). New hub/kit changes (AREA-LEAD recycling rule, COMMON "full only if brief asks", PLAN capture-certification line, recycle) applied automatically by sync.
+- Merge request vw-m3-initial-projection-mounted (910773b31, from Viewing): PENDING owner review, HOLD until M1 record; no action.
+- Open manager escalations on the hub/outbound: app-20261020T031215Z-m1-parity-complete (on origin/main); app-20261020T031359Z-empty-bootstrap-preservation (written 03:13Z in $ORCH/escalations, publishes with the next sync; Agent/Runtime-owned decision, judgment, not mine).
+- Viewing's 03:02Z "snapshot-postflight" escalation asks for a lead action on the Viewing machine (.test snapshot lifetime); not this machine's.
 
 ## Infra changes this check
 None (no restarts, no recycling, no config changes).
 
 ## Open blockers and attempted fixes
-- Disk 7.8 GB < 8 GB floor: recycling is being handled by another subagent; lead watcher auto-recycle is currently off. Not touched by me.
-- Lead watcher not running: needs re-arming by the lead session (not restarted here).
-- Worker count 3 < 5: manager active and queuing; re-check next hour.
+- Worker count 2 < 5: manager active and dispatching after a burst of completions. Re-check next hour; restart rule at 30 min.
+- No infrastructure blockers.
 
 ## Questions for the orchestrator
-- None new. Pending on your side: Runtime null-speed fix then PLAN M1 record; popup-media-read-gap decision (Runtime/Agent).
-
-## Lead 02:25Z: disk pressure on the app machine (for the orchestrator / App manager)
-- Free disk fell to 7.6 GB at 02:12Z. Recycling finished worktrees already contained in integration or in another live branch brought it back to 13 GB.
-- About 45 finished App M2 worktrees (~300 MB each) cannot be recycled safely: their branches are unmerged (M2 merges are held until the M1 record) and contained nowhere else. With 5–7 new workers running, disk will shrink again.
-- Ask: please have the App manager name in STATUS.md (or a "Recyclable:" line) the finished workers it no longer needs a worktree for (superseded, or composed into another branch). Branches are always kept; only worktrees are removed. The lead watcher will then recycle them automatically.
-
-## Lead 02:36Z: second container restart (~02:32Z), recovered
-- All processes were lost again. By 02:35Z the dispatcher (Playwright shim env), hub-syncd, the App manager (Codex gpt-6.1-sol, round 20261020T0234Z) and the lead watcher were back. Disk, repos and Codex login are intact.
-- Six M2 workers were killed mid-run and marked exit=137 INTERRUPTED (no commit; any partial changes stay uncommitted in their worktrees) for the manager to re-dispatch: app-m2-ordinary-session-compose, outbox-upgrade-proof, placement-native-parity, scalar-controls, trim-ingress-map, writer-contract-refresh.
-- Full app-full-m1-opaque-integration-1020022402-17106 was killed mid-suite (no final summary; log kept) and marked error INTERRUPTED. Requeued once as app-full-m1-opaque-integration-1020023434-26543 on the same target and suite.
-- Recovery is now scripted, so a future restart is restored the same way.
-
-## Lead 02:58Z: re orchestrator 02:50Z (leased source worktrees)
-- My mistake: the lead watcher's auto-recycle removed the leased /home/user/work/wt/app-m1-full-agent-source and app-m1-full-runtime-source. They looked "contained in another branch" and it did not check lease notes.
-- Done: after app-m1-full-collection-diagnose finished (diagnosis in managers/app/notes/full26543-collection-diagnosis.md), I cancelled 26543 (status cancelled, INVALID ENVIRONMENT; process group killed; markers and snapshot cleaned).
-- Recreated, detached and clean: app-m1-full-agent-source at Agent tl/integration 4a75f68f32049a69fd86135c645fa64c51175c14 (includes the numeric fix), and app-m1-full-runtime-source at Runtime tl/integration 4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136 (includes the null-speed fix d79758d). Lease notes are updated with these SHAs, and workers/<w>/KEEP is set on both.
-- Lead auto-recycle is now restricted to manager-listed (recyclable-finished-clean.txt) or merged App workers. It skips KEEP, lease and ACTIVE-named worktrees and those with queued or running tests, and runs under one lock. The corrected-environment App full is the manager's to request.
+- Please record global M1 in PLAN.md (App 10022 ZERO NEW, Runtime 3829/7-baseline zero new, Agent 4a75f68f). M2/M3 merges and the held public10 install wait on it; the workers are limited to source/static work meanwhile.
+- Pending your decision: app-20261020T031359Z-empty-bootstrap-preservation (two preservation seams for createDefaultTimeline) and Agent/Runtime ownership of the transition-SET and parent media/import insertion contracts.
