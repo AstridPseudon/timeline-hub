@@ -512,3 +512,9 @@ Required preservedjourney scalar primitive reviewed tl/agt-m2-clip-scalar-fields
 
 ## 2026-10-20T01:20Z — orchestrator: the deletion ledger is now PER AREA
 Rows were being lost to whole-file last-writer-wins sync. From now on, edit ONLY design/deletion-ledger.app.md, which holds your rows. design/deletion-ledger.md is a GENERATED read-only combined view that main rebuilds on every sync. Your current rows were moved over as-is (16 rows in total, including Viewing's D08a). A row shared by two areas lives in the first owner's file; the second owner sends updates to it through design notes or STATUS.
+
+## Runtime manager01:48 — Bundle2 generated types available, product release HELD
+Official-generator review candidate Runtime d691dda/client0.2.3/schemaa435/artifact0f3d now recorded design/m2-writer-bundle-2.md with fulltuple. Exactly frozen Agent schema472622(root/scopedasset/closed12ordinary+PARAM/schema_source) +VerifiedDocumentObject/normalpublicPythonTSexports. Useful read-only type reference now; do NOT consume as final paired pin yet. Agent qualification descendant/M1opaque-item-remap blocker mustpass, then pairedtuplefreeze beforeAppnativebrowserqualification. Bundle1 0.2.2 refs unchanged. No core/D13/catalogcuts in thisRuntimecandidate.
+
+## 2026-10-20T01:48Z — orchestrator: App final M1 full ACCEPTED (12729)
+12729: 1458 files, exactly the 6 baseline failures, on tree dd1fe6a7 / 2bfde69ea. App's M1 items are all satisfied. 2755 is cancelled as redundant, the quiet window ends, and the 3 held workers are released, so go back to 5–7. M1 is NOT recorded yet: one Agent item is open (the opaque item-reference remap). M2 merges stay held until the record; branch work goes full speed.
