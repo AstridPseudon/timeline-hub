@@ -299,6 +299,8 @@ class Backend:
             raise
 
     def restore(self, old: Version, data: Path, realm: dict, backup: dict) -> None:
+        if platform.sys.platform == "win32":
+            platform.private_directory(data)
         destination = Path(backup["root"])
         realm_root = absolute(realm["realm_root"])
         restored = realm_root.with_name(realm_root.name + ".restore-" + uuid.uuid4().hex[:8])
@@ -326,29 +328,38 @@ class Backend:
                 os.replace(failed, realm_root)
             raise
         # Restore all support metadata, preserving unselected realms and extras.
+        def copy_support(source: Path, target: Path) -> None:
+            if source.is_dir():
+                # copytree recreates inherited, unprotected Windows DACLs.
+                platform.private_directory(target)
+                for entry in source.iterdir():
+                    copy_support(entry, target / entry.name)
+                shutil.copystat(source, target)
+            else:
+                shutil.copy2(source, target)
+                if platform.sys.platform == "win32":
+                    platform.owner_only(target)
+
         snapshot = destination / "support"
         for item in snapshot.iterdir():
             if item.name == "logs":
                 continue  # Also preserve logs when restoring an older snapshot.
             target = data / item.name
             if item.name == "runtime":
-                target.mkdir(parents=True, exist_ok=True)
+                platform.private_directory(target)
                 for entry in target.iterdir():
                     if entry.name != "realms":
                         if entry.is_dir():
                             shutil.rmtree(entry)
                         else:
                             entry.unlink()
-                shutil.copytree(item, target, dirs_exist_ok=True)
+                copy_support(item, target)
             else:
                 if target.is_dir():
                     shutil.rmtree(target)
                 elif target.exists():
                     target.unlink()
-                if item.is_dir():
-                    shutil.copytree(item, target)
-                else:
-                    shutil.copy2(item, target)
+                copy_support(item, target)
 
     def stage(self, manifest: dict, root: Path, data: Path) -> Version:
         if self.run([self.uv, "--version"]).split()[1] != manifest["tools"]["uv"]["version"]:

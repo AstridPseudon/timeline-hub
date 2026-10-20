@@ -1,5 +1,6 @@
 """Update backups reserve disk space and preserve the logs of a failed update."""
 
+import os
 import shutil
 from pathlib import Path
 from types import SimpleNamespace
@@ -8,7 +9,15 @@ from unittest.mock import Mock
 import pytest
 
 from astrid.installer.backend import Backend
-from astrid.installer.core import BackupSpaceError, Version, write_json
+from astrid.installer.core import (
+    BackupSpaceError,
+    Installer,
+    Version,
+    current,
+    read_json,
+    switch,
+    write_json,
+)
 
 
 def workspace(tmp_path, system):
@@ -171,3 +180,163 @@ def test_backup_size_propagates_unreadable_directory_errors(tmp_path, monkeypatc
 
     with pytest.raises(PermissionError, match="cannot read workspace"):
         backend._backup_size(data, support=True)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permission modes")
+def test_support_rollback_preserves_posix_file_and_directory_modes(tmp_path, monkeypatch):
+    backend, data, realm, version = workspace(tmp_path, "darwin")
+    tool = data / "helpers/run"
+    tool.parent.mkdir(mode=0o750)
+    tool.write_bytes(b"#!/bin/sh\nexit 0\n")
+    tool.chmod(0o750)
+    monkeypatch.setattr("runtime_protocol.fsclone.clone_or_copy_file", shutil.copy2)
+    identity = {"realm_root": str(realm)}
+    backup = backend.backup(version, data, identity)
+
+    backend.restore(version, data, identity, backup)
+
+    assert tool.stat().st_mode & 0o777 == 0o750
+    assert tool.parent.stat().st_mode & 0o777 == 0o750
+
+
+@pytest.fixture
+def windows_permissions(monkeypatch):
+    from runtime_protocol import platform, windows_security
+
+    # Model protected DACLs separately from POSIX modes: copy2/copytree do not
+    # preserve them on Windows. Existing directories must still be validated.
+    protected = set()
+
+    def validate(path):
+        if Path(path) not in protected:
+            raise PermissionError(f"unprotected existing DACL: {path}")
+
+    def private_directory(path):
+        path = Path(path)
+        if path.exists():
+            validate(path)
+        else:
+            path.mkdir(parents=True)
+            protected.add(path)
+
+    def read_private(path):
+        path = Path(path)
+        validate(path.parent)
+        validate(path)
+        return path.read_bytes()
+
+    remove_tree, unlink = shutil.rmtree, Path.unlink
+
+    def remove_directory(path, *args, **kwargs):
+        remove_tree(path, *args, **kwargs)
+        protected.difference_update({p for p in protected if p == path or Path(path) in p.parents})
+
+    def remove_file(path, *args, **kwargs):
+        unlink(path, *args, **kwargs)
+        protected.discard(path)
+
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "_move_file_write_through", os.replace)
+    monkeypatch.setattr(windows_security, "private_directory", private_directory)
+    monkeypatch.setattr(windows_security, "restrict", lambda path: protected.add(Path(path)))
+    monkeypatch.setattr(windows_security, "read_private", read_private)
+    monkeypatch.setattr(shutil, "rmtree", remove_directory)
+    monkeypatch.setattr(Path, "unlink", remove_file)
+    return protected
+
+
+def test_windows_failed_update_restores_private_support_and_can_retry(
+    tmp_path, windows_permissions,
+):
+    from astrid_runtime.paths import RuntimePaths
+    from runtime_protocol import platform
+
+    backend, data, realm, _version = workspace(tmp_path, "win32")
+    identity = {"realm_id": "selected", "realm_root": str(realm)}
+    retained = {
+        data / "credentials/selected.json": b"workspace credential",
+        data / "runtime/backup-auth.key": b"backup key",
+        data / "runtime/source-profiles/astrid.json": b"source profile",
+    }
+    for path, payload in retained.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(payload)
+
+    def version(name):
+        folder = backend.root / "versions" / name
+        python = folder / "py/Scripts/python.exe"
+        python.parent.mkdir(parents=True)
+        python.touch()
+        value = Version(folder, python, folder / "profile.json", {})
+        write_json(folder / "version.json", value.document())
+        return value
+
+    old, failed, retry = (version(name) for name in ("old", "failed", "retry"))
+    switch(backend.root, old)
+    windows_permissions.update({tmp_path, *tmp_path.rglob("*")})
+    backend.workspace = Mock(return_value=identity)
+    backend.stage = Mock(side_effect=[failed, retry])
+    backend.register = Mock()
+    backend.finish = Mock()
+    backend.open = Mock()
+
+    def restore_realm(argv, **_kwargs):
+        # Only the offline realm restore subprocess is faked. Support rollback
+        # and the transaction below use the real installer implementations.
+        shutil.copytree(Path(argv[-3]), Path(argv[-2]))
+
+    backend.run = Mock(side_effect=restore_realm)
+
+    def upgrade(candidate, _data):
+        if candidate == failed:
+            (realm / "realm.sqlite3").write_bytes(b"failed migration")
+            for path in retained:
+                path.write_bytes(b"candidate state")
+            raise RuntimeError("candidate upgrade failed")
+
+    backend.upgrade = Mock(side_effect=upgrade)
+
+    def start(_version, _data):
+        RuntimePaths.current(data_root=data).ensure_support_dirs()
+        for path, payload in retained.items():
+            assert platform.read_private_file(path) == payload
+
+    backend.start = Mock(side_effect=start)
+    backend.verify = Mock()
+    installer = Installer(backend.root, data, backend, say=lambda _line: None)
+
+    with pytest.raises(RuntimeError, match="^candidate upgrade failed$"):
+        installer.run("update", {})
+
+    assert current(backend.root) == old
+    assert read_json(backend.root / "update-transaction.json")["step"] == "rolled_back"
+    backend.start.assert_called_once_with(old, data)
+    assert (realm / "realm.sqlite3").read_bytes() == b"selected database"
+    assert (data / "runtime/realms/other/excluded").is_file()
+    assert (data / "logs/install.log").read_text() == "before the update\n"
+
+    installer.run("update", {})
+
+    assert current(backend.root) == retry
+    assert read_json(backend.root / "update-transaction.json")["step"] == "complete"
+    assert backend.start.call_args_list[-1].args == (retry, data)
+    backend.verify.assert_any_call(old, data, "selected")
+    backend.verify.assert_any_call(retry, data, "selected")
+
+
+@pytest.mark.parametrize("directory", [".", "runtime"])
+def test_windows_restore_does_not_restrict_retained_unsafe_directory(
+    tmp_path, windows_permissions, directory,
+):
+    backend, data, realm, version = workspace(tmp_path, "win32")
+    windows_permissions.update({tmp_path, *tmp_path.rglob("*")})
+    identity = {"realm_root": str(realm)}
+    backup = backend.backup(version, data, identity)
+    backend.run = Mock(side_effect=lambda argv, **_: shutil.copytree(Path(argv[-3]), Path(argv[-2])))
+    unsafe = data / directory
+    windows_permissions.discard(unsafe)
+
+    with pytest.raises(PermissionError, match="unprotected existing DACL"):
+        backend.restore(version, data, identity, backup)
+
+    assert unsafe not in windows_permissions

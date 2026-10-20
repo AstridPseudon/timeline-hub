@@ -410,6 +410,9 @@ Note which OS line it gave you.
 2. Keep the terminal open and wait for recovery to finish and the failure message with its `Details:` line.
    Do not press Ctrl+C again while Astrid is restoring the previous version.
 3. Run the two checks and open the page.
+4. Native Windows qualification: run the update line once more and let it finish. Confirm the rollback restarted
+   the previous version, the retry succeeds, and the page still shows the same workspace and projects. Check the
+   installer log for permission/DACL errors opening credentials or source profiles; none should appear.
 
 You should see `Astrid couldn't finish. Nothing in your workspace was changed or removed.` followed by a
 `Details:` line. Astrid then runs the previous version, on the same workspace, with the same projects. It's a failure if Astrid
