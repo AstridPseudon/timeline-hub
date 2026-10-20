@@ -158,6 +158,21 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
           return realPort.capture(input);
         } };
+        const realElementPort = session.elementPort;
+        session.elementPort = {
+          capture(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            return realElementPort.capture(input);
+          },
+          finish(basis, edit) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            return realElementPort.finish(basis, edit);
+          },
+          submit(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element');
+            realElementPort.submit(input);
+          },
+        };
         const labelPort = session.trackLabelPort;
         const requireCleanLabelEdit = () => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
@@ -237,6 +252,7 @@ export function useTimelineCommandSession(options: {
   const useLatest = useCallback(() => resolve(false), [resolve]);
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+    elementPort: sessionRef.current?.elementPort,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
