@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T11:46:39Z | dispatcher heartbeat 10s -->
+<!-- main | 2026-10-20T11:47:25Z | dispatcher heartbeat 6s -->
 # runtime — 2026-10-20T11:44:09Z
 Milestone: M1 RECORDED. M2 final S2 consumer release PUBLISHED11:28:51Z; consumer pins and one integration full now. M3 capture remains gated.
 Integrated: Runtime tl/integration 2c4ac180c2220bdad966bc01e95ad230e99ce26a, tree 7ab412cc4bcbe517efcfa806e092336390312e18. Exact tree equals independently APPROVED f7081c14 release (design/runtime-release-s2-final-review.md). F1/F2 safety, main29d0954 credentials/advisory/disk, and producer normalization remain byte-intact. Persisted views now projects:write + explicit key, plain response; both TS clients corrected. Reviewed connector78 and full official S2 union included.
