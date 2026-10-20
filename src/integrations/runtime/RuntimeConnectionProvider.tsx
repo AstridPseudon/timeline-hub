@@ -308,7 +308,8 @@ export function RuntimeConnectionProvider({
     if (failedReadings >= 2) {
       return { ...notConnected, state: { status: connectedBefore || gatewayAnswered ? 'not_running' : 'set_up' }, isBooting: false };
     }
-    return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
+    // Boot ends after the first answer; the second reading only decides which recovery panel to show.
+    return { ...notConnected, state: { status: 'connecting' }, isBooting: outcome === null };
   }, [gated, outcome, permission, isChecking, connectedBefore, connect, failedReadings, gatewayAnswered]);
 
   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;

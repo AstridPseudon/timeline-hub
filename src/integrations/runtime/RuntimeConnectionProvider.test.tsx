@@ -82,6 +82,12 @@ function renderProvider(
 
 const status = () => screen.getByTestId('status').textContent;
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((settle) => { resolve = settle; });
+  return { promise, resolve };
+}
+
 class MemoryStorage {
   private values = new Map<string, string>();
   getItem(key: string) { return this.values.get(key) ?? null; }
@@ -104,6 +110,102 @@ afterEach(() => {
 });
 
 describe('granted', () => {
+  it('stays booting without probing while the first permission query is pending', async () => {
+    const gateway = fakeGateway();
+    const permission = deferred<{ state: string; onchange: null }>();
+    const permissions: PermissionsLike = { query: vi.fn(() => permission.promise) };
+    renderProvider(gateway, permissions);
+
+    expect(latest.state).toEqual({ status: 'connecting' });
+    expect(latest.isBooting).toBe(true);
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+
+    await act(async () => { permission.resolve({ state: 'prompt', onchange: null }); });
+    await waitFor(() => expect(latest.isBooting).toBe(false));
+    expect(latest.awaitingConnect).toBe(true);
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('stays booting and keeps gated children unmounted while the first probe is pending', async () => {
+    const gateway = fakeGateway();
+    const health = deferred<Response>();
+    gateway.routes['/v1/health'] = () => health.promise;
+    const mounted = vi.fn();
+    function ProtectedQueryOwner() {
+      React.useEffect(mounted, []);
+      return <div data-testid="protected-query" />;
+    }
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000}>
+        <>
+          <Probe />
+          <RuntimeConnectionGate><ProtectedQueryOwner /></RuntimeConnectionGate>
+        </>
+      </RuntimeConnectionProvider>,
+    );
+
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    expect(latest.isBooting).toBe(true);
+    expect(latest.isConnected).toBe(false);
+    expect(screen.queryByTestId('protected-query')).toBeNull();
+    expect(mounted).not.toHaveBeenCalled();
+
+    health.resolve(json({ status: 'ok', protocol: 'workspace.v1' }));
+    await waitFor(() => expect(screen.getByTestId('protected-query')).toBeInTheDocument());
+  });
+
+  it('ends boot anonymously after the first failed reading without mounting gated children', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    const mounted = vi.fn();
+    function ProtectedQueryOwner() {
+      React.useEffect(mounted, []);
+      return <div data-testid="protected-query" />;
+    }
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000}>
+        <>
+          <Probe />
+          <RuntimeConnectionGate><ProtectedQueryOwner /></RuntimeConnectionGate>
+        </>
+      </RuntimeConnectionProvider>,
+    );
+
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    expect(latest.state).toEqual({ status: 'connecting' });
+    expect(latest.isBooting).toBe(false);
+    expect(latest.isConnected).toBe(false);
+    expect(screen.queryByTestId('protected-query')).toBeNull();
+    expect(mounted).not.toHaveBeenCalled();
+  });
+
+  it('recovers on the second reading after the first reading failed', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    const mounted = vi.fn();
+    function ProtectedQueryOwner() {
+      React.useEffect(mounted, []);
+      return <div data-testid="protected-query" />;
+    }
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000}>
+        <>
+          <Probe />
+          <RuntimeConnectionGate><ProtectedQueryOwner /></RuntimeConnectionGate>
+        </>
+      </RuntimeConnectionProvider>,
+    );
+
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    expect(latest.isBooting).toBe(false);
+    gateway.up();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(latest.state.status).toBe('connected'));
+    expect(latest.isConnected).toBe(true);
+    expect(screen.getByTestId('protected-query')).toBeInTheDocument();
+    expect(mounted).toHaveBeenCalledTimes(1);
+  });
+
   it('probes health then realm at once and connects, exposing the realm name', async () => {
     const gateway = fakeGateway();
     const onConnected = vi.fn();
