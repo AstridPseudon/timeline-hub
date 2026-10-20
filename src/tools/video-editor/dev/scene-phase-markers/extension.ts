@@ -676,18 +676,38 @@ export function buildAlignShotsPatch(
   alignments: readonly ShotAlignment[],
   extensionId: string,
 ): TimelinePatch {
+  const seenTargets = new Set<string>();
   const operations: TimelinePatchOperation[] = [];
   alignments.forEach((alignment) => {
+    if (seenTargets.has(alignment.clipId)) {
+      throw new Error(`Scene Phase Markers: ambiguous alignment for clip ${alignment.clipId}.`);
+    }
+    seenTargets.add(alignment.clipId);
+    if (!Number.isFinite(alignment.time) || alignment.time < 0) {
+      throw new Error(`Scene Phase Markers: invalid alignment time for clip ${alignment.clipId}.`);
+    }
+    if (alignment.hold !== undefined && (!Number.isFinite(alignment.hold) || alignment.hold <= 0)) {
+      throw new Error(`Scene Phase Markers: invalid alignment hold for clip ${alignment.clipId}.`);
+    }
+    const currentClip = snapshot.clips.find((clip) => clip.id === alignment.clipId);
+    // A same-track absolute move is equivalent to the ordinary native member's
+    // `{ at }` shape. Keep the old `{ track, at }` shape for cross-track or
+    // unresolved targets; those families remain on their existing guarded path.
+    const movePayload = currentClip?.track === alignment.trackId
+      ? { at: alignment.time }
+      : { track: alignment.trackId, at: alignment.time };
     operations.push({
       op: 'clip.move',
       target: alignment.clipId,
-      payload: { track: alignment.trackId, at: alignment.time },
+      payload: movePayload,
     });
     if (alignment.hold !== undefined) {
       operations.push({
         op: 'clip.update',
         target: alignment.clipId,
-        payload: { hold: alignment.hold, mode: 'merge' },
+        // The explicit values/clear envelope is the generic scalar member
+        // shape. It preserves a positive hold SET without inventing clears.
+        payload: { values: { hold: alignment.hold }, clear: [] },
       });
     }
   });

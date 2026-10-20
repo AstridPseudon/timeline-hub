@@ -3,11 +3,12 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import {
   captureGenericPatch,
+  classifyGenericPatch,
   executeGenericPatch,
   GenericPatchRefusal,
   projectGenericPatchPreview,
 } from './genericPatchCapture.ts';
-import { copy, freezeJson } from './clipMovePrimitives.ts';
+import { AuthoredState, copy, freezeJson } from './clipMovePrimitives.ts';
 import { environment } from './__tests__/commitSessionEnvironment.ts';
 
 const nativePatch = (hold = 1.25): TimelinePatch => ({ version: 1, operations: [
@@ -21,6 +22,20 @@ async function authoredBundle() {
 }
 
 describe('bounded native generic patch capture', () => {
+  it('classifies the complete patch before native capture', () => {
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { label: 'Native' } },
+      { op: 'clip.update', target: 'x', payload: { hold: 1.25 } },
+    ] })).toBe('supported');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { label: 'Native' } },
+      { op: 'project-data.write', target: 'extension', payload: { value: 1 } },
+    ] })).toBe('mixed');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'project-data.write', target: 'extension', payload: { value: 1 } },
+    ] })).toBe('unsupported');
+  });
+
   it('captures one ordered command list against one sequential authored bundle', async () => {
     const { bundle } = await authoredBundle();
     const input = nativePatch(1.23456789);
@@ -43,6 +58,114 @@ describe('bounded native generic patch capture', () => {
     expect(input).toEqual(originalPatch);
     expect(Object.isFrozen(result.patch.operations[0].payload)).toBe(true);
     expect(Object.isFrozen(result.commands[0].expect)).toBe(true);
+  });
+
+  it('composes hold/clear, label, and absolute move into one replayable batch', async () => {
+    const { bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    (bundle.parent.clips[0] as Record<string, unknown>).transition = { type: 'wipe' };
+    const patch: TimelinePatch = { version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 4 }, clear: ['transition'] }, order: 0 },
+      { op: 'track.update', target: 'V1', payload: { label: 'Picture' }, order: 1 },
+      { op: 'clip.move', target: 'x', payload: { at: 4 }, order: 2 },
+    ] };
+    const result = captureGenericPatch(bundle, patch, (operation) => operation.op === 'track.update'
+      ? 'parent/track:V1' : 'parent/clip:x');
+
+    expect(result.commands.map((command) => command.op)).toEqual(['clip.set', 'track.set', 'clip.move']);
+    expect(result.records.map((record) => record.ordinal)).toEqual([0, 1, 2]);
+    expect(result.preview.operations).toEqual([
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 4 }, clear: ['transition'] } },
+      { op: 'track.update', target: 'V1', payload: { label: 'Picture' } },
+      { op: 'clip.move', target: 'x', payload: { at: 4 } },
+    ]);
+    const replay = executeGenericPatch(copy(bundle), result.commands);
+    expect(replay).toEqual({ bundle: result.bundle, records: result.records });
+    expect(result.bundle.parent.clips[0]).toMatchObject({ hold: 4, at: 4 });
+    expect(result.bundle.parent.clips[0]).not.toHaveProperty('transition');
+  });
+
+  it('carries a matching move-derived static duration through the producer hold member', async () => {
+    const { bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    const clip = new AuthoredState(bundle).entity('parent/clip:x')!;
+    clip.app = { opaque: { keep: [null, false] }, astrid: { for: 1 } };
+    const patch: TimelinePatch = { version: 1, source: 'timeline.native-ordinary', operations: [
+      { op: 'clip.move', target: 'x', payload: { at: 4 }, order: 0 },
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 5 }, clear: [] }, order: 1 },
+    ] };
+
+    const result = captureGenericPatch(bundle, patch, () => 'parent/clip:x');
+
+    expect(result.commands.map((command) => command.op)).toEqual(['clip.move', 'clip.set']);
+    expect(result.records[1]!.writes).toEqual([
+      { ref: 'parent/clip:x', path: ['app', 'astrid', 'for'], before: { state: 'present', value: 1 }, after: { state: 'present', value: 5 } },
+      { ref: 'parent/clip:x', path: ['hold'], before: { state: 'present', value: 1 }, after: { state: 'present', value: 5 } },
+    ]);
+    expect(new AuthoredState(result.bundle).entity('parent/clip:x')).toMatchObject({
+      at: 4, hold: 5, app: { opaque: { keep: [null, false] }, astrid: { for: 5, fixed_start: true } },
+    });
+
+    const replay = executeGenericPatch(copy(bundle), result.commands);
+    expect(replay).toEqual({ bundle: result.bundle, records: result.records });
+  });
+
+  it('refuses an independent static duration atomically after a move', async () => {
+    const { bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    const moved = executeGenericPatch(bundle, [{
+      schema_version: 1, op: 'clip.move', version: '1', select: 'parent/clip:x',
+      args: { on: 4 }, intent: { ripple: 'none', anchor: 'fixed', position: 'absolute' },
+    }]).bundle;
+    const clip = new AuthoredState(moved).entity('parent/clip:x')!;
+    clip.app = { opaque: null, astrid: { for: 2 } };
+    const patch: TimelinePatch = { version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 5 }, clear: [] } },
+    ] };
+    const before = copy(moved);
+
+    expect(() => captureGenericPatch(moved, patch, () => 'parent/clip:x')).toThrow(GenericPatchRefusal);
+    expect(moved).toEqual(before);
+  });
+
+  it('composes structural birth and dependent add/remove with existing generic members', async () => {
+    const { env, bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    const patch: TimelinePatch = { version: 1, operations: [
+      { op: 'track.add', target: 'ordinary-track', payload: { kind: 'visual', role: 'output' }, order: 0 },
+      { op: 'clip.add', target: 'ordinary-clip', payload: {
+        track: 'ordinary-track', at: 1.25, hold: 2.5, clipType: 'hold',
+      }, order: 1 },
+      { op: 'clip.remove', target: 'ordinary-clip', order: 2 },
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 2 }, clear: [] }, order: 3 },
+      { op: 'track.update', target: 'V1', payload: { label: 'Picture' }, order: 4 },
+      { op: 'clip.move', target: 'x', payload: { at: 4 }, order: 5 },
+    ] };
+    const result = captureGenericPatch(bundle, patch, (operation) => operation.op === 'track.update'
+      ? 'parent/track:V1' : 'parent/clip:x');
+
+    expect(result.commands.map((command) => command.op)).toEqual([
+      'track.create', 'clip.add', 'clip.delete', 'clip.set', 'track.set', 'clip.move',
+    ]);
+    expect(result.commands.slice(0, 3).map((command) => command.created)).toEqual([
+      ['parent/track:ordinary-track'], ['parent/clip:ordinary-clip'], [],
+    ]);
+    expect(result.records.map((record) => record.ordinal)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(result.preview.operations.slice(0, 3)).toEqual(patch.operations.slice(0, 3));
+    expect(executeGenericPatch(copy(bundle), result.commands)).toEqual({
+      bundle: result.bundle,
+      records: result.records,
+    });
+
+    const current = env.current();
+    const before = copy(current);
+    const projected = projectGenericPatchPreview({ ...result.preview, source: 'timeline.native-ordinary' }, current)!;
+    expect(projected.config.tracks?.some((track) => track.id === 'ordinary-track')).toBe(true);
+    expect(projected.config.clips?.some((clip) => clip.id === 'ordinary-clip')).toBe(false);
+    expect(projected.config.clips?.find((clip) => clip.id === 'x')).toMatchObject({ hold: 2, at: 4 });
+    expect(projected.config.tracks?.find((track) => track.id === 'V1')?.label).toBe('Picture');
+    expect(projected.dataLanes).toBe(current.dataLanes);
+    expect(current).toEqual(before);
   });
 
   it('refuses the complete batch before resolving any owner or executing a member', async () => {
@@ -69,6 +192,25 @@ describe('bounded native generic patch capture', () => {
         expect.objectContaining({ operationIndex: 2, reason: expect.stringContaining('another patch member') }),
       ]);
     }
+    expect(resolved).toBe(false);
+  });
+
+  it('routes malformed qualified move and scalar shapes to visible native refusal', async () => {
+    const { bundle } = await authoredBundle();
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'clip.move', target: 'x', payload: { at: -1 } },
+    ] })).toBe('mixed');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { values: { asset: 'bad' }, clear: [] } },
+    ] })).toBe('mixed');
+    let resolved = false;
+    expect(() => captureGenericPatch(bundle, {
+      version: 1,
+      operations: [{ op: 'clip.move', target: 'x', payload: { at: -1 } }],
+    }, () => {
+      resolved = true;
+      return 'parent/clip:x';
+    })).toThrow(GenericPatchRefusal);
     expect(resolved).toBe(false);
   });
 
