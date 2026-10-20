@@ -1712,29 +1712,41 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
     if type(duration_frames) is not int or duration_frames <= 0:
         raise ValueError("Scene-only authority has no positive canonical frame extent.")
     frames = range(duration_frames)
-    metadata = snapshot.get("metadata")
-    scene_clips = metadata.get("scene_clips") if isinstance(metadata, Mapping) else None
-    label = snapshot_label(snapshot)
+    answers: list[dict[str, Any]] = []
+    scene_clips_output: dict[str, Any] = {}
+    label = _scene_only_label_unavailable()
+    out_root = args.out.expanduser().resolve()
     try:
         source = inherited_source(timeline_path, assets_path)
         if source is None:
             raise SceneQueryUnavailable("exact retained Runtime source required")
         source.validate_snapshot(snapshot)
-        if not isinstance(scene_clips, Mapping):
-            raise SceneQueryUnavailable("compiled scene address map unavailable")
         bound = source.read()
         bound_snapshot = bound.get("snapshot") if isinstance(bound, Mapping) else None
-        bound_metadata = bound_snapshot.get("metadata") if isinstance(bound_snapshot, Mapping) else None
-        if (not isinstance(bound_metadata, Mapping)
-                or bound_metadata.get("scene_clips") != scene_clips):
-            raise SceneQueryUnavailable("compiled scene address map differs from retained source")
-        config = snapshot.get("config")
+        if not isinstance(bound_snapshot, Mapping):
+            raise SceneQueryUnavailable("verified source has no capture snapshot")
+        if bound_snapshot.get("project_slug") != args.project_slug:
+            raise SceneQueryUnavailable("verified source does not match the project")
+        bound_duration_frames = bound_snapshot.get("duration_frames")
+        if (type(bound_duration_frames) is not int or bound_duration_frames <= 0
+                or bound_duration_frames != duration_frames):
+            raise SceneQueryUnavailable("verified source frame extent differs from authority")
+        config = bound_snapshot.get("config")
         config_clips = config.get("clips") if isinstance(config, Mapping) else None
-        if isinstance(config_clips, list):
-            config_ids = {clip.get("id") for clip in config_clips if isinstance(clip, Mapping)}
-            if config_ids != set(scene_clips):
-                raise SceneQueryUnavailable("compiled scene IDs differ from retained address map")
-        out_root = args.out.expanduser().resolve()
+        if (not isinstance(config_clips, list)
+                or any(not isinstance(clip, Mapping) or type(clip.get("id")) is not str
+                       or not clip["id"] for clip in config_clips)):
+            raise SceneQueryUnavailable("verified source has missing or malformed config.clips")
+        config_ids = [clip["id"] for clip in config_clips]
+        if len(set(config_ids)) != len(config_ids):
+            raise SceneQueryUnavailable("verified source has duplicate compiled clip IDs")
+        bound_metadata = bound_snapshot.get("metadata")
+        scene_clips = bound_metadata.get("scene_clips") if isinstance(bound_metadata, Mapping) else None
+        if (not isinstance(scene_clips, Mapping) or set(scene_clips) != set(config_ids)
+                or any(not isinstance(value, Mapping)
+                       or type(value.get("address")) is not str or not value["address"]
+                       for value in scene_clips.values())):
+            raise SceneQueryUnavailable("verified source has no exact compiled scene address map")
         out_root.mkdir(parents=True, exist_ok=True)
         project_dir = Path(
             os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or (REPO_ROOT / "remotion")
@@ -1754,20 +1766,31 @@ def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
                 materialized_root=getattr(args, "materialized_root", None),
                 materialized_objects=getattr(args, "materialized_objects", None),
             )
+        expected_frames = range(duration_frames)
+        if (not isinstance(answers, list) or len(answers) != duration_frames
+                or any(not isinstance(answer, Mapping)
+                       or type(answer.get("frame")) is not int
+                       or answer["frame"] != frame
+                       for answer, frame in zip(answers, expected_frames))):
+            raise SceneQueryUnavailable("public Scene returned an incomplete or misordered frame extent")
         if any(
-            layer.get("clipId") not in scene_clips
+            not isinstance(answer.get("layers"), list)
+            or any(not isinstance(layer, Mapping) or layer.get("clipId") not in scene_clips
+                   for layer in answer["layers"])
             for answer in answers
-            for layer in answer.get("layers", [])
-            if isinstance(layer, Mapping)
         ):
             raise SceneQueryUnavailable("public Scene returned an unaddressed compiled ID")
         source.validate_snapshot(snapshot)
+        # Publish the label and map only after Root succeeded against the
+        # unchanged host-owned binding; never copy them from outer metadata.
+        label = snapshot_label(bound_snapshot, source=source)
+        scene_clips_output = dict(scene_clips)
     except (SceneQueryUnavailable, OSError, TypeError, ValueError, KeyError):
         answers = []
+        scene_clips_output = {}
         label = _scene_only_label_unavailable()
 
-    out_root = args.out.expanduser().resolve()
-    scene_clips_output = dict(scene_clips) if isinstance(scene_clips, Mapping) else {}
+    out_root.mkdir(parents=True, exist_ok=True)
     pack_root = out_root / "filmstrip-view"
     pack_root.mkdir(parents=True, exist_ok=True)
     scene_path = pack_root / "scene-answers.json"
