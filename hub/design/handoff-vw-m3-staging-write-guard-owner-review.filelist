@@ -1,0 +1,3 @@
+M	tests/packs/rendering/_helpers.py
+M	tests/packs/rendering/test_presenter_scene_capability.py
+A	tests/packs/rendering/test_private_node_modules_staging.py

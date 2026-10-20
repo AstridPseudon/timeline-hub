@@ -1,0 +1,156 @@
+diff --git a/tests/packs/rendering/_helpers.py b/tests/packs/rendering/_helpers.py
+index 4a6a9489a..d71750851 100644
+--- a/tests/packs/rendering/_helpers.py
++++ b/tests/packs/rendering/_helpers.py
+@@ -17,6 +17,56 @@ from contextlib import contextmanager
+ from pathlib import Path
+ 
+ 
++def _stage_private_node_modules(
++    peers: Path,
++    modules: Path,
++    *,
++    skip_scopes: frozenset[str] | set[str] = frozenset(),
++) -> None:
++    """Link a borrowed peer graph into a private node_modules root.
++
++    Scope directories are owned by the stage; only their package leaves link
++    to the read-only peer graph.  The realpath check must run before every
++    directory or leaf write so a linked parent cannot turn a link operation
++    into a write through the borrowed graph.
++    """
++    borrowed = peers.resolve(strict=True)
++
++    def assert_private_parent(parent: Path) -> None:
++        resolved = parent.resolve(strict=False)
++        if resolved == borrowed or resolved.is_relative_to(borrowed):
++            raise ValueError(f"staging destination resolves into borrowed graph: {parent}")
++        if parent.exists() and (parent.is_symlink() or not parent.is_dir()):
++            raise ValueError(f"staging destination parent is not a real directory: {parent}")
++
++    assert_private_parent(modules)
++    modules.mkdir(parents=True, exist_ok=True)
++    assert_private_parent(modules)
++    for peer in sorted(peers.iterdir(), key=lambda item: item.name):
++        if peer.name in skip_scopes:
++            continue
++        if peer.name.startswith("@"):
++            scope = modules / peer.name
++            assert_private_parent(scope)
++            scope.mkdir(parents=True, exist_ok=True)
++            if scope.is_symlink() or not scope.is_dir():
++                raise ValueError(f"staging scope is not a real directory: {scope}")
++            for leaf in sorted(peer.iterdir(), key=lambda item: item.name):
++                target = scope / leaf.name
++                assert_private_parent(target.parent)
++                subprocess.run(
++                    ["ln", "-sfnT", str(leaf.resolve(strict=True)), str(target)],
++                    check=True,
++                )
++        else:
++            target = modules / peer.name
++            assert_private_parent(target.parent)
++            subprocess.run(
++                ["ln", "-sfnT", str(peer.resolve(strict=True)), str(target)],
++                check=True,
++            )
++
++
+ @contextmanager
+ def _execution_env():
+     """Prepend the active python bin and node bin to PATH so transport-spawned
+diff --git a/tests/packs/rendering/test_presenter_scene_capability.py b/tests/packs/rendering/test_presenter_scene_capability.py
+index 9d58b34ab..84ab09828 100644
+--- a/tests/packs/rendering/test_presenter_scene_capability.py
++++ b/tests/packs/rendering/test_presenter_scene_capability.py
+@@ -12,6 +12,7 @@ import pytest
+ from astrid.core.rendering.node_pin import resolve_pinned_node
+ from astrid.core.theme._schema import BUILTIN_DEFAULT_THEME
+ from scripts import gen_effect_registry
++from tests.packs.rendering._helpers import _stage_private_node_modules
+ 
+ SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+ 
+@@ -44,9 +45,7 @@ def presenter_query(tmp_path_factory):
+                     for m in archive.getmembers() if m.isfile()}
+         archive.extractall(project, filter="data")
+     (project / "package").rename(package)
+-    for peer in peers.iterdir():
+-        if peer.name != "@banodoco":
+-            (modules / peer.name).symlink_to(peer, target_is_directory=peer.is_dir())
++    _stage_private_node_modules(peers, modules, skip_scopes={"@banodoco"})
+     for name in ("package.json", "webpack-alias.mjs"):
+         shutil.copyfile(ROOT / "remotion" / name, project / name)
+     shutil.copyfile(ROOT / "remotion/src/host-registries.ts", source / "host-registries.ts")
+diff --git /dev/null b/tests/packs/rendering/test_private_node_modules_staging.py
+new file mode 100644
+index 000000000..48d63b8ac
+--- /dev/null
++++ b/tests/packs/rendering/test_private_node_modules_staging.py
+@@ -0,0 +1,66 @@
++from __future__ import annotations
++
++import os
++from pathlib import Path
++
++import pytest
++
++from tests.packs.rendering._helpers import _stage_private_node_modules
++
++
++def _entries(root: Path) -> dict[str, tuple[str, bytes | str | None]]:
++    result: dict[str, tuple[str, bytes | str | None]] = {}
++
++    def visit(directory: Path) -> None:
++        for entry in sorted(os.scandir(directory), key=lambda item: item.name):
++            path = Path(entry.path)
++            relative = str(path.relative_to(root))
++            if entry.is_dir(follow_symlinks=False):
++                result[relative] = ("dir", None)
++                visit(path)
++            elif entry.is_symlink():
++                result[relative] = ("link", os.readlink(path))
++            else:
++                result[relative] = ("file", path.read_bytes())
++
++    visit(root)
++    return result
++
++
++def test_private_staging_uses_real_scopes_and_is_idempotent(tmp_path: Path) -> None:
++    borrowed = tmp_path / "borrowed" / "node_modules"
++    (borrowed / "@scope" / "leaf").mkdir(parents=True)
++    (borrowed / "@scope" / "leaf" / "package.json").write_bytes(b"leaf")
++    (borrowed / "plain").mkdir()
++    (borrowed / "plain" / "package.json").write_bytes(b"plain")
++    stage = tmp_path / "stage" / "node_modules"
++    owned = stage / "@banodoco" / "timeline-composition"
++    owned.mkdir(parents=True)
++    (owned / "package.json").write_bytes(b"published-package")
++
++    _stage_private_node_modules(borrowed, stage, skip_scopes={"@banodoco"})
++    before_borrowed = _entries(borrowed)
++    _stage_private_node_modules(borrowed, stage, skip_scopes={"@banodoco"})
++
++    assert (stage / "@scope").is_dir() and not (stage / "@scope").is_symlink()
++    assert (stage / "@scope" / "leaf").is_symlink()
++    assert (stage / "@scope" / "leaf").resolve() == (borrowed / "@scope" / "leaf").resolve()
++    assert (stage / "plain").is_symlink()
++    assert (owned / "package.json").read_bytes() == b"published-package"
++    assert _entries(borrowed) == before_borrowed
++    assert not (borrowed / "@scope" / "leaf" / "leaf").exists()
++
++
++def test_private_staging_rejects_a_linked_scope_parent_before_writing(tmp_path: Path) -> None:
++    borrowed = tmp_path / "borrowed" / "node_modules"
++    (borrowed / "@scope" / "leaf").mkdir(parents=True)
++    (borrowed / "@scope" / "leaf" / "package.json").write_bytes(b"leaf")
++    stage = tmp_path / "stage" / "node_modules"
++    stage.mkdir(parents=True)
++    (stage / "@scope").symlink_to(borrowed / "@scope", target_is_directory=True)
++    before_borrowed = _entries(borrowed)
++
++    with pytest.raises(ValueError, match="borrowed graph"):
++        _stage_private_node_modules(borrowed, stage)
++
++    assert _entries(borrowed) == before_borrowed
