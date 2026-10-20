@@ -332,11 +332,16 @@ class Backend:
                       "restore_backup(sys.argv[1],sys.argv[2])")
             self.run([old.python, "-I", "-c", script, destination / "realm", restored], extra_env=old.env)
         failed = realm_root.with_name(realm_root.name + ".failed-" + uuid.uuid4().hex[:8])
-        os.replace(realm_root, failed)
+        # Recovery may replay after a process was killed between the two
+        # renames. In that state the original is already absent and restoring
+        # the retained backup is the required idempotent continuation.
+        if realm_root.exists():
+            os.replace(realm_root, failed)
         try:
             os.replace(restored, realm_root)
         except BaseException:
-            os.replace(failed, realm_root)
+            if failed.exists() and not realm_root.exists():
+                os.replace(failed, realm_root)
             raise
         # Restore all support metadata, preserving unselected realms and extras.
         snapshot = destination / "support"
@@ -345,6 +350,7 @@ class Backend:
                 continue  # Also preserve logs when restoring an older snapshot.
             target = data / item.name
             if item.name == "runtime":
+                target.mkdir(parents=True, exist_ok=True)
                 for entry in target.iterdir():
                     if entry.name != "realms":
                         if entry.is_dir():
