@@ -10,6 +10,7 @@ import { expandShotData } from '@/shared/lib/shots/shotData';
 import { asRecord } from '@/shared/lib/typeCoercion';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
 import type { OpenRuntimeTaskOutput } from '../RuntimeTaskRecovery';
+import { freezeRecoveryValue, type RuntimeRecoverySource } from '../utils/runtimeRecoveryDestinations';
 
 interface LightboxData {
   type: 'image' | 'video';
@@ -17,6 +18,7 @@ interface LightboxData {
   media: GenerationRow | GenerationRow[];
   videoIndex?: number;
   initialVariantId?: string;
+  runtimeRecoverySource?: RuntimeRecoverySource;
 }
 
 interface UseTasksLightboxOptions {
@@ -80,9 +82,13 @@ export function useTasksLightbox({
       imageUrl: location, type: output.media_type.startsWith('video/') ? 'video' : 'image',
       createdAt: task.updated_at,
     };
-    if (media.type === 'video') handleOpenVideoLightbox(projectedTask, [media], 0, selection.variant_id);
-    else handleOpenImageLightbox(projectedTask, media, selection.variant_id);
-  }, [selectedProjectId, handleOpenImageLightbox, handleOpenVideoLightbox]);
+    setLightboxData({ type: media.type === 'video' ? 'video' : 'image', task: projectedTask,
+      media: media.type === 'video' ? [media] : media, videoIndex: 0, initialVariantId: selection.variant_id,
+      runtimeRecoverySource: freezeRecoveryValue(structuredClone({ task, output, mediaTuple: selection })),
+    });
+    setActiveTaskId(task.task_id);
+    setIsTasksPaneOpen(true);
+  }, [selectedProjectId, setActiveTaskId, setIsTasksPaneOpen]);
 
   const handleCloseLightbox = useCallback(() => {
     // Reset dropdown to current shot when closing

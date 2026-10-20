@@ -247,6 +247,9 @@ function LightboxHarness({ projectId }: { projectId: string }) {
       isExportTaskPending={() => false} onInspectTask={inspected} />
     {lightbox.lightboxProps && <section aria-label="Existing lightbox adapter">
       <span>{lightbox.lightboxProps.media.id}</span><span>{lightbox.lightboxProps.initialVariantId}</span>
+      <span data-testid="recovery-tuple" data-frozen={Object.isFrozen(lightbox.lightboxData?.runtimeRecoverySource?.mediaTuple)}>
+        {JSON.stringify(lightbox.lightboxData?.runtimeRecoverySource?.mediaTuple)}
+      </span>
       <button onClick={lightbox.handleCloseLightbox}>Close output</button>
     </section>}
   </>;
@@ -265,6 +268,8 @@ it('uses the real TasksPane lightbox hook and providers with read-authoritative 
   let lightbox = await screen.findByRole('region', { name: 'Existing lightbox adapter' });
   expect(within(lightbox).getByText(fixture.selection.generation_id)).toBeInTheDocument();
   expect(within(lightbox).getByText(fixture.selection.variant_id)).toBeInTheDocument();
+  expect(JSON.parse(within(lightbox).getByTestId('recovery-tuple').textContent!)).toEqual(fixture.selection);
+  expect(within(lightbox).getByTestId('recovery-tuple')).toHaveAttribute('data-frozen', 'true');
   expect(within(lightbox).queryByText(originalOutput.association_id)).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Close output' }));
   expect(screen.queryByRole('region', { name: 'Existing lightbox adapter' })).not.toBeInTheDocument();

@@ -5,6 +5,7 @@ import { shallow } from 'zustand/shallow';
 import { useRenderLogger } from '@/shared/lib/debug/debugRendering';
 import { TaskList } from './TaskList';
 import { RuntimeTaskList } from './RuntimeTaskList';
+import { RuntimeRecoveryChooser } from './RuntimeRecoveryChooser';
 import { RuntimeActivityDock, type RuntimeTaskInspectionRequest } from './RuntimeActivityDock';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { Button } from '@/shared/components/ui/button';
@@ -715,8 +716,10 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
             showTaskDetails: true,
           }}
           taskDetailsData={taskDetailsData ?? undefined}
-          // Runtime recovery has no selected-timeline command chooser yet.
-          shotWorkflow={runtimeProjectId ? undefined : {
+          customOverlay={isRuntimeMode && lightboxData.runtimeRecoverySource ? <RuntimeRecoveryChooser
+            projectId={runtimeProjectId} timelineId={runtimeTimelineId} source={lightboxData.runtimeRecoverySource}
+          /> : undefined}
+          shotWorkflow={isRuntimeMode ? undefined : {
             allShots: simplifiedShotOptions,
             selectedShotId: lightboxSelectedShotId || currentShotId || lastAffectedShotId || undefined,
             onShotChange: setLightboxSelectedShotId,

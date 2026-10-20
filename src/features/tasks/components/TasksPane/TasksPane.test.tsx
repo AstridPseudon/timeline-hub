@@ -41,6 +41,7 @@ let runtimeListProps: any = null;
 let runtimeDockProps: any = null;
 let mediaLightboxProps: any = null;
 let lightboxOpen = false;
+let runtimeRecoverySource: unknown;
 
 vi.mock('react-dom', async () => {
   const actual = await vi.importActual<typeof import('react-dom')>('react-dom');
@@ -204,7 +205,7 @@ vi.mock('./components/PaginationControls', () => ({
 
 vi.mock('./hooks/useTasksLightbox', () => ({
   useTasksLightbox: () => ({
-    lightboxData: lightboxOpen ? { task: { id: 'task-output' } } : null,
+    lightboxData: lightboxOpen ? { task: { id: 'task-output' }, runtimeRecoverySource } : null,
     lightboxSelectedShotId: null,
     setLightboxSelectedShotId: setLightboxSelectedShotIdMock,
     taskDetailsData: null,
@@ -306,6 +307,7 @@ describe('TasksPane', () => {
     runtimeDockProps = null;
     mediaLightboxProps = null;
     lightboxOpen = false;
+    runtimeRecoverySource = undefined;
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
       value: {
@@ -703,6 +705,20 @@ describe('TasksPane', () => {
     renderTasksPane();
     expect(mediaLightboxProps.shotWorkflow.onAddToShot).toBe(handleAddToShotMock);
     expect(mediaLightboxProps.shotWorkflow.onAddToShotWithoutPosition).toBe(handleAddToShotWithoutPositionMock);
+  });
+
+  it('passes the explicit editor scope and opened source to the existing lightbox overlay with no native callback', () => {
+    lightboxOpen = true;
+    runtimeRecoverySource = { mediaTuple: { generation_id: 'original-generation', variant_id: 'original-variant' } };
+    useLocationMock.mockReturnValue({
+      pathname: '/tools/video-editor',
+      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=selected-timeline',
+    });
+    useTasksPaneControllerMock.mockReturnValue({ ...legacyControllerState, isRuntimeMode: true });
+    renderTasksPane();
+    expect(mediaLightboxProps.customOverlay.props).toEqual({ projectId: 'runtime-project', timelineId: 'selected-timeline', source: runtimeRecoverySource });
+    expect(mediaLightboxProps.shotWorkflow).toBeUndefined();
+    expect(handleAddToShotMock).not.toHaveBeenCalled();
   });
 
   it('opens Runtime history on the newest completed task status', () => {

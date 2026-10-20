@@ -83,6 +83,7 @@ export const MediaLightbox: React.FC<MediaLightboxProps> = (props) => {
     shotWorkflow,
     features,
     actions,
+    customOverlay: props.customOverlay,
   };
 
   if (segmentSlotMode) {
