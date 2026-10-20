@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T07:42:35Z | dispatcher heartbeat 9s -->
+<!-- main | 2026-10-20T07:47:53Z | dispatcher heartbeat 11s -->
 # runtime — 2026-10-20T05:59Z
 Milestone: M1 RECORDED. M2/M3 small gated merges.
 Integrated: Runtime tl/integration e8a24e3 (contract/client 0.2.8). Full (full-restore-integration 1020054712, tree 0b3be24): 4918 pass / 7 baseline fail / 18 skip / 26 xfail / 0 new. Merged today: pack-document-read, render-pub xfail+stray-file fix, option B (candidate-less working copy -> cas/UNCERTIFIED), full-triage timeline+shots (catalog RK01 restored), catalog door 404 expectation.
@@ -30,5 +30,7 @@ Open decisions for orchestrator (from census): D-a removable = dropped from cont
 Running: scope-deny, retired-ops-removal, verified-read-consolidate, text-selection-port, capture-verifier-trim.
 07:45: MERGED crash-window-audit d9a9c39, xfail-raises-rest e792ba0. verified-read-consolidate DONE (net -12 product lines, 155 targeted pass, no wire change) merge queued. scope-deny: targeted green (92 pass incl. App probe) but worker is parked waiting on its own full, QUEUED behind Agent fulls since 06:34 and also my integration full 1020072856 on 84be33c still queued; scope-deny cannot merge until the worker exits (harness commits at exit). Dispatched rt-m2-history-api-audit (history/undo/restore/revision APIs + project-isolation case).
 Running: scope-deny (parked), retired-ops-removal, text-selection-port, capture-verifier-trim, history-api-audit.
+07:52: MERGED verified-read-consolidate 03c68f7. DONE+merge queued: history-api-audit (3 added tests: inverse refuses after overwrite/return, undo dry-run+exact retry, read-scope dry-run 401; all history/undo/restore/revision caps covered incl. two-project isolation), text-selection-port (P1 text_selection + P2 binding projection, 36 pass, MIME must be exactly "text/plain; charset=utf-8"; clear/removal schema open -> orchestrator). Agent told via runtime-coordination. Dispatched rt-m4-delivery-script (build-delivery tool, dry-run, verify by fresh-clone git am) and rt-m2-size-census (design/runtime-size-census.md, top-10 deletion candidates). Full 1020072856 still queued.
+Running: scope-deny (parked), retired-ops-removal, capture-verifier-trim, delivery-script, size-census.
 Workers live: 5. Next dispatch when removal lands: regeneration worker (D13 + auto-placement + schema), verified-read internal consolidation.
 Resources: ~9GB free.
