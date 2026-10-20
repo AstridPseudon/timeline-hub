@@ -232,10 +232,10 @@ describe('canonical shot-composition editor operations', () => {
     expect(item.item_id).toBe(`${selected?.shot_id}:item-1`);
     expect(item.metadata).toMatchObject({
       source_item_id: item.item_id,
-      selected_item_id: item.item_id,
-      parent_item_id: item.item_id,
-      bound_item_id: item.item_id,
-      bound_item_ids: [item.item_id],
+      selected_item_id: 'item-1',
+      parent_item_id: 'item-1',
+      bound_item_id: 'item-1',
+      bound_item_ids: ['item-1'],
       opaque_literal: 'item-1',
     });
     expect((source.items as Record<string, any>[])[0].item_id).toBe('item-1');
