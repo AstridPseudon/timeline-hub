@@ -1,4 +1,4 @@
-// Pure public planner API. Keep this module independent of the React/Remotion
+// Pure public evaluation API. Keep this module independent of the React/Remotion
 // entry point and generated component registries.
 import {
   layerOpacity,
@@ -15,6 +15,8 @@ export {declareAppTransition, admitTransitionContribution, transitionContributio
 export type {AppTransition, TransitionDeclaration, TransitionImplementation, TransitionContributionResource, TransitionContributionReference, AdmittedTransitionContribution} from './lib/transition-declarations';
 
 export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec, IncomingTransitionPolicy, CompiledCanonicalTransitions, IncomingTransitionSpec} from './lib/transition-spans';
+
+export {clipOpacity} from './lib/clip-look';
 
 export type PreparedTrack = {
   readonly plans: readonly DrawPlan[];

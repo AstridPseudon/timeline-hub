@@ -76,6 +76,13 @@ export const fadeMultiplier = (clip: TimelineClip, frame: number, fps: number): 
   return opacity;
 };
 
+/** Authored clip opacity times effects.fade_in/fade_out (seconds), clamped to [0, 1].
+ * Takes the native TimelineClip duration: hold, or to - from, divided by speed,
+ * rounded to frames at fps (minimum one frame). Pass the clip-local content
+ * frame before media/component speed remapping, including transition handles.
+ * Does not filter by the draw interval or include track/transition opacity,
+ * intrinsic media alpha, animations, modifiers or occlusion. No scene is needed.
+ */
 export const clipOpacity = (clip: TimelineClip, frame: number, fps: number): number => {
   const value = fadeMultiplier(clip, frame, fps) * (clip.opacity ?? 1);
   return Math.min(1, Math.max(0, value));

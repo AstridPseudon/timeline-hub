@@ -86,6 +86,12 @@ for (const peer of ['react', 'react-dom', 'remotion', '@remotion/media', '@remot
   assert.equal(realpathSync(require.resolve(peer + '/package.json')), realpathSync(packageRequire.resolve(peer + '/package.json')));
 }
 assert.equal(evaluation.queryTrackFrame(evaluation.prepareTrack([{start: 0, duration: 30}], []), 0).layers.length, 1);
+const faded = {id: 'faded', track: 'visual', at: 0, hold: 2, speed: 2, opacity: .4,
+  effects: [{fade_in: .4}, {fade_out: .4}]};
+assert.equal(evaluation.clipOpacity(faded, 6, 30), .2);
+assert.equal(evaluation.clipOpacity(faded, 30, 30), 0);
+assert.equal(evaluation.clipOpacity({...faded, opacity: 0}, 12, 30), 0);
+assert.equal(evaluation.clipOpacity({...faded, effects: {fade_in: .4}}, 42, 30), .4);
 const spans = [{start: 60, duration: 30}, {start: 90, duration: 30}];
 const native = evaluation.prepareTrack(spans, [{T: 12, kind: 'dip', align: 'end', incomingPolicy: 'preroll-crossfade'}]);
 assert.deepEqual(evaluation.queryTrackFrame(native, 84).layers.map(layer => [layer.contentFrame, layer.opacity]), [[24, 1], [6, .5]]);
@@ -157,7 +163,7 @@ console.log('Plain Node ESM, bundled render, scoped host capability/override and
   run(process.execPath, ['smoke.mjs']);
   writeFileSync(join(temporary, 'consumer.ts'), `
 import {TimelineComposition, prepareCompositionScene, type TimelineClip, type TrackDefinition, type CompositionRegistries, type TransitionReferenceObject} from '@banodoco/timeline-composition';
-import {prepareTrack, queryTrackFrame, querySceneOcclusion, declareAppTransition, type SceneFrame, type SceneOcclusion,
+import {clipOpacity, prepareTrack, queryTrackFrame, querySceneOcclusion, declareAppTransition, type SceneFrame, type SceneOcclusion,
   type ComponentDiagnostics, type ComponentFrameSupport, type TransitionSpec, type IncomingTransitionPolicy, type ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';
 import {composeAnimations, type EffectProps, type RuntimeTheme, type HookAnimationProps} from '@banodoco/timeline-composition/theme-api';
 import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
@@ -170,6 +176,7 @@ host.animations = {custom: (props: HookAnimationProps) => ({content: props.progr
 host.animationMeta = {custom: {kind: 'hook', supportsEasing: true}};
 const resolved = (theme: RuntimeTheme) => resolveElementRegistries(theme, host);
 const clip: TimelineClip = {id: 'x', at: 0, hold: 1, track: 'v', clipType: 'custom'};
+const opacity: number = clipOpacity(clip, 6, 30);
 const incomingPolicy: IncomingTransitionPolicy = 'preroll-crossfade';
 const transition: TransitionReferenceObject = {id: 'fade', durationFrames: 12, align: 'end', incomingPolicy};
 const spec: TransitionSpec = {T: 12, kind: 'dip', align: 'end', incomingPolicy};
@@ -180,7 +187,7 @@ const occlusion = (answer: SceneFrame): SceneOcclusion => querySceneOcclusion(an
 const diagnostics: ComponentDiagnostics = {motion: {zoom: 1.2}, face: {status: 'unknown', reason: 'No face declaration'},
   text: {bounds: {status: 'known', rect: {x: 0, y: 0, width: 100, height: 50}}, minPx: 24}};
 const support: ComponentFrameSupport = {presence: 'present', opaqueSupport: 'none', bounds: {status: 'unknown', reason: 'Glyphs'}, diagnostics};
-void [transition, contentFrame, selectedFile, occlusion, support];
+void [opacity, transition, contentFrame, selectedFile, occlusion, support];
 void [TimelineComposition, prepareCompositionScene, prepareTrack, composeAnimations, resolved, clip, EFFECT_REGISTRY,
   THEME_PACKAGE_REGISTRY, ANIMATION_META, TRANSITION_META];
 `);
