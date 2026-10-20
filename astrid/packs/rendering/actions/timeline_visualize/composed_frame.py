@@ -13,9 +13,11 @@ import json
 import os
 import re
 import shutil
+import struct
 import tempfile
 import threading
 import uuid
+import zlib
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -25,6 +27,7 @@ RENDERER_IDENTITY = "astrid.remotion.frame-capture.v1|backend=1.0.0|remotion=4.0
 DEFAULT_MAX_ENTRIES = 256
 DEFAULT_MAX_BYTES = 512 * 1024 * 1024
 _EPHEMERAL_ATTEMPT_PATH = re.compile(r"astrid-attempt-[^/]+(?=/)")
+_SCENE_CHUNK = b"asTr"
 
 
 class CaptureSceneLabels:
@@ -34,7 +37,7 @@ class CaptureSceneLabels:
     canonical render basis and exact projected IDs/addresses to its retained
     revision/candidate before passing ``observe`` to ``on_scene_props``. Call
     ``retain`` only with that successful batch's fresh output, never PNG-cache
-    entries. No production source owner currently supplies this contract.
+    entries. Cached rows require the cache owner's retained fresh-write binding.
     """
 
     def __init__(self, *, source_identity: str, props: Mapping[str, Any],
@@ -101,6 +104,61 @@ class CaptureSceneLabels:
 
         answer = self.frame(frame, source_identity=source_identity)
         return labels_for_scene(answer, self._addresses), {key: answer[key] for key in ("width", "height")}
+
+    def _cache_payload(self, frame: int) -> dict[str, Any]:
+        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+
+        if not self._props:
+            raise SceneQueryUnavailable("cached scene rows cannot mint a fresh payload")
+        answer = self.frame(frame, source_identity=self._source_identity)
+        return {"source_identity": self._source_identity, "basis": self._basis,
+                "addresses": self._addresses, "answer": answer,
+                "root_source": hashlib.sha256(json.dumps(
+                    self._props, sort_keys=True, separators=(",", ":"), allow_nan=False,
+                ).encode()).hexdigest()}
+
+    @classmethod
+    def _from_cache(cls, payload, *, source_identity, basis, addresses, frame):
+        """Restore only after the cache verifies its own successful fresh write."""
+        answer = payload["answer"]
+        if (payload["source_identity"] != source_identity or payload["basis"] != basis
+                or payload["addresses"] != addresses
+                or not re.fullmatch(r"[0-9a-f]{64}", payload["root_source"])
+                or type(answer["frame"]) is not int or answer["frame"] != frame
+                or any(answer[key] != basis[key] for key in ("width", "height"))
+                or any(layer["clipId"] not in addresses for layer in answer["layers"])):
+            raise ValueError("cached scene source/frame mismatch")
+        capture = cls(source_identity=source_identity, props={}, basis=basis, addresses=addresses)
+        capture._frames = (frame,)
+        capture._answers = {frame: copy.deepcopy(answer)}
+        capture._retained = True
+        capture.labels(frame, source_identity=source_identity)
+        return capture
+
+
+def _split_scene_entry(data: bytes) -> tuple[bytes, bytes | None]:
+    """An optional private ancillary PNG chunk keeps pixels and rows atomic."""
+    if _SCENE_CHUNK not in data:
+        return data, None
+    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise ValueError("invalid scene PNG")
+    offset = 8
+    while offset + 12 <= len(data):
+        length = int.from_bytes(data[offset:offset + 4], "big")
+        end = offset + 12 + length
+        kind = data[offset + 4:offset + 8]
+        if end > len(data):
+            if kind == _SCENE_CHUNK:
+                raise ValueError("truncated scene PNG chunk")
+            break
+        if kind == _SCENE_CHUNK:
+            chunk = data[offset + 8:end - 4]
+            if (end != len(data) - 12 or data[end + 4:end + 8] != b"IEND"
+                    or zlib.crc32(kind + chunk) != int.from_bytes(data[end - 4:end], "big")):
+                raise ValueError("invalid scene PNG chunk")
+            return data[:offset] + data[end:], chunk
+        offset = end
+    return data, None
 
 
 def _close_renderer(renderer: object, *, force: bool = False) -> None:
@@ -272,7 +330,7 @@ def default_cache_root() -> Path:
 
 
 class FrameCaptureCache:
-    """Small, bounded, content-addressed PNG cache."""
+    """Small, bounded PNG cache with optional fresh-callback scene rows."""
 
     def __init__(
         self,
@@ -286,6 +344,9 @@ class FrameCaptureCache:
         self.max_entries = max(1, int(max_entries))
         self.max_bytes = max(1, int(max_bytes))
         self._lock = threading.RLock()
+        # Disk metadata cannot prove that rows came from a callback. Trust only
+        # complete entries minted by this owner; another owner must render fresh.
+        self._scene_digests: dict[str, str] = {}
 
     def path_for(self, key: str) -> Path:
         if not key or any(ch not in "0123456789abcdef" for ch in key):
@@ -293,26 +354,55 @@ class FrameCaptureCache:
         return self.root / f"{key}.png"
 
     def read(self, key: str) -> bytes | None:
+        entry = self.read_entry(key)
+        return entry[0] if entry is not None else None
+
+    def read_entry(self, key: str) -> tuple[bytes, dict | None] | None:
         path = self.path_for(key)
         with self._lock:
             try:
                 data = path.read_bytes()
-            except OSError:
+                png, chunk = _split_scene_entry(data)
+                trusted = self._scene_digests.get(key)
+                payload = None
+                if chunk is not None:
+                    if trusted != hashlib.sha256(data).hexdigest():
+                        return None
+                    payload = json.loads(chunk)
+                    if (payload["key"] != key
+                            or payload["png_sha256"] != hashlib.sha256(png).hexdigest()):
+                        return None
+                elif trusted is not None:
+                    return None
+            except (OSError, ValueError, TypeError, KeyError):
                 return None
             try:
                 os.utime(path, None)  # another process may have pruned it just now
             except OSError:
                 pass
-            return data
+            return png, payload
 
-    def write(self, key: str, data: bytes) -> Path:
+    def write(self, key: str, data: bytes, *, scene: CaptureSceneLabels | None = None,
+              frame: int | None = None) -> Path:
         path = self.path_for(key)
+        if scene is not None:
+            if frame is None or not data.startswith(b"\x89PNG\r\n\x1a\n") or data[-8:-4] != b"IEND":
+                raise ValueError("scene cache requires a PNG")
+            payload = {"key": key, "png_sha256": hashlib.sha256(data).hexdigest(),
+                       "scene": scene._cache_payload(frame)}
+            chunk = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+            packet = (struct.pack(">I", len(chunk)) + _SCENE_CHUNK + chunk
+                      + struct.pack(">I", zlib.crc32(_SCENE_CHUNK + chunk)))
+            data = data[:-12] + packet + data[-12:]
         # Unique per process and per call: two processes writing one key never share a temp file.
         temporary = self.root / f"{key}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
         with self._lock:
+            self._scene_digests.pop(key, None)
             try:
                 temporary.write_bytes(data)
                 os.replace(temporary, path)
+                if scene is not None:
+                    self._scene_digests[key] = hashlib.sha256(data).hexdigest()
             finally:
                 temporary.unlink(missing_ok=True)
             self.prune()
@@ -337,9 +427,12 @@ class FrameCaptureCache:
                         path.unlink(missing_ok=True)
                     except OSError:
                         pass
+                    self._scene_digests.pop(path.stem, None)
                     continue
                 kept += 1
                 total += size
+            self._scene_digests = {key: digest for key, digest in self._scene_digests.items()
+                                   if self.path_for(key).is_file()}
 
 
 class FrameCaptureWorker:
@@ -452,7 +545,9 @@ class _SharedRemotionOwner:
     """Share this process's host renderer lease and serialize all capture requests."""
 
     def __init__(self) -> None:
-        from astrid.packs.rendering.rendering.renderers.remotion.run import PersistentRemotionFrameSession
+        from astrid.packs.rendering.rendering.renderers.remotion.run import (
+            PersistentRemotionFrameSession,
+        )
 
         self.session = PersistentRemotionFrameSession()
         self.lock = threading.RLock()
@@ -585,6 +680,7 @@ class RemotionFrameProvider:
         self.theme_path = Path(theme_path) if theme_path else None
         self.scene_capture: CaptureSceneLabels | None = None
         self.fresh_scene_frames: set[int] = set()
+        self._cached_scenes: dict[int, CaptureSceneLabels] = {}
         self._pending_scene: CaptureSceneLabels | None = None
         self._fresh_requested: tuple[int, ...] = ()
         self._scene_clips = self.snapshot.get("metadata", {}).get("scene_clips")
@@ -748,12 +844,23 @@ class RemotionFrameProvider:
             raise SceneQueryUnavailable("capture staged card assets mismatch")
 
     def scene_for_frame(self, frame: int) -> CaptureSceneLabels | None:
-        return self.scene_capture if frame in self.fresh_scene_frames else None
+        return self.scene_capture if frame in self.fresh_scene_frames else self._cached_scenes.get(frame)
+
+    def _cached_scene(self, payload, frame: int) -> CaptureSceneLabels:
+        if self._scene_clips is None or any(path.read_bytes() != data for path, data in self._source_bytes.items()):
+            raise ValueError("cached scene requires the frozen capture source")
+        return CaptureSceneLabels._from_cache(
+            payload["scene"], source_identity=self.source_identity, frame=frame,
+            basis={"width": self.profile.width, "height": self.profile.height,
+                   "fps": self.profile.fps_rational[0] / self.profile.fps_rational[1]},
+            addresses={key: value["address"] for key, value in self._scene_clips.items()},
+        )
 
     def close(self, *, force: bool = False) -> None:
         if force:
             self.scene_capture = self._pending_scene = None
             self.fresh_scene_frames.clear()
+            self._cached_scenes.clear()
         self.worker.close(force=force)
 
     def capture(
@@ -764,6 +871,7 @@ class RemotionFrameProvider:
     ) -> dict[str, Any]:
         self.scene_capture = self._pending_scene = None
         self.fresh_scene_frames.clear()
+        self._cached_scenes.clear()
         out_root = Path(out_root)
         frames_dir = out_root / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
@@ -773,8 +881,15 @@ class RemotionFrameProvider:
             frame = int(card["frame"])
             key = frame_cache_key(self.snapshot, frame, resolution)
             destination = out_root / str(card["image"])
-            # The cache stores PNGs only; a cached PNG carries no bounds, so bounds captures render every frame.
-            data = None if self.wants_bounds else self.cache.read(key)
+            # Bounds sidecars still require a fresh capture. PNG-only entries
+            # retain their separately qualified legacy label fallback.
+            entry = None if self.wants_bounds else self.cache.read_entry(key)
+            data = entry[0] if entry is not None else None
+            if entry is not None and entry[1] is not None:
+                try:
+                    self._cached_scenes[frame] = self._cached_scene(entry[1], frame)
+                except (OSError, ValueError, TypeError, KeyError, AttributeError):
+                    data = None
             if data is not None:
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes(data)
@@ -808,8 +923,8 @@ class RemotionFrameProvider:
                     self._pending_scene.retain(produced)
                     self.scene_capture = self._pending_scene
                     self.fresh_scene_frames = set(produced)
-                for _frame, key, destination in misses:
-                    self.cache.write(key, destination.read_bytes())
+                for frame, key, destination in misses:
+                    self.cache.write(key, destination.read_bytes(), scene=self._pending_scene, frame=frame)
         except BaseException as operation_error:
             # Cleanup is still mandatory, but its failure must not replace the
             # original native request error (including its structured reply).
