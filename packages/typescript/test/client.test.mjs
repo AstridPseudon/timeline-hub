@@ -26,6 +26,23 @@ test("verified media read preserves the complete pin and encoded alias without m
   assert.equal(calls.length, 1);
 });
 
+test("verified document object read sends the exact pin and object without mutation authority", async () => {
+  const pin = { document_id: "document:pack/1", version: 1, content_digest: `sha256:${"a".repeat(64)}` };
+  const objectId = `sha256:${"b".repeat(64)}`;
+  const object = { object_id: objectId, digest: objectId, size: 2, media_type: "application/json", bytes_base64: "e30=" };
+  const transport = async (method, path, headers, body) => {
+    assert.equal(method, "GET");
+    assert.equal(body, undefined);
+    assert.equal(headers["Idempotency-Key"], undefined);
+    const url = new URL(path, "http://runtime");
+    assert.equal(url.pathname, "/v1/projects/project%2Fone/document-objects/verified");
+    assert.deepEqual(Object.fromEntries(url.searchParams), { ...pin, version: "1", object_id: objectId });
+    return { status: 200, headers: {}, body: json(object) };
+  };
+  const client = new WorkspaceClient("http://runtime", "token", transport);
+  assert.deepEqual(await client.getProjectVerifiedDocumentObject("project/one", pin, objectId), object);
+});
+
 test("generated TypeScript client performs scoped handshake and idempotent project admission", async () => {
   const release = JSON.parse(readFileSync(new URL("../../../generators/release.json", import.meta.url), "utf8"));
   assert.equal(CONTRACT_VERSION, release.contract_version);

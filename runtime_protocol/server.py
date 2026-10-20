@@ -517,8 +517,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 path[2], path[4], cursor=query.get("cursor", [None])[0], limit=query.get("limit", [50])[0],
                 authorize=authorize,
             ))
-        if path[:2] == ["v1", "projects"] and path[3:] in (["media-selection"], ["media-selection", "verified"]) and method == "GET":
+        if path[:2] == ["v1", "projects"] and path[3:] in (
+                ["media-selection"], ["media-selection", "verified"], ["document-objects", "verified"]) and method == "GET":
             verified = path[3:] == ["media-selection", "verified"]
+            document = path[3] == "document-objects"
             identity = self._identity("projects:read")
             publisher = identity["actor"]
             def authorize():
@@ -531,16 +533,26 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 query = parse_qs(raw_query, keep_blank_values=True, strict_parsing=True, errors="strict")
             except (ValueError, UnicodeError) as exc:
                 raise ProtocolError("invalid media selection query encoding") from exc
-            forms = ({"asset", "generation_id", "variant_id", "object_id", "catalog_digest"},) if verified else (
-                {"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"},
-            )
+            if document:
+                forms = ({"document_id", "version", "content_digest", "object_id"},)
+            elif verified:
+                forms = ({"asset", "generation_id", "variant_id", "object_id", "catalog_digest"},)
+            else:
+                forms = ({"asset", "generation_id", "variant_id"}, {"association_id", "object_id", "version"})
             if set(query) not in forms or any(len(values) != 1 or not values[0].strip() for values in query.values()):
-                raise ProtocolError("all five exact media selection fields are required" if verified
+                raise ProtocolError("all four exact document object fields are required" if document
+                                    else "all five exact media selection fields are required" if verified
                                     else "exactly one complete media selection selector form is required")
             if "version" in query:
                 if not re.fullmatch(r"[1-9][0-9]*", query["version"][0]):
-                    raise ProtocolError("output version must be a positive integer")
+                    raise ProtocolError("document version must be a positive integer" if document
+                                        else "output version must be a positive integer")
                 query["version"] = [int(query["version"][0])]
+            if document:
+                return self._send(200, self.runtime.get_project_verified_document_object(
+                    path[2], {key: query[key][0] for key in ("document_id", "version", "content_digest")},
+                    query["object_id"][0], authorize=authorize,
+                ))
             read = self.runtime.get_project_verified_media if verified else self.runtime.get_project_media_selection
             return self._send(200, read(
                 path[2], {key: values[0] for key, values in query.items()}, authorize=authorize,

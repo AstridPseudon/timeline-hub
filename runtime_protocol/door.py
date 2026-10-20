@@ -165,6 +165,7 @@ WORKSPACE_ROUTES = (
     _entry("POST", "/v1/projects/:/timelines/:/inspect"),
     _entry("GET", "/v1/projects/:/media-selection"),
     _entry("GET", "/v1/projects/:/media-selection/verified"),
+    _entry("GET", "/v1/projects/:/document-objects/verified"),
     _entry("GET", "/v1/projects/:/shots/:/revisions/:"),
     _entry("GET,POST", "/v1/projects/:/documents"),
     _entry("GET,PATCH", "/v1/projects/:/documents/:"),
