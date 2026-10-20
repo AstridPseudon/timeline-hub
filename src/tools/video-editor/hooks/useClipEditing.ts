@@ -1,3 +1,4 @@
+import type { ClipDeleteBatchCapturePort } from '../commands/clipDeleteBatchGesture.ts';
 import type { ClipDeleteCapturePort } from '../commands/clipDeleteGesture.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
@@ -29,6 +30,7 @@ import type { DeleteClipOptions } from './clip-editing/types.ts';
 
 export interface UseClipEditingArgs {
   clipDeletePort?: ClipDeleteCapturePort;
+  clipDeleteBatchPort?: ClipDeleteBatchCapturePort;
   dataRef: MutableRefObject<TimelineData | null>;
   resolvedConfig: TimelineData['resolvedConfig'] | null;
   selectedClipId: string | null;
@@ -65,6 +67,7 @@ const PINNED_GROUP_EDIT_MESSAGE = 'Use Delete shot from the shot menu';
 
 export function useClipEditing({
   clipDeletePort,
+  clipDeleteBatchPort,
   dataRef,
   resolvedConfig,
   selectedClipId,
@@ -116,8 +119,7 @@ export function useClipEditing({
     applyEdit(mutation);
   }, [applyEdit]);
 
-  const isPinnedGroupMember = useCallback((clipId: string): boolean => {
-    const current = dataRef.current;
+  const isPinnedGroupMember = useCallback((clipId: string, current = dataRef.current): boolean => {
     if (!current) {
       return false;
     }
@@ -142,8 +144,7 @@ export function useClipEditing({
     applyRowsEdit(current.rows, { [actionId]: patch });
   }, [applyRowsEdit, dataRef]);
 
-  const getValidClipIds = useCallback((clipIds: string[]) => {
-    const current = dataRef.current;
+  const getValidClipIds = useCallback((clipIds: string[], current = dataRef.current) => {
     if (!current) {
       return [];
     }
@@ -287,6 +288,7 @@ export function useClipEditing({
 
   const clipEditingContext: ClipEditingContext = {
     clipDeletePort,
+    clipDeleteBatchPort,
     dataRef,
     resolvedConfig,
     selectedClipId,

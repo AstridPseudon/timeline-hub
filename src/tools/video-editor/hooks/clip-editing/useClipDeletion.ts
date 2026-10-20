@@ -1,11 +1,13 @@
 import { useCallback } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { captureClipDeleteEdit, submitClipDeleteEdit } from '../../commands/clipDeleteGesture.ts';
+import { captureClipDeleteBatchEdit, submitClipDeleteBatchEdit } from '../../commands/clipDeleteBatchGesture.ts';
 import type { ClipEditingContext, DeleteClipOptions } from './types.ts';
 
 export function useClipDeletion(ctx: ClipEditingContext) {
   const {
     clipDeletePort,
+    clipDeleteBatchPort,
     applyRowsEdit,
     dataRef,
     getValidClipIds,
@@ -19,23 +21,30 @@ export function useClipDeletion(ctx: ClipEditingContext) {
       return;
     }
 
-    const validClipIds = getValidClipIds(clipIds);
+    const validClipIds = Object.freeze(getValidClipIds(clipIds, current));
     const clipIdSet = new Set(validClipIds);
     if (clipIdSet.size === 0) {
       return;
     }
 
-    if (!options?.allowPinnedGroupDelete && validClipIds.some((clipId) => isPinnedGroupMember(clipId))) {
+    const hasPinnedMember = validClipIds.some((clipId) => isPinnedGroupMember(clipId, current));
+    if (!options?.allowPinnedGroupDelete && hasPinnedMember) {
       notifyPinnedGroupEditBlocked();
       return;
     }
 
-    // Group, occurrence and multi-clip deletion remain separate, unconverted ingresses.
-    if (clipIdSet.size === 1 && !isPinnedGroupMember(validClipIds[0])) {
+    // Group, occurrence and mixed ownership remain separate, unconverted ingresses.
+    if (!hasPinnedMember) {
       try {
         if (!clipDeletePort) throw new Error('clip.delete capture is unavailable.');
-        if (clipDeletePort.resolveOwner({ clipId: validClipIds[0], current }) === 'parent') {
-          submitClipDeleteEdit(captureClipDeleteEdit(clipDeletePort, current, validClipIds[0], 'parent'));
+        const members = validClipIds.map((clipId) => ({ clipId, ownerRef: clipDeletePort.resolveOwner({ clipId, current }) }));
+        if (members.every(({ ownerRef }) => ownerRef === 'parent')) {
+          if (members.length === 1) {
+            submitClipDeleteEdit(captureClipDeleteEdit(clipDeletePort, current, validClipIds[0], 'parent'));
+          } else {
+            submitClipDeleteBatchEdit(captureClipDeleteBatchEdit(clipDeleteBatchPort, current,
+              members.map(({ clipId }) => ({ clipId, ownerRef: 'parent' }))));
+          }
           return;
         }
       } catch (error) {
@@ -49,7 +58,7 @@ export function useClipDeletion(ctx: ClipEditingContext) {
       actions: row.actions.filter((action) => !clipIdSet.has(action.id)),
     }));
     applyRowsEdit(nextRows, undefined, [...clipIdSet], undefined, { semantic: true });
-  }, [applyRowsEdit, clipDeletePort, dataRef, getValidClipIds, isPinnedGroupMember, notifyPinnedGroupEditBlocked]);
+  }, [applyRowsEdit, clipDeletePort, clipDeleteBatchPort, dataRef, getValidClipIds, isPinnedGroupMember, notifyPinnedGroupEditBlocked]);
 
   const handleDeleteClip = useCallback((clipId: string, options?: DeleteClipOptions) => {
     handleDeleteClips([clipId], options);

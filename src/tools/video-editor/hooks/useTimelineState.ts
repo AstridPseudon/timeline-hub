@@ -1,3 +1,4 @@
+import type { ClipDeleteBatchCapturePort } from '@/tools/video-editor/commands/clipDeleteBatchGesture.ts';
 import type { ClipDeleteCapturePort } from '@/tools/video-editor/commands/clipDeleteGesture.ts';
 import type { ClipScalarCapturePort } from '@/tools/video-editor/commands/clipScalarGesture.ts';
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
@@ -141,6 +142,7 @@ function useTimelineEditorContextValue({
   clipScalarPort,
   clipTrimPort,
   clipDeletePort,
+  clipDeleteBatchPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -188,6 +190,7 @@ function useTimelineEditorContextValue({
   clipParamsPort?: import('@/tools/video-editor/commands/clipParamsGesture.ts').ClipParamsCapturePort;
   clipScalarPort?: ClipScalarCapturePort;
   clipDeletePort?: ClipDeleteCapturePort;
+  clipDeleteBatchPort?: ClipDeleteBatchCapturePort;
   clipTrimPort?: import('@/tools/video-editor/commands/clipTrimGesture.ts').ClipTrimCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
@@ -219,6 +222,7 @@ function useTimelineEditorContextValue({
     clipScalar: clipScalarPort,
     clipTrim: clipTrimPort,
     clipDelete: clipDeletePort,
+    clipDeleteBatch: clipDeleteBatchPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -404,6 +408,7 @@ function useTimelineEditorContextValue({
     clipScalarPort,
     clipTrimPort,
     clipDeletePort,
+    clipDeleteBatchPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -918,6 +923,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
 
   const clipEditing = useClipEditing({
     clipDeletePort: save.commands.clipDeletePort,
+    clipDeleteBatchPort: save.commands.clipDeleteBatchPort,
     dataRef,
     resolvedConfig: selection.resolvedConfig,
     selectedClipId: selection.primaryClipId,
@@ -1108,6 +1114,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     clipScalarPort: save.commands.clipScalarPort,
     clipTrimPort: save.commands.clipTrimPort,
     clipDeletePort: save.commands.clipDeletePort,
+    clipDeleteBatchPort: save.commands.clipDeleteBatchPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1201,6 +1208,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     clipScalar: save.commands.clipScalarPort,
     clipTrim: save.commands.clipTrimPort,
     clipDelete: save.commands.clipDeletePort,
+    clipDeleteBatch: save.commands.clipDeleteBatchPort,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -1260,7 +1268,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.clipParamsPort, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipDeletePort]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.clipParamsPort, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipDeletePort, save.commands.clipDeleteBatchPort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,

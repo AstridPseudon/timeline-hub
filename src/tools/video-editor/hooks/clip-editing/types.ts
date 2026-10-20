@@ -1,3 +1,4 @@
+import type { ClipDeleteBatchCapturePort } from '../../commands/clipDeleteBatchGesture.ts';
 import type { ClipDeleteCapturePort } from '../../commands/clipDeleteGesture.ts';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
@@ -14,6 +15,7 @@ export type DeleteClipOptions = {
 
 export interface ClipEditingContext {
   clipDeletePort?: ClipDeleteCapturePort;
+  clipDeleteBatchPort?: ClipDeleteBatchCapturePort;
   dataRef: MutableRefObject<TimelineData | null>;
   resolvedConfig: TimelineData['resolvedConfig'] | null;
   selectedClipId: string | null;
@@ -30,9 +32,9 @@ export interface ClipEditingContext {
     resolvedConfig: TimelineData['resolvedConfig'],
     options?: ApplyEditOptions,
   ) => void;
-  isPinnedGroupMember: (clipId: string) => boolean;
+  isPinnedGroupMember: (clipId: string, current?: TimelineData | null) => boolean;
   notifyPinnedGroupEditBlocked: () => void;
-  getValidClipIds: (clipIds: string[]) => string[];
+  getValidClipIds: (clipIds: string[], current?: TimelineData | null) => string[];
   selectClip: (clipId: string, opts?: SelectClipOptions) => void;
   setSelectedTrackId: Dispatch<SetStateAction<string | null>>;
 }

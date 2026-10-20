@@ -18,6 +18,7 @@ import { createTimelineStore, useTimelineEditorData, useTimelineEditorOps } from
 import * as commandSession from './useTimelineCommandSession.ts';
 import { createTimelineCommands, useTimelineCommandsService } from './useTimelineCommandsService.ts';
 import { useClipEditing } from './useClipEditing.ts';
+import { TimelineEventBus } from './useTimelineEventBus.ts';
 
 // Keep provider/state, native captures, durable outbox, projection and Runtime client connected.
 // Only external host services and initial reads are fixed. Transport is simulated, with no sockets.
@@ -99,8 +100,9 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
   const session = () => hook.mock.results.at(-1)!.value as ReturnType<typeof commandSession.useTimelineCommandSession>;
   await waitFor(() => expect(ops.clipDelete).toBeDefined());
   expect(ops.clipDelete).toBe(session().clipDeletePort);
+  expect(ops.clipDeleteBatch).toBe(session().clipDeleteBatchPort);
   return { env, view, installs, save, saveAtHead, session, current: () => editor.dataRef.current!,
-    ops: () => ops, selection: () => editor.selectedClipId, facade: () => facade };
+    ops: () => ops, selection: () => editor.selectedClipId, selectedIds: () => editor.selectedClipIds, facade: () => facade };
 }
 
 describe('mounted single-parent deletion ingresses', () => {
@@ -223,6 +225,177 @@ describe('mounted single-parent deletion ingresses', () => {
   });
 });
 
+const secondParentId = 'occ-0:parent-y';
+function batchDocument() {
+  const raw = rawDocument();
+  const parent = raw.parent_revision.payload;
+  parent.clips.splice(1, 0, { id: secondParentId, track: 'V1', at: 4, hold: 1,
+    app: { canonical: { ownerRef: 'occurrence:opaque', clipRef: 'occurrence:opaque/clip:y' } } });
+  parent.clips.push({ ...structuredClone(survivor), id: 'keep-last', at: 8, sourceURL: null,
+    asset: 'picture', from: 1.25, to: 2.25, speed: null });
+  parent.registry = { assets: { picture: { file: 'https://example.test/picture.png', type: 'image/png' } } };
+  parent.config.clips = structuredClone(parent.clips);
+  raw.parent_revision.content_digest = fixtureDigest(parent);
+  return raw;
+}
+
+describe('mounted parent batch deletion', () => {
+  it('reads dataRef only once at the bulk action, including ID filtering and group checks', async () => {
+    const env = await environment(batchDocument());
+    const session = await env.mount();
+    const current = env.current();
+    const read = vi.fn(() => current);
+    const dataRef = { get current() { return read(); } };
+    const hook = renderHook(() => useClipEditing({ dataRef, resolvedConfig: current.resolvedConfig,
+      clipDeletePort: session.clipDeletePort, clipDeleteBatchPort: session.clipDeleteBatchPort,
+      selectedClipId: 'x', selectedTrack: null, currentTime: 0,
+      selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit: vi.fn() }));
+    read.mockClear();
+    act(() => hook.result.current.handleDeleteClips([secondParentId, 'x', secondParentId, 'missing']));
+    expect(read).toHaveBeenCalledOnce();
+    expect(env.previews).toHaveBeenCalledOnce();
+    await session.flush();
+    expect(env.commits()).toHaveLength(1);
+    await session.dispose();
+  });
+
+  it('captures the original valid ID order once, installs once and prunes selection once for one request', async () => {
+    const raw = batchDocument();
+    const m = await mounted(await environment(raw));
+    act(() => m.ops().selectClips(['keep', 'x', secondParentId]));
+    await waitFor(() => expect(m.selectedIds()).toEqual(new Set(['keep', 'x', secondParentId])));
+    const before = m.current();
+    const port = m.ops().clipDeleteBatch!;
+    const capture = vi.spyOn(port, 'capture');
+    const finish = vi.spyOn(port, 'finish');
+    const submit = vi.spyOn(port, 'submit');
+    const single = vi.spyOn(m.ops().clipDelete!, 'submit');
+    const events = vi.spyOn(TimelineEventBus.prototype, 'emit');
+    const gate = m.env.pause();
+    const ids = [secondParentId, 'missing', 'x', secondParentId, 'uploading-stale'];
+    m.installs.length = 0;
+    act(() => m.ops().handleDeleteClips(ids));
+    ids.reverse();
+    expect(capture).toHaveBeenCalledExactlyOnceWith({ current: before, members: [
+      { clipId: secondParentId, ownerRef: 'parent' }, { clipId: 'x', ownerRef: 'parent' },
+    ] });
+    expect(finish).toHaveBeenCalledOnce();
+    expect(submit).toHaveBeenCalledOnce();
+    expect(single).not.toHaveBeenCalled();
+    expect(m.installs).toHaveLength(1);
+    expect(m.installs[0][1]).toEqual({ save: false, skipHistory: true });
+    const remaining = (id: string) => !['x', secondParentId].includes(id);
+    expect(m.current().config).toEqual({ ...before.config, clips: before.config.clips.filter((clip) => remaining(clip.id!)) });
+    expect(m.current().resolvedConfig).toEqual({ ...before.resolvedConfig,
+      clips: before.resolvedConfig.clips.filter((clip) => remaining(clip.id)) });
+    expect(m.current().rows).toEqual(before.rows.map((row) => ({ ...row,
+      actions: row.actions.filter((action) => remaining(action.id)) })));
+    expect(m.current().meta).toEqual(Object.fromEntries(Object.entries(before.meta).filter(([id]) => remaining(id))));
+    expect(m.current().clipOrder).toEqual(Object.fromEntries(Object.entries(before.clipOrder)
+      .map(([track, ids]) => [track, ids.filter(remaining)])));
+    expect(m.current().registry).toBe(before.registry);
+    expect(m.current().dataLanes).toBe(before.dataLanes);
+    expect(m.current().sourceItemsBySchemaRef).toEqual(before.sourceItemsBySchemaRef);
+    expect(m.current().transcriptReferences).toEqual(before.transcriptReferences);
+    expect(events.mock.calls.filter(([event]) => event === 'pruneSelection')).toEqual([
+      ['pruneSelection', new Set(['keep', 'keep-last'])],
+    ]);
+    await waitFor(() => expect(m.selectedIds()).toEqual(new Set(['keep'])));
+    await waitFor(() => expect(m.env.commits()).toHaveLength(1));
+    const [stored] = await m.env.outboxes.list(scope);
+    expect(stored.intents).toHaveLength(1);
+    const commands = m.env.commits()[0].body!.commands;
+    expect(commands.map((command) => command.select)).toEqual([`parent/clip:${secondParentId}`, 'parent/clip:x']);
+    expect(commands.map((command) => command.selections!.find((selection) => selection.key === 'collection.clips')!.order)).toEqual([
+      ['parent/clip:x', `parent/clip:${secondParentId}`, 'parent/clip:keep', 'parent/clip:keep-last'],
+      ['parent/clip:x', 'parent/clip:keep', 'parent/clip:keep-last'],
+    ]);
+    await act(async () => { gate.resolve(); await m.session().flush(); });
+    const accepted = await m.env.provider.loadTimelineCommandBasis(scope.timelineId);
+    const parent = raw.parent_revision.payload;
+    expect(accepted.canonicalDocument.parent_revision.payload).toEqual({ ...parent,
+      clips: parent.clips.filter((clip) => remaining(clip.id as string)), config: { ...parent.config,
+        clips: parent.clips.filter((clip) => remaining(clip.id as string)) } });
+    expect(m.save).not.toHaveBeenCalled();
+    expect(m.saveAtHead).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+    m.view.unmount();
+  });
+
+  it('refuses an unsupported second parent atomically with the earlier draft and selection intact', async () => {
+    const raw = batchDocument();
+    raw.parent_revision.payload.clips[0].children = [];
+    raw.parent_revision.payload.config.clips = structuredClone(raw.parent_revision.payload.clips);
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const m = await mounted(await environment(raw));
+    const gate = m.env.pause();
+    act(() => submitTrackLabelEdit(captureTrackLabelEdit(m.session().trackLabelPort, m.current(), 'V1'),
+      { values: { label: 'Earlier local label' }, clear: [] }));
+    await waitFor(() => expect(m.env.commits()).toHaveLength(1));
+    act(() => m.ops().selectClips([secondParentId, 'x']));
+    const selected = m.selectedIds();
+    const before = m.current();
+    const outbox = await m.env.outboxes.list(scope);
+    const capture = vi.spyOn(m.ops().clipDeleteBatch!, 'capture');
+    const submit = vi.spyOn(m.ops().clipDeleteBatch!, 'submit');
+    m.installs.length = 0;
+    act(() => m.ops().handleDeleteClips([secondParentId, 'x']));
+    expect(capture).toHaveBeenCalledOnce();
+    expect(submit).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('nested clip ownership'));
+    expect(m.current()).toBe(before);
+    expect(m.selectedIds()).toEqual(selected);
+    expect(await m.env.outboxes.list(scope)).toEqual(outbox);
+    expect(m.installs).toHaveLength(0);
+    expect(m.env.commits()).toHaveLength(1);
+    expect(m.save).not.toHaveBeenCalled();
+    expect(m.saveAtHead).not.toHaveBeenCalled();
+    await act(async () => { gate.resolve(); await m.session().flush(); });
+    m.view.unmount();
+  });
+
+  it('recovers the original batch commands and retry identity after lost ACK and reload, then undoes one publication', async () => {
+    const m = await mounted(await environment(batchDocument()));
+    const before = structuredClone(m.current().config.clips);
+    m.env.setFault('lost');
+    act(() => m.ops().handleDeleteClips([secondParentId, 'x', secondParentId]));
+    await waitFor(() => expect(m.session().state.status).toBe('retry'));
+    const [stored] = await m.env.outboxes.list(scope);
+    const pending = structuredClone(stored.pending!.request);
+    const payload = structuredClone(stored.intents[0].payload);
+    const original = structuredClone(m.env.commits()[0]);
+    expect(stored.intents).toHaveLength(1);
+    expect(JSON.parse(pending.body)).toEqual(original.body);
+    expect(pending.key).toBe(original.key);
+    m.view.unmount();
+    vi.restoreAllMocks();
+    const reopened = await mounted(m.env);
+    await waitFor(() => expect(reopened.session().state.status).toBe('recovery'));
+    m.env.setFault('busy');
+    await act(async () => reopened.session().recover(stored.ownerId));
+    expect(reopened.session().state.status).toBe('retry');
+    expect(reopened.current().config.clips.map((clip) => clip.id)).toEqual(['keep', 'keep-last']);
+    const [retained] = await m.env.outboxes.list(scope);
+    expect(retained.pending!.request).toEqual(pending);
+    expect(retained.intents[0].payload).toEqual(payload);
+    expect(m.env.commits()[1]).toEqual(original);
+    m.env.setFault(null);
+    await act(async () => { await reopened.session().retry(); await reopened.session().flush(); });
+    expect(m.env.commits()[2]).toEqual(original);
+    expect(reopened.session().state.status).toBe('saved');
+    await act(async () => { await reopened.session().undo(); await reopened.session().flush(); });
+    expect(m.env.commits()).toHaveLength(4);
+    expect(m.env.commits()[3].body!.commands).toMatchObject([
+      { op: 'timeline.inverse', args: { publications: ['p1'] } },
+    ]);
+    expect(reopened.current().config.clips).toEqual(before);
+    expect(reopened.session().state.canUndo).toBe(false);
+    expect(reopened.save).not.toHaveBeenCalled();
+    expect(reopened.saveAtHead).not.toHaveBeenCalled();
+    reopened.view.unmount();
+  });
+});
+
 describe('unavailable single delete does not enter a snapshot path', () => {
   it('reports the error and preserves the exact displayed draft', async () => {
     const env = await environment(rawDocument());
@@ -236,12 +409,31 @@ describe('unavailable single delete does not enter a snapshot path', () => {
     expect(dataRef.current).toBe(before);
     expect(applyEdit).not.toHaveBeenCalled();
   });
+
+  it('refuses the whole parent selection when the batch port is unavailable', async () => {
+    const env = await environment(batchDocument());
+    const session = await env.mount();
+    const dataRef = { current: env.current() };
+    const before = dataRef.current;
+    const applyEdit = vi.fn();
+    const single = vi.spyOn(session.clipDeletePort, 'submit');
+    const hook = renderHook(() => useClipEditing({ dataRef, resolvedConfig: before.resolvedConfig,
+      clipDeletePort: session.clipDeletePort, selectedClipId: 'x', selectedTrack: null, currentTime: 0,
+      selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit }));
+    act(() => hook.result.current.handleDeleteClips([secondParentId, 'x']));
+    expect(toast.error).toHaveBeenCalledExactlyOnceWith('clip.delete batch capture is unavailable.');
+    expect(dataRef.current).toBe(before);
+    expect(applyEdit).not.toHaveBeenCalled();
+    expect(single).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
 });
 
 describe('separate unconverted deletion ingresses', () => {
-  it.each(['group single', 'group batch', 'free batch'] as const)('preserves the existing %s edit as one row mutation without native submissions', async (ingress) => {
+  it.each(['group single', 'group batch'] as const)('preserves the existing %s edit as one row mutation without native submissions', async (ingress) => {
     const raw = rawDocument();
-    if (ingress !== 'free batch') raw.parent_revision.payload.config.pinnedShotGroups = [
+    raw.parent_revision.payload.config.pinnedShotGroups = [
       { shotId: 'legacy-shot', trackId: 'V1', clipIds: ['x', 'keep'] },
     ];
     raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
@@ -296,6 +488,35 @@ describe('separate unconverted deletion ingresses', () => {
     expect(applyEdit).toHaveBeenLastCalledWith(expected, { semantic: true });
     expect(capture).not.toHaveBeenCalled();
     expect(submit).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
+
+  it('keeps mixed parent and validated occurrence deletion on its distinct ingress', async () => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    raw.parent_revision.payload.config.clips = structuredClone(raw.parent_revision.payload.clips);
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const env = await environment(raw);
+    const session = await env.mount();
+    const composition = createShotCompositionAdapter({ load: async () => env.initial.graph }).prepare(env.initial.graph);
+    const { config } = projectCanonicalComposition(composition, env.current().resolvedConfig);
+    const current = { ...env.current(), ...assembleTimelineData({ ...env.current(), config, resolvedConfig: config }) };
+    const dataRef = { current };
+    const applyEdit = vi.fn();
+    const capture = vi.spyOn(session.clipDeleteBatchPort, 'capture');
+    const single = vi.spyOn(session.clipDeletePort, 'submit');
+    const hook = renderHook(() => useClipEditing({ dataRef, resolvedConfig: current.resolvedConfig,
+      clipDeletePort: session.clipDeletePort, clipDeleteBatchPort: session.clipDeleteBatchPort,
+      selectedClipId: 'x', selectedTrack: null, currentTime: 0,
+      selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit }));
+    const ids = ['x', 'occ-0:child-title'];
+    act(() => hook.result.current.handleDeleteClips(ids));
+    expect(applyEdit).toHaveBeenCalledExactlyOnceWith({ type: 'rows',
+      rows: current.rows.map((row) => ({ ...row, actions: row.actions.filter((action) => !ids.includes(action.id)) })),
+      metaDeletes: ids }, { semantic: true });
+    expect(capture).not.toHaveBeenCalled();
+    expect(single).not.toHaveBeenCalled();
     expect(env.commits()).toHaveLength(0);
     await session.dispose();
   });
