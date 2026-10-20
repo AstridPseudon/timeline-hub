@@ -1,0 +1,1315 @@
+diff --git a/src/tools/travel-between-images/components/ShotTimelinePreview.test.ts b/src/tools/travel-between-images/components/ShotTimelinePreview.test.ts
+index c3e39d8bd..135312029 100644
+--- a/src/tools/travel-between-images/components/ShotTimelinePreview.test.ts
++++ b/src/tools/travel-between-images/components/ShotTimelinePreview.test.ts
+@@ -665,6 +665,32 @@ describe('shot timeline popup persistence', () => {
+       .not.toBe(shotTimelineRecoveryId('document-primary', 'occ-1'));
+   });
+ 
++  it('restores raw opaque app collisions in publication and the real rejected-publication draft', async () => {
++    resetFakeIndexedDB();
++    const graph = structuredClone(fixture);
++    const raw = graph.shot_revisions.find((item) => item.shot_id === 'shot-alpha' && item.revision_id === 'rev-a')!
++        .internal_timeline_revision.timeline.clips[0] as Record<string, unknown>;
++    const app = JSON.parse('{"canonical":null,"canonicalTiming":{"storedOccurrenceDurationMs":null,"__proto__":[false,null]},"ordered":[0,false,null]}');
++    raw.app = app;
++    const composition = createShotCompositionAdapter({ load: vi.fn() }).prepare(graph);
++    const config = projectCanonicalComposition({ ...composition, occurrences: [composition.occurrences[0]] }).config;
++    const publish = vi.fn().mockRejectedValue(Object.assign(new Error('keep draft'), { status: 409 }));
++    const provider = createShotTimelineDataProvider(config, composition, 'occ-1', createShotCompositionAdapter({ load: vi.fn(), publish }));
++    const remember = vi.fn();
++    provider.getTimelineDraftRecoveryMetadata?.(remember);
++    expect(remember).toHaveBeenCalledWith(composition);
++    await expect(provider.saveTimeline('raw-collision-popup', config, 1)).rejects.toMatchObject({ status: 409 });
++    const candidate = publish.mock.calls[0][0].graph;
++    const updated = candidate.shot_revisions.at(-1).internal_timeline_revision.timeline.clips[0];
++    expect(updated.app).toStrictEqual(app);
++    const record = await loadTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-1'));
++    const draft = record!.draft.config as TimelineConfig;
++    expect(draft.clips[0].app).toStrictEqual(app);
++    expect(JSON.stringify(draft.clips[0].app)).toBe(JSON.stringify(app));
++    expect(raw.app).toStrictEqual(app);
++    expect(config.clips[0].app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
++  });
++
+   it('bounds the preview from live draft extent and the hard blocker, not committed timing', () => {
+     const baseConfig = projectCanonicalComposition({
+       ...createShotCompositionAdapter({ load: vi.fn() }).prepare(fixture),
+diff --git a/src/tools/travel-between-images/components/ShotTimelinePreview.tsx b/src/tools/travel-between-images/components/ShotTimelinePreview.tsx
+index 5bd9023fb..840157346 100644
+--- a/src/tools/travel-between-images/components/ShotTimelinePreview.tsx
++++ b/src/tools/travel-between-images/components/ShotTimelinePreview.tsx
+@@ -1,3 +1,4 @@
++import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
+ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+ import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
+ import { AlertCircle, Film } from 'lucide-react';
+@@ -540,16 +541,21 @@ export function ShotTimelinePreview({
+     draftDirtyRef.current = true;
+     const generation = draftGenerationRef.current + 1;
+     draftGenerationRef.current = generation;
+-    dataProvider.setDraftGeneration(generation);
+-    onCanonicalDraftProjectionChange?.({
+-      scope: draftScope,
+-      generation,
+-      composition: projectShotTimelineDraftComposition(
+-        currentComposition,
+-        occurrenceId,
+-        nextConfig,
+-      ),
+-    });
++    const rawComposition = dataProvider.setDraftGeneration(generation);
++    try {
++      onCanonicalDraftProjectionChange?.({
++        scope: draftScope,
++        generation,
++        composition: projectShotTimelineDraftComposition(
++          currentComposition,
++          occurrenceId,
++          nextConfig,
++          rawComposition,
++        ),
++      });
++    } catch (error) {
++      normalizeAndPresentError(error, { context: 'shot-timeline-preview:draft' });
++    }
+   }, [currentComposition, dataProvider, draftScope, occurrenceId, onCanonicalDraftProjectionChange]);
+   const handleSaveStatusChange = useCallback((status: SaveStatus) => {
+     const dirty = status !== 'saved';
+diff --git a/src/tools/travel-between-images/components/shotTimelineDataProvider.ts b/src/tools/travel-between-images/components/shotTimelineDataProvider.ts
+index f312b68ff..73845c70b 100644
+--- a/src/tools/travel-between-images/components/shotTimelineDataProvider.ts
++++ b/src/tools/travel-between-images/components/shotTimelineDataProvider.ts
+@@ -1,3 +1,4 @@
++import { projectedClipCounterparts, serializeProjectedTimelineConfig } from '@/tools/video-editor/lib/serialize.ts';
+ import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+ import type { LoadedTimeline } from '@/tools/video-editor/data/DataProvider.ts';
+ import {
+@@ -132,16 +133,26 @@ export function createShotTimelineInitialData(
+   });
+ }
+ 
+-function createCanonicalTimeline(config: TimelineConfig, occurrenceId: string): Record<string, unknown> {
+-  const clipPrefix = `${occurrenceId}:`;
++function createCanonicalTimeline(config: TimelineConfig, composition: PreparedShotComposition): Record<string, unknown> {
++  const counterparts = projectedClipCounterparts(composition, config.clips);
+   const clips = (config.clips ?? []).map((clip) => {
++    const raw = counterparts.get(clip.id);
++    if (!raw) throw new Error('The shot draft has no unambiguous raw clip counterpart');
++    const rawApp = raw.app as Record<string, unknown> | undefined;
+     const app = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)
+-      ? Object.fromEntries(Object.entries(clip.app).filter(([key]) => !['canonical', 'canonicalTiming'].includes(key)))
+-      : clip.app;
++      ? { ...clip.app } : clip.app;
++    if (app) {
++      for (const key of ['canonical', 'canonicalTiming']) {
++        if (rawApp && Object.hasOwn(rawApp, key)) {
++          Object.defineProperty(app, key, { value: structuredClone(rawApp[key]),
++            enumerable: true, configurable: true, writable: true });
++        } else Reflect.deleteProperty(app, key);
++      }
++    }
+     const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
+     return {
+       ...persistedClip,
+-      id: persistedClip.id.startsWith(clipPrefix) ? persistedClip.id.slice(clipPrefix.length) : persistedClip.id,
++      id: String(raw.id),
+       ...(app && typeof app === 'object' ? { app } : {}),
+     };
+   });
+@@ -209,7 +220,7 @@ type ShotTimelineDataProvider = DataProvider & {
+     expectedHeadRevisionId: string | null,
+   ) => void) => void;
+   setDraftState: (dirty: boolean) => void;
+-  setDraftGeneration: (generation: number) => void;
++  setDraftGeneration: (generation: number) => PreparedShotComposition;
+   adoptCleanBaseline: (config: ResolvedTimelineConfig, composition: PreparedShotComposition) => boolean;
+ };
+ 
+@@ -218,10 +229,11 @@ export function projectShotTimelineDraftComposition(
+   composition: PreparedShotComposition,
+   occurrenceId: string,
+   config: ResolvedTimelineConfig,
++  rawComposition = composition,
+ ): PreparedShotComposition {
+   const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
+   if (!occurrence) return composition;
+-  const timeline = createCanonicalTimeline(createShotTimelineConfig(config), occurrenceId);
++  const timeline = createCanonicalTimeline(createShotTimelineConfig(config), rawComposition);
+   const extentMs = timelineContentExtentMs(timeline);
+   const hardLimitMs = hardDurationMs(composition.contract, occurrenceId, occurrence.atMs);
+   const revision = occurrence.revision;
+@@ -324,12 +336,15 @@ export function createShotTimelineDataProvider(
+     },
+     persistenceEnabled: Boolean(shotCompositionAdapter?.publish),
+     setShotTimelineTraceId: (traceId) => { activeTimingTraceId = traceId; },
+-    getTimelineDraftRecoveryMetadata: (): TimelineDraftRecoveryMetadata => ({
+-      recoveryKey,
+-      baseHeadRevisionId: canonicalBase.headRevisionId,
+-      baseCanonicalGraph: canonicalBase.contract as unknown as Record<string, unknown>,
+-      draftIdentity: globalThis.crypto?.randomUUID?.() ?? `edit-${Date.now()}-${Math.random()}`,
+-    }),
++    getTimelineDraftRecoveryMetadata: (rememberRaw): TimelineDraftRecoveryMetadata => {
++      rememberRaw?.(composition);
++      return {
++        recoveryKey,
++        baseHeadRevisionId: canonicalBase.headRevisionId,
++        baseCanonicalGraph: canonicalBase.contract as unknown as Record<string, unknown>,
++        draftIdentity: globalThis.crypto?.randomUUID?.() ?? `edit-${Date.now()}-${Math.random()}`,
++      };
++    },
+     resolveAssetUrl: resolve,
+     onResolve: async ({ file }) => resolve(file),
+     loadTimeline: async (_timelineId) => {
+@@ -345,6 +360,7 @@ export function createShotTimelineDataProvider(
+             // current canonical head. Only adopt its displayed marker when it
+             // matches the provider's latest known base; never rewrite a stale
+             // draft's original CAS revision here.
++            composition = recoveredBase;
+             adoptCanonicalBase(recoveredBase, recoveryBaseIsCurrent);
+             if (recoveryBaseIsCurrent) {
+               recoveryBaseHeadRevisionId = recoveredBase.headRevisionId;
+@@ -370,6 +386,16 @@ export function createShotTimelineDataProvider(
+           ? reconcileConfigHeadRevision(recoveredConfig as TimelineConfig, recoveryBaseHeadRevisionId)
+           : recoveredConfig as TimelineConfig;
+       }
++      if (recoveredConfig) {
++        const identities = projectCanonicalComposition(composition, undefined, { clampToOccurrenceDuration: false }).clipIdentities;
++        timelineConfig = { ...timelineConfig, clips: timelineConfig.clips.map((clip) => {
++          const identity = identities.get(clip.id);
++          const original = composition.occurrences.find((item) => item.occurrenceId === identity?.occurrenceId);
++          return original ? { ...clip, app: { ...clip.app, canonicalTiming: {
++            ...(clip.app?.canonicalTiming as object), storedOccurrenceDurationMs: original.durationMs,
++          } } } : clip;
++        }) };
++      }
+       const savedPublication = recovery?.draft.canonicalPublication;
+       if (savedPublication && typeof savedPublication === 'object' && !Array.isArray(savedPublication)) {
+         const candidate = savedPublication as Record<string, unknown>;
+@@ -394,6 +420,7 @@ export function createShotTimelineDataProvider(
+           parentDocumentId: composition.parentDocumentId,
+         });
+         if (!latest) throw new Error('The canonical shot composition is unavailable');
++        composition = latest;
+         adoptCanonicalBase(latest);
+         timelineQueryIdentity = latest.headRevisionId;
+         const occurrence = latest.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
+@@ -434,6 +461,7 @@ export function createShotTimelineDataProvider(
+     loadAssetRegistry: async () => registry,
+     saveTimeline: async (timelineId, nextConfig, expectedVersion) => {
+       const publicationGeneration = draftGeneration;
++      const rawComposition = composition;
+       assertEditorHeadIsCurrent();
+       if (!shotCompositionAdapter?.publish) {
+         throw new Error('The canonical shot-composition provider is read-only');
+@@ -444,7 +472,7 @@ export function createShotTimelineDataProvider(
+       let publicationExpectedHeadRevisionId: string | null = null;
+       if (timingTraceId) recordShotTimelinePhase(timingTraceId, 'request-start', { expectedVersion });
+       try {
+-        const timeline = createCanonicalTimeline(nextConfig, occurrenceId);
++        const timeline = createCanonicalTimeline(nextConfig, rawComposition);
+         // Reserve the project queue synchronously in caller order before any
+         // async recovery read or hashing. Otherwise a later edit can finish
+         // preparation first and publish ahead of the save that was requested
+@@ -495,7 +523,7 @@ export function createShotTimelineDataProvider(
+               && typeof recoveryDraftConfig === 'object'
+               && !Array.isArray(recoveryDraftConfig)
+               && await digest(normalizeHeadForSignature(
+-                createCanonicalTimeline(recoveryDraftConfig as TimelineConfig, occurrenceId),
++                createCanonicalTimeline(recoveryDraftConfig as TimelineConfig, rawComposition),
+                 canonicalBase.headRevisionId,
+               )) === configSignature,
+             );
+@@ -509,7 +537,9 @@ export function createShotTimelineDataProvider(
+                 : `superseded:${candidate.idempotencyKey}`;
+             const publicationDraft = {
+               ...(recoveryAtStart?.draft ?? {}),
+-              config: nextConfig,
++              // Existing recovery bytes keep their owner and retry meaning.
++              config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config
++                : serializeProjectedTimelineConfig(nextConfig, rawComposition),
+               registry,
+               canonicalPublication: candidate,
+             };
+@@ -593,7 +623,7 @@ export function createShotTimelineDataProvider(
+     },
+     setPublishCallback: (callback) => { publishCallback = callback; },
+     setDraftState: (dirty) => { draftDirty = dirty; },
+-    setDraftGeneration: (generation) => { draftGeneration = Math.max(draftGeneration, generation); },
++    setDraftGeneration: (generation) => { draftGeneration = Math.max(draftGeneration, generation); return composition; },
+     adoptCleanBaseline: (nextConfig, nextComposition) => {
+       if (draftDirty || pendingPublishes > 0) {
+         return false;
+@@ -606,6 +636,7 @@ export function createShotTimelineDataProvider(
+           file: entry.file ?? entry.media_id ?? entry.url,
+         }]))),
+       };
++      composition = nextComposition;
+       adoptCanonicalBase(nextComposition);
+       timelineQueryIdentity = nextComposition.headRevisionId;
+       return true;
+diff --git a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+index 412dba0ff..557003fca 100644
+--- a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+@@ -159,12 +159,13 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+   // update jump ahead of a deferred config update.
+   useEffect(() => {
+     setDelivery((current) => current.config === config
++      && current.compiledTransitions === compiledTransitions
+       && current.revision.kind === previewRevision.kind
+       && current.revision.revisionId === previewRevision.revisionId
+       && current.revision.baseRevisionId === previewRevision.baseRevisionId
+       ? { ...current, revision: previewRevision }
+       : current);
+-  }, [config, previewRevision]);
++  }, [config, compiledTransitions, previewRevision]);
+ 
+   // Stable identity: reads only the state setter and refs, so effects can depend on it.
+   const setDeferredConfig = useCallback(
+diff --git a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx
+index 0f2571b72..ef3bea08e 100644
+--- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx
+@@ -1,3 +1,4 @@
++import { boundCanonicalRenderConfig } from '../../lib/canonicalRenderBounds.ts';
+ // @vitest-environment jsdom
+ import React from 'react';
+ import { act, cleanup, render, screen } from '@testing-library/react';
+@@ -172,7 +173,7 @@ describe('mounted command projection delivery', () => {
+     expect(player.config).toBe(edit);
+     label('Unsaved local · based on R');
+     advance();
+-    expect(player.config).toBe(closure);
++    expect(player.config).toEqual(boundCanonicalRenderConfig(closure));
+     expect(player.config!.clips.find((clip) => clip.asset)!.assetEntry).toBe(pinnedMedia);
+     expect(player.config!.registry).toBe(closure.registry);
+     label('Committed A');
+diff --git a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.storedCap.test.tsx b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.storedCap.test.tsx
+new file mode 100644
+index 000000000..8074c48c4
+--- /dev/null
++++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.storedCap.test.tsx
+@@ -0,0 +1,133 @@
++// @vitest-environment jsdom
++import React from 'react';
++import { act, cleanup, render, screen } from '@testing-library/react';
++import { afterEach, expect, it, vi } from 'vitest';
++import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
++import { querySceneFrame } from '@banodoco/timeline-composition/evaluation';
++import fixture from '../../data/shotComposition.fixture.json';
++import { createShotCompositionAdapter } from '../../data/shotCompositionAdapter.ts';
++import { projectCanonicalComposition } from '../../data/shotCompositionProjection.ts';
++import { compilePlayerTransitions, preparePlayerClipOpacity, preparePlayerTrack } from '../../compositions/playerEvaluation.ts';
++import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../../contexts/VideoEditorRuntimeContext.tsx';
++import { createTimelineStore, TimelineStoreProvider } from '../../hooks/timelineStore.ts';
++import { assembleTimelineData, type TimelineData } from '../../lib/timeline-data.ts';
++import type { ResolvedTimelineConfig } from '../../types/index.ts';
++import { useVideoEditorPreviewSurface } from './useVideoEditorPreviewSurface.tsx';
++
++const player = vi.hoisted(() => ({
++  config: null as ResolvedTimelineConfig | null,
++  vector: undefined as CompiledCanonicalTransitions | undefined,
++  extent: 0,
++  frame: 0,
++  listeners: new Map<string, Set<() => void>>(),
++}));
++vi.mock('@remotion/player', async () => {
++  const React = await import('react');
++  return { Player: React.forwardRef(function Player(props: {
++    inputProps: { config: ResolvedTimelineConfig; compiledTransitions?: CompiledCanonicalTransitions };
++    durationInFrames: number;
++  }, ref) {
++    player.config = props.inputProps.config;
++    player.vector = props.inputProps.compiledTransitions;
++    player.extent = props.durationInFrames;
++    React.useImperativeHandle(ref, () => ({
++      addEventListener: (name: string, fn: () => void) => {
++        if (!player.listeners.has(name)) player.listeners.set(name, new Set());
++        player.listeners.get(name)!.add(fn);
++      },
++      removeEventListener: (name: string, fn: () => void) => player.listeners.get(name)?.delete(fn),
++      getCurrentFrame: () => player.frame, isPlaying: () => false,
++      seekTo: (frame: number) => { player.frame = frame; },
++      play: vi.fn(), pause: vi.fn(), toggle: vi.fn(),
++    }), []);
++    return <div />;
++  }) };
++});
++
++function source(cap: number, revision: string): TimelineData {
++  const prepared = createShotCompositionAdapter({ load: vi.fn() }).prepare(fixture);
++  const original = prepared.occurrences[0];
++  const internal = original.revision.internal_timeline_revision as Record<string, unknown>;
++  const composition = { ...prepared, occurrences: [{ ...original, durationMs: cap,
++    revision: { ...original.revision, internal_timeline_revision: { ...internal, timeline: {
++      tracks: [{ id: 'video', kind: 'visual' }],
++      clips: [{ id: 'image', track: 'video', at: 0, hold: 5, clipType: 'media', asset: 'alpha-image', effects: { fade_out: 1 } }],
++    } } },
++  }] };
++  const config = projectCanonicalComposition(composition, {
++    output: { fps: 30, resolution: '1920x1080', file: 'image.mp4' },
++    tracks: [], clips: [], registry: {},
++  }).config;
++  return Object.assign(assembleTimelineData({ config, resolvedConfig: config,
++    registry: { assets: config.registry }, output: config.output, assetMap: {}, configVersion: 1 }), {
++    editProjection: { kind: 'accepted' as const, head: { revisionId: revision, publicationId: `pub-${revision}` } },
++  });
++}
++function Surface() {
++  const surface = useVideoEditorPreviewSurface();
++  return <><div ref={surface.slotRef} />{surface.portal}</>;
++}
++afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
++
++it.each(['paused', 'playing'] as const)('delivers stored 4000/4500 config, vector, provenance and extent atomically while %s', (mode) => {
++  vi.useFakeTimers();
++  let nextFrame = 0;
++  const frames = new Map<number, FrameRequestCallback>();
++  vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => { frames.set(++nextFrame, fn); return nextFrame; });
++  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
++  const flushFrame = () => act(() => {
++    const pending = [...frames.values()]; frames.clear(); pending.forEach((fn) => fn(1000));
++  });
++  const advance = (ms = 150) => act(() => { vi.advanceTimersByTime(ms); });
++  player.listeners.clear(); player.frame = 0;
++  const a = source(4000, 'A'), b = source(4500, 'B');
++  expect(a.config.clips[0].hold).toBe(5);
++  expect(b.config.clips[0].hold).toBe(5);
++  const withoutCap = (data: TimelineData) => {
++    const config = structuredClone(data.config);
++    for (const clip of config.clips) Reflect.deleteProperty(clip.app!.canonicalTiming as object, 'storedOccurrenceDurationMs');
++    return config;
++  };
++  expect(withoutCap(a)).toStrictEqual(withoutCap(b));
++  const store = createTimelineStore();
++  const install = (data: TimelineData) => act(() => {
++    // An unchanged editor slice cannot supply the selected command's cap.
++    store.getState().syncDataSlice({ ...store.getState().data, data, resolvedConfig: a.resolvedConfig });
++  });
++  install(a);
++  const runtime = { userId: null, project: { projectId: 'project' }, timelineId: 'timeline',
++    shots: { canonicalComposition: null, canonicalDraft: null } } as VideoEditorRuntimeContextValue;
++  const view = render(<VideoEditorRuntimeProvider value={runtime}>
++    <TimelineStoreProvider store={store}><Surface /></TimelineStoreProvider>
++  </VideoEditorRuntimeProvider>);
++  const assertDelivery = (cap: number, revision: string) => {
++    expect(player.config!.clips[0].hold).toBe(cap / 1000);
++    expect(player.extent).toBe(cap * 30 / 1000);
++    expect(player.vector).toEqual(compilePlayerTransitions(player.config!));
++    expect(screen.getByTestId('preview-revision-label')).toHaveTextContent(`Committed ${revision}`);
++    const config = player.config!;
++    expect(preparePlayerClipOpacity(config.clips[0], 30)(105)).toBe(cap === 4000 ? 0.5 : 1);
++    const evaluation = preparePlayerTrack(config.tracks[0], config.clips, 30, 1920, 1080, undefined, player.vector);
++    expect(querySceneFrame(evaluation.scene, cap * 30 / 1000).layers).toEqual([]);
++  };
++  advance(); assertDelivery(4000, 'A');
++  if (mode === 'playing') {
++    act(() => player.listeners.get('play')?.forEach((fn) => fn())); flushFrame();
++  }
++  const originalVector = player.vector;
++  install(b);
++  assertDelivery(4000, 'A'); expect(player.vector).toBe(originalVector);
++  if (mode === 'playing') flushFrame(); else { advance(149); assertDelivery(4000, 'A'); advance(1); }
++  assertDelivery(4500, 'B');
++  // An end seek is clamped on delivery of the shorter selected unit.
++  player.frame = 134;
++  install(a);
++  assertDelivery(4500, 'B');
++  if (mode === 'playing') flushFrame(); else advance();
++  flushFrame(); assertDelivery(4000, 'A'); expect(player.frame).toBeLessThan(120);
++  install(b); install(a);
++  advance(); flushFrame(); assertDelivery(4000, 'A');
++  view.unmount();
++  advance(500); flushFrame();
++  expect(frames.size).toBe(0);
++});
+diff --git a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.test.tsx b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.test.tsx
+index f38d892a1..031a83017 100644
+--- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.test.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.test.tsx
+@@ -1,3 +1,4 @@
++import { boundCanonicalRenderConfig } from '../../lib/canonicalRenderBounds.ts';
+ // @vitest-environment jsdom
+ import React from 'react';
+ import { act, render, renderHook, screen } from '@testing-library/react';
+@@ -45,7 +46,7 @@ describe('useVideoEditorPreviewSurface', () => {
+     const draft = adapter.prepare(graphWithClipStart(700, 'draft-r1'));
+     const advancedCanonical = adapter.prepare(graphWithClipStart(1200, 'server-r3'));
+     const parentConfig = projectCanonicalComposition(canonical).config!;
+-    const expectedDraftConfig = projectCanonicalComposition(draft, parentConfig).config!;
++    const expectedDraftConfig = boundCanonicalRenderConfig(projectCanonicalComposition(draft, parentConfig).config!);
+     mocks.timeline = { resolvedConfig: parentConfig };
+     mocks.playback = {
+       currentTime: 0,
+diff --git a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
+index 20c73c1e6..f78752e2e 100644
+--- a/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
+@@ -1,3 +1,4 @@
++import { boundCanonicalRenderConfig } from '../../lib/canonicalRenderBounds.ts';
+ import { compilePlayerTransitions } from '../../compositions/playerEvaluation.ts';
+ import type { ReactPortal } from 'react';
+ import { createPortal } from 'react-dom';
+@@ -36,13 +37,15 @@ export function useVideoEditorPreviewSurface({
+   const saveStatus = useTimelineChromeSelector((chrome) => chrome.saveStatus);
+   const runtime = useOptionalVideoEditorRuntime();
+   const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
+-  const previewConfig = compositionResolution.config;
++  const sourceConfig = compositionResolution.config;
++  const previewConfig = useMemo(() => compositionResolution.source === 'canonical' && sourceConfig
++    ? boundCanonicalRenderConfig(sourceConfig) : sourceConfig, [sourceConfig, compositionResolution.source]);
+   const previewSource = compositionResolution.source;
+   const compiledTransitions = useMemo(() => previewSource === 'canonical' && previewConfig
+     ? compilePlayerTransitions(previewConfig) : undefined, [previewConfig, previewSource]);
+   const previewRevision = useMemo<PreviewRevision>(() => {
+     const fact = timelineData?.editProjection;
+-    const paired = fact && previewConfig === timelineData.resolvedConfig;
++    const paired = fact && sourceConfig === timelineData.resolvedConfig;
+     const error = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
+     const unavailableTarget = fact && !paired
+       ? {
+@@ -105,7 +108,7 @@ export function useVideoEditorPreviewSurface({
+     return unavailableTarget
+       ? { kind: 'unavailable', unavailableTarget }
+       : { kind: 'unknown', reason: 'The loaded timeline has no committed revision identity.' };
+-  }, [compositionResolution.error?.message, previewConfig, previewSource, runtime?.shots?.canonicalComposition,
++  }, [compositionResolution.error?.message, sourceConfig, previewSource, runtime?.shots?.canonicalComposition,
+     runtime?.shots?.canonicalCompositionError, runtime?.shots?.canonicalDraft, runtime?.userId,
+     saveStatus, timelineData]);
+   const {
+diff --git a/src/tools/video-editor/data/DataProvider.ts b/src/tools/video-editor/data/DataProvider.ts
+index a8f3775fc..5908fd999 100644
+--- a/src/tools/video-editor/data/DataProvider.ts
++++ b/src/tools/video-editor/data/DataProvider.ts
+@@ -458,7 +458,9 @@ export interface DataProvider extends AssetResolver {
+   projectObjects?: ProjectObjectStorage;
+   persistenceEnabled?: boolean;
+   /** Durable-recovery metadata captured synchronously at the first local edit. */
+-  getTimelineDraftRecoveryMetadata?(): import('./timelineDraftIndexedDb.ts').TimelineDraftRecoveryMetadata;
++  getTimelineDraftRecoveryMetadata?(
++    rememberRaw?: (composition: import('./shotCompositionAdapter.ts').PreparedShotComposition) => void,
++  ): import('./timelineDraftIndexedDb.ts').TimelineDraftRecoveryMetadata;
+   /** Explicit reload path that bypasses provider-local unsaved recovery state. */
+   loadCanonicalTimeline?(timelineId: string): Promise<LoadedTimeline>;
+ 
+diff --git a/src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts b/src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts
+new file mode 100644
+index 000000000..46ac32ecc
+--- /dev/null
++++ b/src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts
+@@ -0,0 +1,61 @@
++import { expect, it } from 'vitest';
++import { querySceneFrame } from '@banodoco/timeline-composition/evaluation';
++import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
++import { RUNTIME_SCHEMA_DIGEST, RUNTIME_TARGETED_EXECUTION_CAPABILITY } from '@/integrations/runtime/contract-metadata.ts';
++import { RUNTIME_CLIENT_SCOPES } from '@/integrations/runtime/client.ts';
++import { compilePlayerTransitions, preparePlayerClipOpacity, preparePlayerTrack } from '../compositions/playerEvaluation.ts';
++import { createShotCompositionAdapter } from './shotCompositionAdapter.ts';
++import { resolveCanonicalComposition } from './canonicalCompositionState.ts';
++import closure from './mainImageCap.fixture.json';
++
++// Verbatim raw closure from the original MAIN a411628f capture, documented in
++// design/viewing-main-image-cap-actual-reference.md (2026-10-20, 11:54 UTC).
++// MAIN f90 RGB240, f105 RGB122/124/130 over RGB5/8/20 => median opacity 0.5.
++// This exercises source consumers only; it does not render or sample pixels.
++it('preserves MAIN image-cap opacity through the canonical projection and public compiler', async () => {
++  const original = structuredClone(closure);
++  const parent = closure.parent_revision;
++  const prefix = `/v1/projects/${parent.project_id}`;
++  const responses: Record<string, unknown> = {
++    '/v1/health': { status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
++      runtime_instance_id: 'main-image-cap-instance', runtime_epoch: 1 },
++    '/v1/handshake': { protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
++      actor_id: 'actor-1', realm_id: 'realm-1', scopes: [...RUNTIME_CLIENT_SCOPES],
++      capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY] },
++    '/v1/realm': { realm_id: 'realm-1' },
++    [`${prefix}/timelines/${parent.timeline_id}/composition-revisions/${parent.revision_id}`]: parent,
++    ...Object.fromEntries(closure.shot_revisions.map(shot =>
++      [`${prefix}/shots/${shot.shot_id}/revisions/${shot.revision_id}`, shot])),
++    ...Object.fromEntries(closure.internal_timeline_revisions.map(internal =>
++      [`${prefix}/timelines/${internal.timeline_id}/revisions/${internal.revision_id}`, internal])),
++  };
++  const provider = new RuntimeDataProvider({ projectId: parent.project_id,
++    baseUrl: 'http://main-image-cap.test', token: 'token', transport: async (method, path) => {
++      expect(method).toBe(path === '/v1/handshake' ? 'POST' : 'GET');
++      expect(responses).toHaveProperty(path);
++      return { status: 200, headers: {}, body: new TextEncoder().encode(JSON.stringify(responses[path])) };
++    } });
++  const graph = await provider.shotComposition.loadAtHead!({ projectId: parent.project_id,
++    parentDocumentId: parent.timeline_id, headRevisionId: parent.revision_id });
++  const composition = createShotCompositionAdapter(provider.shotComposition).prepare(graph);
++  const result = resolveCanonicalComposition({ userId: null, hasShotClips: true, hasShotComposition: true,
++    composition, compositionError: null, baseConfig: null });
++  expect(result.status).toBe('ready');
++  const config = result.config!;
++  expect(config.output).toMatchObject({ fps: 30, resolution: '1920x1080' });
++  expect(config.clips).toHaveLength(1);
++  const clip = config.clips[0];
++  expect.soft(clip).toMatchObject({ id: 'image-occurrence:image', at: 0, hold: 4, effects: { fade_out: 1 } });
++  const compiled = compilePlayerTransitions(config);
++  expect(compiled?.tracks).toHaveLength(1);
++  const evaluation = preparePlayerTrack(config.tracks[0], config.clips, config.output.fps,
++    1920, 1080, undefined, compiled);
++  for (const [frame, opacity] of [[90, 1], [105, 0.5]]) {
++    expect.soft(querySceneFrame(evaluation.scene, frame).layers).toMatchObject([
++      { clipId: clip.id, contentFrame: frame },
++    ]);
++    expect.soft(preparePlayerClipOpacity(clip, config.output.fps)(frame)).toBe(opacity);
++  }
++  expect.soft(querySceneFrame(evaluation.scene, 120).layers).toEqual([]);
++  expect(closure).toStrictEqual(original);
++});
+diff --git a/src/tools/video-editor/data/canonicalCompositionState.ts b/src/tools/video-editor/data/canonicalCompositionState.ts
+index 8a921fe5e..f5ce17e74 100644
+--- a/src/tools/video-editor/data/canonicalCompositionState.ts
++++ b/src/tools/video-editor/data/canonicalCompositionState.ts
+@@ -1,3 +1,4 @@
++import { boundCanonicalRenderConfig } from '../lib/canonicalRenderBounds.ts';
+ import type { PreparedShotComposition } from './shotCompositionAdapter.ts';
+ import { projectCanonicalComposition } from './shotCompositionProjection.ts';
+ import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+@@ -58,7 +59,7 @@ export function resolveCanonicalComposition({
+     return {
+       source: 'canonical',
+       status: 'ready',
+-      config: projectCanonicalComposition(composition, baseConfig).config,
++      config: boundCanonicalRenderConfig(projectCanonicalComposition(composition, baseConfig).config),
+       error: null,
+     };
+   } catch (error) {
+diff --git a/src/tools/video-editor/data/mainImageCap.fixture.json b/src/tools/video-editor/data/mainImageCap.fixture.json
+new file mode 100644
+index 000000000..f1d2901f2
+--- /dev/null
++++ b/src/tools/video-editor/data/mainImageCap.fixture.json
+@@ -0,0 +1,108 @@
++{
++  "parent_revision": {
++    "project_id": "project-demo",
++    "timeline_id": "timeline-1",
++    "revision_id": "image-cap-parent",
++    "payload": {
++      "config": {
++        "tracks": [
++          {
++            "id": "picture",
++            "kind": "visual",
++            "label": "Picture",
++            "fit": "cover"
++          }
++        ],
++        "clips": [],
++        "output": {
++          "fps": 30,
++          "resolution": "1920x1080",
++          "file": "output.mp4"
++        },
++        "theme_overrides": {
++          "visual": {
++            "canvas": {
++              "width": 1920,
++              "height": 1080,
++              "fps": 30
++            }
++          }
++        }
++      },
++      "registry": {
++        "assets": {}
++      },
++      "occurrences": [
++        {
++          "occurrence_id": "image-occurrence",
++          "shot_id": "image-shot",
++          "shot_revision_id": "image-shot-revision",
++          "placement": {
++            "start_ms": 0,
++            "track": "picture"
++          },
++          "duration_ms": 4000,
++          "source_offset": 0,
++          "speed": 1,
++          "gain": 1,
++          "mute": false
++        }
++      ]
++    },
++    "content_digest": "sha256:76135166d9ba031260652b35e28e0acc81aec504c353c47db4e12fcbc57e7e9c"
++  },
++  "shot_revisions": [
++    {
++      "project_id": "project-demo",
++      "shot_id": "image-shot",
++      "revision_id": "image-shot-revision",
++      "internal_timeline_revision_id": "image-internal",
++      "payload": {
++        "name": "Image cap analog",
++        "text_bindings": []
++      },
++      "content_digest": "sha256:f6778c2f114dbcbe5e8fa33fd93ece7719016a8c3fc8c17185fc9b4272e4e446"
++    }
++  ],
++  "internal_timeline_revisions": [
++    {
++      "project_id": "project-demo",
++      "timeline_id": "timeline-1",
++      "revision_id": "image-internal",
++      "payload": {
++        "tracks": [
++          {
++            "id": "picture",
++            "kind": "visual",
++            "label": "Picture",
++            "fit": "cover"
++          }
++        ],
++        "clips": [
++          {
++            "id": "image",
++            "clipType": "image",
++            "asset": "image",
++            "track": "picture",
++            "at": 0,
++            "hold": 5,
++            "effects": {
++              "fade_out": 1
++            }
++          }
++        ],
++        "registry": {
++          "assets": {
++            "image": {
++              "media_id": "sha256:ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
++              "content_sha256": "ec19e1c7d1d247d56db54f73e6514c92a82147a1b6ab59eaa30edeebca2e82b6",
++              "type": "image",
++              "resolution": "16x16"
++            }
++          }
++        }
++      },
++      "content_digest": "sha256:6446eee8de4a9f204a3957ed1f9c21c0629ae4ed1b00564dd1b6994a3dda3a2e"
++    }
++  ]
++}
+diff --git a/src/tools/video-editor/data/shotCompositionProjection.ts b/src/tools/video-editor/data/shotCompositionProjection.ts
+index 5bccca367..3e08edd71 100644
+--- a/src/tools/video-editor/data/shotCompositionProjection.ts
++++ b/src/tools/video-editor/data/shotCompositionProjection.ts
+@@ -330,6 +330,7 @@ function projectClip(
+   clipIndex: number,
+   clipIdentities: Map<string, CanonicalProjectedClipIdentity>,
+   clampToOccurrenceDuration: boolean,
++  storedOccurrenceDurationMs: number,
+ ): TimelineClip | null {
+   assertSupportedChildClip(rawClip, occurrence);
+   const rawClipId = text(rawClip.id) ?? null;
+@@ -432,6 +433,7 @@ function projectClip(
+         durationMs,
+         occurrenceStartMs: occurrence.atMs,
+         occurrenceDurationMs: occurrence.durationMs,
++        storedOccurrenceDurationMs,
+       },
+     },
+   };
+@@ -528,6 +530,7 @@ export function projectCanonicalComposition(
+           index,
+           clipIdentities,
+           options.clampToOccurrenceDuration !== false,
++          occurrence.durationMs,
+         );
+         if (projected) {
+           if (Array.isArray(timeline.effects) && timeline.effects.length > 0) {
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx b/src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx
+index 1cc2369e1..20fcd0284 100644
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx
+@@ -1,7 +1,7 @@
+ // @vitest-environment jsdom
+ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+-import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
++import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+ import { document, environment } from '../commands/__tests__/commitSessionEnvironment.ts';
+ import { authoringBundleFromDocument } from '../commands/authoringBundle.ts';
+ import { captureClipMove as captureNativeMove, executeClipMove, finishClipMove } from '../commands/clipMoveCapture.ts';
+@@ -82,6 +82,75 @@ const assertRoots = (data: TimelineData, opaque: Record<string, unknown>) => {
+ };
+ 
+ describe('atomic command projection facts', () => {
++  it('recomputes the stored cap from the verified bootstrap and original recovered command graph', async () => {
++    const raw = document();
++    const children = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
++      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
++    raw.parent_revision.payload.occurrences = [children.parent_revision.payload.occurrences[0]];
++    raw.parent_revision.payload.occurrences[0].duration_ms = 4000;
++    raw.shot_revisions = children.shot_revisions;
++    raw.internal_timeline_revisions = children.internal_timeline_revisions;
++    raw.dependency_manifest = children.dependency_manifest;
++    const internal = raw.internal_timeline_revisions[0];
++    const child = (internal.payload as { clips: Array<{ hold: number; app: unknown }> }).clips[0];
++    child.hold = 5;
++    child.app = { canonicalTiming: { storedOccurrenceDurationMs: null, opaque: [null, false, 0] } };
++    internal.content_digest = fixtureDigest(internal.payload);
++    raw.dependency_manifest.internal_timelines[0].content_digest = internal.content_digest;
++    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
++    const original = structuredClone(raw);
++    const { env, mount, held } = await setup(raw);
++    const first = mount();
++    await waitFor(() => expect(first.hook.result.current.commands.port).toBeDefined());
++    const assertCap = (data: TimelineData) => {
++      expect(data.resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!.app?.canonicalTiming)
++        .toHaveProperty('storedOccurrenceDurationMs', 4000);
++    };
++    assertCap(first.hook.result.current.commit.data!);
++    env.setFault('busy');
++    act(() => { first.move(7); });
++    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
++    const local = first.hook.result.current.commit.data!;
++    assertCap(local);
++    expect(first.recoveryConfig.snapshot(local.head, local.config).clips.find((clip) => clip.id === 'occ-0:child-title')!.app?.canonicalTiming)
++      .toEqual({ storedOccurrenceDurationMs: null, opaque: [null, false, 0] });
++    const owner = first.hook.result.current.commands.state.ownerId!;
++    first.hook.unmount();
++    await waitFor(() => expect(held.size).toBe(0));
++    const recovered = mount();
++    await waitFor(() => expect(recovered.hook.result.current.commands.state.status).toBe('recovery'));
++    await act(async () => { await recovered.hook.result.current.commands.recover(owner); });
++    assertCap(recovered.hook.result.current.commit.data!);
++    expect(recovered.hook.result.current.commit.data!.editProjection).toMatchObject({ kind: 'local', base: originalBase });
++    expect(JSON.stringify(env.commits())).not.toContain('storedOccurrenceDurationMs');
++    const send = env.provider.commitTimeline.bind(env.provider);
++    vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (request, key) => {
++      const result = await send(request, key);
++      // The in-process acceptance fixture normally has no children. Supply a
++      // coherent accepted pinned child closure to exercise the ACK projector.
++      const document = structuredClone(result.canonicalDocument);
++      document.parent_revision.payload.occurrences = structuredClone(raw.parent_revision.payload.occurrences);
++      document.parent_revision.payload.occurrences[0].duration_ms = 4500;
++      document.shot_revisions = raw.shot_revisions;
++      document.internal_timeline_revisions = raw.internal_timeline_revisions;
++      document.dependency_manifest = raw.dependency_manifest;
++      document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
++      const graph = structuredClone(env.initial.graph!);
++      (graph.primary_timeline as { head: { revision_id: string } }).head.revision_id = result.accepted.revisionId;
++      (graph.occurrences as Array<{ duration_ms: number }>)[0].duration_ms = 4500;
++      graph.parent_composition = document.parent_revision.payload;
++      return { ...result, canonicalDocument: document, graph, response: { ...result.response,
++        data: { ...result.response.data, canonical_document: document, document_digest: fixtureDigest(document) } } };
++    });
++    env.setFault(null);
++    await act(async () => { await recovered.hook.result.current.commands.retry(); });
++    const accepted = recovered.hook.result.current.commit.data!;
++    expect(accepted.editProjection).toMatchObject({ kind: 'accepted', head: { revisionId: 'r1', publicationId: 'p1' } });
++    expect(accepted.resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!.app?.canonicalTiming)
++      .toHaveProperty('storedOccurrenceDurationMs', 4500);
++    expect(raw).toStrictEqual(original);
++  });
++
+   it('projects the exact verified initial config, registry and head with no commands or graph', async () => {
+     const raw = document();
+     const opaque = opaqueRoots();
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandSession.ts b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+index 39db2c89b..a54a8bf5d 100644
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.ts
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+@@ -106,7 +106,7 @@ export function useTimelineCommandSession(options: {
+             : { kind: 'accepted', head: { ...accepted.head } } : undefined;
+         context.configVersionRef.current = data.configVersion;
+         context.headRevisionRef.current = head;
+-        context.recoveryConfig?.remember(head, parent.config);
++        context.recoveryConfig?.remember(head, parent.config, composition);
+         context.store.getState().setConfigVersion(data.configVersion);
+         context.commit.commitData(data, { save: false, skipHistory: true, updateLastSavedSignature: previews.length === 0 });
+         if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
+@@ -148,7 +148,8 @@ export function useTimelineCommandSession(options: {
+         if (latest.current.commit.dataRef.current === initialData && head === initialHead
+           && head?.projectId === basis.canonicalDocument.project_id && head.timelineId === timelineId
+           && head.headRevisionId === basis.head.revisionId && head.headPublicationId === basis.head.publicationId) {
+-          latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config);
++          latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config,
++            basis.graph && provider.shotComposition ? createShotCompositionAdapter(provider.shotComposition).prepare(basis.graph) : undefined);
+         }
+         // A retained outbox owns its original display basis until explicit recovery.
+         if (session.getState().status === 'saved') await project(basis, [], true);
+@@ -201,7 +202,8 @@ export function useTimelineCommandSession(options: {
+         if (currentHead?.projectId === basis.canonicalDocument.project_id && currentHead.timelineId === timelineId
+           && basis.canonicalDocument.timeline_id === timelineId
+           && currentHead.headRevisionId === basis.head.revisionId && currentHead.headPublicationId === basis.head.publicationId) {
+-          latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
++          latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config,
++            basis.graph && provider.shotComposition ? createShotCompositionAdapter(provider.shotComposition).prepare(basis.graph) : undefined);
+         }
+         session.observe(basis);
+       }
+diff --git a/src/tools/video-editor/hooks/useTimelinePersistence.test.tsx b/src/tools/video-editor/hooks/useTimelinePersistence.test.tsx
+index d9eb74d9a..8ad2ef27f 100644
+--- a/src/tools/video-editor/hooks/useTimelinePersistence.test.tsx
++++ b/src/tools/video-editor/hooks/useTimelinePersistence.test.tsx
+@@ -1,3 +1,7 @@
++import fixture from '../data/shotComposition.fixture.json';
++import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
++import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
++import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
+ // @vitest-environment jsdom
+ import React from 'react';
+ import { act, render, renderHook } from '@testing-library/react';
+@@ -128,6 +132,7 @@ interface SetupOptions {
+   loadAssetRegistryImpl?: DataProvider['loadAssetRegistry'];
+   loadReferencedTimelineImpl?: NonNullable<DataProvider['loadReferencedTimeline']>;
+   recoveryMetadata?: TimelineDraftRecoveryMetadata;
++  recoveryConfig?: ReturnType<typeof createRecoveryConfig>;
+ }
+ 
+ function setup(options?: SetupOptions): TestHarness {
+@@ -194,6 +199,7 @@ function setup(options?: SetupOptions): TestHarness {
+       editSeqRef,
+       savedSeqRef,
+       configVersionRef,
++      recoveryConfig: options?.recoveryConfig,
+       lastSavedSignatureRef,
+       interactionStateRef,
+     }),
+@@ -246,6 +252,43 @@ function makeBundle(text: string): TimelineBundleEnvelope {
+ }
+ 
+ describe('useTimelinePersistence — interaction gating', () => {
++  it('writes one clean projected config to the real draft store and save boundary from the retained raw basis', async () => {
++    const composition = createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture);
++    const config = projectCanonicalComposition(composition).config;
++    const data = await buildTimelineData(config, { assets: config.registry });
++    data.editProjection = { kind: 'accepted', head: { revisionId: 'R', publicationId: 'P' } };
++    const recoveryConfig = createRecoveryConfig();
++    recoveryConfig.remember(data.head, {}, composition);
++    const harness = setup({ initialData: data, recoveryConfig,
++      saveTimelineImpl: async () => { throw new TimelineVersionConflictError('keep draft'); } });
++    harness.scheduleSave(data);
++    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
++    const record = await loadTimelineDraft('timeline-1');
++    expect(record).not.toBeNull();
++    expect(JSON.stringify(record!.draft.config)).not.toContain('storedOccurrenceDurationMs');
++    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('keep draft'); });
++    expect(harness.saveTimeline.mock.calls[0][1]).toStrictEqual(record!.draft.config);
++    expect(data.config.clips.find((clip) => clip.id === 'occ-1:alpha-video')!.app?.canonicalTiming)
++      .toHaveProperty('storedOccurrenceDurationMs', 2000);
++    expect(harness.dataRef.current).toBe(data);
++    harness.unmount();
++  });
++
++  it('visibly refuses a declared projection with no raw basis, retaining editor data and existing durable bytes', async () => {
++    const harness = setup();
++    const previous = makeTimelineData('previous');
++    await saveTimelineDraft('timeline-1', { config: previous.config, registry: previous.registry }, 1);
++    const before = await loadTimelineDraft('timeline-1');
++    const data = makeTimelineData('derived');
++    data.editProjection = { kind: 'accepted', head: { revisionId: 'R', publicationId: 'P' } };
++    harness.scheduleSave(data);
++    expect(harness.result.current.saveStatus).toBe('error');
++    expect(harness.dataRef.current).toBe(data);
++    expect(await loadTimelineDraft('timeline-1')).toStrictEqual(before);
++    expect(harness.saveTimeline).not.toHaveBeenCalled();
++    harness.unmount();
++  });
++
+   it('sends the edited source bundle at its captured Runtime head and keeps it recoverable on CAS conflict', async () => {
+     const original = makeTimelineData('source-only');
+     const head = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'revision-1' };
+diff --git a/src/tools/video-editor/hooks/useTimelinePersistence.ts b/src/tools/video-editor/hooks/useTimelinePersistence.ts
+index 32df180ee..7737c2b81 100644
+--- a/src/tools/video-editor/hooks/useTimelinePersistence.ts
++++ b/src/tools/video-editor/hooks/useTimelinePersistence.ts
+@@ -1,3 +1,4 @@
++import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
+ import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
+ import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
+ import { useMutation } from '@tanstack/react-query';
+@@ -138,6 +139,7 @@ interface ScheduledSave {
+   session: PersistenceSession;
+   generation: number;
+   data: TimelineData;
++  authoredConfig: TimelineConfig;
+   seq: number;
+   draftOwnerId: string;
+   draftRecoveryKey: string;
+@@ -652,7 +654,7 @@ export function useTimelinePersistence({
+             : headRevisionRef.current
+               ? cloneAttemptValue(headRevisionRef.current)
+               : undefined,
+-          config: cloneAttemptValue(scheduledOrAttempt.data.config),
++          config: cloneAttemptValue(scheduledOrAttempt.authoredConfig),
+           registry: cloneAttemptValue(scheduledOrAttempt.data.registry),
+           stableSignature: scheduledOrAttempt.data.stableSignature,
+         };
+@@ -948,7 +950,8 @@ export function useTimelinePersistence({
+ 
+   const createScheduledSave = useCallback((nextData: TimelineData, seq: number): ScheduledSave => {
+     const draftOwnerId = generateUUID();
+-    const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.() ?? {};
++    let rawComposition: import('../data/shotCompositionAdapter.ts').PreparedShotComposition | undefined;
++    const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.((composition) => { rawComposition = composition; }) ?? {};
+     // Provider caches may contain a polled head. Only the editor's adopted
+     // base (or its own acknowledged successor) belongs to this draft.
+     const head = headRevisionRef.current;
+@@ -967,8 +970,10 @@ export function useTimelinePersistence({
+         }
+       : cloneAttemptValue(loadedBundleRef.current);
+     const wireBundle = effectiveBundle ?? undefined;
++    const authoredConfig = (recoveryConfig ?? createRecoveryConfig()).snapshot(
++      head, nextData.config, Boolean(nextData.editProjection), rawComposition);
+     const draft = {
+-      config: recoveryConfig?.snapshot(head, nextData.config) ?? cloneAttemptValue(nextData.config),
++      config: authoredConfig,
+       registry: cloneAttemptValue(nextData.registry),
+       bundle: effectiveBundle,
+     };
+@@ -995,6 +1000,7 @@ export function useTimelinePersistence({
+       session,
+       generation: session.generation,
+       data: nextData,
++      authoredConfig,
+       seq,
+       draftOwnerId,
+       draftRecoveryKey,
+@@ -1027,7 +1033,14 @@ export function useTimelinePersistence({
+     // debounce, interaction gate, or network attempt. Draft writes are
+     // serialized so an older IndexedDB transaction cannot land after a newer
+     // mutation, and each receipt can compare-and-delete only its own slot.
+-    const scheduledSave = createScheduledSave(nextData, editSeqRef.current);
++    let scheduledSave: ScheduledSave;
++    try { scheduledSave = createScheduledSave(nextData, editSeqRef.current); }
++    catch (error) {
++      setSaveStatus('error');
++      rejectFlushWaiters(error);
++      console.error('[TimelineSync] Draft retained in the editor: serialization refused', error);
++      return;
++    }
+ 
+     if (reloadInProgressRef.current) {
+       // A user edit made while canonical Reload is pending supersedes that
+@@ -1120,7 +1133,7 @@ export function useTimelinePersistence({
+       recordShotTimelinePhase(scheduledSave.traceId, 'debounce-fired');
+       void doSave(scheduledSave);
+     }, SAVE_DEBOUNCE_MS);
+-  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
++  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, rejectFlushWaiters, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
+ 
+   const resumeDeferredRecoverySave = useCallback(() => {
+     if (recoveryPendingRef?.current || recoveryActiveRef?.current) return;
+diff --git a/src/tools/video-editor/hooks/useTimelineSave.draftConfig.test.ts b/src/tools/video-editor/hooks/useTimelineSave.draftConfig.test.ts
+index 6fbc63de1..ad983300e 100644
+--- a/src/tools/video-editor/hooks/useTimelineSave.draftConfig.test.ts
++++ b/src/tools/video-editor/hooks/useTimelineSave.draftConfig.test.ts
+@@ -1,3 +1,6 @@
++import fixture from '../data/shotComposition.fixture.json';
++import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
++import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
+ import { describe, expect, it } from 'vitest';
+ import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
+ import { createDefaultTimelineConfig } from '../lib/defaults.ts';
+@@ -38,3 +41,17 @@ describe('recovery-only config roots', () => {
+     expect(recovery.snapshot(other, current)).toEqual(current);
+   });
+ });
++
++
++it('snapshots projected drafts from the retained original graph and refuses a different base', () => {
++  const composition = createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture);
++  const config = projectCanonicalComposition(composition).config;
++  const recovery = createRecoveryConfig();
++  recovery.remember(head, { x_null: null }, composition);
++  const draft = recovery.snapshot(head, config, true);
++  expect(draft.clips[0].app?.canonicalTiming).not.toHaveProperty('storedOccurrenceDurationMs');
++  expect(draft).toHaveProperty('x_null', null);
++  expect(config.clips[0].app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
++  expect(() => recovery.snapshot({ ...head, headPublicationId: 'other' }, config, true)).toThrow('verified raw');
++  expect(() => createRecoveryConfig().snapshot(head, config, true)).toThrow('verified raw');
++});
+diff --git a/src/tools/video-editor/hooks/useTimelineSave.draftConfig.ts b/src/tools/video-editor/hooks/useTimelineSave.draftConfig.ts
+index 1b158b588..b96a86ca5 100644
+--- a/src/tools/video-editor/hooks/useTimelineSave.draftConfig.ts
++++ b/src/tools/video-editor/hooks/useTimelineSave.draftConfig.ts
+@@ -1,3 +1,5 @@
++import type { PreparedShotComposition } from '../data/shotCompositionAdapter.ts';
++import { serializeProjectedTimelineConfig } from '../lib/serialize.ts';
+ import type { TimelineHeadRevision } from '../data/DataProvider.ts';
+ import type { TimelineConfig } from '../types/index.ts';
+ 
+@@ -8,21 +10,25 @@ const displayFields = {
+ } satisfies Record<keyof TimelineConfig, true>;
+ 
+ export function createRecoveryConfig() {
+-  let retained: { head: TimelineHeadRevision | undefined; roots: Record<string, unknown> } | undefined;
++  let retained: { head: TimelineHeadRevision | undefined; roots: Record<string, unknown>; composition?: PreparedShotComposition } | undefined;
+   return {
+-    remember(head: TimelineHeadRevision | undefined, config: unknown) {
++    remember(head: TimelineHeadRevision | undefined, config: unknown, composition?: PreparedShotComposition) {
+       retained = {
+         head: head ? { ...head } : undefined,
++        composition,
+         roots: structuredClone(Object.fromEntries(Object.entries(config as object)
+           .filter(([key]) => !Object.prototype.hasOwnProperty.call(displayFields, key)))),
+       };
+     },
+-    snapshot(head: TimelineHeadRevision | undefined, config: TimelineConfig) {
++    snapshot(head: TimelineHeadRevision | undefined, config: TimelineConfig, derived = false, composition?: PreparedShotComposition) {
+       const sameBase = retained && head?.projectId === retained.head?.projectId
+         && head?.timelineId === retained.head?.timelineId
+         && head?.headRevisionId === retained.head?.headRevisionId
+         && head?.headPublicationId === retained.head?.headPublicationId;
+-      return structuredClone({ ...config, ...(sameBase ? retained!.roots : {}) });
++      const rawComposition = composition ?? (sameBase ? retained!.composition : undefined);
++      const authored = derived || rawComposition
++        ? serializeProjectedTimelineConfig(config, rawComposition ?? null) : config;
++      return structuredClone({ ...authored, ...(sameBase ? retained!.roots : {}) });
+     },
+   };
+ }
+diff --git a/src/tools/video-editor/lib/canonicalRenderBounds.ts b/src/tools/video-editor/lib/canonicalRenderBounds.ts
+index 59179e448..1083fce00 100644
+--- a/src/tools/video-editor/lib/canonicalRenderBounds.ts
++++ b/src/tools/video-editor/lib/canonicalRenderBounds.ts
+@@ -1,5 +1,5 @@
+ import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
+-import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
++import type { ResolvedTimelineClip, ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+ 
+ type JsonRecord = Record<string, unknown>;
+ 
+@@ -66,3 +66,22 @@ export function boundCanonicalConfigClips(
+     return bounded ? [bounded] : [];
+   });
+ }
++
++/** A render-only selection; editor rows keep their content-derived geometry. */
++export function boundCanonicalRenderConfig<T extends ResolvedTimelineConfig>(config: T): T {
++  const clips = config.clips.flatMap((clip) => {
++    const timing = record(clip.app?.canonicalTiming);
++    const stored = timing?.storedOccurrenceDurationMs;
++    const effective = timing?.occurrenceDurationMs;
++    // Only the explicit render selection consumes the stored cap. The popup's
++    // live shot-local soft wall and ordinary editor bounds retain their policy.
++    if (typeof stored !== 'number' || !Number.isFinite(stored)
++      || typeof effective !== 'number' || stored >= effective) return [clip];
++    const bounded = boundCanonicalClipToOccurrence({ ...clip, app: { ...clip.app,
++      canonicalTiming: { ...timing, occurrenceDurationMs: Math.max(0, stored) },
++    } });
++    return bounded ? [bounded] : [];
++  });
++  return clips.length === config.clips.length && clips.every((clip, index) => clip === config.clips[index])
++    ? config : { ...config, clips };
++}
+diff --git a/src/tools/video-editor/lib/serialize.test.ts b/src/tools/video-editor/lib/serialize.test.ts
+index 412b81a30..aa8ac1185 100644
+--- a/src/tools/video-editor/lib/serialize.test.ts
++++ b/src/tools/video-editor/lib/serialize.test.ts
+@@ -1,3 +1,7 @@
++import fixture from '../data/shotComposition.fixture.json';
++import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
++import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
++import { serializeProjectedTimelineConfig } from './serialize.ts';
+ import { describe, expect, it } from 'vitest';
+ import { repairConfig } from '@/tools/video-editor/lib/migrate';
+ import { serializeClipForDisk, serializeForDisk, serializeResolvedTimelineEdit, validateSerializedConfig } from '@/tools/video-editor/lib/serialize';
+@@ -969,3 +973,66 @@ describe('resolved editor serialization', () => {
+     expect(serializeResolvedTimelineEdit(resolved, undefined, original).app).toEqual({ edited: { value: 3 } });
+   });
+ });
++
++
++describe('verified projection serialization', () => {
++  it.each([undefined, null, { storedOccurrenceDurationMs: null, ordered: [false, 0, null] },
++    JSON.parse('{"storedOccurrenceDurationMs":{"__proto__":[null,false]},"__proto__":{"keep":true}}')])(
++    'preserves raw opaque timing %j and removes only a newly derived cap', (rawTiming) => {
++      const graph = structuredClone(fixture);
++      const raw = graph.shot_revisions.find((item) => item.shot_id === 'shot-alpha' && item.revision_id === 'rev-a')!
++        .internal_timeline_revision.timeline.clips[0] as Record<string, unknown>;
++      const app = JSON.parse('{"ordered":[0,false,null],"__proto__":{"keep":null},"canonical":null}');
++      if (rawTiming !== undefined) app.canonicalTiming = rawTiming;
++      raw.app = app;
++      const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
++      const before = JSON.stringify(graph);
++      const config = projectCanonicalComposition(composition).config;
++      const projected = config.clips.find((clip) => clip.id === 'occ-1:alpha-video')!;
++      expect(projected.app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
++      const pureRaw = { id: 'raw', at: 0, track: 'video', app };
++      expect(serializeClipForDisk(pureRaw).app).toStrictEqual(app);
++      expect(JSON.stringify(serializeClipForDisk(pureRaw).app)).toBe(JSON.stringify(app));
++      for (const serialized of [serializeClipForDisk(projected, raw),
++        serializeForDisk(config, undefined, undefined, composition).clips.find((clip) => clip.id === 'occ-1:alpha-video')!,
++        serializeResolvedTimelineEdit(config, undefined, undefined, composition).clips.find((clip) => clip.id === 'occ-1:alpha-video')!,
++        serializeProjectedTimelineConfig(config, composition).clips.find((clip) => clip.id === 'occ-1:alpha-video')!]) {
++        expect(serialized.app?.ordered).toStrictEqual(app.ordered);
++        expect(Object.hasOwn(serialized.app!, '__proto__')).toBe(true);
++        expect(serialized.app?.canonical).toBeNull();
++        if (rawTiming !== undefined) {
++          expect(serialized.app?.canonicalTiming).toStrictEqual(rawTiming);
++          expect(JSON.stringify(serialized.app?.canonicalTiming)).toBe(JSON.stringify(rawTiming));
++        } else {
++          expect(serialized.app?.canonicalTiming).not.toHaveProperty('storedOccurrenceDurationMs');
++          expect(serialized.app?.canonicalTiming).toHaveProperty('occurrenceDurationMs', 2000);
++        }
++      }
++      expect(JSON.stringify(graph)).toBe(before);
++      expect(projected.app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
++    });
++
++  it('preserves same-shaped raw parent metadata in a mixed projected timeline and refuses ambiguous identities', () => {
++    const graph = structuredClone(fixture);
++    const raw = { id: 'raw-parent', at: 0, track: 'raw', hold: 1, app: {
++      canonicalTiming: { storedOccurrenceDurationMs: 1234, occurrenceDurationMs: 5000, occurrenceStartMs: 0 },
++    } };
++    Object.assign(graph.parent_composition, { clips: [raw] });
++    Object.assign(graph.parent_composition.config, { tracks: [{ id: 'raw', kind: 'audio' }] });
++    const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
++    const config = projectCanonicalComposition(composition).config;
++    const clean = serializeProjectedTimelineConfig(config, composition);
++    expect(clean.clips.find((clip) => clip.id === raw.id)!.app).toStrictEqual(raw.app);
++    expect(() => serializeProjectedTimelineConfig({ ...config, clips: [...config.clips, config.clips[0]] }, composition))
++      .toThrow('unambiguous');
++  });
++
++  it('requires an explicit raw basis for a declared derived exit without changing the draft', () => {
++    const config = projectCanonicalComposition(createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture)).config;
++    const before = JSON.stringify(config);
++    expect(() => serializeProjectedTimelineConfig(config, null)).toThrow('verified raw');
++    expect(() => serializeForDisk(config, undefined, undefined, null)).toThrow('verified raw');
++    expect(() => serializeClipForDisk(config.clips.find((clip) => clip.id === 'occ-1:alpha-video')!, null)).toThrow('verified raw');
++    expect(JSON.stringify(config)).toBe(before);
++  });
++});
+diff --git a/src/tools/video-editor/lib/serialize.ts b/src/tools/video-editor/lib/serialize.ts
+index 0f104be2a..7d4ba17e5 100644
+--- a/src/tools/video-editor/lib/serialize.ts
++++ b/src/tools/video-editor/lib/serialize.ts
+@@ -1,3 +1,5 @@
++import type { PreparedShotComposition } from '../data/shotCompositionAdapter.ts';
++import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
+ import type {
+   ResolvedTimelineConfig,
+   TimelineClip,
+@@ -19,10 +21,89 @@ export {
+   type TrackDefinitionField,
+ } from './timeline-domain.ts';
+ 
+-export const serializeClipForDisk = (clip: ResolvedTimelineConfig['clips'][number]): TimelineClip => {
+-  return sanitizeTimelineClipSnapshot(clip);
++// Undefined means raw authored input; null means a derived caller lost its basis.
++export const serializeClipForDisk = (
++  clip: ResolvedTimelineConfig['clips'][number],
++  rawClip?: Record<string, unknown> | null,
++): TimelineClip => {
++  if (rawClip === null) throw new Error('The projected clip has no verified raw serialization basis');
++  return sanitizeTimelineClipSnapshot(rawClip === undefined ? clip : restoreStoredCap(clip, rawClip));
+ };
+ 
++function restoreStoredCap<T extends TimelineClip>(serialized: T, rawClip: Record<string, unknown>): T {
++  const timing = serialized.app?.canonicalTiming;
++  if (!timing || typeof timing !== 'object' || Array.isArray(timing)) return serialized;
++  const rawApp = rawClip.app as Record<string, unknown> | undefined;
++  const restored = Object.fromEntries(Object.entries(timing)
++    .filter(([key]) => key !== 'storedOccurrenceDurationMs'));
++  // Projection overwrites these raw names. Restore authored collisions from
++  // their counterpart; leave pre-existing view metadata alone otherwise.
++  const app = { ...serialized.app, canonicalTiming: restored };
++  for (const key of ['canonical', 'canonicalTiming']) {
++    if (rawApp && Object.prototype.hasOwnProperty.call(rawApp, key)) {
++      Object.defineProperty(app, key, { value: structuredClone(rawApp[key]),
++        enumerable: true, configurable: true, writable: true });
++    }
++  }
++  return { ...serialized, app };
++}
++
++/** Resolve counterparts from the retained graph's identity map, never a display prefix. */
++export function projectedClipCounterparts(composition: PreparedShotComposition, clips: readonly TimelineClip[] = []) {
++  const { clipIdentities } = projectCanonicalComposition(composition, undefined, { clampToOccurrenceDuration: false });
++  const counterparts = new Map([...clipIdentities].map(([id, identity]) => {
++    const occurrence = composition.occurrences.find((item) => item.occurrenceId === identity.occurrenceId)!;
++    const internal = occurrence.revision.internal_timeline_revision as Record<string, unknown>;
++    const timeline = internal.timeline as { clips?: Record<string, unknown>[] };
++    const matches = identity.rawClipId === null ? []
++      : (timeline.clips ?? []).filter((clip) => clip.id === identity.rawClipId);
++    return [id, matches.length === 1 ? matches[0] : null] as const;
++  }));
++  // A popup's copy-on-write ACK can remap the new child IDs while the editor
++  // still displays its original pinned revision. That immutable revision is
++  // already retained in the graph; use the existing full identity, not an ID
++  // prefix or a canonicalTiming shape, to recover its raw counterpart.
++  const parent = composition.contract.parent_composition as { clips?: TimelineClip[]; config?: { clips?: TimelineClip[] } };
++  for (const clip of clips) {
++    if (counterparts.has(clip.id) || (parent.clips ?? parent.config?.clips ?? []).some((raw) => raw.id === clip.id)) continue;
++    const identity = clip.app?.canonical as { projectId?: string; parentDocumentId?: string;
++      occurrenceId?: string; shotId?: string; revisionId?: string; rawClipId?: string; clipRef?: string } | undefined;
++    if (identity?.projectId !== composition.projectId || identity.parentDocumentId !== composition.parentDocumentId
++      || !composition.occurrences.some((item) => item.occurrenceId === identity.occurrenceId)
++      || !identity.rawClipId || identity.clipRef !== `occurrence:${identity.occurrenceId}/clip:${identity.rawClipId}`) continue;
++    const revision = composition.contract.shot_revisions.find((item) => item.shot_id === identity.shotId
++      && item.revision_id === identity.revisionId);
++    const internal = revision?.internal_timeline_revision as { timeline?: { clips?: Record<string, unknown>[] } } | undefined;
++    const matches = (internal?.timeline?.clips ?? []).filter((raw) => raw.id === identity.rawClipId);
++    if (matches.length === 1) counterparts.set(clip.id, matches[0]);
++  }
++  return counterparts;
++}
++
++/** Only explicitly projected callers use the verified graph to remove the new view hint. */
++export function serializeProjectedTimelineConfig<T extends TimelineConfig>(
++  config: T,
++  composition: PreparedShotComposition | null,
++): T {
++  if (!composition) throw new Error('The projected timeline has no verified raw serialization basis; keep the draft');
++  if (new Set(config.clips.map((clip) => clip.id)).size !== config.clips.length) {
++    throw new Error('Projected serialization requires unambiguous clip identities; keep the draft');
++  }
++  const counterparts = projectedClipCounterparts(composition, config.clips);
++  const parent = composition.contract.parent_composition as Record<string, unknown>;
++  const parentConfig = parent.config as { clips?: TimelineClip[] } | undefined;
++  const parentClips = (Array.isArray(parent.clips) ? parent.clips : parentConfig?.clips ?? []) as TimelineClip[];
++  return { ...config, clips: config.clips.map((clip) => {
++    if (!counterparts.has(clip.id)) {
++      if (parentClips.filter((raw) => raw.id === clip.id).length === 1) return clip;
++      throw new Error(`The projected clip ${clip.id} has no verified raw counterpart; keep the draft`);
++    }
++    const raw = counterparts.get(clip.id);
++    if (!raw) throw new Error('The projected clip has no unambiguous raw counterpart');
++    return restoreStoredCap(clip, raw);
++  }) };
++}
++
+ export const serializeTrackForDisk = (track: TrackDefinition): TrackDefinition => {
+   return sanitizeTrackDefinitionSnapshot(track);
+ };
+@@ -38,6 +119,7 @@ export const serializeForDisk = (
+   // that don't pass these keep the prior behavior; existing timelines without
+   // them stay unchanged.
+   extras?: Pick<TimelineConfig, 'theme' | 'theme_overrides' | 'generation_defaults' | 'app'>,
++  rawComposition?: PreparedShotComposition | null,
+ ): TimelineConfig => {
+   const resolvedExtras = extras ?? resolved;
+   const serialized: TimelineConfig = {
+@@ -46,7 +128,8 @@ export const serializeForDisk = (
+     // off the wire prevents editor/render settings from fighting the theme.
+     output: resolved.output,
+     tracks: resolved.tracks.map(serializeTrackForDisk),
+-    clips: resolved.clips.map(serializeClipForDisk),
++    clips: (rawComposition === undefined ? resolved : serializeProjectedTimelineConfig(resolved, rawComposition))
++      .clips.map((clip) => serializeClipForDisk(clip)),
+   };
+ 
+   if (pinnedShotGroups && pinnedShotGroups.length > 0) {
+@@ -78,6 +161,7 @@ export const serializeResolvedTimelineEdit = (
+   resolved: ResolvedTimelineConfig,
+   pinnedShotGroups?: TimelineConfig['pinnedShotGroups'],
+   authoredConfig?: TimelineConfig,
++  rawComposition?: PreparedShotComposition | null,
+ ): TimelineConfig => {
+   const { registry: _resolvedRegistry, ...authored } = resolved;
+   return {
+@@ -86,6 +170,6 @@ export const serializeResolvedTimelineEdit = (
+     ...(authoredConfig && Object.prototype.hasOwnProperty.call(authoredConfig, 'registry')
+       ? cloneAppExtension({ registry: Reflect.get(authoredConfig, 'registry') })
+       : {}),
+-    ...serializeForDisk(resolved, pinnedShotGroups),
++    ...serializeForDisk(resolved, pinnedShotGroups, undefined, rawComposition),
+   };
+ };
