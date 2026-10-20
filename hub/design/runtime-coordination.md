@@ -688,3 +688,41 @@ Both commit messages written; harness commit pending.
 Worker source `/home/user/work/wt/rt-m2-internal-nesting-guard`, branch `tl/rt-m2-internal-nesting-guard`, base `81b6665` (`tl/rt-m2-composition-validation-port`). Predecessor `workers/rt-m2-composition-validation-port/notes/report.md` read: actual acceptance persists internal `occurrences: []`; original main refuses. Work is confined to `_validate_closure` plus small focused tests, retaining the original Shot-file RED assertion unchanged. Structural internal-root/authored-clip guard only; opaque params/provenance stay open and byte-exact. This preserves the host structural boundary on held M2; it is not evidence of an M1 native-path exploit or data loss. Bounded validation nodes/neighbors and central actual nine restore/input controls planned; no full suite. All M2 merges remain HELD until PLAN M1 record.
 
 rt-m2-internal-nesting-guard result: six-line `_validate_closure` guard plus one focused test file only; original Shot file byte-identical. Original four validation nodes +17 new structural/opaque controls **21 PASS/2.62s**; whole acceptance/validation/raw-payload/port files **171 PASS/1 integration deselected/13.62s**. Central `rt-m2-internal-nesting-guard-occupancy-integration-1020010610-29298`: **19 PASS/6.62s**, all nine actual restore +ten input controls, snapshot tree `84e1f44d3b348a421fd267f5e54f8b9bd17dd035`, actual Agent `f6fbe741a256e2756a1d686350f8a38e37c015ee`. Root/authored-clip graph fields refuse 422 invalid_closure with nested reason and zero SQL/CAS/staging writes; opaque params/provenance roundtrip byte-exact after restart/retry. Original main recursive blacklist not restored. No other product/schema/DTO/endpoint/projection/retention changes, full run, git mutation, or merge request. The predecessor's five retired-protocol failures remain unchanged/unqualified and are listed explicitly in both reports. HOST structural preservation only, no M1 native-path exploit/data-loss claim. Reports and both commit messages ready at `workers/rt-m2-internal-nesting-guard/{report.md,notes/report.md,commit-msg,commit-msg.txt}`. Manager review next; all M2 merges HELD until PLAN M1 record. Bounded proof complete; stopping.
+
+Agent retained PARAM wire final (`agt-m2-params-retained-wire`, base b2b51c4a; harness commit pending): source native schema_source path qualified against unmodified Runtime b3ce5aa normal service/direct admission transport. 416PASS/4unchanged strictxfail bounded neighbours (56.38s), final selected-input table24PASS(11.63s), actual paired15PASS(10.55s), scoped Ruff/diff clean. Native selected edit survives stale-base replay, V2 admission/current-selection removal/source+cache removal/reopen/inverse/redo/exactretry; raw seed16 provider rejection, wrong identities/stale/revoked/legacy/missing/corrupt/foreign-project/auth negatives pass. Original3 selected-schema strictxfails flipped only after real retained-input proof; unrelated4 strictxfails unchanged. No validator/vendor-health override, SQL fixture, fake provider, new Port method, generated files/pins, full/socket/browser runs or frozen bundle edits. Canonical command schema raw SHA256 eceb232ff04e0bafdcca8ed6aa1055aa9560308b7a001020ab06933b984efce1. Existing Runtime generic non-move args accept the optional op pin normally; official composed schema/VerifiedDocumentObject+Protocol/artifact/pin release is still coordinated later. Full report: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-params-retained-wire/notes/report.md. Both commit message files ready. M2 integration hold unchanged.
+
+
+## Runtime 2026-10-20 — materialization carrier; Agent exact ACK requested
+Settled direction ACK; this exact spelling remains PROPOSED pending Agent ACK.
+Keep flat id_map, no DTO shape change: {"shot:D":"D","shot:D/item:J":"J"}.
+For K=materialization.source:shot:D record bindings are:
+{key:"shot:D",ref:"shot:S",policy:"fixed",dependencies:[K]},
+{key:"shot:D/item:J",ref:"shot:S/item:I",policy:"fixed",dependencies:[K]},
+{key:"materialization.owner:shot:D",ref:"occurrence:O",policy:"fixed",dependencies:[K]}.
+Existing dependency envelope: {key:K,kind:"entity",policy:"exact",
+pin:{parent:original_base_parent,source:original_source_mapping.shots[D]}}.
+Source retains all exact shot/internal revision IDs/digests and item_id_map.
+Original P/T request scope + bound O + source S/I + destinations D/J form the
+allocation tuple. Matching records merge; conflicting tuples refuse. Existing
+command.bindings seals the allocation; Plan retains original pins over rebase.
+Runtime authenticates historical receipt/event/records, actual before→after
+occurrence edges and full source/item pins before authorizing an earlier own
+slot. Current id_map, fabricated bindings, ID spelling or source read alone do
+not establish ownership. Preserve the M1 proof path for old accepted records.
+Occupied unrelated shot/item refuses before any write; exact replay wins first.
+No creation fact for projection; genuinely absent authored roots keep typed
+create_entity and independent project/global retired-ID reservation checks.
+Source counterexample to raw maps: O1/O2 share S and I but require D1!=D2,J1!=J2;
+{S:D1,S:D2} or {I:J1,I:J2} loses an entry. The joined flat map above retains both.
+Nested id_map values would fail existing string schema/types; JSON-encoded values
+would invent opaque authority. Neither is necessary with existing bindings/pins.
+Agent owner: ACK this exact joined carrier and replay/provenance rules, or name
+the precise failing source case and smallest correction in the same carriers.
+Please replace stale identity-only/materialization-as-birth wording in your
+m2-move-draft.md:313-325 and old materialization coordination/report proposal.
+The never-passing physical-birth xfail needs the settled positive allocation
+expectation; four item-ref xfails require canonical generation. Keep the two
+root-alias xfails under their existing owner. This worker edits no Agent files.
+Required paired changes/tests and release procedure are in the worker notes;
+no additional orchestrator approval for the settled direction. No implementation
+or new test pass claimed; M2 merges remain held until PLAN records M1 complete.

@@ -144,8 +144,33 @@ A populated external managed-source inventory is not separately qualified.
 
 ## Qualification
 
-Combined-tree identity, exact commands/results and central request ID will be
-recorded here after the single frozen-source six-case run completes. Offline
+Frozen Agent combined tree: `687f077c4771e3dbb66bfb7ff2b98f310ac054b6`.
+Runtime: clean `/home/user/work/runtime`, commit
+`9f9b25c000485e919f30f1411831fe2d5a3c1316`, tree
+`5c3a7e7141047d7295ab130a8f05359f4fcb34bc`.
+Agent pack-source digest:
+`365136a31323f0556fd7af465f86d246a43b0285659503622b7a533a1b6c3af7`;
+production executable closure digest:
+`df3f607f68ceed56bc5f2e1a626dbd38f42150e1e0c41a33a430c587c09626d4`.
+The harness will assign the handoff branch commit after worker exit; the tree
+above identifies tested source independently of that future commit SHA.
+
+Offline command (worktree cwd):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m 'not integration' tests/packs/rendering/test_real_pack_host.py tests/sdk/test_host_launch_ownership.py tests/sdk/test_host_bootstrap_source_identity.py tests/sdk/test_host_recovery.py tests/sdk/test_child_host_union.py tests/sdk/test_host_ready_empty_inventory.py tests/stage1/test_host_bootstrap_manifest_luna.py tests/core/execution/test_process_group.py tests/test_process_group_cleanup.py
+```
+
+Result: **234 passed, 5 skipped, 6 deselected in 83.41s**. The five skips are
+existing native-Darwin cases on Linux; the six integration cases run centrally.
+Scoped Ruff and `git diff --check` passed.
+
+Single central request:
+`agt-m2-host-final-compose-real-pack-host-integration-1020010913-22865`.
+Result pending; source frozen before submission and unchanged afterward.
+Absolute result directory:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-host-final-compose-real-pack-host-integration-1020010913-22865/`.
+ Offline
 real-custody tests establish the production returned-handle cleanup guarantee,
 including birth/registration failures and preservation of live foreign children;
 helper-only mocked tests are not the sole evidence. The central six cases cover

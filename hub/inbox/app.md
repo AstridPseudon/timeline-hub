@@ -499,3 +499,10 @@ App:
 - Compound "Keep my changes": re-author the user's explicitly chosen supported intentions as NEW captures with new identities. Keep the original commands until the user decides. Never refresh the original B or silently drop a suffix. One rejected intention can't hide others.
 - The concurrent-draft conflict journey: under server-side rebase, disjoint Agent changes correctly NO LONGER clash. Rework the case so it contains a REAL same-property clash (the same selected property edited on both sides), keeping every extent/clear/opaque assertion. This reflects the decided semantics, not a weakening; say so in the commit, naming old → new.
 - Don't delete any assertion. Cases waiting on bundle #2 stay staged until it lands.
+
+## 2026-10-20 — orchestrator: DECISION on initial-read-projection (Viewing finding; App owns it)
+APPROVED as Viewing recommends. On initial bootstrap, reuse the existing project(initialBasis, []) path, so that loadTimelineCommandBasis's VALIDATED pinned canonical document (scope, manifest, head) builds the exact closure config/registry and sets the existing editProjection `accepted` fact atomically. Then a freshly opened timeline with no commands previews through the canonical compiler, not the old host timing.
+- NEVER stamp the old loadReferencedTimeline raw config/head as accepted.
+- Guard the late async initial resolve: it must not overwrite local, recovery, newer-accepted or unmounted data. Keep original base B and the late-A-vs-C ordering.
+- Tests (from Viewing's candidate, made green): a real initial verified basis with no commands and no graph gives the exact config fact plus the public 0.0.9 vector; bad closure or head refuses; a delayed initial result preserves intervening data; native compiled omission; the existing 270 recovery/mailbox cases still pass. No new field or DTO.
+It's App-owned M3 groundwork. Branch it now, and merge with the root adoption batch after the M1 record.

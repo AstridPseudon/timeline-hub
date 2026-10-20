@@ -122,7 +122,9 @@ against exact `6be9706`; canonical schema semantic union and capture byte parity
 Exact-pair central run (one request, final tree only):
 `agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598`.
 Result path: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598/`.
-**Result pending at initial handoff write; manager must use final summary below / worker report.**
+**PASS: 90 passed, 13 strict xfailed in 112.27s; service exit 0 / 117s.**
+Twelve are the preserved popup positives/races; one is the inherited first-clip
+nullable-speed case. The exact centrally snapshotted tree matches the source identity above.
 The suite asserts exact Runtime HEAD and uses the existing frozen client pin, including
 parent label/M1/identity/provider/client cutover plus scalar/first-clip/add-delete/popup/provenance files.
 No full suite, install, network fetch, App/browser journey, artifact generation/version

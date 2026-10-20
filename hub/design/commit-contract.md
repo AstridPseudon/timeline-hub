@@ -337,3 +337,63 @@ Checked artifact tuple: schema digest `sha256:4e52f7df017db99483ffcd0c593ce414b6
 Evidence: required contract/installed-validator/raw/compiled-schema/input/baseline/film/generator/fixture lane **209 passed**; final added parent-container/codec tests plus artifact checks **53 passed**. Generator/conformance/artifact checks and compiled/provenance/command byte checks passed. Actual API publication preserves raw internal rational output plus parent playback/partial output, unknown fields and nulls exactly through PreparedCommit validation; parent rational fps is also preserved by the actual parent codec and schema conformance. Legacy main `publish_parent_composition` itself still rejects rational parent output fps in `visual_seam.normalize_closure` before persistence; that evaluator limitation is outside this schema-only task and is not claimed fixed.
 
 Four UNMODIFIED realpath tests on the private actual-source composition: **3 passed, 1 failed, 1 door deselected**; all four clear the old `422 invalid_prepared` schema failure. Remaining `test_real_inverse_preserves_newer_disjoint_work_and_original_recorders` fails at parent equality: the newer disjoint `music-other` clip retains `app.astrid={fixed_start:true,for:5.5}` in both parent clips mirrors, while the unchanged expected payload only changes `at` to 2. Position assertions already pass. Agent/realpath owner must settle that exact compiler/authored-state expectation; this worker did not change provider/core or tests. Full/socket/browser lanes were not run. Full source tuple and commands are in `workers/rt-m1-raw-schema/report.md`; no complete M1 gate pass is claimed.
+
+
+## 2026-10-20 — physical materialization (proposal; Agent ACK pending)
+Applies the settled physical-materialization-carrier decision. Supersedes only
+the identity-only restriction in §§3/4.1 for the bounded allocation form below.
+Semantic birth requires a genuinely absent authored root, Recording.create_entity
+and typed created facts. Existing virtual shot/item → physical slot is derived
+allocation, never create_entity, command.created or a fabricated absent root.
+Keep id_map: map<string,string>; {} and legacy key==value entries remain valid.
+For virtual shot D and its virtual item J, add {"shot:D":"D","shot:D/item:J":"J"}.
+These are typed allocation-ref → raw physical-ID entries, not raw-source renames.
+Every new entry must have a fixed record binding whose key equals that map key,
+whose ref is the actual source (shot:S or shot:S/item:I), and whose dependencies
+contains the exact source dependency key K. Allocation keys use the canonical
+Agent ref parser, not prefix inference. Reject malformed/unbound/extra entries.
+For D, bind key materialization.owner:shot:D to occurrence:O, fixed, dependencies
+[K]. K=materialization.source:shot:D is kind entity, policy exact; its pin is
+{parent: ORIGINAL_base_parent, source: ORIGINAL_source_mapping.shots[D]}.
+These existing provenance shapes retain source shot_id/revision_id/content_digest,
+internal_timeline_id/internal_timeline_revision_id/internal_timeline_content_digest
+and the exact item_id_map {I:J,...}. Project/timeline are the immutable request
+scope, checked against the captured parent/shot closure; O is the owner binding.
+The shot binding, item bindings, source.item_id_map and id_map must agree exactly.
+Repeated matching entries across records merge; conflicting destinations, owners
+or source allocations refuse. No item ordinal, display alias or opaque encoding.
+Capture allocation bindings before outbox sealing in existing command.bindings;
+finish must retain these typed bindings. Keep the original Plan source dependency
+on rebase; verify against captured immutable inputs, not a refreshed source head.
+The original read occurrence:O/shot path [shot_id] names physical source S;
+the allocation names physical output D/J and candidate closure names exact output
+shot/internal revisions. Before and after physical identities are explicit in
+those facts; no fake State root write or physical-row birth record is introduced.
+Replay uses the captured D/J and original source pins. Reload recovers provenance
+from verified accepted records/closures, never by interpreting a shot ID prefix.
+Exact compiler functions already seed shot with project,timeline,O,S and item
+with project,timeline,O,D,I; D contains S. Keep these functions/seeds unchanged.
+Runtime performs the complete mutable shot/item occupancy preflight in the same
+accept transaction before any write; preview runs equivalent read-only checks.
+Unrelated occupied or retired destinations refuse, including same-project rows,
+foreign rows, archived owners and item collisions. Captured external reads and
+caller id_map/bindings do not authorize overwrite. Exact immutable reuse writes
+no projection. Ordinary current-owner updates keep their existing guarded path.
+An earlier own slot requires authenticated accepted ancestry: history_entry /
+_verify_accepted receipt+event records_digest, matching P/T/O/source binding/read,
+exact before→after occurrence edges and exact shot/item closure identities.
+Require the same captured allocation, and verify current or restored source edge;
+another occurrence/source or mere deterministic ID equality is insufficient.
+Item IDs must belong to that same proven shot in live/retained projections.
+New allocation records bind the source pin and allocations into authenticated
+records; cross-check receipt.result.id_map against them, never trust it alone.
+Old M1 records retain their exact accepted source-edge/binding/read proof path;
+do not retrofit required new facts or weaken inverse/restore/exact-retry guards.
+Semantic-birth reservations remain separate: shots project-wide, items globally
+by parsed item ID (not only owner-qualified ref); undo never frees them. Trusted
+inverse/restore may reuse only authenticated identities; exact ledger retry wins
+before live occupancy checks. No caller-created fact grants restoration authority.
+Release Agent schema/parser/recorder/compiler/provider and Runtime port/store
+validation together; generate refs/clients normally and refresh Agent/App pins and
+ACK validators together. Keep interface_version=1; exact contract digest fails
+closed on mismatched pairs. M2 merges wait for PLAN's M1 completion record.

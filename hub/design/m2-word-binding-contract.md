@@ -9,7 +9,7 @@ read. RestoreArgs, Runtime DTOs, ports and ABI remain unchanged.
 
 Use the existing clip `app.astrid` namespace. Keep `on` and `until` as human text
 echoes. Add one small typed map, `word_anchors`, with independently optional `on`
-and `until` entries. Each entry has exactly this shape (optional defaults omitted):
+and `until` entries. Each entry has exactly this shape (optional fields shown with their defaults):
 
 ```json
 {
@@ -35,7 +35,8 @@ consecutive word of one segment. `edge` is optional `start|end` (default start);
 optional integer (default zero). Seconds are read as decimal rationals and frame
 offsets use the exact rational canvas fps. The spike lowers seconds through
 main Moment grammar and refuses values beyond its six-decimal precision; it
-preserves all supported digits instead of using the lossy human formatter. No extra type/version wrapper is needed:
+preserves all supported digits instead of using the lossy human formatter.
+No extra type/version wrapper is needed:
 the namespaced key defines the type, the pinned transcript defines the ID schema.
 No unknown fields inside a typed entry; unrelated namespaced data is preserved.
 
@@ -76,9 +77,11 @@ canonical bundle and authorized retained VerifiedDocuments. It lowers each entry
 into existing WordBinding values, resolving the owner through current placements.
 It constructs a private Moment spelling from the exact selected IDs plus typed
 edge/offsets, never from the human echo. The existing kernel checks identity,
-scoped exact pin, media, consecutive IDs, source maps and windows. A small pure evaluator change resolves the bound edge directly, without any
+scoped exact pin, media, consecutive IDs, source maps and windows. A small pure
+evaluator change resolves the bound edge directly, without any
 text search; phrase spelling is checked against those exact IDs only. It cannot
-search the transcript/film for a replacement. The adapter returns the unchanged authored bundle and derived timing.
+search the transcript/film for a replacement. The adapter returns the unchanged
+authored bundle and derived timing.
 A raw JSON canonical bundle plus retained inputs suffices, without accepted history.
 
 This adapter is defined and tested before test-local operation registration.
@@ -121,7 +124,8 @@ recipe; `test_word_binding_recipe.py` drives actual Runtime acceptance/rebase,
 restart, guarded inverse/redo, native revision restore, source moves/reorder,
 reused-CAS clips, rational fps, windows, clears and invalid IDs/pins/sources.
 The original same-revision collision assertions remain as strict expected failure
-(the obsolete history-fold assertion is retired with the fold); its positive restore requirement now passes.
+(the obsolete history-fold assertion is retired with the fold); its positive
+restore requirement now passes.
 The report records exact executed tests and remaining unverified boundaries.
 No new production operation, port, restore argument, history semantics, general
 feature, producer carrier or compiler activation is introduced.

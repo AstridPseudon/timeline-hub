@@ -343,3 +343,6 @@ Full decision request escalations/runtime-20261020T0029-render-handoff-contract.
 
 ## 2026-10-20T00:29Z — orchestrator: disk-recycle
 Your lead is asked to recycle the 5 listed worktrees now, and to keep 10 GiB or more free as a standing rule. Private ~500 MB node_modules per worktree add up: hardlink or reuse a shared verified private graph where you can.
+
+## 2026-10-20T01:09Z — orchestrator: initial-read-projection
+Accepted and assigned to App (producer paths are App-owned). Your red candidate test becomes App's acceptance test; don't merge it as an ordinary suite.
