@@ -1,6 +1,6 @@
 # Agent outer voiceover native handoff
 
-2026-10-20. Bounded result: **BLOCKED by missing authored command carriers**.
+2026-10-20. Bounded result: **BLOCKED by missing authored command carriers and an actual Runtime admission restriction**.
 No Runtime contract decision is reopened. No product code, pack declaration,
 schema, permission, generation intent, pin, endpoint or requester implementation
 was changed. The original outer authoring test double remains, explicitly
@@ -93,23 +93,45 @@ legacy bound authoring interface. It has no declared file output
 Adding that declaration alone cannot produce missing command meaning.
 
 The admission test records ordinary SDK `invoke(..., kind='executor',wait=False)`
-and its actual retained spec. It then separately exercises the existing open
-spec target carrier through normal `client.tasks.create`, with exactly
-`runtime_dependencies.publication.admitted_target` containing project, timeline,
-original revision and original publication, and exactly ordered
-`execution_request.inputs` / `input_object_ids`. This second task is a queued
-carrier-retention diagnostic, not a native producer result. Its ingested
-script.txt bytes prove managed object custody only, not authoritative timeline
-script selection. No new `script_pins` field is introduced.
+and its actual retained spec. That normal submit has no original admitted target
+and an empty input manifest. The current action has no file port. Adding a script
+execution_request descriptor to that ordinary invocation fails before dispatch:
+SDK invocation constructs `input_manifest=[]` and exact manifest merge refuses
+the descriptor as missing from input_object_ids. No port/manifest override is made.
 
-Neither diagnostic task is executed, claimed or settled; both are cancelled
-through the normal owner API. There is no outer attempt pin or settled proposal,
+The probe then separately submits through normal `client.tasks.create`, with
+exactly `runtime_dependencies.publication.admitted_target` containing project,
+timeline, original revision and original publication, and exactly ordered
+`execution_request.inputs` / `input_object_ids`. This request reaches the actual
+Runtime and refuses: **runtime continuation requires exactly two ordered
+dependency edges**. There is NO admitted spec/task for this pinned request.
+Its ingested script.txt bytes prove managed object custody only, not authoritative
+timeline script selection. No new `script_pins` field or child relation is added.
+
+**Evidence contradicting the carrier audit:** ad97 `runtime_protocol/store.py`,
+`_continuation_predecessors` (2823-2857), inspects any public
+`spec.runtime_dependencies` object. It requires two edges plus ordered_cas_inputs
+aggregation and also refuses nonempty top-level input_object_ids. Thus the
+publication-only target + ordered script-input shape described in
+`runtime-voiceover-native-admission.md` is not actually admissible in this flow.
+The source-only audit's claim of an existing usable generic admission seam is
+incomplete. This is reported to the orchestrator, not fixed or bypassed here.
+The generic D13 settled-artifact checks themselves are not disproven.
+
+The ordinary diagnostic task is not executed, claimed or settled and is cancelled
+through the normal owner API before the pinned admission probe. The refused
+request creates no task. There is no outer attempt pin or settled proposal,
 and no inner task is started by this investigation. The previously qualified
 inner managed WAV/selection/provenance tests are unchanged and are not rerun.
 Their success cannot stand in for an outer producer pin.
 
+The admission fixture uses an empty canonical bootstrap, not a seeded voiceover
+timeline. The ripple counterexample uses the original detached unit fixture.
+No end-to-end authored voiceover materialization is claimed.
+
 The integration negative submits to the existing commit door with the real
-worker credential and asserts HTTP 403 plus unchanged accepted history. No
+worker credential and asserts exact HTTP 401 / unauthorized / credential lacks required scope, plus unchanged
+accepted bootstrap history and head. No
 requester credential is lent to a worker. The request's empty command suffix is
 intentional: authorization must refuse before edit validation, and it cannot
 masquerade as a substitute voiceover proposal.
@@ -130,7 +152,7 @@ Local bounded command (no sockets):
 env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_fixture_still_requires_audio_provenance_and_ripple tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_fixture_provenance_can_be_captured_without_a_snapshot_writer tests/packs/video_editing/test_draft_voiceover.py tests/sdk/test_timeline_producer_guard.py
 ```
 
-Result: **41 passed, 1 xfailed**, 4.85 seconds. The entire existing voiceover
+Final-tree result: **41 passed, 1 xfailed**, 2.50 seconds (earlier bounded run: 4.85 seconds). The entire existing voiceover
 unit file is unchanged, including all original22 readable-audio/RIPPLE positives
 and the inherited speech-admission addition. Existing producer guard/outbox
 neighbors pass. A focused `-rx` rerun confirms the strict xfail reason above.
@@ -142,16 +164,75 @@ git diff --check
 
 Result: PASS.
 
-Central admission/authority result and snapshot tree: pending. The initial test
-request `1020202335-31688` was rejected by the service before pytest because
-`--files` forbids `-s`; it executed no tests. The replacement uses only one
-explicit node, with captured trace output enabled by the test fixture.
+Central final result `1020203011-12468`: **1 xfailed in 13.67 seconds**;
+service exit 0. This is the missing target admission requirement, NOT a passing
+outer settlement. Final source tree **3f9514685990cd261c54ecbfd28580e2df014b90**;
+source bytes were compared with the central snapshot tree.
+
+- Actual outer queued task: `7dcf6d2ad4204beda5612b9922900a5e`.
+- Registered capability digest:
+  `sha256:952b6df12941758550b696a06f980580fead2f40381fe5954eaddbc0fb3a08c5`.
+- Project `4399b84a8caf4bf6bfa1d261c786185e`, timeline `film`.
+- Actual original base revision `bootstrap-cb774932ae3441fbb975e60242d287a1`,
+  publication `txn-8c90769ad56c4dc0aec194764f7836f0`.
+- Script object/digest
+  `sha256:6264b5eac37a1c42bd1f653665504601a4a45bba89b48cdb40ba55f953bd2bbd`.
+- Worker negative completed before pinned submit: exact 401/unauthorized/missing
+  required scope; accepted history and real bootstrap head unchanged.
+- Pinned request was refused before task creation: no pinned admitted spec,
+  attempt, settled proposal or producer digest exists.
+
+Exact captured normal request, normal admitted spec and refused pinned request:
+`workers/agt-m2-voiceover-outer-native-producer/outer-admission.json`.
+Central complete command/result:
+`tests/agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468/{summary,log.txt}`.
+
+Exact service invocation:
+
+```sh
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+$ORCH/bin/request-test agt-m2-voiceover-outer-native-producer native014-sockets-integration --files tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+$ORCH/bin/wait-test agt-m2-voiceover-outer-native-producer-native014-sockets-integration-1020203011-12468
+```
+
+The named suite's actual pytest suffix is:
+
+```sh
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/packs/video_editing/test_outer_voiceover_native.py::test_outer_admission_records_exact_spec_and_worker_has_no_commit_authority
+```
+Only the one explicit admission/authority node is selected; no outer settlement
+or inner generation case is run. Trace output uses the test capture fixture.
+
+Diagnostic history (all the same bounded node, no product changes):
+
+- `1020202335-31688`: service rejected `-s` in --files before pytest; zero tests.
+- `1020202406-19667`: failed before admission because test executor identity
+  differed from the fixture's credential binding; use actual astrid-pack-host.
+- `1020202605-21464`: normal SDK refuses added undeclared file descriptor
+  because its explicit [] input_object_ids does not mirror the script input.
+- `1020202707-8097`: normal outer submit succeeded; the pinned RemoteTasks
+  request reached Runtime and failed the two-edge continuation requirement.
+- `1020202818-26978`: public commit-history read on a provider-less empty
+  timeline failed history_unavailable before the authority negative. Fixed
+  fixture to install the normal provider, bootstrap an actual base pair,
+  and compare read-only history plus public head.
+- `1020202917-5715`: superseded run cancelled (not qualification evidence).
+  Its partial log also showed the real missing-scope response is HTTP 401,
+  rather than the probe's guessed 403; final assertion requires exact 401,
+  unauthorized, and credential lacks required scope.
+
+A strict expected failure preserves the successful target/script admission
+requirement and matches only this precise Runtime continuation rejection via a
+test-private exception. Other integration assertion failures remain failures.
+The registry metadata requirement is a separate strict positive xfail.
 
 ## Next bounded decision for the orchestrator
 
-Authorize the owner of the existing command registry to supply the missing
+Resolve the existing Runtime continuation-only admission restriction with its
+owner, and authorize the existing command-registry owner to supply the missing
 lossless audio/provenance/ripple carrier, or explicitly keep WC5 blocked.
-There is no evidence that the settled D13 custody/authority design is wrong.
+The actual generic task-admission restriction above needs Runtime-owner review;
+the settled D13 artifact/authority design is unchanged.
 Do not restore a legacy writer or broaden this worker into a new framework.
 After a real exact lowering exists, declare the proposal output, implement the
 owned producer/session adapter, place the worker authority negative first,

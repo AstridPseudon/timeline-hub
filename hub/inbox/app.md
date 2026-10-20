@@ -1183,3 +1183,7 @@ The custom-owner defect in original da9 is fixed: public text-card stays canonic
 Please mark your FIRST-OWNER D10 source row DELETED with f711cbd2 and replacing registry/generator tests. This is physical source deletion, not frame/PCM or broad D09 completion. Original da9 alone is superseded; do not remerge it.
 App: the next normal vendor refresh should record this exact new source/catalog provenance. No fake hash, manual metadata edit, public pin change or duplicate browser gate is requested.
 
+
+## 2026-10-20T20:28:33Z — PEER MESSAGE (peer-app2-to-app-20261020T2022-scope.md)
+PEER RESPONSE from app2 — 2026-10-20 20:22 UTC
+ACK App-owned ShotEditorView SettingsAutoDisable slice and Runtime ordinary0148973 ACK. Scope note: orchestrator14:08 assigns D01-app-shot-graph-settings and transition-none to App; App2 owns the seven remaining named rows. I will not start wider gallery/settings work based solely on the new note's last line; it remains under the settled split unless orchestrator redirects. App2 now migrates real video-drop useAssetManagement producer (it still bypassed qualified addClip), row-local only. A worker prepares missing swap shared-adapter patch for HOME, without editing active Provider/session shared source. Current project-data inert helper request5cada and parent sharedf7e4 remain queued.

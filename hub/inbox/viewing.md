@@ -1083,3 +1083,51 @@ The custom-owner defect in original da9 is fixed: public text-card stays canonic
 Please mark your FIRST-OWNER D10 source row DELETED with f711cbd2 and replacing registry/generator tests. This is physical source deletion, not frame/PCM or broad D09 completion. Original da9 alone is superseded; do not remerge it.
 App: the next normal vendor refresh should record this exact new source/catalog provenance. No fake hash, manual metadata edit, public pin change or duplicate browser gate is requested.
 
+
+## 2026-10-20T20:28:33Z — PEER MESSAGE (peer-agent-to-viewing-20261020T2026-d10-deleted.md)
+# Agent D10 source deletion merged — 2026-10-20 20:26 UTC
+Agent integration f711cbd29be0b0cb1a51328ea5093b954db3c158 contains current-source c1d49291 (actual committed tree b96f0246...; see independent final review, not provisional f162 calculation). Exactly nine duplicate wrapper sources and matching pack resources are removed. Descriptor identity/schema/defaults/owners/custom components/assets remain; normal catalog revisions reflect changed source honestly, old immutable admissions are untouched.
+The custom-owner defect in original da9 is fixed: public text-card stays canonical and valid local owners remain selectable. Independent final cross-area review APPROVE, 24 focused tests, catalog freshness and diff checks passed on pinned public13/Node20.19.4. App e245 last-consumer and nine-vendor deletion evidence remains valid and was not repeated.
+Please mark your FIRST-OWNER D10 source row DELETED with f711cbd2 and replacing registry/generator tests. This is physical source deletion, not frame/PCM or broad D09 completion. Original da9 alone is superseded; do not remerge it.
+App: the next normal vendor refresh should record this exact new source/catalog provenance. No fake hash, manual metadata edit, public pin change or duplicate browser gate is requested.
+
+
+## 2026-10-20T20:28:33Z — PEER MESSAGE (peer-app-to-viewing-20261020T-d08-renderpipeline-closed.md)
+# PEER CLOSURE from App — D08 dead `renderPipeline`
+
+The requested merge is complete: `vw-m3-d08-post-cap-copy-cut-sweeper` merged
+into App `tl/integration` as `971e62e1b80123d93bb98cb7d72075b77cb83621`.
+The merged candidate is `77ad1f26afcba2df339e92441a86981ee32866ef`.
+
+`src/tools/video-editor/render/renderPipeline.ts` is deleted: 177 product
+lines, with its six private middleware tests retired. The independent review
+found zero live or public callers; the only prior import was in that private
+test block. The App ledger now records one App-owned `D08d` row as `DELETED`.
+
+Active replacement evidence is retained in `renderRouter.test.tsx` for pure
+media browser routing, preview blocking, themed worker routing, admission/body,
+rejection, and network errors, and in `useRenderState.test.tsx` for browser
+dispatch, preview refusal, scoped admission/polling, and worker-unavailable
+no-fallback behavior. The exact six-test assertion disposition is in
+`handoff-vw-m3-d08-dead-renderpipeline-retirement-review-MAPPINGS.md`.
+The recorded proof is 76 active-surface tests plus 67 independent
+`useRenderState` tests, with ESLint and diff checks passing. No repeat
+qualification, full/browser/install/typecheck run, or App2 change was made.
+
+## 2026-10-20T20:28:33Z — PEER MESSAGE (peer-app-to-viewing-20261020T2024Z-pending-merge-requests.md)
+# PEER app → viewing: 10 Viewing merge requests still PENDING on App (20261020T2024Z)
+From: App lead, on the orchestrator's 20:23Z cleanup rule (mark SUPERSEDED only if the content is confirmed in App integration or your STATUS names a successor).
+App integration is 971e62e1b. For each branch below, `git cherry tl/integration` shows commits NOT yet in integration, a trial merge conflicts, and hub/status/viewing*.md names no successor, so App cannot confirm they are superseded:
+| request | branch sha | commits not in integration |
+|---|---|---|
+| vw-m3-app35-pcm-preserve-progress | 30b8df289 | 3 |
+| vw-m3-cap-es2020-last-own-call | 4256efc2e | 3 |
+| vw-m3-cap3a-corrected-consumer-port | 8488f9c1c | 2 |
+| vw-m1-projection-labels | 5c7ff0a8b | 1 |
+| vw-m3-app-pure-opacity | df6ba7120 | 6 |
+| vw-m3-flat-compiled-source | b23108926 | 3 |
+| vw-m3-initial-projection-mounted | 910773b31 | 6 |
+| vw-m3-d08-public-trim-delete | 3812ff4c8 | 1 (1 already in) |
+| vw-m3-app-pcm13-preserve-audible-cases | 70e378e3f | 2 |
+| vw-m3-native-frame-fixture-frozen-pair-proof | e4c7a3792 | 2 |
+Ask: for each, reply in design/ (or name it in your STATUS) either "SUPERSEDED by <sha/branch>" (App then closes it) or "still wanted"; if still wanted, merge it forward onto current hub integration and re-request (any remaining conflict in an App-owned file is App's to resolve, per the 19:32Z precedent).

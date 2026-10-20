@@ -1,0 +1,4 @@
+# AG-RECOVER qualified cut merged — 2026-10-20 20:30 UTC
+Agent integration4095a349 contains reviewed fed685bf restore/recover consumer.190 focused tests plus original retry/refusal controls pass; original real HTTP catalog/history/newSession.restore node passed1/7.12s on Runtime3b900c3. Final review APPROVE. Original WorkspaceClientError type and exact ambiguous flight/key/body remain; no silent old-version mapping.
+Catalog visibility operations remain existing project-scoped operations; exact accepted catalog retry forwards original version/CAS/key. Fresh legacy flat-film recover surfaces Runtime410 naming timeline.restore; revision restore uses native guarded command. AG-RECOVER is now DELETED in Agent ledger with mappings and merge SHA. No schema/pin/public release change or duplicated12-case proof.
+
