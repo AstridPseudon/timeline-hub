@@ -9,6 +9,7 @@ import pytest
 from jsonschema import Draft202012Validator
 
 from astrid.core.timeline.authoring_bundle import _identity
+from astrid.core.timeline.shot_composition import stable_occurrence_deep_link, stable_output_identity
 from astrid.sdk.timeline._collections import AcceptedRecords
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import _SCHEMA, execute
@@ -170,17 +171,26 @@ def test_reserved_identity_collisions_refuse(occurrence_id, shot_id):
     assert error.value.kind == 'identity_collision'
 
 
-@pytest.mark.xfail(strict=True, reason='restored by the design/m2-occurrence-duplicate.md extension: re-derive root '
-                                       'stable_deep_link/output_identity with the shot_composition factories, which '
-                                       'needs the parent document_id and the compiled destination revision_id; '
-                                       'neither is in the authoring bundle or the call')
-def test_copy_does_not_carry_source_derived_identity_fields():
+def test_copy_rederives_only_root_identity_against_compiled_destination():
     original = bundle_from_document(duplicate_document())
-    State(original).entity('occurrence:occ-0').update(stable_deep_link='deep:occ-0', output_identity='out:occ-0')
+    State(original).entity('occurrence:occ-0').update(
+        stable_deep_link='deep:occ-0', output_identity='out:occ-0', parent_document_id='doc-1',
+        output_records=[{'output_identity': 'out:occ-0'}])
     plan = execute(original, [duplicate(original, 'occ-0')])
-    copy_row = State(plan.bundle).entity('occurrence:occ-copy')
-    assert copy_row['output_identity'] != 'out:occ-0'
-    assert copy_row['stable_deep_link'] != 'deep:occ-0'
+    compiled = document_from_bundle(plan.bundle)
+    rows = {row['occurrence_id']: row for row in compiled['parent_revision']['payload']['occurrences']}
+    source, copied = rows['occ-0'], rows['occ-copy']
+    revision = copied['shot_revision_id']
+    assert copied['stable_deep_link'] == stable_occurrence_deep_link(
+        'project-1', 'doc-1', 'shot-copy', revision, 'occ-copy')
+    assert copied['output_identity'] == stable_output_identity('project-1', 'doc-1', 'occ-copy')
+    assert {(row['shot_id'], row['revision_id']) for row in compiled['shot_revisions']} >= {('shot-copy', revision)}
+    assert source['stable_deep_link'] == 'deep:occ-0' and source['output_identity'] == 'out:occ-0'
+    assert copied['output_records'] == source['output_records'] == [{'output_identity': 'out:occ-0'}]
+    assert {k: v for k, v in copied.items() if k not in (
+        'occurrence_id', 'shot_id', 'shot_revision_id', 'stable_deep_link', 'output_identity')} == {
+        k: v for k, v in source.items() if k not in (
+            'occurrence_id', 'shot_id', 'shot_revision_id', 'stable_deep_link', 'output_identity')}
 
 
 def test_derived_item_identity_collision_refuses_without_mutation():
