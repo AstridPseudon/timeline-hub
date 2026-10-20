@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 
@@ -25,7 +26,9 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
     # actual host materializer. A fake Runtime *transport* delegates to the
     # real service, so neither the admission nor the hydration layer is mocked.
     from astrid.core.execution.generic_host import GenericPackHost
-    from test_canonical_render_admission import _accept_publication
+    from test_timeline_commit_acceptance import validate_prepared
+    from test_timeline_native_inspection import _publish
+    from runtime_protocol.timeline_commit_store import TimelineCommitStore
 
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
@@ -36,28 +39,32 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
         provider = load_timeline_commit_provider("astrid")
         service.register_timeline_commit_provider(provider)
         service.create_timeline(project_id, "main", idempotency_key="timeline")
+        TimelineCommitStore(service.store, validate_prepared=validate_prepared).bootstrap(
+            project_id, "main", authorize=lambda: None)
         service.register_capability({"capability_id": "rendering.timeline_visualize", "definition_digest": _digest("visualize")})
         service.register_executor({"executor_id": "worker", "capabilities": ["rendering.timeline_visualize"]})
-        clips = [{"id": "old", "clipType": "text", "text": "Saved revision", "at": 0, "hold": 1}]
-        parent = {"config": {"clips": clips}, "registry": {"assets": {}},
-                  "clips": clips, "occurrences": []}
-        _accept_publication({"service": service, "project": project_id}, {
-            "expected_head": None, "parent_revision_id": "revision-1",
-            "parent_composition": parent, "dependency_manifest": {"media": []},
-        }, idempotency_key="saved-revision")
-        document = service._timeline_commits()[0].revision_closure(project_id, "main", "revision-1")
+        fixture = json.loads((Path(__file__).with_name("fixtures") / "capture_authority.json")
+                             .read_text().replace("PROJECT_ID", project_id))
+        media = service.ingest(project_id, fixture["media_bytes"].encode(), media_type="video/mp4",
+                               idempotency_key="media")["data"]["object_id"]
+        publication = fixture["publication"]
+        assert publication["shot_revisions"][0]["payload"]["items"][0]["media_id"] == media
+        asset = publication["internal_timeline_revisions"][0]["payload"]["registry"]["assets"]["picture"]
+        asset["content_sha256"] = media.removeprefix("sha256:")
+        _publish(service, project_id, publication, idempotency_key="saved-revision")
+        document = service._timeline_commits()[0].revision_closure(project_id, "main", "parent-1")
         projection = provider.project_capture(document)
         snapshot = {"config": projection["config"], "registry": projection["registry"],
                     "metadata": {"capture_authority": {
                         "project_id": project_id, "timeline_id": "main",
-                        "parent_revision_id": "revision-1", "parent_content_digest": _digest(parent),
+                        "parent_revision_id": "parent-1", "parent_content_digest": document["parent_revision"]["content_digest"],
                         "expansion": projection["expansion"],
                     }}}
         context = {"mode": "composed_capture", "project_id": project_id, "timeline_id": "main",
-                   "revision_id": "revision-1", "capture_snapshot": snapshot}
+                   "revision_id": "parent-1", "capture_snapshot": snapshot}
         task = service.create_task({
             "project": project_id, "capability_id": "rendering.timeline_visualize",
-            "capability_digest": _digest("visualize"), "input_object_ids": [],
+            "capability_digest": _digest("visualize"), "input_object_ids": [media],
             "idempotency_key": "capture", "spec": {
                 "inputs": {"filmstrip_authority": canonical_json(context)},
                 "authority_context": context,
@@ -68,8 +75,8 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
         assert "capture_snapshot" not in inner["authority_context"]
         assert "capture_snapshot" not in json.loads(inner["inputs"]["filmstrip_authority"])
         ref = inner["authority_context"]["capture_snapshot_ref"]
-        assert ref["revision_id"] == "revision-1"
-        assert ref["revision_digest"] == _digest(parent)
+        assert ref["revision_id"] == "parent-1"
+        assert ref["revision_digest"] == document["parent_revision"]["content_digest"]
         assert ref["digest"] in spec["input_object_ids"]
 
         class Client:
@@ -88,7 +95,7 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
             service.store.conn.execute("PRAGMA foreign_keys=OFF")
             try:
                 with service.store._transaction():
-                    service.store.conn.execute("DELETE FROM parent_composition_revisions WHERE id='revision-1'")
+                    service.store.conn.execute("DELETE FROM parent_composition_revisions WHERE id='parent-1'")
             finally:
                 service.store.conn.execute("PRAGMA foreign_keys=ON")
         with pytest.raises(NotFoundError, match="parent revision is missing"):
