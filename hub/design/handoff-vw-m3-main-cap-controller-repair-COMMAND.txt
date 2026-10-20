@@ -1,0 +1,133 @@
+PREPARATION COMPLETE; STAGE BLOCKED; CAPTURE NOT GRANTED OR RUN.
+
+All paths below are absolute. No product/tests or suite configuration was edited.
+This uses original MAINa411 Root/generator/packs and locked6 (29 members), with
+the immutable SOURCE READY raw closure. It never uses the REJECTED old controller; that controller must never be granted.
+Binding is an explicitly labelled static-public executable analog, NOT a live
+InvocationAssetServer/Runtime/App/admission path or owner film.
+
+Safe offline command (no extraction, browser, listener, renderer, or request):
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-controller.py preflight
+
+Current result: exit1 STAGE_BLOCKED, free=12499419136 bytes. Reserve: 10,737,418,240 bytes (10GiB).
+Additional estimated allocation/headroom: 2,283,658,796 bytes, including the
+94,514,732-byte source, 16MiB filesystem allowance, 2GiB bundle/private caches/
+browser/temp allowance, and 24,883,200 raw RGBA PNG bytes. Before extraction,
+free disk must be >=13,021,077,036 bytes (~12.127GiB); no override exists.
+The 2GiB private-work allowance is conservative and has NOT been measured by
+bundling. Every render step and a 500ms process watchdog enforce the 10GiB floor.
+Three flat 1920x1080 PNGs at frames90,105,119 are estimated <1MiB total for this
+solid image; this is an estimate, not a size/opacity/pixel result. No fourth PNG.
+
+MANAGER-ONLY NEXT STEP, AFTER resource cleanup and review (NOT EXECUTED):
+
+After an independent gate approves the exact hashes below, add exactly the
+following ONE suite line to the existing central tests/suites.conf. The worker
+has not registered a suite, created an actual grant, or requested a run.
+Never register or grant the old REJECTED controller. MAIN git reads use only
+the retained read-only /home/user/work/agent object store, pinned to
+a411628f8fd6129f9c58c332019b56769d997384; no creator worktree is needed.
+
+agent e2e-viewing-main6-image-cap-three-stills /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-controller.py capture
+
+Manager-owned grant file (not present):
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-cap-controller-repair/CAPTURE-GRANT.txt
+
+The grant MUST contain these EXACT THREE LINES (the suite plus both manager-
+approved SHA256 values); a path-only grant is refused by controller AND render:
+
+agent e2e-viewing-main6-image-cap-three-stills /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-controller.py capture
+controller_sha256=41455095972277d6e2b8da04f7796bfb6579cb960c948f64b7fed1e5adc2fde3
+render_sha256=c5be04066bfef43c76b97464f9ce1cc981ca9fc36a224bd2ffe0a078338437e4
+
+The controller checks both script hashes before preflight/allocation and
+rechecks before allocating the stage and every generator/replay/renderer child.
+The renderer independently checks both before stage inspection and peer imports.
+These are the existing small manager test grant, not a new authority protocol.
+
+ONLY AFTER the manager's exact grant and successful resource preflight, request
+the named central suite ONCE (NOT a full). These commands are NOT permission:
+
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test vw-m3-main-cap-controller-repair e2e-viewing-main6-image-cap-three-stills) && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"
+
+If wait exits124, wait on the SAME R; never resubmit. The controller also checks
+the active service snapshot/request/status and takes its own nonblocking lock.
+An exclusive CAPTURE-STARTED marker prevents automatic retries. If a run fails,
+the manager reviews the evidence before arranging any new attempt. The marker
+is never a grant. No local command may run the render.mjs file.
+
+Central sequence:
+1. Require exact manager grant including BOTH frozen script hashes, exact
+   registered suite and active service request.
+2. Verify immutable source/freeze/fixtures and all29 original+generated package
+   members, original MAIN git bytes, full physical SSR graph and six peers/tools.
+3. Enforce reserve PLUS headroom BEFORE extraction into the worker's own REAL
+   capture-stage/main. Run ORIGINAL generator against ORIGINAL packs, and prove
+   all source/package bytes still match. No new package build/backend/install.
+4. Replay the ORIGINAL normal managed resolver/projector/materializer/serializer
+   from the raw hold5 closure. Require byte equality for ALL SEVEN outputs:
+   main-projected-config.json, main-managed-registry.json,
+   main-materialized-timeline.json, main-serialized-timeline.json,
+   main-props-template.json, main-props-static-analog.json, trace.json.
+   A source-worker replay pass alone never substitutes for this consumer replay.
+5. Copy only image.png to private MAIN public/image-cap.png. Use prepared props
+   unchanged, whose sole managed-URL binding is the explicit static-public analog.
+   Bind read-only peer package leaf links under OWN REAL node_modules/scopes;
+   keep the private locked6 package and real private .cache/webpack parent.
+   No shared .cache/.bin/scope link is installed. Existing Node20.19.4,
+   bundler/renderer/Remotion4.0.509, React18.3.1, and headless-shell are reused.
+6. Use ORIGINAL index/Root and original remotionPrimitiveAliasesFor, select normal
+   TimelineComposition, and require ACTUAL metadata1920x1080/fps30/duration120
+   before any PNG. Never clamp frame120 to119. Render exactly90,105,119.
+7. Retain each original PNG/SHA256/byte count and actual metadata. Measure RGB
+   against the actual frame90 full-opacity control and unchanged MAIN background
+   #050814, using (frameRGB-bgRGB)/(control90RGB-bgRGB), 25points*3channels.
+   Record full-image RGBA extrema and actual sampled RGBA separately. Alpha255
+   does NOT imply layer opacity1. Background is source-defined, not a separately
+   captured background frame. No golden or expected opacity1 is silently chosen.
+8. Always verify source/fixture/full graph/six-peer postflight and record validity;
+   mismatch invalidates output. Remove only our newly allocated staging/bundle/
+   cache/temp tree, including partial staging/postflight failures. Ownership is
+   recorded ONLY after mkdir succeeds; a refused pre-existing stage is preserved.
+   Keep flat original PNGs, metadata, replay/generator/capture
+   logs and postflight/measurement evidence under this absolute handoff prefix.
+
+SOURCE PREDICTION, NOT PIXELS: MAIN projects hold5 to hold4, so unchanged locked6
+predicts opacities1,0.5,1/30 at90,105,119. This contradicts suggested raw-clock1
+at105. The controller measures and reports; the Agent/compiler owner decides the
+golden after actual capture. No App/unified parity, audio or Gate6 claim.
+
+Executed offline checks (no capture or central service request):
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-guard-tests.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-guard-tests.log 2>&1
+Result: exit0, 9 tests PASS. Real source check against retained MAIN; reserve/
+headroom exact boundaries and QUIET; absent/path-only/changed-controller/changed-
+render grants; rejection before preflight/log/child execution; pre-existing
+stage directory/file/symlink sentinel preservation; partial-staging and
+postflight-failure cleanup; success cleanup and no automatic retry. Renderer
+hash checks use ONLY its built-in-import admission header in a disposable fake
+ORCH; no peer import, bundler, browser, render, server, or socket is executed.
+All synthetic grants and tiny stage fixtures are private and removed afterward.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-controller.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-guard-tests.py
+Result: exit0, All checks passed.
+
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-render.mjs
+Result: exit0.
+
+git -C /home/user/work/wt/vw-m3-main-cap-controller-repair diff --check
+git -C /home/user/work/wt/vw-m3-main-cap-controller-repair status --porcelain=v1 --untracked-files=all
+Result: exit0, no output; no repository product/test changes.
+
+The real preflight command above returned exit1 solely for disk admission,
+with all source and full-graph checks passing. It performs no extraction or
+capture and writes only this handoff's evidence files. offline-postflight.json
+records the same full physical f816 graph after guard tests; all 21,488 entries,
+six peers, versions and Node/browser hashes remain exact. Rejected old frozen
+controller/render/COMMAND/REPORT hashes remain those in the rejecting gate.
+
+Unverified: seven-output consumer execution/replay, bundling/private cache
+behavior during capture, actual Root metadata and PNG pixels/RGB estimates.
+The source-derived 0.5 at105 remains a prediction, not an approved visual golden.
+Resources and a fresh independent exact-hash verdict remain manager holds.

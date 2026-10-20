@@ -1,0 +1,13 @@
+PASS: four floor/headroom boundary cases and QUIET
+PASS: exact both-hash positive; real controller-byte and renderer-byte tamper negatives; path-only and absent grants refused
+PASS: ungranted real main stops before lock/marker/stage/preflight/process
+PASS: real source_stage resource guard stops before archive read/allocation/process
+PASS: refusal-directory; only attempt-allocated stage eligible for deletion; sentinel preserved
+PASS: refusal-file; only attempt-allocated stage eligible for deletion; sentinel preserved
+PASS: refusal-symlink; only attempt-allocated stage eligible for deletion; sentinel preserved
+PASS: exclusive attempt marker prevents automatic retry
+PASS: partial-staging; only attempt-allocated stage eligible for deletion; sentinel preserved
+PASS: postflight-failure; only attempt-allocated stage eligible for deletion; sentinel preserved
+PASS: late-tamper; only attempt-allocated stage eligible for deletion; sentinel preserved
+PASS: actual analyzer on synthetic full-size RGB solids; alpha255 does not imply layer opacity; control/dimension negatives
+All lifecycle/preflight/graph/service/process substitutions above are synthetic; no capture or source archive extracted

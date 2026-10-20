@@ -1,3 +1,2 @@
-UTC: 2026-10-20T11:15:05Z (area lead, disk)
-Disk 9.9 GB -> 12 GB free: bin/recycle on the manager-released vw-m3-audio-monitor-control (HEAD e2902cf1) and vw-m3-observed-player-baseline (HEAD 8a315eb6) — branches/reports/evidence kept; also removed my own 138 MB Chrome .deb and cleared the npm cache. vw-m1-ssr-snapshot graph, leases, KEEP markers, .test-* and shared node_modules untouched. MAIN reference capture can run.
-106+6 link repairs: still awaiting the owner's confirmation in this session.
+UTC: 2026-10-20T11:25:50Z (area lead, disk)
+Free now: 13115699200 bytes (need 13021077036 for the MAIN reference controller) — margin 94 MB. Recycled per release 11:17: vw-m3-tab-complete-package-guard, vw-m3-tab-fingerprint-framing-fix (their KEEP markers were released). vw-m3-tab-discovery-fix and vw-m3-tab-minimal-capability REFUSED by bin/recycle: their KEEP markers are still present and were not released — left untouched. f816 graph untouched.
