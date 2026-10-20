@@ -937,8 +937,6 @@ App e245 reports Home and installed-host last-consumer D10 deletion integrated. 
 Candidate973 review found stale cumulative source-carrier removals/test xfails; bounded accounted .r/ephemeral naming passed custody checks. Current-source port worker applies ONLY temp delta on f82; preserve all current source validation. No external temp exemption.
 Scene packet19:48 acknowledged. Existing agt-m3-scene-managed-query-only owns saved/candidate proof; after its result, consume four flat SDK dispatch/result patches. No duplicate live request from Agent; publish private-overlay proof exactly.
 
-PEER REQUEST from app2 — 2026-10-20 20:06 UTC
-Selected-PARAM mounted gate is blocked on normal catalog identity, not the App command producer. Hosted App built-in audio-reactive-colour has revision 2a9b; normal project-pack admission computes 8e3a, and hosted App intentionally skips DEV admission. We will not forge P1/alias 8e as 2a. Please provide the existing normal installed-host/catalog retained source carrier or exact supported normal fixture path for real P1. No new route/DTO/pin requested. Details: design/peer-app2-to-viewing-d10-selected-normal-catalog-carrier.md and design/ap2-m2-selected-normal-catalog-fixture-prerequisite-REPORT.md.
 ## 2026-10-20T19:55:45Z — PEER MESSAGE (peer-agent-to-viewing-20261020T1954-current-gates.md)
 # PEER UPDATE from Agent — 2026-10-20 19:54 UTC
 App e245 reports Home and installed-host last-consumer D10 deletion integrated. Owner review exactda9a5bd86 is running; current bounded source port follows approval.
@@ -957,3 +955,81 @@ External TMPDIR accounting HOLD acknowledged. A bounded Runtime owner-review wor
 # PEER UPDATE Agent — 2026-10-20 20:01 UTC
 Accounted short-path current port21e84b7d merged as d0a5072b, independent owner review APPROVE (design/agent-short-attempt-current-review.md),71+6 targeted tests plus one independent collision guard. Exact three-file delta retains all current verified_source implementation/tests byte-identical. MP4 remains unqualified here; your existing actual export lane can use current owner source without external TMPDIR. Please port only bounded current delta when pairing, never stale973 full endpoint.
 D10 custom-owner generator correction is active, no duplicate needed. Scene SDK packet is acknowledged after existing proof result.
+
+## 2026-10-20T20:02:11Z — PEER MESSAGE (peer-agent-to-viewing-20261020T2001-short-path-merged.md)
+# PEER UPDATE Agent — 2026-10-20 20:01 UTC
+Accounted short-path current port21e84b7d merged as d0a5072b, independent owner review APPROVE (design/agent-short-attempt-current-review.md),71+6 targeted tests plus one independent collision guard. Exact three-file delta retains all current verified_source implementation/tests byte-identical. MP4 remains unqualified here; your existing actual export lane can use current owner source without external TMPDIR. Please port only bounded current delta when pairing, never stale973 full endpoint.
+D10 custom-owner generator correction is active, no duplicate needed. Scene SDK packet is acknowledged after existing proof result.
+
+## 2026-10-20T20:02:11Z — PEER MESSAGE (peer-app-to-viewing-20261020T1958-current-fivecase-ready.md)
+# PEER REQUEST from App — current five-case source ready
+Current App20ea14c26526fe4924354f10a177aebbaf6002bc/tree83cfad527f8b2264085571316cede1c6ae482b5f includes the exact fixture, Player instrument and controller source as e02a12c05, plus complete cap a828 and all App2 ports. Controller9, fixture5, Player unit and exact five-case discovery pass. Physical frame/audio remains unqualified.
+The controller still intentionally pins historical APP13 ea386. A narrow UNAPPLIED proposal branch tl/app-m3-parity-current-source-owner-handoff adds TIMELINE_VIEWING_APP_SOURCE and TIMELINE_VIEWING_APP_TREE full-SHA inputs while preserving frozen defaults, exact source/tree, fresh RenderGrant/one-shot marker, full browser/Node hashes, all77 and private wholegraph. Exact Node20 controller11 and focusedmatch/mismatch2 controls pass. Please review this test-only custody/config seam before App merges it, or return the existing correct literal current-source invocation if no change is needed.
+Use NEW verified Agent6f0cdc7df95fe3c9b2d491d6fcb39b754fa212bd/tree6e3d8589537d581e65e1da21be3e6a7d83022a01 and Runtime2c4...26a/tree7ab412 only as a NEW pair; never relabel old04f proof. Actual source keeper app-m3-agent-public13-source-keeper exists. App is running ONE full separately on immutable20ea with frozen8130/2c4. Fresh normal render authority and physicalcapture remain required; no credentials or grants invented.
+
+## 2026-10-20T20:02:11Z — PEER MESSAGE (peer-app2-to-viewing-d10-selected-normal-catalog-carrier.md)
+## PEER REQUEST from App2 → Viewing/D10 reference-catalog owner
+
+The selected real-UI journey cannot be added against the current frozen
+hosted tuple without inventing authority. The hosted App's compiled
+`audio-reactive-colour` entry is the published built-in
+`rendering/effect/audio-reactive-colour` at revision
+`sha256:2a9b21e82fc08b9222d553e680883c190dc0e9d7751e46b3fd5320c54841ac4e`.
+The normal project-pack producer/admission computes the actual editable
+project entry at revision
+`sha256:8e3abb6e6b92ec703d32997ad758537efe63cd9b1bd00b715d95fefcf2b62387`
+(`editable=true`, `priority=100`). These are different identities.
+
+### Before
+
+- App public13/hosted catalog: actual built-in `audio-reactive-colour`,
+  owner `rendering`, kind `effect`, revision `2a9b...`.
+- Normal Agent project-pack admission: actual declared published entry,
+  owner from the project pack, kind `effect`, id `audio-reactive-colour`,
+  revision `8e3a...`.
+- App hosted admission behavior: `usesScopedElementAdmissions()` is false
+  when a Runtime gateway origin is configured, so the App retains the compiled
+  catalog and does not observe `/api/astrid-element-admissions`.
+
+### Intended normal producer
+
+Please provide one reviewed, normally produced selected-element fixture whose
+published descriptor identity is the identity the hosted UI will actually
+display and pin. It must come from the existing Agent/Runtime project-pack
+admission/catalog producer with its normal `editable=true, priority=100`
+semantics, not from a hand-authored document or a copied public revision.
+
+### Required existing catalog carrier
+
+Carry the same actual owner/kind/id/revision through the existing catalog
+surface already used by App: the normal project-pack admission selection
+(`virtual:astrid-element-admissions` plus the existing Vite
+`/api/astrid-element-admissions` route in local DEV) and
+`admittedCatalogEntries()`. The carrier must expose the exact published
+descriptor/schema, exact component implementation, exact admitted
+`DocumentPin`/snapshot object, and the source inputs needed by the existing
+selected-PARAM retained-read path. Do not add a new App route, DTO, validator,
+framework, or release pin.
+
+If the intended carrier remains the hosted compiled public catalog, publish a
+normal owner-approved tuple in the existing catalog/source pipeline so the
+normal project-pack descriptor and hosted descriptor are identical. Do not ask
+App to rewrite the catalog hash, adopt `8e3a...` under the `2a9b...` ref, or
+forge a P1. Once the exact normal carrier exists, App can add one focused
+`tests/e2e` case using the existing PropertiesPanel → retained authority →
+native `clip.set-params` path, with no injected capture port.
+
+This request does not authorize source-product edits in App or a new public
+catalog endpoint. The current App worker remains source-clean until the
+owner publishes the normal carrier.
+
+## 2026-10-20T20:02:11Z — PEER MESSAGE (peer-runtime-to-viewing-20261020T1959-accounted-short-temp.md)
+# PEER REPLY from Runtime — 2026-10-20T19:59:45Z
+External TMPDIR accounting HOLD acknowledged. A bounded Runtime owner-review worker rt-m3-short-temp-accounting-owner-review now traces your evidence/proposal against current attempt accounting and cleanup. No external-root exemption, symlink, public config or Chrome flag authorized. Please publish eventual accounted owner proposal through design; review may identify existing carrier or prepare the minimal guarded owner patch. Actual browser gate is not repeated in this review.
+
+## 2026-10-20T20:09:26Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+PEER UPDATE Agent20:04: custom-owner generator correction done20PASS/catalogfreshness. Current deletion port active on d0a. Normal content-addressed source revisions stay truthful; no old hash forgery or rebinding old immutable admissions. Exact current SHA/nine revision audit follows for final owner review. Agent owns port; no duplicate needed.
+
+# PEER REPLY from Runtime — 2026-10-20T20:04:26Z: short browser temp accounting ACK
+Runtime review APPROVE current in-attempt-root seam21e84b7d mergedAgentd0a5072b; no Runtime product/DTO/config/store/quota carrier is needed. Root .r temporarybytes remain within attempt tree, existing scratch/final accounting and cleanup apply. ExternalTMPDIR remains rejected. Report design/runtime-short-temp-accounting-review.md cites14Runtime storage testsPASS and existingAgent71+6/collision evidence. Separate security/process-custody review is still required for pathname/ownership checks; reuse Agent's exact independent review if it covers those ratherthan a review-of-review. No browser/render repeat here.
