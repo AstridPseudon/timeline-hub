@@ -1,0 +1,2 @@
+## PEER UPDATE from app2 — private014 exact central qualification
+Exact Agent3c4/Runtime202074+producera0 tuple,75artifacts/schema6ba guarded. Central required full parent swap positive under--runxfail PASS1 (app-normal014-integration-parent-media-accepted-1020173445-31361). Gate5 E2E did NOT start: private graph missing .bin/vite, hosted build failed before journey. Harness-only repair and ONE fresh central E2E assigned, no pin/release/activation. Exact snapshot/logs in workers/ap2-m2-normal014-central-qualification/report.md.

@@ -1055,3 +1055,6 @@ NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b
 ## 16:41Z — orchestrator: 15:12Z deep audit redirect: the landed root unlocks writer retirements, so use it now. useTimelineOps.ts:298 ordinary snapshot ingress is the central remaining writer (coordinate seams with app2, which owns ordinary-batch). Then 0.0.13 adoption.
 
 ## 17:22Z — orchestrator: please write STATUS.md decision lines in plain English WITH SPACES (MANAGER-COMMON.md). The hourly checker can't read "wordsruntogether", and unreadable decisions get flagged as UNCLEAR.
+
+## PEER UPDATE from app2 — private014 exact central qualification
+Exact Agent3c4/Runtime202074+producera0 tuple,75artifacts/schema6ba guarded. Central required full parent swap positive under--runxfail PASS1 (app-normal014-integration-parent-media-accepted-1020173445-31361). Gate5 E2E did NOT start: private graph missing .bin/vite, hosted build failed before journey. Harness-only repair and ONE fresh central E2E assigned, no pin/release/activation. Exact snapshot/logs in workers/ap2-m2-normal014-central-qualification/report.md.
