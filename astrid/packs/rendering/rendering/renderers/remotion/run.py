@@ -914,9 +914,7 @@ def _native_window_argument(
                 or type(layer.get("z")) is not int or layer["z"] < 0
                 or type(layer.get("alpha")) is not bool or layer["alpha"] != (layer["z"] > 0)):
             raise ValueError("composition duration requires a native isolated layer window")
-        app = timeline_data.get("app")
-        if ((isinstance(metadata, Mapping) and "source_window_start_seconds" in metadata)
-                or (isinstance(app, Mapping) and "astrid_render_clock" in app)):
+        if isinstance(metadata, Mapping) and "source_window_start_seconds" in metadata:
             raise ValueError("composition duration conflicts with an existing render clock")
     if window is None:
         return None
@@ -930,14 +928,28 @@ def _native_window_argument(
         raise ValueError("Remotion native windows require unit speed")
     if window.fps_rational != profile.fps_rational:
         raise ValueError("Remotion window FPS must exactly match the canonical composition FPS")
-    total = timeline.timeline_render_duration_frames(
-        timeline_data, profile.fps_rational[0] / profile.fps_rational[1]
-    )
+    fps = profile.fps_rational[0] / profile.fps_rational[1]
     if composition_duration_frames is not None:
+        total = timeline.timeline_duration_frames(timeline_data, fps)
+        app = timeline_data.get("app")
+        if isinstance(app, Mapping) and "astrid_render_clock" in app:
+            clock = app["astrid_render_clock"]
+            # The service validated this clock against the original render
+            # view before filtering. Only admit the bounded pre-tail case:
+            # the existing tail placement must remain outside the output.
+            if (not isinstance(clock, Mapping)
+                    or type(clock.get("authored_duration_frames")) is not int
+                    or not total <= clock["authored_duration_frames"] < composition_duration_frames
+                    or type(clock.get("render_duration_frames")) is not int
+                    or clock["render_duration_frames"] != composition_duration_frames
+                    or window.end_frame > total):
+                raise ValueError("composition duration conflicts with an existing render clock")
         if composition_duration_frames < total:
             raise ValueError("composition duration is shorter than the isolated clip extent")
         # This is the service's invocation fact, not authored/source authority.
         total = composition_duration_frames
+    else:
+        total = timeline.timeline_render_duration_frames(timeline_data, fps)
     if window.end_frame > total:
         raise ValueError("Remotion window extends beyond the full composition")
     return f"--frames={window.start_frame}-{window.end_frame - 1}"

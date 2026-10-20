@@ -161,7 +161,12 @@ const getMetadata = async ({
       throw new Error('composition duration must be a positive safe integer covering the isolated clips');
     }
     const app = (props.timeline as typeof props.timeline & {app?: Record<string, unknown>}).app;
-    if (metadata?.source_window_start_seconds !== undefined || app?.astrid_render_clock !== undefined) {
+    if (metadata?.source_window_start_seconds !== undefined
+      || (app?.astrid_render_clock !== undefined && (!clock
+        || clock.render_duration_frames !== originalDuration
+        || !Number.isSafeInteger(clock.authored_duration_frames)
+        || clock.authored_duration_frames < getTimelineDurationInFrames(props.timeline, fps)
+        || clock.authored_duration_frames >= originalDuration))) {
       throw new Error('composition duration conflicts with an existing render clock');
     }
   }
