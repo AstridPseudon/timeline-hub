@@ -1,0 +1,14 @@
+{
+  "compiler-canary-source": {
+    "schema_version": 1,
+    "op": "project-data.write",
+    "version": "1",
+    "select": "parent",
+    "args": {
+      "target": "com.example.compiler-canary",
+      "key": "__dsl__:dsl://com.example.compiler-canary/main.json",
+      "value": "{\"version\":1,\"sourceUri\":\"dsl://com.example.compiler-canary/main.json\",\"clips\":[{\"id\":\"canary-clip-1\",\"track\":\"V1\",\"at\":0,\"duration\":1,\"clipType\":\"hold\",\"sourceLine\":3}]}",
+      "mode": "replace"
+    }
+  }
+}

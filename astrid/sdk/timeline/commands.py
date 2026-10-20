@@ -57,6 +57,7 @@ def operations():
     from .native_shot_pool_commands import POOL_INTENT, shot_pool
     from .native_text_binding import TEXT_INTENT, text_binding_set
     from .native_word_anchor import declare
+    from ._project_data_commands import PROJECT_DATA_INTENT, project_data_write
     from .producer import producer_guard
     return {'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
             'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
@@ -89,7 +90,9 @@ def operations():
             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
             'timeline.assembled-target': Operation(_SCHEMA['$defs']['AssembledTargetArgs'], assembled_target, {}),
             'clip.add-media': Operation(_SCHEMA['$defs']['ClipAddMediaArgs'], parent_add_media, {}),
-            'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {})}
+            'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {}),
+            'project-data.write': Operation(_SCHEMA['$defs']['ProjectDataWriteArgs'], project_data_write,
+                                            PROJECT_DATA_INTENT)}
 
 
 @dataclass

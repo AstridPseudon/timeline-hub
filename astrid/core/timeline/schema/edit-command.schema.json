@@ -1871,6 +1871,35 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "project-data.write"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/ProjectDataWriteArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -2140,6 +2169,34 @@
         }
       ],
       "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
+    },
+    "ProjectDataWriteArgs": {
+      "type": "object",
+      "required": [
+        "target",
+        "key",
+        "value",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]*(\\.[A-Za-z][A-Za-z0-9_-]*)*$"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "$ref": "#/$defs/JSON"
+        },
+        "mode": {
+          "const": "replace"
+        }
+      },
+      "description": "Replace one opaque extension-owned project-data value in the parent authored timeline. The project catalog is a separate scoped operation."
     },
     "ClipTrimArgs": {
       "type": "object",
