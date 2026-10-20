@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pytest
 
+from astrid.core.timeline.scene_answers import Span
 from tests.core.timeline.scene_support import coverage, visible_at
 
 FPS = 30
@@ -32,6 +33,19 @@ def _config(clips, tracks=TRACKS):
     return {"tracks": [dict(t) for t in tracks], "clips": clips}
 
 
+def _project_class_content_intervals(spans):
+    """Project detailed scene spans for the legacy class/content assertion."""
+    projected = []
+    for span in spans:
+        current = (span.start_frame, span.end_frame, span.cls, span.content)
+        if (projected and projected[-1][1] == span.start_frame
+                and projected[-1][2:] == current[2:]):
+            projected[-1] = (projected[-1][0], span.end_frame, *current[2:])
+        else:
+            projected.append(current)
+    return projected
+
+
 # Keep the original covered-crossfade requirement; real component support now
 # exposes Composition's different alpha treatment of these legacy clip fades.
 @pytest.mark.xfail(strict=True, reason='M3 requires covered legacy cross-fade semantics; native source-over alpha currently reports DIP during overlap.')
@@ -44,14 +58,31 @@ def test_a_cross_fade_of_two_full_plates_is_covered_not_dip():
     assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [(0, 45, "COVERED", "CONTENT")]
 
 
-# Keep the continuous DIP expectation across the fully transparent first frame.
-@pytest.mark.xfail(strict=True, reason='M3 requires continuous coverage-class runs; native span encoding currently splits DIP when visible clip membership changes.')
+# The legacy assertion summarizes class/content; detailed public spans retain
+# the visible-membership boundary at the fully transparent first frame.
 def test_a_one_sided_fade_is_a_dip_during_the_ramp_then_covered():
     config = _config([_plate("only", asset=None, params={"src": "/plate.png"}, at=0.0, hold=2.0, effects={"fade_in": 0.5})])
     spans = coverage(config, FPS, CANVAS, ELEMENTS)
-    assert [(s.start_frame, s.end_frame, s.cls) for s in spans] == [(0, 15, "DIP"), (15, 60, "COVERED")]
-    assert spans[0].content is None
-    assert spans[1].content == "CONTENT"
+    assert [(s.start_frame, s.end_frame, s.cls, s.content, s.clips, s.findings) for s in spans] == [
+        (0, 1, "DIP", None, (), ()),
+        (1, 15, "DIP", None, ("only",), ()),
+        (15, 60, "COVERED", "CONTENT", ("only",), ()),
+    ]
+    assert _project_class_content_intervals(spans) == [
+        (0, 15, "DIP", None),
+        (15, 60, "COVERED", "CONTENT"),
+    ]
+
+
+def test_class_content_projection_does_not_cross_a_hole():
+    spans = [
+        Span(0, 1, "DIP", None, (), ("first",)),
+        Span(2, 3, "DIP", None, (), ("second",)),
+    ]
+    assert _project_class_content_intervals(spans) == [
+        (0, 1, "DIP", None),
+        (2, 3, "DIP", None),
+    ]
 
 
 def test_a_none_element_is_not_listed():
