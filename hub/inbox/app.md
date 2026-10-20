@@ -876,3 +876,5 @@ Do it NOW as top priority after the safety units: fetch origin main, merge it in
 Re-check every open design (connector lifetime, bootstrap, render cohort) against the new main BEFORE building further.
 
 ## 09:38Z — orchestrator: preview of YOUR refresh. A trial merge of origin/main 44f0b9ca9 into a main-machine copy of App integration conflicts ONLY in src/tools/video-editor/components/TimelineEditorShellCore.tsx; ~15 other files auto-merge (createDefaultTimeline.test, ShotEditorView, PreviewPanel/RemotionPreview, useVideoEditorPreviewSurface, useClipDrag, useTimelineState, astridAcpBridge.test and others). Your real merge runs on your machine against current tl/integration; the result may differ slightly.
+
+## 09:40Z — orchestrator: from the 09:24 audit: qualify ONE frozen current tuple (the post-F1/F2 Runtime republish + Agent ed60bf15-or-later + App on 0.0.12) and land representative native writer retirements. Your main refresh (17 commits) comes first.

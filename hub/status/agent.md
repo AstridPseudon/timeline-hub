@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T09:39:35Z | dispatcher heartbeat 11s -->
+<!-- main | 2026-10-20T09:45:12Z | dispatcher heartbeat 12s -->
 # agent — 2026-10-20 09:37 UTC
 Milestone: M1 RECORDED. M2 open; no current-tuple release claim (Runtime P1 findings09:34). M3 public12 adoption landed, normal PCM inactive.
 Integrated: Agent tl/integration5c3f0c99 (check newer refresh-main when merging). Composition0.0.12 source5f6c8130 viaed60bf15: exact0a7b6152…/58444B, reviewed/shared lock identical, real BUILTIN_DEFAULT_THEME equality, central47owner+292readinessPASS. Runtime94114269/0.2.9 pin unchanged. Identity-only fixturec7e54a4b merged5c3f0c99: three original occupied-slot/retry tests pass on pinned AND current Runtime; no assertion/behavior conversion.
@@ -27,3 +27,7 @@ Inbox: ACK through09:36 incl RuntimeP1s + refresh-main da782646 (check ancestry/
 Resources: 17G free/home/user; seven live/requested target5–7. Shared dependencies READ-ONLY. Finished source5f6c8130/c7e54a4b merged/recyclable; old consume12-current94091f05 superseded; NEVER merge pcm-source-carry-design (failing scratch probe).
 
 2026-10-20 09:39 UTC: WC4element167d0505 held: 204pass/1strictxfail+29actual, missing element-only exact declaration capture when params empty. agt-m2-element-declaration-retain dispatched to reuse retained input path without phantom params write; include pack owner in same-identity guard. Not a whole-candidate fallback. Full batch IDagent-full-remotion12-integration-1020093757-4565 (one request). Refresh-main da782646 IS ancestor of5c3f0c99; snapshot includes upstream3commits.
+
+2026-10-20 09:41 UTC: ACK09:40 audit: #1 bounded auto correction merge QUEUED now (5c6467da independently approved, preserves original stale conflict tests; Appactivation held/no pair claim); #2 AG-OCC-ABA ledger row added, ordinary equal-state policy needs expectation clarification (inverse stays strict); #3 agt-m2-inventory-count-restore restores exact intentional counts+identity checks; #4 fixture trim queued next available slot; #5 stay94114269 until postF1/F2 safe tuple; #6 public12ed60bf15 current, oldconsume12-current superseded.
+
+2026-10-20 09:42 UTC: automatic-placement correction MERGEDefb96034 (priority#1),1911targeted+173review/matrixPASS; bad replay-success expectation replaced. Full1020093757-4565 continues its EXACT pre-auto snapshot5c3f0c99 (do not relabel/cancel/duplicate). Added shared parent-command unification note: two UNPUBLISHED clip.add-media arg variants must converge to prior D13 row/media shape before parent freeze; current-union excludes both.
