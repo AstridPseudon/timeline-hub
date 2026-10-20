@@ -1,18 +1,25 @@
 # M2 ordinary writer bundle 1 — branch qualification
 
-Status: candidate on branches; all integration merges held for PLAN M1 record. Agent owns the included registry/captures and final schema source. Runtime owns matching official artifacts; App qualifies real browser success/reload/undo and updates pins as one change.
+Status: Runtime candidate READY; Agent-owned pin/registry tuple and App browser success/reload/undo qualification pending. Nothing merges into integration until PLAN records M1. Pins move as one coordinated change. Hub-sync publishes/fetches the branches; managers do not push upstream.
 
-## Runtime staged label-only candidate — 2026-10-19T23:49Z
+## Runtime — reviewed candidate 2026-10-20T00:00Z
 
-- Branch: `tl/rt-m2-track-union-generator`; commit `946bdffbf00abbcf84f25ad1f78be89cabe43496`; tree `3cb734dd6452e76b37c63cefe24a8d1328cd526d`. Hub-sync publishes this worker branch automatically; do not push upstream.
-- Matched Agent schema source: `tl/agt-m2-parent-label-proof` / `86bfe1860cd2b4fe661bde88051ed4b690b94ce1`. This candidate includes ONLY the parent `track.set` label schema slice; Agent owner must confirm/compose any other reviewed ordinary operations before final bundle freeze. No roots/migration draft copied.
-- Official client version `0.2.2`; EditCommand file SHA256 `460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388`; SCHEMA_DIGEST `sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3`; artifact manifest `sha256:9ab13c7a3b05ea32d7f2170c62727acb0cef7e51c8f6914399794cde236c9c71`.
-- Exact schema is an object requiring BOTH `values` and `clear`, with additive `anyOf` nonempty constraints. The generic DTO generator now retains shared/nested field types and refinements. Python imports/introspection work; runtime validation keeps all19 label/clear/Unicode/invalid cases. No schema/ABI/DTO envelope/endpoint semantics change beyond the owned command-schema addition.
-- Reviewed generation fix:42generatorlines changed; genuine Python/TypeScript generic-union and label positive/negative tests. `115 passed` focused contracts/schema/client/parity/release; central generated clients/second-client/release identity `80 passed,1 deselected`; generator/artifact/conformance/TS checks pass. No full or updated-pin real label behavior claimed.
-- Consumer caveat: improved generic minItems typing now represents command batches/inverse publications as nonempty TypeScript tuples. Narrow real nonempty arrays at builders as needed; wire arrays are unchanged. Do not bypass validation with an invented command or change retry payloads.
-- Next Agent step: owned pin worker imports official artifacts from this EXACT Runtime commit into its registry candidate and refreshes `runtime.lock.json`. Provider compatibility with old0.2.1 pin is correctly unqualified until that update. App then builds/pins the same Runtime package and qualifies against the paired Agent branch.
-- Capture/golden contract: Agent parent label fixture `tests/editing_conformance/fixtures/recipe_m2_app_track_label.json` on86bfe; Agent owns final exports/tuple section below. All integration merges remain held.
+| Field | Exact value |
+|---|---|
+| Branch / commit | `tl/rt-m2-track-public-export` / `6be970633cc82ab412428151e6bf42f3e7fc3081` |
+| Tree | `3fc266c2f8a576a8851c72fe36a21b8f475cd972` |
+| Client version | `0.2.2` (provisional until coordinated release) |
+| Schema digest | `sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3` |
+| Artifact manifest | `sha256:3b805d6946fd73c44144009021f44153b78ceeb5e5b1298cd2397a1f2dc19730` |
+| Copied Agent schema | `tl/agt-m2-parent-label-proof` / `86bfe1860cd2b4fe661bde88051ed4b690b94ce1` (owner CONFIRMED label-only first in runtime-coordination.md) |
+| EditCommand file SHA256 | `460e61c70702f1f6bfa5cd033c8da859c913c3c8839f2a5b928df7691e08a388` |
 
-### Installed-package qualification follow-up
+This slice adds the official parent `track.set` label/clear schema. No roots/group draft, ABI/envelope/endpoint/table expansion or authority-cut cohort is included. Its Runtime product base includes the qualified M1 destination-occupancy guard. Agent decides whether later reviewed operations enter a later bundle; do not silently mix schemas.
 
-Actual946bdff Pythonwheel0.2.2 isolated import/forwardref/metadata and packedTS declaration/positive+negativeconsumer compilation passed. QA found `TrackSetArgs` absent from the TS package publicroot (TS2305); `rt-m2-track-public-export` is fixing the minimal authored barrel export and regenerating the artifact manifest. Do not freeze old946bdff as the final coordinated pin; the descendant SHA/artifact digest will be appended immediately after review. Schema89a396 and protocol0.2.2 stay unchanged. No old compatibility digest is overridden.
+`TrackSetArgs` requires BOTH `values` and `clear`; additive `anyOf` requires a nonempty set or clear. The generic generator now retains shared/nested fields and refinements, and the TypeScript package public root exports `TrackSetArgs`. Wire command arrays are unchanged; improved TypeScript minItems typing makes command batches/inverse publications nonempty tuples, so builders may need truthful narrowing.
+
+Evidence: generator/artifact/conformance checks and TS typecheck PASS; focused contracts/schema/client/release115PASS (all19 label cases included); central generated clients/second-client/release80PASS/1existing deselection. Actual isolated0.2.2 Python wheel imports/metadata/forwardrefs PASS; packed TS consumer positive/negative compile PASS. Root export descendant separately rebuilt/packed and compiled through `@astrid/runtime-client`, with public negative guards; artifact/schema parity checks PASS. Literal package `npm test` has existing global TypeScript6 TS5112 config-discovery behavior; equivalent explicit build/typecheck/client-node tests ran. No full suite or updated-pin cross-product label semantics claimed.
+
+Agent next: import official Python artifacts from EXACT6be9706 into the confirmed registry candidate, refresh `runtime.lock.json`, check byte parity and real provider compatibility. App next: build/pin the TypeScript package from the SAME6be9706 and use the paired Agent candidate for actual browser label success/reload/undo. Previous946bdff/fe0dd04 and artifact9ab13c/8612 are superseded; do not pin them.
+
+Agent capture/golden source for this slice: `tests/editing_conformance/fixtures/recipe_m2_app_track_label.json` on86bfe186. Agent owns final registry/pin/capture exports and its tuple section below; App owns qualification results.

@@ -450,3 +450,7 @@ Accepted: central e2e-m1-mixed PASS on 2bfde69ea, with the opaque-root assertion
 
 ## 2026-10-19T23:58Z — orchestrator: DELETION LEDGER (owner rule)
 design/deletion-ledger.md lists everything that contradicts the end state. Keep YOUR rows current (status + evidence: commit and proving test), and ADD any contradicting code you find as a new row. A milestone exits only when all its rows are DELETED. Deletions need their replacement test named; never delete tests to make room.
+
+## Runtime00:00Z — BUNDLE1 Runtime FINAL READY6be9706; confirmed86bfe label-only source
+Read yourSTATUS confirm86bfe label-onlyFIRST (runtime-coordination23:39); ACK. ValidRuntimecandidate tl/rt-m2-track-public-export6be970633cc82ab412428151e6bf42f3e7fc3081/tree3fc266c2, client0.2.2/schema89a396/artifacts3b805d. RootTrackSetArgsexportFIXED+realpackedconsumerPASS; generator115focused+80centralPASS, wheelisolatedimportsPASS. Exactdigests/refs/latestcurrentstate rewritten design/m2-writer-bundle-1.md; old946/fe0/artifacts9ab superseded. Hub-syncpublishesworkerbranch automatically.
+Agent: pleaseOWNEDpin+confirmedregistrycandidateNOW againstEXACT6be source, actualproviderlabel+reload/undo compatibility. App: canbuildsameTSpackage onbranch, waitpairedAgentpinthenqualifyrealordinarylabelsuccess/reload/undo. NoM2integrationmergeuntilPLAN M1record. Labelartifact hasNOroots/groupdraft orallwriter-cutcohort. Laterreadyops canbundle2; don'tdelayordinarylabel.
