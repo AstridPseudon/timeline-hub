@@ -453,6 +453,102 @@
       ],
       "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
     },
+    "ShotSetArgs": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "settings": {
+              "type": "object",
+              "properties": {
+                "videoControlMode": {"type": ["string", "null"]},
+                "prompt": {"type": ["string", "null"]},
+                "negativePrompt": {"type": ["string", "null"]},
+                "dimensionSource": {"type": ["string", "null"]},
+                "generationMode": {"type": ["string", "null"]},
+                "selectedModel": {"type": ["string", "null"]},
+                "motionMode": {"type": ["string", "null"]},
+                "selectedPhasePresetId": {"type": ["string", "null"]},
+                "textBeforePrompts": {"type": ["string", "null"]},
+                "textAfterPrompts": {"type": ["string", "null"]},
+                "generationTypeMode": {"type": ["string", "null"]},
+                "batchVideoFrames": {"type": ["number", "null"]},
+                "batchVideoSteps": {"type": ["number", "null"]},
+                "customWidth": {"type": ["number", "null"]},
+                "customHeight": {"type": ["number", "null"]},
+                "guidanceScale": {"type": ["number", "null"]},
+                "amountOfMotion": {"type": ["number", "null"]},
+                "enhancePrompt": {"type": ["boolean", "null"]},
+                "turboMode": {"type": ["boolean", "null"]},
+                "advancedMode": {"type": ["boolean", "null"]},
+                "smoothContinuations": {"type": ["boolean", "null"]},
+                "ltxHdResolution": {"type": ["boolean", "null"]}
+              },
+              "minProperties": 1,
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "name",
+              "settings.videoControlMode",
+              "settings.prompt",
+              "settings.negativePrompt",
+              "settings.dimensionSource",
+              "settings.generationMode",
+              "settings.selectedModel",
+              "settings.motionMode",
+              "settings.selectedPhasePresetId",
+              "settings.textBeforePrompts",
+              "settings.textAfterPrompts",
+              "settings.generationTypeMode",
+              "settings.batchVideoFrames",
+              "settings.batchVideoSteps",
+              "settings.customWidth",
+              "settings.customHeight",
+              "settings.guidanceScale",
+              "settings.amountOfMotion",
+              "settings.enhancePrompt",
+              "settings.turboMode",
+              "settings.advancedMode",
+              "settings.smoothContinuations",
+              "settings.ltxHdResolution"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Occurrence-owned raw shot payload fields: canonical root name and bounded scalar settings roots. Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots (steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, modelSettingsByModel) are unsupported."
+    },
     "ClipSetParamsArgs": {
       "type": "object",
       "properties": {
@@ -693,6 +789,41 @@
               },
               "intent": {
                 "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "shot.set"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+/shot$"
+              },
+              "args": {
+                "$ref": "#/$defs/ShotSetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
                 "additionalProperties": false
               }
             }
