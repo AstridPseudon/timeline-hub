@@ -41,10 +41,7 @@ export function getSupabasePublishableKey(): string {
 }
 
 export function isDevEnv(): boolean {
-  return (
-    import.meta.env.VITE_APP_ENV === 'dev' ||
-    (typeof window !== 'undefined' && window.location?.hostname === 'localhost')
-  );
+  return import.meta.env.DEV;
 }
 
 // Heavy instrumentation should default off outside debug/dev flows.

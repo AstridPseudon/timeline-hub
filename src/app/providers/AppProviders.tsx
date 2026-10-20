@@ -1,6 +1,5 @@
-import React, { Suspense, lazy, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
 import { AuthProvider } from '@/shared/contexts/AuthContext';
 import { AuthGate } from '@/shared/auth/components/AuthGate';
 import { UserSettingsProvider } from '@/shared/contexts/UserSettingsContext';
@@ -22,7 +21,6 @@ import {
   useLastAffectedShot,
 } from '@/shared/state/selectionStore';
 import { queryClient } from '@/app/providers/queryClient';
-import { resolveAppDataAuthority } from '@/app/runtime/dataAuthority.ts';
 import { RuntimeDocumentBoundary } from '@/app/runtime/RuntimeDocumentBoundary';
 
 interface AppProvidersProps {
@@ -30,23 +28,6 @@ interface AppProvidersProps {
 }
 
 type TreeProvider = React.ComponentType<{ children: React.ReactNode }>;
-
-const DeferredCloudShotsProvider = lazy(async () => {
-  const module = await import('@/shared/contexts/DeferredCloudShotsProvider.tsx');
-  return { default: module.DeferredCloudShotsProvider };
-});
-
-export function AuthorityAwareShotsProvider({ children }: { children: React.ReactNode }) {
-  const { search } = useLocation();
-  if (resolveAppDataAuthority(search) !== 'supabase-deferred') {
-    return <AstridShotsProvider>{children}</AstridShotsProvider>;
-  }
-  return (
-    <Suspense fallback={<AstridShotsProvider>{children}</AstridShotsProvider>}>
-      <DeferredCloudShotsProvider>{children}</DeferredCloudShotsProvider>
-    </Suspense>
-  );
-}
 
 function composeProviders(providers: TreeProvider[]): TreeProvider {
   return function ProviderTree({ children }: { children: React.ReactNode }) {
@@ -136,7 +117,7 @@ const AppProviderTree = composeProviders([
   UserSettingsProvider,
   ProjectProvider,
   RealtimeProvider,
-  AuthorityAwareShotsProvider,
+  AstridShotsProvider,
   GenerationTaskProvider,
   IncomingTasksProvider,
   PanesStoreBootstrapBoundary,

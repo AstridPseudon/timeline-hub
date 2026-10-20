@@ -17,7 +17,6 @@ function CurrentPath() {
 describe('DefaultToolRedirect', () => {
   beforeEach(() => {
     useUserUIStateMock.mockReset();
-    vi.stubEnv('VITE_APP_ENV', 'local');
   });
 
   it('preserves a saved working legacy preference', async () => {

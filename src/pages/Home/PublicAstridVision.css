@@ -570,10 +570,7 @@
 /* The home page's sky sits behind Vision too, and the page follows it through twilight with the same
    dusk values (set inline from the sky; see the dusk rules in PublicAstridShell.css). */
 .astrid-vision > .astrid-sky { width: auto; margin: 0; }
-/* The sky review controls (?sky-review) keep their own size and corner. */
-.astrid-vision > .astrid-sky-review { width: 300px; margin: 0; }
-.astrid-vision > .astrid-sky-review-pill { width: auto; margin: 0; }
-.astrid-vision > :not(.astrid-sky, .astrid-sky-review, .astrid-sky-review-pill) { position: relative; z-index: 1; }
+.astrid-vision > :not(.astrid-sky) { position: relative; z-index: 1; }
 .astrid-vision[data-dusk] {
   --astrid-panel: color-mix(in oklab, #fffefa, #221f1a calc(var(--astrid-dusk) * 100%));
   --astrid-ink: color-mix(in oklab, #25241f, #f3eee4 calc(var(--astrid-dusk-ink) * 100%));

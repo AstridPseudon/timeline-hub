@@ -587,7 +587,6 @@ const env = {
   ...(astridCheckout ? { ASTRID_CHECKOUT: astridCheckout } : {}),
   ...(configuredAstridPublicCheckout ? { ASTRID_PUBLIC_CHECKOUT: configuredAstridPublicCheckout } : {}),
   PORT: port,
-  VITE_ASTRID_EDITOR_ONLY: '1',
   VITE_ASTRID_BRIDGE_PORT: runtimeProxyPort,
   ASTRID_BRIDGE_TOKEN: credential.token,
   ASTRID_ACP_BRIDGE_TOKEN: acpToken,

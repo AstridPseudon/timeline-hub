@@ -97,9 +97,7 @@ export function useShotEditorSetup({
 
   const queryKey = shouldLoadDetailedData ? selectedShotId : null;
 
-  const fullImagesQueryResult = useShotImages(queryKey, {
-    disableRefetch: false,
-  });
+  const fullImagesQueryResult = useShotImages(queryKey);
 
   const fullShotImages = useMemo(
     () => fullImagesQueryResult.data ?? [],

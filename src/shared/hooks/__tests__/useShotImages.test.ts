@@ -1,13 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-
-const mockIsDeferredCloudDataAuthority = vi.hoisted(() => vi.fn(() => true));
-
-vi.mock('@/app/runtime/dataAuthority.ts', () => ({
-  isDeferredCloudDataAuthority: mockIsDeferredCloudDataAuthority,
-}));
 
 // Mock supabase
 vi.mock('@/integrations/supabase/client', () => {
@@ -67,7 +61,6 @@ function createWrapper() {
 describe('useShotImages', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIsDeferredCloudDataAuthority.mockReturnValue(true);
   });
 
   it('is disabled when shotId is null', () => {
@@ -79,16 +72,7 @@ describe('useShotImages', () => {
     expect(result.current.isFetching).toBe(false);
   });
 
-  it('starts fetching when shotId is provided', () => {
-    const { result } = renderHook(() => useShotImages('shot-1'), {
-      wrapper: createWrapper(),
-    });
-
-    expect(result.current.isLoading).toBe(true);
-  });
-
   it('does not fetch relational shot images in Astrid authority', () => {
-    mockIsDeferredCloudDataAuthority.mockReturnValue(false);
     const { result } = renderHook(() => useShotImages('shot-1'), {
       wrapper: createWrapper(),
     });
@@ -97,14 +81,6 @@ describe('useShotImages', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('is disabled when disableRefetch is true', () => {
-    const { result } = renderHook(
-      () => useShotImages('shot-1', { disableRefetch: true }),
-      { wrapper: createWrapper() }
-    );
-
-    expect(result.current.isFetching).toBe(false);
-  });
 });
 
 describe('useTimelineImages', () => {
@@ -118,40 +94,6 @@ describe('useTimelineImages', () => {
     });
 
     expect(result.current.data).toBeUndefined();
-  });
-
-  it('filters to positioned non-video images', async () => {
-    // Set up query cache with mock data
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false, gcTime: 0 } },
-    });
-
-    const mockImages = [
-      { id: '1', timeline_frame: 0, type: 'image', imageUrl: 'img1.jpg', location: 'img1.jpg' },
-      { id: '2', timeline_frame: 1, type: 'image', imageUrl: 'img2.jpg', location: 'img2.jpg' },
-      { id: '3', timeline_frame: null, type: 'image', imageUrl: 'img3.jpg', location: 'img3.jpg' }, // unpositioned
-      { id: '4', timeline_frame: 2, type: 'video/mp4', imageUrl: 'vid.mp4', location: 'vid.mp4' }, // video
-    ];
-
-    // Pre-populate cache
-    queryClient.setQueryData(['generations', 'shot', 'shot-1'], mockImages);
-
-    const wrapper = ({ children }: { children: React.ReactNode }) =>
-      React.createElement(QueryClientProvider, { client: queryClient }, children);
-
-    const { result } = renderHook(() => useTimelineImages('shot-1'), {
-      wrapper,
-    });
-
-    // The selector should filter to only positioned non-video images
-    await waitFor(() => {
-      if (result.current.data) {
-        // Only positioned, non-video images with valid location
-        const filtered = result.current.data;
-        expect(filtered.every((g: { timeline_frame: number | null }) => g.timeline_frame !== null)).toBe(true);
-        expect(filtered.every((g: { type?: string }) => !g.type?.includes('video'))).toBe(true);
-      }
-    });
   });
 });
 

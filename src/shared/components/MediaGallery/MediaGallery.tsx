@@ -6,7 +6,6 @@ import {
 import { useIsMobile, useIsTablet } from "@/shared/hooks/mobile";
 import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation';
 import { useTaskDetails } from '@/shared/components/ShotImageManager/hooks/useTaskDetails';
-import { useBackgroundThumbnailGenerator } from '@/shared/hooks/media/useBackgroundThumbnailGenerator';
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useMediaGalleryState } from '@/shared/components/MediaGallery/hooks/useMediaGalleryState';
@@ -33,7 +32,6 @@ import { DEFAULT_GALLERY_CONFIG } from '@/shared/components/MediaGallery/types';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { GRID_COLUMN_CLASSES, calculateGalleryLayout } from '@/shared/components/MediaGallery/utils';
 import { useCurrentShot, useShotAdditionSelectionOptional } from '@/shared/state/selectionStore';
-import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 
 interface UseAspectRatioLayoutParams {
   projectAspectRatio?: string;
@@ -130,7 +128,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     hidePagination, hideTopFilters, hideMediaTypeFilter, hideBottomPagination, hideShotNotifier,
   } = config;
   const { selectedProjectId } = useProjectSelectionContext();
-  const { runtimeAuthority } = useRuntimeAuthority();
   const { projects } = useProjectCrudContext();
   const { currentShotId } = useCurrentShot();
   const currentProject = projects.find(p => p.id === selectedProjectId);
@@ -269,13 +266,6 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     onClose: actionsHook.handleCloseLightbox,
   });
   const inputImages = taskDetailsData?.inputImages || [];
-  useBackgroundThumbnailGenerator({
-    videos: paginationHook.paginatedImages || [],
-    projectId: selectedProjectId,
-    enabled: !runtimeAuthority
-      && Boolean(selectedProjectId)
-      && (paginationHook.paginatedImages?.length || 0) > 0,
-  });
   const { paginatedImagesWithBadges } = usePaginatedImagesWithBadges({
     paginatedImages: paginationHook.paginatedImages,
   });

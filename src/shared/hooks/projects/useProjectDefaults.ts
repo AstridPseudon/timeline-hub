@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
-import { usePrefetchToolSettings } from '@/shared/hooks/settings/usePrefetchToolSettings';
 import { useMobileTimeoutFallback } from '@/shared/hooks/useMobileTimeoutFallback';
 import { Project } from '@/types/project';
 
 interface UseProjectDefaultsOptions {
   userId: string | null;
-  selectedProjectId: string | null;
   isLoadingProjects: boolean;
   projects: Project[];
   fetchProjects: () => Promise<void>;
@@ -16,24 +14,19 @@ interface UseProjectDefaultsOptions {
  * Orchestrates project-related side effects:
  * - Triggers fetchProjects when userId is available
  * - Cross-device sync when preferences + projects are both loaded
- * - Prefetches tool settings for the selected project
  * - Mobile timeout fallback for stalled fetches
  */
 export function useProjectDefaults({
   userId,
-  selectedProjectId,
   isLoadingProjects,
   projects,
   fetchProjects,
   applyCrossDeviceSync,
 }: UseProjectDefaultsOptions) {
-  // Prefetch all tool settings for the currently selected project
-  usePrefetchToolSettings(selectedProjectId);
-
   // Trigger initial project fetch when userId becomes available.
   // Intentionally omits isLoadingPreferences — that caused a triple-fetch
   // (userId ready → prefs start loading → prefs done) on every startup.
-  // fetchProjects is also excluded because it rebuilds when selectedProjectId
+  // fetchProjects is also excluded because it rebuilds when the selected project
   // changes after the first fetch, which would trigger a cascade re-fetch.
   // The mobile timeout fallback below handles any stalled initial fetch.
    

@@ -1,9 +1,7 @@
 import { assertNativeEditorConnection } from "@/integrations/astrid/nativeEditorConnection.ts";
 import { useEffect, useState } from "react";
-import { getSupabaseClient as supabase } from "@/integrations/supabase/client";
 import { normalizeAndPresentError } from "@/shared/lib/errorHandling/runtimeError";
 import { isLocalTestMode } from "@/app/localTestRuntime";
-import { isDeferredCloudDataAuthority } from "@/app/runtime/dataAuthority";
 import { hasRuntimeDocumentIdentity } from "@/app/runtime/runtimeDocument";
 import { checkAstridDoctorAvailability } from "@/integrations/astrid/doctorAvailability.ts";
 
@@ -45,8 +43,6 @@ export function useOnboarding() {
     typeof window !== "undefined" &&
     window.location.pathname === "/tools/video-editor";
   const skipOnboarding = localTestMode && !isLocalEditorLink && !nativeEditor;
-  const isDeferredCloudMode =
-    isDeferredCloudDataAuthority() && !isLocalEditorLink;
 
   useEffect(() => {
     if (skipOnboarding) return undefined;
@@ -71,21 +67,6 @@ export function useOnboarding() {
           }
           return;
         }
-        if (isDeferredCloudMode) {
-          const {
-            data: { user },
-          } = await supabase().auth.getUser();
-          if (!user) return;
-          const { data: userData, error } = await supabase()
-            .from("users")
-            .select("onboarding_completed")
-            .eq("id", user.id)
-            .single();
-          if (error || !userData) return;
-          if (!(userData as Record<string, unknown>).onboarding_completed)
-            open("first-run");
-          return;
-        }
         // Astrid (local) mode: the app needs a running local Runtime.
         if (!readSetupComplete()) {
           open("first-run");
@@ -107,27 +88,11 @@ export function useOnboarding() {
       cancelled = true;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [isDeferredCloudMode, skipOnboarding, nativeEditor]);
+  }, [skipOnboarding, nativeEditor]);
 
-  const completeOnboarding = async () => {
+  const completeOnboarding = () => {
     if (skipOnboarding) return;
     writeSetupComplete();
-    if (!isDeferredCloudMode) return;
-    try {
-      const {
-        data: { user },
-      } = await supabase().auth.getUser();
-      if (!user) return;
-      await supabase()
-        .from("users")
-        .update({ onboarding_completed: true })
-        .eq("id", user.id);
-    } catch (error) {
-      normalizeAndPresentError(error, {
-        context: "useOnboarding",
-        showToast: false,
-      });
-    }
   };
 
   return {
@@ -136,7 +101,7 @@ export function useOnboarding() {
     closeOnboardingModal: () => {
       const wasFirstRun = mode === "first-run";
       setMode(null);
-      if (wasFirstRun) void completeOnboarding();
+      if (wasFirstRun) completeOnboarding();
     },
   };
 }

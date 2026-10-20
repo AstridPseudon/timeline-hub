@@ -17,7 +17,7 @@
 // - Persisted SOURCE items (`base.sourceItemsBySchemaRef`, V2 bundle plane)
 //   join host-fetched transcript segments as inputs to the same assembly.
 
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { useTimelineStoreApiSafe } from '@/tools/video-editor/hooks/timelineStore.ts';
 import type { SourceFrozenDataItem } from '@/tools/video-editor/data/typed/envelope.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
@@ -31,8 +31,6 @@ import {
 } from '@/tools/video-editor/data/typed/assembleDataLanes.ts';
 import { areLaneSegmentsResolved, useLaneSegments, type LoadDataSegments } from './dataLaneAssemblyAuthority.ts';
 import { useDataKindRegistrySnapshot } from './DataKindRegistryContext.tsx';
-import { useRunawayTimelineItems } from '@/tools/video-editor/dev/runaway-timeline/runawayTimelineData.ts';
-import { getExtensionReleaseFlags } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
 import { playedShotComposition, playedTimelineClips } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 
 export type { LoadDataSegments };
@@ -71,28 +69,6 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
     itemHost?.transientSnapshot ?? (() => EMPTY_TRANSIENT_ITEMS),
     () => EMPTY_TRANSIENT_ITEMS,
   );
-  const runawayReleaseEnabled = getExtensionReleaseFlags().runawayTypedTimelineEnabled;
-  const observeRunawayBridge = useCallback((observation: {
-    readonly outcome: 'success' | 'failure';
-    readonly durationMs: number;
-    readonly errorClass?: 'bridge.timeout' | 'bridge.http_error' | 'bridge.invalid_response';
-  }) => {
-    runtime?.operationalEmitter?.emit({
-      event: 'bridge.request',
-      ...observation,
-    });
-  }, [runtime?.operationalEmitter]);
-  const runawayItems = useRunawayTimelineItems(runawayReleaseEnabled, observeRunawayBridge);
-  const effectiveSourceItems = useMemo(() => {
-    const persisted = base?.sourceItemsBySchemaRef;
-    if (!runawayItems) return persisted;
-    const merged = { ...persisted };
-    for (const [schemaRef, items] of Object.entries(runawayItems)) {
-      merged[schemaRef] = Object.freeze([...(persisted?.[schemaRef] ?? []), ...items]);
-    }
-    return Object.freeze(merged);
-  }, [base?.sourceItemsBySchemaRef, runawayItems]);
-
   const defaultLoader = useMemo<LoadDataSegments | undefined>(() => {
     if (!runtime) return undefined;
     const assets = createEditorAssetSurface(() => null, (assetId) =>
@@ -156,14 +132,12 @@ export function useDataLanePlane({ base, kinds, loadSegments }: UseDataLanesArgs
       segmentsByAsset,
       // V2 bundle plane: persisted SOURCE items ride on the base data and
       // feed the same assembly pass as freshly fetched transcript segments.
-      // Live Astrid bridge items enter as immutable SOURCE items too; the
-      // assembly authority owns their sole timeline-domain projection.
-      sourceItemsBySchemaRef: effectiveSourceItems,
+      sourceItemsBySchemaRef: base.sourceItemsBySchemaRef,
       transientSourceItemsBySchemaRef: transientItems,
     });
     // Base identity when nothing assembles: no clone churn, empty lanes.
     return views.length > 0 ? mergeDataLanes(base, views) : base;
-  }, [base, laneClips, effectiveKinds, effectiveSourceItems, segmentsByAsset, transientItems]);
+  }, [base, laneClips, effectiveKinds, segmentsByAsset, transientItems]);
   return { data, resolved: !effectiveLoader || areLaneSegmentsResolved(segmentsByAsset, neededAssets) };
 }
 

@@ -11,7 +11,6 @@ import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import { finalVideoQueryKeys } from '@/shared/lib/queryKeys/finalVideos';
 import { getDurationSecondsFromFinalVideoParams } from '@/tools/video-editor/lib/finalVideoAssets';
 import { isUuid } from '@/shared/lib/uuid.ts';
-import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority';
 import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
 
 export interface ShotFinalVideo {
@@ -23,9 +22,6 @@ export interface ShotFinalVideo {
 }
 
 export function useShotFinalVideos(projectId: string | null) {
-  const isUuidProjectId = isUuid(projectId);
-  const isDeferredCloudMode = isDeferredCloudDataAuthority();
-
   const { data: rawData, isLoading } = useQuery({
     queryKey: finalVideoQueryKeys.byProject(projectId!),
     queryFn: async () => {
@@ -44,7 +40,7 @@ export function useShotFinalVideos(projectId: string | null) {
       }
       return data || [];
     },
-    enabled: !!projectId && isUuidProjectId && isDeferredCloudMode,
+    enabled: false,
     staleTime: 30_000,
   });
 

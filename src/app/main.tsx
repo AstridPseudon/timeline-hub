@@ -48,9 +48,7 @@ async function main(): Promise<void> {
     window.history.replaceState(window.history.state, '', returningAppEntry);
   }
 
-  const owner = classifyBrowserEntry(new URL(window.location.href), {
-    VITE_APP_ENV: import.meta.env.VITE_APP_ENV,
-  });
+  const owner = classifyBrowserEntry(new URL(window.location.href));
   if (owner === 'public') {
     const { renderPublicEntry } = await import('@/app/publicBootstrap.tsx');
     renderPublicEntry(rootElement);

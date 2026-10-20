@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { AppEnv } from '@/types/env';
 import { toolsManifest, toolsUIManifest } from './index';
 
 describe('tools manifest contracts', () => {
@@ -19,7 +18,4 @@ describe('tools manifest contracts', () => {
     expect(toolsUIManifest.every((tool) => manifestIds.has(tool.id))).toBe(true);
   });
 
-  it('declares local availability for every UI tool', () => {
-    expect(toolsUIManifest.every((tool) => tool.environments.includes(AppEnv.LOCAL))).toBe(true);
-  });
 });

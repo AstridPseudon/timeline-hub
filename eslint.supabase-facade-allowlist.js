@@ -179,7 +179,6 @@ export const supabaseFacadeAllowlist = [
   'src/shared/hooks/billing/useCredits.ts',
   'src/shared/hooks/resources/useResourceBrowserData.ts',
   'src/shared/hooks/settings/useApiKeys.ts',
-  'src/shared/hooks/settings/usePrefetchToolSettings.ts',
   'src/shared/hooks/settings/useToolSettings.ts',
   'src/shared/hooks/shots/useShotGenerationMetadata.ts',
   'src/shared/hooks/shots/useShotImages.ts',

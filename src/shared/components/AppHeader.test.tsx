@@ -59,18 +59,16 @@ describe('AppHeader', () => {
     expect(screen.queryByRole('button', { name: 'Go home' })).toBeNull();
   });
 
-  it('sits in the content layer, above the fixed sky backdrop, in both header variants', () => {
+  it('sits in the content layer, above the fixed sky backdrop, ', () => {
     const { unmount } = render(<AppHeader />);
     expect(screen.getByTestId('video-editor-header')).toHaveClass('relative', 'z-10');
     unmount();
 
-    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     render(<AppHeader />);
     expect(screen.getByTestId('video-editor-header')).toHaveClass('relative', 'z-10');
   });
 
-  it('keeps editor selectors and app settings while removing app navigation in local Astrid mode', () => {
-    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
+  it('keeps editor selectors, navigation, and settings together', () => {
     const settingsEvent = vi.fn();
     window.addEventListener('openSettings', settingsEvent, { once: true });
 
@@ -84,17 +82,16 @@ describe('AppHeader', () => {
 
     expect(screen.getByTestId('selectors')).toBeInTheDocument();
     expect(screen.getByText('Main timeline')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Go home' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Go home' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open tools' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'App settings' })).toBeInTheDocument();
-    expect(screen.getByTestId('video-editor-header')).not.toHaveClass('border-b');
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByTestId('video-editor-header')).toHaveClass('border-b');
 
-    fireEvent.click(screen.getByRole('button', { name: 'App settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     expect(settingsEvent).toHaveBeenCalledTimes(1);
   });
 
   it('renders the page-owned project selector without app-wide Tools or built-in project controls', () => {
-    vi.stubEnv('VITE_ASTRID_EDITOR_ONLY', '1');
     render(
       <AppHeader
         navigationMode="tools"
@@ -106,7 +103,7 @@ describe('AppHeader', () => {
     expect(screen.getByRole('button', { name: 'Editor project selector' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open tools' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Go home' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'App settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
   });
 
   it('selects Runtime project IDs and writes canonical project navigation', async () => {

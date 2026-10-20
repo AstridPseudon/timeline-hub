@@ -25,9 +25,7 @@ import {
   PUBLIC_ASTRID_SKY_REPLAY_SETTLE_MS,
   PUBLIC_ASTRID_SKY_REPLAY_TURN_MS,
   PublicAstridSky,
-  PublicAstridSkyReview,
   usePublicAstridSkyControls,
-  wantsPublicAstridSkyReview,
 } from './PublicAstridSky.tsx';
 import type { PublicAstridSkySession } from './publicAstridSkySession';
 import { usePublicAstridSkySession } from './usePublicAstridSkySession';
@@ -219,7 +217,6 @@ export function PublicAstridShell({ onOpenVision, lifecycle = 'active', environm
     if (!visualActive) return undefined;
     return skySession.registerPaletteTarget(mainRef.current, 'home');
   }, [skySession, visualActive]);
-  const [skyReview] = useState(wantsPublicAstridSkyReview);
   // Easter egg: clicking the mink turns her to face you, then she moves the sky through a whole day by
   // telekinesis (glowing eyes, psychic rings, a slight levitation) before turning back.
   const [minkPose, setMinkPose] = useState<'profile' | 'facing' | 'focus'>('profile');
@@ -717,7 +714,6 @@ export function PublicAstridShell({ onOpenVision, lifecycle = 'active', environm
         reducedMotion={prefersReducedMotion}
         quietBehind=".astrid-hero-copy h1, .astrid-hero-subtitle"
       />}
-      {skyReview && visualActive && <PublicAstridSkyReview session={skySession} active={visualActive} />}
       <section className="astrid-landing-grid" ref={landingGridRef} aria-labelledby="astrid-hero-title">
         <div className="astrid-hero-copy">
           <div className="astrid-brand">
