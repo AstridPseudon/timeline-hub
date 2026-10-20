@@ -12,13 +12,14 @@ PRIVATE_CONTROLLER="$ROOT/tests/e2e/timeline/private-pulse-stereo.controller.mjs
 CONFIG="$ROOT/tests/e2e/timeline/private-pulse-stereo.config.ts"
 : "${PRIVATE_PULSE_STATE_ROOT:?owned per-run state root required}"
 STATE="$PRIVATE_PULSE_STATE_ROOT"
+BASE_WORKER_STATE_ROOT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-stereo-owned-state-guard-fix
 
 [[ -x "$NODE" ]] || { echo "Missing admitted Node: $NODE" >&2; exit 2; }
 [[ "$("$NODE" --version)" == v20.19.4 ]] || { echo 'Admitted Node must be v20.19.4' >&2; exit 2; }
 export TAB_AUDIO_RUN_MODE=stereo PATH="$(dirname "$NODE"):$PATH" NODE_PATH=''
 
 if [[ ${TAB_AUDIO_RUN:-0} != 1 ]]; then
-  TAB_AUDIO_RUN=0 "$NODE" "$PRIVATE_CONTROLLER" --prepare
+  env -u TAB_AUDIO_RUN -u TAB_AUDIO_GRANT_PATH "$NODE" "$PRIVATE_CONTROLLER" --prepare
   echo 'Offline preflight only; no private daemon, browser, socket, network, or capture was started.'
   exit 0
 fi
@@ -28,6 +29,29 @@ fi
 : "${TAB_AUDIO_GRANT_PATH:?fresh exact-source grant required}"
 : "${PLAYWRIGHT_OUTPUT_DIR:?fresh output directory required}"
 : "${TAB_AUDIO_LOCK_PATH:?shared browser lock required}"
+
+[[ -d "$BASE_WORKER_STATE_ROOT" && ! -L "$BASE_WORKER_STATE_ROOT" \
+  && "$(realpath -- "$BASE_WORKER_STATE_ROOT")" == "$BASE_WORKER_STATE_ROOT" ]] \
+  || { echo 'BASE controller worker state root must be an existing real directory' >&2; exit 2; }
+
+assert_base_worker_path() {
+  local path="$1"
+  [[ "$path" == "$BASE_WORKER_STATE_ROOT"/* ]] \
+    || { echo "path must stay inside the BASE controller worker state root: $path" >&2; exit 2; }
+  local parent
+  parent=$(dirname -- "$path")
+  [[ -d "$parent" && ! -L "$parent" && ("$(realpath -- "$parent")" == "$BASE_WORKER_STATE_ROOT" \
+    || "$(realpath -- "$parent")" == "$BASE_WORKER_STATE_ROOT"/*) ]] \
+    || { echo "path parent must stay inside the BASE controller worker state root: $path" >&2; exit 2; }
+  if [[ -e "$path" || -L "$path" ]]; then
+    [[ "$(realpath -- "$path")" == "$BASE_WORKER_STATE_ROOT"/* ]] \
+      || { echo "path must not escape the BASE controller worker state root: $path" >&2; exit 2; }
+  fi
+}
+assert_base_worker_path "$TAB_AUDIO_PREFLIGHT_PATH"
+assert_base_worker_path "$TAB_AUDIO_RUN_MARKER"
+assert_base_worker_path "$TAB_AUDIO_GRANT_PATH"
+assert_base_worker_path "$PLAYWRIGHT_OUTPUT_DIR"
 
 [[ -d "$STATE" && ! -L "$STATE" && "$(realpath -- "$STATE")" == "$STATE" ]] \
   || { echo 'PRIVATE_PULSE_STATE_ROOT must be an existing real per-run directory' >&2; exit 2; }
@@ -144,7 +168,7 @@ exec 9>"$TAB_AUDIO_LOCK_PATH"
 flock -n 9 || { echo 'shared browser flock is already held' >&2; exit 75; }
 export VIEWING_BROWSER_FLOCK_HELD=1 TAB_AUDIO_LOCK_FD=9
 
-TAB_AUDIO_RUN=0 "$NODE" "$PRIVATE_CONTROLLER" --prepare
+env -u TAB_AUDIO_RUN -u TAB_AUDIO_GRANT_PATH "$NODE" "$PRIVATE_CONTROLLER" --prepare
 "$NODE" "$BASE_CONTROLLER" --preflight
 export TAB_AUDIO_PREFLIGHT_DONE=1
 "$NODE" "$BASE_CONTROLLER" --claim
