@@ -5,6 +5,7 @@ import {
   assertCaptureOutcome,
   assertRawPts,
   assertTone,
+  assertStereoTones,
   assertVisualEvent,
   CONTROLLED_AUDIO,
   createSyntheticPcmWav,
@@ -97,6 +98,42 @@ test('tone check observes decoded channels without resampling or level normaliza
     channels: 2,
     frequency: CONTROLLED_AUDIO.webAudioFrequency,
   }), /not present/);
+});
+
+test('left/right detector rejects mono and swapped channels', () => {
+  const sampleRate = CONTROLLED_AUDIO.sampleRate;
+  const samples = new Float32Array(sampleRate * 2);
+  for (let index = 0; index < sampleRate; index += 1) {
+    samples[index * 2] = CONTROLLED_AUDIO.channelAmplitude
+      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.leftFrequency * index / sampleRate);
+    samples[index * 2 + 1] = CONTROLLED_AUDIO.channelAmplitude
+      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.rightFrequency * index / sampleRate);
+  }
+  const result = assertStereoTones(samples, {
+    sampleRate,
+    channels: 2,
+    leftFrequency: CONTROLLED_AUDIO.leftFrequency,
+    rightFrequency: CONTROLLED_AUDIO.rightFrequency,
+  });
+  assert.equal(result.channels, 2);
+
+  const swapped = new Float32Array(samples.length);
+  for (let index = 0; index < sampleRate; index += 1) {
+    swapped[index * 2] = samples[index * 2 + 1];
+    swapped[index * 2 + 1] = samples[index * 2];
+  }
+  assert.throws(() => assertStereoTones(swapped, {
+    sampleRate,
+    channels: 2,
+    leftFrequency: CONTROLLED_AUDIO.leftFrequency,
+    rightFrequency: CONTROLLED_AUDIO.rightFrequency,
+  }), /not present/);
+  assert.throws(() => assertStereoTones(new Float32Array(sampleRate), {
+    sampleRate,
+    channels: 1,
+    leftFrequency: CONTROLLED_AUDIO.leftFrequency,
+    rightFrequency: CONTROLLED_AUDIO.rightFrequency,
+  }), /exactly two interleaved channels/);
 });
 
 test('full-tab source controls distinguish the independent oscillator and HTMLAudio tones', () => {

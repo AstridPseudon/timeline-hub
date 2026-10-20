@@ -7,6 +7,7 @@ import {
   assertCaptureCapabilities,
   assertCaptureOutcome,
   assertTone,
+  assertStereoTones,
   CONTROLLED_AUDIO,
   createSyntheticPcmWav,
   diagnoseVisualEvent,
@@ -20,11 +21,13 @@ declare global {
   interface Window {
     __tabAudioProbe: {
       mimeType: string;
-      tracks: Array<{ kind: string; readyState: string; settings: MediaTrackSettings }>;
+      tracks: Array<{ kind: string; readyState: string; settings: MediaTrackSettings; capabilities: MediaTrackCapabilities }>;
       chunks: string[];
       fixture: {
         webAudioFrequency: number;
         htmlAudioFrequency: number;
+        leftFrequency: number;
+        rightFrequency: number;
         visualEventMs: number;
         captureMs: number;
         startedAt: number;
@@ -40,6 +43,8 @@ function probeHtml() {
   const webAudioFrequency = JSON.stringify(CONTROLLED_AUDIO.webAudioFrequency);
   const webAudioAmplitude = JSON.stringify(CONTROLLED_AUDIO.webAudioAmplitude);
   const htmlAudioFrequency = JSON.stringify(CONTROLLED_AUDIO.htmlAudioFrequency);
+  const leftFrequency = JSON.stringify(CONTROLLED_AUDIO.leftFrequency);
+  const rightFrequency = JSON.stringify(CONTROLLED_AUDIO.rightFrequency);
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>Tab audio capability probe</title></head>
 <body style="margin:0;background:#101820;color:white;font:16px sans-serif">
@@ -79,6 +84,8 @@ function probeHtml() {
           const fixture = {
             webAudioFrequency: ${webAudioFrequency},
             htmlAudioFrequency: ${htmlAudioFrequency},
+            leftFrequency: ${leftFrequency},
+            rightFrequency: ${rightFrequency},
             visualEventMs: ${VISUAL_EVENT_MS},
             captureMs: ${CAPTURE_MS},
             startedAt,
@@ -86,7 +93,7 @@ function probeHtml() {
           };
           window.__tabAudioProbe = {
             mimeType,
-            tracks: stream.getTracks().map((track) => ({ kind: track.kind, readyState: track.readyState, settings: track.getSettings() })),
+            tracks: stream.getTracks().map((track) => ({ kind: track.kind, readyState: track.readyState, settings: track.getSettings(), capabilities: track.getCapabilities() })),
             chunks: [],
             fixture,
           };
@@ -148,7 +155,7 @@ function probeHtml() {
 
 function startProbeServer(): Server {
   const html = Buffer.from(probeHtml());
-  const wav = createSyntheticPcmWav();
+  const wav = createSyntheticPcmWav({leftFrequency: CONTROLLED_AUDIO.leftFrequency, rightFrequency: CONTROLLED_AUDIO.rightFrequency});
   return createServer((request, response) => {
     if (request.method !== 'GET') {
       response.writeHead(405, {'content-type': 'text/plain; charset=utf-8'});
@@ -230,6 +237,8 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
   const capabilities = assertCaptureCapabilities(probe.tracks, { mimeType: probe.mimeType });
   expect(probe.fixture.webAudioFrequency).toBe(CONTROLLED_AUDIO.webAudioFrequency);
   expect(probe.fixture.htmlAudioFrequency).toBe(CONTROLLED_AUDIO.htmlAudioFrequency);
+  expect(probe.fixture.leftFrequency).toBe(CONTROLLED_AUDIO.leftFrequency);
+  expect(probe.fixture.rightFrequency).toBe(CONTROLLED_AUDIO.rightFrequency);
   expect(probe.fixture.visualEventMs).toBe(VISUAL_EVENT_MS);
   expect(Number.isFinite(probe.fixture.visualEventAt)).toBe(true);
   expect(chunks.length).toBeGreaterThan(0);
@@ -243,6 +252,12 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
     .find((stream) => stream.codec_type === 'audio');
   if (!audioStream) throw new Error('ffprobe output did not identify the captured audio stream');
   const decodedAudio = await readDecodedAudio(output, audioStream);
+  const stereoTones = assertStereoTones(decodedAudio, {
+    sampleRate: Number(audioStream.sample_rate),
+    channels: Number(audioStream.channels),
+    leftFrequency: CONTROLLED_AUDIO.leftFrequency,
+    rightFrequency: CONTROLLED_AUDIO.rightFrequency,
+  });
   const tones = {
     webAudio: assertTone(decodedAudio, {
       sampleRate: Number(audioStream.sample_rate),
@@ -270,9 +285,11 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
     body: JSON.stringify({
       requested: { video: true, audio: true, preferCurrentTab: true },
       fixture: probe.fixture,
+      trackEvidence: probe.tracks,
       capabilities,
       outcome,
       tones,
+      stereoTones,
       visualMarkerDiagnostic,
       rawPtsOnly: true,
       note: 'Qualified capability is one live video track plus one live tab-audio track, presence of both declared source tones, and native per-stream PTS. Decoded VP8 marker samples are diagnostic only; no audio/video offset, event phase, per-clip alignment, normalization, resampling, parity, or global-origin claim is made.',
