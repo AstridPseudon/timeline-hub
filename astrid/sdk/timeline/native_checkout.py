@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import re
 
 from astrid.core.timeline import clip_fields
 from astrid.sdk import timeline_intent as intent
@@ -30,11 +31,14 @@ def _seconds(value):
 
 def _publishable_parent_command(command):
     if (not isinstance(command, dict) or not isinstance(command.get('select'), str)
-            or not command['select'].startswith('parent/clip:')):
+            or re.fullmatch(r'parent/clip:[^/]+', command['select']) is None):
         return False
     if command.get('op') == 'clip.move':
         return True
     args = command.get('args')
+    if (command.get('op') == 'clip.trim' and isinstance(args, dict)
+            and set(args) == {'in_s', 'out_s'}):
+        return True
     values = args.get('values') if isinstance(args, dict) else None
     return (command.get('op') == 'clip.set' and isinstance(args, dict)
             and args.get('clear') == [] and isinstance(values, dict)
@@ -113,13 +117,13 @@ class AttachedCheckout(Checkout):
         return result
 
     def publish(self, message='', *, idempotency_key=None, client=None, force=False, restructure=False):
-        """Publish one captured parent move or source-hold set from an explicitly selected outbox.
+        """Publish one captured parent move, source-hold set, or source trim from an explicitly selected outbox.
 
         The outbox path is this draft's recovery identity. Reattach that same
         session after a restart; detached checkouts never discover its intent.
         Other attached verbs continue to use ``flush()``. A hold remains a
-        source-unit scalar; ``AttachedClip.set_duration`` has already captured
-        that value through the native ``clip.set`` operation.
+        source-unit scalar, and trim keeps the original registry/source reads;
+        both are captured through the native command operations.
         """
         if (not getattr(self.session, '_explicit_outbox', False) or force or restructure
                 or (client is not None and client is not self.session.client)):
