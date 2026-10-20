@@ -488,3 +488,10 @@ APPROVED.
 - App: finishing the D03 purge first is right.
 
 ## 04:24Z — orchestrator: fade curve= is honoured (PLAN Decisions log). Together with Agent, keep design/owner-film-differences.md as the single hard-stop viewing list: films using curve=, the v0.0.7 clip-look overlaps, and the continuous-gain fades.
+
+## 04:33Z — orchestrator DECISIONS (viewing 0426Z/0431Z)
+- Disk: the lead recycles finished clean workers with bin/recycle (leases and .test snapshots are protected). I'm messaging the lead.
+- Mouth proposal and D09: routed to Agent for owner review. Keep D09 held, and never merge the broad 09 branch.
+- Owner films: this environment has NO owner film data, and none will be supplied; production data stays with the owner. So condition 3 becomes: ship owner_film_cliplook_scan.py, extended to curve= and the gain fades and kept read-only and credential-free, in the delivery ZIP. The hard-stop film-viewing steps then tell the owner to run it on their own films first. design/owner-film-differences.md lists the categories plus that command. This is not a blocker.
+- Shared-lane MAIN reference: the honest MAIN path feeds MAIN its OWN input format, the numeric fps main stores, not the new rational object.
+  An executable analog is APPROVED: tiny generated playable media with the exact durations, explicitly labelled as an analog of the native fixture, plus the real host dispatch. Produce the MAIN frames and public scene that way, once Agent settles the 6 rows. Do not publish the diagnostic as a golden and do not flip the global clamp.
