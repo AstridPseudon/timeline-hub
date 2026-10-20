@@ -31,4 +31,6 @@ Still-old callers and requirements, kept for coordinated replacement:
 
 Original positive legacy tests stay passing and unchanged. Unsupported native edits fail before staging and retain the draft; no generic root replacement supplies missing intention. Bridge/Clip model methods and selected-input infrastructure remain sibling-owned. Retire the listed legacy callers only when their original positive behavior is covered through commands, with the original tests retained.
 
+The HTTP trim fixture is authored through Runtime main `8c1830d1ca64a3934c37611a28ffe8db7df879ea` in an isolated subprocess, upgraded with the production `migrate_canonical_to_current` function, and then edited only through the locked Runtime/client/provider. It creates no synthetic history or new commands and disables no admission guard. Main's old publication evaluator rejects rational-object FPS, so this HTTP fixture uses the equivalent numeric rate; rational-object preservation is verified in the direct conformance lane.
+
 Validation and exact results are in `workers/agt-m2-sheet-native-ordinary/notes/report.md`. No full suite, integration-worktree changes, push, installation, shared dependency writes or ledger changes are part of this worker.

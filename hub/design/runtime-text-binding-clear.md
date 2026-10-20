@@ -29,8 +29,10 @@ head presence); shot GET/inspect/view consume immutable payload membership,
 not anchor existence (`service.get_project_shot`, `timeline_inspection`,
 `timeline_view`). `backup.export` exports anchor + every raw event including state;
 backup/restore/doctor integrity must preserve these, not reinterpret as live rows.
-Existing accepted media-input/history roots + project objects retain bytes through
-GC; verify clear/restart/GC and old pinned head. No new retention store.
+Existing registered objects + project objects retain all text bytes. There is no
+GC/delete-objects operation in this Runtime; PLAN defers purge. Qualify deep CAS
+reachability, clear/rebind/restart/backup restore and old pinned head; no claim of
+a destructive GC run or a new retention store.
 
 Qualification: existing real Runtime acceptance fixture (`bind`/`accept`) is
 approved for projection proof; native Agent command+inverse pair only if its

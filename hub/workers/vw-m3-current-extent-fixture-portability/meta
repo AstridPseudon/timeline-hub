@@ -1,0 +1,5 @@
+name=vw-m3-current-extent-fixture-portability
+repo=agent
+base=tl/integration
+base_sha=df2739f903edac02bd36b4446deeea847524c040
+remote_request=timeline/agent/tl/vw-m3-current-extent-fixture-portability\ 5d0f1ddca\ viewing\ 09:03+09:34\ original\ native-layer\ extent/plain\ original\ clock\,\ bounded\ pre-tail\ positive\,\ behavior-preserving\ native+legacy\ 3D\ tests\;\ final\ fresh\ tracked\ checkout\ independent\ APPROVE177\(166pytest11Node\)\,\ no\ old\ archive\ dependency/PCM/serializer/pin\ changes\;\ flat\ final-gate\ REPORT
