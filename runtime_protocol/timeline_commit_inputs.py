@@ -27,6 +27,7 @@ DOCUMENT_INPUT_SCHEMA_VERSION = 1
 TRANSCRIPT_KIND = "media.transcript"
 TRANSCRIPT_SCHEMA = "media.transcript/v1"
 TRANSCRIPT_PREFIX = "transcript:"
+PROJECT_PACK_KIND = "astrid.project-pack"
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _MEDIA_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
@@ -221,6 +222,37 @@ def _document_source(content: Any, *, project_id: str, document_id: str, kind: s
         if not isinstance(content, dict) or content.get("schema") != expected_schema:
             raise ConflictError("document schema is not authorized for this input")
     return None, None
+
+
+def pack_snapshot_objects(content: Any) -> list[dict[str, Any]]:
+    """Return the optional portable descriptors; missing means legacy admission."""
+    descriptors = []
+    if not isinstance(content, dict) or not isinstance(content.get("admissions"), list):
+        return descriptors
+    for admission in content["admissions"]:
+        if not isinstance(admission, dict) or "snapshot_object" not in admission:
+            continue
+        value = admission["snapshot_object"]
+        if (not isinstance(value, dict) or set(value) != {"object_id", "digest", "size", "media_type"}
+                or not isinstance(value["object_id"], str) or not _DIGEST_RE.fullmatch(value["object_id"])
+                or value["digest"] != value["object_id"]
+                or type(value["size"]) is not int or value["size"] <= 0
+                or value["media_type"] != "application/json"):
+            raise ValidationError("project pack snapshot_object descriptor is invalid")
+        descriptors.append(copy.deepcopy(value))
+    return descriptors
+
+
+def validate_pack_snapshot_objects(connection: sqlite3.Connection, project_id: str,
+                                   content: Any) -> None:
+    for descriptor in pack_snapshot_objects(content):
+        row = connection.execute(
+            "SELECT o.size, o.media_type FROM objects o JOIN project_objects po ON po.digest=o.digest "
+            "WHERE po.project_id=? AND o.digest=? AND po.relation='managed'",
+            (project_id, descriptor["object_id"].removeprefix("sha256:")),
+        ).fetchone()
+        if row is None or row["size"] != descriptor["size"] or row["media_type"] != descriptor["media_type"]:
+            raise ConflictError("project pack snapshot object metadata or managed project association is invalid")
 
 
 def _reachable(pin: Mapping[str, Any], reachable_pins: Iterable[Any] | None) -> bool:
