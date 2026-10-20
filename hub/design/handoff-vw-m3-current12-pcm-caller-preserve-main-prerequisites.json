@@ -1,0 +1,83 @@
+{
+  "base": "c456b3281497653cecf44f61acd6fa30565d83c8",
+  "kernel": "082cf265b448712b031730d61cf3b9f63b813ab3",
+  "extent": "626eed656edf2a6398703e9e5318343069e47019",
+  "files": {
+    "astrid/core/rendering/remotion_runtime.py": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "9ea2a0426e3dd6912dad530620c3902e62c881731e1c2153d1386ccbe4d2e411"
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "b9396f7314f3d17e7268627b5545ab696f51de5fb4c5e605ac7ff0eb1ff839d0"
+    },
+    "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+    },
+    "remotion/attempt-envelope-pcm.mjs": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "db7bc06d2b3c9efecac015d59d965ef4dfa718e13f1ef303f190c3831bc95719"
+    },
+    "remotion/compiled-audio-source-clock.mjs": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "6ce210e91547d8bca901dc23fe3b06eae0d463fa18d6e1cb79d23494f5145ffc"
+    },
+    "remotion/normal-audio-sources.mjs": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "dc260d6980f3fc6ff0340b364d810cd4310cc3c663db836ab9c84f6ee5dd14e4"
+    },
+    "remotion/package-lock.json": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597"
+    },
+    "remotion/package.json": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "58460ce59e2473d74f44238a2e5e78e2d4bd8a79a0bd94e430f7ae5eb6c2778a"
+    },
+    "remotion/tests/gapless-mp3-source-origin.test.mjs": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "269e147352e8ca84d578285c2396977998683e8c56d5f796738771aa221426a6"
+    },
+    "remotion/tests/long-audio-source.test.mjs": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "e80f3068bfa738dde13c35a7ed07ff22f1ec6322d0d1c0efba8037cb7ceb5e52"
+    },
+    "remotion/tests/normal-audio-native-sources.test.mjs": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "d27108f95cbec13b3422aad7a3a46ca370bc7e5dad1e657ae2de2922d77cb0c9"
+    },
+    "remotion/tests/normal-audio-sources.test.mjs": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "b0139f14f3ce9792503ae218d98c82adfff85b8151a7b91c508fb6382c6b1c3e"
+    },
+    "tests/packs/rendering/test_normal_audio_source_phase.py": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "da82011d8a8415390b9e890ef4e0dc991af12f96da47acac48881d4a9dadbdcc"
+    },
+    "tests/packs/rendering/test_normal_audio_sources.py": {
+      "source": "082cf265b448712b031730d61cf3b9f63b813ab3",
+      "sha256": "66a8ae09e8d84487b77682f14bd6b270e7399d6c5ff3b4c21f0212e75bdc9759"
+    },
+    "astrid/core/rendering/service.py": {
+      "source": "626eed656edf2a6398703e9e5318343069e47019",
+      "sha256": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff"
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": {
+      "source": "626eed656edf2a6398703e9e5318343069e47019",
+      "sha256": "26e24b2cfc1bebc4da99fab0d813e4a09724c9fe530f8b38b40bc6c174e17ae7"
+    },
+    "remotion/src/Root.tsx": {
+      "source": "626eed656edf2a6398703e9e5318343069e47019",
+      "sha256": "321736875ffe7aec5b85a32f60be27af7663fd7a56544765584962e82e9f0407"
+    },
+    "remotion/tests/root-metadata.test.cjs": {
+      "source": "626eed656edf2a6398703e9e5318343069e47019",
+      "sha256": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc"
+    },
+    "tests/packs/rendering/test_native_layer_extent.py": {
+      "source": "626eed656edf2a6398703e9e5318343069e47019",
+      "sha256": "1498d7008bcc6534eeda639b5580c737c51853d1507aebb76dc54afcf4ae8ce2"
+    }
+  }
+}

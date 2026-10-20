@@ -1,0 +1,18 @@
+...............FF                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_native_layer_window_supports_windows_only_backend[0] ___________
+tests/packs/rendering/test_live_scene_composition.py:289: in test_native_layer_window_supports_windows_only_backend
+    assert report.supported, report.reasons
+E   AssertionError: ['renderer does not declare static clip types', 'renderer does not declare static track types']
+E   assert False
+E    +  where False = SupportReport(schema_version=1, supported=False, reasons=['renderer does not declare static clip types', 'renderer doe...'rendering.ffmpeg', 'rendering.remotion', 'rendering.threejs'], backend='fixture.native_only', backend_version='1.0.0').supported
+__________ test_native_layer_window_supports_windows_only_backend[1] ___________
+tests/packs/rendering/test_live_scene_composition.py:289: in test_native_layer_window_supports_windows_only_backend
+    assert report.supported, report.reasons
+E   AssertionError: ['renderer does not declare static clip types', 'renderer does not declare static track types']
+E   assert False
+E    +  where False = SupportReport(schema_version=1, supported=False, reasons=['renderer does not declare static clip types', 'renderer doe...'rendering.ffmpeg', 'rendering.remotion', 'rendering.threejs'], backend='fixture.native_only', backend_version='1.0.0').supported
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_native_layer_window_supports_windows_only_backend[0]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_native_layer_window_supports_windows_only_backend[1]
+2 failed, 15 passed, 1 deselected in 17.52s

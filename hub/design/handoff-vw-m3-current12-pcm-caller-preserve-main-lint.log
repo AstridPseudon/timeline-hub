@@ -1,0 +1,3 @@
+Runner lint matches composed prerequisites exactly (7 inherited diagnostics)
+All checks passed!
+git diff --check passes

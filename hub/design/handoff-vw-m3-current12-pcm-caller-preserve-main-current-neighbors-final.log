@@ -1,0 +1,596 @@
+.............xx.....................................................................EEEEE.....E.EEEEEEE................E..E.... [ 80%]
+..E......EEE....FF........FF.FF                                          [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_actual_source_join_queries_historical_scene_and_overlay[native-text-card] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1110: in execute
+    result: FixtureValue = ihook.pytest_fixture_setup(
+../../venv-agent/lib/python3.11/site-packages/pluggy/_caller.py:197: in __call__
+    return self._hookexec(
+../../venv-agent/lib/python3.11/site-packages/pluggy/_manager.py:183: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/pluggy/_execution.py:64: in run_old_style_hookwrapper
+    return result.get_result()
+           ^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/pluggy/_execution.py:49: in run_old_style_hookwrapper
+    res = yield
+          ^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/setuponly.py:36: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_actual_source_join_queries_historical_scene_and_overlay[native-text] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_actual_source_join_queries_historical_scene_and_overlay[native-am-snap-plate] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_actual_source_join_queries_historical_scene_and_overlay[native-image] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_actual_source_join_queries_historical_scene_and_overlay[native-frame-overlay] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames[native] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-capture] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-missing] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-copy] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-query] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-frames] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-no_callback] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-extra] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_canonical_basis_uses_whole_partial_canvas_and_rational_rate[native] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_candidate_retains_real_compiled_candidate_and_base_label[native] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_execute_handoff_uses_actual_provider_and_public_labels_in_exported_pack[native] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_sdk_source_reaches_real_final_staging_callback[native-text-card] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_sdk_source_reaches_real_final_staging_callback[native-image] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+_ ERROR at setup of test_sdk_source_reaches_real_final_staging_callback[native-frame-overlay] _
+tests/packs/rendering/test_scene_source_carry.py:35: in source_query
+    request.getfixturevalue("native")
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:539: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1068: in execute
+    fixturedef = request._get_active_fixturedef(argname)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:627: in _get_active_fixturedef
+    fixturedef.execute(request=subrequest)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1091: in execute
+    raise exc.with_traceback(exc_tb)
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:1202: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.11/site-packages/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = fixturefunc(**kwargs)
+                     ^^^^^^^^^^^^^^^^^^^^^
+tests/packs/rendering/test_capture_scene_labels.py:48: in host
+    assert target.is_dir(), f"missing provisioned peer: {target}"
+E   AssertionError: missing provisioned peer: /tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react
+E   assert False
+E    +  where False = is_dir()
+E    +    where is_dir = PosixPath('/tmp/pytest-of-root/pytest-70/capture-label-host0/remotion/node_modules/react').is_dir
+=================================== FAILURES ===================================
+____ test_service_layered_plan_native_renderer_isolates_and_adjusts_once[0] ____
+tests/packs/rendering/test_live_scene_composition.py:66: in test_service_layered_plan_native_renderer_isolates_and_adjusts_once
+    assert (clip['at'], clip['from'], clip['to'], clip['speed'], clip['hold']) == (0, 63, 65, 2, 2)
+E   assert (2, 55, 75, 2, 20) == (0, 63, 65, 2, 2)
+E     
+E     At index 0 diff: 2 != 0
+E     Use -v to get more diff
+____ test_service_layered_plan_native_renderer_isolates_and_adjusts_once[1] ____
+tests/packs/rendering/test_live_scene_composition.py:66: in test_service_layered_plan_native_renderer_isolates_and_adjusts_once
+    assert (clip['at'], clip['from'], clip['to'], clip['speed'], clip['hold']) == (0, 63, 65, 2, 2)
+E   assert (2, 55, 75, 2, 20) == (0, 63, 65, 2, 2)
+E     
+E     At index 0 diff: 2 != 0
+E     Use -v to get more diff
+___ test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0] ___
+tests/packs/rendering/test_live_scene_composition.py:181: in test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha
+    assert adapted.window is None
+E   AssertionError: assert FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) is None
+E    +  where FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-70/test_native_window_layer_is_ma0/segment-i...end_config={}, metadata={'astrid_composition_duration_frames': '360'}, materialized_root=None, materialized_objects={}).window
+___ test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1] ___
+tests/packs/rendering/test_live_scene_composition.py:181: in test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha
+    assert adapted.window is None
+E   AssertionError: assert FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) is None
+E    +  where FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-70/test_native_window_layer_is_ma1/segment-i...end_config={}, metadata={'astrid_composition_duration_frames': '360'}, materialized_root=None, materialized_objects={}).window
+_______ test_layer_materialization_retains_null_window_support_rejection _______
+tests/packs/rendering/test_live_scene_composition.py:212: in test_layer_materialization_retains_null_window_support_rejection
+    assert adapted.window is None
+E   AssertionError: assert FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) is None
+E    +  where FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-70/test_layer_materialization_ret0/segment-i...end_config={}, metadata={'astrid_composition_duration_frames': '360'}, materialized_root=None, materialized_objects={}).window
+____ test_locked_release_is_built_and_requires_no_separate_schema_or_theme _____
+tests/packs/rendering/test_composition_package.py:42: in test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+    assert package["version"] == "0.0.10"
+E   AssertionError: assert '0.0.12' == '0.0.10'
+E     
+E     - 0.0.10
+E     ?      ^
+E     + 0.0.12
+E     ?      ^
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_service_layered_plan_native_renderer_isolates_and_adjusts_once[0]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_service_layered_plan_native_renderer_isolates_and_adjusts_once[1]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_layer_materialization_retains_null_window_support_rejection
+FAILED tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_and_requires_no_separate_schema_or_theme
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text-card]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-am-snap-plate]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-image]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-frame-overlay]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-capture]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-missing]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-copy]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-query]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-frames]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-no_callback]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-extra]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_canonical_basis_uses_whole_partial_canvas_and_rational_rate[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_candidate_retains_real_compiled_candidate_and_base_label[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_execute_handoff_uses_actual_provider_and_public_labels_in_exported_pack[native]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-text-card]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-image]
+ERROR tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-frame-overlay]
+6 failed, 131 passed, 1 deselected, 2 xfailed, 19 errors, 161 subtests passed in 17.28s

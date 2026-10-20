@@ -1,0 +1,22 @@
+FF...................................................................... [ 44%]
+........................................................................ [ 88%]
+..................                                                       [100%]
+=================================== FAILURES ===================================
+________ test_direct_preparation_requires_server_only_for_audio[False] _________
+tests/packs/rendering/test_normal_audio_run.py:56: in test_direct_preparation_requires_server_only_for_audio
+    assert list(tmp_path.iterdir()) == []
+E   AssertionError: assert [PosixPath('/...0/xdg-state')] == []
+E     
+E     Left contains 6 more items, first extra item: PosixPath('/tmp/pytest-of-root/pytest-67/test_direct_preparation_requir0/workspace-config')
+E     Use -v to get more diff
+_________ test_direct_preparation_requires_server_only_for_audio[True] _________
+tests/packs/rendering/test_normal_audio_run.py:56: in test_direct_preparation_requires_server_only_for_audio
+    assert list(tmp_path.iterdir()) == []
+E   AssertionError: assert [PosixPath('/...1/xdg-state')] == []
+E     
+E     Left contains 6 more items, first extra item: PosixPath('/tmp/pytest-of-root/pytest-67/test_direct_preparation_requir1/workspace-config')
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_direct_preparation_requires_server_only_for_audio[False]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_direct_preparation_requires_server_only_for_audio[True]
+2 failed, 160 passed in 16.03s

@@ -1,0 +1,5 @@
+
+no tests ran in 0.29s
+ERROR: not found: /home/user/work/wt/vw-m3-current12-pcm-caller-preserve-main/tests/packs/rendering/test_composition_package.py::test_locked_release_is_built_from_this_workspace
+(no match in any of [<Module test_composition_package.py>])
+

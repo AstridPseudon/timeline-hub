@@ -1,0 +1,44 @@
+{
+  "worktree": "/home/user/work/wt/vw-m3-native-layer-m2-test-migration",
+  "base": "626eed656edf2a6398703e9e5318343069e47019",
+  "changed_paths": [
+    "tests/packs/rendering/test_live_scene_composition.py"
+  ],
+  "owned_file": "tests/packs/rendering/test_live_scene_composition.py",
+  "base_sha256": "c7faa408865db4da111ec05b3c67cb3372bfcd2eadb53ec599f0715396c36210",
+  "tested_sha256": "99a726a4326a5492fc112f32c85fcb8eb13de366c76909174dd50f5a609248c5",
+  "patch_sha256": "5d430d93fa5d6383775df2e786bf22be8f55d34375010168d9301749cbc7c83e",
+  "changed_functions": [
+    "test_service_layered_plan_native_renderer_isolates_and_adjusts_once",
+    "test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha",
+    "test_layer_materialization_retains_null_window_support_rejection"
+  ],
+  "added_functions": [
+    "test_native_layer_window_supports_windows_only_backend"
+  ],
+  "unchanged_definitions": [
+    "_composition",
+    "_pulse",
+    "_request",
+    "_rgb_frame",
+    "_three_html",
+    "test_missing_audio_and_corrupt_revision_fail_before_capture",
+    "test_real_render_scene_window_audio_and_overlay",
+    "test_scene_canvas_uses_existing_shared_default",
+    "test_scene_window_uses_existing_pinned_theme_canvas",
+    "test_unlayered_native_window_passes_through_unchanged",
+    "test_window_entering_audio_advances_its_source_and_preserves_shared_scene",
+    "test_window_rejects_other_clocks_and_resampling",
+    "test_window_retains_revision_and_ordinary_audio_trim_rate_overlay"
+  ],
+  "browser_function_byte_identical": true,
+  "nonowned_tracked_changes": [],
+  "new_test_nodes": [
+    "tests/packs/rendering/test_live_scene_composition.py::test_native_layer_window_supports_windows_only_backend[0]",
+    "tests/packs/rendering/test_live_scene_composition.py::test_native_layer_window_supports_windows_only_backend[1]"
+  ],
+  "new_execution_coverage": {
+    "native_and_legacy_capture_observations": 4,
+    "per_frame_source_clock_assertions": 120
+  }
+}
