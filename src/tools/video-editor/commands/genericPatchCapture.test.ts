@@ -123,6 +123,26 @@ describe('bounded native generic patch capture', () => {
     expect(replay).toEqual({ bundle: result.bundle, records: result.records });
   });
 
+  it('captures an exact hold member while retaining an existing transition', async () => {
+    const { bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    const clip = new AuthoredState(bundle).entity('parent/clip:x')!;
+    clip.transition = { type: 'crossfade', duration: 0.5 };
+    const patch: TimelinePatch = { version: 1, operations: [
+      { op: 'clip.move', target: 'x', payload: { at: 4 }, order: 0 },
+      { op: 'clip.update', target: 'x', payload: { hold: 5 }, order: 1 },
+    ] };
+
+    const result = captureGenericPatch(bundle, patch, () => 'parent/clip:x');
+
+    expect(result.commands.map((command) => command.op)).toEqual(['clip.move', 'clip.set']);
+    expect(result.bundle.parent.clips[0]).toMatchObject({
+      at: 4,
+      hold: 5,
+      transition: { type: 'crossfade', duration: 0.5 },
+    });
+  });
+
   it('refuses an independent static duration atomically after a move', async () => {
     const { bundle: source } = await authoredBundle();
     const bundle = copy(source);

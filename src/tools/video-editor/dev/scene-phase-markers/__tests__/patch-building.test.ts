@@ -772,7 +772,7 @@ describe('buildAlignShotsPatch', () => {
 
     expect(patch.operations).toEqual([
       { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
     ]);
   });
 
@@ -808,9 +808,9 @@ describe('buildAlignShotsPatch', () => {
 
     expect(patch.operations).toEqual([
       { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
       { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
-      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 2 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 2 } },
     ]);
   });
 
@@ -928,9 +928,9 @@ describe('alignShotsToTransitions (unified panel action)', () => {
     // clip-a -> marker 1 (3s), hold [3→9) = 6s; clip-b -> marker 2 (9s), tail = 2s default.
     expect(patch.operations).toEqual([
       { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 6 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
       { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
-      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 2 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 2 } },
     ]);
   });
 
@@ -956,7 +956,7 @@ describe('alignShotsToTransitions (unified panel action)', () => {
     const updates = patch.operations.filter((op) => op.op === 'clip.update');
     // Interval [3→9) = 6s; tail = 5s from the input.
     expect(updates.map((op) => (
-      (op.payload as { values: { hold: number } }).values.hold
+      (op.payload as { hold: number }).hold
     ))).toEqual([6, 5]);
   });
 
@@ -1050,9 +1050,9 @@ describe('split panel entry points (createShotsFromMarkers / moveExistingShotsTo
     // clip-a -> m1 (0s) hold 5; clip-b -> m2 (5s) hold 3.
     expect(applied[0]!.operations).toEqual([
       { op: 'clip.move', target: 'clip-a', payload: { at: 0 } },
-      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 5 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 5 } },
       { op: 'clip.move', target: 'clip-b', payload: { at: 5 } },
-      { op: 'clip.update', target: 'clip-b', payload: { values: { hold: 3 }, clear: [] } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 3 } },
     ]);
   });
 });
