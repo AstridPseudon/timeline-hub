@@ -1,0 +1,214 @@
+{
+  "name": "normal-profile-native1920",
+  "status": "PROPOSAL; manager fixture decision and decoder cause review pending",
+  "base_app": "1e13eadfc6ba5f96a1cd570893bd3743fed5f666",
+  "retained_evidence": "1020043712-5716; leased-b70-9f9-installed8-diagnostic; 1 pass / 3 fail",
+  "current_source_tuple": null,
+  "actual_run_authorized": false,
+  "future_spec": "tests/e2e/timeline/player-export-normal-profile-native1920.spec.ts",
+  "collection_only_proposal": "tests/e2e/timeline/player-export-normal-profile-native1920.proposal.ts",
+  "authored_output": {
+    "resolution": "1920x1080",
+    "fps": 30,
+    "file": "frame-parity.mp4"
+  },
+  "expected_normal_profile": {
+    "width": 1920,
+    "height": 1080,
+    "fps": [
+      30,
+      1
+    ],
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "audio_sample_rate": 48000,
+    "channels": 2
+  },
+  "source_video_unchanged": {
+    "width": 640,
+    "height": 360,
+    "codec": "vp8",
+    "fps": 30,
+    "frames": 45,
+    "duration": 1.5
+  },
+  "frame_controls": {
+    "frames": [
+      0,
+      37,
+      44,
+      45,
+      52,
+      89,
+      90,
+      120,
+      121,
+      135,
+      143,
+      164
+    ],
+    "max_channel_error": 2,
+    "max_outside_fraction": 0.001,
+    "negative_frame": 52,
+    "negative_requires_full_passing_baseline": true
+  },
+  "test_host_viewport": {
+    "width": 2000,
+    "height": 1200,
+    "device_scale_factor": 1
+  },
+  "allowed_changes": [
+    "Separately named fixture parent config.output.resolution 640x360 -> 1920x1080; new parent revision digest naturally differs",
+    "Native Player host, screenshot/raw RGB buffers, dimension guards and negative pixel denominator 1920x1080",
+    "Viewport accommodates native Player plus 32px margin; existing browser executables and device scale factor remain",
+    "Readiness marker samples native screenshot at 3x source coordinates; no comparator resampling",
+    "Separate names/imports only; source media generation, task/revision/media authority, timings, all 4 cases and audio metadata assertions retained"
+  ],
+  "unverified": [
+    "Existing config.output=640x360 is not honored by theme-canvas profile authority; this proposal does not close that product contract question",
+    "No standalone audio waveform/negative-audio case exists in these 4 frame cases; AAC metadata and all diagnostic negatives are retained",
+    "Native result MediaError 4 cause unresolved; proposal supplies no codec/browser change or abort exception",
+    "No new render, Player frame, PCM comparison, current tuple, gate 6 or M3 qualification"
+  ],
+  "protected_sha256": {
+    "tests/e2e/timeline/viewing-parity/host-live.test.ts": "82328731704db41f03a302f0661e0a962767b437feadf83b2abd95fe2e8ae3c9",
+    "tests/e2e/timeline/viewing-parity/bootstrap.ts": "9921c25dd8444646cb58c5d5a96e2e677d5e42af9ea70c3951858e1f285d33a4",
+    "tests/e2e/timeline/viewing-parity/admission.test.ts": "417320cc6639aa4083cbf046983c6d4cd41db81146bccbb5e513319a8f0ebe8e",
+    "tests/e2e/timeline/viewing-parity/fixture.ts": "4565d498bd6ff8870434309743120ecceb0e01c39853390da9ea2bfca712f88c",
+    "tests/e2e/timeline/viewing-parity/compare.ts": "5c8936151bb698c4cc7a2404966c63136da0c79d61a486d199a7d73516da6139",
+    "tests/e2e/timeline/viewing-parity/diagnostics.test.ts": "bf266a882e737eaf294fe7c84d6cfd19316710e8538bc8090292779551123c40",
+    "tests/e2e/timeline/viewing-parity/bootstrap.test.ts": "17d973c87113b803a30d484996e2d1d54af3308629aca1c2e57c278686ebc9c4",
+    "tests/e2e/timeline/viewing-parity/authority.test.ts": "2f1a5fa6ad9af35182992a2286a946c7e55c90acc9225375156e74a30cdcd789",
+    "tests/e2e/timeline/viewing-parity/media.test.ts": "75fd8bdcb62db6f7a85c841f3757d0ebd33dc98fd781fe0e6e52fac3e0c94600",
+    "tests/e2e/timeline/viewing-parity/media.ts": "a06acd2ce893d7b0c4eae0c38992f75af453ec8c6b77963bd041d39cebbd909e",
+    "tests/e2e/timeline/viewing-parity/harness.test.ts": "c5b1f60bf1fa15ce83a8c32ffed5b0edaf8b0ec93a077626252c8b6b3d96982d",
+    "tests/e2e/timeline/viewing-parity/diagnostics.ts": "60f6717609da1a904d70b2a9838e5fec9e8201dad2dd90eba822c2fe1c513469",
+    "tests/e2e/timeline/viewing-parity/compare.test.ts": "dedfd02cc0adaca609cfdb4595f8f788ae488ba0fafb056dfb6298481643c68b",
+    "tests/e2e/timeline/viewing-parity/authority.ts": "4ae0c0ac884b8fb0c0dfec779e0eb5f3732dbe50ad60145dd24eed6606cc82bc",
+    "tests/e2e/timeline/viewing-parity/download.ts": "7cb7bcd2129e364158e91559a6f820a2dc4852e4c35c4c1fef2c3b15925b0445",
+    "tests/e2e/timeline/viewing-parity/admission.ts": "3603ee0efca8d71f641210806785bc62038c0ca30d01b853b3dac55c61dcd315",
+    "tests/e2e/timeline/viewing-parity/download.test.ts": "293e7ea21580de62f2860e2aa5a7ec1d559e1665f238810a50032b16b0d73dfe",
+    "tests/e2e/timeline/viewing-parity/tsconfig.json": "d7b59969fe504af5a1a8b81054dfba667f3ad6a7738671d8f78557c57e20c690",
+    "tests/e2e/timeline/viewing-parity/harness.ts": "b234b5fe05c69a21649875ad249e4a971271dc30006de64b4824e2304837d98b",
+    "tests/e2e/timeline/viewing-parity/frames.ts": "149691fa9cb857155c7748ac867be4bca803c0957b190ea523f85613e29a9158",
+    "tests/e2e/timeline/player-export-frame-parity.spec.ts": "a1f3e49530fb4d2ba2ce5d8c3fb605bf229449faedaf53a035e7580ae6e9ae9c",
+    "playwright.viewing-parity.config.ts": "8a7ccaac4d4898c65e7ae2509c770ff98f009f41b8ef2837a31043c868f693d3"
+  },
+  "product_sha256": {
+    "src/tools/video-editor/components/TimelineRenderControls.test.tsx": "ea1e695e521fe7796dee43a45925e996d50e2744bc738ddd28415db8c62c5caa",
+    "src/tools/video-editor/components/TimelineRenderControls.tsx": "d763e1b6b38e4cb05873d2bbe698794f0ccfdff4b16c75496e1a593f5784a544",
+    "src/tools/video-editor/hooks/timelineStore.ts": "2b76bfe78771a79e1c0944bb0164e8389dee2398fdb66eb7e0ca314b461a34f1",
+    "src/tools/video-editor/hooks/useRenderState.test.tsx": "eae87269f692b7502a23f1d1037339eb95fc8deea5ae950faab2aedcd3eee4d2",
+    "src/tools/video-editor/hooks/useRenderState.ts": "80dfe2b912f8aca0c99687e15d2af5dccf222607e7a180927afd2d72d569522b",
+    "src/tools/video-editor/hooks/useTimelineState.ts": "38a68fab02b63aa386001980036cb989630b436e0951b0f2302ee08d1825f114",
+    "src/tools/video-editor/hooks/useTimelineState.types.ts": "86b8f178a4ed4763279a654430091c08e19726b848a07edf04d236c2182130cb"
+  },
+  "variants": [
+    {
+      "source": "fixture.ts",
+      "target": "normal-profile-native1920.fixture.ts",
+      "replacements": [
+        [
+          "generatePlayableVideo, mediaHash, PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH",
+          "generatePlayableVideo, mediaHash, PARITY_FPS"
+        ],
+        [
+          "export { PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';",
+          "import { PARITY_HEIGHT, PARITY_WIDTH } from './normal-profile-native1920.dimensions';\nexport { PARITY_FPS } from './media';\nexport { PARITY_HEIGHT, PARITY_WIDTH } from './normal-profile-native1920.dimensions';"
+        ]
+      ]
+    },
+    {
+      "source": "compare.ts",
+      "target": "normal-profile-native1920.compare.ts",
+      "replacements": [
+        [
+          "from './media'",
+          "from './normal-profile-native1920.dimensions'"
+        ]
+      ]
+    },
+    {
+      "source": "diagnostics.ts",
+      "target": "normal-profile-native1920.diagnostics.ts",
+      "replacements": [
+        [
+          "import { mediaHash, PARITY_FPS, PARITY_HEIGHT, PARITY_WIDTH } from './media';",
+          "import { mediaHash, PARITY_FPS } from './media';\nimport { PARITY_HEIGHT, PARITY_WIDTH } from './normal-profile-native1920.dimensions';"
+        ],
+        [
+          "from './compare'",
+          "from './normal-profile-native1920.compare'"
+        ]
+      ]
+    },
+    {
+      "source": "frames.ts",
+      "target": "normal-profile-native1920.frames.ts",
+      "replacements": [
+        [
+          "  PARITY_WIDTH,\n} from './media';",
+          "  PARITY_WIDTH,\n} from './normal-profile-native1920.dimensions';"
+        ],
+        [
+          "from './compare'",
+          "from './normal-profile-native1920.compare'"
+        ],
+        [
+          "box.width === 640 && box.height === 360",
+          "box.width === 1920 && box.height === 1080"
+        ],
+        [
+          "width: 640px !important; height: 360px !important;",
+          "width: 1920px !important; height: 1080px !important;"
+        ],
+        [
+          "min-width: 640px !important; min-height: 360px !important;",
+          "min-width: 1920px !important; min-height: 1080px !important;"
+        ],
+        [
+          "flex: 0 0 640px !important;",
+          "flex: 0 0 1920px !important;"
+        ]
+      ]
+    },
+    {
+      "source": "../player-export-frame-parity.spec.ts",
+      "target": "../player-export-normal-profile-native1920.proposal.ts",
+      "replacements": [
+        [
+          "from './viewing-parity/diagnostics'",
+          "from './viewing-parity/normal-profile-native1920.diagnostics'"
+        ],
+        [
+          "from './viewing-parity/harness'",
+          "from './viewing-parity/normal-profile-native1920.harness'"
+        ],
+        [
+          "mediaHash, readFrameMarker, VIDEO_START_FRAME",
+          "mediaHash, VIDEO_START_FRAME"
+        ],
+        [
+          "import {\n  assertPinnedFrameParityFixture",
+          "import { readNativeFrameMarker as readFrameMarker } from './viewing-parity/normal-profile-native1920.dimensions';\nimport {\n  assertPinnedFrameParityFixture"
+        ],
+        [
+          "from './viewing-parity/fixture'",
+          "from './viewing-parity/normal-profile-native1920.fixture'"
+        ],
+        [
+          "from './viewing-parity/frames'",
+          "from './viewing-parity/normal-profile-native1920.frames'"
+        ],
+        [
+          "test.describe('ordinary media:",
+          "test.describe('normal-profile-native1920 proposal: ordinary media:"
+        ],
+        [
+          "/230400 pixels exceed",
+          "/2073600 pixels exceed"
+        ]
+      ]
+    }
+  ]
+}
