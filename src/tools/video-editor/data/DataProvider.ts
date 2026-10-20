@@ -458,7 +458,9 @@ export interface DataProvider extends AssetResolver {
   projectObjects?: ProjectObjectStorage;
   persistenceEnabled?: boolean;
   /** Durable-recovery metadata captured synchronously at the first local edit. */
-  getTimelineDraftRecoveryMetadata?(): import('./timelineDraftIndexedDb.ts').TimelineDraftRecoveryMetadata;
+  getTimelineDraftRecoveryMetadata?(
+    rememberRaw?: (composition: import('./shotCompositionAdapter.ts').PreparedShotComposition) => void,
+  ): import('./timelineDraftIndexedDb.ts').TimelineDraftRecoveryMetadata;
   /** Explicit reload path that bypasses provider-local unsaved recovery state. */
   loadCanonicalTimeline?(timelineId: string): Promise<LoadedTimeline>;
 

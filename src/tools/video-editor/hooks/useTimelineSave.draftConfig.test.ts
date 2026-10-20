@@ -1,3 +1,6 @@
+import fixture from '../data/shotComposition.fixture.json';
+import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 import { describe, expect, it } from 'vitest';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 import { createDefaultTimelineConfig } from '../lib/defaults.ts';
@@ -37,4 +40,18 @@ describe('recovery-only config roots', () => {
     const current = createDefaultTimelineConfig();
     expect(recovery.snapshot(other, current)).toEqual(current);
   });
+});
+
+
+it('snapshots projected drafts from the retained original graph and refuses a different base', () => {
+  const composition = createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture);
+  const config = projectCanonicalComposition(composition).config;
+  const recovery = createRecoveryConfig();
+  recovery.remember(head, { x_null: null }, composition);
+  const draft = recovery.snapshot(head, config, true);
+  expect(draft.clips[0].app?.canonicalTiming).not.toHaveProperty('storedOccurrenceDurationMs');
+  expect(draft).toHaveProperty('x_null', null);
+  expect(config.clips[0].app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
+  expect(() => recovery.snapshot({ ...head, headPublicationId: 'other' }, config, true)).toThrow('verified raw');
+  expect(() => createRecoveryConfig().snapshot(head, config, true)).toThrow('verified raw');
 });

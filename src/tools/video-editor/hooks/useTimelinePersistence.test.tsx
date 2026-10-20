@@ -1,3 +1,7 @@
+import fixture from '../data/shotComposition.fixture.json';
+import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
+import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 // @vitest-environment jsdom
 import React from 'react';
 import { act, render, renderHook } from '@testing-library/react';
@@ -128,6 +132,7 @@ interface SetupOptions {
   loadAssetRegistryImpl?: DataProvider['loadAssetRegistry'];
   loadReferencedTimelineImpl?: NonNullable<DataProvider['loadReferencedTimeline']>;
   recoveryMetadata?: TimelineDraftRecoveryMetadata;
+  recoveryConfig?: ReturnType<typeof createRecoveryConfig>;
 }
 
 function setup(options?: SetupOptions): TestHarness {
@@ -194,6 +199,7 @@ function setup(options?: SetupOptions): TestHarness {
       editSeqRef,
       savedSeqRef,
       configVersionRef,
+      recoveryConfig: options?.recoveryConfig,
       lastSavedSignatureRef,
       interactionStateRef,
     }),
@@ -246,6 +252,43 @@ function makeBundle(text: string): TimelineBundleEnvelope {
 }
 
 describe('useTimelinePersistence — interaction gating', () => {
+  it('writes one clean projected config to the real draft store and save boundary from the retained raw basis', async () => {
+    const composition = createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture);
+    const config = projectCanonicalComposition(composition).config;
+    const data = await buildTimelineData(config, { assets: config.registry });
+    data.editProjection = { kind: 'accepted', head: { revisionId: 'R', publicationId: 'P' } };
+    const recoveryConfig = createRecoveryConfig();
+    recoveryConfig.remember(data.head, {}, composition);
+    const harness = setup({ initialData: data, recoveryConfig,
+      saveTimelineImpl: async () => { throw new TimelineVersionConflictError('keep draft'); } });
+    harness.scheduleSave(data);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    const record = await loadTimelineDraft('timeline-1');
+    expect(record).not.toBeNull();
+    expect(JSON.stringify(record!.draft.config)).not.toContain('storedOccurrenceDurationMs');
+    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('keep draft'); });
+    expect(harness.saveTimeline.mock.calls[0][1]).toStrictEqual(record!.draft.config);
+    expect(data.config.clips.find((clip) => clip.id === 'occ-1:alpha-video')!.app?.canonicalTiming)
+      .toHaveProperty('storedOccurrenceDurationMs', 2000);
+    expect(harness.dataRef.current).toBe(data);
+    harness.unmount();
+  });
+
+  it('visibly refuses a declared projection with no raw basis, retaining editor data and existing durable bytes', async () => {
+    const harness = setup();
+    const previous = makeTimelineData('previous');
+    await saveTimelineDraft('timeline-1', { config: previous.config, registry: previous.registry }, 1);
+    const before = await loadTimelineDraft('timeline-1');
+    const data = makeTimelineData('derived');
+    data.editProjection = { kind: 'accepted', head: { revisionId: 'R', publicationId: 'P' } };
+    harness.scheduleSave(data);
+    expect(harness.result.current.saveStatus).toBe('error');
+    expect(harness.dataRef.current).toBe(data);
+    expect(await loadTimelineDraft('timeline-1')).toStrictEqual(before);
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    harness.unmount();
+  });
+
   it('sends the edited source bundle at its captured Runtime head and keeps it recoverable on CAS conflict', async () => {
     const original = makeTimelineData('source-only');
     const head = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'revision-1' };
