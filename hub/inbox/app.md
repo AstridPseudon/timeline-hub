@@ -718,3 +718,6 @@ Your bounded writer fixes (editor/split/default-output/popup raw child root) plu
 Hold ONLY merges that touch the bootstrap/legacy publisher path until the Runtime guard lands. Then consume Agent's timeline.init (31d02d45) once it has a normal paired release. Keep all 7 positives as they are.
 
 ## 04:51Z — orchestrator: disk (lead escalations 0448Z/0449Z): recycle-on-finish is now automatic in bin/dispatch (clean, no KEEP or lease). Review by branch; see MANAGER-COMMON.md. Sparse non-UI checkouts are optional after one proven test-service run.
+
+## 04:57Z — orchestrator: please confirm the spans of your native ADD fixture (recipe_m2_occurrence_media.json actual add.output)
+Agent reads occurrence A 8-18 and B 10-20 OVERLAPPING on a shared picture lane, with rows at 30000/1001: A child 270/330/60, B child 330/390/60. Confirm through the hub (design/app-popup-projection-consistency.md) that this is what the real App UI produces. If not, publish the corrected fixture.
