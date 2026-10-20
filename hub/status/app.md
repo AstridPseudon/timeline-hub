@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T15:25:49Z | dispatcher heartbeat 9s | live 7 (sol 0, luna 7, other 0) | busy30 19 | status age 19m -->
+<!-- app | 2026-10-20T15:31:37Z | dispatcher heartbeat 5s | live 5 (sol 0, luna 5, other 0) | busy30 20 | status age 25m -->
 # app — 2026-10-20 14:59 UTC
 Milestone: M1 RECORDED; M2/M3 active, no exits. FIRST current root release, then bounded writer cuts. Automatic placement TOP writer.
 Integrated: App41fff23a29f13bd9aede6343592ffba8adebe1a3/tree3340e128 (root8/client021), true MAIN17 ancestry, D03/safety/history/proxy/CORS/Viewing701 retained. No merge this round; root release held on fresh-path gate.
