@@ -270,7 +270,11 @@ it('ShotEditor reads, edits and saves Runtime-valid raw settings without changin
       shot_revisions: [{ shot_id: seed.shotId, revision_id: invalidShotRevisionId, internal_timeline_revision_id: current.shot.internal_timeline_revision_id, payload: { ...current.shot.payload, metadata: [] } }],
       internal_timeline_revisions: [],
     });
-    expect(invalid.status).toBe(400);
+    expect(invalid.status).toBe(422);
+    expect(invalid.body).toMatchObject({
+      code: 'validation_error',
+      message: 'shot revision payload cannot be projected losslessly',
+    });
     expect((await rawGet(timelinePath)).head_revision_id).toBe(head);
 
     await harness.enableTimelineAuthoring(ASTRID_PYTHON);
