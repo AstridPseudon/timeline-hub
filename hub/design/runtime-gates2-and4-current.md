@@ -4,10 +4,20 @@ Date: 2026-10-20
 
 ## Source
 
-- Runtime base/current integration: `5c32832baeb3018fb50da53be3ef2921ac2bae29` (`tl/rt-m2-gate2-real-http-concurrent-proof`), with the concurrent real-door regression below.
+- Current Runtime integration: `b88a56feb2e1879455b9f1eb2403e171aa125f3c`, tree `29cb052c96ebcea435dcb920605c9604de8041c1`. It contains merged `168b3fa8006e6bbef99f56d76017604d38e25b8b` plus the current real-door concurrency proof.
 - Gate2 proof snapshot used by the central test service: `36082cf3701de2328d47855bb4cd37455ef4cf57`.
+- Gate4 proof snapshot used by the central test service: `183dbcf45a6b3a25f7437415df10100101ef8bbd`.
 - Actual Agent provider checkout: `/home/user/work/agent`, `d30894a7abfa6e3163c13a59175b4a0d298c7fea`.
 - Shared environments were referenced read-only. The TypeScript check used the existing `/home/user/work/app/node_modules/typescript` path; no dependency or cache files were changed.
+
+### Current-file binding check
+
+The allow-listed suite lines are still present in `ORCH/tests/suites.conf` at lines 128–129. They retain explicit selected integration nodes and the existing `not darwin_native and not live` filter; no broad/full command replaced them.
+
+- Gate2's selected integration functions have identical AST/source hashes in current `b88a56f` and the recorded `36082cf` snapshot: `test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip`, `test_real_door_concurrent_disjoint_moves_accept_and_rebase`, and `test_real_door_lost_ack_restart_exact_retry_never_executes_provider`.
+- Gate4's selected integration functions have identical AST/source hashes in current `b88a56f` and the recorded `183dbcf` snapshot: `test_real_door_commit_admission_checks_origin_auth_and_project_scope` and `test_real_door_lost_ack_restart_exact_retry_never_executes_provider`.
+- The current merged file adds only the complementary Gate4 admission node relative to the Gate2 snapshot and the Gate2 concurrency node relative to the Gate4 snapshot; both are named on the appropriate suite line. The current Gate2/Gate4 source selections therefore remain bound to the recorded **51 Python** and **29 Python / 61 TypeScript** evidence without rerunning either suite.
+- The later baseline/fixture and boundary changes did not remove transport or custody assertions: current object IDs for `tests/test_timeline_commit_baseline.py`, `tests/precut_realm_fixture.py`, `tests/timeline_commit_film_fixture.py`, `tests/test_runtime_boundary.py`, `tests/test_zero_shim_boundary.py`, `tests/test_door_transport.py`, `tests/test_http_response_lock.py`, and `tests/test_timeline_commit_routes.py` are identical to the proof snapshot. The relevant current-to-proof diff is empty.
 
 ## Changes
 
@@ -44,4 +54,5 @@ Evidence includes normal `/v1` commit transport, origin and browser-credential r
 - Gate 2 now includes a simultaneous two-request HTTP-door race using the real Agent provider. The coordinator-level race tests remain complementary coverage for same-key waiters and different-key CAS behavior.
 - No full suite, render suite, or separate browser/e2e suite was requested or run. The Gate 4 door tests are the required Runtime transport coverage.
 - Gate 4 remains the prior current result: **29 Python tests passed in 16.01s; TypeScript generated-client suite 61 passed, 0 failed**, on proof snapshot `183dbcf45a6b3a25f7437415df10100101ef8bbd`. It was not repeated for this Gate2-only task.
+- Retired publication/D04 consumers remain held and are not silently counted as current Gate2/Gate4 coverage. When the held integration-marked public publication tests are ported, the exact deferred allow-list addition is `tests/test_timeline_public_s2_mixed_cli_journey.py` on the existing Runtime `commit-integration` line (or its exact qualified node, if the port narrows the file). Do not add or run that line now: the current suite already has the historical pinned lines, and this task deliberately avoids duplicating their run.
 - No external blocker remains. The remaining gate gaps are outside this Runtime Gate2/Gate4 proof: Gate 3 renderer-independent save evidence, Gate 5 adversarial App journey, Gate 6 one-writer/one-viewer parity and legacy-endpoint rejection across representative gestures, and Gate 7 delivery/ZIP/owner-film evidence.
