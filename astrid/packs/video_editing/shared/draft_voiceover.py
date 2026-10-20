@@ -411,6 +411,86 @@ def runtime_synthesizer(client, project):
     return synthesize
 
 
+def _voiceover_proposal_commands(candidate: Mapping, scripts: Mapping, generated: list[Mapping]):
+    """Capture only native intent whose pins are already present and exact.
+
+    Generated audio and its retiming are deliberately reported as a bounded
+    dependency.  The current native command set has no audio-media selector or
+    audio-duration command, so dropping those edits would turn a proposal into
+    a false success.  Existing script bindings are captured with their exact
+    UTF-8 descriptor when the candidate already carries the same immutable pin;
+    no new order, word anchor, or binding is invented here.
+    """
+    from astrid.sdk.timeline.native_text_binding import capture_text_binding_set
+
+    rows = {row.get("occurrence_id"): row for row in scripts.get("occurrences", [])
+            if isinstance(row, Mapping)}
+    shots = {placement.get("occurrence_id"): placement.get("shot_id")
+             for placement in candidate.get("placements", [])
+             if isinstance(placement, Mapping)}
+    commands, gaps, seen = [], [], set()
+    for job in generated:
+        occurrence_id = job["occurrence_id"]
+        if occurrence_id in seen:
+            continue
+        seen.add(occurrence_id)
+        row = rows.get(occurrence_id, {})
+        bindings = row.get("bindings")
+        binding = bindings[0] if isinstance(bindings, list) and len(bindings) == 1 else None
+        descriptor = None
+        if isinstance(binding, Mapping):
+            object_id = binding.get("object_id") or binding.get("media_id")
+            content_digest = binding.get("digest") or binding.get("content_hash")
+            size = binding.get("size", binding.get("byte_size"))
+            media_type = binding.get("media_type", binding.get("mime_type"))
+            if (isinstance(object_id, str) and isinstance(content_digest, str)
+                    and object_id == content_digest and type(size) is int and 0 <= size <= 1024 * 1024
+                    and media_type == "text/plain; charset=utf-8"):
+                descriptor = {"object_id": object_id, "digest": content_digest,
+                              "size": size, "media_type": media_type}
+        shot_id = shots.get(occurrence_id)
+        shot = candidate.get("shots", {}).get(shot_id, {})
+        authored = shot.get("payload", {}).get("text_bindings", [])
+        authored_row = next((item for item in authored
+                             if isinstance(item, Mapping)
+                             and item.get("kind") == "voiceover_script"
+                             and item.get("slot") is None), None) \
+            if isinstance(authored, list) else None
+        exact_pin = (descriptor is not None and isinstance(authored_row, Mapping)
+                     and authored_row.get("media_id") == descriptor["object_id"]
+                     and authored_row.get("content_hash") == descriptor["digest"]
+                     and authored_row.get("byte_size") == descriptor["size"]
+                     and authored_row.get("mime_type") == descriptor["media_type"])
+        if exact_pin:
+            try:
+                commands.append(capture_text_binding_set(
+                    candidate, f"occurrence:{occurrence_id}",
+                    {"kind": "voiceover_script", "slot": None}, text=descriptor,
+                    verified_text=[{**descriptor, "utf8": True}]))
+            except Exception as exc:
+                gaps.append({"occurrence_id": occurrence_id, "capability": "text-binding.set",
+                             "reason": f"exact pinned text capture failed: {exc}"})
+        else:
+            gaps.append({"occurrence_id": occurrence_id, "capability": "text-binding.set",
+                         "reason": "producer lacks the exact registered UTF-8 text descriptor/order pin"})
+        gaps.append({"occurrence_id": occurrence_id,
+                     "capability": "generated audio media and timing",
+                     "reason": "registered EditCommands accept image/video media only and do not set audio source duration"})
+    return commands, gaps
+
+
+def _commit_voiceover_proposal(client, project: str, timeline: str, proposal: Mapping[str, Any]):
+    """Commit an approved native proposal through the existing durable outbox."""
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    session = TimelineSession.open(project, timeline, client=client)
+    key = "voiceover-" + proposal["proposal_digest"].removeprefix("sha256:")
+    return session.commit_many(
+        proposal["commands"], idempotency_key=key,
+        via="voiceover-proposal:" + proposal["proposal_digest"],
+    )
+
+
 def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
                          settings=None, occurrence_ids=None, adopt_clip_ids=None,
                          padding_seconds=0.15, plan_only=False) -> dict:
@@ -464,14 +544,26 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
     prepared = prepare_draft_voiceover(candidate, scripts,
         synthesize=runtime_synthesizer(client, project_id), timing_policy=timing_policy,
         padding_seconds=padding_seconds, available_media_ids=available_media_ids, **options)
-    # Detect edits made while generation was in flight. Publication repeats the
-    # check and Runtime CAS closes the final race. Never rebase stale speech.
+    # Detect edits made while generation was in flight. The requester/outbox
+    # commit repeats the check and Runtime CAS closes the final race. Never
+    # rebase stale speech.
     current = _data(client.timelines.open_composition(project_id, timeline_id))
     if current["summary"]["head_revision_id"] != head:
         raise VoiceoverSyncError("Timeline changed during synthesis; rerun sync from its new head")
     bound.validate(prepared["candidate"])
     diff = bound.diff(prepared["candidate"])
     frozen = bound.preview(prepared["candidate"])
-    receipt = bound.publish(prepared["candidate"], idempotency_key=frozen["candidate_digest"])
+    commands, gaps = _voiceover_proposal_commands(
+        prepared["candidate"], scripts, prepared["generated"])
+    proposal = bound.proposal(
+        prepared["candidate"], commands,
+        rationale="draft voiceover generated from the pinned composition script",
+    )
+    if gaps:
+        return {"status": "proposal_open", "published": False, "plan": plan,
+                "diff": diff, "generated": prepared["generated"],
+                "proposal": proposal, "gaps": gaps,
+                "candidate_digest": frozen.get("candidate_digest")}
+    receipt = _commit_voiceover_proposal(client, project_id, timeline_id, proposal)
     return {"status": "published", "published": True, "plan": plan, "diff": diff,
-            "generated": prepared["generated"], "receipt": receipt}
+            "generated": prepared["generated"], "proposal": proposal, "receipt": receipt}

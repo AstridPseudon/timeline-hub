@@ -6,18 +6,18 @@ timeline format or a generic ``save`` operation.  The target descriptor is a
 trusted launch input: callers cannot choose a different endpoint, project,
 timeline, or parent head after the session is opened.
 
-The generic pack worker currently has only task/CAS scopes and does not receive
-this pinned closure, so it cannot safely use ``publish`` today.  A worker with
-an explicitly provisioned project-scoped credential may use this seam; the
-normal pack-host credential must remain read/settle-only until Runtime adds a
-task-bound authoring capability.
+Producers hand off native EditCommand proposals through this seam.  The
+requester remains responsible for approval and durable-outbox commit; this
+module never acquires a publication writer.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-import re
+import hashlib
 from typing import Any, Mapping
+
+from astrid.core.receipts.canonical import canonical_json
 
 from astrid.core.timeline.authoring_bundle import (
     AuthoringBundleError,
@@ -25,12 +25,10 @@ from astrid.core.timeline.authoring_bundle import (
     diff_authoring_candidate,
     open_authoring_bundle,
     preview_authoring_candidate,
-    publish_authoring_candidate,
     validate_authoring_candidate,
 )
 
 from .workspace_client import WorkspaceClientError, validate_runtime_endpoint
-from .pagination import paged_rows
 
 __all__ = ["AuthoringRemoteError", "TargetBoundAuthoringBundle"]
 
@@ -62,23 +60,6 @@ def _required_text(value: Any, field: str) -> str:
     return value.strip()
 
 
-def _transport_idempotency_key(value: str) -> str:
-    """Normalize a stable caller key to Runtime's transport spelling."""
-    key = value.strip()
-    if not key:
-        raise AuthoringRemoteError("idempotency_key must be a non-empty string")
-    if key.startswith("sha256:"):
-        key = "candidate-" + key.removeprefix("sha256:")
-    key = re.sub(r"[^A-Za-z0-9._~-]", "-", key)
-    if not key[0].isalnum():
-        key = f"candidate-{key}"
-    try:
-        key.encode("ascii")
-    except UnicodeEncodeError as exc:
-        raise AuthoringRemoteError("idempotency_key must contain ASCII characters") from exc
-    return key[:256]
-
-
 @dataclass(frozen=True)
 class _Target:
     endpoint: str
@@ -88,7 +69,7 @@ class _Target:
 
 
 class TargetBoundAuthoringBundle:
-    """Open and publish one exact parent-composition closure.
+    """Open and propose edits for one exact parent-composition closure.
 
     ``target`` must be the coordinator-issued, read-only target descriptor
     supplied to a worker.  Candidate dictionaries remain ordinary JSON-shaped
@@ -227,15 +208,15 @@ class TargetBoundAuthoringBundle:
     def preview(candidate: Mapping[str, Any]) -> dict[str, Any]:
         return preview_authoring_candidate(candidate)
 
-    def publish(self, candidate: Mapping[str, Any], *, idempotency_key: str) -> dict[str, Any]:
-        """Validate target/head/media ownership, then perform one CAS publish."""
+    def proposal(self, candidate: Mapping[str, Any], commands, *, rationale: str = "") -> dict[str, Any]:
+        """Capture one direct EditCommand proposal for the pinned target.
+
+        This is intentionally a producer-side handoff.  It validates the
+        candidate and registered native commands, but never calls Runtime's
+        publication port.  The requester owns durable-outbox commit and binds
+        approval to the returned proposal digest.
+        """
         identity = self._identity
-        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
-            raise AuthoringRemoteError("idempotency_key must be a non-empty string")
-        # Runtime's transport contract requires an ASCII key whose first
-        # character is alphanumeric. Candidate digests conventionally use
-        # the ``sha256:`` prefix, so normalize that common caller spelling.
-        transport_idempotency_key = _transport_idempotency_key(idempotency_key)
         if not isinstance(candidate, Mapping):
             raise AuthoringRemoteError("authoring candidate must be an object")
         if candidate.get("project_id") != identity.project_id or candidate.get("timeline_id") != identity.timeline_id:
@@ -243,84 +224,39 @@ class TargetBoundAuthoringBundle:
         base_parent = candidate.get("base_parent")
         if not isinstance(base_parent, Mapping) or base_parent.get("revision_id") != identity.base_head:
             raise AuthoringRemoteError("authoring candidate base head is not the trusted target head")
-        rows = paged_rows(self._client.list_timelines, identity.project_id, limit=50) or []
-        current = next(
-            (
-                row for row in rows
-                if isinstance(row, Mapping)
-                and str(row.get("timeline_id") or row.get("id")) == identity.timeline_id
-            ),
-            None,
-        )
-        if not isinstance(current, Mapping):
-            raise AuthoringRemoteError("authoring target timeline is not in the canonical project listing")
-        inspection = _data(
-            self._client.inspect_timeline(
-                identity.project_id,
-                identity.timeline_id,
-                options={"limit": 1, "detail": False},
-            ),
-            "inspect_timeline",
-        )
-        if inspection.get("is_current_head") is not True:
-            raise AuthoringRemoteError("authoring target inspection is not the canonical current head")
-        # Let Runtime evaluate the immutable expected_head after its durable
-        # accepted-request replay check.  Comparing this observation with the
-        # pinned base head here would reject a valid identical retry; the
-        # compiled publication still carries the original expected_head.
         try:
-            compilation = compile_authoring_candidate(candidate)
+            compile_authoring_candidate(candidate)
         except AuthoringBundleError as exc:
             raise AuthoringRemoteError(f"authoring candidate validation failed: {exc}") from exc
-        manifest = compilation.publication.get("dependency_manifest")
-        media = manifest.get("media") if isinstance(manifest, Mapping) else None
-        if not isinstance(media, list):
-            raise AuthoringRemoteError("compiled candidate dependency manifest has no media list")
-        for index, dependency in enumerate(media):
-            if not isinstance(dependency, Mapping):
-                raise AuthoringRemoteError(f"compiled media dependency {index} is not an object")
-            media_id = dependency.get("media_id") or dependency.get("content_digest")
-            if not isinstance(media_id, str) or not media_id:
-                raise AuthoringRemoteError(f"compiled media dependency {index} has no media identity")
-            location = _data(
-                self._client.get_project_object_location(
-                    identity.project_id, media_id.removeprefix("sha256:")
-                ),
-                "get_project_object_location",
-            )
-            if location.get("verified") is not True:
-                raise AuthoringRemoteError(f"candidate media is not destination-owned: {media_id}")
-            observed = location.get("digest") or location.get("object_id")
-            if isinstance(observed, str) and observed.removeprefix("sha256:") != media_id.removeprefix("sha256:"):
-                raise AuthoringRemoteError(f"destination-owned media digest differs for {media_id}")
-
-        class _Writer:
-            def __init__(self, owner: WorkspaceClient):
-                self.owner = owner
-                self.result: Any = None
-
-            def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
-                self.result = self.owner.publish_parent_composition(
-                    project_id, timeline_id, publication, idempotency_key=idempotency_key
-                )
-                return _data(self.result, "publish_parent_composition")
-
-        writer = _Writer(self._client)
         try:
-            result = publish_authoring_candidate(
-                candidate, writer, idempotency_key=transport_idempotency_key
-            )
-        except (AuthoringBundleError, WorkspaceClientError) as exc:
-            raise AuthoringRemoteError(f"authoring candidate publication failed: {exc}") from exc
+            captured = list(commands)
+        except TypeError as exc:
+            raise AuthoringRemoteError("EditCommand proposal requires an iterable command list") from exc
+        if any(not isinstance(command, Mapping) for command in captured):
+            raise AuthoringRemoteError("EditCommand proposal commands must be objects")
+        from .timeline.commands import CommandError, validate_command
+        try:
+            for command in captured:
+                validate_command(command)
+        except CommandError as exc:
+            raise AuthoringRemoteError(f"EditCommand proposal contains an invalid command: {exc}") from exc
+        proposal = {
+            "kind": "edit-proposal",
+            "schema_version": 1,
+            "producer": "astrid.packs.video_editing.shared.draft_voiceover",
+            "admitted_target": {
+                "project_id": identity.project_id,
+                "timeline_id": identity.timeline_id,
+                "base_revision_id": identity.base_head,
+            },
+            "commands": [_plain(command) for command in captured],
+            "rationale": rationale,
+        }
+        proposal_digest = "sha256:" + hashlib.sha256(
+            canonical_json(proposal).encode("utf-8")
+        ).hexdigest()
         return {
-            "route": "authoring-bundle validate/commit",
-            "project_id": identity.project_id,
-            "timeline_id": identity.timeline_id,
-            "expected_head": identity.base_head,
-            "candidate_digest": result.get("candidate_digest"),
-            "identity_mapping": result.get("identity_mapping"),
-            "publication": result.get("publication"),
-            "update": result.get("update"),
-            "summary": result.get("summary"),
-            "next_actions": result.get("next_actions"),
+            **proposal,
+            "proposal_digest": proposal_digest,
+            "approval_binding": {"proposal_digest": proposal_digest},
         }

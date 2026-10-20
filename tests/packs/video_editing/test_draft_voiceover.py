@@ -189,14 +189,16 @@ def coordinator_client(c,s,current='h',fail_publish=False):
             return media_bytes
 
     class Bound:
-        def __init__(self):self.published=False
+        def __init__(self):self.published=False;self.fail_publish=fail_publish
         def open(self):return copy.deepcopy(c)
         def validate(self,work):return {}
         def diff(self,work):return {'changes':['audio']}
         def preview(self,work):return {'candidate_digest':'sha256:'+'3'*64}
-        def publish(self,work,**kwargs):
-            if fail_publish:raise RuntimeError('CAS conflict')
-            self.published=True;return {'publication':{'head':'new'}}
+        def proposal(self,work,commands,**kwargs):
+            digest='sha256:'+'4'*64
+            return {'kind':'edit-proposal','commands':list(commands),
+                    'proposal_digest':digest,
+                    'approval_binding':{'proposal_digest':digest}}
     bound=Bound(); calls=[0]
     def opened(*args,**kwargs):
         calls[0]+=1
@@ -206,6 +208,17 @@ def coordinator_client(c,s,current='h',fail_publish=False):
         timelines=SimpleNamespace(open_composition=opened,resolve_scope=lambda *a:{'project_id':'p','timeline_id':'t'},script=lambda *a,**k:s),
         open_authoring_target=lambda target:bound)
     return client,bound
+
+
+def enable_fake_requester(monkeypatch, bound):
+    """Keep the original coordinator assertions while isolating the requester seam."""
+    monkeypatch.setattr(vo, '_voiceover_proposal_commands', lambda *args: ([], []))
+    def commit(*args):
+        if bound.fail_publish:
+            raise RuntimeError('CAS conflict')
+        bound.published=True
+        return {'publication': {'head': 'new'}}
+    monkeypatch.setattr(vo, '_commit_voiceover_proposal', commit)
 
 
 def test_coordinator_noop_and_plan_do_not_synthesize_or_publish(monkeypatch):
@@ -226,6 +239,7 @@ def test_coordinator_detects_concurrent_head_and_cas_failure(monkeypatch):
         vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert not bound.published
     client,bound=coordinator_client(c,s,fail_publish=True)
+    enable_fake_requester(monkeypatch, bound)
     with pytest.raises(RuntimeError,match='CAS conflict'):
         vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert not bound.published
@@ -235,9 +249,22 @@ def test_coordinator_publishes_once_with_provenance(monkeypatch):
     c,s=fixture();s['occurrences'][0]['text']='New'
     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
     client,bound=coordinator_client(c,s)
+    enable_fake_requester(monkeypatch, bound)
     result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert result['published'] and bound.published
     assert result['generated'][0]['text']=='New'
+
+
+def test_coordinator_emits_open_proposal_when_audio_command_is_unexpressible(monkeypatch):
+    c,s=fixture();s['occurrences'][0]['text']='New'
+    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
+    client,bound=coordinator_client(c,s)
+    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+    assert result['status']=='proposal_open' and not result['published']
+    assert result['proposal']['kind']=='edit-proposal'
+    assert result['proposal']['approval_binding']['proposal_digest']==result['proposal']['proposal_digest']
+    assert any(gap['capability']=='generated audio media and timing' for gap in result['gaps'])
+    assert not bound.published
 
 
 def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_errors(monkeypatch):
@@ -246,6 +273,7 @@ def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_err
     def missing(_object_id):
         error=RuntimeError('missing');error.code='not_found';raise error
     client.media.read_bytes=missing
+    enable_fake_requester(monkeypatch, bound)
     result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert result['published'] and len(result['generated'])==2
 
