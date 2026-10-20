@@ -85,8 +85,8 @@ export type {ResolvedLoop} from './lib/beat-loop';
 export {mediaModifierBounds} from './lib/modifier-bounds';
 export type {ModifierBounds, ModifierContext, ModifierFinding} from './modifier-types';
 
-export {compileAudioEnvelope, validateAudioEnvelope, audioEnvelopeAt, applyAudioEnvelope, audioEnvelopeWav, AudioEnvelopeError} from './lib/audio-envelope';
-export type {AudioEnvelope, AudioCurve} from './lib/audio-envelope';
+export {compileAudioEnvelope, validateAudioEnvelope, audioEnvelopeAt, applyAudioEnvelope, audioEnvelopeWav, encodedEnvelopeSource, AudioEnvelopeError} from './lib/audio-envelope';
+export type {AudioEnvelope, AudioCurve, EncodedEnvelopeSource} from './lib/audio-envelope';
 
 export {prepareScene, querySceneFrame, querySceneFrame as queryCompositionSceneFrame, querySceneOcclusion} from './scene-evaluation';
 export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput, SceneOcclusion} from './scene-evaluation';

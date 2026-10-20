@@ -1,0 +1,103 @@
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {test} from 'node:test';
+import {
+  applyAudioEnvelope,
+  audioEnvelopeAt,
+  audioEnvelopeWav,
+  AudioEnvelopeError,
+  compileAudioEnvelope,
+  computeMediaTrim,
+  encodedEnvelopeSource,
+  getSanitizedPlaybackRate,
+  type EncodedEnvelopeSource,
+} from '../src/evaluation';
+
+const clip = {
+  id: 'sound', at: 7.5, track: 'A1', from: .05, to: .55, speed: 2, volume: .8,
+  params: {fadeIn: .1, fadeOut: .1},
+};
+const envelope = compileAudioEnvelope(clip, 30)!;
+const sourceFrom = computeMediaTrim(clip, 30).trimBefore / 30;
+const playbackRate = getSanitizedPlaybackRate(clip.speed);
+const prepared: EncodedEnvelopeSource = {
+  file: 'https://example.test/attempt-envelope.wav',
+  envelope_key: JSON.stringify(envelope),
+  source_from: sourceFrom,
+  playback_rate: playbackRate,
+};
+
+test('public admission accepts matching full-source PCM with the rounded trim/rate clock', () => {
+  assert.equal(sourceFrom, 2 / 30);
+  assert.equal(playbackRate, 2);
+  const original = Float32Array.from({length: 48000}, (_, i) => i % 2 ? -2 : 3);
+  const channel = original.slice();
+  applyAudioEnvelope([channel], 48000, envelope, sourceFrom, playbackRate);
+  const wav = new DataView(audioEnvelopeWav([channel], 48000));
+  assert.equal(wav.getUint16(20, true), 3);
+  assert.equal(wav.getUint32(24, true), 48000);
+  assert.equal(wav.byteLength, 44 + original.length * 4);
+  const expected = Float32Array.from(original, (value, i) =>
+    value * audioEnvelopeAt(envelope, (i / 48000 - sourceFrom) / playbackRate));
+  const actual = Float32Array.from(original, (_, i) => wav.getFloat32(44 + i * 4, true));
+  assert.deepEqual(new Uint8Array(actual.buffer), new Uint8Array(expected.buffer));
+  const before = JSON.stringify({prepared, envelope});
+  assert.equal(encodedEnvelopeSource(prepared, envelope, sourceFrom, playbackRate), prepared.file);
+  assert.equal(JSON.stringify({prepared, envelope}), before);
+});
+
+for (const [name, change] of [
+  ['wrong envelope', {envelope_key: JSON.stringify({keyframes: [{at: 0, value: 1}]})}],
+  ['raw fractional origin', {source_from: .05}],
+  ['wrong child rate', {playback_rate: .5}],
+  ['blob URL', {file: 'blob:forged'}],
+] as const) {
+  test(`public admission refuses ${name}`, () => {
+    const forged = {...prepared, ...change};
+    const before = JSON.stringify(forged);
+    assert.throws(() => encodedEnvelopeSource(forged, envelope, sourceFrom, playbackRate),
+      (error: unknown) => error instanceof AudioEnvelopeError && error.code === 'ENVELOPE_UNRENDERED');
+    assert.equal(JSON.stringify(forged), before);
+  });
+}
+
+test('public admission preserves canonical identity and addressed missing/malformed/duck refusals', () => {
+  const reordered = JSON.stringify(envelope, function (_key, value) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return Object.fromEntries(Object.entries(value).reverse());
+    }
+    return value;
+  });
+  assert.equal(encodedEnvelopeSource({...prepared, envelope_key: reordered}, envelope, sourceFrom, playbackRate), prepared.file);
+  for (const record of [undefined, {...prepared, envelope_key: '{'}]) {
+    assert.throws(() => encodedEnvelopeSource(record, envelope, sourceFrom, playbackRate), AudioEnvelopeError);
+  }
+  assert.throws(() => encodedEnvelopeSource(prepared, {keyframes: []}, sourceFrom, playbackRate), /invalid compiled envelope/);
+  assert.throws(() => encodedEnvelopeSource(undefined, {...envelope, duck: true}, sourceFrom, playbackRate),
+    (error: unknown) => error instanceof AudioEnvelopeError && error.code === 'DUCK_UNRENDERED');
+});
+
+test('public evaluation imports without runtime peers or browser side effects', () => {
+  const evaluation = new URL('../src/evaluation.js', import.meta.url).href;
+  const result = spawnSync(process.execPath, ['--input-type=module', '--eval', `
+    import {register} from 'node:module';
+    register('data:text/javascript,' + encodeURIComponent(\`
+      export async function resolve(specifier, context, nextResolve) {
+        if (!specifier.startsWith('.') && !specifier.startsWith('file:')) {
+          throw new Error('Evaluation imported a runtime peer: ' + specifier);
+        }
+        if (specifier.startsWith('.') && !specifier.endsWith('.js')) specifier += '.js';
+        return nextResolve(specifier, context);
+      }
+    \`), import.meta.url);
+    for (const name of ['window', 'document', 'fetch', 'AudioContext', 'setTimeout', 'setInterval']) {
+      Object.defineProperty(globalThis, name, {get() {throw new Error('Evaluation accessed ' + name);}});
+    }
+    const api = await import(${JSON.stringify(evaluation)});
+    if (typeof api.encodedEnvelopeSource !== 'function') throw new Error('Admission export missing');
+    if ('useAudioEnvelopeSource' in api) throw new Error('React hook exported');
+    api.encodedEnvelopeSource(${JSON.stringify(prepared)}, ${JSON.stringify(envelope)}, ${sourceFrom}, ${playbackRate});
+  `], {stdio: 'inherit'});
+  assert.ifError(result.error);
+  assert.equal(result.status, 0);
+});
