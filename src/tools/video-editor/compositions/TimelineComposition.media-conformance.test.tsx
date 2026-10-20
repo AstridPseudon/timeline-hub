@@ -195,12 +195,11 @@ describe('public compiled media adapter conformance (no decoded AV claim)', () =
               expect(endpoint).toHaveAttribute('data-trim-after', '330');
               expect(endpoint).toHaveAttribute('data-rate', '2');
               const base = muted ? 0 : gain * 0.8;
-              // Public source already carries its envelope; App invokes its actual
-              // per-frame callback. A source URL assertion is no PCM parity proof.
-              expect(endpoint).toHaveAttribute('data-src', entrypoint === 'public'
-                ? 'https://example.test/prepared-envelope.wav' : authored.assetEntry!.src);
-              expect(endpoint).toHaveAttribute('data-callback', String(entrypoint === 'App'));
-              expect(Number(endpoint!.getAttribute('data-gain'))).toBeCloseTo(entrypoint === 'public' ? base : base * multiplier, 12);
+              // Both consumers receive the same admitted prepared source and
+              // leave envelope gain to the continuous PCM payload.
+              expect(endpoint).toHaveAttribute('data-src', 'https://example.test/prepared-envelope.wav');
+              expect(endpoint).toHaveAttribute('data-callback', 'false');
+              expect(Number(endpoint!.getAttribute('data-gain'))).toBeCloseTo(base, 12);
               expect(endpoint).toHaveAttribute('data-volume-frame', String(local));
             }
             expect(renderFrame(content, 60, fps).querySelector('[data-kind="audio"]')).toBeNull();
