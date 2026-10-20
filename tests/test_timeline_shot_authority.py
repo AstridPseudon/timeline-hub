@@ -159,13 +159,17 @@ def invocation(operation, project, media, shot):
             {**body, "start_ms": 100, "duration_ms": 1000}, f"{action}_shot", (shot,), {})
 
 
-@pytest.mark.parametrize("operation", OPERATIONS)
-@pytest.mark.parametrize("shot", ["placed", "unused", "fresh"])
+@pytest.mark.parametrize(
+    ("operation", "shot"),
+    [(operation, "placed") for operation in OPERATIONS if not operation.startswith("timeline-")]
+    + [(operation, shot) for operation in OPERATIONS if operation.startswith("timeline-") for shot in ("placed", "unused", "fresh")],
+)
 def test_service_shot_writes_refuse_before_replay_or_writes(authority, monkeypatch, operation, shot):
     service, project, media, _ = authority
     _, _, body, method, args, kwargs = invocation(operation, project, media, shot)
     before = snapshot(service)
-    monkeypatch.setattr(service, "_command_replay", lambda *a, **kw: pytest.fail("retired writer consulted old receipt"))
+    if operation.startswith("timeline-"):
+        monkeypatch.setattr(service, "_command_replay", lambda *a, **kw: pytest.fail("retired writer consulted old receipt"))
     # A real existing acceptance identity must not resurrect a retired writer.
     for key in ("new-denied", "seed-shots"):
         with pytest.raises(RetiredRouteError) as error:
@@ -222,8 +226,11 @@ def http_request(daemon, method, path, body, token):
         return error.code, json.load(error)
 
 
-@pytest.mark.parametrize("operation", OPERATIONS)
-@pytest.mark.parametrize("shot", ["placed", "unused", "fresh"])
+@pytest.mark.parametrize(
+    ("operation", "shot"),
+    [(operation, "placed") for operation in OPERATIONS if not operation.startswith("timeline-")]
+    + [(operation, shot) for operation in OPERATIONS if operation.startswith("timeline-") for shot in ("placed", "unused", "fresh")],
+)
 def test_authenticated_http_shot_writes_are_retired(http_authority, operation, shot):
     daemon, project, media = http_authority
     method, path, body, *_ = invocation(operation, project, media, shot)
@@ -235,10 +242,11 @@ def test_authenticated_http_shot_writes_are_retired(http_authority, operation, s
 
 
 @pytest.mark.parametrize("operation", (*OPERATIONS, "item-promote"))
-def test_http_auth_and_scope_checks_precede_retirement(http_authority, operation):
+@pytest.mark.parametrize("shot", ["placed", "unused", "fresh"])
+def test_http_auth_and_scope_checks_precede_retirement(http_authority, operation, shot):
     daemon, project, media = http_authority
     token, _ = daemon.credentials.provision("reader", ["projects:read"])
-    method, path, body, *_ = invocation(operation, project, media, "placed")
+    method, path, body, *_ = invocation(operation, project, media, shot)
     before = snapshot(daemon.service)
     for credential in ("invalid", token):
         status, payload = http_request(daemon, method, path, body, credential)
@@ -254,7 +262,7 @@ def test_http_foreign_project_never_mutates_shot(http_authority, operation):
     method, path, body, *_ = invocation(operation, project, media, "placed")
     before = snapshot(daemon.service)
     status, payload = http_request(daemon, method, path, body, daemon.token)
-    assert status == (404 if operation == "item-promote" else 410), payload
+    assert status == 404, payload
     assert snapshot(daemon.service) == before
 
 

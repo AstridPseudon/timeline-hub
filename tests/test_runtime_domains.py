@@ -387,7 +387,6 @@ def test_project_reference_mutations_roll_back_before_idempotency_replay(tmp_pat
     service.close()
 
 
-@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="RT02 held: direct shot writes are retired (410); restored by the recorded-command replacement")
 def test_project_shot_mutations_roll_back_before_idempotency_replay(tmp_path, monkeypatch):
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
@@ -404,6 +403,59 @@ def test_project_shot_mutations_roll_back_before_idempotency_replay(tmp_path, mo
     monkeypatch.setattr(service, "_command_record", original)
     shot = service.create_project_shot(project["id"], {"shot_id": "atomic-shot", "name": "Shot"}, idempotency_key="atomic-shot")
     assert service.create_project_shot(project["id"], {"shot_id": "atomic-shot", "name": "Shot"}, idempotency_key="atomic-shot") == shot
+    service.close()
+
+
+def test_project_shot_replay_precedes_live_membership_checks(tmp_path, monkeypatch):
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    project = service.create_project({"slug": "replay", "name": "Replay"})
+    service.store.record_object("b" * 64, 1, "application/octet-stream")
+    service.store.add_object_ref(project["id"], "b" * 64)
+    service.create_project_shot(project["id"], {"shot_id": "replay-shot", "name": "Shot"}, idempotency_key="seed")
+    replayed = {"data": {"replayed": True}}
+    monkeypatch.setattr(service, "_command_replay", lambda *args, **kwargs: replayed)
+    monkeypatch.setattr(
+        service,
+        "_require_unplaced_project_shot",
+        lambda *args, **kwargs: pytest.fail("live film membership check preceded receipt replay"),
+    )
+
+    calls = (
+        ("create_project_shot", (project["id"], {"shot_id": "replay-shot", "name": "Shot"}), {}, "shot.create"),
+        ("update_project_shot", (project["id"], "replay-shot", {"expected_version": 1, "name": "Changed"}), {}, "shot.update"),
+        ("update_project_shot", (project["id"], "replay-shot", {"expected_version": 1}), {"archived": True}, "shot.archive"),
+        ("add_shot_item", (project["id"], "replay-shot", {"media_id": "b" * 64}), {}, "shot.item.add"),
+        ("remove_shot_item", (project["id"], "replay-shot", "item", {"expected_version": 1}), {}, "shot.item.remove"),
+        ("reorder_shot_items", (project["id"], "replay-shot", {"expected_version": 1, "item_ids": ["item"]}), {}, "shot.item.reorder"),
+    )
+    for method, args, kwargs, _ in calls:
+        assert getattr(service, method)(*args, idempotency_key="replay-" + method, **kwargs) == replayed
+    service.close()
+
+
+def test_project_shot_catalog_refuses_legacy_timeline_membership(tmp_path):
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    project = service.create_project({"slug": "legacy", "name": "Legacy"})
+    service.create_project_shot(project["id"], {"shot_id": "legacy-shot", "name": "Shot"}, idempotency_key="legacy-shot")
+    service.create_timeline(project["id"], "legacy-timeline", idempotency_key="legacy-timeline")
+    with service.store._transaction():
+        service.store.conn.execute(
+            "INSERT INTO timeline_shots(id, timeline_id, start_ms, duration_ms, reference_ids_json) VALUES (?, ?, 0, 1000, '[]')",
+            ("legacy-shot", "legacy-timeline"),
+        )
+        service.store.conn.execute(
+            "INSERT INTO timeline_revisions(timeline_id, version, shots_json, references_json, created_at) VALUES (?, 2, ?, '[]', ?)",
+            ("legacy-timeline", json.dumps([{"id": "legacy-shot"}]), "2026-01-01T00:00:00Z"),
+        )
+    before = tuple(service.store.conn.iterdump())
+    with pytest.raises(RetiredRouteError) as error:
+        service.update_project_shot(
+            project["id"], "legacy-shot", {"expected_version": 1, "name": "Changed"}, idempotency_key="legacy-update",
+        )
+    assert error.value.details["reason"] == "shot_in_film_history"
+    assert tuple(service.store.conn.iterdump()) == before
     service.close()
 
 
