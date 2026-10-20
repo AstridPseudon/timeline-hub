@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T16:03:38Z | dispatcher heartbeat 14s | live 4 (sol 1, luna 3, other 0) | busy30 30 | status age 6m -->
+<!-- viewing | 2026-10-20T16:09:13Z | dispatcher heartbeat 0s | live 4 (sol 1, luna 3, other 0) | busy30 30 | status age 3m -->
 # viewing — 2026-10-20 15:56 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active/M4 incomplete. Gates6/7 OPEN.
 Integrated: Composition5a4e9b72f/public13/tree13e37553; central1020134123-9841 npmtest76PASS/0FAIL/0SKIP, build/API/archivePASS. Immutable9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738/58477B/77members; old12/11unchanged. PLAN13releaseRECORDED; AppFIRSTthenAgent.
@@ -19,3 +19,5 @@ Inbox: rules rev 2026-10-20 read. ALWAYShigh/Lunadefault/reviewsLuna/SolonlyHARD
 Resources:9608261632Bfree15:57 BELOW10GiBfloor, leadrecycleREQUESTED; physicalrunsPAUSEDuntilheadroom>13GB; no activeheavy/full/browser onViewing. Preservef816graph/freshprivateAppgraph/retainedOWNNode/active.testsnapshots. Shareddeps/runtimes/venvs/cachesREADONLY. No managerproduct/gitmutation/push.
 
 Currentround correction: stopped cap3a reviewer for shared-scope symlink extraction violation; lead audit requested, sharedApp remainsUNQUALIFIED. Resume vw-m3-app-cap3a-readonly-scope-resume explicitly uses CLEANprivate leaf-only overlay. Freshmouth prior4PASS used pollutedscene graph (reportf816claimwrong), cleanf8164testrequalification worker active; no currentclean-envclaim from oldrun. New explicitScene Rootlifetime consumer worker starts currentintegratedhelper, savepure. Rulesrevreadunchanged.
+
+Peerupdate16:07: App590c MAIN574 integratedthenOWNER15:46FIXFORWARD freeze: ONLYTrackInspector touchpreservationtestport next, NOPCM13/app2/fulluntilgreen. ACKdirectly; capcorrectionbranchreviewcontinues, no bypass. Appfull7413 terminal18912PASS/0actualFAIL/3originalexpected/all1478; exact3599/8130/2c4/public12 only. Lead16:00 audit confirmed stoppedreviewer modified18sharedApppackagefiles+4chunks; .package-lock stays008. GraphUNQUALIFIED/no usage, dangerousaliases preservednotrecursed; privatecleanleafreviews valid.
