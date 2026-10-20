@@ -165,16 +165,21 @@ console.log('Plain Node ESM, bundled render, scoped host capability/override and
 import {TimelineComposition, prepareCompositionScene, type TimelineClip, type TrackDefinition, type CompositionRegistries, type TransitionReferenceObject} from '@banodoco/timeline-composition';
 import {clipOpacity, prepareTrack, queryTrackFrame, querySceneOcclusion, declareAppTransition, type SceneFrame, type SceneOcclusion,
   type ComponentDiagnostics, type ComponentFrameSupport, type TransitionSpec, type IncomingTransitionPolicy, type ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';
-import {composeAnimations, type EffectProps, type RuntimeTheme, type HookAnimationProps} from '@banodoco/timeline-composition/theme-api';
+import {composeAnimations, useTheme, type EffectProps, type AnimationReferenceList, type RuntimeTheme, type HookAnimationProps} from '@banodoco/timeline-composition/theme-api';
 import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
 import {EFFECT_REGISTRY} from '@banodoco/timeline-composition/effects.generated';
-import {THEME_PACKAGE_REGISTRY} from '@banodoco/timeline-composition/registry.generated';
+import {THEME_PACKAGE_CLIP_TYPES, THEME_PACKAGE_REGISTRY} from '@banodoco/timeline-composition/registry.generated';
 import {ANIMATION_META} from '@banodoco/timeline-composition/animations.generated';
 import {TRANSITION_META} from '@banodoco/timeline-composition/transitions.generated';
 const host: CompositionRegistries = {effects: {custom: (_props: EffectProps<{title: string}>) => null}};
 host.animations = {custom: (props: HookAnimationProps) => ({content: props.progress})};
 host.animationMeta = {custom: {kind: 'hook', supportsEasing: true}};
 const resolved = (theme: RuntimeTheme) => resolveElementRegistries(theme, host);
+type _AnimationListCheck = AnimationReferenceList;
+const _composeAnimationsRef: typeof composeAnimations = composeAnimations;
+const _useThemeRef: typeof useTheme = useTheme;
+declare const _animationList: _AnimationListCheck;
+void [_composeAnimationsRef, _useThemeRef, _animationList];
 const clip: TimelineClip = {id: 'x', at: 0, hold: 1, track: 'v', clipType: 'custom'};
 const opacity: number = clipOpacity(clip, 6, 30);
 const incomingPolicy: IncomingTransitionPolicy = 'preroll-crossfade';
@@ -189,7 +194,7 @@ const diagnostics: ComponentDiagnostics = {motion: {zoom: 1.2}, face: {status: '
 const support: ComponentFrameSupport = {presence: 'present', opaqueSupport: 'none', bounds: {status: 'unknown', reason: 'Glyphs'}, diagnostics};
 void [opacity, transition, contentFrame, selectedFile, occlusion, support];
 void [TimelineComposition, prepareCompositionScene, prepareTrack, composeAnimations, resolved, clip, EFFECT_REGISTRY,
-  THEME_PACKAGE_REGISTRY, ANIMATION_META, TRANSITION_META];
+  THEME_PACKAGE_CLIP_TYPES, THEME_PACKAGE_REGISTRY, ANIMATION_META, TRANSITION_META];
 `);
   run(process.execPath, ['node_modules/typescript/bin/tsc', '--noEmit', '--strict', '--skipLibCheck',
     '--module', 'NodeNext', '--moduleResolution', 'NodeNext', '--target', 'ES2022', 'consumer.ts']);
