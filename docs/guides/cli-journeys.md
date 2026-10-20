@@ -500,8 +500,11 @@ python3 -m astrid timelines replace-parent-media primary --project demo \
   --occurrence-id OCC_01ABC --clip-id CLIP_01ABC \
   --source-object-id MEDIA_SHA256 --expected-head REV_01ABC --json
 
-# Complete-document edits use the detached checkout recipe. Edit the JSON
-# between checkout and check; publish performs one parent compare-and-swap.
+# Document edits use the detached checkout recipe. Edit the JSON between
+# checkout and check; publish captures supported raw timing/trim/hold fields
+# into native EditCommands and commits them through the source-file outbox.
+# Unsupported structure, narration/DSL, and legacy same-alias media changes
+# remain held with the original positive requirement intact.
 python3 astrid/packs/rendering/docs/scripts/timeline_document.py checkout \
   --project demo --timeline primary --file /tmp/timeline-edit.json
 python3 astrid/packs/rendering/docs/scripts/timeline_document.py check \

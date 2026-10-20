@@ -15,6 +15,7 @@ from astrid.core.timeline.authoring_bundle import open_authoring_bundle, publish
 from astrid.core.timeline.authoring_feedback import authoring_change_summary, publication_feedback
 from astrid.packs.timeline.cli import _configure_diff, _configure_show, _configure_visualize
 from astrid.sdk.authoring_remote import AuthoringRemoteError, TargetBoundAuthoringBundle
+from astrid.sdk.timeline.document_diff import DocumentDiffError, document_diff_to_commands
 from astrid.sdk.timeline_editing import duplicate_authoring_shot, remove_authoring_shot
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.timeline.test_authoring_bundle import NEW, OLD, _closure, _digest
@@ -144,6 +145,42 @@ def test_timing_fields_on_one_clip_count_one_adjustment_and_no_images():
     assert result["summary"]["media_selections"]["image"]["updated"] == 0
 
 
+def test_document_view_adapter_emits_native_command_for_explicit_parent_timing():
+    work = bundle()
+    base = copy.deepcopy(work)
+    work["parent"]["clips"][0]["at"] = 4
+    work["parent"]["config"]["clips"][0]["at"] = 4
+
+    native = document_diff_to_commands(work, base)
+
+    assert [command["op"] for command in native["commands"]] == ["clip.move"]
+    assert native["commands"][0]["select"] == "parent/clip:direct"
+
+
+def test_document_view_adapter_holds_narration_and_same_alias_media_changes():
+    work = bundle()
+    base = copy.deepcopy(work)
+    shot = next(iter(work["shots"].values()))
+    shot["payload"]["text_bindings"][0]["text"] = "changed"
+    with pytest.raises(DocumentDiffError, match="payload/narration"):
+        document_diff_to_commands(work, base)
+
+    work = bundle()
+    shot = next(iter(work["shots"].values()))
+    shot["internal_timeline"]["registry"]["assets"]["old-picture"]["media_id"] = NEW
+    with pytest.raises(DocumentDiffError, match="registry/media"):
+        document_diff_to_commands(work, bundle())
+
+
+def test_document_view_adapter_requires_the_exact_pinned_base():
+    work = bundle()
+    base = bundle()
+    base["parent"]["clips"][0]["at"] = 9
+
+    with pytest.raises(DocumentDiffError, match="exact pinned parent base"):
+        document_diff_to_commands(work, base)
+
+
 def test_unchanged_checkout_reports_no_authored_changes_and_unknown_imports_by_default():
     result = publish_authoring_candidate(bundle(), Writer(), idempotency_key="noop")
     assert result["update"].startswith("No authored changes. Saved revision saved-revision.")
@@ -212,25 +249,47 @@ def test_document_publish_stdout_and_durable_receipt_contain_shared_feedback(tmp
     spec = importlib.util.spec_from_file_location("timeline_document_feedback_test", script)
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
-    work = bundle(images=3)
-    replace_images(work)
+    work = bundle()
+    work["base_parent"]["publication_id"] = "publication-1"
+    work["parent"]["clips"][0]["at"] = 4
+    work["parent"]["config"]["clips"][0]["at"] = 4
     path = tmp_path / "batch 'one' edit.json"
     source = json.dumps(work)
     path.write_text(source)
-    client = SimpleNamespace(timelines=SimpleNamespace(open_composition=lambda *args: SimpleNamespace(
-        ok=True, data={"summary": {"head_revision_id": "parent-1"}},
-    )))
+    commits = []
+
+    class Session:
+        def _state(self):
+            return {"base": {"revision_id": "parent-1", "publication_id": "publication-1"}}
+
+        def _bundle(self, _state):
+            original = bundle()
+            original["base_parent"]["publication_id"] = "publication-1"
+            return original
+
+        def commit_many(self, commands, **kwargs):
+            commits.append(commands)
+            assert [command["op"] for command in commands] == ["clip.move"]
+            assert kwargs["idempotency_key"] == "batch-feedback"
+            return {"data": {
+                "status": "accepted", "accepted_revision_id": "saved-revision",
+                "previous_revision_id": "parent-1",
+            }}
+
+    client = SimpleNamespace(
+        timelines=SimpleNamespace(history=lambda *args, **kwargs: None),
+    )
     monkeypatch.setattr(helper.AstridClient, "open_from_launcher", lambda **kwargs: nullcontext(client))
-    writer = Writer()
-    monkeypatch.setattr(helper, "workspace", lambda: writer)
+    monkeypatch.setattr(helper, "workspace", lambda: SimpleNamespace())
+    monkeypatch.setattr(helper.TimelineSession, "open", lambda *args, **kwargs: Session())
     monkeypatch.setattr("sys.argv", [str(script), "publish", "--file", str(path), "--idempotency-key", "batch-feedback"])
     helper.main()
     output = json.loads(capsys.readouterr().out)
     saved = json.loads(path.with_suffix(".publication.json").read_text())
-    assert output["update"].startswith("Updated 3 image selections.")
+    assert output["update"].startswith("Adjusted timing on 1 clip.")
     for field in ("update", "summary", "next_actions"):
         assert output[field] == saved[field]
-    assert output["publication"]["new_head"] == "saved-revision"
+    assert output["publication"]["data"]["accepted_revision_id"] == "saved-revision"
     assert saved["media_imports"] == []
     assert output["artifacts"] == saved["artifacts"]
     for key, suffix in (("check", ".check.json"), ("prepared", ".prepared.json"), ("publication", ".publication.json")):
@@ -249,6 +308,18 @@ def test_document_publish_stdout_and_durable_receipt_contain_shared_feedback(tmp
         assert parsed.format == diff_action["format"]
     assert "--from-revision parent-1 --to-revision saved-revision" in output["update"]
     assert path.read_text() == source
+
+    helper.main()
+    replay = json.loads(capsys.readouterr().out)
+    assert replay["publication"]["data"]["accepted_revision_id"] == "saved-revision"
+    assert len(commits) == 1
+
+    changed = json.loads(path.read_text())
+    changed["parent"]["clips"][0]["at"] = 5
+    changed["parent"]["config"]["clips"][0]["at"] = 5
+    path.write_text(json.dumps(changed))
+    with pytest.raises(RuntimeError, match="changed document intent"):
+        helper.main()
 
 
 def test_target_bound_sdk_forwards_shared_publication_feedback():

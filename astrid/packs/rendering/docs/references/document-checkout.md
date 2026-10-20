@@ -6,12 +6,12 @@ snapshot, not a lock. The runtime remains authoritative until publication.
 
 The complete executable example is
 [`../scripts/timeline_document.py`](../scripts/timeline_document.py). It defines
-all connection, discovery, immutable-closure, validation, and writer variables;
-read it when adapting the workflow. `AstridClient.open_from_launcher` resolves
-project/timeline names and pins the head. The public launcher receipt and
-`WorkspaceClient` supply the revision reads and publication port that the
-high-level client does not yet expose as a general checkout method. It never
-constructs a pretend coordinator capability or accesses private client fields.
+all connection, discovery, immutable-closure, validation, and native-session
+variables; read it when adapting the workflow. `AstridClient.open_from_launcher`
+resolves project/timeline names and pins the head. The public launcher receipt
+and `WorkspaceClient` supply revision reads and catalog import; `TimelineSession`
+owns normal command publication and its durable outbox. It never constructs a
+pretend coordinator capability or accesses private client fields.
 
 Run with Python from the environment where Astrid is installed. Keep the same
 launcher configuration as Astrid App; for a checkout-backed installation this may
@@ -38,8 +38,12 @@ not the bounded `timelines show` projection. `check` probes every referenced
 local file, prepares a detached copy with calculated media digests, validates,
 and diffs locally. It does not connect to or write runtime state. Its `.check.json`
 lists the files and import keys that publication will use. `publish` repeats
-that preflight, rechecks the selected head, imports through the existing project
-catalog, validates the durable result, and sends one parent-CAS publication.
+that preflight, captures only the supported raw view fields into native
+EditCommands against the exact pinned Runtime closure, imports through the
+existing project catalog, and commits the command batch through the durable
+source-file outbox. Structure, narration/DSL, and legacy same-alias media
+replacement remain explicitly held rather than falling back to a whole-candidate
+save.
 Keep its `.prepared.json` durable rewrite, `.imports.json` catalog receipts,
 and `.publication.json` receipt,
 including `new_head` and `dependency_manifest`; use a new checkout for the next
@@ -109,7 +113,7 @@ checkout             detached, editable JSON at the current head
         ↓
 check                local validation and a readable diff
         ↓
-publish              one parent compare-and-swap publication
+publish              native command batch through the durable source-file outbox
 ```
 
 Both inspection commands print the next useful command in human output and

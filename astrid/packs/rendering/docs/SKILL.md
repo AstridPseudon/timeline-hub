@@ -622,14 +622,17 @@ Use the same pinned parent composition for direct edits and code-driven batch
 edits. `timelines show` opens a read-only inspection projection; it is not the
 editable bundle. For an exact parent-media replacement, use the supported
 `timelines replace-parent-media` command only when the case-specific target
-receipt declares that route and supplies its required locator. For other
-supported edits, use ordinary Python against the detached same-schema bundle:
+receipt declares that route and supplies its required locator. The detached
+document script's publish step is narrower: it captures supported raw clip
+timing/trim/hold, declared built-in parameters, and parent track labels into
+native EditCommands, then commits them through the durable source-file outbox.
+Structure, narration/DSL, and legacy same-alias media changes remain held.
+For other supported edits, use ordinary Python against the detached same-schema bundle:
 
 ```python
 from astrid.sdk.authoring_bundle import (
     open_authoring_bundle, validate_authoring_candidate,
     diff_authoring_candidate, preview_authoring_candidate,
-    publish_authoring_candidate,
 )
 
 candidate = open_authoring_bundle(
@@ -640,8 +643,10 @@ candidate = open_authoring_bundle(
 validate_authoring_candidate(candidate)
 diff = diff_authoring_candidate(candidate)
 frozen = preview_authoring_candidate(candidate)  # freezes candidate JSON; no pixels are rendered
-publication = publish_authoring_candidate(candidate, writer, idempotency_key=run_id)
-# Retain the receipt; reopen its exact closure only if a later check needs it.
+# The document script captures its supported view fields against the exact
+# pinned Runtime bundle and calls TimelineSession.commit_many(..., via="document",
+# base={"revision_id": ..., "publication_id": ...}). Retain its receipt and
+# source-file outbox; retry the same command body after a lost acknowledgement.
 ```
 
 Keep the exact publication response, including its `new_head` and complete
@@ -678,7 +683,7 @@ uses **`row["duration_ms"]` at the row level**, not inside `placement`.
 Do not reconstruct or save a legacy whole-document `config`/`registry` payload
 from `timelines show`. Use the detached checkout recipe above so the complete
 parent/shot/internal closure, managed media identities, validation diff, and
-compare-and-swap publication stay together. For reusable project shots, use
+native command publication stay together. For reusable project shots, use
 the nested `timelines shots` product only where its command is explicitly
 available.
 
