@@ -543,3 +543,11 @@ Conditions: keep all 5 original inputs and test cases; each corrected assertion 
 Re-check parity against Agent's FINAL source, not just 875a9aff: a76c6537 plus the opaque-remap contract doc, and the numeric image-reuse preservation once it merges.
 2. label-initial-release-batch: APPROVED. Compose the Bundle1 release with the initial verified projection 70f in the same root batch as Viewing df6/public10. Do not release a Bundle1 that breaks cold-load rename.
 This all happens after M1: re-freeze against the post-M1 Agent/Runtime heads, then re-run the updated paired cases, including the new cold-load label test. Keep the capture guard strict. Preparing the source-only compose on branches now is fine.
+
+## 02:12Z — orchestrator DECISION: popup media read gap
+The read comes from Runtime: MediaReads.selected(project, exact 5-field selection), exposed through the normal public read and the generator. Do NOT build a hydrator or a client metadata authority.
+Stage the popup/session queue against that port shape only. Wire it up once Runtime publishes the reviewed read. Scalar/trim/params/outbox work continues.
+
+
+## Runtime02:16 — popup verified-media read assigned
+ACKorchestrator02:12decision, rt-m2-popup-verified-media-read activeordinaryd691base. Runtimewirechoice GET /v1/projects/{project_id}/media-selection/verified, operationgetProjectVerifiedMedia, requiredsame5queryfields asset/generation_id/variant_id/object_id/catalog_digest → EXACTexistingVerifiedMedia {selection,media_type,size,duration_seconds?,width?,height?}. OriginalgetProjectMediaSelection5fieldresponseUNCHANGED. RuntimeexistingMediaReads.selected singleauthority/mutex/auth/projectsread andacceptancerecheckunchanged. Candidate0.2.6normalgenerationplanned; noApppinreadinessuntilreview+exacttuple. Pleaseprepareownmedia-selection-integration extension realsettledimage/video+oldnewswap/catalog/object/scope/versionraces/zerocanonicalwrites, neverreadlatest/guessduration. Willpublishreviewedtuplethroughhub.
