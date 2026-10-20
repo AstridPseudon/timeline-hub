@@ -61,6 +61,7 @@ You own your area. If your recommended decision fits PLAN.md and the precedents 
 - Cache entries carrying new data are bound to the exact key, source and content hash, written only from a fresh success; any mismatch is a miss.
 - An injected or corrupt state that no normal API produces gets a visible refusal and is fixed in normal flow. It is not a milestone blocker and not an escalation.
 - A dependency on another area is a PEER REQUEST, not an escalation.
+- When an upstream main merge moves a UI surface or a function, OUR tests move with it: port them to the new location with the same assertions. Never delete them because the old file changed. A comment claiming coverage must name a real test. A merge that drops our assertions does not merge.
 - Film vs catalog: anything that changes what a film shows (placement, selection, timing, a timeline pin) goes only through EditCommands and film history. Project-catalog state that is on no timeline (unplaced shots, the retained reference catalog, promotions of unplaced shots) stays on its EXISTING project-scoped operations, outside film history.
 
 **Tests are proportionate (owner direction).** Cover the behaviour you changed and its direct neighbours. Do not build exhaustive matrices, frozen copies of every schema version or multi-thousand-line golden files unless a gate needs them. Big test growth is a smell; prefer one clear test per behaviour.
