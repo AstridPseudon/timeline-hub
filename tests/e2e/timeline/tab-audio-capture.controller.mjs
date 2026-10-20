@@ -112,7 +112,7 @@ function inputFiles(allTracked) {
   return files;
 }
 
-function hashTree(root) {
+export function hashTree(root) {
   const entries = [];
   function visit(directory, prefix = '') {
     for (const name of readdirSync(directory).sort()) {
@@ -120,17 +120,13 @@ function hashTree(root) {
       const relativePath = `${prefix}${name}`;
       const stat = lstatSync(absolute);
       if (stat.isDirectory()) visit(absolute, `${relativePath}/`);
-      else if (stat.isFile()) entries.push({path: relativePath, kind: stat.mode & 0o111 ? 'executable' : 'file', bytes: readFileSync(absolute)});
-      else if (stat.isSymbolicLink()) entries.push({path: relativePath, kind: 'symlink', bytes: Buffer.from(readlinkSync(absolute))});
+      else if (stat.isFile()) entries.push([relativePath, stat.mode & 0o111 ? 'executable' : 'file', sha256(readFileSync(absolute))]);
+      else if (stat.isSymbolicLink()) entries.push([relativePath, 'symlink', sha256(Buffer.from(readlinkSync(absolute)))]);
       else throw new Error(`Unsupported dependency tree entry: ${absolute}`);
     }
   }
   visit(root);
-  const hash = createHash('sha256');
-  for (const entry of entries) {
-    hash.update(JSON.stringify([entry.path, entry.kind, sha256(entry.bytes)]));
-  }
-  return {sha256: hash.digest('hex'), fileCount: entries.length};
+  return {sha256: sha256(Buffer.from(JSON.stringify(entries))), fileCount: entries.length};
 }
 
 function packageFingerprint(name) {

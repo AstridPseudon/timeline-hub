@@ -1,13 +1,20 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
+import {createRequire} from 'node:module';
+import {chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {dirname, join} from 'node:path';
+import {tmpdir} from 'node:os';
 import {
   assertFingerprintUnchanged,
   assertGrant,
   BROWSER_EXECUTABLE,
   BROWSER_VERSION,
+  hashTree,
   PROFILE,
   renderGraphFingerprint,
 } from './tab-audio-capture.controller.mjs';
+
+const require = createRequire(import.meta.url);
 
 const fingerprint = {
   sourceSha: 'a'.repeat(40),
@@ -99,4 +106,41 @@ test('render graph fingerprint resolves the package root and all frozen files', 
     'remotion/dist/esm/index.mjs': '5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
     'remotion/dist/cjs/audio/shared-audio-tags.js': '949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
   });
+});
+
+test('hashTree uses canonical whole-tuple framing for fixtures and the frozen Playwright tree', () => {
+  const root = mkdtempSync(join(tmpdir(), 'tab-audio-hash-tree-'));
+  const executable = join(root, 'bin', 'run.sh');
+  const regular = join(root, 'alpha.txt');
+  try {
+    mkdirSync(dirname(executable));
+    writeFileSync(regular, 'alpha\n');
+    writeFileSync(executable, '#!/bin/sh\n');
+    chmodSync(regular, 0o644);
+    chmodSync(executable, 0o755);
+
+    const expected = {sha256: '8a79f98987096e97cc953ecbd5af33617f60b15ab9280fa50e5a3e9b803b3218', fileCount: 2};
+    // This vector is the pre-fix per-tuple concatenation for the same fixture.
+    const legacyPerTupleFraming = '54b43f4ffd704bcedefb2f7ab19c47de86b67672100b9f9106524fea964b6a64';
+    assert.deepEqual(hashTree(root), expected);
+    assert.notEqual(hashTree(root).sha256, legacyPerTupleFraming);
+
+    assert.deepEqual(hashTree(dirname(BROWSER_EXECUTABLE)), {
+      sha256: '5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e',
+      fileCount: 255,
+    });
+    const playwrightRoot = dirname(require.resolve('playwright-core/package.json'));
+    assert.deepEqual(hashTree(playwrightRoot), {
+      sha256: '6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d',
+      fileCount: 106,
+    });
+
+    writeFileSync(regular, 'changed\n');
+    assert.notEqual(hashTree(root).sha256, expected.sha256);
+    writeFileSync(regular, readFileSync(regular, 'utf8').replace('changed', 'alpha'));
+    chmodSync(regular, 0o755);
+    assert.notEqual(hashTree(root).sha256, expected.sha256);
+  } finally {
+    rmSync(root, {recursive: true, force: true});
+  }
 });
