@@ -178,6 +178,21 @@ export function useTimelineCommandSession(options: {
             realElementPort.submit(input);
           },
         };
+        const realElementOverlay = session.elementOverlay;
+        session.elementOverlay = {
+          capture(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element overlay');
+            return realElementOverlay.capture(input);
+          },
+          finish(basis) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element overlay');
+            return realElementOverlay.finish(basis);
+          },
+          submit(input) {
+            if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing an element overlay');
+            realElementOverlay.submit(input);
+          },
+        };
         const genericPatchPort = session.genericPatchPort;
         const requireCleanGenericPatch = () => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before applying a native patch');
@@ -279,9 +294,10 @@ export function useTimelineCommandSession(options: {
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     genericPatchPort: sessionRef.current?.genericPatchPort,
     elementPort: sessionRef.current?.elementPort,
+    elementOverlay: sessionRef.current?.elementOverlay,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
-  & Partial<Pick<ReturnType<typeof useTimelineCommandSession>, 'useLatest' | 'keepLabelChanges'>>;
+  & Partial<Pick<ReturnType<typeof useTimelineCommandSession>, 'useLatest' | 'keepLabelChanges' | 'elementOverlay'>>;

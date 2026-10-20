@@ -1354,6 +1354,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     commandSession: save.commands.enabled ? {
       state: save.commands.state, retry: save.commands.retry, recover: save.commands.recover,
       useLatest: save.commands.useLatest, keepLabelChanges: save.commands.keepLabelChanges,
+      elementOverlay: save.commands.elementOverlay,
     } : undefined,
     ...(commandHistory ? {
       undo: () => { void save.commands.undo().catch((error) => runtime.toast.error(error instanceof Error ? error.message : String(error))); },

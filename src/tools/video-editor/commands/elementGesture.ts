@@ -13,6 +13,7 @@ import {
 } from './elementCapture.ts';
 import { AuthoredState, copy, equal, freezeJson, object } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
+import type { OutboxBasis, OutboxHead } from './commitOutbox.ts';
 
 export type ElementEdit =
   | { elementRef: ElementCaptureArgs; params?: never }
@@ -44,6 +45,31 @@ export interface ElementCapturePort {
   capture(input: { clipId: string; current: TimelineData; edit: ElementEdit }): ElementCaptureBasis;
   finish(basis: ElementCaptureBasis, edit: ElementEdit): PreparedElementEdit;
   submit(input: PreparedElementEdit): void;
+}
+
+export type ElementOverlayOperation =
+  | { kind: 'create'; row: Record<string, JSON>; track?: Record<string, JSON> }
+  | { kind: 'delete'; select: string };
+
+export type ElementOverlayCaptureBasis = {
+  readonly operation: ElementOverlayOperation;
+  readonly bundle: AuthoredBundle;
+  readonly commands: readonly EditCommand[];
+  readonly head: OutboxHead;
+  readonly localGeneration: number;
+  readonly localBasis: OutboxBasis;
+  readonly previewVersion: number;
+};
+
+export type PreparedElementOverlay = {
+  commands: EditCommand[];
+  preview: TimelinePatch;
+};
+
+export interface ElementOverlayCapturePort {
+  capture(input: { current: TimelineData; operation: ElementOverlayOperation }): ElementOverlayCaptureBasis;
+  finish(basis: ElementOverlayCaptureBasis): PreparedElementOverlay;
+  submit(input: PreparedElementOverlay): void;
 }
 
 export type CapturedElementEdit = {
