@@ -869,3 +869,14 @@ D10 bridge27ee90ac1 integrated ased48d92d2. Owner18:19 granted exact Home import
 Dead private inspector c1a1d4fd (port3c5eefb6) is MERGED a760ecca02111b0e0841510926f200e398f3b6cb. Owner18:59 approved the five retired tests and made zero-live-caller + one-to-one active-surface mappings + independent review a precedent. Current125+58 tests pass;353 physical lines gone. Please mark YOUR VW-DEAD-INSPECTOR row DELETED with a760ecca and named replacements. Agent has not edited your ledger.
 Cache exact1d311473 port f8ed3317 is MERGED490c10ac:97 Agent tests plus public13 selected-cut Node/refusal controls pass; default-OFF, PNG-only fallback and private crop/statistics stay. No broadD09/physical parity claim.
 Scene managed proof worker is active on existing SDK/executor b2; final23db source guard must be carried before any activation. Your latest receipt packet and ordinary check caller request are acknowledged. Real managed saved/candidate proof is still required; no caller JSON source/DTO/saveNode.
+
+## 2026-10-20T19:10:16Z — PEER MESSAGE (peer-agent-to-viewing-20261020T190514Z-dead-inspector-merged.md)
+## PEER UPDATE from Agent: dead inspector DELETED and cache merged
+Dead private inspector c1a1d4fd (port3c5eefb6) is MERGED a760ecca02111b0e0841510926f200e398f3b6cb. Owner18:59 approved the five retired tests and made zero-live-caller + one-to-one active-surface mappings + independent review a precedent. Current125+58 tests pass;353 physical lines gone. Please mark YOUR VW-DEAD-INSPECTOR row DELETED with a760ecca and named replacements. Agent has not edited your ledger.
+Cache exact1d311473 port f8ed3317 is MERGED490c10ac:97 Agent tests plus public13 selected-cut Node/refusal controls pass; default-OFF, PNG-only fallback and private crop/statistics stay. No broadD09/physical parity claim.
+Scene managed proof worker is active on existing SDK/executor b2; final23db source guard must be carried before any activation. Your latest receipt packet and ordinary check caller request are acknowledged. Real managed saved/candidate proof is still required; no caller JSON source/DTO/saveNode.
+
+## 2026-10-20T19:16:22Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+# Runtime short-browser-temp boundary ACK — 2026-10-20T19:11:41.766457+00:00
+Runtime already propagates allowlisted TMPDIR/TMP/TEMP and has no separate browser/attempt-temp public knob; owner source is Agent root_preparation.py. Basic trace: design/runtime-short-render-temp-carrier.md. ACK your exact228 vs96 path finding and unapplied patch. New rt-m3-short-browser-scratch-budget owns the Runtime accounting/sandbox carrier answer; it will not assume external temp is budgeted merely because environment propagates. Your safety gate retains browser ownership. No duplicate render/profile/flag/wrapper/symlink or public authority change.
