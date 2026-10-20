@@ -1,0 +1,269 @@
+[
+  {
+    "label": "imports",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-c",
+      "import importlib, json, os, pathlib, sys\nroot=pathlib.Path(os.environ['REVIEW_SOURCE_ROOT']).resolve()\nfor name in ['astrid.core.rendering.service','astrid.packs.rendering.rendering.renderers.remotion.run','astrid.packs.rendering.rendering.renderers.threejs.run','tests.packs.rendering.test_live_scene_composition','tests.packs.rendering.test_remotion_layer_tail_compat']:\n    importlib.import_module(name)\nrows={}\nfor name, module in list(sys.modules.items()):\n    if name=='astrid' or name.startswith('astrid.') or name=='tests' or name.startswith('tests.'):\n        file=getattr(module,'__file__',None)\n        if file:\n            path=pathlib.Path(file).resolve()\n            assert path.is_relative_to(root), (name,str(path))\n            rows[name]=str(path)\nprint(json.dumps(rows,indent=2))\n"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-imports.log"
+  },
+  {
+    "label": "extent-tail",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "tests/packs/rendering/test_native_layer_extent.py",
+      "tests/packs/rendering/test_remotion_layer_tail_compat.py",
+      "--basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/tmp-extent-tail"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-extent-tail.log"
+  },
+  {
+    "label": "native-callback",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "tests/packs/rendering/test_remotion_native_window.py",
+      "tests/packs/rendering/test_remotion_capture_scene_props.py",
+      "--basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/tmp-native-callback"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-native-callback.log"
+  },
+  {
+    "label": "live-scene17",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "-k",
+      "not real_render",
+      "--basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/tmp-live-scene17"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-live-scene17.log"
+  },
+  {
+    "label": "clock-service",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "tests/core/rendering/test_service.py",
+      "tests/core/rendering/test_storage.py",
+      "tests/packs/rendering/test_managed_timeline_render.py",
+      "-k",
+      "render_clock or declared_render_tail or window_timeline or segment_request",
+      "--basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/tmp-clock-service"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-clock-service.log"
+  },
+  {
+    "label": "root-exact",
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/tests/root-metadata.test.cjs"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-root-exact.log"
+  },
+  {
+    "label": "root-supplement",
+    "command": [
+      "/tmp/vw-m3-agent-gate-node20.19.4/bin/node",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-root-supplement.test.cjs"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-root-supplement.log"
+  },
+  {
+    "label": "independent",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-probe.py",
+      "--basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/tmp-independent"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-independent.log"
+  },
+  {
+    "label": "three-source",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--tb=short",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-three-source.py",
+      "--basetemp=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/tmp-three-source"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-three-source.log"
+  },
+  {
+    "label": "ruff",
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "ruff",
+      "check",
+      "--no-cache",
+      "tests/packs/rendering/test_native_layer_extent.py",
+      "tests/packs/rendering/test_remotion_layer_tail_compat.py",
+      "tests/packs/rendering/test_live_scene_composition.py"
+    ],
+    "cwd": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+    "environment": {
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "REVIEW_SOURCE_ROOT": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/tmp/vw-m3-agent-gate-node20.19.4/bin:/opt/ruby-3.3.6/bin:/opt/rbenv/bin:/opt/rbenv/shims:/opt/node22/bin:/opt/maven/bin:/usr/lib/jvm/java-21-openjdk-amd64/bin:/opt/gradle/bin:/root/.bun/bin:/opt/node22/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/root/.codex/tmp/arg0-linux/codex-arg0avTwFT:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "NODE_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules",
+      "ROOT_SOURCE_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/src",
+      "ASTRID_INTERNAL_INVOCATION": "1"
+    },
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-current-extent-fixture-final-gate-ruff.log"
+  }
+]

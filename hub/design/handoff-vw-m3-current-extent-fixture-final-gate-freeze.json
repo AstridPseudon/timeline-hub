@@ -1,0 +1,38 @@
+{
+  "source_sha": "5d0f1ddcad54936b36cedf1d89bf34f45fa612b5",
+  "source_tree": "dbd59878d5710b938a4107bbad4469a0da78e219",
+  "base": "da10b0b7690a8c2a4032e75eb3d4a3e988121997",
+  "source_archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/final-source.tar",
+  "archive_sha256": "4cbdd353fc032c9573ea6c729f75c42a260defcba189f24af9c22e126dbe6287",
+  "tracked_blobs": 3009,
+  "changed_paths": [
+    "tests/packs/rendering/test_remotion_layer_tail_compat.py"
+  ],
+  "protected": [
+    {
+      "path": "astrid/core/rendering/service.py",
+      "sha256": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "astrid/packs/rendering/rendering/renderers/remotion/run.py",
+      "sha256": "5c3cd96bf8561eebc369090fe3c520fac40457802458959827c7903464837269",
+      "byte_equal_to_base": true
+    },
+    {
+      "path": "remotion/src/Root.tsx",
+      "sha256": "afde359fcf7324f0885543e3f3292372bd1b94bb3f219477bd15a2a4ee704f90",
+      "byte_equal_to_base": true
+    }
+  ],
+  "old_assert_count": 63,
+  "new_assert_count": 65,
+  "unchanged_test_function_count": 9,
+  "package_dependency": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz",
+  "package_version": "0.0.12",
+  "package_integrity": "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==",
+  "package_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+  "duration_chunk_sha256": "887441a18596fd09bd145381f6745ca986372cd32fb59278733f6b8d161f494b",
+  "old_archive_absent": true,
+  "git_directory_absent": true
+}

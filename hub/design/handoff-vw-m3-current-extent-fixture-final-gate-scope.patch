@@ -1,0 +1,35 @@
+diff --git a/tests/packs/rendering/test_remotion_layer_tail_compat.py b/tests/packs/rendering/test_remotion_layer_tail_compat.py
+index e9d407988..a80cf4680 100644
+--- a/tests/packs/rendering/test_remotion_layer_tail_compat.py
++++ b/tests/packs/rendering/test_remotion_layer_tail_compat.py
+@@ -38,6 +38,7 @@ _ROOT = Path(__file__).resolve().parents[3]
+ _REMOTION_ROOT = _ROOT / "remotion"
+ _ROOT_TSX = _REMOTION_ROOT / "src" / "Root.tsx"
+ _DURATION_CHUNK = "chunk-SE4TPVLW.js"
++_COMPOSITION_PACKAGE = "@banodoco/timeline-composition"
+ 
+ _ROOT_PROBE = r"""
+ const fs = require('node:fs');
+@@ -173,8 +174,21 @@ def _props(timeline: dict[str, object], *, extent: int | None = None) -> dict[st
+     return props
+ 
+ 
++def _composition_archive() -> Path:
++    package = json.loads((_REMOTION_ROOT / "package.json").read_text(encoding="utf-8"))
++    dependency = package["dependencies"][_COMPOSITION_PACKAGE]
++    assert isinstance(dependency, str) and dependency.startswith("file:"), dependency
++    archive = (_REMOTION_ROOT / dependency.removeprefix("file:")).resolve()
++    try:
++        archive.relative_to(_REMOTION_ROOT.resolve())
++    except ValueError as error:
++        raise AssertionError(f"composition archive escapes Remotion root: {archive}") from error
++    assert archive.is_file(), archive
++    return archive
++
++
+ def _root_probe(tmp_path: Path, props: dict[str, object]) -> dict[str, object]:
+-    archive = _REMOTION_ROOT / "artifacts" / "banodoco-timeline-composition-0.0.10.tgz"
++    archive = _composition_archive()
+     duration_path = tmp_path / _DURATION_CHUNK
+     extract = subprocess.run(
+         ["tar", "-xOf", str(archive), f"package/dist/{_DURATION_CHUNK}"],

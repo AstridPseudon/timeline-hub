@@ -1,0 +1,27 @@
+{
+  "source_sha": "5d0f1ddcad54936b36cedf1d89bf34f45fa612b5",
+  "tracked_blob_count_reverified": 3009,
+  "extra_source_files": [],
+  "review_worktree_clean": true,
+  "producer_tip_unchanged": true,
+  "root_probe_only_archive_assignment_changed": true,
+  "original_assertion_multiset_preserved": true,
+  "diff_check_exit": 0,
+  "lanes": {
+    "extent-tail": 95,
+    "native-callback": 36,
+    "live-scene17": 17,
+    "clock-service": 12,
+    "root-exact": 7,
+    "root-supplement": 4,
+    "independent": 4,
+    "three-source": 2
+  },
+  "total_pytest_passed": 166,
+  "total_node_passed": 11,
+  "total_bounded_checks_passed": 177,
+  "old_archive_absent": true,
+  "own_node_scope": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/root-modules/node_modules/typescript"
+  ]
+}

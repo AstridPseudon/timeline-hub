@@ -52,7 +52,10 @@ def verify():
             assert content == git('show', ref + ':' + name), (ref, name)
         hashes[name] = digest(content)
     output('ten-file-hashes.json', hashes)
-    assert git('rev-parse', 'HEAD') == git('rev-parse', 'tl/integration')
+    integration = git('rev-parse', 'tl/integration').decode().strip()
+    for name in paths:
+        assert (REPO / name).read_bytes() == git('show', integration + ':' + name), name
+    output('integration-' + sys.argv[1] + '.json', {'observed': integration, 'worktree_head': git('rev-parse', 'HEAD').decode().strip(), 'changed_since_worktree': git('diff', '--name-only', 'HEAD', integration).decode().splitlines(), 'ten_paths_identical': True})
     tracked = {}
     # One git archive avoids thousands of individual git show invocations.
     with tarfile.open(fileobj=io.BytesIO(git('archive', 'HEAD'))) as archive:
@@ -131,7 +134,6 @@ if sys.argv[1] == 'setup':
             target = PROJECT / name.removeprefix('remotion/')
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(REPO / name, target)
-    shutil.copyfile(ARTIFACT, PROJECT / 'artifacts' / ARTIFACT.name) if (PROJECT / 'artifacts').exists() else None
     (PROJECT / 'artifacts').mkdir(exist_ok=True)
     shutil.copyfile(ARTIFACT, PROJECT / 'artifacts' / ARTIFACT.name)
     Path(str(PREFIX) + 'landing.patch').write_bytes(git('diff', '--binary', 'HEAD'))
