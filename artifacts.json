@@ -104,7 +104,7 @@
     "astrid/packs/rendering/editor/live-scenes/extension.tsx": "sha256:4a77f276c6f1ac2725441bb93ade19bf51032c38cc8f95a76642eeeacb7c9f83",
     "astrid/packs/rendering/editor/live-scenes/identity.ts": "sha256:ab1fa9c6972518d85dd39f5f1fdeee983a2754b6ad04a738d3e4dff13ed2b3b9",
     "astrid/packs/rendering/editor/live-scenes/runtime.ts": "sha256:3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
-    "astrid/packs/rendering/elements/catalog.ts": "sha256:b5bbae29786685482e77c9a7d8811b30c617496c669cbc2f70e5ea60be4ef75b",
+    "astrid/packs/rendering/elements/catalog.ts": "sha256:86cdbe82390a3055f68cb65b3e9563f5dc5a6685102a7c68f66679101257e08c",
     "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx": "sha256:5d0712d03bab1ccb4f3401b6ecef80c8c9c90c409d4067695d2542a84eac4cca",
     "astrid/packs/rendering/rendering/elements/animations/fade-up/element.yaml": "sha256:2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
     "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx": "sha256:cd0a71e4c02debf9d326a6644b4d1c8a8de95a60bf60062201023da25abf52f3",
@@ -141,7 +141,7 @@
     "astrid/packs/video_editing/pack.yaml": "sha256:53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
     "astrid/packs/video_editing/ui/video-editor/entry.json": "sha256:ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
     "astrid/tools/catalog.json": "sha256:05677b1f9cd9f931c9681edee821e848f243159787e44cdc2cda2e4136fdf237",
-    "cli-surface.json": "sha256:90d4bdaf7cf0a947567c385ade3ca7c4d9aee34eb8a384e97ac46d8c384d09f4",
+    "cli-surface.json": "sha256:eb35ad12a2eaef8ec7ed44a91e5934f8f94bd444fe897e8475c79954261f6e0f",
     "remotion/public/fonts/DepartureMono-Regular.woff2": "sha256:5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
     "remotion/public/fonts/FONT_PROVENANCE.md": "sha256:f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
     "remotion/public/fonts/Gelasio-Bold.woff2": "sha256:2fdaa469d51ef618d648e27819f10a1df08721ed2331614c3123850162cc147a",
@@ -163,5 +163,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:e556b0d9215a1924f01d0526df886642b047af955c238ab3ebcf47d7b886083b"
+  "version": "sha256:25650cd7ad634318e51dbc68a5cb35666407bb2e0865c07ffcd8b9d0b475dcf8"
 }

@@ -944,6 +944,16 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
     document is a mutable storage projection and cannot be presented as the
     current editor state when the native Runtime inspection route is absent.
     """
+    if getattr(parsed, "native", False):
+        if getattr(parsed, "presentation", None) != "sheet":
+            from astrid.sdk.contracts import ErrorObject
+
+            return print_result(DomainResult.failure(ErrorObject(
+                "validation_error", "--native requires --as sheet", {})), as_json=parsed.json)
+        from astrid.packs.timeline.cli_show import print_native_sheet
+
+        return print_native_sheet(parsed)
+
     from astrid.packs.timeline.cli_history import show_ref
 
     refused = show_ref(parsed)  # TL@prev: the revision before the head
@@ -2297,6 +2307,10 @@ def _configure_list(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_show(subparser: argparse.ArgumentParser) -> None:
+    subparser.add_argument("--native", action="store_true",
+                           help="With --as sheet: retain a pinned editable sheet in the scoped outbox. "
+                                "Supports starts, parent labels, source-second hold, explicit asset/transition clears "
+                                "and built-in literal params in canvas units; replaces the previous export.")
     subparser.epilog = (
         "Next: use `timelines visualize` for composed pixels. For edits, use the "
         "timeline_editing document-checkout recipe (checkout → edit → check → publish). "
@@ -3563,6 +3577,10 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_apply(parsed: argparse.Namespace) -> int:
+    if parsed.native:
+        return _cmd_commit_edit(parsed, sheet=True)
+    if parsed.dry_run or parsed.idempotency_key or parsed.json:
+        raise _VerbError("--native is required with commit apply options", 2)
     from astrid.sdk.timeline_sheet import apply_sheet
     tl = _edit_checkout(parsed)
     before = tl.document()
@@ -3844,6 +3862,11 @@ def _configure_apply(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("sheet_file", help="Path to the edited cut sheet.")
+    subparser.add_argument("--native", action="store_true",
+                           help="Commit using the original sheet export retained in the scoped outbox.")
+    subparser.add_argument("--dry-run", action="store_true", help="Preview native commands locally without publishing.")
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_apply)))
 
 
@@ -3861,7 +3884,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
-def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=None) -> int:
+def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=None, sheet=False) -> int:
     from astrid.core.receipts.contract import CommandReceipt
     from astrid.sdk.contracts import ErrorObject
     from astrid.sdk.timeline._common import TimelineEditError
@@ -3870,6 +3893,8 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=
     try:
         if undo and (parsed.steps_option is not None or parsed.steps != 1 or parsed.draft):
             raise TimelineEditError("--publication cannot be combined with local draft/step undo")
+        if sheet and parsed.draft:
+            raise TimelineEditError("--native cannot be combined with a local draft")
         batch = None
         base = {}
         if getattr(parsed, "commands_file", None) is not None:
@@ -3879,7 +3904,18 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=
             base = {"base_revision_id": parsed.base_revision_id, "base_publication_id": parsed.base_publication_id}
         session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client, **base)
         options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
-        if batch is not None:
+        if sheet:
+            from astrid.sdk.timeline_sheet import NativeSheet
+
+            result = NativeSheet.load(session).apply(
+                Path(parsed.sheet_file).read_text(encoding="utf-8"), session=session,
+                dry_run=parsed.dry_run, idempotency_key=parsed.idempotency_key)
+            if parsed.dry_run or not isinstance(result, dict):
+                return print_result(DomainResult.success({
+                    "status": "preview" if parsed.dry_run else "unchanged", "commands": result.commands,
+                }), as_json=parsed.json, human_renderer=lambda _: (
+                    "preview only; no publication accepted" if parsed.dry_run else "no change (the sheet matches its original export)"))
+        elif batch is not None:
             result = session.commit_many(batch, **options)
         elif command is not None:
             result = session.commit(command, **options)
@@ -3889,10 +3925,11 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=
         shown = DomainResult.success(result["data"], receipt=receipt,
                                      idempotency_key=result["idempotency_key"])
     except Exception as exc:  # noqa: BLE001 - preserve pending work and render transport/semantic failures
+        message = str(exc) + (f"; edited sheet kept at {parsed.sheet_file}" if sheet else "")
         if isinstance(exc, CommitConflict):
-            error = ErrorObject(exc.failure["code"], str(exc), exc.failure["details"])
+            error = ErrorObject(exc.failure["code"], message, exc.failure["details"])
         else:
-            error = ErrorObject(getattr(exc, "code", "timeline_edit_error"), str(exc), getattr(exc, "details", {}))
+            error = ErrorObject(getattr(exc, "code", "timeline_edit_error"), message, getattr(exc, "details", {}))
         shown = DomainResult.failure(error)
     return print_result(shown, as_json=parsed.json, human_renderer=lambda value: (
         "preview only; no publication accepted" if parsed.dry_run else
