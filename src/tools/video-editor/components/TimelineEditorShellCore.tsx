@@ -870,7 +870,8 @@ function TimelineEditorShellCoreComponent({
 
   return (
     <>
-      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId ?? ''} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
+      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId ?? ''}
+        data-command-session-ready={chrome.commandSession?.state.status === 'saved' ? 'true' : 'false'} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
         activateInstance();
         if (!outerRef.current?.contains(document.activeElement)) outerRef.current?.focus({ preventScroll: true });
       }} className={cn(

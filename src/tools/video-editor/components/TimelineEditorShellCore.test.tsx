@@ -2073,6 +2073,14 @@ describe('TimelineEditorShellCore — recovery draft banner', () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
+  it('marks the shell ready only after the command session exposes its ports', () => {
+    __chromeOverrides = { commandSession: { recover: vi.fn(), retry: vi.fn(), state: {
+      status: 'saved', error: null, recoverableOwners: [], ownerId: null, canUndo: false,
+    } } };
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    expect(document.querySelector('[data-command-session-ready="true"]')).toBeTruthy();
+  });
+
   it('shows a retained command conflict without snapshot replacement choices', () => {
     __chromeOverrides = { isConflictExhausted: true, commandSession: { recover: vi.fn(), retry: vi.fn(), state: {
       status: 'conflict', error: 'read changed', recoverableOwners: [], ownerId: 'owner', canUndo: false,

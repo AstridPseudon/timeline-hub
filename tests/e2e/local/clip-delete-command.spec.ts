@@ -81,11 +81,12 @@ async function openCommandTimeline(page: Page, harness: DirectHarness, seed: Thr
   await openSeededTimeline(page, harness);
   // The canvas can finish loading before the command session exposes its native ports.
   await expect.poll(async () => ({
-    ready: (await commandOutboxes(page, seed.timelineId)).some((owner) =>
+    mounted: await page.locator('[data-command-session-ready="true"]').count(),
+    owner: (await commandOutboxes(page, seed.timelineId)).some((owner) =>
       !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length),
     notice: await page.getByTestId('timeline-command-recovery').allTextContents(),
-  }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' })
-    .toMatchObject({ ready: true });
+  }), { ...CEILING, message: 'the mounted editor must expose native command ports and claim a new durable owner before the gesture' })
+    .toMatchObject({ mounted: 1, owner: true });
 }
 
 type CommitPost = { method: string; path: string; body: string; key: string; status: number; response: CommitAcceptedMutation };
