@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { ASTRID_RENDERING_ELEMENTS } from '../../../../vendor/astrid-browser/astrid/packs/rendering/elements/catalog.ts';
 import type { CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { AuthoredState, copy, freezeJson } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 import { captureClipParams, finishClipParams } from './clipParamsCapture.ts';
 import type { ClipParamsArgs } from './clipParamsCapture.ts';
-import objectFixture from './fixtures/recipe_m2_scalar_params_object.json';
-import absentFixture from './fixtures/recipe_m2_scalar_params_absent.json';
-import nullFixture from './fixtures/recipe_m2_scalar_params_null.json';
 import disjointFixture from './fixtures/recipe_m2_scalar_disjoint.json';
-import nativeFixture from './fixtures/recipe_m2_clip_params_native.json';
+import nativeFixture from './fixtures/recipe_m2_clip_params_bundle2.json';
 
 type ScalarGolden = {
   name: string;
@@ -18,25 +16,37 @@ type ScalarGolden = {
   command: EditCommand;
   args: ClipParamsArgs;
   select: string;
+  rebased_records?: CommandRecord[];
 };
 
 // Full records exported by unmodified Agent execute(), not reconstructed here.
-const originals = [
-  ['recipe_m2_scalar_params_object.json', objectFixture],
-  ['recipe_m2_scalar_params_absent.json', absentFixture],
-  ['recipe_m2_scalar_params_null.json', nullFixture],
-  ['recipe_m2_scalar_disjoint.json', disjointFixture],
-] as const;
-const goldens = [
-  ...originals.map(([name, fixture]) => ({ ...fixture, name, records: nativeFixture.originals[name].records })),
-  ...nativeFixture.cases,
-] as unknown as ScalarGolden[];
+const goldens = nativeFixture.cases as unknown as ScalarGolden[];
 const objectGolden = goldens[0];
 const ref = objectGolden.select;
 
 const roundtrip = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
 describe('portable clip.set-params capture', () => {
+  it('uses the exact frozen native built-in property schemas without a second schema definition', () => {
+    expect(Object.fromEntries(ASTRID_RENDERING_ELEMENTS.map((element) =>
+      [element.id, element.schema.properties ?? {}]))).toEqual(nativeFixture.builtin_properties);
+  });
+
+  it.each(nativeFixture.refusals)('refuses the native invalid input atomically: $name', (golden) => {
+    const bundle = freezeJson(copy(golden.bundle)) as unknown as AuthoredBundle;
+    const snapshot = copy(bundle);
+    expect(() => captureClipParams(bundle, golden.select, golden.args as ClipParamsArgs))
+      .toThrow(expect.objectContaining({ kind: golden.error.kind }));
+    expect(bundle).toEqual(snapshot);
+  });
+
+  it.each(nativeFixture.replay_refusals)('refuses changed native reads: $name', (golden) => {
+    const basis = freezeJson(copy(golden.basis));
+    const snapshot = copy(basis);
+    expect(() => finishClipParams(basis, golden.args)).toThrow();
+    expect(basis).toEqual(snapshot);
+  });
+
   it.each(goldens)('matches the exported native command, after bundle and full record: $name', (golden) => {
     const input = freezeJson(copy(golden.bundle));
     const basis = captureClipParams(input, golden.select, golden.args);
@@ -46,9 +56,56 @@ describe('portable clip.set-params capture', () => {
     expect([result.record]).toEqual(golden.records);
     expect(basis.bundle).toEqual(golden.bundle);
     expect(input).toEqual(golden.bundle);
+    const before = new AuthoredState(golden.bundle).entity(golden.select)!;
+    const after = new AuthoredState(result.bundle).entity(golden.select)!;
+    for (const key of ['at', 'from', 'to', 'speed', 'app', 'opaque', 'elementRef', 'element_ref']) {
+      expect(after[key], key).toEqual(before[key]);
+      expect(Object.hasOwn(after, key), key).toBe(Object.hasOwn(before, key));
+    }
   });
 
-  it.each(goldens.filter((golden) => golden.select.startsWith('parent/')))(
+  it.each(goldens.filter((golden) => /^(parent|occurrence)_clear_(absent|null|object|empty)$/.test(golden.name)))(
+    'preserves clear-only container presence without materialization: $name', (golden) => {
+      const result = finishClipParams(captureClipParams(golden.bundle, golden.select, golden.args), golden.args);
+      const before = new AuthoredState(golden.bundle).get(golden.select, ['params']);
+      const after = new AuthoredState(result.bundle).get(golden.select, ['params']);
+      if (before.state === 'absent' || before.value === null) expect(after).toEqual(before);
+      expect(result.record.writes.every((write) => write.path.length === 2)).toBe(true);
+      expect(result.command.reads!.some((read) => read.path.join('.') === 'params'))
+        .toBe(before.state === 'absent' || before.value === null);
+    },
+  );
+
+  it('keeps unrelated registry edits and opaque source-window fields out of the read guards', () => {
+    const golden = goldens.find((item) => item.name === 'registry_asset')!;
+    const basis = roundtrip(captureClipParams(golden.bundle, golden.select, golden.args));
+    const state = new AuthoredState(basis.bundle);
+    const clip = state.entity(golden.select)!;
+    clip.from = 9;
+    clip.to = 12;
+    clip.speed = 0.5;
+    clip.app = { untouched: [false, null, {}] };
+    const registry = state.entity('occurrence:o/registry')!;
+    const assets = registry.assets as Record<string, Record<string, JSON>>;
+    assets.other.media_id = 'unrelated-new-media';
+    assets.chosen.opaque = { changed: true };
+    const result = finishClipParams(basis, golden.args);
+    expect(result.command).toEqual(golden.command);
+    const after = new AuthoredState(result.bundle).entity(golden.select)!;
+    for (const key of ['from', 'to', 'speed', 'app']) expect(after[key]).toEqual(clip[key]);
+    expect(new AuthoredState(result.bundle).entity('occurrence:o/registry')).toEqual(registry);
+  });
+
+  it('visibly refuses changed selected-pack values without accepting a descriptor or a fabricated schema pin', () => {
+    const golden = nativeFixture.refusals.find((item) => item.name === 'selected_elementRef_changed')!;
+    expect(() => captureClipParams(golden.bundle as unknown as AuthoredBundle, golden.select, golden.args))
+      .toThrow(/exact schema_source and verified immutable inputs/);
+    expect(() => captureClipParams(golden.bundle as unknown as AuthoredBundle, golden.select, {
+      ...golden.args, schema_source: { document_id: 'fabricated', version: 1, content_digest: 'sha256:fake' },
+    } as ClipParamsArgs)).toThrow();
+  });
+
+  it.each(goldens.slice(0, 11).filter((golden) => golden.select.startsWith('parent/')))(
     'compiles equal parent mirrors once and preserves opaque siblings: $name', (golden) => {
       expect(golden.bundle.parent.clips).toEqual(golden.bundle.parent.config.clips);
       const result = finishClipParams(captureClipParams(golden.bundle, golden.select, golden.args), golden.args);
@@ -76,7 +133,7 @@ describe('portable clip.set-params capture', () => {
     const result = finishClipParams(freezeJson(basis), source.args);
     expect(result.command).toEqual(source.command);
     expect(result.bundle).toEqual(disjointFixture.rebased_bundle);
-    expect([result.record]).toEqual(nativeFixture.originals['recipe_m2_scalar_disjoint.json'].rebased_records);
+    expect([result.record]).toEqual(source.rebased_records);
   });
 
   it('keeps the original scope and claims through cloning, freezing and JSON round trips', () => {

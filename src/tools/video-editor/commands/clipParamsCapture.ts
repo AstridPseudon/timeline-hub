@@ -1,4 +1,6 @@
 import type { CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import Ajv from 'ajv';
+import { ASTRID_RENDERING_ELEMENTS } from '../../../../vendor/astrid-browser/astrid/packs/rendering/elements/catalog.ts';
 import { ClipMoveError, MoveRecording, assertFiniteJson, copy, equal, freezeJson, has, object } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 
@@ -19,6 +21,55 @@ export type ClipParamsResult = {
 };
 
 const CLAIMS = ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const;
+
+// Sealed Agent manifests, not mutable UI descriptors. The catalog's final
+// text-card entry is the local manifest selected by native element_schema.
+const builtinSchemas = new Map(ASTRID_RENDERING_ELEMENTS.map((element) => [element.id, element.schema]));
+const validator = new Ajv({ allErrors: true, format: false });
+
+const nativeTruthy = (value: JSON | undefined): boolean =>
+  !!value && (!object(value) || Object.keys(value).length > 0) && (!Array.isArray(value) || value.length > 0);
+
+function validateValues(ctx: MoveRecording, ref: string, identity: Record<string, JSON | undefined>,
+  values: Record<string, JSON>): void {
+  const element = [identity.clipType, identity.clip_type].find(nativeTruthy) ?? 'media';
+  if (typeof element !== 'string') throw new ClipMoveError('clip type must be a string');
+  const changed = Object.entries(values).filter(([key, value]) =>
+    !equal(ctx.state.get(ref, ['params', key]), { state: 'present', value }));
+  const selected = [identity.elementRef, identity.element_ref].find(nativeTruthy);
+  if (object(selected) && nativeTruthy(selected.packId)) {
+    if (changed.length) throw new ClipMoveError('selected project pack requires exact schema_source and verified immutable inputs');
+    return;
+  }
+  const schema = builtinSchemas.get(element);
+  const properties = schema && object(schema.properties) ? schema.properties : {};
+  for (const [key, value] of changed) {
+    if (!has(properties, key)) continue;
+    // Native validates only changed known properties, with no coercion/defaults.
+    try {
+      if (validator.validate(properties[key] as object, value)) continue;
+    } catch {
+      throw new ClipMoveError('parameter schema reference is unavailable');
+    }
+    throw new ClipMoveError(`invalid ${element} parameter ${key}: ${validator.errorsText()}`);
+  }
+}
+
+function clearParam(ctx: MoveRecording, ref: string, key: string): void {
+  const container = ctx.state.get(ref, ['params']);
+  if (container.state === 'present' && container.value !== null) {
+    ctx.clear(ref, ['params', key]);
+    return;
+  }
+  // Native records the absent leaf write but State.set leaves absent/null
+  // ancestors intact. The move recorder's setter requires an object ancestor.
+  ctx.read(ref, ['params']);
+  const address = canonicalTarget(ref, ['params', key]);
+  const absent = { state: 'absent' } as const;
+  ctx.command.expect![address] = absent;
+  ctx.command.authorship![address] = 'direct';
+  ctx.record.writes.push({ ref, path: ['params', key], before: absent, after: absent });
+}
 
 function propertyToken(key: string): string {
   return /^[A-Za-z_][\w-]*$/.test(key) ? key : `[${JSON.stringify(key)}]`;
@@ -97,14 +148,23 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand): ClipParamsResult 
   }
   ctx.bind('scalar.target', supplied.select, ['scalar.images']);
 
-  for (const key of ['clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id']) {
-    ctx.read(supplied.select, [key]);
+  const identity: Record<string, JSON | undefined> = {};
+  for (const key of ['clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id', 'elementRef', 'element_ref']) {
+    identity[key] = ctx.read(supplied.select, [key]);
+  }
+  const clip = ctx.state.entity(supplied.select)!;
+  const selector = ['asset', 'asset_id', 'media_id', 'object_id'].find((key) => has(clip, key));
+  if ((selector === 'asset' || selector === 'asset_id') && typeof identity[selector] === 'string') {
+    for (const key of ['media_id', 'object_id', 'digest', 'content_digest']) {
+      ctx.read(`${owner}/registry`, ['assets', identity[selector], key]);
+    }
   }
 
-  ctx.object(supplied.select, ['params']);
   const values = supplied.args.values;
+  validateValues(ctx, supplied.select, identity, values);
+  if (Object.keys(values).length) ctx.object(supplied.select, ['params']);
   for (const key of Object.keys(values).sort()) ctx.write(supplied.select, ['params', key], values[key]);
-  for (const key of [...supplied.args.clear].sort()) ctx.clear(supplied.select, ['params', key]);
+  for (const key of [...supplied.args.clear].sort()) clearParam(ctx, supplied.select, key);
   canonicalizeParamClaims(ctx, supplied.select);
   ctx.compile();
 
