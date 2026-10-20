@@ -258,6 +258,65 @@ describe('canonical shot-composition downstream projection', () => {
     });
   });
 
+  it.each([
+    { name: 'attenuates both levels', child: { gain: 0.8 }, occurrenceGain: 0.5, expected: 0.4 },
+    { name: 'preserves boosts at both levels', child: { gain: 1.5 }, occurrenceGain: 2, expected: 3 },
+    { name: 'preserves a zero child gain', child: { gain: 0 }, occurrenceGain: 2, expected: 0 },
+    { name: 'defaults a missing child gain to unity', child: {}, occurrenceGain: 2, expected: 2 },
+    { name: 'defaults a missing occurrence gain to unity', child: { gain: 1.5 }, expected: 1.5 },
+    { name: 'defaults both missing gains to unity', child: {}, expected: 1 },
+    { name: 'uses child volume when gain is null', child: { gain: null, volume: 0.25 }, occurrenceGain: 2, expected: 0.5 },
+    { name: 'gives child gain precedence over child volume', child: { gain: 0.75, volume: 0.25 }, occurrenceGain: 2, expected: 1.5 },
+  ])('multiplies child and occurrence gain and $name', ({ child, occurrenceGain, expected }) => {
+    const source = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      clips: [{
+        ...(timeline.clips as Array<Record<string, unknown>>)[0],
+        ...child,
+      }],
+    }));
+    const composition: PreparedShotComposition = {
+      ...source,
+      occurrences: source.occurrences.map((occurrence, index) => index === 0
+        ? { ...occurrence, gain: occurrenceGain }
+        : occurrence),
+    };
+
+    const clip = projectCanonicalComposition(composition).config.clips.find(
+      (candidate) => candidate.id === 'occ-1:alpha-video',
+    );
+
+    expect(clip).toMatchObject({
+      volume: expected,
+      app: { canonicalTiming: { gain: expected } },
+    });
+  });
+
+  it.each([
+    { name: 'child mute', child: { muted: true }, occurrence: { gain: 2 }, expected: 0 },
+    { name: 'occurrence mute', child: { gain: 2 }, occurrence: { gain: 2, muted: true }, expected: 0 },
+  ])('keeps $name as a final zeroing rule', ({ child, occurrence, expected }) => {
+    const source = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      clips: [{
+        ...(timeline.clips as Array<Record<string, unknown>>)[0],
+        ...child,
+      }],
+    }));
+    const composition: PreparedShotComposition = {
+      ...source,
+      occurrences: source.occurrences.map((candidate, index) => index === 0
+        ? { ...candidate, ...occurrence }
+        : candidate),
+    };
+
+    const clip = projectCanonicalComposition(composition).config.clips.find(
+      (candidate) => candidate.id === 'occ-1:alpha-video',
+    );
+
+    expect(clip?.volume).toBe(expected);
+  });
+
   it('filters child Source lanes before extent, asset selection and track merging', () => {
     const normalized = withOccurrenceRevision(prepared, 0, (timeline) => ({
       ...timeline,
