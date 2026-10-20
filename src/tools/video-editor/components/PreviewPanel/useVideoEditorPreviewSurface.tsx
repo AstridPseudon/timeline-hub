@@ -117,10 +117,7 @@ export function useVideoEditorPreviewSurface({
     onPreviewTimeUpdate: playback.onPreviewTimeUpdate,
   }), shallow);
   const hasConfig = Boolean(previewConfig);
-  const [{slotNode, attachmentGeneration}, setAttachment] = useState<{
-    slotNode: HTMLDivElement | null;
-    attachmentGeneration: number;
-  }>({slotNode: null, attachmentGeneration: 0});
+  const [slotNode, setSlotNode] = useState<HTMLDivElement | null>(null);
   const [hostNode] = useState<HTMLDivElement | null>(() => {
     if (typeof document === 'undefined') {
       return null;
@@ -132,9 +129,7 @@ export function useVideoEditorPreviewSurface({
   });
 
   const slotRef = useCallback<RefCallback<HTMLDivElement>>((node) => {
-    setAttachment((current) => current.slotNode === node
-      ? current
-      : {slotNode: node, attachmentGeneration: current.attachmentGeneration + 1});
+    setSlotNode(node);
   }, []);
 
   useLayoutEffect(() => {
@@ -152,16 +147,15 @@ export function useVideoEditorPreviewSurface({
   }, [hasConfig, hostNode, slotNode]);
 
   const portal = useMemo(() => {
-    if (!hostNode || !hasConfig || !previewConfig || !slotNode) {
+    if (!hostNode || !hasConfig || !previewConfig) {
       return null;
     }
 
     return createPortal(
       <RemotionPreview
-        // A physical slot move is a new preview attachment. Remount the
-        // player-owned subtree at the current paused playhead for that case,
-        // while ordinary config updates retain the existing DOM attachment.
-        key={`${runtime?.project?.projectId ?? ''}:${runtime?.timelineId ?? ''}:${previewSource}:${attachmentGeneration}`}
+        // Only a content scope change replaces the player. Moving its host
+        // between layout slots retains playback and the player-owned DOM.
+        key={`${runtime?.project?.projectId ?? ''}:${runtime?.timelineId ?? ''}:${previewSource}`}
         ref={previewRef}
         config={previewConfig}
         previewRevision={previewRevision}
@@ -185,8 +179,6 @@ export function useVideoEditorPreviewSurface({
     previewConfig,
     previewRevision,
     previewSource,
-    attachmentGeneration,
-    slotNode,
     runtime?.project?.projectId,
     runtime?.timelineId,
   ]);

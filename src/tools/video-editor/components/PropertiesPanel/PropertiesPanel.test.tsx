@@ -159,7 +159,6 @@ function createBaseEditorData() {
     selectedClipIds: new Set(['clip-1']),
     deviceClass: 'desktop',
     interactionMode: 'select',
-    precisionEnabled: false,
     selectedTrack: null,
     selectedTrackId: null,
     selectedClipHasPredecessor: false,
@@ -234,7 +233,6 @@ function createEditorOps() {
     setSelectedTrackId: vi.fn(),
     onDoubleClickAsset: vi.fn(),
     setInteractionMode: vi.fn(),
-    setPrecisionEnabled: vi.fn(),
     patchRegistry: vi.fn(),
     registerAsset: vi.fn(),
     setAssetPanelState: vi.fn(),
@@ -1315,7 +1313,7 @@ describe('mounted store transcript selection lifecycle', () => {
       const data = useTimelineEditorData();
       const editorOps = useTimelineEditorOps();
       const editAreaRef = useRef<HTMLDivElement>(null);
-      const marquee = useMarqueeSelect({ editAreaRef, deviceClass: 'desktop', interactionMode: 'select', gestureOwner: 'none',
+      const marquee = useMarqueeSelect({ editAreaRef, deviceClass: 'desktop', gestureOwner: 'none',
         setGestureOwner: () => {}, setInputModalityFromPointerType: () => 'mouse', onClearSelection: editorOps.clearSelection });
       return <><div ref={editAreaRef} data-testid="selection-canvas" onPointerDown={marquee.onPointerDown}>
         <DataLaneList data={data.data} pixelsPerSecond={50} selectedTarget={data.inspectorTarget} selectedDataItems={data.selectedDataItems}
@@ -1337,7 +1335,7 @@ describe('mounted store transcript selection lifecycle', () => {
     expect(store.getState().data.contextTarget).toMatchObject(expected);
     expect(screen.getByTestId('opaque-data-item-inspector')).toBeInTheDocument();
     // A normal provider rerender must not let the mounted inspector clear it.
-    act(() => update({ precisionEnabled: true }));
+    act(() => update({ inputModality: 'touch' }));
     expect(item).toHaveAttribute('data-selected', 'true');
     expect(store.getState().data.inspectorTarget).toMatchObject(expected);
     const empty = screen.getByTestId('selection-canvas');

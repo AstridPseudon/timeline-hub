@@ -27,26 +27,19 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import * as policy from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import {
-  APP_PANE_RAIL_GUTTER_PX,
-  resolveTimelineModeSwitcherVariant,
-  resolveTouchGestureMode,
+  getDefaultInteractionMode,
+  resolveArmedTouchGesture,
   shouldAllowTouchClipDrag,
-  shouldAllowTouchMarquee,
   shouldEnableTimelinePinchZoom,
   shouldExpandTouchTrimHandles,
-  shouldPinHoverAffordances,
-  shouldReserveAppPaneRailGutter,
-  shouldShowTimelineModeSwitcher,
-  shouldTapTimelineToolButtons,
   type TimelineDeviceClass,
   type TimelineGestureOwner,
   type TimelineInteractionMode,
-  type TimelineShellLayout,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import {
   CLIP_ACTION_SELECTOR,
@@ -88,7 +81,6 @@ const __editorOps = {
   clearSelection: vi.fn(),
   setInspectorTarget: vi.fn(),
   setContextTarget: vi.fn(),
-  setPrecisionEnabled: vi.fn(),
   setInteractionMode: vi.fn(),
 };
 
@@ -115,7 +107,6 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
       selectedTrackId: null,
       resolvedConfig: null,
       deviceClass: __deviceClass,
-      precisionEnabled: false,
       interactionMode: __interactionMode,
       gestureOwner: null,
       inspectorTarget: { kind: 'timeline' as const },
@@ -261,7 +252,6 @@ vi.mock('@/shared/state/selectionStore.ts', () => ({
 // Imported after the mocks, as the sibling suites do.
 import { TimelineCanvas } from '@/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx';
 import { TimelineEditorShellCore } from '@/tools/video-editor/components/TimelineEditorShellCore.tsx';
-import { TIMELINE_MODE_HINTS } from '@/tools/video-editor/components/TimelineModeSwitcher.tsx';
 
 // ---------------------------------------------------------------------------
 // The matrix
@@ -273,11 +263,10 @@ const INTERACTION_MODES: readonly TimelineInteractionMode[] = [
   'select',
   'move',
   'trim',
-  'precision',
 ];
 const TOUCH_DEVICE_CLASSES: readonly TimelineDeviceClass[] = ['tablet', 'phone'];
-/** Modes the switcher must expose. `precision` is the switcher's toggle, not a mode button. */
-const SWITCHABLE_MODES = ['browse', 'select', 'move', 'trim'] as const;
+/** Which shell layout is rendered. Single-pane is the phone's stacked layout. */
+type TimelineShellLayout = 'single-pane' | 'split';
 
 /**
  * Which policy exports each check binds to a rendered mechanism. Coverage is
@@ -285,13 +274,10 @@ const SWITCHABLE_MODES = ['browse', 'select', 'move', 'trim'] as const;
  * entry fails the suite.
  */
 const COVERAGE = {
-  'gesture ownership': ['resolveTouchGestureMode', 'shouldAllowTouchClipDrag'],
-  marquee: ['shouldAllowTouchMarquee'],
+  'gesture ownership': ['resolveArmedTouchGesture', 'shouldAllowTouchClipDrag'],
   'trim handles': ['shouldExpandTouchTrimHandles'],
-  'affordance pinning': ['shouldPinHoverAffordances', 'shouldTapTimelineToolButtons'],
   'pinch zoom': ['shouldEnableTimelinePinchZoom'],
-  'mode reachability': ['resolveTimelineModeSwitcherVariant', 'shouldShowTimelineModeSwitcher'],
-  'pane rail gutter': ['shouldReserveAppPaneRailGutter', 'APP_PANE_RAIL_GUTTER_PX'],
+  'mode reachability': ['resolveArmedTouchGesture', 'getDefaultInteractionMode'],
 } as const satisfies Record<string, readonly string[]>;
 
 /**
@@ -306,19 +292,12 @@ const EXCLUSIONS: Record<string, string> = {
     + 'classification itself is pinned by mobile-interaction-model.test.ts ("device class").',
   resolveInputModalityFromPointerType:
     'The other matrix input: maps a PointerEvent.pointerType to a modality. Pure lookup, no DOM.',
-  getDefaultInteractionMode:
-    'Picks the mode the editor opens in. The mechanism that matters is that every *other* mode '
-    + 'stays reachable from there, which is the "mode reachability" check.',
   createMobileInteractionPolicy:
     'Seeds the store slice from a device class. Each field it seeds is read by a predicate that '
     + 'this suite already binds, so asserting the seed again would test the store, not a mechanism.',
   isTouchTimelineInput:
     'Shared "is this a touch stream on a touch device" guard composed by the touch predicates; '
     + 'it grants nothing on its own and is exercised transitively by every touch row here.',
-  shouldToggleTouchSelection:
-    'Selection semantics inside useClipDrag\'s document-level pointer machine — it changes which '
-    + 'clips end up selected, not what the DOM must carry. Pinned by useClipDrag.test.tsx '
-    + '("toggles touch selection in select mode without desktop modifier keys").',
   shouldPreserveTouchSelectionForMove:
     'Same pointer machine, same reason. Pinned by useClipDrag.test.tsx ("preserves additive touch '
     + 'selection on move-mode taps that do not start a drag").',
@@ -454,12 +433,12 @@ afterEach(() => {
 
 describe.each(DEVICE_CLASSES)('gesture ownership — %s', (deviceClass) => {
   it.each(INTERACTION_MODES)('%s carries the mechanism its policy implies', (interactionMode) => {
-    const expectedMode = resolveTouchGestureMode(deviceClass, interactionMode);
+    const expectedMode = resolveArmedTouchGesture(deviceClass, interactionMode);
     const { editArea } = renderCanvasFor(deviceClass, interactionMode);
 
     expect(
       editArea.getAttribute(TOUCH_GESTURE_MODE_ATTR),
-      `edit area's ${TOUCH_GESTURE_MODE_ATTR} disagrees with resolveTouchGestureMode(${deviceClass}, ${interactionMode}) — TimelineCanvas.tsx writes this attribute from that policy; fix whichever side is wrong`,
+      `edit area's ${TOUCH_GESTURE_MODE_ATTR} disagrees with resolveArmedTouchGesture(${deviceClass}, ${interactionMode}) — TimelineCanvas.tsx writes this attribute from that policy; fix whichever side is wrong`,
     ).toBe(expectedMode);
 
     if (deviceClass === 'desktop') {
@@ -484,7 +463,7 @@ describe.each(DEVICE_CLASSES)('gesture ownership — %s', (deviceClass) => {
 
   it.each(INTERACTION_MODES)('%s hands the touch to the element that owns it', (interactionMode) => {
     const { editArea } = renderCanvasFor(deviceClass, interactionMode);
-    const expectedMode = resolveTouchGestureMode(deviceClass, interactionMode);
+    const expectedMode = resolveArmedTouchGesture(deviceClass, interactionMode);
     if (expectedMode === null) {
       return;
     }
@@ -503,9 +482,6 @@ describe.each(DEVICE_CLASSES)('gesture ownership — %s', (deviceClass) => {
     } else if (expectedMode === 'trim') {
       expect(owner).toBe(RESIZE_EDGE_SELECTOR);
       expect(editArea.querySelector(RESIZE_EDGE_SELECTOR)).toBeTruthy();
-    } else {
-      // Marquee starts on empty canvas, so the scroll container itself is the owner.
-      expect(owner).toBe('');
     }
   });
 
@@ -526,30 +502,8 @@ describe.each(DEVICE_CLASSES)('gesture ownership — %s', (deviceClass) => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. Marquee (the gap this suite was written after)
+// 2. Marquee: mouse-only, so touch owns no gesture on the edit area
 // ---------------------------------------------------------------------------
-
-describe.each(TOUCH_DEVICE_CLASSES)('marquee — %s', (deviceClass) => {
-  it.each(INTERACTION_MODES)('%s: permission and mechanism agree', (interactionMode) => {
-    const { editArea } = renderCanvasFor(deviceClass, interactionMode);
-    const allowed = shouldAllowTouchMarquee(deviceClass, 'touch', interactionMode);
-    const marqueeOwned = editArea.getAttribute(TOUCH_GESTURE_MODE_ATTR) === 'marquee';
-
-    expect(
-      marqueeOwned,
-      `shouldAllowTouchMarquee(${deviceClass}, touch, ${interactionMode}) is ${allowed} but the edit area ${marqueeOwned ? 'claims' : 'does not claim'} the marquee gesture — resolveTouchGestureMode must derive marquee ownership from that permission (mobile-interaction-model.ts) and TimelineCanvas.tsx must write the attribute`,
-    ).toBe(allowed);
-    if (!allowed) {
-      return;
-    }
-
-    // Scoped to the edit area itself and nothing inside it: a descendant rule
-    // would leave the empty canvas — where the marquee actually starts — pannable,
-    // which is how a tablet marquee drag used to overscroll into the browser's
-    // back-navigation gesture and take the page off the editor.
-    expect(touchActionNoneSelectors).toContain(gestureModeSelector('marquee'));
-  });
-});
 
 it('leaves marquee ownership off desktop, whose mouse marquee needs no touch-action', () => {
   INTERACTION_MODES.forEach((interactionMode) => {
@@ -583,44 +537,31 @@ describe.each(DEVICE_CLASSES)('trim handles — %s', (deviceClass) => {
 // ---------------------------------------------------------------------------
 
 describe.each(DEVICE_CLASSES)('affordance pinning — %s', (deviceClass) => {
-  it('renders track actions without hover gating exactly when the policy pins them', () => {
+  it('keeps hover-only track actions off touch devices, where hover never comes', () => {
     const { container } = renderCanvasFor(deviceClass, 'select');
-    const pinned = container.querySelector('[data-track-actions="touch"]');
 
-    if (!shouldPinHoverAffordances(deviceClass)) {
-      expect(pinned).toBeNull();
-      // Desktop keeps the hover overlay; that is the affordance being pinned elsewhere.
+    if (deviceClass === 'desktop') {
+      // Desktop keeps the hover overlay; touch has no hover, so nothing is left behind one.
       expect(container.querySelector('.group-hover\\:opacity-100')).toBeTruthy();
       return;
     }
 
-    if (!(pinned instanceof HTMLElement)) {
-      throw new Error('expected pinned track actions');
-    }
-    // Nothing on the reachable path may be hidden until a hover that never comes.
-    expect(pinned.className).not.toMatch(/opacity-0|group-hover/);
-    const reorder = within(pinned).getByRole('button', { name: 'Reorder track' });
-    expect(reorder.className).not.toMatch(/opacity-0|group-hover/);
-    expect(reorder.closest('[class*="opacity-0"]')).toBeNull();
+    expect(container.querySelector('.group-hover\\:opacity-100')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Reorder track' })).toBeNull();
   });
 
-  it('makes the timeline tool buttons tap-capable exactly when the policy says so', () => {
+  it('shows the timeline tool cluster as drag sources on desktop and not at all on touch', () => {
     renderCanvasFor(deviceClass, 'select');
 
-    if (!shouldTapTimelineToolButtons(deviceClass)) {
-      // HTML5 drag sources: fine on a pointer device, inert on touch.
-      expect(screen.getByTitle('Drag onto timeline to add text')).toBeTruthy();
+    if (deviceClass !== 'desktop') {
+      // Touch leaves adding elements to the agent: no drag sources, no tap tools.
+      expect(screen.queryByTitle('Drag onto timeline to add text')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'New text at playhead' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Create animation sequence' })).toBeNull();
       return;
     }
 
-    expect(screen.queryByTitle('Drag onto timeline to add text')).toBeNull();
-    ['New text at playhead', 'New effect layer at playhead', 'Create animation sequence'].forEach(
-      (label) => {
-        const button = screen.getByRole('button', { name: label });
-        expect(button.tagName).toBe('BUTTON');
-        expect(button.getAttribute('draggable')).not.toBe('true');
-      },
-    );
+    expect(screen.getByTitle('Drag onto timeline to add text')).toBeTruthy();
   });
 });
 
@@ -664,64 +605,37 @@ const SHELL_CASES: ReadonlyArray<[TimelineDeviceClass, TimelineShellLayout]> = [
 ];
 
 describe.each(SHELL_CASES)('mode reachability — %s / %s', (deviceClass, layout) => {
-  it('renders the switcher variant the policy resolves, or none', () => {
-    const variant = resolveTimelineModeSwitcherVariant(deviceClass, layout);
-    expect(shouldShowTimelineModeSwitcher(deviceClass, layout)).toBe(variant !== null);
-
+  it('renders no global mode control', () => {
     renderShellFor(deviceClass, layout);
-    const switchers = document.querySelectorAll('[data-timeline-mode-switcher]');
 
-    if (variant === null) {
-      expect(switchers).toHaveLength(0);
-      return;
+    expect(document.querySelectorAll('[data-timeline-mode-switcher]')).toHaveLength(0);
+    for (const label of ['Browse', 'Select', 'Precision']) {
+      expect(screen.queryByRole('button', { name: label })).toBeNull();
     }
-
-    expect(switchers).toHaveLength(1);
-    expect(switchers[0].getAttribute('data-timeline-mode-switcher')).toBe(variant);
   });
 
-  it('reaches every switchable mode through a pressable control', () => {
-    if (resolveTimelineModeSwitcherVariant(deviceClass, layout) === null) {
+  it.each(['move', 'trim'] as const)('offers Done exactly while the policy reports %s armed, and Done restores the resting mode', (mode) => {
+    __interactionMode = mode;
+    renderShellFor(deviceClass, layout);
+    const armed = resolveArmedTouchGesture(deviceClass, mode);
+    const done = screen.queryByRole('button', { name: 'Done' });
+
+    if (armed === null) {
+      expect(done).toBeNull();
       return;
     }
 
-    __interactionMode = 'trim';
-    renderShellFor(deviceClass, layout);
-    const switcher = document.querySelector('[data-timeline-mode-switcher]') as HTMLElement;
-
-    SWITCHABLE_MODES.forEach((mode) => {
-      const label = mode[0].toUpperCase() + mode.slice(1);
-      const button = within(switcher).getByRole('button', { name: label });
-      // aria-pressed is the contract: a mode control with no pressed state is a
-      // button that cannot tell you which mode you are in.
-      expect(button.getAttribute('aria-pressed')).toBe(String(mode === 'trim'));
-      expect(button.tagName).toBe('BUTTON');
-    });
-
-    // Precision is a toggle beside the modes, not a mode button.
-    expect(within(switcher).getByRole('button', { name: 'Precision' })).toBeTruthy();
-    expect(TIMELINE_MODE_HINTS.trim).toBeTruthy();
+    if (!(done instanceof HTMLElement)) {
+      throw new Error(`expected Done while ${mode} is armed on ${deviceClass}`);
+    }
+    expect(done.closest('[data-armed-gesture]')?.getAttribute('data-armed-gesture')).toBe(armed);
+    fireEvent.click(done);
+    expect(__editorOps.setInteractionMode).toHaveBeenCalledWith(getDefaultInteractionMode(deviceClass));
   });
 });
 
 // ---------------------------------------------------------------------------
-// 7. App pane-rail gutter
-// ---------------------------------------------------------------------------
-
-describe.each(SHELL_CASES)('pane rail gutter — %s / %s', (deviceClass, layout) => {
-  it('insets the shell main exactly when the policy reserves the gutter', () => {
-    renderShellFor(deviceClass, layout);
-    const main = document.querySelector('main') as HTMLElement | null;
-    expect(main).toBeTruthy();
-
-    expect(main?.style.paddingInline).toBe(
-      shouldReserveAppPaneRailGutter(deviceClass) ? `${APP_PANE_RAIL_GUTTER_PX}px` : '',
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 8. The gate
+// 7. The gate
 // ---------------------------------------------------------------------------
 
 describe('conformance coverage gate', () => {

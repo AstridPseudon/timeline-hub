@@ -90,8 +90,8 @@ describe('Astrid capability inspection', () => {
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(6);
   });
 
-  it('probes the URL-selected bridge project when it matches the project list', async () => {
-    window.history.replaceState({}, '', '/tools/video-editor?localProject=selected-project');
+  it('probes the URL-selected bridge project by canonical ID', async () => {
+    window.history.replaceState({}, '', '/tools/video-editor?project=selected-id');
     const router = createFakeRuntimeRouter();
     const requests: string[] = [];
     installFetch(async (request) => {
@@ -122,10 +122,8 @@ describe('Astrid capability inspection', () => {
     expect(requests).not.toContain('/api/astrid/v1/projects/first-project/generations');
   });
 
-  it.each([
-    ['', 'no localProject'],
-    ['?localProject=missing-project', 'an unmatched localProject'],
-  ])('falls back to the first bridge project with %s', async (search) => {
+  it('uses the first bridge project when there is no explicit selection', async () => {
+    const search = '';
     window.history.replaceState({}, '', `/tools/video-editor${search}`);
     const router = createFakeRuntimeRouter();
     installFetch(async (request) => {
@@ -147,8 +145,8 @@ describe('Astrid capability inspection', () => {
     expect(result.projectSlug).toBe('first-project');
   });
 
-  it('falls back safely when localProject is malformed', async () => {
-    window.history.replaceState({}, '', '/tools/video-editor?localProject=%E0%A4%A');
+  it('does not fall back when an explicit project selector is malformed', async () => {
+    window.history.replaceState({}, '', '/tools/video-editor?project=%E0%A4%A');
     const router = createFakeRuntimeRouter();
     installFetch(async (request) => {
       const url = new URL(request.url);
@@ -164,9 +162,7 @@ describe('Astrid capability inspection', () => {
       return router.handle(request);
     });
 
-    await expect(inspectAstridCapabilities()).resolves.toMatchObject({
-      projectSlug: 'first-project',
-    });
+    await expect(inspectAstridCapabilities()).resolves.toMatchObject({ projectSlug: null });
   });
 
   it('does not mistake transport uncertainty for permanent capability absence', async () => {

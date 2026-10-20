@@ -19,13 +19,10 @@ const LazyProductTour = React.lazy(() =>
 import { AIInputModeProvider } from '@/shared/contexts/AIInputModeContext';
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
 import { cn } from '@/shared/components/ui/contracts/cn';
-import { isVideoEditorRoute, useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
+import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
 import { SocialIcons } from './components/SocialIcons';
 
 import { useAuth } from '@/shared/contexts/AuthContext';
-import { RuntimeConnectionGate } from '@/integrations/runtime/RuntimeConnectionProvider';
-import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
-import { RuntimeConnectionPill } from '@/shared/components/RuntimeConnection/RuntimeConnectionPill.tsx';
 import { APP_ENTRY_PATH, prefersAppEntry } from './entryClassification.ts';
 import { useSplitViewScroll } from './hooks/useSplitViewScroll';
 import { useGlobalPaneShortcuts } from './hooks/useGlobalPaneShortcuts';
@@ -35,8 +32,6 @@ import { useResetCurrentShotOnRouteChange } from './hooks/useResetCurrentShotOnR
 import { useTextCase } from '@/shared/hooks/useTextCase';
 import { LayoutMainContent } from './components/LayoutMainContent';
 import { usePanesStore } from '@/shared/state/panesStore';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
-import { isRuntimeDocumentMode } from '@/app/runtime/runtimeDocument';
 import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
 import { astridEditorOnlyRedirectTarget, isAstridEditorOnlyWorkspace } from './localWorkspaceShell';
 
@@ -53,37 +48,13 @@ function ScrollToTop() {
   return null;
 }
 
-/** The app shell, behind the Runtime boot gate: on the hosted build nothing below it mounts (no hook, no query)
- * until the local Runtime is connected; the gate shows the connection panel instead. Same-origin builds pass straight through. */
-export const Layout: React.FC = () => (
-  <RuntimeConnectionGate
-    panel={(connection) => <RuntimeConnectionPanel connection={connection} />}
-    pill={(connection) => <RuntimeConnectionPill connection={connection} />}
-  >
-    <LayoutShell />
-  </RuntimeConnectionGate>
-);
+/** Provider-level Runtime and document gates already hold this shell until identity is resolved. */
+export const Layout: React.FC = () => <LayoutShell />;
 
 const LayoutShell: React.FC = () => {
   const { pathname, search } = useLocation();
   const editorOnlyRedirectTarget = astridEditorOnlyRedirectTarget(pathname, search);
   const isAstridEditorOnlyApp = isAstridEditorOnlyWorkspace();
-  // Deterministic local Astrid documents are intentionally sessionless. They
-  // still use the normal Layout so the production shell is exercised, but
-  // they must not be redirected to Home (which mounts the legacy Supabase
-  // auth subscription). AuthProvider already short-circuits this mode; keep
-  // the route-access decision on the same explicit query contract rather than
-  // inventing a fake authenticated user.
-  const localParams = new URLSearchParams(search);
-  const localProject = localParams.get('localProject')?.trim();
-  const isLocalAstridDocument = hasLocalModeUrlParams(search)
-    && Boolean(localProject)
-    && (
-      isVideoEditorRoute(pathname)
-      || pathname === '/tools/image-generation'
-      || pathname === '/tools/travel-between-images'
-    );
-  const isRuntimeDocument = isRuntimeDocumentMode(search, pathname);
   const { isVideoEditorShellActive } = useVideoEditorRouteState();
   const isTasksPaneLocked = usePanesStore((state) => state.isTasksPaneLocked);
   const tasksPaneWidth = usePanesStore((state) => state.tasksPaneWidth);
@@ -139,7 +110,7 @@ const LayoutShell: React.FC = () => {
   //
   // Someone who installed Astrid or chose to use it in the browser never lands back on the
   // landing page: they go to the local editor, which this gate lets through.
-  if (!isAuthenticated && !isLocalAstridDocument && !isRuntimeDocument) {
+  if (!isAuthenticated) {
     if (prefersAppEntry()) return <Navigate to={APP_ENTRY_PATH} replace />;
     return <Navigate to="/home" replace state={{ fromProtected: true }} />;
   }
@@ -169,7 +140,7 @@ const LayoutShell: React.FC = () => {
 
   return (
     <AIInputModeProvider>
-      <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-screen overflow-hidden')}>
+      <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-dvh min-h-0 overflow-hidden')}>
         <ScrollToTop />
         <AppSkyBackground />
 

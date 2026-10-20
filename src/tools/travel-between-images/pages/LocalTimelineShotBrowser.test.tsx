@@ -68,7 +68,7 @@ function LocationProbe() {
   return <output data-testid="location">{location.pathname}{location.search}{location.hash}</output>;
 }
 
-function renderBrowser(initialEntry = '/tools/travel-between-images?localProject=project-001&localTimeline=document-primary') {
+function renderBrowser(initialEntry = '/tools/travel-between-images?project=project-001&timeline=document-primary') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -129,7 +129,7 @@ describe('LocalTimelineShotBrowser', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/tools/travel-between-images?localProject=project-001&localTimeline=document-primary']}>
+        <MemoryRouter initialEntries={['/tools/travel-between-images?project=project-001&timeline=document-primary']}>
           <LocalTimelineShotBrowser projectSlug="project-001" timelineRef="document-primary" />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -147,7 +147,7 @@ describe('LocalTimelineShotBrowser', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('location')).toHaveTextContent(
-        '/tools/travel-between-images?localProject=project-001&localTimeline=document-primary#project%2Fproject-001%2Fdocument%2Fdocument-primary%2Fshot%2Fshot-alpha%2Frevision%2Frev-a%2Foccurrence%2Focc-1',
+        '/tools/travel-between-images?project=project-001&timeline=document-primary#project%2Fproject-001%2Fdocument%2Fdocument-primary%2Fshot%2Fshot-alpha%2Frevision%2Frev-a%2Foccurrence%2Focc-1',
       );
       expect(screen.getByRole('heading', { name: 'shot-alpha' })).toBeInTheDocument();
       expect(screen.getByTestId('production-shot-editor')).toBeInTheDocument();
@@ -158,12 +158,12 @@ describe('LocalTimelineShotBrowser', () => {
   });
 
   it('opens a valid deep link directly in shot detail after refresh', async () => {
-    renderBrowser('/tools/travel-between-images?localProject=project-001&localTimeline=document-primary#project%2Fproject-001%2Fdocument%2Fdocument-primary%2Fshot%2Fshot-alpha%2Frevision%2Frev-a%2Foccurrence%2Focc-1');
+    renderBrowser('/tools/travel-between-images?project=project-001&timeline=document-primary#project%2Fproject-001%2Fdocument%2Fdocument-primary%2Fshot%2Fshot-alpha%2Frevision%2Frev-a%2Foccurrence%2Focc-1');
 
     expect(await screen.findByRole('heading', { name: 'shot-alpha' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Back to all shots/i })).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent(
-      '/tools/travel-between-images?localProject=project-001&localTimeline=document-primary#project%2Fproject-001%2Fdocument%2Fdocument-primary%2Fshot%2Fshot-alpha%2Frevision%2Frev-a%2Foccurrence%2Focc-1',
+      '/tools/travel-between-images?project=project-001&timeline=document-primary#project%2Fproject-001%2Fdocument%2Fdocument-primary%2Fshot%2Fshot-alpha%2Frevision%2Frev-a%2Foccurrence%2Focc-1',
     );
   });
 
@@ -174,7 +174,7 @@ describe('LocalTimelineShotBrowser', () => {
     });
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-        <MemoryRouter initialEntries={['/tools/video-editor?localProject=project-001&localTimeline=document-primary']}>
+        <MemoryRouter initialEntries={['/tools/video-editor?project=project-001&timeline=document-primary']}>
           <LocalTimelineShotBrowser
             projectSlug="project-001"
             projectId="project-001"
@@ -189,11 +189,11 @@ describe('LocalTimelineShotBrowser', () => {
     );
 
     expect(await screen.findByRole('heading', { name: 'shot-alpha' })).toBeInTheDocument();
-    expect(screen.getByTestId('location')).toHaveTextContent('/tools/video-editor?localProject=project-001&localTimeline=document-primary');
+    expect(screen.getByTestId('location')).toHaveTextContent('/tools/video-editor?project=project-001&timeline=document-primary');
 
     fireEvent.click(screen.getByRole('button', { name: /Back to all shots/i }));
     expect(onClose).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('location')).toHaveTextContent('/tools/video-editor?localProject=project-001&localTimeline=document-primary');
+    expect(screen.getByTestId('location')).toHaveTextContent('/tools/video-editor?project=project-001&timeline=document-primary');
   });
 
   it('opens immediately from the parent composition while the document refresh is still pending', () => {
@@ -208,7 +208,7 @@ describe('LocalTimelineShotBrowser', () => {
 
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-        <MemoryRouter initialEntries={['/tools/video-editor?localProject=project-001&localTimeline=document-primary']}>
+        <MemoryRouter initialEntries={['/tools/video-editor?project=project-001&timeline=document-primary']}>
           <LocalTimelineShotBrowser
             projectSlug="project-001"
             projectId="project-001"
@@ -227,15 +227,15 @@ describe('LocalTimelineShotBrowser', () => {
   });
 
   it.each([
-    ['malformed', '/tools/travel-between-images?localProject=project-001&localTimeline=document-primary#%E0%A4%A'],
-    ['unknown', '/tools/travel-between-images?localProject=project-001&localTimeline=document-primary#not-a-shot'],
+    ['malformed', '/tools/travel-between-images?project=project-001&timeline=document-primary#%E0%A4%A'],
+    ['unknown', '/tools/travel-between-images?project=project-001&timeline=document-primary#not-a-shot'],
   ])('falls back to the overview for a %s hash', async (_kind, initialEntry) => {
     renderBrowser(initialEntry);
 
     expect(await screen.findAllByRole('button', { name: 'Select shot shot-alpha' })).not.toHaveLength(0);
     await waitFor(() => {
       expect(screen.getByTestId('location')).toHaveTextContent(
-        '/tools/travel-between-images?localProject=project-001&localTimeline=document-primary',
+        '/tools/travel-between-images?project=project-001&timeline=document-primary',
       );
     });
     expect(screen.queryByTestId('production-shot-editor')).not.toBeInTheDocument();
@@ -250,7 +250,7 @@ describe('LocalTimelineShotBrowser', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('location')).toHaveTextContent(
-        '/tools/travel-between-images?localProject=project-001&localTimeline=document-primary',
+        '/tools/travel-between-images?project=project-001&timeline=document-primary',
       );
       expect(screen.getAllByRole('button', { name: 'Select shot shot-alpha' })).not.toHaveLength(0);
     });

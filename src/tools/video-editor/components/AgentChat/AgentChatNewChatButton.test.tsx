@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton.tsx';
 
 beforeAll(() => {
@@ -10,7 +10,7 @@ beforeAll(() => {
 afterEach(cleanup);
 const plainLine = (line: string) => line.replaceAll('`', '');
 
-const ready: LocalAgentChoice[] = (['astrid', 'claude-code', 'codex'] as const)
+const ready: LocalAgentChoice[] = LOCAL_AGENT_IDS
   .map(id => ({ id, name: LOCAL_AGENT_TABLE[id].name, state: 'ready', line: null }));
 const claudeModels: NewChatAgentModels = {
   agent: 'claude-code',
@@ -40,10 +40,19 @@ describe('AgentChatNewChatButton', () => {
     expect(onNewChat).toHaveBeenCalledWith();
   });
 
-  it('copies the service line for every non-ready row without disabling it', async () => {
+  it.each(['sign-in', 'not-installed'] as const)('shows Hermes and opens the menu when the default agent is %s', (state) => {
+    const onNewChat = vi.fn();
+    render(<AgentChatNewChatButton defaultAgent="hermes" agents={[{ id: 'hermes', name: 'Hermes', state, line: state === 'sign-in' ? LOCAL_AGENT_TABLE.hermes.signInLine : LOCAL_AGENT_TABLE.hermes.notInstalledLine }]} onNewChat={onNewChat} />);
+    expect(screen.getByRole('button', { name: 'New chat' })).toHaveAttribute('title', 'New chat with Hermes');
+    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent(state === 'sign-in' ? 'Sign in' : 'Not installed');
+  });
+
+  it('does not copy or start a chat when a non-ready row is clicked', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
-    openMenu({ agents: [
+    const { onNewChat } = openMenu({ agents: [
       { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine },
       { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'sign-in', line: LOCAL_AGENT_TABLE['claude-code'].signInLine },
       { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.codex.notInstalledLine! },
@@ -58,8 +67,46 @@ describe('AgentChatNewChatButton', () => {
     expect(codex).toHaveTextContent(plainLine(LOCAL_AGENT_TABLE.codex.notInstalledLine!));
     for (const row of [astrid, claude, codex]) expect(row).not.toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(claude);
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(plainLine(LOCAL_AGENT_TABLE['claude-code'].signInLine)));
-    expect(await screen.findByText('Copied')).toBeTruthy();
+    expect(writeText).not.toHaveBeenCalled();
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(claude).toHaveTextContent('Sign in');
+  });
+
+  it('copies only the command from its Copy button', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const command = 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash';
+    const { onNewChat } = openMenu({ agents: [
+      { id: 'hermes', name: LOCAL_AGENT_TABLE.hermes.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.hermes.notInstalledLine! },
+    ] });
+    const hermes = screen.getByRole('option', { name: /Hermes/ });
+    const copyButton = within(hermes).getByRole('button', { name: 'Copy command' });
+    expect(copyButton).toHaveAttribute('title', 'Copy command');
+    expect(copyButton).toHaveAttribute('tabindex', '0');
+
+    fireEvent.click(copyButton);
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(command));
+    expect(writeText).not.toHaveBeenCalledWith(expect.stringContaining('Install with'));
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(hermes).toHaveTextContent('Not installed');
+  });
+
+  it('gives each command in a line its own copy button', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    openMenu({ agents: [
+      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine },
+    ] });
+    const astrid = screen.getByRole('option', { name: /Astrid/ });
+    const buttons = within(astrid).getAllByRole('button', { name: 'Copy command' });
+    expect(buttons).toHaveLength(2);
+
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[1]);
+
+    await waitFor(() => expect(writeText).toHaveBeenNthCalledWith(2, '/login'));
+    expect(writeText).toHaveBeenNthCalledWith(1, 'omp');
   });
 
   it('starts ready agents and treats unknown sign-in as ready', async () => {
@@ -77,6 +124,29 @@ describe('AgentChatNewChatButton', () => {
   it('shows a known current model on the ready row', () => {
     openMenu({ agentModelNames: { 'claude-code': 'Sonnet 4.5' } });
     expect(screen.getByLabelText('Ready, using Sonnet 4.5')).toHaveTextContent('Sonnet 4.5');
+  });
+
+  it('starts Hermes directly and omits model drill-in until a model list is reported', () => {
+    const { onNewChat } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: false } });
+    expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent('Ready');
+    expect(screen.queryByRole('button', { name: 'Choose a Hermes model' })).toBeNull();
+    fireEvent.click(screen.getByRole('option', { name: /Hermes/ }));
+    expect(onNewChat).toHaveBeenCalledWith('hermes', undefined);
+  });
+
+  it('does not enter Hermes model browsing with ArrowRight until models are reported', () => {
+    const { onBrowseAgent } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: false } });
+    fireEvent.keyDown(document.querySelector('[cmdk-root]') as HTMLElement, { key: 'ArrowRight' });
+    expect(onBrowseAgent).not.toHaveBeenCalledWith('hermes');
+    expect(screen.queryByPlaceholderText('Search Hermes models...')).toBeNull();
+  });
+
+  it('closes the Hermes model picker when a session reports an empty list', async () => {
+    const { onNewChat, onBrowseAgent, view } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: true } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Hermes model' }));
+    view.rerender(<AgentChatNewChatButton defaultAgent="hermes" agents={ready} onNewChat={onNewChat} onBrowseAgent={onBrowseAgent} agentCanBrowse={{ hermes: true }} agentModels={{ agent: 'hermes', models: [], loading: false }} />);
+    await waitFor(() => expect(screen.queryByPlaceholderText('Search Hermes models...')).toBeNull());
+    expect(onBrowseAgent).toHaveBeenLastCalledWith(null);
   });
 
   it('disables both halves while a chat cannot start', () => {

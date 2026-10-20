@@ -23,6 +23,7 @@ import {
 } from '@/shared/state/selectionStore';
 import { queryClient } from '@/app/providers/queryClient';
 import { resolveAppDataAuthority } from '@/app/runtime/dataAuthority.ts';
+import { RuntimeDocumentBoundary } from '@/app/runtime/RuntimeDocumentBoundary';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -130,6 +131,7 @@ function SelectionStoreBoundary({ children }: { children: React.ReactNode }) {
 const AppProviderTree = composeProviders([
   AuthProvider,
   AuthGate,
+  RuntimeDocumentBoundary,
   TaskTypeConfigInitializer,
   UserSettingsProvider,
   ProjectProvider,

@@ -17,7 +17,6 @@ function bodyProps(hasActiveAstridElementParams?: boolean): ClipPanelBodyProps {
     track: { id: 'V1', kind: 'visual', label: 'Video 1' },
     deviceClass: 'desktop',
     interactionMode: 'move',
-    precisionEnabled: false,
     hasPredecessor: false,
     onChange: () => undefined,
     onResetPosition: () => undefined,
@@ -27,7 +26,6 @@ function bodyProps(hasActiveAstridElementParams?: boolean): ClipPanelBodyProps {
     onMoveTrackUp: () => undefined,
     onMoveTrackDown: () => undefined,
     onSetInteractionMode: () => undefined,
-    onSetPrecisionEnabled: () => undefined,
     compositionWidth: 1920,
     compositionHeight: 1080,
     registry: {},
@@ -82,5 +80,33 @@ describe('ClipPanelBody timing value commits', () => {
 
     expect(onChange).toHaveBeenLastCalledWith(expectedPatch);
     expect(onChange).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('ClipPanelBody media duration', () => {
+  it('shows the played length and edits the source out, clamped to the media length', () => {
+    const onChange = vi.fn();
+    // Source 1s to 4s at 2x plays for 1.5s; the 6s video caps the source out.
+    const clip = {
+      id: 'clip-1',
+      clipType: 'media',
+      at: 0,
+      track: 'V1',
+      from: 1,
+      to: 4,
+      speed: 2,
+      assetEntry: { file: 'clip.mp4', type: 'video/mp4', duration: 6 },
+    };
+    render(<ClipPanelBody {...bodyProps()} clip={clip} activeTab="timing" onChange={onChange} />);
+
+    const input = screen.getByText('Duration (seconds)').parentElement?.querySelector('input');
+    expect(input).not.toBeNull();
+    expect(input!.value).toBe('1.5');
+
+    fireEvent.change(input!, { target: { value: '2' } });
+    expect(onChange).toHaveBeenLastCalledWith({ to: 5 });
+
+    fireEvent.change(input!, { target: { value: '10' } });
+    expect(onChange).toHaveBeenLastCalledWith({ to: 6 });
   });
 });

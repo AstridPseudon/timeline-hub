@@ -20,9 +20,10 @@ import {
   vi,
 } from "vitest";
 import VideoEditorPage, {
-  LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
+  LAST_OPENED_PROJECT_STORAGE_KEY,
 } from "@/tools/video-editor/pages/VideoEditorPage.tsx";
 import {
+  AstridRuntimeClient,
   RUNTIME_CLIENT_SCOPES,
   RuntimeAuthenticationError,
 } from "@/integrations/runtime/client.ts";
@@ -118,7 +119,9 @@ const state = vi.hoisted(() => ({
     // project list, or one that resolved without the URL's project.
     projectsPending: false,
     projectsError: null as Error | null,
+    retainDiscoveryDataOnError: false,
     omitRuntimeProject: false,
+    includeL04: false,
   },
   discovery: {
     bridgeHealthy: true,
@@ -143,9 +146,18 @@ const state = vi.hoisted(() => ({
       slug?: string;
       name: string;
       is_default?: boolean;
+      is_shot?: boolean;
     }[],
+    timelineProjectId: null as string | null,
   },
   ensureProjectHasTimeline: vi.fn(async () => "01CREATED"),
+  createCanonicalTimeline: vi.fn(async (_projectId: string, request: { timelineId: string; name?: string; idempotencyKey?: string }) => request.timelineId),
+  setPrimaryTimeline: vi.fn(async (timelineId: string) => {
+    state.discovery.timelines = state.discovery.timelines.map((timeline) => ({
+      ...timeline,
+      is_default: timeline.timeline_id === timelineId,
+    }));
+  }),
   selectedProvider: null as DataProvider | null,
   providerProbe: null as React.ComponentType<{
     dataProvider: DataProvider;
@@ -181,11 +193,6 @@ const state = vi.hoisted(() => ({
   extensionDisposals: [] as string[],
   nativeProbe: vi.fn(),
   runtimeOnError: null as null | ((error: unknown) => void),
-  // Mirrors Runtime: selectors match id OR slug and answer with the canonical id.
-  resolveRuntimeProjectId: vi.fn(async (selector: string) => {
-    if (selector === 'missing-project') throw new Error('Runtime project "missing-project" not found');
-    return selector === 'almost-ready' ? '811a657af5fe43e4b2b48a670de1f3e8' : selector;
-  }),
   runtimeCtor: vi.fn(function MockRuntimeProvider(
     this: Record<string, unknown>,
     options: unknown,
@@ -193,6 +200,7 @@ const state = vi.hoisted(() => ({
     this.kind = "runtime";
     this.options = options;
     this.reconnect = vi.fn(async () => undefined);
+    this.setPrimaryTimeline = state.setPrimaryTimeline;
     state.runtimeOnError =
       (options as { onRuntimeError?: (error: unknown) => void })
         .onRuntimeError ?? null;
@@ -228,68 +236,12 @@ vi.mock("@/shared/hooks/settings/useToolSettings.ts", () => ({
 vi.mock("@/integrations/runtime/createDefaultTimeline.ts", () => ({
   ensureProjectHasTimeline: (...args: unknown[]) =>
     state.ensureProjectHasTimeline(...(args as [string, unknown])),
+  createCanonicalTimeline: (...args: unknown[]) =>
+    state.createCanonicalTimeline(...(args as [string, { timelineId: string }, unknown])),
 }));
 
 vi.mock("@/tools/video-editor/hooks/useTimelinesList.ts", () => ({
   useTimelinesList: () => state.timelines,
-}));
-
-// The discovery hook is owned by the page; tests drive its result through the
-// mutable `state.discovery` object so bridge-down → online refreshes can be
-// simulated without a real bridge.
-vi.mock("@/tools/video-editor/hooks/useAstridBridgeDiscovery.ts", () => ({
-  useAstridBridgeDiscovery: () => ({
-    healthQuery: {
-      isLoading: state.discovery.healthLoading,
-      isError: state.discovery.bridgeDown,
-      error: state.discovery.bridgeDown
-        ? new Error("bridge unreachable")
-        : null,
-      data: state.discovery.bridgeHealthy ? true : false,
-    },
-    projectsQuery: {
-      isLoading: state.discovery.projectsLoading,
-      isFetching: state.discovery.projectsLoading,
-      isError: state.discovery.projectsError !== null,
-      error: state.discovery.projectsError,
-      data:
-        state.discovery.bridgeDown ||
-        state.discovery.projectsError ||
-        state.discovery.projectsLoading
-          ? undefined
-          : {
-              projects: state.discovery.projects.map((p) => ({
-                ...p,
-                project_id: p.project_id ?? p.slug,
-              })),
-            },
-      refetch: vi.fn(async () => ({
-        data: { projects: state.discovery.projects },
-      })),
-    },
-    timelinesQuery: {
-      isLoading: state.discovery.timelinesLoading,
-      isPending: state.discovery.timelinesPending,
-      isError: state.discovery.timelinesError !== null,
-      error: state.discovery.timelinesError,
-      data:
-        state.discovery.timelinesLoading ||
-        state.discovery.timelinesPending ||
-        state.discovery.timelinesError
-          ? undefined
-          : { timelines: state.discovery.timelines },
-      refetch: vi.fn(async () => ({
-        data: { timelines: state.discovery.timelines },
-      })),
-    },
-    bridgeHealthy: state.discovery.bridgeHealthy,
-    bridgeDown: state.discovery.bridgeDown,
-    projectsEmpty: state.discovery.projects.length === 0,
-  }),
-}));
-
-vi.mock('@/integrations/runtime/resolveProjectSelector.ts', () => ({
-  resolveRuntimeProjectId: state.resolveRuntimeProjectId,
 }));
 
 vi.mock(
@@ -308,12 +260,6 @@ vi.mock(
       }) => {
         const override = state.runtimeDiscovery;
         const projects = [
-          {
-            project_id: "811a657af5fe43e4b2b48a670de1f3e8",
-            slug: "almost-ready",
-            name: "Almost ready",
-            metadata: {},
-          },
           ...state.discovery.projects.map((p) => ({
             ...p,
             project_id: p.project_id ?? p.slug,
@@ -329,9 +275,20 @@ vi.mock(
                   metadata: {},
                 },
               ]),
+          ...(override.includeL04 ? [{
+            project_id: L04_PROJECT,
+            slug: "l04-project",
+            name: "L04 project",
+            metadata: {},
+          }, {
+            project_id: "l04-other-project-id",
+            slug: "l04-other",
+            name: "L04 other project",
+            metadata: {},
+          }] : []),
         ];
         const listPending = override.projectsPending;
-        const listed = listPending || !!override.projectsError ? null : projects;
+        const listed = listPending || (!!override.projectsError && !override.retainDiscoveryDataOnError) ? null : projects;
         const project =
           listed?.find((p) => p.project_id === projectId) ?? null;
         return {
@@ -339,18 +296,36 @@ vi.mock(
           projectsQuery: {
             data: listed ?? undefined,
             isLoading: listPending,
+            isFetching: listPending,
             error: override.projectsError,
             refetch: vi.fn(),
           },
           timelinesQuery: {
-            data: project
-              ? [
-                  ...state.discovery.timelines,
-                  { timeline_id: "timeline-r", name: "Runtime timeline" },
-                ]
-              : undefined,
-            isLoading: false,
-            error: null,
+            data: project && (state.discovery.timelinesLoading || state.discovery.timelinesPending || (state.discovery.timelinesError && !override.retainDiscoveryDataOnError))
+              ? undefined
+              : project && state.discovery.timelineProjectId
+                && state.discovery.timelineProjectId !== projectId
+                ? []
+                : projectId === L04_PROJECT
+                  ? state.discovery.timelines.length > 0
+                    ? state.discovery.timelines
+                    : [
+                        { timeline_id: L04_TIMELINE, name: "L04 timeline", is_default: true },
+                        { timeline_id: "l04-other-timeline", name: "L04 other timeline" },
+                      ]
+                  : projectId === "l04-other-project-id"
+                    ? [{ timeline_id: "l04-other-timeline", name: "L04 other timeline" }]
+                : project
+                  ? [
+                      ...state.discovery.timelines,
+                      ...(projectId === "project-r"
+                        ? [{ timeline_id: "timeline-r", name: "Runtime timeline" }]
+                        : []),
+                    ]
+                  : undefined,
+            isLoading: !!project && (state.discovery.timelinesLoading || state.discovery.timelinesPending),
+            isFetching: !!project && state.discovery.timelinesLoading,
+            error: project ? state.discovery.timelinesError : null,
             refetch: vi.fn(),
           },
           reconnect: vi.fn(async () => undefined),
@@ -530,7 +505,11 @@ vi.mock("@/tools/video-editor/contexts/VideoEditorProvider.tsx", async () => {
   };
 });
 
-function deferred() { let resolve!: () => void; const promise = new Promise<void>(done=>{resolve=done;}); return {promise,resolve}; }
+function deferred<T = void>() {
+  let resolvePromise!: (value: T) => void;
+  const promise = new Promise<T>((done) => { resolvePromise = done; });
+  return { promise, resolve: (value?: T) => resolvePromise(value as T) };
+}
 
 function ChatScopeProbe() {
   const scope = useAgentChatBridge();
@@ -798,8 +777,9 @@ function L04RouteDriver() {
   return null;
 }
 function renderL04Page(
-  entry = `/tools/video-editor?localProject=l04-project&localTimeline=${L04_TIMELINE}`,
+  entry = `/tools/video-editor?project=${L04_PROJECT}&timeline=${L04_TIMELINE}`,
 ) {
+  state.runtimeDiscovery.includeL04 = true;
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -872,7 +852,9 @@ describe("VideoEditorPage", () => {
     state.timelines.deleteTimeline.mutateAsync.mockClear();
     state.runtimeDiscovery.projectsPending = false;
     state.runtimeDiscovery.projectsError = null;
+    state.runtimeDiscovery.retainDiscoveryDataOnError = false;
     state.runtimeDiscovery.omitRuntimeProject = false;
+    state.runtimeDiscovery.includeL04 = false;
     state.discovery.bridgeHealthy = true;
     state.discovery.bridgeDown = false;
     state.discovery.healthLoading = false;
@@ -882,6 +864,7 @@ describe("VideoEditorPage", () => {
     state.discovery.timelinesLoading = false;
     state.discovery.timelinesPending = false;
     state.discovery.timelinesError = null;
+    state.discovery.timelineProjectId = null;
     state.discovery.timelines = [
       {
         timeline_id: "11111111-1111-1111-1111-111111111111",
@@ -899,6 +882,8 @@ describe("VideoEditorPage", () => {
       },
     ];
     state.ensureProjectHasTimeline.mockReset().mockResolvedValue("01CREATED");
+    state.createCanonicalTimeline.mockReset().mockImplementation(async (_projectId, request) => request.timelineId);
+    state.setPrimaryTimeline.mockClear();
     state.selectedProvider = null;
     state.providerProbe = null;
     state.providerMounts = 0;
@@ -938,8 +923,11 @@ describe("VideoEditorPage", () => {
   });
 
   it("guards source imports before any source row exists and confirms staged draft navigation", async () => {
+    state.discovery.projects = [{
+      slug: 'transcript-project', name: 'Transcript project', project_id: 'project-canonical-id',
+    }];
     renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+      "/tools/video-editor?project=project-canonical-id&timeline=11111111-1111-1111-1111-111111111111",
     );
     await screen.findByTestId("video-editor-provider");
     act(() =>
@@ -957,7 +945,7 @@ describe("VideoEditorPage", () => {
     state.confirm.mockReturnValue(false);
     const user = userEvent.setup();
     await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
-    await user.click(await screen.findByRole("option", { name: /Alt Cut/ }));
+    await user.click(await screen.findByText("Alt Cut"));
     expect(state.confirm).toHaveBeenCalledWith(
       expect.stringContaining("project transcript draft"),
     );
@@ -968,7 +956,7 @@ describe("VideoEditorPage", () => {
   });
   it("offers exactly one header project and one preview timeline selector for direct Runtime URLs", async () => {
     renderPage(
-      "/tools/video-editor?runtime=1&runtimeProject=project-r&runtimeTimeline=timeline-r&localTest=1",
+      "/tools/video-editor?project=project-r&timeline=timeline-r&localTest=1",
     );
     await screen.findByTestId("video-editor-provider");
     expect(
@@ -999,8 +987,8 @@ describe("VideoEditorPage", () => {
         project_id: "runtime-p2",
       },
     ];
-    renderPage("/tools/video-editor?localProject=fresh-project", true);
-    expect(screen.getByRole('heading', { name: 'Loading timelines…' })).toBeInTheDocument();
+    renderPage("/tools/video-editor?project=runtime-p1", true);
+    expect(screen.queryByText("No timeline yet")).toBeNull();
     expect(screen.queryByText('Timeline not found')).toBeNull();
     const scope = () =>
       JSON.parse(screen.getByTestId("chat-scope").textContent!);
@@ -1014,9 +1002,7 @@ describe("VideoEditorPage", () => {
     expect(screen.queryByTestId("video-editor-provider")).toBeNull();
     const user = userEvent.setup();
     await user.click(screen.getByRole("combobox", { name: "Select project" }));
-    await user.click(
-      await screen.findByRole("option", { name: /Other project/ }),
-    );
+    await user.click(await screen.findByRole("option", { name: /Other project/ }));
     await waitFor(() =>
       expect(scope()).toMatchObject({
         projectId: "runtime-p2",
@@ -1025,12 +1011,12 @@ describe("VideoEditorPage", () => {
       }),
     );
     expect(
-      window.localStorage.getItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY),
-    ).toBe("other-project");
+      window.localStorage.getItem(LAST_OPENED_PROJECT_STORAGE_KEY),
+    ).toBe("runtime-p2");
     expect(state.runtimeCtor).not.toHaveBeenCalled();
   });
 
-  it("restores the last opened local project after project discovery completes", async () => {
+  it("restores the last opened project after discovery completes", async () => {
     state.discovery.projects = [
       {
         slug: "newest-project",
@@ -1044,7 +1030,7 @@ describe("VideoEditorPage", () => {
       },
     ];
     window.localStorage.setItem(
-      LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
+      LAST_OPENED_PROJECT_STORAGE_KEY,
       "last-opened-project",
     );
 
@@ -1057,7 +1043,19 @@ describe("VideoEditorPage", () => {
     );
   });
 
-  it("falls back from a stale local project preference to the newest created project", async () => {
+  it('resumes a canonical project ID before another project with a colliding slug', async () => {
+    state.discovery.projects = [
+      { project_id: 'other-id', slug: 'remembered-id', name: 'Colliding alias' },
+      { project_id: 'remembered-id', slug: 'remembered-slug', name: 'Remembered project' },
+    ];
+    window.localStorage.setItem(LAST_OPENED_PROJECT_STORAGE_KEY, 'remembered-id');
+    renderPage('/tools/video-editor');
+
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Remembered project'));
+    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'remembered-id' }));
+  });
+
+  it("falls back from a stale project preference to the newest project", async () => {
     state.discovery.projects = [
       {
         slug: "older-project",
@@ -1071,7 +1069,7 @@ describe("VideoEditorPage", () => {
       },
     ];
     window.localStorage.setItem(
-      LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
+      LAST_OPENED_PROJECT_STORAGE_KEY,
       "deleted-project",
     );
 
@@ -1083,11 +1081,11 @@ describe("VideoEditorPage", () => {
       ).toHaveTextContent("Newest project"),
     );
     expect(
-      window.localStorage.getItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY),
+      window.localStorage.getItem(LAST_OPENED_PROJECT_STORAGE_KEY),
     ).toBe("newest-project");
   });
 
-  it("keeps an explicit project URL authoritative over stored selection and reports a missing slug", async () => {
+  it("keeps an explicit canonical project URL authoritative and reports an unknown project", async () => {
     state.discovery.projects = [
       {
         slug: "stored-project",
@@ -1096,39 +1094,39 @@ describe("VideoEditorPage", () => {
       },
     ];
     window.localStorage.setItem(
-      LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
+      LAST_OPENED_PROJECT_STORAGE_KEY,
       "stored-project",
     );
 
-    renderPage("/tools/video-editor?localProject=missing-project");
+    renderPage("/tools/video-editor?project=missing-project");
 
     expect(
       await screen.findByRole("heading", { name: "Project not found" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("combobox", { name: "Select project" }),
-    ).toHaveTextContent("Project not found");
+    ).toHaveTextContent("Project unavailable");
     expect(
-      window.localStorage.getItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY),
+      window.localStorage.getItem(LAST_OPENED_PROJECT_STORAGE_KEY),
     ).toBe("stored-project");
   });
 
-  it("keeps an explicit valid URL project over a different stored project during discovery", async () => {
+  it("keeps an explicit canonical project over a different stored project during discovery", async () => {
     state.discovery.projects = [];
-    state.discovery.projectsLoading = true;
+    state.runtimeDiscovery.projectsPending = true;
     window.localStorage.setItem(
-      LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY,
+      LAST_OPENED_PROJECT_STORAGE_KEY,
       "stored-project",
     );
 
     const view = renderPage(
-      "/tools/video-editor?localProject=explicit-project",
+      "/tools/video-editor?project=explicit-project",
     );
     expect(
       screen.getByRole("combobox", { name: "Select project" }),
-    ).toHaveTextContent("Loading project…");
+    ).toHaveTextContent("Loading project");
 
-    state.discovery.projectsLoading = false;
+    state.runtimeDiscovery.projectsPending = false;
     state.discovery.projects = [
       {
         slug: "stored-project",
@@ -1149,37 +1147,14 @@ describe("VideoEditorPage", () => {
       ).toHaveTextContent("Explicit project"),
     );
     expect(
-      window.localStorage.getItem(LOCAL_ASTRID_LAST_OPENED_PROJECT_STORAGE_KEY),
+      window.localStorage.getItem(LAST_OPENED_PROJECT_STORAGE_KEY),
     ).toBe("explicit-project");
   });
 
-  it("shows project loading instead of an empty-selection card while restoring an explicit URL project", async () => {
-    state.discovery.projects = [];
-    state.discovery.projectsLoading = true;
-
-    renderPage(
-      "/tools/video-editor?localProject=the-lion-kink&localTimeline=timeline-1",
-    );
-
-    expect(
-      screen.getByRole("combobox", { name: "Select project" }),
-    ).toHaveTextContent("Loading project…");
-    expect(
-      screen.getByText("Restoring the local Astrid workspace selection."),
-    ).toBeInTheDocument();
-    const loadingCard = screen
-      .getByText("Restoring the local Astrid workspace selection.")
-      .closest('[role="status"]');
-    expect(
-      loadingCard?.querySelector("[data-astrid-mink-circle]"),
-    ).toHaveAttribute("width", "48");
-    expect(
-      screen.queryByText("Select a project and timeline"),
-    ).not.toBeInTheDocument();
-  });
 
   it("shows project creation when discovery authoritatively returns no projects", async () => {
     state.discovery.projects = [];
+    state.runtimeDiscovery.omitRuntimeProject = true;
 
     renderPage("/tools/video-editor");
 
@@ -1203,7 +1178,7 @@ describe("VideoEditorPage", () => {
       },
     ];
     renderPage(
-      "/tools/video-editor?localProject=fresh-project&localTimeline=11111111-1111-1111-1111-111111111111",
+      "/tools/video-editor?project=runtime-p1&timeline=11111111-1111-1111-1111-111111111111",
       true,
     );
     await screen.findByTestId("video-editor-provider");
@@ -1217,60 +1192,74 @@ describe("VideoEditorPage", () => {
         timelineSummary: { configVersion: 7 },
       }),
     );
-    expect(state.runtimeCtor).toHaveBeenCalledWith(
+      expect(state.runtimeCtor).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: "runtime-p1" }),
     );
   });
 
   it('automatically clears a mounted failure only after a fresh authenticated workspace probe, retaining the editor and draft scope', async () => {
     const ready=deferred();state.nativeProbe.mockImplementationOnce(()=>ready.promise);
-    renderPage('/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111');
+    renderPage('/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111');
     const editor=await screen.findByTestId('video-editor-provider'), mounts=state.providerMounts;
     act(()=>state.pendingWorkCallback?.({writing:false,unsaved:true}));
     act(()=>state.runtimeOnError?.(new RuntimeAuthenticationError('/api/runtime')));
-    await screen.findByTestId('workspace-connection-recovery');
-    expect(state.nativeProbe).toHaveBeenCalledOnce();expect(editor).not.toBeVisible();
+    await screen.findByTestId('runtime-connector-alert');
+    expect(state.nativeProbe).toHaveBeenCalledOnce();expect(editor).toBeVisible();
     await act(async()=>{ready.resolve();await ready.promise;});
-    await waitFor(()=>expect(screen.queryByTestId('workspace-connection-recovery')).toBeNull());
+    await waitFor(()=>expect(screen.queryByTestId('runtime-connector-alert')).toBeNull());
     expect(screen.getByTestId('video-editor-provider')).toBe(editor);expect(editor).toBeVisible();expect(state.providerMounts).toBe(mounts);expect(state.providerUnmounts).toBe(0);
   });
 
   it('does not let an older successful probe clear a failure reported after that probe started', async () => {
     const older=deferred(), newer=deferred();
     state.nativeProbe.mockImplementationOnce(()=>older.promise).mockImplementationOnce(()=>newer.promise);
-    renderPage('/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111');
+    renderPage('/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111');
     const editor=await screen.findByTestId('video-editor-provider');
     act(()=>state.runtimeOnError?.(new RuntimeAuthenticationError('/api/runtime/first')));
     await waitFor(()=>expect(state.nativeProbe).toHaveBeenCalledTimes(1));
     const latest=new RuntimeAuthenticationError('/api/runtime/latest');act(()=>state.runtimeOnError?.(latest));
     await waitFor(()=>expect(state.nativeProbe).toHaveBeenCalledTimes(2));
     await act(async()=>{older.resolve();await older.promise;});
-    expect(screen.getByTestId('workspace-connection-recovery')).toBeInTheDocument();expect(screen.getByText(latest.message)).toBeInTheDocument();
+    expect(screen.getByTestId('runtime-connector-alert')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Show full connection error'));
+    expect(screen.getByTestId('workspace-connection-diagnostic')).toHaveTextContent(latest.message);
     await act(async()=>{newer.resolve();await newer.promise;});
-    await waitFor(()=>expect(screen.queryByTestId('workspace-connection-recovery')).toBeNull());expect(screen.getByTestId('video-editor-provider')).toBe(editor);
+    await waitFor(()=>expect(screen.queryByTestId('runtime-connector-alert')).toBeNull());expect(screen.getByTestId('video-editor-provider')).toBe(editor);
   });
 
-  it("mounts the Runtime editor from the URL when discovery fails, with no sticky error", async () => {
+  it("keeps an unverified URL behind discovery recovery when discovery fails", async () => {
     state.runtimeDiscovery.projectsError = new Error("Runtime busy");
     renderPage(
-      "/tools/video-editor?runtime=1&runtimeProject=project-r&runtimeTimeline=timeline-r",
+      "/tools/video-editor?project=project-r&timeline=timeline-r",
     );
 
-    await screen.findByTestId("video-editor-provider");
-    expect(screen.queryByText("Workspace unavailable")).toBeNull();
-    expect(state.runtimeCtor).toHaveBeenCalledWith(
-      expect.objectContaining({ projectId: "project-r" }),
-    );
+    expect(await screen.findByTestId("runtime-connector-alert")).toBeInTheDocument();
+    expect(screen.queryByTestId("video-editor-provider")).toBeNull();
+    expect(state.runtimeCtor).not.toHaveBeenCalled();
+  });
+
+  it("keeps the verified editor and drafts mounted through a discovery refetch failure", async () => {
+    const view = renderPage('/tools/video-editor?project=project-r&timeline=timeline-r');
+    const editor = await screen.findByTestId('video-editor-provider');
+    act(() => state.pendingWorkCallback?.({ writing: false, unsaved: true }));
+    state.runtimeDiscovery.retainDiscoveryDataOnError = true;
+    state.runtimeDiscovery.projectsError = new Error('Runtime temporarily unavailable');
+    state.discovery.timelinesError = new Error('Timeline refresh failed');
+    view.refresh();
+
+    expect(await screen.findByTestId('runtime-connector-alert')).toBeInTheDocument();
+    expect(screen.getByTestId('video-editor-provider')).toBe(editor);
+    expect(state.providerMounts).toBe(1);
+    expect(state.providerUnmounts).toBe(0);
   });
 
   it("shows a loading state, never 'not available', while the project list is pending", async () => {
     state.runtimeDiscovery.projectsPending = true;
-    renderPage("/tools/video-editor?runtime=1&runtimeProject=project-r");
+    renderPage("/tools/video-editor?project=project-r");
 
     // The header's picker holds a quiet loading bar; no status card or copy. A
     // first load keeps the boot layer up meanwhile.
     expect(await screen.findByText("Loading project")).toBeInTheDocument();
-    expect(document.querySelector("[data-boot-hold]")).not.toBeNull();
     expect(screen.queryByText("Connecting to workspace…")).toBeNull();
     expect(
       screen.queryByText(/not available in this workspace/),
@@ -1280,21 +1269,17 @@ describe("VideoEditorPage", () => {
 
   it("reports 'not available' only after the resolved list lacks the project", async () => {
     state.runtimeDiscovery.omitRuntimeProject = true;
-    renderPage("/tools/video-editor?runtime=1&runtimeProject=project-r");
+    renderPage("/tools/video-editor?project=project-r");
 
-    expect(await screen.findByText("Project not found")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "The selected project is not available in this workspace. Choose an existing project.",
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Project not found" })).toBeInTheDocument();
+    expect(screen.getByText(/not available in this workspace/)).toBeInTheDocument();
     expect(document.querySelector("[data-boot-hold]")).toBeNull();
     expect(screen.queryByText("Connecting to workspace…")).toBeNull();
   });
 
   it("surfaces Runtime auth recovery in the existing Runtime editor route", async () => {
     renderPage(
-      "/tools/video-editor?runtime=1&runtimeProject=project-r&runtimeTimeline=timeline-r",
+      "/tools/video-editor?project=project-r&timeline=timeline-r",
     );
 
     await screen.findByTestId("video-editor-provider");
@@ -1323,60 +1308,50 @@ describe("VideoEditorPage", () => {
     );
   });
 
-  it('builds the Runtime provider with the canonical id when runtimeProject is a slug', async () => {
-    renderPage('/tools/video-editor?runtime=1&runtimeProject=almost-ready&runtimeTimeline=timeline-r', true);
 
-    await screen.findByTestId('video-editor-provider');
-    expect(state.runtimeCtor).toHaveBeenCalledTimes(1);
-    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: '811a657af5fe43e4b2b48a670de1f3e8' }));
-    await waitFor(() => expect(JSON.parse(screen.getByTestId('chat-scope').textContent!)).toMatchObject({
-      projectId: '811a657af5fe43e4b2b48a670de1f3e8', projectSlug: 'almost-ready',
-    }));
-  });
+  it('reports an unknown canonical project id as not found without building a provider', async () => {
+    renderPage('/tools/video-editor?project=missing-project&timeline=timeline-r');
 
-  it('keeps a canonical runtimeProject id as is', async () => {
-    renderPage('/tools/video-editor?runtime=1&runtimeProject=811a657af5fe43e4b2b48a670de1f3e8&runtimeTimeline=timeline-r');
-
-    await screen.findByTestId('video-editor-provider');
-    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: '811a657af5fe43e4b2b48a670de1f3e8' }));
-  });
-
-  it('reports an unknown runtimeProject as not found without building a provider', async () => {
-    renderPage('/tools/video-editor?runtime=1&runtimeProject=missing-project&runtimeTimeline=timeline-r');
-
-    expect(await screen.findByText('Runtime project "missing-project" not found')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Project not found' })).toBeInTheDocument();
     expect(state.runtimeCtor).not.toHaveBeenCalled();
   });
 
-  it('does not show a false "not available" copy while the project selector is still resolving', async () => {
-    let release: (id: string) => void = () => undefined;
-    state.resolveRuntimeProjectId.mockImplementationOnce(
-      () => new Promise<string>((resolve) => { release = resolve; }),
-    );
-    renderPage('/tools/video-editor?runtime=1&runtimeProject=almost-ready&runtimeTimeline=timeline-r', true);
+  it('keeps an explicit canonical project pending while discovery is loading', async () => {
+    state.runtimeDiscovery.projectsPending = true;
+    const view = renderPage('/tools/video-editor?project=project-r&timeline=timeline-r', true);
 
     expect(await screen.findByText('Loading project')).toBeInTheDocument();
     expect(screen.queryByText('Connecting to workspace…')).toBeNull();
     expect(screen.queryByText(/not found|not available|unavailable/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('video-editor-provider')).toBeNull();
     expect(state.runtimeCtor).not.toHaveBeenCalled();
-    release('811a657af5fe43e4b2b48a670de1f3e8');
-    await screen.findByTestId('video-editor-provider');
-    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: '811a657af5fe43e4b2b48a670de1f3e8' }));
+    state.runtimeDiscovery.projectsPending = false;
+    view.refresh();
+    expect(await screen.findByTestId('video-editor-provider')).toBeInTheDocument();
+    expect(state.runtimeCtor).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'project-r' }));
   });
 
-  it("only exposes the manual ACP controls behind the explicit debug flag", async () => {
+  it('does not mount a provider when timeline verification rejects a cross-project row', async () => {
+    state.discovery.timelinesError = new Error('Runtime returned a timeline belonging to a different project.');
+    renderPage('/tools/video-editor?project=project-r&timeline=timeline-r');
+
+    expect(await screen.findByTestId('runtime-connector-alert')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Timelines unavailable' })).toBeInTheDocument();
+    expect(state.runtimeCtor).not.toHaveBeenCalled();
+  });
+
+  it("does not expose manual ACP controls even when the retired debug flag is present", async () => {
     renderPage(
-      "/tools/video-editor?runtime=1&runtimeProject=project-r&runtimeTimeline=timeline-r&acpDebug=1",
+      "/tools/video-editor?project=project-r&timeline=timeline-r&acpDebug=1",
     );
 
     await screen.findByTestId("video-editor-provider");
-    expect(
-      screen.getByTestId("astrid-acp-session-controls"),
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId("astrid-acp-session-controls")).toBeNull();
   });
 
   it("does not loop timeline creation when Astrid returns an empty list", async () => {
     state.discovery.projects = [];
+    state.runtimeDiscovery.omitRuntimeProject = true;
     state.settings.settings = { lastTimelineId: undefined };
     state.timelines.data = [];
     state.timelines.timelineMutationsAvailable = false;
@@ -1402,6 +1377,46 @@ describe("VideoEditorPage", () => {
     expect(state.timelines.deleteTimeline.mutateAsync).not.toHaveBeenCalled();
   });
 
+  it("renames the current timeline from the canonical editor route", async () => {
+    state.discovery.projects = [
+      {
+        slug: "ados-talks",
+        name: "Ados Talks",
+        project_id: "project-canonical-id",
+      },
+    ];
+    const renameTimeline = vi
+      .spyOn(AstridRuntimeClient.prototype, "renameTimeline")
+      .mockResolvedValue(
+        {} as Awaited<ReturnType<AstridRuntimeClient["renameTimeline"]>>,
+      );
+
+    renderPage(
+      "/tools/video-editor?project=project-canonical-id&timeline=11111111-1111-1111-1111-111111111111",
+    );
+    await screen.findByTestId("video-editor-provider");
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Rename timeline" }),
+    );
+    await user.clear(screen.getByRole("textbox", { name: "Timeline name" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Timeline name" }),
+      "Renamed intro",
+    );
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(renameTimeline).toHaveBeenCalledWith(
+        "project-canonical-id",
+        "11111111-1111-1111-1111-111111111111",
+        "Renamed intro",
+      );
+    });
+  });
+
   it("automatically creates and opens Main from the authoritative empty-project state", async () => {
     state.discovery.projects = [
       {
@@ -1415,7 +1430,7 @@ describe("VideoEditorPage", () => {
       state.discovery.timelines = [{ timeline_id: "01CREATED", name: "Main" }];
       return "01CREATED";
     });
-    renderPage("/tools/video-editor?localProject=demo-project");
+    renderPage("/tools/video-editor?project=project-canonical-id");
 
     const provider = await screen.findByTestId("video-editor-provider");
     expect(provider).toHaveAttribute("data-kind", "runtime");
@@ -1439,8 +1454,8 @@ describe("VideoEditorPage", () => {
     ];
     state.discovery.timelines = [];
     state.ensureProjectHasTimeline.mockRejectedValue(new Error("unavailable"));
-    renderPage("/tools/video-editor?localProject=demo-project");
-    await screen.findByRole("alert");
+    renderPage("/tools/video-editor?project=project-canonical-id");
+    await waitFor(() => expect(screen.getByRole("button", { name: "New timeline" })).toBeEnabled());
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(state.ensureProjectHasTimeline).toHaveBeenCalledTimes(1);
     expect(
@@ -1448,102 +1463,102 @@ describe("VideoEditorPage", () => {
     ).toBeEnabled();
   });
 
-  it("fails closed for a local URL the workspace does not list rather than mounting a slug-addressed backend", async () => {
-    // Only the Runtime provider exists: a slug that workspace discovery does
-    // not resolve to a canonical project id mounts nothing, even when the URL
-    // names a timeline.
-    state.discovery.projects = [{ slug: "other-project", name: "Other project" }];
-    state.discovery.timelines = [];
-    renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
-    );
-    expect(
-      await screen.findByRole("heading", { name: "Project not found" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Connect the local workspace")).toBeNull();
+  it("retries additional timeline creation with the same idempotency identity", async () => {
+    state.createCanonicalTimeline
+      .mockRejectedValueOnce(new Error("temporary failure"))
+      .mockImplementationOnce(async (_projectId, request) => request.timelineId);
+    renderPage("/tools/video-editor?project=project-r&timeline=timeline-r");
+    await screen.findByTestId("video-editor-provider");
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "New timeline" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "New timeline" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "New timeline" }));
+    await waitFor(() => expect(state.createCanonicalTimeline).toHaveBeenCalledTimes(2));
+
+    const firstRequest = state.createCanonicalTimeline.mock.calls[0];
+    const retryRequest = state.createCanonicalTimeline.mock.calls[1];
+    expect(firstRequest[0]).toBe("project-r");
+    expect(retryRequest[0]).toBe("project-r");
+    expect(retryRequest[1]).toEqual(firstRequest[1]);
+    expect(retryRequest[1]).toMatchObject({
+      name: "Timeline 4",
+      idempotencyKey: expect.stringContaining("astrid-timeline-create-project-r-"),
+    });
+  });
+
+  it("does not let an additional timeline completion switch away during a save", async () => {
+    const creation = deferred<string>();
+    state.createCanonicalTimeline.mockReturnValueOnce(creation.promise as never);
+    renderPage("/tools/video-editor?project=project-r&timeline=timeline-r");
+    const provider = await screen.findByTestId("video-editor-provider");
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "New timeline" }));
+    await waitFor(() => expect(state.createCanonicalTimeline).toHaveBeenCalledOnce());
+
+    act(() => state.saveStatusCallback?.("saving"));
+    await act(async () => {
+      creation.resolve("timeline-created");
+      await creation.promise;
+    });
+
+    expect(screen.getByTestId("video-editor-provider")).toBe(provider);
+    expect(provider).toHaveAttribute("data-timeline-id", "timeline-r");
+    expect(state.providerMounts).toBe(1);
+  });
+
+  it("marks and selects the new primary timeline through the Runtime provider", async () => {
+    renderPage("/tools/video-editor?project=project-r&timeline=timeline-r");
+    await screen.findByTestId("video-editor-provider");
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
+    await user.click(screen.getByRole("button", { name: "Make Alt Cut primary" }));
+
+    await waitFor(() => expect(state.setPrimaryTimeline).toHaveBeenCalledWith("22222222-2222-2222-2222-222222222222"));
+    await waitFor(() => expect(screen.getByTestId("video-editor-provider")).toHaveAttribute(
+      "data-timeline-id", "22222222-2222-2222-2222-222222222222",
+    ));
+    await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
+    expect(screen.getByText("Primary")).toBeInTheDocument();
+  });
+
+  it("rejects a timeline id discovered under a different project", async () => {
+    state.discovery.projects = [
+      { slug: "project-one", name: "Project One", project_id: "project-one" },
+      { slug: "project-two", name: "Project Two", project_id: "project-two" },
+    ];
+    state.discovery.timelines = [
+      { timeline_id: "timeline-two", name: "Project Two timeline" },
+    ];
+    state.discovery.timelineProjectId = "project-two";
+    renderPage("/tools/video-editor?project=project-two&timeline=timeline-one");
+
+    expect(await screen.findByRole("heading", { name: "Timeline not found" })).toBeInTheDocument();
     expect(screen.queryByTestId("video-editor-provider")).toBeNull();
     expect(state.runtimeCtor).not.toHaveBeenCalled();
   });
 
-  it("does not advertise a local render action when the Astrid render bridge is descoped", async () => {
-    const fetchCalls: string[] = [];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const url = String(input);
-        fetchCalls.push(url);
-        if (
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/11111111-1111-1111-1111-111111111111",
-          )
-        ) {
-          return new Response(
-            JSON.stringify({
-              timeline_id: "11111111-1111-1111-1111-111111111111",
-              name: "Intro Cut",
-              config: { clips: [], tracks: [] },
-              config_version: 0,
-            }),
-            { status: 200 },
-          );
-        }
-        throw new Error(`Unexpected bridge request: ${url}`);
-      }),
+  it('keeps the selected shot visible while hiding other shot timelines', async () => {
+    state.discovery.timelines.push(
+      { timeline_id: 'selected-shot', name: 'Selected shot', is_shot: true },
+      { timeline_id: 'other-shot', name: 'Other shot', is_shot: true },
     );
+    renderPage('/tools/video-editor?project=project-r&timeline=selected-shot');
+    await screen.findByTestId('video-editor-provider');
+    const picker = screen.getByRole('combobox', { name: 'Select timeline' });
+    expect(picker).toHaveTextContent('Selected shot');
+    await userEvent.setup().click(picker);
 
-    renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
-    );
-
-    await screen.findByTestId("video-editor-provider");
-
-    expect(
-      screen.queryByRole("button", { name: /render locally/i }),
-    ).toBeNull();
-    expect(fetchCalls.every((url) => !url.includes("/render"))).toBe(true);
+    expect(screen.getByRole('option', { name: /Selected shot/ })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /Other shot/ })).toBeNull();
+    expect(screen.getByRole('option', { name: /Intro Cut/ })).toBeInTheDocument();
   });
 
-  it("remounts the editor when the Local timeline selection changes (explicit URL params)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const url = String(input);
-        if (
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/11111111-1111-1111-1111-111111111111",
-          )
-        ) {
-          return new Response(
-            JSON.stringify({
-              timeline_id: "11111111-1111-1111-1111-111111111111",
-              name: "Intro Cut",
-              config: { clips: [], tracks: [] },
-              config_version: 0,
-            }),
-            { status: 200 },
-          );
-        }
-        if (
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/22222222-2222-2222-2222-222222222222",
-          )
-        ) {
-          return new Response(
-            JSON.stringify({
-              timeline_id: "22222222-2222-2222-2222-222222222222",
-              name: "Alt Cut",
-              config: { clips: [], tracks: [] },
-              config_version: 0,
-            }),
-            { status: 200 },
-          );
-        }
-        throw new Error(`Unexpected bridge request: ${url}`);
-      }),
-    );
 
+
+  it("remounts the editor when the canonical timeline selection changes", async () => {
     const first = renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+      "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
     );
 
     const provider = await screen.findByTestId("video-editor-provider");
@@ -1556,7 +1571,7 @@ describe("VideoEditorPage", () => {
     // A new explicit selection (different URL) mounts a fresh editor.
     first.unmount();
     renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=22222222-2222-2222-2222-222222222222",
+      "/tools/video-editor?project=ados-talks&timeline=22222222-2222-2222-2222-222222222222",
     );
 
     await waitFor(() => {
@@ -1570,7 +1585,7 @@ describe("VideoEditorPage", () => {
 
   it("renders only Astrid projects in the selector dropdown", async () => {
     renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+      "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
     );
 
     await screen.findByTestId("video-editor-provider");
@@ -1586,79 +1601,11 @@ describe("VideoEditorPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the bridge-down card with the selectors visible when the bridge is down", async () => {
-    state.discovery.bridgeDown = true;
-    state.discovery.bridgeHealthy = false;
-    state.discovery.timelines = [];
-    renderPage("/tools/video-editor?localProject=ados-talks");
 
-    await screen.findByText("Workspace connection unavailable");
-    // The selectors stay mounted (and openable) so the launch hint is reachable.
-    expect(
-      screen.getByRole("combobox", { name: "Select project" }),
-    ).toBeInTheDocument();
-  });
 
-  it("keeps recovery controls mounted while a failed connection is checked again", async () => {
-    state.discovery.bridgeDown = true;
-    state.discovery.bridgeHealthy = false;
-    state.discovery.timelines = [];
-    const view = renderPage("/tools/video-editor?localProject=ados-talks");
-    const recovery = await screen.findByTestId("workspace-connection-recovery");
-    await userEvent.setup().click(screen.getByRole("button", { name: "Show restart steps" }));
-    state.discovery.healthLoading = true;
-    view.refresh();
-    expect(screen.getByTestId("workspace-connection-recovery")).toBe(recovery);
-    expect(screen.getByRole("button", { name: "Hide restart steps" })).toBeInTheDocument();
-    state.discovery.healthLoading = false;
-    view.refresh();
-    expect(screen.getByTestId("workspace-connection-recovery")).toBe(recovery);
-  });
 
-  it("shows the projects-root hint when the bridge is reachable but has no projects", async () => {
-    state.discovery.projects = [];
-    state.discovery.timelines = [];
-    renderPage("/tools/video-editor?localProject=ados-talks");
-
-    await screen.findByRole("heading", { name: "Project not found" });
-
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("combobox", { name: "Select project" }));
-
-    expect(
-      await screen.findByText("No projects available."),
-    ).toBeInTheDocument();
-  });
-
-  it("auto-picks the default timeline when a local project has no timeline param", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const url = String(input);
-        if (
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/11111111-1111-1111-1111-111111111111",
-          ) ||
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/01JM4K5N7P0000000000000017",
-          )
-        ) {
-          return new Response(
-            JSON.stringify({
-              timeline_id: "11111111-1111-1111-1111-111111111111",
-              timeline_ulid: "01JM4K5N7P0000000000000017",
-              name: "Intro Cut",
-              config: { clips: [], tracks: [] },
-              config_version: 0,
-            }),
-            { status: 200 },
-          );
-        }
-        throw new Error(`Unexpected bridge request: ${url}`);
-      }),
-    );
-
-    renderPage("/tools/video-editor?localProject=ados-talks");
+  it("auto-picks the default timeline when a canonical project has no timeline", async () => {
+    renderPage("/tools/video-editor?project=ados-talks");
 
     const provider = await screen.findByTestId("video-editor-provider");
     expect(provider).toHaveAttribute("data-kind", "runtime");
@@ -1671,22 +1618,9 @@ describe("VideoEditorPage", () => {
 
   it("shows a loading state, never 'No timeline yet', while the timelines query has not started", async () => {
     state.discovery.timelinesPending = true;
-    renderPage("/tools/video-editor?localProject=ados-talks");
-
-    expect(
-      await screen.findByRole("heading", { name: "Loading timelines…" }),
-    ).toBeInTheDocument();
+    renderPage("/tools/video-editor?project=ados-talks");
     expect(screen.queryByText("No timeline yet")).toBeNull();
-  });
-
-  it("shows 'No timeline yet' only once the timelines list has loaded empty", async () => {
-    state.discovery.timelines = [];
-    renderPage("/tools/video-editor?localProject=ados-talks");
-
-    expect(
-      await screen.findByRole("heading", { name: "No timeline yet" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Loading timelines…")).toBeNull();
+    expect(screen.queryByTestId("video-editor-provider")).toBeNull();
   });
 
   it("auto-picks the first timeline when no default exists", async () => {
@@ -1699,34 +1633,7 @@ describe("VideoEditorPage", () => {
         is_default: false,
       },
     ];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const url = String(input);
-        if (
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/22222222-2222-2222-2222-222222222222",
-          ) ||
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/01JM4K5N7P0000000000000018",
-          )
-        ) {
-          return new Response(
-            JSON.stringify({
-              timeline_id: "22222222-2222-2222-2222-222222222222",
-              timeline_ulid: "01JM4K5N7P0000000000000018",
-              name: "Alt Cut",
-              config: { clips: [], tracks: [] },
-              config_version: 0,
-            }),
-            { status: 200 },
-          );
-        }
-        throw new Error(`Unexpected bridge request: ${url}`);
-      }),
-    );
-
-    renderPage("/tools/video-editor?localProject=ados-talks");
+    renderPage("/tools/video-editor?project=ados-talks");
 
     const provider = await screen.findByTestId("video-editor-provider");
     expect(provider).toHaveAttribute("data-kind", "runtime");
@@ -1737,11 +1644,10 @@ describe("VideoEditorPage", () => {
     );
   });
 
-  it("renders the selectors with the current local selection while keeping the editor mounted", async () => {
-    setupBridgeFetch();
+  it("renders the selectors with the current canonical selection while keeping the editor mounted", async () => {
 
     renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+      "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
     );
 
     const provider = await screen.findByTestId("video-editor-provider");
@@ -1759,159 +1665,27 @@ describe("VideoEditorPage", () => {
     });
   });
 
-  it("opens Local mode straight from the URL params and never writes a storage flag", async () => {
-    // The legacy `dev.videoEditor.localMode` flag is retired — the pasted link
-    // is the only signal, and it has to be enough (any environment).
-    setupBridgeFetch();
 
-    renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
-    );
 
-    const provider = await screen.findByTestId("video-editor-provider");
-    expect(provider).toHaveAttribute("data-kind", "runtime");
-    // ...and no storage flag is written (existing stored values stay inert).
-    expect(window.localStorage.getItem("dev.videoEditor.localMode")).toBeNull();
-  });
 
-  it("honors explicit local-mode URL params when DEV is off", async () => {
-    (import.meta.env as Record<string, unknown>).DEV = false;
-    setupBridgeFetch();
-
-    renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
-    );
-
-    const provider = await screen.findByTestId("video-editor-provider");
-    // Desktop production serves the same-origin Astrid bridge middleware; the
-    // explicit URL remains the sole mode signal in every environment.
-    expect(provider).toHaveAttribute("data-kind", "runtime");
-    expect(state.runtimeCtor).toHaveBeenCalledTimes(1);
-  });
-
-  it("keeps the selector Astrid-only", async () => {
-    setupBridgeFetch();
-
-    renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
-    );
-
-    const provider = await screen.findByTestId("video-editor-provider");
-    await waitFor(() => {
-      expect(provider).toHaveAttribute("data-kind", "runtime");
-    });
-
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("combobox", { name: "Select project" }));
-    expect(screen.queryByText("Astrid App projects")).toBeNull();
-    expect(screen.queryByRole("option", { name: /Project One/ })).toBeNull();
-    expect(
-      screen.getByRole("option", { name: /Ados Talks/ }),
-    ).toBeInTheDocument();
-    expect(state.confirm).not.toHaveBeenCalled();
-  });
-
-  it("bridge-down → online: the selectors refresh and the editor mounts", async () => {
-    state.discovery.bridgeDown = true;
-    state.discovery.bridgeHealthy = false;
-    state.discovery.projects = [];
-    state.discovery.timelines = [];
-
-    const view = renderPage("/tools/video-editor?localProject=ados-talks");
-
-    await screen.findByText("Workspace connection unavailable");
-
-    const user = userEvent.setup();
-    const projectTrigger = screen.getByRole("combobox", {
-      name: "Select project",
-    });
-    await user.click(projectTrigger);
-    expect(
-      await screen.findByText(/Unable to connect to the local workspace/),
-    ).toBeInTheDocument();
-    await user.click(projectTrigger);
-
-    // The bridge comes up with a projects root (but no timelines yet): the
-    // reopened dropdown must now show the discovered project.
-    state.discovery.bridgeDown = false;
-    state.discovery.bridgeHealthy = true;
-    state.discovery.projects = [{ slug: "ados-talks", name: "Ados Talks" }];
-    state.discovery.timelines = [];
-    state.ensureProjectHasTimeline.mockImplementation(
-      () => new Promise(() => undefined),
-    );
-    view.refresh();
-
-    await user.click(screen.getByRole("combobox", { name: "Select project" }));
-    expect(
-      await screen.findByRole("option", { name: /Ados Talks/ }),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole("combobox", { name: "Select project" }));
-
-    // Timelines appear → the auto-pick effect mounts the bridge editor.
-    state.discovery.timelines = [
-      {
-        timeline_id: "11111111-1111-1111-1111-111111111111",
-        timeline_ulid: "01JM4K5N7P0000000000000017",
-        slug: "intro-cut",
-        name: "Intro Cut",
-        is_default: true,
-      },
-    ];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const url = String(input);
-        if (
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/11111111-1111-1111-1111-111111111111",
-          ) ||
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/01JM4K5N7P0000000000000017",
-          )
-        ) {
-          return new Response(
-            JSON.stringify({
-              timeline_id: "11111111-1111-1111-1111-111111111111",
-              timeline_ulid: "01JM4K5N7P0000000000000017",
-              name: "Intro Cut",
-              config: { clips: [], tracks: [] },
-              config_version: 0,
-            }),
-            { status: 200 },
-          );
-        }
-        throw new Error(`Unexpected bridge request: ${url}`);
-      }),
-    );
-
-    // Reopening the dropdown re-renders the page, which re-reads the mocked
-    // discovery state and lets the auto-pick effect run.
-    await user.click(screen.getByRole("combobox", { name: "Select project" }));
-    await user.click(screen.getByRole("combobox", { name: "Select project" }));
-
-    const provider = await screen.findByTestId("video-editor-provider");
-    expect(provider).toHaveAttribute("data-kind", "runtime");
-  });
 
   it("passes a save-status callback into the mounted provider", async () => {
     renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+      "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
     );
 
     await screen.findByTestId("video-editor-provider");
     expect(state.saveStatusCallback).toBeTypeOf("function");
   });
 
-  it("switching local projects with a clean editor auto-picks a timeline and remounts", async () => {
+  it("switching projects with a clean editor auto-picks a timeline and remounts", async () => {
     state.discovery.projects = [
       { slug: "ados-talks", name: "Ados Talks" },
       { slug: "other-project", name: "Other Project" },
     ];
-    setupBridgeFetch();
 
     renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+      "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
     );
 
     const provider = await screen.findByTestId("video-editor-provider");
@@ -1939,7 +1713,7 @@ describe("VideoEditorPage", () => {
   });
 
   it("blocks switching while the editor is saving", async () => {
-    await mountLocalEditor();
+    await mountEditor();
 
     act(() => {
       state.saveStatusCallback?.("saving");
@@ -1961,7 +1735,7 @@ describe("VideoEditorPage", () => {
   });
 
   it("blocks switching while the editor is retrying a transport failure", async () => {
-    await mountLocalEditor();
+    await mountEditor();
 
     act(() => {
       state.saveStatusCallback?.("retrying");
@@ -1983,7 +1757,7 @@ describe("VideoEditorPage", () => {
   });
 
   it("confirms dirty-state timeline switches when accepted and blocks when declined", async () => {
-    await mountLocalEditor();
+    await mountEditor();
 
     // Dirty + denied → switch must be blocked, provider unchanged
     state.confirm.mockReturnValue(false);
@@ -2035,7 +1809,7 @@ describe("VideoEditorPage", () => {
   });
 
   it("confirms error-state timeline switches and blocks when declined", async () => {
-    await mountLocalEditor();
+    await mountEditor();
 
     // Error + denied → switch blocked
     state.confirm.mockReturnValue(false);
@@ -2081,88 +1855,10 @@ describe("VideoEditorPage", () => {
     });
   });
 
-  it("confirms error-state local timeline switches and cancels them when declined", async () => {
-    setupBridgeFetch();
+
+  async function mountEditor() {
     renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
-    );
-
-    const provider = await screen.findByTestId("video-editor-provider");
-    await waitFor(() => {
-      expect(screen.getByTestId("mock-save-status")).toHaveTextContent("saved");
-    });
-    act(() => {
-      state.saveStatusCallback?.("error");
-    });
-    state.confirm.mockReturnValue(false);
-
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
-    await user.click(await screen.findByText("Alt Cut"));
-
-    expect(state.confirm).toHaveBeenCalledWith(
-      "The last timeline save failed. Switch editors anyway?",
-    );
-    expect(screen.getByTestId("video-editor-provider")).toHaveAttribute(
-      "data-timeline-id",
-      "11111111-1111-1111-1111-111111111111",
-    );
-    expect(state.providerMounts).toBe(1);
-    expect(state.providerUnmounts).toBe(0);
-  });
-
-  function setupBridgeFetch() {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL) => {
-        const url = String(input);
-        if (
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/11111111-1111-1111-1111-111111111111",
-          ) ||
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/01JM4K5N7P0000000000000017",
-          )
-        ) {
-          return new Response(
-            JSON.stringify({
-              timeline_id: "11111111-1111-1111-1111-111111111111",
-              timeline_ulid: "01JM4K5N7P0000000000000017",
-              name: "Intro Cut",
-              config: { clips: [], tracks: [] },
-              config_version: 0,
-            }),
-            { status: 200 },
-          );
-        }
-        if (
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/22222222-2222-2222-2222-222222222222",
-          ) ||
-          url.includes(
-            "/api/astrid/projects/ados-talks/timelines/01JM4K5N7P0000000000000018",
-          )
-        ) {
-          return new Response(
-            JSON.stringify({
-              timeline_id: "22222222-2222-2222-2222-222222222222",
-              timeline_ulid: "01JM4K5N7P0000000000000018",
-              name: "Alt Cut",
-              config: { clips: [], tracks: [] },
-              config_version: 0,
-            }),
-            { status: 200 },
-          );
-        }
-        throw new Error(`Unexpected bridge request: ${url}`);
-      }),
-    );
-  }
-
-  async function mountLocalEditor() {
-    setupBridgeFetch();
-    renderPage(
-      "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+      "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
     );
     const provider = await screen.findByTestId("video-editor-provider");
     expect(provider).toHaveAttribute("data-kind", "runtime");
@@ -2179,7 +1875,7 @@ describe("VideoEditorPage", () => {
   describe("?extensionSmoke=1 page integration", () => {
     it("does not change the native tool catalog for test-only URL flags", async () => {
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111&localTest=1&extensionSmoke=1&timelineOverlayCanary=1",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111&localTest=1&extensionSmoke=1&timelineOverlayCanary=1",
       );
       await screen.findByTestId("video-editor-provider");
       expect(state.lastProviderExtensions ?? []).toHaveLength(0);
@@ -2188,7 +1884,7 @@ describe("VideoEditorPage", () => {
 
     it("does NOT pass the smoke extension when ?extensionSmoke is absent", async () => {
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2200,7 +1896,7 @@ describe("VideoEditorPage", () => {
 
     it("does NOT pass the smoke extension when extensionSmoke=0 (not exactly 1)", async () => {
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111&extensionSmoke=0",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111&extensionSmoke=0",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2211,7 +1907,7 @@ describe("VideoEditorPage", () => {
 
     it("does NOT pass the smoke extension when extensionSmoke is empty", async () => {
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111&extensionSmoke",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111&extensionSmoke",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2228,7 +1924,7 @@ describe("VideoEditorPage", () => {
   describe("?timelineOverlayCanary=1 (DEV canary gate)", () => {
     it("does not change native overlay capability for a canary URL", async () => {
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111&timelineOverlayCanary=1",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111&timelineOverlayCanary=1",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2242,7 +1938,7 @@ describe("VideoEditorPage", () => {
 
     it("keeps the overlay dark in DEV when the canary query is absent", async () => {
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2256,7 +1952,7 @@ describe("VideoEditorPage", () => {
 
     it("ignores a non-1 canary value in DEV (only exactly 1 enables)", async () => {
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111&timelineOverlayCanary=0",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111&timelineOverlayCanary=0",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2270,7 +1966,7 @@ describe("VideoEditorPage", () => {
     it("ignores the canary query in production (DEV off) — the query must never be honored outside DEV", async () => {
       (import.meta.env as Record<string, unknown>).DEV = false;
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111&timelineOverlayCanary=1",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111&timelineOverlayCanary=1",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2282,16 +1978,7 @@ describe("VideoEditorPage", () => {
       );
     });
 
-    it("passes the flag into the local-mode provider mount too (canary + localProject)", async () => {
-      setupBridgeFetch();
-      renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111&timelineOverlayCanary=1",
-      );
 
-      const provider = await screen.findByTestId("video-editor-provider");
-      expect(provider).toHaveAttribute("data-kind", "runtime");
-      expect(state.lastTimelineOverlaysEnabled).toBe(false);
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -2328,7 +2015,7 @@ describe("VideoEditorPage", () => {
     it("mounts the overlay host when an overlay-capable dev-local extension is enabled (no URL param)", async () => {
       state.devLocalExtensions.push(makeOverlayDevLocalExtension());
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2361,7 +2048,7 @@ describe("VideoEditorPage", () => {
         activate: vi.fn(() => ({ dispose: vi.fn() })),
       });
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2375,7 +2062,7 @@ describe("VideoEditorPage", () => {
     it("drops the overlay gate when the overlay extension is disabled through the external store", async () => {
       state.devLocalExtensions.push(makeOverlayDevLocalExtension());
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2394,7 +2081,7 @@ describe("VideoEditorPage", () => {
       (import.meta.env as Record<string, unknown>).DEV = false;
       state.devLocalExtensions.push(makeOverlayDevLocalExtension());
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2435,7 +2122,7 @@ describe("VideoEditorPage", () => {
     it("passes an enabled dev-local extension into the provider (activated once)", async () => {
       state.devLocalExtensions.push(makeDevLocalExtension());
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2449,7 +2136,7 @@ describe("VideoEditorPage", () => {
     it("drops the dev-local extension when disabled through the external store (no searchParams change, no refresh key)", async () => {
       state.devLocalExtensions.push(makeDevLocalExtension());
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2475,7 +2162,7 @@ describe("VideoEditorPage", () => {
       });
       state.devLocalExtensions.push(makeDevLocalExtension());
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       await screen.findByTestId("video-editor-provider");
@@ -2487,7 +2174,7 @@ describe("VideoEditorPage", () => {
     it("re-enables a disabled dev-local extension and activates it exactly once", async () => {
       state.devLocalExtensions.push(makeDevLocalExtension());
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       await screen.findByTestId("video-editor-provider");
@@ -2527,7 +2214,7 @@ describe("VideoEditorPage", () => {
       (import.meta.env as Record<string, unknown>).DEV = false;
 
       renderPage(
-        "/tools/video-editor?localProject=ados-talks&localTimeline=11111111-1111-1111-1111-111111111111",
+        "/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111",
       );
 
       const provider = await screen.findByTestId("video-editor-provider");
@@ -2594,7 +2281,10 @@ describe("VideoEditorPage", () => {
         state.providerProbe = L04QueryProbe;
         const view = renderL04Page();
         if (initiallyAbsent) {
+          // Discovery must verify the document before a provider can mount.
+          // Once admitted below, pending reads and display metadata keep it.
           expect(screen.queryByTestId("video-editor-provider")).toBeNull();
+          expect(runtime.providers).toHaveLength(0);
           state.discovery.timelinesLoading = false;
           state.discovery.timelines = [
             {
@@ -2604,6 +2294,7 @@ describe("VideoEditorPage", () => {
             },
           ];
           view.refresh();
+          expect(await screen.findByTestId("video-editor-provider")).toBeInTheDocument();
         }
         try {
           const admittedCard = await screen.findByTestId("l04-admitted-card");
@@ -2712,7 +2403,7 @@ describe("VideoEditorPage", () => {
         const first = state.selectedProvider;
         expect(state.providerMounts).toBe(1);
         view.navigate(
-          "/tools/video-editor?localProject=l04-project&localTimeline=l04-other-timeline",
+          `/tools/video-editor?project=${L04_PROJECT}&timeline=l04-other-timeline`,
         );
         await waitFor(() => expect(state.providerMounts).toBe(2));
         const second = state.selectedProvider;
@@ -2722,7 +2413,7 @@ describe("VideoEditorPage", () => {
           "l04-other-timeline",
         );
         view.navigate(
-          "/tools/video-editor?localProject=l04-other&localTimeline=l04-other-timeline",
+          "/tools/video-editor?project=l04-other-project-id&timeline=l04-other-timeline",
         );
         await waitFor(() => expect(state.providerMounts).toBe(3));
         expect(state.selectedProvider).not.toBe(second);
@@ -2738,50 +2429,7 @@ describe("VideoEditorPage", () => {
       }
     });
 
-    it("replaces provider/remount on local-to-runtime mode change and retries through the current provider", async () => {
-      const view = renderL04Page();
-      try {
-        await screen.findByTestId("video-editor-provider");
-        const localProvider = state.selectedProvider;
-        view.navigate(
-          `/tools/video-editor?runtime=1&runtimeProject=${L04_PROJECT}&runtimeTimeline=${L04_TIMELINE}`,
-        );
-        await waitFor(() => expect(state.providerMounts).toBe(2));
-        const currentProvider = state.selectedProvider as RuntimeDataProvider;
-        expect(currentProvider).not.toBe(localProvider);
-        expect(state.providerUnmounts).toBe(1);
-        const reconnect = vi.spyOn(currentProvider, "reconnect");
-        act(() =>
-          state.runtimeOnError?.(
-            new RuntimeAuthenticationError("/api/runtime"),
-          ),
-        );
-        await screen.findByTestId("runtime-connector-alert");
-        await waitFor(()=>expect(screen.getByRole('button',{name:'Retry Runtime connection'})).toBeEnabled());
-        state.nativeProbe.mockResolvedValueOnce(undefined);
-        await userEvent
-          .setup()
-          .click(
-            screen.getByRole("button", { name: "Retry Runtime connection" }),
-          );
-        await waitFor(() => expect(reconnect).toHaveBeenCalledTimes(1));
-        await waitFor(() =>
-          expect(screen.queryByTestId("runtime-connector-alert")).toBeNull(),
-        );
-        expect(state.selectedProvider).toBe(currentProvider);
-        expect(
-          runtime.requests.every(({ provider }) => provider === "provider-2"),
-        ).toBe(true);
-        view.navigate(
-          `/tools/video-editor?localProject=l04-project&localTimeline=${L04_TIMELINE}`,
-        );
-        await waitFor(() => expect(state.providerMounts).toBe(3));
-        expect(state.selectedProvider).not.toBe(currentProvider);
-      } finally {
-        view.unmount();
-        view.client.clear();
-      }
-    });
+
 
     it("resolves a known card and rejects a truly unknown token on the page-selected provider", async () => {
       const view = renderL04Page();

@@ -81,7 +81,7 @@ const ImageGenerationToolPage: React.FC = React.memo(() => {
   const collapsibleContainerRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
   const explicitRuntimeProjectId = getRuntimeDocumentProjectId(searchParams.toString(), pathname);
-  const resolvedGalleryProject = useResolvedGalleryProject(searchParams.toString(), pathname);
+  const resolvedGalleryProject = useResolvedGalleryProject();
   const galleryProjectId = resolvedGalleryProject.runtimeAuthority
     ? resolvedGalleryProject.projectId
     : effectiveProjectId;

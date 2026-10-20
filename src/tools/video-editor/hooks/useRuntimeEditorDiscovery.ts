@@ -6,6 +6,8 @@ import { AstridRuntimeClient } from "@/integrations/runtime/client.ts";
 import type { Project } from "@/integrations/runtime/generated.ts";
 const timelineSchema = z.looseObject({
   timeline_id: z.string().min(1),
+  timeline_ulid: z.string().optional(),
+  head_revision_id: z.string().nullable().optional(),
   project_id: z.string().optional(),
   name: z.string().nullable().optional(),
   slug: z.string().optional(),
@@ -15,16 +17,47 @@ const timelineSchema = z.looseObject({
   updated_at: z.string().optional(),
 });
 export type RuntimeEditorTimeline = z.infer<typeof timelineSchema>;
+function resolvePrimaryTimelineId(
+  timelines: readonly RuntimeEditorTimeline[],
+  reference: string | undefined,
+): string | undefined {
+  if (!reference) return undefined;
+  return timelines.find((timeline) => timeline.timeline_id === reference)?.timeline_id
+    ?? timelines.find((timeline) => timeline.timeline_ulid === reference)?.timeline_id;
+}
+export function normalizeRuntimeEditorTimelines(
+  project: Project,
+  rows: readonly RuntimeEditorTimeline[],
+): RuntimeEditorTimeline[] {
+  const primaryRef = typeof project.metadata?.default_timeline_id === 'string'
+    ? project.metadata.default_timeline_id.trim() || undefined
+    : undefined;
+  const primaryId = resolvePrimaryTimelineId(rows, primaryRef);
+  return rows.map((timeline) => ({
+    ...timeline,
+    is_shot: timeline.is_shot === true || timeline.slug?.startsWith('shot-') === true,
+    is_default: primaryRef
+      ? timeline.timeline_id === primaryId
+      : timeline.is_default === true ||
+        (timeline.is_default === undefined && timeline.slug === 'main'),
+  }));
+}
 export function chooseRuntimeTimeline(
   project: Project,
   timelines: readonly RuntimeEditorTimeline[],
 ): RuntimeEditorTimeline | undefined {
   const available = timelines.filter((t) => !t.is_shot);
-  const defaultId = project.metadata?.default_timeline_id;
+  const defaultId = typeof project.metadata?.default_timeline_id === 'string'
+    ? project.metadata.default_timeline_id
+    : undefined;
+  const defaultTimelineId = resolvePrimaryTimelineId(available, defaultId);
   return (
-    available.find((t) => t.timeline_id === defaultId) ??
-    available.find((t) => t.is_default) ??
+    (defaultTimelineId
+      ? available.find((t) => t.timeline_id === defaultTimelineId)
+      : undefined) ??
+    (!defaultId ? available.find((t) => t.is_default) : undefined) ??
     available.find((t) => t.slug === "main") ??
+    available.find((t) => t.slug === "rough-cut") ??
     [...available].sort((a, b) => a.timeline_id.localeCompare(b.timeline_id))[0]
   );
 }
@@ -77,19 +110,60 @@ export function useRuntimeEditorDiscovery({
   });
   const project =
     projectsQuery.data?.find((p) => p.project_id === projectId) ?? null;
+  const canonicalProjectId = project?.project_id ?? null;
   const timelinesQuery = useQuery({
-    queryKey: ["runtime-editor", session, projectId, "timelines"],
+    queryKey: ["runtime-editor", session, canonicalProjectId, "timelines"],
     enabled: enabled && !!project,
     queryFn: async () => {
       const rows = z
         .array(timelineSchema)
-        .parse(await client.listTimelines(projectId!));
-      if (rows.some((t) => t.project_id && t.project_id !== projectId))
+        .parse(await client.listTimelines(canonicalProjectId!));
+      if (rows.some((t) => t.project_id && t.project_id !== canonicalProjectId))
         throw new Error(
           "Runtime returned a timeline belonging to a different project.",
         );
-      return rows;
+      return await Promise.all(rows.map(async (timeline) => {
+        const name = timeline.name?.trim();
+        const fallbackName = timeline.slug?.trim() && timeline.slug.trim() !== timeline.timeline_id
+          ? timeline.slug.trim()
+          : 'Untitled timeline';
+        if (name && name !== timeline.timeline_id) return timeline;
+        if (!timeline.head_revision_id) {
+          return { ...timeline, name: fallbackName };
+        }
+        try {
+          const detail = await client.getProjectParentCompositionRevision(
+            canonicalProjectId!,
+            timeline.timeline_id,
+            timeline.head_revision_id,
+          );
+          const payload = detail.payload && typeof detail.payload === 'object'
+            ? detail.payload as Record<string, unknown>
+            : detail.parent_composition && typeof detail.parent_composition === 'object'
+              ? detail.parent_composition as Record<string, unknown>
+              : null;
+          const detailName = typeof payload?.name === 'string' ? payload.name.trim() : '';
+          const detailSlug = typeof payload?.slug === 'string' ? payload.slug.trim() : '';
+          return {
+            ...timeline,
+            name: detailName && detailName !== timeline.timeline_id
+              ? detailName
+              : detailSlug && detailSlug !== timeline.timeline_id
+                ? detailSlug
+                : name && name !== timeline.timeline_id
+                  ? name
+                  : fallbackName,
+            slug: timeline.slug || detailSlug || undefined,
+          };
+        } catch {
+          return { ...timeline, name: fallbackName };
+        }
+      }));
     },
+    // Primary selection is project metadata, not part of timeline-list identity.
+    // Derive it from cached rows so a project metadata refresh never empties the
+    // query or remounts the currently selected editor document.
+    select: (rows) => normalizeRuntimeEditorTimelines(project!, rows),
     retry,
     retryDelay: runtimeDiscoveryRetryDelay,
     refetchInterval: runtimeDiscoveryRecoveryPoll,
@@ -97,9 +171,9 @@ export function useRuntimeEditorDiscovery({
   });
   const timelineEditQueries = useQueries({
     queries: (timelinesQuery.data ?? []).map((timeline) => ({
-      queryKey: ["runtime-editor", projectId, "timeline-edit", timeline.timeline_id],
+      queryKey: ["runtime-editor", canonicalProjectId, "timeline-edit", timeline.timeline_id],
       enabled: enabled && !!project,
-      queryFn: () => client.latestTimelineEditAt(projectId!, timeline.timeline_id),
+      queryFn: () => client.latestTimelineEditAt(canonicalProjectId!, timeline.timeline_id),
       staleTime: 60_000,
     })),
   });
@@ -110,22 +184,22 @@ export function useRuntimeEditorDiscovery({
     const updatedAt = timelinesQuery.dataUpdatedAt;
     const previous = listUpdatedAt.current;
     listUpdatedAt.current = updatedAt;
-    if (!projectId || !updatedAt || !previous || previous === updatedAt) return;
+    if (!canonicalProjectId || !updatedAt || !previous || previous === updatedAt) return;
     void queryClient.invalidateQueries({
-      queryKey: ["runtime-editor", projectId, "timeline-edit"],
+      queryKey: ["runtime-editor", canonicalProjectId, "timeline-edit"],
     });
-  }, [projectId, queryClient, timelinesQuery.dataUpdatedAt]);
+  }, [canonicalProjectId, queryClient, timelinesQuery.dataUpdatedAt]);
   const { refetch: refreshProjects } = projectsQuery,
     { refetch: refreshTimelines } = timelinesQuery;
   useEffect(() => {
     if (!enabled || !open) return;
     void refreshProjects();
-    if (projectId && project) void refreshTimelines();
-  }, [enabled, open, projectId, project, refreshProjects, refreshTimelines]);
+    if (canonicalProjectId) void refreshTimelines();
+  }, [enabled, open, canonicalProjectId, refreshProjects, refreshTimelines]);
   const reconnect = async () => {
     await client.reconnect();
     await refreshProjects();
-    if (project) await refreshTimelines();
+    if (canonicalProjectId) await refreshTimelines();
   };
-  return { projectsQuery, timelinesQuery, timelineEditQueries, project, client, reconnect };
+  return { projectsQuery, timelinesQuery, timelineEditQueries, project, client, reconnect, canonicalProjectId };
 }

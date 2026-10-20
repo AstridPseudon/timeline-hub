@@ -33,7 +33,7 @@ import { useStickyHeader } from '../hooks/useStickyHeader';
 import { useNavigationState } from '../hooks/navigation/useNavigationState';
 import { useOperationTracking } from '../hooks/useOperationTracking';
 import { usePanesStore } from '@/shared/state/panesStore';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 import type { LocalTimelineShotModel } from './localTimelineShotModel.ts';
 import type {
   PreparedShotComposition,
@@ -113,7 +113,7 @@ export function ShotEditorView({
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const isLocalMode = hasLocalModeUrlParams(location.search);
+  const isLocalMode = hasRuntimeDocumentIdentity(location.search);
   const canEditCanonicalShot = Boolean(
     canonicalShotComposition?.publish && canonicalComposition && canonicalOccurrence,
   );
@@ -291,7 +291,7 @@ export function ShotEditorView({
       return;
     }
     setCurrentShotId(null);
-    const localScope = hasLocalModeUrlParams(location.search);
+    const localScope = hasRuntimeDocumentIdentity(location.search);
     navigate(
       localScope
         ? shotListLocation(location.pathname, location.search)

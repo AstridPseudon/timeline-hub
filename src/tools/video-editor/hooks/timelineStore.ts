@@ -174,7 +174,6 @@ function createInitialDataSlice(): TimelineEditorDataContextValue {
     inputModality: initialInteractionPolicy.inputModality,
     interactionMode: initialInteractionPolicy.interactionMode,
     gestureOwner: initialInteractionPolicy.gestureOwner,
-    precisionEnabled: initialInteractionPolicy.precisionEnabled,
     contextTarget: initialInteractionPolicy.contextTarget,
     inspectorTarget: initialInteractionPolicy.inspectorTarget,
     interactionPolicy: initialInteractionPolicy,
@@ -232,7 +231,6 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
   const setInputModality: TimelineEditorOpsContextValue['setInputModality'] = opsUnavailable('setInputModality');
   const setInteractionMode: TimelineEditorOpsContextValue['setInteractionMode'] = opsUnavailable('setInteractionMode');
   const setGestureOwner: TimelineEditorOpsContextValue['setGestureOwner'] = opsUnavailable('setGestureOwner');
-  const setPrecisionEnabled: TimelineEditorOpsContextValue['setPrecisionEnabled'] = opsUnavailable('setPrecisionEnabled');
   const setContextTarget: TimelineEditorOpsContextValue['setContextTarget'] = opsUnavailable('setContextTarget');
   const setInspectorTarget: TimelineEditorOpsContextValue['setInspectorTarget'] = opsUnavailable('setInspectorTarget');
   const setSelectedTrackId: TimelineEditorOpsContextValue['setSelectedTrackId'] = opsUnavailable('setSelectedTrackId');
@@ -302,7 +300,6 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
     setInputModalityFromPointerType: resolveInputModalityFromPointerType,
     setInteractionMode,
     setGestureOwner,
-    setPrecisionEnabled,
     setContextTarget,
     setInspectorTarget,
     isClipSelected: opsUnavailable('isClipSelected'),

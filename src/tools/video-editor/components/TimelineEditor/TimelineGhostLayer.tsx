@@ -2,7 +2,6 @@ import type { TimelineRowLayout } from '@/tools/video-editor/lib/timeline-row-la
 import React, { useMemo } from 'react';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget.ts';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
-import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import {
   ACTION_VERTICAL_MARGIN,
 } from '@/tools/video-editor/components/TimelineEditor/timeline-canvas-constants.ts';

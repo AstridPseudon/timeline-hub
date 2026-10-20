@@ -1,7 +1,7 @@
 // dataKind V1 (Batch 6): one duration-neutral lane row on the timeline.
 //
 // Layout mirrors the host's track-row vocabulary: a sticky label gutter
-// (LABEL_WIDTH) plus a relative canvas area whose origin IS timeline zero
+// (labelWidth) plus a relative canvas area whose origin IS timeline zero
 // (the gutter sits in-flow before it), scaled by the scroller's shared
 // `pixelsPerSecond`. Lanes inform — they never edit, and
 // their heights are the only quantity the canvas folds into scroll math.
@@ -40,10 +40,11 @@ import type {
   DataLaneRendererProps,
 } from '@astrid/editor-sdk';
 import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
-import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 
 export interface DataLaneRowProps {
   readonly lane: DataLaneView;
+  /** Width of the sticky track-name gutter that heads the row. */
+  readonly labelWidth: number;
   /** Shared px-per-second scale — same value the ruler and tracks use. */
   readonly pixelsPerSecond: number;
   /** Current host-mapped playhead state, independent of lane selection. */
@@ -362,15 +363,16 @@ function selectViewportWindow(
   index: DataLaneTemporalIndex,
   pixelsPerSecond: number,
   viewport: DataLaneViewport,
+  labelWidth: number,
   pinnedIndex?: number,
   supportsSparseItemWindows = false,
   protectedIndex?: number,
 ): DataLaneItemWindow {
   const safePixelsPerSecond = Math.max(Number.EPSILON, pixelsPerSecond);
-  // The sticky LABEL_WIDTH gutter occludes the left side of the scroller. In
+  // The sticky label gutter occludes the left side of the scroller. In
   // row-canvas coordinates its right edge is exactly scrollLeft, so t=0 is
   // visible at scrollLeft=0 and late scrolls map directly to scrollLeft / pps.
-  const canvasViewportWidth = Math.max(0, viewport.clientWidth - LABEL_WIDTH);
+  const canvasViewportWidth = Math.max(0, viewport.clientWidth - labelWidth);
   const viewportStartSeconds = Math.max(0, viewport.scrollLeft / safePixelsPerSecond);
   const viewportEndSeconds = Math.max(
     viewportStartSeconds,
@@ -455,6 +457,7 @@ function navigationDirection(event: KeyboardEvent<HTMLElement>): NavigationDirec
 
 export function DataLaneRow({
   lane,
+  labelWidth,
   pixelsPerSecond,
   playheadTime = 0,
   isPlaying = false,
@@ -505,6 +508,7 @@ export function DataLaneRow({
     temporalIndex,
     pixelsPerSecond,
     resolvedViewport,
+    labelWidth,
     pinnedWindowIndex,
     lane.opaque || supportsSparseItemWindows === true,
     protectedFocusIndex === -1 ? undefined : protectedFocusIndex,
@@ -639,7 +643,7 @@ export function DataLaneRow({
       )}
       <div
         className="sticky left-0 z-20 h-full shrink-0 border-r border-border bg-card"
-        style={{ width: LABEL_WIDTH, position: 'sticky', left: 0 }}
+        style={{ width: labelWidth, position: 'sticky', left: 0 }}
         onPointerDown={(event) => event.stopPropagation()}
       >
         <div

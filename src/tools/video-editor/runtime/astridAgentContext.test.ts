@@ -20,7 +20,7 @@ describe('Astrid App editor context for Astrid', () => {
         assetCount: 9,
         duration: 24.5,
       },
-      deepLink: 'http://127.0.0.1:2222/tools/video-editor?localProject=astrid-intro&localTimeline=timeline-1',
+      deepLink: 'http://127.0.0.1:2222/tools/video-editor?project=astrid-intro&timeline=timeline-1',
     }, [{
       clipId: 'clip-1',
       url: 'http://127.0.0.1:2222/private-media.mp4',

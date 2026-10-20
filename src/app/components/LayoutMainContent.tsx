@@ -9,6 +9,7 @@ import { useViewportResponsive } from '@/shared/hooks/responsive/useViewportResp
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
 import { usePanesStore } from '@/shared/state/panesStore';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 import { isDeferredCloudDataAuthority } from '@/app/runtime/dataAuthority.ts';
 import { TOOL_ROUTES } from '@/shared/lib/tooling/toolRoutes';
 import { isAstridEditorOnlyShellPath } from '@/app/localWorkspaceShell';
@@ -47,6 +48,8 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
   const isGenerationsPaneLocked = usePanesStore((state) => state.isGenerationsPaneLocked);
   const isGenerationsPaneOpen = usePanesStore((state) => state.isGenerationsPaneOpen);
   const effectiveGenerationsPaneHeight = usePanesStore((state) => state.effectiveGenerationsPaneHeight);
+  // A page that hosts the pane entry points gets the gallery as a sheet over it, not a pane that pushes it up.
+  const paneControlsHosted = usePaneControlsHosted();
   const { header, globalHeaderContent } = useHeaderState();
   const { isSm, isMd, isLg, isXl, is2Xl, contentWidth, contentHeight } = useViewportResponsive();
 
@@ -58,7 +61,7 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
     marginRight: isTasksPaneLocked ? `${tasksPaneWidth}px` : '0px',
     marginLeft: !isAstridEditorOnlyShell && isShotsPaneLocked ? `${shotsPaneWidth}px` : '0px',
     paddingTop: isEditorPaneLocked && isVideoEditorShellActive ? `${effectiveEditorPaneHeight}px` : '0px',
-    paddingBottom: isMobileSplitView || isImageGenerationPage
+    paddingBottom: isMobileSplitView || isImageGenerationPage || paneControlsHosted
       ? '0px'
       : ((isGenerationsPaneLocked || isGenerationsPaneOpen) ? `${effectiveGenerationsPaneHeight}px` : '0px'),
     '--content-width': `${contentWidth}px`,

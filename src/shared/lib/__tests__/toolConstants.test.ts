@@ -52,21 +52,21 @@ describe('Astrid shot routes', () => {
       'timeline-1',
       'project/project-1/document/timeline-1/shot/shot-1/revision/rev-1/occurrence/occ-1',
     )).toBe(
-      '/tools/travel-between-images?localProject=astrid-intro&localTimeline=timeline-1#project%2Fproject-1%2Fdocument%2Ftimeline-1%2Fshot%2Fshot-1%2Frevision%2Frev-1%2Foccurrence%2Focc-1',
+      '/tools/travel-between-images?project=astrid-intro&timeline=timeline-1#project%2Fproject-1%2Fdocument%2Ftimeline-1%2Fshot%2Fshot-1%2Frevision%2Frev-1%2Foccurrence%2Focc-1',
     );
   });
 
   it('preserves scope when opening and closing a shot hash', () => {
-    expect(shotLocation('/tools/travel-between-images', '?localProject=demo&localTimeline=abc', 'project/demo/shot/1'))
+    expect(shotLocation('/tools/travel-between-images', '?project=demo&timeline=abc', 'project/demo/shot/1'))
       .toEqual({
         pathname: '/tools/travel-between-images',
-        search: '?localProject=demo&localTimeline=abc',
+        search: '?project=demo&timeline=abc',
         hash: 'project%2Fdemo%2Fshot%2F1',
       });
-    expect(shotListLocation('/tools/travel-between-images', '?localProject=demo&localTimeline=abc'))
+    expect(shotListLocation('/tools/travel-between-images', '?project=demo&timeline=abc'))
       .toEqual({
         pathname: '/tools/travel-between-images',
-        search: '?localProject=demo&localTimeline=abc',
+        search: '?project=demo&timeline=abc',
         hash: '',
       });
   });

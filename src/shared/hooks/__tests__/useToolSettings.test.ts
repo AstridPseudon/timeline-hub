@@ -308,7 +308,7 @@ describe('useToolSettings hook', () => {
     window.history.replaceState(
       {},
       '',
-      '/tools/video-editor?localProject=desert-plant-growth&localTimeline=01KYPVKMW5STB4W6FE05ED8242',
+      '/tools/video-editor?project=desert-plant-growth&timeline=01KYPVKMW5STB4W6FE05ED8242',
     );
 
     try {

@@ -73,12 +73,18 @@ export const getBulkVisibleTabs = (
   return tabs;
 };
 
+/**
+ * The tab a newly selected clip opens on: a text clip's words; otherwise Effects at a desk and
+ * Timing on touch, where the clip sheet is for the basic jobs (when it starts, how long it runs).
+ */
 export const getSelectionDefaultClipTab = (
   clip: ResolvedTimelineClip | null,
   track: TrackDefinition | null,
+  touch = false,
 ): ClipTab => {
   const visibleTabs = getVisibleClipTabs(clip, track);
-  return visibleTabs.includes('text') ? 'text' : 'effects';
+  if (visibleTabs.includes('text')) return 'text';
+  return touch ? 'timing' : 'effects';
 };
 
 export const getFallbackClipTab = (
@@ -86,4 +92,19 @@ export const getFallbackClipTab = (
   visibleTabs: readonly ClipTab[],
 ): ClipTab => {
   return visibleTabs.includes(activeTab) ? activeTab : 'effects';
+};
+
+/**
+ * Where a clip on `trackId` can go with Track up / Track down: the next track of its kind above or
+ * below in track order (front to back). At the edge there is nowhere to go, and the action says so.
+ */
+export const getTrackMoveTargets = (
+  tracks: readonly TrackDefinition[],
+  trackId: string | undefined,
+): { up: boolean; down: boolean } => {
+  const index = tracks.findIndex((track) => track.id === trackId);
+  if (index < 0) return { up: false, down: false };
+  const { kind } = tracks[index];
+  const sameKind = (track: TrackDefinition) => track.kind === kind;
+  return { up: tracks.slice(0, index).some(sameKind), down: tracks.slice(index + 1).some(sameKind) };
 };

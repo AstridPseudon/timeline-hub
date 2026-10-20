@@ -1,15 +1,11 @@
-import { Asterisk, Hexagon, Sparkles, type LucideProps } from 'lucide-react';
-import { LOCAL_AGENT_TABLE, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { Asterisk, Feather, Hexagon, Sparkles, type LucideProps } from 'lucide-react';
+import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 
-export const AGENT_IDS = ['astrid', 'claude-code', 'codex'] as const satisfies readonly LocalAgentId[];
+export const AGENT_IDS = LOCAL_AGENT_IDS;
 
-export const agentNames: Record<LocalAgentId, string> = {
-  astrid: LOCAL_AGENT_TABLE.astrid.name,
-  'claude-code': LOCAL_AGENT_TABLE['claude-code'].name,
-  codex: LOCAL_AGENT_TABLE.codex.name,
-};
+export const agentNames = Object.fromEntries(LOCAL_AGENT_IDS.map(id => [id, LOCAL_AGENT_TABLE[id].name])) as Record<LocalAgentId, string>;
 
-const agentIcons = { astrid: Sparkles, 'claude-code': Asterisk, codex: Hexagon } as const;
+const agentIcons = { astrid: Sparkles, 'claude-code': Asterisk, codex: Hexagon, hermes: Feather } as const;
 
 /** A quiet mark that tells chats apart at a glance; the name always travels with it. */
 export function AgentIcon({ agent, ...props }: { agent: LocalAgentId } & LucideProps) {

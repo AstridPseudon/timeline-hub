@@ -1,4 +1,6 @@
 import React from 'react';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget';
+import { cn } from '@/shared/components/ui/contracts/cn';
 import type { Shot } from '@/domains/generation/types';
 import { MediaGallery, type GalleryFilterState } from '@/shared/components/MediaGallery';
 import type { GalleryConfig } from '@/shared/components/MediaGallery/types';
@@ -211,7 +213,12 @@ export function GenerationsPaneGallery({
               <div className="flex justify-end px-1 pt-2">
                 <button
                   type="button"
-                  className="rounded border border-sky-400/60 px-2 py-1 text-[11px] text-sky-100 hover:bg-sky-500/15"
+                  className={cn(
+                    'rounded border border-sky-400/60 px-2 py-1 text-[11px] text-sky-100 hover:bg-sky-500/15',
+                    // On touch it is the way a tapped item reaches the timeline: a full-size target.
+                    '[@media(pointer:coarse)]:px-4 [@media(pointer:coarse)]:text-sm',
+                    COARSE_TOUCH_TARGET,
+                  )}
                   onClick={() => gallery.onAddGenerationToTimeline?.(selectedGenerationId)}
                   data-testid="add-selected-generation-to-timeline"
                 >

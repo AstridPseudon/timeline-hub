@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { EXTERNAL_AGENT_IDS } from '../src/integrations/astrid/localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
 import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
@@ -26,14 +27,17 @@ function fixture(directory: string) {
   executable(join(bin, 'codex'), `#!${process.execPath}\nprocess.stderr.write('Logged in using ChatGPT\\n');\n`);
   const shell = join(directory, 'login-shell');
   executable(shell, `#!/bin/sh\n[ "$1" = "-lic" ] || exit 98\nprintf '\\n__ASTRID_LOGIN_PATH__%s\\n' "$ASTRID_TEST_LOGIN_PATH"\n`);
-  executable(join(bin, 'bun'), `#!${process.execPath}
+  const adapterProgram = `#!${process.execPath}
 const fs = require('node:fs');
 const readline = require('node:readline');
 const log = ${JSON.stringify(logs)};
+const native = process.argv[1].endsWith('/hermes');
+if (native && process.argv[2] === 'acp' && process.argv[3] === '--check') process.exit(0);
 const adapter = process.argv[4];
 const expected = ${JSON.stringify(LOCAL_AGENT_ADAPTERS)};
-if (process.argv[2] !== 'x' || process.argv[3] !== '--bun' || !Object.values(expected).includes(adapter)) process.exit(98);
-const agent = adapter === expected['claude-code'] ? 'claude-agent-acp' : 'codex-acp';
+if (!native && (process.argv[2] !== 'x' || process.argv[3] !== '--bun' || !Object.values(expected).includes(adapter))) process.exit(98);
+if (native && process.argv[2] !== 'acp') process.exit(98);
+const agent = native ? 'hermes' : adapter === expected['claude-code'] ? 'claude-agent-acp' : 'codex-acp';
 const write = value => process.stdout.write(JSON.stringify(value) + '\\n');
 const record = value => fs.appendFileSync(log, JSON.stringify({agent, value}) + '\\n');
 const waiting = new Map();
@@ -56,13 +60,14 @@ rl.on('line', async line => {
   if (message.id === undefined) { record({notification:message}); return; }
   if (message.method === 'initialize') {
     record({method:message.method, params:message.params});
-    write({jsonrpc:'2.0',id:message.id,result:{protocolVersion:1,agentCapabilities:{loadSession:true,sessionCapabilities:{list:{},resume:{},close:{}}}}});
+    write({jsonrpc:'2.0',id:message.id,result:{protocolVersion:1,agentCapabilities:{loadSession:true,sessionCapabilities:{list:{},resume:{},close:{},...(agent === 'claude-agent-acp' ? {systemPrompt:{mode:{override:{}}}} : {})}}}});
     return;
   }
   record({method:message.method, params:message.params});
   if (message.method === 'session/new') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:'shared-native-id'}}); return; }
   if (message.method === 'session/list') { write({jsonrpc:'2.0',id:message.id,result:{sessions:[{sessionId:'shared-native-id'}]}}); return; }
   if (message.method === 'session/load' || message.method === 'session/resume') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:message.params.sessionId}}); return; }
+  if (message.method === 'session/fork') { write({jsonrpc:'2.0',id:message.id,result:{sessionId:'forked-native-id'}}); return; }
   if (message.method === 'session/prompt') {
     record({receivedPrompt:message.params.prompt});
     await askPermission({sessionId:'shared-native-id',toolCall:{title:'Read file'},options:[{optionId:'offered-allow-once',kind:'allow_once'},{optionId:'offered-allow-always',kind:'allow_always'}]});
@@ -74,7 +79,9 @@ rl.on('line', async line => {
   write({jsonrpc:'2.0',id:message.id,result:{}});
 });
 rl.on('close', () => process.exit(0));
-`);
+`;
+  executable(join(bin, 'bun'), adapterProgram);
+  executable(join(bin, 'hermes'), adapterProgram);
   return { bin, cwd, logs, profile, shell };
 }
 
@@ -160,10 +167,14 @@ test('external ACP bridge namespaces sessions and routes context, permissions, a
     assert.equal((codexRecords.find(row => row.startup)!).adapter, LOCAL_AGENT_ADAPTERS.codex);
     const claudeNew = claudeRecords.find(row => row.method === 'session/new')!.params as Json;
     assert.equal((((claudeNew._meta as Json).claudeCode as Json).options as Json).pathToClaudeCodeExecutable, join(f.bin, 'claude'));
+    const systemPrompt = claudeNew.systemPrompt as Json;
+    assert.equal(systemPrompt.mode, 'append');
+    const grounding = (systemPrompt.content as Json[]).map(part => part.text).join('\n');
+    assert.match(grounding, /PROFILE_SENTINEL/);
+    assert.match(grounding, /Load the relevant Astrid SKILL\.md/);
     const claudePrompt = claudeRecords.find(row => row.receivedPrompt)!.receivedPrompt as Json[];
     const sentText = claudePrompt.map(part => part.text).join('\n');
-    assert.match(sentText, /PROFILE_SENTINEL/);
-    assert.match(sentText, /Load the relevant Astrid SKILL\.md/);
+    assert.doesNotMatch(sentText, /PROFILE_SENTINEL|astrid_agent_context/);
     assert.match(sentText, /EDITOR_CONTEXT_SENTINEL/);
     assert.deepEqual(claudeRecords.filter(row => row.permissionResponse).map(row => ((((row.permissionResponse as Json).result as Json).outcome as Json).optionId)), ['offered-allow-always', 'offered-reject-once']);
     assert.equal((codexRecords.find(row => row.startup)!).cliPath, join(f.bin, 'codex'));
@@ -207,3 +218,74 @@ test('external agent readiness fails closed for missing CLIs and sign-in, but do
     await createLocalAgentAcpProcessHost('claude-code', options);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+for (const agent of EXTERNAL_AGENT_IDS) {
+  test(`${agent} delivers grounding through its capability and preserves it across session operations`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'astrid-agent-grounding-'));
+    const f = fixture(directory);
+    const host = await createLocalAgentAcpProcessHost(agent, {
+      cwd: f.cwd,
+      env: { PATH: f.bin, SHELL: f.shell, ASTRID_TEST_LOGIN_PATH: f.bin },
+      profileFileForCommand: () => f.profile,
+      callbacks: { requestPermission: () => ({ outcome: { outcome: 'cancelled' } }) },
+    });
+    try {
+      await host.initialize({ protocolVersion: 1, clientCapabilities: {} });
+      const meta = { caller: 'preserve-me', claudeCode: { caller: 'nested', options: { customOption: true } } };
+      const created = await host.newSession<Json>({ cwd: f.cwd, mcpServers: [], _meta: meta });
+      assert.equal(created.sessionId, `${agent}:shared-native-id`);
+      assert.deepEqual(await host.listSessions(), { sessions: [{ sessionId: created.sessionId }] });
+      await assert.rejects(host.loadSession({ sessionId: 'another-agents-chat' }), /different agent/);
+      const send = (sessionId: string, text: string) => host.prompt({
+        sessionId, prompt: [{ type: 'text', text: `<astrid_editor_context>${text}</astrid_editor_context>` }],
+      });
+      await send(created.sessionId as string, 'first');
+      await host.resumeSession({ sessionId: created.sessionId, cwd: f.cwd, _meta: meta });
+      await send(created.sessionId as string, 'second');
+      await host.loadSession({ sessionId: `${agent}:older-chat`, cwd: f.cwd, _meta: meta });
+      await send(`${agent}:older-chat`, 'loaded');
+      await host.resumeSession({ sessionId: `${agent}:other-old-chat`, cwd: f.cwd, _meta: meta });
+      await send(`${agent}:other-old-chat`, 'resumed');
+      const forked = await host.forkSession<Json>({ sessionId: created.sessionId, cwd: f.cwd, _meta: meta });
+      assert.equal(forked.sessionId, `${agent}:forked-native-id`);
+      await send(forked.sessionId as string, 'forked');
+      const rows = records(f.logs).map(row => row.value as Json);
+      const opening = rows.filter(row => ['session/new', 'session/load', 'session/resume', 'session/fork'].includes(row.method as string));
+      const firstSystemPrompt = (opening[0]!.params as Json).systemPrompt as Json | undefined;
+      if (agent === 'claude-code') {
+        assert.equal(firstSystemPrompt?.mode, 'append');
+        assert.match(((firstSystemPrompt?.content as Json[])[0]!.text as string), /PROFILE_SENTINEL/);
+      }
+      const prompts = rows.filter(row => row.receivedPrompt).map(row => row.receivedPrompt as Json[]);
+      assert.equal(prompts.length, 5);
+      for (const [index, prompt] of prompts.entries()) {
+        const text = prompt.map(part => part.text).join('\n');
+        assert.match(text, /astrid_editor_context/);
+        if (agent !== 'claude-code' && index === 0) {
+          assert.match(text, /<astrid_agent_context>[\s\S]*PROFILE_SENTINEL/);
+          assert.match(text, /Load the relevant Astrid SKILL\.md/);
+        } else {
+          assert.doesNotMatch(text, /astrid_agent_context|PROFILE_SENTINEL/);
+          assert.equal(prompt.length, 1);
+        }
+      }
+      for (const row of opening) {
+        const params = row.params as Json;
+        if (agent === 'claude-code') {
+          assert.deepEqual(params.systemPrompt, firstSystemPrompt);
+          const forwardedMeta = params._meta as Json;
+          assert.equal(forwardedMeta.caller, 'preserve-me');
+          const claudeMeta = forwardedMeta.claudeCode as Json;
+          assert.equal(claudeMeta.caller, 'nested');
+          assert.deepEqual(claudeMeta.options, { customOption: true, pathToClaudeCodeExecutable: join(f.bin, 'claude') });
+        } else {
+          assert.equal(params.systemPrompt, undefined);
+          assert.deepEqual(params._meta, meta);
+        }
+      }
+    } finally {
+      await host.dispose();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+}

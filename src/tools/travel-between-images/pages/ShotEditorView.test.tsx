@@ -51,7 +51,7 @@ async function setup(input = fixture) {
   const adapter = createShotCompositionAdapter({ load: async () => current, publish });
   const base = await adapter.load({ projectId: 'project-001', parentDocumentId: 'document-primary' });
   const occurrence = base.occurrences.find((value) => value.occurrenceId === 'occ-1')!;
-  render(<MemoryRouter initialEntries={['/tools/travel-between-images?localProject=project-001&localTimeline=document-primary']}>
+  render(<MemoryRouter initialEntries={['/tools/travel-between-images?project=project-001&timeline=document-primary']}>
     <ShotEditorView shotToEdit={{ id: 'shot-alpha', name: 'Original', images: [] } as unknown as Shot}
       selectedProjectId="project-001" isNewlyCreatedShot={false} shotFromState={undefined} shots={[]}
       availableLoras={[]} canonicalComposition={base} canonicalShotComposition={adapter}

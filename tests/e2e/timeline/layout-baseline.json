@@ -7,42 +7,41 @@
     "rects": {
       "preview": {
         "x": 12,
-        "y": 52,
-        "w": 1204,
-        "h": 464
+        "y": 60,
+        "w": 1144,
+        "h": 520
       },
       "editArea": {
         "x": 12,
-        "y": 628,
-        "w": 1576,
-        "h": 276
+        "y": 660,
+        "w": 1144,
+        "h": 292
       },
-      "modeSwitcher": null,
       "trackLabelColumn": {
         "x": 12,
-        "y": 628,
+        "y": 660,
         "w": 144,
         "h": 36
       },
       "ruler": {
         "x": 12,
-        "y": 596,
-        "w": 1576,
+        "y": 632,
+        "w": 1144,
         "h": 32
       },
       "firstClip": {
         "x": 156,
-        "y": 632,
+        "y": 664,
         "w": 128,
         "h": 28
       }
     },
     "counts": {
       "tracks": 3,
-      "visibleModeButtons": 0
+      "modeUiElements": 0
     },
     "flags": {
-      "phoneBarPresent": false,
+      "armedBarPresent": false,
       "gutterPadding": "144px"
     }
   },
@@ -54,48 +53,42 @@
     "rects": {
       "preview": {
         "x": 12,
-        "y": 216,
+        "y": 112,
         "w": 396,
-        "h": 268
+        "h": 220
       },
       "editArea": {
         "x": 12,
-        "y": 564,
+        "y": 428,
         "w": 396,
-        "h": 108
-      },
-      "modeSwitcher": {
-        "x": 12,
-        "y": 100,
-        "w": 396,
-        "h": 80
+        "h": 324
       },
       "trackLabelColumn": {
         "x": 12,
-        "y": 564,
-        "w": 144,
+        "y": 428,
+        "w": 56,
         "h": 36
       },
       "ruler": {
         "x": 12,
-        "y": 536,
+        "y": 396,
         "w": 396,
         "h": 32
       },
       "firstClip": {
-        "x": 156,
-        "y": 568,
+        "x": 68,
+        "y": 432,
         "w": 128,
         "h": 28
       }
     },
     "counts": {
       "tracks": 3,
-      "visibleModeButtons": 5
+      "modeUiElements": 0
     },
     "flags": {
-      "phoneBarPresent": true,
-      "gutterPadding": "144px"
+      "armedBarPresent": false,
+      "gutterPadding": "56px"
     }
   },
   "tabletPortrait": {
@@ -105,49 +98,43 @@
     },
     "rects": {
       "preview": {
-        "x": 52,
-        "y": 52,
-        "w": 356,
-        "h": 376
+        "x": 12,
+        "y": 112,
+        "w": 808,
+        "h": 452
       },
       "editArea": {
-        "x": 52,
-        "y": 736,
-        "w": 728,
-        "h": 336
-      },
-      "modeSwitcher": {
-        "x": 68,
-        "y": 504,
-        "w": 308,
-        "h": 52
+        "x": 12,
+        "y": 660,
+        "w": 808,
+        "h": 464
       },
       "trackLabelColumn": {
-        "x": 52,
-        "y": 736,
-        "w": 144,
+        "x": 12,
+        "y": 660,
+        "w": 56,
         "h": 36
       },
       "ruler": {
-        "x": 52,
-        "y": 704,
-        "w": 728,
+        "x": 12,
+        "y": 628,
+        "w": 808,
         "h": 32
       },
       "firstClip": {
-        "x": 196,
-        "y": 740,
+        "x": 68,
+        "y": 664,
         "w": 128,
         "h": 28
       }
     },
     "counts": {
       "tracks": 3,
-      "visibleModeButtons": 5
+      "modeUiElements": 0
     },
     "flags": {
-      "phoneBarPresent": false,
-      "gutterPadding": "144px"
+      "armedBarPresent": false,
+      "gutterPadding": "56px"
     }
   },
   "tabletLandscape": {
@@ -157,49 +144,43 @@
     },
     "rects": {
       "preview": {
-        "x": 52,
-        "y": 52,
-        "w": 704,
-        "h": 272
+        "x": 284,
+        "y": 112,
+        "w": 612,
+        "h": 344
       },
       "editArea": {
-        "x": 52,
-        "y": 512,
-        "w": 1076,
-        "h": 208
-      },
-      "modeSwitcher": {
-        "x": 172,
-        "y": 364,
-        "w": 312,
-        "h": 52
+        "x": 12,
+        "y": 548,
+        "w": 1156,
+        "h": 204
       },
       "trackLabelColumn": {
-        "x": 52,
-        "y": 512,
-        "w": 144,
+        "x": 12,
+        "y": 548,
+        "w": 56,
         "h": 36
       },
       "ruler": {
-        "x": 52,
-        "y": 480,
-        "w": 1076,
+        "x": 12,
+        "y": 520,
+        "w": 1156,
         "h": 32
       },
       "firstClip": {
-        "x": 196,
-        "y": 516,
+        "x": 68,
+        "y": 552,
         "w": 128,
         "h": 28
       }
     },
     "counts": {
       "tracks": 3,
-      "visibleModeButtons": 5
+      "modeUiElements": 0
     },
     "flags": {
-      "phoneBarPresent": false,
-      "gutterPadding": "144px"
+      "armedBarPresent": false,
+      "gutterPadding": "56px"
     }
   }
 }

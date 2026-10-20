@@ -152,7 +152,7 @@ describe('useMarkVariantViewed', () => {
     window.history.replaceState(
       {},
       '',
-      '/tools/video-editor?localProject=local-project&localTimeline=local-timeline',
+      '/tools/video-editor?project=local-project&timeline=local-timeline',
     );
     const queryClient = createQueryClient();
     const { result } = renderHookWithProviders(() => useMarkVariantViewed(), { queryClient });
@@ -170,7 +170,7 @@ describe('useMarkVariantViewed', () => {
     window.history.replaceState(
       {},
       '',
-      '/tools/image-generation?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+      '/tools/image-generation?project=runtime-project&timeline=timeline-1',
     );
     const { result } = renderHookWithProviders(() => useMarkVariantViewed());
 

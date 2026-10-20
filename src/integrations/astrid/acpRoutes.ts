@@ -128,6 +128,12 @@ export class AstridLocalAcpRoutes {
     }, projectChatSchema, 'Choose Main project chat');
   }
 
+  async renameProjectSession(projectId: string, expectedRevision: number, sessionId: string, title: string): Promise<ProjectChatState> {
+    return this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat`, {
+      method: 'PATCH', body: { expected_revision: expectedRevision, session_id: sessionId, title },
+    }, projectChatSchema, 'Rename project chat session');
+  }
+
   async promptProjectSession(projectId: string, connectionId: string, sessionId: string, prompt: Array<Record<string, unknown>>, requestId?: string): Promise<unknown> {
     const response = await this.transport.requestJson(`/acp/projects/${encodeURIComponent(projectId)}/chat/prompt`, {
       method: 'POST', body: { connection_id: connectionId, session_id: sessionId, prompt, ...(requestId ? { request_id: requestId } : {}) },

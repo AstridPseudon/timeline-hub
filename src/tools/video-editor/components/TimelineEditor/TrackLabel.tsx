@@ -7,7 +7,6 @@ import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
 import { Check, GripVertical, Settings, Trash2, Video, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog.tsx';
-import { Input } from '@/shared/components/ui/input.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select.tsx';
 import { Slider } from '@/shared/components/ui/slider.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
@@ -20,10 +19,7 @@ import { VideoEditorRuntimeContext } from '@/tools/video-editor/contexts/VideoEd
 import { trackRole } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { isTrackMuted } from '@/tools/video-editor/lib/editor-utils.ts';
 import { trackLabelAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
-import {
-  shouldPinHoverAffordances,
-  type TimelineDeviceClass,
-} from '@/tools/video-editor/lib/mobile-interaction-model.ts';
+import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import type { TrackBlendMode, TrackDefinition, TrackFit } from '@/tools/video-editor/types/index.ts';
 import type { TargetContextPayload } from '@astrid/editor-sdk';
 
@@ -163,10 +159,6 @@ interface TrackSettingsDialogProps {
   triggerClassName: string;
   iconClassName: string;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
-  /** Touch-only: rename + remove live in the dialog because the 144px row cannot hold them. */
-  showIdentityControls: boolean;
-  confirmingDelete: boolean;
-  onRemoveClick: (event: React.MouseEvent) => void;
 }
 
 function TrackSettingsDialog({
@@ -174,9 +166,6 @@ function TrackSettingsDialog({
   triggerClassName,
   iconClassName,
   onChange,
-  showIdentityControls,
-  confirmingDelete,
-  onRemoveClick,
 }: TrackSettingsDialogProps) {
   return (
     <Dialog>
@@ -220,17 +209,6 @@ function TrackSettingsDialog({
               {' '}Applies to all items on this track.
             </p>
           </div>
-          {showIdentityControls && (
-            <div className="space-y-1.5">
-              <FieldLabel>Name</FieldLabel>
-              <Input
-                className="h-9 text-xs"
-                value={track.label}
-                aria-label="Track name"
-                onChange={(event) => onChange(track.id, { label: event.target.value })}
-              />
-            </div>
-          )}
           {track.kind === 'visual' && (
             <>
               <div className="space-y-1.5">
@@ -306,18 +284,6 @@ function TrackSettingsDialog({
                 {isTrackMuted(track) ? 'Unmute Track' : 'Mute Track'}
               </Button>
             </div>
-          )}
-          {showIdentityControls && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className={cn('h-11 w-full justify-start gap-1.5', confirmingDelete ? 'text-destructive hover:text-destructive' : 'text-muted-foreground')}
-              onClick={onRemoveClick}
-            >
-              {confirmingDelete ? <Check className="h-3.5 w-3.5" /> : <Trash2 className="h-3.5 w-3.5" />}
-              {confirmingDelete ? 'Tap again to confirm' : 'Remove track'}
-            </Button>
           )}
         </div>
       </DialogContent>
@@ -403,7 +369,9 @@ export function TrackLabelContent({
     });
   }, [commandRegistry, extensions, onSelect, readOnly, track.id]);
 
-  const pinActions = shouldPinHoverAffordances(deviceClass);
+  // On touch the track column only names the track: reordering and track
+  // settings are deliberate edits, left to the agent there.
+  const showTrackActions = !readOnly && deviceClass === 'desktop';
   const isSource = trackRole(track) === 'source';
 
   return (
@@ -411,7 +379,7 @@ export function TrackLabelContent({
       <div
         className={cn(
           'group relative flex h-9 items-center gap-1 border-b border-border text-xs text-foreground',
-          pinActions ? 'px-1' : 'px-2',
+          deviceClass === 'desktop' ? 'px-2' : 'px-1.5',
           isSelected ? 'bg-accent/70' : 'bg-card/60 hover:bg-accent/50',
           isSource && 'border-l-2 border-l-amber-500/60',
         )}
@@ -426,43 +394,15 @@ export function TrackLabelContent({
           ) : track.kind === 'visual' ? <Video className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
         </span>
 
-        {/* Full label shown at rest; on pointer devices it fades out for the hover overlay */}
+        {/* Full label shown at rest; on desktop it fades out for the hover overlay */}
         <span
-          className={cn('min-w-0 flex-1 truncate', !pinActions && !readOnly && (rowDragging ? 'opacity-0' : 'transition-opacity group-hover:opacity-0'))}
+          className={cn('min-w-0 flex-1 truncate', showTrackActions && (rowDragging ? 'opacity-0' : 'transition-opacity group-hover:opacity-0'))}
           title={displayLabel ?? track.label}
         >
           {displayLabel ?? track.label}
         </span>
 
-        {!readOnly && pinActions ? (
-          /* Touch: two full-height targets. 144px of row cannot hold rename plus three
-             36px buttons, so rename and remove move inside the settings dialog and the
-             grip stays out here because dnd-kit needs a pointerdown on the handle. */
-          <div className="flex shrink-0 items-center" data-track-actions="touch">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
-              title="Reorder track"
-              aria-label="Reorder track"
-              onClick={(event) => event.stopPropagation()}
-              {...dragAttributes}
-              {...dragListeners}
-            >
-              <GripVertical className="h-4 w-4" />
-            </Button>
-            <TrackSettingsDialog
-              track={track}
-              triggerClassName="h-9 w-9"
-              iconClassName="h-4 w-4"
-              onChange={onChange}
-              showIdentityControls
-              confirmingDelete={confirmingDelete}
-              onRemoveClick={handleRemoveClick}
-            />
-          </div>
-        ) : !readOnly ? (
+        {showTrackActions ? (
           /* Keep the existing activator mounted during a drag. The name stays
              visible without hover, and unrelated actions release its space. */
           <div className={cn('absolute inset-0 flex items-center gap-1 px-2', rowDragging ? 'opacity-100' : 'opacity-0 transition-opacity group-hover:opacity-100')}>
@@ -494,9 +434,6 @@ export function TrackLabelContent({
                 triggerClassName={cn('h-6 w-6', rowDragging && 'hidden')}
                 iconClassName="h-3.5 w-3.5"
                 onChange={onChange}
-                showIdentityControls={false}
-                confirmingDelete={confirmingDelete}
-                onRemoveClick={handleRemoveClick}
               />
               <Button
                 type="button"

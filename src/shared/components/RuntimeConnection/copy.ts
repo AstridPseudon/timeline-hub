@@ -97,8 +97,13 @@ export interface RuntimeConnectionCopy {
   readonly restartNeeded: Message;
   /** A phone can never reach Astrid on a computer: the link goes there instead. */
   readonly phone: Message & { readonly button: string; readonly copied: string };
-  /** Screen-reader text of the status container while connected; nothing else says it. */
+  /** Screen-reader text of the status container while connected, and the line App settings shows then. */
   readonly connected: { readonly sentence: string };
+  /**
+   * Connected, but Astrid on this computer and this page speak different versions, so the page can't use it (App
+   * settings). A schema digest has no direction, so the sentence never says which one is older.
+   */
+  readonly updateNeeded: Message;
   /** Connected, and the health check stopped answering. The card clears itself when Astrid is back. */
   readonly stopped: Message;
   /** Connected, and Astrid restarted (or changed) under the page. */
@@ -183,6 +188,11 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   connected: {
     sentence: 'Connected to Astrid',
+  },
+
+  updateNeeded: {
+    title: 'Astrid needs an update',
+    sentence: "Astrid on this computer doesn't match this page. Ask your agent to update it.",
   },
 
   stopped: {

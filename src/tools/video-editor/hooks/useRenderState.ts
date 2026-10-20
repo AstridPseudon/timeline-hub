@@ -876,9 +876,8 @@ export function useRenderState(
     setRenderResultFilename(null);
     setRenderLog('Admitting render to Astrid…');
 
-    const bridgeBaseUrl = (runtimeContext.provider as { apiBaseUrl?: string }).apiBaseUrl;
     const { AstridLocalClient: AstridLocalClientModule } = await import('@/integrations/astrid/client.ts');
-    const client = new AstridLocalClientModule({ projectSlug: projectId, baseUrl: bridgeBaseUrl });
+    const client = new AstridLocalClientModule({ projectSlug: projectId });
     renderClientRef.current = client;
     const renderRouter = await import('@/tools/video-editor/lib/renderRouter.ts');
     const request = {
@@ -890,7 +889,6 @@ export function useRenderState(
       resolvedConfig: renderConfig,
       renderRuntime: {
         projectId,
-        bridgeBaseUrl,
         destination: renderDestination,
       },
     };
@@ -915,7 +913,6 @@ export function useRenderState(
     const admission = await renderRouter.enqueueAstridRuntimeRenderTimeline(built.payload, {
       client,
       destination: renderDestination,
-      expectedVersion,
       operationId,
     });
     if (admission.status === 'error' || !admission.task_id) {
@@ -926,6 +923,8 @@ export function useRenderState(
       setRenderLog(admission.message);
       return true;
     }
+    visualSeamReportConfigRef.current = admission.seamReport ? renderConfigFingerprint(renderConfig) : null;
+    setVisualSeamReport(admission.seamReport ?? null);
     setActiveRenderTaskId(admission.task_id);
     const generation = ++renderPollGenerationRef.current;
     await pollAstridRender(client, admission.task_id, generation);

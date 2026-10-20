@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { usePaneLockPolicyState } from './usePaneLockPolicyState';
+import { acquirePaneControlsHost } from '@/shared/state/paneControlsHost';
 
 const useUserUIStateSpy = vi.fn();
 const useIsMobileSpy = vi.fn();
@@ -109,5 +110,27 @@ describe('usePaneLockPolicyState', () => {
 
     expect(result.current.locks).toEqual({ shots: false, tasks: false, gens: false, editor: true });
     expect(result.current.isTasksPaneOpenState).toBe(false);
+  });
+
+  it('keeps a saved tablet lock but does not apply it while a page hosts the pane entry points', () => {
+    const savePaneLocks = vi.fn();
+    useIsMobileSpy.mockReturnValue(true);
+    useIsTabletSpy.mockReturnValue(true);
+    useUserUIStateSpy.mockReturnValue({
+      value: { shots: false, tasks: false, gens: true, editor: false },
+      update: savePaneLocks,
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() => usePaneLockPolicyState());
+    expect(result.current.locks.gens).toBe(true);
+
+    let release = () => {};
+    act(() => { release = acquirePaneControlsHost(); });
+    expect(result.current.locks).toEqual({ shots: false, tasks: false, gens: false, editor: false });
+    expect(savePaneLocks).not.toHaveBeenCalled();
+
+    act(() => release());
+    expect(result.current.locks.gens).toBe(true);
   });
 });

@@ -19,7 +19,7 @@ import {
 } from '@/shared/state/selectionStore.ts';
 import { createInteractionState, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { ROW_HEIGHT, TIMELINE_START_LEFT } from '@/tools/video-editor/lib/coordinate-utils.ts';
+import { ROW_HEIGHT, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useAssetOperations } from '@/tools/video-editor/hooks/useAssetOperations.ts';
 import { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
@@ -143,7 +143,6 @@ function useTimelineEditorContextValue({
   setInputModalityFromPointerType,
   setInteractionMode,
   setGestureOwner,
-  setPrecisionEnabled,
   setContextTarget,
   setInspectorTarget,
 }: {
@@ -186,7 +185,6 @@ function useTimelineEditorContextValue({
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => ReturnType<typeof createMobileInteractionPolicy>['inputModality'];
   setInteractionMode: Dispatch<SetStateAction<ReturnType<typeof createMobileInteractionPolicy>['interactionMode']>>;
   setGestureOwner: Dispatch<SetStateAction<ReturnType<typeof createMobileInteractionPolicy>['gestureOwner']>>;
-  setPrecisionEnabled: Dispatch<SetStateAction<boolean>>;
   setContextTarget: Dispatch<SetStateAction<ReturnType<typeof createMobileInteractionPolicy>['contextTarget']>>;
   setInspectorTarget: Dispatch<SetStateAction<ReturnType<typeof createMobileInteractionPolicy>['inspectorTarget']>>;
 }): TimelineEditorContextValue {
@@ -207,7 +205,6 @@ function useTimelineEditorContextValue({
     inputModality: interactionPolicy.inputModality,
     interactionMode: interactionPolicy.interactionMode,
     gestureOwner: interactionPolicy.gestureOwner,
-    precisionEnabled: interactionPolicy.precisionEnabled,
     contextTarget: interactionPolicy.contextTarget,
     inspectorTarget: interactionPolicy.inspectorTarget,
     interactionPolicy,
@@ -239,7 +236,6 @@ function useTimelineEditorContextValue({
     setInputModalityFromPointerType,
     setInteractionMode,
     setGestureOwner,
-    setPrecisionEnabled,
     setContextTarget,
     setInspectorTarget,
     isClipSelected: multiSelect.isClipSelected,
@@ -368,7 +364,6 @@ function useTimelineEditorContextValue({
     setInputModalityFromPointerType,
     setInspectorTarget,
     setInteractionMode,
-    setPrecisionEnabled,
     setSelectedTrackId,
     trackManagement.createTrackAndMoveClip,
     trackManagement.handleMoveTrack,
@@ -622,7 +617,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const [inputModality, setInputModality] = useState(initialInteractionPolicyRef.current.inputModality);
   const [interactionMode, setInteractionMode] = useState(initialInteractionPolicyRef.current.interactionMode);
   const [gestureOwner, setGestureOwner] = useState(initialInteractionPolicyRef.current.gestureOwner);
-  const [precisionEnabled, setPrecisionEnabled] = useState(initialInteractionPolicyRef.current.precisionEnabled);
   const [contextTarget, setContextTarget] = useState(initialInteractionPolicyRef.current.contextTarget);
   const [inspectorTarget, setInspectorTarget] = useState(initialInteractionPolicyRef.current.inspectorTarget);
   const save = useTimelineSave(queries, runtime.provider, interactionStateRef, store, initialTimelineData);
@@ -822,7 +816,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     inputModality,
     interactionMode,
     gestureOwner,
-    precisionEnabled,
     contextTarget,
     inspectorTarget,
   }), [
@@ -832,7 +825,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     inputModality,
     inspectorTarget,
     interactionMode,
-    precisionEnabled,
   ]);
 
   useEffect(() => {
@@ -866,7 +858,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     dataRef,
     scale,
     scaleWidth,
-    startLeft: TIMELINE_START_LEFT,
+    startLeft: getTimelineLabelWidth(deviceClass),
     rowHeight: ROW_HEIGHT,
     editability: runtime.timelineEditability,
   });
@@ -1085,7 +1077,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setInputModalityFromPointerType,
     setInteractionMode,
     setGestureOwner,
-    setPrecisionEnabled,
     setContextTarget,
     setInspectorTarget,
   });
@@ -1097,7 +1088,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     inputModality: editor.inputModality,
     interactionMode: editor.interactionMode,
     gestureOwner: editor.gestureOwner,
-    precisionEnabled: editor.precisionEnabled,
     contextTarget: editor.contextTarget,
     inspectorTarget: editor.inspectorTarget,
     interactionPolicy: editor.interactionPolicy,
@@ -1168,7 +1158,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
     setInteractionMode: editor.setInteractionMode,
     setGestureOwner: editor.setGestureOwner,
-    setPrecisionEnabled: editor.setPrecisionEnabled,
     setContextTarget: editor.setContextTarget,
     setInspectorTarget: editor.setInspectorTarget,
     isClipSelected: editor.isClipSelected,

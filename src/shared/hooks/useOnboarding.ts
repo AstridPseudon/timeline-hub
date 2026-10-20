@@ -4,7 +4,7 @@ import { getSupabaseClient as supabase } from "@/integrations/supabase/client";
 import { normalizeAndPresentError } from "@/shared/lib/errorHandling/runtimeError";
 import { isLocalTestMode } from "@/app/localTestRuntime";
 import { isDeferredCloudDataAuthority } from "@/app/runtime/dataAuthority";
-import { hasLocalModeUrlParams } from "@/shared/dev/devSession";
+import { hasRuntimeDocumentIdentity } from "@/app/runtime/runtimeDocument";
 import { checkAstridDoctorAvailability } from "@/integrations/astrid/doctorAvailability.ts";
 
 /**
@@ -38,7 +38,7 @@ export function useOnboarding() {
   const [mode, setMode] = useState<OnboardingMode | null>(null);
   const localTestMode = isLocalTestMode();
   // A local editor link is always local, whatever the build's default authority.
-  const isLocalEditorLink = hasLocalModeUrlParams(
+  const isLocalEditorLink = hasRuntimeDocumentIdentity(
     typeof window === "undefined" ? "" : window.location.search,
   );
   const nativeEditor =

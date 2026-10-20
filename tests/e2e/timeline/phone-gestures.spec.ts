@@ -1,8 +1,11 @@
 /**
- * Phone timeline: the full interaction-mode matrix under real touch input.
+ * Phone timeline: browse, tap-to-sheet and the armed move/trim gestures under
+ * real touch input.
  *
  * Ported from the untracked `node_modules/.probe/mobile.mjs` device probe.
- * Every step runs against one live page in sequence — each mode switch is state
+ * The phone rests in browse (drag pans, tap opens the clip sheet). Move and trim
+ * are armed from the sheet's action grid and released with Done in the toolbar.
+ * Every step runs against one live page in sequence — each arm/release is state
  * the next step depends on — so this is a single test with named `test.step`s
  * rather than independent tests.
  */
@@ -25,7 +28,7 @@ test.describe('timeline phone gestures', () => {
     deviceScaleFactor: 2,
   });
 
-  test('phone interaction modes survive real touch input', async ({ context, page }, testInfo) => {
+  test('phone browse, sheet and armed gestures survive real touch input', async ({ context, page }, testInfo) => {
     test.setTimeout(240_000);
 
     const logs: string[] = [];
@@ -42,20 +45,20 @@ test.describe('timeline phone gestures', () => {
       timeout: 20_000,
     });
 
-    // --- 0. structural: phone layout, mode bar -----------------------------
+    // --- 0. structural: phone layout, no mode bar --------------------------
     const structure = await page.evaluate((clipBodySelector) => {
       const rect = (el: Element) => {
         const r = el.getBoundingClientRect();
         return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
       };
-      const bar = document.querySelector('[aria-label="Phone timeline mode bar"]');
       const editArea = document.querySelector('.timeline-canvas-edit-area');
       return {
-        modeBar: bar ? rect(bar) : null,
-        barButtons: bar
-          ? Array.from(bar.querySelectorAll('button'))
-            .map((b) => ({ label: b.textContent?.trim(), ...rect(b), pressed: b.getAttribute('aria-pressed') }))
-          : [],
+        phoneShell: Boolean(document.querySelector('main[data-shell-layout="touch"]')),
+        topRow: document.querySelector('[data-toolbar-layout="touch"]') ? rect(document.querySelector('[data-toolbar-layout="touch"]')!) : null,
+        modeUi: document.querySelectorAll(
+          '[data-timeline-mode-switcher], [aria-label="Phone timeline mode bar"], [aria-label="Timeline mode switcher"]',
+        ).length,
+        armed: document.querySelectorAll('[data-armed-gesture]').length,
         clips: Array.from(document.querySelectorAll(clipBodySelector))
           .map((el) => ({ id: el.getAttribute('data-clip-id'), ...rect(el) })),
         editArea: editArea
@@ -71,13 +74,14 @@ test.describe('timeline phone gestures', () => {
       };
     }, CLIP_BODY_SELECTOR as string);
 
-    await test.step('phone mode bar present', async () => {
-      expect(structure.modeBar, JSON.stringify(structure.modeBar)).not.toBeNull();
+    await test.step('single-pane phone shell with a top row', async () => {
+      expect(structure.phoneShell).toBe(true);
+      expect(structure.topRow, JSON.stringify(structure.topRow)).not.toBeNull();
     });
 
-    await test.step('mode bar has 5 buttons', async () => {
-      expect(structure.barButtons.map((b) => `${b.label}:${b.w}x${b.h}`).join(', ')).toBeTruthy();
-      expect(structure.barButtons).toHaveLength(5);
+    await test.step('no mode switcher; resting state has nothing armed', async () => {
+      expect(structure.modeUi).toBe(0);
+      expect(structure.armed).toBe(0);
     });
 
     await test.step('clips visible on phone', async () => {
@@ -90,18 +94,45 @@ test.describe('timeline phone gestures', () => {
 
     await shot('m0-base');
 
-    const modeButton = (label: string) => page
-      .locator('[aria-label="Phone timeline mode bar"] button', { hasText: new RegExp(`^${label}$`, 'i') })
-      .first();
+    const sheet = page.getByTestId('timeline-clip-sheet');
+    const armedBar = page.locator('[data-armed-gesture]');
 
-    async function setMode(label: string): Promise<boolean> {
-      const button = modeButton(label);
-      for (let attempt = 0; attempt < 2; attempt += 1) {
-        const box = await button.boundingBox();
-        if (box) await touch.tap(box.x + box.width / 2, box.y + box.height / 2);
-        if ((await button.getAttribute('aria-pressed')) === 'true') return true;
+    async function tapLocator(target: ReturnType<typeof page.locator>): Promise<void> {
+      const box = await target.boundingBox();
+      if (!box) throw new Error('nothing to tap');
+      await touch.tap(box.x + box.width / 2, box.y + box.height / 2);
+    }
+
+    /** Tap a clip; on phone that opens the clip sheet. */
+    async function tapClipForSheet(clipSelector: string): Promise<void> {
+      const box = await page.locator(clipSelector).first().boundingBox();
+      if (!box) throw new Error(`no clip for ${clipSelector}`);
+      await touch.tap(box.x + box.width / 2, box.y + box.height / 2);
+      await expect(sheet).toBeVisible({ timeout: 5_000 });
+    }
+
+    /** Tap a clip, then Move/Trim in its sheet: the sheet closes and the gesture arms. */
+    async function armGesture(clipSelector: string, gesture: 'move' | 'trim'): Promise<boolean> {
+      await tapClipForSheet(clipSelector);
+      await tapLocator(sheet.getByRole('button', { name: gesture === 'move' ? 'Move' : 'Trim', exact: true }));
+      await expect(sheet).toBeHidden({ timeout: 5_000 });
+      try {
+        await expect(armedBar).toHaveAttribute('data-armed-gesture', gesture, { timeout: 5_000 });
+        return true;
+      } catch {
+        return false;
       }
-      return (await button.getAttribute('aria-pressed')) === 'true';
+    }
+
+    /** Tap Done in the phone's top row: back to browse. */
+    async function releaseGesture(): Promise<boolean> {
+      await tapLocator(page.locator('[data-toolbar-layout="touch"]').getByRole('button', { name: 'Done', exact: true }));
+      try {
+        await expect(armedBar).toHaveCount(0, { timeout: 5_000 });
+        return true;
+      } catch {
+        return false;
+      }
     }
 
     const scrollLeft = () => page.evaluate(
@@ -134,37 +165,35 @@ test.describe('timeline phone gestures', () => {
     });
     await page.waitForTimeout(300);
 
-    // --- 2. select mode: tap toggles selection -----------------------------
-    const selectActivated = await setMode('select');
-    await test.step('select mode activates', async () => {
-      expect(selectActivated).toBe(true);
-    });
-
-    const c1 = await boxOf(page, CLIP_BODY_SELECTOR);
-    if (c1) await touch.tap(c1.cx, c1.cy);
+    // --- 2. browse: tap selects the clip and opens the sheet ----------------
+    const c1Selector = CLIP_BODY_SELECTOR as string;
+    await tapClipForSheet(c1Selector);
     const selCount1 = await countSelectedClips(page);
-    await test.step('select: tap selects clip', async () => {
+    await test.step('browse: tap selects clip and opens the clip sheet', async () => {
       expect(selCount1, `${selCount1} selected`).toBeGreaterThanOrEqual(1);
+      await expect(sheet.getByRole('button', { name: 'Move', exact: true })).toBeVisible();
+      await expect(sheet.getByRole('button', { name: 'Trim', exact: true })).toBeVisible();
     });
 
-    await shot('m2-select');
+    await shot('m2-sheet');
 
-    if (c1) await touch.tap(c1.cx, c1.cy);
-    const selCount2 = await countSelectedClips(page);
-    await test.step('select: second tap deselects (additive toggle)', async () => {
-      expect(selCount2, `${selCount2} selected after second tap`).toBe(0);
+    await tapLocator(sheet.getByRole('button', { name: 'Close clip' }));
+    await test.step('Close clip closes the sheet', async () => {
+      await expect(sheet).toBeHidden({ timeout: 5_000 });
     });
 
-    // --- 3. move mode: touch drag moves clip -------------------------------
-    const moveActivated = await setMode('move');
-    await test.step('move mode activates', async () => {
-      expect(moveActivated).toBe(true);
+    // --- 3. armed move: touch drag moves clip ------------------------------
+    const moveClipSelector = `${CLIP_BODY_SELECTOR}[data-clip-id="clip-video"]`;
+    const moveArmed = await armGesture(moveClipSelector, 'move');
+    await test.step('sheet Move arms the move gesture (Done shown)', async () => {
+      expect(moveArmed).toBe(true);
+      await expect(page.locator('[data-toolbar-layout="touch"]').getByRole('button', { name: 'Done', exact: true })).toBeVisible();
     });
 
     // The right-most V1 clip can be outside the CSS viewport when the page has
     // horizontal overflow; CDP correctly ignores a touch whose start point is
     // outside the device viewport. Use the fixture's sole V2 clip: it is fully
-    // visible and has free space on its track, so this measures move mode.
+    // visible and has free space on its track, so this measures the armed move.
     const beforeMove = await page.evaluate((clipBodySelector) => {
       const el = document.querySelector(`${clipBodySelector}[data-clip-id="clip-video"]`);
       if (!el) return null;
@@ -198,10 +227,15 @@ test.describe('timeline phone gestures', () => {
 
     await shot('m3-move');
 
-    // --- 4. trim mode: expanded handles, edge drag resizes -----------------
-    const trimActivated = await setMode('trim');
-    await test.step('trim mode activates', async () => {
-      expect(trimActivated).toBe(true);
+    const moveReleased = await releaseGesture();
+    await test.step('Done leaves the armed move', async () => {
+      expect(moveReleased).toBe(true);
+    });
+
+    // --- 4. armed trim: expanded handles, edge drag resizes ----------------
+    const trimArmed = await armGesture(c1Selector, 'trim');
+    await test.step('sheet Trim arms the trim gesture (Done shown)', async () => {
+      expect(trimArmed).toBe(true);
     });
     await page.waitForTimeout(300);
 
@@ -231,6 +265,25 @@ test.describe('timeline phone gestures', () => {
 
     await shot('m4-trim');
 
+    const trimReleased = await releaseGesture();
+    await test.step('Done leaves the armed trim', async () => {
+      expect(trimReleased).toBe(true);
+    });
+
+    // Back in browse a drag over a clip pans the timeline again.
+    await page.evaluate(() => {
+      const el = document.querySelector('.timeline-canvas-edit-area');
+      if (el) el.scrollLeft = 0;
+    });
+    await page.waitForTimeout(300);
+    const panBox = await boxOf(page, CLIP_BODY_SELECTOR);
+    const panBefore = await scrollLeft();
+    if (panBox) await touch.touchDrag(panBox.cx, panBox.cy, panBox.cx - 120, panBox.cy);
+    const panAfter = await scrollLeft();
+    await test.step('after Done: dragging a clip pans the timeline again', async () => {
+      expect(panAfter, `scrollLeft ${panBefore} -> ${panAfter}`).toBeGreaterThan(panBefore);
+    });
+
     // --- 5. ruler scrub via touch ------------------------------------------
     const playheadBefore = await boxOf(page, '[data-testid="timeline-playhead"]');
     const ruler = await page.evaluate(() => {
@@ -248,9 +301,11 @@ test.describe('timeline phone gestures', () => {
     });
     if (ruler) {
       // Composed extension markers occupy the ruler's top 20px. Scrub in the
-      // host-owned bottom strip so the gesture reaches the ruler rather than a
-      // marker button while still exercising real touch arbitration.
-      const scrubY = ruler.y + ruler.h - 3;
+      // host-owned strip below them so the gesture reaches the ruler rather than a
+      // marker button while still exercising real touch arbitration. Not at the
+      // ruler's very edge: a touch within ~5px of the clip row is adjusted onto
+      // the clip (as iOS does), so the strip's edge belongs to the clip.
+      const scrubY = ruler.y + 22;
       await touch.touchDrag(ruler.x + 200, scrubY, ruler.x + 300, scrubY, { steps: 10 });
     }
     const playheadAfter = await boxOf(page, '[data-testid="timeline-playhead"]');
@@ -263,75 +318,54 @@ test.describe('timeline phone gestures', () => {
       ).toBe(true);
     });
 
-    // --- 6. precision toggle ------------------------------------------------
-    const precisionActivated = await setMode('precision');
-    await test.step('precision toggle activates', async () => {
-      expect(precisionActivated).toBe(true);
+    // --- 6. the armed hint names the armed gesture --------------------------
+    const armedHint = () => page.evaluate(() => {
+      const el = document.querySelector('[data-armed-gesture]');
+      return el ? { gesture: el.getAttribute('data-armed-gesture'), text: el.textContent ?? '' } : null;
     });
-    await shot('m6-precision');
-
-    // --- 7. mode bar hint reacts to the active mode ------------------------
-    const hintText = () => page.evaluate(() => {
-      const bar = document.querySelector('[aria-label="Phone timeline mode bar"]');
-      if (!bar) return null;
-      const hint = bar.lastElementChild;
-      return hint && hint.tagName === 'DIV' && !hint.querySelector('button') ? hint.textContent!.trim() : null;
+    // The pan above left the first clip partly scrolled out; bring it back before tapping it.
+    await page.evaluate(() => {
+      const el = document.querySelector('.timeline-canvas-edit-area');
+      if (el) el.scrollLeft = 0;
     });
-    await setMode('browse');
-    const hintBrowse = await hintText();
-    await setMode('move');
-    const hintMove = await hintText();
+    await page.waitForTimeout(300);
+    await armGesture(c1Selector, 'move');
+    const hintMove = await armedHint();
+    await releaseGesture();
+    await armGesture(c1Selector, 'trim');
+    const hintTrim = await armedHint();
+    await releaseGesture();
 
-    await test.step('mode bar hint changes with mode', async () => {
+    await test.step('armed hint follows the gesture (move vs trim)', async () => {
       expect(
-        Boolean(hintBrowse && hintMove && hintBrowse !== hintMove),
-        `browse="${hintBrowse}" move="${hintMove}"`,
+        Boolean(hintMove && hintTrim && /move/i.test(hintMove.text) && /trim/i.test(hintTrim.text)),
+        `move=${JSON.stringify(hintMove)} trim=${JSON.stringify(hintTrim)}`,
       ).toBe(true);
     });
 
-    // --- 8. floating tool buttons are touch-sized --------------------------
-    const toolButtons = await page.evaluate(() => {
-      const labels = ['New text at playhead', 'New effect layer at playhead', 'Create animation sequence'];
-      return labels.map((label) => {
-        const el = document.querySelector(`[aria-label="${label}"]`);
-        if (!el) return { label, missing: true as const, w: 0, h: 0, opacity: 0 };
-        const r = el.getBoundingClientRect();
-        return {
-          label,
-          missing: false as const,
-          w: Math.round(r.width),
-          h: Math.round(r.height),
-          opacity: Number(getComputedStyle(el).opacity),
-        };
+    // --- 7. phone chrome that no longer exists -----------------------------
+    const absent = await page.evaluate(() => {
+      const buttonNamed = (re: RegExp) => Array.from(document.querySelectorAll('button'))
+        .filter((b) => re.test((b.getAttribute('aria-label') || b.textContent || '').trim())).length;
+      return {
+        dock: document.querySelectorAll('[data-testid="video-editor-right-panel-dock"]').length,
+        floatingTools: document.querySelectorAll(
+          '[aria-label="New text at playhead"], [aria-label="New effect layer at playhead"], [aria-label="Create animation sequence"]',
+        ).length,
+        panelButtons: buttonNamed(/^(Inspector|Clip|Panel display)$/i),
+        trackButtons: buttonNamed(/reorder|track settings/i),
+        clipOverflow: buttonNamed(/open clip actions/i),
+        playbackRow: document.querySelectorAll('[data-testid="touch-playback-row"]').length,
+      };
+    });
+
+    await test.step('phone has no dock, tool cluster or per-track/per-clip buttons', async () => {
+      expect(absent, JSON.stringify(absent)).toEqual({
+        dock: 0, floatingTools: 0, panelButtons: 0, trackButtons: 0, clipOverflow: 0, playbackRow: 1,
       });
     });
 
-    await test.step('all three floating tool buttons are >=40px on phone', async () => {
-      expect(
-        toolButtons.length === 3
-          && toolButtons.every((b) => !b.missing && b.w >= 40 && b.h >= 40 && b.opacity > 0.5),
-        JSON.stringify(toolButtons),
-      ).toBe(true);
-    });
-
-    // --- 9. tapping "New text" adds a clip ---------------------------------
-    const clipCount = () => page.evaluate(
-      (clipBodySelector) => document.querySelectorAll(clipBodySelector).length,
-      CLIP_BODY_SELECTOR as string,
-    );
-    const clipsBeforeText = await clipCount();
-    const textTool = await boxOf(page, '[aria-label="New text at playhead"]');
-    if (textTool) await touch.tap(textTool.cx, textTool.cy);
-    await page.waitForTimeout(700);
-    const clipsAfterText = await clipCount();
-
-    await test.step('tap "New text" adds a clip', async () => {
-      expect(clipsAfterText, `${clipsBeforeText} -> ${clipsAfterText} clips`).toBeGreaterThan(clipsBeforeText);
-    });
-
-    await shot('m7-tools');
-
-    // --- 10. pinch-to-zoom over the edit area ------------------------------
+    // --- 8. pinch-to-zoom over the edit area ------------------------------
     const pinchArea = await boxOf(page, '.timeline-canvas-edit-area');
     const pinchMidX = pinchArea ? pinchArea.cx : 210;
     const pinchMidY = pinchArea ? pinchArea.y + 20 : 590;
@@ -388,28 +422,5 @@ test.describe('timeline phone gestures', () => {
     });
 
     await shot('m8-pinch');
-
-    // --- 11. track label actions are reachable without hover ---------------
-    const trackActions = await page.evaluate(() => {
-      const row = document.querySelector('[data-track-id]');
-      if (!row) return null;
-      return Array.from(row.querySelectorAll('button')).map((b) => {
-        const r = b.getBoundingClientRect();
-        return {
-          label: (b.getAttribute('aria-label') || b.getAttribute('title') || '').trim(),
-          w: Math.round(r.width),
-          h: Math.round(r.height),
-          opacity: Number(getComputedStyle(b).opacity)
-            * Number(getComputedStyle(b.parentElement!).opacity),
-        };
-      });
-    });
-
-    await test.step('track actions visible without hover (>=36px, opacity > 0.5)', async () => {
-      expect(
-        Boolean(trackActions?.some((b) => b.opacity > 0.5 && b.h >= 36 && b.w >= 36)),
-        `${JSON.stringify(trackActions)} :: ${[...new Set(logs)].join(' | ')}`,
-      ).toBe(true);
-    });
   });
 });

@@ -16,6 +16,9 @@ import {
 function runtimeSpec(resource: RuntimeTaskResource): BridgeTaskSpec {
   const envelope = asRecord(resource.spec);
   const spec = asRecord(envelope?.spec) ?? {};
+  const inputs = asRecord(spec.inputs);
+  const timelineAuthority = asRecord(inputs?.timeline_authority);
+  const visualSeamReport = timelineAuthority?.visual_seam_report;
   const schemaVersion = Number(resource.schema_version);
 
   return {
@@ -24,6 +27,11 @@ function runtimeSpec(resource: RuntimeTaskResource): BridgeTaskSpec {
     ...(typeof spec.source_task_type === 'string' ? { source_task_type: spec.source_task_type } : {}),
     ...(asRecord(spec.params) ? { params: asRecord(spec.params)! } : {}),
     ...(asRecord(spec.output_policy) ? { output_policy: asRecord(spec.output_policy)! } : {}),
+    // Runtime attaches the visual seam report under the admitted capability
+    // spec. Preserve that advice for the render warning UI.
+    ...(visualSeamReport !== undefined
+      ? { spec: { inputs: { timeline_authority: { visual_seam_report: visualSeamReport } } } }
+      : {}),
   };
 }
 

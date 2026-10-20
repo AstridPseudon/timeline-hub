@@ -109,7 +109,6 @@ describe('timeline DOM contract', () => {
 
     expect(new Set(selectors)).toEqual(new Set([
       `${EDIT_AREA_SELECTOR}::before`,
-      `${EDIT_AREA_SELECTOR}[${TOUCH_GESTURE_MODE_ATTR}='marquee']`,
       `${EDIT_AREA_SELECTOR}[${TOUCH_GESTURE_MODE_ATTR}='move'] ${CLIP_ACTION_SELECTOR}`,
       `${EDIT_AREA_SELECTOR}[${TOUCH_GESTURE_MODE_ATTR}='trim'] [${RESIZE_EDGE_ATTR}]`,
       `${EDIT_AREA_SELECTOR}[${TOUCH_GESTURE_MODE_ATTR}='trim'] [${RESIZE_EDGE_ATTR}]::after`,

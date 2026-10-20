@@ -1,3 +1,5 @@
+import { EXTERNAL_AGENT_IDS } from '@/integrations/astrid/localAgents.ts';
+
 /**
  * The model each chat last used, by session ID, so the chat list can say
  * "Codex · gpt-6.1-sol" without loading every session. Browser-local display
@@ -31,10 +33,10 @@ export function rememberChatModel(sessionId: string, model: string): Record<stri
 
 export interface RememberedAgentModel { id: string; name: string; description?: string | null }
 
-const agentModelsKey = (agent: string) => `astrid.app.agentModels.${agent}`;
+const agentModelsKey = (agent: typeof EXTERNAL_AGENT_IDS[number]) => `astrid.app.agentModels.${agent}`;
 
 /** An agent's model list from its last session, so New chat can offer it before a session starts. */
-export function readAgentModels(agent: string): RememberedAgentModel[] {
+export function readAgentModels(agent: typeof EXTERNAL_AGENT_IDS[number]): RememberedAgentModel[] {
   try {
     const value: unknown = JSON.parse(globalThis.localStorage?.getItem(agentModelsKey(agent)) ?? '[]');
     return Array.isArray(value)
@@ -45,7 +47,7 @@ export function readAgentModels(agent: string): RememberedAgentModel[] {
   }
 }
 
-export function rememberAgentModels(agent: string, models: RememberedAgentModel[]): void {
+export function rememberAgentModels(agent: typeof EXTERNAL_AGENT_IDS[number], models: RememberedAgentModel[]): void {
   try {
     globalThis.localStorage?.setItem(agentModelsKey(agent), JSON.stringify(models.map(({ id, name, description }) => ({ id, name, description: description ?? null }))));
   } catch {

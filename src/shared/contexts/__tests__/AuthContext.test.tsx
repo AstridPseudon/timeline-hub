@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const { probeBridgeSessionMock } = vi.hoisted(() => ({
   probeBridgeSessionMock: vi.fn(),
@@ -17,12 +17,15 @@ import { AuthProvider, useAuth } from '../AuthContext';
 
 // Test consumer component
 function AuthConsumer() {
-  const { userId, isAuthenticated, isLoading } = useAuth();
+  const { userId, isAuthenticated, isLoading, authError, isRetryingAuth, retryAuth } = useAuth();
   return (
     <div>
       <span data-testid="userId">{userId ?? 'null'}</span>
       <span data-testid="isAuthenticated">{String(isAuthenticated)}</span>
       <span data-testid="isLoading">{String(isLoading)}</span>
+      <span data-testid="authError">{authError?.message ?? 'null'}</span>
+      <span data-testid="isRetryingAuth">{String(isRetryingAuth)}</span>
+      <button type="button" onClick={() => void retryAuth()}>retry auth</button>
     </div>
   );
 }
@@ -53,8 +56,9 @@ describe('AuthContext', () => {
   });
 
   describe('AuthProvider', () => {
-    it('is immediately anonymous and never probes in localTest mode', () => {
-      window.history.replaceState({}, '', '/tools/video-editor?localTest=1');
+    it('does not let legacy document selectors bypass connection-based auth', async () => {
+      probeBridgeSessionMock.mockReturnValue(new Promise(() => {}));
+      window.history.replaceState({}, '', '/tools/video-editor?runtime=1&runtimeProject=runtime-project&runtimeTimeline=runtime-timeline&localProject=legacy-project&localTimeline=legacy-timeline');
 
       render(
         <AuthProvider>
@@ -62,37 +66,9 @@ describe('AuthContext', () => {
         </AuthProvider>
       );
 
-      expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
+      expect(screen.getByTestId('isLoading')).toHaveTextContent('true');
       expect(screen.getByTestId('userId')).toHaveTextContent('null');
-      expect(probeBridgeSessionMock).not.toHaveBeenCalled();
-    });
-
-    it('is immediately anonymous and never probes for an ordinary local editor URL', () => {
-      window.history.replaceState({}, '', '/tools/video-editor?localProject=astrid-intro&localTimeline=timeline-1');
-
-      render(
-        <AuthProvider>
-          <AuthConsumer />
-        </AuthProvider>
-      );
-
-      expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
-      expect(screen.getByTestId('userId')).toHaveTextContent('null');
-      expect(probeBridgeSessionMock).not.toHaveBeenCalled();
-    });
-
-    it('is immediately anonymous and never probes in Runtime document mode', () => {
-      window.history.replaceState({}, '', '/tools/video-editor?runtime=1&runtimeProject=project-1&runtimeTimeline=timeline-1');
-
-      render(
-        <AuthProvider>
-          <AuthConsumer />
-        </AuthProvider>
-      );
-
-      expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
-      expect(screen.getByTestId('userId')).toHaveTextContent('null');
-      expect(probeBridgeSessionMock).not.toHaveBeenCalled();
+      await waitFor(() => expect(probeBridgeSessionMock).toHaveBeenCalledTimes(1));
     });
 
     it('renders children', async () => {
@@ -156,11 +132,29 @@ describe('AuthContext', () => {
 
       expect(screen.getByTestId('userId')).toHaveTextContent('null');
       expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('false');
+      expect(screen.getByTestId('authError')).toHaveTextContent('bridge unreachable');
 
-      // One probe per boot: failure is terminal for this mount, never retried.
+      // Failure remains terminal until the user explicitly retries.
       await waitFor(() => {
         expect(probeBridgeSessionMock).toHaveBeenCalledTimes(1);
       });
+    });
+
+    it('allows a manual retry to recover authentication after a failed boot', async () => {
+      probeBridgeSessionMock
+        .mockResolvedValueOnce({ ok: false, reason: 'bridge unreachable' })
+        .mockResolvedValueOnce({ ok: true, userId: 'local-user' });
+
+      render(<AuthProvider><AuthConsumer /></AuthProvider>);
+      await waitFor(() => expect(screen.getByTestId('authError')).toHaveTextContent('bridge unreachable'));
+      expect(probeBridgeSessionMock).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole('button', { name: 'retry auth' }));
+      await waitFor(() => {
+        expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('true');
+        expect(screen.getByTestId('authError')).toHaveTextContent('null');
+      });
+      expect(probeBridgeSessionMock).toHaveBeenCalledTimes(2);
     });
   });
 });

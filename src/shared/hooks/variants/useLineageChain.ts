@@ -28,11 +28,7 @@ export function isRuntimeLineageAuthority(
   search = typeof window === 'undefined' ? '' : window.location.search,
 ): boolean {
   const params = new URLSearchParams(search);
-  const hasLocalDocument = params.has('localProject') || params.has('localTimeline');
-  const hasRuntimeDocument = params.get('runtime') === '1'
-    && Boolean(params.get('runtimeProject')?.trim())
-    && Boolean(params.get('runtimeTimeline')?.trim());
-  return hasLocalDocument || hasRuntimeDocument;
+  return params.has('project') || params.has('timeline');
 }
 
 interface LineageItem {

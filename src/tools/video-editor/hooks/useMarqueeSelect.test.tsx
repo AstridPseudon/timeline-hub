@@ -135,7 +135,6 @@ function renderMarquee(editAreaRef: { current: HTMLElement | null }) {
   return renderHook(() => useMarqueeSelect({
     editAreaRef,
     deviceClass: 'desktop',
-    interactionMode: 'select',
     gestureOwner: 'none',
     setGestureOwner: vi.fn(),
     setInputModalityFromPointerType: (): TimelineInputModality => 'mouse',
@@ -274,7 +273,7 @@ describe('typed timeline selection clearing', () => {
     const { editArea } = mountEditArea();
     const { result } = renderHook(() => {
       const [target, setTarget] = useState<{ kind: string } | null>({ kind });
-      const marquee = useMarqueeSelect({ editAreaRef: { current: editArea }, deviceClass: 'desktop', interactionMode: 'select',
+      const marquee = useMarqueeSelect({ editAreaRef: { current: editArea }, deviceClass: 'desktop',
         gestureOwner: 'none', setGestureOwner: vi.fn(), setInputModalityFromPointerType: () => 'mouse',
         onClearSelection: () => setTarget(null) });
       return { ...marquee, target, hasInspectableSelection: target !== null };
@@ -288,7 +287,7 @@ describe('typed timeline selection clearing', () => {
   it('does not clear a data row/item, control, additive click, portal release, or cancelled gesture', () => {
     const { editArea } = mountEditArea();
     const onClearSelection = vi.fn();
-    const { result } = renderHook(() => useMarqueeSelect({ editAreaRef: { current: editArea }, deviceClass: 'desktop', interactionMode: 'select',
+    const { result } = renderHook(() => useMarqueeSelect({ editAreaRef: { current: editArea }, deviceClass: 'desktop',
       gestureOwner: 'none', setGestureOwner: vi.fn(), setInputModalityFromPointerType: () => 'mouse', onClearSelection }));
     const lane = document.createElement('div'); lane.dataset.laneId = 'astrid.transcript'; editArea.append(lane);
     const item = document.createElement('button'); lane.append(item);
@@ -400,7 +399,7 @@ describe('mixed painted marquee geometry', () => {
     itemBox(editArea, 'transcript', 'retained', 40);
     publishMarqueePlane(editArea, { layoutKey: 'v1', dataItems: [{ laneId: 'transcript', itemId: 'retained' }] });
     const { result, rerender, unmount } = renderHook(({ owner }) => useMarqueeSelect({ editAreaRef: { current: editArea }, selectionOwner: owner,
-      deviceClass: 'desktop', interactionMode: 'select', gestureOwner: 'none', setGestureOwner: vi.fn(), setInputModalityFromPointerType: () => 'mouse' }), { initialProps: { owner: Symbol('one') } });
+      deviceClass: 'desktop', gestureOwner: 'none', setGestureOwner: vi.fn(), setInputModalityFromPointerType: () => 'mouse' }), { initialProps: { owner: Symbol('one') } });
     const start = () => { act(() => result.current.onPointerDown(pointerDownOn(editArea, { clientX: 110, clientY: 150 }))); dispatchPointer('pointermove', 300, 195); };
     start(); dispatchPointer('pointerup', 300, 195);
     expect(selectionMocks.userSelectTimelineItems.mock.calls.at(-1)![0].dataItems).toEqual([{ laneId: 'transcript', itemId: 'retained' }]);

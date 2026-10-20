@@ -444,7 +444,7 @@ describe('TasksPane', () => {
   it('lets the arrow open and close empty task history independently from the persistent lock', async () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
-      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+      search: '?project=runtime-project&timeline=timeline-1',
     });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,
@@ -510,7 +510,7 @@ describe('TasksPane', () => {
     });
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
-      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+      search: '?project=runtime-project&timeline=timeline-1',
     });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,
@@ -538,7 +538,7 @@ describe('TasksPane', () => {
     );
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
-      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+      search: '?project=runtime-project&timeline=timeline-1',
     });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,
@@ -584,7 +584,7 @@ describe('TasksPane', () => {
     expect(setIsTasksPaneLockedMock).not.toHaveBeenCalled();
   });
 
-  it('marks engaged, opens the pane, and focuses the composer once AgentChat actions are registered', () => {
+  it('marks engaged, opens the pane, and focuses the composer inside the tap and again next frame', () => {
     const callOrder: string[] = [];
     const markEngaged = vi.fn(() => {
       callOrder.push('mark');
@@ -603,6 +603,7 @@ describe('TasksPane', () => {
       markEngaged,
       isRecording: false,
       isProcessing: false,
+      isAgentWorking: false,
     });
 
     renderTasksPane();
@@ -611,10 +612,12 @@ describe('TasksPane', () => {
 
     expect(markEngaged).toHaveBeenCalledTimes(1);
     expect(openPaneMock).toHaveBeenCalledTimes(1);
+    // iOS raises the keyboard only for a focus made while handling the tap; the next frame
+    // covers a composer the open has just enabled.
     expect(globalThis.requestAnimationFrame).toHaveBeenCalledTimes(1);
-    expect(focusComposer).toHaveBeenCalledTimes(1);
+    expect(focusComposer).toHaveBeenCalledTimes(2);
     expect(toggleRecording).not.toHaveBeenCalled();
-    expect(callOrder).toEqual(['mark', 'open', 'focus']);
+    expect(callOrder).toEqual(['mark', 'open', 'focus', 'focus']);
     expect(paneControlProps.actions.splitButton.primary.ariaLabel).toBe('Open message composer');
   });
 
@@ -632,7 +635,7 @@ describe('TasksPane', () => {
   it('routes the explicit Runtime editor identity to the Runtime task list', () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
-      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+      search: '?project=runtime-project&timeline=timeline-1',
     });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,
@@ -657,7 +660,7 @@ describe('TasksPane', () => {
   it('opens Runtime history on the newest completed task status', () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
-      search: '?runtime=1&runtimeProject=runtime-project&runtimeTimeline=timeline-1',
+      search: '?project=runtime-project&timeline=timeline-1',
     });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,
@@ -679,7 +682,7 @@ describe('TasksPane', () => {
   it('routes the active editor identity ahead of a stale primary route', () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
-      search: '?runtime=1&runtimeProject=project-A&runtimeTimeline=timeline-A',
+      search: '?project=project-A&timeline=timeline-A',
     });
     useOptionalAgentChatBridgeMock.mockReturnValue({
       editorContext: { projectId: 'project-B', timelineId: 'timeline-B' },

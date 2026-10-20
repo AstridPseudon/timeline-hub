@@ -30,9 +30,7 @@ function makeOptions(overrides: Partial<Parameters<typeof useKeyboardShortcuts>[
   return {
     hasSelectedClip: false,
     canMoveSelectedClipToTrack: false,
-    precisionEnabled: false,
     selectedClipIds: new Set<string>(),
-    timelineFps: 30,
     moveSelectedClipsToTrack: vi.fn(),
     nudgeSelectedClipsInTime: vi.fn(),
     undo: vi.fn(),
@@ -136,33 +134,11 @@ describe('normalizeKeyboardEvent', () => {
 describe('useKeyboardShortcuts time-axis nudge', () => {
   const selection = { hasSelectedClip: true, selectedClipIds: new Set(['clip-1']) };
 
-  it('nudges the selection one frame per press with precision on', () => {
-    const nudgeSelectedClipsInTime = vi.fn();
-    const seekRelative = vi.fn();
-
-    mountShortcuts({
-      options: makeOptions({
-        ...selection,
-        precisionEnabled: true,
-        timelineFps: 24,
-        nudgeSelectedClipsInTime,
-        seekRelative,
-      }),
-    });
-
-    const event = dispatchKey(window, { key: 'ArrowRight', altKey: true });
-
-    expect(event.defaultPrevented).toBe(true);
-    expect(nudgeSelectedClipsInTime).toHaveBeenCalledTimes(1);
-    expect(nudgeSelectedClipsInTime.mock.calls[0][0]).toBeCloseTo(1 / 24, 10);
-    expect(seekRelative).not.toHaveBeenCalled();
-  });
-
-  it('nudges by the coarse step with precision off, and leftwards on ArrowLeft', () => {
+  it('nudges by the coarse step, and leftwards on ArrowLeft', () => {
     const nudgeSelectedClipsInTime = vi.fn();
 
     mountShortcuts({
-      options: makeOptions({ ...selection, precisionEnabled: false, nudgeSelectedClipsInTime }),
+      options: makeOptions({ ...selection, nudgeSelectedClipsInTime }),
     });
 
     dispatchKey(window, { key: 'ArrowRight', altKey: true });
@@ -171,15 +147,13 @@ describe('useKeyboardShortcuts time-axis nudge', () => {
     expect(nudgeSelectedClipsInTime.mock.calls.map((call) => call[0])).toEqual([0.5, -0.5]);
   });
 
-  it('leaves Alt+Arrow as the precision seek when nothing is selected', () => {
+  it('seeks a whole second on Alt+Arrow when nothing is selected', () => {
     const nudgeSelectedClipsInTime = vi.fn();
     const seekRelative = vi.fn();
 
     mountShortcuts({
       options: makeOptions({
         hasSelectedClip: false,
-        precisionEnabled: true,
-        timelineFps: 24,
         nudgeSelectedClipsInTime,
         seekRelative,
       }),
@@ -189,7 +163,7 @@ describe('useKeyboardShortcuts time-axis nudge', () => {
 
     expect(nudgeSelectedClipsInTime).not.toHaveBeenCalled();
     expect(seekRelative).toHaveBeenCalledTimes(1);
-    expect(seekRelative.mock.calls[0][0]).toBeCloseTo(1 / 24, 10);
+    expect(seekRelative).toHaveBeenCalledWith(1);
   });
 
   it('leaves the unmodified arrows seeking the playhead', () => {

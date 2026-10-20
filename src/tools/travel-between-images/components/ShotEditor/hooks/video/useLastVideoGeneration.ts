@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
+import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 
 export function useLastVideoGeneration(selectedShotId?: string): string | null {
   const { data } = useQuery({
@@ -49,7 +49,7 @@ export function useLastVideoGeneration(selectedShotId?: string): string | null {
     // Local document shots have no relational shot_generations row. Their
     // media is supplied by the Astrid timeline adapter, so do not invoke the
     // retired Supabase lookup while rendering the established shot editor.
-    enabled: !!selectedShotId && !hasLocalModeUrlParams(
+    enabled: !!selectedShotId && !hasRuntimeDocumentIdentity(
       typeof window === 'undefined' ? '' : window.location.search,
     ),
     staleTime: 30_000,

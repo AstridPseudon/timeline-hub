@@ -63,6 +63,14 @@ export function createFakeAcp(projectSelectors: readonly string[]): FakeAcp {
       }
       // A cold editor can query the unscoped session list before project context settles. Give that exact
       // read a deterministic empty connection; no prompt, session creation or arbitrary RPC is served.
+      // The chat pane's agent picker and model menu read these catalogs on mount (`acpRoutes.ts` agents(),
+      // models()). One ready Astrid and no providers: enough for the pane to settle, nothing to pick.
+      if (pathname === '/agents' && method === 'GET') {
+        return { status: 200, body: { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null }] } };
+      }
+      if (pathname === '/models' && method === 'GET') {
+        return { status: 200, body: { providers: [], currentModel: null } };
+      }
       if (pathname === '/connect' && method === 'POST') {
         return { status: 200, body: { connection_id: CONNECTION_ID, initialize: {} } };
       }

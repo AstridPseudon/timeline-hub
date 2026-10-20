@@ -15,7 +15,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget.ts';
 import { TrackLabelContent } from '@/tools/video-editor/components/TimelineEditor/TrackLabel.tsx';
-import { LABEL_WIDTH } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { actionSlotAttrs, resizeHandleAttrs, rowAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
 import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import type { TimelineRowLayout, TimelineVisualRow } from '@/tools/video-editor/lib/timeline-row-layout.ts';
@@ -229,7 +228,7 @@ function SortableRow({
       )}
       <div
         className="absolute left-0 top-0 z-20 h-full border-r border-border bg-card"
-        style={{ width: LABEL_WIDTH, position: 'sticky', left: 0 }}
+        style={{ width: startLeft, position: 'sticky', left: 0 }}
         onPointerDown={(event) => event.stopPropagation()}
       >
         <TrackLabelContent

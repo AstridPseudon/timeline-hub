@@ -528,7 +528,7 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderStatus).toBe('idle');
   });
 
-  it('exposes the structured seam report when local render admission is blocked', async () => {
+  it('admits the render and exposes the advisory seam report returned with its task', async () => {
     const seamReport = {
       version: 1 as const,
       fps: 30,
@@ -547,8 +547,11 @@ describe('useRenderState render routing', () => {
       warningCount: 1,
       blocked: true,
     };
-    renderRouterMocks.buildRenderTimelinePayload.mockReturnValueOnce({
-      error: 'Visual seam admission blocked',
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(renderTaskDetail('queued')), { status: 200 })));
+    renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mockResolvedValueOnce({
+      status: 'queued',
+      task_id: 'render-task-1',
+      message: 'queued',
       seamReport,
     });
     const runtimeValue = {
@@ -560,7 +563,7 @@ describe('useRenderState render routing', () => {
     const wrapper = ({children}: {children: ReactNode}) => (
       <VideoEditorRuntimeContext.Provider value={runtimeValue}>{children}</VideoEditorRuntimeContext.Provider>
     );
-    const {result} = renderHook(() => useRenderState(
+    const {result, unmount} = renderHook(() => useRenderState(
       {...buildConfig({id: 'clip-native', clipType: 'media', track: 'V1', at: 0, hold: 1}),
         app: {visualSeamContract: {mode: 'enforced'}}},
       null,
@@ -571,9 +574,12 @@ describe('useRenderState render routing', () => {
 
     await act(async () => { await result.current.startRender(); });
 
-    expect(result.current.renderStatus).toBe('error');
+    expect(result.current.renderStatus).toBe('rendering');
     expect(result.current.visualSeamReport).toEqual(seamReport);
-    expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline).not.toHaveBeenCalled();
+    expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline).toHaveBeenCalledOnce();
+
+    unmount();
+    vi.unstubAllGlobals();
   });
 
   it('disables seam acknowledgement when the timeline changes after the failed render', async () => {
@@ -596,7 +602,11 @@ describe('useRenderState render routing', () => {
       warningCount: 1,
       blocked: true,
     };
-    renderRouterMocks.buildRenderTimelinePayload.mockReturnValueOnce({error: 'Visual seam admission blocked', seamReport});
+    renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mockResolvedValueOnce({
+      status: 'error',
+      message: 'Astrid render admission failed: blocked by a Runtime validation error',
+      seamReport,
+    });
     const runtimeValue = {
       project: {projectId: 'demo-project'},
       timelineId: 'timeline-1',
@@ -776,7 +786,7 @@ describe('useRenderState render routing', () => {
     const runtimeValue = {
       project: { projectId: 'demo-project' },
       timelineId: 'timeline-1',
-      provider: { apiBaseUrl: '/api/astrid' },
+      provider: { apiBaseUrl: '/api/runtime' },
       telemetry: { warn: vi.fn() },
     } as unknown as VideoEditorRuntimeContextValue;
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -795,8 +805,14 @@ describe('useRenderState render routing', () => {
     expect(flushPendingSave).toHaveBeenCalledTimes(1);
     expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ expectedVersion: 7, destination: 'download' }),
+      expect.objectContaining({ destination: 'download' }),
     );
+    expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mock.calls[0][1]).not.toHaveProperty('expectedVersion');
+    // The provider is the Runtime's (`/api/runtime`); the Astrid-API client must still use `/api/astrid`.
+    const admissionOptions = renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mock.calls[0][1] as {
+      client: { transport: { baseUrl: string } };
+    };
+    expect(admissionOptions.client.transport.baseUrl).toBe('/api/astrid');
     expect(result.current.renderStatus).toBe('rendering');
     expect(result.current.activeRenderTaskId).toBe('render-task-1');
     expect(fetchMock).toHaveBeenCalledTimes(1);

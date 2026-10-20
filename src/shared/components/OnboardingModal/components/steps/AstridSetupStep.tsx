@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { Bot, Check, CheckCircle2, Copy, Cpu, ExternalLink, Loader2, Minus, Terminal } from 'lucide-react';
+import { Bot, Check, CheckCircle2, Copy, Cpu, ExternalLink, Terminal } from 'lucide-react';
 import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner';
 import { DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
 import { SegmentedControl, SegmentedControlItem } from '@/shared/components/ui/segmented-control';
 import { inspectAstridCapabilities, type AstridCapabilityCensus } from '@/integrations/astrid/capabilityCensus.ts';
+import { LOCAL_AGENT_TABLE, saveLocalAgent, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import {
-  AGENT_SETUP_BRIEF,
+  agentSetupBriefFor,
   ASTRID_LAUNCH_COMMANDS,
   ASTRID_STUDIO_MESSAGE,
   detectSetupPlatform,
@@ -19,20 +20,11 @@ import {
   type SetupPlatform,
 } from '@/shared/components/OnboardingModal/lib/astridSetupGuide';
 import type { OnboardingStepProps } from '@/shared/components/OnboardingModal/types';
+import { SetupStatusLine, type CheckState, type SetupChecks } from '@/shared/components/OnboardingModal/components/SetupStatusLine';
 
 const POLL_MS = 4000;
 const NO_PROJECT_REASON = /no project exists yet/i;
 const REPORT_ISSUE_URL = 'https://github.com/banodoco/astrid-agent/issues';
-
-type CheckState = 'checking' | 'pass' | 'fail' | 'later';
-
-export interface SetupChecks {
-  runtime: CheckState;
-  workspace: CheckState;
-  tools: CheckState;
-  /** Runtime running and workspace readable: enough to start creating. */
-  ready: boolean;
-}
 
 /** What the browser can honestly observe of a local install, from the Runtime's own probes. */
 export function setupChecksFrom(census: AstridCapabilityCensus | null): SetupChecks {
@@ -161,53 +153,6 @@ function MeetAstrid({ platform }: { platform: SetupPlatform }) {
   );
 }
 
-const CHECKS: ReadonlyArray<{ key: keyof Omit<SetupChecks, 'ready'>; label: string; later?: string }> = [
-  { key: 'runtime', label: 'Runtime' },
-  { key: 'workspace', label: 'Workspace' },
-  { key: 'tools', label: 'Tools', later: 'Checked once you have a project' },
-];
-
-/** Pending reads as pending (a spinner), not as a failure, until the check passes. */
-function CheckMark({ state }: { state: CheckState }) {
-  if (state === 'pass') return <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-500" aria-hidden />;
-  if (state === 'later') return <Minus className="h-3.5 w-3.5" aria-hidden />;
-  return <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />;
-}
-
-function statusMessage(checks: SetupChecks): string {
-  if (checks.ready) return 'Astrid is up and running';
-  if (checks.runtime === 'checking') return 'Looking for Astrid';
-  if (checks.runtime !== 'pass') return 'Waiting for Astrid to start';
-  return 'Almost there';
-}
-
-/**
- * What setup is waiting for: a small mark per check, and the running mink while it waits (unless the mink
- * is already shown elsewhere, as above the setup step's title). The modal shows it in its footer, below
- * the scrolling instructions, so it never covers them.
- */
-export function SetupStatusLine({ checks, mink = true }: { checks: SetupChecks; mink?: boolean }) {
-  return (
-    <div className="flex flex-col items-center gap-2 text-xs text-muted-foreground" role="status" aria-live="polite" aria-label={statusMessage(checks)}>
-      {mink && !checks.ready && <MinkRunner className="text-foreground" />}
-      <span className="flex items-center gap-4">
-        {CHECKS.map(({ key, label, later }) => (
-          <span
-            key={key}
-            className={`inline-flex items-center gap-1.5 ${checks[key] === 'pass' ? 'text-foreground' : ''}`}
-            data-check={key}
-            data-state={checks[key]}
-            title={checks[key] === 'later' ? later : undefined}
-          >
-            <CheckMark state={checks[key]} />
-            {label}
-          </span>
-        ))}
-      </span>
-    </div>
-  );
-}
-
 /** The modal footer's view of setup: the status line until the setup step shows its own result. The
  *  running mink sits above the step's title instead. */
 export function SetupFooterStatus() {
@@ -216,6 +161,22 @@ export function SetupFooterStatus() {
 }
 
 type SetupRoute = 'agent' | 'manual';
+
+function AgentChoice({ value, onChange }: { value: LocalAgentId | undefined; onChange: (value: string) => void }) {
+  return (
+    <div className="space-y-1.5 text-center">
+      <p className="text-xs text-muted-foreground">Already use an agent?</p>
+      <div className="flex justify-center">
+        <SegmentedControl value={value === 'astrid' ? 'none' : value ?? ''} onValueChange={onChange} variant="pill" size="sm" aria-label="Already use an agent?">
+          <SegmentedControlItem value="claude-code">Claude Code</SegmentedControlItem>
+          <SegmentedControlItem value="codex">Codex</SegmentedControlItem>
+          <SegmentedControlItem value="hermes">Hermes</SegmentedControlItem>
+          <SegmentedControlItem value="none">None yet</SegmentedControlItem>
+        </SegmentedControl>
+      </div>
+    </div>
+  );
+}
 
 /**
  * First-run setup: the person picks between handing a brief to their agent or doing the steps
@@ -226,7 +187,17 @@ type SetupRoute = 'agent' | 'manual';
 export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepProps & { reconnect?: boolean }) {
   const [route, setRoute] = useState<SetupRoute>('agent');
   const [platform, setPlatform] = useState<SetupPlatform>(detectSetupPlatform);
+  const [chosenAgent, setChosenAgent] = useState<LocalAgentId | undefined>();
   const checks = useSetupChecks();
+  const chosenAgentName = chosenAgent && chosenAgent !== 'astrid' ? LOCAL_AGENT_TABLE[chosenAgent].name : undefined;
+  const agentBrief = agentSetupBriefFor(chosenAgentName);
+
+  const chooseAgent = (value: string) => {
+    const agent = value === 'none' ? 'astrid' : value as LocalAgentId;
+    setChosenAgent(agent);
+    setRoute(agent === 'astrid' ? 'manual' : 'agent');
+    saveLocalAgent(agent);
+  };
 
   useEffect(() => {
     if (reconnect && checks.ready) onNext();
@@ -244,6 +215,7 @@ export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepPro
           </DialogTitle>
         </DialogHeader>
         {reconnect ? <SetupStatusLine checks={checks} /> : <MeetAstrid platform={platform} />}
+        {!reconnect && <AgentChoice value={chosenAgent} onChange={chooseAgent} />}
         <Button variant="retro" size="retro-sm" onClick={onNext} className="w-full sm:w-auto">
           {reconnect ? 'Back to Astrid' : 'Continue'}
         </Button>
@@ -290,6 +262,8 @@ export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepPro
         </div>
       </div>
 
+      <AgentChoice value={chosenAgent} onChange={chooseAgent} />
+
       <div className="flex justify-center">
         <SegmentedControl value={route} onValueChange={(value) => setRoute(value as SetupRoute)} variant="pill">
           <SegmentedControlItem value="agent" icon={<Bot className="h-4 w-4" />}>I’ll give this to my agent</SegmentedControlItem>
@@ -299,7 +273,7 @@ export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepPro
 
       {route === 'agent' ? (
         <div className="space-y-2">
-          <PastePanel title="Brief for your agent to set everything up" text={AGENT_SETUP_BRIEF} copyLabel="Copy brief" />
+          <PastePanel title={chosenAgentName ? `Paste this into ${chosenAgentName}` : 'Brief for your agent to set everything up'} text={agentBrief} copyLabel="Copy brief" />
         </div>
       ) : (
         <div className="space-y-4">

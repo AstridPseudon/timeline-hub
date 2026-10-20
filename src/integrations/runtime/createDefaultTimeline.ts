@@ -18,6 +18,16 @@ function timelineId(value: RuntimeTimeline | undefined): string | undefined {
     : undefined;
 }
 
+function resolveTimelineId(
+  timelines: RuntimeTimeline[],
+  reference: string | undefined,
+): string | undefined {
+  if (!reference) return undefined;
+  const active = timelines.filter((timeline) => timeline.archived !== true);
+  return timelineId(active.find((timeline) => timeline.timeline_id === reference)
+    ?? active.find((timeline) => timeline.timeline_ulid === reference));
+}
+
 function chooseTimeline(timelines: RuntimeTimeline[]): RuntimeTimeline | undefined {
   const active = timelines.filter((timeline) => timeline.archived !== true);
   const preferred = (candidates: RuntimeTimeline[]) => candidates.find((timeline) => timeline.is_default === true)
@@ -99,7 +109,10 @@ export async function ensureProjectHasTimeline(
   const project = await client.getProject(projectId);
   const currentDefault = project.metadata.default_timeline_id;
   const defaultTimeline = typeof currentDefault === 'string'
-    ? timelines.find(t => (t.timeline_id === currentDefault || t.timeline_ulid === currentDefault) && t.archived !== true)
+    ? timelines.filter((timeline) => timeline.archived !== true)
+      .find((timeline) => timeline.timeline_id === currentDefault)
+      ?? timelines.filter((timeline) => timeline.archived !== true)
+        .find((timeline) => timeline.timeline_ulid === currentDefault)
     : undefined;
   const existing = defaultTimeline ?? chooseTimeline(timelines);
   let target = timelineId(existing);
@@ -119,12 +132,31 @@ export async function ensureProjectHasTimeline(
   for (let attempt = 0; attempt < 12; attempt++) {
     const latest = await client.getProject(projectId);
     const assigned = latest.metadata.default_timeline_id;
-    if (typeof assigned === 'string' && timelines.some(t => (t.timeline_id === assigned || t.timeline_ulid === assigned) && t.archived !== true)) return assigned;
-    if (typeof assigned === 'string' && assigned !== currentDefault) return assigned;
+    if (typeof assigned === 'string' && assigned) {
+      if (assigned !== currentDefault) {
+        const refreshedTimelines = await client.listTimelines(projectId) as RuntimeTimeline[];
+        const refreshedId = resolveTimelineId(refreshedTimelines, assigned);
+        if (refreshedId) return refreshedId;
+        const confirmed = await client.getProject(projectId);
+        if (confirmed.metadata.default_timeline_id !== assigned) continue;
+        throw new Error('Runtime selected a primary timeline that could not be resolved to a canonical timeline ID; retry.');
+      }
+      const resolved = resolveTimelineId(timelines, assigned);
+      if (resolved) return resolved;
+    }
     try {
-      await client.updateProject(projectId, generateUUID(), latest.version, undefined, {
+      const updated = await client.updateProject(projectId, generateUUID(), latest.version, undefined, {
         ...latest.metadata, default_timeline_id: target,
       });
+      const updatedRef = updated.metadata.default_timeline_id;
+      if (typeof updatedRef === 'string' && updatedRef !== target) {
+        const resolved = resolveTimelineId(timelines, updatedRef);
+        if (resolved) return resolved;
+        const refreshedTimelines = await client.listTimelines(projectId) as RuntimeTimeline[];
+        const refreshedId = resolveTimelineId(refreshedTimelines, updatedRef);
+        if (refreshedId) return refreshedId;
+        throw new Error('Runtime saved a primary timeline that could not be resolved to a canonical timeline ID; retry.');
+      }
       return target;
     } catch (error) {
       if (!(error instanceof ApiError && error.status === 409)) throw error;

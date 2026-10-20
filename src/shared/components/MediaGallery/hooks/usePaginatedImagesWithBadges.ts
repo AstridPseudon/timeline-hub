@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useVariantBadges } from '@/shared/hooks/variants/useVariantBadges';
+import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
-import { getRuntimeDocumentProjectId } from '@/app/runtime/runtimeDocument';
 import type { GeneratedImageWithMetadata } from '../types';
 
 interface UsePaginatedImagesWithBadgesParams {
@@ -9,13 +9,13 @@ interface UsePaginatedImagesWithBadgesParams {
 }
 
 export function usePaginatedImagesWithBadges({ paginatedImages }: UsePaginatedImagesWithBadgesParams) {
-  const runtimeMode = getRuntimeDocumentProjectId() !== null;
+  const { runtimeAuthority } = useRuntimeAuthority();
   const paginatedGenerationIds = useMemo(
     () =>
-      (runtimeMode ? [] : paginatedImages || [])
+      (paginatedImages || [])
         .map((image) => getGenerationId(image))
         .filter((id): id is string => typeof id === 'string' && id.length > 0),
-    [paginatedImages, runtimeMode],
+    [paginatedImages],
   );
 
   const { getBadgeData, isLoading: isBadgeDataLoading } = useVariantBadges(paginatedGenerationIds);
@@ -25,12 +25,9 @@ export function usePaginatedImagesWithBadges({ paginatedImages }: UsePaginatedIm
       return [];
     }
 
-    if (runtimeMode) {
-      return paginatedImages;
-    }
-
     return paginatedImages.map((image) => {
       if (isBadgeDataLoading) {
+        if (runtimeAuthority) return image;
         const { derivedCount, hasUnviewedVariants, unviewedVariantCount, ...imageWithoutBadges } = image;
         return imageWithoutBadges;
       }
@@ -42,12 +39,14 @@ export function usePaginatedImagesWithBadges({ paginatedImages }: UsePaginatedIm
 
       return {
         ...image,
-        derivedCount: badgeData.derivedCount,
+        derivedCount: runtimeAuthority && typeof image.derivedCount === 'number'
+          ? image.derivedCount
+          : badgeData.derivedCount,
         hasUnviewedVariants: badgeData.hasUnviewedVariants,
         unviewedVariantCount: badgeData.unviewedVariantCount,
       };
     });
-  }, [paginatedImages, getBadgeData, isBadgeDataLoading, runtimeMode]);
+  }, [paginatedImages, getBadgeData, isBadgeDataLoading, runtimeAuthority]);
 
   return {
     paginatedImagesWithBadges,

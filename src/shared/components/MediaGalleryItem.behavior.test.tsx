@@ -438,3 +438,32 @@ describe('MediaGalleryItem behavior', () => {
     expect(mocks.createDragPreview).toHaveBeenCalledWith(expect.anything(), undefined);
   });
 });
+
+describe('MediaGalleryItem touch selection', () => {
+  it('selects a video on a tap with single-click selection, even when not in mobile mode', () => {
+    mocks.hasLoadedImage.mockReturnValue(true);
+    const onImageClick = vi.fn();
+    const video = {
+      id: 'vid-1',
+      url: 'https://cdn/clip.mp4',
+      thumbUrl: 'https://cdn/clip-thumb.jpg',
+      type: 'video/mp4',
+      metadata: { taskId: 'task-1' },
+    };
+    const props = buildProps({
+      image: video,
+      features: { enableSingleClick: true },
+      actions: { onImageClick, onOpenLightbox: vi.fn(), onImageLoaded: vi.fn() },
+    });
+
+    const { container } = render(<MediaGalleryItem {...props} />);
+    const root = container.querySelector('[data-gallery-item-id="vid-1"]') as HTMLElement;
+
+    // A tap is touchstart and touchend at the same point; the wrapper reads the coordinates from touches.
+    fireEvent.touchStart(root, { touches: [{ clientX: 40, clientY: 40 }] });
+    fireEvent.touchEnd(root, { changedTouches: [{ clientX: 40, clientY: 40 }] });
+
+    expect(onImageClick).toHaveBeenCalledTimes(1);
+    expect(onImageClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'vid-1' }), { multiSelect: false });
+  });
+});

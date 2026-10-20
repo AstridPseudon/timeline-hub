@@ -1,17 +1,21 @@
 import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
 import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
-import { Eye, Maximize2, SlidersHorizontal } from 'lucide-react';
+import { Images, Loader2, Maximize2, Sparkles, Type } from 'lucide-react';
+import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/shared/components/ui/alert-dialog.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
+import { dispatchAppEvent } from '@/shared/lib/typedEvents.ts';
+import { acquirePaneControlsHost } from '@/shared/state/paneControlsHost.ts';
 import { Slider } from '@/shared/components/ui/slider.tsx';
 import { activateTimelineClipData, editorReplaceTimelineSelection } from '@/shared/state/selectionStore.ts';
 import { usePanesStore } from '@/shared/state/panesStore.ts';
-import { useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext.tsx';
+import { useAgentChatActions, useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext.tsx';
 import { PreviewPanel } from '@/tools/video-editor/components/PreviewPanel/PreviewPanel.tsx';
 import { useVideoEditorPreviewSurface } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx';
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx';
@@ -19,12 +23,9 @@ import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManag
 import {
   HOST_PROPERTIES_PANEL_KEY,
   VideoEditorRightPanelDock,
+  type VideoEditorRightPanelTab,
 } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
 import { ElementsLibraryPanel } from '@/tools/video-editor/components/ElementsLibraryPanel.tsx';
-import {
-  TimelineModeSwitcher,
-  type TimelineSwitchableMode,
-} from '@/tools/video-editor/components/TimelineModeSwitcher.tsx';
 import { TimelineEditor } from '@/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx';
 import { TimelineErrorBoundary } from '@/tools/video-editor/components/TimelineEditor/TimelineErrorBoundary.tsx';
 import {
@@ -42,19 +43,18 @@ import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-edit
 import { buildKeyboardDeleteMutation } from '@/tools/video-editor/lib/keyboard-delete.ts';
 import { buildKeyboardTimeNudgeMutation } from '@/tools/video-editor/lib/keyboard-nudge.ts';
 import {
-  APP_PANE_RAIL_GUTTER_PX,
   areTimelineInteractionTargetsEqual,
-  resolveTimelineModeSwitcherVariant,
-  shouldReserveAppPaneRailGutter,
+  getDefaultInteractionMode,
+  resolveArmedTouchGesture,
   type TimelineInspectorTarget,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { bootDiagnostics, MemoryPressureDetector } from '@/tools/video-editor/lib/perf-diagnostics.ts';
-import { shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
+import { CLIP_ACTION_CLASS, shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
 import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx';
-import { TimelineEditorShellToolbar } from './TimelineEditorShellToolbar.tsx';
+import { TimelineEditorShellToolbar, TimelineUndoRedo } from './TimelineEditorShellToolbar.tsx';
 import { TimelineCommandRecovery } from './TimelineCommandRecovery.tsx';
 import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
@@ -76,6 +76,9 @@ import {
   type AppHeaderNavigationMode,
 } from '@/shared/components/AppHeader.tsx';
 
+/** The thumb bar's round buttons: 44px, quiet until pressed. */
+const THUMB_BAR_CIRCLE_CLASS = 'h-11 w-11 shrink-0 rounded-full border-border bg-card/95 text-muted-foreground shadow-sm hover:text-foreground';
+
 function PlaybackTimecode() {
   const currentTime = useTimelinePlaybackSelector((playback) => playback.currentTime);
   const formatTime = useTimelinePlaybackSelector((playback) => playback.formatTime);
@@ -96,6 +99,24 @@ function PlaybackSlider({ max }: { max: number }) {
     />
   );
 }
+
+/**
+ * The touch shell's grid, for phones and tablets alike. It stacks the document
+ * row, the picture, the timeline and the Astrid bar. A short landscape screen
+ * (a phone on its side, under 500px tall) has no height to stack, so it puts the
+ * picture and the bar beside the document row and the timeline. A tablet in
+ * landscape has the height, and its timeline wants the full width: it stacks.
+ * The variant is spelled out in full on each class (`[@media(orientation:landscape)_and_(max-height:500px)]:`)
+ * because Tailwind only sees literal class names.
+ */
+const TOUCH_GRID = [
+  "grid-cols-1 grid-rows-[auto_auto_minmax(120px,1fr)_auto] [grid-template-areas:'toolbar'_'preview'_'timeline'_'agent']",
+  "[@media(orientation:landscape)_and_(max-height:500px)]:grid-cols-2 [@media(orientation:landscape)_and_(max-height:500px)]:grid-rows-[auto_minmax(0,1fr)_auto] [@media(orientation:landscape)_and_(max-height:500px)]:[grid-template-areas:'preview_toolbar'_'preview_timeline'_'agent_timeline']",
+].join(' ');
+const TOUCH_GRID_WITH_ACTIVITY = [
+  "grid-cols-1 grid-rows-[auto_auto_auto_minmax(120px,1fr)_auto] [grid-template-areas:'toolbar'_'activity'_'preview'_'timeline'_'agent']",
+  "[@media(orientation:landscape)_and_(max-height:500px)]:grid-cols-2 [@media(orientation:landscape)_and_(max-height:500px)]:grid-rows-[auto_auto_minmax(0,1fr)_auto] [@media(orientation:landscape)_and_(max-height:500px)]:[grid-template-areas:'preview_toolbar'_'preview_activity'_'preview_timeline'_'agent_timeline']",
+].join(' ');
 
 export interface TimelineEditorShellCoreProps {
   timelineId: string;
@@ -218,8 +239,8 @@ function TimelineEditorShellCoreComponent({
   const chrome = useTimelineChromeContext();
   const previewRef = useTimelinePlaybackSelector((playback) => playback.previewRef);
   const timelineStore = useTimelineStoreApi();
-  const isPhone = editorData.deviceClass === 'phone';
-  const isTablet = editorData.deviceClass === 'tablet';
+  /** Phones and tablets share one touch editor; only desktop differs. */
+  const touchChrome = editorData.deviceClass !== 'desktop';
   /** M1: Extension activity region status events (placeholder state). */
   const [activityEvents, setActivityEvents] = useState<readonly ExtensionStatusEvent[]>([]);
   /** M2: Proposal runtime and import diagnostics from timelineStore. */
@@ -247,7 +268,7 @@ function TimelineEditorShellCoreComponent({
     onDividerLostPointerCapture,
     gridTemplateRows,
   } = useTimelineShellDividerDrag(hasActivityRegion);
-  const [condensedRightPanel, setCondensedRightPanel] = useState<'preview' | 'properties'>('preview');
+  const [condensedRightPanel, setCondensedRightPanel] = useState<VideoEditorRightPanelTab>('video');
   const [isMobilePropertiesOpen, setIsMobilePropertiesOpen] = useState(false);
   const [isElementsOpen, setIsElementsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -266,7 +287,6 @@ function TimelineEditorShellCoreComponent({
     setActivityEvents((prev) => prev.filter((e) => e.id !== eventId));
   }, []);
 
-  const timelineFps = Math.max(1, editorData.resolvedConfig?.output?.fps ?? 30);
   // A refetch that fails keeps the last loaded timeline (and the local draft on top of it). While the Astrid stopped /
   // restarted card is up, that timeline stays mounted behind it: the card says the changes are kept, so they stay in view.
   const hasLoadedTimeline = Boolean(editorData.resolvedConfig);
@@ -338,9 +358,7 @@ function TimelineEditorShellCoreComponent({
   useKeyboardShortcuts({
     hasSelectedClip: !editorData.selectedDataItems?.length && editorData.selectedClipIds.size > 0,
     canMoveSelectedClipToTrack: !editorData.selectedDataItems?.length && editorData.selectedClipIds.size >= 1,
-    precisionEnabled: editorData.precisionEnabled,
     selectedClipIds: editorData.selectedClipIds,
-    timelineFps,
     moveSelectedClipsToTrack: editorOps.moveSelectedClipsToTrack,
     nudgeSelectedClipsInTime: handleKeyboardTimeNudge,
     undo: chrome.undo,
@@ -409,31 +427,20 @@ function TimelineEditorShellCoreComponent({
     return () => observer.disconnect();
   }, [forceCondensed, aspectRatio, isTimelineMaximized]);
 
-  const mobileSinglePane = isPhone && !forceCondensed;
-  // Keep the full editable timeline branch while the existing generations
-  // pane is open.  The pane consumes bottom height; switching to the
-  // condensed branch at that point collapses the timeline to zero height and
-  // prevents the supported gallery-to-timeline drag flow.
-  const condensed = forceCondensed || (tooSmall && !isGenerationsPaneOpen) || mobileSinglePane || (isOnEditorPage && isEditorPaneLocked);
+  const mobileSinglePane = touchChrome && !forceCondensed;
+  // Give the timeline the available height and move Video into the sidebar
+  // when the generations pane is pinned or there isn't room to stack both.
+  const condensed = forceCondensed || tooSmall || (isGenerationsPaneOpen && isGenerationsPaneLocked) || mobileSinglePane || (isOnEditorPage && isEditorPaneLocked);
   const hasClipSelection = selectedClipIdsList.length > 0;
-  const mobilePropertiesTitle = hasClipSelection
-    ? selectedClipIdsList.length > 1
-      ? `Selected clips (${selectedClipIdsList.length})`
-      : 'Selected clip'
-    : 'Inspector';
-  const mobilePropertiesDescription = hasClipSelection
-    ? 'Use inspector-first controls for trim, move, track changes, split, mute, and delete without relying on direct manipulation.'
-    : 'Use the inspector for timeline controls and mode changes when you need more precision.';
-  const inspectorButtonLabel = hasClipSelection
-    ? selectedClipIdsList.length > 1
-      ? `Selection (${selectedClipIdsList.length})`
-      : 'Clip'
-    : 'Inspector';
-  const touchChrome = isPhone || isTablet;
-  const previewActionButtonClass = touchChrome ? 'h-11 min-w-11 px-3 text-[11px]' : 'h-7 px-3 text-[11px]';
+  const clipSheetTitle = selectedClipIdsList.length > 1
+    ? `Selected clips (${selectedClipIdsList.length})`
+    : 'Selected clip';
+  // Touch controls match the header: 36px with a 44px touch target.
+  const previewActionButtonClass = touchChrome
+    ? cn('h-9 min-w-9 px-3 text-xs', COARSE_TOUCH_TARGET)
+    : 'h-7 px-3 text-[11px]';
   const interactionStatusLabel = [
     `Timeline mode ${editorData.interactionMode}.`,
-    `Precision ${editorData.precisionEnabled ? 'enabled' : 'disabled'}.`,
     editorData.gestureOwner === 'preview'
       ? 'Preview transform active.'
       : (touchChrome ? 'Touch controls are available for shell, timeline, and preview actions.' : 'Desktop pointer controls are active.'),
@@ -466,12 +473,13 @@ function TimelineEditorShellCoreComponent({
   }, [editorData.inspectorTarget, editorData.selectedTrackId, editorData.selectedDataItems, editorOps, inspectorTarget, selectedClipIdsList]);
 
   useEffect(() => {
-    if (isTablet && condensed && hasClipSelection && condensedRightPanel !== 'properties') {
-      setCondensedRightPanel('properties');
-    }
-  }, [condensed, condensedRightPanel, hasClipSelection, isTablet]);
+    if (condensed) setCondensedRightPanel('video');
+  }, [condensed, isGenerationsPaneOpen, isGenerationsPaneLocked]);
 
   const previewSurface = useVideoEditorPreviewSurface({ compact: condensed, touchChrome });
+  // The shell owns the portal outside the changing layout branches. Panels
+  // only provide slots, so moving the host preserves the mounted player.
+  const previewPanelSurface = useMemo(() => ({ ...previewSurface, portal: null }), [previewSurface]);
 
   const {
     compileOnlyExportFormats,
@@ -506,7 +514,6 @@ function TimelineEditorShellCoreComponent({
     ?? 'dock';
   const hasCustomRightPanelSlot = Boolean(rightPanelSlot || inspectorPanelSlot);
   const hostPaneClosed = !hasCustomRightPanelSlot && !selectedRightPanelExists;
-  const visibleCondensedRightPanel = hostPaneClosed ? 'preview' : condensedRightPanel;
   const showFullHeightHostDock = !hasCustomRightPanelSlot
     && selectedRightPanelExists
     && rightPanelLayout === 'dock';
@@ -549,65 +556,96 @@ function TimelineEditorShellCoreComponent({
     return getTimelineDurationInFrames(outputConfig, outputConfig.output.fps) / outputConfig.output.fps;
   }, [editorData.resolvedConfig]);
 
-  const openInspector = useCallback(() => {
-    editorOps.setSelectedRightPanelId(HOST_PROPERTIES_PANEL_KEY);
-    editorOps.setInspectorTarget(inspectorTarget);
-    editorOps.setContextTarget(inspectorTarget);
+  // The condensed desktop/tablet layout hosts Video in the right dock, whose
+  // tabs replace the overlay's Inspector button and panel reopen control.
+  const sidebarVideo = condensed && !mobileSinglePane;
+  // Expand returns Video to the main area: unlock the pinned gallery on the
+  // editor page, or open the editor from elsewhere. Otherwise there's no bigger view.
+  const expandsByUnlocking = Boolean(isOnEditorPage && isGenerationsPaneLocked && onSetGenerationsPaneLocked);
+  const showExpandVideo = sidebarVideo && (expandsByUnlocking || (!isOnEditorPage && Boolean(onOpenEditorRoute)));
+  const expandVideoLabel = expandsByUnlocking ? 'Expand video' : 'Open editor';
 
-    if (mobileSinglePane) {
-      setIsMobilePropertiesOpen(true);
-      return;
-    }
+  /** Touch has no mode switcher: a clip's Move/Trim arms the gesture and Done releases it. */
+  const armedGesture = resolveArmedTouchGesture(editorData.deviceClass, editorData.interactionMode);
+  const releaseArmedGesture = useCallback(() => {
+    editorOps.setInteractionMode(getDefaultInteractionMode(editorData.deviceClass));
+  }, [editorData.deviceClass, editorOps]);
 
-    setCondensedRightPanel('properties');
-  }, [editorOps, inspectorTarget, mobileSinglePane]);
+  // The touch shell carries chat and the gallery in its own bottom bar, so the app's
+  // floating pane tabs step aside instead of covering the picture and the timeline.
+  useEffect(() => (mobileSinglePane ? acquirePaneControlsHost() : undefined), [mobileSinglePane]);
+  const openAgentComposer = useCallback(() => {
+    runtime.agentChat?.activateTimeline?.();
+    if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);
+    dispatchAppEvent('openAgentComposer');
+  }, [runtime.agentChat, runtime.agentSelectionOwner]);
+  const agentWorking = useAgentChatActions()?.isAgentWorking ?? false;
+  // Text goes in at the playhead, over the picture, and opens in its sheet on the words.
+  const addTextAtPlayhead = useCallback(() => {
+    chrome.handleAddText();
+    setIsMobilePropertiesOpen(true);
+  }, [chrome]);
 
-  const handleInteractionModeChange = useCallback((mode: TimelineSwitchableMode) => {
-    editorOps.setInteractionMode(mode);
-    editorOps.setContextTarget({ kind: 'timeline' });
-    editorOps.setInspectorTarget(inspectorTarget);
-  }, [editorOps, inspectorTarget]);
+  // Touch: tapping a clip opens its sheet. Not while a gesture is armed, when
+  // the tap is the start of direct manipulation, and not from a control drawn
+  // inside the clip.
+  const openClipSheetFromTap = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    if (armedGesture || !(event.target instanceof Element)) return;
+    const clip = event.target.closest(`.${CLIP_ACTION_CLASS}`);
+    const control = event.target.closest('button, a, input, textarea, select, [role="menuitem"], [data-no-clip-drag]');
+    if (!clip || (control && clip.contains(control))) return;
+    setIsMobilePropertiesOpen(true);
+  }, [armedGesture]);
+  // Move/Trim from the sheet hand the clip to the timeline for a direct drag.
+  useEffect(() => {
+    if (armedGesture) setIsMobilePropertiesOpen(false);
+  }, [armedGesture]);
+  // Closing or deleting the clip closes its sheet.
+  const hadClipSelectionRef = useRef(hasClipSelection);
+  useEffect(() => {
+    if (hadClipSelectionRef.current && !hasClipSelection) setIsMobilePropertiesOpen(false);
+    hadClipSelectionRef.current = hasClipSelection;
+  }, [hasClipSelection]);
 
-  const toggleInteractionPrecision = useCallback(() => {
-    editorOps.setPrecisionEnabled(!editorData.precisionEnabled);
-    editorOps.setContextTarget({ kind: 'timeline' });
-    editorOps.setInspectorTarget(inspectorTarget);
-  }, [editorData.precisionEnabled, editorOps, inspectorTarget]);
-
-  /** Desktop is modeless and gets nothing; the phone's stacked layout gets the
-   *  full-width bar; every other touch layout (tablet, force-condensed phone)
-   *  gets the compact segmented control in the toolbar row. */
-  /** Keeps editor chrome out of the band the host app's fixed pane-control tabs
-   *  occupy at the left/right viewport edges. */
-  const mainPaddingInline = shouldReserveAppPaneRailGutter(editorData.deviceClass)
-    ? APP_PANE_RAIL_GUTTER_PX
-    : undefined;
-
-  const modeSwitcherVariant = resolveTimelineModeSwitcherVariant(
-    editorData.deviceClass,
-    mobileSinglePane ? 'single-pane' : 'split',
+  const renderControls = (
+    <>
+      {hasAnyExportFormat && (
+        <TimelineExportMenu
+          compileOnlyExportFormats={compileOnlyExportFormats}
+          renderDependentExportFormats={renderDependentExportFormats}
+          previewActionButtonClass={previewActionButtonClass}
+        />
+      )}
+      <TimelineRenderControls
+        compact={mobileSinglePane}
+        previewActionButtonClass={previewActionButtonClass}
+        afterRenderControl={!mobileSinglePane && !hasCustomRightPanelSlot && !sidebarVideo ? <VideoEditorPanelDisplayControl visible={hostPaneClosed} className="video-editor-panel-reopen-motion" /> : undefined}
+      />
+    </>
   );
 
-  const modeSwitcher = modeSwitcherVariant ? (
-    <TimelineModeSwitcher
-      variant={modeSwitcherVariant}
-      interactionMode={editorData.interactionMode}
-      precisionEnabled={editorData.precisionEnabled}
-      onModeChange={handleInteractionModeChange}
-      onTogglePrecision={toggleInteractionPrecision}
-      hintSuffix={hasClipSelection ? ` ${inspectorButtonLabel} actions are in the inspector.` : undefined}
-    />
+  // The touch shell names its timeline in the document row, not on the picture.
+  // Captions go (the selector shows the name, New timeline keeps its icon); both
+  // controls are the pickers' own 36px chips with 44px touch rings.
+  const touchTimelineControls = previewControls ? (
+    <div
+      className="flex min-w-0 items-center gap-2 [&_[data-picker-label]]:sr-only [&_button]:justify-center"
+      data-testid="video-editor-editor-navigation-controls"
+    >
+      {previewControls}
+    </div>
   ) : null;
-
-  const phoneModeBar = modeSwitcherVariant === 'bar' ? modeSwitcher : null;
-  const toolbarModeSwitcher = modeSwitcherVariant === 'compact' ? modeSwitcher : null;
 
   const toolbar = (
     <TimelineEditorShellToolbar
       timelineLoaded={Boolean(editorData.data)}
       touchChrome={touchChrome}
       condensed={condensed}
-      toolbarModeSwitcher={toolbarModeSwitcher}
+      documentRow={mobileSinglePane}
+      armedGesture={armedGesture}
+      onReleaseArmedGesture={releaseArmedGesture}
+      leading={mobileSinglePane ? touchTimelineControls : undefined}
+      trailing={mobileSinglePane ? renderControls : undefined}
       onDividerPointerDown={onDividerPointerDown}
       onDividerPointerMove={onDividerPointerMove}
       onDividerPointerUp={onDividerPointerUp}
@@ -646,21 +684,27 @@ function TimelineEditorShellCoreComponent({
     </div>
   ) : null;
 
-  const previewOverlay = (
+  // The touch shell keeps the picture clear: the timeline picker and Render sit in the
+  // document row above it, the readout with the scrubber below it.
+  const previewOverlay = mobileSinglePane ? null : (
     <div
       className={cn(
         'pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-3 py-3',
-        // Phone is too narrow for the full `APP_PANE_RAIL_GUTTER_PX` inset on the
-        // whole layout, but the app's right-hand pane tab lands exactly on this
-        // chip row there and was covering the Render button. Inset the row alone.
-        mobileSinglePane && 'pr-14',
+        // In the sidebar the app's right-hand pane tab floats over the dock's
+        // right edge. Keep Render clear of it.
+        sidebarVideo && 'pr-10',
       )}
       data-shell-interaction="true"
     >
       <div className="pointer-events-auto flex min-w-0 max-w-[min(75%,32rem)] flex-col items-start gap-1">
         {previewControls && (
           <div
-            className="flex min-w-0 max-w-full flex-wrap items-center gap-2"
+            className={cn(
+              'flex min-w-0 max-w-full flex-wrap items-center gap-2',
+              // The sidebar is too narrow for the picker's captions; the
+              // selector names its timeline and New timeline keeps its icon.
+              sidebarVideo && '[&_[data-picker-label]]:sr-only',
+            )}
             data-testid="video-editor-editor-navigation-controls"
           >
             {previewControls}
@@ -671,62 +715,26 @@ function TimelineEditorShellCoreComponent({
         </span>
       </div>
       <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
-        {mobileSinglePane && !hostPaneClosed && (
-          <TimelineMobileInspectorDialog
-            isMobilePropertiesOpen={isMobilePropertiesOpen}
-            setIsMobilePropertiesOpen={setIsMobilePropertiesOpen}
-            inspectorTarget={inspectorTarget}
-            hasClipSelection={hasClipSelection}
-            inspectorButtonLabel={inspectorButtonLabel}
-            previewActionButtonClass={previewActionButtonClass}
-            mobilePropertiesTitle={mobilePropertiesTitle}
-            mobilePropertiesDescription={mobilePropertiesDescription}
-          />
-        )}
-        {condensed && !mobileSinglePane && !hostPaneClosed && (
-          <Button
-            type="button"
-            size="sm"
-            variant={condensedRightPanel === 'properties' ? 'secondary' : hasClipSelection ? 'outline' : 'ghost'}
-            className={cn(
-              `gap-1.5 ${previewActionButtonClass}`,
-              hasClipSelection && condensedRightPanel !== 'properties' && 'border-sky-400/60 text-sky-100 hover:bg-sky-500/10',
-            )}
-            onClick={openInspector}
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            {inspectorButtonLabel}
-          </Button>
-        )}
-        {condensed && !mobileSinglePane && (
+        {showExpandVideo && (
           <Button
             type="button"
             size="sm"
             variant="outline"
-            className={`gap-1.5 ${previewActionButtonClass}`}
+            aria-label={expandVideoLabel}
+            title={expandVideoLabel}
+            className={cn(previewActionButtonClass, 'aspect-square px-0')}
             onClick={() => {
-              if (isOnEditorPage && isGenerationsPaneLocked && onSetGenerationsPaneLocked) {
-                onSetGenerationsPaneLocked(false);
+              if (expandsByUnlocking) {
+                onSetGenerationsPaneLocked?.(false);
               } else {
                 onOpenEditorRoute?.(timelineId);
               }
             }}
           >
-            <Maximize2 className="h-3 w-3" />
-            Editor
+            <Maximize2 className="h-3.5 w-3.5" />
           </Button>
         )}
-        {hasAnyExportFormat && (
-          <TimelineExportMenu
-            compileOnlyExportFormats={compileOnlyExportFormats}
-            renderDependentExportFormats={renderDependentExportFormats}
-            previewActionButtonClass={previewActionButtonClass}
-          />
-        )}
-        <TimelineRenderControls
-          previewActionButtonClass={previewActionButtonClass}
-          afterRenderControl={!hasCustomRightPanelSlot ? <VideoEditorPanelDisplayControl visible={hostPaneClosed} className="video-editor-panel-reopen-motion" /> : undefined}
-        />
+        {renderControls}
       </div>
     </div>
   );
@@ -856,7 +864,11 @@ function TimelineEditorShellCoreComponent({
       <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId ?? ''} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
         activateInstance();
         if (!outerRef.current?.contains(document.activeElement)) outerRef.current?.focus({ preventScroll: true });
-      }} className="flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground">
+      }} className={cn(
+        'flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground',
+        // The page draws edge to edge (viewport-fit=cover): keep touch chrome clear of the notch and rounded corners.
+        mobileSinglePane && 'pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]',
+      )}>
         <div className="sr-only" aria-live="polite" aria-atomic="true">
           {interactionStatusLabel}
         </div>
@@ -871,117 +883,135 @@ function TimelineEditorShellCoreComponent({
         {mobileSinglePane ? (
           <main
             data-layout-settling={layoutSettling ? '' : undefined}
+            data-shell-layout="touch"
             className={cn(
-              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-3 overflow-x-clip p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-opacity [@media(orientation:landscape)_and_(max-height:500px)]:gap-2',
               shellEntrance,
-              hasActivityRegion
-                ? 'grid-rows-[auto_auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]'
-                : 'grid-rows-[auto_auto_minmax(200px,42dvh)_minmax(140px,1fr)]',
+              hasActivityRegion ? TOUCH_GRID_WITH_ACTIVITY : TOUCH_GRID,
             )}
-            style={{ paddingInline: mainPaddingInline }}
           >
-            <div className="min-w-0">
+            <div className="min-w-0 [grid-area:toolbar]">
               {toolbar}
             </div>
 
-            {phoneModeBar}
-
             {/* Extension activity region — only mounted when it has content. */}
-            {hasActivityRegion && <div className="min-w-0">{activityRegion}</div>}
+            {hasActivityRegion && <div className="min-w-0 [grid-area:activity]">{activityRegion}</div>}
 
-            <div className="flex min-h-0 min-w-0 flex-col gap-3">
-              <div className="relative min-h-0 flex-1">
-                {previewOverlay}
-                <PreviewPanel surface={previewSurface} />
+            <div className="flex min-h-0 min-w-0 flex-col gap-2 [grid-area:preview]">
+              {/* Stacked: the film's own shape, as wide as the column allows
+                  while at most 42dvh tall, centred. Short landscape: fills the
+                  column beside the timeline. */}
+              <div
+                className="relative mx-auto aspect-[var(--film-aspect)] min-h-[140px] w-[min(100%,calc(42dvh*var(--film-aspect)))] [@media(orientation:landscape)_and_(max-height:500px)]:aspect-auto [@media(orientation:landscape)_and_(max-height:500px)]:min-h-0 [@media(orientation:landscape)_and_(max-height:500px)]:w-full [@media(orientation:landscape)_and_(max-height:500px)]:flex-1"
+                style={{ '--film-aspect': String(aspectRatio) } as CSSProperties}
+              >
+                <PreviewPanel surface={previewPanelSurface} />
               </div>
-              <div className="rounded-xl border border-border bg-card/80 px-3 py-2">
-                <PlaybackSlider max={Math.max(1, totalSeconds)} />
+              {/* Undo, redo, the readout and the scrubber, under the picture they change. */}
+              <div className="-ml-3 flex min-h-11 min-w-0 items-center gap-1" data-testid="touch-playback-row">
+                <TimelineUndoRedo buttonClassName="h-11 w-11 shrink-0 text-muted-foreground" iconClassName="h-4 w-4" />
+                <span className="shrink-0 pl-1 font-mono text-[11px] tabular-nums tracking-[0.08em] text-muted-foreground">
+                  <PlaybackTimecode />
+                </span>
+                <div className="min-w-0 flex-1 px-3">
+                  <PlaybackSlider max={Math.max(1, totalSeconds)} />
+                </div>
               </div>
             </div>
 
-            <div className="relative min-h-0 min-w-0 overflow-hidden">
+            <div className="relative min-h-0 min-w-0 overflow-hidden [grid-area:timeline]" onClick={openClipSheetFromTap}>
               {timelineRegion}
             </div>
 
-            <VideoEditorRightPanelDock
-              key="video-editor-right-panel-dock"
-              leftPanelPresent={false}
-              responsive
-              rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
-              onOpenExtensionManager={openExtensionManager}
-              extensionManagerOpen={isExtensionManagerOpen}
-            />
-
+            {/* The touch shell's way to Astrid and to what goes into the film (gallery
+                media, text): a bar at the thumb, in place of the app's floating pane tabs
+                (see paneControlsHost). While Astrid answers, the bar says so. */}
+            <div className="flex min-w-0 items-center gap-2 [grid-area:agent]" data-testid="touch-agent-bar">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={THUMB_BAR_CIRCLE_CLASS}
+                onClick={() => dispatchAppEvent('openGenerationsPane')}
+                aria-label="Open gallery"
+                title="Gallery"
+              >
+                <Images className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={THUMB_BAR_CIRCLE_CLASS}
+                onClick={addTextAtPlayhead}
+                aria-label="Add text"
+                title="Text"
+              >
+                <Type className="h-4 w-4" />
+              </Button>
+              <button
+                type="button"
+                className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-card/95 px-4 text-left text-sm text-muted-foreground shadow-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={openAgentComposer}
+              >
+                {agentWorking ? (
+                  <>
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary motion-reduce:animate-none" aria-hidden="true" />
+                    <span className="truncate text-foreground" role="status">Astrid is working…</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                    <span className="truncate">Ask Astrid…</span>
+                  </>
+                )}
+              </button>
+            </div>
           </main>
         ) : condensed ? (
           <main
             data-layout-settling={layoutSettling ? '' : undefined}
             className={cn(
-              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none grid-cols-[minmax(0,1fr)_320px] gap-3 overflow-x-clip p-3 transition-opacity',
+              'relative grid h-full w-full min-h-0 min-w-0 max-w-full flex-1 duration-200 motion-reduce:animate-none motion-reduce:transition-none gap-y-3 overflow-x-clip p-3 transition-opacity',
               shellEntrance,
               hasActivityRegion ? 'grid-rows-[auto_auto_minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
             )}
-            style={{ paddingInline: mainPaddingInline }}
+            style={{
+              gridTemplateColumns: 'minmax(0,1fr) minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))',
+            }}
           >
-            <div className="col-span-1">
-              {toolbar}
+            <div style={{ gridColumn: 1, gridRow: 1 }}>
+              {toolbarSlot ?? toolbar}
             </div>
 
             {/* Extension activity region — only mounted when it has content. */}
-            {hasActivityRegion && <div className="col-span-1">{activityRegion}</div>}
+            {hasActivityRegion && <div style={{ gridColumn: 1, gridRow: 2 }}>{activityRegion}</div>}
 
-            <div className={cn(
-              hasActivityRegion ? 'row-span-3' : 'row-span-2',
-              'flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95',
-            )}>
-              {!hostPaneClosed && <div className="flex items-center border-b border-border">
-                <button
-                  type="button"
-                  className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors motion-reduce:transition-none ${condensedRightPanel === 'preview' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  onClick={() => setCondensedRightPanel('preview')}
-                >
-                  <Eye className="h-3 w-3" />
-                  Preview
-                </button>
-                <button
-                  type="button"
-                  className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 border px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors motion-reduce:transition-none ${condensedRightPanel === 'properties' ? 'border-transparent bg-accent text-foreground' : editorData.selectedClipIds.size > 0 ? 'border-sky-400 text-muted-foreground hover:text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-                  onClick={openInspector}
-                >
-                  <SlidersHorizontal className="h-3 w-3" />
-                  {inspectorButtonLabel}
-                </button>
-              </div>}
-
-              <div
-                className={cn('relative flex min-h-0 flex-1 flex-col', visibleCondensedRightPanel !== 'preview' && 'hidden')}
-                aria-hidden={visibleCondensedRightPanel !== 'preview'}
-              >
-                {previewOverlay}
-                <div className="min-h-0 flex-1">
-                  <div ref={previewSurface.slotRef} className="flex h-full w-full min-h-0 items-center justify-center" />
-                </div>
-                <div className="border-t border-border px-3 py-2">
-                  <PlaybackSlider max={Math.max(1, totalSeconds)} />
-                </div>
-              </div>
-              <div
-                className={cn('min-h-0 flex-1 overflow-auto p-3', visibleCondensedRightPanel !== 'properties' && 'hidden')}
-                aria-hidden={visibleCondensedRightPanel !== 'properties'}
-              >
-                <PropertiesPanel />
-              </div>
-            </div>
-
-            <div className="relative col-span-1 min-h-0 overflow-hidden">
+            <div className="relative min-h-0 min-w-0 overflow-hidden" {...shellRegionAttrs('timeline')} style={{ gridColumn: 1, gridRow: hasActivityRegion ? 3 : 2 }}>
               {timelineRegion}
+              {timelineFooterSlot}
             </div>
 
             <VideoEditorRightPanelDock
               key="video-editor-right-panel-dock"
               leftPanelPresent={false}
-              responsive
-              rightInset={isTablet ? APP_PANE_RAIL_GUTTER_PX : 12}
+              video={{
+                activeTab: condensedRightPanel,
+                onTabChange: setCondensedRightPanel,
+                content: <>
+                  {/* One continuous stage: letterbox bars share the frame's
+                      black instead of showing slivers of panel. */}
+                  <div className="relative min-h-0 flex-1 bg-[var(--video-editor-stage-bg)]" style={VIDEO_EDITOR_THEME_VARS} {...shellRegionAttrs('preview')}>
+                    {previewOverlay}
+                    <div ref={previewSurface.slotRef} data-testid="video-editor-preview-surface" className="flex h-full w-full min-h-0 items-center justify-center" />
+                  </div>
+                  {/* Pointer layouts scrub on the adjacent timeline, as the
+                      main preview does; touch keeps a larger scrub target. */}
+                  {touchChrome && <div className="shrink-0 border-t border-border px-3 py-2">
+                    <PlaybackSlider max={Math.max(1, totalSeconds)} />
+                  </div>}
+                </>,
+              }}
               onOpenExtensionManager={openExtensionManager}
               extensionManagerOpen={isExtensionManagerOpen}
             />
@@ -1003,7 +1033,6 @@ function TimelineEditorShellCoreComponent({
               // its width. Its 12px gutter is inside the track, not a phantom
               // column gap left behind when the track reaches zero.
               columnGap: hasCustomRightPanelSlot ? undefined : 0,
-              paddingInline: mainPaddingInline,
             }}
           >
             {/* Left panel surface slot — host-owned placement */}
@@ -1019,7 +1048,7 @@ function TimelineEditorShellCoreComponent({
 
             <div ref={previewAreaRef} className="relative min-h-0" {...shellRegionAttrs('preview')} style={{ gridColumn: leftPanelSlot ? '2' : '1', gridRow: '1' }}>
               {previewOverlay}
-              <PreviewPanel surface={previewSurface} />
+              <PreviewPanel surface={previewPanelSurface} />
             </div>
 
             {hasCustomRightPanelSlot && (
@@ -1056,17 +1085,20 @@ function TimelineEditorShellCoreComponent({
 
           </main>
         )}
-        {statusBarSlot}
+        {/* Extension strips (status bar, code/writing/stage panels) are desk surfaces, like the
+            dock: the touch editor leaves that work to the agent rather than draw them off screen. */}
+        {!mobileSinglePane && statusBarSlot}
 
-        {reservedSlots}
+        {!mobileSinglePane && reservedSlots}
       </div>
-      {/* Render the shared preview portal here only when the rendered layout
-          hosts it on a bare `previewSurface.slotRef` — that is the condensed
-          branch alone. `condensed` is also true for single-pane phone, but
-          that branch renders <PreviewPanel>, which mounts this same portal
-          itself, so it has to be excluded or the phone layout mounts a second
-          <RemotionPreview> beside the first. */}
-      {condensed && !mobileSinglePane && previewPortal}
+      {previewPortal}
+      {mobileSinglePane && (
+        <TimelineMobileInspectorDialog
+          open={isMobilePropertiesOpen}
+          onOpenChange={setIsMobilePropertiesOpen}
+          title={clipSheetTitle}
+        />
+      )}
       {/* Extension-contributed dialog slot */}
       {dialogsSlot}
       <Dialog open={isExtensionManagerOpen} onOpenChange={setIsExtensionManagerOpen}>

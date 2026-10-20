@@ -9,6 +9,7 @@ import { safeAreaCalc } from '@/shared/lib/safeArea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
 import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 
 // Icon type for pane controls
 type PaneIconType = 'chevron' | 'tools' | 'gallery' | 'tasks';
@@ -113,6 +114,7 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
   const handleOpen = customOpenAction ?? openPane;
   const useDesktopBehavior = !isMobile || isTablet;
   const [selectionActive, setSelectionActive] = React.useState(false);
+  const paneControlsHosted = usePaneControlsHosted();
   const isBottom = side === 'bottom' || side === 'top';
   const showTooltips = !isMobile;
   const tooltipSide = side === 'left' ? 'right' : side === 'right' ? 'left' : side === 'top' ? 'bottom' : 'top';
@@ -363,6 +365,8 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
 
   // Hide on mobile when selection is active
   if (!useDesktopBehavior && selectionActive) return null;
+  // The page's own layout carries the entry points (see paneControlsHost.ts).
+  if (paneControlsHosted) return null;
 
   const buttons = getButtonsToShow();
 

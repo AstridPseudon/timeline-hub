@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
-import { getLocalProjectSlug } from '@/shared/dev/devSession';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import {
   createGenerationForLocalFile,
@@ -67,9 +65,7 @@ function isReadableFileHandle(handle: FileSystemHandleLike | null): handle is Re
 export function useDropToGeneration(): (files: File[], options?: DropToGenerationOptions) => Promise<void> {
   const queryClient = useQueryClient();
   const { selectedProjectId } = useProjectSelectionContext();
-  const location = useLocation();
-  const resolvedGalleryProject = useResolvedGalleryProject(location.search, location.pathname);
-  const localProjectSlug = getLocalProjectSlug(location.search);
+  const resolvedGalleryProject = useResolvedGalleryProject();
   const runtimeProjectId = resolvedGalleryProject.runtimeAuthority
     ? resolvedGalleryProject.projectId
     : null;
@@ -79,11 +75,6 @@ export function useDropToGeneration(): (files: File[], options?: DropToGeneratio
   );
 
   return useCallback(async (files: File[], options?: DropToGenerationOptions) => {
-    if (localProjectSlug && !resolvedGalleryProject.runtimeAuthority) {
-      toast.error('Runtime media import is unavailable for the legacy Astrid Bridge host.');
-      return;
-    }
-
     if (resolvedGalleryProject.runtimeAuthority && !runtimeProjectId) {
       toast.error(resolvedGalleryProject.error?.message ?? 'Astrid Runtime project is not ready for media import.');
       return;
@@ -215,5 +206,5 @@ export function useDropToGeneration(): (files: File[], options?: DropToGeneratio
           : unifiedGenerationQueryKeys.projectPrefix(projectId),
       });
     }
-  }, [localProjectSlug, queryClient, resolvedGalleryProject, runtimeProjectId, runtimeProvider, selectedProjectId]);
+  }, [queryClient, resolvedGalleryProject, runtimeProjectId, runtimeProvider, selectedProjectId]);
 }

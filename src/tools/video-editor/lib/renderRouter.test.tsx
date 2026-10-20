@@ -75,7 +75,12 @@ function renderTaskMutationResponse(
 
 function canonicalRenderFetch(taskId = 'task-42') {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(input instanceof Request ? input.url : String(input));
+    const url = new URL(input instanceof Request ? input.url : String(input), 'http://localhost');
+    // The default client reaches `/api/astrid` (same-origin) or the door's origin + `/api/astrid`.
+    if (!url.pathname.startsWith('/v1/') && !url.pathname.startsWith('/api/astrid/')) {
+      throw new Error(`render fixture request outside the Astrid bridge: ${url.pathname}`);
+    }
+    url.pathname = url.pathname.replace(/^\/api\/astrid/, '');
     if (url.pathname === '/v1/capabilities') {
       return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
     }
@@ -883,7 +888,7 @@ describe('Sprint 8 buildRenderTimelinePayload', () => {
     correlationId: '33333333-3333-3333-3333-333333333333',
   };
 
-  it('blocks worker admission for an enforced canonical seam with undeclared cues', () => {
+  it('does not block worker admission for an enforced canonical seam with undeclared cues', () => {
     const { payload, error } = buildRenderTimelinePayload({
       ...baseInput,
       request: {
@@ -914,8 +919,9 @@ describe('Sprint 8 buildRenderTimelinePayload', () => {
         },
       },
     });
-    expect(payload).toBeUndefined();
-    expect(error).toContain('Visual seam admission blocked');
+    expect(error).toBeUndefined();
+    expect(payload).toBeDefined();
+    expect(payload?.timeline.clips).toHaveLength(3);
   });
 
   it('produces the SD-034-shaped payload from valid input', () => {
@@ -1228,14 +1234,40 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     correlation_id: 'c',
   };
 
+  describe.each([
+    ['same-origin (dev:local)', {}, '/api/astrid'],
+    ['hosted (Runtime door)', { VITE_RUNTIME_ORIGIN: 'http://127.0.0.1:17340' }, 'http://127.0.0.1:17340/api/astrid'],
+  ])('render admission on %s', (_name, env, astridPrefix) => {
+    it('lists capabilities and admits the task under /api/astrid, never the provider /api/runtime base', async () => {
+      vi.resetModules();
+      const { setRuntimeOrigin } = await import('@/integrations/runtime/connection.ts');
+      setRuntimeOrigin(env);
+      const router = await import('@/tools/video-editor/lib/renderRouter');
+      const fetchImpl = canonicalRenderFetch();
+      vi.stubGlobal('fetch', fetchImpl);
+      const result = await router.enqueueAstridRuntimeRenderTimeline(payload, {});
+      expect(result.status).toBe('queued');
+      const urls = fetchImpl.mock.calls.map(([input]) => String(input instanceof Request ? input.url : input));
+      expect(urls.length).toBeGreaterThanOrEqual(2);
+      for (const url of urls) {
+        expect(url.startsWith(`${astridPrefix}/v1/`)).toBe(true);
+        expect(url).not.toContain('/api/runtime');
+      }
+      expect(urls[0].startsWith(`${astridPrefix}/v1/capabilities`)).toBe(true);
+      expect(urls.some((url) => url.startsWith(`${astridPrefix}/v1/tasks`))).toBe(true);
+      vi.unstubAllGlobals();
+    });
+  });
+
   it('selects the existing Three.js route for saved scenes with ordinary audio', async () => {
     const fetchImpl = canonicalRenderFetch();
     vi.stubGlobal('fetch', fetchImpl);
     const scenePayload = { ...payload, timeline: { tracks: [{ id: 'v', kind: 'visual' }, { id: 'a', kind: 'audio' }], clips: [{ clipType: 'haus.astrid.liveScene', track: 'v' }, { clipType: 'media', track: 'a' }] } };
-    const result = await enqueueAstridRuntimeRenderTimeline(scenePayload, { client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }), expectedVersion: 12 });
+    const result = await enqueueAstridRuntimeRenderTimeline(scenePayload, { client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }) });
     expect(result.status).toBe('queued');
     const body = JSON.parse((fetchImpl.mock.calls[1][1] as RequestInit).body as string);
-    expect(body.spec.params).toMatchObject({ selector: 'rendering.threejs', timeline_ref: 't', expected_version: 12 });
+    expect(body.spec.params).toMatchObject({ selector: 'rendering.threejs', timeline_ref: 't' });
+    expect(body.spec.params).not.toHaveProperty('expected_version');
     expect(body.input_object_ids).toEqual([]);
     vi.unstubAllGlobals();
   });
@@ -1247,38 +1279,6 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     expect(result.status).toBe('error');
     expect(result.message).toContain('mixed or unsupported');
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    vi.unstubAllGlobals();
-  });
-
-  it('tells the user the timeline changed when Runtime rejects a stale expected_version', async () => {
-    // Exact Runtime wire shape: store.py ConflictError -> server.py _error (409).
-    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = new URL(input instanceof Request ? input.url : String(input));
-      if (url.pathname === '/v1/capabilities') {
-        return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
-      }
-      if (url.pathname === '/v1/tasks' && init?.method === 'POST') {
-        return new Response(JSON.stringify({
-          error: {
-            code: 'conflict',
-            message: 'render expected_version does not match the canonical timeline',
-            details: { expected: 3, actual: 5 },
-            request_id: 'req-1',
-          },
-        }), { status: 409 });
-      }
-      throw new Error(`unexpected request: ${url.pathname}`);
-    });
-    vi.stubGlobal('fetch', fetchImpl);
-    const result = await enqueueAstridRuntimeRenderTimeline(payload, {
-      client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
-      expectedVersion: 3,
-    });
-    expect(result.status).toBe('error');
-    expect(result.message).toContain('The timeline changed');
-    expect(result.message).toContain('version 3');
-    expect(result.message).toContain('latest is 5');
-    expect(result.message).toContain('Reload');
     vi.unstubAllGlobals();
   });
 
@@ -1345,12 +1345,67 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     vi.unstubAllGlobals();
   });
 
-  it('POSTs the canonical rendering.render envelope through the Runtime task route', async () => {
+  it('reads the advisory seam report from the admitted task spec', async () => {
+    const seamReport = {
+      version: 1,
+      fps: 30,
+      guardFrames: 2,
+      boundaries: [{
+        frame: 30,
+        ownerPaths: [['parent', 'main', 'occurrence', 'occ-1', 'clip', 'b']],
+        cues: [{
+          frame: 30,
+          kind: 'motion-start',
+          id: 'move',
+          path: ['parent', 'main', 'occurrence', 'occ-1', 'clip', 'b'],
+        }],
+        requiresIntent: true,
+      }],
+      structuralIssues: [],
+      warningCount: 1,
+      blocked: false,
+    };
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.pathname === '/v1/capabilities') return new Response(JSON.stringify(renderCapabilityPage()), { status: 200 });
+      if (url.pathname === '/v1/tasks' && init?.method === 'POST') {
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+        const headers = init.headers as Record<string, string>;
+        const response = renderTaskMutationResponse('task-advisory-seam', body, headers['Idempotency-Key']);
+        const outerSpec = response.data.spec as Record<string, unknown>;
+        const innerSpec = outerSpec.spec as Record<string, unknown>;
+        innerSpec.inputs = { timeline_authority: { visual_seam_report: seamReport } };
+        return new Response(JSON.stringify(response), { status: 201 });
+      }
+      throw new Error(`unexpected request: ${url.pathname}`);
+    });
+    vi.stubGlobal('fetch', fetchImpl);
+
+    const result = await enqueueAstridRuntimeRenderTimeline(payload, {
+      client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
+    });
+
+    expect(result).toMatchObject({ status: 'queued', task_id: 'task-advisory-seam' });
+    expect(result.seamReport).toMatchObject({
+      blocked: false,
+      warningCount: 1,
+      boundaries: [{
+        frame: 30,
+        timeSeconds: 1,
+        requiresIntent: true,
+        unacknowledgedRisk: true,
+        participants: expect.arrayContaining([expect.objectContaining({clipId: 'b', ownerId: 'occ-1', behavior: 'motion-start'})]),
+      }],
+      rawDiagnostics: seamReport,
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it('POSTs the canonical rendering.render envelope without a redundant timeline version', async () => {
     const fetchImpl = canonicalRenderFetch();
     vi.stubGlobal('fetch', fetchImpl);
     const result = await enqueueAstridRuntimeRenderTimeline(payload, {
       client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
-      expectedVersion: 12,
       destination: 'project-media',
     });
     expect(result.status).toBe('queued');
@@ -1364,7 +1419,7 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     expect(url).toBe('http://bridge.fake/v1/tasks');
     expect((init as RequestInit).method).toBe('POST');
     const headers = (init as RequestInit).headers as Record<string, string>;
-    expect(headers['Idempotency-Key']).toBe('astrid.render:v1:t:12:project-media:render.mp4');
+    expect(headers['Idempotency-Key']).toBe('astrid.render:v1:t:project-media:render.mp4');
     const body = JSON.parse((init as RequestInit).body as string);
     expect(body).toMatchObject({
       project: 'p',
@@ -1376,7 +1431,6 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
         family: RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: 't',
-          expected_version: 12,
           selector: 'rendering.remotion',
           output_name: 'render.mp4',
         },
@@ -1404,7 +1458,6 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
       vi.stubGlobal('fetch', fetchImpl);
       await expect(enqueueAstridRuntimeRenderTimeline(payload, {
         client: new AstridLocalClient({ projectSlug: 'p', baseUrl: 'http://bridge.fake' }),
-        expectedVersion: 3,
         operationId,
       })).resolves.toMatchObject({ status: 'queued', task_id: taskId });
       keys.push(((fetchImpl.mock.calls[1][1] as RequestInit).headers as Record<string, string>)['Idempotency-Key']);
@@ -1415,9 +1468,9 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     await submit('intent-a', 'task-a-replay');
     await submit('intent-b', 'task-b');
 
-    expect(keys[0]).toBe('astrid.render:v2:intent-a:t:3:download:render.mp4');
+    expect(keys[0]).toBe('astrid.render:v3:intent-a:t:download:render.mp4');
     expect(keys[1]).toBe(keys[0]);
-    expect(keys[2]).toBe('astrid.render:v2:intent-b:t:3:download:render.mp4');
+    expect(keys[2]).toBe('astrid.render:v3:intent-b:t:download:render.mp4');
     expect(keys[2]).not.toBe(keys[0]);
   });
 
@@ -1716,7 +1769,7 @@ describe('Sprint 8 render pipeline middleware', () => {
     ]);
   });
 
-  it('blocks browser export on an enforced seam with an active opaque effect', async () => {
+  it('does not block browser export on an enforced seam with an active opaque effect', async () => {
     const startBrowserRender = vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' }));
     const request = {
       timelineId: 'timeline-opaque-seam',
@@ -1749,9 +1802,8 @@ describe('Sprint 8 render pipeline middleware', () => {
       startBrowserRender,
     });
 
-    expect(result).toMatchObject({ status: 'error', providerId: 'browser-remotion' });
-    expect(result.message).toContain('Visual seam admission blocked');
-    expect(startBrowserRender).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ status: 'done', providerId: 'browser-remotion' });
+    expect(startBrowserRender).toHaveBeenCalledOnce();
   });
 
   it('emits beforeRender, assetMaterialized, and afterRender through one shared middleware path', async () => {
@@ -1822,10 +1874,7 @@ describe('Sprint 8 render pipeline middleware', () => {
     const fetchImpl = canonicalRenderFetch('task-1');
     const originalFetch = globalThis.fetch;
     vi.stubGlobal('fetch', fetchImpl);
-    const workerRuntime = {
-      ...runtime,
-      bridgeBaseUrl: 'http://bridge.fake',
-    };
+    const workerRuntime = runtime;
     const request = {
       timelineId: 'timeline-fixture-worker',
       assetRegistry: {

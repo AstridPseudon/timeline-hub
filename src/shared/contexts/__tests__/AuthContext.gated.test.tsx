@@ -3,8 +3,9 @@
  * AuthContext on the hosted build: the Runtime boot gate is the session, not the bridge probe.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { POLL_INTERVAL_MS } from '@/integrations/runtime/RuntimeConnectionProvider';
 
 const { probeBridgeSessionMock } = vi.hoisted(() => ({ probeBridgeSessionMock: vi.fn() }));
 vi.mock('@/shared/auth/bridgeSession', () => ({
@@ -65,6 +66,7 @@ describe('AuthProvider on the hosted build', () => {
     probeBridgeSessionMock.mockReset();
   });
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     Reflect.deleteProperty(navigator, 'permissions');
   });
@@ -82,20 +84,42 @@ describe('AuthProvider on the hosted build', () => {
     expect(invalidate).toHaveBeenCalledTimes(1);
     const { predicate } = invalidate.mock.calls[0]![0] as { predicate: (query: { queryKey: unknown[] }) => boolean };
     expect(predicate({ queryKey: ['runtime', 'generation-variants'] })).toBe(true);
-    expect(predicate({ queryKey: ['astrid-bridge', 'health'] })).toBe(true);
+    expect(predicate({ queryKey: ['astrid-bridge', 'health'] })).toBe(false);
     expect(predicate({ queryKey: ['runtime-tasks', 'p1'] })).toBe(true);
     expect(predicate({ queryKey: ['runtime-editor', 'session', 'projects'] })).toBe(true);
     expect(predicate({ queryKey: ['shots', 'p1'] })).toBe(false);
   });
 
   it('is loading while the permission is read, then anonymous and not loading when the Runtime is not reachable', async () => {
-    stubPermission('granted');
-    stubGateway(() => { throw new TypeError('Failed to fetch'); });
+    vi.useFakeTimers();
+    const status: { state: string; onchange: ((this: unknown, event: Event) => unknown) | null } = {
+      state: 'granted',
+      onchange: null,
+    };
+    let resolvePermission!: (value: typeof status) => void;
+    const permissionRead = new Promise<typeof status>((resolve) => { resolvePermission = resolve; });
+    Object.defineProperty(navigator, 'permissions', {
+      configurable: true,
+      value: { query: vi.fn(() => permissionRead) },
+    });
+    const fetchMock = stubGateway(() => { throw new TypeError('Failed to fetch'); });
     await renderHosted();
 
-    await waitFor(() => expect(screen.getByTestId('isLoading')).toHaveTextContent('false'));
+    expect(screen.getByTestId('isLoading')).toHaveTextContent('true');
+    await act(async () => {
+      resolvePermission(status);
+      await permissionRead;
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('isLoading')).toHaveTextContent('true');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
     expect(screen.getByTestId('userId')).toHaveTextContent('null');
     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('false');
+    expect(fetchMock).toHaveBeenCalled();
     expect(probeBridgeSessionMock).not.toHaveBeenCalled();
   });
 

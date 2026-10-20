@@ -3,19 +3,15 @@ import { useUserSettings } from './UserSettingsContext';
 import { useProjectSelection } from '@/shared/hooks/projects/useProjectSelection';
 import { useProjectCRUD } from '@/shared/hooks/projects/useProjectCRUD';
 import { useProjectDefaults } from '@/shared/hooks/projects/useProjectDefaults';
-import { hasLocalModeUrlParams } from '@/shared/dev/devSession';
 import { isRuntimeDocumentMode } from '@/app/runtime/runtimeDocument';
 
 export function useProjectSessionCoordinator() {
   const { userId } = useAuth();
-  const isLocalMode = hasLocalModeUrlParams(
-    typeof window === 'undefined' ? '' : window.location.search,
-  );
   const isRuntimeMode = isRuntimeDocumentMode();
   // The bridge identity is useful to the editor itself, but it must not be
   // presented as an app/cloud user to the legacy project session coordinator.
   // Doing so would run project discovery and user-record setup on a local URL.
-  const sessionUserId = isLocalMode || isRuntimeMode ? null : (userId ?? null);
+  const sessionUserId = isRuntimeMode ? null : (userId ?? null);
   const {
     userSettings: userPreferences,
     isLoadingSettings: isLoadingPreferences,

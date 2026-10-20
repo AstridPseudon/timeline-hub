@@ -266,7 +266,7 @@ const BUILTIN_CLIP_TYPE_REGISTRATIONS = [
           width: 640,
           height: 180,
           text: {
-            content: 'Double-click to edit',
+            content: 'Your text',
             fontSize: 64,
             color: '#ffffff',
             align: 'center',

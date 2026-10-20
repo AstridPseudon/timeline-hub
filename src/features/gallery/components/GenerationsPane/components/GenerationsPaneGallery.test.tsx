@@ -68,7 +68,7 @@ function GalleryTaskDetailsProbe() {
   const authority = useRuntimeAuthority();
   const details = useGenerationTaskDetails({
     generationId: '11111111-1111-4111-8111-111111111111',
-    projectId: 'legacy-selected-project',
+    projectId: 'runtime-project-42',
   });
   return (
     <div
@@ -184,7 +184,7 @@ describe('GenerationsPaneGallery', () => {
   });
 
   it('passes resolved Runtime authority into the lightbox subtree for local project selectors', () => {
-    window.history.replaceState({}, '', '/tools/video-editor?localProject=desert-plant-growth');
+    window.history.replaceState({}, '', '/tools/video-editor?project=desert-plant-growth');
     render(<GenerationsPaneGallery {...buildProps({
       gallery: {
         ...buildProps().gallery,
@@ -197,25 +197,11 @@ describe('GenerationsPaneGallery', () => {
     expect(screen.getByTestId('gallery-authority')).toHaveAttribute('data-project-id', 'runtime-project-42');
   });
 
-  it('replaces the failing slug-scoped gallery read with Runtime generation and task routes', async () => {
-    window.history.replaceState({}, '', '/tools/video-editor');
+  it('uses Runtime generation and task routes for canonical project selection', async () => {
+    window.history.replaceState({}, '', '/tools/video-editor?project=runtime-project-42');
     const generationId = '11111111-1111-4111-8111-111111111111';
     resetProjectSelectionStoreForTests();
     setProjectSelectionSnapshot({ selectedProjectId: 'legacy-selected-project' });
-    mocks.legacyGalleryGet.mockRejectedValue(new TypeError('Failed to fetch'));
-    const legacyQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-    const legacyView = render(
-      <QueryClientProvider client={legacyQueryClient}>
-        <GalleryTaskDetailsProbe />
-      </QueryClientProvider>,
-    );
-    const failedLegacyDetails = await screen.findByTestId('gallery-task-details');
-    await waitFor(() => expect(failedLegacyDetails).toHaveAttribute('data-error', expect.stringContaining('Failed to fetch')));
-    expect(mocks.legacyGalleryGet).toHaveBeenCalledWith(generationId);
-    expect(mocks.runtimeGetGeneration).not.toHaveBeenCalled();
-    legacyView.unmount();
-
-    mocks.legacyGalleryGet.mockClear();
     mocks.runtimeGetGeneration.mockResolvedValue({
       generation_id: generationId,
       project_id: 'runtime-project-42',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/primitives/label";
@@ -14,14 +14,17 @@ interface CreateProjectModalProps {
   onOpenChange: (isOpen: boolean) => void;
   initialName?: string;
   onProjectCreated?: () => void;
+  confirmNavigation?: () => boolean;
 }
 
-export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onOpenChange, initialName, onProjectCreated }) => {
+export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onOpenChange, initialName, onProjectCreated, confirmNavigation }) => {
   const [projectName, setProjectName] = useState(initialName || '');
   const [aspectRatio, setAspectRatio] = useState<string>('16:9');
   const { selectedProjectId } = useProjectSelectionContext();
   const { addNewProject, isCreatingProject, projects } = useProjectCrudContext();
   const navigate = useNavigate();
+  const confirmNavigationRef = useRef(confirmNavigation);
+  confirmNavigationRef.current = confirmNavigation;
 
   // Get current project to use its aspect ratio as default
   const currentProject = projects.find(p => p.id === selectedProjectId);
@@ -74,7 +77,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
         setProjectName('');
         setAspectRatio(currentProject?.aspectRatio || '16:9');
         onOpenChange(false);
-        navigate(`/tools/video-editor?localProject=${encodeURIComponent(newProject.id)}`);
+        if (confirmNavigationRef.current && !confirmNavigationRef.current()) return;
+        navigate(`/tools/video-editor?project=${encodeURIComponent(newProject.id)}`);
       }
     } catch (error) {
       normalizeAndPresentError(error, { context: 'CreateProjectModal', toastTitle: 'An error occurred while creating the project' });

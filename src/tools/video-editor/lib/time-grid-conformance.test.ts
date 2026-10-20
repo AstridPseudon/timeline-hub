@@ -39,7 +39,7 @@ import {
   type TimelineData,
 } from '@/tools/video-editor/lib/timeline-data.ts';
 import { createTimelineScale } from '@/tools/video-editor/lib/timeline-scale.ts';
-import { SCALE_SECONDS, TIMELINE_START_LEFT } from '@/tools/video-editor/lib/coordinate-utils.ts';
+import { SCALE_SECONDS, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { applyClipEdgeMove } from '@/tools/video-editor/lib/resize-math.ts';
 import { useClipResize, type ClipEdgeResizeSession } from '@/tools/video-editor/hooks/useClipResize.ts';
 import type { TimelineApplyEdit } from '@/tools/video-editor/hooks/timeline-state-types.ts';
@@ -90,16 +90,16 @@ const pixelPopulation = (rng: () => number, n: number): TimePair[] => {
     const scale = createTimelineScale({
       scale: SCALE_SECONDS,
       scaleWidth: zooms[Math.floor(rng() * zooms.length)],
-      startLeft: TIMELINE_START_LEFT,
+      startLeft: getTimelineLabelWidth('desktop'),
     });
-    const startPx = TIMELINE_START_LEFT + Math.floor(rng() * 2000);
+    const startPx = getTimelineLabelWidth('desktop') + Math.floor(rng() * 2000);
     const widthPx = 20 + Math.floor(rng() * 400);
     const at = scale.pixelToTime(startPx);
     return { at, dur: scale.pixelToTime(startPx + widthPx) - at };
   });
 };
 
-/** N accumulated `1/fps` additions — precision-nudge binary dust. */
+/** N accumulated `1/fps` additions — accumulated-nudge binary dust. */
 const nudgePopulation = (rng: () => number, n: number, fps: number): TimePair[] =>
   Array.from({ length: n }, () => {
     let at = Math.round(rng() * 6000) / 100;
@@ -221,7 +221,7 @@ describe.each(FPS_MATRIX)('commit funnel (rowsToConfig) @%dfps', (fps) => {
     const populations: Array<[string, TimePair[]]> = [
       ['drag-2dp', dragPopulation(rng, 400)],
       ['pixel-derived', pixelPopulation(rng, 400)],
-      ['precision-nudged', nudgePopulation(rng, 400, fps)],
+      ['nudge-accumulated', nudgePopulation(rng, 400, fps)],
     ];
 
     for (const [label, pairs] of populations) {
@@ -369,7 +369,7 @@ describe('resize commit (useClipResize)', () => {
 // ---------------------------------------------------------------------------
 
 describe('keyboard nudge result', () => {
-  it('keeps a precision-nudged clip on exact frame instants across 40 presses', () => {
+  it('keeps a repeatedly nudged clip on exact frame instants across 40 presses', () => {
     const fps = 24;
     // 0.01 s: representative pre-existing off-grid value (old drag rounding).
     let config = makeConfig([holdClip('clip-1', 0.01, 1)], fps);

@@ -18,7 +18,7 @@ import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnosti
 import { ClipAction } from '@/tools/video-editor/components/TimelineEditor/ClipAction.tsx';
 import { DropIndicator } from '@/tools/video-editor/components/TimelineEditor/DropIndicator.tsx';
 import { TimelineCanvas } from '@/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx';
-import { ROW_HEIGHT, TIMELINE_START_LEFT } from '@/tools/video-editor/lib/coordinate-utils.ts';
+import { ROW_HEIGHT, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { EDIT_AREA_SELECTOR } from '@/tools/video-editor/lib/timeline-dom.ts';
 import { computeTimelineExtent, maxClipEndSeconds } from '@/tools/video-editor/lib/timeline-scale.ts';
 import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -442,7 +442,6 @@ function TimelineEditorCoreComponent({
     editAreaRef,
     onClearSelection: clearSelection,
     deviceClass,
-    interactionMode,
     gestureOwner,
     setGestureOwner,
     setInputModalityFromPointerType,
@@ -478,8 +477,8 @@ function TimelineEditorCoreComponent({
     ),
     scale,
     scaleWidth,
-    startLeft: TIMELINE_START_LEFT,
-  }), [durationLimitSeconds, hardDurationSeconds, renderRows, scale, scaleWidth, shotGroups]);
+    startLeft: getTimelineLabelWidth(deviceClass),
+  }), [deviceClass, durationLimitSeconds, hardDurationSeconds, renderRows, scale, scaleWidth, shotGroups]);
 
   const thumbnailMap = useMemo<Record<string, string>>(() => {
     if (!resolvedConfig) {
@@ -545,7 +544,7 @@ function TimelineEditorCoreComponent({
   const { pixelToTime } = useTimelineScale({
     scale,
     scaleWidth,
-    startLeft: TIMELINE_START_LEFT,
+    startLeft: getTimelineLabelWidth(deviceClass),
   });
 
   const assetGenerationMap = useMemo<Record<string, string>>(() => {
@@ -815,7 +814,6 @@ function TimelineEditorCoreComponent({
         isInPinnedShotGroup={shotGroupClipIds.has(action.id)}
         isSelected={isClipSelected(action.id)}
         isPrimary={primaryClipId === action.id}
-        showOverflowMenu={deviceClass !== 'desktop'}
         selectedClipIds={[...selectedClipIds]}
         thumbnailSrc={thumbnailSrc}
         audioSrc={audioSrc}
@@ -952,7 +950,7 @@ function TimelineEditorCoreComponent({
           scale={scale}
           scaleWidth={scaleWidth}
           scaleSplitCount={5}
-          startLeft={TIMELINE_START_LEFT}
+          startLeft={getTimelineLabelWidth(deviceClass)}
           rowHeight={ROW_HEIGHT}
           minScaleCount={timelineExtent.scaleCount}
           maxScaleCount={timelineExtent.scaleCount}

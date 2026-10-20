@@ -4,6 +4,7 @@ import { useRenderLogger } from '@/shared/lib/debug/debugRendering';
 import { useProjectSessionCoordinator } from './useProjectSessionCoordinator';
 import { requireContextValue } from './contextGuard';
 import { setProjectSelectionFallbackId } from './projectSelectionStore';
+import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 
 // Type for updating projects (re-exported for consumers that may need it)
 interface ProjectUpdate {
@@ -45,10 +46,13 @@ const ProjectIdentityContext = createContext<ProjectIdentityContextType | undefi
 
 export const ProjectProvider = ({ children }: { children: ReactNode }) => {
   const { userId, selection, crud } = useProjectSessionCoordinator();
+  const { runtimeAuthority, runtimeProjectId } = useRuntimeAuthority();
   useRenderLogger('ProjectProvider', { userId });
 
   const projects = crud.projects || [];
-  const selectedProjectId = selection.selectedProjectId;
+  const selectedProjectId = runtimeAuthority
+    ? runtimeProjectId
+    : selection.selectedProjectId;
   const project = projects.find((item) => item.id === selectedProjectId) ?? null;
 
   // ProjectProvider is the composition boundary for React and non-React

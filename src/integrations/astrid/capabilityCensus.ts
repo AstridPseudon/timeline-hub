@@ -1,6 +1,5 @@
 import { probeBridgeSession } from '@/shared/auth/bridgeSession.ts';
 import { astridBase } from '@/integrations/runtime/connection.ts';
-import { getLocalProjectSlug } from '@/shared/dev/devSession.ts';
 import { AstridBridgeTransport, BridgeRouteError } from './transport.ts';
 import { AstridLocalProjectRoutes } from './projectRoutes.ts';
 import { runtimeTaskReadPageSchema } from './taskReadSchemas.ts';
@@ -121,27 +120,29 @@ async function probeGenerationCapability(
 }
 
 /**
- * Select only from projects returned by the local bridge. A local-mode URL
- * owns project selection when it names one of those projects; otherwise keep
- * the historical first-project fallback. Never consult cloud or persisted
+ * Select only from projects returned by the local bridge. A canonical URL
+ * owns project selection when it names one of those projects; an unknown
+ * explicit selection has no fallback. With no URL selection keep the
+ * historical first-project default. Never consult cloud or persisted
  * project selection here: this census is a bridge-only boot probe.
  */
 function selectCapabilityProbeProject(
-  projects: Array<{ slug: string }>,
+  projects: Array<{ slug: string; project_id?: string }>,
 ): string | null {
   const fallback = projects[0]?.slug ?? null;
   if (typeof window === 'undefined') return fallback;
 
   let requested: string | null = null;
   try {
-    requested = getLocalProjectSlug(window.location.search);
+    requested = new URLSearchParams(window.location.search).get('project')?.trim() || null;
   } catch {
     // A malformed location must not prevent the bridge health census from
     // completing; use the bridge-owned fallback below.
   }
-  return requested && projects.some((project) => project.slug === requested)
-    ? requested
-    : fallback;
+  const selected = requested ? projects.find((project) =>
+    project.project_id === requested || project.slug === requested,
+  ) : null;
+  return selected?.slug ?? (requested ? null : fallback);
 }
 
 /**
