@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import base64
+import copy
 import hashlib
-import json
+from contextlib import contextmanager
 
 import pytest
 
-from runtime_protocol.errors import ConflictError, LeaseError
+from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
-from runtime_protocol.store import RealmStore
 from runtime_protocol.util import canonical_json, now
 
 
@@ -39,8 +39,8 @@ def _ready_authoring_attempt(service, *, publication=None, legacy_parent=False):
     project = service.create_project({"slug": "publication", "name": "Publication"})
     child_cap, author_cap, render_cap = "test.child", "rendering.assemble_timeline", "rendering.render"
     digests = {cap: _digest(cap) for cap in (child_cap, author_cap, render_cap)}
-    for cap in digests:
-        service.register_capability({"capability_id": cap, "definition_digest": digests[cap]})
+    for cap, definition_digest in digests.items():
+        service.register_capability({"capability_id": cap, "definition_digest": definition_digest})
     service.register_executor(
         {"executor_id": "worker", "capabilities": list(digests), "max_concurrency": 4},
         idempotency_key="register-worker",
@@ -100,95 +100,162 @@ def _publication_body(attempt, render_digest):
     }
 
 
-def test_publication_is_fenced_atomic_and_exactly_replayable(tmp_path):
-    RealmStore.initialize(tmp_path / "realm").close()
-    service = RuntimeService(tmp_path / "realm")
+def _native_state(service):
+    return (tuple(service.store.conn.iterdump()),
+            {(root.name, str(path.relative_to(root))): path.read_bytes()
+             for root in (service.store.cas_root, service.store.staging_root)
+             for path in root.rglob("*") if path.is_file()})
+
+
+def _native_pending_render(case):
+    checkpoint = case.service.store.timeline_render_publication(case.task)
+    pending = checkpoint["prepared"]["pending_render"]
+    assert checkpoint["state"] == "prepared"
+    assert pending is not None
+    return copy.deepcopy(pending)
+
+
+@contextmanager
+def _native_case(tmp_path, astrid_importable):
+    from test_timeline_render_publication_authority import native_target_isolation
+
+    cases = native_target_isolation.__wrapped__(tmp_path, astrid_importable)
+    case = next(cases)
     try:
-        _, author, attempt, render_digest = _ready_authoring_attempt(service)
-        body = _publication_body(attempt, render_digest)
-        result = service.publish_timeline_render(attempt["attempt_id"], body, idempotency_key="publish")
-        assert result["timeline_version"] == 2
-        assert service._timeline_resource("main")["config_version"] == 2
-        render = service.task(result["render_task_id"])["task"]
-        assert render["spec"]["spec"]["inputs"]["expected_version"] == 2
-        assert "timeline_snapshot" not in render["spec"]["spec"]["inputs"]
-        snapshot_ref = render["spec"]["spec"]["inputs"]["timeline_snapshot_ref"]
-        assert snapshot_ref["digest"] in render["spec"]["input_object_ids"]
-        snapshot = json.loads(service.object(snapshot_ref["digest"])[1])
-        assert snapshot["config"] == body["config"]
-        assert snapshot["registry"] == body["registry"]
-        assert service.publish_timeline_render(attempt["attempt_id"], body, idempotency_key="another-key") == result
-        assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_render_publications").fetchone()[0] == 1
-        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks WHERE capability='rendering.render'").fetchone()[0] == 1
-
-        changed = {**body, "config": {"tracks": []}}
-        with pytest.raises(ConflictError, match="payload changed"):
-            service.publish_timeline_render(attempt["attempt_id"], changed, idempotency_key="publish-changed")
-
-        service.cancel_task_canonical(author["task"]["id"], {}, idempotency_key="cancel-author")
-        assert service.publish_timeline_render(attempt["attempt_id"], body, idempotency_key="replay-after-cancel") == result
+        yield case
     finally:
-        service.close()
+        cases.close()
 
 
-def test_prepared_checkpoint_cannot_publish_after_cancel_or_stale_fence(tmp_path, monkeypatch):
-    RealmStore.initialize(tmp_path / "realm").close()
-    service = RuntimeService(tmp_path / "realm")
-    try:
-        _, author, attempt, render_digest = _ready_authoring_attempt(service)
-        body = _publication_body(attempt, render_digest)
-        stale = {**body, "fence": attempt["fence"] - 1}
-        with pytest.raises(LeaseError):
-            service.publish_timeline_render(attempt["attempt_id"], stale, idempotency_key="stale")
-        assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_render_publications").fetchone()[0] == 0
+@pytest.mark.integration
+def test_publication_is_fenced_atomic_and_exactly_replayable(tmp_path, astrid_importable):
+    from test_timeline_producer_guards import _body as producer_body
+    from test_timeline_render_publication_authority import _submit_native_producer
 
-        original = service.store.prepare_timeline_render_publication
-        def prepare_then_cancel(*args, **kwargs):
-            value = original(*args, **kwargs)
-            service.cancel_task_canonical(author["task"]["id"], {}, idempotency_key="cancel-at-seam")
+    with _native_case(tmp_path, astrid_importable) as case:
+        stale = producer_body(case)
+        stale["commands"][0]["args"]["pin"]["fence"] += 1
+        before = _native_state(case.service)
+        with pytest.raises(RuntimeErrorBase) as error:
+            _submit_native_producer(case, body=stale, key="stale-native-publication")
+        assert error.value.details["reason"] in {"producer_attempt_mismatch", "producer_dependency_unavailable"}
+        assert _native_state(case.service) == before
+        assert case.service.store.conn.execute(
+            "SELECT COUNT(*) FROM timeline_render_publications",
+        ).fetchone()[0] == 0
+
+        accepted = _submit_native_producer(case, key="native-publication")
+        head = case.service.get_project_timeline(case.project, "timelineB")
+        assert head["version"] == 2
+        assert head["head_revision_id"] == accepted["data"]["accepted_revision_id"]
+        pending = _native_pending_render(case)
+        admitted = case.service.create_task(pending["body"] | {"idempotency_key": pending["idempotency_key"]})
+        task = admitted["task"]
+        authority = task["spec"]["spec"]["inputs"]["timeline_authority"]
+        selector = pending["body"]["spec"]["params"]["canonical_revision"]
+        assert {key: authority[key] for key in (
+            "project_id", "timeline_id", "parent_revision_id", "publication_id", "parent_content_digest",
+        )} == {
+            "project_id": selector["project_id"], "timeline_id": selector["timeline_id"],
+            "parent_revision_id": selector["revision_id"], "publication_id": selector["publication_id"],
+            "parent_content_digest": selector["content_digest"],
+        }
+        assert "timeline_snapshot" not in task["spec"]["spec"]["inputs"]
+        snapshot_ref = task["spec"]["spec"]["timeline_snapshot_ref"]
+        assert snapshot_ref["digest"] in task["spec"]["input_object_ids"]
+        assert case.service.store.conn.execute(
+            "SELECT COUNT(*) FROM timeline_render_publications",
+        ).fetchone()[0] == 1
+        assert case.service.store.conn.execute(
+            "SELECT COUNT(*) FROM tasks WHERE capability='rendering.render'",
+        ).fetchone()[0] == 1
+
+        assert _submit_native_producer(case, key="native-publication") == accepted
+        assert case.service.create_task(copy.deepcopy(pending["body"]) | {
+            "idempotency_key": pending["idempotency_key"],
+        }) == admitted
+
+        changed = producer_body(case)
+        changed["rationale"] += " changed"
+        before = _native_state(case.service)
+        with pytest.raises(RuntimeErrorBase):
+            _submit_native_producer(case, body=changed, key="native-publication")
+        assert _native_state(case.service) == before
+
+        case.service.cancel_task_canonical(case.task, {}, idempotency_key="cancel-native-author")
+        assert _submit_native_producer(case, key="native-publication") == accepted
+        assert case.service.create_task(copy.deepcopy(pending["body"]) | {
+            "idempotency_key": pending["idempotency_key"],
+        }) == admitted
+
+
+@pytest.mark.integration
+def test_prepared_checkpoint_cannot_publish_after_cancel_or_stale_fence(tmp_path, astrid_importable, monkeypatch):
+    from test_timeline_producer_guards import _body as producer_body
+    from test_timeline_render_publication_authority import _submit_native_producer
+
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    with _native_case(tmp_path, astrid_importable) as case:
+        stale = producer_body(case)
+        stale["commands"][0]["args"]["pin"]["fence"] += 1
+        before = _native_state(case.service)
+        with pytest.raises(RuntimeErrorBase):
+            _submit_native_producer(case, body=stale, key="stale-native-fence")
+        assert _native_state(case.service) == before
+        assert case.service.get_project_timeline(case.project, "timelineB")["version"] == 1
+
+        observed = []
+        original = RequestCommitPort.producer_attempt
+
+        def capture_then_supersede(port, pin):
+            value = original(port, pin)
+            case.service.retry_task(case.task, {}, idempotency_key="supersede-native-proposal")
+            observed.append(_native_state(case.service))
             return value
-        monkeypatch.setattr(service.store, "prepare_timeline_render_publication", prepare_then_cancel)
-        with pytest.raises(LeaseError):
-            service.publish_timeline_render(attempt["attempt_id"], body, idempotency_key="publish")
-        assert service._timeline_resource("main")["config_version"] == 1
-        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks WHERE capability='rendering.render'").fetchone()[0] == 0
-        assert service.store.timeline_render_publication(author["task"]["id"])["state"] == "prepared"
-    finally:
-        service.close()
+
+        monkeypatch.setattr(RequestCommitPort, "producer_attempt", capture_then_supersede)
+        with pytest.raises(RuntimeErrorBase) as error:
+            _submit_native_producer(case, key="superseded-native-proposal")
+        assert error.value.details["reason"] in {"producer_attempt_mismatch", "producer_dependency_unavailable"}
+        assert observed
+        assert _native_state(case.service) == observed[0]
+        assert case.service.get_project_timeline(case.project, "timelineB")["version"] == 1
+        assert case.service.store.conn.execute(
+            "SELECT COUNT(*) FROM timeline_render_publications",
+        ).fetchone()[0] == 0
+        assert case.service.store.conn.execute(
+            "SELECT COUNT(*) FROM tasks WHERE capability='rendering.render'",
+        ).fetchone()[0] == 0
 
 
-def test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart(tmp_path, monkeypatch):
-    root = tmp_path / "realm"
-    RealmStore.initialize(root).close()
-    service = RuntimeService(root)
-    _, author, attempt, render_digest = _ready_authoring_attempt(service)
-    body = _publication_body(attempt, render_digest)
-    original = service.store.prepare_timeline_render_publication
+@pytest.mark.integration
+def test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart(tmp_path, astrid_importable):
+    from test_timeline_render_publication_authority import _submit_native_producer
 
-    class SimulatedCrash(RuntimeError):
-        pass
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
 
-    def prepare_then_crash(*args, **kwargs):
-        original(*args, **kwargs)
-        raise SimulatedCrash
-
-    monkeypatch.setattr(service.store, "prepare_timeline_render_publication", prepare_then_crash)
-    with pytest.raises(SimulatedCrash):
-        service.publish_timeline_render(attempt["attempt_id"], body, idempotency_key="publish")
-    assert service.store.timeline_render_publication(author["task"]["id"])["state"] == "prepared"
-    service.close()
-
-    service = RuntimeService(root)
-    try:
-        service.register_executor(
-            {"executor_id": "worker", "capabilities": ["test.child", "rendering.assemble_timeline", "rendering.render"],
-             "max_concurrency": 4, "runtime_epoch": service.health()["runtime_epoch"]},
-            idempotency_key="register-after-restart",
-        )
-        recovered = _claim(service, "rendering.assemble_timeline", "reclaim-author")
-        resumed = {**body, "lease_id": recovered["lease_id"], "fence": recovered["fence"], "runtime_epoch": recovered["runtime_epoch"]}
-        result = service.publish_timeline_render(recovered["attempt_id"], resumed, idempotency_key="resume-publication")
-        assert result["timeline_version"] == 2
-        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks WHERE capability='rendering.render'").fetchone()[0] == 1
-    finally:
-        service.close()
+    with _native_case(tmp_path, astrid_importable) as case:
+        accepted = _submit_native_producer(case, key="restart-native-publication")
+        pending = _native_pending_render(case)
+        root = case.service.store.root
+        case.service.close()
+        case.service = RuntimeService(root)
+        case.service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        try:
+            assert _submit_native_producer(case, key="restart-native-publication") == accepted
+            admitted = case.service.create_task(pending["body"] | {"idempotency_key": pending["idempotency_key"]})
+            authority = admitted["task"]["spec"]["spec"]["inputs"]["timeline_authority"]
+            selector = pending["body"]["spec"]["params"]["canonical_revision"]
+            assert authority["parent_revision_id"] == selector["revision_id"] == accepted["data"]["accepted_revision_id"]
+            assert authority["publication_id"] == selector["publication_id"] == accepted["receipt"]["receipt_id"]
+            assert authority["parent_content_digest"] == selector["content_digest"]
+            checkpoint = case.service.store.timeline_render_publication(case.task)
+            assert checkpoint["state"] == "published"
+            assert checkpoint["prepared"]["pending_render"] == pending
+            assert checkpoint["render_task_id"] == admitted["task"]["id"]
+            assert case.service.create_task(copy.deepcopy(pending["body"]) | {
+                "idempotency_key": pending["idempotency_key"],
+            }) == admitted
+        finally:
+            case.service.close()
