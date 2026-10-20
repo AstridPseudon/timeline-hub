@@ -61,6 +61,7 @@ node --check scripts/testing/current013-native-none.mjs
 node --check tests/e2e/local/support/current013-native-none.test.mjs
 node "$W/notes/source-review.mjs"
 git diff --check
+git diff --check 171a259ac HEAD
 ```
 
 All final commands exit 0; lint emits no warnings. The retained pure source probe verifies unchanged source scope/prefix and reproduces the binding mismatch using the real matcher against frozen JSON; its passing result means the incorrect assertion was rejected, not that either journey passed. Its first invocation failed with sandbox `spawnSync git EPERM`; using explicit ignored stdin and piped output resolved that audit-helper invocation. No product/test source was changed to resolve it.
