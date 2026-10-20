@@ -1,3 +1,4 @@
+import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import { AlertCircle, Film } from 'lucide-react';
@@ -540,16 +541,21 @@ export function ShotTimelinePreview({
     draftDirtyRef.current = true;
     const generation = draftGenerationRef.current + 1;
     draftGenerationRef.current = generation;
-    dataProvider.setDraftGeneration(generation);
-    onCanonicalDraftProjectionChange?.({
-      scope: draftScope,
-      generation,
-      composition: projectShotTimelineDraftComposition(
-        currentComposition,
-        occurrenceId,
-        nextConfig,
-      ),
-    });
+    const rawComposition = dataProvider.setDraftGeneration(generation);
+    try {
+      onCanonicalDraftProjectionChange?.({
+        scope: draftScope,
+        generation,
+        composition: projectShotTimelineDraftComposition(
+          currentComposition,
+          occurrenceId,
+          nextConfig,
+          rawComposition,
+        ),
+      });
+    } catch (error) {
+      normalizeAndPresentError(error, { context: 'shot-timeline-preview:draft' });
+    }
   }, [currentComposition, dataProvider, draftScope, occurrenceId, onCanonicalDraftProjectionChange]);
   const handleSaveStatusChange = useCallback((status: SaveStatus) => {
     const dirty = status !== 'saved';

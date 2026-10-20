@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { document, environment } from '../commands/__tests__/commitSessionEnvironment.ts';
 import { authoringBundleFromDocument } from '../commands/authoringBundle.ts';
 import { captureClipMove as captureNativeMove, executeClipMove, finishClipMove } from '../commands/clipMoveCapture.ts';
@@ -82,6 +82,75 @@ const assertRoots = (data: TimelineData, opaque: Record<string, unknown>) => {
 };
 
 describe('atomic command projection facts', () => {
+  it('recomputes the stored cap from the verified bootstrap and original recovered command graph', async () => {
+    const raw = document();
+    const children = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    raw.parent_revision.payload.occurrences = [children.parent_revision.payload.occurrences[0]];
+    raw.parent_revision.payload.occurrences[0].duration_ms = 4000;
+    raw.shot_revisions = children.shot_revisions;
+    raw.internal_timeline_revisions = children.internal_timeline_revisions;
+    raw.dependency_manifest = children.dependency_manifest;
+    const internal = raw.internal_timeline_revisions[0];
+    const child = (internal.payload as { clips: Array<{ hold: number; app: unknown }> }).clips[0];
+    child.hold = 5;
+    child.app = { canonicalTiming: { storedOccurrenceDurationMs: null, opaque: [null, false, 0] } };
+    internal.content_digest = fixtureDigest(internal.payload);
+    raw.dependency_manifest.internal_timelines[0].content_digest = internal.content_digest;
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const original = structuredClone(raw);
+    const { env, mount, held } = await setup(raw);
+    const first = mount();
+    await waitFor(() => expect(first.hook.result.current.commands.port).toBeDefined());
+    const assertCap = (data: TimelineData) => {
+      expect(data.resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!.app?.canonicalTiming)
+        .toHaveProperty('storedOccurrenceDurationMs', 4000);
+    };
+    assertCap(first.hook.result.current.commit.data!);
+    env.setFault('busy');
+    act(() => { first.move(7); });
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    const local = first.hook.result.current.commit.data!;
+    assertCap(local);
+    expect(first.recoveryConfig.snapshot(local.head, local.config).clips.find((clip) => clip.id === 'occ-0:child-title')!.app?.canonicalTiming)
+      .toEqual({ storedOccurrenceDurationMs: null, opaque: [null, false, 0] });
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    first.hook.unmount();
+    await waitFor(() => expect(held.size).toBe(0));
+    const recovered = mount();
+    await waitFor(() => expect(recovered.hook.result.current.commands.state.status).toBe('recovery'));
+    await act(async () => { await recovered.hook.result.current.commands.recover(owner); });
+    assertCap(recovered.hook.result.current.commit.data!);
+    expect(recovered.hook.result.current.commit.data!.editProjection).toMatchObject({ kind: 'local', base: originalBase });
+    expect(JSON.stringify(env.commits())).not.toContain('storedOccurrenceDurationMs');
+    const send = env.provider.commitTimeline.bind(env.provider);
+    vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (request, key) => {
+      const result = await send(request, key);
+      // The in-process acceptance fixture normally has no children. Supply a
+      // coherent accepted pinned child closure to exercise the ACK projector.
+      const document = structuredClone(result.canonicalDocument);
+      document.parent_revision.payload.occurrences = structuredClone(raw.parent_revision.payload.occurrences);
+      document.parent_revision.payload.occurrences[0].duration_ms = 4500;
+      document.shot_revisions = raw.shot_revisions;
+      document.internal_timeline_revisions = raw.internal_timeline_revisions;
+      document.dependency_manifest = raw.dependency_manifest;
+      document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+      const graph = structuredClone(env.initial.graph!);
+      (graph.primary_timeline as { head: { revision_id: string } }).head.revision_id = result.accepted.revisionId;
+      (graph.occurrences as Array<{ duration_ms: number }>)[0].duration_ms = 4500;
+      graph.parent_composition = document.parent_revision.payload;
+      return { ...result, canonicalDocument: document, graph, response: { ...result.response,
+        data: { ...result.response.data, canonical_document: document, document_digest: fixtureDigest(document) } } };
+    });
+    env.setFault(null);
+    await act(async () => { await recovered.hook.result.current.commands.retry(); });
+    const accepted = recovered.hook.result.current.commit.data!;
+    expect(accepted.editProjection).toMatchObject({ kind: 'accepted', head: { revisionId: 'r1', publicationId: 'p1' } });
+    expect(accepted.resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!.app?.canonicalTiming)
+      .toHaveProperty('storedOccurrenceDurationMs', 4500);
+    expect(raw).toStrictEqual(original);
+  });
+
   it('projects the exact verified initial config, registry and head with no commands or graph', async () => {
     const raw = document();
     const opaque = opaqueRoots();

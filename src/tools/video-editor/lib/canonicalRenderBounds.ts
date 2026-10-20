@@ -1,5 +1,5 @@
 import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
-import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
+import type { ResolvedTimelineClip, ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -65,4 +65,23 @@ export function boundCanonicalConfigClips(
     const bounded = boundCanonicalClipToOccurrence(clip);
     return bounded ? [bounded] : [];
   });
+}
+
+/** A render-only selection; editor rows keep their content-derived geometry. */
+export function boundCanonicalRenderConfig<T extends ResolvedTimelineConfig>(config: T): T {
+  const clips = config.clips.flatMap((clip) => {
+    const timing = record(clip.app?.canonicalTiming);
+    const stored = timing?.storedOccurrenceDurationMs;
+    const effective = timing?.occurrenceDurationMs;
+    // Only the explicit render selection consumes the stored cap. The popup's
+    // live shot-local soft wall and ordinary editor bounds retain their policy.
+    if (typeof stored !== 'number' || !Number.isFinite(stored)
+      || typeof effective !== 'number' || stored >= effective) return [clip];
+    const bounded = boundCanonicalClipToOccurrence({ ...clip, app: { ...clip.app,
+      canonicalTiming: { ...timing, occurrenceDurationMs: Math.max(0, stored) },
+    } });
+    return bounded ? [bounded] : [];
+  });
+  return clips.length === config.clips.length && clips.every((clip, index) => clip === config.clips[index])
+    ? config : { ...config, clips };
 }
