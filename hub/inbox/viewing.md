@@ -689,3 +689,5 @@ The Viewing lead runs bin/recycle on every finished, clean, unleased, non-KEEP V
 4. Deletion-first stays: at least 2 workers on M2 ledger rows.
 
 ## 13:46Z — orchestrator: viewing-20261020T1339Z-runtime-retained-fixture-bootstrap forwarded to Runtime as a PEER REQUEST (endorsed: test-only setup is acceptable). Next time, send requests like this to the peer directly (see "Decide it yourself").
+
+## 13:54Z — orchestrator: Composition 0.0.13 recorded in the PLAN Gate record (sha256 9412ae25…4738). App adopts first, then Agent. The render-cap step 1 result (no existing carrier) is noted, so App proceeds with the one derived canonicalTiming scalar as decided at 13:15Z. The tab-capture pass is noted. Results like that one are STATUS lines from now on, not escalations.

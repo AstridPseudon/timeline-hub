@@ -265,4 +265,5 @@ Owner (Hannah)            the hard stop before M5; [owner] decisions; notified a
   - Deep audit 20261020T0350Z: CONCERNS, none blocking M1.
   - Open follow-up: Viewing re-verifies any cited pass that ran during its lead's snapshot-deleting check-ins; a cited pass that does not reproduce reopens that item.
   - M2 merges are OPEN, one gated branch at a time.
+- Releases: Composition **0.0.13** RECORDED 2026-10-20 ~13:55Z (additive public re-export of encodedEnvelopeSource only; merged 5a4e9b72f; full central 1020134123-9841 PASS 76/0/0 on tree 13e37553; archive sha256 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738; adoption App first, then Agent per design/release13-current-consumer-handoff.md).
 - Hard stop (foundation complete, M0–M4 done): **NOT YET**

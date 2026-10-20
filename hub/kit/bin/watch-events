@@ -12,7 +12,7 @@ while true; do
     [ -e $ORCH/managers/$m/REMOTE ] && continue
     [ -e $ORCH/managers/$m/running ] || emit "MANAGER_STOPPED $m $(date -u +%Y%m%dT%H)"
   done
-  for m in app viewing; do [ -e $ORCH/managers/$m/REMOTE ] || continue
+  for m in app viewing app2; do [ -e $ORCH/managers/$m/REMOTE ] || continue
     t=$(head -1 $ORCH/managers/$m/STATUS.md 2>/dev/null | sed -n 's/^<!-- [a-z]* | \([^ ]*\) |.*/\1/p'); [ -n "$t" ] || continue
     age=$(( now - $(date -d "$t" +%s 2>/dev/null || echo $now) )); [ $age -gt 1200 ] && emit "REMOTE_STALE $m since $t"
   done

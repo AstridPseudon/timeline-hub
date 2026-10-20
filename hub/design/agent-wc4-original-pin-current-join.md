@@ -1,0 +1,15 @@
+# WC4 original selected PARAM join on current source
+
+**Implementation complete; WC4 remains HELD for independent review and orchestrator merge.** No integration merge was performed.
+
+Agent base `4ef1391c`; final qualified central tree `cd13be81bf14c05e5acc7089a1e66d109000c61d`. Narrow ports: current helper `20f1b290`, authority `654da693`, authentic legacy-alias fix `6868e16a`, and staged-inverse fix `fa156464` (ported only after committed). Provider resolver/commit code and the inverse implementation are byte-identical to their reviewed prerequisite sources.
+
+The public helper's whole-parent publisher call and imports are gone. Same selected E now emits only PARAM/hold, recovering original accepted P1 through the ONE existing authority resolver and same authenticated public history/retained-document/object reads. Current admission P2 cannot silently replace it. An actual requested revision change may use the existing authenticated current admission. Legacy same-element digest-only HOLD succeeds without schema/object/resolver/re-admission work; actual revision-change failure keeps the existing `pack snapshot unavailable; re-admit pack` flow outside save.
+
+A small read adapter supplies history entries and immutable canonical documents already returned in accepted receipts; the existing resolver owns all ancestry/association/inverse logic. The existing public generated 013 VerifiedDocument/object methods are forwarded through the existing WorkspaceClient facade. No endpoint, DTO, schema, validator, persistence, source factory, cache or journal was added. Public S2 remains `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef`; all pins/generated artifacts are unchanged. `sync.py` remains byte-identical to current base, preserving BOTH sheet-basis and producer-pending guards. Current verified-source extraction is untouched.
+
+Final evidence: **450 authority/conformance passed; 365 current/helper/session/schema/core neighbors passed; 94 real Runtime013 native cases passed; 20 central HTTP M1/trim/sheet/frontend cases passed.** No expected failures. Native source is frozen Runtime `b748ae72`, contract 0.2.13. All changed Python files except inherited `remote.py` pass Ruff; its 121 diagnostics exactly match base. Diff whitespace check passes. No full suite was requested.
+
+Permanent tests cover original P1 max10 after P2 max20/removal/source deletion/restart (8 accepted, 16 refused with zero POST/head/database writes), PARAM/clear without set-element, intentional revision reselection allowing16, three first-PARAM bootstrap refusals, legacy HOLD, original rebased/lost-ACK/paginated history recovery, authentic old alias inverse positives, F1 atomic same-batch refusal and valid inverse/select/PARAM plus disjoint staged inverse.
+
+Detailed exact source paths, test IDs, commands/results, fixture adaptations, diagnostic failures, immutable boundaries and limits: [worker report](../workers/agt-m2-wc4-original-pin-current-join/notes/report.md). Source path list and complete review patch are beside it. No browser/App, full suite, renderer/audio/pixel or macOS qualification; no release/closure approval is supplied.

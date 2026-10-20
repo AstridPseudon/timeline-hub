@@ -1,5 +1,5 @@
 #!/bin/bash
-# hub-sync MACHINE  (main | app | viewing): one sync cycle with the hub (see $ORCH/COMMS.md).
+# hub-sync MACHINE  (main | app | viewing | app2): one sync cycle with the hub (see $ORCH/COMMS.md).
 set -u
 M=$1
 ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
@@ -10,19 +10,23 @@ W=/home/user/work
 #   remote writes hub/status/<area>.READY -> main stops its local manager, publishes final STATUS/INBOX,
 #   marks $ORCH/managers/<area>/REMOTE and writes hub/status/<area>.HANDOVER -> remote starts its manager.
 # Until then main keeps the area (and its home repo) local.
-declare -A REPO_OF=( [app]=app [viewing]=composition )
+declare -A REPO_OF=( [app]=app [viewing]=composition [app2]=app )
 case $M in
   main)    AREAS="runtime agent"; HOME_REPOS="agent runtime"; REMOTE_AREAS=""
-           for a in app viewing; do
+           for a in app viewing app2; do
+             [ $a = app2 ] && [ ! -e $ORCH/managers/app2/REMOTE ] && continue   # app2 only ever runs remotely
              if [ -e $ORCH/managers/$a/REMOTE ]; then REMOTE_AREAS="$REMOTE_AREAS $a"
              else AREAS="$AREAS $a"; HOME_REPOS="$HOME_REPOS ${REPO_OF[$a]}"; fi
            done;;
   app)     AREAS="app";           HOME_REPOS="app";           REMOTE_AREAS="";;
   viewing) AREAS="viewing";       HOME_REPOS="composition";   REMOTE_AREAS="";;
-  *) echo "usage: hub-sync main|app|viewing"; exit 2;;
+  # app2: a second App machine (2026-10-20). Owns NO repo: its app branches merge through the App home via merge requests. No handover.
+  app2)    AREAS="app2";          HOME_REPOS="";              REMOTE_AREAS=""; mkdir -p $ORCH/managers/app2; touch $ORCH/managers/app2/HANDOVER_DONE;;
+  *) echo "usage: hub-sync main|app|viewing|app2"; exit 2;;
 esac
 # on a remote machine, home repos count as mine only once the handover arrived
 [ $M != main ] && [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ] && HOME_REPOS=""
+[ $M = app2 ] && HOME_REPOS=""
 exec 8>$ORCH/.hub-sync.lock; flock -w 300 8 || exit 0   # never race hub-syncd
 now=$(date -u +%FT%TZ)
 retry(){ local d=2; for i in 1 2 3 4 5; do "$@" && return 0; sleep $d; d=$((d*2)); done; return 1; }
@@ -92,8 +96,8 @@ fi
 
 # worker evidence for handed-over areas: main publishes its workers' report/meta/exit/commit.log + log tail and
 # the area's test-service results; the remote machine copies them into its $ORCH/workers and $ORCH/tests (no overwrite)
-declare -A PFX=( [app]=app [viewing]=vw )
-declare -A TREPO=( [app]=app [viewing]=composition )
+declare -A PFX=( [app]=app [viewing]=vw [app2]=ap2 )
+declare -A TREPO=( [app]=app [viewing]=composition [app2]=app )
 if [ $M = main ]; then
   for a in $REMOTE_AREAS; do
     for d in $ORCH/workers/${PFX[$a]}-*; do [ -d "$d" ] || continue; w=$(basename $d); mkdir -p hub/workers/$w
@@ -161,7 +165,7 @@ import_merges(){
   echo $tip > $mk
   return 0
 }
-if [ $M = main ]; then for a in $REMOTE_AREAS; do import_merges ${REPO_OF[$a]} || true; done; fi
+if [ $M = main ]; then for r in $(for a in $REMOTE_AREAS; do echo ${REPO_OF[$a]}; done | sort -u); do import_merges $r || true; done; fi
 
 # repair old metas whose remote_request= value was written unquoted (breaks `. meta`)
 for m in $ORCH/workers/*/meta; do grep -q "^remote_request=[^'\"$]" "$m" 2>/dev/null && python3 -I -c "import sys,shlex;p=sys.argv[1];L=open(p).read().splitlines();open(p,'w').write(chr(10).join([('remote_request='+shlex.quote(l.split('=',1)[1])) if l.startswith('remote_request=') and not l.split('=',1)[1][:1] in ('\\'','\"','\$') else l for l in L])+chr(10))" "$m"; done
