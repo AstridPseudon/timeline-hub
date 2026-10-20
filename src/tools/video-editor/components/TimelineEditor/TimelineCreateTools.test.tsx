@@ -12,46 +12,16 @@ import {
 const noop = () => {};
 
 describe('TimelineCreateTools', () => {
-  it('touch: three 40px tap buttons that call their handlers, and are not drag sources', () => {
-    const onAddText = vi.fn();
-    const onCreateEffect = vi.fn();
+  it('keeps the text-tool and effect-layer HTML5 drag sources, 24px, and a prompt-free animation button', () => {
     const onCreateAnimation = vi.fn();
     render(
       <TimelineCreateTools
-        variant="touch"
-        host="playback-row"
-        onAddText={onAddText}
-        onCreateEffect={onCreateEffect}
-        effectLabel="Create new effect"
-        onCreateAnimation={onCreateAnimation}
-        animationLabel="Create animation"
-      />,
-    );
-
-    const buttons = ['New text at playhead', 'Create new effect', 'Create animation'].map(
-      (name) => screen.getByRole('button', { name }),
-    );
-    buttons.forEach((button) => {
-      expect(button.tagName).toBe('BUTTON');
-      expect(button.className).toContain('h-10 w-10');
-      expect(button.getAttribute('draggable')).not.toBe('true');
-      fireEvent.click(button);
-    });
-    expect(onAddText).toHaveBeenCalledTimes(1);
-    expect(onCreateEffect).toHaveBeenCalledTimes(1);
-    expect(onCreateAnimation).toHaveBeenCalledTimes(1);
-  });
-
-  it('pointer: keeps the text-tool and effect-layer HTML5 drag sources', () => {
-    render(
-      <TimelineCreateTools
-        variant="pointer"
-        host="timeline-footer"
-        onAddText={noop}
+        labelWidth={144}
+        showTextTool
         onCreateEffect={noop}
         effectLabel="New effect layer at playhead"
         effectDragSource
-        onCreateAnimation={noop}
+        onCreateAnimation={onCreateAnimation}
         animationLabel="Create animation sequence"
       />,
     );
@@ -64,42 +34,45 @@ describe('TimelineCreateTools', () => {
     const textTransfer = { setData: vi.fn(), effectAllowed: '' };
     fireEvent.dragStart(text, { dataTransfer: textTransfer });
     expect(textTransfer.setData).toHaveBeenCalledWith('text-tool', 'true');
+    expect(textTransfer.effectAllowed).toBe('copy');
     const effectTransfer = { setData: vi.fn(), effectAllowed: '' };
     fireEvent.dragStart(effect, { dataTransfer: effectTransfer });
     expect(effectTransfer.setData).toHaveBeenCalledWith('effect-layer', 'true');
-    expect(screen.getByRole('button', { name: 'Create animation sequence' }).className).toContain('h-6 w-6');
+
+    const animation = screen.getByRole('button', { name: 'Create animation sequence' });
+    expect(animation.className).toContain('h-6 w-6');
+    fireEvent.click(animation);
+    expect(onCreateAnimation).toHaveBeenCalledTimes(1);
   });
 
-  it('marks the root with its host, and as shell chrome only when the shell hosts it', () => {
-    const { rerender } = render(
-      <TimelineCreateTools variant="pointer" host="timeline-footer" onAddText={noop} effectLabel="x" animationLabel="y" />,
+  it('turns the effect tool into a prompt button when the host takes prompts', () => {
+    const onCreateEffect = vi.fn();
+    render(
+      <TimelineCreateTools labelWidth={144} onCreateEffect={onCreateEffect} effectLabel="Create new effect" animationLabel="Create animation" />,
     );
-    const root = () => screen.getByTestId('timeline-tool-buttons');
-    expect(root().getAttribute('data-create-tools-host')).toBe('timeline-footer');
-    expect(root().hasAttribute('data-shell-interaction')).toBe(false);
 
-    rerender(<TimelineCreateTools variant="touch" host="toolbar" onAddText={noop} effectLabel="x" animationLabel="y" />);
-    expect(root().getAttribute('data-create-tools-host')).toBe('toolbar');
-    expect(root().getAttribute('data-shell-interaction')).toBe('true');
+    expect(screen.queryByTitle('Drag onto timeline to add an effect layer')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Create new effect' }));
+    expect(onCreateEffect).toHaveBeenCalledTimes(1);
   });
 
-  it.each(['playback-row', 'toolbar'] as const)('carries its own theme variables when the shell hosts it (%s), outside any canvas', (host) => {
-    render(<TimelineCreateTools variant="touch" host={host} onAddText={noop} onCreateEffect={noop} onCreateAnimation={noop} effectLabel="x" animationLabel="y" />);
-    const root = screen.getByTestId('timeline-tool-buttons');
-    ['--video-editor-accent-bg-strong', '--video-editor-effect-bg', '--video-editor-success-bg'].forEach((name) => {
-      expect(root.style.getPropertyValue(name), name).not.toBe('');
-    });
-    expect(root.style.left).toBe('');
+  it('shows only the tools it is given, just right of the track-name column', () => {
+    render(<TimelineCreateTools labelWidth={144} showTextTool effectLabel="x" animationLabel="y" />);
+
+    expect(screen.getByTitle('Drag onto timeline to add text')).toBeInTheDocument();
+    expect(screen.queryByTitle('New effect')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByTestId('timeline-tool-buttons').style.left).toBe('152px');
   });
 
   it('keeps pointer-down from reaching the timeline behind it', () => {
     const onParentPointerDown = vi.fn();
     render(
       <div onPointerDown={onParentPointerDown}>
-        <TimelineCreateTools variant="touch" host="toolbar" onAddText={noop} effectLabel="x" animationLabel="y" />
+        <TimelineCreateTools labelWidth={144} onCreateAnimation={noop} effectLabel="x" animationLabel="Create animation" />
       </div>,
     );
-    fireEvent.pointerDown(screen.getByRole('button', { name: 'New text at playhead' }));
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Create animation' }));
     expect(onParentPointerDown).not.toHaveBeenCalled();
   });
 

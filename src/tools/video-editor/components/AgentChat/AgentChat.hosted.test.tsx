@@ -14,7 +14,7 @@ vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
 
 vi.mock('@/shared/contexts/AgentChatContext', () => ({
   useAgentChatBridge: () => ({ timelineId: null, editorContext: { projectId: 'project-1' } }),
-  useAgentChatActionsRegistry: () => ({ registerHandlers: () => {}, unregister: () => {} }),
+  useAgentChatActionsRegistry: () => ({ registerHandlers: () => {}, publishState: () => {}, unregister: () => {} }),
 }));
 
 import { AgentChatPanel } from './AgentChat.tsx';

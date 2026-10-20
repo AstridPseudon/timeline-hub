@@ -642,12 +642,7 @@ function ClipActionComponent({
             {icon}
           </div>
         )}
-        {/* The 40px overflow button is pinned to the clip's right edge; the label ends before it
-            (and truncates with an ellipsis) instead of running under the dots. */}
-        <div
-          data-clip-label=""
-          className={cn('relative z-10 min-w-0 flex-1 py-1 pl-2 text-foreground', showOverflowMenu && canOpenContextMenu ? 'pr-10' : 'pr-2')}
-        >
+        <div className="relative z-10 min-w-0 flex-1 px-2 py-1 text-foreground">
           <div className="truncate text-[11px] font-medium">
             {isEmptyShotAnchor
               ? (emptyShotLabel ?? 'New Shot')

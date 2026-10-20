@@ -1,10 +1,12 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { TIMELINE_START_LEFT } from '../../../src/tools/video-editor/lib/coordinate-utils.ts';
+import { getTimelineLabelWidth } from '../../../src/tools/video-editor/lib/coordinate-utils.ts';
 import { BASELINE_CLIPS, PROJECT_SLUG, TIMELINE_SLUG, browserEvidencePath, openEditor } from './support';
 
 const FPS = 30;
+/** This spec runs on a desktop viewport, where the track-name column (the timeline's `startLeft`) is 144px. */
+const TIMELINE_START_LEFT = getTimelineLabelWidth('desktop');
 const PREVIEW_SURFACE = '[data-testid="video-editor-preview-surface"]';
 const RULER = '[data-testid="timeline-ruler"]';
 const HERO_CLIP = '[data-clip-id="clip-hero"][role="button"]';

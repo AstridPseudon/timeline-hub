@@ -240,7 +240,6 @@ export interface TimelineEditorCoreProps {
   onNavigateToShot?: (shot: Shot) => void;
   onOpenGenerateVideo?: (shot: Shot) => void;
   isCreatingShot?: boolean;
-  /** Creates a new empty shot anchored at an empty timeline position. */
   duplicatingClipId?: string | null;
   onDuplicateGenerationClip?: (clipId: string) => void | Promise<void>;
   onOpenShotVideoModal?: (shotId: string, reason: 'pinned-group' | 'final-video-file') => void;
@@ -826,7 +825,6 @@ function TimelineEditorCoreComponent({
     applyVariantToAsset,
     canCreateShotFromSelection,
     data,
-    deviceClass,
     dismissAsset,
     dismissedAssetKeys,
     duplicatingClipId,

@@ -1,6 +1,6 @@
 /**
- * The canned ACP replies for the editor's chat pane cold reads (state, draft, agent and model
- * catalogs), and nothing more. These are not Runtime routes and no existing fake serves them: with `VITE_ASTRID_ACP_BRIDGE_PORT` pointing at the fake, the
+ * The canned ACP replies the stub gave the editor's chat pane, and nothing more. These are not Runtime
+ * routes and no existing fake serves them: with `VITE_ASTRID_ACP_BRIDGE_PORT` pointing at the fake, the
  * editor's cold reads (`AgentChat` -> `useProjectChat`, `acpRoutes.ts`) land here. Every other ACP path
  * answers 404, so a prompt, a session creation or any other RPC can never be sent to the fake.
  *
@@ -60,14 +60,6 @@ export function createFakeAcp(projectSelectors: readonly string[]): FakeAcp {
           return { status: 200, body: chatState(selector) };
         }
         return null;
-      }
-      // The chat menu's two cold catalog reads (`AstridLocalAcpRoutes.agents` / `.models`): one ready
-      // agent and no model providers, in the shapes `localAgentCatalogSchema` / `modelCatalogSchema` parse.
-      if (pathname === '/agents' && method === 'GET') {
-        return { status: 200, body: { agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', line: null }] } };
-      }
-      if (pathname === '/models' && method === 'GET') {
-        return { status: 200, body: { providers: [], currentModel: null } };
       }
       // A cold editor can query the unscoped session list before project context settles. Give that exact
       // read a deterministic empty connection; no prompt, session creation or arbitrary RPC is served.

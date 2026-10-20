@@ -231,8 +231,6 @@ export interface TimelineEditorCoreProps {
   onOpenSequenceCreator?: () => void;
   onOpenExtensionManager?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
-  /** The shell hosts the touch create tools in its own chrome, so the canvas footer drops them. */
-  shellHostsTouchCreateTools?: boolean;
   finalVideoMap?: Map<string, DoubleClickFinalVideo>;
   shotGroups?: ShotGroup[];
   canonicalOccurrences?: readonly CanonicalShotOccurrence[];
@@ -257,7 +255,6 @@ export interface TimelineEditorCoreProps {
   onNavigateToShot?: (shot: Shot) => void;
   onOpenGenerateVideo?: (shot: Shot) => void;
   isCreatingShot?: boolean;
-  /** Creates a new empty shot anchored at an empty timeline position. */
   duplicatingClipId?: string | null;
   onDuplicateGenerationClip?: (clipId: string) => void | Promise<void>;
   onOpenShotVideoModal?: (shotId: string, reason: 'pinned-group' | 'final-video-file') => void;
@@ -271,7 +268,6 @@ function TimelineEditorCoreComponent({
   onOpenSequenceCreator,
   onOpenExtensionManager,
   onOpenElementCreationPrompt,
-  shellHostsTouchCreateTools,
   finalVideoMap = EMPTY_FINAL_VIDEO_MAP,
   shotGroups = EMPTY_SHOT_GROUPS,
   canonicalOccurrences = [],
@@ -1000,7 +996,6 @@ function TimelineEditorCoreComponent({
           onAddEffectLayerAt={handleAddEffectLayerAt}
           onOpenSequenceCreator={onOpenSequenceCreator}
           onOpenElementCreationPrompt={onOpenElementCreationPrompt}
-          shellHostsTouchCreateTools={shellHostsTouchCreateTools}
           onScaleWidthChange={setScaleWidth}
           unusedTrackCount={unusedTrackCount}
           onClearUnusedTracks={handleClearUnusedTracks}

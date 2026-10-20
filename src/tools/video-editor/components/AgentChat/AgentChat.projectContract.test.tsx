@@ -9,7 +9,7 @@ import type { ProjectChatState } from '@/integrations/astrid/acpRoutes';
 // The editor is the host boundary. Chat, its hooks, ACP routes, transport,
 // presentation, attachment selection and query cache are all real.
 const host = vi.hoisted(() => ({ context: null as AgentChatEditorContext | null,
-  actions: { registerHandlers: vi.fn(), unregister: vi.fn() } }));
+  actions: { registerHandlers: vi.fn(), publishState: vi.fn(), unregister: vi.fn() } }));
 vi.mock('@/shared/contexts/AgentChatContext', () => ({
   useAgentChatBridge: () => ({ editorContext: host.context, timelineId: host.context?.timelineId }),
   useAgentChatActionsRegistry: () => host.actions,

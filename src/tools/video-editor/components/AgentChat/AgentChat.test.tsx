@@ -200,6 +200,7 @@ function mockFromState(state: ReturnType<typeof createState>) {
   }));
   mocks.useAgentChatActionsRegistry.mockImplementation(() => ({
     registerHandlers: vi.fn(),
+    publishState: vi.fn(),
     unregister: vi.fn(),
   }));
   mocks.useAgentSessions.mockImplementation(() => ({
