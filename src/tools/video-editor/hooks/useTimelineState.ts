@@ -186,6 +186,7 @@ function useTimelineEditorContextValue({
   selectedParamPort,
   elementPort,
   shotSetPort,
+  parentClipAddMediaPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -234,6 +235,7 @@ function useTimelineEditorContextValue({
   selectedParamPort?: ClipParamsCapturePort;
   elementPort?: import('@/tools/video-editor/commands/elementGesture.ts').ElementCapturePort;
   shotSetPort?: ShotSetCapturePort;
+  parentClipAddMediaPort?: import('@/tools/video-editor/commands/commitSession.ts').ParentClipAddMediaCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -264,6 +266,7 @@ function useTimelineEditorContextValue({
     element: elementPort,
     trackLabel: trackLabelPort,
     shotSet: shotSetPort,
+    parentClipAddMedia: parentClipAddMediaPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -447,6 +450,7 @@ function useTimelineEditorContextValue({
     clipScalarPort,
     clipTrimPort,
     shotSetPort,
+    parentClipAddMediaPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -1146,6 +1150,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     selectedParamPort: save.commands.clipParamsPort,
     elementPort: save.commands.elementPort,
     shotSetPort: save.commands.shotSetPort,
+    parentClipAddMediaPort: save.commands.parentClipAddMediaPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
