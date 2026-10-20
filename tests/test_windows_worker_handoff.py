@@ -505,6 +505,90 @@ def test_windows_handle_list_is_explicit_and_inheritance_is_restored(monkeypatch
     assert flags == {101: False, 202: False} and listener.closed
 
 
+@pytest.mark.parametrize("mode", ["-c", "-m"])
+@pytest.mark.parametrize("flags", [["-I", "-S"], ["-S", "-I"], ["-u", "-B", "-I", "-S", "-s", "-E"]])
+def test_windows_module_entry_accepts_no_site_and_preserves_worker_arguments(monkeypatch, mode, flags):
+    import runpy
+    received = []
+    monkeypatch.setattr(sys, "argv", [])
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    original_path = list(sys.path)
+    monkeypatch.setenv("PYTHONPATH", "unadmitted-import-root")
+    monkeypatch.setitem(sys.modules, "worker_probe", SimpleNamespace(record=lambda: received.append(list(sys.argv))))
+    def run_module(name, **kwargs):
+        assert name == "worker_probe" and kwargs == {"run_name": "__main__", "alter_sys": True}
+        received.append(list(sys.argv))
+    monkeypatch.setattr(runpy, "run_module", run_module)
+    target = "import worker_probe; worker_probe.record()" if mode == "-c" else "worker_probe"
+    windows.enter_module([sys.executable, *flags, mode, target, "request.json", "--child-bridge", "101", "-S"])
+    assert received == [["-c" if mode == "-c" else target, "request.json", "--child-bridge", "101", "-S"]]
+    assert sys.path == original_path
+
+
+def test_windows_no_site_bootstrap_authenticates_then_enters_network_site_and_channel(monkeypatch):
+    events = []
+    listener = SimpleNamespace(endpoint="private-endpoint", close=lambda: None)
+    monkeypatch.setattr(windows, "Listener", lambda **kwargs: listener)
+    monkeypatch.setitem(sys.modules, "msvcrt", SimpleNamespace())
+    monkeypatch.setattr(subprocess, "STARTUPINFO", lambda: SimpleNamespace(lpAttributeList=None), raising=False)
+    monkeypatch.setattr(os, "get_handle_inheritable", lambda handle: False, raising=False)
+    monkeypatch.setattr(os, "set_handle_inheritable", lambda handle, value: events.append(("inherit", handle, value)), raising=False)
+    inherited = Channel()
+    inherited.detach = lambda: 101
+    inherited.sendall = lambda data: events.append(("worker-send", data))
+    monkeypatch.setattr(windows.socket, "socket", lambda *, fileno: inherited)
+    authenticated = Channel()
+    authenticated.sendall = lambda data: events.append(("bootstrap-ack", data))
+    authenticated.close = lambda: events.append("bootstrap-close")
+    def connect(endpoint, **kwargs):
+        assert endpoint == listener.endpoint
+        events.append("authenticate")
+        return authenticated
+    monkeypatch.setattr(windows, "connect", connect)
+    monkeypatch.setattr(windows, "verify_peer", lambda channel: events.append("verify-owner") or PEER)
+    monkeypatch.setattr(windows, "pin_peer", lambda channel, owner: events.append(("adopt-owner", owner)) or owner)
+    monkeypatch.setattr(windows, "_inherited_owner", None)
+    monkeypatch.setattr(windows, "_inherited_sockets", {})
+    monkeypatch.setattr(sys, "argv", [])
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    monkeypatch.setitem(sys.modules, "startup_probe", SimpleNamespace(install_network=lambda: events.append("network")))
+    def worker():
+        assert sys.argv == ["-c", "request.json", "--child-bridge", "101"]
+        events.append("worker")
+        windows.adopt_socket(int(sys.argv[3])).sendall(b"ready")
+    dependency = SimpleNamespace(run=worker)
+    def site_main():
+        assert events[-1] == "network"
+        events.append("site")
+        monkeypatch.setitem(sys.modules, "worker_dependency", dependency)
+        site.execsitecustomize()
+        site.execusercustomize()
+    site = SimpleNamespace(main=site_main, execsitecustomize=lambda: pytest.fail("unexpected site hook"),
+                           execusercustomize=lambda: pytest.fail("unexpected user hook"))
+    monkeypatch.setitem(sys.modules, "site", site)
+    monkeypatch.delitem(sys.modules, "worker_dependency", raising=False)
+    command = (
+        "import startup_probe; startup_probe.install_network(); import site; "
+        "site.execsitecustomize=lambda: None; site.execusercustomize=lambda: None; site.main(); "
+        "import worker_dependency; worker_dependency.run()"
+    )
+    argv = [sys.executable, "-u", "-B", "-I", "-S", "-c", command, "request.json", "--child-bridge", "101"]
+    kwargs = {"env": {"PYTHONPATH": "unadmitted-import-root"}}
+    launch = windows.InheritedHandles(argv, kwargs, (101,))
+    try:
+        assert launch.argv == [windows.python_executable(sys.executable), "-u", "-B", "-I", "-S",
+                               str(Path(windows.__file__).with_name("windows_worker_bootstrap.py"))]
+        monkeypatch.setenv("ASTRID_RUNTIME_WORKER_BOOTSTRAP", kwargs["env"]["ASTRID_RUNTIME_WORKER_BOOTSTRAP"])
+        events.clear()
+        windows.run_worker()
+        assert events == ["authenticate", "verify-owner", ("bootstrap-ack", b"\x02"), "bootstrap-close",
+                          ("inherit", 101, False), "network", "site", "worker", ("adopt-owner", PEER),
+                          ("worker-send", b"ready")]
+        assert "unadmitted-import-root" not in sys.path
+    finally:
+        launch.close()
+
+
 @pytest.mark.parametrize("failure", [None, "job", "spawn", "assign", "resume", "authenticate"])
 def test_windows_worker_launch_authenticates_after_job_assignment_and_cleans_failure(monkeypatch, failure):
     events = []
@@ -581,6 +665,88 @@ def test_windows_worker_launch_ignores_a_rogue_first_connection(tmp_path, monkey
                 if process.poll() is None: platform.stop_tree(process, grace=1)
             finally:
                 process._runtime_job.close()
+
+
+@pytest.mark.integration
+@requires_windows_process_and_lock_apis
+def test_windows_strict_network_startup_with_inherited_channel(tmp_path):
+    import venv
+    from runtime_protocol.local_worker_composition import _frame_receive
+    root = tmp_path / "strict-worker-venv"
+    venv.EnvBuilder(with_pip=False).create(root)
+    packages = root / "Lib" / "site-packages"
+    unexpected_site = tmp_path / "unexpected-site"
+    guarded_site = tmp_path / "guarded-site"
+    # Both automatic .pth execution and a customizable hook must stay out of
+    # bootstrap startup. The worker explicitly restores dependencies only once
+    # its network guard is installed, matching strict host startup ordering.
+    (packages / "startup-order.pth").write_text(
+        "import pathlib, socket; assert socket.socket.connect.__name__ == 'deny_network'; "
+        f"pathlib.Path({str(guarded_site)!r}).write_text('guarded')\n", encoding="utf-8")
+    (packages / "sitecustomize.py").write_text(
+        f"from pathlib import Path; Path({str(unexpected_site)!r}).touch()\n", encoding="utf-8")
+    (packages / "worker_dependency.py").write_text(
+        "import socket\nassert socket.socket.connect.__name__ == 'deny_network'\nVALUE = 'admitted'\n",
+        encoding="utf-8")
+    code = r'''
+import importlib.util, json, os, pathlib, socket, sys
+config = json.loads(sys.argv[1])
+assert sys.flags.isolated and sys.flags.no_site
+assert 'site' not in sys.modules
+assert not pathlib.Path(config['unexpected_site']).exists()
+assert importlib.util.find_spec('worker_dependency') is None
+events = ['network']
+def deny_network(self, address):
+    raise PermissionError('strict worker network guard')
+socket.socket.connect = deny_network
+import site
+site.execsitecustomize = lambda: None
+site.execusercustomize = lambda: None
+site.main()
+events.append('site')
+assert pathlib.Path(config['guarded_site']).read_text() == 'guarded'
+assert not pathlib.Path(config['unexpected_site']).exists()
+import worker_dependency
+events.append('worker')
+try:
+    with socket.socket() as denied:
+        denied.connect(('127.0.0.1', 17480))
+except PermissionError:
+    pass
+else:
+    raise AssertionError('network guard did not remain installed')
+from runtime_protocol import platform
+assert sys.argv[2:4] == ['request.json', '--child-bridge']
+channel = platform.handoff_adopt_socket(int(sys.argv[4]))
+channel.sendall((json.dumps({'events': events, 'pid': os.getpid(), 'prefix': sys.prefix,
+    'dependency': worker_dependency.VALUE, 'inheritable': channel.get_inheritable()}) + '\n').encode())
+assert channel.recv(1) == b'x'
+channel.close()
+'''
+    config = json.dumps({"unexpected_site": str(unexpected_site), "guarded_site": str(guarded_site)})
+    parent, inherited = socket.socketpair()
+    process = None
+    try:
+        process = platform.spawn_tree([str(platform.venv_python(root)), "-I", "-S", "-c", code,
+                                      config, "request.json", "--child-bridge", str(inherited.fileno())],
+                                     pass_fds=(inherited.fileno(),), close_fds=True,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        inherited.close(); parent.settimeout(15)
+        report = _frame_receive(parent)
+        assert report == {"events": ["network", "site", "worker"], "pid": process.pid,
+                          "prefix": str(root), "dependency": "admitted", "inheritable": False}
+        parent.sendall(b"x")
+        output, errors = process.communicate(timeout=15)
+        assert process.returncode == 0, (output, errors)
+        assert not unexpected_site.exists()
+    finally:
+        parent.close(); inherited.close()
+        if process is not None:
+            try:
+                if process.poll() is None: platform.stop_tree(process, grace=1)
+            finally:
+                process._runtime_job.close()
+                process.communicate(timeout=15)
 
 
 @pytest.mark.integration

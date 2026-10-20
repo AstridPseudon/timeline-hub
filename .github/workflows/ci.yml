@@ -106,4 +106,5 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -e '.[test]'
-      - run: python -m pytest -q -n 2 -m "" tests/test_windows_worker_handoff.py
+      - name: Qualify authenticated handoff and strict-network inherited channels
+        run: python -m pytest -q -n 2 -m "" tests/test_windows_worker_handoff.py

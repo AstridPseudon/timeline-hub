@@ -329,9 +329,11 @@ class InheritedHandles:
                 "sockets": sockets,
             }, separators=(",", ":"))
             kwargs.update(env=environment, close_fds=True)
+            # Strict workers install their network guard before site.main;
+            # the authenticated bootstrap must also suppress automatic site.
             flags = []
             for argument in argv[1:]:
-                if argument not in ("-I", "-u", "-B", "-s", "-E"):
+                if argument not in ("-I", "-S", "-u", "-B", "-s", "-E"):
                     break
                 flags.append(argument)
             self.argv = [executable, *flags, str(Path(__file__).with_name("windows_worker_bootstrap.py"))]
@@ -400,7 +402,7 @@ def enter_module(argv):
     if os.path.normcase(os.path.realpath(argv[0])) != os.path.normcase(os.path.realpath(sys.executable)):
         raise ConflictError("Windows custody target requires the selected Python interpreter")
     arguments = argv[1:]
-    while arguments and arguments[0] in ("-I", "-u", "-B", "-s", "-E"):
+    while arguments and arguments[0] in ("-I", "-S", "-u", "-B", "-s", "-E"):
         arguments = arguments[1:]
     if len(arguments) < 2 or arguments[0] not in ("-m", "-c"):
         raise ConflictError("Windows worker launch requires a Python module or command")
