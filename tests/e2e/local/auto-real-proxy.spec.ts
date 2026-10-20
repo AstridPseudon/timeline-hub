@@ -34,6 +34,10 @@ type Workspace = { harness: DirectHarness; seed: ThreeProductsSeed; vite: ViteWo
 type ViteWorkspace = { origin: string; restart(): Promise<void>; stop(): Promise<void> };
 type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> };
 
+function sanitizedError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 async function freePort(): Promise<number> {
   const server = createServer();
   await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
@@ -300,18 +304,28 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
 
   let reserved: Awaited<ReturnType<typeof commandOutboxes>> | undefined;
   let taskPost: Wire | undefined;
+  let reservationProbeFailure: string | undefined;
   await page.route(`**${TASK_PATH}`, async (route) => {
     taskPost = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '' };
-    reserved = await commandOutboxes(page, seed.timelineId);
-    if (!reserved.some((item) => item.placementContinuations?.length)) {
-      // Keep the admission request paused: the continuation must become
-      // observable before Runtime receives the task body.
-      await expect.poll(async () => {
-        reserved = await commandOutboxes(page, seed.timelineId);
-        return reserved.some((item) => item.placementContinuations?.length);
-      }, CEILING).toBe(true);
+    let stage = 'initial reservation probe';
+    try {
+      reserved = await commandOutboxes(page, seed.timelineId);
+      if (!reserved.some((item) => item.placementContinuations?.length)) {
+        // Keep the admission request paused: the continuation must become
+        // observable before Runtime receives the task body.
+        stage = 'reservation probe polling';
+        await expect.poll(async () => {
+          reserved = await commandOutboxes(page, seed.timelineId);
+          return reserved.some((item) => item.placementContinuations?.length);
+        }, CEILING).toBe(true);
+      }
+      await route.continue();
+    } catch (error) {
+      // Keep the original probe error visible while fail-closing the paused
+      // admission request. A probe failure must not permit task transmission.
+      reservationProbeFailure = `${stage}: ${sanitizedError(error)}`;
+      await route.abort('failed').catch(() => {});
     }
-    await route.continue();
   });
   await page.getByRole('button', { name: 'Generate 1 New Image', exact: true }).click();
   try {
@@ -326,7 +340,10 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
     ].join('\n'));
   }
   const owner = (reserved ?? []).find((item) => item.placementContinuations?.length);
-  if (!owner) throw new Error(`placement reservation missing before task admission: ${JSON.stringify(reserved)}`);
+  if (!owner) {
+    const probe = reservationProbeFailure ? ` (${reservationProbeFailure})` : '';
+    throw new Error(`placement reservation missing before task admission${probe}: ${JSON.stringify(reserved)}`);
+  }
   expect(owner?.placementContinuations?.[0].input).toMatchObject({ ownerRef: `occurrence:${seed.occurrenceId}`, lane: PLACEMENT_LANE, anchor: seed.agentClipId });
   expect(owner?.placementContinuations?.[0].input.request).toEqual({ method: 'POST', path: '/v1/tasks', body: taskPost!.body, key: taskPost!.key });
   expect(owner?.placementContinuations?.[0].input.readClosure).toEqual(expect.objectContaining({ head: expect.anything(), savedCanonicalDocument: expect.anything() }));
