@@ -69,7 +69,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         """Edit a TimelineSession's original base and pending intent.
 
         Bounded literal clip verbs queue durably before updating the preview.
-        Use ``flush()`` to accept them; unsupported verbs refuse explicitly.
+        Use ``flush()`` to accept them; ``publish(message)`` also accepts one
+        parent move when the session explicitly names its draft's outbox path.
+        Unsupported verbs refuse explicitly.
         Detached ``open``/``load``/``draft`` retain their existing behavior.
         """
         from astrid.sdk.timeline.native_checkout import AttachedCheckout
