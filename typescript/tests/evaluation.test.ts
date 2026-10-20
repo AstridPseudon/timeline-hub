@@ -4,6 +4,8 @@ import {
   applyAudioEnvelope,
   audioEnvelopeAt,
   compileAudioEnvelope,
+  computeMediaTrim,
+  getSanitizedPlaybackRate,
   prepareTrack,
   declareAppTransition,
   prepareDeclaredTrack,
@@ -52,6 +54,30 @@ test('audio envelope evaluation accepts representative fade input and applies ga
   const channel = new Float32Array([1, 1, 1]);
   applyAudioEnvelope([channel], 4, envelope);
   assert.deepEqual([...channel].map((value) => Number(value.toFixed(6))), [0, .5, 1]);
+});
+
+test('public media clock helpers preserve trim rounding and strict half-open source bounds', () => {
+  const occurrenceFixture: TimelineClip & {occurrence: {id: string}} = {
+    id: 'occurrence-clip', at: 12.5, hold: 4, speed: 1.5, track: 'audio',
+    from: 0.49, to: 1.01, occurrence: {id: 'occurrence-1'},
+  };
+  assert.deepEqual(computeMediaTrim(occurrenceFixture, 30), {trimBefore: 15, trimAfter: 30});
+  assert.equal(getSanitizedPlaybackRate(occurrenceFixture.speed), 1.5);
+  assert.deepEqual(computeMediaTrim({from: .5, to: .5}, 30), {trimBefore: 15});
+  assert.deepEqual(computeMediaTrim({from: .5, to: .49}, 30), {trimBefore: 15});
+});
+
+test('public media clock helpers preserve defaults, invalid-rate fallback and fractional-fps rounding', () => {
+  const defaultFixture: TimelineClip = {id: 'default', at: 0, hold: 2, track: 'audio'};
+  assert.deepEqual(computeMediaTrim(defaultFixture, 30), {trimBefore: 0});
+  assert.deepEqual(computeMediaTrim({from: .5, to: 1.5}, 29.97), {trimBefore: 15, trimAfter: 45});
+
+  for (const invalid of [undefined, 0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+    assert.equal(getSanitizedPlaybackRate(invalid), 1);
+  }
+  assert.equal(getSanitizedPlaybackRate(defaultFixture.speed), 1);
+  assert.equal(getSanitizedPlaybackRate(.5), .5);
+  assert.equal(getSanitizedPlaybackRate(2), 2);
 });
 
 // Keep the public result shape exercised as a compile-time contract too.

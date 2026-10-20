@@ -17,6 +17,8 @@ export type {AppTransition, TransitionDeclaration, TransitionImplementation, Tra
 export type {Align, ClipSpan, DrawPlan, FadeWindow, TransitionSpec, IncomingTransitionPolicy, CompiledCanonicalTransitions, IncomingTransitionSpec} from './lib/transition-spans';
 
 export {clipOpacity} from './lib/clip-look';
+export {computeMediaTrim} from './lib/trim';
+export {getSanitizedPlaybackRate} from './lib/duration';
 
 export type PreparedTrack = {
   readonly plans: readonly DrawPlan[];

@@ -1,6 +1,6 @@
 # @banodoco/timeline-composition
 
-Version 0.0.9 ships built ESM and declarations for the timeline evaluator,
+Version 0.0.11 ships built ESM and declarations for the timeline evaluator,
 Remotion composition, theme API and default registries. Plain Node can import
 `@banodoco/timeline-composition/evaluation` without React, Remotion or a TypeScript
 loader. The renderer uses host peers React/React DOM 18.3.1 and
@@ -296,6 +296,29 @@ This API does not wire the App editor or change legacy rendering automatically.
 - Invalid speeds (not a finite number above 0) act as 1.
 
 The element remap is a `<Freeze>` around the element content, applied in `ClipLook.tsx`. The sanitising and frame math is pure and lives in `typescript/src/lib/clip-look.ts` (`clipSpeed`, `remappedFrame`).
+
+## Media clock helpers
+
+The public `./evaluation` entry exports the existing pure media clock helpers:
+
+```ts
+import {
+  computeMediaTrim,
+  getSanitizedPlaybackRate,
+} from '@banodoco/timeline-composition/evaluation';
+
+const trim = computeMediaTrim({from: 0.5, to: 1.5}, 30);
+// {trimBefore: 15, trimAfter: 45}
+const rate = getSanitizedPlaybackRate(2);
+// 2
+```
+
+`computeMediaTrim` rounds source seconds to frames with `Math.round`, clamps a
+negative or invalid `from` to zero, and includes `trimAfter` only when `to` is
+strictly greater than the effective start. `getSanitizedPlaybackRate` returns
+the finite positive speed unchanged and otherwise returns `1`. These helpers
+are the same functions used by the media renderers; the public export does not
+change their math or behavior.
 
 ## Build, package and verify
 
