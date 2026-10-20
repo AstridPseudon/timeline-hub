@@ -1,0 +1,26 @@
+{
+  "members": [
+    "FILELIST.md",
+    "ORCHREPORT.md",
+    "README.md",
+    "VERSION",
+    "owner_film_cliplook_scan.py",
+    "reference/extension-ORCHREPORT.md",
+    "reference/extension-owner-film-differences-scan.json",
+    "reference/predecessor-ORCHREPORT.md",
+    "reference/predecessor-owner-film-cliplook-scan.json",
+    "tests/conftest.py",
+    "tests/test_owner_film_cliplook_scan.py"
+  ],
+  "tgz": {
+    "name": "owner-film-viewing-tools-v1.tgz",
+    "sha256": "fc9d90a4cf2019882ba3dbb6fd4cb38e6193770d14e2e9d1ad279dddd0517308",
+    "size": 15871
+  },
+  "version": "1.0.0",
+  "zip": {
+    "name": "owner_film_cliplook_scan-v1.0.0.zip",
+    "sha256": "16b37fad6f3953b547c8d9dbeec914b1dcbf684faa95a71143b5a918eca16656",
+    "size": 20310
+  }
+}

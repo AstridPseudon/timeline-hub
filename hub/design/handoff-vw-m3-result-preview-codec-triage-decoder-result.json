@@ -1,0 +1,769 @@
+{
+  "kind": "decoder calibration only; no App/HTTP streaming/parity qualification",
+  "start": "2026-10-20T04:55:03.781Z",
+  "cases": [
+    {
+      "executablePath": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+      "browserVersion": "141.0.7390.37",
+      "mode": "blob",
+      "support": {
+        "video/mp4": "maybe",
+        "video/mp4; codecs=\"avc1.640028\"": "",
+        "audio/mp4; codecs=\"mp4a.40.2\"": "",
+        "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"": "",
+        "video/webm; codecs=\"vp8\"": "probably"
+      },
+      "outcome": "error",
+      "events": [
+        {
+          "event": "emptied",
+          "clockMs": 134.10000000149012,
+          "sinceStartMs": 73.80000000074506,
+          "wallTime": 1792472104099,
+          "currentSrc": "",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadstart",
+          "clockMs": 136.5,
+          "sinceStartMs": 76.19999999925494,
+          "wallTime": 1792472104101,
+          "currentSrc": "blob:https://astrid.test:39635/2f115baa-bf61-4fd3-a097-9f91777f16ad",
+          "readyState": 0,
+          "networkState": 2,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "error",
+          "clockMs": 147.10000000149012,
+          "sinceStartMs": 86.80000000074506,
+          "wallTime": 1792472104112,
+          "currentSrc": "blob:https://astrid.test:39635/2f115baa-bf61-4fd3-a097-9f91777f16ad",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": {
+            "code": 4,
+            "message": "DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams"
+          }
+        }
+      ],
+      "final": {
+        "clockMs": 147.20000000298023,
+        "sinceStartMs": 86.90000000223517,
+        "wallTime": 1792472104112,
+        "currentSrc": "blob:https://astrid.test:39635/2f115baa-bf61-4fd3-a097-9f91777f16ad",
+        "readyState": 0,
+        "networkState": 3,
+        "duration": null,
+        "width": 0,
+        "height": 0,
+        "currentTime": 0,
+        "error": {
+          "code": 4,
+          "message": "DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams"
+        }
+      },
+      "transport": [
+        {
+          "clock": "2026-10-20T04:55:04.117Z",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "executablePath": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+      "browserVersion": "141.0.7390.37",
+      "mode": "full200",
+      "support": {
+        "video/mp4": "maybe",
+        "video/mp4; codecs=\"avc1.640028\"": "",
+        "audio/mp4; codecs=\"mp4a.40.2\"": "",
+        "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"": "",
+        "video/webm; codecs=\"vp8\"": "probably"
+      },
+      "outcome": "error",
+      "events": [
+        {
+          "event": "emptied",
+          "clockMs": 69.69999999925494,
+          "sinceStartMs": 0.9000000022351742,
+          "wallTime": 1792472104260,
+          "currentSrc": "",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadstart",
+          "clockMs": 71.79999999701977,
+          "sinceStartMs": 3,
+          "wallTime": 1792472104262,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 0,
+          "networkState": 2,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "error",
+          "clockMs": 99.5,
+          "sinceStartMs": 30.700000002980232,
+          "wallTime": 1792472104290,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": {
+            "code": 4,
+            "message": "DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams"
+          }
+        }
+      ],
+      "final": {
+        "clockMs": 99.5,
+        "sinceStartMs": 30.700000002980232,
+        "wallTime": 1792472104290,
+        "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+        "readyState": 0,
+        "networkState": 3,
+        "duration": null,
+        "width": 0,
+        "height": 0,
+        "currentTime": 0,
+        "error": {
+          "code": 4,
+          "message": "DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams"
+        }
+      },
+      "transport": [
+        {
+          "clock": "2026-10-20T04:55:04.265Z",
+          "requestHeaderNames": [
+            "accept",
+            "accept-encoding",
+            "origin",
+            "range",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "user-agent"
+          ],
+          "request": {
+            "origin": "https://astrid.test:39635",
+            "range": "bytes=0-"
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "access-control-allow-origin": "https://astrid.test:39635",
+              "access-control-expose-headers": "content-type, content-length, content-range, accept-ranges, etag, last-modified",
+              "cache-control": "private, max-age=31536000, immutable",
+              "content-length": "1109353",
+              "content-type": "video/mp4",
+              "date": "Tue, 20 Oct 2026 04:39:54 GMT",
+              "etag": "\"sha256:ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9\"",
+              "vary": "Origin"
+            }
+          },
+          "bodySha256": "ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "bodyBytes": 1109353
+        },
+        {
+          "clock": "2026-10-20T04:55:04.293Z",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "executablePath": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+      "browserVersion": "141.0.7390.37",
+      "mode": "range206",
+      "support": {
+        "video/mp4": "maybe",
+        "video/mp4; codecs=\"avc1.640028\"": "",
+        "audio/mp4; codecs=\"mp4a.40.2\"": "",
+        "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"": "",
+        "video/webm; codecs=\"vp8\"": "probably"
+      },
+      "outcome": "error",
+      "events": [
+        {
+          "event": "emptied",
+          "clockMs": 59.80000000074506,
+          "sinceStartMs": 0.8000000007450581,
+          "wallTime": 1792472104416,
+          "currentSrc": "",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadstart",
+          "clockMs": 61.69999999925494,
+          "sinceStartMs": 2.699999999254942,
+          "wallTime": 1792472104418,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 0,
+          "networkState": 2,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "error",
+          "clockMs": 85.69999999925494,
+          "sinceStartMs": 26.699999999254942,
+          "wallTime": 1792472104442,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": {
+            "code": 4,
+            "message": "DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams"
+          }
+        }
+      ],
+      "final": {
+        "clockMs": 85.90000000223517,
+        "sinceStartMs": 26.900000002235174,
+        "wallTime": 1792472104442,
+        "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+        "readyState": 0,
+        "networkState": 3,
+        "duration": null,
+        "width": 0,
+        "height": 0,
+        "currentTime": 0,
+        "error": {
+          "code": 4,
+          "message": "DEMUXER_ERROR_NO_SUPPORTED_STREAMS: FFmpegDemuxer: no supported streams"
+        }
+      },
+      "transport": [
+        {
+          "clock": "2026-10-20T04:55:04.419Z",
+          "requestHeaderNames": [
+            "accept",
+            "accept-encoding",
+            "origin",
+            "range",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "user-agent"
+          ],
+          "request": {
+            "origin": "https://astrid.test:39635",
+            "range": "bytes=0-"
+          },
+          "response": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "access-control-allow-origin": "https://astrid.test:39635",
+              "access-control-expose-headers": "content-type, content-length, content-range, accept-ranges, etag, last-modified",
+              "cache-control": "private, max-age=31536000, immutable",
+              "content-length": "1109353",
+              "content-type": "video/mp4",
+              "date": "Tue, 20 Oct 2026 04:39:54 GMT",
+              "etag": "\"sha256:ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9\"",
+              "vary": "Origin",
+              "content-range": "bytes 0-1109352/1109353"
+            }
+          },
+          "bodySha256": "ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "bodyBytes": 1109353
+        },
+        {
+          "clock": "2026-10-20T04:55:04.445Z",
+          "failure": "net::ERR_ABORTED"
+        }
+      ]
+    },
+    {
+      "executablePath": "/opt/google/chrome/chrome",
+      "browserVersion": "155.0.8059.84",
+      "mode": "blob",
+      "support": {
+        "video/mp4": "maybe",
+        "video/mp4; codecs=\"avc1.640028\"": "probably",
+        "audio/mp4; codecs=\"mp4a.40.2\"": "probably",
+        "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"": "probably",
+        "video/webm; codecs=\"vp8\"": "probably"
+      },
+      "outcome": "decoded-seek",
+      "events": [
+        {
+          "event": "emptied",
+          "clockMs": 135.39999999850988,
+          "sinceStartMs": 72.89999999850988,
+          "wallTime": 1792472104919,
+          "currentSrc": "",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadstart",
+          "clockMs": 145.09999999776483,
+          "sinceStartMs": 82.59999999776483,
+          "wallTime": 1792472104929,
+          "currentSrc": "blob:https://astrid.test:39635/25211430-4632-4479-815b-aca69783457d",
+          "readyState": 0,
+          "networkState": 2,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadedmetadata",
+          "clockMs": 148,
+          "sinceStartMs": 85.5,
+          "wallTime": 1792472104932,
+          "currentSrc": "blob:https://astrid.test:39635/25211430-4632-4479-815b-aca69783457d",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadeddata",
+          "clockMs": 150,
+          "sinceStartMs": 87.5,
+          "wallTime": 1792472104934,
+          "currentSrc": "blob:https://astrid.test:39635/25211430-4632-4479-815b-aca69783457d",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "canplay",
+          "clockMs": 150.09999999776483,
+          "sinceStartMs": 87.59999999776483,
+          "wallTime": 1792472104934,
+          "currentSrc": "blob:https://astrid.test:39635/25211430-4632-4479-815b-aca69783457d",
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        },
+        {
+          "event": "seeking",
+          "clockMs": 150.30000000074506,
+          "sinceStartMs": 87.80000000074506,
+          "wallTime": 1792472104934,
+          "currentSrc": "blob:https://astrid.test:39635/25211430-4632-4479-815b-aca69783457d",
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        },
+        {
+          "event": "seeked",
+          "clockMs": 215.80000000074506,
+          "sinceStartMs": 153.30000000074506,
+          "wallTime": 1792472105000,
+          "currentSrc": "blob:https://astrid.test:39635/25211430-4632-4479-815b-aca69783457d",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        }
+      ],
+      "final": {
+        "clockMs": 215.80000000074506,
+        "sinceStartMs": 153.30000000074506,
+        "wallTime": 1792472105000,
+        "currentSrc": "blob:https://astrid.test:39635/25211430-4632-4479-815b-aca69783457d",
+        "readyState": 4,
+        "networkState": 1,
+        "duration": 5.5,
+        "width": 1920,
+        "height": 1080,
+        "currentTime": 0.5,
+        "error": null
+      },
+      "transport": []
+    },
+    {
+      "executablePath": "/opt/google/chrome/chrome",
+      "browserVersion": "155.0.8059.84",
+      "mode": "full200",
+      "support": {
+        "video/mp4": "maybe",
+        "video/mp4; codecs=\"avc1.640028\"": "probably",
+        "audio/mp4; codecs=\"mp4a.40.2\"": "probably",
+        "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"": "probably",
+        "video/webm; codecs=\"vp8\"": "probably"
+      },
+      "outcome": "decoded-seek",
+      "events": [
+        {
+          "event": "emptied",
+          "clockMs": 64,
+          "sinceStartMs": 0.8000000007450581,
+          "wallTime": 1792472105171,
+          "currentSrc": "",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadstart",
+          "clockMs": 65.09999999776483,
+          "sinceStartMs": 1.8999999985098839,
+          "wallTime": 1792472105172,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 0,
+          "networkState": 2,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadedmetadata",
+          "clockMs": 89.89999999850988,
+          "sinceStartMs": 26.699999999254942,
+          "wallTime": 1792472105197,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadeddata",
+          "clockMs": 91.59999999776483,
+          "sinceStartMs": 28.399999998509884,
+          "wallTime": 1792472105199,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "canplay",
+          "clockMs": 92,
+          "sinceStartMs": 28.800000000745058,
+          "wallTime": 1792472105199,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        },
+        {
+          "event": "seeking",
+          "clockMs": 102.69999999925494,
+          "sinceStartMs": 39.5,
+          "wallTime": 1792472105210,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        },
+        {
+          "event": "seeked",
+          "clockMs": 132.39999999850988,
+          "sinceStartMs": 69.19999999925494,
+          "wallTime": 1792472105240,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        }
+      ],
+      "final": {
+        "clockMs": 132.5,
+        "sinceStartMs": 69.30000000074506,
+        "wallTime": 1792472105240,
+        "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+        "readyState": 4,
+        "networkState": 1,
+        "duration": 5.5,
+        "width": 1920,
+        "height": 1080,
+        "currentTime": 0.5,
+        "error": null
+      },
+      "transport": [
+        {
+          "clock": "2026-10-20T04:55:05.174Z",
+          "requestHeaderNames": [
+            "accept",
+            "origin",
+            "range",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "user-agent"
+          ],
+          "request": {
+            "origin": "https://astrid.test:39635",
+            "range": "bytes=0-"
+          },
+          "response": {
+            "status": 200,
+            "headers": {
+              "accept-ranges": "bytes",
+              "access-control-allow-origin": "https://astrid.test:39635",
+              "access-control-expose-headers": "content-type, content-length, content-range, accept-ranges, etag, last-modified",
+              "cache-control": "private, max-age=31536000, immutable",
+              "content-length": "1109353",
+              "content-type": "video/mp4",
+              "date": "Tue, 20 Oct 2026 04:39:54 GMT",
+              "etag": "\"sha256:ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9\"",
+              "vary": "Origin"
+            }
+          },
+          "bodySha256": "ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "bodyBytes": 1109353
+        }
+      ]
+    },
+    {
+      "executablePath": "/opt/google/chrome/chrome",
+      "browserVersion": "155.0.8059.84",
+      "mode": "range206",
+      "support": {
+        "video/mp4": "maybe",
+        "video/mp4; codecs=\"avc1.640028\"": "probably",
+        "audio/mp4; codecs=\"mp4a.40.2\"": "probably",
+        "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"": "probably",
+        "video/webm; codecs=\"vp8\"": "probably"
+      },
+      "outcome": "decoded-seek",
+      "events": [
+        {
+          "event": "emptied",
+          "clockMs": 62,
+          "sinceStartMs": 0.8000000007450581,
+          "wallTime": 1792472105392,
+          "currentSrc": "",
+          "readyState": 0,
+          "networkState": 3,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadstart",
+          "clockMs": 63.29999999701977,
+          "sinceStartMs": 2.099999997764826,
+          "wallTime": 1792472105393,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 0,
+          "networkState": 2,
+          "duration": null,
+          "width": 0,
+          "height": 0,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadedmetadata",
+          "clockMs": 91.39999999850988,
+          "sinceStartMs": 30.199999999254942,
+          "wallTime": 1792472105422,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "loadeddata",
+          "clockMs": 93.19999999925494,
+          "sinceStartMs": 32,
+          "wallTime": 1792472105423,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0,
+          "error": null
+        },
+        {
+          "event": "canplay",
+          "clockMs": 93.39999999850988,
+          "sinceStartMs": 32.19999999925494,
+          "wallTime": 1792472105424,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        },
+        {
+          "event": "seeking",
+          "clockMs": 93.59999999776483,
+          "sinceStartMs": 32.399999998509884,
+          "wallTime": 1792472105424,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 1,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        },
+        {
+          "event": "seeked",
+          "clockMs": 132.29999999701977,
+          "sinceStartMs": 71.09999999776483,
+          "wallTime": 1792472105462,
+          "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "readyState": 4,
+          "networkState": 1,
+          "duration": 5.5,
+          "width": 1920,
+          "height": 1080,
+          "currentTime": 0.5,
+          "error": null
+        }
+      ],
+      "final": {
+        "clockMs": 132.29999999701977,
+        "sinceStartMs": 71.09999999776483,
+        "wallTime": 1792472105462,
+        "currentSrc": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3Aba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+        "readyState": 4,
+        "networkState": 1,
+        "duration": 5.5,
+        "width": 1920,
+        "height": 1080,
+        "currentTime": 0.5,
+        "error": null
+      },
+      "transport": [
+        {
+          "clock": "2026-10-20T04:55:05.395Z",
+          "requestHeaderNames": [
+            "accept",
+            "origin",
+            "range",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "user-agent"
+          ],
+          "request": {
+            "origin": "https://astrid.test:39635",
+            "range": "bytes=0-"
+          },
+          "response": {
+            "status": 206,
+            "headers": {
+              "accept-ranges": "bytes",
+              "access-control-allow-origin": "https://astrid.test:39635",
+              "access-control-expose-headers": "content-type, content-length, content-range, accept-ranges, etag, last-modified",
+              "cache-control": "private, max-age=31536000, immutable",
+              "content-length": "1109353",
+              "content-type": "video/mp4",
+              "date": "Tue, 20 Oct 2026 04:39:54 GMT",
+              "etag": "\"sha256:ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9\"",
+              "vary": "Origin",
+              "content-range": "bytes 0-1109352/1109353"
+            }
+          },
+          "bodySha256": "ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+          "bodyBytes": 1109353
+        }
+      ]
+    }
+  ],
+  "postflight": "passed",
+  "end": "2026-10-20T04:55:09.056Z"
+}
