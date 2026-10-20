@@ -1,0 +1,168 @@
+diff --git /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/commands/commitSession.ts /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/commands/commitSession.ts
+--- /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/commands/commitSession.ts
++++ /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/commands/commitSession.ts
+@@ -10,5 +10,7 @@
+ import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
+ import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+ import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
++import { captureOccurrenceDuplicate, executeOccurrenceDuplicate, finishOccurrenceDuplicate } from './occurrenceDuplicateCapture.ts';
++import type { OccurrenceDuplicateCapturePort } from './occurrenceDuplicateGesture.ts';
+ 
+ type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+@@ -270,5 +270,39 @@
+       prepared.delete(key);
+       enqueue({ ...entry.payload, preview }, preview, entry.basis);
+     },
+   };
++  const occurrenceDuplicatePort: OccurrenceDuplicateCapturePort = {
++    capture({ ownerRef, args, current }) {
++      assertReady();
++      if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
++        || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
++        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
++        throw new Error('Displayed timeline does not match the raw authoring basis');
++      }
++      return freezeJson(json({ ...captureOccurrenceDuplicate(bundle, ownerRef, args), localGeneration,
++        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<OccurrenceDuplicateCapturePort['capture']>;
++    },
++    finish(basis) {
++      assertReady();
++      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the duplicate');
++      const original = finishOccurrenceDuplicate(basis);
++      const result = executeOccurrenceDuplicate(bundle, original.command);
++      freezeJson(result.command);
++      prepared.set(JSON.stringify(result.command), { payload: {
++        commands: [result.command], before: bundle, after: result.bundle, preview: null,
++      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
++      return { command: result.command };
++    },
++    submit({ command }) {
++      assertReady();
++      assertFiniteJson(command);
++      const key = JSON.stringify(command);
++      const entry = prepared.get(key);
++      if (command.op !== 'occurrence.duplicate' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
++        throw new Error('Duplicate was not captured by this session or the timeline changed');
++      }
++      prepared.delete(key);
++      enqueue(entry.payload, null, entry.basis);
++    },
++  };
+   const trackLabelPort: TrackLabelCapturePort = {
+@@ -422,7 +422,8 @@
+   return {
+     port,
+     trackLabelPort,
++    occurrenceDuplicatePort,
+     useLatest: () => resolveRejected(false),
+     keepLabelChanges: () => resolveRejected(true),
+     getState: () => state,
+
+diff --git /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineCommandSession.ts /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+--- /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineCommandSession.ts
++++ /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+@@ -157,5 +157,14 @@
+         session.port = { ...realPort, capture: (input) => {
+           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
+           return realPort.capture(input);
+         } };
++        const occurrenceDuplicatePort = session.occurrenceDuplicatePort;
++        const requireCleanDuplicate = () => {
++          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before duplicating a shot');
++        };
++        session.occurrenceDuplicatePort = {
++          capture(input) { requireCleanDuplicate(); return occurrenceDuplicatePort.capture(input); },
++          finish(basis) { requireCleanDuplicate(); return occurrenceDuplicatePort.finish(basis); },
++          submit(input) { requireCleanDuplicate(); occurrenceDuplicatePort.submit(input); },
++        };
+         const labelPort = session.trackLabelPort;
+@@ -239,6 +239,7 @@
+   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
+-  return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+-    trackLabelPort: sessionRef.current?.trackLabelPort,
++  return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
++    trackLabelPort: sessionRef.current?.trackLabelPort,
++    occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
+     retry, undo, flush, recover, useLatest, keepLabelChanges };
+ }
+
+diff --git /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineState.types.ts /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineState.types.ts
+--- /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineState.types.ts
++++ /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineState.types.ts
+@@ -1,3 +1,4 @@
+ import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
+ import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
+ import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
++import type { OccurrenceDuplicateCapturePort } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
+@@ -138,5 +138,6 @@
+   /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
+   clipMove?: ClipMoveCapturePort;
+   trackLabel?: TrackLabelCapturePort;
++  occurrenceDuplicate?: OccurrenceDuplicateCapturePort;
+   setInputModality: (inputModality: TimelineInputModality) => void;
+
+diff --git /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineState.ts /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineState.ts
+--- /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineState.ts
++++ /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/hooks/useTimelineState.ts
+@@ -1163,5 +1163,6 @@
+ 
+   const editorOps = useMemo(() => ({
+     clipMove: save.commands.port,
+     trackLabel: save.commands.trackLabelPort,
++    occurrenceDuplicate: save.commands.occurrenceDuplicatePort,
+     transcriptHost,
+@@ -1222,5 +1222,5 @@
+     patchRegistry: editor.patchRegistry,
+     unpatchRegistry: editor.unpatchRegistry,
+     registerAsset: editor.registerAsset,
+-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort]);
++  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.occurrenceDuplicatePort]);
+
+diff --git /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/components/AstridTimelineEditor.tsx /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/components/AstridTimelineEditor.tsx
+--- /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/components/AstridTimelineEditor.tsx
++++ /home/user/work/wt/ap2-m2-duplicate-capture-resume/src/tools/video-editor/components/AstridTimelineEditor.tsx
+@@ -1,2 +1,3 @@
+ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+ import { shallow } from 'zustand/shallow';
++import { captureOccurrenceDuplicateEdit, submitOccurrenceDuplicateEdit } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
+@@ -183,8 +183,10 @@
+     applyEdit,
+     prepareGenerationAsset,
+     registerGenerationAsset,
++    occurrenceDuplicate,
+   } = useTimelineOpsSelector((ops) => ({
+     applyEdit: ops.applyEdit,
+     prepareGenerationAsset: ops.prepareGenerationAsset,
+     registerGenerationAsset: ops.registerGenerationAsset,
++    occurrenceDuplicate: ops.occurrenceDuplicate,
+   }), shallow);
+@@ -390,2 +390,22 @@
+   const handleDuplicateDocumentShotGroup = useCallback(async (locator: { shotId: string; trackId: string; canonicalIdentity?: CanonicalShotOccurrence }) => {
++    if (locator.canonicalIdentity && occurrenceDuplicate && data) {
++      const occurrence = locator.canonicalIdentity;
++      const suffix = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? String(Date.now());
++      try {
++        const captured = captureOccurrenceDuplicateEdit(occurrenceDuplicate, data,
++          `occurrence:${occurrence.occurrenceId}`, {
++            occurrence_id: `${occurrence.occurrenceId}-copy-${suffix}`,
++            shot_id: `${occurrence.shotId}-copy-${suffix}`,
++          });
++        submitOccurrenceDuplicateEdit(captured);
++        toast.success('Independent shot duplicated');
++      } catch (error) {
++        // Refusal leaves the original draft and reserved IDs untouched.
++        normalizeAndPresentError(error, {
++          context: 'video-editor:duplicate-canonical-shot',
++          toastTitle: 'Failed to duplicate canonical shot',
++        });
++      }
++      return;
++    }
+     if (locator.canonicalIdentity && runtime.shots?.shotComposition && runtime.shots.canonicalComposition) {
+@@ -443,4 +443,4 @@
+         });
+       }
+     }
+-  }, [configVersion, reloadFromServer, runtime.project.projectId, runtime.shots, runtime.timelineId]);
++  }, [configVersion, data, occurrenceDuplicate, reloadFromServer, runtime.project.projectId, runtime.shots, runtime.timelineId]);
+
