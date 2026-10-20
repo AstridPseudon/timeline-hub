@@ -292,6 +292,49 @@ describe('source-only create then native initialization', () => {
     });
   });
 
+  it('keeps the reserved bootstrap owner scoped during create/init, then drains it after ACK', async () => {
+    const env = environment();
+    let releaseCreate!: () => void;
+    const createGate = new Promise<void>((resolve) => { releaseCreate = resolve; });
+    const create = env.ports.createTimeline.getMockImplementation()!;
+    env.ports.createTimeline.mockImplementation(async (...args) => {
+      const result = await create(...args);
+      await createGate;
+      return result;
+    });
+    let releaseInit!: () => void;
+    const initGate = new Promise<void>((resolve) => { releaseInit = resolve; });
+    const commit = env.ports.commitTimeline.getMockImplementation()!;
+    env.ports.commitTimeline.mockImplementation(async (...args) => {
+      const result = await commit(...args);
+      await initGate;
+      return result;
+    });
+    let ownerId = '';
+    const running = env.open().create(scope, async (box, id) => {
+      ownerId = id;
+      await reserveBootstrapInitialization(box, 'Main', key);
+      await resumeBootstrapInitialization(box, env.ports);
+    });
+    await vi.waitFor(async () => expect(env.ports.createTimeline).toHaveBeenCalledOnce());
+    const [reserved] = await env.open().list(scope);
+    expect(reserved).toMatchObject({ scope, ownerId, intents: [{ basis: { create: true } }] });
+    expect(reserved.pending?.request).toEqual({ method: 'POST', path: '/v1/projects/project-1/timelines',
+      body: JSON.stringify({ timeline_id: scope.timelineId, name: 'Main' }), key });
+
+    releaseCreate();
+    await vi.waitFor(async () => expect(env.ports.commitTimeline).toHaveBeenCalledOnce());
+    const [initializing] = await env.open().list(scope);
+    expect(initializing).toMatchObject({ scope, ownerId, intents: [{ payload: { kind: 'timeline-init' } }] });
+    expect(initializing.pending?.request.path).toBe('/v1/projects/project-1/timelines/main/commit');
+
+    releaseInit();
+    await running;
+    const [drained] = await env.open().list(scope);
+    expect(drained).toMatchObject({ scope, ownerId, intents: [] });
+    expect(drained.pending).toBeUndefined();
+  });
+
   it('reopens the owner before first POST and after create loses its ACK, retaining exact identity and inputs', async () => {
     const env = environment();
     let owner = '';

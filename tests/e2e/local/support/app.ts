@@ -131,6 +131,28 @@ export async function holdCommandRequests(page: Page) {
   };
 }
 
+/** Hold the native timeline create long enough to inspect its reserved bootstrap owner. */
+export async function holdTimelineCreation(page: Page) {
+  const creates = /\/v1\/projects\/[^/]+\/timelines$/;
+  const requests: Request[] = [];
+  let release!: (send: boolean) => void;
+  const gate = new Promise<boolean>((resolve) => { release = resolve; });
+  const intercept = async (route: import('@playwright/test').Route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    requests.push(route.request());
+    const send = await gate;
+    await (send ? route.continue() : route.abort('connectionreset')).catch(() => {});
+  };
+  await page.route(creates, intercept);
+  return {
+    requests,
+    async release(send = false) {
+      await page.unroute(creates, intercept);
+      release(send);
+    },
+  };
+}
+
 /**
  * Holds every save of a composition revision in flight, so the Runtime never receives it and an edit stays an unsaved
  * draft by construction. The editor autosaves 500 ms after an edit, so without this a restart that follows the edit
