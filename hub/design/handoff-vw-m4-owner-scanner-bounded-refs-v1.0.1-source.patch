@@ -1,0 +1,447 @@
+--- owner_film_cliplook_scan.py@v1.0.0
++++ owner_film_cliplook_scan.py@v1.0.1
+@@ -24,7 +24,7 @@
+ from pathlib import Path
+ from typing import Any
+ 
+-VERSION = "1.0.0"
++VERSION = "1.0.1"
+ SEMANTIC_CATEGORIES = (
+     "curve_honoured",
+     "element_clip_look_overlap",
+@@ -45,6 +45,20 @@
+     "fade_out": "params.fadeOutCurve",
+ }
+ _LOOK_NAMES = ("opacity", "entrance", "exit", "fade_in", "fade_out")
++_REFERENCE_FIELDS = (
++    "project_id",
++    "timeline_id",
++    "revision_id",
++    "occurrence_id",
++    "shot_id",
++    "shot_revision_id",
++    "internal_timeline_revision_id",
++    "clip_id",
++    "authored_clip_id",
++    "source_kind",
++    "source_path",
++)
++_REFERENCE_LIST_FIELDS = ("clip_ids", "occurrence_ids", "source_kinds")
+ 
+ 
+ def _mapping(value: Any, label: str) -> Mapping[str, Any]:
+@@ -66,6 +80,114 @@
+     return list(dict.fromkeys(value for value in values if isinstance(value, str) and value))
+ 
+ 
++def _add_error(errors: list[str], message: str) -> None:
++    if message not in errors:
++        errors.append(message)
++
++
++def _reference_error(field: str) -> str:
++    return f"{field} reference must be a string"
++
++
++def _validate_ref_fields(value: Any, fields: Sequence[str], errors: list[str]) -> None:
++    if not isinstance(value, Mapping):
++        return
++    for field in fields:
++        if field in value and not isinstance(value[field], str):
++            _add_error(errors, _reference_error(field))
++
++
++def _rows(value: Any) -> Sequence[Any]:
++    return value if isinstance(value, list) else ()
++
++
++def _validate_closure_refs(document: Mapping[str, Any], errors: list[str]) -> None:
++    _validate_ref_fields(document, ("project_id", "timeline_id"), errors)
++    parent = document.get("parent_revision")
++    _validate_ref_fields(parent, ("project_id", "timeline_id", "revision_id"), errors)
++
++    for row in _rows(document.get("shot_revisions")):
++        _validate_ref_fields(
++            row,
++            ("shot_id", "revision_id", "internal_timeline_revision_id", "parent_document_id"),
++            errors,
++        )
++    for row in _rows(document.get("internal_timeline_revisions")):
++        _validate_ref_fields(row, ("revision_id",), errors)
++
++    if not isinstance(parent, Mapping) or not isinstance(parent.get("payload"), Mapping):
++        return
++    payload = parent["payload"]
++    _validate_ref_fields(payload, ("project_id", "timeline_id"), errors)
++    for occurrence in _rows(payload.get("occurrences")):
++        _validate_ref_fields(
++            occurrence,
++            ("occurrence_id", "shot_id", "shot_revision_id", "revision_id", "parent_document_id"),
++            errors,
++        )
++
++    def validate_clips(clips: Any) -> None:
++        if not isinstance(clips, list):
++            return
++        for clip in clips:
++            _validate_ref_fields(
++                clip,
++                ("id", "track", "asset", "asset_id", "media_id", "object_id"),
++                errors,
++            )
++            element_ref = clip.get("elementRef") if isinstance(clip, Mapping) else None
++            _validate_ref_fields(element_ref, ("id", "kind", "packId"), errors)
++
++    validate_clips(payload.get("clips"))
++    config = payload.get("config")
++    if not isinstance(config, Mapping):
++        config = {}
++    for track in _rows(config.get("tracks")):
++        _validate_ref_fields(track, ("id",), errors)
++    validate_clips(config.get("clips"))
++
++    for revision in _rows(document.get("internal_timeline_revisions")):
++        if not isinstance(revision, Mapping) or not isinstance(revision.get("payload"), Mapping):
++            continue
++        revision_payload = revision["payload"]
++        for track in _rows(revision_payload.get("tracks")):
++            _validate_ref_fields(track, ("id",), errors)
++        validate_clips(revision_payload.get("clips"))
++
++
++def _sanitize_ref_value(
++    field: str, value: Any, errors: list[str], *, allow_none: bool = True
++) -> str | None:
++    if value is None and allow_none:
++        return None
++    if not isinstance(value, str):
++        _add_error(errors, _reference_error(field))
++        return None
++    return value
++
++
++def _sanitize_refs(refs: Mapping[str, Any], errors: list[str]) -> dict[str, Any]:
++    result: dict[str, Any] = {}
++    for field in _REFERENCE_FIELDS:
++        if field not in refs or refs[field] is None:
++            continue
++        value = _sanitize_ref_value(field, refs[field], errors)
++        if value is not None:
++            result[field] = value
++    for field in _REFERENCE_LIST_FIELDS:
++        if field not in refs or refs[field] is None:
++            continue
++        value = refs[field]
++        if not isinstance(value, (list, tuple)):
++            _add_error(errors, f"{field} references must be strings")
++            continue
++        valid = [item for item in value if isinstance(item, str)]
++        if len(valid) != len(value):
++            _add_error(errors, f"{field} references must be strings")
++        result[field] = valid
++    return result
++
++
+ def _agent_api(agent_root: str | os.PathLike[str]) -> dict[str, Any]:
+     """Load only public Agent helpers from the explicitly supplied checkout."""
+     root = Path(agent_root).expanduser().resolve(strict=True)
+@@ -128,19 +250,18 @@
+ 
+     shots = {
+         (row.get("shot_id"), row.get("revision_id")): row
+-        for row in document.get("shot_revisions", [])
++        for row in _rows(document.get("shot_revisions"))
+         if isinstance(row, Mapping)
++        and isinstance(row.get("shot_id"), str)
++        and isinstance(row.get("revision_id"), str)
+     }
+     internals = {
+         row.get("revision_id"): row
+-        for row in document.get("internal_timeline_revisions", [])
+-        if isinstance(row, Mapping)
++        for row in _rows(document.get("internal_timeline_revisions"))
++        if isinstance(row, Mapping) and isinstance(row.get("revision_id"), str)
+     }
+     internal_indexes = {revision_id: index for index, revision_id in enumerate(internals)}
+-    occurrences = payload.get("occurrences", [])
+-    if not isinstance(occurrences, list):
+-        return paths
+-    for occurrence in occurrences:
++    for occurrence in _rows(payload.get("occurrences")):
+         if not isinstance(occurrence, Mapping):
+             continue
+         occurrence_id = occurrence.get("occurrence_id")
+@@ -208,7 +329,7 @@
+     pack_id = ref.get("packId") if isinstance(ref, Mapping) else None
+     try:
+         definition = registry.get("effects", requested_id, pack_id=pack_id)
+-    except (KeyError, ValueError):
++    except (KeyError, TypeError, ValueError):
+         return {"classification": "unknown_candidate", "compile_availability": "unknown"}
+     source = getattr(definition, "component", None) or getattr(definition, "root", None)
+     source_path = str(source) if source is not None else None
+@@ -223,7 +344,7 @@
+     }
+ 
+ 
+-def _public_refs(candidate: Mapping[str, Any]) -> dict[str, Any]:
++def _public_refs(candidate: Mapping[str, Any], errors: list[str]) -> dict[str, Any]:
+     allowed = (
+         "project_id",
+         "timeline_id",
+@@ -238,7 +359,10 @@
+         "source_path",
+         "interval_frames",
+     )
+-    return {key: candidate[key] for key in allowed if candidate.get(key) is not None}
++    return _sanitize_refs(
++        {key: candidate[key] for key in allowed if key in candidate and candidate[key] is not None},
++        errors,
++    )
+ 
+ 
+ def _finding(
+@@ -248,13 +372,15 @@
+     properties: Sequence[str],
+     source_paths: Sequence[str],
+     refs: Mapping[str, Any],
++    errors: list[str],
+     interval_frames: Sequence[int] | None = None,
+     compile_availability: str | None = None,
+ ) -> dict[str, Any]:
++    safe_refs = _sanitize_refs(refs, errors)
+     result: dict[str, Any] = {
+-        **{key: value for key, value in refs.items() if value is not None},
++        **safe_refs,
+         "semantic_category": category,
+-        "knowledge": "known" if known else "unknown",
++        "knowledge": "known" if known and safe_refs == dict(refs) else "unknown",
+         "properties": _dedupe(properties),
+         "source_paths": _dedupe(source_paths),
+     }
+@@ -288,7 +414,8 @@
+     asset = assets.get(asset_id) if isinstance(asset_id, str) else None
+     asset_type = asset.get("type") if isinstance(asset, Mapping) else None
+     media_type = asset.get("media_type") if isinstance(asset, Mapping) else None
+-    normalized_type = str(asset_type or media_type or "").strip().lower()
++    raw_type = asset_type if isinstance(asset_type, str) else media_type
++    normalized_type = raw_type.strip().lower() if isinstance(raw_type, str) else ""
+     known = isinstance(role, str) and role.lower() in _AUDIO_ROLES and (
+         normalized_type in _AUDIO_ASSET_TYPES or normalized_type.startswith("audio/")
+     )
+@@ -331,16 +458,13 @@
+     return observations
+ 
+ 
+-def _closure_error(document: Mapping[str, Any], errors: Sequence[str]) -> dict[str, Any]:
+-    parent = document.get("parent_revision")
+-    revision_id = parent.get("revision_id") if isinstance(parent, Mapping) else None
+-    return {
++def _closure_error(
++    document: Mapping[str, Any], errors: Sequence[str], refs: Mapping[str, Any] | None = None
++) -> dict[str, Any]:
++    result = {
+         "version": VERSION,
+         "status": "incomplete",
+         "closure_errors": list(errors),
+-        "project_id": document.get("project_id"),
+-        "timeline_id": document.get("timeline_id"),
+-        "revision_id": revision_id,
+         "fps_rational": None,
+         "input_authority": "runtime_canonical_document",
+         "evidence_kind": "synthetic_or_unverified_canonical_input",
+@@ -349,10 +473,30 @@
+         "findings": [],
+         "clean_claim": False,
+     }
++    if refs:
++        result.update(refs)
++    return result
+ 
+ 
+ def scan(document: Mapping[str, Any], *, agent_root: str | os.PathLike[str]) -> dict[str, Any]:
+     """Scan one supplied closure; never claim that an owner film is clean."""
++    errors: list[str] = []
++    if not isinstance(document, Mapping):
++        return _closure_error({}, ["input JSON must be an object"])
++    _validate_closure_refs(document, errors)
++    scope_refs = _sanitize_refs(
++        {
++            field: document[field]
++            for field in ("project_id", "timeline_id")
++            if field in document
++        },
++        errors,
++    )
++    parent = document.get("parent_revision")
++    if isinstance(parent, Mapping) and "revision_id" in parent:
++        revision_id = _sanitize_ref_value("revision_id", parent["revision_id"], errors)
++        if revision_id is not None:
++            scope_refs["revision_id"] = revision_id
+     required = (
+         "project_id",
+         "timeline_id",
+@@ -362,15 +506,19 @@
+     )
+     missing = [key for key in required if key not in document]
+     if missing:
+-        return _closure_error(document, [f"missing top-level keys: {', '.join(missing)}"])
+-    parent = _mapping(document["parent_revision"], "parent_revision")
++        _add_error(errors, f"missing top-level keys: {', '.join(missing)}")
++        return _closure_error(document, errors, scope_refs)
++    try:
++        parent = _mapping(document["parent_revision"], "parent_revision")
++    except ValueError as exc:
++        return _closure_error(document, [str(exc)], scope_refs)
+     if not isinstance(parent.get("payload"), Mapping):
+-        return _closure_error(document, ["parent_revision.payload is absent"])
+-    errors: list[str] = []
++        _add_error(errors, "parent_revision.payload is absent")
++        return _closure_error(document, errors, scope_refs)
+     if document.get("schema_version") != 1:
+-        errors.append("schema_version is not 1")
++        _add_error(errors, "schema_version is not 1")
+     if "dependency_manifest" not in document:
+-        errors.append("dependency_manifest is absent")
++        _add_error(errors, "dependency_manifest is absent")
+     try:
+         api = _agent_api(agent_root)
+         projected = api["project_runtime_parent_composition"](
+@@ -379,47 +527,47 @@
+             internal_timeline_revisions=document["internal_timeline_revisions"],
+         )
+     except Exception as exc:  # noqa: BLE001 - projection is the exact closure boundary
+-        errors.append(f"canonical projection unavailable: {type(exc).__name__}")
+-        return _closure_error(document, errors)
++        _add_error(errors, f"canonical projection unavailable: {type(exc).__name__}")
++        return _closure_error(document, errors, scope_refs)
+     config = _mapping(projected.config, "projected.config")
+     try:
+         fps_rational = _fps_rational(config, api)
+     except Exception as exc:  # noqa: BLE001 - timing setup fails closed
+-        errors.append(f"rational FPS unavailable: {type(exc).__name__}")
+-        return _closure_error(document, errors)
++        _add_error(errors, f"rational FPS unavailable: {type(exc).__name__}")
++        return _closure_error(document, errors, scope_refs)
+     fps = fps_rational[0] / fps_rational[1]
+     try:
+         registry = api["load_default_registry"](project_root=api["root"])
+     except Exception as exc:  # noqa: BLE001 - registry failure remains unknown
+         registry = None
+-        errors.append(f"Agent element registry unavailable: {type(exc).__name__}")
+-    source_paths = _raw_clip_sources(document)
++        _add_error(errors, f"Agent element registry unavailable: {type(exc).__name__}")
++    try:
++        source_paths = _raw_clip_sources(document)
++    except Exception as exc:  # noqa: BLE001 - malformed source paths remain bounded
++        source_paths = {}
++        _add_error(errors, f"source paths unavailable: {type(exc).__name__}")
+     records: list[tuple[Mapping[str, Any], dict[str, Any]]] = []
+     element_candidates: list[dict[str, Any]] = []
+     for clip in config.get("clips", []):
+         if not isinstance(clip, Mapping):
+             continue
+-        source = dict(source_paths.get(str(clip.get("id")), {}))
+-        source.update(
+-            {
+-                "project_id": document.get("project_id"),
+-                "timeline_id": document.get("timeline_id"),
+-                "revision_id": parent.get("revision_id"),
+-            }
+-        )
++        clip_id = clip.get("id")
++        source = dict(source_paths.get(clip_id, {})) if isinstance(clip_id, str) else {}
++        source.update(scope_refs)
+         try:
+             interval = [
+                 api["clip_start_frame"](clip, fps),
+                 api["clip_end_frame"](clip, fps),
+             ]
+         except Exception as exc:  # noqa: BLE001 - one malformed clip remains incomplete
+-            errors.append(f"clip {clip.get('id')!r} timing unavailable: {type(exc).__name__}")
++            _add_error(errors, f"clip timing unavailable: {type(exc).__name__}")
+             continue
+         record = {
+             **source,
+-            "clip_id": clip.get("id"),
+             "interval_frames": interval,
+         }
++        if isinstance(clip_id, str):
++            record["clip_id"] = clip_id
+         records.append((clip, record))
+         info = _element_info(clip, registry, api["root"])
+         if info["classification"] != "not_element":
+@@ -443,7 +591,7 @@
+     findings: list[dict[str, Any]] = []
+     projected_registry = projected.registry if isinstance(projected.registry, Mapping) else {}
+     for clip, record in records:
+-        refs = _public_refs(record)
++        refs = _public_refs(record, errors)
+         for name, curve_known, properties, paths, audio_known in _audio_fade_observations(
+             clip, fps=fps, config=config, registry=projected_registry, api=api
+         ):
+@@ -454,6 +602,7 @@
+                     properties=properties,
+                     source_paths=paths,
+                     refs=refs,
++                    errors=errors,
+                     interval_frames=record["interval_frames"],
+                 )
+             )
+@@ -464,12 +613,14 @@
+                     properties=properties,
+                     source_paths=paths,
+                     refs=refs,
++                    errors=errors,
+                     interval_frames=record["interval_frames"],
+                 )
+             )
+     by_track: dict[str, list[dict[str, Any]]] = {}
+     for candidate in element_candidates:
+-        by_track.setdefault(str(candidate.get("track_id") or ""), []).append(candidate)
++        track_id = candidate.get("track_id")
++        by_track.setdefault(track_id if isinstance(track_id, str) else "", []).append(candidate)
+     for rows in by_track.values():
+         for left, right in combinations(rows, 2):
+             start = max(left["interval_frames"][0], right["interval_frames"][0])
+@@ -484,13 +635,12 @@
+                     properties=[*left["properties"], *right["properties"]],
+                     source_paths=[*left["source_paths"], *right["source_paths"]],
+                     refs={
+-                        "project_id": document.get("project_id"),
+-                        "timeline_id": document.get("timeline_id"),
+-                        "revision_id": parent.get("revision_id"),
+-                        "clip_ids": [left["clip_id"], right["clip_id"]],
++                        **scope_refs,
++                        "clip_ids": [left.get("clip_id"), right.get("clip_id")],
+                         "occurrence_ids": _dedupe([left.get("occurrence_id"), right.get("occurrence_id")]),
+                         "source_kinds": _dedupe([left.get("source_kind"), right.get("source_kind")]),
+                     },
++                    errors=errors,
+                     interval_frames=[start, end],
+                     compile_availability=(
+                         "available"
+@@ -500,13 +650,10 @@
+                     ),
+                 )
+             )
+-    return {
++    result = {
+         "version": VERSION,
+         "status": "incomplete" if errors else "complete",
+         "closure_errors": errors,
+-        "project_id": document.get("project_id"),
+-        "timeline_id": document.get("timeline_id"),
+-        "revision_id": parent.get("revision_id"),
+         "fps_rational": list(fps_rational),
+         "input_authority": "runtime_canonical_document",
+         "evidence_kind": "synthetic_or_unverified_canonical_input",
+@@ -515,6 +662,8 @@
+         "findings": findings,
+         "clean_claim": False,
+     }
++    result.update(scope_refs)
++    return result
+ 
+ 
+ def _load_json(path: Path) -> Mapping[str, Any]:

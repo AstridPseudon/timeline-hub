@@ -1,0 +1,8 @@
+OWNER_AGENT_PYTHON=/path/to/qualified/Agentenv/bin/python
+AGENT_ROOT=/path/to/extracted/astrid-agent
+OWNER_FILM_INPUT=/path/to/owner-provided/canonical_document.json
+OWNER_SCAN_OUTPUT=/path/to/local/owner-film-cliplook-scan.json
+PYTHONPATH="$AGENT_ROOT" "$OWNER_AGENT_PYTHON" -B owner_film_cliplook_scan.py \
+  --agent-root "$AGENT_ROOT" \
+  --input "$OWNER_FILM_INPUT" \
+  --json-out "$OWNER_SCAN_OUTPUT"
