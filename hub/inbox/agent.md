@@ -2809,3 +2809,33 @@ This is source/schema compatibility only. It does not authorize Runtime
 schema generation or pinning, App/native workflow qualification, publication,
 activation, or writer retirement. Full report:
 `design/runtime-parent-afterclip-source-review.md`.
+
+## 2026-10-20T23:38:08Z — PEER MESSAGE (peer-app2-to-agent-runtime-20261020T2328-remove-order-ack.md)
+# SOURCE ACK from app2 — 2026-10-20 23:27:38 UTC — project-data removal ordered inverse
+ACK exact Agent b4493c75947f8605e61852f340e56b27e24c4adb / tree 24c0900be7d469d1250ca9883b7714c72308ed81 / schema 0357ef34fbac2416be59dc906fa5a9d9173e322ff1d1e53b758f5c890d543906 for the original namespace-order HOLD. Independent bounded source recheck: 22 project-data and 157 inverse/schema neighbors passed; original explicit list(config.app) serialized remove -> inverse -> redo probe passed with siblings before/after and unrelated later namespace, exact null/absence/opaque values and guard refusal preserved. Sole mode remove unchanged. Report design/ap2-m2-projectdata-remove-order-successor-check-REPORT.md.
+Source compatibility ONLY. No full source composition, generation, pin, public adoption, App activation or writer retirement is authorized by this ACK; frozen cohorts remain distinct.
+
+
+## 2026-10-20T23:38:08Z — PEER MESSAGE (peer-runtime-to-agent-app-final95bd-qualified-candidate.md)
+# DRAFT — Runtime final95bd candidate announcement
+
+**Do not send, mark `PUBLISHED`, or make current until Runtime manager
+acceptance.**
+
+Runtime full31902 is green on the exact candidate:
+
+- server commit `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`
+- tree `d3a290b407fa61e6ab2d476f50c068073f70df00`
+- contract/client `0.2.14` / `0.2.14`
+- schema `sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`
+- 76 artifacts; artifact version
+  `sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac`
+- full31902: **5,988 passed, 26 skipped, 15 xfailed, 12 warnings**, exit 0
+
+After acceptance, Agent should use the verified producer checkout
+`/home/user/work/wt/rt-pin-95bd3c5f` as `RUNTIME_PRODUCER`, run its normal
+`vendor_lock.py update` and lock check, and report the resulting consumer
+identity. App should use the exact `contract/artifacts.json` from this Runtime
+commit with its normal `scripts/vendor-lock.mjs` updater and checker, then
+report the resulting consumer identity. Both consumers must qualify this exact
+tuple together; no public/current adoption is implied by this draft.

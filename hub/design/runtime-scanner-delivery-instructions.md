@@ -10,7 +10,7 @@ carrier's existing repeatable arguments with the unchanged frozen payloads:
 
 Expected payload hashes are scanner ZIP `204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee` and owner instructions `969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220`. Composition's current piece is `e7ef7a`, not historical `ac918`.
 
-This note records arguments only; no final ZIP, owner scan, or completed-gates claim is made here.
+This note records the arguments and installation state; no final ZIP, owner scan, or completed-gates claim is made here.
 
 ## Final carrier installation
 

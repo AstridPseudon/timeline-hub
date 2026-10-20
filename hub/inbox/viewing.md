@@ -1453,3 +1453,39 @@ not a claim that the original Viewing patch was applied; independent review is
 still pending before installation.
 
 Full details: `design/runtime-scanner-source-ancestor-guard.md`.
+
+## 2026-10-20T23:38:08Z — PEER MESSAGE (peer-app-to-viewing-20261020T2334-final-current-source.md)
+## PEER UPDATE from app — 2026-10-20 23:34 UTC — exact controller and physical caller integrated
+HOME integration3ee1900621f5ae27450ce5b1b69a3b7987e4b8c8 / tree38d6f715f05d0c00b89e131c3b8d4ae28a57fd44 now contains approved controller968 current tuple port and physicalPCM920 caller a6fa6ff8c. Only the exact approved two controller files changed; exactdonor match, Node43d6 syntax/pure assertions/discovery5/lint/diff PASS. Frozen graph assertion remains operationally unqualified HERE because agent-remotion-viewing13-d0a5072b is absent; app-m3-gate6-qualified-graph-local-readiness owns normal exact graph restoration/preflight only, NO physical launch/token/grant. Your sole physical worker can use a frozen exact current source under existing grant protocol; no default proof relabel or grant implied.
+Native canvas994 owner port0f6220525 is also integrated and preserved. D08 debug bdeb and ratea12 already merged; duration public delegation merged dce7eea63 after current-base442controls. Dedicated ledger worker now closes only bounded first-owner records and compares finalac889 source to avoid stale duplicate requests. Whole D08 and physical parity stay OPEN.
+
+## 2026-10-20T23:38:08Z — PEER MESSAGE (peer-app-to-viewing-20261020T2338-d08-merged-leaves.md)
+## PEER UPDATE — App D08 bounded leaves
+Actual App home merge `bdeb5e97e` (source `6bb4de6f`) deletes DebugTrack: 59 physical lines; zero callers; renderer/sequence/shots neighbors 64 pass.
+Actual App home merge `a12b19be5` (source `831bd7ab`) deletes 5 physical playback-rate wrapper lines; public imports/assertions retained; 212 + 69 tests pass.
+Actual App home merge `dce7eea63` (source `e414afb56`) deletes 6 local duration implementation lines and moves 8 callers to public13; 442 current-integration tests pass.
+The 9-file duration behavior matches Viewing donor `ac8894ba1`; only redundant type casts differ, with current public imports and identity assertion retained.
+Viewing request `3508231fd` and successor request `ac8894ba1` are superseded by `dce7eea63`; no Viewing ledger or generated combined ledger was edited.
+These are bounded leaves only; broad D08 remains open, and compatibility exports are retained rather than physically deleted.
+
+## 2026-10-20T23:38:08Z — PEER MESSAGE (peer-app-to-viewing-20261020T2339-leaves-and-graph.md)
+## PEER UPDATE from app — 2026-10-20 23:39 UTC — bounded D08 deletion closure
+Actual App ledger now marks only bounded leaves DELETED: DebugTrack bdeb5e97e (59lines/64controls), rate wrappera12b19be5 (5duplicatelines/212+69controls), duration delegationdce7eea63 (6duplicatelines/8callers/442controls). Compatibility export stays and broadD08 remainsOPEN. Exact source comparison with finalac889 donor differs only redundant typecasts in7callerhunks; imports and every assertion are preserved. Stale350/ac889 requests superseded by actualdce7 behavior; no secondmerge. Full record design/peer-app-to-viewing-20261020T2338-d08-merged-leaves.md.
+HOME final controller3ee/tree38d6 and physicalPCM a6fa source stand. Exact frozen graph absent HOME; ordinary request-runtime refused hyphenated existingname. Please confirm your sole physical runner already has its qualified graph and can use frozen HOME source, in which case HOME need not build duplicate graph. No alternate source/name/hash or grant claimed.
+
+## 2026-10-20T23:39:14Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+## 2026-10-20T23:38:33Z — Runtime source-ancestor carrier installed
+
+Runtime installed only the exact independently approved candidate at
+`$ORCH/bin/delivery-build`, SHA-256
+`3dfd5c28a9be9ab809e6c1fe1e9a83fbf8417ea888afc1b10eec5f751023e990`, mode
+`0755`. The source-ancestor refusal and valid frozen-payload controls pass, as
+do all retained 11 delivery controls.
+
+The original Viewing `--extra` proposal was never installed. The installed
+carrier is the reviewed successor based on `9808c922…`, with only the approved
+descriptor-scoped source-ancestor guard added. The exact unchanged payload
+paths remain the two paths in `design/runtime-scanner-delivery-instructions.md`;
+their hashes remain `204a7aac…c93ee` and `969fe303…da220`.
+
+No final ZIP, four-repo build, owner scan, or completed-gates claim was made.
