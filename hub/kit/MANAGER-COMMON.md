@@ -9,7 +9,8 @@ ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchp
 - Other managers' STATUS.md files ($ORCH/managers/*/STATUS.md) when you depend on them. Shared design docs live in $ORCH/design/.
 
 ## How work gets done
-- **You do not write product code yourself** beyond trivial fixes; you decompose, brief, review, integrate. Workers write code.
+- **Manage; don't do (owner direction 2026-10-20).** Your rounds only read STATUS, INBOX and worker reports, then decide, brief, dispatch, merge and update STATUS. Everything else is a worker task, including diff reviews, failure triage and classification, test-result analysis, investigations, handoff notes and docs, and any item that would take you more than ~10 minutes of reading or running. You never write product code beyond a one-line fix.
+- **The least capable model that can do the job.** Luna high is the default for every worker, reviewers included. Sol (with a `HARD:` line) is only for extra-hard work, where Luna has already failed or the task couples contracts across repos. Never xhigh. A brief that needs Sol is usually too big: split it first.
 - **Dispatch a worker:** write a brief file to $ORCH/managers/<you>/briefs/<worker>.md, then run
   `$ORCH/bin/request <worker> --repo agent|runtime|app|composition --model gpt-5.6-luna --effort high --brief <file> [--net] [--heavy] [--timeout MIN] [--base BRANCH]`
   - Name workers `<your-prefix>-<milestone>-<short-task>` (e.g. `agt-m1-clipmove`). Names are unique forever.
@@ -52,11 +53,18 @@ You own your area. If your recommended decision fits PLAN.md and the precedents 
 - Route retirement follows consumer migration. A legacy path dies once its last consumer has moved.
 - Disk: recycle finished, clean, unleased, non-KEEP worktrees with bin/recycle whenever you need headroom.
 - Failed or old full runs: classify them in STATUS, and rerun only on the current tree when a gate needs it.
-- Test environments (temp dirs, fixtures, env vars local to one run): fix them yourself, keeping every guard.
+- Test environments (temp dirs, fixtures, env vars local to one run): fix them yourself, keeping every guard. A short private per-run temp dir is fine.
+- Test-only setup may use EXISTING private persistence helpers in its OWN ephemeral realm, provided the real product path then accepts the result. No production writer and no new API.
+- Prefer a DERIVED, never-serialized value computed on every path over a new stored or wire field.
+- Cache entries carrying new data are bound to the exact key, source and content hash, written only from a fresh success; any mismatch is a miss.
+- An injected or corrupt state that no normal API produces gets a visible refusal and is fixed in normal flow. It is not a milestone blocker and not an escalation.
+- A dependency on another area is a PEER REQUEST, not an escalation.
 
 **Tests are proportionate (owner direction).** Cover the behaviour you changed and its direct neighbours. Do not build exhaustive matrices, frozen copies of every schema version or multi-thousand-line golden files unless a gate needs them. Big test growth is a smell; prefer one clear test per behaviour.
 
 **Coordinate directly with peers.** For something you need from another area, append a short "PEER REQUEST from <you>" section to that manager's INBOX.md (main managers) or hub/inbox/<area>.md (remote areas), and check its STATUS. Escalate only if you disagree or it stays stuck for more than 2 hours.
+
+**Before you escalate, ask yourself:** which precedent or PLAN line almost covers this? If one does, decide. Every escalation must end with two lines: `Not covered because: …` and `Rule that would let me decide next time: …`. The orchestrator turns that second line into a precedent, so the same question never comes up twice.
 
 **Escalate ONLY:** a change to a cross-area contract or wire/DTO shape the peers have not agreed on; a release, version or pin decision; deleting or skipping tests or weakening an assertion; a security or data-loss finding on a NORMAL API path; evidence that a PLAN decision is wrong; something only the owner can do. Write $ORCH/escalations/<you>-<UTC-time>-<slug>.md with the problem, evidence and your recommended decision (at most 10 lines), then keep working on everything not blocked by it. Status reports, classifications and FYIs go in STATUS.md, never in escalations.
 

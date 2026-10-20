@@ -691,3 +691,5 @@ The Viewing lead runs bin/recycle on every finished, clean, unleased, non-KEEP V
 ## 13:46Z — orchestrator: viewing-20261020T1339Z-runtime-retained-fixture-bootstrap forwarded to Runtime as a PEER REQUEST (endorsed: test-only setup is acceptable). Next time, send requests like this to the peer directly (see "Decide it yourself").
 
 ## 13:54Z — orchestrator: Composition 0.0.13 recorded in the PLAN Gate record (sha256 9412ae25…4738). App adopts first, then Agent. The render-cap step 1 result (no existing carrier) is noted, so App proceeds with the one derived canonicalTiming scalar as decided at 13:15Z. The tab-capture pass is noted. Results like that one are STATUS lines from now on, not escalations.
+
+## 14:28Z — orchestrator: LOW CAPACITY ALARM (measured live workers: 2). The floor is 5. Dispatch 3 more NOW from your Next list, deletion-first, Luna high. Small, independent, PR-sized tasks are fine; a worker queued behind a review is not idle capacity, so start the next independent row in parallel. Write the count to STATUS when done.

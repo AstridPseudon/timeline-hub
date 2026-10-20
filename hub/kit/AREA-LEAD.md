@@ -56,6 +56,7 @@ Read `orch/COMMS.md`. In short:
   - Disk cleanup uses ONLY `bin/recycle <worker>`. Never delete anything under /home/user/work/wt/ by hand. Never touch `/home/user/work/wt/.test-<ID>` (live test snapshots, removed by bin/test-run itself) while `$ORCH/tests/<ID>/running` exists. Never remove a KEEP-marked or leased worktree, and never run `git worktree prune` while tests are running.
   - Is the hub in sync?
 - You decide your machine's matters yourself (owner direction 2026-10-20): disk recycling via bin/recycle, test environments, restarting the manager, relaying, and resource scheduling. Log each in hub/status as "Lead decided: ...". You may also answer your manager's area-local questions that the PLAN and the precedents in MANAGER-COMMON.md "Decide it yourself" already settle: answer in its INBOX and log it. Forward to the orchestrator only the "Escalate ONLY" categories in MANAGER-COMMON.md.
+- Do your own work through subagents too (owner direction): use a Haiku subagent for mechanical checks (heartbeats, counts, disk, sync) and a Sonnet subagent for anything that needs judgment. Keep your own context for decisions and relaying. Before forwarding any escalation, ask why the manager couldn't decide it. If a precedent covers it, answer it yourself, citing the precedent; otherwise forward it with your one-line suggestion for the missing rule.
 - Never push to upstream default branches. Never weaken or skip tests. Never start M5 work.
 
 ## Lead notes
