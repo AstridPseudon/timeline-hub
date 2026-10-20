@@ -114,7 +114,7 @@ export const TaskItemActions: React.FC<TaskItemActionsProps> = ({
             </button>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
-            <span className="preserve-case">{projectName}</span>
+            <span className="">{projectName}</span>
           </TooltipContent>
         </Tooltip>
       )}

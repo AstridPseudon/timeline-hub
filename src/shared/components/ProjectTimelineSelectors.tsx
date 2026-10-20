@@ -54,8 +54,6 @@ const newTimelineRowClass = cn(
   'focus-visible:bg-accent focus-visible:text-accent-foreground',
   'disabled:pointer-events-none disabled:opacity-50 [@media(pointer:coarse)]:min-h-11',
 );
-const renameInputClass =
-  '[:root:not(.preserve-user-text)_&.preserve-case]:!normal-case';
 /** The primary timeline's mark: a filled accent star, labelled for assistive tech. */
 function PrimaryMark({ className }: { className?: string }) {
   return (
@@ -173,7 +171,7 @@ export function ProjectTimelinePicker({
               {kind === 'timeline' && rows.some((row) => row.id === selected && row.isPrimary) && (
                 <PrimaryMark className="shrink-0" />
               )}
-              <span className="truncate preserve-case">{label}</span>
+              <span className="truncate">{label}</span>
             </>
           )}
           <ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-50" />
@@ -256,7 +254,7 @@ export function ProjectTimelinePicker({
                       </span>
                     )}
                     <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate preserve-case" title={row.name || row.detail || row.id}>
+                        <span className="truncate" title={row.name || row.detail || row.id}>
                         {row.name?.trim() || row.detail?.trim() || (kind === 'timeline' ? 'Untitled timeline' : 'Untitled project')}
                       </span>
                       {(primary || row.detail) && (
@@ -427,7 +425,6 @@ export function ProjectTimelinePicker({
               value={renameValue}
               maxLength={121}
               aria-label="Timeline name"
-              className={renameInputClass}
               aria-invalid={!!renameError}
               aria-describedby={renameError ? 'rename-timeline-error' : undefined}
               onChange={(event) => {

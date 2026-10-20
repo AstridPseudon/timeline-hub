@@ -341,7 +341,7 @@ export const VideoShotDisplay: React.FC<VideoShotDisplayProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Shot</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete shot "<span className="preserve-case">{shot.name}</span>"? This will permanently remove the shot and all its associated data. This action cannot be undone.
+              Are you sure you want to delete shot "<span className="">{shot.name}</span>"? This will permanently remove the shot and all its associated data. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center gap-x-2 py-2">

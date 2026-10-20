@@ -67,7 +67,7 @@ const CommandInput = React.forwardRef<
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        "flex h-11 w-full rounded-md bg-transparent py-3 text-base lg:text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 preserve-case",
+        "flex h-11 w-full rounded-md bg-transparent py-3 text-base lg:text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -132,7 +132,7 @@ const CommandSeparator = React.forwardRef<
 CommandSeparator.displayName = CommandPrimitive.Separator.displayName
 
 const commandItemVariants = cva(
-  "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 preserve-case",
+  "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
   {
     variants: {
       variant: {

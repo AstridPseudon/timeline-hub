@@ -35,7 +35,7 @@ export function SharePageHeader(props: SharePageHeaderProps) {
               ) : (
                 <div className="h-6 w-6 rounded-full bg-muted border" />
               )}
-              <span className="preserve-case">
+              <span className="">
                 Shot shared by {creator?.name || creator?.username || 'an Astrid artist'}
               </span>
             </div>

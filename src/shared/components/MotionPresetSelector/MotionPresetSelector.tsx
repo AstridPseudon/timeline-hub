@@ -219,12 +219,12 @@ export const MotionPresetSelector: React.FC<MotionPresetSelectorProps> = ({
                         )}
                         <div className="flex min-w-0 flex-col justify-center items-start text-left flex-1">
                           {isBuiltinDefault ? (
-                            <span className="text-sm font-medium leading-tight preserve-case">
+                            <span className="text-sm font-medium leading-tight">
                               {metadata?.name || 'Preset'}{' '}
                               <span className="font-normal text-muted-foreground">(default)</span>
                             </span>
                           ) : (
-                            <span className="text-sm font-medium leading-tight line-clamp-2 preserve-case">
+                            <span className="text-sm font-medium leading-tight line-clamp-2">
                               {metadata?.name || 'Preset'}
                             </span>
                           )}

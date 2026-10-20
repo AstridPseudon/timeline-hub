@@ -101,7 +101,7 @@ export function FileInputSelectedFiles({
               </Button>
             )}
 
-            <p className="text-xs text-muted-foreground mt-1 truncate text-center preserve-case" title={file.name}>
+            <p className="text-xs text-muted-foreground mt-1 truncate text-center" title={file.name}>
               {cropFilename(file.name)}
             </p>
           </div>

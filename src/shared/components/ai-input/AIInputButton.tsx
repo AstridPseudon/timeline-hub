@@ -40,7 +40,7 @@ function PopoverFormContent({ inputRef, inputValue, setInputValue, handleKeyDown
           placeholder="Your prompt creation/edit instructions..."
           disabled={textState === "processing"}
           className={cn(
-            "w-full min-h-[60px] max-h-[120px] rounded-md border border-input bg-background px-3 py-2 pr-8 text-base lg:text-sm preserve-case",
+            "w-full min-h-[60px] max-h-[120px] rounded-md border border-input bg-background px-3 py-2 pr-8 text-base lg:text-sm",
             "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             "resize-none",
             textState === "processing" && "opacity-50"

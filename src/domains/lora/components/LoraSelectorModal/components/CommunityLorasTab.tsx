@@ -330,7 +330,7 @@ export const CommunityLorasTab: React.FC<CommunityLorasTabProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete LoRA</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "<span className="preserve-case">{loraToDelete?.name}</span>"? This action cannot be undone.
+              Are you sure you want to delete "<span className="">{loraToDelete?.name}</span>"? This action cannot be undone.
               {loraToDelete?.isAdded && (
                 <span className="block mt-2 text-amber-600 dark:text-amber-400">
                   Note: This LoRA is currently added to your generator and will be removed.

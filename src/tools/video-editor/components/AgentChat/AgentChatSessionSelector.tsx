@@ -64,7 +64,7 @@ export function AgentChatSessionSelector({
           title={`Choose chat session: ${activeLabel}`}
           className="flex h-7 min-w-0 max-w-40 shrink items-center gap-1.5 rounded-md border border-border/70 bg-card/80 px-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className={`min-w-0 truncate ${activeSession?.title?.trim() ? 'preserve-case' : 'normal-case'}`}>{activeLabel}</span>
+          <span className="min-w-0 truncate">{activeLabel}</span>
           <ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden="true" />
         </button>
       </PopoverTrigger>
@@ -95,7 +95,7 @@ export function AgentChatSessionSelector({
                   >
                     <Check className={`mr-2 h-3.5 w-3.5 shrink-0 ${selected ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true" />
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span title={label} className={`min-w-0 truncate ${session.title?.trim() ? 'preserve-case' : 'normal-case'}`}>{label}</span>
+                      <span title={label} className="min-w-0 truncate">{label}</span>
                       {meta && (
                         <span className="flex min-w-0 items-center gap-1 text-[11px] leading-4 text-muted-foreground normal-case" title={metaLabel ?? undefined}>
                           <AgentIcon agent={meta.agent} className="h-3 w-3 shrink-0" />
@@ -193,7 +193,6 @@ export function AgentChatSessionSelector({
                 aria-label="Chat name"
                 value={renameValue}
                 maxLength={121}
-                className="[:root:not(.preserve-user-text)_&.preserve-case]:!normal-case"
                 onFocus={(event) => event.currentTarget.select()}
                 aria-invalid={!!renameError}
                 aria-describedby={renameError ? 'rename-chat-error' : undefined}

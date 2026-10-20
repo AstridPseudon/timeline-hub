@@ -86,7 +86,7 @@ export const LoraGrid: React.FC<LoraGridProps> = ({
 
                 <div className="p-2 space-y-2">
                   <p
-                    className="text-xs font-medium truncate preserve-case"
+                    className="text-xs font-medium truncate"
                     title={getDisplayNameFromUrl(lora.path, undefined, lora.name)}
                   >
                     {getDisplayNameFromUrl(lora.path, undefined, lora.name)}

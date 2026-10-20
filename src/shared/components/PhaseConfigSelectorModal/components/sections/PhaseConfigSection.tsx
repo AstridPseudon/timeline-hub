@@ -311,7 +311,7 @@ export const PhaseConfigSection: React.FC<PhaseConfigSectionProps> = ({
                             <DropdownMenuItem
                               key={predefinedLora.url}
                               onClick={() => addLoraToPhase(phaseIdx, predefinedLora.url, '1.0')}
-                              className="text-xs preserve-case"
+                              className="text-xs"
                             >
                               {predefinedLora.name}
                             </DropdownMenuItem>

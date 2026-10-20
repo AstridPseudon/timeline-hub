@@ -9,7 +9,7 @@ import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded.tsx';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
 import { readModelThoughtSelections, rememberModelThoughtSelection } from './newChatThinkingSelection.ts';
 
-const KEYCAP = 'verbatim-case select-all rounded border border-border px-1 font-mono text-[10px]';
+const KEYCAP = 'select-all rounded border border-border px-1 font-mono text-[10px]';
 const SEGMENT = 'flex h-7 items-center text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50';
 /** A submenu lists this many models; its search reaches the rest. */
 const SUBMENU_LIMIT = 50;

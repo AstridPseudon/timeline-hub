@@ -158,7 +158,7 @@ export const ProjectSelectorModal: React.FC<ProjectSelectorModalProps> = ({
                         <RadioGroupItem value={project.id} id={project.id} />
                         <Label
                           htmlFor={project.id}
-                          className="flex-1 cursor-pointer preserve-case"
+                          className="flex-1 cursor-pointer"
                         >
                           {project.name}
                         </Label>

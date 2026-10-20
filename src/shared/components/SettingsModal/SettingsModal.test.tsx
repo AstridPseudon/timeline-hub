@@ -57,8 +57,6 @@ function renderSettings() {
     <SettingsModal
       isOpen
       onOpenChange={vi.fn()}
-      preserveUserText={false}
-      setPreserveUserText={vi.fn()}
     />,
   );
   const section = screen.getByRole('region', { name: STATUS_COPY.title });

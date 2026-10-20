@@ -75,7 +75,7 @@ export const CharacterAnimateDetails: React.FC<TaskDetailsProps> = ({
           config={config}
           label="Prompt"
           value={prompt}
-          valueClassName="break-words whitespace-pre-wrap leading-relaxed preserve-case"
+          valueClassName="break-words whitespace-pre-wrap leading-relaxed"
         />
       )}
 

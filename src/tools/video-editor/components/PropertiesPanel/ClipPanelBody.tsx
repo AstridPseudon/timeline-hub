@@ -484,8 +484,6 @@ export function ClipPanelBody({
               <>
                 <Textarea
                   aria-label="Text"
-                  // The film's words, shown as they will render, whatever the lowercase preference.
-                  className="verbatim-case"
                   value={clip.text?.content ?? ''}
                   onChange={(event) => onChange({ text: { ...(clip.text ?? { content: '' }), content: event.target.value } })}
                   // A new text clip's placeholder words are there to be replaced: typing does.

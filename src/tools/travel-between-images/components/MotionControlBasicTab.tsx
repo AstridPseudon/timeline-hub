@@ -133,12 +133,12 @@ export const MotionControlBasicTab: React.FC<MotionControlBasicTabProps> = ({
                       )}
                       <div className="flex min-w-0 flex-col items-start">
                         {isBuiltinDefault ? (
-                          <span className="text-sm font-medium whitespace-nowrap preserve-case">
+                          <span className="text-sm font-medium whitespace-nowrap">
                             {preset.metadata.name || 'Preset'}{' '}
                             <span className="font-normal text-muted-foreground">(default)</span>
                           </span>
                         ) : (
-                          <span className="text-sm font-medium truncate preserve-case">
+                          <span className="text-sm font-medium truncate">
                             {preset.metadata.name || 'Preset'}
                           </span>
                         )}

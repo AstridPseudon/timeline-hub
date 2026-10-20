@@ -6,8 +6,6 @@ import type { ExtensionReferenceReport } from "@/tools/video-editor/runtime/exte
 export interface SettingsModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  preserveUserText: boolean;
-  setPreserveUserText: (value: boolean) => void;
   initialTab?: string;
   creditsTab?: 'purchase' | 'history' | 'task-log';
   /** Optional extension display data for the Extensions tab. */
@@ -38,8 +36,6 @@ export interface SettingsModalProps {
 
 export interface PreferencesSectionProps {
   isMobile: boolean;
-  preserveUserText: boolean;
-  setPreserveUserText: (value: boolean) => void;
   aiInputMode: AIInputMode;
   setAIInputMode: (mode: AIInputMode) => void;
 }

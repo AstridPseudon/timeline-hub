@@ -65,7 +65,7 @@ export const UploadedSampleFileCard: React.FC<UploadedSampleFileCardProps> = ({
         ×
       </Button>
     </div>
-    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate preserve-case" title={file.name}>
+    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate" title={file.name}>
       {file.name}
     </p>
   </div>
