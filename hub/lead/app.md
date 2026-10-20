@@ -7,4 +7,5 @@ WORK LIST NOW (report each as done / blocked):
 3. app2 merge requests are auto-queued. Any REFUSED (conflict) is resolved by an App merge-forward worker within one manager round. Check hub/merge-results/app hourly.
 4. Composition 0.0.13 adoption (App first): confirm it has landed on App integration, and tell me the sha. If it hasn't, make it the manager's top item.
 5. Upstream main: when refresh-main --check on main reports App behind, merge-forward within the same day (tests move with upstream, never dropped).
+6. CRITICAL PATH (added 20:51Z): app2 handed App a shared-file patch for ordinary-batch (useTimelineOps stale retained adapter; peerfix 97fb1c46…, in its flat handoff note in design/). App owns that file, so land it as the manager's TOP item this round: review lightly, run the targeted tests, merge, and tell app2 the sha. Ordinary-batch is the central remaining App writer.
 DONE WHEN: every App ledger row is DELETED or KEEP with evidence, all App gates are green on current main, and the manager reports M2 exit.
