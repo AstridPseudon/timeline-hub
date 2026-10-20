@@ -725,7 +725,7 @@ class TimelineCommitStore:
 
     def _project_text_binding(self, project_id, shot_id, kind, slot, before, after, publication_id):
         from .service import RuntimeService
-        from .timeline_commit_port import verify_text_object
+        from .timeline_commit_port import verify_retained_text_object, verify_text_object
         from .cas import ContentAddressedStore
 
         owner = self.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (shot_id,)).fetchone()
@@ -753,11 +753,16 @@ class TimelineCommitStore:
         if clearing and not live:
             reject("text_binding_mismatch", "cannot clear an absent text binding")
         value = current if clearing else after["value"]
-        selection = {"object_id": value.get("media_id"), "digest": value.get("content_hash"),
-                     "size": value.get("byte_size"), "media_type": value.get("mime_type")}
-        if (value.get("kind"), value.get("slot")) != (kind, slot):
-            reject("invalid_records", "text binding row differs from its key", status=422)
-        verify_text_object(self.conn, ContentAddressedStore(self.store.cas_root), project_id, selection)
+        for descriptor in ([current] if live else []) + ([] if clearing else [value]):
+            selection = {"object_id": descriptor.get("media_id"), "digest": descriptor.get("content_hash"),
+                         "size": descriptor.get("byte_size"), "media_type": descriptor.get("mime_type")}
+            if (descriptor.get("kind"), descriptor.get("slot")) != (kind, slot):
+                reject("invalid_records", "text binding row differs from its key", status=422)
+            cas = ContentAddressedStore(self.store.cas_root)
+            if selection["media_type"] == "text/plain" and row is not None:
+                verify_retained_text_object(self.conn, cas, row, selection)
+            else:
+                verify_text_object(self.conn, cas, project_id, selection)
         object_digest = value["media_id"][7:]
         timestamp = now()
         if row is None:
