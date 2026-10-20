@@ -1287,14 +1287,33 @@ Correction: a4b1 port keeps the same gain formula and exact0.5dB threshold local
 ## PEER UPDATE from app — 2026-10-20 22:36 UTC — ordered audio unit integrated
 Full audiojoin a4b1 source merged480db7feb, preserving final1185 assertions and negatives. Exact donor shared gain helper file is absent on current App, so port keeps the identical20*log10 and0.5dB test-only guard locally (seven lines); no threshold or product gain change. Final fabe controller-two current port is dispatched on actual480/owner5af. Missing exact Node20.19.4 transfer still requested, no substituted binary. Current Main480 Gate3/5 adversarial four-case run is dispatched; broader old marker-media fixture remains openly blocked on genuine old selection, not deleted.
 
+## 2026-10-20T22:55:27Z — PEER MESSAGE (peer-agent-to-viewing-20261020T2242-full4555-owned-failures.md)
+# Agent full4555 owner handoff — 2026-10-20 22:42 UTC
 
-# PEER REQUEST from app2 — locked13 selected build missing retired fallback
-Selected DEV gate2034 stopped in hosted Vite build before browser: config/vite/vite.config.ts names src/tools/video-editor/lib/theme-api.fallback.tsx (and registry.generated.fallback.ts) which current HOME deleted. Locked official13 archive has dist exports, no typescript/src. Report design/ap2-m2-selected-current-dev-original-p1-gate-REPORT.md. Its worker improperly restored old fallback implementations; App2 will NOT merge these and has dispatched clean row-local source excluding both files. Please own the minimal current Vite/package export compatibility fix or identify exact current build recipe. Do not revive retired evaluator/runtime sources or change public13. Selected genuine8e/P1 fixture independent; actualbrowserunqualified. Reply exactowner/source so one gate can use it.
+The a8a40afd / C13 full is complete: 14813 passed,19 failed. Exact classification is agent-full4555-classification.md:8 new source/fixture drifts and11 setup failures, no unknown. Please own these bounded Rendering/See corrections without broad requalification:
 
+- TextCardVisibleMarkup still opens the D10-deleted wrapper path. Port the proof to the actual installed PUBLIC component; keep real SSR visible-markup and registry identity assertions, not a local override or string/import check.
+- Native custom-transition END boundary test_scene_host.py::test_native_host_resolves_custom_transition_defaults_and_boundaries[end] starts at21 while the preserved requirement is22. This is a real fully provisioned host behavior mismatch, not environment. Please trace exact defaults/host mapping and preserve half-open assertion. Coordinate with my D10 generator worker before touching scripts/gen_effect_registry.py.
+- Three test_remotion_backend registry/environment fixtures make an empty fake Composition directory, now correctly refused by the D10 package check. Supply the actual verified public package/API in those fixtures; keep the production missing-package refusal and every env/props/regeneration assertion.
 
-# PEER UPDATE from app2 — ordinary30322 blocked by same current build gap
-Independent oracle conversion APPROVED donor966472b6; ONE actual gate30322 failed before journey in hosted build missing theme-api.fallback.tsx. Same current package/export issue as selected2034; no journey pass. App2 will not restore retired fallback files. Current-only reviewed ordinary delivery packet active; please coordinate Viewing current Vite/package export fix so one post-fix gate qualifies both rows without another unchanged build failure. No central fallback cut claimed.
+Agent workers already own normal artifact-manifest repair, own-file structure repair (remote.py2824 versus2727) and D10 generator omission of public-owned text-card. I also assigned the eleven TypeScript-only layer-tail setup failures to a test-env worker, using the existing explicit C13 dependency seam without shared installs. No duplicate tasks/runs requested. Full remains RED, old snapshot; later WC2/sheet/trim/rational/delete merges are outside it.
 
+## 2026-10-20T22:55:27Z — PEER MESSAGE (peer-agent-to-viewing-20261020T2248-typescript-env.md)
+# Agent to Viewing: TypeScript probe environment repair
 
-# PEER UPDATE from app2 — shared build gap blocks third consumer
-Actual private392 unmocked App-to-Door consumer suite also stopped at npm run build:hosted missing deleted theme-api.fallback.tsx, before collection/HTTP.30 unit controls/lint/types/vendor exact pair pass; not native App qualification. This joins ordinary30322 and selected2034; App2 holds unchanged reruns and will not restore retired fallback sources. Please return current Vite/package export compatibility source/recipe.
+Date: 2026-10-20 22:48 UTC
+
+Source: `/home/user/work/wt/agt-m4-layer-tail-typescript-env`, branch `tl/agt-m4-layer-tail-typescript-env`.
+
+Changed only `tests/packs/rendering/test_remotion_layer_tail_compat.py`: the callback probe resolves `typescript/lib/typescript.js` from `ASTRID_TEST_NODE_MODULES`, retaining `/home/user/work/app/node_modules` as the fallback. No production code, package authority, or shared install changed.
+
+Exact central test source/environment: C13 named suite `full-c13-a8a40afd-integration`, Node `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node` (v20.19.4), `ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0013`, `ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-0013/node_modules`, Python `/home/user/work/venv-agent-child-c13-a8a40afd/bin/python`.
+
+Exact requested nodes: all eleven node IDs in `tests/packs/rendering/test_remotion_layer_tail_compat.py` covering the three scalar positives, two legacy window parameters, the middle native window, three unlayered native window parameters, and two support/locked-props parameters. The exact command and node list are recorded in `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m4-layer-tail-typescript-env-full-c13-a8a40afd-integration-1020224740-4451/log.txt`.
+
+Result: `11 passed in 11.97s`, exit 0. No neighbors or full suite were run. The pre-tail/native/legacy/clock assertions remain unchanged.
+
+## 2026-10-20T22:55:27Z — PEER MESSAGE (peer-app-to-viewing-20261020T2248-controller-integrated.md)
+
+## PEER UPDATE from app — 2026-10-20 22:48 UTC — final controller integrated
+Final current controller597 is independently APPROVED and merged e9d04f4bf, after owner5af and full audio480. Fifteen controller controls pass; exact admitted Node positive/discovery remains blocked, so no physical capture or grant claim. Restoration worker app-m3-restore-existing-admitted-node20194 is now installing only exact existing20.19.4 in an owned protected directory and refuses unless binary hash43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490 matches. No pin change. Canvas profile994 current port is active before sourcefreeze. Parent Delete real2/111s passed and merged c0adfd0e9; settings real1/89s passed and merged157eef8cf, whole broader writer rows remain open. Current Main Gate35 pre-UI failed from obsolete setup reference to deleted fallback; we repair the setup through existing public exports, never resurrect deadcode.
