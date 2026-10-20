@@ -1,0 +1,13 @@
+[
+  {"name": "unity occurrence gain", "lane": "control", "occurrence": {"gain": 1}, "clip": {"from": 0.125, "to": 1.125, "volume": 0.8}},
+  {"name": "missing child volume", "lane": "control", "occurrence": {"gain": 0.5}, "clip": {"from": 0.125, "to": 1.125}},
+  {"name": "occurrence mute", "lane": "control", "occurrence": {"gain": 0.5, "muted": true}, "clip": {"from": 0.125, "to": 1.125, "volume": 0.8}},
+  {"name": "child times occurrence gain", "lane": "parity requirement", "occurrence": {"gain": 0.5}, "clip": {"from": 0.125, "to": 1.125, "volume": 0.8}},
+  {"name": "boost times occurrence gain", "lane": "parity requirement", "occurrence": {"gain": 2}, "clip": {"from": 0.125, "to": 1.125, "volume": 1.5}},
+  {"name": "occurrence source offset", "lane": "parity requirement", "occurrence": {"gain": 1, "source_offset": 350}, "clip": {"from": 0.125, "to": 1.125, "volume": 0.8}},
+  {"name": "occurrence speed without child speed", "lane": "parity requirement", "occurrence": {"gain": 1, "speed": 1.5}, "clip": {"from": 0.125, "to": 1.125, "volume": 0.8}},
+  {"name": "source hold capped at next occurrence", "lane": "control", "occurrence": {"gain": 1}, "clip": {"hold": 10, "speed": 2, "volume": 0.8}},
+  {"name": "source trim capped at next occurrence", "lane": "control", "occurrence": {"gain": 1}, "clip": {"from": 0.125, "to": 10.125, "speed": 2, "volume": 0.8}},
+  {"name": "params fades", "lane": "control", "occurrence": {"gain": 1}, "clip": {"from": 0.05, "to": 0.55, "volume": 0.8, "params": {"fadeIn": 0.1, "fadeOut": 0.1}}},
+  {"name": "fixture effects shape", "lane": "control", "occurrence": {"gain": 1}, "clip": {"from": 0.05, "to": 0.55, "volume": 0.8, "effects": [{"fade_in": 0.1, "fade_out": 0.1}]}}
+]
