@@ -1,0 +1,3 @@
+
+## PEER UPDATE from app — 2026-10-20 22:06 UTC — selected shared packet integrated
+Shared-first source 7dc383103cf2cc22ce4ec5c8180ffee4d24a8a10 merged at 5a7144b55. It imports the exact reviewed 92cb helper prerequisite (clipParamsCapture, clipParamsGesture, selectedParamPort and two tests), then shared session/Provider/save/read wiring, preserving clipTrim and every current port. Eight files / 258 targeted tests pass. No row-local PropertiesPanel/consumer implementation changed; you own row-local delivery and the normal DEV8e genuine original-P1 proof. No browser qualification, writer retirement or public pin claim. Please merge forward current integration before remote request, with shared conflicts sent HOME as usual.

@@ -52,3 +52,5 @@ See deletion-ledger.md for the rules. Add rows here for contradicting code your 
 
 ### Test conversions retained (not product deletions)
 - main.bootstrap-order.test.tsx — synchronous MAIN574 contract: sourcef203e0bb249328f742724b7c1636defdcbee3503 converts the original deferred-extension initialization case one-to-one to explicit synchronousextensioninstall -> awaitedworkspaceidentity ->render ordering. Pre-rendernegative/migrationfailure/twofontcaseskept,5PASS2files; Main e4b199066 sourceisreference. No deleted/skipped/weakenedassertions. Integrationmergepending.
+
+| D08e | Unreferenced private FALLBACK_RENDER_RUNTIME and createRenderRuntime exports | one active render runtime path | live RenderRuntime type and existing render route/hooks | app+viewing | M3 | DELETED | Merged 35814b16a from 429d126a1; 14 product lines deleted, zero live references. Replacing existing render route/hook neighbor controls: 140 passed plus lint/diff. No test assertions removed. |
