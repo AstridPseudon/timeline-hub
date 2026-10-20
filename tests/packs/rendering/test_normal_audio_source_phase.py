@@ -3,7 +3,7 @@
 The slicer rewrites at/from/to, so two different originals can slice to the
 same clip; the host therefore records the original phase on the slice.  The
 PCM requirements need the trusted prepared-source producer, which this tree
-does not have yet (design/audio-compile-contract.md, join plan).
+does not have yet (docs/design/audio-compile-contract.md, join plan).
 """
 
 import copy
