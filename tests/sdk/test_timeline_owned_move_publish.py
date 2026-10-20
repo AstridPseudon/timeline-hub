@@ -11,10 +11,12 @@ from astrid.core.timeline.authoring_bundle import open_authoring_bundle
 from astrid.sdk.timeline import commands, store
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
+from tests.editing_conformance.test_recipe_m2_clip_trim import media_document
 from tests.sdk.test_timeline_sync import connected, open_session  # noqa: F401
 
 
@@ -66,6 +68,52 @@ def test_parent_publish_captures_source_hold_set_and_undoes_without_legacy_write
     assert loaded.clip('parent/clip:a').data == dict(original, hold=4)
     loaded.undo([accepted['receipt']['receipt_id']])
     assert loaded.clip('parent/clip:a').data == original
+    assert client.reads
+
+
+def test_parent_publish_captures_source_trim_rebases_reloads_and_undoes(connected, monkeypatch):
+    client, generated, _ = connected
+    generated.bundles['r0'] = bundle_from_document(media_document())
+    generated.bundles['r0'].update(project_id='p', timeline_id='t')
+    original = copy.deepcopy(State(generated.bundles['r0']).entity('parent/clip:clip-a'))
+    tl = Checkout.attach(open_session(connected))
+    generated.bundles['peer'] = copy.deepcopy(generated.bundles['r0'])
+    State(generated.bundles['peer']).entity('parent/track:picture')['label'] = 'Peer'
+    generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
+
+    clip = tl.clip('parent/clip:clip-a')
+    clip.trim(1.0000004, 5.0000006)
+    command = state(connected)['pending'][0]
+    assert command['op'] == 'clip.trim'
+    assert command['select'] == 'parent/clip:clip-a'
+    assert command['args'] == {'in_s': 1.0000004, 'out_s': 5.0000006}
+    assert clip.data['from'] == 1.0 and clip.data['to'] == 5.000001
+    assert clip.data['hold'] == 4.000001
+
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        tl.publish('Trim the opening', idempotency_key='owned-trim')
+    first = copy.deepcopy(generated.calls[-1])
+
+    def no_capture(*args):
+        pytest.fail('trim retry attempted to recapture intent')
+
+    loaded = Checkout.attach(open_session(connected))
+    monkeypatch.setattr(commands, 'execute', no_capture)
+    accepted = loaded.publish()
+    assert generated.calls[-1] == first
+    assert state(connected)['flight'] is None
+    assert accepted['receipt']['result']['status'] == 'rebased'
+    assert accepted['message'] == 'Trim the opening'
+    assert loaded.clip('parent/clip:clip-a').data['from'] == 1.0
+    assert loaded.clip('parent/clip:clip-a').data['to'] == 5.000001
+    assert loaded.clip('parent/clip:clip-a').data['hold'] == 4.000001
+    assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer'
+
+    undone = loaded.undo([accepted['receipt']['receipt_id']])
+    assert undone['data']['status'] == 'accepted'
+    assert loaded.clip('parent/clip:clip-a').data == original
+    assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer'
     assert client.reads
 
 
