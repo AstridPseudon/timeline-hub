@@ -653,6 +653,7 @@ def _verify_text_object(conn, cas, project_id, selection, media_type):
 
 class MediaReads:
     def __init__(self, service):
+        self.service = service
         self.store = service.store
         self.realm = service.realm
         self.cas = service.cas
@@ -839,6 +840,13 @@ class MediaReads:
                 )}
             if entry["media_type"].startswith(("video/", "audio/")) and "duration_seconds" not in entry:
                 raise ValueError("selected audio/video requires intrinsic duration")
+            # A selected command input is authoritative only while its exact
+            # managed object bytes still match the catalog size and digest.
+            # Keep this scoped to consumed selections; the acceptance closure
+            # remains responsible for its existing manifest checks.
+            self.service._verify_child_object_bytes(
+                row["object_digest"], row["size"], label="selected media CAS object",
+            )
             record["catalog_digest"] = digest(record)
         except (ValueError, TypeError, OverflowError) as exc:
             raise ValidationError("invalid selected media metadata") from exc
