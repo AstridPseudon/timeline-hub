@@ -59,6 +59,31 @@ def trim_film(film):
 
 
 @pytest.fixture
+def transition_film(trim_film):
+    """Reuse the trim closure with an authored parent transition."""
+    from runtime_protocol.service import RuntimeService
+
+    fixture, original, _ = trim_film
+    parent = copy.deepcopy(original)
+    for rows in (parent['clips'], parent['config']['clips']):
+        next(row for row in rows if row['id'] == 'music-bed')['transition'] = {
+            'type': 'crossfade', 'duration': .25}
+    service = RuntimeService(fixture.duplicate_root)
+    try:
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
+        baseline = service.publish_parent_composition(
+            fixture.project_id, fixture.timeline_id,
+            {'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
+             'expected_head': head, 'parent_revision_id': 'owned-transition-baseline',
+             'parent_composition': parent},
+            idempotency_key='owned-transition-baseline',
+        )
+    finally:
+        service.close()
+    return fixture, parent, baseline
+
+
+@pytest.fixture
 def split_film(trim_film):
     """Reuse the verified-media trim closure with an explicit source window."""
     from runtime_protocol.service import RuntimeService
@@ -207,6 +232,67 @@ def test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo(
 
     loaded.undo([retried['receipt']['receipt_id']])
     assert loaded.clip('parent/clip:music-bed').data == original
+
+
+def test_http_original_sdk_parent_transition_clear_lost_ack_reload_retry_undo(
+    tmp_path, transition_film, wire, real_runtime,
+):
+    fixture, _, _ = transition_film
+    observed, lose = wire
+    support = tmp_path / 'support'
+    outbox = tmp_path / 'owned-transition-clear.json'
+
+    def start(port=0):
+        return real_runtime(fixture.duplicate_root, support_root=support,
+                            port=port, authoring_profile='astrid')
+
+    daemon = start()
+    client = m1.open_client(daemon)
+    session = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+                                   client=client, outbox_path=outbox)
+    tl = Checkout.attach(session)
+    original = copy.deepcopy(tl.clip('parent/clip:music-bed').data)
+    peer = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=client,
+        outbox_path=tmp_path / 'peer.json'))
+    peer.clip('music-other').on(2)
+    peer.flush(idempotency_key='owned-transition-peer')
+
+    clip = tl.clip('parent/clip:music-bed')
+    clip.set(transition=None)
+    captured = json.loads(outbox.read_bytes())['pending']
+    assert captured[0]['op'] == 'clip.set'
+    assert captured[0]['select'] == 'parent/clip:music-bed'
+    assert captured[0]['args'] == {'values': {}, 'clear': ['transition']}
+    assert 'transition' not in clip.data
+
+    lose.add('owned-transition-clear')
+    with pytest.raises(WorkspaceClientError):
+        tl.publish('Clear the transition', idempotency_key='owned-transition-clear')
+    first = copy.deepcopy(observed[-1])
+    durable = json.loads(outbox.read_bytes())
+    assert json.loads(first['body'])['commands'] == captured
+    assert json.loads(first['body'])['rationale'] == 'Clear the transition'
+    assert durable['flight']['body'].encode() == first['body']
+    assert durable['flight']['key'] == 'owned-transition-clear'
+
+    port = daemon.httpd.server_port
+    daemon.stop()
+    daemon = start(port)
+    loaded = Checkout.attach(TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=m1.open_client(daemon),
+        outbox_path=outbox))
+    retried = loaded.publish()
+    assert observed[-1]['body'] == first['body']
+    assert observed[-1]['key'] == first['key']
+    assert retried['receipt'] == first['response']['receipt']
+    assert retried['message'] == 'Clear the transition'
+    assert 'transition' not in loaded.clip('parent/clip:music-bed').data
+    assert loaded.clip('music-other').start == 2
+
+    loaded.undo([retried['receipt']['receipt_id']])
+    assert loaded.clip('parent/clip:music-bed').data == original
+    assert loaded.clip('music-other').start == 2
 
 
 def test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo(

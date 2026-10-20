@@ -849,11 +849,8 @@ class NativeSheet:
 def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
     """Apply a full sheet or fragment atomically and return the checkout's change summary.
 
-    A detached sheet exported from an earlier local version merges three-way
-    (what the sheet changed since it was exported, onto what is here now): an
-    edit made after the export is never reverted. Connected callers use the
-    retained NativeSheet basis and TimelineSession instead.
-    """
+    A sheet exported from an earlier version merges three-way (what the sheet changed since it was exported,
+    onto what is here now): an edit made after the export is never reverted."""
     parsed = parse_sheet(text)
     if "clips" in parsed or "tracks" in parsed:
         raise SheetError("native sheet rows require NativeSheet and TimelineSession")
