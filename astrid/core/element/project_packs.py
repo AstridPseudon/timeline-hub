@@ -5,6 +5,7 @@ Reads are observational; only explicit init/admit creates files.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -13,16 +14,18 @@ import shlex
 import shutil
 import subprocess
 import tempfile
-from pathlib import Path
+from collections.abc import Mapping
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import yaml
 
 from astrid.core.foundation.paths import REPO_ROOT
 from astrid.core.pack.canonical import validate_canonical_pack
-from .catalog import _element_descriptor
-from .schema import load_element_definition
 from astrid.sdk.documents import stable_document_id
+
+from .catalog import _element_descriptor
+from .schema import element_definition_from_payload, load_element_definition
 
 SCHEMA = "astrid.element-admissions/v1"
 ROOT_ENV = "ASTRID_PROJECT_PACKS_ROOT"
@@ -71,6 +74,12 @@ def _read_document(client: Any, realm: str, project: str, collection: str='defau
         raise ValueError(f'Project pack document read failed: {result.error}')
     row=result.data
     if not isinstance(row,dict) or row.get('kind')!=DOCUMENT_KIND or not isinstance(row.get('version'),int):raise ValueError('Malformed project pack document')
+    _project_pack_content(row)
+
+    return document_id,row
+
+
+def _project_pack_content(row):
     content=row.get('content')
     if not isinstance(content,dict) or content.get('schema')!=DOCUMENT_SCHEMA or content.get('source_binding_key')!=SOURCE_BINDING:raise ValueError('Unsupported project pack payload schema/source binding')
     if not re.fullmatch(r'[a-z][a-z0-9_]*',str(content.get('pack_id',''))):raise ValueError('Invalid project pack owner')
@@ -78,7 +87,7 @@ def _read_document(client: Any, realm: str, project: str, collection: str='defau
     for admission in content['admissions']:
         if not isinstance(admission,dict) or set(admission)!={'id','kind','revision','snapshot_digest'} or admission['kind'] not in {'effect','animation','transition'} or not re.fullmatch(r'sha256:[0-9a-f]{64}',str(admission['revision'])) or not re.fullmatch(r'[0-9a-f]{64}',str(admission['snapshot_digest'])):raise ValueError('Invalid selected pack admission')
 
-    return document_id,row
+    return content
 
 
 def _content(realm: str, project: str, collection: str='default') -> dict[str,Any]:
@@ -353,6 +362,139 @@ def materialize_project_pack(realm,project,*,client=None,collection='default'):
     return {'ok':True,'manifestPath':str(path),'documentId':document_id,'documentVersion':row['version'],'elements':records}
 
 
+def admitted_element_descriptor(realm, project, reference, verified, files, build_receipt):
+    """Resolve an exact declaration from Runtime-verified, retained inputs.
+
+    ``verified`` is the existing VerifiedDocument. ``files`` contains only the
+    immutable CAS resource bytes, not a caller catalog or an inline schema.
+    The port must independently verify custody and current admission authority.
+    This resolver checks their exact identity/content without external reads.
+    """
+    _identity(realm)
+    _identity(project)
+    required = {"id", "kind", "packId", "revision"}
+    if (
+        not isinstance(reference, dict)
+        or not required.issubset(reference)
+        or any(not isinstance(reference[k], str) or not reference[k] for k in required)
+    ):
+        raise ValueError("An admitted owner-qualified element reference is required")
+    if not isinstance(verified, Mapping) or not isinstance(verified.get("document"), Mapping):
+        raise ValueError("Missing verified project pack declaration")
+    row = verified["document"]
+    pin = verified.get("pin")
+    if (
+        row.get("kind") != DOCUMENT_KIND
+        or row.get("project_id") != project
+        or type(row.get("version")) is not int
+        or row["version"] < 1
+        or pin
+        != {
+            "document_id": row.get("document_id"),
+            "version": row["version"],
+            "content_digest": _json_digest(row.get("content")),
+        }
+    ):
+        raise ValueError("Project pack declaration does not match its exact scoped pin")
+    content = _project_pack_content(row)
+    owner = content["pack_id"]
+    collection = "default" if owner == _content(realm, project)["pack_id"] else owner
+    if (
+        owner != reference["packId"]
+        or row.get("document_id") != stable_document_id(project, DOCUMENT_KIND, collection)
+        or content["relative_manifest"] != f"{realm}/{project}/packs/{owner}/pack.yaml"
+    ):
+        raise ValueError("Project pack owner or scope does not match selected declaration")
+    admitted = [
+        a
+        for a in content["admissions"]
+        if all(a.get(k) == reference[k] for k in ("id", "kind", "revision"))
+    ]
+    if len(admitted) != 1:
+        raise ValueError("Element owner/revision is not admitted for this project")
+    if (
+        not isinstance(files, Mapping)
+        or not files
+        or len(files) > 256
+        or any(
+            not isinstance(name, str) or not isinstance(value, bytes)
+            for name, value in files.items()
+        )
+        or sum(map(len, files.values())) > 64 * 1024 * 1024
+    ):
+        raise ValueError("Invalid bounded admitted snapshot resources")
+    files = dict(files)
+    for name in files:
+        if (
+            name.startswith("/")
+            or any(part in ("", "..", ".") for part in name.split("/"))
+            or "\\" in name
+        ):
+            raise ValueError("Invalid admitted snapshot resource path")
+    closure = [
+        {"path": name, "sha256": hashlib.sha256(value).hexdigest()}
+        for name, value in sorted(files.items())
+    ]
+    if _json_digest(closure).removeprefix("sha256:") != admitted[0]["snapshot_digest"]:
+        raise ValueError("Admitted element snapshot is missing or corrupt")
+    build = json.loads(build_receipt)
+    identity = {
+        "projectId": project,
+        **{k: reference[k] for k in ("packId", "id", "kind", "revision")},
+    }
+    if (
+        not isinstance(build, dict)
+        or build.get("schema") != "astrid.element-build/v1"
+        or identity not in build.get("elements", [])
+    ):
+        raise ValueError("Selected source lacks a successful build receipt")
+    if "pack.yaml" not in files:
+        raise ValueError("Admitted snapshot pack manifest is missing")
+    manifest = yaml.safe_load(files["pack.yaml"])
+    if not isinstance(manifest, dict) or manifest.get("id") != owner:
+        raise ValueError("Admitted snapshot pack owner mismatch")
+    exact = []
+    for declaration in manifest.get("rendering", {}).values():
+        if declaration["type"] != "element":
+            raise ValueError("Project draft pack admission supports rendering elements only")
+        path = PurePosixPath(declaration["path"])
+        # Admission uses the standard element manifest precedence.
+        name = next(
+            (
+                path.parent / name
+                for name in ("element.yaml", "element.yml", "element.json")
+                if (path.parent / name).as_posix() in files
+            ),
+            None,
+        )
+        if name is None:
+            raise ValueError("Selected pack element is unavailable")
+        payload = (
+            json.loads(files[name.as_posix()])
+            if name.suffix == ".json"
+            else yaml.safe_load(files[name.as_posix()])
+        )
+        definition = element_definition_from_payload(
+            payload,
+            root=path.parent,
+            kind=payload["kind"],
+            source=f"pack:{owner}",
+            editable=True,
+            priority=100,
+            manifest_path=name,
+            files=files,
+        )
+        if definition.id == reference["id"]:
+            exact.append(_element_descriptor(definition, files=files))
+    if len(exact) != 1 or any(exact[0].get(k) != reference[k] for k in required):
+        raise ValueError("Admitted source does not match canonical revision")
+    descriptor = exact[0]
+    descriptor["componentPath"] = (
+        f"external/{owner}/{admitted[0]['snapshot_digest']}/{descriptor['componentPath']}"
+    )
+    return copy.deepcopy(descriptor)
+
+
 def resolve_admitted_element(realm: str, project: str, reference: dict[str,str], *, client=None) -> dict[str,Any]:
     if client is None:
         with _open_client() as connected:return resolve_admitted_element(realm,project,reference,client=connected)
@@ -372,11 +514,14 @@ def resolve_admitted_element(realm: str, project: str, reference: dict[str,str],
     files=[{'path':p,'sha256':r.sha256} for p,r in sorted(resources.items())]
     digest=_json_digest(files).removeprefix('sha256:')
     if digest!=admitted[0]['snapshot_digest'] or files!=snapshot['files']:raise ValueError('Admitted element snapshot is missing or corrupt')
-    build=json.loads((root/'.build-receipt.json').read_text())
-    identity={'projectId':project,**{k:reference[k] for k in ('packId','id','kind','revision')}}
-    if build.get('schema')!='astrid.element-build/v1' or identity not in build.get('elements',[]):raise ValueError('Selected source lacks a successful build receipt')
-    exact=[_element_descriptor(d) for d,_ in _definitions(root,entry) if d.id==reference['id']]
-    if len(exact)!=1 or any(exact[0].get(k)!=reference[k] for k in required):raise ValueError('Admitted source does not match canonical revision')
+    verified={'pin':{'document_id':document_id,'version':row['version'],
+                     'content_digest':_json_digest(row['content'])},
+              'document':{**row,'project_id':project}}
+    descriptor=admitted_element_descriptor(
+        realm,project,reference,verified,{name:(root/name).read_bytes() for name in resources},
+        (root/'.build-receipt.json').read_bytes())
+    if descriptor!=record['descriptor']:
+        raise ValueError('Admitted source descriptor mismatch')
     return {**record,'binding':_index(realm,project,document_id,row['version'],row['content'],[])['binding']}
 
 

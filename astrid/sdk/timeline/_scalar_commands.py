@@ -5,6 +5,8 @@ import copy
 import re
 
 from jsonschema import Draft202012Validator
+from referencing import Registry
+from referencing.exceptions import Unresolvable
 
 from ._command_state import CommandError
 
@@ -69,17 +71,27 @@ def clip_set_params(ctx, command):
         raise CommandError('clip type must be a string', ref=ref)
     # These are stored JSON values, not human expressions or canvas-unit input.
     # Reuse the element's declared value schemas without parsing or coercion.
-    properties = element_schema(element).get('properties', {})
-    for key, value in values.items():
-        if key in properties:
-            errors = list(Draft202012Validator(properties[key]).iter_errors(value))
-            if errors:
-                raise CommandError(errors[0].message, ref=ref, path=['params', key])
+    _validate_param_values(ref, values, element_schema(element))
     ctx.object(ref, ['params'])
     for key in sorted(values):
         ctx.write(ref, ['params', key], values[key])
     for key in sorted(clear):
         ctx.clear(ref, ['params', key])
+
+
+def _validate_param_values(ref, values, schema):
+    """Check only changed known properties, preserving literal opaque values."""
+    properties = schema.get('properties', {})
+    validator = Draft202012Validator(schema, registry=Registry())
+    for key, value in values.items():
+        if key in properties:
+            try:
+                errors = list(validator.evolve(schema=properties[key]).iter_errors(value))
+            except Unresolvable as exc:
+                raise CommandError('parameter schema reference is unavailable', ref=ref,
+                                   path=['params', key]) from exc
+            if errors:
+                raise CommandError(errors[0].message, ref=ref, path=['params', key])
 
 
 def capture_track_set(bundle, select, *, values=None, clear=()):
