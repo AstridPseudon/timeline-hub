@@ -65,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
             backend = Backend(root, log, uv)
         # The lock lives outside the removable program directory (Windows keeps
         # open files locked). One per user also serializes custom-root installs.
-        lock_path = default_program_root(Path.home(), sys.platform).parent / "astrid-install.lock"
+        lock_path = log.parent / "installer" / "astrid-install.lock"
         platform.private_directory(lock_path.parent)
         with lock_path.open("a+b") as lock:
             platform.lock_file(lock.fileno(), blocking=False)
