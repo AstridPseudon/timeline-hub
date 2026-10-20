@@ -6,7 +6,7 @@ from fractions import Fraction
 
 from astrid.core.timeline.duration import clip_start_frame
 
-from ._command_state import CommandError, root_identity
+from ._command_state import CommandError, equal, root_identity
 from ._recording import active
 from .capture import MOVE_INTENT, RELATIONS, _provenance, number, occurrence_start, rate
 from .new_group_commands import _geometry
@@ -38,6 +38,9 @@ def occurrence_move(ctx, command):
     owner, args = command['select'], command['args']
     if root_identity(owner) is None or not owner.startswith('occurrence:'):
         raise CommandError('move requires an exact occurrence root')
+    if 'start_ms' in args:
+        _move_start(ctx, owner, args['start_ms'])
+        return
     if ctx.select('placement.owners', owner) != [owner]:
         raise CommandError('shared occurrence isolation needs a materialization carrier', kind='unsupported_ownership')
     row = ctx.read(owner)
@@ -109,6 +112,75 @@ def occurrence_move(ctx, command):
     ctx.write(owner, ['track'], destination['id'])
     for ref in members:
         ctx.write(ref, ['track'], child['id'])
+
+
+def _move_start(ctx, owner, start_ms):
+    """Translate the canonical root clock without quantizing or retracking children."""
+    if type(start_ms) is not int or start_ms < 0:
+        raise CommandError('start_ms must be a nonnegative integer', kind='unsupported_timing')
+    owners = ctx.select('collection.occurrences', 'parent')
+    row = ctx.read(owner)
+    # Record ownership as canonical identity reads. A sibling's materialization
+    # can make this unchanged source unshared; State.matches proves that exact
+    # source/slot alias without weakening membership or shared-owner guards.
+    for other in owners:
+        shot_id = ctx.read(other, ['shot_id'])
+        if other != owner and shot_id == row['shot_id']:
+            raise CommandError('shared occurrence isolation needs a materialization carrier',
+                               kind='unsupported_ownership')
+    if row.get('occurrence_id') != root_identity(owner)[1]:
+        raise CommandError('move requires a stable occurrence identity', kind='identity_conflict')
+    # State validates the raw source or its canonical occurrence-owned alias.
+    # A display/group ID never supplies authority for a materialized root.
+    ctx.read(owner + '/shot', ['shot_id'])
+    occurrence_start(row)
+    if (not active(row)
+            or not any(equal(row.get('source_offset'), value) for value in
+                       (None, 0, {'start': 0, 'end': 0}))
+            or not any(equal(row.get('speed'), value) for value in
+                       (None, 1, {'numerator': 1, 'denominator': 1}))
+            or any(row.get(k) is not None for k in ('time_map', 'timeMap', 'source_map', 'sourceMap',
+                                                    'clips', 'children', 'from_ms', 'to_ms',
+                                                    'at', 'start', 'start_ms'))):
+        raise CommandError('move requires a translation-only occurrence', kind='unsupported_map')
+    app = row.get('app')
+    for container in (row, app, app.get('astrid') if isinstance(app, dict) else None):
+        if container is not None and (not isinstance(container, dict) or any(
+                container.get(k) is not None and not (k == 'fixed_start' and container[k] is True)
+                for k in (*RELATIONS, 'anchor'))):
+            raise CommandError('move requires fixed occurrence timing')
+    output_lane(ctx, 'parent/track:' + lane(row))
+    number(row.get('duration_ms'), 'duration_ms', positive=True)
+    duration = Fraction(str(row['duration_ms']))
+    for other in ctx.select('move.blockers', owner):
+        if other == owner:
+            continue
+        blocker = ctx.read(other)
+        occurrence_start(blocker)
+        start = (blocker.get('placement') or {}).get('start_ms')
+        start = Fraction(str(blocker.get('at_ms', 0) if start is None else start))
+        number(blocker.get('duration_ms'), 'duration_ms', positive=True)
+        end = start + Fraction(str(blocker['duration_ms']))
+        if start_ms < end and start < start_ms + duration:
+            raise CommandError('moved occurrence overlaps destination content', kind='occurrence_boundary')
+    for ref in ctx.select('collection.clips', owner):
+        ctx.read(ref)
+    ctx.read(owner + '/source', ['registry'])
+    _provenance(ctx, owner)
+    ctx.bind('move.owner', owner)
+    ctx.object(owner, ['placement'])
+    ctx.write(owner, ['placement', 'start_ms'], start_ms)
+    if 'at_ms' in row:
+        ctx.write(owner, ['at_ms'], start_ms)
+
+
+def capture_occurrence_start(bundle, select, start_ms):
+    """Capture an exact root start; child ownership and source state stay intact."""
+    from .commands import execute
+
+    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.move', 'version': '1',
+                             'select': select, 'args': {'start_ms': start_ms},
+                             'intent': OCCURRENCE_MOVE_INTENT}]).commands[0]
 
 
 def capture_occurrence_move(bundle, select, on, *, track, child_track, new_child_track=None):

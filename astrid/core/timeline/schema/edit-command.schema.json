@@ -3223,13 +3223,51 @@
     },
     "OccurrenceMoveArgs": {
       "type": "object",
-      "required": [
-        "on",
-        "track",
-        "child_track"
+      "oneOf": [
+        {
+          "required": [
+            "on",
+            "track",
+            "child_track"
+          ],
+          "not": {
+            "required": [
+              "start_ms"
+            ]
+          }
+        },
+        {
+          "required": [
+            "start_ms"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "on"
+                ]
+              },
+              {
+                "required": [
+                  "track"
+                ]
+              },
+              {
+                "required": [
+                  "child_track"
+                ]
+              }
+            ]
+          }
+        }
       ],
       "additionalProperties": false,
       "properties": {
+        "start_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Exact authored root start in milliseconds; preserves all child tracks. Mutually exclusive with frame-quantized retrack arguments."
+        },
         "on": {
           "type": "number",
           "minimum": 0,

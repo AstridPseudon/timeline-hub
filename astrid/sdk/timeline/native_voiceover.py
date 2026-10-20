@@ -5,6 +5,7 @@ import copy
 import math
 from collections.abc import Mapping
 
+from ._clip_scalar_commands import capture_clip_set
 from ._command_state import CommandError, State, equal
 from ._shot_commands import capture_shot_set
 from .capture import capture_track_create, number
@@ -13,8 +14,73 @@ from .native_occurrence_media_commands import (
     capture_occurrence_add_media,
     capture_occurrence_swap_media,
 )
+from .native_occurrence_resize import capture_occurrence_resize
+from .occurrence_commands import capture_occurrence_start
 
 _MEDIA_FIELDS = {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
+_TIMING_FIELDS = ("at", "at_ms", "hold", "from", "to", "speed", "duration", "duration_ms")
+
+
+def _capture_timing(bundle, candidate, jobs):
+    """Use literal carriers for prepared timing; refuse any unrepresented change."""
+    work, commands = copy.deepcopy(bundle), []
+
+    def append(command):
+        nonlocal work
+        commands.append(command)
+        work = execute(work, [command]).bundle
+
+    placements = candidate.get("placements", [])
+    if [p.get("occurrence_id") for p in placements] != [p.get("occurrence_id") for p in bundle["placements"]]:
+        raise CommandError("voiceover changed occurrence membership/order", kind="identity_conflict")
+    if not equal(bundle["parent"].get("config", {}).get("duration"),
+                 candidate["parent"].get("config", {}).get("duration")):
+        raise CommandError("voiceover parent duration has no literal command carrier", kind="unsupported_timing")
+    # Free shrinking spans first; move later spans outwards before extending.
+    for before, after in zip(bundle["placements"], placements):
+        if after["duration_ms"] < before["duration_ms"]:
+            append(capture_occurrence_resize(work, before["occurrence_id"], after["duration_ms"]))
+    shifts = [(before, after) for before, after in zip(bundle["placements"], placements)
+              if before["placement"]["start_ms"] != after["placement"]["start_ms"]]
+    right = sorted((pair for pair in shifts if pair[1]["placement"]["start_ms"] >
+                    pair[0]["placement"]["start_ms"]), key=lambda pair: -pair[0]["placement"]["start_ms"])
+    left = sorted((pair for pair in shifts if pair not in right), key=lambda pair: pair[0]["placement"]["start_ms"])
+    for before, after in right + left:
+        append(capture_occurrence_start(work, "occurrence:" + before["occurrence_id"],
+                                        after["placement"]["start_ms"]))
+    for before, after in zip(bundle["placements"], placements):
+        if after["duration_ms"] > before["duration_ms"]:
+            append(capture_occurrence_resize(work, before["occurrence_id"], after["duration_ms"]))
+
+    scopes = [("parent", bundle["parent"].get("clips", []), candidate["parent"].get("clips", []), None)]
+    for before, after in zip(bundle["placements"], placements):
+        scopes.append(("occurrence:" + before["occurrence_id"],
+                       bundle["shots"][before["shot_id"]]["internal_timeline"].get("clips", []),
+                       candidate["shots"][after["shot_id"]]["internal_timeline"].get("clips", []),
+                       jobs.get(before["occurrence_id"], {}).get("clip_id")))
+        old_duration = bundle["shots"][before["shot_id"]]["internal_timeline"].get("duration")
+        new_duration = candidate["shots"][after["shot_id"]]["internal_timeline"].get("duration")
+        if not equal(old_duration, new_duration):
+            raise CommandError("voiceover child duration has no literal command carrier", kind="unsupported_timing")
+    for owner, originals, prepared, audio_id in scopes:
+        originals = {row["id"]: row for row in originals}
+        if set(originals) - {row["id"] for row in prepared}:
+            raise CommandError("voiceover removed authored children", kind="identity_conflict")
+        for row in prepared:
+            before = originals.get(row["id"])
+            if before is None:
+                if row["id"] == audio_id:
+                    continue
+                raise CommandError("voiceover changed visual membership", kind="identity_conflict")
+            changed = {key for key in _TIMING_FIELDS if (key in before) != (key in row)
+                       or not equal(before.get(key), row.get(key))}
+            if row["id"] == audio_id:
+                changed -= {"from", "to", "hold"}
+            if changed - {"hold"} or ("hold" in changed and "hold" not in row):
+                raise CommandError("voiceover timing has no exact literal command carrier", kind="unsupported_timing")
+            if "hold" in changed:
+                append(capture_clip_set(work, owner + "/clip:" + row["id"], values={"hold": row["hold"]}))
+    return work, commands
 
 
 def _selection(value, label):
@@ -79,10 +145,9 @@ def capture_draft_voiceover(bundle, prepared, *, media_by_occurrence,
     if {row.get("occurrence_id") for row in generated} != set(jobs):
         raise CommandError("voiceover synthesis outcome and plan disagree")
 
-    work = copy.deepcopy(bundle)
-    commands = []
-    captures = []
     candidate = prepared["candidate"]
+    work, commands = _capture_timing(bundle, candidate, jobs)
+    captures = []
     for result in generated:
         occurrence_id = result.get("occurrence_id")
         job = jobs[occurrence_id]
@@ -134,7 +199,9 @@ def capture_draft_voiceover(bundle, prepared, *, media_by_occurrence,
         else:
             # Swap changes only the selected asset. Do not claim a prepared
             # duration while retaining a different authored source window.
-            _source_row(existing, duration, "authored voiceover")
+            if _source_row(existing, duration, "authored voiceover") != source:
+                raise CommandError("voiceover source window has no literal command carrier",
+                                   kind="unsupported_timing")
             old = _selection(old_media_by_occurrence.get(occurrence_id), "old media")
             command = capture_occurrence_swap_media(work, target, old, media,
                                                     verified_media=verified_media)
