@@ -14,8 +14,6 @@ from astrid.packs.rendering.shared.rendering_backend import _serialize_timeline
 from astrid.sdk.timeline.units import from_canvas
 from tests.packs.rendering.test_scene_host import BASIS, ROOT, props
 
-pytest_plugins = ['tests.packs.rendering.test_scene_host']
-
 
 def prepared_props(tmp_path, clips, assets=None):
     graph = json.loads((ROOT / 'tests/fixtures/timeline/shot_composition.json').read_text())
