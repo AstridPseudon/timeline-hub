@@ -14,7 +14,8 @@ export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapab
   // The public scene supplies the same speed-remapped frame as the component.
   frame: frame => {
     const {view} = presenterAt(clip.params, frame, fps);
-    const {left, top, width: w, height: h} = pixelGeometry(mouthInspectionRect(clip.params), view);
+    const inspection = mouthInspectionRect(clip.params);
+    const geometry = inspection ? pixelGeometry(inspection, view) : null;
     return {
       presence: 'unknown',
       opaqueSupport: 'none',
@@ -25,7 +26,9 @@ export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapab
         // Padded inspection ROI, including closed pose; no plate or alpha claim.
         mouth: presenterMosaicAt(clip.params, clip, frame, fps)
           ? {status: 'unknown', reason: 'Presenter mouth overlay is hidden by mosaic'}
-          : {status: 'known', rect: {x: left, y: top, width: w, height: h}},
+          : geometry
+            ? {status: 'known', rect: {x: geometry.left, y: geometry.top, width: geometry.width, height: geometry.height}}
+            : {status: 'unknown', reason: 'Presenter mouth has no compatible authored anchor'},
       },
     };
   },

@@ -122,8 +122,10 @@ if (mode === 'snapshots') {
   };
   const erase = (c, frame, fps) => pixelRect(source.pixelGeometry(
     source.mouthEraseRect(source.mouthAnchor(c.params)), presenterAt(c.params, frame, fps).view));
-  const inspection = (c, frame, fps) => pixelRect(source.pixelGeometry(
-    source.mouthInspectionRect(c.params), presenterAt(c.params, frame, fps).view));
+  const inspection = (c, frame, fps) => {
+    const rect = source.mouthInspectionRect(c.params);
+    return rect ? pixelRect(source.pixelGeometry(rect, presenterAt(c.params, frame, fps).view)) : null;
+  };
   const support = (c, frame, b = basis) => source.Presenter.prepareSceneCapability({clip: c, ...b,
     rendererIdentity: 'registered-ssr', fontDigests: {}}).frame(frame);
   const drawnOverlay = (c, frame, b = basis) => render({clip: c, params: c.params, fps: b.fps}, frame, b,
@@ -155,7 +157,9 @@ if (mode === 'snapshots') {
           seen.add(state);
           const html = render(props, frame, b);
           assert.ok(html.includes(drawnOverlay(c, frame, b)), `registered drawing ${fps}:${frame}`);
-          assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
+          const expected = inspection(c, frame, fps);
+          if (expected) assert.deepEqual(layer.diagnostics.mouth.rect, expected);
+          else assert.equal(layer.diagnostics.mouth.status, 'unknown');
           const mouth = erase(c, frame, fps);
           assert.equal(html.includes(eraseStyle(mouth) + '#EDB98E'), state !== 'closed');
         }
@@ -188,10 +192,11 @@ if (mode === 'snapshots') {
         const layer = querySceneFrame(scene, frame).layers[0];
         assertMotion(c, frame, b, layer);
         assert.deepEqual(layer.diagnostics.mouth, support(c, frame, b).diagnostics.mouth);
-        assert.equal(layer.diagnostics.mouth.status, 'known');
+        const expected = inspection(c, frame, fps);
+        assert.equal(layer.diagnostics.mouth.status, expected ? 'known' : 'unknown');
         const state = mouthStateAt(presenterAt(c.params, frame, fps).timing, frame);
         const html = render(props, frame, b);
-        assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
+        if (expected) assert.deepEqual(layer.diagnostics.mouth.rect, expected);
         if (state !== 'closed') assert.ok(html.includes(eraseStyle(erase(c, frame, fps)) + '#EDB98E'));
         assert.equal(layer.visible, 'unknown');
         assert.equal(layer.opaqueSupport, 'none');
@@ -199,11 +204,19 @@ if (mode === 'snapshots') {
         assert.equal(layer.diagnostics.text, undefined);
       }
     }
-    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
-    assert.deepEqual(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.rect,
-      {x: -12, y: 1056, width: 30, height: 48});
+    assert.deepEqual(query(clip({mouth: {x: 151, y: 104, w: 19}}), 0).diagnostics.mouth.rect,
+      {x: 894, y: 606, width: 138, height: 48});
+    assert.deepEqual(query(clip({mouth: {x: 151, y: 104}}), 0).diagnostics.mouth.rect,
+      {x: 894, y: 606, width: 120, height: 48});
+    assert.deepEqual(source.mouthAnchor({mouth: {x: 151, y: 104}}), {x: 151, y: 104, w: 19});
+    assert.equal(query(clip(), 0).diagnostics.mouth.status, 'unknown');
+    assert.equal(query(clip({mouth: {x: 'bad', y: null, w: 900}}), 0).diagnostics.mouth.status, 'unknown');
+    const malformed = {mouth: {x: 'bad', y: null, w: 900}};
+    assert.deepEqual(source.mouthAnchor(malformed), {x: 151, y: 104, w: 40});
+    assert.deepEqual(motionAt(malformed, 0, basis.fps), motionAt({mouth: {x: 151, y: 104, w: 40}}, 0, basis.fps));
+    assert.equal(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.status, 'unknown');
     const small = {...basis, width: 960, height: 540};
-    const layer = query(clip(), 0, small);
+    const layer = query(clip({mouth: {x: 151, y: 104, w: 19}}), 0, small);
     // Logical overlay pixels are not rescaled to an invented 320x180 viewport.
     assert.deepEqual(layer.diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
     assert.deepEqual(layer.bounds.rect, {x: 0, y: 0, width: 960, height: 540});
@@ -217,7 +230,7 @@ if (mode === 'snapshots') {
     const s = support(c, 0);
     assert.equal(s.presence, 'unknown');
     assert.equal(s.opaqueSupport, 'none');
-    assert.equal(s.diagnostics.mouth.status, 'known'); // footprint, not occupied pixels
+    assert.equal(s.diagnostics.mouth.status, 'unknown'); // absent raw mouth skips compatibility inspection
     assert.equal(querySceneFrame(prepareHostScene(props, basis, {}), 0).coverage, 'UNKNOWN');
     for (const missing of [{asset: 'missing'}, {params: {...c.params, src: '/not-a-presenter-asset.png'}}]) {
       const other = {...c, ...missing};
@@ -226,7 +239,7 @@ if (mode === 'snapshots') {
     }
     for (const ramps of [{mosaicIn: {frames: 8}}, {mosaicOut: {frames: 8}},
       {mosaicIn: {frames: 8, steps: [48, 6]}}]) {
-      const m = clip({...ramps, words, chrome: 'none', blinkEvery: 0});
+      const m = clip({...ramps, mouth: {x: 151, y: 104, w: 19}, words, chrome: 'none', blinkEvery: 0});
       for (const frame of [0, 1, 3, 4, 6, 7, 8, 52, 53, 54, 55, 56, 57, 58, 59]) {
         const layer = query(m, frame);
         assertMotion(m, frame, basis, layer);
@@ -238,8 +251,9 @@ if (mode === 'snapshots') {
         }
       }
     }
-    assert.equal(query(clip({mosaicIn: {frames: 8}}), 0).diagnostics.mouth.status, 'unknown');
-    assert.equal(query(clip({mosaicIn: {frames: 8}}), 6).diagnostics.mouth.status, 'known');
+    const mosaic = {mosaicIn: {frames: 8}, mouth: {x: 151, y: 104, w: 19}};
+    assert.equal(query(clip(mosaic), 0).diagnostics.mouth.status, 'unknown');
+    assert.equal(query(clip(mosaic), 6).diagnostics.mouth.status, 'known');
     for (const extra of [{cropLeft: .1}, {entrance: 'fade-up'}, {exit: 'fade-up'},
       {modifiers: [{id: 'unknown', element: {packId: 'missing', kind: 'modifier', id: 'missing'}, params: {}}]}]) {
       const outer = query({...c, ...extra}, 2);
