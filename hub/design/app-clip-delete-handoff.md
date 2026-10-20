@@ -1,118 +1,98 @@
 # App ordinary clip-delete handoff
 
-Status: **capture-ready; UI/session wiring not ready** (M2, docs plus standalone
-offline parity only). This handoff is based on App `9c074972c`, Agent integration
-`fc324e83`, Agent native worker `bbb60b5cd664f675df0de1679e8fc565ae73fd0c`,
-frozen R4 SDK candidate `11caf1d9de291d76f491cf69f7942606b7471d7a`, Runtime
-integration `9f9b25c000485e919f30f1411831fe2d5a3c1316`, and frozen Runtime
-candidate `31c7ac3a00f7a205f507bf5bd4d4625628d429bd`.
+M2 branch only. Capture and durable-session seam are implemented; UI wiring and
+actual server acceptance remain open. No M2 integration merge until PLAN records
+M1. App base `9c074972c` retains the opaque recovery roots, all original journeys,
+the exact three `it.fails`, Runtime 0.2.1/schema4e52 and Composition 0.0.8 pins.
 
-## Native contract
+## Sources and readiness
 
-Agent publishes one bounded operation:
+The original handoff at App `961197e84` names Agent native worker
+`bbb60b5cd664f675df0de1679e8fc565ae73fd0c` (capture/delete/recording implementation
+and golden), Agent integration `fc324e83`, Runtime integration `9f9b25c`, and
+frozen R4 SDK `11caf1d9` / Runtime `31c7ac3a` for comparison. The R4 references
+are historical source references, **not the current official Runtime artifact**.
+The delete implementation/golden is native forward-port worker source, not a
+claim that App's pinned official artifact accepts it. The old move source note
+naming `sdk/timeline/capture.py::move` is recipe provenance, not a package pin.
+
+Only the three capture/golden files were copied from `961197e84`; its mistakenly
+repo-local design document was moved here. The original golden is byte-identical.
+Two copied-capture parity gaps were corrected against that exact native source:
+`Recording.compile_mirrors` records an empty final collection, and `State.set`
+preserves colons within raw IDs. App now does both, with a regression test.
+
+Actual server proof waits for the widened official Agent registry/provider and
+Runtime generated artifact with an exact source tuple. App pins are unchanged:
+client 0.2.1, schema
+`4e52f7df017db99483ffcd0c593ce414b6443d5d0214ada943bb26fdfcc1714d`,
+Composition 0.0.8. No schema guessing or compatibility writer is introduced.
+
+## Native contract and guards
 
 ```json
-{
-  "schema_version": 1,
-  "op": "clip.delete",
-  "version": "1",
-  "select": "parent/clip:<raw-id>",
-  "args": {},
-  "intent": {}
-}
+{"schema_version":1,"op":"clip.delete","version":"1","select":"parent/clip:<raw-id>","args":{},"intent":{}}
 ```
 
-`select` is exactly one parent-owned clip identity. The native capture records
-the whole authored row as one root clear, the parent clip collection membership
-and order, the parent occurrence collection, every declared relation it checks,
-and the exact target-row guard. A mirrored `parent.config.clips` collection is
-compiled as a derived write. The inverse restores the original row and order;
-the accepted Agent record, not App state, authorizes undo.
+The target is exactly one parent-owned raw clip. Native capture records its whole
+authored row/root clear, parent clip membership/order, occurrence collection,
+and every declared relation it checks. Mirror synchronization is a derived write.
+The accepted Agent record authorizes inverse/restore; App never invents an inverse.
+Original value-and-identity guards govern dependent commands: equal-state ABA is
+NOT a dependent-edit conflict under PLAN. Accepted history/inverse write guards
+remain server-owned; the old handoff's blanket ABA refusal statement was too broad.
 
-This is not a general “remove” command. The native operation refuses occurrence-
-owned targets, legacy shot-owned clips, nested clips, pinned groups, transitions,
-and non-empty declared relations (`on`, `until`, `cut`, `formulas`, `sequence`,
-`words`, `beats`, `replaces`, and the other listed semantic keys). It also refuses
-missing/duplicate identities, divergent clip mirrors, changed membership/order,
-changed target source or opaque data, and ABA/same-value intervening writes.
-It does not inspect opaque strings as guessed dependencies and never deletes
-media, registry entries, source pins, or unrelated rows.
+Native delete refuses occurrence-owned/legacy-shot/nested targets, pinned groups,
+transitions and nonempty declared semantic relations (`on`, `until`, `cut`,
+`formulas`, `sequence`, `words`, `beats`, `replaces`, etc.). It rejects ambiguous
+IDs, divergent clip mirrors, changed target source/opaque fields, and changed
+collection membership/order. It never guesses dependencies from opaque strings,
+removes media/registry/source pins, or replaces unrelated rows.
 
-The portable authored input and exact native output are copied from Agent's
-`tests/editing_conformance/fixtures/recipe_clip_delete.json` into
-`src/tools/video-editor/commands/fixtures/recipe_m2_app_clip_delete.json`.
-The semantic input is `select: parent/clip:clip-b`; the command, after bundle,
-reads, selections, guarded inverse record, and derived mirror write are fixture
-data, not an App-invented wire shape.
+## Session seam
 
-## App parity seam
+`commands/clipDeleteGesture.ts` publishes:
 
-`src/tools/video-editor/commands/clipDeleteCapture.ts` is deliberately standalone.
-It provides `captureClipDelete`, `finishClipDelete`, and
-`executeClipDelete` over the existing `AuthoredBundle` and recording primitives.
-It freezes the original bundle/claims, preserves null/absent/opaque values, and
-rejects a refreshed basis rather than recapturing it. It does not register a UI
-command, alter `useTimelineCommandSession`, call Runtime, or write a snapshot.
-`clipDeleteCapture.test.ts` proves exact command/after-bundle/record parity and
-the key ownership, dependency, identity, immutability, and closure refusals.
+```ts
+interface ClipDeleteCapturePort {
+  capture(input: { clipId: string; current: TimelineData }): JsonObject;
+  finish(basis: JsonObject): { command: EditCommand };
+  submit(input: { command: EditCommand; preview: TimelinePatch }): void;
+}
+captureClipDeleteEdit(port, current, clipId);
+submitClipDeleteEdit(captured);
+```
 
-## Current remove ingress to replace later
+Raw session and mounted hook expose `.clipDeletePort`. Capture fences raw scope,
+exact display head pair and unique raw parent identity, then captures native
+claims over the optimistic raw bundle. Finish verifies ORIGINAL claims against
+the current bundle, preserving unrelated remote row updates. Submit accepts only
+one `clip.remove` local preview for the SAME ID. Only the native `clip.delete`
+command is persisted/submitted canonically; a preview is never a replacement save.
+The existing prepared map, generation fence, dependent basis, outbox, retry,
+undo and disposal drain are reused. The hook fences every phase while older
+snapshot work remains dirty.
 
-The ordinary UI/service/public-patch paths are still legacy writers and remain
-open until a real command-door journey exists:
+Track-label session work is on another branch. Compose its independent port
+and hook deltas with this change; neither branch replaces the other's shared
+files or adds another outbox/framework.
 
-* UI keyboard: `components/TimelineEditorShellCore.tsx` calls
-  `lib/keyboard-delete.ts`, which expands pinned groups or builds a local
-  `rows` mutation before falling through to `handleDeleteClips`.
-* Editing hook: `hooks/clip-editing/useClipDeletion.ts` removes actions and
-  calls `applyRowsEdit(..., metaDeletes)`.
-* Public service: `hooks/useTimelineCommandsService.ts` exposes `deleteClip`
-  and `PUBLIC_TIMELINE_COMMAND_NAMES`; its implementation builds a local rows
-  mutation and calls `applyValidatedMutation`. This is not `clip.delete`.
-* Public patch: `lib/timeline-patch.ts` still accepts and applies
-  `clip.remove`; `lib/sequence-public.ts` projects `metaDeletes`, and
-  `lib/shot-group-commands.ts` owns the separate pinned-group removal path.
-  Prepared-media `removeClipId`/`removeClipIds` in `commands/media.ts` is a
-  separate replacement flow and must not be silently mapped to ordinary delete.
+## Remaining writer integration
 
-No fallback `clip.remove` or whole-document save is a canonical writer for this
-handoff. These paths should be deleted or converted only after the native
-registry/capture artifact and Runtime commit artifact are named and frozen.
+UI keyboard deletion (`keyboard-delete.ts`), `useClipDeletion.ts` via
+`applyRowsEdit`, public `useTimelineCommandsService.deleteClip` via
+`applyValidatedMutation`, and public `timeline-patch.ts`/`sequence-public.ts`
+removal ingresses remain to migrate. Pinned-group removal and prepared-media
+replacement (`removeClipId`/`removeClipIds`) are distinct operations; do not map
+them silently to this bounded parent deletion. No UI/state/service/useTimelineOps
+changes belong in this session branch.
 
-## Minimal next wiring and tests
-
-1. Freeze the Agent registry entry and Runtime provider artifact/version used by
-   App. App should pass the captured command through the existing command
-   session/outbox/`commitTimeline` path; it must not add an App opcode or refresh
-   the basis from display state.
-2. Add a narrow ordinary-delete adapter for one parent clip. Keep group,
-   occurrence, legacy-shot, nested, semantic-dependency, and multi-delete inputs
-   visibly refused with the local draft/selection retained. No session or UI
-   change belongs in this parity branch.
-3. Add zero-traffic spies for `applyRowsEdit`/snapshot publication,
-   `saveTimeline`, `saveTimelineAtHead`, `publishParentComposition`,
-   `config-replaced`, and `clip.remove` on the migrated path. Add outbox lost-ACK,
-   exact retry, reload, accepted undo, opaque closure, and intervening-write
-   tests before removing any old ingress.
-
-The portable fixture request for the next Agent/Runtime handoff is: provide an
-existing authored bundle from the native capture fixture plus a semantic input
-(target identity and any required selection/ownership context), and the exact
-native command/record/after bundle. Do not request or invent a guessed App
-`TimelinePatch`, `clip.remove`, or new wire opcode. Additional occurrence or
-group cases need their own published Agent primitive and fixture first.
-
-## Readiness
-
-**Ready:** standalone App capture parity against the official Agent golden;
-offline unit tests pass; the direct App typecheck has the two pre-existing
-baseline diagnostics only (TS7053 at `RuntimeConnectionProvider.ts:90` and
-TS2550 at `AgentChatNewChatButton.tsx:80`); no product writer or Runtime DTO
-changes required. The prior claim that `npm exec tsc` passed was incorrect:
-the direct `./node_modules/.bin/tsc --noEmit -p tsconfig.app.json` run before
-this type-only correction also reported the new TS2345 at
-`clipDeleteCapture.ts:92-103`, which this handoff fixes.
-
-**Not ready:** UI/session integration, Runtime acceptance, multi-clip/group
-delete, occurrence-owned deletion, or removal of the legacy ingress. M1 remains
-merge-held per PLAN, and this branch does not claim Gate 6 closure.
+Offline tests cover exact golden/record parity, whole-row guards, queued
+move→delete, both lost-ACK/reload positions, identical retry keys/bodies, fresh
+dependent identity, same-turn drain, unrelated-row preservation and native
+refusals. Mounted tests cover local preview, visible refusal with retained
+outbox, zero snapshot saves and every legacy-clean phase. Outgoing accepted
+`timeline.inverse` intent is checked; actual server guarded undo is unverified.
+Next: after official artifact publication and M1 record, compose the session
+ports, wire ordinary single-parent ingress, then prove real success/reload/undo
+and zero legacy traffic before deleting the old writer branches.
