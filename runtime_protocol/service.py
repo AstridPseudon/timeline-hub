@@ -7133,6 +7133,7 @@ class RuntimeService:
                 self.store._settle_attempt(
                     row["task_id"], row["lease_id"], result,
                     effect=effect, fence=body["fence"], attempt_id=attempt_id,
+                    duration_seconds_presence=staged["duration_seconds_presence"],
                     publish=lambda: self._publish_staged_outputs(staged, project_id=project_id),
                     record=record,
                 )
@@ -7423,6 +7424,7 @@ class RuntimeService:
             raise ValidationError("attempt staging directory is invalid")
         platform.owner_only(stage_dir)
         staged = []
+        duration_seconds_presence = {}
         seen = set()
         content_metadata = {}
         non_object_digests = set()
@@ -7642,6 +7644,13 @@ class RuntimeService:
                     normalized["is_primary"] = is_primary
                 if duration_seconds is not None:
                     normalized["duration_seconds"] = duration_seconds
+                if "duration_seconds" in output:
+                    duration_seconds_presence[(
+                        output_port,
+                        group_key,
+                        variant_key,
+                        int(ordinal if ordinal is not None else 0),
+                    )] = duration_seconds
                 if durability != "durable":
                     normalized["durability"] = durability
                 if producer:
@@ -7660,7 +7669,15 @@ class RuntimeService:
                     "generation_id": generation_id, "durability": durability, "producer": producer,
                     "provenance": provenance, "regeneration": regeneration, "coverage": coverage,
                 })
-            return {"stage_dir": stage_dir, "attempt_id": attempt_id, "items": staged, "outputs": [item["output"] for item in staged]}
+            return {
+                "stage_dir": stage_dir,
+                "attempt_id": attempt_id,
+                "items": staged,
+                "outputs": [item["output"] for item in staged],
+                # Keep explicit null presence transiently for missing-only
+                # settlement enrichment; it is not part of the wire result.
+                "duration_seconds_presence": duration_seconds_presence,
+            }
         except Exception:
             self._discard_staged_outputs({"stage_dir": stage_dir, "items": staged})
             raise
