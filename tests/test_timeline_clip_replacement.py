@@ -13,8 +13,18 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 from astrid_runtime_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
-from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
+from runtime_protocol.errors import ConflictError, NotFoundError, RetiredRouteError, ValidationError
 from runtime_protocol.service import RuntimeService
+
+
+# Direct replace_timeline_clip is retired (ledger D04; refusal asserted in
+# test_timeline_legacy_authority.py). These keep the original expectations until
+# the commit path covers clip media replacement (Agent popup swap / occurrence
+# media swap bundle).
+retired_writer = pytest.mark.xfail(
+    strict=True, raises=RetiredRouteError,
+    reason="ledger D04: direct clip replacement retired; awaiting commit-path replacement",
+)
 
 
 def _media_bytes(duration: float = 5, *, kind: str = "video") -> bytes:
@@ -65,6 +75,7 @@ def _service_fixture(tmp_path, *, clip_type: str | None = None):
     return service, project, config, registry, source["data"]["object_id"]
 
 
+@retired_writer
 def test_replace_timeline_clip_is_atomic_cas_and_exactly_replayable(tmp_path):
     service, project, before_config, before_registry, source_id = _service_fixture(tmp_path)
     try:
@@ -92,6 +103,7 @@ def test_replace_timeline_clip_is_atomic_cas_and_exactly_replayable(tmp_path):
         service.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_rejects_cross_project_source(tmp_path):
     service, _, _, _, _ = _service_fixture(tmp_path)
     try:
@@ -104,6 +116,7 @@ def test_replace_timeline_clip_rejects_cross_project_source(tmp_path):
         service.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_rejects_malformed_source_without_mutation(tmp_path):
     service, project, _, _, _ = _service_fixture(tmp_path)
     try:
@@ -118,6 +131,7 @@ def test_replace_timeline_clip_rejects_malformed_source_without_mutation(tmp_pat
         service.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_rejects_tampered_cas_without_mutation(tmp_path):
     service, _, _, _, source_id = _service_fixture(tmp_path)
     try:
@@ -132,6 +146,7 @@ def test_replace_timeline_clip_rejects_tampered_cas_without_mutation(tmp_path):
         service.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_rejects_wrong_stream_without_mutation(tmp_path):
     service, project, _, _, _ = _service_fixture(tmp_path)
     try:
@@ -144,6 +159,7 @@ def test_replace_timeline_clip_rejects_wrong_stream_without_mutation(tmp_path):
         service.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_rejects_too_short_source_without_mutation(tmp_path):
     service, project, _, _, _ = _service_fixture(tmp_path)
     try:
@@ -156,6 +172,7 @@ def test_replace_timeline_clip_rejects_too_short_source_without_mutation(tmp_pat
         service.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_requires_source_to_reach_authored_end(tmp_path):
     service, project, _, _, _ = _service_fixture(tmp_path)
     try:
@@ -168,6 +185,7 @@ def test_replace_timeline_clip_requires_source_to_reach_authored_end(tmp_path):
         service.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_generic_visual_media_requires_video_stream(tmp_path):
     service, project, _, _, _ = _service_fixture(tmp_path, clip_type="media")
     try:
@@ -180,6 +198,7 @@ def test_replace_timeline_clip_generic_visual_media_requires_video_stream(tmp_pa
         service.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_replays_after_intervening_edit_and_reopen(tmp_path):
     service, project, _, _, source_id = _service_fixture(tmp_path)
     root = tmp_path / "realm"
@@ -199,6 +218,7 @@ def test_replace_timeline_clip_replays_after_intervening_edit_and_reopen(tmp_pat
         reopened.close()
 
 
+@retired_writer
 def test_replace_timeline_clip_public_http_route(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
