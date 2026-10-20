@@ -11,6 +11,7 @@ from typing import Iterator
 
 from .errors import ConflictError, RealmAdmissionError, ValidationError
 from .catalog import _safe_path
+from .sqlite_uri import sqlite_file_uri
 
 
 def _regular_database(root: str | Path) -> tuple[Path, Path]:
@@ -116,7 +117,7 @@ def _interruption_report(connection: sqlite3.Connection) -> dict[str, object]:
 def inspect_interruption_state(root: str | Path) -> dict[str, object]:
     """Observe lifecycle blockers without creating files, sidecars, or rows."""
     _, database = _regular_database(root)
-    connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True)
+    connection = sqlite3.connect(sqlite_file_uri(database), uri=True)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA query_only=ON")
     try:

@@ -60,6 +60,36 @@ def log_dir(home: Path | str | None = None) -> Path:
     return Path(os.environ.get("XDG_STATE_HOME") or home / ".local" / "state") / "astrid-runtime" / "logs"
 
 
+def is_remote_filesystem(path: Path | str) -> bool:
+    """Identify Windows network volumes, including UNC and mapped drives.
+
+    GetVolumePathName follows junctions and mounted folders and also accepts
+    missing trailing components, so this works before a realm is created.
+    Other filesystem users (including media readers) do not need this policy.
+    """
+    if sys.platform != "win32":
+        return False
+    name = os.fspath(path).replace("/", "\\")
+    if name.startswith("\\\\") and (
+        not name.startswith(("\\\\?\\", "\\\\.\\"))
+        or name.upper().startswith("\\\\?\\UNC\\")
+    ):
+        return True
+    from ctypes import wintypes
+    kernel = _kernel()
+    kernel.GetVolumePathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+    kernel.GetVolumePathNameW.restype = wintypes.BOOL
+    kernel.GetDriveTypeW.argtypes = [wintypes.LPCWSTR]
+    kernel.GetDriveTypeW.restype = wintypes.UINT
+    volume = ctypes.create_unicode_buffer(32768)
+    if not kernel.GetVolumePathNameW(str(Path(path).absolute()), volume, len(volume)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    drive_type = kernel.GetDriveTypeW(volume.value)
+    if drive_type in (0, 1):  # DRIVE_UNKNOWN / DRIVE_NO_ROOT_DIR
+        raise OSError(errno.ENODEV, "filesystem volume type is unavailable", str(path))
+    return drive_type == 4  # DRIVE_REMOTE
+
+
 def owner_only(path_or_fd, *, directory: bool | None = None) -> None:
     """Apply 0600/0700 or a protected owner/SYSTEM DACL."""
     if sys.platform == "win32":

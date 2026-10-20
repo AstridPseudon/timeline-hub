@@ -51,7 +51,9 @@ class RuntimeDaemon:
     """Loopback-only daemon owning one realm and its storage."""
 
     def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None, door=None, services=None, log_directory=None):
-        if host not in ("127.0.0.1", "localhost", "::1"):
+        if ":" in host:
+            raise ValueError("runtime daemon requires IPv4 loopback; IPv6 is not supported yet")
+        if host not in ("127.0.0.1", "localhost"):
             raise ValueError("runtime daemon only binds to loopback")
         self.root = _authority_path(root, "realm root").resolve()
         self.support_root = (_authority_path(support_root, "support root").resolve() if support_root else self.root / "support")

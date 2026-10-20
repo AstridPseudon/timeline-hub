@@ -88,6 +88,7 @@ jobs:
           tests/test_profile_services.py
           tests/test_service_stop.py
           tests/test_m1_review.py
+          tests/test_windows_runtime_sweep.py
           tests/test_foreground.py
           tests/test_native_custody.py
           tests/test_portable_lifecycle.py

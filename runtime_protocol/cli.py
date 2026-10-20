@@ -17,6 +17,7 @@ from .local_worker_composition import load_local_worker_composition
 from .backup import create_backup, restore_backup, structured_export
 from .errors import RuntimeErrorBase
 from .store import REALM_ADMISSION_TIMEOUT_SECONDS, RealmStore
+from .sqlite_uri import sqlite_file_uri
 from .upgrade import (
     DEFAULT_UPGRADE_TIMEOUT_SECONDS,
     GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION,
@@ -204,7 +205,7 @@ def _main(args):
         if not database.is_file() or database.is_symlink():
             print(json.dumps({"status": "unavailable", "reason": "realm database is unavailable", "root": str(root)}, sort_keys=True))
             return 1
-        connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True, timeout=30.0)
+        connection = sqlite3.connect(sqlite_file_uri(database), uri=True, timeout=30.0)
         connection.row_factory = sqlite3.Row
         try:
             result = audit_active_timeline_heads(connection, project_id=args.project_id)

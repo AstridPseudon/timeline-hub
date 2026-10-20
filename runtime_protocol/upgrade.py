@@ -36,6 +36,7 @@ from .store import (REQUIRED_SCHEMA_COLUMNS, REQUIRED_SCHEMA_TABLES, SCHEMA_VERS
                     retire_terminal_specs, configured_spec_retention_days)
 from .util import canonical_json, now
 from .snapshot_refs import publish_snapshot, rewrite_spec_snapshots, restore_spec_snapshots
+from .sqlite_uri import sqlite_file_uri
 
 LEGACY_TABLES = frozenset(
     {
@@ -199,7 +200,7 @@ def compact_idempotency_ledger(root: str | Path, *, confirmation: str | None = N
             connection.execute("PRAGMA journal_mode=DELETE")
             connection.execute("VACUUM INTO ?", (str(output),))
             platform.owner_only(output)
-            verified = sqlite3.connect(f"file:{output}?mode=ro", uri=True)
+            verified = sqlite3.connect(sqlite_file_uri(output), uri=True)
             try:
                 if _retained_idempotency_digest(verified) != (after_count, after_digest):
                     raise ValidationError("VACUUM output changed retained idempotency facts")
@@ -500,7 +501,7 @@ def _owner_fence(root: Path):
 
 def _open_readonly(db: Path) -> sqlite3.Connection:
     _regular(db, "realm database")
-    connection = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    connection = sqlite3.connect(sqlite_file_uri(db), uri=True)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA query_only=ON")
     return connection

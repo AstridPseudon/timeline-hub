@@ -30,6 +30,7 @@ from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
 from .dirfd import remove_tree_at
 from .snapshot_refs import publish_snapshot, rewrite_spec_snapshots, working_copy_binding
+from .sqlite_uri import sqlite_file_uri
 from .util import canonical_json, new_id, now
 from .visual_seam import (
     admit_closure,
@@ -45,6 +46,16 @@ IDEMPOTENCY_RESULT_WINDOW_SECONDS = 24 * 60 * 60
 IDEMPOTENCY_RESULT_MARKER = "__runtime_idempotency_result_expired_v1"
 IDEMPOTENCY_RESULT_MARKER_PREFIX = '{"' + IDEMPOTENCY_RESULT_MARKER + '":'
 SPEC_RETENTION_DAYS = 30
+
+
+def _local_realm_root(root: str | Path) -> Path:
+    root = Path(root).expanduser()
+    try:
+        if platform.is_remote_filesystem(root):
+            raise RealmAdmissionError("realm storage must use a local filesystem; network realm roots are not supported")
+        return root.resolve()
+    except OSError as exc:
+        raise RealmAdmissionError("realm storage filesystem could not be verified as local") from exc
 
 
 def configured_spec_retention_days() -> int:
@@ -584,7 +595,7 @@ class RealmStore:
         CAS directory.  Creation is a separate operation so a missing path is
         an admission failure rather than an implicit bootstrap.
         """
-        root = Path(root).expanduser().resolve()
+        root = _local_realm_root(root)
         # Validate the complete identity before touching the requested root.
         # Creation is a sibling build followed by one directory publication;
         # the final name must never expose the schema without its identity.
@@ -697,7 +708,7 @@ class RealmStore:
                 os.close(parent_fd)
 
     def __init__(self, root: str | Path, *, create: bool = False, acquire_owner: bool = True, admission_timeout: float = REALM_ADMISSION_TIMEOUT_SECONDS):
-        self.root = Path(root).expanduser().resolve()
+        self.root = _local_realm_root(root)
         self.admission_timeout = admission_timeout
         if create:
             raise ValidationError("implicit realm creation is disabled; use RealmStore.initialize")
@@ -798,7 +809,7 @@ class RealmStore:
             raise OSError("realm database must be an ordinary file")
         if not platform.is_owner_only(self.db_path):
             raise PermissionError("realm database must retain owner-only permissions")
-        connection = sqlite3.connect(f"{self.db_path.as_uri()}?mode=ro", uri=True, isolation_level=None)
+        connection = sqlite3.connect(sqlite_file_uri(self.db_path), uri=True, isolation_level=None)
         connection.row_factory = sqlite3.Row
         try:
             connection.execute("PRAGMA query_only=ON")
@@ -1110,13 +1121,15 @@ class RealmStore:
                 if not path.exists() or not path.is_dir():
                     raise RealmAdmissionError("realm storage roots are incomplete")
             self.conn = sqlite3.connect(
-                f"{self.db_path.as_uri()}?mode=rw", uri=True, timeout=10,
+                sqlite_file_uri(self.db_path, mode="rw"), uri=True, timeout=10,
                 isolation_level=None, check_same_thread=False,
             )
         platform.owner_only(self.db_path)
         self.conn.row_factory = sqlite3.Row
+        journal_mode = self.conn.execute("PRAGMA journal_mode=WAL").fetchone()
+        if journal_mode is None or str(journal_mode[0]).lower() != "wal":
+            raise RealmAdmissionError("realm storage requires SQLite WAL journal mode")
         if fresh:
-            self.conn.execute("PRAGMA journal_mode=WAL")
             self.conn.executescript(CANONICAL_SCHEMA_SQL)
             self.conn.execute(
                 "INSERT INTO runtime_schema(id, format_id, version, created_at) VALUES (1, ?, ?, ?)",
