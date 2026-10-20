@@ -71,6 +71,19 @@ The vector test now checks an absent dotted key with `_lookup(...) is None`. The
 
 The occurrence-offset and occurrence-speed rows (7-8) deliberately **do not** match App's current adapter, which applies both. App must drop that application; this is the narrow App repair the 03:17 decision asks for.
 
+### Reconciliation with Viewing's 11 (04:44 item 2): not done, Viewing's originals unreachable
+
+Viewing's authored set, `vw-m3-audio-projection-goldens2`, is not in the orchestrator's `workers/` directory, not in any worktree under `/home/user/work/wt`, and not on any branch or path searched under `/home/user/work`, `/home/user/peteromallet` or `/home/user/banodoco`. So vectors 1-11 cannot be compared with the originals.
+
+What is on record: the closed escalation `viewing-20261020T0309Z-audio-projection-export.md` quotes four of Viewing's values. They match this file's vectors 1, 2, 7 and 8:
+
+- gain 0.8 x 0.5: App 0.8, Agent 0.4 (vector 1);
+- gain 1.5 x 2: App 1.5, Agent 3 (vector 2);
+- source_offset 0.35 on trim 0.125..1.125: App applies the offset to the trim, Agent keeps the trim and the metadata (vector 7);
+- occurrence speed 1.5 with the child speed absent: App uses 1.5, Agent keeps the child speed absent and the metadata (vector 8).
+
+**Needs Viewing sign-off** (against the authored originals, not the escalation): vectors 1, 2, 7 and 8 for the exact inputs and expectations, and vectors 3, 4, 5, 6, 9, 10 and 11, none of which the escalation quotes. Vectors 12-14 are Agent-authored under the 04:24 curve decision and have no Viewing counterpart. Any disagreement goes to the orchestrator, not into a quiet edit of either set.
+
 ## ENVELOPE_UNRENDERED join plan
 
 Problem: the public 0.0.10 `applyAudioEnvelope` path needs a trusted prepared source. Main's normal render route has no producer (`astrid/packs/rendering/actions/render/` has no `render_source`). So a non-Player audio fade currently refuses `ENVELOPE_UNRENDERED`, and that refusal must stay. Relaxing the check, removing the fade, or adding a new refusal test is not allowed.

@@ -58,3 +58,26 @@ Owner review (PLAN, hard stop): play the films listed in section 1 and section 2
 - No owner film was found or read. The lists are empty for that reason.
 - No frames or PCM were rendered or compared.
 - The pinned 0.0.8 artifact was not read; the statements are about the composition repo tags and HEAD.
+
+## 4. Compiler and source evidence for the popup closure (04:44 item 3)
+
+Added by `agt-visual-contract-correct`. Contracts: `design/visual-compile-contract.md` (section 1) and `design/audio-compile-contract.md`. This section records what the compiler and the native source show. It does not change the owner list.
+
+Visual closure (the native ADD fixture, not a reconstruction):
+
+| Fact | Evidence |
+|---|---|
+| Source | App `309cb7a4`, `src/tools/video-editor/commands/fixtures/recipe_m2_occurrence_media.json` (blob `22be2059`), key `add.output`, copied verbatim into `visual_compile_contract.json` as `native_add_output` |
+| Occurrence A at 8 s, B at 10 s, both 10 s | `add.output.parent_revision.payload.occurrences` (`placement.start_ms` 8000 and 10000, `duration_ms` 10000) |
+| Source window child: at 1, hold 4, from 2, to 6, speed 2, so 2 s on the timeline | `add.output.internal_timeline_revisions` (`internal-1` and `authoring-timeline-revision-bfcf…`) |
+| Native child `reserved-child` keeps `opaque` `[null, false, {}]` and `params` `null` | `add.output.internal_timeline_revisions[1].payload.clips` |
+| No child overhangs its occurrence end, so the clamp does not change the rows | `_project_clip` at `shot_composition_projection.py:308-313`; largest child ends 15 s (A, end 18 s) and 17 s (B, end 20 s) |
+| Occurrence spans overlap (A 8-18 s, B 10-20 s); main accepts it | `project_runtime_parent_composition` output (`occurrences` at 8.0 and 10.0, hold 10.0 each); no validation rejects it |
+| Native fps is a `{numerator, denominator}` dict; `Fraction(30000, 1001)` works, the dict and the `[num, den]` list raise | `add.output.parent_revision.payload.config.output.fps`; `duration.py:45-49` (`_positive_fps`) |
+| Rows: occ-a child 270 to 330 (60 frames); occ-b child 330 to 390 (60 frames) | Probe on this branch, `project_runtime_parent_composition` with `Fraction(30000, 1001)` |
+
+Owner-film meaning: none found. The popup closure is App's native fixture, not an owner film, and the owner scan above found no owner film in reach.
+
+Audio: 11 of Viewing's originals are not reachable from this tree. The reconciliation status and the list needing Viewing's sign-off are in `design/audio-compile-contract.md`, "Reconciliation with Viewing's 11".
+
+Open for the orchestrator: whether overlapping occurrence spans on one lane are intended, and what decides the clamp when no child overhangs.

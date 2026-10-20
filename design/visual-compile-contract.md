@@ -1,42 +1,46 @@
 # Visual compile contract
 
-Status: contract draft for the Agent compiler, from the 2026-10-20 03:46 orchestrator decision (popup projection consistency) and the 03:59 revised decision (clip look). Golden vectors: `tests/editing_conformance/fixtures/visual_compile_contract.json`, run by `tests/editing_conformance/test_compile_contracts.py`.
+Status: contract draft for the Agent compiler, from the 2026-10-20 03:46 orchestrator decision (popup projection consistency), the 03:59 decision (clip look) and the 04:44 correction (exact native fixture). Golden vectors: `tests/editing_conformance/fixtures/visual_compile_contract.json`, run by `tests/editing_conformance/test_compile_contracts.py`.
 
-Reference for "visible today": `origin/main` e51595c6. The compiler is `astrid/core/timeline/shot_composition_projection.py`. The renderer is Composition 0.0.6 (`remotion/package.json:18` on main).
+Reference for "visible today": `origin/main` e51595c6. The compiler is `astrid/core/timeline/shot_composition_projection.py`, identical to main's file in this tree. The renderer is Composition 0.0.6 (`remotion/package.json:18` on main).
 
-## 1. Popup closure: occurrences A (8 s) and B (10 s) on a shared lane
+## 1. Popup closure: the native ADD fixture
+
+The closure is the output of App's native `occurrence.add-media` on occurrence A, not a reconstruction. Source: App commit `309cb7a463833126e3af730fb3c6ff536d9e457c`, `src/tools/video-editor/commands/fixtures/recipe_m2_occurrence_media.json` (blob `22be20593b2b53dd35d1b0b71031f3cf128bf32e`), key `add.output`. The fixture stores that object verbatim as `native_add_output`.
 
 ### Closure
 
-Two occurrences of different shot revisions on one lane (`video`):
+Two occurrences on the shared `picture` lane, both 10 s long:
 
-| Occurrence | Shot revision | Placement | Occurrence duration | Child duration (overhang) |
+| Occurrence | Shot (pinned revision) | Placement | Occurrence duration | Source window child (`clip-a`) |
 |---|---|---|---|---|
-| occ-1 (A) | shot-alpha rev-a | at 0 s | 8 s | 10 s |
-| occ-3 (B) | shot-alpha rev-b | at 8 s | 10 s | 12 s |
+| occ-a (A) | `shot-placement-17545…` (`authoring-shot-revision-e0bb…`, which adds `reserved-child`) | at 8 s (`placement.start_ms` 8000) | 10 s (`duration_ms` 10000) | at 1, hold 4, from 2, to 6, speed 2 |
+| occ-b (B) | `chapter-shot` (`shot-1`) | at 10 s (`placement.start_ms` 10000) | 10 s (`duration_ms` 10000) | at 1, hold 4, from 2, to 6, speed 2 |
 
-Each child overhangs its occurrence by 2 s, which is the case the clamp exists for. Without the clamp, A's child would run into B's window.
+Other fields that the projection carries through:
 
-### Main's visible result (the reference)
+- Each source window child has a timeline length of `hold / speed` = 4 / 2 = 2 s (`duration.py:113-142`). Its absolute window is therefore 9-11 s in A and 11-13 s in B.
+- Each occurrence also has `clip-b` (at 5, hold 2, so 2 s). A's `clip-b` is 13-15 s, B's is 15-17 s.
+- A has `reserved-child` (at 0.125, hold 4, from 2, to 6, speed 2, so 8.125-10.125 s). Its `opaque` is `[null, false, {}]` and its `params` is `null`. The projection keeps both.
+- The parent's own `clip-a` and `clip-b` (on the same lane, at 1 and 5, not occurrence-owned) are excluded from the rows. They carry no `shot_occurrence_id`.
+- Occurrence `speed` is 1 and `source_offset` is 0 on both occurrences.
 
-`shot_composition_projection.py:308-326` (`_project_clip`) computes the visible window as `[occurrence start + child at, min(child end, occurrence end))`. It then shortens the child's `hold` or `to` to match. Visible result on main:
+### What main does with this closure
 
-| Clip | Visible window | Frames at 30 fps |
-|---|---|---|
-| A child | [0 s, 8 s) | [0, 240) |
-| B child | [8 s, 18 s) | [240, 540) |
+- The projection is `project_runtime_parent_composition`, which calls the same `_project_clip` as the reference. The visible window is `[occurrence start + child at, min(child end, occurrence end))` (`shot_composition_projection.py:308-313`).
+- **The overhang clamp is not exercised by this closure.** No child extends past its occurrence end. Largest child ends: A 15 s against an end of 18 s; B 17 s against an end of 20 s. With the clamp on or off, the rows are the same. The 03:46 premise, that A's child runs into B without the clamp, came from the reconstruction and does not reproduce on the native fixture.
+- **Occurrence spans overlap.** A spans 8-18 s and B spans 10-20 s, an 8 s overlap on the lane. Main accepts this and does not reject it. The source-window children do not overlap: A's child ends at 11 s, where B's begins. Whether overlapping occurrence spans on one lane are intended is an open item for the orchestrator (section "Open").
+- The clamp decision itself is not settled by this fixture. The 03:46 "clamp is ON" decision in this document is a policy statement, not evidence from this closure. App's `clampToOccurrenceDuration: false` (`ShotTimelinePreview.tsx:99`, `shotTimelineDataProvider.ts:404`) makes no difference to these rows.
 
-The windows are half-open. Neither clip overlaps the other on the lane. The test checks both windows and the no-overlap property.
+### Rational clock
 
-### Decision applied: the clamp is ON, with one compiled result
+The native fps is `{"numerator": 30000, "denominator": 1001}` (NTSC, 29.97). Main's frame helpers take a Real. `Fraction(30000, 1001)` gives the right frames. Passing the `{numerator, denominator}` object, or the two-element `fps_rational` list, to `clip_start_frame` or `clip_end_frame` raises `ValueError: fps must be a number` at `_positive_fps` (`duration.py:45-49`). The test builds `Fraction(numerator, denominator)` from the fixture's `fps` and keeps the pair in the fixture. No frame is computed from a dict or list.
 
-- `clampToOccurrenceDuration` in App is not a per-call choice. The 03:46 decision says App uses ONE compiled result for both the local candidate and the accepted projection. Main's clamp is the reference.
-- App currently passes `clampToOccurrenceDuration: false` at `ShotTimelinePreview.tsx:99` and `shotTimelineDataProvider.ts:404`, so the overhang stays visible. That diverges from main. App must stop passing the option, not flip the global default just to pass a unit test.
-- App's own clamp replica at `src/tools/video-editor/data/shotCompositionProjection.ts:437-449` should go as well, so that App reads the compiled window. App's test at `shotCompositionProjection.test.ts:420` expects the unclamped `hold: 5` for the local candidate; that expectation is App's to change. The raw AuthoringBundle and editor source windows stay as they are.
+Frames are half-open, with JavaScript `Math.round` semantics (`duration.py:145-171`): `start = round(at * fps)`, `duration = max(1, round(visible_seconds * fps))`, `end = start + duration`.
 
-### Occurrence speed (visual)
+### Physical reference (not produced here)
 
-Main does not inherit occurrence speed for visuals either (`shot_composition_projection.py:305-307, :354`). Occurrence speed is metadata only, the same rule as audio. The child keeps its own speed.
+The physical reference is the approved executable analog (04:40 decision, Viewing's inbox): tiny generated playable media with the exact durations, explicitly labelled as an analog of the native fixture, plus the real host dispatch. MAIN is fed its own numeric fps, `Fraction(30000, 1001)`, and its frames are the reference. This worktree generated no media and rendered no frames. The reference belongs to Viewing, and it is valid only after MAIN's rational path and managed bytes are supplied. The rows below are the compiler's expectation for that reference.
 
 ## 2. Element clips get the clip look (intended change from 0.0.6)
 
@@ -55,38 +59,32 @@ Also in the same 0.0.7 release, per-boundary transitions (dissolve vs dip) chang
 
 ## Vectors
 
-| id | Expected | Status |
-|---|---|---|
-| popup-occurrence-a-start-frame | 0 | pass |
-| popup-occurrence-a-end-frame | 240 | pass |
-| popup-occurrence-a-duration-frames | 240 | pass |
-| popup-occurrence-b-start-frame | 240 | pass |
-| popup-occurrence-b-end-frame | 540 | pass |
-| popup-occurrence-b-duration-frames | 300 | pass |
-| `test_popup_closure_occurrences_are_half_open_on_the_shared_lane` | A's end <= B's start | pass |
-| `test_render_pin_gives_element_clips_the_clip_look` | pin >= 0.0.7 | pass |
+The six render-facing rows are the source-window child of each occurrence. Each row is a frame value from the projected clip (`shot_occurrence_id` plus `app.astrid_shot_composition.source_clip_id` = `clip-a`).
 
-These are not xfails. The clip look is already in this tree, and the popup clamp is main's current behaviour.
+| id | Occurrence / child | Field | Expect | Status |
+|---|---|---|---|---|
+| popup-occurrence-a-start-frame | occ-a / clip-a (9 s) | start_frame | 270 | pass |
+| popup-occurrence-a-end-frame | occ-a / clip-a (11 s) | end_frame | 330 | pass |
+| popup-occurrence-a-duration-frames | occ-a / clip-a | duration_frames | 60 | pass |
+| popup-occurrence-b-start-frame | occ-b / clip-a (11 s) | start_frame | 330 | pass |
+| popup-occurrence-b-end-frame | occ-b / clip-a (13 s) | end_frame | 390 | pass |
+| popup-occurrence-b-duration-frames | occ-b / clip-a | duration_frames | 60 | pass |
+| `test_closure_places_occurrences_at_eight_and_ten_seconds_on_the_picture_lane` | occ-a at 8 s, occ-b at 10 s, both 10 s | placement | as stated | pass |
+| `test_popup_closure_source_windows_are_half_open_on_the_shared_lane` | A's child end <= B's child start | order | 330 <= 330 | pass |
+| `test_native_child_keeps_its_opaque_and_null_params_fields` | occ-a / reserved-child | `opaque`, `params` | `[null, false, {}]`, `null` | pass |
+| `test_render_pin_gives_element_clips_the_clip_look` | pin >= 0.0.7 | pin | >= 0.0.7 | pass |
 
-### Render-facing rows (the 6 rows the compiler must emit)
+These are not xfails. Every row the compiler must emit is produced on this branch, and the clip look is already in this tree.
 
-The clock is the rational `fps_rational: [30, 1]` (main's encoding is the `[num, den]` pair, read as `Fraction(*fps_rational)` at `astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py:466`). Frames are half-open: `start = round(at * fps)`, `duration = max(1, round(visible_seconds * fps))`, `end = start + duration`, with `round` = JavaScript `Math.round` (`astrid/core/timeline/duration.py:145-156` on main). The six rows are start, end and duration frames for each occurrence:
+Measured on this branch with `/home/user/work/venv-agent/bin/python -m pytest`: 22 passed, 2 xfailed (the two audio vectors 10-11). No visual row needs an xfail.
 
-| Row | Clip | Field | Frames |
-|---|---|---|---|
-| 1 | A (occ-1, shot-alpha rev-a) | start_frame | 0 |
-| 2 | A | end_frame | 240 |
-| 3 | A | duration_frames | 240 |
-| 4 | B (occ-3, shot-alpha rev-b) | start_frame | 240 |
-| 5 | B | end_frame | 540 |
-| 6 | B | duration_frames | 300 |
+## Open
 
-Rows 1-6 are produced by the compiler as it stands. Measured on this branch: `test_compile_contracts.py` passes all six with the rational clock. No strict xfail is needed, because no row is missing from the compiler's output.
-
-The 03:46 premise that main's numeric helpers return NaN on a rational object did not reproduce. `clip_start_frame` and `clip_end_frame` (`duration.py:145-168`) take a Real. A `Fraction` gives the right frames (240 and 540). A `{num, den}` dict or a `[num, den]` list raises `ValueError: fps must be a number` at `_positive_fps` (`duration.py:45-49`). The compiler therefore takes the rational as a `Fraction` built from the pair, and the fixture keeps the pair. Main has no `{num, den}` object: its wire form is the two-element `fps_rational` list.
+1. **Clamp decision.** This native closure does not exercise the clamp. The "clamp ON" policy stays as the 03:46 decision says, but it needs another closure to be evidence. Orchestrator call.
+2. **Overlapping occurrence spans on the picture lane.** A (8-18 s) and B (10-20 s) overlap by 8 s. Main accepts it, and the source-window children do not overlap. Orchestrator to confirm this is intended for a shared lane.
+3. **Physical reference.** Viewing produces it (analog, MAIN at `Fraction(30000, 1001)`) and checks these six rows against it. Not done here.
 
 ## Not verified
 
-- The popup closure is the one specified in the 03:46 decision. Its exact placement and child timings are my reconstruction, and the 03:46 decision asks Viewing to confirm the reference against main's frames. This worktree has no rendered frames.
-- No frames were rendered and no pixels were compared.
-- App's tests were not run here.
+- No media was generated, no frames were rendered and no pixels were compared. The vectors test the compiler's output fields only.
+- App's tests were not run from this worktree. App's own clamp replica (`src/tools/video-editor/data/shotCompositionProjection.ts:437-449`) and its `clampToOccurrenceDuration: false` callers were not changed here.

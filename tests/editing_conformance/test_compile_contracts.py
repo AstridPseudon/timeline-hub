@@ -13,7 +13,10 @@ from pathlib import Path
 import pytest
 
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
-from astrid.core.timeline.shot_composition_projection import project_shot_composition
+from astrid.core.timeline.shot_composition_projection import (
+    project_runtime_parent_composition,
+    project_shot_composition,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 FIXTURES = Path(__file__).parent / 'fixtures'
@@ -77,48 +80,67 @@ def test_audio_vector(vector):
             assert _lookup(clip, key) == pytest.approx(want)
 
 
-def _closure_graph():
-    graph = _graph(VISUAL['base']['graph'])
-    rows = VISUAL['closure']['occurrences']
-    for row in rows:
-        occurrence = next(o for o in graph['occurrences'] if o['occurrence_id'] == row['occurrence_id'])
-        occurrence.update(at_ms=row['at_ms'], duration_ms=row['duration_ms'])
-        child = next(c for c in _clips(_revision(graph, *row['shot_revision'])) if c['track'] == VISUAL['lane'])
-        child['duration_ms'] = row['child_duration_ms']
-    keep = [row['occurrence_id'] for row in rows]
-    graph['occurrences'] = [next(o for o in graph['occurrences'] if o['occurrence_id'] == oid) for oid in keep]
-    for ordinal, occurrence in enumerate(graph['occurrences']):
-        occurrence['ordinal'] = ordinal
-    return graph
+def _native_projection():
+    # The native ADD closure, projected by main's runtime parent path (shot_composition_projection.py, identical to main e51595c6).
+    native = VISUAL['native_add_output']
+    parent = {
+        'project_id': native['project_id'],
+        'timeline_id': native['timeline_id'],
+        'revision_id': native['parent_revision']['revision_id'],
+        'payload': native['parent_revision']['payload'],
+    }
+    return project_runtime_parent_composition(
+        parent,
+        shot_revisions=native['shot_revisions'],
+        internal_timeline_revisions=native['internal_timeline_revisions'],
+    )
 
 
-def _lane_clips(projection):
-    return [c for c in projection.config['clips'] if c['track'] == VISUAL['lane']]
+def _source_clip(projection, occurrence_id, source_clip_id):
+    return next(c for c in projection.config['clips']
+                if c.get('shot_occurrence_id') == occurrence_id
+                and c['app']['astrid_shot_composition']['source_clip_id'] == source_clip_id)
 
 
 def _clock():
-    # main's rational clock is the [num, den] pair (filmstrip_cards.py:466); the frame helpers take a Real, so pass the Fraction.
-    return Fraction(*VISUAL['fps_rational'])
+    # The native fps is {numerator, denominator}; the frame helpers take a Real, so pass the Fraction built from it.
+    # Passing the dict or the [num, den] list to clip_start_frame raises ValueError at _positive_fps (duration.py:45-49).
+    fps = VISUAL['fps']
+    return Fraction(fps['numerator'], fps['denominator'])
 
 
 @pytest.mark.parametrize('vector', _marked(VISUAL['vectors']))
 def test_visual_vector(vector):
     fps = _clock()
-    projection = project_shot_composition(_closure_graph())
-    clip = next(c for c in _lane_clips(projection) if c['shot_occurrence_id'] == vector['occurrence_id'])
+    clip = _source_clip(_native_projection(), vector['occurrence_id'], vector['source_clip_id'])
     start = clip_start_frame(clip, fps)
     end = clip_end_frame(clip, fps)
     rows = {'start_frame': start, 'end_frame': end, 'duration_frames': end - start}
     assert rows[vector['field']] == vector['expect']
 
 
-def test_popup_closure_occurrences_are_half_open_on_the_shared_lane():
+def test_closure_places_occurrences_at_eight_and_ten_seconds_on_the_picture_lane():
+    projection = _native_projection()
+    placed = {o['occurrence_id']: (o['at'], o['hold']) for o in projection.occurrences}
+    expected = {row['occurrence_id']: (row['at_ms'] / 1000, row['duration_ms'] / 1000) for row in VISUAL['closure']['occurrences']}
+    assert placed == expected
+    assert all(c['track'] == VISUAL['lane'] for c in projection.config['clips'] if 'shot_occurrence_id' in c)
+
+
+def test_popup_closure_source_windows_are_half_open_on_the_shared_lane():
+    # Occurrence spans overlap (A 8-18 s, B 10-20 s). The source-window children do not: A's child ends where B's begins.
     fps = _clock()
-    projection = project_shot_composition(_closure_graph())
-    spans = sorted((clip_start_frame(c, fps), clip_end_frame(c, fps)) for c in _lane_clips(projection))
-    assert len(spans) == len(VISUAL['closure']['occurrences'])
-    for (_, earlier_end), (later_start, _) in zip(spans, spans[1:]):
-        assert earlier_end <= later_start
+    projection = _native_projection()
+    first, second = VISUAL['closure']['occurrences']
+    earlier = _source_clip(projection, first['occurrence_id'], first['source_clip_id'])
+    later = _source_clip(projection, second['occurrence_id'], second['source_clip_id'])
+    assert clip_end_frame(earlier, fps) <= clip_start_frame(later, fps)
+
+
+def test_native_child_keeps_its_opaque_and_null_params_fields():
+    clip = _source_clip(_native_projection(), 'occ-a', 'reserved-child')
+    assert clip['opaque'] == [None, False, {}]
+    assert clip['params'] is None
 
 
 def test_render_pin_gives_element_clips_the_clip_look():
