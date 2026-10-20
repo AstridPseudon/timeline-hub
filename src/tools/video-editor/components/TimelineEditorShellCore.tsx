@@ -3,7 +3,7 @@ import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/Dat
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
-import { Images, Loader2, Maximize2, Sparkles, Type } from 'lucide-react';
+import { Images, Loader2, Maximize2, Sparkles } from 'lucide-react';
 import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/shared/components/ui/alert-dialog.tsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
@@ -49,7 +49,7 @@ import {
   type TimelineInspectorTarget,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { bootDiagnostics, MemoryPressureDetector } from '@/tools/video-editor/lib/perf-diagnostics.ts';
-import { CLIP_ACTION_CLASS, shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
+import { CLIP_ACTION_CLASS, CLIP_SELECTED_ATTR, shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
@@ -579,22 +579,21 @@ function TimelineEditorShellCoreComponent({
     dispatchAppEvent('openAgentComposer');
   }, [runtime.agentChat, runtime.agentSelectionOwner]);
   const agentWorking = useAgentChatActions()?.isAgentWorking ?? false;
-  // Text goes in at the playhead, over the picture, and opens in its sheet on the words.
-  const addTextAtPlayhead = useCallback(() => {
-    chrome.handleAddText();
-    setIsMobilePropertiesOpen(true);
-  }, [chrome]);
-
-  // Touch: tapping a clip opens its sheet. Not while a gesture is armed, when
-  // the tap is the start of direct manipulation, and not from a control drawn
-  // inside the clip.
+  // Touch: tapping a clip opens its sheet, whether or not it is already selected.
+  // Not from a control drawn inside the clip. While Move/Trim is armed a tap on
+  // the selected clip (no drag) is the way back: it releases the gesture and
+  // reopens the sheet; other taps are the start of direct manipulation.
   const openClipSheetFromTap = useCallback((event: ReactMouseEvent<HTMLElement>) => {
-    if (armedGesture || !(event.target instanceof Element)) return;
+    if (!(event.target instanceof Element)) return;
     const clip = event.target.closest(`.${CLIP_ACTION_CLASS}`);
     const control = event.target.closest('button, a, input, textarea, select, [role="menuitem"], [data-no-clip-drag]');
     if (!clip || (control && clip.contains(control))) return;
+    if (armedGesture) {
+      if (clip.getAttribute(CLIP_SELECTED_ATTR) !== 'true') return;
+      releaseArmedGesture();
+    }
     setIsMobilePropertiesOpen(true);
-  }, [armedGesture]);
+  }, [armedGesture, releaseArmedGesture]);
   // Move/Trim from the sheet hand the clip to the timeline for a direct drag.
   useEffect(() => {
     if (armedGesture) setIsMobilePropertiesOpen(false);
@@ -922,7 +921,7 @@ function TimelineEditorShellCoreComponent({
             </div>
 
             {/* The touch shell's way to Astrid and to what goes into the film (gallery
-                media, text): a bar at the thumb, in place of the app's floating pane tabs
+                media): a bar at the thumb, in place of the app's floating pane tabs
                 (see paneControlsHost). While Astrid answers, the bar says so. */}
             <div className="flex min-w-0 items-center gap-2 [grid-area:agent]" data-testid="touch-agent-bar">
               <Button
@@ -935,17 +934,6 @@ function TimelineEditorShellCoreComponent({
                 title="Gallery"
               >
                 <Images className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className={THUMB_BAR_CIRCLE_CLASS}
-                onClick={addTextAtPlayhead}
-                aria-label="Add text"
-                title="Text"
-              >
-                <Type className="h-4 w-4" />
               </Button>
               <button
                 type="button"
