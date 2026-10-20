@@ -7,7 +7,7 @@ Remaining deletion/gates: Delete serializeResolvedTimelineEdit with its three sn
 Shared files: App currently owns door/outbox/commitSession/useTimelineCommandSession/useTimelineOps changes; send exact seam patch before concurrent edits.
 Reference design docs: deletion-ledger.app.md D01-app-resolved-edit-serializer; app-writers.md. Core serializers currently also investigated for derived-cap stripping: coordinate shared seam.
 Targeted command (own verified dependency graph and own cache config):
-`node --require "$N/vitest-runner.cjs" "$V" run --config "$N/vitest.config.ts" --configLoader=runner --no-cache --maxWorkers=1 src/tools/video-editor/lib/serialize.test.ts src/tools/video-editor/commands/runner.test.ts src/tools/video-editor/hooks/useAssetManagement.assetDrop.test.tsx`
-Use the actual test files on the named branch; inspect git tree if a historical filename was renamed. No source-proof is an actual browser/current tuple pass.
+`node --require "$N/vitest-runner.cjs" "$V" run --config "$N/vitest.config.ts" --configLoader=runner --no-cache --maxWorkers=1 src/tools/video-editor/lib/serialize.test.ts src/tools/video-editor/commands/runner.test.ts src/tools/video-editor/hooks/useAssetManagement.assetDrop.test.ts`
+Test filenames verified in the named source trees; no source-proof is an actual browser/current tuple pass.
 Before writer cut: normal actual acceptance → reload → guarded undo → exact retry and 0 legacy traffic; update row evidence through App until ledger ownership is split.
 Remote reviewed merge requests receive LIGHT overlap/conflict check and prompt merge queue. No extra broad review imposed.

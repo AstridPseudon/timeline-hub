@@ -8,7 +8,7 @@ Remaining deletion/gates: Delete runtime/element-adapter save/CAS and VideoEdito
 Shared files: App currently owns door/outbox/commitSession/useTimelineCommandSession/useTimelineOps changes; send exact seam patch before concurrent edits.
 Reference design docs: app-writers.md; deletion-ledger.app.md D01-app-element-routes.
 Targeted command (own verified dependency graph and own cache config):
-`node --require "$N/vitest-runner.cjs" "$V" run --config "$N/vitest.config.ts" --configLoader=runner --no-cache --maxWorkers=1 src/integrations/runtime/element-adapter.test.ts src/tools/video-editor/components/ElementsLibraryPanel.test.tsx`
-Use the actual test files on the named branch; inspect git tree if a historical filename was renamed. No source-proof is an actual browser/current tuple pass.
+`node --require "$N/vitest-runner.cjs" "$V" run --config "$N/vitest.config.ts" --configLoader=runner --no-cache --maxWorkers=1 src/tools/video-editor/runtime/element-adapter.test.ts src/tools/video-editor/components/ElementsLibraryPanel.test.tsx`
+Test filenames verified in the named source trees; no source-proof is an actual browser/current tuple pass.
 Before writer cut: normal actual acceptance → reload → guarded undo → exact retry and 0 legacy traffic; update row evidence through App until ledger ownership is split.
 Remote reviewed merge requests receive LIGHT overlap/conflict check and prompt merge queue. No extra broad review imposed.
