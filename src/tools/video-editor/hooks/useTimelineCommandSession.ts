@@ -1,4 +1,5 @@
 import { projectClipTrimPreview } from '../commands/clipTrimGesture.ts';
+import { projectParentClipAddPreview } from '../commands/parentClipAddGesture.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type { DataProvider, TimelineCommandBasis, TimelineHeadRevision } from '../data/DataProvider.ts';
 import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
@@ -93,8 +94,8 @@ export function useTimelineCommandSession(options: {
         let data = await buildTimelineData(config, registry, resolve,
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
-          const trimmed = projectClipTrimPreview(preview, data);
-          const compiled = trimmed ? { valid: true, nextData: trimmed } : compileTimelinePatch(preview, data);
+          const nativePreview = projectParentClipAddPreview(preview, data) ?? projectClipTrimPreview(preview, data);
+          const compiled = nativePreview ? { valid: true, nextData: nativePreview } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
           data = compiled.nextData;
         }
@@ -131,8 +132,8 @@ export function useTimelineCommandSession(options: {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const trimmed = projectClipTrimPreview(patch, commit.dataRef.current);
-          const compiled = trimmed ? { valid: true, nextData: trimmed } : compileTimelinePatch(patch, commit.dataRef.current);
+          const nativePreview = projectParentClipAddPreview(patch, commit.dataRef.current) ?? projectClipTrimPreview(patch, commit.dataRef.current);
+          const compiled = nativePreview ? { valid: true, nextData: nativePreview } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
           ownsHistoryRef.current = true;
@@ -271,6 +272,7 @@ export function useTimelineCommandSession(options: {
     clipTrimPort: sessionRef.current?.clipTrimPort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
     clipParamsPort: sessionRef.current?.clipParamsPort,
+    parentClipAddPort: sessionRef.current?.parentClipAddPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>

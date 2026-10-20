@@ -7,6 +7,7 @@ import { captureClipParams, finishClipParams } from './clipParamsCapture.ts';
 import type { ClipParamsArgs } from './clipParamsCapture.ts';
 import disjointFixture from './fixtures/recipe_m2_scalar_disjoint.json';
 import nativeFixture from './fixtures/recipe_m2_clip_params_bundle2.json';
+import ownKeysJson from './fixtures/recipe_m2_clip_params_own_keys.json?raw';
 
 type ScalarGolden = {
   name: string;
@@ -25,6 +26,43 @@ const objectGolden = goldens[0];
 const ref = objectGolden.select;
 
 const roundtrip = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+// Parse as JSON so the bundler cannot turn __proto__ into object-literal syntax.
+const ownKeysFixture = JSON.parse(ownKeysJson) as { cases: ScalarGolden[] };
+
+describe('native JSON property semantics through PARAM capture and finish', () => {
+  for (const construction of ['JSON.parse', 'Object.fromEntries']) {
+    it.each(ownKeysFixture.cases)(
+      `${construction} matches the full native command, bundle and record: $name`, (golden) => {
+        const args = roundtrip(golden.args);
+        if (construction === 'Object.fromEntries') args.values = Object.fromEntries(Object.entries(args.values));
+        const input = freezeJson(copy(golden.bundle));
+        const basis = captureClipParams(input, golden.select, args);
+        const snapshot = copy(basis);
+        const result = finishClipParams(freezeJson(roundtrip(basis)), args);
+        expect(result.command).toEqual(golden.command);
+        expect(result.bundle).toEqual(golden.after_bundle);
+        expect([result.record]).toEqual(golden.records);
+        expect(roundtrip(result.bundle)).toEqual(golden.after_bundle);
+        expect(basis).toEqual(snapshot);
+        expect(input).toEqual(golden.bundle);
+        const state = new AuthoredState(result.bundle);
+        const params = state.entity(golden.select)!.params as Record<string, JSON>;
+        expect(Object.getPrototypeOf(params)).toBe(Object.getPrototypeOf(copy({})));
+        for (const key of Object.keys(args.values)) {
+          expect(Object.hasOwn(params, key), key).toBe(true);
+          expect(state.get(golden.select, ['params', key])).toEqual({ state: 'present', value: args.values[key] });
+          expect(Object.getOwnPropertyDescriptor(params, key)).toEqual({
+            value: args.values[key], enumerable: true, configurable: true, writable: true,
+          });
+        }
+        for (const key of args.clear) {
+          expect(Object.hasOwn(params, key), key).toBe(false);
+          expect(state.get(golden.select, ['params', key])).toEqual({ state: 'absent' });
+        }
+      },
+    );
+  }
+});
 
 describe('portable clip.set-params capture', () => {
   it('uses the exact frozen native built-in property schemas without a second schema definition', () => {

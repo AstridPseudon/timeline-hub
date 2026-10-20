@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
+import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 import { captureClipParamsEdit, submitClipParamsEdit } from './clipParamsGesture.ts';
 import { captureClipParams, finishClipParams, type ClipParamsArgs } from './clipParamsCapture.ts';
 import { AuthoredState, type AuthoredBundle } from './clipMovePrimitives.ts';
@@ -23,6 +25,13 @@ function changeClips(raw: ReturnType<typeof document>, change: (clip: Record<str
   change(rawClip(raw));
   raw.parent_revision.payload.config.clips = structuredClone(raw.parent_revision.payload.clips);
 }
+function projectedDisplay(env: Awaited<ReturnType<typeof environment>>): TimelineData {
+  const composition = createShotCompositionAdapter({ load: async () => env.initial.graph }).prepare(env.initial.graph);
+  const { config } = projectCanonicalComposition(composition, { ...env.current().resolvedConfig,
+    clips: structuredClone(env.initial.canonicalDocument.parent_revision.payload.clips) as TimelineData['config']['clips'],
+  });
+  return { ...env.current(), config, resolvedConfig: config };
+}
 const args: ClipParamsArgs = { values: { x: 2 }, clear: [] };
 const clearOnly: ClipParamsArgs = { values: {}, clear: ['missing', 'literal.key', ''] };
 const clearContainers = [undefined, null, {}, { opaque: { keep: [null, false, {}, []] }, 'a::b': '' }];
@@ -30,6 +39,149 @@ const clearContainers = [undefined, null, {}, { opaque: { keep: [null, false, {}
 // Offline simulated acceptance exercises App's outbox. Actual Runtime acceptance
 // follows the released Agent/Runtime pair and official client pin.
 describe('clip params on the existing durable command session', () => {
+  it.each([
+    ['wrong project', { projectId: 'other-project' }],
+    ['wrong parent', { parentDocumentId: 'other-timeline' }],
+    ['wrong source shot', { shotId: 'other-shot' }],
+    ['stale shot revision', { revisionId: 'old-shot-revision' }],
+    ['stale internal revision', { internalTimelineRevisionId: 'old-internal-revision' }],
+    ['wrong output identity', { outputIdentity: 'other-output' }],
+    ['wrong owner', { ownerRef: 'occurrence:occ-1' }],
+    ['wrong occurrence', { occurrenceId: 'occ-1' }],
+    ['wrong clipRef', { clipRef: 'occurrence:occ-1/clip:child-title' }],
+    ['wrong raw ID', { rawClipId: 'other-clip' }],
+    ['missing raw target', { rawClipId: 'missing', clipRef: 'occurrence:occ-0/clip:missing' }],
+    ['unaddressable binding', { clipRef: null }],
+    ['missing binding', undefined],
+    ['clipRef alone', { clipRef: 'occurrence:occ-0/clip:child-title' }],
+  ] as const)('refuses projected %s before preview or outbox changes', async (name, forged) => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    const env = await environment(raw);
+    const session = await env.mount();
+    const current = projectedDisplay(env);
+    const selected = current.resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!;
+    const canonical = forged === undefined ? undefined : name === 'clipRef alone'
+      ? forged : { ...(selected.app!.canonical as object), ...forged };
+    selected.app = { ...selected.app, canonical };
+    const before = structuredClone(current);
+    const outboxes = await env.outboxes.list(scope);
+    expect(() => captureClipParamsEdit(session.clipParamsPort, current, selected.id)).toThrow();
+    expect(current).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual(outboxes);
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
+  it('refuses a complete sibling identity attached to another projector output', async () => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    const env = await environment(raw);
+    const session = await env.mount();
+    const current = projectedDisplay(env);
+    const selected = current.resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!;
+    const sibling = current.resolvedConfig.clips.find((clip) => clip.id === 'occ-1:child-title')!;
+    selected.app = structuredClone(sibling.app);
+    const before = structuredClone(current);
+    const outboxes = await env.outboxes.list(scope);
+    expect(() => captureClipParamsEdit(session.clipParamsPort, current, selected.id)).toThrow();
+    expect(current).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual(outboxes);
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
+  it.each([
+    [false, { clipRef: 'parent/clip:x' }],
+    [false, null],
+    [false, 'projected'],
+    [true, undefined],
+    [true, 'projected'],
+  ] as const)('targets the exact raw parent (same child ID: %s, opaque canonical: %j)', async (collision, canonical) => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    const seed = await environment(raw);
+    const projected = projectedDisplay(seed).resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!;
+    const parent = rawClip(raw);
+    if (collision) parent.id = 'child-title';
+    parent.params = { x: 1, opaque: [null, false] };
+    parent.app = { keep: null, ...(canonical === undefined ? {} : {
+      canonical: canonical === 'projected' ? structuredClone(projected.app!.canonical) as JSON : canonical,
+    }) };
+    raw.parent_revision.payload.config.clips = [structuredClone(parent)];
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const env = await environment(raw);
+    const session = await env.mount();
+    const current = projectedDisplay(env);
+    const captured = captureClipParamsEdit(session.clipParamsPort, current, parent.id as string);
+    const before = captured.basis.bundle as AuthoredBundle;
+    const native = finishClipParams(captureClipParams(before, `parent/clip:${parent.id}`, args), args);
+    submitClipParamsEdit(captured, args);
+    await session.dispose();
+    const [stored] = await env.outboxes.list(scope);
+    const payload = stored.intents[0].payload as unknown as { commands: JSON[]; after: AuthoredBundle };
+    expect(payload.commands).toEqual([native.command]);
+    expect(payload.after).toEqual(native.bundle);
+    expect(new AuthoredState(payload.after).entity(`parent/clip:${parent.id}`)).toEqual({ ...parent, params: { x: 2, opaque: [null, false] } });
+    expect(payload.after.shots).toEqual(before.shots);
+    expect(payload.after.placements).toEqual(before.placements);
+    expect(env.previews).toHaveBeenCalledExactlyOnceWith({ version: 1, operations: [
+      { op: 'clip.update', target: parent.id, payload: { params: { x: 2, opaque: [null, false] } } },
+    ] });
+    expect(env.commits()).toHaveLength(0);
+  });
+  it('refuses a parent/projected display collision even with a complete authored canonical identity', async () => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    const seed = await environment(raw);
+    const projected = projectedDisplay(seed).resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!;
+    const parent = rawClip(raw);
+    parent.id = projected.id;
+    parent.app = structuredClone(projected.app) as JSON;
+    raw.parent_revision.payload.config.clips = [structuredClone(parent)];
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const env = await environment(raw);
+    const session = await env.mount();
+    const current = projectedDisplay(env);
+    expect(current.resolvedConfig.clips.filter((clip) => clip.id === parent.id)).toHaveLength(2);
+    const before = structuredClone(current);
+    const outboxes = await env.outboxes.list(scope);
+    expect(() => captureClipParamsEdit(session.clipParamsPort, current, parent.id as string)).toThrow('unambiguous');
+    expect(current).toEqual(before);
+    expect(await env.outboxes.list(scope)).toEqual(outboxes);
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
+  it('stages exact native occurrence writes without changing the sibling or source', async () => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    const internal = raw.internal_timeline_revisions[0];
+    (internal.payload.clips as Array<Record<string, JSON>>)[0].params = { x: 1, old: null, opaque: [] };
+    internal.content_digest = fixtureDigest(internal.payload);
+    raw.dependency_manifest.internal_timelines[0].content_digest = internal.content_digest;
+    const env = await environment(raw);
+    const session = await env.mount();
+    const current = projectedDisplay(env);
+    const captured = captureClipParamsEdit(session.clipParamsPort, current, 'occ-0:child-title');
+    const edit = { values: { x: null }, clear: ['old'] };
+    const before = captured.basis.bundle as AuthoredBundle;
+    const native = finishClipParams(captureClipParams(before, 'occurrence:occ-0/clip:child-title', edit), edit);
+    submitClipParamsEdit(captured, edit);
+    await session.dispose();
+    const [stored] = await env.outboxes.list(scope);
+    const payload = stored.intents[0].payload as unknown as { commands: JSON[]; after: AuthoredBundle };
+    expect(payload.commands).toEqual([native.command]);
+    expect(payload.after).toEqual(native.bundle);
+    expect(new AuthoredState(payload.after).entity('occurrence:occ-0/clip:child-title')!.params).toEqual({ x: null, opaque: [] });
+    expect(new AuthoredState(payload.after).entity('occurrence:occ-1/clip:child-title')).toEqual(
+      new AuthoredState(before).entity('occurrence:occ-1/clip:child-title'));
+    expect(payload.after.shots['shot-1']).toEqual(before.shots['shot-1']);
+    expect(env.previews).toHaveBeenCalledExactlyOnceWith({ version: 1, operations: [
+      { op: 'clip.update', target: 'occ-0:child-title', payload: { params: { x: null, opaque: [] } } },
+    ] });
+    expect(env.commits()).toHaveLength(0);
+  });
   it.each(clearContainers)('durably records unchanged clears on %j with no preview or fabricated container', async (params) => {
     const env = await environment(withParams(params));
     const session = await env.mount();
@@ -252,10 +404,7 @@ describe('clip params on the existing durable command session', () => {
     const clipId = (new AuthoredState(authored).config(ownerRef).clips as Array<{ id: string }>)[0].id;
     const displayId = `${occurrence}:${clipId}`;
     const select = `${ownerRef}/clip:${clipId}`;
-    const current = { ...env.current(), resolvedConfig: { ...env.current().resolvedConfig, clips: [
-      { ...env.current().resolvedConfig.clips[0], id: displayId,
-        app: { canonical: { occurrenceId: occurrence, rawClipId: clipId, ownerRef, clipRef: select } } },
-    ] } } as TimelineData;
+    const current = projectedDisplay(env);
     const captured = captureClipParamsEdit(session.clipParamsPort, current, displayId);
     const native = finishClipParams(captureClipParams(captured.basis.bundle as AuthoredBundle, select, clearOnly), clearOnly);
     submitClipParamsEdit(captured, clearOnly);
@@ -506,7 +655,11 @@ describe('clip params on the existing durable command session', () => {
       if (fault === 'duplicate') current.resolvedConfig.clips.push(current.resolvedConfig.clips[0]);
       if (fault === 'legacy') current.config.pinnedShotGroups = [{ clipIds: ['x'] }] as never;
       if (fault === 'synthetic') { clipId = 'display-only'; current.resolvedConfig.clips[0].id = clipId; }
-      if (fault === 'canonical') current.resolvedConfig.clips[0].app = { canonical: { clipRef: 'parent/clip:x' } };
+      if (fault === 'canonical') {
+        clipId = 'display-only';
+        current.resolvedConfig.clips[0].id = clipId;
+        current.resolvedConfig.clips[0].app = { canonical: { clipRef: 'parent/clip:x' } };
+      }
       expect(() => captureClipParamsEdit(session.clipParamsPort, current, clipId)).toThrow();
       expect(env.previews).not.toHaveBeenCalled();
       expect(env.commits()).toHaveLength(0);
@@ -524,20 +677,19 @@ describe('clip params on the existing durable command session', () => {
     const config = new AuthoredState(authored).config(ownerRef);
     const clipId = (config.clips as Array<{ id: string }>)[0].id;
     const displayId = `${occurrence}:${clipId}`;
-    const current = { ...env.current(), resolvedConfig: { ...env.current().resolvedConfig,
-      clips: [{ ...env.current().resolvedConfig.clips[0], id: displayId,
-        app: { canonical: { occurrenceId: occurrence, rawClipId: clipId, ownerRef, clipRef: `${ownerRef}/clip:${clipId}` } } }] } } as TimelineData;
+    const current = projectedDisplay(env);
+    const selected = current.resolvedConfig.clips.find((clip) => clip.id === displayId)!;
     const captured = captureClipParamsEdit(session.clipParamsPort, current, displayId);
     const prepared = session.clipParamsPort.finish(captured.basis, args);
     expect(prepared.command).toMatchObject({ select: `${ownerRef}/clip:${clipId}`, bindings: { 'scalar.owner': ownerRef } });
     expect(prepared.command.reads).toContainEqual({ ref: ownerRef, path: ['occurrence_id'], state: { state: 'present', value: occurrence } });
     for (const canonical of [undefined, { clipRef: null }, { occurrenceId: 'other', rawClipId: clipId, ownerRef, clipRef: `${ownerRef}/clip:${clipId}` }]) {
-      current.resolvedConfig.clips[0].app = { canonical } as never;
+      selected.app = { canonical } as never;
       expect(() => captureClipParamsEdit(session.clipParamsPort, current, displayId)).toThrow();
     }
     // A raw child ID alone never gives permission to infer its occurrence.
-    current.resolvedConfig.clips[0].id = clipId;
-    current.resolvedConfig.clips[0].app = {};
+    selected.id = clipId;
+    selected.app = {};
     expect(() => captureClipParamsEdit(session.clipParamsPort, current, clipId)).toThrow('explicit occurrence');
     expect(env.commits()).toHaveLength(0);
     await session.dispose();
