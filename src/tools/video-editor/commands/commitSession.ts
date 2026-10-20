@@ -5,6 +5,8 @@ import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataPro
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { clipScalarPreview, type ClipScalarArgs, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
+import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
+import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import { stableOutputIdentity } from '../data/shotComposition.ts';
 import type { CanonicalProjectedClipIdentity } from '../data/shotCompositionProjection.ts';
 import { authoringBundleFromDocument, type AuthoringBundle } from './authoringBundle.ts';
@@ -681,6 +683,62 @@ export async function createTimelineCommandSession(options: Options) {
     prepared.delete(key);
     enqueue({ ...entry.payload, preview }, preview, entry.basis);
   }
+  const clipTrimPort: ClipTrimCapturePort = {
+    capture({ clipId, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      const identity = matches[0]?.app?.canonical as { clipRef?: string; occurrenceId?: string } | undefined;
+      if (matches.length !== 1 || identity?.occurrenceId !== undefined
+        || (identity?.clipRef !== undefined && identity.clipRef !== `parent/clip:${clipId}`)) {
+        throw new Error('Trim requires one literal parent clip identity');
+      }
+      return json({ ...captureClipTrim(bundle, `parent/clip:${clipId}`), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipTrimCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the trim');
+      if (!basis.bundle || !basis.command || !['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created']
+        .every((key) => Object.prototype.hasOwnProperty.call(basis.command, key))) {
+        throw new Error('Incomplete clip.trim basis');
+      }
+      const original = executeClipTrim(basis.bundle as AuthoredBundle,
+        { ...copy(basis.command as EditCommand), args: { ...args, in_s: args.in_s ?? null, out_s: args.out_s ?? null } });
+      // Verify original claims on today's closure; never replace disjoint remote fields with the captured bundle.
+      const result = executeClipTrim(bundle, original.command);
+      const payload: Record<string, unknown> = {};
+      for (const write of result.record.writes) {
+        if (write.after.state === 'present') payload[write.path[0]] = copy(write.after.value);
+        else if (write.before.state === 'present') {
+          throw new Error('Exact trim intent-container removal needs the session scalar clear preview');
+        }
+      }
+      const source = new AuthoredState(result.bundle).entity(result.command.select!)!;
+      if ('speed' in source) payload.speed = copy(source.speed);
+      const preview: TimelinePatch = { version: 1, source: 'clip.trim', operations: [
+        { op: 'clip.update', target: result.command.select!.slice('parent/clip:'.length), payload },
+      ] };
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.trim' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Trim was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Trim requires its native source-window preview');
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
   type CapturedGenericPatchBasis = GenericPatchBasis & { bundle: AuthoredBundle };
   const genericPatchPort: GenericPatchCapturePort = {
     capture({ patch, current }) {
@@ -873,6 +931,7 @@ export async function createTimelineCommandSession(options: Options) {
   return {
     port,
     clipScalarPort,
+    clipTrimPort,
     elementPort,
     elementOverlay,
     genericPatchPort,

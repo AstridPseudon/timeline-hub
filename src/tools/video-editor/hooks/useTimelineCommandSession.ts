@@ -7,6 +7,7 @@ import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import { projectGenericPatchPreview } from '../commands/genericPatchCapture.ts';
+import { projectClipTrimPreview } from '../commands/clipTrimGesture.ts';
 import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
 import { createTimelineCommandSession, type CommandSessionState, type TimelineCommandSession } from '../commands/commitSession.ts';
 import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
@@ -95,8 +96,10 @@ export function useTimelineCommandSession(options: {
         let data = await buildTimelineData(config, registry, resolve,
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
-          const native = projectGenericPatchPreview(preview, data);
-          const compiled = native ? { valid: true, nextData: native } : compileTimelinePatch(preview, data);
+          const trimmed = projectClipTrimPreview(preview, data);
+          const native = trimmed ?? projectGenericPatchPreview(preview, data);
+          const compiled = trimmed ? { valid: true, nextData: trimmed }
+            : native ? { valid: true, nextData: native } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
           data = compiled.nextData;
         }
@@ -133,8 +136,10 @@ export function useTimelineCommandSession(options: {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const native = projectGenericPatchPreview(patch, commit.dataRef.current);
-          const compiled = native ? { valid: true, nextData: native } : compileTimelinePatch(patch, commit.dataRef.current);
+          const trimmed = projectClipTrimPreview(patch, commit.dataRef.current);
+          const native = trimmed ?? projectGenericPatchPreview(patch, commit.dataRef.current);
+          const compiled = trimmed ? { valid: true, nextData: trimmed }
+            : native ? { valid: true, nextData: native } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
           ownsHistoryRef.current = true;
@@ -256,6 +261,15 @@ export function useTimelineCommandSession(options: {
           finishBatch(bases, args) { requireCleanScalarEdit(); return scalarPort.finishBatch!(bases, args); },
           submitBatch(input) { requireCleanScalarEdit(); scalarPort.submitBatch!(input); },
         };
+        const trimPort = session.clipTrimPort;
+        const requireCleanTrim = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before trimming');
+        };
+        session.clipTrimPort = {
+          capture(input) { requireCleanTrim(); return trimPort.capture(input); },
+          finish(basis, args) { requireCleanTrim(); return trimPort.finish(basis, args); },
+          submit(input) { requireCleanTrim(); trimPort.submit(input); },
+        };
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
@@ -332,6 +346,7 @@ export function useTimelineCommandSession(options: {
     elementOverlay: sessionRef.current?.elementOverlay,
     trackLabelPort: sessionRef.current?.trackLabelPort, shotSetPort: sessionRef.current?.shotSetPort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
+    clipTrimPort: sessionRef.current?.clipTrimPort,
     parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
     occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
