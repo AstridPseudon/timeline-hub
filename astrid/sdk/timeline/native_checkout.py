@@ -6,6 +6,7 @@ import copy
 from astrid.core.timeline import clip_fields
 from astrid.sdk import timeline_intent as intent
 
+from ._clip_scalar_commands import capture_clip_set
 from ._command_state import State, equal
 from ._common import AUDIO_KINDS, TIME_RE, TimelineEditError, _length_seconds, _r
 from .capture import move_intent, number, occurrence_start, rate
@@ -56,7 +57,7 @@ class AttachedCheckout(Checkout):
         if not equal(state['base'], self._basis) or not equal(state['pending'], self._pending):
             raise TimelineEditError('attached checkout basis changed; reattach before editing')
 
-    def _queue(self, command):
+    def _queue(self, command=None, *, builder=None):
         self._unchanged_preview()
         plans = []
 
@@ -65,7 +66,8 @@ class AttachedCheckout(Checkout):
             bundle = self.session._bundle(state)
             if not equal(bundle, self._preview):
                 raise TimelineEditError('attached checkout basis changed; reattach before editing')
-            plan = execute(bundle, [command])
+            captured = builder(bundle) if builder is not None else command
+            plan = execute(bundle, [captured])
             plans.append(plan)
             return plan.commands
 
@@ -194,6 +196,18 @@ class AttachedClip(Clip):
 
     def set(self, **params):
         allow_new = params.pop('_allow_new', False)
+        if 'hold' in params:
+            # This is the one ordinary scalar carried by the current registry.
+            # Keep the first consumer deliberately narrower than the registry:
+            # parent clips only, one declared property, and no mixed PARAM edit.
+            if self.shot_id != 'parent' or set(params) != {'hold'}:
+                _held()
+            value = params['hold']
+            return self._tl._queue(
+                builder=lambda bundle: capture_clip_set(
+                    bundle, self._ref,
+                    values={} if value is None else {'hold': value},
+                    clear=[] if value is not None else ['hold']))
         selected = self.data.get('elementRef') or self.data.get('element_ref')
         if isinstance(selected, dict) and selected.get('packId'):
             # Session queue currently has no exact selected-schema input reader.

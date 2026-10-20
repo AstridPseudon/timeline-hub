@@ -107,6 +107,49 @@ def test_literal_params_clear_and_opaque_values_use_one_captured_command(connect
     assert loaded.clip('a').params == {'text': 'café'}
 
 
+def test_parent_property_set_lost_ack_restart_exact_retry_reload_and_guarded_undo(connected):
+    tl = attached(connected)
+    tl.clip('a').set(hold=2)
+    command = pending(connected)['pending'][0]
+    assert command['op'] == 'clip.set'
+    assert command['select'] == 'parent/clip:a'
+    assert command['args'] == {'values': {'hold': 2}, 'clear': []}
+    assert command['expect']['parent/clip:a::hold'] == {'state': 'present', 'value': 1}
+
+    generated = connected[1]
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        tl.flush(idempotency_key='property-A')
+    flight = pending(connected)['flight']
+
+    # A restarted Checkout keeps the original request and base; it does not
+    # recapture the property against the accepted head after the lost ACK.
+    restarted = Checkout.attach(open_session(connected))
+    assert pending(connected)['flight'] == flight
+    accepted = restarted.flush(idempotency_key='property-A')
+    assert generated.calls[0] == generated.calls[1] == (flight['body'].encode(), 'property-A')
+    state = pending(connected)
+    assert state['base'] == {'revision_id': 'r1', 'publication_id': 'pub1'}
+    assert state['pending'] == [] and state['flight'] is None
+    assert accepted['data']['accepted_revision_id'] == 'r1'
+    assert restarted.clip('a').data['hold'] == 2
+
+    reloaded = Checkout.attach(open_session(connected))
+    undone = reloaded.undo([accepted['receipt']['receipt_id']])
+    assert undone['data']['accepted_revision_id'] == 'r2'
+    assert Checkout.attach(open_session(connected)).clip('a').data['hold'] == 1
+
+
+def test_parent_property_mixed_with_param_refuses_before_capture(connected):
+    tl = attached(connected)
+    before, state = copy.deepcopy(tl.bundle), pending(connected)
+    with pytest.raises(TimelineEditError, match='held'):
+        tl.clip('a').set(hold=2, text='next')
+    assert tl.bundle == before
+    assert pending(connected) == state
+    assert connected[1].calls == []
+
+
 def test_move_then_trim_then_reload_preserves_source_hold_and_opaque_fields(connected):
     tl = attached(connected, bundle_from_document(media_document()))
     clip = tl.clip('parent/clip:clip-a')
