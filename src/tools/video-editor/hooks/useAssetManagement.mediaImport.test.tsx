@@ -168,14 +168,15 @@ describe('useAssetManagement Runtime media imports', () => {
       error: { code: 'mutation_failed', message: 'Runtime selection was refused' },
     });
     const applyEdit = vi.fn();
-    const { result } = renderAssetManagement({
-      supportsDirectAssetUpload: true,
-      resolveAssetUrl: vi.fn(),
-    }, buildArgs({
-      dataRef: { current: buildVideoTimeline() },
-      applyEdit,
-      commands: { addClip },
-    }));
+    const toastError = vi.fn();
+    const data = buildVideoTimeline();
+    const before = structuredClone(data);
+    const args = buildArgs({ dataRef: { current: data }, applyEdit, commands: { addClip } });
+    const runtime = buildRuntimeValue({ supportsDirectAssetUpload: true, resolveAssetUrl: vi.fn() });
+    runtime.toast.error = toastError;
+    const { result } = renderHook(() => useAssetManagement(args), {
+      wrapper: ({ children }) => <VideoEditorRuntimeProvider value={runtime}>{children}</VideoEditorRuntimeProvider>,
+    });
     const prepared = result.current.prepareGenerationAsset({
       generationId: 'generation-1',
       variantId: 'variant-1',
@@ -198,6 +199,8 @@ describe('useAssetManagement Runtime media imports', () => {
     });
 
     expect(applyEdit).not.toHaveBeenCalled();
+    expect(data).toEqual(before);
+    expect(toastError).toHaveBeenCalledWith('Failed to save asset', { description: 'Runtime selection was refused' });
   });
 
   it('uses one Runtime import identity for image and video drops', async () => {

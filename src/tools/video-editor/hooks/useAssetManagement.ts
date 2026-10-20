@@ -295,7 +295,12 @@ export function useAssetManagement({
         preparedAsset: prepared,
         ...(trackId !== undefined ? { trackId } : {}),
         time,
-      })).then((result) => result.ok);
+      })).then((result) => {
+        if (!result.ok) {
+          runtime.toast.error('Failed to save asset', { description: result.error.message });
+        }
+        return result.ok;
+      });
     }
 
     const command = buildPlacePreparedMediaCommand({
@@ -327,7 +332,7 @@ export function useAssetManagement({
       semantic: true,
     });
     return true;
-  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId]);
+  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId, runtime.toast]);
 
   const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string) => {
     if (preparedAsset) {

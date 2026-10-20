@@ -1184,11 +1184,15 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
   const wire = await faultFirstCommit(page);
   const importResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/media-imports$/.test(new URL(response.url()).pathname), CEILING);
   const selectionResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
+  const verifiedResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\/verified\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
   await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 20);
   const imported = await importResponse;
   expect(imported.status()).toBe(201);
   const importedBody = await imported.json() as { data: Record<string, any> };
   const selected = await selectionResponse.then((response) => response.json()) as Record<string, string>;
+  const verified = await verifiedResponse;
+  expect(verified.status(), await verified.text()).toBe(200);
+  expect((await verified.json()).selection).toEqual(selected);
   const selectedRequest = mediaReads.find((url) => url.pathname.endsWith('/media-selection'));
   const verifiedRequest = mediaReads.find((url) => url.pathname.endsWith('/media-selection/verified'));
   expect(selectedRequest).toBeTruthy();
@@ -1205,6 +1209,13 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
   expect(verifiedRequest!.searchParams.get('object_id')).toBe(selected.object_id);
   expect(verifiedRequest!.searchParams.get('catalog_digest')).toBe(selected.catalog_digest);
 
+  // A sent request and a fetched response are different milestones.
+  await expect.poll(async () => ({
+    attempts: wire.attempts,
+    alerts: await page.getByRole('alert').allTextContents(),
+    session: await page.getByTestId('timeline-command-recovery').allTextContents(),
+    draft: await timelineDraft(page, seed3.timelineId),
+  }), CEILING).toMatchObject({ attempts: 1 });
   await expect.poll(() => wire.posts.length, CEILING).toBe(1);
   const addPost = wire.posts[0];
   const addRequest = JSON.parse(addPost.body) as CommitRequest;

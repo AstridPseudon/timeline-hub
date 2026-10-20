@@ -493,8 +493,17 @@ export function createTimelineCommands(
 
           const plannedDuration = readPositiveDurationSeconds(input.clipSpanSeconds)
             ?? estimateAssetDuration(prepared.entry, 'visual');
+          // Upload placeholders are display state, excluded from authored
+          // clips by rowsToConfig. They must not move their own placement.
+          const placementCurrent = {
+            ...current,
+            rows: current.rows.map((row) => ({
+              ...row,
+              actions: row.actions.filter((action) => !action.id.startsWith('uploading-')),
+            })),
+          };
           const targetPlan = planAssetDropTarget({
-            current,
+            current: placementCurrent,
             assetKind: 'visual',
             trackId: input.trackId,
             selectedTrackId: state.data.selectedTrackId,
@@ -503,7 +512,7 @@ export function createTimelineCommands(
             time: input.time,
             duration: plannedDuration,
           });
-          if (!targetPlan.ok || targetPlan.preparedCurrent !== current) {
+          if (!targetPlan.ok || targetPlan.preparedCurrent !== placementCurrent) {
             return failure('mutation_failed', 'Native prepared media requires an existing visual track.');
           }
           const command: PlacePreparedMediaCommand = {
@@ -518,7 +527,7 @@ export function createTimelineCommands(
               ...(input.clipSpanSeconds !== undefined ? { clipSpanSeconds: input.clipSpanSeconds } : {}),
             },
           };
-          const preview = applyPreparedMediaCommand(current, command);
+          const preview = applyPreparedMediaCommand(placementCurrent, command);
           const detail = preview?.commandResult?.detail;
           const clip = detail && typeof detail.clipId === 'string'
             ? preview?.nextData.config.clips.find((candidate) => candidate.id === detail.clipId)
