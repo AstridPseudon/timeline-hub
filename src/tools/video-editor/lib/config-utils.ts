@@ -6,6 +6,7 @@ import type {
   TimelineClip,
   TimelineConfig,
 } from '@/tools/video-editor/types/index.ts';
+import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import {
   getConfigSignature,
   getStableConfigSignature,
@@ -86,12 +87,7 @@ export const getClipDurationInFrames = (clip: TimelineClip, fps: number): number
   return Math.max(1, secondsToFrames(getClipTimelineDuration(clip), fps));
 };
 
-export const getTimelineDurationInFrames = (config: ResolvedTimelineConfig, fps: number): number => {
-  return Math.max(
-    1,
-    ...config.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps)),
-  );
-};
+export { getTimelineDurationInFrames };
 
 export const getEffectValue = (
   effects: TimelineClip['effects'],
