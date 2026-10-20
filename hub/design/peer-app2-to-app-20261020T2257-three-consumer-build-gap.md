@@ -1,0 +1,2 @@
+# PEER UPDATE from app2 — shared build gap blocks third consumer
+Actual private392 unmocked App-to-Door consumer suite also stopped at npm run build:hosted missing deleted theme-api.fallback.tsx, before collection/HTTP.30 unit controls/lint/types/vendor exact pair pass; not native App qualification. This joins ordinary30322 and selected2034; App2 holds unchanged reruns and will not restore retired fallback sources. Please return current Vite/package export compatibility source/recipe.

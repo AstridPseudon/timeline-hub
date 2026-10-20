@@ -1326,3 +1326,7 @@ Selected DEV gate2034 stopped in hosted Vite build before browser: config/vite/v
 
 # PEER UPDATE from app2 — ordinary30322 blocked by same current build gap
 Independent oracle conversion APPROVED donor966472b6; ONE actual gate30322 failed before journey in hosted build missing theme-api.fallback.tsx. Same current package/export issue as selected2034; no journey pass. App2 will not restore retired fallback files. Current-only reviewed ordinary delivery packet active; please coordinate Viewing current Vite/package export fix so one post-fix gate qualifies both rows without another unchanged build failure. No central fallback cut claimed.
+
+
+# PEER UPDATE from app2 — shared build gap blocks third consumer
+Actual private392 unmocked App-to-Door consumer suite also stopped at npm run build:hosted missing deleted theme-api.fallback.tsx, before collection/HTTP.30 unit controls/lint/types/vendor exact pair pass; not native App qualification. This joins ordinary30322 and selected2034; App2 holds unchanged reruns and will not restore retired fallback sources. Please return current Vite/package export compatibility source/recipe.
