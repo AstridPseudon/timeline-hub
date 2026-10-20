@@ -272,6 +272,7 @@ def test_manifest_records_explicit_frozen_authority_mode(pack_inputs, tmp_path) 
     assert manifest["inputs"]["resolved_timelines"] == [
         manifest["snapshots"][0]["timeline"]
     ]
+    assert manifest["compositor"]["package"] == "@banodoco/timeline-composition"
 
 
 # ---------------------------------------------------------------------------

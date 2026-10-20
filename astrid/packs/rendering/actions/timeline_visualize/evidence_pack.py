@@ -71,7 +71,7 @@ FILMSTRIP_DIR = "filmstrip"
 #: Relative repo path of the pinned compositor source snapshot (R2).  This is
 #: provenance only — it is never resolved inside the pack.
 COMPOSITOR_SOURCE_SNAPSHOT_PATH = "docs/reference/timeline-composition-v0.0.6/"
-COMPOSITOR_PACKAGE = "timeline-composition"
+COMPOSITOR_PACKAGE = "@banodoco/timeline-composition"
 
 #: Deterministic reason recorded for the retired SVG output format.
 _SVG_NULL_REASON = "SVG output was removed; request PNG or Markdown instead"
