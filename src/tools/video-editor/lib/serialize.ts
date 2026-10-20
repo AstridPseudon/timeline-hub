@@ -77,10 +77,15 @@ export const serializeForDisk = (
 export const serializeResolvedTimelineEdit = (
   resolved: ResolvedTimelineConfig,
   pinnedShotGroups?: TimelineConfig['pinnedShotGroups'],
+  authoredConfig?: TimelineConfig,
 ): TimelineConfig => {
   const { registry: _resolvedRegistry, ...authored } = resolved;
   return {
     ...cloneTimelineExtras(authored),
+    // Resolution replaces this opaque authored root with preview assets.
+    ...(authoredConfig && Object.hasOwn(authoredConfig, 'registry')
+      ? cloneAppExtension({ registry: Reflect.get(authoredConfig, 'registry') })
+      : {}),
     ...serializeForDisk(resolved, pinnedShotGroups),
   };
 };
