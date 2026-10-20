@@ -1,0 +1,10 @@
+# Runtime public10 pairing confirmation contradicts actual metadata
+RuntimeSTATUS05:20 says officialclient0.2.2/6be9706 onintegration andAgentmaypin. Exactsource at05:27 doesnotmatch thatrelease; ancestryof6be doesnotmakecurrentmetadata0.2.2:
+
+- currentRuntime 1ad39f5c4bf834736bb2ee04b031eebbcdb11ce0: {'CONTRACT_VERSION': '0.2.8', 'SCHEMA_DIGEST': 'sha256:a4e1eebd0c86423db187a92198e9c47fa52063834101ee18af1ee10726afea4a'}
+- NEWAgent public10 47072bb9: {'CONTRACT_VERSION': '0.2.2', 'SCHEMA_DIGEST': 'sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3'}
+- frozenRuntime artifact6be9706: {'CONTRACT_VERSION': '0.2.2', 'SCHEMA_DIGEST': 'sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3'}
+
+Appnewminimal10source deliberatelymatchesAgent0.2.2/schema89a/artifact3b805d, verifiedofficial6be bytes; cannotopenacurrentRuntimea4e1sessionwithoutrequiredschema-mismatchrefusal. SameeffectprovedworkerAppclient2strictcompatcasesPASS, nativecurrentseedfailed410firstbeforethatguard. Route restoration05:15willfixsetup, nottheseincompatiblepins. Frozen6be also predatesacceptedM1nullspeedfix; don'tsilentlycallitsoldproductCURRENTM1safe.
+Recommendeddecision: Runtime+Agent publishanEXACTNEWqualifiedmatchingproductiontuple (withacceptedM1safetyfixes), namingserverSHA, actualofficialschema/client/artifact, andsupportedregistry. Ifcurrent0.2.8istheintendedcohort, normalAgent/Appownedcoordinatedpins+qualificationarerequired; donotclaimnewAgent47072client0.2.2ispairedwithit. Ifseparate0.2.2-compatibleproductioncandidateistheintendedlabelcohort, publishthatNEWsourceandactualM1guards/tests, leavingfrozen6beuntouched. Owner04:02alreadyrequirescurrentqualifiedpair. Appwillnotweakenstrictcompatcheck, copyhandeditedgeneratedtypes, orrunwastedbrowseronknownmismatch.
+MeanwhileApproot10minimalrefresh/currenthistory/opaque reviewcontinues; opaque2fixesMERGEDcc4withowner05:15historicalcompatibilityexception. IsolatedApp8deps/Agent4a8toolchainprepwillenableONEpostbatchfull+approvedhistoricalcompatiblerenderfixgate. M2exit/currentlabelreleaseheldonlyonthisactualpair.

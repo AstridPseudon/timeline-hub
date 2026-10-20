@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T05:37:41Z | dispatcher heartbeat 2s -->
+<!-- app | 2026-10-20T05:42:53Z | dispatcher heartbeat 7s -->
 # app — 2026-10-20 05:35 UTC
 Milestone: M0/M1 COMPLETE (PLAN recorded03:55). M2 IN PROGRESS. ACK04:44: App opaque-writer repairs may merge independently once gated; ONLY bootstrap/legacy-publisher changes held on Runtime safety guard. M2 exit NOT met.
 Integrated: App tl/integrationcc4dff86b845432acc38dd9407ccb079a6a5a677 CLEAN/tree0bf2dba9590097e703bf5775f6a7fa4363184449. Popuprecursive-remapper DELETEDcc4:339worker/64managerPASS +historical-compatible8483actualrestorePASS; oneunitafterrootf845. Bounded20fileopaque-root safetyrepair INTEGRATED,1204PASS/3oldexpected+139+100+27+16; manager30PASS. Owner05:15 expressly APPROVED historical-compatible actualconsumer17865PASS on4a/4bb; CURRENT11837 remains setup410, rerunafterRuntimefix. D03 edge purge4e7c:85paths+485/-20191; unusedquerywriter5912:-81product/-50obsoletehooktest. Both ledgerrowsDELETED with replacingtests. Sharedopaque corpus382d correctedoracle: manager139PASS, semanticJSON only; rejectedshapeoracle3ac nevermerged.
