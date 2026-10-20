@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T03:27:50Z | dispatcher heartbeat 8s -->
+<!-- app | 2026-10-20T03:33:00Z | dispatcher heartbeat 1s -->
 # app — 2026-10-20 03:16 UTC
 Milestone: M0 COMPLETE; APP M1 EXIT COMPLETE (correctedparityfull10022 ZERO NEW), global M1 NOT RECORDED. All M2/M3 integration merges HELD. App's prior full accepted01:58; one corrected parity full now active.
 Integrated: app tl/integration c8566f12d114c538db8136b8c580a1e663af1ad1 CLEAN/tree6cd06f59a067907d266f721b24863468398fa482. Exact Agent context-aware opaque remapper + same native fixture loader/capture/move tests; manager189PASS, final209PASS incl20native moves. All5oldfixturecases/inputs preserved; approved wrong unknown-field expectations corrected, trueknownlinks positive. Actualtsc2OLD only. No M2 code/pins merged.
