@@ -51,7 +51,11 @@ The caller reserves only `occurrence_id` and `shot_id`, once. The op RE-DERIVES 
 
 Everything else stays byte-for-byte: historical output/task/association records, nested/namespaced data and unknown fields. No suffix remapper. The strict xfail `test_copy_does_not_carry_source_derived_identity_fields` flips only when the RAW copied root row (not a recomputed-on-read value) carries the new values and the closure is right.
 
-### Status: NOT implemented — exact extension needed
+### Status: implemented (agt-m2-duplicate-rederive)
+
+`authoring_bundle._rederive_root_identity` runs in the compile step that sets `placement["shot_revision_id"]`, only for placements with no base placement (new occurrences). It rewrites `stable_deep_link`/`output_identity` only if the row already carries them. `parent_document_id` is the row's own `parent_document_id` (already carried verbatim in the bundle placement), else `timeline_id`, the existing default (`shot_composition_migration`, `invocation.py`). No bundle schema change, no new authority. `test_copy_rederives_only_root_identity_against_compiled_destination` reads the compiled parent row and closure. The text below is the superseded analysis.
+
+### Superseded: exact extension that was needed
 
 The factories need two inputs the authoring bundle and the closed call do not hold:
 

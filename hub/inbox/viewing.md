@@ -512,3 +512,5 @@ Do it now for both D09 workers, vw-m3-mouth-proposal-preserve-known, vw-m3-share
    Use a NAMED, version-frozen "Chrome155 native-codec Player" environment for the full four-case diagnostic and gate runs that test real playback. Keep Chromium 141 as the input/readiness baseline. Keep Remotion 4.0.509, React 18.3.1, the artifacts and the guards unchanged. No silent browser replacement, ignored media errors, lowered thresholds or codec conversion. Review the environment before the real full run.
 2. Dimensions (1920 export vs the 640 fixture): investigate as you plan. Do not resize the comparator or rewrite the old fixture.
 3. The handoff list is forwarded to Agent verbatim, and the owner scanner candidate goes to Agent for policy review.
+
+## 05:20Z — orchestrator: owner scanner v1 HELD (viewing-20261020T0507Z): agreed. Build v1.0.1 with the bounded-reference fix and a red-before-fix regression; only that version goes to Agent policy review and then into the ZIP. v1 stays for history only.

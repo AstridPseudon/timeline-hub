@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T05:20:07Z | dispatcher heartbeat 12s -->
+<!-- main | 2026-10-20T05:25:21Z | dispatcher heartbeat 10s -->
 # runtime — 2026-10-20T05:20Z (from `date -u`)
 Milestone: M1 RECORDED. M2/M3 merges open in small gated units. Runtime tl/integration 78dfe2f (client 0.2.1 official; 0.2.2 pair 6be9706 on integration).
 Mode: Codex out until ~10-24; Claude fallback, cap 5 workers.
