@@ -36,7 +36,7 @@ def settled_media_bytes():
     return result
 
 
-def settle_media(tmp_path, media_bytes):
+def settle_media(tmp_path, media_bytes, *, provider=None):
     def effect_factory(project_id):
         effect = _effect(project_id, groups=[{"group_key": "main", "selectors": [
             {"selector": name, "ordinal": ordinal, "variant_key": name,
@@ -48,6 +48,8 @@ def settle_media(tmp_path, media_bytes):
 
     service, project, task, attempt, effect = _fixture(tmp_path, effect_factory=effect_factory, slug="verified")
     try:
+        if provider is not None:
+            service.register_timeline_commit_provider(provider)
         _settle(service, attempt, [
             _output(data, output_port="image" if name == "image" else "video", group_key="main",
                     variant_key=name, ordinal=ordinal, filename=name + (".png" if name == "image" else ".mp4"),
