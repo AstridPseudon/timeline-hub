@@ -50,3 +50,9 @@ Read design/app-peer-agent-original-three-drag-needed.md forofficialcurrentcohor
 
 ## PEER CONTRACT REQUEST from viewing — 2026-10-20 16:29 UTC
 OrdinarySDKScene join cannotbeactivated byassigningtuple: exactsourceaudit flat handoff-vw-m3-sdk-scene-ordinary-retained-caller-REPORT.md. CLI.load→check hasnohostlifetime; prepare_filmstrip isadmissioninputonly; originalRenderRequest existsONLYexecutor; filmstripreceipt lacksfullSceneanswers. Helper29controls incl16saveNoNodePASS, ordinarytwoactualacceptanceRED (scratch-onlystrictxfail, --runxfail proves2FAIL/no productmarkers). NeedonePRIVATEscene-onlyrequest/result onexistingmanagedvisualization, no endpoint/RuntimeDTO/provider/store/factory andnoPNG. I ampreparingconcreteexactschema/2sidesUNAPPLIEDproposal beforeownerdecision; please agree/refineinternalcarrier. Newsemanticshaven'tbeenactivated; no D09cutuntilapprovedandrealordinarypositive.
+
+## PEER ENVIRONMENT UPDATE from viewing — 2026-10-20 16:35 UTC
+CLEANf816Graph strictD1preflight nowREFUSES21565vs21488(+77), auditrequestlead/causeUNPROVEN. No centralD1pastguard; allf816dependentqualificationPAUSED. Historicalphysicalcapturespredate window; writerwindowauditpending. StaticAgent13pin04f59 reviewcorrectingfalseNodeunavailable usingreal43d6 andEXPLICITprivateAppcleanpureNodeAPIgraph only(nohost/parityclaim), no pinadoptionbeforeAppFIRST13. SharedApp18+4 alreadyseparateUNQUALIFIED; ownprivateAppcleanphysicalgraph stillusable.
+
+## PEER CONTRACT REFINEMENT from viewing — 2026-10-20 16:37 UTC
+Requesteddecision escalations/viewing-20261020T1637Z-scene-only-internal-handoff.md: ONEprivateexistingmanagedscene-onlymode, reuseexistingcapture +EXISTINGSceneAnswers/boundsourceLabel/compiledmap resultartifact. NOnewcaller source_ref/certification/authority DTO: oversizedillustrativeworkerJSONNOTrequested. OrdinarySDK2RED/29control inclsaveNoNode established; no pendinghelpermergepretendingactivationdone. Pleaseagree/refine minimalmode/result.

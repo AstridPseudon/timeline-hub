@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T16:31:06Z | dispatcher heartbeat 11s | live 4 (sol 0, luna 4, other 0) | busy30 30 | status age 6m -->
+<!-- viewing | 2026-10-20T16:36:34Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 27 | status age 0m -->
 # viewing — 2026-10-20 16:18 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active/M4 incomplete. Gates6/7 OPEN.
 Integrated: Composition5a4e9b72f/public13/tree13e37553; central1020134123-9841 npmtest76PASS/0FAIL/0SKIP +build/API/packPASS. Immutable58477B/77members SHA9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738. Old12/11unchanged. PLAN13releaseRECORDED; AppFIRSTthenAgent.
@@ -21,3 +21,7 @@ Resources:10247503872Bfree16:17 BELOW10GiBfloor; leadrecycleREQUESTED/physicalru
 Inbox16:19ACK: rootcause sharedAppoverwrite = tar extraction THROUGHlinked@scope (COMMONreadonlyviolation), modified18+4files. Brief-TEMPLATE.md nowcontains EXACTmandatoryrealpath-beforewrite/REALscopeleaflinkrule, allnewbriefsaddit. Leadownsowner-confirmednpmci/reprotect; no managergraphrepair. D1old52Nodecasesusedfake20.20versionwrapper = UNQUALIFIEDfunctionalonly; strictreal43d6preflight+PATHfixworkeractive, no fakeversionsallowed.
 
 Decidedlocally16:26: existingnobody65534 daemon-only per-runchild (no account/globalsettings/sharedchmod); currentUID/root retainsprotectedsource/Node paths. Owner16:19 brief-template/realpathinstructionAPPLIED. App848public13paired35+5/actualRootframes/fullprojecttscPASS; ownerpeerupdated. Coldfull/TrackInspectorfreeze unchanged; no graphrepairwithoutownerlead.
+
+ENVIRONMENTSTOP16:34: previouslyCLEANf816 peergraph now21565vs21488(+77); D1actual43d6preflightREFUSED BEFOREcentral, causeUNPROVEN/auditleadrequested. ALLf816dependentqualificationPAUSED; priorfunctionalpassesnotenvironmentclaims pendingwriterwindowaudit. No managerrepair. ExistingsharedApp18+4 auditseparate. Diskstillbelow10GiBphysicalfloor.
+
+Contract16:37: concreteordinaryScenehandoff escalated boundedprivateexistingmanagedmode+EXISTINGSceneAnswers/sourceLabel/map, NOnewcaller source_ref/cert/authorityDTO. WorkerillustrativelargerJSONNOTrequested. Sourceaudit29controls/2ordinaryRED, SDKhelperaloneinert; activation/deletionHELDpendingdecision. Agentpeeraskedagreement. Otherworkcontinues.
