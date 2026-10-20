@@ -45,7 +45,11 @@ import {
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
-import { captureClipDeleteEdit, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
+import {
+  captureClipDeleteEdit,
+  isParentClipDeleteTarget,
+  submitClipDeleteEdit,
+} from '../commands/clipDeleteGesture.ts';
 
 export type TimelineCommandErrorCode =
   | 'editor_not_mounted'
@@ -850,7 +854,7 @@ export function createTimelineCommands(
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
-      if (state.ops.clipDelete && !isPinnedGroupClip(current, input.clipId)) {
+      if (state.ops.clipDelete && isParentClipDeleteTarget(current, input.clipId)) {
         try {
           submitClipDeleteEdit(captureClipDeleteEdit(state.ops.clipDelete, current, input.clipId));
           return success({ clipId: input.clipId });

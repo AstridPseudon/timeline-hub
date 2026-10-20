@@ -36,7 +36,12 @@ import {
   submitTrackLabelEdit,
   type TrackLabelCapturePort,
 } from '../commands/trackLabelGesture.ts';
-import { captureClipDeleteEdit, submitClipDeleteEdit, type ClipDeleteCapturePort } from '../commands/clipDeleteGesture.ts';
+import {
+  captureClipDeleteEdit,
+  isParentClipDeleteTarget,
+  submitClipDeleteEdit,
+  type ClipDeleteCapturePort,
+} from '../commands/clipDeleteGesture.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -284,7 +289,9 @@ export function useTimelineOps({
       }
 
       const deletes = patch.operations.filter((operation) => operation.op === 'clip.remove');
-      if (clipDeletePort && deletes.length > 0) {
+      const deleteTargetExists = current.resolvedConfig.clips.some((clip) => clip.id === deletes[0]?.target);
+      if (clipDeletePort && deletes.length > 0
+        && (!deleteTargetExists || isParentClipDeleteTarget(current, deletes[0].target))) {
         if (patch.operations.length !== 1) {
           throw new Error('TimelineOps.apply: only a single clip.remove is supported until shared batch commands are available.');
         }

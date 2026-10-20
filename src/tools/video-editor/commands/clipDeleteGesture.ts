@@ -10,6 +10,29 @@ export interface ClipDeleteCapturePort {
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
 }
 
+/** Parent-only native delete does not yet own projected occurrence clips or groups. */
+export function isParentClipDeleteTarget(current: TimelineData, clipId: string): boolean {
+  if (current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))) {
+    return false;
+  }
+
+  const clip = current.resolvedConfig.clips.find((candidate) => candidate.id === clipId);
+  if (!clip) {
+    return false;
+  }
+
+  const canonical = clip.app?.canonical;
+  if (!canonical || typeof canonical !== 'object') {
+    return true;
+  }
+
+  const ownerRef = canonical.ownerRef;
+  const clipRef = canonical.clipRef;
+  return ![ownerRef, clipRef].some((ref) => (
+    typeof ref === 'string' && ref.startsWith('occurrence:')
+  ));
+}
+
 export interface CapturedClipDeleteEdit {
   readonly clipId: string;
   readonly basis: JsonObject;

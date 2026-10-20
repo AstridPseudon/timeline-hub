@@ -64,6 +64,32 @@ function setup() {
   return { args, hookArgs, store, applyEdit, selectedClipIds, bundle, expected, capture, finish, submit };
 }
 
+function addOccurrenceTarget(env: ReturnType<typeof setup>) {
+  const clipId = 'occ-1:child';
+  const occurrenceClip = {
+    id: clipId,
+    track: 'picture',
+    at: 12,
+    hold: 1,
+    clipType: 'hold' as const,
+    app: {
+      canonical: {
+        occurrenceId: 'occ-1',
+        ownerRef: 'occurrence:occ-1',
+        rawClipId: 'child',
+        clipRef: 'occurrence:occ-1/clip:child',
+      },
+    },
+  };
+  const current = env.args.dataRef.current!;
+  current.config.clips.push(occurrenceClip);
+  current.resolvedConfig.clips.push(occurrenceClip);
+  current.rows[0]!.actions.push({ id: clipId, start: 12, end: 13, effectId: `effect-${clipId}` });
+  current.meta[clipId] = { track: 'picture', clipType: 'hold', hold: 1 };
+  current.clipOrder.picture!.push(clipId);
+  return clipId;
+}
+
 function expectNoWrite(env: ReturnType<typeof setup>) {
   expect(env.applyEdit).not.toHaveBeenCalled();
   expect(env.args.commitData).not.toHaveBeenCalled();
@@ -237,6 +263,31 @@ describe('ordinary single clip delete ingresses', () => {
     expect(env.submit).not.toHaveBeenCalled();
     expect(env.args.dataRef.current).toEqual(before);
     expectNoWrite(env);
+  });
+
+  it.each(['ops', 'service', 'hook'] as const)('keeps an ungrouped canonical occurrence child on the existing writer through %s', (ingress) => {
+    const env = setup();
+    const occurrenceId = addOccurrenceTarget(env);
+    const occurrenceRemove: TimelinePatchOperation = { op: 'clip.remove', target: occurrenceId };
+
+    if (ingress === 'ops') {
+      const { result } = renderHook(() => useTimelineOps(env.args));
+      result.current.apply(patch(occurrenceRemove));
+      expect(env.args.commitData).toHaveBeenCalledOnce();
+    } else if (ingress === 'service') {
+      expect(createTimelineCommands(env.store).deleteClip({ clipId: occurrenceId })).toEqual({
+        ok: true, data: { clipId: occurrenceId },
+      });
+      expect(env.applyEdit).toHaveBeenCalledOnce();
+    } else {
+      const { result } = renderHook(() => useClipEditing(env.hookArgs));
+      act(() => result.current.handleDeleteClip(occurrenceId));
+      expect(env.applyEdit).toHaveBeenCalledOnce();
+    }
+
+    expect(env.capture).not.toHaveBeenCalled();
+    expect(env.finish).not.toHaveBeenCalled();
+    expect(env.submit).not.toHaveBeenCalled();
   });
 });
 
