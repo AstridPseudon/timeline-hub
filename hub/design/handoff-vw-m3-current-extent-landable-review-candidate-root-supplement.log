@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: both callbacks retain 300/600 frames for identical empty/sparse layers at rational FPS
+ok 1 - both callbacks retain 300/600 frames for identical empty/sparse layers at rational FPS
+  ---
+  duration_ms: 115.912673
+  ...
+# Subtest: boolean retained extents refuse
+ok 2 - boolean retained extents refuse
+  ---
+  duration_ms: 21.565975
+  ...
+# Subtest: bounded original-clock metadata fact accepts covered clips on both actual callbacks
+ok 3 - bounded original-clock metadata fact accepts covered clips on both actual callbacks
+  ---
+  duration_ms: 9.795732
+  ...
+# Subtest: bounded original-clock conflicts and invalid authored facts refuse on both actual callbacks
+ok 4 - bounded original-clock conflicts and invalid authored facts refuse on both actual callbacks
+  ---
+  duration_ms: 110.694531
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 277.824106

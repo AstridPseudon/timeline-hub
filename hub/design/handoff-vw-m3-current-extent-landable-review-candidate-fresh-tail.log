@@ -110,4 +110,4 @@ FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_unlayered_
 FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_unlayered_original_clock_native_windows_unchanged[300-330]
 FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_support_and_locked_props_keep_pre_tail_positive[0-30]
 FAILED tests/packs/rendering/test_remotion_layer_tail_compat.py::test_support_and_locked_props_keep_pre_tail_positive[150-165]
-11 failed, 11 passed in 3.52s
+11 failed, 11 passed in 3.47s

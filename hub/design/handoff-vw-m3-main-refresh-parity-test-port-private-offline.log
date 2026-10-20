@@ -1,0 +1,65 @@
+TAP version 13
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/admission.test.ts
+ok 1 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/admission.test.ts
+  ---
+  duration_ms: 304.808407
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/authority.test.ts
+ok 2 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/authority.test.ts
+  ---
+  duration_ms: 295.880816
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/browser-profile.test.ts
+ok 3 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/browser-profile.test.ts
+  ---
+  duration_ms: 712.525951
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/canvas.test.ts
+ok 4 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/canvas.test.ts
+  ---
+  duration_ms: 912.91459
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/compare.test.ts
+ok 5 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/compare.test.ts
+  ---
+  duration_ms: 315.641523
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/diagnostics.test.ts
+ok 6 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/diagnostics.test.ts
+  ---
+  duration_ms: 4037.083557
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/directframes.test.ts
+ok 7 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/directframes.test.ts
+  ---
+  duration_ms: 1387.495401
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/download.test.ts
+ok 8 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/download.test.ts
+  ---
+  duration_ms: 325.967236
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/harness.test.ts
+ok 9 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/harness.test.ts
+  ---
+  duration_ms: 729.670949
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/media.test.ts
+ok 10 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/media.test.ts
+  ---
+  duration_ms: 2862.01008
+  ...
+# Subtest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/source-tuple.test.ts
+ok 11 - /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-main-refresh-parity-test-port/private-graph/tests/e2e/timeline/viewing-parity/source-tuple.test.ts
+  ---
+  duration_ms: 658.951743
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4972.832646

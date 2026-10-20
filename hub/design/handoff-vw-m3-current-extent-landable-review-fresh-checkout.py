@@ -22,4 +22,5 @@ Path(str(P) + '-candidate-fresh-tail.json').write_text(json.dumps(record, indent
 print('\n'.join(log.read_text().splitlines()[-17:]))
 assert result.returncode == 1
 assert '11 failed, 11 passed' in log.read_text()
-assert 'Cannot open: No such file or directory' in log.read_text()
+assert 'banodoco-timeline-composition-0.0.10.tgz' in log.read_text()
+assert not old_fixture.exists()

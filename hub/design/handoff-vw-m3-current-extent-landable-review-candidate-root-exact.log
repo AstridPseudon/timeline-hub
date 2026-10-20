@@ -1,0 +1,45 @@
+TAP version 13
+# Subtest: Root registers both compositions with actual metadata callbacks
+ok 1 - Root registers both compositions with actual metadata callbacks
+  ---
+  duration_ms: 62.972036
+  ...
+# Subtest: native empty and sparse props retain the original 300-frame extent
+ok 2 - native empty and sparse props retain the original 300-frame extent
+  ---
+  duration_ms: 32.624165
+  ...
+# Subtest: without the internal override, empty and ordinary durations keep their existing values
+ok 3 - without the internal override, empty and ordinary durations keep their existing values
+  ---
+  duration_ms: 22.561724
+  ...
+# Subtest: legacy local-window metadata remains a 30-frame composition
+ok 4 - legacy local-window metadata remains a 30-frame composition
+  ---
+  duration_ms: 9.513653
+  ...
+# Subtest: default canvas, explicit canvas and explicit render-tail metadata remain unchanged
+ok 5 - default canvas, explicit canvas and explicit render-tail metadata remain unchanged
+  ---
+  duration_ms: 20.420612
+  ...
+# Subtest: invalid, noninteger, unsafe and smaller overrides are refused
+ok 6 - invalid, noninteger, unsafe and smaller overrides are refused
+  ---
+  duration_ms: 80.088022
+  ...
+# Subtest: an override conflicting with either legacy clock is refused
+ok 7 - an override conflicting with either legacy clock is refused
+  ---
+  duration_ms: 13.337385
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 262.098052

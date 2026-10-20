@@ -1,110 +1,192 @@
-# Viewing M4 size/cut plan
+# Viewing M4 conditional size-cut plan
 
-Status: design-only handoff; no product or test changes.  This uses the frozen
-08:00 Core boundary and the corrected 09:05 census, not a quota-driven
-redefinition of the boundary.
+Status: docs-only measurement handoff, 2026-10-20. This refines the frozen
+cut plan; it does not change the M4 boundary or claim that the target has been
+met. Counts are nonblank physical UTF-8 lines unless a function-body count is
+called out explicitly.
 
-## Accounting boundary
+## Result first
 
-The authoritative confirmed Viewing slice is **140 -> 205 files,
-45,182 -> 48,343 nonblank UTF-8 lines**.  It is reproduced by
-`handoff-vw-m4-size-census-gate-review-script.mjs` from committed blobs at the
-three frozen current SHAs in `handoff-vw-m4-current-core-census-freeze.json`.
-The rows are disjoint:
+The only currently qualified reduction remains Composition's six nonblank
+lines in `typescript/src/lib/fade.ts` (Q1). The frozen confirmed Viewing slice
+therefore remains **48,337 lines after Q1**, not 20–26k. D09 and D08 are still
+conditional: the source map finds more private visibility/evaluator logic than
+the previous `375 + 31` summary, but the public-query caller and parity gates
+are not complete.
 
-| current row | files / nonblank lines | treatment |
-| --- | ---: | --- |
-| Composition authored `typescript/src/**` | 79 / 4,097 | one public evaluator/source; generated registries, curves and timer declaration excluded |
-| Agent `timeline_visualize/**` authored subset | 55 / 25,256 | keep Read/See, pixel lane, statistics and timing behavior |
-| Agent explicit render/evaluator adapters + elements | 29 / 10,744 | keep render/export, loaders, capabilities and diagnostics; D09 is a source-qualified replacement, not a blind file cut |
-| Agent `onscreen.py` + `scene_answers.py` | 2 / 469 | private evaluator plus inactive/public transport; D09 held |
-| Agent Remotion host (adjacent execution files removed) | 10 / 613 | keep host/runtime seam; adjacent live-scene/execution bucket is separate |
-| App PreviewPanel/compositions/render active source | 30 / 7,164 | keep playback, themes, unknown placeholders and audio behavior; D08 remains partial |
-| **confirmed total** | **205 / 48,343** | baseline is 140 / 45,182 |
+The measured conditional arithmetic is:
 
-Explicitly outside this number: Runtime generic worker/custody/auth/CAS/
-platform/lifecycle infrastructure and generated clients/contracts/DTOs;
-Agent visualize schemas, stage/docs/fonts/inspector assets and generated
-Remotion/declaration/test files; App tests, generated/fallback modules, vendor
-trees and package archives; Composition generated source; and Agent's three
-unchanged `remotion/src` adjacent files (818 nonblank lines).  The App census
-also has unresolved omitted domain files (for example `runtime/composition/
-graphProjector.ts`, `patchPreview.ts`, `materialRuntime.ts` and
-`data-kinds/`); they are not silently excluded from a global total.  Generic
-classification is source-based: Runtime's `runtime_protocol/local_*`,
-`remote_worker_*`, `verified_host_launch.py`, `astrid_runtime/` and generic
-auth/backup/CAS/platform code are outside Read/See/Edit; App's seven reviewed
-layout/recovery shell files are an adjacent bucket, not deletions.
-
-Observed live `tl/integration` heads before estimating: Composition
-`e80c46b`, Agent `efb9603`, App `18becfb`, Runtime `642eef7`.  Composition's
-tree is the frozen census tree; App matches the frozen census tree; Agent has
-only later committed source changes (+186 nonblank lines in the selected Agent
-row, chiefly `composed_frame.py`, `filmstrip_cards.py` and
-`filmstrip_execution.py`).  The frozen 48,343 number remains the accounting
-base. Frozen R4 references were read as parts-bin evidence only: Composition
-public `scene-evaluation.ts`, Agent's warm-owner `scene_answers.py`, App's
-vendored evaluator/package tree, and Runtime's `visual_seam.py`; none is a
-permission to transplant an old branch.
-
-## Vendored copies: raw versus deduplicated
-
-Independent blob comparison on current App `18becfb` against Agent `efb9603`
-found that all vendor roots are disjoint from the confirmed active manifest.
-Thus active authored copies were already excluded; deleting them cannot be
-subtracted from 48,343 a second time.
-
-| remaining vendor bucket | raw instances | deduplicated / exact evidence | future canonical reduction |
+| conditional unit | deduplicated body/source count | current confirmed net | measured after range, if the named gates pass |
 | --- | ---: | ---: | ---: |
-| App `vendor/astrid-browser` + `vendor/astrid-build-inputs/primary/astrid` text | **169 / 35,024 NB / 1,319,619 B** | 153 unique blob contents / 31,346 NB; 123 exact Agent-snapshot files / 21,122 NB / 882,979 B; 15 exact selected canonical Agent files / 933 NB / 24,931 B | **0** (already outside census); delete only after owner proves which 123 are replaced. The 46 non-exact/unmatched files (13,902 NB) are unresolved, not imagined duplicates. |
-| App vendored Composition `vendor/timeline-composition/typescript/src/**` | **21 / 1,504 NB / 51,742 B** | source copy is outside the active manifest; package metadata/tests/generated files are separate | **0** to confirmed core; package adoption may remove the vendor tree |
-| Agent old Composition reference `docs/reference/timeline-composition-v0.0.6/**` | **21 / 1,612 NB / 57,156 B** | archived reference, not active source | **0** to confirmed core; delete only as an archive cleanup |
-| App static/theme copies (`vendor/banodoco-animations`, `-effects`, `-transitions`, `timeline-theme-2rp`) | **64 / 1,091 NB / 42,575 B** | package inputs, not active manifest rows; package/alias ownership is unresolved | **0** until the immutable package/official pin gate proves replacement |
+| Q1: `typescript/src/lib/fade.ts` inline | 6 NB source lines | **-6** | 48,337 |
+| D09 core: `astrid/core/timeline/onscreen.py` | 375 NB whole file; 69 NB role/coverage seam must remain or move (`element_coverage`, `_coverage_of`, `_has_value`, `role_of`) | 0 until callers and the seam are qualified | **47,962–48,031** (−375 to −306) |
+| D09a: `motion/model.py::mouth_state` | 24 NB direct body; `hash_unit` is a separate 9 NB helper; `presenter_words` is shared and is not creditable | 0 | subtract **31–40** only after both lipsync callers and the helper are replaced; combined **47,922–48,000** |
+| D09b: `motion/model.py::mouth_box` | 7 NB direct body; shared `presenter_view` is retained | 0 | included in the combined range above only after the pixel caller/aggregate gate |
+| D09c: private mouth crop | excluded | 0 | 0; pixel crop/statistics remain KEEP |
+| D08: App `lib/audioFade.ts` | 60 NB module / 27 NB executable function bodies | 0 to the confirmed slice (outside its manifest row) | App-local source can fall by at most 60 NB; confirmed Viewing total unchanged |
+| D08: App `VisualClip`/`TimelineRenderer` host | `VisualClip.tsx` 648 NB; `TimelineRenderer.tsx` 1,656 NB | 0 | 0 until a complete public host replacement exists; do not count mixed adapters |
 
-The committed App package still points at Composition **0.0.8** and local
-theme/ops/schema packages; Agent carries the newer immutable **0.0.12**
-artifact.  The replacement is the exact 0.0.12 package
-(`0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3`, 77
-members), with matching App/Agent/Runtime pins and no private vendor import.
-The App 0.0.8 archive (50,664 B) and Agent 0.0.12 archive (58,444 B) are
-binary/package debt, not authored lines.  Untracked local links for
-`timeline-ops`, `timeline-schema` and `timeline-theme-2rp` are not committed
-source and are not counted.
+The D09 ranges are a conditional arithmetic envelope, not a forecast of a
+landing. With the current evidence the honest expected total is still
+48,337. A public replacement may add a thin adapter, and a source-qualified
+caller may retain more of the old helpers. No vendor, archive, fallback, stale
+`dist`, pixel, timing, custom-loader, or unknown-diagnostic deletion is added
+to these numbers.
 
-## Cuts and expected arithmetic
+## Frozen accounting boundary and current growth
 
-All figures below are nonblank lines unless marked otherwise.  “Net” includes
-replacement source; a deletion-only ceiling is not a parity result.
+This table is preserved from the frozen census. It is the accounting base and
+must not be silently rewritten using the later Agent head.
 
-| unit | current evidence and replacement | qualified reduction / expected net | blockers and proof required |
-| --- | --- | ---: | --- |
-| Composition `typescript/src/lib/fade.ts` | 7 physical / **6 NB**; inline the identical `fadeMultiplier` call already used by `VisualClip` | **-6 NB**, giving **48,337** confirmed Viewing lines if landed | Q1 replacement is exact. Preserve `VisualClip`; run `typescript/tests/transition-policy.test.ts` and `typescript/tests/registries.test.ts` after `npm run build:test`. |
-| D08 App duplicate evaluator math | Historical `playerEvaluation.ts` is already absent from current App; do not count it. Remaining `TimelineRenderer`/`VisualClip` are mixed live consumers. `audioFade.ts` is 66 physical / **60 NB** outside this Viewing manifest. Replacement is Composition public evaluation and `audio-envelope.ts`/`applyAudioEnvelope` for audio. | **0 now**; conditional `-60 NB` is not a forecast until both preview/export PCM consumers pass | Actual frame+audio parity, public12 package/root/vendor adoption, source-selected revision/initial-read proof, and zero legacy visual/audio evaluator traffic. Keep playback fades, transitions, audio gains, diagnostics and unknown internals. |
-| D09 private Agent evaluator | Current `onscreen.py` is **452 physical / 375 NB**; `scene_answers.py` is already 114 physical / 94 NB and is not a free deletion. Replacement is public Composition scene rows through the existing prepared Root/source boundary. | Deletion-only ceiling **-375 NB**; replacement net is **unmeasured**, so expected net is **0 until qualified** (the held old proposal deleted 452 physical lines on a different tree and is not current evidence) | Trusted post-resolve/historical source, exact materialized assets/theme/occurrence identity, real custom-loader/capability positives, advisory UNKNOWN/findings, renderer-free save behavior, and paired pixel/audio parity. Named neighbors: `test_scene_answers.py`, `test_scene_host.py`, `test_scene_caller_preservation.py`, `test_coverage_empty_cut.py`, label/fast-lane tests. |
-| VW-D09a/b presenter mouth helpers | Current `motion/model.py`: `mouth_state` **24 NB**, `mouth_box` **7 NB**. Replacement is registered presenter `motionAt`/scene diagnostics from the same drawing geometry. | Deletion-only ceiling **-31 NB**; **0 net until caller/aggregate proof** | Exact selected-cut counts, ordinary registered render positive and planted mismatch, default/partial/raw-invalid known behavior, same source/theme/assets. Preserve private statistics/crop inputs while parity is open. |
-| VW-D09c pixel crop/verification | Private crop selection remains coupled to `fast_lane.py`; pixel verification, statistics, strict 2% denominator and selected-key behavior are required evidence, not duplicate evaluator math. | **0** | Public source-qualified mouth ROI plus exact selected-cut aggregate; no threshold/denominator rewrite. |
-| D10 vendored Composition/Agent/static copies | Counts are in the vendor table and already excluded from 48,343. Replacement is immutable public package plus official pins and alias isolation. | **0 canonical NB** (repository deletion may remove raw vendor lines later) | App/Agent matched package adoption, all public exports/registry/theme behavior, no private vendor imports, then actual frame/audio parity. |
-| D12 stale `dist`/masked build | Current Composition has no tracked `dist`; ledger says stale dist/build masking is already deleted. | **0** | Standard build/package smoke remains the proof; do not recount. |
+| manifest row | baseline files / bytes / NB lines | current files / bytes / NB lines | growth files / bytes / NB lines |
+| --- | ---: | ---: | ---: |
+| Composition authored `typescript/src/**` | 16 / 45,621 / 1,398 | 79 / 190,523 / 4,097 | +63 / +144,902 / +2,699 |
+| Agent `timeline_visualize/**` authored subset | 54 / 1,253,951 / 24,911 | 55 / 1,270,190 / 25,256 | +1 / +16,239 / +345 |
+| Agent explicit render/evaluator adapters + elements | 29 / 375,489 / 10,993 | 29 / 366,756 / 10,744 | 0 / −8,733 / −249 |
+| Agent `onscreen.py`, `scene_answers.py` | 1 / 18,156 / 375 | 2 / 24,116 / 469 | +1 / +5,960 / +94 |
+| Agent Remotion host, adjacent execution excluded | 11 / 24,264 / 573 | 10 / 27,058 / 613 | −1 / +2,794 / +40 |
+| App active PreviewPanel/compositions/render source | 29 / 282,934 / 6,932 | 30 / 293,804 / 7,164 | +1 / +10,870 / +232 |
+| **confirmed canonical total** | **140 / 2,000,415 / 45,182** | **205 / 2,172,447 / 48,343** | **+65 / +172,032 / +3,161** |
 
-Honest current forecast: the only presently qualified authored-line reduction is
-Q1, so the confirmed Viewing slice is **48,337 NB**, not 20–26k.  This is
-**22,337 above the upper 26k target (28,337 above 20k)** before any Runtime or
-Agent editing/App core outside this Viewing slice is included.  Runtime is a
-separate census (23,501 physical lines at its frozen ref; 22,178 NB in the
-live-head read), so it must not be arithmetically mixed into this nonblank
-Viewing total.  The true four-repo core is higher because those Runtime,
-App-editing and Agent-editing paths are not in this Viewing manifest.  Closing
-that gap requires owner decisions about held evaluator/source joins and broader
-product paths; it does not authorize cutting kept behavior or pretending
-vendor/archive deletions are core savings.
+Frozen refs are Composition `46bd700b`, Agent `931d7ec`, and App `18becfb`,
+with the full SHAs and reproducible manifest in
+`handoff-vw-m4-current-core-census-freeze.json`. The read-only live source map
+was also checked against Composition `e80c46b` (same tree), App `18becfb`, and
+Agent `df2739f`; the later Agent head measures 25,442 NB lines in the authored
+visualize subset and 11,213 NB lines in the explicit adapter/elements subset.
+Those two live numbers are inspection facts, not a replacement baseline: the
+frozen 48,343 total and its growth columns remain authoritative.
 
-## Non-negotiable preservation gates
+## What the public replacement actually is
 
-Keep `fast_lane`/`sweep` pixel verification and statistics, `_timing_evaluators`,
-custom loaders, registered capabilities, loud unknown-element diagnostics,
-advisory UNKNOWN/findings, playback features (music beds, fades and
-transitions), and owner-film/legacy intended-DIP coverage.  A replacement is
-trusted only when it uses the same prepared source, registry, theme, occurrence
-and revision identity; metadata that merely looks like a revision is not
-authority.  No save-path renderer dependency, second projector, new manifest
-framework, feature deletion, or test weakening is part of this plan.
+The replacement query is the Composition public scene path:
+
+* `typescript/src/scene-evaluation.ts`: `prepareScene`, `querySceneFrame`,
+  `querySceneOcclusion`, `SceneLayer.diagnostics`, and the explicit
+  `COVERED`/`DIP`/`GAP`/`UNKNOWN` result. It uses evaluated component bounds and
+  declared capability facts; it does not guess glyph, sprite, media-alpha, or
+  modifier internals.
+* Agent `astrid/core/timeline/scene_answers.py`: `frames_at` and
+  `host_frames_at` are transport/thin-admission adapters. The latter currently
+  imports `element_coverage` and `role_of` from `onscreen.py`, so deleting the
+  whole file without moving that 69-NB role/coverage seam would break the
+  replacement itself.
+* Agent `composed_frame.py::RemotionFrameProvider` and `_observe_scene` bind
+  answers to the exact captured timeline, registry, theme, materialized assets,
+  source identity, occurrence map, and requested frames. This is source
+  authority and capture plumbing, not a second evaluator.
+
+Named evidence that must remain attached to the eventual deletion is
+`tests/packs/rendering/test_scene_answers.py`, `test_scene_host.py`,
+`test_scene_source_carry.py`, `presenter_selected_cut_query.mjs`,
+`presenter_series_inspection.mjs`, `test_presenter_series_inspection.py`, and
+`test_presenter_selected_cut_aggregate.py`. The latter is still explicitly an
+unapplied consumer proposal and says production lipsync uses `mouth_box`; it
+is not a deletion qualification.
+
+## D09: complete private-math map
+
+The following is a source map, not a claim that every line is deletable.
+Function counts are deduplicated by the union of their nonblank source spans;
+overlapping callers are not counted twice.
+
+| source | measured body | role and status | replacement/caller gate |
+| --- | ---: | --- | --- |
+| `onscreen.py`: `element_coverage`, `_coverage_of`, `role_of`, `layout_bounds`, `_build`, `_opacity`, `_visible`, `visible_at`, `_classify`, `coverage` and helpers | 375 NB whole-file removal candidate | direct private coverage/opacity/bounds evaluator; **conditional D09 core** | Public `querySceneFrame`/`SceneLayer`; move the 69-NB role/coverage seam first, then prove SDK check, labels, capture and historical/source-bound callers preserve exact IDs, frame order, findings, and UNKNOWN/unavailable distinction |
+| `motion/model.py`: presenter/motion/geometry group (`hash_unit`, `presenter_words`, `mouth_state`, `pushed_zoom`, `presenter_view`, `face_box`, `declared_face`, `mouth_box`, props helpers, `props_at`, `_wrap_lines`, `_internal_zoom`, `boxes_at`, `safe_rect`, `intersection`, `area`) | 261 NB union; `boxes_at` alone 68 NB | remaining private visualizer model; **mostly unresolved**, not a 261-line deletion credit | Public component diagnostics/motion facts must cover all current callers. `render_lipsync`, `overlay_bounds`, motion checks, and fast-lane occlusion/zoom currently call these helpers directly |
+| `motion/model.py::mouth_state` and unique helper dependency | 24 NB direct; 33 NB with `hash_unit`; `presenter_words` shared | **D09a conditional** | Replace `layers/builtin.py::render_lipsync` and `_presenter_props` with a public per-frame motion/diagnostics query. `presenter_words` remains because `motion/data.py`, `motion/lint.py`, and the built-in layer use it independently |
+| `motion/model.py::mouth_box` | 7 NB direct; shared `presenter_view` retained | **D09b conditional** | Replace `layers/builtin.py::render_lipsync` ROI with the source-qualified public mouth diagnostic, preserving the 2% threshold, denominator, selected keys, and planted mismatch |
+| `motion/lint.py`: `_clear_face`, `_data_faces`, `composition`, `timing`, `lint_cuts` | 188 NB union | checks and findings; **unresolved/KEEP until public facts cover them** | Public scene findings may supply bounds/diagnostics, but these checks also produce safe-area, text-size, overlap and timing messages. Do not delete or convert them to refusal/UNKNOWN without named behavior tests |
+| `layers/builtin.py::render_lipsync` and `overlay_bounds` | 75 NB and 31 NB | presentation/check consumers; **KEEP pending caller migration** | Must retain the visible motion sheet, selected-frame labels, and exact pixel lane while semantic and ROI queries are qualified |
+| `fast_lane.py`: `_on`, `_changed_on_screen`, `hidden_under`, `zoom_region`, `_crop` and related helpers | 61 NB selected spans | **pixel KEEP**, not a D09 deletion | Pixel verification, changed-area statistics, selected crop/zoom and the existing `fast_lane` behavior are explicitly preserved. `sweep.py` is likewise not a deletable pool |
+
+This map explains the corrected boundary: `375 + 31` names only the direct
+core/mouth deletion units. It omits the 261-NB motion/geometry region, the
+188-NB check callers, and the 61-NB pixel spans because those have live
+presentation, diagnostics, or pixel consumers. They are measured and
+classified, not silently credited as cuts.
+
+## D08: App map and replacement limits
+
+`playerEvaluation.ts` is already absent from current App and cannot be counted
+again. The remaining viewer is a mixed host, not a removable evaluator file:
+
+* `VisualClip.tsx` has 648 NB. Its concrete geometry bodies are
+  `getClipBoxStyle` (42 NB), `getIntrinsicMediaSize` (17), `VisualAsset` (162),
+  `VisualClip` (116), and `VisualClipSequence` (59). They handle readiness,
+  missing/unsupported assets, crop/viewport layout, transitions, effects,
+  shaders, canonical occurrence caps, and premount timing. The public
+  Composition evaluator supplies scene answers, but not this App host contract;
+  these bodies are **adapters KEEP**, not D08 credits.
+* `TimelineRenderer.tsx` is 1,656 NB. `VisualTrack`,
+  `TimelineRendererBody`, dynamic/extension dispatch, shot loading, effect and
+  unknown placeholders are host orchestration and capability isolation. The
+  public-host tests (`TimelineRenderer.public-host.qualification.test.tsx`,
+  `TimelineRenderer.sequence.test.tsx`, `TimelineRenderer.test.tsx`) prove
+  behavior that a scene query alone cannot replace.
+* `lib/audioFade.ts` is a small genuine duplicate of renderer fade semantics:
+  `getAudioFade` (10 NB), `audioFadeGain` (9), and `getAudioVolumeProp` (8).
+  `AudioTrack.tsx` calls all three. `audio-envelope.ts`/`applyAudioEnvelope`
+  are the possible public replacement, but exact per-frame clip-fade behavior,
+  frame offsets, retry/mute/amplify behavior, and App/export parity are still
+  open. `lib/audioFade.test.ts` is the caller contract and must remain until a
+  public equivalent passes the same crossfade, overlap, invalid-input, and
+  delayed-Sequence cases.
+
+Therefore D08 has a measured App-local ceiling of 60 NB, but **zero confirmed
+Viewing-slice credit** and zero current net. A package adoption or an App host
+rewrite must not be disguised as deletion of `VisualClip`/`TimelineRenderer`.
+
+## Largest remaining modules, ranked by primary treatment
+
+The ranking uses the live Agent/App source map where noted. It is intentionally
+not additive: a module may contain retained neighboring behavior, and the
+whole-file number is not a deletion claim.
+
+| rank | module | NB | primary classification | reason |
+| ---: | --- | ---: | --- | --- |
+| 1 | Agent `rendering/elements/catalog.ts` | 6,151 | adapters KEEP / generic main infrastructure | registry, aliases, capabilities and package-owned element admission; not a second visibility evaluator |
+| 2 | Agent `timeline_visualize/emit.py` | 1,994 | presentation | projection, structure, relations, diagnostics and action indexes |
+| 3 | Agent `timeline_visualize/filmstrip_execution.py` | 1,987 | adapters KEEP | managed output, source/materialization, timing alignment and receipts |
+| 4 | Agent `timeline_visualize/layout.py` | 1,961 | presentation | timeline/page geometry and labels; it lays out answers rather than deciding scene coverage |
+| 5 | Agent `timeline_visualize/frozen.py` | 1,957 | adapters KEEP / generic main infrastructure | frozen-pack identity, ownership and integrity admission |
+| 6 | Agent `timeline_visualize/filmstrip_cards.py` | 1,827 | presentation | captions, cards, audio waveforms, navigation and PNG composition |
+| 7 | Agent `rendering/renderers/remotion/run.py` | 1,710 | adapters KEEP / generic main infrastructure | managed renderer host, registry/theme/materialization and render contract |
+| 8 | App `compositions/TimelineRenderer.tsx` | 1,656 | adapters KEEP | live App dispatch/host behavior, not a standalone evaluator |
+| 9 | Agent `timeline_visualize/inspection_contract.py` | 1,334 | adapters KEEP | input-window, status, provenance and compact receipt contract |
+| 10 | Agent `actions/render/managed_timeline.py` | 1,105 | adapters KEEP | managed render input and canonical host boundary |
+| 11 | Agent `timeline_visualize/fast_lane.py` | 804 | pixel KEEP | exact decoded pixel comparison, crop/zoom and changed-area statistics |
+| 12 | Agent `timeline_visualize/composed_frame.py` | 759 | pixel KEEP / source authority | exact capture source, materialized assets, renderer callback and cache |
+| 13 | Agent `timeline_visualize/motion/model.py` | 645 | unresolved evaluator-adjacent | 261 NB of private motion/geometry bodies have live callers; only named mouth units are conditional |
+| 14 | Agent `timeline_visualize/audio_analysis.py` | 517 | adapters KEEP / pixel-audio evidence | waveform bins, gaps, loudness and audio identity |
+| 15 | Agent `timeline_visualize/motion/element_motion.py` | 503 | unresolved/presentation | generic registered element motion and capability evaluation, not the D09 core |
+
+The true generic untouched infrastructure in this list is the element catalog,
+Remotion host, frozen-pack verifier, managed render boundary, and App registry/
+extension dispatch. A whole-file census that calls these “evaluator duplicate”
+would overcount. Conversely, the motion model and checks are not generic main
+infrastructure, but they remain unresolved because their current presentation
+and diagnostic callers are real. Pixel statistics/crops, `_timing_evaluators`,
+custom loaders, loud unknown reports, and feature playback remain separate KEEP
+categories.
+
+## Conditional AFTER table and owner choices
+
+| state | confirmed Viewing NB | what is actually credited | remaining gap to 26k |
+| --- | ---: | --- | ---: |
+| frozen current | 48,343 | none | 22,343 |
+| Q1 qualified | **48,337** | Composition fade helper, −6 | 22,337 |
+| Q1 + D09 core, thin role seam | **48,031–47,962** | only if trusted source/caller/parity gates pass; −306 to −375 | 22,031–21,962 |
+| also D09a + D09b | **48,000–47,922** | only if public motion and selected-cut ROI gates pass; additional −31 to −40 | 22,000–21,922 |
+| D08 audio helper | **unchanged** | App-local −60 maximum is outside the confirmed row; no slice credit | unchanged |
+
+The best measured conditional envelope is still roughly 47.9k, far above the
+26k upper target, and the true four-repo core is larger because Runtime and
+editing paths are outside this Viewing census. Closing that gap requires
+precise owner choices: qualify the D09 source/caller join and accept the
+remaining motion/crop behavior as retained, qualify exact App public audio and
+host parity, or consciously revise the global size target. It does not permit
+cutting the retained viewer, pixel lane, diagnostics, generic host, or owner
+film behavior, and it does not permit re-crediting vendor/archive/fallback
+deletions that were already excluded.
+

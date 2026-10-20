@@ -1,0 +1,49 @@
+{
+  "candidate": "da10b0b7690a8c2a4032e75eb3d4a3e988121997",
+  "candidate_tracked_bytes_still_equal": true,
+  "blob_count": 3009,
+  "producer_ref_still_frozen": true,
+  "reviewer_checkout_clean": true,
+  "final_integration_cohort": {
+    "agent": "df2739f903edac02bd36b4446deeea847524c040",
+    "runtime": "c0dcd3871d78c405184506eb6735565592498c77",
+    "app": "18becfbede00038830b97e63345445eeef54fa42",
+    "composition": "e80c46baf5aa4b50a10b77a5ceadcb7ec4ab27ab"
+  },
+  "current_agent_changes_since_base": [],
+  "protected_drift": [],
+  "capture_remotion_frames_ast_identical": true,
+  "locked_on_scene_props_calls_ast_identical": true,
+  "direct_tests_ruff": {
+    "command": [
+      "/home/user/work/venv-agent/bin/python",
+      "-B",
+      "-m",
+      "ruff",
+      "check",
+      "--no-cache",
+      "tests/packs/rendering/test_native_layer_extent.py",
+      "tests/packs/rendering/test_remotion_layer_tail_compat.py",
+      "tests/packs/rendering/test_live_scene_composition.py"
+    ],
+    "exit": 0
+  },
+  "product_ruff": {
+    "astrid/core/rendering/service.py": {
+      "baseline_diagnostics": 6,
+      "candidate_diagnostics": 6,
+      "same_codes_and_messages": true
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": {
+      "baseline_diagnostics": 7,
+      "candidate_diagnostics": 7,
+      "same_codes_and_messages": true
+    }
+  },
+  "test_environment": {
+    "node": "v20.19.4",
+    "typescript": "5.9.3",
+    "private_node_scope": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-review/root-modules/node_modules",
+    "shared_dependencies_written": false
+  }
+}

@@ -1,0 +1,71 @@
+TAP version 13
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/admission.test.ts
+ok 1 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/admission.test.ts
+  ---
+  duration_ms: 330.364307
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/authority.test.ts
+ok 2 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/authority.test.ts
+  ---
+  duration_ms: 304.739374
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/browser-profile.test.ts
+not ok 3 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/browser-profile.test.ts
+  ---
+  duration_ms: 757.506137
+  location: '/home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/browser-profile.test.ts:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/canvas.test.ts
+ok 4 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/canvas.test.ts
+  ---
+  duration_ms: 975.536848
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/compare.test.ts
+ok 5 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/compare.test.ts
+  ---
+  duration_ms: 339.285188
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/diagnostics.test.ts
+ok 6 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/diagnostics.test.ts
+  ---
+  duration_ms: 3992.758457
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/directframes.test.ts
+ok 7 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/directframes.test.ts
+  ---
+  duration_ms: 1510.683747
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/download.test.ts
+ok 8 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/download.test.ts
+  ---
+  duration_ms: 360.725735
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/harness.test.ts
+ok 9 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/harness.test.ts
+  ---
+  duration_ms: 726.026405
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/media.test.ts
+ok 10 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/media.test.ts
+  ---
+  duration_ms: 2849.340498
+  ...
+# Subtest: /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/source-tuple.test.ts
+ok 11 - /home/user/work/wt/vw-m3-main-refresh-parity-test-port/tests/e2e/timeline/viewing-parity/source-tuple.test.ts
+  ---
+  duration_ms: 698.645265
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 10
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5128.318838
