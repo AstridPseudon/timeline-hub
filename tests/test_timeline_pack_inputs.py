@@ -1,11 +1,11 @@
 """Exact project-pack Documents at the Runtime host boundary.
 
-The admission inventory is retained here. Snapshot resource custody is a
-separate missing prerequisite; these tests do not claim the inventory contains
-an element declaration or substitute for Agent's selected-schema validation.
+The portable CAS tests prove byte custody independently of Agent's declaration
+validation. The older real-admission tests qualify only the Document boundary.
 """
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import json
@@ -35,7 +35,7 @@ def pin(document):
             "content_digest": digest(document["content"])}
 
 
-def create_pack(service, *, collection="default", **changes):
+def create_pack(service, *, collection="default", snapshot_object=None, **changes):
     project = service.test_project
     realm = service.realm["id"]
     owner = "project_" + hashlib.sha256(f"{realm}:{project}:default".encode()).hexdigest()[:20]
@@ -45,6 +45,8 @@ def create_pack(service, *, collection="default", **changes):
                "relative_manifest": f"{realm}/{project}/packs/{owner}/pack.yaml",
                "admissions": [{"id": "reveal", "kind": "effect", "revision": "sha256:" + "1" * 64,
                                "snapshot_digest": "2" * 64}]}
+    if snapshot_object is not None:
+        content["admissions"][0]["snapshot_object"] = snapshot_object
     document_id = "document:" + str(uuid.uuid5(uuid.NAMESPACE_URL, json.dumps([project, PROJECT_PACK_KIND, collection])))
     body = {"document_id": document_id, "kind": PROJECT_PACK_KIND, "content": content}
     body.update(changes)
@@ -389,4 +391,250 @@ def test_real_exact_selection_refuses_without_acceptance_writes(service, admitte
     before = snapshot(service)
     with pytest.raises(RuntimeErrorBase, match="exact admitted declaration"):
         commit(service, source_request(service, source_pin))
+    assert snapshot(service) == before
+
+
+def portable_object(service, *, data=None, project=None, media_type="application/json", key="portable"):
+    if data is None:
+        resource = b"original pack resource\n"
+        data = json.dumps({"files": [{"path": "pack.yaml", "sha256": hashlib.sha256(resource).hexdigest(),
+                                     "bytes_base64": base64.b64encode(resource).decode("ascii")}],
+                           "build_receipt_base64": base64.b64encode(b"original receipt").decode("ascii")},
+                          sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+    actual = service.ingest(project or service.test_project, data, media_type=media_type, idempotency_key=key)["data"]
+    descriptor = {name: actual[name] for name in ("object_id", "digest", "size", "media_type")}
+    return descriptor, data
+
+
+def install_object_provider(service, source_pin, object_id, *, seen=None, before_accept=None):
+    def read_object(verified, candidate):
+        port = service.test_provider.ports[-1]
+        value = port.document_object(source_pin, object_id)
+        if seen is not None:
+            seen.append(value)
+        if before_accept is not None:
+            before_accept(value, candidate)
+    return install_source_provider(service, source_pin, before_accept=read_object)
+
+
+@pytest.mark.parametrize("damage", ["null", "extra", "bool-size", "zero-size", "float-size", "negative-size",
+                                    "hash", "object-id", "uppercase", "mime", "missing-key"])
+@pytest.mark.parametrize("boundary", ["create", "update"])
+def test_snapshot_descriptor_validation_at_document_admission(service, damage, boundary):
+    descriptor, _ = portable_object(service)
+    source = create_pack(service)
+    value = copy.deepcopy(descriptor)
+    if damage == "null":
+        value = None
+    elif damage == "extra":
+        value["path"] = "/tmp/forged"
+    elif damage.endswith("size"):
+        value["size"] = {"bool-size": True, "zero-size": 0, "float-size": 1.0, "negative-size": -1}[damage]
+    elif damage == "hash":
+        value["digest"] = "sha256:" + "0" * 64
+    elif damage == "object-id":
+        value["object_id"] = "../../outside"
+    elif damage == "uppercase":
+        value["object_id"] = value["digest"] = descriptor["digest"].upper()
+    elif damage == "mime":
+        value["media_type"] = "application/octet-stream"
+    else:
+        del value["digest"]
+    content = copy.deepcopy(source["content"])
+    content["admissions"][0]["snapshot_object"] = value
+    before = snapshot(service)
+    with pytest.raises(RuntimeErrorBase, match="snapshot"):
+        if boundary == "create":
+            service.create_document(service.test_project, {"document_id": "bad-pack", "kind": PROJECT_PACK_KIND,
+                                                           "content": content}, idempotency_key="bad-create")
+        else:
+            service.update_document(service.test_project, source["document_id"],
+                                    {"expected_version": 1, "content": content}, idempotency_key="bad-update")
+    assert snapshot(service) == before
+
+
+@pytest.mark.parametrize("damage", ["foreign", "unmanaged", "missing-object", "size", "mime", "dedup-mime"])
+def test_snapshot_admission_requires_actual_managed_project_metadata(service, damage):
+    project = service.test_project
+    if damage == "foreign":
+        project = service.create_project({"slug": "foreign", "name": "Foreign"})["id"]
+    descriptor, data = portable_object(service, project=project,
+                                       media_type="text/plain" if damage == "dedup-mime" else "application/json")
+    raw_hash = descriptor["object_id"].removeprefix("sha256:")
+    if damage == "unmanaged":
+        service.store.conn.execute("UPDATE project_objects SET relation='referenced' WHERE digest=?", (raw_hash,))
+    elif damage == "missing-object":
+        service.store.conn.execute("PRAGMA foreign_keys=OFF")
+        service.store.conn.execute("DELETE FROM objects WHERE digest=?", (raw_hash,))
+        service.store.conn.execute("PRAGMA foreign_keys=ON")
+    elif damage == "size":
+        descriptor["size"] += 1
+    elif damage == "mime":
+        service.store.conn.execute("UPDATE objects SET media_type='text/plain' WHERE digest=?", (raw_hash,))
+    elif damage == "dedup-mime":
+        actual, _ = portable_object(service, data=data, key="dedup")
+        assert actual["media_type"] == "text/plain"  # Requested MIME never replaces stored metadata.
+        descriptor["media_type"] = "application/json"
+    before = snapshot(service)
+    with pytest.raises(RuntimeErrorBase, match="snapshot"):
+        create_pack(service, snapshot_object=descriptor)
+    assert snapshot(service) == before
+
+
+@pytest.mark.parametrize("damage", ["not-captured", "forged-config", "wrong-object", "foreign", "unmanaged", "missing-object",
+                                    "size", "mime", "missing-blob", "corrupt-blob", "symlink"])
+def test_document_object_refuses_unauthorized_or_damaged_cas(service, tmp_path, damage):
+    descriptor, data = portable_object(service)
+    source = create_pack(service, snapshot_object=descriptor)
+    source_pin = pin(source)
+    raw_hash = descriptor["object_id"].removeprefix("sha256:")
+    path = service.cas.path_for(raw_hash)
+    if damage == "forged-config":
+        service.store.conn.execute("UPDATE project_documents SET kind='forged.config' WHERE id=?", (source["document_id"],))
+    elif damage in {"foreign", "unmanaged"}:
+        if damage == "foreign":
+            foreign = service.create_project({"slug": "foreign", "name": "Foreign"})["id"]
+            service.store.conn.execute("UPDATE project_objects SET project_id=? WHERE digest=?", (foreign, raw_hash))
+        else:
+            service.store.conn.execute("DELETE FROM project_objects WHERE digest=?", (raw_hash,))
+    elif damage == "missing-object":
+        service.store.conn.execute("PRAGMA foreign_keys=OFF")
+        service.store.conn.execute("DELETE FROM objects WHERE digest=?", (raw_hash,))
+        service.store.conn.execute("PRAGMA foreign_keys=ON")
+    elif damage in {"size", "mime"}:
+        service.store.conn.execute("UPDATE objects SET " + ("size=size+1" if damage == "size" else "media_type='text/plain'") +
+                                   " WHERE digest=?", (raw_hash,))
+    elif damage == "missing-blob":
+        path.unlink()
+    elif damage == "corrupt-blob":
+        path.write_bytes(b"x" * len(data))
+    elif damage == "symlink":
+        target = tmp_path / "outside-cas"
+        target.write_bytes(data)
+        path.unlink()
+        path.symlink_to(target)
+
+    def action(context, port):
+        candidate = prepared(context, port)
+        if damage != "not-captured":
+            port.config_source(source_pin)
+        port.document_object(source_pin, "sha256:" + "0" * 64 if damage == "wrong-object" else descriptor["object_id"])
+        raise AssertionError("unavailable object was read")
+    service.test_provider.action = action
+    before = snapshot(service)
+    with pytest.raises(RuntimeErrorBase):
+        commit(service, source_request(service, source_pin))
+    assert snapshot(service) == before
+
+
+@pytest.mark.parametrize("damage", ["association", "metadata", "bytes", "replacement", "live-v2", "authority"])
+def test_object_capture_rechecks_races_atomically(service, damage):
+    descriptor, data = portable_object(service)
+    source = create_pack(service, snapshot_object=descriptor)
+    source_pin = pin(source)
+    raw_hash = descriptor["object_id"].removeprefix("sha256:")
+    after_race = []
+
+    def race(value, candidate):
+        if damage == "association":
+            service.store.conn.execute("DELETE FROM project_objects WHERE digest=?", (raw_hash,))
+        elif damage == "metadata":
+            service.store.conn.execute("UPDATE objects SET size=size+1 WHERE digest=?", (raw_hash,))
+        elif damage in {"bytes", "replacement"}:
+            path = service.cas.path_for(raw_hash)
+            if damage == "bytes":
+                path.write_bytes(b"x" * len(data))
+            else:
+                replacement = path.with_suffix(".replacement")
+                replacement.write_bytes(data)
+                replacement.replace(path)
+        elif damage == "live-v2":
+            content = copy.deepcopy(source["content"])
+            content["admissions"] = []
+            service.update_document(service.test_project, source["document_id"],
+                                    {"expected_version": 1, "content": content}, idempotency_key="race-v2")
+        after_race.append(snapshot(service))
+
+    install_object_provider(service, source_pin, descriptor["object_id"], before_accept=race)
+    from runtime_protocol.errors import AuthorizationError
+    def authorize():
+        if damage == "authority" and after_race:
+            raise AuthorizationError("authority revoked")
+    with pytest.raises(RuntimeErrorBase):
+        commit(service, source_request(service, source_pin), authorize=authorize)
+    assert after_race and snapshot(service) == after_race[0]
+    assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_document_input_links").fetchone()[0] == 0
+
+
+def test_portable_snapshot_v1_survives_v2_document_removal_restart_and_compaction(service):
+    from runtime_protocol.upgrade import compact_idempotency_ledger
+    descriptor, data = portable_object(service)
+    source = create_pack(service, snapshot_object=descriptor)
+    source_pin = pin(source)
+    seen = []
+    provider = install_object_provider(service, source_pin, descriptor["object_id"], seen=seen)
+    body = source_request(service, source_pin)
+    accepted = commit(service, body)
+    assert seen == [{**descriptor, "bytes_base64": base64.b64encode(data).decode("ascii")}]
+    with pytest.raises(RuntimeErrorBase):
+        provider.ports[-1].document_object(source_pin, descriptor["object_id"])
+    newer, _ = portable_object(service, data=b'{"v":2}', key="portable-v2")
+    content = copy.deepcopy(source["content"])
+    content["admissions"].append({**content["admissions"][0], "revision": "sha256:" + "3" * 64,
+                                  "snapshot_digest": "4" * 64, "snapshot_object": newer})
+    service.update_document(service.test_project, source["document_id"],
+                            {"expected_version": 1, "content": content}, idempotency_key="v2")
+    service.store.conn.execute("DELETE FROM project_documents WHERE id=?", (source["document_id"],))
+    tables = ("objects", "project_objects", "timeline_document_input_contents",
+              "timeline_document_input_bindings", "timeline_document_input_links")
+    retained = {table: list(map(tuple, service.store.conn.execute(f"SELECT * FROM {table}"))) for table in tables}
+    project, root, realm = service.test_project, service.store.root, service.realm["id"]
+    assert service.store.integrity_report()["ok"]
+    service.close()
+    compact_idempotency_ledger(root, confirmation=f"COMPACT IDEMPOTENCY {realm}")
+    restarted = RuntimeService(root)
+    try:
+        restarted.test_project = project
+        provider = install_object_provider(restarted, source_pin, descriptor["object_id"], seen=seen)
+        assert {table: list(map(tuple, restarted.store.conn.execute(f"SELECT * FROM {table}"))) for table in tables} == retained
+        before = snapshot(restarted)
+        assert commit(restarted, body) == accepted
+        assert snapshot(restarted) == before and provider.calls == 0
+        commit(restarted, source_request(restarted, source_pin, declare=False), key="retained-cas-v1")
+        assert seen == [{**descriptor, "bytes_base64": base64.b64encode(data).decode("ascii")}] * 2
+        assert restarted.store.integrity_report()["ok"]
+    finally:
+        restarted.close()
+
+
+@pytest.mark.parametrize("damage", ["association", "object", "size", "mime", "blob", "corruption"])
+def test_doctor_detects_retained_snapshot_damage_after_current_document_removal(service, damage):
+    descriptor, data = portable_object(service)
+    source = create_pack(service, snapshot_object=descriptor)
+    source_pin = pin(source)
+    install_object_provider(service, source_pin, descriptor["object_id"])
+    commit(service, source_request(service, source_pin))
+    service.store.conn.execute("DELETE FROM project_documents WHERE id=?", (source["document_id"],))
+    assert service.store.integrity_report()["ok"]
+    raw_hash = descriptor["object_id"].removeprefix("sha256:")
+    if damage == "association":
+        service.store.conn.execute("DELETE FROM project_objects WHERE digest=?", (raw_hash,))
+    elif damage == "object":
+        service.store.conn.execute("PRAGMA foreign_keys=OFF")
+        service.store.conn.execute("DELETE FROM objects WHERE digest=?", (raw_hash,))
+        service.store.conn.execute("PRAGMA foreign_keys=ON")
+    elif damage in {"size", "mime"}:
+        service.store.conn.execute("UPDATE objects SET " + ("size=size+1" if damage == "size" else "media_type='text/plain'") +
+                                   " WHERE digest=?", (raw_hash,))
+    elif damage == "blob":
+        service.cas.path_for(raw_hash).unlink()
+    else:
+        service.cas.path_for(raw_hash).write_bytes(b"x" * len(data))
+    report = service.store.integrity_report()
+    assert not report["ok"]
+    if damage in {"association", "object", "size", "mime"}:
+        assert not report["checks"]["revisions"]["ok"]
+    before = snapshot(service)
+    with pytest.raises(RuntimeErrorBase):
+        commit(service, source_request(service, source_pin, declare=False), key="damaged-retained-v1")
     assert snapshot(service) == before

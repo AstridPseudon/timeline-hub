@@ -281,7 +281,7 @@ class TimelineCommitStore:
 
     def _verify_inputs(self, document):
         for pin in document["dependency_manifest"]["documents"]:
-            row = self.conn.execute("SELECT c.content_json, c.content_size FROM timeline_document_input_contents c "
+            row = self.conn.execute("SELECT c.content_json, c.content_size, b.kind FROM timeline_document_input_contents c "
                 "JOIN timeline_document_input_bindings b ON b.content_digest=c.content_digest "
                 "JOIN timeline_document_input_links l ON l.project_id=b.project_id AND l.document_id=b.document_id "
                 "AND l.document_version=b.document_version AND l.content_digest=b.content_digest "
@@ -291,6 +291,9 @@ class TimelineCommitStore:
                  pin["document_id"], pin["version"], pin["content_digest"])).fetchone()
             if row is None or digest(json.loads(row["content_json"])) != pin["content_digest"] or len(row["content_json"].encode()) != row["content_size"]:
                 reject("dependency_unavailable", "retained input is missing or corrupt")
+            from .timeline_commit_inputs import PROJECT_PACK_KIND, validate_pack_snapshot_objects
+            if row["kind"] == PROJECT_PACK_KIND:
+                validate_pack_snapshot_objects(self.conn, document["project_id"], json.loads(row["content_json"]))
 
     def integrity_errors(self):
         errors = []

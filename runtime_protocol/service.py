@@ -4476,6 +4476,9 @@ class RuntimeService:
     def _validate_project_document(self, project_id, document_id, kind, content):
         self._validate_preference_document(project_id, document_id, kind, content)
         self._validate_transcript_document(project_id, document_id, kind, content)
+        from .timeline_commit_inputs import PROJECT_PACK_KIND, validate_pack_snapshot_objects
+        if kind == PROJECT_PACK_KIND:
+            validate_pack_snapshot_objects(self.store.conn, project_id, content)
 
     def _document_resource(self, row):
         content = json.loads(row["content_json"])
