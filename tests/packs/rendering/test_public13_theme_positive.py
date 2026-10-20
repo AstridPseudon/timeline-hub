@@ -8,8 +8,13 @@ import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from astrid.core.theme import builtin_theme
 from astrid.packs.rendering.rendering.renderers.remotion import run
+
+
+pytestmark = pytest.mark.integration
 
 
 NORMAL_COMPONENT_SCRIPT = r"""
