@@ -24,6 +24,9 @@ import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLa
 import { captureClipParamsEdit, submitClipParamsEdit } from '../commands/clipParamsGesture.ts';
 import { captureClipScalarEdit, submitClipScalarEdit } from '../commands/clipScalarGesture.ts';
 import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
+import { captureClipSplitBatchEdit, submitClipSplitBatchEdit } from '../commands/clipSplitBatchGesture.ts';
+import splitBatchFixture from '../commands/fixtures/recipe_m2_clip_split_batch.json';
+import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -101,6 +104,49 @@ async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
 }
 
 describe('mounted timeline command session', () => {
+  it('fences the batch port and installs/reloads the complete refused native preview once', async () => {
+    const document = structuredClone(splitBatchFixture.input) as unknown as CanonicalDocument;
+    document.project_id = scope.projectId;
+    document.timeline_id = scope.timelineId;
+    document.parent_revision.revision_id = 'r0';
+    const env = await environment(document);
+    env.setFault('conflict');
+    const first = await scoped(env);
+    const port = first.hook.result.current.commands.clipSplitBatchPort!;
+    const current = first.hook.result.current.commit.data!;
+    const input = { clipIds: ['clip-b', 'clip-a'], members: [
+      { clipId: 'clip-b', rightId: 'right:b' }, { clipId: 'clip-a', rightId: 'right:a' },
+    ], on: 3, current };
+    first.setLegacyClean(false);
+    expect(() => port.capture(input)).toThrow('earlier timeline saves');
+    first.setLegacyClean(true);
+    const captured = captureClipSplitBatchEdit(port, current, input.clipIds, 3,
+      (_used, clipId) => `right:${clipId.slice(-1)}`)!;
+    first.setLegacyClean(false);
+    expect(() => port.finish(captured.basis)).toThrow('earlier timeline saves');
+    first.setLegacyClean(true);
+    const prepared = port.finish(captured.basis);
+    first.setLegacyClean(false);
+    expect(() => port.submit(prepared)).toThrow('earlier timeline saves');
+    first.setLegacyClean(true);
+    const install = vi.spyOn(first.hook.result.current.commit, 'commitData');
+    act(() => submitClipSplitBatchEdit(captured));
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(install.mock.calls[0][1]).toMatchObject({ save: false, skipHistory: true });
+    const expected = ['clip-a', 'right:a', 'clip-b', 'right:b'];
+    expect(first.hook.result.current.commit.data!.config.clips.map((clip) => clip.id)).toEqual(expected);
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('conflict'));
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    first.hook.unmount();
+    const second = await scoped(env);
+    await waitFor(() => expect(second.hook.result.current.commands.state.recoverableOwners).toContain(owner));
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    expect(second.hook.result.current.commit.data!.config.clips.map((clip) => clip.id)).toEqual(expected);
+    expect(second.hook.result.current.commands.state.status).toBe('conflict');
+    expect(env.commits()).toHaveLength(1);
+    second.hook.unmount();
+  });
+
   it('exposes the staged split port and fences capture behind earlier legacy saves', async () => {
     const { hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.clipSplitPort!;
