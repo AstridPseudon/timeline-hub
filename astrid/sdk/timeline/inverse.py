@@ -18,7 +18,14 @@ from ._recording import Recording, guard, selection
 from ._root_inverse import arrange_restored, occurrence_orders, recover_source
 
 
-def _patch(state, path, replacement):
+def _row_identity(row, token):
+    if token[0] == 'text-binding':
+        from .native_text_binding import binding_key
+        return binding_key(row)
+    return row.get('id')
+
+
+def _patch(state, path, replacement, *, append_text=False):
     if not path:
         return copy.deepcopy(replacement)
     if state == ABSENT or state.get('value') is None:
@@ -29,7 +36,7 @@ def _patch(state, path, replacement):
     node = value
     for token in path[:-1]:
         if isinstance(token, tuple):
-            matches = [row for row in node if row.get('id') == token[1]]
+            matches = [row for row in node if _row_identity(row, token) == token[1]]
             if len(matches) != 1:
                 raise CommandError('ambiguous collection alias', kind='identity_conflict')
             node = matches[0]
@@ -49,7 +56,7 @@ def _patch(state, path, replacement):
             raise CommandError('patch requires historical container structure', kind='history_unavailable')
     if isinstance(path[-1], tuple):
         identity = path[-1][1]
-        indices = [i for i, row in enumerate(node) if row.get('id') == identity]
+        indices = [i for i, row in enumerate(node) if _row_identity(row, path[-1]) == identity]
         if len(indices) > 1:
             raise CommandError('ambiguous collection alias', kind='identity_conflict')
         if replacement['state'] == 'absent':
@@ -57,6 +64,8 @@ def _patch(state, path, replacement):
                 node.pop(indices[0])
         elif indices:
             node[indices[0]] = copy.deepcopy(replacement['value'])
+        elif path[-1][0] == 'text-binding' and (not node or append_text):
+            node.append(copy.deepcopy(replacement['value']))
         else:
             raise CommandError('collection alias insertion needs historical order', kind='history_unavailable')
         return present(value)
@@ -108,8 +117,8 @@ def _root_addresses(records, state=None):
             if owner in owners:
                 return 'shot:' + owners[owner], tuple(path)
         root, path = logical_address(ref, path)
-        if root.startswith('occurrence:') and path[:1] == ('source',) and root in owners:
-            return 'shot:' + owners[root], ('internal_timeline', *path[1:])
+        if root.startswith('occurrence:') and path[:1] in (('source',), ('payload',)) and root in owners:
+            return 'shot:' + owners[root], (('internal_timeline' if path[0] == 'source' else 'payload'), *path[1:])
         return root, path
 
     return address
@@ -136,7 +145,8 @@ def coalesce(records, state=None):
                              and address[1][:len(value_address(old)[1])] == value_address(old)[1]), None)
             if ancestor is not None:
                 ancestor['after'] = _patch(ancestor['after'], address[1][len(value_address(ancestor)[1]):],
-                                           write['after'])
+                                           write['after'], append_text=(ancestor['before'] == ABSENT
+                                               and ancestor['path'] == ['payload', 'text_bindings']))
                 continue
             descendants = [old for old in result
                            if value_address(old)[0] == address[0]
@@ -181,7 +191,8 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
         source_roots = []
         guarded = []
         for ref in refs:
-            if member(ref) is not None:
+            entity = member(ref)
+            if entity is not None and entity[1] != 'text-binding':
                 guarded.append((ref, ('id',)))
             owner = ref.split('/', 1)[0]
             root = root_identity(owner)
@@ -410,6 +421,8 @@ def apply_inverse(ctx, records, intervening_records):
                 ctx.create_entity(write['ref'], kind=root[0],
                                   owner=None if root[0] == 'shot' else 'parent',
                                   value=write['before']['value'], restoring=True)
+            elif '/text-binding:' in write['ref']:
+                ctx.assign(write['ref'], write['path'], write['before'])
             elif '/asset:' in write['ref']:
                 owner, identity = write['ref'].rsplit('/asset:', 1)
                 ctx.create_asset(owner, identity, write['before']['value'])

@@ -24,6 +24,11 @@ def selection(state, key, owner, members=()):
             return {"key": key, "query_version": 1, "owner": owner, "members": list(members),
                     "order": result, "boundaries": insertion_boundary(result, members),
                     "policy": "guard-membership"}
+    elif key == 'text-binding.owners':
+        source = state.entity(owner + '/shot')['shot_id']
+        result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
+                  if state.entity('occurrence:' + row['occurrence_id'] + '/shot')['shot_id'] == source]
+        boundaries = ['shot:' + source]
     elif key == 'placement.owners':
         shot = state.occurrence(owner)['shot_id']
         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
@@ -43,7 +48,20 @@ def selection(state, key, owner, members=()):
         raise CommandError(f"unsupported recorded query {key!r}")
     return {"key": key, "query_version": 1, "owner": owner, "members": result,
             "order": list(result), "boundaries": list(result) if boundaries is None else boundaries,
-            "policy": "guard-membership"}
+            "policy": "include-concurrent" if key == "collection.text-bindings.append" else "guard-membership"}
+
+
+def selection_matches(expected, actual):
+    if equal(expected, actual):
+        return True
+    if expected["key"] != "collection.text-bindings.append" or expected["policy"] != "include-concurrent":
+        return False
+    # Concurrent keyed births append after the original ordered prefix. The
+    # accepted record still captures the complete new input order for inverse.
+    return (expected["members"] == expected["order"] == expected["boundaries"]
+            and actual["order"][:len(expected["order"])] == expected["order"]
+            and all(equal(value, actual[key]) for key, value in expected.items()
+                    if key not in ("members", "order", "boundaries")))
 
 
 class Recording:
