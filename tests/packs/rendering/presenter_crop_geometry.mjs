@@ -12,6 +12,14 @@ export const eraseRegion = (raw, frame, fps) => {
   return {status: 'known', rect: {x, y, width, height}};
 };
 
+export const legacyInspectionRegion = (raw, frame, fps) => {
+  const rect = shared.mouthInspectionRect(raw);
+  if (!rect) return null;
+  const {left: x, top: y, width, height} = shared.pixelGeometry(
+    rect, shared.presenterAt(raw, frame, fps).view);
+  return {status: 'known', rect: {x, y, width, height}};
+};
+
 export const basis = {width: 1920, height: 1080, fps: 30};
 export const frames = [0, 3, 4, 5, 15, 29];
 export const params = {mouth: {x: 151, y: 104, w: 19}, words: [[.1, .4]],
@@ -32,7 +40,9 @@ export const inspect = (props, b = basis, selected = frames) => {
     assert.equal(answer.layers.length, 1);
     const layer = answer.layers[0];
     assert.equal(layer.clipId, props.timeline.clips[0].id);
-    return {frame, mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
+    return {frame, mouth: layer.diagnostics.mouth,
+      legacyInspection: legacyInspectionRegion(props.timeline.clips[0].params, frame, b.fps),
+      motion: layer.diagnostics.motion};
   });
 };
 

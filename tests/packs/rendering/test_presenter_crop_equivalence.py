@@ -60,17 +60,22 @@ def public_box(row, key="mouth"):
     return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
 
 
+def legacy_box(row):
+    assert row["legacyInspection"]["status"] == "known"
+    r = row["legacyInspection"]["rect"]
+    return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
+
+
 def area(crop):
     return (crop[2] - crop[0]) * (crop[3] - crop[1])
 
 
 def legacy_qualified(case):
-    # Eligibility for the compatibility ROI: drawing normalization remains a
-    # separate semantic fact, while this seam accepts the legacy partial width.
+    # Legacy equivalence is qualified only for complete normalized anchors.
     raw = case["props"]["timeline"]["clips"][0]["params"].get("mouth")
-    return (isinstance(raw, dict) and type(raw.get("x")) is int and type(raw.get("y")) is int
-            and 0 <= raw["x"] < 320 and 0 <= raw["y"] < 180
-            and ("w" not in raw or (type(raw["w"]) is int and 1 <= raw["w"] <= 40)))
+    return isinstance(raw, dict) and all(
+        type(raw.get(key)) is int and raw[key] == case["normalizedMouth"][key]
+        for key in ("x", "y", "w"))
 
 
 def test_registered_default_and_clamped_anchors_are_not_legacy_defaults(crop_cases):
@@ -79,25 +84,26 @@ def test_registered_default_and_clamped_anchors_are_not_legacy_defaults(crop_cas
         row = case["rows"][0]
         if case["name"] == "default":
             assert old is None
-            assert row["mouth"]["status"] == "unknown"
+            assert public_box(row) == (894, 606, 1032, 654)
         elif case["name"] == "partial":
             assert old == (894, 606, 1014, 654)  # legacy w=16, actual drawing w=19
-            assert public_box(row) == (894, 606, 1014, 654)
+            assert legacy_box(row) == (894, 606, 1014, 654)
+            assert public_box(row) == (894, 606, 1032, 654)
         elif case["name"] == "rawInvalid":
-            assert row["mouth"]["status"] == "unknown"
+            assert public_box(row) == (894, 606, 1158, 654)
         elif case["name"] == "clamps":
             assert old == (-132, 5976, -108, 6024)
-            assert row["mouth"]["status"] == "unknown"
+            assert public_box(row) == (-12, 1056, 18, 1104)
         elif case["name"] == "fractional":
             assert old == (903, 604.2, 1050.6, 652.2)
-            assert row["mouth"]["status"] == "unknown"
+            assert public_box(row) == (906, 606, 1056, 654)
 
 
 @pytest.mark.parametrize("size", [(1920, 1080), (640, 360), (641, 361), (720, 405)])
 def test_same_frame_compatibility_and_separate_erase_denominators(crop_cases, size):
     seen = set()
     for case in crop_cases:
-        if case["name"] not in ("custom", "partial", "zoom", "focusClamp", "push", "punch", "bob"):
+        if case["name"] not in ("custom", "fractional", "zoom", "focusClamp", "push", "punch", "bob"):
             continue
         element = legacy_element(case)
         for row in case["rows"]:
@@ -112,7 +118,7 @@ def test_same_frame_compatibility_and_separate_erase_denominators(crop_cases, si
             if legacy_qualified(case):
                 assert old == compat, (case["name"], frame, size)
             else:
-                assert case["name"] == "partial"
+                assert case["name"] == "fractional"
                 assert old != compat
             # The retained private fallback cannot fix erase's padding mismatch.
             fallback = png_crop(model.mouth_box(legacy_element(case, own_view=False), frame), size)
@@ -157,7 +163,5 @@ def test_public_known_normalization_is_not_legacy_qualification(crop_cases):
     for case in crop_cases:
         if case["name"] in ("mosaic", "outer"):
             continue
-        expected_known = case["name"] not in ("default", "clamps", "rawInvalid", "fractional")
-        assert all(row["mouth"]["status"] == ("known" if expected_known else "unknown")
-                   for row in case["rows"])
-        assert legacy_qualified(case) is expected_known
+        assert all(row["mouth"]["status"] == "known" for row in case["rows"])
+        assert legacy_qualified(case) == (case["name"] not in ("default", "partial", "clamps", "rawInvalid", "fractional"))
