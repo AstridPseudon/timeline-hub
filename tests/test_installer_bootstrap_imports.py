@@ -38,9 +38,16 @@ allowed = sys.stdlib_module_names | {"astrid", "astrid_runtime_client", "runtime
 original = builtins.__import__
 def guarded(name, globals=None, locals=None, fromlist=(), level=0):
     if not level and name.split(".")[0] not in allowed:
-        raise AssertionError("Installer imported a third-party dependency: " + name)
+        raise ModuleNotFoundError("No module named " + repr(name.split(".")[0]), name=name.split(".")[0])
     return original(name, globals, locals, fromlist, level)
 builtins.__import__ = guarded
+# A genuine third-party import stays unavailable in this clean bootstrap.
+try:
+    import requests
+except ModuleNotFoundError as error:
+    assert error.name == "requests", error
+else:
+    raise AssertionError("Blocked third-party import unexpectedly succeeded")
 import astrid.installer
 # Import every installer module, including the backend and every mode's helpers.
 for item in pkgutil.iter_modules(astrid.installer.__path__):
