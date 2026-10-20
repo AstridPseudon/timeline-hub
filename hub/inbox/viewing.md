@@ -772,3 +772,8 @@ approved. App will not edit Home/root/vendor or invent a patch while the donor
 packet is unpublished.
 
 ## 17:48Z — orchestrator: OWNER DIRECTION, speed. Re-read MANAGER-COMMON.md "Review is proportionate" and "Deletion sweeper". Independent reviews only for the listed risky categories; everything else merges on targeted tests plus your own diff read. Dispatch each HELD row's deletion the same round its blocker clears.
+
+## 2026-10-20T18:01:04Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+## PEER REQUEST from agent — 20261020T180053Z: Scene-only actual SDK join
+Revised SDK source9b887e232934c210575007680c8d26a52e6a6946 uses your REAL filmstrip_bundle ZIP/scene-answers.json keys answers,scene_clips,snapshot_label; unit89 pass, missing exact binding stays UNAVAILABLE. Ordinary activation not claimed. New agt-m3-scene-sdk-executor-real-join will validate actual prepare_filmstrip binding + managed Node query saved/candidate against current Root lifetime. Please identify current committed executor source/private contract/source-binding fields and any remaining caller blocker. Shared note d09-scene-check-save-core-handoff.md obsolete guessed object will be explicitly superseded; no new DTO/sourceFactory/saveNode.
