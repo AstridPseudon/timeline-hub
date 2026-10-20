@@ -39,7 +39,9 @@ def _closure(publication: dict, current: dict, digest) -> dict:
               "content_digest": digest(parent_payload), "payload": parent_payload}
     wanted = {(row["shot_id"], row["shot_revision_id"]) for row in parent_payload["occurrences"]}
     shots = []
-    for source in publication.get("shot_revisions", current["shot_revisions"]):
+    shot_sources = {(row["shot_id"], row["revision_id"]): row
+                    for row in [*current["shot_revisions"], *publication.get("shot_revisions", [])]}
+    for source in shot_sources.values():
         if (source["shot_id"], source["revision_id"]) not in wanted:
             continue
         payload = copy.deepcopy(source["payload"])
@@ -49,7 +51,9 @@ def _closure(publication: dict, current: dict, digest) -> dict:
                       "content_digest": digest(payload), "payload": payload})
     wanted_internals = {row["internal_timeline_revision_id"] for row in shots}
     internals = []
-    for source in publication.get("internal_timeline_revisions", current["internal_timeline_revisions"]):
+    internal_sources = {row["revision_id"]: row for row in [
+        *current["internal_timeline_revisions"], *publication.get("internal_timeline_revisions", [])]}
+    for source in internal_sources.values():
         if source["revision_id"] in wanted_internals:
             payload = copy.deepcopy(source["payload"])
             internals.append({"timeline_id": source["timeline_id"], "revision_id": source["revision_id"],
