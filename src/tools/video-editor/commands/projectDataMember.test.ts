@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
+import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import { copy } from './clipMovePrimitives.ts';
 import {
@@ -11,8 +12,8 @@ import { environment } from './__tests__/commitSessionEnvironment.ts';
 
 const target = 'com.example.compiler-canary';
 
-function write(key: string, value: unknown, extra: Record<string, unknown> = {}) {
-  return { op: 'project-data.write' as const, target, payload: { key, value, mode: 'replace' as const, ...extra } };
+function write(key: string, value: unknown, extra: Record<string, unknown> = {}, order?: number) {
+  return { op: 'project-data.write' as const, target, payload: { key, value, ...extra }, ...(order === undefined ? {} : { order }) };
 }
 
 async function authoredBundle() {
@@ -88,6 +89,46 @@ describe('bounded inert project-data member', () => {
     expect(bundle).toEqual(before);
   });
 
+  it('lowers Main merge, default replace, and declared order to native replace cells', async () => {
+    const env = await environment();
+    const bundle = await authoringBundleFromDocument(env.initial.canonicalDocument);
+    const initial = {
+      settings: {
+        volume: 1,
+        theme: 'light',
+        nested: { keep: true, override: 'old' },
+      },
+      replacement: { old: true },
+      opaque: { keep: ['in', 'order'] },
+    };
+    bundle.parent.config = { app: { [target]: copy(initial) } };
+    expect(bundle.parent.config.app).toEqual({ [target]: initial });
+    env.current().config.app = { [target]: copy(initial) };
+    const patch: TimelinePatch = { version: 1, operations: [
+      write('settings', { volume: 3, nested: { late: true } }, { mode: 'merge' }, 5),
+      write('settings', { theme: 'dark', nested: { first: true } }, { mode: 'merge' }, 1),
+      write('replacement', { fresh: true }),
+    ] };
+
+    const main = compileTimelinePatch(patch, env.current());
+    expect(main.valid).toBe(true);
+    const native = captureProjectDataMember(bundle, patch);
+
+    expect(native.commands.map((command) => command.args)).toEqual([
+      { target, key: 'settings', value: {
+        volume: 1, theme: 'dark', nested: { keep: true, override: 'old', first: true },
+      }, mode: 'replace' },
+      { target, key: 'settings', value: {
+        volume: 3, theme: 'dark', nested: { keep: true, override: 'old', first: true, late: true },
+      }, mode: 'replace' },
+      { target, key: 'replacement', value: { fresh: true }, mode: 'replace' },
+    ]);
+    expect(native.bundle.parent.config.app).toEqual(main.nextData!.config.app);
+    expect(Object.keys(native.bundle.parent.config.app![target] as object)).toEqual([
+      'settings', 'replacement', 'opaque',
+    ]);
+  });
+
   it('births a dictionary through a null extension namespace without losing the command basis', async () => {
     const bundle = await authoredBundle();
     bundle.parent.config.app = { [target]: null };
@@ -104,7 +145,6 @@ describe('bounded inert project-data member', () => {
   it.each([
     ['unsafe nested object key', write('source', JSON.parse('{"nested":{"__proto__":true}}'))],
     ['non-canonical key', write(' source', 1)],
-    ['merge mode', write('source', 1, { mode: 'merge' })],
   ])('refuses %s as a retained draft', async (_label, operation) => {
     const bundle = await authoredBundle();
     const before = copy(bundle);
@@ -120,6 +160,23 @@ describe('bounded inert project-data member', () => {
     expect(() => captureProjectDataMember(bundle, { version: 1, operations: [write('source', 1)] }))
       .toThrow(ProjectDataMemberRefusal);
     expect(bundle).toEqual(before);
+  });
+
+  it('retains original same-leaf guards while allowing a disjoint replay', async () => {
+    const bundle = await authoredBundle();
+    bundle.parent.config.app = { [target]: { source: 'A', sibling: { opaque: true } } };
+    const captured = captureProjectDataMember(bundle, { version: 1, operations: [write('source', 'B')] });
+
+    const stale = copy(bundle);
+    (stale.parent.config.app![target] as Record<string, unknown>).source = 'C';
+    expect(() => executeProjectDataMember(stale, captured.commands)).toThrow(/submitted expect/);
+
+    const disjoint = copy(bundle);
+    (disjoint.parent.config.app![target] as Record<string, unknown>).other = null;
+    const replayed = executeProjectDataMember(disjoint, captured.commands);
+    expect(replayed.bundle.parent.config.app).toEqual({ [target]: {
+      source: 'B', sibling: { opaque: true }, other: null,
+    } });
   });
 
   it('refuses a mixed batch atomically and reports every intention', async () => {
