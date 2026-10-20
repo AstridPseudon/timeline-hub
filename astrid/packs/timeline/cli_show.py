@@ -87,6 +87,8 @@ def show_checkout(parsed: argparse.Namespace, bundle_opener: Any) -> tuple[Any, 
 
 def print_sheet(parsed: argparse.Namespace, bundle_opener: Any) -> int:
     """``show --as sheet``: the cut sheet of the working copy (or the published head)."""
+    if getattr(parsed, "native", False):
+        return print_native_sheet(parsed)
     from astrid.sdk.timeline_address import AddressError, resolve
     from astrid.sdk.timeline_sheet import SheetError, moment_range, range_cuts, render_sheet
 
@@ -120,6 +122,28 @@ def print_sheet(parsed: argparse.Namespace, bundle_opener: Any) -> int:
     # a hint only on a terminal (to stderr): a redirected sheet stays exactly the sheet, even with 2>&1
     if sys.stdout.isatty():
         print(f"next: save it (> FILE), change a line, then  timelines apply {where} FILE", file=sys.stderr)
+    return 0
+
+
+def print_native_sheet(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline.sync import TimelineSession
+    from astrid.sdk.timeline_sheet import NativeSheet, SheetError
+
+    try:
+        if any(getattr(parsed, name, None) for name in (
+            "draft", "revision_id", "range", "at", "address", "clip", "occurrence", "shot", "track",
+            "asset", "cursor", "page", "page_size", "summary", "layers", "detail", "full", "keys", "clips",
+        )):
+            raise SheetError("native export requires the complete current published timeline without selectors")
+        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client)
+        sheet = NativeSheet.export(session)
+    except Exception as exc:  # noqa: BLE001 - report export failures without emitting partial text
+        return print_result(DomainResult.failure(ErrorObject(
+            getattr(exc, "code", "timeline_edit_error"), str(exc), getattr(exc, "details", {}),
+        )), as_json=parsed.json)
+    if parsed.json:
+        return print_result(DomainResult.success({"text": sheet.text}), as_json=True)
+    print(sheet.text, end="")
     return 0
 
 

@@ -605,7 +605,8 @@ class NativeSheet:
     The legacy named-cut view has neither scoped row bindings nor a publication
     pin, and Checkout may flatten/migrate its input. This opt-in projection reads
     the untouched authoring bundle instead. Retain this object beside edited
-    ``text``; there is no new checkout/persistent format. ``# ref`` comments are
+    ``text``, or use ``export``/``load`` to retain one export in its scoped
+    session outbox. ``# ref`` comments are
     hidden editor bindings, never names or row positions. Only clip start gutters
     and parent track labels are editable; ``label=clear`` removes a label,
     ``label=""`` sets an empty string. All other cells are read-only.
@@ -651,6 +652,31 @@ class NativeSheet:
         out.extend(line + " # ref " + json.dumps(ref) for line, ref in zip(_align(rows), refs))
         self.text = "\n".join(out) + "\n"
         self._rows, self._frame = self._read(self.text)
+
+    @classmethod
+    def export(cls, session):
+        """Durably retain the original bundle and pin before emitting editable text.
+
+        One export per scoped outbox; exporting again replaces that artifact.
+        Pending intent must be acknowledged first so its retry basis survives.
+        """
+        with session.outbox.locked():
+            state = session._state()
+            if state["pending"] or state["flight"] is not None:
+                raise SheetError("flush original pending intent before exporting another sheet")
+            sheet = cls(session._bundle(state), basis=state["base"])
+            state["sheet"] = {"bundle": sheet._bundle, "basis": sheet._basis}
+            session.outbox.write(state)
+        return sheet
+
+    @classmethod
+    def load(cls, session):
+        """Reconstruct bindings from the retained original, never the current head."""
+        with session.outbox.locked():
+            artifact = session._state().get("sheet")
+            if artifact is None:
+                raise SheetError("no original native sheet export in this scoped outbox")
+            return cls(artifact["bundle"], basis=artifact["basis"])
 
     @staticmethod
     def _read(text):
@@ -707,6 +733,8 @@ class NativeSheet:
 
     def apply(self, text, *, session=None, dry_run=True, idempotency_key=None):
         """Preview only, or queue the entire captured batch atomically and flush it."""
+        from astrid.sdk.timeline._command_state import equal
+
         plan = self.preview(text)
         if dry_run or not plan.commands:
             return plan
@@ -717,10 +745,10 @@ class NativeSheet:
             if (session.project_id != self._bundle["project_id"]
                     or session.timeline_id != self._bundle["timeline_id"] or state["base"] != self._basis):
                 raise SheetError("sheet and session must share the original project, timeline and basis")
-            if state["pending"] != plan.commands:
+            if not equal(state["pending"], plan.commands):
                 if state["pending"] or state["flight"] is not None:
                     raise SheetError("flush original pending intent before applying another sheet")
-                if session._bundle(state) != self._bundle:
+                if not equal(session._bundle(state), self._bundle):
                     raise SheetError("sheet bundle differs from its pinned session basis")
                 state["pending"] = plan.commands
                 session.outbox.write(state)
