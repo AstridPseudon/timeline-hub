@@ -8,6 +8,7 @@ Agent checkout. Only the HTTP cases need sockets; service cases run directly.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from types import SimpleNamespace
 
@@ -19,6 +20,7 @@ from runtime_protocol.errors import RetiredRouteError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import route_path
+from runtime_protocol.util import canonical_json
 from test_shot_composition_runtime import restore_provider as actual_provider  # noqa: F401 (fixture)
 
 
@@ -68,6 +70,33 @@ def snapshot(service):
         objects = {str(path.relative_to(service.store.cas_root)): path.read_bytes()
                    for path in service.store.cas_root.rglob("*") if path.is_file()}
     return database, objects
+
+
+def _recover_request_hash(timeline_id, body):
+    return hashlib.sha256(canonical_json({
+        "timeline_id": timeline_id, "body": body, "action": "recover",
+    }).encode()).hexdigest()
+
+
+def _inject_recover_receipt(service, project, timeline_id, body, key, *, event_payload=None):
+    """Inject review-only receipt evidence through the existing store helper."""
+    result = service._timeline_resource(timeline_id)
+    result["archived"] = False
+    with service.store._mutex, service.store._transaction():
+        event_ids = ()
+        if event_payload is not None:
+            event_ids = (service.store._append_timeline_event(
+                timeline_id, "timeline.recovered", event_payload,
+            ),)
+        event_seq = service.store.conn.execute(
+            "SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?",
+            (timeline_id,),
+        ).fetchone()[0]
+        service.store._record_command_receipt(
+            "timeline.recover", timeline_id, key, _recover_request_hash(timeline_id, body),
+            result, project_id=project, event_ids=event_ids,
+            primary_stream_id=timeline_id, resulting_stream_seq=event_seq,
+        )
 
 
 def legacy_request(case, family, timeline):
@@ -217,6 +246,68 @@ def test_service_catalog_visibility_unarchives_current_or_absent_version(service
     assert current["data"]["archived"] is False
     assert commits.revision_closure(case.project, "tracked", created["head_revision_id"]) == closure_before
     assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == history_count
+
+
+def test_service_current_target_legacy_receipt_refuses_before_replay(service_case, monkeypatch):
+    case = service_case
+    service = case.service
+    created = service.get_project_timeline(case.project, "tracked")
+    archived = service.archive_timeline(
+        "tracked", {"expected_version": created["version"]}, idempotency_key="legacy-current-archive",
+    )
+    body = {"expected_version": archived["data"]["version"], "version": archived["data"]["version"]}
+    _inject_recover_receipt(
+        service, case.project, "tracked", body, "legacy-current-recover",
+        event_payload={"project_id": case.project, "version": archived["data"]["version"], "target_version": 1},
+    )
+    before = snapshot(service)
+
+    def replay(*args, **kwargs):
+        pytest.fail("legacy current-target recover consulted idempotency replay")
+
+    monkeypatch.setattr(service, "_command_replay", replay)
+    with pytest.raises(RetiredRouteError) as error:
+        service.recover_timeline("tracked", body, idempotency_key="legacy-current-recover")
+    assert error.value.status == 410
+    assert error.value.details["replacement"] == "timeline.restore"
+    assert snapshot(service) == before
+
+
+def test_service_recover_receipt_missing_event_refuses_before_visibility_replay(service_case):
+    case = service_case
+    service = case.service
+    created = service.get_project_timeline(case.project, "tracked")
+    archived = service.archive_timeline(
+        "tracked", {"expected_version": created["version"]}, idempotency_key="missing-event-archive",
+    )
+    body = {"expected_version": archived["data"]["version"]}
+    _inject_recover_receipt(service, case.project, "tracked", body, "missing-event-recover")
+    before = snapshot(service)
+
+    with pytest.raises(RetiredRouteError) as error:
+        service.recover_timeline("tracked", body, idempotency_key="missing-event-recover")
+    assert error.value.status == 410
+    assert error.value.details["replacement"] == "timeline.restore"
+    assert snapshot(service) == before
+
+
+def test_service_exact_new_visibility_replay_survives_catalog_version_change(service_case):
+    case = service_case
+    service = case.service
+    created = service.get_project_timeline(case.project, "tracked")
+    archived = service.archive_timeline(
+        "tracked", {"expected_version": created["version"]}, idempotency_key="new-current-archive",
+    )
+    body = {"expected_version": archived["data"]["version"], "version": archived["data"]["version"]}
+    accepted = service.recover_timeline("tracked", body, idempotency_key="new-current-recover")
+    service.archive_timeline(
+        "tracked", {"expected_version": accepted["data"]["version"]}, idempotency_key="later-archive",
+    )
+    before = snapshot(service)
+
+    replayed = service.recover_timeline("tracked", body, idempotency_key="new-current-recover")
+    assert replayed == accepted
+    assert snapshot(service) == before
 
 
 def test_service_historical_recover_refuses_before_legacy_replay_or_writes(service_case, monkeypatch):

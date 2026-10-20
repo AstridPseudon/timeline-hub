@@ -3895,33 +3895,48 @@ class RuntimeService:
         request_hash = hashlib.sha256(canonical_json({
             "timeline_id": timeline_id, "body": body, "action": "recover",
         }).encode()).hexdigest()
-        # This operation is catalog visibility only.  A historical target is
-        # the retired flat-projection writer; canonical history is restored by
-        # the recorded timeline.restore command instead.  An exact receipt
-        # from this visibility-only implementation remains replayable, but a
-        # legacy historical receipt must not be allowed to resurrect its
-        # flat-projection write.
-        if target is not None and target != current["version"]:
-            safe_receipt = self.store.conn.execute(
-                "SELECT event_ids_json FROM command_idempotency "
-                "WHERE command_kind=? AND aggregate_id=? AND idempotency_key=? "
-                "AND request_hash=?",
-                ("timeline.recover", timeline_id, idempotency_key, request_hash),
-            ).fetchone() if idempotency_key is not None else None
-            if safe_receipt:
+        # This operation is catalog visibility only.  An exact receipt from
+        # this implementation remains replayable, but only when its event
+        # proves that it was the visibility-only operation.  Check this before
+        # the ordinary replay path so absent and current-target retries cannot
+        # replay a legacy flat-projection write.
+        safe_receipt = self.store.conn.execute(
+            "SELECT event_ids_json FROM command_idempotency "
+            "WHERE command_kind=? AND aggregate_id=? AND idempotency_key=? "
+            "AND request_hash=?",
+            ("timeline.recover", timeline_id, idempotency_key, request_hash),
+        ).fetchone() if idempotency_key is not None else None
+        if safe_receipt:
+            event = None
+            try:
                 event_ids = json.loads(safe_receipt["event_ids_json"] or "[]")
-                event = self.store.conn.execute(
-                    "SELECT kind, payload_json FROM timeline_events "
-                    "WHERE id=? AND timeline_id=?",
-                    (event_ids[0], timeline_id),
-                ).fetchone() if event_ids else None
-                if event and event["kind"] == "timeline.recovered" and "target_version" not in json.loads(event["payload_json"]):
-                    replay = self._command_replay(
-                        "timeline.recover", timeline_id, idempotency_key,
-                        request_hash, project_id=project_id,
-                    )
-                    if replay is not None:
-                        return replay
+                if isinstance(event_ids, list) and event_ids:
+                    event = self.store.conn.execute(
+                        "SELECT kind, payload_json FROM timeline_events "
+                        "WHERE id=? AND timeline_id=?",
+                        (event_ids[0], timeline_id),
+                    ).fetchone()
+                payload = json.loads(event["payload_json"]) if event else None
+            except (TypeError, ValueError, json.JSONDecodeError):
+                payload = None
+            if event and event["kind"] == "timeline.recovered" and isinstance(payload, dict) and "target_version" not in payload:
+                replay = self._command_replay(
+                    "timeline.recover", timeline_id, idempotency_key,
+                    request_hash, project_id=project_id,
+                )
+                if replay is not None:
+                    return replay
+            raise RetiredRouteError(
+                "legacy timeline recover cannot restore a historical film version; restore a revision with timeline.restore",
+                details={
+                    "status": "refused", "reason": "timeline_restore_required",
+                    "replacement": "timeline.restore", "requested_version": target,
+                    "current_version": current["version"],
+                },
+            )
+        # A historical target is the retired flat-projection writer; canonical
+        # history is restored by the recorded timeline.restore command.
+        if target is not None and target != current["version"]:
             raise RetiredRouteError(
                 "legacy timeline recover cannot restore a historical film version; restore a revision with timeline.restore",
                 details={
