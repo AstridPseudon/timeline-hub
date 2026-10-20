@@ -1,7 +1,7 @@
 """Native element batches against the actual retained-schema Runtime provider.
 
-The public helper remains on its compatibility publisher until paired migration.
-These tests exercise explicit native requests, not helper retry recovery.
+Explicit native requests and the public helper share the normal commit provider.
+Helper recovery uses the existing session/outbox and accepted Runtime history.
 """
 from __future__ import annotations
 
@@ -355,3 +355,285 @@ def test_another_actually_admitted_owner_cannot_replace_selected_owner(retained_
     assert case.service.list_timeline_commits(
         case.project, 'film', authorize=lambda: None) == history
 
+
+
+@pytest.fixture
+def helper_client(retained_pack, monkeypatch, tmp_path):
+    """Generated method boundary over the actual immutable NORMAL Runtime service."""
+    import json
+    from types import SimpleNamespace
+
+    from astrid.sdk.remote import RemoteTimelines
+    from astrid.sdk.timeline.outbox import request_bytes
+    from astrid.sdk.workspace_client import WorkspaceClient
+    from astrid_runtime_client import ApiError
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    case = retained_pack
+    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'support'))
+    calls, lost_ack, before_submit = [], [False], [None]
+
+    class Generated:
+        def get_project(self, project):
+            return case.service.get_project(project)
+
+        def get_document(self, project, document):
+            try:
+                return case.service.get_document(project, document)
+            except RuntimeErrorBase as exc:
+                raise ApiError(404, exc.code, str(exc), details=exc.details) from exc
+
+        def get_object(self, object_id):
+            return {'data': case.service.cas.read(object_id.removeprefix('sha256:'))}
+
+        def list_timeline_commits(self, project, timeline, *, cursor=None, limit=50):
+            return case.service.list_timeline_commits(
+                project, timeline, cursor=cursor, limit=limit, authorize=lambda: None)
+
+        def commit_timeline(self, project, timeline, body, *, idempotency_key):
+            outbox = next((tmp_path / 'support/timeline-outbox').glob('*.json'))
+            durable = json.loads(outbox.read_bytes())
+            raw = request_bytes(body)
+            assert durable['flight']['body'].encode() == raw
+            assert durable['flight']['key'] == idempotency_key
+            calls.append((raw, idempotency_key))
+            if before_submit[0] is not None:
+                callback, before_submit[0] = before_submit[0], None
+                callback()
+            try:
+                result = case.submit(body, idempotency_key)
+            except RuntimeErrorBase as exc:
+                raise ApiError(409, exc.code, str(exc), details=exc.details) from exc
+            if lost_ack[0]:
+                lost_ack[0] = False
+                raise ConnectionError('lost acknowledgement after durable acceptance')
+            return result
+
+    def connect():
+        transport = WorkspaceClient.__new__(WorkspaceClient)
+        transport._generated = Generated()
+        transport.endpoint = 'http://127.0.0.1:1'
+        transport._last_handshake = {'realm_id': 'realm', 'actor_id': 'author'}
+        owner = RemoteTimelines(transport)
+        owner._resolve_timeline = lambda *a, **kw: DomainResult.success({
+            'project_id': case.project, 'timeline_id': 'film'})
+        owner.open_composition = lambda *a, **kw: DomainResult.success({
+            'native_inspection': {'project_id': case.project, 'timeline_id': 'film'},
+            'summary': {'head_revision_id': case.head()['revision_id']}})
+
+        def opened(project, timeline, *, revision_id=None):
+            head = case.head()['revision_id']
+            revision = revision_id or head
+            document = case.service._timeline_commits()[0].revision_closure(project, timeline, revision)
+            return DomainResult.success({'project_id': project, 'timeline_id': timeline,
+                'head_revision_id': head, 'revision_id': revision,
+                'bundle': commit.bundle_from_document(document)})
+
+        owner.open_bundle = opened
+        return owner
+
+    for name in ('publish_parent_composition', 'save_timeline', 'update_timeline'):
+        monkeypatch.setattr(case.service, name, lambda *a, **kw: pytest.fail('legacy writer called'),
+                            raising=False)
+    return SimpleNamespace(connect=connect, calls=calls, lost_ack=lost_ack, before_submit=before_submit,
+                           outbox=lambda: next((tmp_path / 'support/timeline-outbox').glob('*.json')))
+
+
+@pytest.mark.parametrize('key', [None, 'public-element'])
+@pytest.mark.parametrize('same_revision', [False, True])
+def test_public_helper_restart_exact_retry_later_head_inverse_redo(
+        retained_pack, helper_client, monkeypatch, same_revision, key):
+    import json
+
+    from astrid.sdk.timeline_elements import update_parent_element
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+
+    case, client = retained_pack, helper_client
+    original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+    before = copy.deepcopy(State(case.bundle()).entity(REF))
+    selected = case.selected
+    if not same_revision:
+        case.definition['schema']['properties']['seed']['maximum'] = 20
+        case.path.write_text(yaml.safe_dump(case.definition))
+        admission = packs.admit_project_pack('realm', case.project)
+        selected = {k: admission['elements'][0]['descriptor'][k] for k in ('id', 'kind', 'packId', 'revision')}
+    expected = case.head()['revision_id']
+    kwargs = dict(realm='realm', clip_id='effect', element=selected, expected_head=expected,
+                  duration=6, params={'seed': 8, 'opaque': {'keep': [None, False, {}]}},
+                  clear_params=['future'], idempotency_key=key)
+    client.lost_ack[0] = True
+    failed = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+    assert not failed.ok
+    flight = json.loads(client.outbox().read_bytes())['flight']
+    assert flight['key'] == (key or failed.idempotency_key)
+    request = json.loads(flight['body'])
+    assert [call['op'] for call in request['commands']] == [
+        'clip.set-element', 'clip.set', 'clip.set-params']
+    assert request['commands'][0]['selections'] == [{
+        'key': 'element.targets', 'query_version': 1, 'owner': 'parent',
+        'members': [REF], 'order': [REF], 'boundaries': [REF], 'policy': 'guard-membership'}]
+    for changed in ({'duration': 7}, {'idempotency_key': 'another-key'},
+                    {'clip_id': 'missing'}, {'expected_head': 'another-head'}):
+        refused = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, **changed})
+        assert not refused.ok and len(client.calls) == 1
+        assert json.loads(client.outbox().read_bytes())['flight'] == flight
+    accepted = case.submit(request, flight['key'])
+    pin = request['commands'][0]['args']['schema_source']
+    document = accepted['data']['canonical_document']
+    row = State(commit.bundle_from_document(document)).entity(REF)
+    assert row == {**before, 'elementRef': selected, 'hold': 6,
+                   'params': {'seed': 8, 'opaque': {'keep': [None, False, {}]}}}
+    # Advance both the timeline and the declaration, then remove current selection.
+    case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+                                               values={'label': 'Later'})]), 'later-head')
+    case.definition['schema']['properties']['seed']['maximum'] = 30
+    case.path.write_text(yaml.safe_dump(case.definition))
+    packs.admit_project_pack('realm', case.project)
+    current = case.service.get_document(case.project, pin['document_id'])
+    assert current['version'] > pin['version']
+    case.service.update_document(case.project, pin['document_id'], {
+        'expected_version': current['version'], 'content': {**current['content'], 'admissions': []}},
+        idempotency_key='remove-helper-selection')
+    shutil.rmtree(case.source_root)
+    shutil.rmtree(case.artifact_root)
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    later = case.head()
+
+    def forbidden(*a, **kw):
+        pytest.fail('helper recaptured original intent, read current admission, or called legacy writer')
+
+    with monkeypatch.context() as retry:
+        retry.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+        retry.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+        retry.setattr(commands, 'execute', forbidden)
+        result = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+        assert result.ok, result.error
+        assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+        assert result.receipt.as_dict() == accepted['receipt']
+        assert result.data['new_head'] == accepted['data']['accepted_revision_id']
+        assert result.data['before'] == {'element': before['elementRef'], 'duration': 2,
+                                          'params': before['params']}
+        assert json.loads(client.outbox().read_bytes())['flight'] is None
+        assert json.loads(client.outbox().read_bytes())['pending'] == []
+        # Acknowledged invocation uses accepted Runtime history, never recapture.
+        kwargs['idempotency_key'] = flight['key']
+        again = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+        assert again == result and len(client.calls) == 2
+        changed = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, 'duration': 7})
+        assert not changed.ok and len(client.calls) == 2
+    assert case.head() == later
+    undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-helper')
+    restored = State(commit.bundle_from_document(undone['data']['canonical_document']))
+    assert restored.entity(REF) == before
+    assert restored.entity('parent/track:picture')['label'] == 'Later'
+    assert undone['data']['canonical_document']['dependency_manifest']['documents'] == [pin]
+    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-helper')
+    redone_state = State(commit.bundle_from_document(redone['data']['canonical_document']))
+    assert redone_state.entity(REF) == row
+    assert redone['data']['canonical_document']['shot_revisions'] == original['shot_revisions']
+    assert redone['data']['canonical_document']['internal_timeline_revisions'] == original['internal_timeline_revisions']
+    head = case.head()
+    with pytest.raises(RuntimeErrorBase) as error:
+        case.submit(case.request([inverse(result.receipt.receipt_id)]), 'helper-aba')
+    assert error.value.details['reason'] == 'intervening_write'
+    assert case.head() == head
+
+
+@pytest.mark.parametrize('existing', [None, {}])
+@pytest.mark.parametrize('params', [None, {}])
+def test_public_helper_element_only_keeps_literal_params_and_exact_inverse(
+        retained_pack, helper_client, existing, params):
+    case = retained_pack
+    row = copy.deepcopy(State(case.bundle()).entity(REF))
+    row['id'] = 'empty-effect'
+    row.pop('params')
+    if existing is not None:
+        row['params'] = existing
+    case.submit(case.request([capture_clip_add(case.bundle(), 'parent', row)]), 'helper-empty-row')
+    original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+    result = helper_client.connect().update_parent_element(
+        case.project, 'film', realm='realm', clip_id='empty-effect', element=case.selected,
+        expected_head=case.head()['revision_id'], params=params)
+    assert result.ok, result.error
+    accepted = result.receipt.result
+    commands_sent = accepted['commands']
+    assert [command['op'] for command in commands_sent] == ['clip.set-element']
+    assert State(commit.bundle_from_document(accepted['canonical_document'])).entity(
+        'parent/clip:empty-effect') == row
+    undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-helper-empty')
+    assert undone['data']['canonical_document']['parent_revision']['payload'] == original['parent_revision']['payload']
+    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-helper-empty')
+    assert redone['data']['canonical_document'] == accepted['canonical_document']
+
+
+def test_public_helper_optional_session_rebases_over_disjoint_edit(retained_pack, helper_client):
+    from types import SimpleNamespace
+
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    case, client = retained_pack, helper_client
+    owner = client.connect()
+    client_facade = SimpleNamespace(_remote=SimpleNamespace(_transport=owner._client), timelines=owner)
+    session = TimelineSession.open(case.project, 'film', client=client_facade)
+    expected = case.head()['revision_id']
+    client.before_submit[0] = lambda: case.submit(case.request([
+        capture_track_set(case.bundle(), 'parent/track:picture', values={'label': 'Concurrent'})]),
+        'concurrent-helper-label')
+    result = owner.update_parent_element(case.project, 'film', realm='realm', clip_id='effect',
+        element=case.selected, expected_head=expected, duration=3, session=session)
+    assert result.ok, result.error
+    assert result.receipt.result['status'] == 'rebased'
+    state = State(case.bundle())
+    assert state.entity(REF)['hold'] == 3
+    assert state.entity('parent/track:picture')['label'] == 'Concurrent'
+    undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-rebased-helper')
+    restored = State(commit.bundle_from_document(undone['data']['canonical_document']))
+    assert restored.entity(REF)['hold'] == 2
+    assert restored.entity('parent/track:picture')['label'] == 'Concurrent'
+
+
+@pytest.mark.parametrize('damage', ['realm', 'id', 'kind', 'owner', 'revision', 'session-scope'])
+def test_public_helper_scope_and_identity_refusal_is_atomic(retained_pack, helper_client, damage):
+    from types import SimpleNamespace
+
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    case, client = retained_pack, helper_client
+    owner = client.connect()
+    kwargs = dict(realm='realm', clip_id='effect', element=case.selected,
+                  expected_head=case.head()['revision_id'])
+    if damage == 'realm':
+        kwargs['realm'] = 'foreign'
+    elif damage == 'session-scope':
+        facade = SimpleNamespace(_remote=SimpleNamespace(_transport=owner._client), timelines=owner)
+        session = TimelineSession.open(case.project, 'film', client=facade)
+        session.project_id = 'foreign'
+        kwargs['session'] = session
+    else:
+        kwargs['element'] = {**case.selected, {'owner': 'packId'}.get(damage, damage): 'wrong'}
+    before, head = copy.deepcopy(case.bundle()), case.head()
+    result = owner.update_parent_element(case.project, 'film', **kwargs)
+    assert not result.ok and result.error.code == 'validation_error'
+    assert client.calls == [] and case.head() == head and case.bundle() == before
+
+
+def test_public_helper_native_refusal_preserves_error_and_flight(retained_pack, helper_client, monkeypatch):
+    import json
+
+    from runtime_protocol.errors import ForbiddenError
+
+    case = retained_pack
+    before, head = copy.deepcopy(case.bundle()), case.head()
+    error = ForbiddenError('Element commit denied', details={'reason': 'helper_authorization'})
+    monkeypatch.setattr(case, 'submit', lambda *a, **kw: (_ for _ in ()).throw(error))
+    result = helper_client.connect().update_parent_element(
+        case.project, 'film', realm='realm', clip_id='effect', element=case.selected,
+        expected_head=head['revision_id'], duration=3, idempotency_key='helper-denied')
+    assert not result.ok and result.error.code == error.code
+    assert result.error.details['reason'] == 'helper_authorization'
+    assert result.idempotency_key == 'helper-denied'
+    assert case.head() == head and case.bundle() == before
+    assert json.loads(helper_client.outbox().read_bytes())['flight']['key'] == 'helper-denied'
