@@ -3267,14 +3267,24 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if parsed.extend is not None and parsed.for_seconds is not None:
         raise _VerbError("--for/--duration and --extend both set a length; pick one", 2)
 
-    from astrid.packs.timeline.cli_native import commit_trim, ordinary_trim_requested
+    from astrid.packs.timeline.cli_native import (
+        commit_move,
+        commit_trim,
+        ordinary_move_requested,
+        ordinary_trim_requested,
+    )
+
+    if ordinary_move_requested(parsed):
+        result = _cmd_commit_edit(parsed, edit=commit_move)
+        if result is not NotImplemented:
+            return result
 
     if ordinary_trim_requested(parsed):
         result = _cmd_commit_edit(parsed, edit=commit_trim)
         if result is not NotImplemented:
             return result
     if parsed.dry_run or parsed.idempotency_key or parsed.json:
-        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native trim; "
+        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native move or trim; "
                          "other edit families still use the detached working copy", 2)
 
     if parsed.file:

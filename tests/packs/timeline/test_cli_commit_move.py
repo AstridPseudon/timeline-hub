@@ -43,6 +43,39 @@ def test_move_dispatch_matches_python_capture_and_reports_immutable_revision(com
     assert output["receipt"]["receipt_id"] == "pub1"
 
 
+def test_ordinary_edit_literal_move_uses_native_outbox(command, capsys):
+    run, generated = command
+    assert run("edit", "t", "--clip", "a", "--on", "5", "--json") == 0
+    body = json.loads(generated.calls[0][0])
+    assert body["commands"] == [capture_move(initial_bundle(), "parent/clip:a", 5.0)]
+    assert body["source"] == {"via": "cli"}
+    output = json.loads(capsys.readouterr().out)
+    assert output["data"]["accepted_publication_id"] == "pub1"
+
+
+def test_ordinary_edit_literal_move_retries_the_persisted_flight(command, capsys):
+    run, generated = command
+    args = ("edit", "t", "--clip", "a", "--on", "5", "--json", "--idempotency-key", "ordinary-move")
+    generated.lose_ack = True
+    assert run(*args) == 1
+    capsys.readouterr()
+    assert run(*args) == 0
+    capsys.readouterr()
+    assert generated.calls[0] == generated.calls[1]
+
+
+def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
+    run, generated = command
+
+    def legacy(*args, **kwargs):
+        raise RuntimeError("legacy moment resolution")
+
+    monkeypatch.setattr(cli, "_edit_checkout", legacy)
+    with pytest.raises(RuntimeError, match="legacy moment resolution"):
+        run("edit", "t", "--clip", "a", "--on", 'after "Astrid"')
+    assert generated.calls == []
+
+
 def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
     run, generated = command
     assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
