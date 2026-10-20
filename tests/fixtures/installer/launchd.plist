@@ -32,8 +32,8 @@
 	<key>RunAtLoad</key>
 	<true/>
 	<key>StandardErrorPath</key>
-	<string>/logs/install.log</string>
+	<string>/logs/runtime-service.log</string>
 	<key>StandardOutPath</key>
-	<string>/logs/install.log</string>
+	<string>/logs/runtime-service.log</string>
 </dict>
 </plist>

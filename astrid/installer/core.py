@@ -11,6 +11,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+class VerificationError(RuntimeError):
+    """The installed Runtime's browser door did not pass its readiness check."""
+
+
+class BackupSpaceError(RuntimeError):
+    """The update cannot fit its workspace backup on the program disk."""
+
+
 def linked(path: Path) -> bool:
     if path.is_symlink():
         return True
@@ -153,6 +161,17 @@ class Installer:
         # Repair never provisions tools, installs code, migrates or rewrites data.
         if old and mode != "update":
             realm = self.backend.workspace(old, self.data)
+            try:
+                # The browser health endpoint refuses a changed Runtime identity
+                # with runtime_identity_mismatch, which requires this restart.
+                self.backend.verify(old, self.data, realm["realm_id"], timeout=3)
+            except VerificationError:
+                pass
+            else:
+                if not self.backend.restart_required():
+                    self.backend.open()
+                    self.say("Open https://astrid.haus")
+                    return
             self.say("Restarting Astrid with the installed version.")
             self.backend.stop(old, self.data)
             self.backend.register(old, self.data)

@@ -9,8 +9,8 @@ Restart=on-failure
 RestartSec=5
 KillMode=mixed
 TimeoutStopSec=90
-StandardOutput="append:/logs/install.log"
-StandardError="append:/logs/install.log"
+StandardOutput="append:/logs/runtime-service.log"
+StandardError="append:/logs/runtime-service.log"
 
 [Install]
 WantedBy=default.target

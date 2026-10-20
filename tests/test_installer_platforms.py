@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path, PureWindowsPath
 from unittest.mock import Mock
+from urllib.error import HTTPError
 
 import pytest
 
@@ -65,6 +66,7 @@ def test_service_definitions_match_reviewed_snapshots(system, fixture):
     rendered = service.render(system, version, data, log, user='S-1-5-21-1234')
     assert rendered == (FIXTURES / fixture).read_text(encoding='utf-8')
     assert 'npm' not in rendered and 'pack_host' not in rendered and 'chat' not in rendered
+    assert 'runtime-service.log' in rendered and 'install.log' not in rendered
 
 
 def test_launchd_is_foreground_keepalive_with_explicit_environment():
@@ -400,7 +402,7 @@ def test_clone_rollback_restores_workspace_and_support_without_deleting_other_re
     assert any((p / 'realm.sqlite3').read_text() == 'migrated' for p in realm.parent.glob('one.failed-*'))
 
 
-@pytest.mark.parametrize('mismatch', [None, 'realm', 'instance', 'port', 'owner'])
+@pytest.mark.parametrize('mismatch', [None, 'realm', 'instance', 'port', 'owner', 'restart-required'])
 @pytest.mark.parametrize('door_port', [17340, 17391])
 def test_door_verification_requires_selected_realm_recorded_instance_and_live_owner(tmp_path, monkeypatch, mismatch, door_port):
     import json
@@ -417,6 +419,9 @@ def test_door_verification_requires_selected_realm_recorded_instance_and_live_ow
     health = {'status': 'ok', 'runtime_instance_id': 'foreign' if mismatch == 'instance' else 'owned-instance'}
     realm = {'realm_id': 'other' if mismatch == 'realm' else 'selected'}
     def opening(request, timeout):
+        if mismatch == 'restart-required':
+            raise HTTPError(request.full_url, 503, 'Service Unavailable', {},
+                            io.BytesIO(b'{"error":"runtime_identity_mismatch"}'))
         return io.BytesIO(json.dumps(health if request.full_url.endswith('/health') else realm).encode())
     opener = Mock()
     opener.open.side_effect = opening

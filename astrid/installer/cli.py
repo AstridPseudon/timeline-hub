@@ -10,14 +10,21 @@ import traceback
 from pathlib import Path
 
 from .backend import Backend
-from .core import Installer, absolute, current, find_data_root, read_json, write_json
+from .core import (
+    BackupSpaceError,
+    Installer,
+    absolute,
+    current,
+    find_data_root,
+    read_json,
+    write_json,
+)
 from .service import LABEL, default_program_root, legacy_roots
 from .tools import download, validate_manifest
 
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="astrid install", description="Install or restart Astrid for astrid.haus.")
-    result.add_argument("operation", nargs="?", choices=("install", "repair", "update", "uninstall"), default="install")
     mode = result.add_mutually_exclusive_group()
     mode.add_argument("--update", action="store_true", help="back up and install the pinned version")
     mode.add_argument("--repair", action="store_true", help="restart the installed version without upgrading")
@@ -35,9 +42,7 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     mode = ("update" if args.update else "repair" if args.repair else "uninstall" if args.uninstall
-            else "doctor" if args.doctor is not None else args.operation)
-    if args.operation != "install" and any((args.update, args.repair, args.uninstall, args.doctor is not None)):
-        parser().error("Choose either an operation or a mode flag.")
+            else "doctor" if args.doctor is not None else "install")
     if args.delete_data and mode != "uninstall":
         parser().error("--delete-data is only valid for uninstall.")
     from runtime_protocol import platform
@@ -125,10 +130,11 @@ def main(argv: list[str] | None = None) -> int:
             finally:
                 platform.unlock_file(lock.fileno())
         return 0
-    except (Exception, KeyboardInterrupt):
+    except (Exception, KeyboardInterrupt) as failure:
         with contextlib.suppress(OSError):
             with log.open("a", encoding="utf-8") as stream:
                 traceback.print_exc(file=stream)
-        print("Astrid could not finish; your workspace and any update backup have been kept.")
+        print(str(failure) if isinstance(failure, BackupSpaceError) else
+              "Astrid could not finish; your workspace and any update backup have been kept.")
         print(f"Details: {log}")
         return 1

@@ -78,9 +78,13 @@ class FakeBackend:
     def start(self, version, data):
         self.step('start-' + version.root.name)
 
-    def verify(self, version, data, realm_id):
+    def verify(self, version, data, realm_id, *, timeout=90):
         assert realm_id == 'same-realm'
         self.step('verify-' + version.root.name)
+
+    def restart_required(self):
+        self.step('restart-required')
+        return False
 
     def finish(self, old, new, backup):
         self.step('finish')
@@ -151,10 +155,40 @@ def test_existing_install_is_idempotent_repair_without_data_or_tool_mutations(in
     before = backend.sentinel.stat().st_mtime_ns
     installer.run(mode, {})
     installer.run(mode, {})
-    assert backend.calls == ['workspace', 'stop', 'register-old', 'start-old', 'verify-old', 'open'] * 2
+    assert backend.calls == ['workspace', 'verify-old', 'restart-required', 'open'] * 2
     assert current(root) == backend.old
     assert backend.sentinel.read_text() == 'original'
     assert backend.sentinel.stat().st_mtime_ns == before
+
+
+@pytest.mark.parametrize('reason', ['unhealthy', 'changed-settings'])
+def test_repair_restarts_after_failed_verification_or_changed_service_settings(installation, reason):
+    _, _, backend, installer, _ = installation
+
+    def verify(version, data, realm_id, *, timeout=90):
+        backend.calls.append('verify-' + version.root.name)
+        if reason == 'unhealthy' and timeout == 3:
+            raise core.VerificationError('browser door refused runtime_identity_mismatch')
+
+    backend.verify = verify
+    backend.restart_required = lambda: True
+
+    installer.run('repair', {})
+
+    assert backend.calls == [
+        'workspace', 'verify-old', 'stop', 'register-old', 'start-old', 'verify-old', 'open'
+    ]
+
+
+@pytest.mark.parametrize('failure', [TypeError('bad call'), RuntimeError('bug'), KeyboardInterrupt()])
+def test_repair_does_not_restart_after_unexpected_verification_failures(installation, failure):
+    _, _, backend, installer, _ = installation
+    backend.verify = Mock(side_effect=failure)
+
+    with pytest.raises(type(failure)):
+        installer.run('repair', {})
+
+    assert backend.calls == ['workspace']
 
 
 def test_first_install_creates_one_workspace_and_never_calls_upgrade(tmp_path):

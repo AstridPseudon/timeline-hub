@@ -66,6 +66,7 @@ def command(version: Version, data: Path, *, windows: bool = False, log: Path | 
     # console. pythonw executes the foreground Runtime in this same process.
     script = "import json,os,sys\nfrom pathlib import Path\n"
     if windows:
+        log = log.with_name("runtime-service.log")
         script += (f"os.environ.update({version.env!r})\n"
                    f"sys.stdout=sys.stderr=open({str(log)!r},'a',encoding='utf-8',buffering=1)\n")
     if env_file is not None:
@@ -86,6 +87,7 @@ def systemd_quote(value: str) -> str:
 
 def render(system: str, version: Version, data: Path, log: Path, *, user: str = "",
            env_file: Path | None = None) -> str:
+    log = log.with_name("runtime-service.log")
     argv = command(version, data, windows=system == "win32", log=log, env_file=env_file)
     if system == "darwin":
         return plistlib.dumps({
@@ -129,7 +131,7 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str = 
 class Service:
     def __init__(self, root: Path, log: Path, run, *, home: Path | None = None,
                  system: str | None = None, say=print):
-        self.root, self.log, self.run = root, log, run
+        self.root, self.log, self.run = root, log.with_name("runtime-service.log"), run
         self.home, self.system, self.say = home or Path.home(), system or sys.platform, say
         self.registry = default_program_root(self.home, self.system) / "service.json"
         self.selection = install_selection(self.home, self.system)
@@ -264,6 +266,7 @@ class Service:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if not self.env_file.exists():
             write_json(self.env_file, {})
+        settings = self.settings()
         user = self.powershell("[Security.Principal.WindowsIdentity]::GetCurrent().User.Value").strip() if self.system == "win32" else ""
         self.path.write_text(render(self.system, version, data, self.log, user=user, env_file=self.env_file), encoding="utf-8", newline="\n")
         if self.system == "darwin":
@@ -278,9 +281,22 @@ class Service:
             xml_path = str(self.path).replace("'", "''")
             self.powershell(f"Register-ScheduledTask -TaskName '{TASK}' -Xml ([IO.File]::ReadAllText('{xml_path}')) -Force | Out-Null")
         record = {"owner": LABEL, "program_root": str(self.root),
-                  "data_root": str(data), "version": version.document()}
+                  "data_root": str(data), "version": version.document(),
+                  "service_settings": settings}
         write_json(self.registry, record)
         write_json(self.selection, record)
+
+    def settings(self) -> dict:
+        settings = read_json(self.env_file)
+        if (set(settings) - {"ASTRID_WARM_IDLE_SECONDS", "ASTRID_ALLOW_UNQUALIFIED_GPU"}
+                or any(not isinstance(value, str) for value in settings.values())):
+            raise ValueError("Invalid Astrid service-env.json; use the documented string settings.")
+        return settings
+
+    def restart_required(self) -> bool:
+        # Legacy services did not record settings. An empty file preserves their
+        # default behavior; a nonempty file needs one restart to establish it.
+        return self.recorded().get("service_settings", {}) != self.settings()
 
     def start(self) -> bool:
         if self.system == "darwin":

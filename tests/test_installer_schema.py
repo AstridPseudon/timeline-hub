@@ -79,6 +79,18 @@ def test_staging_installs_the_npm_locked_schema_before_declaring_services(tmp_pa
     assert schema_path.endswith("/a/remotion/node_modules/@banodoco/timeline-schema/python")
     initial_install = next(call for call in calls if any(value.endswith("packages/python") for value in call))
     assert not any("timeline-schema" in value for value in initial_install)
+    python_installs = [call for call in calls if call[1:3] == ["pip", "install"]]
+    assert python_installs[0] == [
+        str(backend.uv), "pip", "install", "--python", str(version.python),
+        "--require-hashes", "-r", str(version.root / "a/requirements/runtime.lock"),
+    ]
+    assert python_installs[1] == [
+        str(backend.uv), "pip", "install", "--python", str(version.python), "--no-deps",
+        str(version.root / "r"), str(version.root / "r/packages/python"), str(version.root / "a"),
+    ]
+    assert python_installs[2] == [
+        str(backend.uv), "pip", "install", "--python", str(version.python), "--no-deps", schema_path,
+    ]
     assert version.profile.is_file()
 
 

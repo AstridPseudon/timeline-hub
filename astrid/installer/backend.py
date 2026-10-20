@@ -18,7 +18,17 @@ from pathlib import Path
 from runtime_protocol import platform
 from runtime_protocol.door import DEFAULT_DOOR_PORT
 
-from .core import Version, absolute, current, linked, new_version_id, read_json, write_json
+from .core import (
+    BackupSpaceError,
+    VerificationError,
+    Version,
+    absolute,
+    current,
+    linked,
+    new_version_id,
+    read_json,
+    write_json,
+)
 from .service import Service, platform_target, venv_python
 from .tools import binary, install_tools, source
 
@@ -228,6 +238,32 @@ class Backend:
             if owner_state == "live":
                 raise RuntimeError("Astrid did not release its recorded Runtime owner.")
 
+    @staticmethod
+    def _backup_ignored(source: Path, parent: Path, names, *, support: bool) -> set[str]:
+        ignored = set()
+        if support and parent == source:
+            ignored.add("logs")
+        if support and parent == source / "runtime":
+            ignored.update({"realms", "discovery.json", "instance.lock", "bootstrap.lock"})
+        for name in set(names) - ignored:
+            entry = parent / name
+            if linked(entry):
+                raise ValueError(f"Backup refused a linked entry: {entry}")
+        return ignored.intersection(names)
+
+    def _backup_size(self, source: Path, *, support=False) -> int:
+        """Measure the same entries admitted by the support/clone copy."""
+        def failed(error):
+            raise error
+
+        size = 0
+        for folder, directories, files in os.walk(source, onerror=failed):
+            parent = Path(folder)
+            ignored = self._backup_ignored(source, parent, directories + files, support=support)
+            directories[:] = [name for name in directories if name not in ignored]
+            size += sum((parent / name).stat().st_size for name in files if name not in ignored)
+        return size
+
     def _copy(self, source: Path, destination: Path, *, clone=False, support=False) -> None:
         from runtime_protocol.fsclone import clone_or_copy_file
 
@@ -242,36 +278,41 @@ class Backend:
             return str(dst)
 
         def ignore(folder, names):
-            parent = Path(folder)
-            for name in names:
-                entry = parent / name
-                if linked(entry):
-                    raise ValueError(f"Backup refused a linked entry: {entry}")
-            if support and parent == source / "runtime":
-                return {"realms", "discovery.json", "instance.lock", "bootstrap.lock"}.intersection(names)
-            return set()
+            return self._backup_ignored(source, Path(folder), names, support=support)
 
         shutil.copytree(source, destination, copy_function=copy_file, ignore=ignore)
 
     def backup(self, version: Version, data: Path, realm: dict) -> dict:
         from runtime_protocol import platform
         destination = self.root / "backups" / uuid.uuid4().hex[:12]
-        platform.private_directory(destination)
         kind = "clone" if self.service.system == "darwin" else "runtime"
-        if kind == "clone":
-            self._copy(absolute(realm["realm_root"]), destination / "realm", clone=True)
-        else:
-            # The backup CLI uses authenticated RPC. Start only the neutral
-            # daemon (no foreground service supervisor and no browser door).
-            try:
-                self.runtime(version, data, "up", "--hosted-origin", "off", profile=True)
-                self.runtime(version, data, "backup", "--destination", str(destination / "realm"))
-            finally:
-                self.stop(version, data)
-        self._copy(data, destination / "support", clone=kind == "clone", support=True)
-        result = {"root": str(destination), "kind": kind}
-        write_json(destination / "backup.json", result)
-        return result
+        realm_root = absolute(realm["realm_root"])
+        if kind != "clone":
+            size = self._backup_size(realm_root) + self._backup_size(data, support=True)
+            margin = max(256 * 1024 * 1024, size // 10)
+            platform.private_directory(destination.parent)
+            if shutil.disk_usage(self.root).free < size + margin:
+                raise BackupSpaceError("There is not enough free disk space to back up your workspace.")
+        try:
+            platform.private_directory(destination)
+            if kind == "clone":
+                self._copy(realm_root, destination / "realm", clone=True)
+            else:
+                # The backup CLI uses authenticated RPC. Start only the neutral
+                # daemon (no foreground service supervisor and no browser door).
+                try:
+                    self.runtime(version, data, "up", "--hosted-origin", "off", profile=True)
+                    self.runtime(version, data, "backup", "--destination", str(destination / "realm"))
+                finally:
+                    self.stop(version, data)
+            self._copy(data, destination / "support", clone=kind == "clone", support=True)
+            result = {"root": str(destination), "kind": kind}
+            write_json(destination / "backup.json", result)
+            return result
+        except BaseException:
+            if destination.exists():
+                shutil.rmtree(destination)
+            raise
 
     def restore(self, old: Version, data: Path, realm: dict, backup: dict) -> None:
         destination = Path(backup["root"])
@@ -295,6 +336,8 @@ class Backend:
         # Restore all support metadata, preserving unselected realms and extras.
         snapshot = destination / "support"
         for item in snapshot.iterdir():
+            if item.name == "logs":
+                continue  # Also preserve logs when restoring an older snapshot.
             target = data / item.name
             if item.name == "runtime":
                 for entry in target.iterdir():
@@ -326,7 +369,9 @@ class Backend:
         environment = folder / "py"
         self.run([self.uv, "venv", "--python", manifest["tools"]["python"]["version"], environment])
         python = venv_python(environment)
-        self.run([self.uv, "pip", "install", "--python", python, runtime,
+        self.run([self.uv, "pip", "install", "--python", python, "--require-hashes",
+                  "-r", agent / "requirements" / "runtime.lock"])
+        self.run([self.uv, "pip", "install", "--python", python, "--no-deps", runtime,
                   runtime / "packages" / "python", agent])
         env = install_tools(manifest, folder / "tools", platform_target(), self.run)
         prior = current(root) or self.existing(data)
@@ -342,7 +387,7 @@ class Backend:
         # candidate's npm tree so the environment follows the same pinned
         # package as the Remotion bundle.
         schema_python = agent / "remotion" / "node_modules" / "@banodoco" / "timeline-schema" / "python"
-        self.run([self.uv, "pip", "install", "--python", python, schema_python])
+        self.run([self.uv, "pip", "install", "--python", python, "--no-deps", schema_python])
         services_path = self._declare_services(
             folder=folder, agent=agent, data=data, python=python,
             bun=env["ASTRID_BUN_EXECUTABLE"], env=env, old=prior,
@@ -399,10 +444,13 @@ class Backend:
         if not self.service.start():
             self.service.start_foreground(version, data)
 
-    def verify(self, version: Version, data: Path, realm_id: str) -> None:
+    def restart_required(self) -> bool:
+        return self.service.restart_required()
+
+    def verify(self, version: Version, data: Path, realm_id: str, *, timeout: float = 90) -> None:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         port = int(version.env.get("ASTRID_RUNTIME_DOOR_PORT", str(DEFAULT_DOOR_PORT)))
-        deadline = time.monotonic() + 90
+        deadline = time.monotonic() + timeout
         error = None
         while time.monotonic() < deadline:
             try:
@@ -427,7 +475,7 @@ class Backend:
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 error = exc
                 time.sleep(0.25)
-        raise RuntimeError(f"Astrid's browser door did not become ready: {error}")
+        raise VerificationError(f"Astrid's browser door did not become ready: {error}")
 
     def finish(self, old: Version | None, candidate: Version, backup: dict | None) -> None:
         # Keep the immediately previous program and backup. Failures cleaning an

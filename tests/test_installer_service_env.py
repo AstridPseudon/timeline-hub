@@ -59,7 +59,59 @@ def test_registration_preserves_settings_and_records_selection(tmp_path, monkeyp
     assert manager.env_file.read_bytes() == before
     assert str(manager.env_file) in manager.path.read_text()
     assert read_json(manager.selection)["program_root"] == str(root)
+    assert read_json(manager.selection)["service_settings"] == {"ASTRID_WARM_IDLE_SECONDS": "17"}
     assert default_program_root(tmp_path, "linux") == tmp_path / "xdg-data/astrid"
+
+
+@pytest.mark.parametrize("settings", [
+    {"ASTRID_WARM_IDLE_SECONDS": "18"}, {"ASTRID_ALLOW_UNQUALIFIED_GPU": "1"}, {},
+])
+def test_changed_or_cleared_service_settings_require_restart(tmp_path, monkeypatch, settings):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg-data"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg-config"))
+    root = tmp_path / "program"
+    manager = Service(root, tmp_path / "log", Mock(side_effect=FileNotFoundError()),
+                      home=tmp_path, system="linux", say=lambda _: None)
+    write_json(manager.env_file, {"ASTRID_WARM_IDLE_SECONDS": "17"})
+    version = Version(root / "versions/one", tmp_path / "python", tmp_path / "profile", {})
+    manager.register(version, tmp_path / "data")
+    assert manager.restart_required() is False
+
+    write_json(manager.env_file, settings)
+
+    assert manager.restart_required() is True
+    manager.register(version, tmp_path / "data")
+    assert manager.restart_required() is False
+
+
+@pytest.mark.parametrize("settings,expected", [({}, False), ({"ASTRID_WARM_IDLE_SECONDS": "17"}, True)])
+def test_legacy_services_restart_for_nonempty_unrecorded_settings(tmp_path, settings, expected):
+    manager = Service(tmp_path / "program", tmp_path / "log", Mock(), home=tmp_path, system="linux")
+    write_json(manager.selection, {"owner": LABEL})
+    write_json(manager.env_file, settings)
+
+    assert manager.restart_required() is expected
+
+
+def test_foreground_service_uses_its_own_log(tmp_path, monkeypatch):
+    from runtime_protocol import platform
+
+    manager = Service(tmp_path / "program", tmp_path / "install.log", Mock(),
+                      home=tmp_path, system="linux")
+    version = Version(tmp_path / "program", tmp_path / "python", tmp_path / "profile", {})
+    observed = []
+
+    def spawn(_argv, **kwargs):
+        observed.append(kwargs["stdout"].name)
+        return Mock(pid=42)
+
+    monkeypatch.setattr(platform, "spawn_tree", spawn)
+    monkeypatch.setattr(platform, "process_identity", lambda _pid: {"birth_id": "owner"})
+
+    manager.start_foreground(version, tmp_path / "data")
+
+    assert observed == [str(tmp_path / "runtime-service.log")]
+    assert not (tmp_path / "install.log").exists()
 
 
 def test_removed_install_can_delete_kept_data_repeatedly(tmp_path, monkeypatch):

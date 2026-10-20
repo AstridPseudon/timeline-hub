@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.installer.core import Installer, Version, switch, write_json
+from astrid.installer.core import Installer, VerificationError, Version, switch, write_json
 from astrid.installer.service import LABEL, install_selection
 from astrid.sdk import storage_root
 
@@ -205,6 +205,45 @@ def test_cli_exposes_doctor_as_an_exclusive_mode_with_optional_bundle_path():
     assert chosen.doctor == "/tmp/astrid-support.zip"
 
 
+@pytest.mark.parametrize("operation", ["install", "repair", "update", "uninstall"])
+def test_cli_rejects_positional_operations(operation):
+    from astrid.installer.cli import parser
+
+    with pytest.raises(SystemExit) as failure:
+        parser().parse_args([operation])
+
+    assert failure.value.code == 2
+
+
+@pytest.mark.parametrize("operation", ["repair", "update", "uninstall", "doctor"])
+def test_cli_accepts_operation_flags(operation):
+    from astrid.installer.cli import parser
+
+    args = parser().parse_args(["--" + operation])
+
+    assert getattr(args, operation)
+    assert not hasattr(args, "operation")
+
+
+def test_cli_explains_backup_space_failure_with_one_sentence(tmp_path, monkeypatch, capsys):
+    from runtime_protocol import platform
+
+    from astrid.installer import cli
+    from astrid.installer.core import BackupSpaceError
+
+    message = "There is not enough free disk space to back up your workspace."
+    monkeypatch.setattr(platform, "log_dir", lambda: tmp_path / "logs")
+
+    def no_space(*_args):
+        raise BackupSpaceError(message)
+
+    monkeypatch.setattr(cli, "Backend", no_space)
+
+    assert cli.main(["--root", str(tmp_path / "program")]) == 1
+    assert capsys.readouterr().out.splitlines() == [message, f"Details: {tmp_path / 'logs/install.log'}"]
+    assert message in (tmp_path / "logs/install.log").read_text()
+
+
 def test_cli_loads_manifest_when_current_pointer_targets_missing_interpreter(monkeypatch, tmp_path):
     from runtime_protocol import platform
 
@@ -321,12 +360,17 @@ def test_repair_skips_down_for_proven_dead_runtime_and_keeps_discovery(tmp_path,
         calls = []
         backend.register = lambda *_args: calls.append("register")
         backend.start = lambda *_args: calls.append("start")
-        backend.verify = lambda *_args: calls.append("verify")
+        def verify(*_args, timeout=90):
+            if timeout == 3:
+                calls.append("verify-unhealthy")
+                raise VerificationError("the recorded Runtime is dead")
+            calls.append("verify")
+        backend.verify = verify
         backend.open = lambda: calls.append("open")
 
         Installer(backend.root, data, backend, say=lambda _line: None).run("repair", {})
 
-        assert calls == ["register", "start", "verify", "open"]
+        assert calls == ["verify-unhealthy", "register", "start", "verify", "open"]
         assert discovery.is_file(), "Runtime startup must reconcile stale discovery"
     finally:
         if child.poll() is None:
