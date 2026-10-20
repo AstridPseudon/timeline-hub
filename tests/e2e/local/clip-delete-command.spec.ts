@@ -203,6 +203,9 @@ test('M2 current013 real parent DELETE: lost ACK, reload, Runtime restart, exact
   const clip = page.locator(`.clip-action[data-clip-id="${seed3.appClipId}"]`).first();
   await expect(clip).toBeVisible();
   await clip.click();
+  await expect(clip).toHaveAttribute('data-selected', 'true');
+  await clip.focus();
+  await expect(clip).toBeFocused();
   await page.keyboard.press('Delete');
   // Missing nativeDelete composition must fail here; a legacy save cannot satisfy this.
   await expect.poll(() => wire.posts.length, CEILING).toBe(1);
@@ -368,6 +371,9 @@ test('M2 current013 parent DELETE conflict: same-property Agent move wins while 
   const clip = page.locator(`.clip-action[data-clip-id="${seed3.appClipId}"]`).first();
   await expect(clip).toBeVisible();
   await clip.click();
+  await expect(clip).toHaveAttribute('data-selected', 'true');
+  await clip.focus();
+  await expect(clip).toBeFocused();
   await page.keyboard.press('Delete');
   await expect.poll(() => wire.request(), CEILING).toBeTruthy();
   const held = wire.request()!;
