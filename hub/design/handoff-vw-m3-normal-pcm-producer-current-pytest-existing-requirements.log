@@ -1,0 +1,16 @@
+.............xx................FFFF                                      [100%]
+=================================== FAILURES ===================================
+_ test_half_second_slice_pcm_equals_original_on_host_served_wav[window-sound] __
+[XPASS(strict)] Agent source owner: trusted prepared-source producer (normal_audio) must translate the recorded origin so the 0..2s clip sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5
+_ test_half_second_slice_pcm_equals_original_on_host_served_wav[window-other] __
+[XPASS(strict)] Agent source owner: trusted prepared-source producer (normal_audio) must translate the recorded origin so the 0..2s clip sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5
+__ test_half_second_slice_pcm_equals_original_on_host_served_wav[layer-sound] __
+[XPASS(strict)] Agent source owner: trusted prepared-source producer (normal_audio) must translate the recorded origin so the 0..2s clip sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5
+__ test_half_second_slice_pcm_equals_original_on_host_served_wav[layer-other] __
+[XPASS(strict)] Agent source owner: trusted prepared-source producer (normal_audio) must translate the recorded origin so the 0..2s clip sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_host_served_wav[window-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_host_served_wav[window-other]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_host_served_wav[layer-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_host_served_wav[layer-other]
+4 failed, 29 passed, 2 xfailed in 0.43s

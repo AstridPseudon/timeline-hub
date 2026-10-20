@@ -1,0 +1,38 @@
+{"positive":"gapless MP3","frames":86400,"onsetDelta":[0,1],"skip":1105,"discard":47,"wavSha256":"d8a6de77461ad1040ae64f4d411beb12319a7a5c61f48bde8ed81e96de2d7ddf"}
+{"positive":"rational trim + child speed","sourceClock":{"source_from":0.06673333333333334,"playback_rate":1.5},"wavSha256":"2dce02df933ad094b75790971a9acb0d798549cf20e707df148af4960dd49696","wrongOriginSha256":"54b053925236e364d499bc4f601d5675f83e56bb59e2199c9734bf3ed6924f84"}
+{"characterization":"source.mp3","stream":{"codec_name":"mp3","sample_rate":"48000","channels":2,"time_base":"1/14112000","start_pts":324870,"start_time":"0.023021","duration_ts":25740288},"format":{"format_name":"mp3","start_time":"0.023021"},"first":{"pts":0,"dts":0,"duration":338688,"side_data_list":[{"side_data_type":"Skip Samples","skip_samples":1105,"discard_padding":0,"skip_reason":0,"discard_reason":0}]},"last":{"pts":25401600,"dts":25401600,"duration":338688,"side_data_list":[{"side_data_type":"Skip Samples","skip_samples":0,"discard_padding":47,"skip_reason":0,"discard_reason":0}]},"frames":86400,"onset":[9606,14406],"onsetDelta":[0,1]}
+{"characterization":"unknown.mp3","stream":{"codec_name":"mp3","sample_rate":"48000","channels":2,"time_base":"1/14112000","start_pts":0,"start_time":"0.000000","duration_ts":25740288},"format":{"format_name":"mp3","start_time":"0.000000"},"first":{"pts":0,"dts":0,"duration":338688},"last":{"pts":25401600,"dts":25401600,"duration":338688},"frames":87552,"onset":[10711,15511],"onsetDelta":[1105,1106]}
+{"characterization":"unknown.aac","stream":{"codec_name":"aac","sample_rate":"48000","channels":2,"time_base":"1/28224000","duration_ts":53574894},"format":{"format_name":"aac"},"first":{"pts":0,"dts":0,"duration":602112},"last":{"pts":51179520,"dts":51179520,"duration":602112},"frames":88064,"onset":[10630,15429],"onsetDelta":[1024,1024]}
+{"characterization":"source.m4a","stream":{"codec_name":"aac","sample_rate":"48000","channels":2,"time_base":"1/48000","start_pts":0,"start_time":"0.000000","duration_ts":86400},"format":{"format_name":"mov,mp4,m4a,3gp,3g2,mj2","start_time":"0.000000"},"first":{"pts":-1024,"dts":-1024,"duration":1024,"side_data_list":[{"side_data_type":"Skip Samples","skip_samples":1024,"discard_padding":0,"skip_reason":0,"discard_reason":0}]},"last":{"pts":86016,"dts":86016,"duration":384},"frames":87040,"onset":[9606,14405],"onsetDelta":[0,0]}
+{"characterization":"offset-aac.mka","stream":{"codec_name":"aac","sample_rate":"48000","channels":2,"time_base":"1/1000","start_pts":104,"start_time":"0.104000"},"format":{"format_name":"matroska,webm","start_time":"0.104000"},"first":{"pts":104,"dts":104},"last":{"pts":1917,"dts":1917,"duration":21},"frames":88064,"onset":[10630,15429],"onsetDelta":[1024,1024]}
+{"characterization":"offset-mp3.mka","stream":{"codec_name":"mp3","sample_rate":"48000","channels":2,"time_base":"1/1000","start_pts":102,"start_time":"0.102000"},"format":{"format_name":"matroska,webm","start_time":"0.102000"},"first":{"pts":102,"dts":102,"duration":24},"last":{"pts":1902,"dts":1902,"duration":24,"side_data_list":[{"side_data_type":"Skip Samples","skip_samples":0,"discard_padding":47,"skip_reason":0,"discard_reason":0}]},"frames":87505,"onset":[10711,15511],"onsetDelta":[1105,1106]}
+TAP version 13
+# Subtest: ordinary gapless MP3 decodes through public apply into a full native-source WAV
+ok 1 - ordinary gapless MP3 decodes through public apply into a full native-source WAV
+  ---
+  duration_ms: 259.876807
+  ...
+# Subtest: rational public trim and child speed retain the full source and expose a wrong decoder origin
+ok 2 - rational public trim and child speed retain the full source and expose a wrong decoder origin
+  ---
+  duration_ms: 219.279421
+  ...
+# Subtest: a source-backed timestamped MP3 without skip metadata cannot use the relaxation
+ok 3 - a source-backed timestamped MP3 without skip metadata cannot use the relaxation
+  ---
+  duration_ms: 44.998067
+  ...
+# Subtest: direct unknown-origin evidence retains zero-start MP3 and absent-start/offset AAC debt
+ok 4 - direct unknown-origin evidence retains zero-start MP3 and absent-start/offset AAC debt
+  ---
+  duration_ms: 40.060647
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1922.590973

@@ -1,0 +1,1045 @@
+diff --git a/astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py b/astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+new file mode 100644
+index 000000000..d814e982d
+--- /dev/null
++++ b/astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py
+@@ -0,0 +1,114 @@
++"""Inactive PCM preparation inside the existing render lock/asset lifetime.
++
++The source owner must validate the actual compiled input pair before calling.
++This module neither admits a source nor activates the normal rendering path.
++"""
++
++from __future__ import annotations
++
++import copy
++import hashlib
++import json
++import os
++import shutil
++import subprocess
++import sys
++import tempfile
++from collections.abc import Mapping
++from pathlib import Path
++from typing import Any
++
++from astrid.core.rendering.assets import AssetMaterializer, AssetURLResolver
++from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools, probe_context
++
++
++def prepare_normal_audio_sources(
++    props: Mapping[str, Any], *, materializer: AssetMaterializer,
++    asset_server: AssetURLResolver, attempt_directory: Path,
++    project_dir: Path, runtime_tools: RemotionRuntimeTools,
++    original_clips: Mapping[str, Mapping[str, Any]] | None = None,
++) -> dict[str, Any]:
++    """Copy Root props and prepare each audio clip from its managed original.
++
++    ``original_clips`` maps current clip IDs to original compiled occurrences,
++    retained by the trusted source owner before a window/track transform. It is
++    internal input, not authority. Never construct it from caller app metadata.
++    The owner must thread this seam through source validation and serialization
++    before activating window/layer rendering. Omitting it is for unsliced input.
++
++    The caller owns an attempt directory under materializer.serving_root and
++    keeps it and the server alive through consumption, usually via ExitStack.
++    Successful WAVs live there until caller cleanup; failed batches remove only
++    their own directory. Authored files and the original registry are untouched.
++    """
++    def encode(value: Any) -> str:
++        return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
++
++    expected = materializer.resolved_registry(asset_server)
++    if encode(props["assets"]) != encode(expected):
++        raise ValueError("audio Root registry differs from materialized source")
++    tracks = {row["id"] for row in props["timeline"]["tracks"] if row["kind"] == "audio"}
++    indexed = []
++    for index, clip in enumerate(props["timeline"]["clips"]):
++        if "render_source" in (clip.get("audio") or {}):
++            raise ValueError("audio source already prepared")
++        if clip.get("track") in tracks:
++            indexed.append((index, clip))
++    if not indexed:
++        return copy.deepcopy(dict(props))
++    project = project_dir.resolve(strict=True)
++    helper = (project / "normal-audio-sources.mjs").resolve(strict=True)
++    helper.relative_to(project)
++    attempt = attempt_directory.resolve(strict=True)
++    attempt.relative_to(materializer.serving_root)
++    clips = []
++    for _, clip in indexed:
++        asset = materializer.assets[clip["asset"]]
++        if asset.local_path is None:
++            raise ValueError("audio source has no verified materialized path")
++        # Recheck the selected bytes, including reused runtime materializations.
++        metadata = asset.metadata
++        digest = (metadata.get("digest") or metadata.get("content_sha256")
++                  or metadata.get("sha256") or metadata.get("hash"))
++        with asset.local_path.open("rb") as source:
++            if hashlib.file_digest(source, "sha256").hexdigest() != digest.removeprefix("sha256:"):
++                raise ValueError("audio managed source failed integrity check")
++        row = {"clip": clip, "source": str(asset.local_path)}
++        if original_clips is not None:
++            row["originalClip"] = original_clips[clip["id"]]
++        clips.append(row)
++    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
++    directory = Path(tempfile.mkdtemp(prefix="normal-audio-", dir=attempt))
++    try:
++        result = subprocess.run(
++            [str(runtime_tools.node_executable), str(helper)],
++            input=json.dumps({"clips": clips, "fps": props["compiledTransitions"]["fps"],
++                              "attemptDirectory": str(directory)}, allow_nan=False),
++            cwd=project, env=environment, capture_output=True, text=True, timeout=30, check=False,
++        )
++        if result.returncode:
++            raise RuntimeError(result.stderr.strip() or "audio PCM preparation unavailable")
++        prepared = json.loads(result.stdout)
++        if not isinstance(prepared, list) or len(prepared) != len(indexed):
++            raise ValueError("invalid audio PCM preparation response")
++        output = copy.deepcopy(dict(props))
++        for (index, _), row in zip(indexed, prepared):
++            if row is None:
++                continue
++            if set(row) != {"path", "envelope_key", "source_from", "playback_rate", "envelope"}:
++                raise ValueError("invalid audio PCM preparation fields")
++            path = Path(row["path"]).resolve(strict=True)
++            path.relative_to(directory)
++            clip = output["timeline"]["clips"][index]
++            audio = clip.setdefault("audio", {})
++            audio["envelope"] = row["envelope"]
++            audio["render_source"] = {
++                "file": asset_server.local_url(path),
++                **{key: row[key] for key in ("envelope_key", "source_from", "playback_rate")},
++            }
++        if not any(row is not None for row in prepared):
++            shutil.rmtree(directory)
++        return output
++    except BaseException:
++        shutil.rmtree(directory)
++        raise
+diff --git a/remotion/attempt-envelope-pcm.mjs b/remotion/attempt-envelope-pcm.mjs
+new file mode 100644
+index 000000000..4c99b9e6e
+--- /dev/null
++++ b/remotion/attempt-envelope-pcm.mjs
+@@ -0,0 +1,114 @@
++import {execFileSync} from 'node:child_process';
++import {closeSync, mkdtempSync, openSync, readSync, rmSync, statSync, writeFileSync} from 'node:fs';
++import path from 'node:path';
++import {
++  applyAudioEnvelope, audioEnvelopeWav, compileAudioEnvelope,
++} from '@banodoco/timeline-composition/evaluation';
++
++// Inactive preparation kernel. The caller supplies the compiled clip's public
++// source clock, using compiledAudioSourceClock from the public trim/rate helpers.
++// Never pass a previously prepared source or persist these results as authored data.
++export const prepareAttemptEnvelopePcm = ({
++  clip, fps, source, attemptDirectory, sourceClock,
++}) => {
++  if (clip.audio?.render_source !== undefined) throw new Error('source already prepared');
++  const envelope = compileAudioEnvelope(clip, fps);
++  if (!envelope) return undefined;
++  if (!sourceClock || !Number.isFinite(sourceClock.source_from)
++    || sourceClock.source_from < 0 || !Number.isFinite(sourceClock.playback_rate)
++    || sourceClock.playback_rate <= 0) throw new Error('public source clock required');
++  if (!path.isAbsolute(source) || !statSync(source).isFile()
++    || !path.isAbsolute(attemptDirectory) || !statSync(attemptDirectory).isDirectory()) {
++    throw new Error('local source and attempt directory required');
++  }
++  const run = (program, args, maxBuffer) => execFileSync(program, args, {
++    maxBuffer, timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
++  });
++  const probe = JSON.parse(run('ffprobe', [
++    '-v', 'error', '-protocol_whitelist', 'file,pipe', '-select_streams', 'a:0',
++    '-show_entries', 'format=format_name,start_time:stream=codec_name,sample_rate,channels,time_base,start_pts,start_time', '-of', 'json', source,
++  ], 64 * 1024).toString());
++  const stream = probe.streams?.[0];
++  const sampleRate = Number(stream?.sample_rate), count = stream?.channels;
++  if (!Number.isSafeInteger(sampleRate) || sampleRate <= 0
++    || !Number.isSafeInteger(count) || count <= 0) {
++    throw new Error('source PCM clock cannot be retained');
++  }
++  if (stream.start_time !== undefined && Number(stream.start_time) !== 0) {
++    // MP3 demuxer start includes encoder/decoder priming, already removed by
++    // native FFmpeg. Require packet skip + exact presentation ticks, not a
++    // codec name or rounded decimal start alone. No sample/clock adjustment.
++    let gaplessOrigin = false;
++    if (stream.codec_name === 'mp3' && probe.format?.format_name === 'mp3') {
++      const packets = JSON.parse(run('ffprobe', [
++        '-v', 'error', '-protocol_whitelist', 'file,pipe', '-select_streams', 'a:0',
++        '-read_intervals', '%+#1', '-show_packets', '-show_entries',
++        'packet=pts,dts:packet_side_data=side_data_type,skip_samples,discard_padding,skip_reason,discard_reason',
++        '-of', 'json', source,
++      ], 64 * 1024).toString());
++      const packet = packets.packets?.[0];
++      const skip = packet?.side_data_list?.find(data => data.side_data_type === 'Skip Samples');
++      const base = /^(\d+)\/(\d+)$/.exec(stream.time_base ?? '');
++      if (packet?.pts === 0 && packet.dts === 0
++        && Number.isSafeInteger(skip?.skip_samples) && skip.skip_samples > 0
++        && skip.skip_reason === 0 && skip.discard_reason === 0
++        && skip.discard_padding === 0
++        && Number.isSafeInteger(stream.start_pts) && stream.start_pts > 0
++        && base && BigInt(base[1]) > 0n && BigInt(base[2]) > 0n) {
++        gaplessOrigin = BigInt(stream.start_pts) * BigInt(base[1]) * BigInt(sampleRate)
++          === BigInt(skip.skip_samples) * BigInt(base[2]);
++      }
++    }
++    if (!gaplessOrigin) throw new Error('source PCM clock cannot be retained');
++  }
++  const directory = mkdtempSync(path.join(attemptDirectory, 'envelope-'));
++  try {
++    // File-backed subprocess stdout avoids retaining/capping the decoded pipe.
++    // Public apply/WAV still need whole-source arrays: this is NOT bounded RAM.
++    const decoded = path.join(directory, 'decoded.f32');
++    const fd = openSync(decoded, 'wx+');
++    let channels;
++    try {
++      execFileSync('ffmpeg', [
++        '-v', 'error', '-nostdin', '-protocol_whitelist', 'file,pipe', '-i', source,
++        '-map', '0:a:0', '-threads', '1', '-c:a', 'pcm_f32le', '-f', 'f32le', 'pipe:1',
++      ], {maxBuffer: 64 * 1024, timeout: 30000, stdio: ['ignore', fd, 'pipe']});
++      const bytes = statSync(decoded).size, frameBytes = count * 4;
++      if (!bytes || bytes % frameBytes !== 0) throw new Error('invalid decoded PCM');
++      const samples = bytes / frameBytes;
++      channels = Array.from({length: count}, () => new Float32Array(samples));
++      const block = Buffer.alloc(Math.max(1, Math.floor(64 * 1024 / frameBytes)) * frameBytes);
++      for (let position = 0; position < bytes;) {
++        const wanted = Math.min(block.length, bytes - position);
++        let received = 0;
++        while (received < wanted) {
++          const length = readSync(fd, block, received, wanted - received, position + received);
++          if (!length) throw new Error('incomplete decoded PCM');
++          received += length;
++        }
++        for (let offset = 0; offset < wanted; offset += frameBytes) {
++          for (let channel = 0; channel < count; channel++) {
++            const value = block.readFloatLE(offset + channel * 4);
++            if (!Number.isFinite(value)) throw new Error('non-finite source PCM');
++            channels[channel][(position + offset) / frameBytes] = value;
++          }
++        }
++        position += wanted;
++      }
++    } finally {
++      closeSync(fd);
++    }
++    rmSync(decoded);
++    applyAudioEnvelope(channels, sampleRate, envelope,
++      sourceClock.source_from, sourceClock.playback_rate);
++    const output = path.join(directory, 'source.wav');
++    writeFileSync(output, Buffer.from(audioEnvelopeWav(channels, sampleRate)), {flag: 'wx'});
++    // The existing consumer parses JSON before comparing its canonical key.
++    // Only the later asset-stage owner can attach the attempt's HTTP file URL.
++    return {path: output, envelope_key: JSON.stringify(envelope),
++      source_from: sourceClock.source_from, playback_rate: sourceClock.playback_rate};
++  } catch (error) {
++    rmSync(directory, {recursive: true, force: true});
++    throw error;
++  }
++};
+diff --git a/remotion/compiled-audio-source-clock.mjs b/remotion/compiled-audio-source-clock.mjs
+new file mode 100644
+index 000000000..badc39f42
+--- /dev/null
++++ b/remotion/compiled-audio-source-clock.mjs
+@@ -0,0 +1,13 @@
++import {
++  computeMediaTrim, getSanitizedPlaybackRate,
++} from '@banodoco/timeline-composition/evaluation';
++
++// Input must be the ONE Agent compiler's output. Occurrence offsets and speed
++// inheritance belong to that compiler; this adapter only reads its media clock.
++export const compiledAudioSourceClock = (compiledClip, fps) => {
++  if (!Number.isFinite(fps) || fps <= 0) throw new Error('resolved fps required');
++  return {
++    source_from: computeMediaTrim(compiledClip, fps).trimBefore / fps,
++    playback_rate: getSanitizedPlaybackRate(compiledClip.speed),
++  };
++};
+diff --git a/remotion/normal-audio-sources.mjs b/remotion/normal-audio-sources.mjs
+new file mode 100644
+index 000000000..c4f16ff61
+--- /dev/null
++++ b/remotion/normal-audio-sources.mjs
+@@ -0,0 +1,57 @@
++import {readFileSync, rmSync} from 'node:fs';
++import path from 'node:path';
++import {fileURLToPath} from 'node:url';
++import {compileAudioEnvelope} from '@banodoco/timeline-composition/evaluation';
++import {prepareAttemptEnvelopePcm} from './attempt-envelope-pcm.mjs';
++import {compiledAudioSourceClock} from './compiled-audio-source-clock.mjs';
++
++const translate = (envelope, delta) => ({
++  ...envelope,
++  ...(envelope.keyframes && {
++    keyframes: envelope.keyframes.map(point => ({...point, at: point.at - delta})),
++  }),
++  ...(envelope.multiply && {multiply: envelope.multiply.map(child => translate(child, delta))}),
++  ...(envelope.minimum && {minimum: envelope.minimum.map(child => translate(child, delta))}),
++});
++
++// Private subprocess data from the existing asset/source owner, never a grant.
++// originalClip must be retained before slicing, not reconstructed from app data.
++export const prepareNormalAudioSources = ({clips, fps, attemptDirectory}) => {
++  const prepared = [];
++  try {
++    for (const {clip, source, originalClip} of clips) {
++      if (clip.audio?.render_source !== undefined || originalClip?.audio?.render_source !== undefined) {
++        throw new Error('source already prepared');
++      }
++      const sourceClock = compiledAudioSourceClock(clip, fps);
++      let derived = clip;
++      if (originalClip) {
++        const originalClock = compiledAudioSourceClock(originalClip, fps);
++        if (originalClip.asset !== clip.asset || originalClip.track !== clip.track
++          || originalClock.playback_rate !== sourceClock.playback_rate) {
++          throw new Error('original compiled clip does not match sliced source');
++        }
++        const envelope = compileAudioEnvelope(originalClip, fps);
++        if (envelope) {
++          const delta = (sourceClock.source_from - originalClock.source_from) / sourceClock.playback_rate;
++          derived = {...clip, audio: {...clip.audio, envelope: translate(envelope, delta)}};
++        }
++      }
++      const row = prepareAttemptEnvelopePcm({clip: derived, fps, source, attemptDirectory, sourceClock});
++      prepared.push(row ? {...row, envelope: JSON.parse(row.envelope_key)} : null);
++    }
++    return prepared;
++  } catch (error) {
++    for (const row of prepared) if (row) rmSync(path.dirname(row.path), {recursive: true, force: true});
++    throw error;
++  }
++};
++
++if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
++  try {
++    process.stdout.write(JSON.stringify(prepareNormalAudioSources(JSON.parse(readFileSync(0, 'utf8')))));
++  } catch (error) {
++    process.stderr.write(`${error.message}\n`);
++    process.exitCode = 1;
++  }
++}
+diff --git a/remotion/tests/gapless-mp3-source-origin.test.mjs b/remotion/tests/gapless-mp3-source-origin.test.mjs
+new file mode 100644
+index 000000000..70c471e59
+--- /dev/null
++++ b/remotion/tests/gapless-mp3-source-origin.test.mjs
+@@ -0,0 +1,192 @@
++import assert from 'node:assert/strict';
++import {execFileSync} from 'node:child_process';
++import {createHash} from 'node:crypto';
++import {mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
++import os from 'node:os';
++import path from 'node:path';
++import {after, before, test} from 'node:test';
++import {applyAudioEnvelope, audioEnvelopeWav, compileAudioEnvelope} from '@banodoco/timeline-composition/evaluation';
++import {prepareAttemptEnvelopePcm} from '../attempt-envelope-pcm.mjs';
++import {compiledAudioSourceClock} from '../compiled-audio-source-clock.mjs';
++
++const sampleRate = 48000, frames = 86400, count = 2, fps = 30000 / 1001;
++const run = (program, args) => execFileSync(program, args, {
++  stdio: ['ignore', 'pipe', 'pipe'], timeout: 30000, maxBuffer: 2 * 1024 * 1024,
++});
++const encode = args => run('ffmpeg', ['-v', 'error', '-nostdin', '-filter_threads', '1',
++  ...args.slice(0, -1), '-threads', '1', args.at(-1)]);
++const decode = file => run('ffmpeg', ['-v', 'error', '-nostdin', '-i', file,
++  '-map', '0:a:0', '-threads', '1', '-c:a', 'pcm_f32le', '-f', 'f32le', 'pipe:1']);
++const probe = file => JSON.parse(run('ffprobe', ['-v', 'error', '-select_streams', 'a:0',
++  '-show_entries', 'format=format_name,start_time:stream=codec_name,sample_rate,channels,time_base,start_pts,start_time,duration_ts',
++  '-of', 'json', file]).toString());
++const packets = file => JSON.parse(run('ffprobe', ['-v', 'error', '-select_streams', 'a:0',
++  '-show_packets', '-show_entries', 'packet=pts,dts,duration:packet_side_data=side_data_type,skip_samples,discard_padding,skip_reason,discard_reason',
++  '-of', 'json', file]).toString()).packets;
++const skip = packet => packet.side_data_list?.find(data => data.side_data_type === 'Skip Samples');
++const planar = pcm => {
++  assert.equal(pcm.length % 8, 0);
++  const channels = Array.from({length: count}, () => new Float32Array(pcm.length / 8));
++  for (let i = 0; i < channels[0].length; i++) for (let channel = 0; channel < count; channel++) {
++    channels[channel][i] = pcm.readFloatLE(i * 8 + channel * 4);
++  }
++  return channels;
++};
++const onsets = pcm => planar(pcm).map(channel => channel.findIndex(value => Math.abs(value) > 0.03));
++const digest = bytes => createHash('sha256').update(bytes).digest('hex');
++const referenceWav = (pcm, clip, clock) => {
++  const channels = planar(pcm);
++  applyAudioEnvelope(channels, sampleRate, compileAudioEnvelope(clip, fps),
++    clock.source_from, clock.playback_rate);
++  return Buffer.from(audioEnvelopeWav(channels, sampleRate));
++};
++const wavHeader = wav => {
++  assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
++  assert.equal(wav.readUInt16LE(20), 3);
++  assert.equal(wav.readUInt16LE(22), count);
++  assert.equal(wav.readUInt32LE(24), sampleRate);
++  assert.equal(wav.readUInt16LE(34), 32);
++  assert.equal(wav.readUInt32LE(40), frames * count * 4);
++  assert.equal(wav.length, 44 + frames * count * 4);
++};
++const unityClip = {
++  id: 'music', asset: 'music', track: 'A1', at: 5, from: 0, to: 1.8, volume: 7,
++  audio: {envelope: {keyframes: [{at: 0, value: 1}]}},
++};
++let scratch, source, mp3, attemptDirectory, reference, native;
++const observed = {};
++
++before(() => {
++  scratch = mkdtempSync(path.join(os.tmpdir(), 'gapless-mp3-origin-'));
++  attemptDirectory = path.join(scratch, 'attempt');
++  mkdirSync(attemptDirectory);
++  writeFileSync(path.join(attemptDirectory, 'unrelated'), 'keep');
++  source = path.join(scratch, 'source.wav');
++  // Independent PCM16 source. Unequal delayed tones expose priming on both
++  // channels; the original reference is never trimmed, shifted or aligned.
++  const bytes = Buffer.alloc(44 + frames * 4);
++  bytes.write('RIFF'); bytes.writeUInt32LE(bytes.length - 8, 4); bytes.write('WAVEfmt ', 8);
++  bytes.writeUInt32LE(16, 16); bytes.writeUInt16LE(1, 20); bytes.writeUInt16LE(count, 22);
++  bytes.writeUInt32LE(sampleRate, 24); bytes.writeUInt32LE(sampleRate * 4, 28);
++  bytes.writeUInt16LE(4, 32); bytes.writeUInt16LE(16, 34);
++  bytes.write('data', 36); bytes.writeUInt32LE(frames * 4, 40);
++  for (let i = 0; i < frames; i++) {
++    bytes.writeInt16LE(i < 9600 ? 0 : Math.round(32768 * 0.1 * Math.sin(2 * Math.PI * 440 * (i - 9600) / sampleRate)), 44 + i * 4);
++    bytes.writeInt16LE(i < 14400 ? 0 : Math.round(-32768 * 0.075 * Math.sin(2 * Math.PI * 660 * (i - 14400) / sampleRate)), 46 + i * 4);
++  }
++  writeFileSync(source, bytes);
++  mp3 = path.join(scratch, 'source.mp3');
++  encode(['-i', source, '-c:a', 'libmp3lame', '-b:a', '128k', mp3]);
++  encode(['-i', source, '-c:a', 'libmp3lame', '-b:a', '128k', '-write_xing', '0', path.join(scratch, 'unknown.mp3')]);
++  encode(['-i', source, '-c:a', 'aac', '-b:a', '128k', '-f', 'adts', path.join(scratch, 'unknown.aac')]);
++  encode(['-i', source, '-c:a', 'aac', '-b:a', '128k', path.join(scratch, 'source.m4a')]);
++  encode(['-itsoffset', '0.125', '-i', path.join(scratch, 'source.m4a'), '-c', 'copy', path.join(scratch, 'offset-aac.mka')]);
++  encode(['-i', mp3, '-c', 'copy', '-output_ts_offset', '0.125', path.join(scratch, 'offset-mp3.mka')]);
++  reference = decode(source);
++  native = decode(mp3);
++  for (const name of ['source.mp3', 'unknown.mp3', 'unknown.aac', 'source.m4a', 'offset-aac.mka', 'offset-mp3.mka']) {
++    const file = path.join(scratch, name), metadata = probe(file), packetList = packets(file), pcm = decode(file);
++    observed[name] = {stream: metadata.streams[0], format: metadata.format,
++      first: packetList[0], last: packetList.at(-1),
++      frames: pcm.length / 8, onset: onsets(pcm), pcm};
++  }
++});
++after(() => rmSync(scratch, {recursive: true, force: true}));
++
++test('ordinary gapless MP3 decodes through public apply into a full native-source WAV', () => {
++  const metadata = observed['source.mp3'];
++  assert.equal(reference.length / 8, frames);
++  assert.deepEqual(onsets(reference), [9606, 14405]);
++  assert.equal(metadata.stream.start_time, '0.023021');
++  assert.equal(metadata.format.start_time, '0.023021');
++  assert.equal(metadata.stream.time_base, '1/14112000');
++  assert.equal(metadata.stream.start_pts, 324870);
++  assert.equal(metadata.first.pts, 0);
++  assert.equal(skip(metadata.first).skip_samples, 1105);
++  assert.equal(skip(metadata.last).discard_padding, 47);
++  assert.equal(metadata.frames, frames);
++  const delta = metadata.onset.map((value, channel) => value - onsets(reference)[channel]);
++  assert.deepEqual(delta, [0, 1]); // Codec waveform difference, no fitted alignment.
++  const packetSamples = packets(mp3).reduce((sum, packet) => sum + packet.duration / 294, 0);
++  assert.equal(packetSamples - skip(metadata.first).skip_samples - skip(metadata.last).discard_padding, frames);
++  const before = digest(readFileSync(mp3)), graph = JSON.stringify(unityClip);
++  const sourceClock = compiledAudioSourceClock(unityClip, fps);
++  const prepared = prepareAttemptEnvelopePcm({clip: unityClip, fps, source: mp3, attemptDirectory, sourceClock});
++  const wav = readFileSync(prepared.path);
++  wavHeader(wav);
++  assert.equal(wav.subarray(44).equals(native), true); // Every raw native decoded sample, both channels.
++  assert.equal(wav.equals(referenceWav(native, unityClip, sourceClock)), true);
++  assert.equal(decode(prepared.path).equals(native), true);
++  assert.equal(prepared.source_from, 0);
++  assert.equal(prepared.playback_rate, 1);
++  assert.equal(prepared.envelope_key, JSON.stringify(compileAudioEnvelope(unityClip, fps)));
++  assert.deepEqual(readdirSync(path.dirname(prepared.path)), ['source.wav']);
++  assert.equal(digest(readFileSync(mp3)), before);
++  assert.equal(JSON.stringify(unityClip), graph);
++  console.log(JSON.stringify({positive: 'gapless MP3', frames, onsetDelta: delta,
++    skip: 1105, discard: 47, wavSha256: digest(wav)}));
++});
++
++test('rational public trim and child speed retain the full source and expose a wrong decoder origin', () => {
++  const clip = {...unityClip, from: 0.051, to: 1.401, speed: 1.5, hold: 0.8,
++    params: {fadeIn: 0.2, fadeInCurve: 'equal-power', fadeOut: 0.15}, audio: undefined};
++  const graph = JSON.stringify(clip), sourceClock = compiledAudioSourceClock(clip, fps);
++  assert.deepEqual(sourceClock, {source_from: 2 / fps, playback_rate: 1.5});
++  assert.notEqual(sourceClock.source_from, clip.from);
++  const prepared = prepareAttemptEnvelopePcm({clip, fps, source: mp3, attemptDirectory, sourceClock});
++  const actual = readFileSync(prepared.path), expected = referenceWav(native, clip, sourceClock);
++  wavHeader(actual);
++  assert.equal(actual.equals(expected), true, 'all full-source public WAV bytes');
++  assert.equal(decode(prepared.path).equals(actual.subarray(44)), true, 'native float WAV readback');
++  // A priming debt accidentally added to the public origin must fail exact
++  // whole-source comparison. Never fit or correct it per clip to get a pass.
++  const wrong = referenceWav(native, clip, {...sourceClock,
++    source_from: sourceClock.source_from + 1105 / sampleRate});
++  assert.notEqual(digest(actual), digest(wrong));
++  assert.equal(actual.equals(wrong), false);
++  assert.equal(prepared.source_from, sourceClock.source_from);
++  assert.equal(prepared.playback_rate, sourceClock.playback_rate);
++  assert.equal(JSON.stringify(clip), graph);
++  console.log(JSON.stringify({positive: 'rational trim + child speed', sourceClock,
++    wavSha256: digest(actual), wrongOriginSha256: digest(wrong)}));
++});
++
++test('a source-backed timestamped MP3 without skip metadata cannot use the relaxation', () => {
++  const bad = observed['offset-mp3.mka'];
++  assert.equal(bad.stream.codec_name, 'mp3');
++  assert.notEqual(Number(bad.stream.start_time), 0);
++  assert.equal(skip(bad.first), undefined);
++  assert.notEqual(bad.frames, frames);
++  assert.ok(bad.onset.every((value, channel) => value - onsets(reference)[channel] > 1000));
++  const before = readdirSync(attemptDirectory);
++  assert.throws(() => prepareAttemptEnvelopePcm({clip: unityClip, fps,
++    source: path.join(scratch, 'offset-mp3.mka'), attemptDirectory,
++    sourceClock: compiledAudioSourceClock(unityClip, fps)}), /source PCM clock cannot be retained/);
++  assert.deepEqual(readdirSync(attemptDirectory), before);
++  assert.equal(readFileSync(path.join(attemptDirectory, 'unrelated'), 'utf8'), 'keep');
++});
++
++test('direct unknown-origin evidence retains zero-start MP3 and absent-start/offset AAC debt', () => {
++  const unknown = observed['unknown.mp3'], adts = observed['unknown.aac'];
++  const m4a = observed['source.m4a'], offset = observed['offset-aac.mka'];
++  assert.equal(Number(unknown.stream.start_time), 0);
++  assert.equal(skip(unknown.first), undefined);
++  assert.notEqual(unknown.frames, frames);
++  assert.ok(unknown.onset.every((value, channel) => value - onsets(reference)[channel] > 1000));
++  assert.equal(adts.stream.start_time, undefined);
++  assert.equal(adts.format.start_time, undefined);
++  assert.equal(skip(adts.first), undefined);
++  assert.equal(adts.frames, 88064);
++  assert.deepEqual(adts.onset.map((value, channel) => value - onsets(reference)[channel]), [1024, 1024]);
++  assert.equal(skip(m4a.first).skip_samples, 1024);
++  assert.equal(m4a.frames, 87040); // Onset preserved, 640 trailing frames: unresolved count policy.
++  assert.deepEqual(m4a.onset, onsets(reference));
++  assert.notEqual(Number(offset.stream.start_time), 0);
++  assert.equal(skip(offset.first), undefined);
++  assert.equal(offset.frames, 88064);
++  assert.deepEqual(offset.onset.map((value, channel) => value - onsets(reference)[channel]), [1024, 1024]);
++  for (const [name, {pcm, ...data}] of Object.entries(observed)) {
++    console.log(JSON.stringify({characterization: name, ...data,
++      onsetDelta: data.onset.map((value, channel) => value - onsets(reference)[channel])}));
++  }
++});
+diff --git a/remotion/tests/long-audio-source.test.mjs b/remotion/tests/long-audio-source.test.mjs
+new file mode 100644
+index 000000000..7d65d8b65
+--- /dev/null
++++ b/remotion/tests/long-audio-source.test.mjs
+@@ -0,0 +1,133 @@
++import assert from 'node:assert/strict';
++import {execFileSync} from 'node:child_process';
++import {createHash} from 'node:crypto';
++import {closeSync, mkdirSync, mkdtempSync, openSync, readSync, readdirSync, rmSync, statSync, writeFileSync, writeSync} from 'node:fs';
++import os from 'node:os';
++import path from 'node:path';
++import {test} from 'node:test';
++import {applyAudioEnvelope, audioEnvelopeWav} from '@banodoco/timeline-composition/evaluation';
++import {prepareAttemptEnvelopePcm} from '../attempt-envelope-pcm.mjs';
++import {compiledAudioSourceClock} from '../compiled-audio-source-clock.mjs';
++
++const sampleRate = 48000, channels = 2, frames = 8388609;
++const decodedBytes = frames * channels * 4; // 64 MiB plus one stereo frame.
++const fps = 30000 / 1001;
++const clip = {
++  id: 'long-music', track: 'A1', asset: 'music', at: 0, from: 0.051,
++  to: frames / sampleRate, speed: 1.5, volume: 7,
++  audio: {envelope: {keyframes: [
++    {at: 0, value: 0, curve: 'equal-power'}, {at: 0.2, value: 1},
++    {at: 60, value: 1, curve: 's-curve'}, {at: 90, value: 0.5},
++  ]}},
++};
++const digest = file => {
++  const hash = createHash('sha256'), fd = openSync(file, 'r'), block = Buffer.alloc(64 * 1024);
++  try {
++    let length;
++    while ((length = readSync(fd, block))) hash.update(block.subarray(0, length));
++    return hash.digest('hex');
++  } finally { closeSync(fd); }
++};
++const read = (file, at, length) => {
++  const fd = openSync(file, 'r'), result = Buffer.alloc(length);
++  try { assert.equal(readSync(fd, result, 0, length, at), length); return result; }
++  finally { closeSync(fd); }
++};
++// Independent native-rate stereo float WAV, written in bounded blocks. Unequal
++// channels and edge impulses expose truncation, clipping and interleaving loss.
++const sourceWav = (file, count = frames, nonfinite = false) => {
++  const header = Buffer.alloc(44), bytes = count * 8;
++  header.write('RIFF'); header.writeUInt32LE(bytes + 36, 4); header.write('WAVEfmt ', 8);
++  header.writeUInt32LE(16, 16); header.writeUInt16LE(3, 20); header.writeUInt16LE(2, 22);
++  header.writeUInt32LE(sampleRate, 24); header.writeUInt32LE(sampleRate * 8, 28);
++  header.writeUInt16LE(8, 32); header.writeUInt16LE(32, 34);
++  header.write('data', 36); header.writeUInt32LE(bytes, 40);
++  const fd = openSync(file, 'wx'), block = Buffer.alloc(64 * 1024);
++  try {
++    writeSync(fd, header);
++    for (let start = 0; start < count; start += block.length / 8) {
++      const size = Math.min(block.length / 8, count - start);
++      for (let i = 0; i < size; i++) {
++        block.writeFloatLE(nonfinite ? Infinity : start + i === count - 1 ? 3 : 0.25, i * 8);
++        block.writeFloatLE(start + i === count - 2 ? -2 : -0.125, i * 8 + 4);
++      }
++      writeSync(fd, block.subarray(0, size * 8));
++    }
++  } finally { closeSync(fd); }
++};
++
++test('ordinary long source exceeds the old stdout cap and retains full-source public WAV bytes', () => {
++  assert.equal(process.env.TIMELINE_HEAVY, '1', 'run with the explicitly authorized heavy flag');
++  const scratch = mkdtempSync(path.join(os.tmpdir(), 'long-envelope-'));
++  try {
++    const source = path.join(scratch, 'music.wav'), attemptDirectory = path.join(scratch, 'attempt');
++    mkdirSync(attemptDirectory);
++    sourceWav(source);
++    const before = digest(source), graph = JSON.stringify(clip);
++    const sourceClock = compiledAudioSourceClock(clip, fps);
++    assert.deepEqual(sourceClock, {source_from: 2 / fps, playback_rate: 1.5});
++    const args = {clip, fps, source, attemptDirectory, sourceClock};
++    assert.equal(decodedBytes, 64 * 1024 * 1024 + 8);
++    // Independent whole-source channels and unchanged public apply/WAV are the
++    // oracle. No chunk-origin arithmetic or replacement gain policy is used.
++    const referenceDigest = () => {
++      const reference = [new Float32Array(frames).fill(0.25), new Float32Array(frames).fill(-0.125)];
++      reference[0][frames - 1] = 3;
++      reference[1][frames - 2] = -2;
++      applyAudioEnvelope(reference, sampleRate, clip.audio.envelope,
++        sourceClock.source_from, sourceClock.playback_rate);
++      return createHash('sha256').update(Buffer.from(audioEnvelopeWav(reference, sampleRate))).digest('hex');
++    };
++    const expected = referenceDigest();
++    global.gc?.();
++    const prepared = prepareAttemptEnvelopePcm(args);
++    assert.equal(digest(prepared.path), expected);
++    assert.equal(statSync(prepared.path).size, decodedBytes + 44);
++    assert.deepEqual(readdirSync(path.dirname(prepared.path)), ['source.wav']);
++    const header = read(prepared.path, 0, 44);
++    assert.equal(header.toString('ascii', 0, 4), 'RIFF');
++    assert.equal(header.readUInt16LE(20), 3);
++    assert.equal(header.readUInt16LE(22), channels);
++    assert.equal(header.readUInt32LE(24), sampleRate);
++    assert.equal(header.readUInt32LE(40), decodedBytes);
++    assert.equal(read(prepared.path, 44, 8).readFloatLE(0), 0);
++    // Far beyond the former limit: no truncation, gain baking or clipping.
++    assert.equal(read(prepared.path, 44 + (frames - 1) * 8, 8).readFloatLE(0), 1.5);
++    assert.equal(read(prepared.path, 44 + (frames - 2) * 8, 8).readFloatLE(4), -1);
++    assert.equal(prepared.source_from, sourceClock.source_from);
++    assert.equal(prepared.playback_rate, sourceClock.playback_rate);
++    assert.equal(prepared.envelope_key, JSON.stringify(clip.audio.envelope));
++    const decoded = path.join(scratch, 'readback.f32'), fd = openSync(decoded, 'wx');
++    try {
++      execFileSync('ffmpeg', ['-v', 'error', '-nostdin', '-i', prepared.path,
++        '-map', '0:a:0', '-threads', '1', '-c:a', 'pcm_f32le', '-f', 'f32le', 'pipe:1'],
++      {stdio: ['ignore', fd, 'pipe'], timeout: 30000, maxBuffer: 64 * 1024});
++    } finally { closeSync(fd); }
++    assert.equal(statSync(decoded).size, decodedBytes);
++    assert.equal(read(decoded, (frames - 1) * 8, 8).readFloatLE(0), 1.5);
++    assert.equal(digest(source), before);
++    assert.equal(JSON.stringify(clip), graph);
++    console.log(JSON.stringify({frames, sampleRate, channels, decodedBytes, seconds: frames / sampleRate,
++      sourceClock, wavSha256: expected, maxRssKiB: process.resourceUsage().maxRSS}));
++  } finally { rmSync(scratch, {recursive: true, force: true}); }
++});
++
++test('file-backed proposal cleans its own scratch on nonfinite PCM and decoder failure', () => {
++  const scratch = mkdtempSync(path.join(os.tmpdir(), 'long-envelope-errors-'));
++  try {
++    const source = path.join(scratch, 'bad.wav'), attemptDirectory = path.join(scratch, 'attempt');
++    mkdirSync(attemptDirectory);
++    const sentinel = path.join(attemptDirectory, 'unrelated');
++    writeFileSync(sentinel, 'keep');
++    sourceWav(source, 100, true);
++    const args = {clip, fps, source, attemptDirectory, sourceClock: compiledAudioSourceClock(clip, fps)};
++    assert.throws(() => prepareAttemptEnvelopePcm(args), /non-finite source PCM/);
++    assert.deepEqual(readdirSync(attemptDirectory), ['unrelated']);
++    // Valid WAV header but no sample frames: ffprobe succeeds, ffmpeg produces
++    // no PCM (or fails), and preparation never publishes a partial source.wav.
++    writeFileSync(source, read(source, 0, 44));
++    assert.throws(() => prepareAttemptEnvelopePcm(args));
++    assert.deepEqual(readdirSync(attemptDirectory), ['unrelated']);
++    assert.equal(digest(sentinel), createHash('sha256').update('keep').digest('hex'));
++  } finally { rmSync(scratch, {recursive: true, force: true}); }
++});
+diff --git a/remotion/tests/normal-audio-sources.test.mjs b/remotion/tests/normal-audio-sources.test.mjs
+new file mode 100644
+index 000000000..4778d6e96
+--- /dev/null
++++ b/remotion/tests/normal-audio-sources.test.mjs
+@@ -0,0 +1,103 @@
++import assert from 'node:assert/strict';
++import {mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
++import os from 'node:os';
++import path from 'node:path';
++import {test} from 'node:test';
++import {applyAudioEnvelope, audioEnvelopeWav, compileAudioEnvelope} from '@banodoco/timeline-composition/evaluation';
++import {prepareNormalAudioSources} from '../normal-audio-sources.mjs';
++import {compiledAudioSourceClock} from '../compiled-audio-source-clock.mjs';
++
++const sampleRate = 30000, frames = 60000;
++const wav = (left, right) => {
++  const data = Buffer.alloc(44 + frames * 4);
++  data.write('RIFF'); data.writeUInt32LE(data.length - 8, 4); data.write('WAVEfmt ', 8);
++  data.writeUInt32LE(16, 16); data.writeUInt16LE(1, 20); data.writeUInt16LE(2, 22);
++  data.writeUInt32LE(sampleRate, 24); data.writeUInt32LE(sampleRate * 4, 28);
++  data.writeUInt16LE(4, 32); data.writeUInt16LE(16, 34);
++  data.write('data', 36); data.writeUInt32LE(frames * 4, 40);
++  for (let i = 0; i < frames; i++) {
++    data.writeInt16LE(left, 44 + i * 4); data.writeInt16LE(right, 46 + i * 4);
++  }
++  return data;
++};
++const fixture = run => {
++  const scratch = mkdtempSync(path.join(os.tmpdir(), 'normal-audio-test-'));
++  try {
++    const source = path.join(scratch, 'original.wav'), attemptDirectory = path.join(scratch, 'attempt');
++    mkdirSync(attemptDirectory); writeFileSync(source, wav(8192, -4096));
++    run({scratch, source, attemptDirectory});
++  } finally { rmSync(scratch, {recursive: true, force: true}); }
++};
++const clip = {id: 'sound', track: 'A1', asset: 'sound', at: 0, from: 0, to: 2,
++  volume: 3, params: {fadeIn: 0.5, fadeOut: 0.5}};
++
++for (const [fps, from, speed, curve] of [
++  [30, 0, 1, 'linear'], [30, 0, 1, 'equal-power'],
++  [30, 0.05, 1.5, 'equal-power'], [30000 / 1001, 0.05, 1.5, 's-curve'],
++]) test(`owner-supplied original phase: fps=${fps}, from=${from}, speed=${speed}, curve=${curve}`, () => fixture(args => {
++  const originalClip = {...clip, from, speed,
++    params: {fadeIn: 0.5, fadeOut: 0.5, fadeInCurve: curve, fadeOutCurve: curve}};
++  const sliced = {...originalClip, id: 'slice', from: from + 0.5 * speed, to: Math.min(2, from + 1.5 * speed),
++    app: {astrid_slice_origin: {from: 99, to: 99}}};
++  const before = JSON.stringify({originalClip, sliced});
++  const [whole, part] = prepareNormalAudioSources({...args, fps, clips: [
++    {clip: originalClip, source: args.source}, {clip: sliced, originalClip, source: args.source},
++  ]});
++  const wholePcm = readFileSync(whole.path), partPcm = readFileSync(part.path);
++  assert.equal(wholePcm.length, 44 + frames * 8);
++  assert.equal(partPcm.length, wholePcm.length);
++  for (let at = 44; at < wholePcm.length; at += 4) {
++    assert.ok(Math.abs(partPcm.readFloatLE(at) - wholePcm.readFloatLE(at)) < 1e-7, `sample byte ${at}`);
++  }
++  if (from === 0 && speed === 1) assert.equal(partPcm.readFloatLE(44 + 15000 * 8), 0.25);
++  assert.deepEqual(part.envelope, JSON.parse(part.envelope_key));
++  assert.equal(JSON.stringify({originalClip, sliced}), before);
++  const reference = [new Float32Array(frames).fill(0.25), new Float32Array(frames).fill(-0.125)];
++  const clock = compiledAudioSourceClock(originalClip, fps);
++  applyAudioEnvelope(reference, sampleRate, compileAudioEnvelope(originalClip, fps), clock.source_from, clock.playback_rate);
++  assert.deepEqual(wholePcm, Buffer.from(audioEnvelopeWav(reference, sampleRate)));
++}));
++
++test('same envelope and clock retain distinct actual source bytes, not a swapped WAV', () => fixture(args => {
++  const other = path.join(args.scratch, 'other.wav'); writeFileSync(other, wav(-16384, 2048));
++  const [a, b] = prepareNormalAudioSources({...args, fps: 30, clips: [
++    {clip, source: args.source}, {clip: {...clip, asset: 'other'}, source: other},
++  ]});
++  assert.equal(a.envelope_key, b.envelope_key);
++  assert.equal(a.source_from, b.source_from); assert.equal(a.playback_rate, b.playback_rate);
++  assert.notEqual(a.path, b.path);
++  assert.equal(readFileSync(a.path).readFloatLE(44 + 15000 * 8), 0.25);
++  assert.equal(readFileSync(b.path).readFloatLE(44 + 15000 * 8), -0.5);
++}));
++
++test('recursive multiply/minimum phase translation preserves envelope fields', () => fixture(args => {
++  const originalClip = {...clip, audio: {envelope: {keyframes: [{at: 0, value: 2}],
++    multiply: [{keyframes: [{at: 0, value: 0, curve: 's-curve'}, {at: 0.5, value: 1}]}],
++    minimum: [{keyframes: [{at: 0, value: 0.5}]}]}}};
++  const [row] = prepareNormalAudioSources({...args, fps: 30, clips: [
++    {clip: {...originalClip, from: 0.5}, originalClip, source: args.source},
++  ]});
++  assert.equal(row.envelope.keyframes[0].at, -0.5);
++  assert.equal(row.envelope.multiply[0].keyframes[0].at, -0.5);
++  assert.equal(row.envelope.multiply[0].keyframes[0].curve, 's-curve');
++  assert.equal(row.envelope.minimum[0].keyframes[0].at, -0.5);
++  assert.equal(readFileSync(row.path).readFloatLE(44 + 15000 * 8), 0.25);
++}));
++
++test('forged prepared WAVs and double apply fail before preparing any source', () => fixture(args => {
++  const [row] = prepareNormalAudioSources({...args, fps: 30, clips: [{clip, source: args.source}]});
++  for (const file of [row.path, '/wrong.wav']) {
++    assert.throws(() => prepareNormalAudioSources({...args, fps: 30, clips: [
++      {clip: {...clip, audio: {render_source: {file, envelope_key: row.envelope_key,
++        source_from: row.source_from, playback_rate: row.playback_rate}}}, source: args.source},
++    ]}), /already prepared/);
++  }
++}));
++
++test('failed batches clean prepared predecessors and preserve unrelated attempt files', () => fixture(args => {
++  writeFileSync(path.join(args.attemptDirectory, 'unrelated'), 'keep');
++  assert.throws(() => prepareNormalAudioSources({...args, fps: 30, clips: [
++    {clip, source: args.source}, {clip: {...clip, params: {fadeIn: 0.5, fadeInCurve: 'unknown'}}, source: args.source},
++  ]}), /ENVELOPE_UNRENDERED/);
++  assert.deepEqual(readdirSync(args.attemptDirectory), ['unrelated']);
++}));
+diff --git a/tests/packs/rendering/test_normal_audio_sources.py b/tests/packs/rendering/test_normal_audio_sources.py
+new file mode 100644
+index 000000000..04fbae05f
+--- /dev/null
++++ b/tests/packs/rendering/test_normal_audio_sources.py
+@@ -0,0 +1,271 @@
++"""Inactive asset-stage tests using real native decode and public audio helpers.
++
++The URL resolver exercises containment only; these are not normal-render or
++trusted-producer positives. The original ENVELOPE_UNRENDERED requirement stays.
++"""
++
++import copy
++import hashlib
++import io
++import json
++import os
++import shutil
++import struct
++import wave
++from pathlib import Path
++
++import pytest
++
++from astrid.core.rendering.assets import AssetMaterializer
++from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
++from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import (
++    prepare_normal_audio_sources,
++)
++
++
++class ContainedURLs:
++    def __init__(self, root):
++        self.root = root
++
++    def local_url(self, path):
++        relative = Path(path).resolve(strict=True).relative_to(self.root)
++        return "http://attempt.invalid/" + relative.as_posix()
++
++
++@pytest.fixture
++def stage(tmp_path, monkeypatch):
++    # The suite redirects Python caches; the real launch policy rejects that
++    # interpreter override, so keep it out of this native subprocess fixture.
++    monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
++    pcm = io.BytesIO()
++    with wave.open(pcm, "wb") as writer:
++        writer.setparams((2, 2, 30000, 0, "NONE", "not compressed"))
++        writer.writeframes(struct.pack("<hh", 8192, -4096) * 30000)
++    payload = pcm.getvalue()
++    other = bytearray(payload)
++    for offset in range(44, len(other), 4):
++        struct.pack_into("<hh", other, offset, -16384, 2048)
++    other = bytes(other)
++    registry = tmp_path / "assets.json"
++    registry.write_text(json.dumps({"assets": {"sound": {
++        "object_id": "object-sound", "digest": hashlib.sha256(payload).hexdigest(),
++        "type": "audio/wav",
++    }, "other": {
++        "object_id": "object-other", "digest": hashlib.sha256(other).hexdigest(),
++        "type": "audio/wav",
++    }}}))
++    with AssetMaterializer(registry, materialized_objects={
++        "object-sound": payload, "object-other": other,
++    }) as materializer:
++        urls = ContainedURLs(materializer.serving_root)
++        attempt = materializer.serving_root / "envelopes"
++        attempt.mkdir()
++        project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", "remotion")).resolve()
++        tools = RemotionRuntimeTools(Path(shutil.which("node")), "test-only", project / "unused-cli")
++        props = {
++            "timeline": {"tracks": [{"id": "A1", "kind": "audio", "volume": 0.5}], "clips": [{
++                "id": "sound", "track": "A1", "asset": "sound", "at": 0.25,
++                "from": 0.05, "to": 0.55, "speed": 1.5, "volume": 3,
++                "params": {"fadeIn": 0.1, "fadeOut": 0.1, "fadeInCurve": "equal-power"},
++                "app": {"astrid_shot_composition": {"source_offset": 350, "speed": 2}},
++            }]},
++            "assets": materializer.resolved_registry(urls),
++            "compiledTransitions": {"fps": 30, "tracks": []},
++        }
++
++        def prepare(value, **kwargs):
++            return prepare_normal_audio_sources(
++                value, materializer=materializer, asset_server=urls, attempt_directory=attempt,
++                project_dir=project, runtime_tools=tools, **kwargs,
++            )
++
++        yield props, prepare, attempt, registry, payload
++
++
++@pytest.mark.parametrize("fps,origin", [(30, 2 / 30), (30000 / 1001, 1 / (30000 / 1001))])
++def test_full_stereo_wav_and_exact_compiler_clock_without_authored_writes(stage, fps, origin):
++    props, prepare, attempt, registry, payload = stage
++    props["compiledTransitions"]["fps"] = fps
++    before = copy.deepcopy(props)
++    registry_before = registry.read_bytes()
++    output = prepare(props)
++    prepared = output["timeline"]["clips"][0]["audio"]["render_source"]
++    assert prepared["source_from"] == origin
++    assert prepared["playback_rate"] == 1.5
++    assert json.loads(prepared["envelope_key"])["multiply"]
++    wav = next(attempt.glob("normal-audio-*/envelope-*/source.wav")).read_bytes()
++    assert wav[:4] == b"RIFF"
++    assert struct.unpack_from("<HHI", wav, 20) == (3, 2, 30000)
++    assert len(wav) == 44 + 30000 * 2 * 4
++    assert struct.unpack_from("<ff", wav, 44 + 8000 * 8) == (0.25, -0.125)
++    assert struct.unpack_from("<ff", wav, 44) == (0, 0)
++    assert props == before
++    assert registry.read_bytes() == registry_before
++    assert hashlib.sha256(payload).hexdigest() in registry_before.decode()
++    del output["timeline"]["clips"][0]["audio"]
++    assert output == props  # includes scalar gain, metadata, at/from/to/speed and full registry
++
++
++def test_wrong_root_asset_url_is_rejected_before_pcm(stage):
++    props, prepare, attempt, _, _ = stage
++    props["assets"]["assets"]["sound"]["file"] = "http://foreign.invalid/same-clock.wav"
++    with pytest.raises(ValueError, match="registry differs"):
++        prepare(props)
++    assert list(attempt.iterdir()) == []
++
++
++def test_wrong_bytes_under_right_managed_asset_identity_are_rejected(stage):
++    _, _, _, registry, payload = stage
++    with pytest.raises(ValueError, match="integrity check"):
++        AssetMaterializer(registry, materialized_objects={"object-sound": payload[:-4] + b"nope"})
++
++
++def test_prepared_output_cannot_be_applied_twice(stage):
++    props, prepare, _, _, _ = stage
++    output = prepare(props)
++    with pytest.raises(ValueError, match="already prepared"):
++        prepare(output)
++
++
++def test_no_envelope_does_not_create_render_source_or_pcm(stage):
++    props, prepare, attempt, _, _ = stage
++    props["timeline"]["clips"][0].pop("params")
++    assert prepare(props) == props
++    assert list(attempt.iterdir()) == []
++
++
++def test_replaced_staged_bytes_cannot_keep_the_original_managed_identity(stage):
++    props, prepare, attempt, _, _ = stage
++    url = props["assets"]["assets"]["sound"]["file"]
++    materialized = attempt.parent / url.removeprefix("http://attempt.invalid/")
++    materialized.write_bytes(materialized.read_bytes()[:-4] + b"nope")
++    with pytest.raises(ValueError, match="integrity check"):
++        prepare(props)
++    assert list(attempt.iterdir()) == []
++
++
++def test_forged_render_source_is_not_admission_even_with_a_valid_clock(stage):
++    props, prepare, attempt, _, _ = stage
++    props["timeline"]["clips"][0]["audio"] = {"render_source": {
++        "file": "http://attempt.invalid/wrong.wav", "source_from": 2 / 30,
++        "playback_rate": 1.5, "envelope_key": "{}",
++    }}
++    with pytest.raises(ValueError, match="already prepared"):
++        prepare(props)
++    assert list(attempt.iterdir()) == []
++
++
++def test_failed_batch_removes_only_its_own_files(stage):
++    props, prepare, attempt, _, _ = stage
++    sentinel = attempt / "unrelated"
++    sentinel.write_bytes(b"keep")
++    second = copy.deepcopy(props["timeline"]["clips"][0])
++    second["id"] = "bad"
++    second["params"]["fadeInCurve"] = "unknown"
++    props["timeline"]["clips"].append(second)
++    before = copy.deepcopy(props)
++    with pytest.raises(RuntimeError, match="ENVELOPE_UNRENDERED"):
++        prepare(props)
++    assert list(attempt.iterdir()) == [sentinel]
++    assert sentinel.read_bytes() == b"keep"
++    assert props == before
++
++
++def test_url_registration_failure_cleans_the_prepared_batch(stage, monkeypatch):
++    props, prepare, attempt, _, _ = stage
++    real_resolve = ContainedURLs.local_url
++
++    def fail_prepared(self, path):
++        if Path(path).name == "source.wav":
++            raise ValueError("cannot register WAV")
++        return real_resolve(self, path)
++
++    monkeypatch.setattr(ContainedURLs, "local_url", fail_prepared)
++    with pytest.raises(ValueError, match="cannot register"):
++        prepare(props)
++    assert list(attempt.iterdir()) == []
++
++
++@pytest.mark.parametrize("fps", [30, 30000 / 1001])
++def test_internal_original_clip_seam_preserves_phase_without_trusting_app(stage, fps):
++    props, prepare, attempt, _, _ = stage
++    props["compiledTransitions"]["fps"] = fps
++    original = props["timeline"]["clips"][0]
++    original.update(at=0, **{"from": 0.05, "to": 2})
++    original["params"] = {"fadeIn": 0.5, "fadeOut": 0.5, "fadeInCurve": "equal-power"}
++    original = copy.deepcopy(original)
++    whole = prepare(props)
++    whole_file = next(attempt.glob("normal-audio-*/envelope-*/source.wav"))
++    whole_pcm = whole_file.read_bytes()[44:]
++    sliced = props["timeline"]["clips"][0]
++    sliced.update(at=0, **{"from": 0.8, "to": 1.8})
++    # This caller-authored field is deliberately false; the separate owner input
++    # retains the original compiled occurrence, with occurrence gain already in it.
++    sliced["app"]["astrid_slice_origin"] = {"at": 99, "from": 99, "to": 99}
++    before = copy.deepcopy(props)
++    output = prepare(props, original_clips={"sound": original})
++    prepared = output["timeline"]["clips"][0]["audio"]["render_source"]
++    source_path = attempt.parent / prepared["file"].removeprefix("http://attempt.invalid/")
++    part_pcm = source_path.read_bytes()[44:]
++    # Translation can change floating operation ordering, so use the existing
++    # attempt-PCM precision (seven decimal places), with no time/sample fitting.
++    for whole_sample, part_sample in zip(struct.iter_unpack("<f", whole_pcm),
++                                       struct.iter_unpack("<f", part_pcm), strict=True):
++        assert part_sample[0] == pytest.approx(whole_sample[0], abs=1e-7)
++    assert prepared["source_from"] == round(0.8 * fps) / fps
++    assert prepared["playback_rate"] == 1.5
++    assert whole["timeline"]["clips"][0]["volume"] == 3
++    assert props == before
++
++
++def test_successful_files_survive_until_the_attempt_owner_cleans_up(stage):
++    props, prepare, attempt, _, _ = stage
++    output = prepare(props)
++    url = output["timeline"]["clips"][0]["audio"]["render_source"]["file"]
++    path = attempt.parent / url.removeprefix("http://attempt.invalid/")
++    assert path.is_file()
++    # The source owner uses its existing ExitStack/TemporaryDirectory lifetime.
++    shutil.rmtree(attempt)
++    assert not path.exists()
++    assert any(attempt.parent.glob("*.wav"))  # original materialized source remains
++
++
++@pytest.mark.parametrize("tracks", [None, ("A1",)], ids=["window", "layer"])
++def test_actual_slice_needs_original_compiled_clip_transport(stage, tracks):
++    """Ordinary RED: source owner must join the actual pre-slice compiled input."""
++    from astrid.core.rendering.contracts import FrameWindow
++    from astrid.core.rendering.service import RenderService
++
++    props, prepare, attempt, _, _ = stage
++    props["timeline"]["clips"][0].update(at=0, speed=1, **{"from": 0, "to": 2})
++    props["timeline"]["clips"][0]["params"] = {"fadeIn": 0.5, "fadeOut": 0.5}
++    props["timeline"] = RenderService._window_timeline(
++        props["timeline"], FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
++        tracks=tracks,
++    )
++    output = prepare(props)
++    url = output["timeline"]["clips"][0]["audio"]["render_source"]["file"]
++    wav = (attempt.parent / url.removeprefix("http://attempt.invalid/")).read_bytes()
++    # Host app metadata alone cannot prove which compiled original was sliced.
++    # Keep this positive requirement until the source owner carries the original
++    # through pair validation and serializer into the real producer invocation.
++    assert struct.unpack_from("<ff", wav, 44 + 15000 * 8) == (0.25, -0.125)
++
++
++def test_exact_asset_keys_bind_distinct_managed_bytes_to_their_own_wav_urls(stage):
++    props, prepare, attempt, _, _ = stage
++    second = copy.deepcopy(props["timeline"]["clips"][0])
++    second.update(id="other", asset="other")
++    props["timeline"]["clips"].append(second)
++    before = copy.deepcopy(props)
++    output = prepare(props)
++    first, second = [clip["audio"]["render_source"] for clip in output["timeline"]["clips"]]
++    assert first["file"] != second["file"]
++    for key in ("envelope_key", "source_from", "playback_rate"):
++        assert first[key] == second[key]
++    for row, expected in ((first, (0.25, -0.125)), (second, (-0.5, 0.0625))):
++        path = attempt.parent / row["file"].removeprefix("http://attempt.invalid/")
++        path.relative_to(attempt)
++        assert struct.unpack_from("<ff", path.read_bytes(), 44 + 8000 * 8) == expected
++    assert props == before
++    assert output["assets"] == props["assets"]

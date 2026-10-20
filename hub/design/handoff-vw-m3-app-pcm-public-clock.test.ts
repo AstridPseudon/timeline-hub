@@ -1,0 +1,97 @@
+import { Buffer } from 'node:buffer';
+import { describe, expect, it } from 'vitest';
+import {
+  applyAudioEnvelope,
+  audioEnvelopeAt,
+  audioEnvelopeWav,
+  compileAudioEnvelope,
+  computeMediaTrim,
+  getSanitizedPlaybackRate,
+} from '@banodoco/timeline-composition/evaluation';
+import { compiledAudioSourceClock } from './handoff-vw-m3-app-pcm-public-clock-adapter';
+
+const cases = [
+  { fps: 30, trimFrames: 2, speed: 2, sampleRate: 48000 },
+  { fps: 30000 / 1001, trimFrames: 1, speed: 2, sampleRate: 44100 },
+  { fps: 30, trimFrames: 2, speed: 0.5, sampleRate: 44100 },
+  { fps: 30000 / 1001, trimFrames: 1, speed: 0.5, sampleRate: 48000 },
+];
+
+// Literal already-compiled child; occurrence metadata never enters its clock.
+const compiledClip = (speed: number) => ({
+  id: 'child', track: 'audio', asset: 'source', at: 7.5,
+  from: 0.05, to: 0.55, speed, volume: 0.4,
+  params: { fadeIn: 0.1, fadeOut: 0.1 },
+  app: { astrid_shot_composition: { source_offset: 350, speed: 1.5, gain: 0.5 } },
+});
+
+describe('unapplied App compiled PCM source clock', () => {
+  it.each(cases)('rounds .05 at $fps fps with child speed $speed', ({ fps, trimFrames, speed }) => {
+    const clip = compiledClip(speed);
+    const authoredBytes = JSON.stringify(clip);
+    expect(computeMediaTrim(clip, fps).trimBefore).toBe(trimFrames);
+    expect(compiledAudioSourceClock(clip, fps)).toEqual({
+      source_from: trimFrames / fps, playback_rate: speed,
+    });
+    expect(compiledAudioSourceClock(clip, fps).source_from).not.toBe(clip.from);
+    expect(JSON.stringify(clip)).toBe(authoredBytes);
+  });
+
+  it.each(cases)('writes full native WAV at $sampleRate Hz / $fps fps / $speed speed', ({ fps, trimFrames, speed, sampleRate }) => {
+    const clip = compiledClip(speed);
+    const authoredBytes = JSON.stringify(clip);
+    const clock = compiledAudioSourceClock(clip, fps);
+    const length = sampleRate * 2 + 1;
+    const original = [
+      Float32Array.from({ length }, (_, i) => i % 17 === 0 ? 2 : 0.25),
+      Float32Array.from({ length }, (_, i) => i % 19 === 0 ? -3 : -0.75),
+    ];
+    const channels = original.map(channel => channel.slice());
+    const envelope = compileAudioEnvelope(clip, fps)!;
+    // One public compile/apply/WAV. Scalar gain and media trim/rate stay downstream.
+    applyAudioEnvelope(channels, sampleRate, envelope, clock.source_from, clock.playback_rate);
+    const wav = new DataView(audioEnvelopeWav(channels, sampleRate));
+    expect(wav.getUint16(20, true)).toBe(3); // IEEE float
+    expect(wav.getUint16(22, true)).toBe(2);
+    expect(wav.getUint32(24, true)).toBe(sampleRate);
+    expect(wav.getUint16(34, true)).toBe(32);
+    expect(wav.getUint32(40, true)).toBe(length * 2 * 4);
+    expect(wav.byteLength).toBe(44 + length * 2 * 4);
+    const expected = original.map(channel => Float32Array.from(channel, (value, i) =>
+      value * audioEnvelopeAt(envelope, (i / sampleRate - trimFrames / fps) / speed)));
+    const actual = original.map(() => new Float32Array(length));
+    for (let i = 0; i < length; i++) for (let channel = 0; channel < 2; channel++) {
+      actual[channel][i] = wav.getFloat32(44 + (i * 2 + channel) * 4, true);
+    }
+    expect(actual.map((channel, index) => Buffer.from(channel.buffer)
+      .equals(Buffer.from(expected[index].buffer)))).toEqual([true, true]);
+    const middle = Math.round((trimFrames / fps + 0.115 * speed) * sampleRate);
+    expect(actual[0][middle]).toBe(original[0][middle]);
+    expect(actual[1][middle]).toBe(original[1][middle]);
+    expect(actual[0].some(value => value > 1)).toBe(true);
+    expect(actual[1].some(value => value < -1)).toBe(true);
+    expect(JSON.stringify(clip)).toBe(authoredBytes);
+  });
+
+  it.each([undefined, 0, -1, NaN, Infinity])('delegates rate sanitization for %s', speed => {
+    expect(compiledAudioSourceClock({ from: 0.05, speed }, 30).playback_rate)
+      .toBe(getSanitizedPlaybackRate(speed));
+    expect(compiledAudioSourceClock({ from: 0.05, speed }, 30).playback_rate).toBe(1);
+  });
+
+  it('ignores occurrence offset, speed and gain, and all constant clip gain', () => {
+    const clip = compiledClip(2);
+    const expected = { source_from: 2 / 30, playback_rate: 2 };
+    for (const volume of [0, 0.5, 3]) {
+      const input = { ...clip, volume, app: { astrid_shot_composition: {
+        source_offset: 350, speed: 7, gain: 2,
+      } } };
+      expect(compiledAudioSourceClock(input, 30)).toEqual(expected);
+      expect(compileAudioEnvelope(input, 30)).toEqual(compileAudioEnvelope(clip, 30));
+    }
+  });
+
+  it.each([0, -1, NaN, Infinity])('refuses invalid resolved fps %s', fps => {
+    expect(() => compiledAudioSourceClock({ from: 0.05 }, fps)).toThrow('invalid audio source fps');
+  });
+});

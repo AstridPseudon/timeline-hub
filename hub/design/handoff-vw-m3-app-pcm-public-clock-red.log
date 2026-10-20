@@ -1,0 +1,175 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
+
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 30 fps with child speed 2 7ms
+   → expected { source_from: 0.05, playback_rate: 2 } to deeply equal { …(2) }
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 29.97002997002997 fps with child speed 2 1ms
+   → expected { source_from: 0.05, playback_rate: 2 } to deeply equal { …(2) }
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 30 fps with child speed 0.5 1ms
+   → expected { source_from: 0.05, …(1) } to deeply equal { …(2) }
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 29.97002997002997 fps with child speed 0.5 1ms
+   → expected { source_from: 0.05, …(1) } to deeply equal { …(2) }
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 48000 Hz / 30 fps / 2 speed 73ms
+   → expected [ false, false ] to deeply equal [ true, true ]
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 44100 Hz / 29.97002997002997 fps / 2 speed 44ms
+   → expected [ false, false ] to deeply equal [ true, true ]
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 44100 Hz / 30 fps / 0.5 speed 35ms
+   → expected [ false, false ] to deeply equal [ true, true ]
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 48000 Hz / 29.97002997002997 fps / 0.5 speed 37ms
+   → expected [ false, false ] to deeply equal [ true, true ]
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for undefined 1ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for 0 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for -1 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for NaN 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for Infinity 0ms
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > ignores occurrence offset, speed and gain, and all constant clip gain 1ms
+   → expected { source_from: 0.05, playback_rate: 2 } to deeply equal { …(2) }
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > refuses invalid resolved fps 0 1ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > refuses invalid resolved fps -1 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > refuses invalid resolved fps NaN 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > refuses invalid resolved fps Infinity 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 30 fps with child speed 2
+AssertionError: expected { source_from: 0.05, playback_rate: 2 } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "playback_rate": 2,
+-   "source_from": 0.06666666666666667,
++   "source_from": 0.05,
+  }
+
+ ❯ handoff-vw-m3-app-pcm-public-clock.test.ts:33:49
+     31|     const authoredBytes = JSON.stringify(clip);
+     32|     expect(computeMediaTrim(clip, fps).trimBefore).toBe(trimFrames);
+     33|     expect(compiledAudioSourceClock(clip, fps)).toEqual({
+       |                                                 ^
+     34|       source_from: trimFrames / fps, playback_rate: speed,
+     35|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 29.97002997002997 fps with child speed 2
+AssertionError: expected { source_from: 0.05, playback_rate: 2 } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "playback_rate": 2,
+-   "source_from": 0.03336666666666667,
++   "source_from": 0.05,
+  }
+
+ ❯ handoff-vw-m3-app-pcm-public-clock.test.ts:33:49
+     31|     const authoredBytes = JSON.stringify(clip);
+     32|     expect(computeMediaTrim(clip, fps).trimBefore).toBe(trimFrames);
+     33|     expect(compiledAudioSourceClock(clip, fps)).toEqual({
+       |                                                 ^
+     34|       source_from: trimFrames / fps, playback_rate: speed,
+     35|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 30 fps with child speed 0.5
+AssertionError: expected { source_from: 0.05, …(1) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "playback_rate": 0.5,
+-   "source_from": 0.06666666666666667,
++   "source_from": 0.05,
+  }
+
+ ❯ handoff-vw-m3-app-pcm-public-clock.test.ts:33:49
+     31|     const authoredBytes = JSON.stringify(clip);
+     32|     expect(computeMediaTrim(clip, fps).trimBefore).toBe(trimFrames);
+     33|     expect(compiledAudioSourceClock(clip, fps)).toEqual({
+       |                                                 ^
+     34|       source_from: trimFrames / fps, playback_rate: speed,
+     35|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 29.97002997002997 fps with child speed 0.5
+AssertionError: expected { source_from: 0.05, …(1) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "playback_rate": 0.5,
+-   "source_from": 0.03336666666666667,
++   "source_from": 0.05,
+  }
+
+ ❯ handoff-vw-m3-app-pcm-public-clock.test.ts:33:49
+     31|     const authoredBytes = JSON.stringify(clip);
+     32|     expect(computeMediaTrim(clip, fps).trimBefore).toBe(trimFrames);
+     33|     expect(compiledAudioSourceClock(clip, fps)).toEqual({
+       |                                                 ^
+     34|       source_from: trimFrames / fps, playback_rate: speed,
+     35|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 48000 Hz / 30 fps / 2 speed
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 44100 Hz / 29.97002997002997 fps / 2 speed
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 44100 Hz / 30 fps / 0.5 speed
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 48000 Hz / 29.97002997002997 fps / 0.5 speed
+AssertionError: expected [ false, false ] to deeply equal [ true, true ]
+
+- Expected
++ Received
+
+  [
+-   true,
+-   true,
++   false,
++   false,
+  ]
+
+ ❯ handoff-vw-m3-app-pcm-public-clock.test.ts:67:54
+     65|     }
+     66|     expect(actual.map((channel, index) => Buffer.from(channel.buffer)
+     67|       .equals(Buffer.from(expected[index].buffer)))).toEqual([true, tr…
+       |                                                      ^
+     68|     const middle = Math.round((trimFrames / fps + 0.115 * speed) * sam…
+     69|     expect(actual[0][middle]).toBe(original[0][middle]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > ignores occurrence offset, speed and gain, and all constant clip gain
+AssertionError: expected { source_from: 0.05, playback_rate: 2 } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "playback_rate": 2,
+-   "source_from": 0.06666666666666667,
++   "source_from": 0.05,
+  }
+
+ ❯ handoff-vw-m3-app-pcm-public-clock.test.ts:89:51
+     87|         source_offset: 350, speed: 7, gain: 2,
+     88|       } } };
+     89|       expect(compiledAudioSourceClock(input, 30)).toEqual(expected);
+       |                                                   ^
+     90|       expect(compileAudioEnvelope(input, 30)).toEqual(compileAudioEnve…
+     91|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 9 passed (18)
+   Start at  07:23:31
+   Duration  433ms (transform 68ms, setup 0ms, import 87ms, tests 202ms, environment 0ms)
+

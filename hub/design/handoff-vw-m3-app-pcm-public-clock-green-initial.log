@@ -1,0 +1,50 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
+
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 30 fps with child speed 2 2ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 29.97002997002997 fps with child speed 2 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 30 fps with child speed 0.5 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > rounds .05 at 29.97002997002997 fps with child speed 0.5 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 48000 Hz / 30 fps / 2 speed 73ms
+ × handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 44100 Hz / 29.97002997002997 fps / 2 speed 47ms
+   → expected 0.20872126519680023 to be 0.25 // Object.is equality
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 44100 Hz / 30 fps / 0.5 speed 46ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 48000 Hz / 29.97002997002997 fps / 0.5 speed 36ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for undefined 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for 0 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for -1 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for NaN 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > delegates rate sanitization for Infinity 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > ignores occurrence offset, speed and gain, and all constant clip gain 1ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > refuses invalid resolved fps 0 1ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > refuses invalid resolved fps -1 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > refuses invalid resolved fps NaN 0ms
+ ✓ handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > refuses invalid resolved fps Infinity 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  handoff-vw-m3-app-pcm-public-clock.test.ts > unapplied App compiled PCM source clock > writes full native WAV at 44100 Hz / 29.97002997002997 fps / 2 speed
+AssertionError: expected 0.20872126519680023 to be 0.25 // Object.is equality
+
+- Expected
++ Received
+
+- 0.25
++ 0.20872126519680023
+
+ ❯ handoff-vw-m3-app-pcm-public-clock.test.ts:69:31
+     67|       .equals(Buffer.from(expected[index].buffer)))).toEqual([true, tr…
+     68|     const middle = Math.round((trimFrames / fps + 0.15 * speed) * samp…
+     69|     expect(actual[0][middle]).toBe(original[0][middle]);
+       |                               ^
+     70|     expect(actual[1][middle]).toBe(original[1][middle]);
+     71|     expect(actual[0].some(value => value > 1)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+   Start at  07:23:08
+   Duration  415ms (transform 66ms, setup 0ms, import 85ms, tests 208ms, environment 0ms)
+
