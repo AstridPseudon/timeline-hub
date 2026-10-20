@@ -384,10 +384,10 @@ describe('TrackListRenderer', () => {
 
   it.each(['phone', 'tablet'] as const)('selects the track on %s without rendering a sheet or inline controls', (deviceClass) => {
     const onSelect = vi.fn();
-    render(<AIInputModeProvider><TrackLabelContent
+    render(<TrackLabelContent
       track={tracks[0]} isSelected={false} hasClips deviceClass={deviceClass}
       onSelect={onSelect} onChange={vi.fn()} onRemove={vi.fn()}
-    /></AIInputModeProvider>);
+    />);
     fireEvent.click(screen.getByText(tracks[0].label));
     expect(onSelect).toHaveBeenCalledWith('V1');
     expect(screen.getByText(tracks[0].label).closest('[data-track-label]')).not.toBeNull();
