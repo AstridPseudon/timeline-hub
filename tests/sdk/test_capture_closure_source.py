@@ -122,3 +122,80 @@ def test_forged_candidate_digest_is_not_certified_by_capture_labels(client):
     preview["candidate_digest"] = "sha256:" + "f" * 64
     with pytest.raises(CapabilityValidationError, match="does not match its frozen candidate"):
         prepare(client, authoring_preview=preview, capture_authority={"canonical": True})
+
+
+@pytest.mark.parametrize("working_copy", [False, True])
+def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(client, monkeypatch, tmp_path, working_copy):
+    """Real SDK enrichment/publication and host handoff; Runtime admission doubled."""
+    import hashlib
+    import json
+    from types import SimpleNamespace
+
+    from astrid.core.execution.generic_host import GenericPackHost
+    from astrid.sdk.invocation import _invoke_internal_result
+    from tests.sdk.test_visualize_authority_objects import Runtime
+
+    runtime = Runtime()
+    from tests.timeline.test_authoring_bundle import AUDIO, OLD, _digest, _replace_values
+
+    payloads = {OLD: b'exact source picture', AUDIO: b'exact source audio'}
+    replacements = {old: 'sha256:' + hashlib.sha256(data).hexdigest() for old, data in payloads.items()}
+    for old, data in payloads.items():
+        runtime.objects[replacements[old]] = data
+    client.parent = _replace_values(client.parent, replacements)
+    client.shots = _replace_values(client.shots, replacements)
+    client.internals = _replace_values(client.internals, replacements)
+    for row in [client.parent, *client.shots, *client.internals]:
+        row['content_digest'] = _digest(row['payload'])
+    # Keep the real prepare_filmstrip and immutable closure opener. Only the
+    # transport read surface and registry admission are fixture-owned.
+    runtime._remote._transport.__dict__.update({name: getattr(client, name) for name in (
+        'get_project', 'list_timelines', 'get_project_parent_composition_revision',
+        'get_project_shot_revision', 'get_project_timeline_revision')})
+    inputs = {"view": "filmstrip", "timeline_ref": client.timeline_id,
+              "composed_capture": True, "revision_id": "parent-1"}
+    if working_copy:
+        inputs['authoring_preview'] = candidate(client)
+    result = _invoke_internal_result('rendering.timeline_visualize', kind='executor', project='demo',
+                                     client=runtime, inputs=inputs)
+    assert runtime.created, result.error
+    admitted = runtime.created[-1]
+    context = admitted['spec']['authority_context']
+    assert 'authority_object' not in context and 'capture_snapshot' not in context
+    ref = context['capture_snapshot_ref']
+    assert ref['source_kind'] == ('working_copy' if working_copy else 'revision')
+    raw = runtime.objects[ref['digest']]
+    assert ref['digest'] == 'sha256:' + hashlib.sha256(raw).hexdigest()
+    snapshot = json.loads(raw)
+    authority = snapshot['metadata']['capture_authority']
+    assert authority['expansion']['shots'][0]['content_digest']
+    assert authority['expansion']['children'][0]['config_hash']
+    if working_copy:
+        assert ref['working_copy']['candidate_digest'] == snapshot['metadata']['working_copy']['candidate_digest']
+    else:
+        assert ref['revision_id'] == 'parent-1'
+        assert ref['revision_digest'] == client.parent['content_digest']
+    assert ref['digest'] in admitted['input_manifest']
+    host = GenericPackHost(pack_roots=[tmp_path], client=SimpleNamespace(get_object=lambda key: runtime.objects['sha256:' + key]))
+    values = host._materialize_inputs({'spec': admitted['spec'], 'input_object_ids': admitted['input_manifest']}, tmp_path / 'attempt')
+    assert values.timeline_source.read()['ref'] == ref
+    assert values.timeline_source.read()['authority'] == authority
+    assert values.timeline_source.read()['snapshot'] == snapshot
+
+
+@pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
+def test_sdk_capture_reserved_source_ports_are_refused(client, key):
+    with pytest.raises(ValueError, match='host-owned'):
+        prepare(client, **{key: {'source_kind': 'revision', 'revision_id': 'forged'}})
+
+
+@pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
+def test_sdk_capture_invocation_refuses_source_before_admission(key):
+    from astrid.sdk.invocation import _invoke_internal_result
+    from tests.sdk.test_visualize_authority_objects import Runtime
+
+    runtime = Runtime()
+    result = _invoke_internal_result('rendering.timeline_visualize', kind='executor', project='demo',
+                                     client=runtime, inputs={'view': 'filmstrip', key: {'canonical': True}})
+    assert not result.ok and 'host-owned' in result.error['message']
+    assert runtime.created == []

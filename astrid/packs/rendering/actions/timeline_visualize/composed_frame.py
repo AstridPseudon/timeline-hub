@@ -481,7 +481,14 @@ def snapshot_wants_bounds(snapshot: Mapping[str, Any]) -> bool:
 def _validate_capture_files(
     snapshot: Mapping[str, Any], timeline_path: Path, assets_path: Path,
 ) -> None:
-    """Check the prepared files against the closure, without certifying its source."""
+    """Check prepared files against either the inherited binding or native closure."""
+    from astrid.core.rendering.verified_source import inherited_source, reject_source_keys
+
+    reject_source_keys(snapshot)
+    source = inherited_source(timeline_path, assets_path)
+    if source is not None:
+        source.validate_snapshot(snapshot)
+        return
     for key, path in (("config", timeline_path), ("registry", assets_path)):
         expected = snapshot.get(key)
         if not isinstance(expected, Mapping):
@@ -510,7 +517,11 @@ class RemotionFrameProvider:
         scene_labels: bool = False,
         renderer: Callable[[Sequence[int], Path, Sequence[int] | None], Mapping[int, Path]] | None = None,
     ) -> None:
+        from astrid.core.rendering.verified_source import inherited_source, reject_source_keys
+
+        reject_source_keys(snapshot)
         self.snapshot = snapshot
+        self._verified_source = inherited_source(timeline_path, assets_path)
         self.timeline_path = Path(timeline_path)
         self.assets_path = Path(assets_path)
         self.project_dir = Path(project_dir)
@@ -635,8 +646,12 @@ class RemotionFrameProvider:
         self.scene_occlusions = {}
         self.scene_clip_identities = {}
         self.scene_unavailable = None
+        from astrid.core.rendering.verified_source import inherited_source
+
         if self._capture_snapshot is not None:
             try:
+                if self._verified_source != inherited_source(self.timeline_path, self.assets_path):
+                    raise ValueError("verified source authority is unavailable or replaced")
                 _validate_capture_files(self._capture_snapshot, self.timeline_path, self.assets_path)
             except ValueError as exc:
                 self.scene_unavailable = str(exc)
