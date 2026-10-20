@@ -198,11 +198,29 @@ class TimelineCommitStore:
             entry = self.history_entry(project_id, timeline_id, row["publication_id"])
             if entry["revision_id"] != row["revision_id"]:
                 reject("history_unavailable")
-            ledger = self.conn.execute("SELECT resulting_stream_seq FROM command_idempotency WHERE txn_id=?", (row["publication_id"],)).fetchone()
-            untracked = self.conn.execute("SELECT kind FROM timeline_events WHERE timeline_id=? ORDER BY id LIMIT -1 OFFSET ?",
-                                           (timeline_id, ledger[0])).fetchall()
-            if any(event[0] != "timeline.renamed" for event in untracked):
-                reject("history_unavailable", "timeline has untracked writes")
+            from .timeline_commit_baseline import _publication_events, _shot_projection, _text_bindings
+            from .timeline_catalog import verify_catalog_tail
+            ledger = self.conn.execute("SELECT resulting_stream_seq, last_project_seq FROM command_idempotency WHERE txn_id=?",
+                                       (row["publication_id"],)).fetchone()
+            try:
+                events, _, _ = _publication_events(self.conn, project_id, timeline_id)
+                catalog = verify_catalog_tail(self.conn, project_id, timeline_id, events, ledger[0], ledger[1],
+                                              legacy=entry["intent"] == "legacy_unknown")
+                if catalog:
+                    from .cas import ContentAddressedStore
+                    document = self.revision_closure(project_id, timeline_id, row["revision_id"])
+                    if entry["intent"] == "recorded" and document != entry["receipt"]["result"]["canonical_document"]:
+                        reject("history_unavailable", "canonical film differs from accepted publication")
+                    for shot in document["shot_revisions"]:
+                        _shot_projection(self.conn, project_id, shot["shot_id"])
+                        _text_bindings(self.conn, project_id, shot, ContentAddressedStore(self.store.cas_root).read)
+            except ConflictError as exc:
+                from .timeline_commit import CommitRejected
+                raise CommitRejected({"http_status": 409, "code": "conflict",
+                                      "message": "timeline has untracked writes",
+                                      "details": {"base": None, "current": None, "conflicts": [], **exc.details}}) from exc
+            except (KeyError, TypeError, ValueError, IndexError):
+                reject("history_unavailable", "timeline catalog facts are corrupt")
             return dict(row)
 
     def history_entry(self, project_id, timeline_id, publication_id):
