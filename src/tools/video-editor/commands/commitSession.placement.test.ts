@@ -43,8 +43,13 @@ function reply(value: unknown, status = 200): Response {
     arrayBuffer: async () => bytes.buffer } as Response;
 }
 const sessions: Array<Awaited<ReturnType<typeof createTimelineCommandSession>>> = [];
+const operationHosts: RuntimeOperationHost[] = [];
 beforeEach(() => vi.mocked(initializeWorkspaceRuntimeIdentity).mockResolvedValue({ ...launch }));
-afterEach(async () => { await Promise.all(sessions.splice(0).map((session) => session.dispose())); vi.restoreAllMocks(); });
+afterEach(async () => {
+  await Promise.all(sessions.splice(0).map((session) => session.dispose()));
+  operationHosts.splice(0).forEach((host) => host.dispose());
+  vi.restoreAllMocks();
+});
 
 // Real production binding/capture/pump; HTTP acceptance and IDB are unit fixtures.
 function environment() {
@@ -118,6 +123,7 @@ function environment() {
   const directSend = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>(async () => { throw new Error('Placement must use the bound operation'); });
   const mount = async (basis = initial) => {
     const operationHost = new RuntimeOperationHost(fetchImpl as typeof fetch);
+    operationHosts.push(operationHost);
     const operation = await operationHost.bind();
     const host = createEditorImagePlacementHost(operation, scope.projectId);
     const session = await createTimelineCommandSession({ scope, initial: basis, outboxes,
@@ -157,6 +163,12 @@ describe('production command session automatic image continuation', () => {
     await session.dispose();
     gate.resolve(); await refused;
     expect(env.admissions()).toEqual([]);
+  });
+
+  it('keeps the Provider-owned operation current when a command session is replaced', async () => {
+    const env = environment(), mounted = await env.mount();
+    await mounted.session.dispose();
+    expect(mounted.operation.isCurrentIdentity(scope)).toBe(true);
   });
 
   it('discovers task completion on the installed subscription, projects exact acceptance, and registers normal Undo', async () => {

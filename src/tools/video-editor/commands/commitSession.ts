@@ -558,9 +558,8 @@ export async function createTimelineCommandSession(options: Options) {
     dispose() {
       stopped = true;
       unsubscribePlacement?.();
-      // Retire the operation before releasing the editor claim. Late task,
-      // media or commit callbacks must observe the old owner as unavailable.
-      options.imagePlacementHost?.retire?.();
+      // The Provider owns the pinned operation binding. Releasing this command
+      // session must not retire it before a replacement session can recover.
       closing ??= (async () => {
         try {
           // Drain accepted gestures, never wait for an unknown network outcome.

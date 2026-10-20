@@ -14,7 +14,7 @@ export type EditorImagePlacementHost = {
   taskEventsReady?(): Promise<void>;
   subscribe?(changed: () => void): () => void;
   isCurrentIdentity(scope: OutboxScope): boolean;
-  /** Retires the operation before the editor releases its claimed session. */
+  /** Retires the operation when the Provider's editor lifetime ends. */
   retire?(): void;
 };
 

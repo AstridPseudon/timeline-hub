@@ -123,7 +123,7 @@ export function createOperationLocalClient(operation: RuntimeOperation, projectI
   return { catalog, objects, tasks } as LocalClient;
 }
 
-/** The editor owns this binding and retires it with its claimed command session. */
+/** The Provider owns this binding and retires it with the editor lifetime. */
 export function createEditorImagePlacementHost(operation: RuntimeOperation, projectId: string): EditorImagePlacementHost {
   const client = createOperationLocalClient(operation, projectId);
   return {
