@@ -257,15 +257,16 @@ describe('Agent built-in clip.move capture parity', () => {
     expect(executeClipMove(disjoint, golden.command).command).toEqual(golden.command);
   });
 
-  // Legacy overwrite expectation; M2 requires native initial-equality-only mirror synchronization.
-  it.fails('records compiler synchronization of the nonempty config clip mirror', () => {
+  it('preserves a divergent config clip mirror without derived writes', () => {
     const input = detached(fixture.bundle) as AuthoredBundle;
     (input.parent.config as Record<string, unknown>).clips = [{ id: 'legacy', at: 88 }];
     const result = finishClipMove(captureClipMove(input, fixture.select), 4);
-    expect((result.bundle.parent.config as Record<string, unknown>).clips).toEqual(result.bundle.parent.clips);
-    expect(result.record.derived_writes).toEqual([{ ref: 'parent', path: ['config', 'clips'],
-      before: { state: 'present', value: [{ id: 'legacy', at: 88 }] },
-      after: { state: 'present', value: result.bundle.parent.clips }, cause: 0 }]);
+    expect((result.bundle.parent.config as Record<string, unknown>).clips).toEqual([{ id: 'legacy', at: 88 }]);
+    expect(result.record.derived_writes).toEqual([]);
+    expect((result.bundle.parent.clips as Array<Record<string, unknown>>)[0].app).toEqual({
+      astrid: { cut: 'old-cut', fixed_start: true, for: 2 },
+      opaque: { keep: true },
+    });
     expect((input.parent.config as Record<string, unknown>).clips).toEqual([{ id: 'legacy', at: 88 }]);
   });
 
