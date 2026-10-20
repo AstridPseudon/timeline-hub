@@ -704,7 +704,13 @@ export class DirectHarness {
       { id: ids.agentClearClipId, at: 6, track: 'V2', clipType: 'media', asset: 'f2-clear', hold: 3 },
     ];
     const publication = compositionPublication({ projectId, timelineId }, headRevisionId, 'Main', 30);
-    publication.parent_composition.config = { ...publication.parent_composition.config, clips: parentClips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }], x_f2_opaque: THREE_PRODUCTS_OPAQUE.config } as unknown as typeof publication.parent_composition.config;
+    publication.parent_composition.config = {
+      ...publication.parent_composition.config,
+      clips: parentClips,
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }],
+      x_f2_opaque: THREE_PRODUCTS_OPAQUE.config,
+      app: { 'haus.astrid.scene-phase-markers': { sceneMarkers: [{ id: 'ordinary-marker-a', time: 1 }, { id: 'ordinary-marker-b', time: 6 }] } },
+    } as unknown as typeof publication.parent_composition.config;
     publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
     publication.parent_composition.registry = { assets: { 'f2-app': imageAsset('f2-app'), 'f2-video': videoAsset } } as unknown as typeof publication.parent_composition.registry;
     Object.assign(publication, {
