@@ -153,6 +153,22 @@ def test_cache_identity_changes_when_renderer_source_changes(tmp_path, monkeypat
     assert first != second
 
 
+@pytest.mark.parametrize("relative", [
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py",
+    "astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py",
+])
+def test_cache_identity_tracks_root_preparation_source(tmp_path, monkeypatch, relative):
+    from astrid.packs.rendering.actions.timeline_visualize import composed_frame
+
+    source = tmp_path / relative
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("# before\n")
+    monkeypatch.setattr(composed_frame, "_checkout_root", lambda: tmp_path)
+    first = frame_cache_key(_snapshot(), 1, [32, 18])
+    source.write_text("# changed preparation\n")
+    assert frame_cache_key(_snapshot(), 1, [32, 18]) != first
+
+
 def test_cache_identity_ignores_ephemeral_attempt_directory_paths():
     first = _snapshot()
     second = _snapshot()

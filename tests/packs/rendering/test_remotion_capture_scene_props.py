@@ -369,3 +369,42 @@ def test_callback_and_capture_failures_preserve_cleanup(capture_host, tmp_path, 
     else:
         assert len(host.requests) == 1
     assert_cleaned(host, tmp_path)
+
+
+@pytest.mark.parametrize("failure", [None, RuntimeError("query failed"), KeyboardInterrupt()])
+def test_read_only_root_context_matches_capture_without_launch(capture_host, tmp_path, failure):
+    host = capture_host
+    capture(host, tmp_path, frame_session=host.session)
+    expected = host.serialized
+    host.events.clear()
+    host.staged_paths.clear()
+    host.requests.clear()
+    for path in (tmp_path / "frames").glob("frame-*.png"):
+        path.unlink()
+    marker = tmp_path / "frames" / ".capture-placeholder.mp4"
+
+    def query():
+        with remotion._prepared_remotion_root(
+            host.timeline_path, host.assets_path, marker,
+            provenance_out_path=marker, composition_id="TimelineComposition",
+            min_free_gb=None, frame_numbers=(0, 3, 7),
+            frame_output_dir=tmp_path / "frames", **host.kwargs,
+        ) as prepared:
+            props, props_path = prepared[:2]
+            assert host.active and host.public_root.is_dir()
+            assert all(path.is_file() for path in host.staged_paths)
+            assert json.dumps(props).encode() == props_path.read_bytes() == expected
+            assert host.events == ["server-enter", "stage"]
+            assert not host.commands and not host.requests
+            assert not list((tmp_path / "frames").glob("frame-*.png"))
+            if failure is not None:
+                raise failure
+
+    if failure is None:
+        query()
+    else:
+        with pytest.raises(type(failure)) as raised:
+            query()
+        assert raised.value is failure
+    assert host.events == ["server-enter", "stage", "server-exit"]
+    assert_cleaned(host, tmp_path)
