@@ -1,6 +1,6 @@
 # Runtime saved-revision real-capture review
 
-Verdict: APPROVE, pending the required central scoped test result.
+Verdict: APPROVE.
 
 Reviewed Runtime tree `d962e7a1d4abfabdbc4a12e35b5b647b750cfa8a` (tree `6bfe0591b64cda6e9b0bb48656e4a4cd7dc5643e`) against `7e160c5d254a9b3d42a28672a2d7e2ac1acd5ca8`. The only changed product-repo path is `tests/test_spec_reference.py`; no Runtime product code, DTO, endpoint, renderer, scene evaluator, second verifier, or save writer changed.
 
@@ -20,5 +20,15 @@ Evidence:
 ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=$PWD:/home/user/work/agent PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration tests/test_spec_reference.py::test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
 1 passed in 2.88s
 ```
+
+Required central final-source scoped service run also passed:
+
+```text
+capture-legacy-integration --files "tests/test_spec_reference.py::test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source"
+env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=$PWD:/home/user/work/agent PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/test_spec_reference.py::test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
+1 passed in 1.61s
+```
+
+The service snapshot was Runtime tree `6bfe0591b64cda6e9b0bb48656e4a4cd7dc5643e` with Agent source `a760ecca02111b0e0841510926f200e398f3b6cb`.
 
 The earlier central batch (`165 passed, 5 failed, 4 deselected`) was on the pre-correction snapshot and is not final evidence. Its four neighboring `RenderRequest.verified_source` failures are separate and were not changed. No broad/full suite, renderer, browser, PCM, scene-evaluation, or live-socket claim is made.

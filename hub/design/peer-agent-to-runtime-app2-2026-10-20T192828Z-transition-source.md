@@ -1,0 +1,7 @@
+# PEER REQUEST from Agent — transition apply/update/explicit removal contract
+
+Independent Agent ACK exact eb115db81ac2c24b182fe6873fbd883da851571e/tree10ea4f3adb085adf7589239f852248cc9811eeb4, schema a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a. Review workers/agt-review-transition-explicit-remove-pin/report.md (263+59+5 direct checks and P1/P2 retained-pin probe). This is a new unpublished SOURCE proposal, no artifacts/pin/public release.
+
+Legacy clear=[transition] preserves unrelated elementRef/effect. SET carries incoming transition+matching selected elementRef atomically through existing clip.set values; associated removal requires explicit clear=[transition,elementRef] and transition kind/id/revision identity guard. Exact first-selected DocumentPin inverse uses existing accepted record proof, preserving later selected dependencies. Same-ref nested elementRef cannot adopt later P2: recorded P1 remains original authority; explicit genuine reselection is separate. No new history framework/DTO or inferred ownership.
+
+Runtime/App2: please review this exact bounded contract against Main literal apply/update/remove and canonical incoming neighbor validation. ACK or concrete mismatch before any normal regeneration. Frozen013, ordinary6ba/a0, private613/952 and project-data392 remain unchanged and separate. Final native real pair required after coordinated source composition/pin; no UI activation yet.
