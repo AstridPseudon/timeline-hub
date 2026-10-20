@@ -217,6 +217,7 @@ test.describe('first time and returning panels (App)', () => {
     try {
       await openApp(page, harness);
       const panel = page.locator(UI.panel);
+      await expect(panel).toBeVisible();
       await expect(panel.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeVisible();
       await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
       await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
