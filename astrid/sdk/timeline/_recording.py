@@ -38,6 +38,7 @@ class Recording:
     def __init__(self, bundle, command, ordinal, *, closures=None):
         self.state = State(bundle, closures=closures)
         self.input_state = None
+        self.command_input = State(copy.deepcopy(bundle), closures=closures)
         parent = bundle['parent']
         config = parent.get('config')
         self.mirrored_clips = (isinstance(parent.get('clips'), list)
@@ -168,8 +169,17 @@ class Recording:
     def finish(self, *, capture=False):
         command = self.record['command']
         if capture:
-            command['reads'] = copy.deepcopy(self.record['reads'])
-            command['selections'] = copy.deepcopy(self.record['selections'])
+            # Public replay guards describe the input; the record retains actual
+            # observations made between the deterministic recipe's own writes.
+            command['reads'], command['selections'] = [], []
+            for read in self.record['reads']:
+                claim = {**read, 'state': self.command_input.get(read['ref'], read['path'])}
+                if not any(equal(claim, prior) for prior in command['reads']):
+                    command['reads'].append(claim)
+            for selected in self.record['selections']:
+                claim = selection(self.command_input, selected['key'], selected['owner'], selected['members'])
+                if claim not in command['selections']:
+                    command['selections'].append(claim)
             command['bindings'] = {b['key']: b['ref'] for b in self.record['bindings']
                                    if '/clip:' in b['ref'] or '/track:' in b['ref']
                                    or (b['ref'].startswith('occurrence:') and '/' not in b['ref'])}
@@ -181,8 +191,7 @@ class Recording:
                 if write['ref'] == 'timeline':
                     continue
                 key = write['ref'] + '::' + spelling(write['path'])
-                before = (self.input_state.get(write['ref'], write['path'])
-                          if self.input_state is not None else write['before'])
+                before = self.command_input.get(write['ref'], write['path'])
                 command['expect'].setdefault(key, copy.deepcopy(before))
                 command['authorship'][key] = 'direct'
         return self.record

@@ -192,22 +192,41 @@ def _legacy_inverse_sites(records, record):
 
 
 def _validate_inputs(state, record, records):
-    legacy = None
+    sites = None
+
+    def proven_sites():
+        if record['command']['op'] == 'timeline.inverse':
+            return _legacy_inverse_sites(records, record)
+        # Recorder writes are ordered even though reads and selections are not.
+        # Reconstruct only those stages, retaining unrelated current authored data.
+        stage = State(copy.deepcopy(state.bundle), closures=state.closures)
+        reads, selections = [], []
+        for write in [None, *record['writes']]:
+            if write is not None:
+                guard(stage, write['ref'], write['path'], write['before'], kind='history_unavailable')
+                stage.set(write['ref'], write['path'], write['after'])
+            reads.extend(read for read in record['reads']
+                         if stage.matches(read['ref'], read['path'], read['state']))
+            selections.extend(selected for selected in record['selections']
+                              if equal(selection(stage, selected['key'], selected['owner'],
+                                                 selected['members']), selected))
+        return reads, selections
+
     for read in record['reads']:
         if state.matches(read['ref'], read['path'], read['state']):
             continue
-        if legacy is None:
-            legacy = _legacy_inverse_sites(records, record)
-        if read not in legacy[0]:
+        if sites is None:
+            sites = proven_sites()
+        if not any(equal(read, site) for site in sites[0]):
             raise CommandError('original inverse read changed', kind='inverse_dependency_changed',
                                ref=read['ref'], path=read['path'])
     for selected in record['selections']:
         actual = selection(state, selected['key'], selected['owner'], selected['members'])
         if equal(actual, selected):
             continue
-        if legacy is None:
-            legacy = _legacy_inverse_sites(records, record)
-        if selected not in legacy[1]:
+        if sites is None:
+            sites = proven_sites()
+        if not any(equal(selected, site) for site in sites[1]):
             raise CommandError('inverse selection changed', kind='selection_changed', ref=selected['owner'])
     created = {item['ref'] for item in record['created']}
     for binding in record.get('bindings', []):

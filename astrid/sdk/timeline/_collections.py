@@ -179,8 +179,8 @@ def restoration_orders(records, *, only=None):
                 original = order(boundary[0], owner, kind)
             else:
                 original = list(selected[0]['order'])
-                if any(s['members'] != original or s['order'] != original
-                       or s['boundaries'] != original or s['query_version'] != 1
+                if any(s['members'] != s['order']
+                       or s['boundaries'] != s['order'] or s['query_version'] != 1
                        or s['policy'] != 'guard-membership' for s in selected):
                     raise CommandError('inconsistent structural order proof', kind='history_unavailable')
             if len(original) != len(set(original)) or any(
@@ -205,6 +205,10 @@ def restoration_orders(records, *, only=None):
                 elif write['after'] == ABSENT:
                     final.remove(ref)
                 stages.append(list(final))
+            if not legacy_inverse and any(s['order'] != original for s in selected):
+                if not _ordinary_append(record, writes, owner, kind) or any(
+                        s['order'] not in stages for s in selected):
+                    raise CommandError('unrecoverable creation selection stage', kind='history_unavailable')
             if legacy_inverse and any(s['members'] != s['order'] or s['boundaries'] != s['order']
                                       or s['order'] not in stages for s in selected):
                 raise CommandError('unrecoverable legacy selection stage', kind='history_unavailable')
