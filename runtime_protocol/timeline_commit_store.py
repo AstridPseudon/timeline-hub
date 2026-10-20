@@ -595,7 +595,18 @@ class TimelineCommitStore:
         if not occupied:
             return
         current = self.revision_closure(project, timeline, prepared["expected_head"]["revision_id"])
-        occupied -= {s["shot_id"] for s in current["shot_revisions"]}
+        heads = {shot: self.conn.execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id=? AND project_id=?",
+                                        (shot, project)).fetchone() for shot in occupied}
+
+        def unchanged(shot, revision):
+            return heads[shot] is not None and heads[shot]["revision_id"] == revision
+
+        for image in current["shot_revisions"]:
+            shot = image["shot_id"]
+            if shot in occupied and unchanged(shot, image["revision_id"]):
+                # A film pin authorizes its own projection, not a newer catalog
+                # head written since that pin was accepted.
+                occupied.remove(shot)
         if not occupied:
             return
         from .timeline_commit_port import command_leaves
@@ -621,7 +632,8 @@ class TimelineCommitStore:
                 if entry["publication_id"] in remaining:
                     for o, (shot, _) in prior.items():
                         owner, source = "occurrence:" + o, before["parent_revision"]
-                        if output.get(o, (None,))[0] == shot and any(
+                        if (shot in occupied and unchanged(shot, prior[o][1])
+                                and output.get(o, (None,))[0] == shot) and any(
                                 w["ref"] == "shot:" + shot or w["ref"] == owner or w["ref"].startswith(owner + "/")
                                 or (w["ref"] == "timeline" and not w["path"] and w["before"] == {
                                     "state": "present", "value": {k: source[k] for k in ("revision_id", "content_digest")}})
@@ -631,8 +643,9 @@ class TimelineCommitStore:
                 after = edges(self.revision_closure(project, timeline, entry["revision_id"]))
                 for o, (shot, _) in after.items():
                     owner = "occurrence:" + o
-                    if (shot in occupied and output.get(o, (None,))[0] == shot and o in prior
-                            and active.get(o) == prior[o] and prior[o][0] != shot
+                    if (shot in occupied and unchanged(shot, after[o][1])
+                            and output.get(o, (None,))[0] == shot and o in prior
+                            and active.get(o) == prior[o]
                             and any(any(b["ref"] == owner for b in r["bindings"])
                                     and any(read["ref"] == owner + "/shot" and read["path"] == ["shot_id"]
                                             and read["state"] == {"state": "present", "value": prior[o][0]}
