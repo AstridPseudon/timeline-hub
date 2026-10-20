@@ -190,10 +190,6 @@ function applyProjectDataMember(bundle: AuthoredBundle, supplied: EditCommand, o
   const ctx = new MoveRecording(bundle, command);
   // project-data.write is a non-singleton parent operation in Agent's registry.
   ctx.command.resolved = [];
-  const paths = [
-    ['config'], ['config', 'app'], ['config', 'app', args.target], ['config', 'app', args.target, args.key],
-  ] as const;
-  paths.forEach((path) => ctx.read('parent', [...path]));
   ctx.object('parent', ['config']);
   ctx.object('parent', ['config', 'app']);
   ctx.object('parent', ['config', 'app', args.target]);
@@ -206,6 +202,10 @@ function applyProjectDataMember(bundle: AuthoredBundle, supplied: EditCommand, o
       throw new ClipMoveError(`submitted ${claim} does not match original capture`, 'capture_mismatch');
     }
   }
+  // Agent's project-data compatibility check treats container reads as
+  // generated setup claims, not portable input reads. Keep them in the full
+  // record while leaving the submitted command's optional reads claim absent.
+  delete ctx.command.reads;
   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
 }
 

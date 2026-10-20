@@ -52,10 +52,11 @@ describe('bounded inert project-data member', () => {
         state: 'absent',
       },
     });
-    expect(result.commands[0].reads).toEqual(expect.arrayContaining([
+    expect(result.records[0].reads).toEqual(expect.arrayContaining([
       { ref: 'parent', path: ['config', 'app'], state: { state: 'absent' } },
       { ref: 'parent', path: ['config', 'app', target], state: { state: 'absent' } },
     ]));
+    expect(result.commands[0]).not.toHaveProperty('reads');
 
     const replayed = executeProjectDataMember(copy(bundle), result.commands);
     expect(replayed.bundle).toEqual(result.bundle);
