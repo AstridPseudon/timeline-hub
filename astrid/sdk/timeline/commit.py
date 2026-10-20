@@ -218,6 +218,11 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=()):
                        key=lambda row: (row["timeline_id"], row["revision_id"]))
     documents = (source["dependency_manifest"]["documents"]
                  if document_pins is None else document_pins)
+    if document_pins is None:
+        documents = copy.deepcopy(documents)
+        for capture in bundle['source_mapping'].get('pinned_documents', []):
+            if capture['pin'] not in documents:
+                documents.append(copy.deepcopy(capture['pin']))
     # Retained inputs may include media consumed through a transcript or other
     # immutable binding rather than a selected clip. Keep those existing pins.
     media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
@@ -267,10 +272,17 @@ def _load(port, context, revision):
     return bundle_from_document(document)
 
 
-def _hydrate(port, bundle):
-    captures = []
+def _hydrate(port, bundle, calls=()):
+    captures, schema_inputs = [], []
     document = bundle["source_mapping"]["_runtime_document"]
-    for pin in document["dependency_manifest"]["documents"]:
+    pins = copy.deepcopy(document["dependency_manifest"]["documents"])
+    for call in calls:
+        pin = call.get('args', {}).get('schema_source')
+        if call['op'] == 'clip.set-params' and pin is not None:
+            pin = _document_pin(pin)
+            if pin not in pins:
+                pins.append(pin)
+    for pin in pins:
         transcript = pin["document_id"].startswith("transcript:")
         verified = (port.transcript_source(pin) if transcript else port.config_source(pin))
         _require(isinstance(verified, Mapping) and isinstance(verified.get("document"), Mapping),
@@ -295,11 +307,23 @@ def _hydrate(port, bundle):
                      and pin["document_id"] == transcript_document_id(
                          bundle["project_id"], content.get("media_id"), content.get("source_id")),
                      "invalid transcript source identity")
+        elif source.get('kind') == 'astrid.project-pack':
+            objects = {}
+            for admission in source.get('content', {}).get('admissions', []):
+                descriptor = admission.get('snapshot_object')
+                if descriptor is not None:
+                    _require(callable(getattr(port, 'document_object', None)),
+                             'Runtime document_object support is required for pack snapshots')
+                    object_id = descriptor['object_id']
+                    if object_id not in objects:
+                        objects[object_id] = port.document_object(pin, object_id)
+            schema_inputs.append((copy.deepcopy(verified), objects))
         else:
             _require(isinstance(source.get("kind"), str) and source["kind"].endswith(".config"),
                      "unregistered config source kind")
         captures.append(copy.deepcopy(verified))
     bundle["source_mapping"]["pinned_documents"] = captures
+    return schema_inputs
 
 
 def _history(port, through, after, rejected, base):
@@ -427,6 +451,9 @@ class RuntimeCommitService:
         current = None
         try:
             calls = request["commands"]
+            from astrid.sdk.timeline.commands import validate_command
+            for call in calls:
+                validate_command(call)
             restore = any(call["op"] == "timeline.restore" for call in calls)
             if restore:
                 current = port.head()
@@ -499,8 +526,6 @@ class RuntimeCommitService:
                                                    CommitRejected, base, current))
             closures, restored_from = {}, None
             if restore:
-                from astrid.sdk.timeline.commands import validate_command
-                validate_command(calls[0])
                 restored_from = copy.deepcopy(calls[0]['args'])
                 source = _load(port, context, restored_from['revision_id'])
                 image = source['source_mapping']['_runtime_document']['parent_revision']
@@ -520,12 +545,14 @@ class RuntimeCommitService:
                         closures[pin['revision_id']] = source
             # The port captures exactly the resulting document inputs. Discarded
             # current/source closures must not retain unrelated document pins.
+            schema_inputs = []
             for source in closures.values():
-                _hydrate(port, source)
+                schema_inputs.extend(_hydrate(port, source))
             if not closures:
-                _hydrate(port, bundle)
+                schema_inputs = _hydrate(port, bundle, calls)
             original = execute(bundle, calls, inverse_records=inverse_records,
-                               intervening_records=inverse_intervening, closures=closures)
+                               intervening_records=inverse_intervening, closures=closures,
+                               schema_inputs=schema_inputs, realm_id=context['realm_id'])
             for attempt in range(3):
                 if attempt:
                     current = port.head()
@@ -538,10 +565,11 @@ class RuntimeCommitService:
                     entries = _history(port, current, base, CommitRejected, base)
                     head_bundle = _load(port, context, current["revision_id"])
                     if not closures:
-                        _hydrate(port, head_bundle)
+                        schema_inputs = _hydrate(port, head_bundle, calls)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)], closures=closures)
+                                      entries, CommitRejected, base, current)], closures=closures,
+                                  schema_inputs=schema_inputs, realm_id=context['realm_id'])
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources)
                 prepared = {

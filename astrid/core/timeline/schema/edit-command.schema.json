@@ -463,6 +463,30 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "schema_source": {
+          "type": "object",
+          "properties": {
+            "document_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "content_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "document_id",
+            "version",
+            "content_digest"
+          ],
+          "additionalProperties": false,
+          "description": "Exact original admitted project-pack Document pin for selected parameter validation."
         }
       },
       "required": [

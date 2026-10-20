@@ -5,7 +5,9 @@ from .commands import execute
 from .inverse import check_intervening
 
 
-def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None, closures=None):
+def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None, closures=None,
+           schema_inputs=(), realm_id=None):
     check_intervening(plan.records, intervening_records)
     return execute(head_bundle, plan.commands, inverse_records=inverse_records,
-                   intervening_records=intervening_records, id_map=id_map, closures=closures)
+                   intervening_records=intervening_records, id_map=id_map, closures=closures,
+                   schema_inputs=schema_inputs, realm_id=realm_id)

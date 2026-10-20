@@ -115,7 +115,7 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None):
+            closures=None, schema_inputs=(), realm_id=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -133,7 +133,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
-        ctx = Recording(candidate, command, ordinal, closures=closures)
+        ctx = Recording(candidate, command, ordinal, closures=closures,
+                        schema_inputs=schema_inputs, realm_id=realm_id)
         _verify_claims(ctx, command)
         operation = operations().get(command['op'])
         if operation is not None:

@@ -35,8 +35,9 @@ def selection(state, key, owner, members=()):
 
 
 class Recording:
-    def __init__(self, bundle, command, ordinal, *, closures=None):
+    def __init__(self, bundle, command, ordinal, *, closures=None, schema_inputs=(), realm_id=None):
         self.state = State(bundle, closures=closures)
+        self.schema_inputs, self.realm_id = schema_inputs, realm_id
         self.input_state = None
         parent = bundle['parent']
         config = parent.get('config')

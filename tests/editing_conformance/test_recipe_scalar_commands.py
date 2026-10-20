@@ -1,6 +1,7 @@
 """Native scalar recipes: exact presence, narrow guards and portable capture."""
 from __future__ import annotations
 
+import base64
 import copy
 import json
 import os
@@ -52,9 +53,26 @@ def admitted_param_revisions(configured_project_pack):
     return refs
 
 
+def schema_options(documents, reference, project='project-1'):
+    row = next(copy.deepcopy(row) for (owner, _), row in documents.rows.items()
+               if owner == project and row['content']['pack_id'] == reference['packId'])
+    row['project_id'] = project
+    pin = {'document_id': row['document_id'], 'version': row['version'],
+           'content_digest': project_packs._json_digest(row['content'])}
+    objects = {}
+    for admission in row['content']['admissions']:
+        descriptor = admission['snapshot_object']
+        objects[descriptor['object_id']] = {
+            **descriptor, 'bytes_base64': base64.b64encode(
+                documents.media.objects[(project, descriptor['object_id'])]).decode('ascii')}
+    return {'schema_source': pin, 'schema_inputs': [({'pin': pin, 'document': row}, objects)],
+            'realm_id': 'realm'}
+
+
 @pytest.mark.parametrize('field', ['elementRef', 'element_ref'])
 @pytest.mark.parametrize('change', ['revision', 'attach', 'remove'])
-def test_original_param_basis_refuses_new_admitted_schema(admitted_param_revisions, field, change):
+def test_original_param_basis_refuses_new_admitted_schema(
+        admitted_param_revisions, configured_project_pack, field, change):
     from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 
     original = bundle()
@@ -67,7 +85,10 @@ def test_original_param_basis_refuses_new_admitted_schema(admitted_param_revisio
         target[field] = old
     original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
     compile_authoring_candidate(original)
-    plan = execute(original, [capture_clip_set_params(original, ref, values={'seed': 16})])
+    options = schema_options(configured_project_pack, old) if change != 'attach' else {}
+    inputs = {key: value for key, value in options.items() if key != 'schema_source'}
+    plan = execute(original, [capture_clip_set_params(original, ref, values={'seed': 16}, **options)],
+                   **inputs)
     head = copy.deepcopy(original)
     if change == 'remove':
         del clip(head, ref)[field]
@@ -77,13 +98,13 @@ def test_original_param_basis_refuses_new_admitted_schema(admitted_param_revisio
     compile_authoring_candidate(head)
     snapshot = copy.deepcopy(head)
     with pytest.raises(CommandError):
-        replay(plan, head)
+        replay(plan, head, **inputs)
     assert head == snapshot
     if change == 'revision':
         for history in ([later(ref, [field], old)],
                         [later(ref, [field], new), later(ref, [field], old)]):
             with pytest.raises(CommandError, match='intervening'):
-                replay(plan, original, intervening_records=history)
+                replay(plan, original, intervening_records=history, **inputs)
 
 
 @pytest.mark.parametrize('container', [ABSENT, present(None)])

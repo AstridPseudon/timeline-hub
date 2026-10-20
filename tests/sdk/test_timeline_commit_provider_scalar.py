@@ -30,7 +30,8 @@ def current(realm):
     return bundle_from_document(realm.documents[realm.head['revision_id']])
 
 
-def test_provider_refuses_old_param_basis_after_admitted_element_update(admitted_param_revisions):
+def test_provider_refuses_old_param_basis_after_admitted_element_update(
+        admitted_param_revisions, configured_project_pack):
     from astrid.sdk.timeline._clip_commands import capture_clip_add
     from tests.editing_conformance.test_recipe_m2_clip_add import empty_document
 
@@ -41,7 +42,10 @@ def test_provider_refuses_old_param_basis_after_admitted_element_update(admitted
            'at': 0, 'hold': 2, 'track': 'picture'}
     realm.call([capture_clip_add(current(realm), 'parent', row)])
     original = current(realm)
-    command = capture_clip_set_params(original, 'parent/clip:effect', values={'seed': 16})
+    options = scalar_recipes.schema_options(configured_project_pack, old)
+    source, realm.snapshot_objects = options['schema_inputs'][0]
+    realm.live_sources[_digest(source['pin'])] = source
+    command = capture_clip_set_params(original, 'parent/clip:effect', values={'seed': 16}, **options)
     # Seed the supported replacement revision as an immutable accepted head.
     # No new element-update command or renderer is needed for this provider probe.
     replacement = copy.deepcopy(original)
