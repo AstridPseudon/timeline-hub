@@ -111,6 +111,7 @@ function withOccurrenceIdentity(
 }
 
 function revisionPayload(revision: JsonObject): JsonObject {
+  if (record(revision.rawJson)) return revision.rawJson as JsonObject;
   return Object.fromEntries(Object.entries(revision).filter(([key]) => ![
     'shot_id',
     'revision_id',
@@ -283,6 +284,18 @@ export async function updateCanonicalShotRevision(
       ? { timing: { ...(record(sourceRevision.timing) ?? {}), duration_ms: occurrenceDurationMs } }
       : {}),
   };
+  const rawJson = record(sourceRevision.rawJson);
+  if (rawJson) {
+    updatedRevision.rawJson = {
+      ...rawJson,
+      ...(patch.settings ? { settings: clone(patch.settings) } : {}),
+      ...(patch.provenance ? { provenance: clone(patch.provenance) } : {}),
+      ...(patch.assets ? { assets: clone(patch.assets) } : {}),
+      ...(occurrenceDurationMs !== undefined && (patch.timeline || patch.occurrenceDurationMs !== undefined)
+        ? { timing: { ...record(rawJson.timing), duration_ms: occurrenceDurationMs } }
+        : {}),
+    };
+  }
   if (sharedSource) {
     const sourceItems = Array.isArray(updatedRevision.items) ? updatedRevision.items : [];
     const itemIds = new Map<string, string>();
@@ -299,6 +312,7 @@ export async function updateCanonicalShotRevision(
       );
     }
     updatedRevision = remapItems(updatedRevision as Record<string, JSON>, itemIds);
+    if (rawJson) updatedRevision.rawJson = remapItems(updatedRevision.rawJson as Record<string, JSON>, itemIds);
   }
   const finalInternal = record(updatedRevision.internal_timeline_revision);
   if (finalInternal && (updatedInternal || sharedSource)) {
@@ -307,6 +321,9 @@ export async function updateCanonicalShotRevision(
       finalInternal.publish = true;
     }
     finalInternal.content_digest = await digestJson(internalTimelinePayload(finalInternal));
+  }
+  if (rawJson && finalInternal) {
+    (updatedRevision.rawJson as JsonObject).internal_timeline_revision_id = finalInternal.revision_id;
   }
   updatedRevision.content_digest = await digestJson(revisionPayload(updatedRevision));
   // Keep the source revision in the graph. Runtime revisions are immutable;
