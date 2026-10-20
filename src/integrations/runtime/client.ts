@@ -630,6 +630,15 @@ export class AstridRuntimeClient {
     return this.withSession(() => this.client.listTimelineCommits(projectId, timelineId, cursor, limit));
   }
 
+  async createTimeline(
+    projectId: string,
+    timelineId: string,
+    idempotencyKeyValue: string,
+    name?: string,
+  ): Promise<MutationResult<Record<string, unknown>>> {
+    return this.withMutation(() => this.client.createTimeline(projectId, timelineId, idempotencyKeyValue, name));
+  }
+
   async getProjectMediaSelection(
     projectId: string,
     selection: MediaSelectionQuery,

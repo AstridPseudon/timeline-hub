@@ -89,6 +89,151 @@ function environment() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('durable command outbox', () => {
+  it('checkpoints the original init atomically and keeps it after later edits, inverse ACKs and reopen', async () => {
+    const env = environment();
+    let owner = '';
+    let initialization: Awaited<ReturnType<ClaimedOutbox['read']>>['initialization'];
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      const init = await box.append({ kind: 'timeline-init', commands: ['original-guards'] }, { head: h0 });
+      const dependent = await box.append(move(7), { after: init });
+      let original!: OutboxRequest;
+      await expect(box.dispatch(build, async (request) => {
+        original = request;
+        env.fault.abortNextWrite = true;
+        return accepted();
+      })).rejects.toThrow('aborted');
+      const before = await box.read();
+      expect(before.initialization).toBeUndefined();
+      expect(before.pending!.request).toEqual(original);
+      expect(before.intents.map((intent) => intent.id)).toEqual([init, dependent]);
+      const after = await box.dispatch(() => { throw new Error('Must retry exact init'); }, async (request) => {
+        expect(request).toEqual(original);
+        return accepted();
+      });
+      initialization = structuredClone(after.initialization);
+      expect(initialization).toEqual({ intent: before.intents[0], request: original, head: ha, value: accepted().value });
+      expect(after.intents[0].readyBase).toEqual(ha);
+      after.initialization!.request.key = 'detached-mutation';
+      await box.dispatch(build, async () => accepted({ revisionId: 'RB', publicationId: 'PB' }));
+      expect((await box.read()).initialization).toEqual(initialization);
+      await box.append({ commands: ['timeline.inverse'] }, { after: dependent });
+      await box.dispatch(build, async () => accepted({ revisionId: h0.revisionId, publicationId: 'inverse-p3' }));
+      expect((await box.read()).accepted?.head).toEqual({ revisionId: h0.revisionId, publicationId: 'inverse-p3' });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      expect((await box.read()).initialization).toEqual(initialization);
+      expect((await box.read()).intents).toEqual([]);
+    });
+  });
+
+  it('preserves existing render and placement continuation JSON during init and later ACKs', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      await box.append({ kind: 'timeline-init' }, { head: h0 });
+    });
+    const continuations = {
+      renderContinuations: [{ intent: { opaque: [null, 'render'] }, accepted: { intentId: 'older', head: h0, value: {} } }],
+      placementContinuations: [{ id: 'placement', input: { opaque: [null, 'placement'] },
+        placement: { intentId: 'cancelled-placement', cancelled: true } }],
+    };
+    // Older/future owner fields are opaque to this bounded storage branch.
+    await new Promise<void>((resolve) => {
+      const request = env.factory.open('astrid.command-outbox', 1);
+      request.addEventListener('success', () => {
+        const db = request.result;
+        const records = db.recordsByStore.get('owners');
+        for (const [key, record] of records) records.set(key, { ...record, ...structuredClone(continuations) });
+        db.close();
+        resolve();
+      });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const init = await box.dispatch(build, async () => accepted());
+      expect(init).toMatchObject(continuations);
+      const link = init.initialization;
+      await box.append(move(9), { after: init.accepted!.intentId });
+      const later = await box.dispatch(build, async () => accepted({ revisionId: 'later', publicationId: 'later-p' }));
+      expect(later).toMatchObject(continuations);
+      expect(later.initialization).toEqual(link);
+    });
+  });
+
+  const createRequest: OutboxRequest = { method: 'POST', path: '/v1/projects/project/timelines',
+    body: '{"timeline_id":"timeline","name":"Main"}', key: 'astrid-first-timeline-project' };
+
+  it('persists pre-create identity and defaults before sending, including a lost or unpersisted create ACK', async () => {
+    const env = environment();
+    const defaults = { name: 'Main', output: { background: null }, tracks: ['V1', 'A1'] };
+    let owner = '';
+    let original!: OutboxRequest;
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      await box.reserveCreate(defaults, createRequest);
+      original = (await box.read()).pending!.request;
+      await box.dispatch(() => { throw new Error('No invented head'); }, async (request) => {
+        expect((await env.open().list(scope))[0].pending!.request).toEqual(request);
+        throw new Error('ACK lost');
+      });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const before = await box.read();
+      await expect(box.dispatch(() => { throw new Error('No recapture'); }, async (request) => {
+        expect(request).toEqual(original);
+        env.fault.abortNextWrite = true;
+        return accepted(h0);
+      })).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(before);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const next = await box.dispatch(() => { throw new Error('No recapture'); }, async (request) => {
+        expect(request).toEqual(original);
+        return accepted(h0);
+      });
+      expect(next.accepted).toMatchObject({ head: h0, creation: { request: original, payload: defaults } });
+      expect(next.pending).toBeUndefined();
+      expect(next.intents).toEqual([]);
+      const a = await box.append(move(5), { after: next.accepted!.intentId });
+      expect((await box.read()).intents[0]).toMatchObject({ id: a, readyBase: h0 });
+    });
+  });
+
+  it('does not send or lose earlier work if the pre-create reservation cannot persist', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const original = await box.read();
+      env.fault.abortNextWrite = true;
+      await expect(box.reserveCreate({ defaults: null }, createRequest)).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(original);
+      const transmit = vi.fn(async () => accepted(h0));
+      await expect(box.dispatch(build, transmit)).rejects.toThrow('empty');
+      expect(transmit).not.toHaveBeenCalled();
+      await box.reserveCreate({ defaults: null }, createRequest);
+      const reserved = await box.read();
+      await expect(box.reserveCreate({}, createRequest)).rejects.toThrow('unused');
+      await expect(box.cancel(reserved.pending!.intentId)).rejects.toThrow('uncertain');
+      expect(await box.read()).toEqual(reserved);
+    });
+  });
+
+  it('refuses cross-scope, changed-route, extra-wire-field and fabricated-head creation reservations', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const original = await box.read();
+      for (const request of [
+        { ...createRequest, path: '/v1/projects/other/timelines' },
+        { ...createRequest, method: 'PUT' },
+        { ...createRequest, key: 'invalid key' },
+        { ...createRequest, body: '{"timeline_id":"other"}' },
+        { ...createRequest, body: '{"timeline_id":"timeline","head_revision_id":"fake"}' },
+      ]) await expect(box.reserveCreate({}, request)).rejects.toThrow('Noncanonical');
+      await expect(box.append({}, { create: true })).rejects.toThrow('reserved');
+      expect(await box.read()).toEqual(original);
+    });
+  });
+
   it('never disposes an unknown flight, including before transmission completes', async () => {
     const env = environment();
     await env.open().create(scope, async (box) => {
