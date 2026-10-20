@@ -746,7 +746,16 @@ export async function createTimelineCommandSession(options: Options) {
         throw new Error('Native patch has a stale local version');
       }
       if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
-        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        || current.head.headRevisionId !== displayHead.revisionId
+        || (current.head.headPublicationId != null
+          ? current.head.headPublicationId !== displayHead.publicationId
+          : current.editProjection?.kind === 'accepted'
+            ? current.editProjection.head.revisionId !== displayHead.revisionId
+              || current.editProjection.head.publicationId !== displayHead.publicationId
+            : current.editProjection?.kind === 'local'
+              ? current.editProjection.base.revisionId !== displayHead.revisionId
+                || current.editProjection.base.publicationId !== displayHead.publicationId
+              : true)) {
         throw new Error('Displayed timeline does not match the raw authoring basis');
       }
       const snapshot = copy(current);

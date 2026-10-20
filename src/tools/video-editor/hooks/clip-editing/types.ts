@@ -6,6 +6,8 @@ import type {
 } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { ApplyEditOptions } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import type { TimelineSelectedTrack } from '@/tools/video-editor/hooks/timeline-state-types.ts';
+import type { GenericPatchCapturePort } from '../../commands/genericPatchCapture.ts';
+import type { TimelineEditability } from '../../lib/timeline-editability.ts';
 
 export type DeleteClipOptions = {
   allowPinnedGroupDelete?: boolean;
@@ -33,4 +35,6 @@ export interface ClipEditingContext {
   getValidClipIds: (clipIds: string[]) => string[];
   selectClip: (clipId: string, opts?: SelectClipOptions) => void;
   setSelectedTrackId: Dispatch<SetStateAction<string | null>>;
+  genericPatchPort?: GenericPatchCapturePort;
+  editability?: TimelineEditability;
 }

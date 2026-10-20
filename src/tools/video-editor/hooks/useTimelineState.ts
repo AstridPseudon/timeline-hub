@@ -943,6 +943,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   });
 
   const clipEditing = useClipEditing({
+    genericPatchPort: save.commands.genericPatchPort,
+    editability: runtime.timelineEditability,
     dataRef,
     resolvedConfig: selection.resolvedConfig,
     selectedClipId: selection.primaryClipId,
