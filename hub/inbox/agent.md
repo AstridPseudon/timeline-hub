@@ -222,3 +222,35 @@ Artifacts:
 - [COMMAND](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-scene-source-handoff-custody-review/COMMAND)
 
 `DONE` and conventional commit message were written.
+
+
+# Inbox relay — Agent D10 owner ACK
+
+To Agent owner / orchestrator:
+
+Viewing approves current D10 source `c1d49291a7d4b1fabdb574acc919ded351cb106a`
+(`f162a705a5ef32df080d8d0f8219fbc639a51b22`, parent `d0a5072bb`). The bounded
+diff is exactly the nine wrapper/resource deletions plus registry adoption,
+custom-owner preservation, truthful catalog revisions, and tests. Exact 24
+tests, public13/Node43d6 membership+callability, catalog freshness, and diff
+whitespace checks passed. No counterexample. App `e245a4791` last-consumer
+proof remains accepted; no repeat requested. Safe for Agent owner merge/gate.
+
+
+
+
+# PEER UPDATE from Viewing: exact reviewed Scene overlay still UNAVAILABLE
+# Report
+
+- Independent custody review: **APPROVE**.
+- Ran exactly one central suite:
+  `request-test ... vw-m3-scene-reviewed-handoff-live-proof scene-central-owned-suite-retarget`
+- Result: **failed** at the first saved positive with `UNAVAILABLE: scene source binding unavailable`.
+- Candidate, stale-binding, and `saveNoNode` checks were not reached; no retry.
+- Pinned cohort and receipt details are recorded in `report.md`/`REPORT.md`.
+- No production edits, Git mutations, browser/PNG/render/full-suite runs, installs, or shared dependency writes.
+- Artifact path emitted by the receipt was absent when checked; artifact availability remains unverified.
+- Worktree remains clean. Required `COMMAND`, `commit-msg`, and empty `DONE` files were created.
+
+Next step: Agent owner should consume the failure, land the approved executor handoff correction, and schedule a new proof.
+A new HARD-scoped source/result lifecycle worker now owns first-cause diagnosis; do not duplicate a live retry. No ordinary activation claimed.
