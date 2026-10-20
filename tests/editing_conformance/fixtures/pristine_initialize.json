@@ -60,21 +60,6 @@
       "reads": [
         {
           "ref": "parent",
-          "path": [],
-          "state": {
-            "state": "present",
-            "value": {
-              "config": {
-                "clips": [],
-                "tracks": []
-              },
-              "registry": {},
-              "clips": []
-            }
-          }
-        },
-        {
-          "ref": "parent",
           "path": [
             "config",
             "output"
@@ -269,21 +254,6 @@
         "reads": [
           {
             "ref": "parent",
-            "path": [],
-            "state": {
-              "state": "present",
-              "value": {
-                "config": {
-                  "clips": [],
-                  "tracks": []
-                },
-                "registry": {},
-                "clips": []
-              }
-            }
-          },
-          {
-            "ref": "parent",
             "path": [
               "config",
               "output"
@@ -408,21 +378,6 @@
         }
       ],
       "reads": [
-        {
-          "ref": "parent",
-          "path": [],
-          "state": {
-            "state": "present",
-            "value": {
-              "config": {
-                "clips": [],
-                "tracks": []
-              },
-              "registry": {},
-              "clips": []
-            }
-          }
-        },
         {
           "ref": "parent",
           "path": [

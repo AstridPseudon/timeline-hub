@@ -70,6 +70,24 @@ def test_app_golden_exact_capture_replay_inverse_and_redo():
                for key in ('theme', 'theme_overrides', 'generation_defaults'))
 
 
+@pytest.mark.parametrize('opaque', [None, False, [], {}])
+def test_inverse_reload_redo_preserves_unrelated_opaque_parent_field(opaque):
+    original = bundle_from_document(empty_document())
+    plan = execute(original, batch(original))
+    edited = copy.deepcopy(plan.bundle)
+    edited['parent']['opaque'] = opaque
+    reloaded = bundle_from_document(document_from_bundle(edited))
+
+    restored = inverse(reloaded, plan.records)
+    expected = copy.deepcopy(original)
+    expected['parent']['opaque'] = opaque
+    assert (document_from_bundle(restored.bundle)['parent_revision']['payload']
+            == document_from_bundle(expected)['parent_revision']['payload'])
+
+    redone = inverse(restored.bundle, restored.records)
+    assert document_from_bundle(redone.bundle) == document_from_bundle(reloaded)
+
+
 @pytest.mark.parametrize('path,value', [
     (['config', 'output'], None), (['name'], None), (['slug'], ''),
     (['registry', 'assets'], {}), (['registry', 'opaque'], [None, False]),
@@ -124,7 +142,7 @@ def test_exact_order_claims_and_intervening_write_guard():
         inverse(plan.bundle, plan.records, [{'writes': [write]}])
     assert error.value.kind == 'intervening_write'
     forged = copy.deepcopy(plan.commands)
-    forged[0]['reads'][0]['state']['value']['opaque'] = None
+    forged[0]['reads'][0]['state'] = {'state': 'present', 'value': None}
     with pytest.raises(CommandError):
         execute(original, forged)
     # A different raw parent cannot be treated as an equivalent empty basis.

@@ -6,9 +6,13 @@ from ._command_state import ABSENT, CommandError, equal
 
 def initialize(ctx, command):
     bundle = ctx.state.bundle
-    parent = ctx.read('parent')
+    # The pristine-entry check consumes the complete raw parent, but that
+    # observation must not become an inverse dependency. The init writes below
+    # are the only authored state this command owns; a later opaque sibling is
+    # therefore disjoint and must survive its inverse.
     if (ctx.record['ordinal'] != 0
-            or not equal(parent, {'config': {'clips': [], 'tracks': []}, 'registry': {}, 'clips': []})
+            or not equal(bundle['parent'],
+                         {'config': {'clips': [], 'tracks': []}, 'registry': {}, 'clips': []})
             or bundle['placements'] or bundle['shots']):
         raise CommandError('initialization requires the pristine empty timeline', kind='not_pristine')
     for path in (['config', 'output'], ['name'], ['slug'], ['registry', 'assets']):
