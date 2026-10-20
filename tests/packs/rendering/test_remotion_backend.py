@@ -42,6 +42,24 @@ LOCAL_EFFECT_SMOKE_FIXTURE = ROOT / "tests" / "fixtures" / "local_effect_smoke"
 render_remotion = remotion
 
 
+def _selected_composition_package() -> Path:
+    configured_runtime = os.environ.get("ASTRID_REMOTION_PROJECT_DIR", "").strip()
+    if not configured_runtime:
+        raise AssertionError(
+            "registry fixture requires the explicitly selected Remotion runtime"
+        )
+    package = (
+        Path(configured_runtime).resolve()
+        / "node_modules"
+        / "@banodoco"
+        / "timeline-composition"
+    )
+    manifest = package / "package.json"
+    assert manifest.is_file(), manifest
+    assert json.loads(manifest.read_text(encoding="utf-8"))["version"] == "0.0.13"
+    return package
+
+
 def _is_remotion_render_command(command: list[str]) -> bool:
     return (
         len(command) >= 3
@@ -829,7 +847,10 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         banodoco_root = project_dir / "node_modules" / "@banodoco"
         composition_src = project_dir / "src"
         composition_src.mkdir(parents=True)
-        (banodoco_root / "timeline-composition").mkdir(parents=True)
+        banodoco_root.mkdir(parents=True)
+        (banodoco_root / "timeline-composition").symlink_to(
+            _selected_composition_package(), target_is_directory=True
+        )
         (project_dir / "package.json").write_text('{"scripts":{}}\n', encoding="utf-8")
         cli = project_dir / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
         cli.parent.mkdir(parents=True)
@@ -889,13 +910,27 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             theme_path = tmp / "theme.json"
             theme_path.write_text("{}", encoding="utf-8")
             calls: list[tuple[list[str], dict[str, object]]] = []
+            real_run = subprocess.run
 
             def fake_run(cmd, **kwargs):
+                command = [str(part) for part in cmd]
+                if "--input-type=module" in command:
+                    return real_run(cmd, **kwargs)
                 calls.append(([str(part) for part in cmd], kwargs))
                 return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
             with (
-                mock.patch.dict(render_remotion.os.environ, {"ASTRID_RENDER_UNDECLARED": "host"}, clear=True),
+                mock.patch.dict(
+                    render_remotion.os.environ,
+                    {
+                        "ASTRID_RENDER_UNDECLARED": "host",
+                        "ASTRID_REMOTION_PROJECT_DIR": str(project_dir),
+                        "ASTRID_NODE_EXECUTABLE": os.environ[
+                            "ASTRID_NODE_EXECUTABLE"
+                        ],
+                    },
+                    clear=True,
+                ),
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
             ):
                 render_remotion._regenerate_element_registries(project_dir, theme_path)
@@ -1079,9 +1114,12 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             props_payloads: list[dict[str, object]] = []
             props_paths: list[Path] = []
             remotion_temp_roots: list[Path] = []
+            real_run = subprocess.run
 
             def fake_run(cmd, **kwargs):
                 command = [str(part) for part in cmd]
+                if "--input-type=module" in command:
+                    return real_run(cmd, **kwargs)
                 calls.append((command, kwargs))
                 if _is_remotion_render_command(command):
                     child_env = kwargs["env"]
@@ -1102,7 +1140,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                         "HOME": str(tmp / "home"),
                         "ASTRID_NODE_EXECUTABLE": os.environ[
                             "ASTRID_NODE_EXECUTABLE"
-                        ]
+                        ],
+                        "ASTRID_REMOTION_PROJECT_DIR": str(project_dir),
                     },
                     clear=True,
                 ),
@@ -1376,9 +1415,12 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             project_dir, composition_src = self._write_fake_remotion_project(tmp)
             timeline_path, assets_path, out_path = self._write_empty_render_inputs(tmp)
             remotion_envs: list[dict[str, str]] = []
+            real_run = subprocess.run
 
             def fake_run(cmd, **kwargs):
                 command = [str(part) for part in cmd]
+                if "--input-type=module" in command:
+                    return real_run(cmd, **kwargs)
                 if _is_remotion_render_command(command):
                     remotion_envs.append(dict(kwargs["env"]))
                     _write_fake_remotion_output(command)
@@ -1395,6 +1437,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 "ASTRID_NODE_EXECUTABLE": render_remotion.os.environ[
                     "ASTRID_NODE_EXECUTABLE"
                 ],
+                "ASTRID_REMOTION_PROJECT_DIR": str(project_dir),
             }
             Path(host_env["HOME"]).mkdir()
             with (
