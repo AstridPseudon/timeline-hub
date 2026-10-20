@@ -5,6 +5,7 @@ import {
   VIEWING_QUALIFICATIONS,
   MISSING_OWNER_PORTS, OWNER_PORTS,
   assertCandidateTuple, assertCompletedAppConsumer, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
+  readAppSourceSelection,
 } from './tab-audio.controller.mjs';
 
 test('READY controller identifies the integrated App13 and verified normal13 tuple', () => {
@@ -20,6 +21,32 @@ test('READY controller identifies the integrated App13 and verified normal13 tup
 });
 test('controller rejects a changed source tuple before capture', () => {
   assert.throws(() => assertCandidateTuple({ app: { ...APP13, tree: 'changed' }, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }), /app13 candidate tuple changed/);
+});
+
+test('controller accepts an externally selected literal current App source/tree', () => {
+  const app = readAppSourceSelection({
+    TIMELINE_VIEWING_APP_SOURCE: '20ea14c26526fe4924354f10a177aebbaf6002bc',
+    TIMELINE_VIEWING_APP_TREE: '83cfad527f8b2264085571316cede1c6ae482b5f',
+  });
+  assert.deepEqual(app, {
+    source: '20ea14c26526fe4924354f10a177aebbaf6002bc',
+    tree: '83cfad527f8b2264085571316cede1c6ae482b5f',
+    status: 'externally-pinned',
+  });
+  assertCandidateTuple({ app, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }, app);
+});
+
+test('controller refuses an externally selected mismatched App source', () => {
+  const app = readAppSourceSelection({
+    TIMELINE_VIEWING_APP_SOURCE: '20ea14c26526fe4924354f10a177aebbaf6002bc',
+    TIMELINE_VIEWING_APP_TREE: '83cfad527f8b2264085571316cede1c6ae482b5f',
+  });
+  assert.throws(() => assertCandidateTuple({
+    app: { ...app, source: '1111111111111111111111111111111111111111' },
+    agent: AGENT13,
+    runtime: RUNTIME13,
+    composition: COMPOSITION13,
+  }, app), /app13 candidate tuple changed/);
 });
 
 test('readiness reports the current flat owner-port status', () => {
