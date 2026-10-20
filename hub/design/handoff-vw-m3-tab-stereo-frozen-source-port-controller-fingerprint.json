@@ -1,0 +1,26 @@
+{
+  "status": "source-unit-only-postcommit-fingerprint-required",
+  "appBaseCommit": "2b388e769d9e153122e43b16b5d21e6e1ddf5b71",
+  "appBaseTree": "0124b608968c3baa371d6683ca3d0f2c953c235b",
+  "controllerProfile": "native-codec-chrome155-clean-install-public12",
+  "controllerSha256": "ae515d0769473bcf66ec0932daf4cf6bdd04784e9177fd2e8b945dea6916fca7",
+  "configSha256": "1b28c12092e9e40c02c1959b89b80cc55d06ec2a7e1a9f60f6abe18ab33b5ee0",
+  "launcherSha256": "eba045ce37cfe6bf593367536ee88b1a29f32dd3b173db652e7c8a95a143ebef",
+  "node": {
+    "version": "v20.19.4",
+    "executableSha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node"
+  },
+  "frozenPrivate12Graph": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules",
+    "treeSha256": "4a54ed6f3300cba740b377e3c780f330996ead23147647f9c963ed4dd5bdd7a4",
+    "fileCount": 32382
+  },
+  "playwrightDiscovery": {
+    "testCount": 1,
+    "result": "Total: 1 test in 1 file",
+    "browserLaunched": false
+  },
+  "sourceShaAfterHarnessCommit": null,
+  "sourceTreeAfterHarnessCommit": null
+}

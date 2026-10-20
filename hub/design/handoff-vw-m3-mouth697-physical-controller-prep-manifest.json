@@ -1,0 +1,59 @@
+{
+  "worker": "vw-m3-mouth697-physical-controller-prep",
+  "scope": "component-level pixel compatibility preparation only",
+  "agent": {
+    "revision": "ee71010a0947edcbbacbf8178e5fee11ab6bab3d",
+    "tree": "9e9971d62a870173af6065cc0af9ee8b79011ecc",
+    "source_hashes": {
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx": "b1dea928a4c709e1148525ceb88c704952b93fdf6f2b89c49e6e668afb7e84cc",
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts": "00b60482093b5f5ead7179bd81689afcc671502f40f38059432d5087634c7701",
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts": "4cde365dd358ac02eafca9a59f565a96fe8e204f68b955b51c6b260441e46e50",
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml": "7bbcb59775818bda4d0cdc58e364256139d904901ce87bcc7263c8ee80afe156",
+      "tests/packs/rendering/presenter_scene_capability.mjs": "c8c6d64e258bb7069ea8e4daaf6aa13aae951dc6d79640e0f97ff57a36a379b0",
+      "tests/packs/rendering/test_presenter_scene_capability.py": "bbe8feb39d0580295af82582b94e2778063f207dc4ba106559dffef5789b5a43",
+      "astrid/packs/astrid_motion/pack.yaml": "064d7450d0ce3f2c6eac73c3d0ac2517a0ea6bdca4993134dd672f8ad5c556e1",
+      "remotion/src/host-registries.ts": "16cb1c2068e6643edca57e89dc155f757418676adab6658192539ed7036b83df"
+    },
+    "source_contract": {
+      "missing_default_mouth": "unknown; no inspection",
+      "malformed_mouth": "unknown; no fabricated inspection",
+      "partial_raw_input": {"x": 151, "y": 104, "w": "omitted", "legacy_width": 16}
+    }
+  },
+  "composition": {"integration_revision": "5a4e9b72f"},
+  "public12": {
+    "artifact": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.12.tgz",
+    "sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "files": 77,
+    "read_only": true
+  },
+  "dependency_graph": {
+    "reference": "f8164bef73215272562c4d6974acadbd82c2898a",
+    "path": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules",
+    "file_count": 21488,
+    "tree_sha256": "9e556a876a02ee4f4ed3e8215eaaf793ac0ba66a6d85e503747f635521acc425",
+    "read_only": true,
+    "whole_graph_pre_post": true,
+    "six_peers": {
+      "@remotion/player/dist/cjs/PlayerUI.js": "5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb",
+      "@remotion/player/dist/cjs/use-player-methods.js": "ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46",
+      "@remotion/player/dist/cjs/use-playback.js": "6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0",
+      "@remotion/player/dist/esm/index.mjs": "d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12",
+      "remotion/dist/esm/index.mjs": "9fdfe58f3f34e6a72564a811ac5d374d1c97a0f535e2a0e3aac198670d9b7ff8",
+      "remotion/dist/cjs/audio/shared-audio-tags.js": "471b33916a91f5b9529c477bdf0ec586cb700d5a7179ab910a82dd932e172f6c"
+    }
+  },
+  "runtime": {
+    "node": {"path": "/tmp/vw-m3-agent-gate-node20.19.4/bin/node", "version": "v20.19.4", "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"},
+    "chrome": {"path": "/opt/google/chrome/chrome", "version": "155.0.8059.84", "directory_sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e"},
+    "flock": "/tmp/timeline-viewing-browser.lock"
+  },
+  "qualification": {
+    "existing_explicit": {"frames": [0, 3, 4, 5], "raw_mouth": {"x": 151, "y": 104, "w": 19}, "pixels": 799, "erase_pixels": 387},
+    "fresh_partial": {"frames": [0, 3], "raw_mouth": {"x": 151, "y": 104, "w": "omitted"}, "pixels": 697, "crop": [298, 202, 339, 219], "erase_pixels": 387},
+    "threshold": "strict > 0.02",
+    "negative_patch_pixels": 20,
+    "no_default_capture": true
+  },
+  "status": "preflight_and_central_controller_prepared; no browser/render/socket executed"
+}

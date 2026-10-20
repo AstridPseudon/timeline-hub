@@ -1,0 +1,273 @@
+diff --git a/tests/e2e/timeline/tab-audio-capture.analysis.mjs b/tests/e2e/timeline/tab-audio-capture.analysis.mjs
+index 480626adc..b63329ae1 100644
+--- a/tests/e2e/timeline/tab-audio-capture.analysis.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.analysis.mjs
+@@ -14,6 +14,9 @@ export const CONTROLLED_AUDIO = Object.freeze({
+   webAudioAmplitude: 0.2,
+   htmlAudioFrequency: 1_320,
+   htmlAudioAmplitude: 0.18,
++  leftFrequency: 1_760,
++  rightFrequency: 1_980,
++  channelAmplitude: 0.12,
+ });
+ 
+ function writeAscii(bytes, offset, value) {
+@@ -23,6 +26,9 @@ function writeAscii(bytes, offset, value) {
+ /**
+  * Build the private fixture's declared PCM source. This is a finite, native
+  * 48 kHz stereo signal; it is not a substitute for decoded capture output.
++ * @param {{sampleRate?: number, channels?: number, durationSeconds?: number,
++ * frequency?: number, amplitude?: number, leftFrequency?: number|null,
++ * rightFrequency?: number|null, channelAmplitude?: number}} options
+  */
+ export function createSyntheticPcmWav({
+   sampleRate = CONTROLLED_AUDIO.sampleRate,
+@@ -30,11 +36,18 @@ export function createSyntheticPcmWav({
+   durationSeconds = CONTROLLED_AUDIO.durationSeconds,
+   frequency = CONTROLLED_AUDIO.htmlAudioFrequency,
+   amplitude = CONTROLLED_AUDIO.htmlAudioAmplitude,
++  leftFrequency = null,
++  rightFrequency = null,
++  channelAmplitude = CONTROLLED_AUDIO.channelAmplitude,
+ } = {}) {
+   if (!Number.isInteger(sampleRate) || sampleRate <= 0 || channels !== 2
+     || !Number.isInteger(durationSeconds) || durationSeconds <= 0
+     || !Number.isFinite(frequency) || frequency <= 0
+-    || !Number.isFinite(amplitude) || amplitude <= 0 || amplitude > 1) {
++    || !Number.isFinite(amplitude) || amplitude <= 0 || amplitude > 1
++    || (leftFrequency !== null && (!Number.isFinite(leftFrequency) || leftFrequency <= 0))
++    || (rightFrequency !== null && (!Number.isFinite(rightFrequency) || rightFrequency <= 0))
++    || (leftFrequency === null) !== (rightFrequency === null)
++    || !Number.isFinite(channelAmplitude) || channelAmplitude < 0 || channelAmplitude > 1) {
+     throw new Error('Synthetic WAV parameters are invalid');
+   }
+   const frameCount = sampleRate * durationSeconds;
+@@ -53,8 +66,14 @@ export function createSyntheticPcmWav({
+   writeAscii(bytes, 36, 'data');
+   bytes.writeUInt32LE(bytes.length - 44, 40);
+   for (let frame = 0; frame < frameCount; frame += 1) {
+-    const value = Math.round(amplitude * 32_767 * Math.sin(2 * Math.PI * frequency * frame / sampleRate));
+-    for (let channel = 0; channel < channels; channel += 1) bytes.writeInt16LE(value, 44 + (frame * channels + channel) * 2);
++    const shared = amplitude * Math.sin(2 * Math.PI * frequency * frame / sampleRate);
++    for (let channel = 0; channel < channels; channel += 1) {
++      const sideFrequency = channel === 0 ? leftFrequency : rightFrequency;
++      const side = sideFrequency === null
++        ? 0
++        : channelAmplitude * Math.sin(2 * Math.PI * sideFrequency * frame / sampleRate);
++      bytes.writeInt16LE(Math.round((shared + side) * 32_767), 44 + (frame * channels + channel) * 2);
++    }
+   }
+   return bytes;
+ }
+@@ -229,3 +248,59 @@ export function assertTone(samples, {sampleRate, channels, frequency}) {
+   }
+   return {sampleRate, channels, frequency, amplitudes: measurements};
+ }
++
++function measureTone(samples, {sampleRate, channels, frequency, channel}) {
++  const sampleCount = samples.length / channels;
++  let sin = 0;
++  let cos = 0;
++  for (let index = 0; index < sampleCount; index += 1) {
++    const phase = 2 * Math.PI * frequency * index / sampleRate;
++    const value = samples[index * channels + channel];
++    sin += value * Math.sin(phase);
++    cos += value * Math.cos(phase);
++  }
++  return 2 * Math.hypot(sin, cos) / sampleCount;
++}
++
++/**
++ * Detect the deliberately separated left/right source without downmixing.
++ * A mono recorder output is a refusal, not stereo evidence.
++ */
++export function assertStereoTones(samples, {
++  sampleRate,
++  channels,
++  leftFrequency,
++  rightFrequency,
++  minAmplitude = 0.001,
++  maxLeakage = 0.02,
++  maxLeakageRatio = 0.25,
++}) {
++  if (!(samples instanceof Float32Array) || samples.length === 0
++    || !Number.isInteger(sampleRate) || sampleRate <= 0
++    || channels !== 2 || samples.length % channels !== 0) {
++    throw new Error('Stereo detector requires exactly two interleaved channels');
++  }
++  for (const [name, frequency] of [['left', leftFrequency], ['right', rightFrequency]]) {
++    if (!Number.isFinite(frequency) || frequency <= 0) throw new Error(`Invalid ${name} detector frequency`);
++  }
++  const left = measureTone(samples, {sampleRate, channels, frequency: leftFrequency, channel: 0});
++  const leftLeakage = measureTone(samples, {sampleRate, channels, frequency: leftFrequency, channel: 1});
++  const right = measureTone(samples, {sampleRate, channels, frequency: rightFrequency, channel: 1});
++  const rightLeakage = measureTone(samples, {sampleRate, channels, frequency: rightFrequency, channel: 0});
++  if (left < minAmplitude || right < minAmplitude) {
++    throw new Error(`Separated L/R tones were not present in their expected channels: ${left}/${right}`);
++  }
++  if (leftLeakage > maxLeakage || rightLeakage > maxLeakage
++    || leftLeakage > left * maxLeakageRatio || rightLeakage > right * maxLeakageRatio) {
++    throw new Error(`Separated L/R tones leaked across channels: ${leftLeakage}/${rightLeakage}`);
++  }
++  return {
++    sampleRate,
++    channels,
++    leftFrequency,
++    rightFrequency,
++    amplitudes: {left, right},
++    leakage: {leftIntoRight: leftLeakage, rightIntoLeft: rightLeakage},
++    controls: {minAmplitude, maxLeakage, maxLeakageRatio},
++  };
++}
+diff --git a/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs b/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+index a743009bc..c67584022 100644
+--- a/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+@@ -5,6 +5,7 @@ import {
+   assertCaptureOutcome,
+   assertRawPts,
+   assertTone,
++  assertStereoTones,
+   assertVisualEvent,
+   CONTROLLED_AUDIO,
+   createSyntheticPcmWav,
+@@ -99,6 +100,42 @@ test('tone check observes decoded channels without resampling or level normaliza
+   }), /not present/);
+ });
+ 
++test('left/right detector rejects mono and swapped channels', () => {
++  const sampleRate = CONTROLLED_AUDIO.sampleRate;
++  const samples = new Float32Array(sampleRate * 2);
++  for (let index = 0; index < sampleRate; index += 1) {
++    samples[index * 2] = CONTROLLED_AUDIO.channelAmplitude
++      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.leftFrequency * index / sampleRate);
++    samples[index * 2 + 1] = CONTROLLED_AUDIO.channelAmplitude
++      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.rightFrequency * index / sampleRate);
++  }
++  const result = assertStereoTones(samples, {
++    sampleRate,
++    channels: 2,
++    leftFrequency: CONTROLLED_AUDIO.leftFrequency,
++    rightFrequency: CONTROLLED_AUDIO.rightFrequency,
++  });
++  assert.equal(result.channels, 2);
++
++  const swapped = new Float32Array(samples.length);
++  for (let index = 0; index < sampleRate; index += 1) {
++    swapped[index * 2] = samples[index * 2 + 1];
++    swapped[index * 2 + 1] = samples[index * 2];
++  }
++  assert.throws(() => assertStereoTones(swapped, {
++    sampleRate,
++    channels: 2,
++    leftFrequency: CONTROLLED_AUDIO.leftFrequency,
++    rightFrequency: CONTROLLED_AUDIO.rightFrequency,
++  }), /not present/);
++  assert.throws(() => assertStereoTones(new Float32Array(sampleRate), {
++    sampleRate,
++    channels: 1,
++    leftFrequency: CONTROLLED_AUDIO.leftFrequency,
++    rightFrequency: CONTROLLED_AUDIO.rightFrequency,
++  }), /exactly two interleaved channels/);
++});
++
+ test('full-tab source controls distinguish the independent oscillator and HTMLAudio tones', () => {
+   const sampleRate = CONTROLLED_AUDIO.sampleRate;
+   const samples = new Float32Array(sampleRate * 2);
+diff --git a/tests/e2e/timeline/tab-audio-capture.probe.ts b/tests/e2e/timeline/tab-audio-capture.probe.ts
+index 0669217f9..822348d34 100644
+--- a/tests/e2e/timeline/tab-audio-capture.probe.ts
++++ b/tests/e2e/timeline/tab-audio-capture.probe.ts
+@@ -7,6 +7,7 @@ import {
+   assertCaptureCapabilities,
+   assertCaptureOutcome,
+   assertTone,
++  assertStereoTones,
+   CONTROLLED_AUDIO,
+   createSyntheticPcmWav,
+   diagnoseVisualEvent,
+@@ -20,11 +21,13 @@ declare global {
+   interface Window {
+     __tabAudioProbe: {
+       mimeType: string;
+-      tracks: Array<{ kind: string; readyState: string; settings: MediaTrackSettings }>;
++      tracks: Array<{ kind: string; readyState: string; settings: MediaTrackSettings; capabilities: MediaTrackCapabilities }>;
+       chunks: string[];
+       fixture: {
+         webAudioFrequency: number;
+         htmlAudioFrequency: number;
++        leftFrequency: number;
++        rightFrequency: number;
+         visualEventMs: number;
+         captureMs: number;
+         startedAt: number;
+@@ -40,6 +43,8 @@ function probeHtml() {
+   const webAudioFrequency = JSON.stringify(CONTROLLED_AUDIO.webAudioFrequency);
+   const webAudioAmplitude = JSON.stringify(CONTROLLED_AUDIO.webAudioAmplitude);
+   const htmlAudioFrequency = JSON.stringify(CONTROLLED_AUDIO.htmlAudioFrequency);
++  const leftFrequency = JSON.stringify(CONTROLLED_AUDIO.leftFrequency);
++  const rightFrequency = JSON.stringify(CONTROLLED_AUDIO.rightFrequency);
+   return `<!doctype html>
+ <html><head><meta charset="utf-8"><title>Tab audio capability probe</title></head>
+ <body style="margin:0;background:#101820;color:white;font:16px sans-serif">
+@@ -79,6 +84,8 @@ function probeHtml() {
+           const fixture = {
+             webAudioFrequency: ${webAudioFrequency},
+             htmlAudioFrequency: ${htmlAudioFrequency},
++            leftFrequency: ${leftFrequency},
++            rightFrequency: ${rightFrequency},
+             visualEventMs: ${VISUAL_EVENT_MS},
+             captureMs: ${CAPTURE_MS},
+             startedAt,
+@@ -86,7 +93,7 @@ function probeHtml() {
+           };
+           window.__tabAudioProbe = {
+             mimeType,
+-            tracks: stream.getTracks().map((track) => ({ kind: track.kind, readyState: track.readyState, settings: track.getSettings() })),
++            tracks: stream.getTracks().map((track) => ({ kind: track.kind, readyState: track.readyState, settings: track.getSettings(), capabilities: track.getCapabilities() })),
+             chunks: [],
+             fixture,
+           };
+@@ -148,7 +155,7 @@ function probeHtml() {
+ 
+ function startProbeServer(): Server {
+   const html = Buffer.from(probeHtml());
+-  const wav = createSyntheticPcmWav();
++  const wav = createSyntheticPcmWav({leftFrequency: CONTROLLED_AUDIO.leftFrequency, rightFrequency: CONTROLLED_AUDIO.rightFrequency});
+   return createServer((request, response) => {
+     if (request.method !== 'GET') {
+       response.writeHead(405, {'content-type': 'text/plain; charset=utf-8'});
+@@ -230,6 +237,8 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
+   const capabilities = assertCaptureCapabilities(probe.tracks, { mimeType: probe.mimeType });
+   expect(probe.fixture.webAudioFrequency).toBe(CONTROLLED_AUDIO.webAudioFrequency);
+   expect(probe.fixture.htmlAudioFrequency).toBe(CONTROLLED_AUDIO.htmlAudioFrequency);
++  expect(probe.fixture.leftFrequency).toBe(CONTROLLED_AUDIO.leftFrequency);
++  expect(probe.fixture.rightFrequency).toBe(CONTROLLED_AUDIO.rightFrequency);
+   expect(probe.fixture.visualEventMs).toBe(VISUAL_EVENT_MS);
+   expect(Number.isFinite(probe.fixture.visualEventAt)).toBe(true);
+   expect(chunks.length).toBeGreaterThan(0);
+@@ -243,6 +252,12 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
+     .find((stream) => stream.codec_type === 'audio');
+   if (!audioStream) throw new Error('ffprobe output did not identify the captured audio stream');
+   const decodedAudio = await readDecodedAudio(output, audioStream);
++  const stereoTones = assertStereoTones(decodedAudio, {
++    sampleRate: Number(audioStream.sample_rate),
++    channels: Number(audioStream.channels),
++    leftFrequency: CONTROLLED_AUDIO.leftFrequency,
++    rightFrequency: CONTROLLED_AUDIO.rightFrequency,
++  });
+   const tones = {
+     webAudio: assertTone(decodedAudio, {
+       sampleRate: Number(audioStream.sample_rate),
+@@ -270,9 +285,11 @@ test('captures whole-tab video and tab audio in one Chrome155 MediaRecorder cloc
+     body: JSON.stringify({
+       requested: { video: true, audio: true, preferCurrentTab: true },
+       fixture: probe.fixture,
++      trackEvidence: probe.tracks,
+       capabilities,
+       outcome,
+       tones,
++      stereoTones,
+       visualMarkerDiagnostic,
+       rawPtsOnly: true,
+       note: 'Qualified capability is one live video track plus one live tab-audio track, presence of both declared source tones, and native per-stream PTS. Decoded VP8 marker samples are diagnostic only; no audio/video offset, event phase, per-clip alignment, normalization, resampling, parity, or global-origin claim is made.',

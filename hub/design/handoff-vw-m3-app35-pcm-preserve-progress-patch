@@ -1,0 +1,11 @@
+# Source patch summary
+
+The only product delta is in PreviewAudio preparation:
+1. Add an attempt-owned `preparationProgress` callback ref.
+2. Stream `Response.body.getReader()` chunks when available.
+3. Invoke the existing hold renewal for every received chunk.
+4. Clear the callback on hold-effect cleanup.
+5. Fall back to `response.arrayBuffer()` when no body stream exists.
+
+No timeout, decoder service, keepalive, mute reset, second attempt owner, public API, or DSP copy was added.
+

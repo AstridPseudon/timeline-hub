@@ -1,0 +1,28 @@
+# Exact public13 five-file lane
+node node_modules/vitest/vitest.mjs run --no-cache --maxWorkers=1 --config /tmp/vw-m3-app35-pcm-public13.config.mjs \
+  src/tools/video-editor/compositions/AudioTrack.test.tsx \
+  src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx \
+  src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.contract.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+# PASS: 5 files, 143 tests
+
+# Scoped lint
+node node_modules/eslint/bin/eslint.js \
+  src/tools/video-editor/compositions/AudioTrack.tsx \
+  src/tools/video-editor/compositions/AudioTrack.test.tsx \
+  src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.contract.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx \
+  --max-warnings 0
+# PASS
+
+# Scoped typecheck
+node node_modules/typescript/bin/tsc -p tsconfig.strict-islands.json --noEmit --pretty false
+# PASS
+
+# Parent diff checks
+git diff --check HEAD
+git diff --check HEAD^ -- src/tools/video-editor/compositions/AudioTrack.tsx src/tools/video-editor/compositions/AudioTrack.test.tsx src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx src/tools/video-editor/compositions/continuousPCM.contract.test.tsx src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+# PASS
+

@@ -1,0 +1,11 @@
+READY (manager review and fresh grant required before central execution):
+
+ASTRID_CHECKOUT=/home/user/work/wt/vw-m3-mouth697-physical-controller-prep-agent \
+VIEWING_CROP_REVISION=<new-clean-ee71010a0-descendant-agent-commit-sha> \
+VIEWING_CROP_ARTIFACT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.12.tgz \
+bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth697-physical-controller-prep-READY.sh
+
+The selected Agent source must be a clean owner descendant of ee71010a0 with
+the staged component/motion/scene/registration hashes in the manifest. The
+manager writes that exact full SHA to READY_GRANTED. This command is one-shot;
+do not reuse the rejected default/partial grant or controller.

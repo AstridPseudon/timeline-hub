@@ -1,0 +1,12 @@
+# Approved 70e378e3f mapping
+
+- Invalid speed 0/-1/NaN -> lifetime PCM applies sanitized rate 1 and checks sample output.
+- Six curves: linear, equal-power, exponential-fast, exponential-moderate, exponential-slow, s-curve -> exact prepared WAV comparison.
+- Exact fade boundaries: fade-out, fade-in/out, and trimmed source -> source-time sample assertions.
+- Overlap/unsupported -> overlapping ramps use product in PCM; AudioTrack native matrix retains all eight unsupported inputs.
+- Nested boost/minimum -> four nested forms get exact PCM plus Web Audio admission; minimum-silenced boost remains silent while retaining admission.
+- Rerenders/transitions -> authored envelope and curve rerenders re-bake; native/prepared transition retains readiness.
+- Boosted occurrence -> authored-time samples remain correct across occurrence bounds, trim, and speed; >1 sample is asserted.
+- Boosted fades -> below-unity fade sample is checked while Web Audio remains admitted.
+- Existing positives/negatives, continuous-vs-step-held mismatch, abort/stale, retry, Blob cleanup, AudioContext close, mute, readiness, and export behavior remain.
+

@@ -1,0 +1,6 @@
+tests/e2e/timeline/tab-audio-capture.analysis.mjs
+tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+tests/e2e/timeline/tab-audio-capture.probe.ts
+tests/e2e/timeline/tab-audio-capture.controller.mjs (unchanged; fingerprinted for manager review)
+tests/e2e/timeline/tab-audio-capture.config.ts (unchanged; fingerprinted for manager review)
+tests/e2e/timeline/setup-tab-audio-capture.sh (unchanged; fingerprinted for manager review)

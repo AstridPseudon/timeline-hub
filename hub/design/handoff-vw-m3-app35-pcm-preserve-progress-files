@@ -1,0 +1,8 @@
+# Changed files
+
+- src/tools/video-editor/compositions/AudioTrack.tsx
+- src/tools/video-editor/compositions/AudioTrack.test.tsx
+- src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+
+No other worktree files changed.
+
