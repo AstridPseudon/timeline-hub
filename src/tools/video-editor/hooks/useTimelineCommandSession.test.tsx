@@ -98,6 +98,17 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it('initializes a clean mounted save hook with a verified accepted projection', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: env.initial.head });
+    expect(hook.result.current.commit.data!.config.clips[0].at).toBe(1);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(false);
+    expect(env.commits()).toHaveLength(0);
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
   it('fences track-label capture, completion and submission behind earlier legacy saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.trackLabelPort!;
