@@ -4,3 +4,6 @@ Concreteinactivefixture/nativepersist+existingrestore proposal is design/handoff
 
 ## PEER REQUEST from app2 — 2026-10-20 14:31 UTC — bootstrap qualification prerequisite
 ACK next ordinary UNPUBLISHED candidate7f6dd892/Agent310e5484/55defs29ops; no release or pin requested. Bootstrap current App native source dcf52eb3 needs guarded init + SAME-ID truly null/no-head shell repair without overwrite/nonempty adoption. Current source review says2c4 rejects no-row/null-head existing positive;708df14 scoped preflight source alone not paired proof. Please point to exact current tested normal candidate repair behavior and preserved original positives, or own remaining Runtime repair. App2 test-only prerequisite worker active; shared doors untouched.
+
+## PEER REQUEST from app2 — 2026-10-20 15:51 UTC — ordinary project-data prerequisite
+Agent peer request sent for the exact existing compiler-canary project-data replace positive; evidence design/ap2-m2-ordinary-projectdata-native-recipe.md (current closed union lacks it). Please coordinate the Agent-owned recipe/schema in the next agreed native pair, with existing /v1 commit, no endpoint/store/DTO fork. This is a prerequisite request, not an app2 pin/release decision. App preserves the legacy standalone positive until paired native migration; mixed batches remain atomic refusals.

@@ -1,0 +1,389 @@
+diff --git a/src/tools/video-editor/commands/commitSession.occurrenceDuplicate.test.ts b/src/tools/video-editor/commands/commitSession.occurrenceDuplicate.test.ts
+new file mode 100644
+index 000000000..2bf0e9866
+--- /dev/null
++++ b/src/tools/video-editor/commands/commitSession.occurrenceDuplicate.test.ts
+@@ -0,0 +1,94 @@
++import { createFakeIndexedDB } from 'fake-indexeddb';
++import { describe, expect, it, vi } from 'vitest';
++import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
++import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
++import { buildTimelineData } from '../lib/timeline-data.ts';
++import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
++import { copy } from './clipMovePrimitives.ts';
++import { createCommitOutbox } from './commitOutbox.ts';
++import { createTimelineCommandSession } from './commitSession.ts';
++import { captureOccurrenceDuplicateEdit, submitOccurrenceDuplicateEdit } from './occurrenceDuplicateGesture.ts';
++import fixture from './fixtures/recipe_m2_app_occurrence_duplicate.json';
++
++const initialDocument = fixture.bundle.source_mapping._runtime_document as unknown as CanonicalDocument;
++const acceptedDocument = fixture.after_document as unknown as CanonicalDocument;
++const scope = { projectId: 'project-1', timelineId: 'film', realmId: 'realm-1', actorId: 'actor-1' };
++const args = { occurrence_id: 'occ-copy', shot_id: 'shot-copy' };
++const owner = 'occurrence:occ-0';
++const initialHead = { revisionId: initialDocument.parent_revision.revision_id, publicationId: 'p0' };
++
++async function setup() {
++  const held = new Set<string>();
++  const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (key, work) => {
++    if (held.has(key)) throw new Error('claimed');
++    held.add(key);
++    try { return await work(); } finally { held.delete(key); }
++  } });
++  const initial: TimelineCommandBasis = { head: initialHead, canonicalDocument: copy(initialDocument) };
++  const display = (basis: TimelineCommandBasis) => {
++    const parent = basis.canonicalDocument.parent_revision.payload;
++    return buildTimelineData(parent.config as TimelineConfig, parent.registry as AssetRegistry, undefined, 1, undefined, {
++      projectId: scope.projectId, timelineId: scope.timelineId,
++      headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId,
++    });
++  };
++  let current = await display(initial);
++  const calls: { body: string; request: CommitRequest; key: string }[] = [];
++  const previews = vi.fn();
++  let result: TimelineCommitResult | undefined;
++  let lost = false;
++  const send = async (request: CommitRequest, key: string): Promise<TimelineCommitResult> => {
++    calls.push({ body: JSON.stringify(request), request: copy(request), key });
++    if (!result) {
++      expect(request.commands).toEqual([fixture.command]);
++      const response = acceptedCommit({ revision_id: acceptedDocument.parent_revision.revision_id, publication_id: 'p1' },
++        { revision_id: request.base_revision_id, publication_id: request.base_publication_id }, {
++          projectId: scope.projectId, timelineId: scope.timelineId, commands: request.commands,
++        });
++      response.data.canonical_document = copy(acceptedDocument);
++      response.data.document_digest = fixtureDigest(acceptedDocument);
++      response.receipt.result = response.data;
++      response.receipt.idempotency_key = key;
++      result = { response, canonicalDocument: copy(acceptedDocument), graph: {}, receipt: response.receipt,
++        accepted: { revisionId: acceptedDocument.parent_revision.revision_id, publicationId: 'p1' } };
++    } else expect(calls.at(-1)).toEqual(calls[0]);
++    if (lost) { lost = false; throw new Error('lost acknowledgement'); }
++    return copy(result);
++  };
++  const mount = () => createTimelineCommandSession({ scope, initial, outboxes, send, changed: () => {}, preview: previews,
++    project: async (basis, patches) => {
++      expect(patches).toEqual([]);
++      current = await display(basis);
++    },
++  });
++  return { mount, outboxes, calls, previews, current: () => current, loseAck: () => { lost = true; } };
++}
++
++describe('occurrence duplicate through the command session', () => {
++  it('keeps one outbox intent and retries the exact request after a lost acknowledgement and restart', async () => {
++    const env = await setup();
++    const session = await env.mount();
++    env.loseAck();
++    submitOccurrenceDuplicateEdit(captureOccurrenceDuplicateEdit(session.occurrenceDuplicatePort, env.current(), owner, args));
++    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
++
++    const [stored] = await env.outboxes.list(scope);
++    expect(stored.intents).toHaveLength(1);
++    expect(stored.pending?.request.body).toBe(env.calls[0].body);
++    expect(stored.pending?.request.key).toBe(env.calls[0].key);
++    expect(env.calls[0].request.commands).toEqual([fixture.command]);
++    expect(env.previews).not.toHaveBeenCalled();
++
++    await session.dispose();
++    const reopened = await env.mount();
++    expect(reopened.getState().status).toBe('recovery');
++    await reopened.recover(stored.ownerId);
++    await reopened.flush();
++
++    expect(env.calls).toHaveLength(2);
++    expect(env.calls[1]).toEqual(env.calls[0]);
++    expect((await env.outboxes.list(scope))[0].intents).toEqual([]);
++    await reopened.dispose();
++  });
++});
+diff --git a/src/tools/video-editor/commands/commitSession.ts b/src/tools/video-editor/commands/commitSession.ts
+index 0922b4660..8a2d51452 100644
+--- a/src/tools/video-editor/commands/commitSession.ts
++++ b/src/tools/video-editor/commands/commitSession.ts
+@@ -6,9 +6,11 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
+ import { authoringBundleFromDocument } from './authoringBundle.ts';
+ import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
+ import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
+-import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
++import { AuthoredState, assertFiniteJson, copy, equal, freezeJson } from './clipMovePrimitives.ts';
+ import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
+ import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
++import { captureOccurrenceDuplicate, executeOccurrenceDuplicate, finishOccurrenceDuplicate } from './occurrenceDuplicateCapture.ts';
++import type { OccurrenceDuplicateCapturePort } from './occurrenceDuplicateGesture.ts';
+ import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
+ 
+ type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+@@ -318,6 +320,40 @@ export async function createTimelineCommandSession(options: Options) {
+       enqueue({ ...entry.payload, preview }, preview, entry.basis);
+     },
+   };
++  const occurrenceDuplicatePort: OccurrenceDuplicateCapturePort = {
++    capture({ ownerRef, args, current }) {
++      assertReady();
++      if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
++        || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
++        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
++        throw new Error('Displayed timeline does not match the raw authoring basis');
++      }
++      return freezeJson(json({ ...captureOccurrenceDuplicate(bundle, ownerRef, args), localGeneration,
++        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<OccurrenceDuplicateCapturePort['capture']>;
++    },
++    finish(basis) {
++      assertReady();
++      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the duplicate');
++      const original = finishOccurrenceDuplicate(basis);
++      const result = executeOccurrenceDuplicate(bundle, original.command);
++      freezeJson(result.command);
++      prepared.set(JSON.stringify(result.command), { payload: {
++        commands: [result.command], before: bundle, after: result.bundle, preview: null,
++      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
++      return { command: result.command };
++    },
++    submit({ command }) {
++      assertReady();
++      assertFiniteJson(command);
++      const key = JSON.stringify(command);
++      const entry = prepared.get(key);
++      if (command.op !== 'occurrence.duplicate' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
++        throw new Error('Duplicate was not captured by this session or the timeline changed');
++      }
++      prepared.delete(key);
++      enqueue(entry.payload, null, entry.basis);
++    },
++  };
+   async function resolveRejected(keepLabel: boolean) {
+     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
+     const label = keepLabel ? labelIntent() : undefined;
+@@ -422,6 +458,7 @@ export async function createTimelineCommandSession(options: Options) {
+   return {
+     port,
+     trackLabelPort,
++    occurrenceDuplicatePort,
+     useLatest: () => resolveRejected(false),
+     keepLabelChanges: () => resolveRejected(true),
+     getState: () => state,
+diff --git a/src/tools/video-editor/components/AstridTimelineEditor.document-shots.test.tsx b/src/tools/video-editor/components/AstridTimelineEditor.document-shots.test.tsx
+index d1c604b83..5b55d7a16 100644
+--- a/src/tools/video-editor/components/AstridTimelineEditor.document-shots.test.tsx
++++ b/src/tools/video-editor/components/AstridTimelineEditor.document-shots.test.tsx
+@@ -6,6 +6,14 @@ const mocks = vi.hoisted(() => ({
+   createShot: vi.fn(),
+   navigate: vi.fn(),
+   duplicateShotGroup: vi.fn(async () => ({})),
++  occurrenceDuplicate: {
++    capture: vi.fn(({ ownerRef, args }: { ownerRef: string; args: Record<string, string> }) => ({ ownerRef, args })),
++    finish: vi.fn((basis: { ownerRef: string; args: Record<string, string> }) => ({ command: {
++      schema_version: 1, op: 'occurrence.duplicate', version: '1', select: basis.ownerRef,
++      args: basis.args, intent: { ownership: 'occurrence' },
++    } })),
++    submit: vi.fn(),
++  },
+   promotePrimaryVariant: vi.fn(async () => []),
+   reloadFromServer: vi.fn(async () => undefined),
+   galleryGet: vi.fn(async () => ({
+@@ -86,6 +94,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
+     unpatchRegistry: vi.fn(),
+     registerAsset: vi.fn(),
+     registerGenerationAsset: vi.fn(),
++    occurrenceDuplicate: mocks.occurrenceDuplicate,
+     reloadFromServer: mocks.reloadFromServer,
+   }),
+   useTimelineChromeSelector: (selector: (value: unknown) => unknown) => selector({
+@@ -143,14 +152,16 @@ vi.mock('@/integrations/astrid/client.ts', () => ({
+ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx', () => ({
+   resolveSelectedGenerationIdsForShotCreation: () => ({ canCreateShot: false, generationIds: [] }),
+   TimelineEditorCore: (props: {
+-    onShotGroupDuplicate?: (locator: { shotId: string; trackId: string }) => void;
++    onShotGroupDuplicate?: (locator: { shotId: string; trackId: string; canonicalIdentity?: typeof mocks.canonicalOccurrence }) => void;
+     onShotGroupPromotePrimary?: (locator: { shotId: string; trackId: string }) => void;
+     onShotGroupNavigate?: unknown;
+     onShotGroupGenerateVideo?: unknown;
+     onShotGroupOpen?: (occurrence: typeof mocks.canonicalOccurrence) => void;
+   }) => (
+     <div>
+-      <button onClick={() => props.onShotGroupDuplicate?.({ shotId: 'shot-a', trackId: 'V1' })}>Duplicate document shot</button>
++      <button onClick={() => props.onShotGroupDuplicate?.({
++        shotId: 'shot-a', trackId: 'V1', ...(mocks.canonicalMode ? { canonicalIdentity: mocks.canonicalOccurrence } : {}),
++      })}>Duplicate document shot</button>
+       <button onClick={() => props.onShotGroupPromotePrimary?.({ shotId: 'shot-a', trackId: 'V1' })}>Promote document variant</button>
+       {props.onShotGroupOpen && (
+         <button onClick={() => props.onShotGroupOpen?.(mocks.canonicalOccurrence)}>Open canonical document shot</button>
+@@ -216,6 +227,20 @@ describe('AstridTimelineEditor document-derived shot consumer', () => {
+     expect(mocks.createShot).not.toHaveBeenCalled();
+   });
+ 
++  it('routes canonical duplication through the native session without graph publishing or catalog traffic', async () => {
++    mocks.canonicalMode = true;
++    render(<AstridTimelineEditor />);
++
++    fireEvent.click(screen.getByText('Duplicate document shot'));
++
++    await waitFor(() => expect(mocks.occurrenceDuplicate.submit).toHaveBeenCalledWith({ command: expect.objectContaining({
++      op: 'occurrence.duplicate', select: 'occurrence:occ-1',
++      args: { occurrence_id: expect.stringMatching(/^occ-1-copy-/), shot_id: expect.stringMatching(/^shot-1-copy-/) },
++    }) }));
++    expect(mocks.duplicateShotGroup).not.toHaveBeenCalled();
++    expect(mocks.reloadFromServer).not.toHaveBeenCalled();
++  });
++
+   it.each([
+     {
+       action: 'Promote document variant',
+diff --git a/src/tools/video-editor/components/AstridTimelineEditor.tsx b/src/tools/video-editor/components/AstridTimelineEditor.tsx
+index 215ea47bf..eba83404d 100644
+--- a/src/tools/video-editor/components/AstridTimelineEditor.tsx
++++ b/src/tools/video-editor/components/AstridTimelineEditor.tsx
+@@ -31,6 +31,7 @@ import { useShotGroups } from '@/tools/video-editor/hooks/useShotGroups.ts';
+ import { shotGroupVideoKey } from '@/tools/video-editor/hooks/useShotGroups.ts';
+ import { useSwitchToFinalVideo } from '@/tools/video-editor/hooks/useSwitchToFinalVideo.ts';
+ import { useTimelineCommandsService } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
++import { captureOccurrenceDuplicateEdit, submitOccurrenceDuplicateEdit } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
+ import {
+   useTimelineDataSelector,
+   useTimelineChromeSelector,
+@@ -43,9 +44,6 @@ import {
+   duplicateShotGroup,
+   promotePrimaryVariant,
+ } from '@/tools/video-editor/lib/shot-group-pack-commands.ts';
+-import {
+-  duplicateIndependentShot,
+-} from '@/tools/video-editor/data/shotCompositionEditor.ts';
+ import type {
+   CanonicalShotOccurrence,
+   PreparedShotComposition,
+@@ -183,10 +181,12 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
+     applyEdit,
+     prepareGenerationAsset,
+     registerGenerationAsset,
++    occurrenceDuplicate,
+   } = useTimelineOpsSelector((ops) => ({
+     applyEdit: ops.applyEdit,
+     prepareGenerationAsset: ops.prepareGenerationAsset,
+     registerGenerationAsset: ops.registerGenerationAsset,
++    occurrenceDuplicate: ops.occurrenceDuplicate,
+   }), shallow);
+ 
+   const assetGenerationMap = useMemo<Record<string, string>>(() => {
+@@ -388,33 +388,20 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
+   }, []);
+ 
+   const handleDuplicateDocumentShotGroup = useCallback(async (locator: { shotId: string; trackId: string; canonicalIdentity?: CanonicalShotOccurrence }) => {
+-    if (locator.canonicalIdentity && runtime.shots?.shotComposition && runtime.shots.canonicalComposition) {
++    if (locator.canonicalIdentity) {
+       const occurrence = locator.canonicalIdentity;
+       const suffix = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? String(Date.now());
+       try {
+-        const graph = duplicateIndependentShot(
+-          runtime.shots.canonicalComposition.contract,
+-          occurrence.occurrenceId,
+-          {
+-            shotId: `${occurrence.shotId}-copy-${suffix}`,
+-            revisionId: `${occurrence.revisionId}-copy-${suffix}`,
+-            internalTimelineRevisionId: `${occurrence.revisionId}-timeline-copy-${suffix}`,
+-            occurrenceId: `${occurrence.occurrenceId}-copy-${suffix}`,
+-          },
+-        );
+-        await runtime.shots.shotComposition.publish?.({
+-          projectId: occurrence.projectId,
+-          parentDocumentId: occurrence.parentDocumentId,
+-          expectedHeadRevisionId: runtime.shots.canonicalComposition.headRevisionId,
+-          graph,
+-        });
+-        runtime.shots.refetchShots();
++        if (!occurrenceDuplicate || !data) throw new Error('Native occurrence duplicate capture is unavailable');
++        const captured = captureOccurrenceDuplicateEdit(occurrenceDuplicate, data,
++          `occurrence:${occurrence.occurrenceId}`, {
++            occurrence_id: `${occurrence.occurrenceId}-copy-${suffix}`,
++            shot_id: `${occurrence.shotId}-copy-${suffix}`,
++          });
++        submitOccurrenceDuplicateEdit(captured);
+         toast.success('Independent shot duplicated');
+       } catch (error) {
+-        normalizeAndPresentError(error, {
+-          context: 'video-editor:duplicate-canonical-shot',
+-          toastTitle: 'Failed to duplicate canonical shot',
+-        });
++        normalizeAndPresentError(error, { context: 'video-editor:duplicate-canonical-shot', toastTitle: 'Failed to duplicate canonical shot' });
+       }
+       return;
+     }
+@@ -442,7 +429,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
+         toastTitle: 'Failed to duplicate shot',
+       });
+     }
+-  }, [configVersion, reloadFromServer, runtime.project.projectId, runtime.shots, runtime.timelineId]);
++  }, [configVersion, data, occurrenceDuplicate, reloadFromServer, runtime.project.projectId, runtime.timelineId]);
+ 
+   const handlePromoteDocumentShotGroupPrimary = useCallback(async (locator: { shotId: string; trackId: string }) => {
+     const projectSlug = runtime.project.projectId;
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandSession.ts b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+index 39db2c89b..dcf008f04 100644
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.ts
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+@@ -167,6 +167,15 @@ export function useTimelineCommandSession(options: {
+           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
+           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
+         };
++        const occurrenceDuplicatePort = session.occurrenceDuplicatePort;
++        const requireCleanDuplicate = () => {
++          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before duplicating a shot');
++        };
++        session.occurrenceDuplicatePort = {
++          capture(input) { requireCleanDuplicate(); return occurrenceDuplicatePort.capture(input); },
++          finish(basis) { requireCleanDuplicate(); return occurrenceDuplicatePort.finish(basis); },
++          submit(input) { requireCleanDuplicate(); occurrenceDuplicatePort.submit(input); },
++        };
+         sessionRef.current = session;
+         setState({ ...session.getState() });
+       }
+@@ -238,6 +247,7 @@ export function useTimelineCommandSession(options: {
+   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
+   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+     trackLabelPort: sessionRef.current?.trackLabelPort,
++    occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
+     retry, undo, flush, recover, useLatest, keepLabelChanges };
+ }
+ export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
+diff --git a/src/tools/video-editor/hooks/useTimelineState.ts b/src/tools/video-editor/hooks/useTimelineState.ts
+index a949741e7..3a402879e 100644
+--- a/src/tools/video-editor/hooks/useTimelineState.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.ts
+@@ -1164,6 +1164,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
+   const editorOps = useMemo(() => ({
+     clipMove: save.commands.port,
+     trackLabel: save.commands.trackLabelPort,
++    occurrenceDuplicate: save.commands.occurrenceDuplicatePort,
+     transcriptHost,
+     setInputModality: editor.setInputModality,
+     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
+@@ -1222,7 +1223,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
+     patchRegistry: editor.patchRegistry,
+     unpatchRegistry: editor.unpatchRegistry,
+     registerAsset: editor.registerAsset,
+-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort]);
++  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost, save.commands.port, save.commands.trackLabelPort, save.commands.occurrenceDuplicatePort]);
+ 
+   const renderRequest = useTimelineRenderRequest(
+     runtime.timelineId,
+diff --git a/src/tools/video-editor/hooks/useTimelineState.types.ts b/src/tools/video-editor/hooks/useTimelineState.types.ts
+index 7f9741081..452b5d948 100644
+--- a/src/tools/video-editor/hooks/useTimelineState.types.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.types.ts
+@@ -1,6 +1,7 @@
+ import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
+ import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
+ import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
++import type { OccurrenceDuplicateCapturePort } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
+ import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+ import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
+ import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
+@@ -139,6 +140,7 @@ export interface TimelineEditorOpsContextValue {
+   /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
+   clipMove?: ClipMoveCapturePort;
+   trackLabel?: TrackLabelCapturePort;
++  occurrenceDuplicate?: OccurrenceDuplicateCapturePort;
+   setInputModality: (inputModality: TimelineInputModality) => void;
+   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
+   setInteractionMode: (mode: TimelineInteractionMode) => void;

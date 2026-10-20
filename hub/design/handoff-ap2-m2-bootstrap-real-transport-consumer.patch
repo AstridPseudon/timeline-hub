@@ -1,0 +1,3513 @@
+diff --git a/src/integrations/runtime/bootstrapInitialization.test.ts b/src/integrations/runtime/bootstrapInitialization.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3484a0e9228cefde51b017744c402d319c4ac862
+--- /dev/null
++++ b/src/integrations/runtime/bootstrapInitialization.test.ts
+@@ -0,0 +1,542 @@
++import { describe, expect, it, vi } from 'vitest';
++import { createFakeIndexedDB } from 'fake-indexeddb';
++import type { MutationReceipt, MutationResult } from './generated.ts';
++import type { CanonicalDocument, CommandRecord, CommitRequest, HistoryPage, JSON } from './timeline-commit-types.ts';
++import type { TimelineCommandBasis, TimelineCommitResult } from '@/tools/video-editor/data/DataProvider.ts';
++import { createCommitOutbox, type ClaimedOutbox } from '@/tools/video-editor/commands/commitOutbox.ts';
++import fixture from '@/tools/video-editor/commands/fixtures/recipe_m2_app_bootstrap.json';
++import { reserveBootstrapInitialization, resumeBootstrapInitialization } from './bootstrapInitialization.ts';
++import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
++import { ApiError } from './generated.ts';
++
++const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-1', timelineId: 'main' };
++const h0 = { revisionId: 'parent-0', publicationId: 'bootstrap-p0' };
++const key = 'astrid-first-timeline-project-1';
++const document = (parent = fixture.bundle.parent, revision = h0.revisionId): CanonicalDocument => ({
++  schema_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
++  parent_revision: { revision_id: revision, content_digest: fixtureDigest({ ...parent, occurrences: [] }), payload: { ...parent, occurrences: [] } },
++  shot_revisions: [], internal_timeline_revisions: [], dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
++});
++function receipt(kind: string, id: string, idempotencyKey: string, result: unknown): MutationReceipt {
++  return { receipt_id: id, command_kind: kind, idempotency_key: idempotencyKey, request_hash: 'request-hash',
++    project_id: scope.projectId, project_seq: [1, 1], event_ids: ['event'], result, created_at: '2026-10-20T00:00:00Z' };
++}
++function initialBasis(): TimelineCommandBasis {
++  const canonicalDocument = document();
++  const publication = { project_id: scope.projectId, timeline_id: scope.timelineId, revision_id: h0.revisionId,
++    old_head: null, new_head: h0.revisionId,
++    content_digest: canonicalDocument.parent_revision.content_digest, payload: canonicalDocument.parent_revision.payload };
++  return { head: h0, canonicalDocument, history: { head: { revision_id: h0.revisionId, publication_id: h0.publicationId }, next_cursor: null,
++    items: [{ publication_id: h0.publicationId, revision_id: h0.revisionId, previous: null,
++      receipt: receipt('parent_composition.publish', h0.publicationId, 'bootstrap:main', publication), intent: 'bootstrap',
++      records: null, provider_version: null, compiler_version: null, publisher: null }] } };
++}
++function environment() {
++  const factory = createFakeIndexedDB();
++  const open = () => createCommitOutbox({ indexedDB: factory, exclusiveLock: async (_name, work) => work() });
++  let basis = initialBasis();
++  let history = basis.history!;
++  const revisions = new Map([[h0.revisionId, document()]]);
++  const created = { project_id: scope.projectId, timeline_id: scope.timelineId, archived: false,
++    head_revision_id: h0.revisionId, head_publication_id: h0.publicationId };
++  const createResult = () => Object.defineProperty({ ...created }, 'receipt', {
++    value: receipt('timeline.create', 'create-receipt', key, created), enumerable: false,
++  }) as MutationResult<Record<string, unknown>>;
++  const createTimeline = vi.fn(async (_project: string, _timeline: string, _key: string, _name?: string) => createResult());
++  const loadLatest = vi.fn(async () => structuredClone(basis));
++  const commitTimeline = vi.fn(async (body: CommitRequest, commitKey: string): Promise<TimelineCommitResult> => {
++    const response = acceptedCommit({ revision_id: 'initialized', publication_id: 'init-p1' },
++      { revision_id: h0.revisionId, publication_id: h0.publicationId }, { projectId: scope.projectId, timelineId: scope.timelineId, commands: body.commands });
++    const parent = { ...fixture.after_bundle.parent, name: body.commands[0].args.name as string,
++      slug: body.commands[0].args.slug as string };
++    const canonicalDocument = document(parent as typeof fixture.bundle.parent, 'initialized');
++    response.data.canonical_document = canonicalDocument;
++    response.data.document_digest = fixtureDigest(canonicalDocument);
++    response.receipt.idempotency_key = commitKey;
++    basis = { head: { revisionId: 'initialized', publicationId: 'init-p1' }, canonicalDocument };
++    history = { head: { revision_id: basis.head.revisionId, publication_id: basis.head.publicationId }, next_cursor: null,
++      items: [{ publication_id: basis.head.publicationId, revision_id: basis.head.revisionId,
++        previous: { revision_id: h0.revisionId, publication_id: h0.publicationId }, receipt: structuredClone(response.receipt), intent: 'recorded',
++        records: { schema_version: 1, commands: fixture.records.map((record, index) => ({ ...structuredClone(record),
++          command: structuredClone(body.commands[index]) })) as CommandRecord[], undo_of: [], restored_from: null },
++        provider_version: response.data.provider_version, compiler_version: response.data.compiler_version, publisher: response.data.publisher },
++      initialBasis().history!.items[0]] };
++    revisions.set(canonicalDocument.parent_revision.revision_id, structuredClone(canonicalDocument));
++    return { response, accepted: basis.head, canonicalDocument, graph: {}, receipt: response.receipt };
++  });
++  const listTimelineCommits = vi.fn(async (_project: string, _timeline: string, _cursor?: string): Promise<HistoryPage> => structuredClone(history));
++  const getProjectParentCompositionRevision = vi.fn(async (_project: string, _timeline: string, revision: string) => {
++    const saved = revisions.get(revision)!;
++    return { project_id: saved.project_id, timeline_id: saved.timeline_id, ...structuredClone(saved.parent_revision),
++      dependency_manifest: structuredClone(saved.dependency_manifest) };
++  });
++  return { open, ports: { createTimeline, loadLatest, commitTimeline, listTimelineCommits, getProjectParentCompositionRevision }, createResult,
++    setBasis: (next: TimelineCommandBasis) => { basis = next; } };
++}
++
++// Synthetic local adapter/storage inputs and mocked authority reads, not Runtime admission.
++async function localInitAcceptance(env: ReturnType<typeof environment>,
++  value: (result: TimelineCommitResult) => unknown = (result) => ({ kind: 'timeline-initialized', result }),
++  changeRequest: (body: CommitRequest) => void = () => {}) {
++  let owner = '';
++  await env.open().create(scope, async (box, id) => {
++    owner = id;
++    await box.append({ kind: 'timeline-init', commands: fixture.commands as JSON }, { head: h0 });
++    await box.dispatch(() => {
++      const body: CommitRequest = { api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
++        base_revision_id: h0.revisionId, base_publication_id: h0.publicationId,
++        commands: structuredClone(fixture.commands) as CommitRequest['commands'], source: { via: 'app' } };
++      changeRequest(body);
++      return { method: 'POST', path: '/v1/projects/project-1/timelines/main/commit', body: body as unknown as JSON };
++    }, async (request) => {
++      const result = await env.ports.commitTimeline(JSON.parse(request.body) as CommitRequest, request.key);
++      return { kind: 'accepted', head: structuredClone(result.accepted), value: JSON.parse(JSON.stringify(value(result))) as JSON };
++    });
++  });
++  env.ports.loadLatest.mockClear();
++  return owner;
++}
++
++describe('source-only create then native initialization', () => {
++  it('refuses marker-only completion after reopening, keeping the owner at pristine H0', async () => {
++    const env = environment();
++    let owner = '';
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      await box.append({ unrelated: true }, { head: h0 });
++      await box.dispatch(() => ({ method: 'POST', path: '/v1/projects/project-1/timelines/main/commit', body: {} }),
++        async () => ({ kind: 'accepted', head: h0, value: { kind: 'timeline-initialized' } }));
++    });
++    const before = (await env.open().list(scope))[0];
++    await env.open().recover(scope, owner, async (box) => {
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow();
++      expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
++    });
++    expect(await env.open().list(scope)).toHaveLength(1);
++    expect(env.ports.createTimeline).not.toHaveBeenCalled();
++    expect(env.ports.commitTimeline).not.toHaveBeenCalled();
++  });
++
++  it.each(['missing-result', 'project', 'timeline', 'base-revision', 'base-publication', 'commands', 'head', 'publication',
++    'receipt-key', 'receipt-kind', 'receipt-result', 'detached-document', 'detached-receipt', 'preview'])(
++    'refuses a reopened local init with %s and retains the complete owner', async (fault) => {
++      const env = environment();
++      const owner = await localInitAcceptance(env, (result) => {
++        if (fault === 'missing-result') return { kind: 'timeline-initialized' };
++        if (fault === 'project') result.canonicalDocument.project_id = 'other-project';
++        if (fault === 'timeline') result.canonicalDocument.timeline_id = 'other-timeline';
++        if (fault === 'base-revision') result.response.data.base_revision_id = 'other-revision';
++        if (fault === 'base-publication') result.response.data.base_publication_id = 'other-publication';
++        if (fault === 'commands') result.response.data.commands[0].args.name = 'changed';
++        if (fault === 'head') result.accepted.revisionId = 'other-revision';
++        if (fault === 'publication') result.accepted.publicationId = 'other-publication';
++        if (fault === 'receipt-key') result.receipt.idempotency_key = 'other-key';
++        if (fault === 'receipt-kind') result.receipt.command_kind = 'timeline.create';
++        if (fault === 'receipt-result') result.receipt.result = {};
++        if (fault === 'detached-document') result.canonicalDocument = document();
++        if (fault === 'detached-receipt') result.receipt = { ...result.receipt, receipt_id: 'other-receipt' };
++        if (fault === 'preview') Object.assign(result.response.data, { status: 'preview' });
++        return { kind: 'timeline-initialized', result };
++      });
++      const before = (await env.open().list(scope))[0];
++      await env.open().recover(scope, owner, async (box) => {
++        await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('receipt does not match');
++        expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
++      });
++      expect(env.ports.listTimelineCommits).not.toHaveBeenCalled();
++      expect(env.ports.loadLatest).not.toHaveBeenCalled();
++      expect(env.ports.commitTimeline).toHaveBeenCalledTimes(1);
++    });
++
++  it.each(['commands', 'project', 'timeline', 'base', 'preview'])(
++    'refuses saved original request %s mismatch independently of its matching saved result', async (fault) => {
++      const env = environment();
++      const owner = await localInitAcceptance(env, undefined, (body) => {
++        if (fault === 'commands') body.commands[0].args.name = 'other-name';
++        if (fault === 'project') body.project_id = 'other-project';
++        if (fault === 'timeline') body.timeline_id = 'other-timeline';
++        if (fault === 'base') body.base_publication_id = 'other-base';
++        if (fault === 'preview') body.dry_run = true;
++      });
++      const before = (await env.open().list(scope))[0];
++      await env.open().recover(scope, owner, async (box) => {
++        await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('original request/commands');
++        expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
++      });
++      expect(env.ports.loadLatest).not.toHaveBeenCalled();
++    });
++
++  it.each(['missing', 'publication', 'revision', 'previous', 'receipt', 'scope', 'commands', 'provider', 'compiler', 'publisher', 'intent'])(
++    'requires the exact historical init publication: %s mismatch keeps the owner', async (fault) => {
++      const env = environment();
++      const owner = await localInitAcceptance(env);
++      const page = await env.ports.listTimelineCommits(scope.projectId, scope.timelineId);
++      const entry = page.items[0];
++      if (fault === 'missing') page.items.shift();
++      if (fault === 'publication') entry.publication_id = 'same-revision-other-publication';
++      if (fault === 'revision') entry.revision_id = 'other-revision';
++      if (fault === 'previous') entry.previous!.publication_id = 'other-previous';
++      if (fault === 'receipt') entry.receipt.idempotency_key = 'other-key';
++      if (fault === 'scope') entry.receipt.project_id = 'other-project';
++      if (fault === 'commands') entry.records!.commands[0].command.args.name = 'other-name';
++      if (fault === 'provider') entry.provider_version = 'other-provider';
++      if (fault === 'compiler') entry.compiler_version = 'other-compiler';
++      if (fault === 'publisher') entry.publisher = 'other-publisher';
++      if (fault === 'intent') entry.intent = 'bootstrap';
++      env.ports.listTimelineCommits.mockResolvedValue(page);
++      const before = (await env.open().list(scope))[0];
++      await env.open().recover(scope, owner, async (box) => {
++        await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('historical publication');
++        expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
++      });
++      expect(env.ports.getProjectParentCompositionRevision).not.toHaveBeenCalled();
++      expect(env.ports.loadLatest).not.toHaveBeenCalled();
++    });
++
++  it.each(['project', 'timeline', 'revision', 'digest', 'payload', 'manifest'])(
++    'requires the historical immutable closure: %s mismatch keeps the owner', async (fault) => {
++      const env = environment();
++      const owner = await localInitAcceptance(env);
++      const parent = await env.ports.getProjectParentCompositionRevision(scope.projectId, scope.timelineId, 'initialized');
++      if (fault === 'project') parent.project_id = 'other-project';
++      if (fault === 'timeline') parent.timeline_id = 'other-timeline';
++      if (fault === 'revision') parent.revision_id = 'other-revision';
++      if (fault === 'digest') parent.content_digest = fixtureDigest('other');
++      if (fault === 'payload') parent.payload.name = 'other-name';
++      if (fault === 'manifest') parent.dependency_manifest.media.push({ media_id: 'media', content_digest: 'digest' });
++      env.ports.getProjectParentCompositionRevision.mockResolvedValue(parent);
++      const before = (await env.open().list(scope))[0];
++      await env.open().recover(scope, owner, async (box) => {
++        await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('immutable closure');
++        expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
++      });
++      expect(env.ports.loadLatest).not.toHaveBeenCalled();
++    });
++
++  it.each(['edit', 'undo', 'equal-byte-restore'])(
++    'proves historical init through pagination after %s, then displays today after later owner ACKs', async (laterKind) => {
++      const env = environment();
++      // The tag is a dispatch hint; authoritative matching data also works without it.
++      const owner = await localInitAcceptance(env, (result) => ({ result }));
++      const init = (await env.open().list(scope))[0].initialization!;
++      const head = { revisionId: laterKind === 'equal-byte-restore' ? 'initialized' : `${laterKind}-r3`, publicationId: `${laterKind}-p3` };
++      const parent = laterKind === 'undo' ? fixture.bundle.parent : fixture.after_bundle.parent;
++      const later = { head, canonicalDocument: document(parent as typeof fixture.bundle.parent, head.revisionId) };
++      if (laterKind === 'edit') {
++        const config = later.canonicalDocument.parent_revision.payload.config as { tracks: Array<{ label: string }> };
++        config.tracks[0].label = 'Later label';
++        later.canonicalDocument.parent_revision.content_digest = fixtureDigest(later.canonicalDocument.parent_revision.payload);
++      }
++      env.setBasis(later);
++      const history = await env.ports.listTimelineCommits(scope.projectId, scope.timelineId);
++      history.head = { revision_id: head.revisionId, publication_id: head.publicationId };
++      const command: CommitRequest['commands'][number] = laterKind === 'undo'
++        ? { schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: ['init-p1'] } }
++        : laterKind === 'equal-byte-restore'
++          ? { schema_version: 1, op: 'timeline.restore', version: '1', select: null,
++            args: { revision_id: 'initialized', content_digest: later.canonicalDocument.parent_revision.content_digest } }
++          : { schema_version: 1, op: 'track.set', version: '1', select: 'parent/track:V1', args: { values: { label: 'Later label' }, clear: [] } };
++      const laterResponse = acceptedCommit(history.head, { revision_id: init.head.revisionId, publication_id: init.head.publicationId },
++        { projectId: scope.projectId, timelineId: scope.timelineId, commands: [command] });
++      laterResponse.data.canonical_document = later.canonicalDocument;
++      laterResponse.data.document_digest = fixtureDigest(later.canonicalDocument);
++      const laterEntry = { ...history.items[0], publication_id: head.publicationId, revision_id: head.revisionId,
++        previous: { revision_id: init.head.revisionId, publication_id: init.head.publicationId }, receipt: laterResponse.receipt,
++        records: { schema_version: 1 as const, commands: [{ ordinal: 0, command, writes: [], reads: [], selections: [], bindings: [],
++          created: [], dependencies: [], derived_writes: [] }], undo_of: laterKind === 'undo' ? ['init-p1'] : [], restored_from: null } };
++      env.ports.listTimelineCommits.mockImplementation(async (_project, _timeline, cursor) => cursor
++        ? history : { head: history.head, items: [laterEntry], next_cursor: 'older-page' });
++      await env.open().recover(scope, owner, async (box) => {
++        await box.append({ kind: 'later-edit' }, { after: init.intent.id });
++        await box.dispatch(() => ({ method: 'POST', path: '/v1/projects/project-1/timelines/main/commit', body: {} }),
++          async () => ({ kind: 'accepted', head, value: { later: laterKind } }));
++        expect((await box.read()).accepted?.value).toEqual({ later: laterKind });
++        expect((await box.read()).initialization).toEqual(init);
++      });
++      env.ports.listTimelineCommits.mockClear();
++      await env.open().recover(scope, owner, async (box) => {
++        expect(await resumeBootstrapInitialization(box, env.ports)).toEqual(later);
++        expect((await box.read()).initialization).toEqual(init);
++      });
++      expect(env.ports.listTimelineCommits.mock.calls).toEqual([
++        [scope.projectId, scope.timelineId, undefined], [scope.projectId, scope.timelineId, 'older-page'],
++      ]);
++      expect(env.ports.getProjectParentCompositionRevision).toHaveBeenCalledWith(scope.projectId, scope.timelineId, 'initialized');
++      expect(env.ports.commitTimeline).toHaveBeenCalledTimes(1);
++      expect(env.ports.createTimeline).not.toHaveBeenCalled();
++    });
++
++  it('reserves identity/defaults before POST, captures sequentially at H0, then reloads the initialized basis', async () => {
++    const env = environment();
++    await env.open().create(scope, async (box) => {
++      await reserveBootstrapInitialization(box, 'Main', key);
++      const before = await box.read();
++      expect(env.ports.createTimeline).not.toHaveBeenCalled();
++      expect(before.pending!.request).toEqual({ method: 'POST', path: '/v1/projects/project-1/timelines',
++        body: JSON.stringify({ timeline_id: 'main', name: 'Main' }), key });
++      env.ports.createTimeline.mockImplementationOnce(async () => {
++        expect((await box.read()).pending).toEqual(before.pending);
++        return env.createResult();
++      });
++      env.ports.commitTimeline.mockImplementationOnce(async (body, commitKey) => {
++        const pending = (await box.read()).pending!;
++        expect(pending.request.body).toBe(JSON.stringify(body));
++        expect(pending.request.key).toBe(commitKey);
++        expect(body).toEqual({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
++          base_revision_id: h0.revisionId, base_publication_id: h0.publicationId, commands: fixture.commands, source: { via: 'app' } });
++        return env.ports.commitTimeline.getMockImplementation()!(body, commitKey);
++      });
++      const result = await resumeBootstrapInitialization(box, env.ports);
++      expect(result.canonicalDocument.parent_revision.payload).toEqual({ ...fixture.after_bundle.parent, occurrences: [] });
++      expect((await box.read()).intents).toEqual([]);
++    });
++  });
++
++  it('reopens the owner before first POST and after create loses its ACK, retaining exact identity and inputs', async () => {
++    const env = environment();
++    let owner = '';
++    await env.open().create(scope, async (box, id) => { owner = id; await reserveBootstrapInitialization(box, 'Main', key); });
++    env.ports.createTimeline.mockRejectedValueOnce(new Error('create ACK lost'));
++    await env.open().recover(scope, owner, async (box) => {
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('create ACK lost');
++    });
++    const durable = (await env.open().list(scope))[0];
++    expect(durable.pending?.request.key).toBe(key);
++    await env.open().recover(scope, owner, async (box) => { await resumeBootstrapInitialization(box, env.ports); });
++    expect(env.ports.createTimeline.mock.calls).toEqual([
++      [scope.projectId, scope.timelineId, key, 'Main'], [scope.projectId, scope.timelineId, key, 'Main'],
++    ]);
++    expect(env.ports.commitTimeline).toHaveBeenCalledTimes(1);
++  });
++
++  it('discovers a reserved random additional timeline after restart without a remembered URL, ID or owner', async () => {
++    const env = environment();
++    const additional = { ...scope, timelineId: crypto.randomUUID() };
++    const createKey = `astrid-timeline-create-${additional.projectId}-${additional.timelineId}`;
++    await env.open().create(additional, async (box) => {
++      await reserveBootstrapInitialization(box, 'Timeline 2', createKey);
++    });
++    const projectScope = { realmId: scope.realmId, actorId: scope.actorId, projectId: scope.projectId };
++    expect(await env.open().list({ ...projectScope, actorId: 'other' })).toEqual([]);
++    expect(await env.open().list({ ...projectScope, realmId: 'other' })).toEqual([]);
++    expect(await env.open().list({ ...projectScope, projectId: 'other' })).toEqual([]);
++    const [saved] = await env.open().list(projectScope);
++    expect(saved.scope).toEqual(additional);
++    expect(saved.intents[0].payload).toMatchObject({ name: 'Timeline 2', slug: 'timeline-2' });
++    env.ports.createTimeline.mockRejectedValueOnce(new Error('ACK lost'));
++    await env.open().recover(saved.scope, saved.ownerId, async (box) => {
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('ACK lost');
++    });
++    expect(env.ports.createTimeline).toHaveBeenCalledWith(scope.projectId, additional.timelineId, createKey, 'Timeline 2');
++    expect((await env.open().list(projectScope))[0].pending!.request).toEqual(saved.pending!.request);
++  });
++
++  it('retains create ACK/defaults if history loading crashes before capture, then resumes without another create', async () => {
++    const env = environment();
++    let owner = '';
++    env.ports.loadLatest.mockRejectedValueOnce(new Error('read interrupted'));
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      await reserveBootstrapInitialization(box, 'Main', key, null);
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('read interrupted');
++      expect((await box.read()).accepted?.creation?.request.body).toBe('{"timeline_id":"main"}');
++      expect((await box.read()).accepted?.value).toMatchObject({ receipt: { command_kind: 'timeline.create' } });
++    });
++    await env.open().recover(scope, owner, async (box) => { await resumeBootstrapInitialization(box, env.ports); });
++    expect(env.ports.createTimeline).toHaveBeenCalledTimes(1);
++    expect(env.ports.createTimeline).toHaveBeenCalledWith(scope.projectId, scope.timelineId, key, undefined);
++  });
++
++  it('reopens after capture is durable but before commit reservation without recapturing on a newer head', async () => {
++    const env = environment();
++    let owner = '';
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      await reserveBootstrapInitialization(box, 'Main', key);
++      const dispatch = box.dispatch.bind(box);
++      let calls = 0;
++      box.dispatch = async (...args) => {
++        if (++calls === 2) throw new Error('process stopped before init dispatch');
++        return dispatch(...args);
++      };
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('process stopped');
++      const record = await box.read();
++      expect(record.pending).toBeUndefined();
++      expect(record.intents[0].payload).toEqual({ kind: 'timeline-init', commands: fixture.commands });
++      expect(record.intents[0].readyBase).toEqual(h0);
++    });
++    env.ports.loadLatest.mockClear();
++    const commit = env.ports.commitTimeline.getMockImplementation()!;
++    env.ports.commitTimeline.mockImplementation(async (...args) => {
++      expect(env.ports.loadLatest).not.toHaveBeenCalled();
++      return commit(...args);
++    });
++    await env.open().recover(scope, owner, async (box) => { await resumeBootstrapInitialization(box, env.ports); });
++    expect(env.ports.createTimeline).toHaveBeenCalledTimes(1);
++  });
++
++  it('reopens after init ACK is durable but display reload crashes, without another initialization', async () => {
++    const env = environment();
++    let owner = '';
++    env.ports.loadLatest.mockResolvedValueOnce(initialBasis()).mockRejectedValueOnce(new Error('reload interrupted'));
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      await reserveBootstrapInitialization(box, 'Main', key);
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('reload interrupted');
++      expect((await box.read()).accepted?.value).toMatchObject({ kind: 'timeline-initialized' });
++      expect((await box.read()).intents).toEqual([]);
++    });
++    const later = { head: { revisionId: 'undo-r3', publicationId: 'undo-p3' }, canonicalDocument: document() };
++    env.setBasis(later);
++    await env.open().recover(scope, owner, async (box) => { expect(await resumeBootstrapInitialization(box, env.ports)).toEqual(later); });
++    expect(env.ports.createTimeline).toHaveBeenCalledTimes(1);
++    expect(env.ports.commitTimeline).toHaveBeenCalledTimes(1);
++  });
++
++  it('retries init after accepted/lost ACK and restart with identical request/key, without reading or recapturing today’s head', async () => {
++    const env = environment();
++    let owner = '';
++    const commit = env.ports.commitTimeline.getMockImplementation()!;
++    env.ports.commitTimeline.mockImplementationOnce(async (body, commitKey) => { await commit(body, commitKey); throw new Error('init ACK lost'); });
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      await reserveBootstrapInitialization(box, 'Main', key);
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('init ACK lost');
++    });
++    const original = (await env.open().list(scope))[0];
++    const later = { head: { revisionId: 'edited-then-undone', publicationId: 'undo-p3' }, canonicalDocument: document() };
++    env.setBasis(later);
++    env.ports.loadLatest.mockClear();
++    env.ports.commitTimeline.mockImplementation(async () => {
++      expect(env.ports.loadLatest).not.toHaveBeenCalled();
++      expect((await env.open().list(scope))[0].pending!.request).toEqual(original.pending!.request);
++      // Exact replay returns the historical acceptance, never today's head.
++      const result = await commit(...env.ports.commitTimeline.mock.calls[0]);
++      env.setBasis(later);
++      return result;
++    });
++    await env.open().recover(scope, owner, async (box) => {
++      expect(await resumeBootstrapInitialization(box, env.ports)).toEqual(later);
++    });
++    expect(env.ports.commitTimeline.mock.calls[1]).toEqual(env.ports.commitTimeline.mock.calls[0]);
++    expect(env.ports.createTimeline).toHaveBeenCalledTimes(1);
++    expect(env.ports.loadLatest).toHaveBeenCalledTimes(1);
++    await env.open().recover(scope, owner, async (box) => {
++      expect(await resumeBootstrapInitialization(box, env.ports)).toEqual(later);
++    });
++    expect(env.ports.commitTimeline).toHaveBeenCalledTimes(2);
++  });
++
++  it.each(['advanced', 'publication', 'extra-history', 'cursor', 'receipt', 'scope', 'opaque', 'manifest', 'no-history'])('retains the draft and refuses fresh capture for %s even if displayed empty bytes match', async (fault) => {
++    const env = environment();
++    const basis = initialBasis();
++    if (fault === 'advanced') basis.head = { revisionId: h0.revisionId, publicationId: 'undo-p3' };
++    if (fault === 'publication') basis.history!.items[0].receipt.receipt_id = 'create-receipt';
++    if (fault === 'extra-history') basis.history!.items.push(structuredClone(basis.history!.items[0]));
++    if (fault === 'cursor') basis.history!.next_cursor = 'more-history';
++    if (fault === 'receipt') basis.history!.items[0].receipt.project_id = 'other-project';
++    if (fault === 'scope') basis.canonicalDocument.timeline_id = 'other-timeline';
++    if (fault === 'opaque') {
++      basis.canonicalDocument.parent_revision.payload.opaque = [null, { order: [3, 1, 2] }];
++      const result = basis.history!.items[0].receipt.result as { payload: unknown };
++      result.payload = structuredClone(basis.canonicalDocument.parent_revision.payload);
++    }
++    if (fault === 'manifest') basis.canonicalDocument.dependency_manifest.media.push({ media_id: 'media', content_digest: 'digest' });
++    if (fault === 'no-history') delete basis.history;
++    env.setBasis(basis);
++    await env.open().create(scope, async (box) => {
++      await reserveBootstrapInitialization(box, 'Main', key);
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow(/bootstrap|pristine/);
++      expect((await box.read()).accepted?.creation).toBeDefined();
++      expect(env.ports.commitTimeline).not.toHaveBeenCalled();
++      expect(await env.ports.loadLatest(scope.timelineId)).toEqual(basis);
++    });
++  });
++
++  it('does not fabricate H0 when the provider returns a headless create, and retains the exact flight', async () => {
++    const env = environment();
++    env.ports.createTimeline.mockResolvedValueOnce(Object.assign(env.createResult(), { head_publication_id: null }));
++    await env.open().create(scope, async (box) => {
++      await reserveBootstrapInitialization(box, 'Main', key);
++      const original = await box.read();
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('tracked timeline');
++      expect((await box.read()).pending!.request).toEqual(original.pending!.request);
++      expect((await box.read()).accepted).toBeUndefined();
++      expect(env.ports.loadLatest).not.toHaveBeenCalled();
++      expect(env.ports.commitTimeline).not.toHaveBeenCalled();
++    });
++  });
++
++  it('retains original native commands on a definitive intervening-write conflict', async () => {
++    const env = environment();
++    env.ports.commitTimeline.mockRejectedValueOnce(new ApiError(409, 'conflict', 'intervening_write', '', { status: 'conflict' }));
++    await env.open().create(scope, async (box) => {
++      await reserveBootstrapInitialization(box, 'Main', key);
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('intervening_write');
++      const record = await box.read();
++      expect((record.intents[0].payload as { commands: JSON }).commands).toEqual(fixture.commands);
++      expect(record.intents[0].readyBase).toEqual(h0);
++      expect(record.pending?.outcome?.kind).toBe('rejected');
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('rejected prefix');
++      expect(env.ports.commitTimeline).toHaveBeenCalledTimes(1);
++    });
++  });
++
++  it('retains an uncertain init flight when its returned receipt belongs to a different request', async () => {
++    const env = environment();
++    const commit = env.ports.commitTimeline.getMockImplementation()!;
++    env.ports.commitTimeline.mockImplementationOnce(async (...args) => {
++      const result = await commit(...args);
++      result.response.receipt.idempotency_key = 'another-request';
++      return result;
++    });
++    await env.open().create(scope, async (box) => {
++      await reserveBootstrapInitialization(box, 'Main', key);
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('receipt does not match');
++      const record = await box.read();
++      expect(record.pending?.outcome?.kind).toBe('retry');
++      expect(record.intents).toHaveLength(1);
++      expect(record.accepted?.head).toEqual(h0);
++    });
++  });
++
++  it.each(['', '   ', '  Authored Cut  ', 'x'.repeat(121)])('retains authored name %j across create retry and native capture', async (name) => {
++    const env = environment();
++    let owner = '';
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      await reserveBootstrapInitialization(box, name, key);
++      const reserved = await box.read();
++      expect(reserved.pending!.request.body).toBe('{"timeline_id":"main"}');
++      expect(reserved.intents[0].payload).toMatchObject({ name,
++        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'timeline' });
++      env.ports.createTimeline.mockRejectedValueOnce(new Error('ACK lost'));
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('ACK lost');
++      expect((await box.read()).pending!.request).toEqual(reserved.pending!.request);
++    });
++    const commit = env.ports.commitTimeline.getMockImplementation()!;
++    env.ports.commitTimeline.mockImplementation(async (...args) => {
++      expect(args[0].commands[0].args.name).toBe(name);
++      return commit(...args);
++    });
++    await env.open().recover(scope, owner, async (box) => {
++      await resumeBootstrapInitialization(box, env.ports);
++      expect((await box.read()).initialization!.intent.payload).toMatchObject({ commands: [
++        expect.objectContaining({ args: expect.objectContaining({ name }) }), expect.anything(), expect.anything(),
++      ] });
++    });
++    expect(env.ports.createTimeline.mock.calls).toEqual([
++      [scope.projectId, scope.timelineId, key, undefined], [scope.projectId, scope.timelineId, key, undefined],
++    ]);
++  });
++
++  it('refuses unsupported create names and owners without a reserved initialization', async () => {
++    const env = environment();
++    await env.open().create(scope, async (box: ClaimedOutbox) => {
++      await expect(reserveBootstrapInitialization(box, 'Main', key, '')).rejects.toThrow('Create requires');
++      await expect(reserveBootstrapInitialization(box, 'Main', key, 'x'.repeat(121))).rejects.toThrow('Create requires');
++      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('No acknowledged');
++      expect(env.ports.createTimeline).not.toHaveBeenCalled();
++    });
++  });
++});
+diff --git a/src/integrations/runtime/bootstrapInitialization.ts b/src/integrations/runtime/bootstrapInitialization.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..70518e8ea7c3d9fcdc7b3ea80394c2f6a20b978a
+--- /dev/null
++++ b/src/integrations/runtime/bootstrapInitialization.ts
+@@ -0,0 +1,219 @@
++import type { WorkspaceClient } from './generated.ts';
++import { ApiError } from './generated.ts';
++import { classifyRuntimeCommitFailure } from './client.ts';
++import type { CommitRequest, JSON } from './timeline-commit-types.ts';
++import type { TimelineCommandBasis, TimelineCommitResult } from '@/tools/video-editor/data/DataProvider.ts';
++import { DEFAULT_OUTPUT, DEFAULT_VIDEO_TRACKS } from '@/tools/video-editor/lib/defaults.ts';
++import { authoringBundleFromDocument } from '@/tools/video-editor/commands/authoringBundle.ts';
++import { captureBootstrap } from '@/tools/video-editor/commands/bootstrapCapture.ts';
++import { copy, equal, object } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
++import { createCommitOutbox, type ClaimedOutbox, type OutboxHead, type OutboxIntent, type OutboxOutcome, type OutboxRecord, type OutboxRequest, type OutboxScope } from '@/tools/video-editor/commands/commitOutbox.ts';
++
++type Defaults = { name: string; slug: string; output: JSON; tracks: JSON };
++type InitPayload = { kind: 'timeline-init'; commands: CommitRequest['commands'] };
++export type BootstrapInitializationPorts = {
++  createTimeline: WorkspaceClient['createTimeline'];
++  listTimelineCommits: WorkspaceClient['listTimelineCommits'];
++  getProjectParentCompositionRevision: WorkspaceClient['getProjectParentCompositionRevision'];
++  loadLatest(timelineId: string): Promise<TimelineCommandBasis>;
++  commitTimeline(request: CommitRequest, key: string): Promise<TimelineCommitResult>;
++};
++type Ports = BootstrapInitializationPorts;
++const json = (value: unknown): JSON => JSON.parse(JSON.stringify(value)) as JSON;
++const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
++const requireValue = (condition: unknown, message: string): void => { if (!condition) throw new Error(message); };
++
++/** Source-only seam: caller holds the existing owner claim, including explicit crash recovery. */
++export async function reserveBootstrapInitialization(box: ClaimedOutbox, name: string, key: string, createName: string | null = name === name.trim() && name.length > 0 && name.length <= 120 ? name : null) {
++  requireValue(typeof name === 'string', 'Initialization requires an authored name');
++  requireValue(createName === null || (typeof createName === 'string' && createName === createName.trim()
++    && createName.length > 0 && createName.length <= 120), 'Create requires a supported name or an omitted name');
++  const { scope } = await box.read();
++  const defaults: Defaults = { name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'timeline',
++    output: copy(DEFAULT_OUTPUT), tracks: json(DEFAULT_VIDEO_TRACKS) };
++  await box.reserveCreate(json(defaults), { method: 'POST', path: `/v1/projects/${encodeURIComponent(scope.projectId)}/timelines`,
++    body: JSON.stringify({ timeline_id: scope.timelineId, ...(createName === null ? {} : { name: createName }) }), key });
++}
++
++function ready(record: OutboxRecord) {
++  if (record.pending || record.intents.length) {
++    const failure = record.pending?.outcome;
++    throw new Error(failure && failure.kind !== 'accepted'
++      ? String((failure.error as { message?: string })?.message ?? 'Initialization is not acknowledged; retain and retry the original request')
++      : 'Initialization is not acknowledged; retain and retry the original request');
++  }
++}
++
++function initializationRequest(intent: OutboxIntent, request: OutboxRequest, scope: OutboxScope) {
++  const payload = intent.payload as InitPayload;
++  const body = JSON.parse(request.body) as CommitRequest;
++  requireValue(payload?.kind === 'timeline-init' && payload.commands?.length === 3
++    && payload.commands[0].op === 'timeline.init' && payload.commands[0].version === '1'
++    && payload.commands.slice(1).every((command) => command.op === 'track.create' && command.version === '1')
++    && request.method === 'POST' && !!request.key
++    && request.path === `/v1/projects/${encodeURIComponent(scope.projectId)}/timelines/${encodeURIComponent(scope.timelineId)}/commit`
++    && body.api_version === 1 && body.project_id === scope.projectId && body.timeline_id === scope.timelineId
++    && body.dry_run !== true && !!intent.readyBase
++    && body.base_revision_id === intent.readyBase.revisionId && body.base_publication_id === intent.readyBase.publicationId
++    && equal(body.commands, payload.commands), 'Initialization original request/commands do not match; owner retained');
++  return body;
++}
++
++function initializationResult(saved: NonNullable<OutboxRecord['initialization']>, scope: OutboxScope) {
++  const { intent, request, head, value } = saved;
++  const body = initializationRequest(intent, request, scope);
++  const result = (value as unknown as { result?: TimelineCommitResult })?.result;
++  const data = result?.response?.data;
++  const receipt = result?.response?.receipt;
++  const document = data?.canonical_document;
++  requireValue((data?.status === 'accepted' || data?.status === 'rebased')
++    && data.base_revision_id === body.base_revision_id && data.base_publication_id === body.base_publication_id
++    && equal(data.commands, body.commands)
++    && !!head.revisionId && !!head.publicationId && result && sameHead(result.accepted, head)
++    && data.accepted_revision_id === head.revisionId && document?.parent_revision.revision_id === head.revisionId
++    && document.project_id === scope.projectId && document.timeline_id === scope.timelineId
++    && equal(result.canonicalDocument, document) && equal(result.receipt, receipt)
++    && receipt?.command_kind === 'timeline.commit' && receipt.idempotency_key === request.key
++    && receipt.project_id === scope.projectId && receipt.receipt_id === head.publicationId && equal(receipt.result, data),
++  'Initialization commit receipt does not match its original request/result; owner retained');
++  return result!;
++}
++
++async function proveInitialization(record: OutboxRecord, ports: Ports) {
++  requireValue(record.initialization, 'No acknowledged initialization with its original request/result in this owner');
++  const saved = record.initialization!;
++  const result = initializationResult(saved, record.scope);
++  const { data, receipt } = result.response;
++  let cursor: string | undefined;
++  const seen = new Set<string>();
++  for (;;) {
++    const page = await ports.listTimelineCommits(record.scope.projectId, record.scope.timelineId, cursor);
++    const entry = page.items.find((item) => item.publication_id === saved.head.publicationId);
++    if (entry) {
++      requireValue(entry.revision_id === saved.head.revisionId && entry.intent === 'recorded'
++        && equal(entry.receipt, receipt)
++        && equal(entry.previous, { revision_id: data.previous_revision_id, publication_id: data.previous_publication_id })
++        && equal(entry.records?.commands.map((item) => item.command), data.commands)
++        && entry.provider_version === data.provider_version && entry.compiler_version === data.compiler_version
++        && entry.publisher === data.publisher, 'Initialization historical publication does not match; owner retained');
++      break;
++    }
++    requireValue(page.next_cursor && !seen.has(page.next_cursor), 'Initialization historical publication is missing; owner retained');
++    cursor = page.next_cursor!;
++    seen.add(cursor);
++  }
++  // Native init has no children. Read its immutable closure, independently of today's head.
++  const document = data.canonical_document;
++  const parent = await ports.getProjectParentCompositionRevision(record.scope.projectId, record.scope.timelineId, saved.head.revisionId);
++  requireValue(parent.project_id === record.scope.projectId && parent.timeline_id === record.scope.timelineId
++    && parent.revision_id === saved.head.revisionId && parent.content_digest === document.parent_revision.content_digest
++    && equal(parent.payload, document.parent_revision.payload) && equal(parent.dependency_manifest, document.dependency_manifest)
++    && equal(document.dependency_manifest, { shots: [], internal_timelines: [], media: [], documents: [] })
++    && equal(document.shot_revisions, []) && equal(document.internal_timeline_revisions, []),
++  'Initialization immutable closure does not match; owner retained');
++  await authoringBundleFromDocument(document);
++}
++
++/** No production caller until the paired registry/Runtime release and central browser proof. */
++export async function resumeBootstrapInitialization(box: ClaimedOutbox, ports: Ports): Promise<TimelineCommandBasis> {
++  let record = await box.read();
++  const { scope } = record;
++  const failure = (error: unknown): OutboxOutcome => {
++    const kind = error instanceof ApiError && error.status >= 500 ? 'unknown' : classifyRuntimeCommitFailure(error);
++    return { kind: kind === 'unknown' || kind === 'storage' ? 'retry' : 'rejected',
++      error: { message: error instanceof Error ? error.message : String(error) } };
++  };
++  if (record.intents[0] && 'create' in record.intents[0].basis) {
++    record = await box.dispatch(() => { throw new Error('Creation must already be reserved'); }, async (request) => {
++      try {
++        const body = JSON.parse(request.body) as { timeline_id: string; name?: string };
++        requireValue(request.body === JSON.stringify({ timeline_id: scope.timelineId,
++          ...(body.name === undefined ? {} : { name: body.name }) }), 'Create request differs from the generated request; draft retained');
++        const result = await ports.createTimeline(scope.projectId, body.timeline_id, request.key, body.name);
++        const receiptResult = result.receipt.result;
++        requireValue(result.project_id === scope.projectId && result.timeline_id === scope.timelineId
++          && result.archived === false && typeof result.head_revision_id === 'string' && !!result.head_revision_id
++          && typeof result.head_publication_id === 'string' && !!result.head_publication_id
++          && result.receipt.command_kind === 'timeline.create' && result.receipt.idempotency_key === request.key
++          && result.receipt.project_id === scope.projectId && !!result.receipt.receipt_id
++          && object(receiptResult) && receiptResult.project_id === scope.projectId && receiptResult.timeline_id === scope.timelineId
++          && receiptResult.head_revision_id === result.head_revision_id && receiptResult.head_publication_id === result.head_publication_id,
++        'Create did not return a tracked timeline and matching receipt; draft retained');
++        return { kind: 'accepted', head: { revisionId: result.head_revision_id as string, publicationId: result.head_publication_id as string },
++          // Generated create's receipt is non-enumerable. Persist it explicitly.
++          value: json({ data: { ...result }, receipt: result.receipt }) };
++      } catch (error) { return failure(error); }
++    });
++    ready(record);
++  }
++  if (!record.initialization && !record.intents.length && record.accepted?.creation) {
++    const created = record.accepted;
++    const basis = await ports.loadLatest(scope.timelineId);
++    const history = basis.history;
++    const entry = history?.items[0];
++    const document = basis.canonicalDocument;
++    const receiptResult = entry?.receipt.result;
++    requireValue(sameHead(basis.head, created.head) && history?.head.revision_id === created.head.revisionId
++      && history.head.publication_id === created.head.publicationId && history.next_cursor === null && history.items.length === 1
++      && entry?.intent === 'bootstrap' && entry.previous === null && entry.revision_id === created.head.revisionId
++      && entry.publication_id === created.head.publicationId && entry.receipt.receipt_id === created.head.publicationId
++      && entry.receipt.command_kind === 'parent_composition.publish' && entry.receipt.project_id === scope.projectId
++      && object(receiptResult) && receiptResult.project_id === scope.projectId && receiptResult.timeline_id === scope.timelineId
++      && receiptResult.revision_id === created.head.revisionId && receiptResult.content_digest === document.parent_revision.content_digest
++      && receiptResult.old_head === null && receiptResult.new_head === created.head.revisionId
++      && equal(receiptResult.payload, document.parent_revision.payload)
++      && document.project_id === scope.projectId && document.timeline_id === scope.timelineId
++      && document.parent_revision.revision_id === created.head.revisionId
++      && equal(document.dependency_manifest, { shots: [], internal_timelines: [], media: [], documents: [] })
++      && equal(document.shot_revisions, []) && equal(document.internal_timeline_revisions, []),
++    'Initialization requires the original sole bootstrap publication; draft retained');
++    const captured = captureBootstrap(await authoringBundleFromDocument(document), created.creation!.payload as Defaults);
++    await box.append(json({ kind: 'timeline-init', commands: captured.commands }), { after: created.intentId });
++    record = await box.read();
++  }
++  if (record.intents.length) {
++    requireValue((record.intents[0].payload as InitPayload).kind === 'timeline-init' && record.intents.length === 1,
++      'Outbox does not contain this initialization');
++    record = await box.dispatch((intent, head) => ({ method: 'POST',
++      path: `/v1/projects/${encodeURIComponent(scope.projectId)}/timelines/${encodeURIComponent(scope.timelineId)}/commit`,
++      body: json({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
++        base_revision_id: head.revisionId, base_publication_id: head.publicationId,
++        commands: (intent.payload as InitPayload).commands, source: { via: 'app' } } satisfies CommitRequest),
++    }), async (request) => {
++      try {
++        const body = initializationRequest(record.intents[0], request, scope);
++        const result = await ports.commitTimeline(body, request.key);
++        const value = json({ kind: 'timeline-initialized', result });
++        initializationResult({ intent: record.intents[0], request, head: result.accepted, value }, scope);
++        return { kind: 'accepted', head: result.accepted, value };
++      } catch (error) { return failure(error); }
++    });
++  }
++  ready(record);
++  await proveInitialization(record, ports);
++  // A late ACK is historical. Display today's verified basis, never reinstall defaults.
++  return ports.loadLatest(scope.timelineId);
++}
++
++/** Run the create/init boundary through the existing durable owner store. */
++export async function initializeBootstrapTimeline(
++  scope: OutboxScope,
++  options: {
++    name: string;
++    createName: string | null;
++    createKey: string;
++    outboxes?: ReturnType<typeof createCommitOutbox>;
++    ports: BootstrapInitializationPorts;
++  },
++): Promise<TimelineCommandBasis> {
++  const outboxes = options.outboxes ?? createCommitOutbox();
++  const candidates = await outboxes.list({ ...scope, timelineId: undefined });
++  const existing = candidates.find((record) => record.scope.timelineId === scope.timelineId);
++  if (existing) {
++    return outboxes.recover(scope, existing.ownerId, (box) => resumeBootstrapInitialization(box, options.ports));
++  }
++  return outboxes.create(scope, async (box) => {
++    await reserveBootstrapInitialization(box, options.name, options.createKey, options.createName);
++    return resumeBootstrapInitialization(box, options.ports);
++  });
++}
+diff --git a/src/integrations/runtime/client.ts b/src/integrations/runtime/client.ts
+index 49b46ca4c2bd4675ef694f1af63a4bc88ed62cbf..0d1e5d5850e3335df161b8711e41bfa71e1f9a0c 100644
+--- a/src/integrations/runtime/client.ts
++++ b/src/integrations/runtime/client.ts
+@@ -629,6 +629,15 @@ export class AstridRuntimeClient {
+     return this.withSession(() => this.client.listTimelineCommits(projectId, timelineId, cursor, limit));
+   }
+ 
++  async createTimeline(
++    projectId: string,
++    timelineId: string,
++    idempotencyKeyValue: string,
++    name?: string,
++  ): Promise<MutationResult<Record<string, unknown>>> {
++    return this.withMutation(() => this.client.createTimeline(projectId, timelineId, idempotencyKeyValue, name));
++  }
++
+   async getProjectMediaSelection(
+     projectId: string,
+     selection: MediaSelectionQuery,
+diff --git a/src/integrations/runtime/createDefaultTimeline.test.ts b/src/integrations/runtime/createDefaultTimeline.test.ts
+index a28748689f1460a9d11ff5c6f6801fffdc8663bc..7f9bfc42f03ea56fcfe433359966febe2cbae72b 100644
+--- a/src/integrations/runtime/createDefaultTimeline.test.ts
++++ b/src/integrations/runtime/createDefaultTimeline.test.ts
+@@ -1,10 +1,10 @@
+ import { describe, expect, it, vi } from 'vitest';
+-import { AstridRuntimeClient, RUNTIME_CLIENT_SCOPES } from './client.ts';
+-import { ApiError, type Transport } from './generated.ts';
+-import {
+-  RUNTIME_SCHEMA_DIGEST,
+-  RUNTIME_TARGETED_EXECUTION_CAPABILITY,
+-} from './contract-metadata.ts';
++import { createFakeIndexedDB } from 'fake-indexeddb';
++import { AstridRuntimeClient } from './client.ts';
++import { ApiError, type CanonicalDocument, type CommitRequest, type Transport } from './generated.ts';
++import { RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
++import fixture from '@/tools/video-editor/commands/fixtures/recipe_m2_app_bootstrap.json';
++import { fixtureDigest } from './__tests__/timelineCommitFixture.ts';
+ import { createCanonicalTimeline, ensureProjectHasTimeline } from './createDefaultTimeline.ts';
+ 
+ function runtimeClient(timelines: Record<string, unknown>[]) {
+@@ -16,6 +16,181 @@ function runtimeClient(timelines: Record<string, unknown>[]) {
+   } as unknown as AstridRuntimeClient;
+ }
+ 
++type NativeTransportOptions = {
++  projectId: string;
++  timelineId: string;
++  existing?: boolean;
++  lose?: 'create' | 'init';
++};
++
++function nativeTransport(options: NativeTransportOptions) {
++  const parentPayload = { ...structuredClone(fixture.bundle.parent), occurrences: [] };
++  const initializedPayload = { ...structuredClone(fixture.after_bundle.parent), occurrences: [] };
++  const h0 = { revision_id: 'parent-0', publication_id: 'bootstrap-p0' };
++  const h1 = { revision_id: 'initialized', publication_id: 'init-p1' };
++  let created = options.existing === true;
++  let initialized = false;
++  let createAttempts = 0;
++  let initAttempts = 0;
++  let createRequest: { timeline_id: string; name?: string } | undefined;
++  let initRequest: CommitRequest | undefined;
++  let initReceipt: Record<string, unknown> | undefined;
++  const calls: Array<{ method: string; path: string; headers: Record<string, string>; body?: unknown }> = [];
++  const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
++  const ok = (value: unknown) => ({ status: 200, headers: { 'content-type': 'application/json' }, body: bytes(value) });
++  const document = (revision: string, payload: Record<string, unknown>): CanonicalDocument => ({
++    schema_version: 1,
++    project_id: options.projectId,
++    timeline_id: options.timelineId,
++    parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload },
++    shot_revisions: [],
++    internal_timeline_revisions: [],
++    dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
++  });
++  const h0Document = () => document(h0.revision_id, parentPayload);
++  const h1Document = () => document(h1.revision_id, initializedPayload);
++  const h0Receipt = {
++    receipt_id: h0.publication_id,
++    command_kind: 'parent_composition.publish',
++    idempotency_key: `bootstrap:${options.timelineId}`,
++    request_hash: 'bootstrap-hash',
++    project_id: options.projectId,
++    project_seq: [1, 1] as [number, number],
++    event_ids: ['bootstrap-event'],
++    result: {
++      project_id: options.projectId, timeline_id: options.timelineId, revision_id: h0.revision_id,
++      content_digest: fixtureDigest(parentPayload), old_head: null, new_head: h0.revision_id, payload: parentPayload,
++    },
++    created_at: '2026-10-20T00:00:00Z',
++  };
++  const commitResponse = (request: CommitRequest) => {
++    const data = {
++      status: 'accepted' as const,
++      base_revision_id: request.base_revision_id,
++      base_publication_id: request.base_publication_id,
++      previous_revision_id: h0.revision_id,
++      previous_publication_id: h0.publication_id,
++      accepted_revision_id: h1.revision_id,
++      rebased_onto: null,
++      canonical_document: h1Document(),
++      document_digest: fixtureDigest(h1Document()),
++      commands: request.commands,
++      id_map: {},
++      provider_version: 'provider-1',
++      compiler_version: 'compiler-1',
++      publisher: 'actor-1',
++    };
++    return { data, receipt: {
++      receipt_id: h1.publication_id,
++      command_kind: 'timeline.commit',
++      idempotency_key: 'init-key',
++      request_hash: 'init-hash',
++      project_id: options.projectId,
++      project_seq: [2, 2] as [number, number],
++      event_ids: ['init-event'],
++      result: data,
++      created_at: '2026-10-20T00:00:00Z',
++    } };
++  };
++  const history = () => {
++    const current = initialized ? h1 : h0;
++    const currentDocument = initialized ? h1Document() : h0Document();
++    const currentReceipt = initialized ? initReceipt : h0Receipt;
++    return {
++      head: current,
++      next_cursor: null,
++      items: [{
++        publication_id: current.publication_id,
++        revision_id: current.revision_id,
++        previous: initialized ? h0 : null,
++        receipt: currentReceipt,
++        intent: initialized ? 'recorded' : 'bootstrap',
++        records: initialized ? {
++          schema_version: 1,
++          commands: initRequest!.commands.map((command) => ({ command })),
++          undo_of: [], restored_from: null,
++        } : null,
++        provider_version: initialized ? 'provider-1' : null,
++        compiler_version: initialized ? 'compiler-1' : null,
++        publisher: initialized ? 'actor-1' : null,
++      },
++      ...(initialized ? [{
++        publication_id: h0.publication_id, revision_id: h0.revision_id, previous: null,
++        receipt: h0Receipt, intent: 'bootstrap', records: null,
++        provider_version: null, compiler_version: null, publisher: null,
++      }] : []),
++      ],
++      currentDocument,
++    };
++  };
++  const transport: Transport = async (method, path, headers, body) => {
++    const text = body ? new TextDecoder().decode(body as Uint8Array) : undefined;
++    const parsed = text ? JSON.parse(text) as Record<string, unknown> : undefined;
++    calls.push({ method, path, headers, body: parsed });
++    if (path === '/v1/health') return ok({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'runtime-instance-fixture' });
++    if (path === '/v1/handshake') return ok({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-fixture', actor_id: 'astrid-product-connector', realm_id: 'realm-fixture', scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'], capabilities: ['execution_binding.targeted.v1'] });
++    if (path === '/v1/realm') return ok({ realm_id: 'realm-fixture', display_name: 'Fixture', version: 1, created_at: '2026-10-14T00:00:00Z' });
++    if (method === 'GET' && path.endsWith('/commits?limit=50')) {
++      const current = history();
++      return ok({ head: current.head, next_cursor: current.next_cursor, items: current.items });
++    }
++    if (method === 'GET' && path.includes('/composition-revisions/')) {
++      const revision = path.split('/').at(-1);
++      const current = revision === h1.revision_id ? h1Document() : h0Document();
++      return ok({ project_id: current.project_id, timeline_id: current.timeline_id, ...current.parent_revision, dependency_manifest: current.dependency_manifest });
++    }
++    if (method === 'POST' && path === `/v1/projects/${options.projectId}/timelines`) {
++      createAttempts += 1;
++      createRequest = parsed as typeof createRequest;
++      options.timelineId = createRequest.timeline_id;
++      h0Receipt.result.timeline_id = options.timelineId;
++      created = true;
++      const key = headers['Idempotency-Key'] ?? headers['idempotency-key'];
++      if (options.lose === 'create' && createAttempts === 1) throw new Error('simulated lost response after create');
++      const data = { project_id: options.projectId, timeline_id: options.timelineId, archived: false, head_revision_id: h0.revision_id, head_publication_id: h0.publication_id };
++      return ok({ data, receipt: { receipt_id: 'create-receipt', command_kind: 'timeline.create', idempotency_key: key, request_hash: 'create-hash', project_id: options.projectId, project_seq: [1, 1], event_ids: ['create-event'], result: data, created_at: '2026-10-20T00:00:00Z' } });
++    }
++    if (method === 'POST' && path.startsWith(`/v1/projects/${options.projectId}/timelines/`) && path.endsWith('/commit')) {
++      initAttempts += 1;
++      initRequest = parsed as unknown as CommitRequest;
++      initialized = true;
++      const response = commitResponse(initRequest);
++      response.receipt.idempotency_key = headers['Idempotency-Key'] ?? headers['idempotency-key'] ?? '';
++      initReceipt = response.receipt;
++      if (options.lose === 'init' && initAttempts === 1) throw new Error('simulated lost response after init');
++      return ok(response);
++    }
++    throw new Error(`unexpected ${method} ${path}`);
++  };
++  return { transport, calls, state: () => ({ createAttempts, initAttempts, created, initialized, createRequest, initRequest }) };
++}
++
++function nativeClient(projectId: string, timelines: Record<string, unknown>[], options: NativeTransportOptions) {
++  const native = nativeTransport(options);
++  const client = new AstridRuntimeClient({
++    baseUrl: `http://runtime-${projectId}.test`,
++    expectedIdentity: { actorId: 'astrid-product-connector', realmId: 'realm-fixture', runtimeInstanceId: 'runtime-instance-fixture' },
++    transport: native.transport,
++  });
++  client.getProject = vi.fn(async () => ({ project_id: projectId, version: 1, metadata: { unrelated: true } })) as never;
++  client.listTimelines = vi.fn(async () => timelines) as never;
++  client.updateProject = vi.fn(async (_id, _key, _version, _name, metadata) => ({ project_id: projectId, version: 2, metadata })) as never;
++  client.publishParentComposition = vi.fn(async () => ({ revision_id: 'legacy-parent-head' })) as never;
++  return { client, native };
++}
++
++function installNativeHarness(transport: Transport) {
++  vi.stubGlobal('indexedDB', createFakeIndexedDB());
++  vi.stubGlobal('navigator', { locks: { request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}) } });
++  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
++    const url = new URL(String(input), 'http://runtime.test');
++    const headers = Object.fromEntries(new Headers(init?.headers).entries());
++    const body = init?.body === undefined ? undefined : new Uint8Array(await new Response(init.body).arrayBuffer());
++    const response = await transport(init?.method ?? 'GET', `${url.pathname}${url.search}`, headers, body);
++    return new Response(response.body, { status: response.status, headers: response.headers });
++  });
++}
++
+ describe('ensureProjectHasTimeline', () => {
+   it('never reapplies defaults over an already headed timeline with opaque authored edits', async () => {
+     const authored = JSON.parse('{"opaque":[null,false,[]],"nullable":null,"ordered":[3,1,2],"__proto__":{"literal":true},"constructor":0,"prototype":false}');
+@@ -37,46 +212,38 @@ describe('ensureProjectHasTimeline', () => {
+     expect(client.publishParentComposition).not.toHaveBeenCalled();
+   });
+ 
+-  it('publishes a canonical empty composition atomically for a new project timeline', async () => {
+-    const client = runtimeClient([]);
++  it('creates and initializes a canonical empty timeline through the native Runtime transport', async () => {
++    const projectId = 'project-native-create';
++    const timelineId = 'timeline-native-create';
++    const { client, native } = nativeClient(projectId, [], { projectId, timelineId });
++    installNativeHarness(native.transport);
+ 
+-    const created = await ensureProjectHasTimeline('project-id', client);
++    const createdId = await ensureProjectHasTimeline(projectId, client);
++    expect(createdId).toBe(native.state().createRequest?.timeline_id);
+ 
+-    expect(created).toBeTruthy();
+-    expect(client.listTimelines).toHaveBeenCalledWith('project-id');
+-    expect(client.publishParentComposition).toHaveBeenCalledWith(
+-      'project-id',
+-      created,
+-      expect.objectContaining({
+-        project_id: 'project-id',
+-        timeline_id: created,
+-        expected_head: null,
+-        parent_revision_id: expect.any(String),
+-        parent_composition: expect.objectContaining({
+-          slug: 'main',
+-          name: 'Main',
+-          config: expect.objectContaining({ clips: [], tracks: expect.any(Array) }),
+-          registry: { assets: {} },
+-          clips: [],
+-          occurrences: [],
+-        }),
+-        shot_revisions: [],
+-        internal_timeline_revisions: [],
+-      }),
+-      'astrid-first-timeline-project-id',
+-    );
++    const state = native.state();
++    expect(state.createAttempts).toBe(1);
++    expect(state.initAttempts).toBe(1);
++    expect(state.createRequest).toEqual({ timeline_id: expect.any(String), name: 'Main' });
++    expect(state.initRequest?.commands).toEqual(fixture.commands);
++    expect(native.calls.some(({ path }) => path.includes('/composition-revisions') && !path.includes('/commits'))).toBe(true);
++    expect(native.calls.filter(({ path }) => path.endsWith('/commit'))).toHaveLength(1);
+   });
+ 
+   it('repairs an existing headless shell without creating a second timeline', async () => {
+-    const client = runtimeClient([{ timeline_id: 'headless-shell', head_revision_id: null }]);
++    const projectId = 'project-native-repair';
++    const timelineId = 'headless-shell';
++    const { client, native } = nativeClient(projectId, [{ timeline_id: timelineId, head_revision_id: null }], { projectId, timelineId, existing: true });
++    installNativeHarness(native.transport);
+ 
+-    await expect(ensureProjectHasTimeline('project-id', client)).resolves.toBe('headless-shell');
+-    expect(client.publishParentComposition).toHaveBeenCalledWith(
+-      'project-id',
+-      'headless-shell',
+-      expect.objectContaining({ expected_head: null }),
+-      expect.any(String),
+-    );
++    await expect(ensureProjectHasTimeline(projectId, client)).resolves.toBe(timelineId);
++
++    const state = native.state();
++    expect(state.createAttempts).toBe(1);
++    expect(state.initAttempts).toBe(1);
++    expect(state.initRequest?.base_revision_id).toBe('parent-0');
++    expect(state.initRequest?.base_publication_id).toBe('bootstrap-p0');
++    expect(client.publishParentComposition).not.toHaveBeenCalled();
+   });
+ 
+   it('honors a reassigned Main pointer over a timeline named main without changing either composition', async () => {
+@@ -154,152 +321,68 @@ describe('ensureProjectHasTimeline', () => {
+   });
+ 
+   it('merges a newly created Main pointer with concurrent chat metadata after a CAS conflict', async () => {
+-    const client = runtimeClient([]);
++    const projectId = 'project-native-cas';
++    const timelineId = 'timeline-native-cas';
++    const { client, native } = nativeClient(projectId, [], { projectId, timelineId });
++    installNativeHarness(native.transport);
+     vi.mocked(client.getProject).mockResolvedValueOnce({ version: 1, metadata: {} } as never)
+       .mockResolvedValueOnce({ version: 1, metadata: {} } as never)
+       .mockResolvedValue({ version: 2, metadata: { chat: { keep: true } } } as never);
+     vi.mocked(client.updateProject).mockRejectedValueOnce(new ApiError(409, 'version_conflict', 'changed'));
+-    const id = await ensureProjectHasTimeline('project-id', client);
+-    expect(client.updateProject).toHaveBeenLastCalledWith('project-id', expect.any(String), 2, undefined,
++    const id = await ensureProjectHasTimeline(projectId, client);
++    expect(client.updateProject).toHaveBeenLastCalledWith(projectId, expect.any(String), 2, undefined,
+       { chat: { keep: true }, default_timeline_id: id });
+-    expect(client.publishParentComposition).toHaveBeenCalledTimes(1);
++    expect(native.state().initAttempts).toBe(1);
++    expect(client.publishParentComposition).not.toHaveBeenCalled();
+   });
+ 
+   it('creates an additional canonical timeline with its own idempotency key', async () => {
+-    const client = runtimeClient([]);
++    const projectId = 'project-native-additional';
++    const timelineId = 'project-timeline-2';
++    const { client, native } = nativeClient(projectId, [], { projectId, timelineId });
++    installNativeHarness(native.transport);
+ 
+-    await expect(createCanonicalTimeline('project-id', {
++    await expect(createCanonicalTimeline(projectId, {
+       name: 'Timeline 2',
+-      timelineId: 'project-timeline-2',
+-    }, client)).resolves.toBe('project-timeline-2');
+-    expect(client.publishParentComposition).toHaveBeenCalledWith(
+-      'project-id',
+-      'project-timeline-2',
+-      expect.objectContaining({
+-        expected_head: null,
+-        parent_composition: expect.objectContaining({ slug: 'timeline-2', name: 'Timeline 2' }),
+-      }),
+-      'astrid-timeline-create-project-id-project-timeline-2',
++      timelineId,
++    }, client)).resolves.toBe(timelineId);
++    expect(native.state().createRequest).toEqual({ timeline_id: timelineId, name: 'Timeline 2' });
++    const createCall = native.calls.find(({ method, path }) => method === 'POST' && path.endsWith('/timelines'));
++    expect(createCall?.headers['Idempotency-Key'] ?? createCall?.headers['idempotency-key']).toBe(
++      `astrid-timeline-create-${projectId}-${timelineId}`,
+     );
++    expect(client.publishParentComposition).not.toHaveBeenCalled();
+   });
+ 
+-  it('uses the current atomic Runtime route and replays a stable first-timeline publication', async () => {
+-    const requests: Array<{
+-      method: string;
+-      path: string;
+-      headers: Record<string, string>;
+-      body?: Record<string, unknown>;
+-    }> = [];
+-    let publishCount = 0;
+-    const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
+-    const transport: Transport = async (method, path, headers, body) => {
+-      const parsedBody = body
+-        ? JSON.parse(new TextDecoder().decode(body as Uint8Array)) as Record<string, unknown>
+-        : undefined;
+-      requests.push({ method, path, headers, ...(parsedBody ? { body: parsedBody } : {}) });
++  it('replays the exact native initialization request after a lost response', async () => {
++    const projectId = 'project-native-retry';
++    const timelineId = 'timeline-native-retry';
++    const idempotencyKey = 'timeline-native-retry-key';
++    const { client, native } = nativeClient(projectId, [], { projectId, timelineId, lose: 'init' });
++    installNativeHarness(native.transport);
+ 
+-      if (method === 'GET' && path === '/v1/health') {
+-        return {
+-          status: 200,
+-          headers: {},
+-          body: json({
+-            status: 'ok',
+-            protocol: 'workspace.v1',
+-            schema_digest: RUNTIME_SCHEMA_DIGEST,
+-            runtime_epoch: 1,
+-            runtime_instance_id: 'runtime-instance-fixture',
+-          }),
+-        };
+-      }
+-      if (method === 'POST' && path === '/v1/handshake') {
+-        return {
+-          status: 200,
+-          headers: {},
+-          body: json({
+-            protocol: 'workspace.v1',
+-            schema_digest: RUNTIME_SCHEMA_DIGEST,
+-            session_id: 'session-fixture',
+-            actor_id: 'astrid-product-connector',
+-            realm_id: 'realm-fixture',
+-            scopes: RUNTIME_CLIENT_SCOPES,
+-            capabilities: [RUNTIME_TARGETED_EXECUTION_CAPABILITY],
+-          }),
+-        };
+-      }
+-      if (method === 'GET' && path === '/v1/realm') {
+-        return {
+-          status: 200,
+-          headers: {},
+-          body: json({ realm_id: 'realm-fixture', display_name: 'Fixture', version: 1, created_at: '2026-10-14T00:00:00Z' }),
+-        };
+-      }
+-      if (method === 'GET' && path === '/v1/projects/project-id') {
+-        return { status: 200, headers: {}, body: json({ project_id: 'project-id', realm_id: 'realm-fixture', slug: 'project', name: 'Project', metadata: {}, version: 1, created_at: '', updated_at: '' }) };
+-      }
+-      if (method === 'PATCH' && path === '/v1/projects/project-id') {
+-        return { status: 200, headers: {}, body: json({ project_id: 'project-id', realm_id: 'realm-fixture', slug: 'project', name: 'Project', metadata: parsedBody?.metadata, version: 2, created_at: '', updated_at: '' }) };
+-      }
+-      if (method === 'GET' && path === '/v1/projects/project-id/timelines?limit=200') {
+-        return { status: 200, headers: {}, body: json({ items: [], next_cursor: null }) };
+-      }
+-      if (method === 'POST' && path.startsWith('/v1/projects/project-id/timelines/') && path.endsWith('/composition-revisions')) {
+-        publishCount += 1;
+-        if (publishCount === 1) throw new Error('simulated lost response after commit');
+-        const timelineId = path.split('/').at(-2);
+-        return {
+-          status: 200,
+-          headers: {},
+-          body: json({
+-            data: { project_id: 'project-id', timeline_id: timelineId, revision_id: parsedBody?.parent_revision_id },
+-            receipt: { receipt_id: 'composition.publish:astrid-first-timeline-project-id' },
+-          }),
+-        };
+-      }
+-      throw new Error(`unexpected ${method} ${path}`);
+-    };
+-    const client = new AstridRuntimeClient({
+-      baseUrl: 'http://runtime.test',
+-      expectedIdentity: {
+-        actorId: 'astrid-product-connector',
+-        realmId: 'realm-fixture',
+-        runtimeInstanceId: 'runtime-instance-fixture',
+-      },
+-      transport,
+-    });
+-
+-    await expect(ensureProjectHasTimeline('project-id', client)).rejects.toThrow('simulated lost response');
+-    const timelineId = await ensureProjectHasTimeline('project-id', client);
++    await expect(createCanonicalTimeline(projectId, { name: 'Retry', timelineId, idempotencyKey }, client))
++      .rejects.toThrow('simulated lost response after init');
++    await expect(createCanonicalTimeline(projectId, { name: 'Retry', timelineId, idempotencyKey }, client))
++      .resolves.toBe(timelineId);
+ 
+-    const publications = requests.filter(({ method, path }) => (
+-      method === 'POST' && path.endsWith('/composition-revisions')
+-    ));
+-    expect(publications).toHaveLength(2);
+-    expect(publications[0]).toEqual(publications[1]);
+-    expect(publications[0]).toMatchObject({
+-      method: 'POST',
+-      path: `/v1/projects/project-id/timelines/${timelineId}/composition-revisions`,
+-      headers: {
+-        'Content-Type': 'application/json',
+-        'Idempotency-Key': 'astrid-first-timeline-project-id',
+-      },
+-      body: {
+-        project_id: 'project-id',
+-        timeline_id: timelineId,
+-        expected_head: null,
+-        parent_revision_id: expect.stringMatching(/^[0-9a-f-]{36}$/),
+-        parent_composition: {
+-          slug: 'main',
+-          name: 'Main',
+-          registry: { assets: {} },
+-          clips: [],
+-          occurrences: [],
+-          config: expect.objectContaining({ clips: [], tracks: expect.any(Array) }),
+-        },
+-        shot_revisions: [],
+-        internal_timeline_revisions: [],
+-      },
+-    });
+-    expect(publications[0]?.headers['Idempotency-Key']).toMatch(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/);
+-    expect(publications[0]?.path).not.toContain('timeline-documents');
++    const creates = native.calls.filter(({ method, path }) => method === 'POST' && path.endsWith('/timelines'));
++    const commits = native.calls.filter(({ method, path }) => method === 'POST' && path.endsWith('/commit'));
++    expect(creates).toHaveLength(1);
++    expect(commits).toHaveLength(2);
++    expect(commits[0]).toEqual(commits[1]);
++    expect(commits[0]?.body).toEqual(expect.objectContaining({
++      base_revision_id: 'parent-0',
++      base_publication_id: 'bootstrap-p0',
++      commands: expect.arrayContaining([
++        expect.objectContaining({ op: 'timeline.init', args: expect.objectContaining({ name: 'Retry', slug: 'retry' }) }),
++      ]),
++    }));
++    expect(commits[0]?.headers['Idempotency-Key'] ?? commits[0]?.headers['idempotency-key']).toBe(
++      commits[1]?.headers['Idempotency-Key'] ?? commits[1]?.headers['idempotency-key'],
++    );
++    expect(creates[0]?.headers['Idempotency-Key']).toBe(idempotencyKey);
++    expect(native.state().initAttempts).toBe(2);
++    expect(client.publishParentComposition).not.toHaveBeenCalled();
+   });
+ });
+diff --git a/src/integrations/runtime/createDefaultTimeline.ts b/src/integrations/runtime/createDefaultTimeline.ts
+index faaed0c65dd7fcea60fe236f63f127949787520a..82b1d7078a3ac7ea002b4c41b7ddfd19d197d38c 100644
+--- a/src/integrations/runtime/createDefaultTimeline.ts
++++ b/src/integrations/runtime/createDefaultTimeline.ts
+@@ -1,7 +1,8 @@
+ import { AstridRuntimeClient } from './client.ts';
+ import { ApiError } from './generated.ts';
+ import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
+-import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
++import { RuntimeDataProvider } from './dataProvider.ts';
++import { initializeBootstrapTimeline } from './bootstrapInitialization.ts';
+ 
+ type RuntimeTimeline = Record<string, unknown> & {
+   timeline_id?: unknown;
+@@ -48,39 +49,41 @@ async function stableUuid(seed: string): Promise<string> {
+   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+ }
+ 
+-async function publishEmptyTimeline(
++function supportedCreateName(name: string): string | null {
++  return name.trim() === name && name.length > 0 && name.length <= 120 ? name : null;
++}
++
++async function initializeTimeline(
+   projectId: string,
+   targetTimelineId: string,
+   name: string,
+   client: AstridRuntimeClient,
+   key: string,
++  createName: string | null = supportedCreateName(name),
+ ): Promise<void> {
+-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'timeline';
+-  const parentRevisionId = await stableUuid(`astrid-parent-revision:${projectId}:${targetTimelineId}`);
+-  await client.publishParentComposition(
+-    projectId,
+-    targetTimelineId,
++  const identity = await client.getRecoverableIdentity();
++  const provider = new RuntimeDataProvider({ projectId, baseUrl: client.baseUrl });
++  await initializeBootstrapTimeline(
++    { ...identity, projectId, timelineId: targetTimelineId },
+     {
+-      project_id: projectId,
+-      timeline_id: targetTimelineId,
+-      expected_head: null,
+-      parent_revision_id: parentRevisionId,
+-      parent_composition: {
+-        slug,
+-        name,
+-        config: createDefaultTimelineConfig() as unknown as Record<string, unknown>,
+-        registry: { assets: {} },
+-        clips: [],
+-        occurrences: [],
++      name,
++      createName,
++      createKey: key,
++      ports: {
++        createTimeline: (project, timeline, idempotencyKey, createNameValue) =>
++          client.createTimeline(project, timeline, idempotencyKey, createNameValue),
++        listTimelineCommits: (project, timeline, cursor, limit) =>
++          client.listTimelineCommits(project, timeline, cursor, limit),
++        getProjectParentCompositionRevision: (project, timeline, revision) =>
++          client.getProjectParentCompositionRevision(project, timeline, revision),
++        loadLatest: (timeline) => provider.loadTimelineCommandBasis(timeline),
++        commitTimeline: (request, idempotencyKey) => provider.commitTimeline(request, idempotencyKey),
+       },
+-      shot_revisions: [],
+-      internal_timeline_revisions: [],
+     },
+-    key,
+   );
+ }
+ 
+-/** Publish a new empty canonical parent composition through the current Runtime contract. */
++/** Create and natively initialize a canonical empty timeline through Runtime. */
+ export async function createCanonicalTimeline(
+   projectId: string,
+   options: { name?: string; timelineId?: string; idempotencyKey?: string } = {},
+@@ -90,7 +93,7 @@ export async function createCanonicalTimeline(
+     ?? (options.idempotencyKey
+       ? await stableUuid(`astrid-timeline:${options.idempotencyKey}`)
+       : generateUUID());
+-  await publishEmptyTimeline(
++  await initializeTimeline(
+     projectId,
+     targetTimelineId,
+     options.name ?? 'Timeline',
+@@ -118,7 +121,7 @@ export async function ensureProjectHasTimeline(
+   let target = timelineId(existing);
+   if (target) {
+     if (typeof existing?.head_revision_id !== 'string' || !existing.head_revision_id) {
+-      await publishEmptyTimeline(projectId, target, 'Main', client, `astrid-first-timeline-${projectId}`);
++      await initializeTimeline(projectId, target, 'Main', client, `astrid-first-timeline-${projectId}`, null);
+     }
+   } else {
+     target = await createCanonicalTimeline(projectId, {
+diff --git a/src/tools/video-editor/commands/bootstrapCapture.test.ts b/src/tools/video-editor/commands/bootstrapCapture.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..fcd1bc9331d865bedb430666f4eebe8c97cf1178
+--- /dev/null
++++ b/src/tools/video-editor/commands/bootstrapCapture.test.ts
+@@ -0,0 +1,74 @@
++import { describe, expect, it } from 'vitest';
++import { DEFAULT_OUTPUT, DEFAULT_VIDEO_TRACKS } from '../lib/defaults.ts';
++import { captureBootstrap } from './bootstrapCapture.ts';
++import { copy, freezeJson, type AuthoredBundle } from './clipMovePrimitives.ts';
++import fixture from './fixtures/recipe_m2_app_bootstrap.json';
++
++const defaults = { name: 'Main', slug: 'main', output: DEFAULT_OUTPUT, tracks: DEFAULT_VIDEO_TRACKS };
++const original = fixture.bundle as AuthoredBundle;
++
++describe('native App bootstrap capture', () => {
++  it('matches native sequential init/V1/A1 commands, full records and authored result exactly', () => {
++    const input = freezeJson(copy(original));
++    const result = captureBootstrap(input, defaults);
++    expect(result.commands).toEqual(fixture.commands);
++    expect(result.records).toEqual(fixture.records);
++    expect(result.bundle).toEqual(fixture.after_bundle);
++    expect(input).toEqual(original);
++    expect(result.commands[2].selections![0].order).toEqual(['parent/track:V1']);
++    expect(result.commands[0].expect!['parent::config.output']).toEqual({ state: 'absent' });
++    expect(result.commands[0].reads![0]).toEqual({ ref: 'parent', path: [], state: { state: 'present', value: original.parent } });
++    expect(result.commands[0].expect!['parent::registry.assets']).toEqual({ state: 'absent' });
++    expect(result.records[0].writes.at(-1)).toEqual({ ref: 'parent', path: ['registry', 'assets'],
++      before: { state: 'absent' }, after: { state: 'present', value: {} } });
++    expect(result.bundle.parent.config).not.toHaveProperty('theme');
++    expect((result.bundle.parent.config as any).output).toEqual({
++      resolution: '1280x720', fps: 30, file: 'output.mp4', background: null, background_scale: null,
++    });
++  });
++
++  it.each([['Timeline 2', 'timeline-2'], ['!!!', 'timeline'], ['', 'timeline'], ['   ', 'timeline'],
++    ['  Authored Cut  ', 'authored-cut'], ['x'.repeat(121), 'x'.repeat(121)]])('retains authored name %s and slug %s', (name, slug) => {
++    const result = captureBootstrap(original, { ...defaults, name, slug });
++    expect(result.commands[0].args).toEqual({ name, slug, output: DEFAULT_OUTPUT });
++    expect(result.bundle.parent.name).toBe(name);
++    expect(result.bundle.parent.slug).toBe(slug);
++    expect(result.commands.slice(1)).toEqual(fixture.commands.slice(1));
++  });
++
++  it.each(['opaque', '__proto__', 'constructor', 'prototype'])('refuses opaque own key %s without changing authored input', (key) => {
++    const input = copy(original);
++    Object.defineProperty(input.parent, key, { enumerable: true, writable: true, configurable: true, value: [null, false, [3, 1, 2]] });
++    const before = copy(input);
++    expect(() => captureBootstrap(input, defaults)).toThrow('pristine');
++    expect(input).toEqual(before);
++  });
++
++  it.each([
++    { config: { clips: [], tracks: [], theme: null } },
++    { registry: { assets: {} } },
++    { name: null },
++    { slug: '' },
++    { config: { clips: [], tracks: [], output: null } },
++    { registry: { opaque: [null, false] } },
++    { config: { clips: [], tracks: [DEFAULT_VIDEO_TRACKS[0]] } },
++  ])('refuses authored state, including explicit null, instead of treating it as absent: %j', (change) => {
++    const input = copy(original);
++    Object.assign(input.parent, change);
++    const before = copy(input);
++    expect(() => captureBootstrap(input, defaults)).toThrow('pristine');
++    expect(input).toEqual(before);
++  });
++
++  it('refuses unsupported output, row order, child data and nonfinite values', () => {
++    for (const output of [{ ...DEFAULT_OUTPUT, fps: 29.97 }, { ...DEFAULT_OUTPUT, fps: { numerator: 30, denominator: 1 } },
++      { resolution: '1280x720', fps: 30, file: 'output.mp4' }]) {
++      expect(() => captureBootstrap(original, { ...defaults, output })).toThrow('supported');
++    }
++    expect(() => captureBootstrap(original, { ...defaults, tracks: [...DEFAULT_VIDEO_TRACKS].reverse() })).toThrow('supported');
++    const input = copy(original);
++    input.placements.push({ opaque: null });
++    expect(() => captureBootstrap(input, defaults)).toThrow('pristine');
++    expect(() => captureBootstrap(original, { ...defaults, output: Infinity })).toThrow('finite JSON');
++  });
++});
+diff --git a/src/tools/video-editor/commands/bootstrapCapture.ts b/src/tools/video-editor/commands/bootstrapCapture.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..7e27b047f6b9c052857f4d801f8c08d66ab442ba
+--- /dev/null
++++ b/src/tools/video-editor/commands/bootstrapCapture.ts
+@@ -0,0 +1,53 @@
++import type { CommandBatch, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
++import { DEFAULT_OUTPUT, DEFAULT_VIDEO_TRACKS } from '../lib/defaults.ts';
++import { ClipMoveError, MoveRecording, assertFiniteJson, copy, equal, object, type AuthoredBundle } from './clipMovePrimitives.ts';
++
++const EMPTY = { config: { clips: [], tracks: [] }, registry: {}, clips: [] };
++
++// Agent 487ca1e0 native_initialize.py and _recording.py::create, bounded to App defaults.
++export function captureBootstrap(bundle: AuthoredBundle, input: { name: string; slug: string; output: JSON; tracks: JSON }) {
++  assertFiniteJson(bundle);
++  assertFiniteJson(input);
++  if (!equal(Object.keys(input).sort(), ['name', 'output', 'slug', 'tracks'])
++    || typeof input.name !== 'string' || typeof input.slug !== 'string' || !input.slug
++    || !equal(input.output, DEFAULT_OUTPUT) || !equal(input.tracks, DEFAULT_VIDEO_TRACKS)) {
++    throw new ClipMoveError('Bootstrap requires the supported authored App defaults');
++  }
++  if (!equal(bundle.parent, EMPTY) || !equal(bundle.placements, []) || !equal(bundle.shots, {})) {
++    throw new ClipMoveError('timeline.init requires the pristine empty bootstrap', 'not_pristine');
++  }
++  const init = new MoveRecording(bundle, { schema_version: 1, op: 'timeline.init', version: '1', select: 'parent',
++    args: { name: input.name, slug: input.slug, output: copy(input.output) }, intent: {} });
++  init.command.resolved = [];
++  init.read('parent', []);
++  for (const path of [['config', 'output'], ['name'], ['slug'], ['registry', 'assets']]) init.read('parent', path);
++  init.write('parent', ['config', 'output'], input.output);
++  init.write('parent', ['name'], input.name);
++  init.write('parent', ['slug'], input.slug);
++  init.write('parent', ['registry', 'assets'], {});
++  let after = init.state.bundle;
++  const records = [init.record];
++  for (const row of input.tracks as Array<{ [key: string]: JSON }>) {
++    const ctx = new MoveRecording(after, { schema_version: 1, op: 'track.create', version: '1', select: 'parent',
++      args: { row: copy(row) }, intent: {} });
++    ctx.command.resolved = [];
++    const config = ctx.state.bundle.parent.config;
++    if (!object(config) || !Array.isArray(config.tracks)) throw new ClipMoveError('Missing authored track collection');
++    const members = config.tracks.map((track) => `parent/track:${(track as { id: string }).id}`);
++    ctx.command.selections!.push({ key: 'track.create', query_version: 1, owner: 'parent',
++      members, order: [...members], boundaries: [...members], policy: 'guard-membership' });
++    const ref = `parent/track:${row.id}`;
++    if (ctx.read(ref, []) !== undefined) throw new ClipMoveError('Created identity is occupied', 'identity_collision');
++    // Whole-entity creation is the native recorded write, not a config.tracks replacement.
++    ctx.command.expect![`${ref}::`] = { state: 'absent' };
++    ctx.command.authorship![`${ref}::`] = 'direct';
++    ctx.command.created!.push(ref);
++    ctx.record.writes.push({ ref, path: [], before: { state: 'absent' }, after: { state: 'present', value: copy(row) } });
++    ctx.record.created.push({ ref, kind: 'track', owner: 'parent' });
++    config.tracks.push(copy(row));
++    ctx.record.ordinal = records.length;
++    records.push(ctx.record);
++    after = ctx.state.bundle;
++  }
++  return { commands: records.map((record) => record.command) as CommandBatch, bundle: after, records };
++}
+diff --git a/src/tools/video-editor/commands/commitOutbox.test.ts b/src/tools/video-editor/commands/commitOutbox.test.ts
+index 53a1e93aa0c5ae015ee9ecb9f6f7efc056de075d..26412713a544bd3cacfd6d5a57c8dd1a71a6eaab 100644
+--- a/src/tools/video-editor/commands/commitOutbox.test.ts
++++ b/src/tools/video-editor/commands/commitOutbox.test.ts
+@@ -89,6 +89,151 @@ function environment() {
+ afterEach(() => vi.unstubAllGlobals());
+ 
+ describe('durable command outbox', () => {
++  it('checkpoints the original init atomically and keeps it after later edits, inverse ACKs and reopen', async () => {
++    const env = environment();
++    let owner = '';
++    let initialization: Awaited<ReturnType<ClaimedOutbox['read']>>['initialization'];
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      const init = await box.append({ kind: 'timeline-init', commands: ['original-guards'] }, { head: h0 });
++      const dependent = await box.append(move(7), { after: init });
++      let original!: OutboxRequest;
++      await expect(box.dispatch(build, async (request) => {
++        original = request;
++        env.fault.abortNextWrite = true;
++        return accepted();
++      })).rejects.toThrow('aborted');
++      const before = await box.read();
++      expect(before.initialization).toBeUndefined();
++      expect(before.pending!.request).toEqual(original);
++      expect(before.intents.map((intent) => intent.id)).toEqual([init, dependent]);
++      const after = await box.dispatch(() => { throw new Error('Must retry exact init'); }, async (request) => {
++        expect(request).toEqual(original);
++        return accepted();
++      });
++      initialization = structuredClone(after.initialization);
++      expect(initialization).toEqual({ intent: before.intents[0], request: original, head: ha, value: accepted().value });
++      expect(after.intents[0].readyBase).toEqual(ha);
++      after.initialization!.request.key = 'detached-mutation';
++      await box.dispatch(build, async () => accepted({ revisionId: 'RB', publicationId: 'PB' }));
++      expect((await box.read()).initialization).toEqual(initialization);
++      await box.append({ commands: ['timeline.inverse'] }, { after: dependent });
++      await box.dispatch(build, async () => accepted({ revisionId: h0.revisionId, publicationId: 'inverse-p3' }));
++      expect((await box.read()).accepted?.head).toEqual({ revisionId: h0.revisionId, publicationId: 'inverse-p3' });
++    });
++    await env.open().recover(scope, owner, async (box) => {
++      expect((await box.read()).initialization).toEqual(initialization);
++      expect((await box.read()).intents).toEqual([]);
++    });
++  });
++
++  it('preserves existing render and placement continuation JSON during init and later ACKs', async () => {
++    const env = environment();
++    let owner = '';
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      await box.append({ kind: 'timeline-init' }, { head: h0 });
++    });
++    const continuations = {
++      renderContinuations: [{ intent: { opaque: [null, 'render'] }, accepted: { intentId: 'older', head: h0, value: {} } }],
++      placementContinuations: [{ id: 'placement', input: { opaque: [null, 'placement'] },
++        placement: { intentId: 'cancelled-placement', cancelled: true } }],
++    };
++    // Older/future owner fields are opaque to this bounded storage branch.
++    await new Promise<void>((resolve) => {
++      const request = env.factory.open('astrid.command-outbox', 1);
++      request.addEventListener('success', () => {
++        const db = request.result;
++        const records = db.recordsByStore.get('owners');
++        for (const [key, record] of records) records.set(key, { ...record, ...structuredClone(continuations) });
++        db.close();
++        resolve();
++      });
++    });
++    await env.open().recover(scope, owner, async (box) => {
++      const init = await box.dispatch(build, async () => accepted());
++      expect(init).toMatchObject(continuations);
++      const link = init.initialization;
++      await box.append(move(9), { after: init.accepted!.intentId });
++      const later = await box.dispatch(build, async () => accepted({ revisionId: 'later', publicationId: 'later-p' }));
++      expect(later).toMatchObject(continuations);
++      expect(later.initialization).toEqual(link);
++    });
++  });
++
++  const createRequest: OutboxRequest = { method: 'POST', path: '/v1/projects/project/timelines',
++    body: '{"timeline_id":"timeline","name":"Main"}', key: 'astrid-first-timeline-project' };
++
++  it('persists pre-create identity and defaults before sending, including a lost or unpersisted create ACK', async () => {
++    const env = environment();
++    const defaults = { name: 'Main', output: { background: null }, tracks: ['V1', 'A1'] };
++    let owner = '';
++    let original!: OutboxRequest;
++    await env.open().create(scope, async (box, id) => {
++      owner = id;
++      await box.reserveCreate(defaults, createRequest);
++      original = (await box.read()).pending!.request;
++      await box.dispatch(() => { throw new Error('No invented head'); }, async (request) => {
++        expect((await env.open().list(scope))[0].pending!.request).toEqual(request);
++        throw new Error('ACK lost');
++      });
++    });
++    await env.open().recover(scope, owner, async (box) => {
++      const before = await box.read();
++      await expect(box.dispatch(() => { throw new Error('No recapture'); }, async (request) => {
++        expect(request).toEqual(original);
++        env.fault.abortNextWrite = true;
++        return accepted(h0);
++      })).rejects.toThrow('aborted');
++      expect(await box.read()).toEqual(before);
++    });
++    await env.open().recover(scope, owner, async (box) => {
++      const next = await box.dispatch(() => { throw new Error('No recapture'); }, async (request) => {
++        expect(request).toEqual(original);
++        return accepted(h0);
++      });
++      expect(next.accepted).toMatchObject({ head: h0, creation: { request: original, payload: defaults } });
++      expect(next.pending).toBeUndefined();
++      expect(next.intents).toEqual([]);
++      const a = await box.append(move(5), { after: next.accepted!.intentId });
++      expect((await box.read()).intents[0]).toMatchObject({ id: a, readyBase: h0 });
++    });
++  });
++
++  it('does not send or lose earlier work if the pre-create reservation cannot persist', async () => {
++    const env = environment();
++    await env.open().create(scope, async (box) => {
++      const original = await box.read();
++      env.fault.abortNextWrite = true;
++      await expect(box.reserveCreate({ defaults: null }, createRequest)).rejects.toThrow('aborted');
++      expect(await box.read()).toEqual(original);
++      const transmit = vi.fn(async () => accepted(h0));
++      await expect(box.dispatch(build, transmit)).rejects.toThrow('empty');
++      expect(transmit).not.toHaveBeenCalled();
++      await box.reserveCreate({ defaults: null }, createRequest);
++      const reserved = await box.read();
++      await expect(box.reserveCreate({}, createRequest)).rejects.toThrow('unused');
++      await expect(box.cancel(reserved.pending!.intentId)).rejects.toThrow('uncertain');
++      expect(await box.read()).toEqual(reserved);
++    });
++  });
++
++  it('refuses cross-scope, changed-route, extra-wire-field and fabricated-head creation reservations', async () => {
++    const env = environment();
++    await env.open().create(scope, async (box) => {
++      const original = await box.read();
++      for (const request of [
++        { ...createRequest, path: '/v1/projects/other/timelines' },
++        { ...createRequest, method: 'PUT' },
++        { ...createRequest, key: 'invalid key' },
++        { ...createRequest, body: '{"timeline_id":"other"}' },
++        { ...createRequest, body: '{"timeline_id":"timeline","head_revision_id":"fake"}' },
++      ]) await expect(box.reserveCreate({}, request)).rejects.toThrow('Noncanonical');
++      await expect(box.append({}, { create: true })).rejects.toThrow('reserved');
++      expect(await box.read()).toEqual(original);
++    });
++  });
++
+   it('never disposes an unknown flight, including before transmission completes', async () => {
+     const env = environment();
+     await env.open().create(scope, async (box) => {
+diff --git a/src/tools/video-editor/commands/commitOutbox.ts b/src/tools/video-editor/commands/commitOutbox.ts
+index 6dbed6a9cbffe66123f35793bbf0a5642693dbbf..84bdecd66064df278e18b5165978b9bbffbde114 100644
+--- a/src/tools/video-editor/commands/commitOutbox.ts
++++ b/src/tools/video-editor/commands/commitOutbox.ts
+@@ -13,7 +13,7 @@ export interface OutboxHead {
+   publicationId: string;
+ }
+ 
+-export type OutboxBasis = { head: OutboxHead } | { after: string };
++export type OutboxBasis = { head: OutboxHead } | { after: string } | { create: true };
+ 
+ export interface OutboxIntent {
+   id: string;
+@@ -43,7 +43,10 @@ export interface OutboxRecord {
+   intents: OutboxIntent[];
+   pending?: { intentId: string; request: OutboxRequest; outcome?: OutboxOutcome };
+   // Only the last acknowledged prefix, also usable by a late dependent append.
+-  accepted?: { intentId: string; head: OutboxHead; value: OutboxJson };
++  accepted?: { intentId: string; head: OutboxHead; value: OutboxJson;
++    creation?: { payload: OutboxJson; request: OutboxRequest } };
++  // Keep the original init link when later acknowledgements replace accepted.
++  initialization?: { intent: OutboxIntent; request: OutboxRequest; head: OutboxHead; value: OutboxJson };
+ }
+ 
+ export type OutboxExclusiveLock = <T>(name: string, work: () => Promise<T>) => Promise<T>;
+@@ -55,6 +58,7 @@ export type OutboxRequestBuilder = (
+ 
+ export interface ClaimedOutbox {
+   read(): Promise<OutboxRecord>;
++  reserveCreate(payload: OutboxJson, request: OutboxRequest): Promise<string>;
+   append(payload: OutboxJson, basis: OutboxBasis): Promise<string>;
+   cancel(intentId: string): Promise<void>;
+   resolveRejected(intentIds: string[], replacement?: { payload: OutboxJson; head: OutboxHead }, isCurrent?: () => boolean): Promise<OutboxRecord>;
+@@ -144,12 +148,15 @@ export function createCommitOutbox(options: {
+     }
+   }
+ 
+-  async function list(scope: OutboxScope): Promise<OutboxRecord[]> {
+-    const prefix = scopeKey(scope, '_');
++  async function list(scope: Omit<OutboxScope, 'timelineId'> & { timelineId?: string }): Promise<OutboxRecord[]> {
++    // A creation may crash before its randomly allocated timeline has a URL or server row.
++    const projectOnly = scope.timelineId === undefined;
++    const query = { ...scope, timelineId: projectOnly ? '_' : scope.timelineId! };
++    const prefix = scopeKey(query, '_');
+     return transaction('readonly', (store, finish) => {
+       const request = store.getAll();
+       request.addEventListener('success', () => finish((request.result as OutboxRecord[])
+-        .filter((record) => scopeKey(record.scope, '_') === prefix).map(detached)));
++        .filter((record) => scopeKey(projectOnly ? { ...record.scope, timelineId: '_' } : record.scope, '_') === prefix).map(detached)));
+     });
+   }
+ 
+@@ -204,7 +211,23 @@ export function createCommitOutbox(options: {
+ 
+       const outbox: ClaimedOutbox = {
+         read: () => access('readonly', detached),
++        async reserveCreate(payload, request) {
++          const intent = newIntent(payload, { create: true });
++          const exact = detached(request);
++          return access('readwrite', (record) => {
++            const body = JSON.parse(exact.body) as Record<string, unknown>;
++            if (exact.method !== 'POST' || exact.path !== `/v1/projects/${encodeURIComponent(scope.projectId)}/timelines`
++              || typeof exact.key !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/.test(exact.key)
++              || body?.timeline_id !== scope.timelineId || Object.keys(body).some((key) => !['timeline_id', 'name'].includes(key))
++              || ('name' in body && typeof body.name !== 'string')) throw new Error('Noncanonical timeline create request');
++            if (record.intents.length || record.pending || record.accepted) throw new Error('Creation requires an unused outbox owner');
++            record.intents.push(intent);
++            record.pending = { intentId: intent.id, request: exact };
++            return intent.id;
++          });
++        },
+         async append(payload, basis) {
++          if ('create' in basis) throw new Error('Creation requires an exact reserved request');
+           const intent = newIntent(payload, basis);
+           return access('readwrite', (record) => {
+             const predecessor = record.intents[record.intents.length - 1];
+@@ -283,7 +306,13 @@ export function createCommitOutbox(options: {
+               if (record.pending?.request.key !== pending.request.key
+                 || record.intents[0]?.id !== pending.intentId) throw new Error('Stale outbox completion');
+               if (outcome.kind === 'accepted') {
+-                record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value };
++                const intent = record.intents[0];
++                record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value,
++                  ...('create' in intent.basis ? { creation: { payload: intent.payload, request: pending.request } } : {}) };
++                if (intent.payload !== null && typeof intent.payload === 'object' && !Array.isArray(intent.payload)
++                  && intent.payload.kind === 'timeline-init' && !record.initialization) {
++                  record.initialization = { intent, request: pending.request, head: outcome.head, value: outcome.value };
++                }
+                 record.intents.shift();
+                 delete record.pending;
+                 const next = record.intents[0];
+diff --git a/src/tools/video-editor/commands/fixtures/bootstrap_parity.py b/src/tools/video-editor/commands/fixtures/bootstrap_parity.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..ad71e835379d6aa3bb64a8aebd952238754af8a3
+--- /dev/null
++++ b/src/tools/video-editor/commands/fixtures/bootstrap_parity.py
+@@ -0,0 +1,78 @@
++"""Compare App bootstrap goldens against Agent 487ca1e0 on PYTHONPATH.
++
++Run with the shared Agent interpreter and an extracted source tree containing
++editing_conformance. This exercises native semantics, not Runtime admission.
++"""
++import copy
++import json
++import re
++from pathlib import Path
++
++import pytest
++
++from astrid.sdk.timeline._command_state import CommandError
++from astrid.sdk.timeline.native_initialize import capture_initialize
++from astrid.sdk.timeline.capture import capture_track_create
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.rebase import replay
++from tests.editing_conformance.test_recipe_m1_commands import inverse
++from tests.editing_conformance.test_pristine_initialize import GOLDEN as native_fixture
++
++fixture = json.loads(Path(__file__).with_name('recipe_m2_app_bootstrap.json').read_text())
++original = fixture['bundle']
++init = capture_initialize(original, **fixture['commands'][0]['args'])
++video = capture_track_create(execute(original, [init]).bundle, 'parent', fixture['commands'][1]['args']['row'])
++audio = capture_track_create(execute(original, [init, video]).bundle, 'parent', fixture['commands'][2]['args']['row'])
++plan = execute(original, [init, video, audio])
++
++
++def test_native_sequential_captures_records_inverse_redo_and_replay():
++    assert fixture['source'] == '487ca1e0d74edf4aecdd2b4e045294ab089fc273'
++    assert fixture['commands'] == native_fixture['commands']
++    assert fixture['records'] == native_fixture['records']
++    assert [init, video, audio] == fixture['commands']
++    assert plan.records == fixture['records'] and plan.bundle == fixture['after_bundle']
++    undone = inverse(plan.bundle, plan.records)
++    assert undone.bundle == original and undone.records == fixture['inverse_records']
++    redone = inverse(undone.bundle, undone.records)
++    assert redone.bundle == plan.bundle and redone.records == fixture['redo_records']
++    assert replay(plan, original).records == plan.records
++    with pytest.raises(CommandError) as error:
++        replay(plan, undone.bundle, intervening_records=[*plan.records, *undone.records])
++    assert error.value.kind == 'intervening_write'
++
++
++@pytest.mark.parametrize('name', ['', '   ', '  Authored Cut  ', 'x' * 121, 'Timeline 2', '!!!'])
++def test_authored_names_match_native_capture_and_reverse_exactly(name):
++    slug = re.sub(r'^-|-$', '', re.sub('[^a-z0-9]+', '-', name.lower())) or 'timeline'
++    named = capture_initialize(original, name=name, slug=slug, output=init['args']['output'])
++    expected = copy.deepcopy(init)
++    expected['args'].update(name=name, slug=slug)
++    assert named == expected
++    named_plan = execute(original, [named])
++    assert named_plan.bundle['parent']['name'] == name
++    assert inverse(named_plan.bundle, named_plan.records).bundle == original
++
++
++def test_inverse_preserves_a_later_authored_output_edit():
++    edited = copy.deepcopy(plan.bundle)
++    edited['parent']['config']['output']['background'] = 'edited'
++    before = copy.deepcopy(edited)
++    with pytest.raises(CommandError):
++        inverse(edited, plan.records)
++    assert edited == before
++
++
++@pytest.mark.parametrize('value', [None, False, [3, 1, 2], {'constructor': None, '__proto__': [None, False]}])
++# Requirement: bootstrap inverse must preserve unrelated opaque parent fields.
++@pytest.mark.xfail(strict=True, reason='Agent 487ca1e0 raw-parent inverse read currently rejects unrelated opaque fields')
++def test_inverse_preserves_unrelated_opaque_parent_fields(value):
++    edited = copy.deepcopy(plan.bundle)
++    edited['parent']['opaque'] = value
++    before = copy.deepcopy(edited)
++    restored = inverse(edited, plan.records)
++    assert restored.bundle['parent']['opaque'] == value and edited == before
++
++
++if __name__ == '__main__':
++    raise SystemExit(pytest.main([__file__, '-q', '-p', 'no:cacheprovider']))
+diff --git a/src/tools/video-editor/commands/fixtures/recipe_m2_app_bootstrap.json b/src/tools/video-editor/commands/fixtures/recipe_m2_app_bootstrap.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..9a5b061981f358b7b706037e5d2c388b04c2c3f3
+--- /dev/null
++++ b/src/tools/video-editor/commands/fixtures/recipe_m2_app_bootstrap.json
+@@ -0,0 +1,1672 @@
++{
++  "source": "487ca1e0d74edf4aecdd2b4e045294ab089fc273",
++  "bundle": {
++    "schema_version": 1,
++    "project_id": "project-1",
++    "timeline_id": "main",
++    "base_parent": {
++      "revision_id": "parent-0",
++      "content_digest": "sha256:0cc2994fe668de0cbf300bd8aa48bf1301fa4feb18b2b48239893ac6e0fc261c"
++    },
++    "base_parent_payload": {
++      "config": {
++        "clips": [],
++        "tracks": []
++      },
++      "registry": {},
++      "clips": []
++    },
++    "base_placements": {},
++    "parent": {
++      "config": {
++        "clips": [],
++        "tracks": []
++      },
++      "registry": {},
++      "clips": []
++    },
++    "placements": [],
++    "shots": {},
++    "source_mapping": {
++      "placements": {},
++      "shots": {}
++    }
++  },
++  "commands": [
++    {
++      "schema_version": 1,
++      "op": "timeline.init",
++      "version": "1",
++      "select": "parent",
++      "args": {
++        "name": "Main",
++        "slug": "main",
++        "output": {
++          "resolution": "1280x720",
++          "fps": 30,
++          "file": "output.mp4",
++          "background": null,
++          "background_scale": null
++        }
++      },
++      "intent": {},
++      "resolved": [],
++      "reads": [
++        {
++          "ref": "parent",
++          "path": [],
++          "state": {
++            "state": "present",
++            "value": {
++              "config": {
++                "clips": [],
++                "tracks": []
++              },
++              "registry": {},
++              "clips": []
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "config",
++            "output"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "name"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "slug"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "registry",
++            "assets"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        }
++      ],
++      "selections": [],
++      "bindings": {},
++      "created": [],
++      "expect": {
++        "parent::config.output": {
++          "state": "absent"
++        },
++        "parent::name": {
++          "state": "absent"
++        },
++        "parent::slug": {
++          "state": "absent"
++        },
++        "parent::registry.assets": {
++          "state": "absent"
++        }
++      },
++      "authorship": {
++        "parent::config.output": "direct",
++        "parent::name": "direct",
++        "parent::slug": "direct",
++        "parent::registry.assets": "direct"
++      }
++    },
++    {
++      "schema_version": 1,
++      "op": "track.create",
++      "version": "1",
++      "select": "parent",
++      "args": {
++        "row": {
++          "id": "V1",
++          "kind": "visual",
++          "label": "V1",
++          "scale": 1,
++          "fit": "contain",
++          "opacity": 1,
++          "blendMode": "normal"
++        }
++      },
++      "intent": {},
++      "resolved": [],
++      "reads": [
++        {
++          "ref": "parent/track:V1",
++          "path": [],
++          "state": {
++            "state": "absent"
++          }
++        }
++      ],
++      "selections": [
++        {
++          "key": "track.create",
++          "query_version": 1,
++          "owner": "parent",
++          "members": [],
++          "order": [],
++          "boundaries": [],
++          "policy": "guard-membership"
++        }
++      ],
++      "bindings": {},
++      "created": [
++        "parent/track:V1"
++      ],
++      "expect": {
++        "parent/track:V1::": {
++          "state": "absent"
++        }
++      },
++      "authorship": {
++        "parent/track:V1::": "direct"
++      }
++    },
++    {
++      "schema_version": 1,
++      "op": "track.create",
++      "version": "1",
++      "select": "parent",
++      "args": {
++        "row": {
++          "id": "A1",
++          "kind": "audio",
++          "label": "A1",
++          "scale": 1,
++          "fit": "contain",
++          "opacity": 1,
++          "blendMode": "normal"
++        }
++      },
++      "intent": {},
++      "resolved": [],
++      "reads": [
++        {
++          "ref": "parent/track:A1",
++          "path": [],
++          "state": {
++            "state": "absent"
++          }
++        }
++      ],
++      "selections": [
++        {
++          "key": "track.create",
++          "query_version": 1,
++          "owner": "parent",
++          "members": [
++            "parent/track:V1"
++          ],
++          "order": [
++            "parent/track:V1"
++          ],
++          "boundaries": [
++            "parent/track:V1"
++          ],
++          "policy": "guard-membership"
++        }
++      ],
++      "bindings": {},
++      "created": [
++        "parent/track:A1"
++      ],
++      "expect": {
++        "parent/track:A1::": {
++          "state": "absent"
++        }
++      },
++      "authorship": {
++        "parent/track:A1::": "direct"
++      }
++    }
++  ],
++  "after_bundle": {
++    "schema_version": 1,
++    "project_id": "project-1",
++    "timeline_id": "main",
++    "base_parent": {
++      "revision_id": "parent-0",
++      "content_digest": "sha256:0cc2994fe668de0cbf300bd8aa48bf1301fa4feb18b2b48239893ac6e0fc261c"
++    },
++    "base_parent_payload": {
++      "config": {
++        "clips": [],
++        "tracks": []
++      },
++      "registry": {},
++      "clips": []
++    },
++    "base_placements": {},
++    "parent": {
++      "config": {
++        "clips": [],
++        "tracks": [
++          {
++            "id": "V1",
++            "kind": "visual",
++            "label": "V1",
++            "scale": 1,
++            "fit": "contain",
++            "opacity": 1,
++            "blendMode": "normal"
++          },
++          {
++            "id": "A1",
++            "kind": "audio",
++            "label": "A1",
++            "scale": 1,
++            "fit": "contain",
++            "opacity": 1,
++            "blendMode": "normal"
++          }
++        ],
++        "output": {
++          "resolution": "1280x720",
++          "fps": 30,
++          "file": "output.mp4",
++          "background": null,
++          "background_scale": null
++        }
++      },
++      "registry": {
++        "assets": {}
++      },
++      "clips": [],
++      "name": "Main",
++      "slug": "main"
++    },
++    "placements": [],
++    "shots": {},
++    "source_mapping": {
++      "placements": {},
++      "shots": {}
++    }
++  },
++  "records": [
++    {
++      "ordinal": 0,
++      "command": {
++        "schema_version": 1,
++        "op": "timeline.init",
++        "version": "1",
++        "select": "parent",
++        "args": {
++          "name": "Main",
++          "slug": "main",
++          "output": {
++            "resolution": "1280x720",
++            "fps": 30,
++            "file": "output.mp4",
++            "background": null,
++            "background_scale": null
++          }
++        },
++        "intent": {},
++        "resolved": [],
++        "reads": [
++          {
++            "ref": "parent",
++            "path": [],
++            "state": {
++              "state": "present",
++              "value": {
++                "config": {
++                  "clips": [],
++                  "tracks": []
++                },
++                "registry": {},
++                "clips": []
++              }
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "config",
++              "output"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "name"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "slug"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "registry",
++              "assets"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          }
++        ],
++        "selections": [],
++        "bindings": {},
++        "created": [],
++        "expect": {
++          "parent::config.output": {
++            "state": "absent"
++          },
++          "parent::name": {
++            "state": "absent"
++          },
++          "parent::slug": {
++            "state": "absent"
++          },
++          "parent::registry.assets": {
++            "state": "absent"
++          }
++        },
++        "authorship": {
++          "parent::config.output": "direct",
++          "parent::name": "direct",
++          "parent::slug": "direct",
++          "parent::registry.assets": "direct"
++        }
++      },
++      "writes": [
++        {
++          "ref": "parent",
++          "path": [
++            "config",
++            "output"
++          ],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": {
++              "resolution": "1280x720",
++              "fps": 30,
++              "file": "output.mp4",
++              "background": null,
++              "background_scale": null
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "name"
++          ],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": "Main"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "slug"
++          ],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": "main"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "registry",
++            "assets"
++          ],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": {}
++          }
++        }
++      ],
++      "reads": [
++        {
++          "ref": "parent",
++          "path": [],
++          "state": {
++            "state": "present",
++            "value": {
++              "config": {
++                "clips": [],
++                "tracks": []
++              },
++              "registry": {},
++              "clips": []
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "config",
++            "output"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "name"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "slug"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "registry",
++            "assets"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        }
++      ],
++      "selections": [],
++      "bindings": [],
++      "created": [],
++      "dependencies": [],
++      "derived_writes": []
++    },
++    {
++      "ordinal": 1,
++      "command": {
++        "schema_version": 1,
++        "op": "track.create",
++        "version": "1",
++        "select": "parent",
++        "args": {
++          "row": {
++            "id": "V1",
++            "kind": "visual",
++            "label": "V1",
++            "scale": 1,
++            "fit": "contain",
++            "opacity": 1,
++            "blendMode": "normal"
++          }
++        },
++        "intent": {},
++        "resolved": [],
++        "reads": [
++          {
++            "ref": "parent/track:V1",
++            "path": [],
++            "state": {
++              "state": "absent"
++            }
++          }
++        ],
++        "selections": [
++          {
++            "key": "track.create",
++            "query_version": 1,
++            "owner": "parent",
++            "members": [],
++            "order": [],
++            "boundaries": [],
++            "policy": "guard-membership"
++          }
++        ],
++        "bindings": {},
++        "created": [
++          "parent/track:V1"
++        ],
++        "expect": {
++          "parent/track:V1::": {
++            "state": "absent"
++          }
++        },
++        "authorship": {
++          "parent/track:V1::": "direct"
++        }
++      },
++      "writes": [
++        {
++          "ref": "parent/track:V1",
++          "path": [],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": {
++              "id": "V1",
++              "kind": "visual",
++              "label": "V1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          }
++        }
++      ],
++      "reads": [
++        {
++          "ref": "parent/track:V1",
++          "path": [],
++          "state": {
++            "state": "absent"
++          }
++        }
++      ],
++      "selections": [
++        {
++          "key": "track.create",
++          "query_version": 1,
++          "owner": "parent",
++          "members": [],
++          "order": [],
++          "boundaries": [],
++          "policy": "guard-membership"
++        }
++      ],
++      "bindings": [],
++      "created": [
++        {
++          "ref": "parent/track:V1",
++          "kind": "track",
++          "owner": "parent"
++        }
++      ],
++      "dependencies": [],
++      "derived_writes": []
++    },
++    {
++      "ordinal": 2,
++      "command": {
++        "schema_version": 1,
++        "op": "track.create",
++        "version": "1",
++        "select": "parent",
++        "args": {
++          "row": {
++            "id": "A1",
++            "kind": "audio",
++            "label": "A1",
++            "scale": 1,
++            "fit": "contain",
++            "opacity": 1,
++            "blendMode": "normal"
++          }
++        },
++        "intent": {},
++        "resolved": [],
++        "reads": [
++          {
++            "ref": "parent/track:A1",
++            "path": [],
++            "state": {
++              "state": "absent"
++            }
++          }
++        ],
++        "selections": [
++          {
++            "key": "track.create",
++            "query_version": 1,
++            "owner": "parent",
++            "members": [
++              "parent/track:V1"
++            ],
++            "order": [
++              "parent/track:V1"
++            ],
++            "boundaries": [
++              "parent/track:V1"
++            ],
++            "policy": "guard-membership"
++          }
++        ],
++        "bindings": {},
++        "created": [
++          "parent/track:A1"
++        ],
++        "expect": {
++          "parent/track:A1::": {
++            "state": "absent"
++          }
++        },
++        "authorship": {
++          "parent/track:A1::": "direct"
++        }
++      },
++      "writes": [
++        {
++          "ref": "parent/track:A1",
++          "path": [],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": {
++              "id": "A1",
++              "kind": "audio",
++              "label": "A1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          }
++        }
++      ],
++      "reads": [
++        {
++          "ref": "parent/track:A1",
++          "path": [],
++          "state": {
++            "state": "absent"
++          }
++        }
++      ],
++      "selections": [
++        {
++          "key": "track.create",
++          "query_version": 1,
++          "owner": "parent",
++          "members": [
++            "parent/track:V1"
++          ],
++          "order": [
++            "parent/track:V1"
++          ],
++          "boundaries": [
++            "parent/track:V1"
++          ],
++          "policy": "guard-membership"
++        }
++      ],
++      "bindings": [],
++      "created": [
++        {
++          "ref": "parent/track:A1",
++          "kind": "track",
++          "owner": "parent"
++        }
++      ],
++      "dependencies": [],
++      "derived_writes": []
++    }
++  ],
++  "inverse_records": [
++    {
++      "ordinal": 0,
++      "command": {
++        "schema_version": 1,
++        "op": "timeline.inverse",
++        "version": "1",
++        "select": null,
++        "args": {
++          "publications": [
++            "accepted-publication"
++          ]
++        },
++        "intent": {},
++        "resolved": [],
++        "reads": [
++          {
++            "ref": "parent/collection:track",
++            "path": [],
++            "state": {
++              "state": "present",
++              "value": {
++                "members": {
++                  "state": "present",
++                  "value": []
++                },
++                "config": {
++                  "state": "present",
++                  "value": {}
++                }
++              }
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [],
++            "state": {
++              "state": "present",
++              "value": {
++                "config": {
++                  "clips": [],
++                  "tracks": [
++                    {
++                      "id": "V1",
++                      "kind": "visual",
++                      "label": "V1",
++                      "scale": 1,
++                      "fit": "contain",
++                      "opacity": 1,
++                      "blendMode": "normal"
++                    },
++                    {
++                      "id": "A1",
++                      "kind": "audio",
++                      "label": "A1",
++                      "scale": 1,
++                      "fit": "contain",
++                      "opacity": 1,
++                      "blendMode": "normal"
++                    }
++                  ],
++                  "output": {
++                    "resolution": "1280x720",
++                    "fps": 30,
++                    "file": "output.mp4",
++                    "background": null,
++                    "background_scale": null
++                  }
++                },
++                "registry": {
++                  "assets": {}
++                },
++                "clips": [],
++                "name": "Main",
++                "slug": "main"
++              }
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "config",
++              "output"
++            ],
++            "state": {
++              "state": "present",
++              "value": {
++                "resolution": "1280x720",
++                "fps": 30,
++                "file": "output.mp4",
++                "background": null,
++                "background_scale": null
++              }
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "name"
++            ],
++            "state": {
++              "state": "present",
++              "value": "Main"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "slug"
++            ],
++            "state": {
++              "state": "present",
++              "value": "main"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "registry",
++              "assets"
++            ],
++            "state": {
++              "state": "present",
++              "value": {}
++            }
++          },
++          {
++            "ref": "parent/track:V1",
++            "path": [],
++            "state": {
++              "state": "present",
++              "value": {
++                "id": "V1",
++                "kind": "visual",
++                "label": "V1",
++                "scale": 1,
++                "fit": "contain",
++                "opacity": 1,
++                "blendMode": "normal"
++              }
++            }
++          },
++          {
++            "ref": "parent/track:A1",
++            "path": [],
++            "state": {
++              "state": "present",
++              "value": {
++                "id": "A1",
++                "kind": "audio",
++                "label": "A1",
++                "scale": 1,
++                "fit": "contain",
++                "opacity": 1,
++                "blendMode": "normal"
++              }
++            }
++          }
++        ],
++        "selections": [
++          {
++            "key": "collection.tracks",
++            "query_version": 1,
++            "owner": "parent",
++            "members": [
++              "parent/track:V1",
++              "parent/track:A1"
++            ],
++            "order": [
++              "parent/track:V1",
++              "parent/track:A1"
++            ],
++            "boundaries": [
++              "parent/track:V1",
++              "parent/track:A1"
++            ],
++            "policy": "guard-membership"
++          },
++          {
++            "key": "track.create",
++            "query_version": 1,
++            "owner": "parent",
++            "members": [
++              "parent/track:V1",
++              "parent/track:A1"
++            ],
++            "order": [
++              "parent/track:V1",
++              "parent/track:A1"
++            ],
++            "boundaries": [
++              "parent/track:V1",
++              "parent/track:A1"
++            ],
++            "policy": "guard-membership"
++          }
++        ],
++        "bindings": {},
++        "created": [],
++        "expect": {
++          "parent/track:A1::": {
++            "state": "present",
++            "value": {
++              "id": "A1",
++              "kind": "audio",
++              "label": "A1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          },
++          "parent/track:V1::": {
++            "state": "present",
++            "value": {
++              "id": "V1",
++              "kind": "visual",
++              "label": "V1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          },
++          "parent::registry.assets": {
++            "state": "present",
++            "value": {}
++          },
++          "parent::slug": {
++            "state": "present",
++            "value": "main"
++          },
++          "parent::name": {
++            "state": "present",
++            "value": "Main"
++          },
++          "parent::config.output": {
++            "state": "present",
++            "value": {
++              "resolution": "1280x720",
++              "fps": 30,
++              "file": "output.mp4",
++              "background": null,
++              "background_scale": null
++            }
++          }
++        },
++        "authorship": {
++          "parent/track:A1::": "direct",
++          "parent/track:V1::": "direct",
++          "parent::registry.assets": "direct",
++          "parent::slug": "direct",
++          "parent::name": "direct",
++          "parent::config.output": "direct"
++        }
++      },
++      "writes": [
++        {
++          "ref": "parent/track:A1",
++          "path": [],
++          "before": {
++            "state": "present",
++            "value": {
++              "id": "A1",
++              "kind": "audio",
++              "label": "A1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          },
++          "after": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent/track:V1",
++          "path": [],
++          "before": {
++            "state": "present",
++            "value": {
++              "id": "V1",
++              "kind": "visual",
++              "label": "V1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          },
++          "after": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "registry",
++            "assets"
++          ],
++          "before": {
++            "state": "present",
++            "value": {}
++          },
++          "after": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "slug"
++          ],
++          "before": {
++            "state": "present",
++            "value": "main"
++          },
++          "after": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "name"
++          ],
++          "before": {
++            "state": "present",
++            "value": "Main"
++          },
++          "after": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "config",
++            "output"
++          ],
++          "before": {
++            "state": "present",
++            "value": {
++              "resolution": "1280x720",
++              "fps": 30,
++              "file": "output.mp4",
++              "background": null,
++              "background_scale": null
++            }
++          },
++          "after": {
++            "state": "absent"
++          }
++        }
++      ],
++      "reads": [
++        {
++          "ref": "parent/collection:track",
++          "path": [],
++          "state": {
++            "state": "present",
++            "value": {
++              "members": {
++                "state": "present",
++                "value": []
++              },
++              "config": {
++                "state": "present",
++                "value": {}
++              }
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [],
++          "state": {
++            "state": "present",
++            "value": {
++              "config": {
++                "clips": [],
++                "tracks": [
++                  {
++                    "id": "V1",
++                    "kind": "visual",
++                    "label": "V1",
++                    "scale": 1,
++                    "fit": "contain",
++                    "opacity": 1,
++                    "blendMode": "normal"
++                  },
++                  {
++                    "id": "A1",
++                    "kind": "audio",
++                    "label": "A1",
++                    "scale": 1,
++                    "fit": "contain",
++                    "opacity": 1,
++                    "blendMode": "normal"
++                  }
++                ],
++                "output": {
++                  "resolution": "1280x720",
++                  "fps": 30,
++                  "file": "output.mp4",
++                  "background": null,
++                  "background_scale": null
++                }
++              },
++              "registry": {
++                "assets": {}
++              },
++              "clips": [],
++              "name": "Main",
++              "slug": "main"
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "config",
++            "output"
++          ],
++          "state": {
++            "state": "present",
++            "value": {
++              "resolution": "1280x720",
++              "fps": 30,
++              "file": "output.mp4",
++              "background": null,
++              "background_scale": null
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "name"
++          ],
++          "state": {
++            "state": "present",
++            "value": "Main"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "slug"
++          ],
++          "state": {
++            "state": "present",
++            "value": "main"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "registry",
++            "assets"
++          ],
++          "state": {
++            "state": "present",
++            "value": {}
++          }
++        },
++        {
++          "ref": "parent/track:V1",
++          "path": [],
++          "state": {
++            "state": "present",
++            "value": {
++              "id": "V1",
++              "kind": "visual",
++              "label": "V1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          }
++        },
++        {
++          "ref": "parent/track:A1",
++          "path": [],
++          "state": {
++            "state": "present",
++            "value": {
++              "id": "A1",
++              "kind": "audio",
++              "label": "A1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          }
++        }
++      ],
++      "selections": [
++        {
++          "key": "collection.tracks",
++          "query_version": 1,
++          "owner": "parent",
++          "members": [
++            "parent/track:V1",
++            "parent/track:A1"
++          ],
++          "order": [
++            "parent/track:V1",
++            "parent/track:A1"
++          ],
++          "boundaries": [
++            "parent/track:V1",
++            "parent/track:A1"
++          ],
++          "policy": "guard-membership"
++        },
++        {
++          "key": "track.create",
++          "query_version": 1,
++          "owner": "parent",
++          "members": [
++            "parent/track:V1",
++            "parent/track:A1"
++          ],
++          "order": [
++            "parent/track:V1",
++            "parent/track:A1"
++          ],
++          "boundaries": [
++            "parent/track:V1",
++            "parent/track:A1"
++          ],
++          "policy": "guard-membership"
++        }
++      ],
++      "bindings": [],
++      "created": [],
++      "dependencies": [],
++      "derived_writes": []
++    }
++  ],
++  "redo_records": [
++    {
++      "ordinal": 0,
++      "command": {
++        "schema_version": 1,
++        "op": "timeline.inverse",
++        "version": "1",
++        "select": null,
++        "args": {
++          "publications": [
++            "accepted-publication"
++          ]
++        },
++        "intent": {},
++        "resolved": [],
++        "reads": [
++          {
++            "ref": "parent/collection:track",
++            "path": [],
++            "state": {
++              "state": "present",
++              "value": {
++                "members": {
++                  "state": "present",
++                  "value": []
++                },
++                "config": {
++                  "state": "present",
++                  "value": {}
++                }
++              }
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [],
++            "state": {
++              "state": "present",
++              "value": {
++                "config": {
++                  "clips": [],
++                  "tracks": []
++                },
++                "registry": {},
++                "clips": []
++              }
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "config",
++              "output"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "name"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "slug"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent",
++            "path": [
++              "registry",
++              "assets"
++            ],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent/track:V1",
++            "path": [],
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "ref": "parent/track:A1",
++            "path": [],
++            "state": {
++              "state": "absent"
++            }
++          }
++        ],
++        "selections": [
++          {
++            "key": "collection.tracks",
++            "query_version": 1,
++            "owner": "parent",
++            "members": [],
++            "order": [],
++            "boundaries": [],
++            "policy": "guard-membership"
++          },
++          {
++            "key": "track.create",
++            "query_version": 1,
++            "owner": "parent",
++            "members": [],
++            "order": [],
++            "boundaries": [],
++            "policy": "guard-membership"
++          }
++        ],
++        "bindings": {},
++        "created": [
++          "parent/track:V1",
++          "parent/track:A1"
++        ],
++        "expect": {
++          "parent::config.output": {
++            "state": "absent"
++          },
++          "parent::name": {
++            "state": "absent"
++          },
++          "parent::slug": {
++            "state": "absent"
++          },
++          "parent::registry.assets": {
++            "state": "absent"
++          },
++          "parent/track:V1::": {
++            "state": "absent"
++          },
++          "parent/track:A1::": {
++            "state": "absent"
++          }
++        },
++        "authorship": {
++          "parent::config.output": "direct",
++          "parent::name": "direct",
++          "parent::slug": "direct",
++          "parent::registry.assets": "direct",
++          "parent/track:V1::": "direct",
++          "parent/track:A1::": "direct"
++        }
++      },
++      "writes": [
++        {
++          "ref": "parent",
++          "path": [
++            "config",
++            "output"
++          ],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": {
++              "resolution": "1280x720",
++              "fps": 30,
++              "file": "output.mp4",
++              "background": null,
++              "background_scale": null
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "name"
++          ],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": "Main"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "slug"
++          ],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": "main"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "registry",
++            "assets"
++          ],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": {}
++          }
++        },
++        {
++          "ref": "parent/track:V1",
++          "path": [],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": {
++              "id": "V1",
++              "kind": "visual",
++              "label": "V1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          }
++        },
++        {
++          "ref": "parent/track:A1",
++          "path": [],
++          "before": {
++            "state": "absent"
++          },
++          "after": {
++            "state": "present",
++            "value": {
++              "id": "A1",
++              "kind": "audio",
++              "label": "A1",
++              "scale": 1,
++              "fit": "contain",
++              "opacity": 1,
++              "blendMode": "normal"
++            }
++          }
++        }
++      ],
++      "reads": [
++        {
++          "ref": "parent/collection:track",
++          "path": [],
++          "state": {
++            "state": "present",
++            "value": {
++              "members": {
++                "state": "present",
++                "value": []
++              },
++              "config": {
++                "state": "present",
++                "value": {}
++              }
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [],
++          "state": {
++            "state": "present",
++            "value": {
++              "config": {
++                "clips": [],
++                "tracks": []
++              },
++              "registry": {},
++              "clips": []
++            }
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "config",
++            "output"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "name"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "slug"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent",
++          "path": [
++            "registry",
++            "assets"
++          ],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent/track:V1",
++          "path": [],
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "ref": "parent/track:A1",
++          "path": [],
++          "state": {
++            "state": "absent"
++          }
++        }
++      ],
++      "selections": [
++        {
++          "key": "collection.tracks",
++          "query_version": 1,
++          "owner": "parent",
++          "members": [],
++          "order": [],
++          "boundaries": [],
++          "policy": "guard-membership"
++        },
++        {
++          "key": "track.create",
++          "query_version": 1,
++          "owner": "parent",
++          "members": [],
++          "order": [],
++          "boundaries": [],
++          "policy": "guard-membership"
++        }
++      ],
++      "bindings": [],
++      "created": [
++        {
++          "ref": "parent/track:V1",
++          "kind": "track",
++          "owner": "parent"
++        },
++        {
++          "ref": "parent/track:A1",
++          "kind": "track",
++          "owner": "parent"
++        }
++      ],
++      "dependencies": [],
++      "derived_writes": []
++    }
++  ]
++}
