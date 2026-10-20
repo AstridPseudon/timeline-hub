@@ -31,6 +31,13 @@ def selection(state, key, owner, members=()):
             return {"key": key, "query_version": 1, "owner": owner, "members": list(members),
                     "order": result, "boundaries": insertion_boundary(result, members),
                     "policy": "guard-membership"}
+    elif key == 'lane.members':
+        from .occurrence_commands import lane
+        target = state.entity(owner)['id']
+        result = [ref for ref in order(state, 'parent', 'clip')
+                  if state.entity(ref).get('track') == target]
+        result += [ref for ref in order(state, 'parent', 'occurrence')
+                   if lane(state.entity(ref)) == target]
     elif key == 'placement.owners':
         shot = state.occurrence(owner)['shot_id']
         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']

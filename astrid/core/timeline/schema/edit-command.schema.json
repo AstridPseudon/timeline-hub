@@ -1120,6 +1120,32 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.move"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)occurrence:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceMoveArgs"
+              }
+            }
+          }
         }
       ]
     },
@@ -1395,6 +1421,32 @@
               }
             }
           }
+        }
+      }
+    },
+    "OccurrenceMoveArgs": {
+      "type": "object",
+      "required": [
+        "on",
+        "track",
+        "child_track"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "on": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute global seconds, quantized using parent rational fps."
+        },
+        "track": {
+          "type": "string",
+          "pattern": "^(?!.*::)parent/track:[^/]+$",
+          "description": "Existing parent output lane."
+        },
+        "child_track": {
+          "type": "string",
+          "pattern": "^(?!.*::)occurrence:[^/]+/track:[^/]+$",
+          "description": "Explicit existing raw child lane; caller may precede with typed track.create in this batch."
         }
       }
     }

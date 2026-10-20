@@ -38,7 +38,9 @@ def operations():
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
     from .native_placement_commands import placement_move
     from .new_group_commands import migrate_groups
-    return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+    from .occurrence_commands import OCCURRENCE_MOVE_INTENT, occurrence_move
+    return {'occurrence.move': Operation(_SCHEMA['$defs']['OccurrenceMoveArgs'], occurrence_move, OCCURRENCE_MOVE_INTENT, True),
+            'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
