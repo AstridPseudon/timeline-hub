@@ -18,7 +18,7 @@ from typing import Any
 
 from astrid.core.timeline.astrid_ns import migrate_bundle
 from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
-from astrid.sdk.timeline_restructure import STRUCTURE_KEY
+from astrid.sdk.timeline_restructure import STRUCTURE_KEY, flatten
 from astrid.sdk.timeline_editing import add_authoring_shot
 
 __all__ = ["duplicate_timeline", "id_map", "copy_content"]
@@ -174,7 +174,7 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         # form: copying the flat shot would store the duplicate as a single shot whose chapters all share one id.
         content = src.bundle.get(STRUCTURE_KEY) or src.bundle
         bundle, notes = copy_content(content, dst.bundle, new_slug=slug or new_id)
-        dst.bundle = bundle
+        dst.bundle = flatten(bundle)  # a chapter film is edited and published flat; publish splits it back into its stored form
         dst.notes.extend(notes)
         report = dst.check()
         if not report.valid:
