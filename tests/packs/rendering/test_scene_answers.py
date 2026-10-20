@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import tarfile
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -258,3 +259,73 @@ def test_invalid_resolved_inputs_are_unavailable(installed, change):
         frames = [-1]
     with pytest.raises(scene_answers.SceneQueryUnavailable):
         scene_answers.frames_at(payload, frames)
+
+
+def test_prepared_host_query_uses_final_root_inside_lock(monkeypatch, tmp_path):
+    props = {
+        "timeline": {"tracks": [], "clips": []},
+        "assets": {"assets": {}},
+        "theme": {"visual": {}},
+    }
+    events = []
+    calls = []
+
+    @contextmanager
+    def lock():
+        events.append("lock-enter")
+        yield
+        events.append("lock-exit")
+
+    @contextmanager
+    def prepare(*args, **kwargs):
+        calls.append((args, kwargs))
+        events.append("prepare-enter")
+        yield (props, tmp_path / ".props.json")
+        events.append("prepare-exit")
+
+    from astrid.core.rendering import profile
+    from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
+    from astrid.packs.rendering.rendering.renderers.remotion import root_preparation
+
+    monkeypatch.setattr(remotion_lock, "remotion_render_lock", lock)
+    monkeypatch.setattr(root_preparation, "_prepared_remotion_root", prepare)
+    monkeypatch.setattr(profile, "resolve_render_profile", lambda *args, **kwargs:
+                        SimpleNamespace(width=641, height=359, fps_rational=(30000, 1001)))
+
+    def query(received_props, basis, frames):
+        assert received_props is props
+        assert basis == {"width": 641, "height": 359, "fps": 30000 / 1001}
+        assert tuple(frames) == (7, 0, 7)
+        assert events == ["lock-enter", "prepare-enter"]
+        return [{"frame": frame} for frame in frames]
+
+    monkeypatch.setattr(scene_answers, "host_frames_at", query)
+    result = scene_answers._prepared_host_frames_at(
+        tmp_path / "timeline.json", tmp_path / "assets.json", (7, 0, 7),
+        staged_video=tmp_path / "unused.mp4", provenance_out_path=tmp_path / "provenance.json",
+        project_dir=tmp_path / "remotion", composition_id="TimelineComposition",
+        theme_path=None, min_free_gb=None, frame_output_dir=tmp_path / "frames",
+    )
+
+    assert result == [{"frame": 7}, {"frame": 0}, {"frame": 7}]
+    assert calls[0][1]["frame_numbers"] == (7, 0, 7)
+    assert calls[0][1]["frame_output_dir"] == tmp_path / "frames"
+    assert events == ["lock-enter", "prepare-enter", "prepare-exit", "lock-exit"]
+
+
+def test_prepared_host_query_reports_unavailable_without_fallback(monkeypatch, tmp_path):
+    @contextmanager
+    def prepare(*args, **kwargs):
+        raise RuntimeError("source admission failed")
+        yield  # pragma: no cover
+
+    from astrid.packs.rendering.rendering.renderers.remotion import root_preparation
+
+    monkeypatch.setattr(root_preparation, "_prepared_remotion_root", prepare)
+    with pytest.raises(scene_answers.SceneQueryUnavailable, match="source admission failed"):
+        scene_answers._prepared_host_frames_at(
+            tmp_path / "timeline.json", tmp_path / "assets.json", [0],
+            staged_video=tmp_path / "unused.mp4", provenance_out_path=tmp_path / "provenance.json",
+            project_dir=tmp_path / "remotion", composition_id="TimelineComposition",
+            theme_path=None, min_free_gb=None, frame_output_dir=tmp_path / "frames",
+        )
