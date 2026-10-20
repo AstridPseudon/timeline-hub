@@ -79,7 +79,7 @@ def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_sl
     placements = [dict(row) for row in source.get("placements") or []]
     shot_ids = [str(row["shot_id"]) for row in placements]
     occurrence_ids = [str(row["occurrence_id"]) for row in placements]
-    shot_map = id_map(shot_ids, new_slug)
+    shot_map = id_map(list(dict.fromkeys(shot_ids)), new_slug)  # a shot the source places twice is ONE shot
     occ_map = id_map(occurrence_ids, f"occ-{new_slug}")
     ids = {**shot_map, **occ_map}
 
@@ -102,6 +102,12 @@ def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_sl
         src_shot = (source.get("shots") or {}).get(old_shot)
         if not isinstance(src_shot, Mapping):
             raise TimelineEditError(f"source shot {old_shot!r} has no content")
+        if new_shot in out["shots"]:  # placed again: same shot, another occurrence
+            again = _remap_values(copy.deepcopy(row), ids)
+            again["shot_id"], again["occurrence_id"] = new_shot, occ_map[str(row["occurrence_id"])]
+            out["placements"].append(again)
+            out["source_mapping"]["placements"][again["occurrence_id"]] = copy.deepcopy(again)
+            continue
         # Seed the shot the way build_timeline does (add_authoring_shot). Its base_* stays the empty seed
         # and the current content is the copy: that difference is what makes the compiler materialize it.
         shot = add_authoring_shot(out, shot_id=new_shot, occurrence_id=occ_map[str(row["occurrence_id"])],
@@ -129,7 +135,35 @@ def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_sl
             notes.append(f"{text_bindings} narration text binding(s) not copied (these lines declare no script text); "
                          "the words themselves are copied in each VO clip's app.words")
     migrate_bundle(out)  # the source may be an old revision: the copy carries intent under app.astrid
+    assert_copy_equals_source(source, out, shot_map)
     return out, notes
+
+
+def assert_copy_equals_source(source: Mapping[str, Any], copied: Mapping[str, Any], shot_map: Mapping[str, str]) -> None:
+    """Prove a copy is its source under a one-to-one shot-id mapping, or raise (nothing is published).
+
+    Same number of placements; distinct source shots map to distinct new shots (a shot placed twice stays one shot
+    placed twice); each placement keeps its start and length; each shot's clips are the source's, ids remapped.
+    """
+    src_rows, new_rows = list(source.get("placements") or []), list(copied.get("placements") or [])
+    if len(src_rows) != len(new_rows):
+        raise TimelineEditError(f"the copy has {len(new_rows)} placements, its source has {len(src_rows)}")
+    if len(set(shot_map.values())) != len(shot_map):
+        raise TimelineEditError("the copy maps distinct source shots onto one shot id")
+    for a, b in zip(src_rows, new_rows):
+        if shot_map.get(str(a["shot_id"])) != str(b["shot_id"]):
+            raise TimelineEditError(f"placement of shot {a['shot_id']!r} was copied onto {b['shot_id']!r}, not {shot_map.get(str(a['shot_id']))!r}")
+        if (a.get("placement") or {}) != (b.get("placement") or {}) or a.get("duration_ms") != b.get("duration_ms"):
+            raise TimelineEditError(f"placement of shot {a['shot_id']!r} changed its start or length in the copy")
+    if len({str(r["shot_id"]) for r in new_rows}) != len({str(r["shot_id"]) for r in src_rows}):
+        raise TimelineEditError("the copy has a different number of distinct shots than its source")
+    source = copy.deepcopy(dict(source))
+    migrate_bundle(source)  # the copy carries intent under app.astrid
+    for old, new in shot_map.items():
+        want = _remap_values(copy.deepcopy(dict((source["shots"][old].get("internal_timeline")) or {})), shot_map)
+        got = (copied.get("shots") or {}).get(new, {}).get("internal_timeline") or {}
+        if (want.get("clips") or []) != (got.get("clips") or []):
+            raise TimelineEditError(f"shot {old!r} was not copied faithfully into {new!r} (its clips differ)")
 
 
 def duplicate_timeline(project: str, source: str, *, slug: str | None = None, name: str | None = None,
@@ -176,6 +210,9 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         bundle, notes = copy_content(content, dst.bundle, new_slug=slug or new_id)
         dst.bundle = flatten(bundle)  # a chapter film is edited and published flat; publish splits it back into its stored form
         dst.notes.extend(notes)
+        stored = dst.stored_document()  # what publish will store: the copy must still be one shot per source shot
+        if len({str(r["shot_id"]) for r in stored["placements"]}) != len({str(r["shot_id"]) for r in content["placements"]}):
+            raise TimelineEditError("the copy would be stored with a different number of distinct shots than its source")
         report = dst.check()
         if not report.valid:
             raise TimelineEditError("the copy is invalid: " + "; ".join(report.problems or [str(report)]))

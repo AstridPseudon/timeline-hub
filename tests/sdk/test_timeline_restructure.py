@@ -385,3 +385,38 @@ def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(monkeyp
     assert all(s.startswith("dup-") for s in shot_ids)
     assert [doc["shots"][s]["payload"]["name"] for s in shot_ids] == ["01 ONE", "02 TWO", "03 THREE"]
     assert len({r["occurrence_id"] for r in doc["placements"]}) == 3
+
+
+def test_duplicate_guard_refuses_a_copy_that_collapses_shots_and_keeps_a_repeated_shot_repeated():
+    """The copy is proven equal to its source: a shot placed twice stays ONE shot placed twice, and a copy that maps
+    distinct shots onto one id (or changes a placement or a shot's clips) is refused."""
+    from astrid.sdk.timeline_duplicate import assert_copy_equals_source, copy_content
+
+    stored = published(split(flat_film()))
+    stored["shots"] = {r["shot_id"]: stored["shots"][r["shot_id"]] for r in stored["placements"]}
+    ids = [r["shot_id"] for r in stored["placements"]]
+    again = copy.deepcopy(stored["placements"][1])  # the chapter placed a second time (as the owner's film does)
+    again["occurrence_id"] = "occ-again"
+    again["placement"] = {"start_ms": 12000}
+    stored["placements"].append(again)
+
+    out, _ = copy_content(stored, copy.deepcopy(flat_film()), new_slug="dup")
+    new_ids = [r["shot_id"] for r in out["placements"]]
+    assert len(new_ids) == 4 and len(set(new_ids)) == 3 and new_ids[1] == new_ids[3]
+    assert len(out["shots"]) == 3 and len({r["occurrence_id"] for r in out["placements"]}) == 4
+    shot_map = dict(zip(ids, new_ids[:3]))
+    assert_copy_equals_source(stored, out, shot_map)
+
+    collapsed = copy.deepcopy(out)
+    for row in collapsed["placements"]:
+        row["shot_id"] = new_ids[0]
+    with pytest.raises(TimelineEditError, match="copied onto"):
+        assert_copy_equals_source(stored, collapsed, shot_map)
+    with pytest.raises(TimelineEditError, match="onto one shot id"):
+        assert_copy_equals_source(stored, out, {ids[0]: "x", ids[1]: "x", ids[2]: "y"})
+    with pytest.raises(TimelineEditError, match="placements"):
+        assert_copy_equals_source(stored, {**out, "placements": out["placements"][:3]}, shot_map)
+    edited = copy.deepcopy(out)
+    edited["shots"][new_ids[2]]["internal_timeline"]["clips"].pop()
+    with pytest.raises(TimelineEditError, match="clips differ"):
+        assert_copy_equals_source(stored, edited, shot_map)
