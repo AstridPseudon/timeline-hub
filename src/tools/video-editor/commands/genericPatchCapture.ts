@@ -12,6 +12,10 @@ import {
   executeOrdinaryScalarMember,
 } from './ordinaryScalarMember.ts';
 import {
+  captureOrdinaryStructuralBatch,
+  executeOrdinaryStructuralBatch,
+} from './ordinaryStructuralMember.ts';
+import {
   AuthoredState,
   ClipMoveError,
   MoveRecording,
@@ -61,11 +65,25 @@ function qualified(operation: TimelinePatchOperation): boolean {
       && (has(operation.payload, 'values') || has(operation.payload, 'clear')));
 }
 
+function structural(operation: TimelinePatchOperation): boolean {
+  return operation.op === 'track.add' || operation.op === 'clip.add' || operation.op === 'clip.remove';
+}
+
+function structuralSupported(operation: TimelinePatchOperation): boolean {
+  if (!structural(operation) || typeof operation.target !== 'string' || !operation.target
+    || (operation.order !== undefined && !Number.isFinite(operation.order))) return false;
+  return operation.op === 'clip.remove'
+    ? operation.payload === undefined || (object(operation.payload) && Object.keys(operation.payload).length === 0)
+    : object(operation.payload);
+}
+
 function supported(operation: TimelinePatchOperation): boolean {
   const payload = operation.payload;
   if (Object.keys(operation).some((key) => !['op', 'target', 'payload', 'order'].includes(key))
     || typeof operation.target !== 'string' || !operation.target
-    || (operation.order !== undefined && !Number.isFinite(operation.order)) || !object(payload)) return false;
+    || (operation.order !== undefined && !Number.isFinite(operation.order))) return false;
+  if (structural(operation)) return structuralSupported(operation);
+  if (!object(payload)) return false;
   if (operation.op === 'track.update') {
     return typeof payload.label === 'string' && Object.keys(payload).every((key) => key === 'label' || key === 'mode')
       && (!('mode' in payload) || payload.mode === 'merge');
@@ -411,6 +429,15 @@ export function executeGenericPatch(bundle: AuthoredBundle, commands: readonly E
         ? object(command.args) && Array.isArray(command.args.clear) && command.args.clear.length
           ? executeOrdinaryScalarMember(after, command, ordinal)
           : executeClipSet(after, command, ordinal)
+        : ['track.create', 'clip.add', 'clip.delete'].includes(command.op)
+          ? (() => {
+            const result = executeOrdinaryStructuralBatch(after, [command]);
+            if (result.records.length !== 1) throw new Error('structural member did not produce one record');
+            const record = copy(result.records[0]);
+            record.ordinal = ordinal;
+            record.derived_writes.forEach((write) => { write.cause = ordinal; });
+            return { bundle: result.bundle, record };
+          })()
         : (() => { throw new Error('Unsupported native patch member'); })();
     after = result.bundle;
     records.push(result.record);
@@ -439,6 +466,7 @@ export function captureGenericPatch(
   }
   if (failures.size) throw new GenericPatchRefusal(original, failures);
   const owners = original.operations.map((operation, index) => {
+    if (structural(operation)) return 'parent';
     try { return resolve(operation); }
     catch (error) {
       failures.set(index, error instanceof Error ? error.message : String(error));
@@ -469,6 +497,18 @@ export function captureGenericPatch(
         const move = finishOrdinaryMoveMember(basis, commands.length);
         result = move;
         previewOperations.push({ op: operation.op, target: operation.target, payload: { at: move.previewAt } });
+      } else if (structural(operation)) {
+        const structural = captureOrdinaryStructuralBatch(after, { version: original.version, operations: [operation] });
+        const record = copy(structural.records[0]);
+        record.ordinal = commands.length;
+        record.derived_writes.forEach((write) => { write.cause = commands.length; });
+        result = {
+          command: structural.commands[0],
+          bundle: structural.bundle,
+          record,
+        };
+        previewOperations.push({ ...operation,
+          ...(operation.payload === undefined ? {} : { payload: copy(operation.payload) }) });
       } else if (object(operation.payload) && (has(operation.payload, 'values') || has(operation.payload, 'clear'))) {
         const values = operation.payload.values as Record<string, JSON>;
         const clear = operation.payload.clear as string[];
@@ -518,7 +558,8 @@ export interface GenericPatchCapturePort {
 
 /** One local projection, preserving exact authored values and unrelated display state. */
 export function projectGenericPatchPreview(patch: TimelinePatch, current: TimelineData): TimelineData | undefined {
-  if (patch.source !== 'timeline.native-label-hold' && patch.source !== 'timeline.native-ordinary') return undefined;
+  if (patch.source !== 'timeline.native-label-hold' && patch.source !== 'timeline.native-ordinary'
+    && patch.source !== 'timeline.native-structural') return undefined;
   assertFiniteJson(patch);
   if (patch.version !== 1 || !patch.operations.length || patch.operations.some((operation) => !supported(operation))) {
     throw new Error('Invalid native patch preview');
@@ -527,6 +568,18 @@ export function projectGenericPatchPreview(patch: TimelinePatch, current: Timeli
   const resolvedConfig = copy(current.resolvedConfig);
   for (const operation of patch.operations) {
     for (const target of [config, resolvedConfig]) {
+      if (structural(operation)) {
+        if (operation.op === 'track.add') {
+          target.tracks ??= [];
+          target.tracks.push({ id: operation.target, ...copy(operation.payload ?? {}) });
+        } else if (operation.op === 'clip.add') {
+          target.clips ??= [];
+          target.clips.push({ id: operation.target, ...copy(operation.payload ?? {}) });
+        } else {
+          target.clips = (target.clips ?? []).filter((row) => row.id !== operation.target);
+        }
+        continue;
+      }
       const rows = operation.op === 'track.update' ? target.tracks ?? [] : target.clips;
       const matches = rows.filter((row) => row.id === operation.target);
       if (matches.length !== 1) throw new Error('Native patch preview requires one displayed target');

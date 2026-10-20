@@ -85,6 +85,46 @@ describe('bounded native generic patch capture', () => {
     expect(result.bundle.parent.clips[0]).not.toHaveProperty('transition');
   });
 
+  it('composes structural birth and dependent add/remove with existing generic members', async () => {
+    const { env, bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    const patch: TimelinePatch = { version: 1, operations: [
+      { op: 'track.add', target: 'ordinary-track', payload: { kind: 'visual', role: 'output' }, order: 0 },
+      { op: 'clip.add', target: 'ordinary-clip', payload: {
+        track: 'ordinary-track', at: 1.25, hold: 2.5, clipType: 'hold',
+      }, order: 1 },
+      { op: 'clip.remove', target: 'ordinary-clip', order: 2 },
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 2 }, clear: [] }, order: 3 },
+      { op: 'track.update', target: 'V1', payload: { label: 'Picture' }, order: 4 },
+      { op: 'clip.move', target: 'x', payload: { at: 4 }, order: 5 },
+    ] };
+    const result = captureGenericPatch(bundle, patch, (operation) => operation.op === 'track.update'
+      ? 'parent/track:V1' : 'parent/clip:x');
+
+    expect(result.commands.map((command) => command.op)).toEqual([
+      'track.create', 'clip.add', 'clip.delete', 'clip.set', 'track.set', 'clip.move',
+    ]);
+    expect(result.commands.slice(0, 3).map((command) => command.created)).toEqual([
+      ['parent/track:ordinary-track'], ['parent/clip:ordinary-clip'], [],
+    ]);
+    expect(result.records.map((record) => record.ordinal)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(result.preview.operations.slice(0, 3)).toEqual(patch.operations.slice(0, 3));
+    expect(executeGenericPatch(copy(bundle), result.commands)).toEqual({
+      bundle: result.bundle,
+      records: result.records,
+    });
+
+    const current = env.current();
+    const before = copy(current);
+    const projected = projectGenericPatchPreview({ ...result.preview, source: 'timeline.native-ordinary' }, current)!;
+    expect(projected.config.tracks?.some((track) => track.id === 'ordinary-track')).toBe(true);
+    expect(projected.config.clips?.some((clip) => clip.id === 'ordinary-clip')).toBe(false);
+    expect(projected.config.clips?.find((clip) => clip.id === 'x')).toMatchObject({ hold: 2, at: 4 });
+    expect(projected.config.tracks?.find((track) => track.id === 'V1')?.label).toBe('Picture');
+    expect(projected.dataLanes).toBe(current.dataLanes);
+    expect(current).toEqual(before);
+  });
+
   it('refuses the complete batch before resolving any owner or executing a member', async () => {
     const { bundle } = await authoredBundle();
     const patch: TimelinePatch = {
