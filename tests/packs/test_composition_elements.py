@@ -3,6 +3,7 @@ import re
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from astrid.core import timeline
 from astrid.core.element import catalog as effects_catalog
@@ -90,9 +91,18 @@ class CompositionElementTest(unittest.TestCase):
             timeline.validate_timeline(config)
 
     def test_bundled_element_registries_generate_together(self) -> None:
-        effects = gen_effect_registry.generate_element_registry("effects", include_local=False)
-        animations = gen_effect_registry.generate_element_registry("animations", include_local=False)
-        transitions = gen_effect_registry.generate_element_registry("transitions", include_local=False)
+        public_ids = {
+            kind: frozenset(
+                element.id
+                for element in gen_effect_registry._element_registry().list(kind=kind)
+                if element.source == "pack:rendering" and not element.component.is_file()
+            )
+            for kind in ("effects", "animations", "transitions")
+        }
+        with mock.patch.object(gen_effect_registry, "_public_registry_ids", return_value=public_ids):
+            effects = gen_effect_registry.generate_element_registry("effects", include_local=False)
+            animations = gen_effect_registry.generate_element_registry("animations", include_local=False)
+            transitions = gen_effect_registry.generate_element_registry("transitions", include_local=False)
 
         self.assertNotIn("'text-card'", effects)
         self.assertNotIn("@pack-rendering-elements-effects/text-card/component", effects)

@@ -8,6 +8,8 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -30,6 +32,19 @@ OUTPUTS = {
 
 ElementKind = Literal["effects", "animations", "transitions"]
 REGISTRY_STATE_VERSION = 1
+
+_PUBLIC_REGISTRY_NODE_SCRIPT = r'''
+import {DEFAULT_THEME} from '@banodoco/timeline-composition';
+import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
+
+const registries = resolveElementRegistries(DEFAULT_THEME);
+console.log(JSON.stringify({
+  effects: Object.keys(registries.effects ?? {}),
+  animations: Object.keys(registries.animations ?? {}),
+  transitions: Object.keys(registries.transitions ?? {}),
+}));
+'''
+_PUBLIC_REGISTRY_CACHE: dict[tuple[str, str], dict[str, frozenset[str]]] = {}
 
 
 @dataclass(frozen=True)
@@ -85,19 +100,11 @@ def discover_plugins(
     registry = _element_registry()
     plugins: dict[str, PluginRecord] = {}
     if include_local:
-        elements = tuple(
-            _host_element_for_entry(registry, element)
-            for element in registry.list(kind=kind)
-        )
+        elements = registry.list(kind=kind)
     else:
         elements = tuple(
-            definitions[0]
-            for (item_kind, _), definitions in registry._entries.items()
-            if item_kind == kind
-            for definitions in [
-                [element for element in definitions if element.source != "pack:local"]
-            ]
-            if definitions
+            element for element in registry.list(kind=kind)
+            if element.source != "pack:local"
         )
     # The public Composition package owns the bundled wrapper implementations.
     # Their descriptors remain in the normal element registry so authored
@@ -113,31 +120,91 @@ def discover_plugins(
     return plugins
 
 
-def _host_element_for_entry(
-    registry: ElementRegistry,
-    winner: ElementDefinition,
-) -> ElementDefinition:
-    """Resolve an executable local override without changing catalog winners."""
-    candidates = registry._entries.get((winner.kind, winner.id), ())
-    local = next(
-        (element for element in candidates if element.source == "pack:local"),
-        None,
-    )
-    if local is not None:
-        _component_is_host_importable(local)
-        return local
-    return winner
-
-
 def _component_is_host_importable(element: ElementDefinition) -> bool:
     if element.component.is_file():
         return True
-    if element.source == "pack:rendering":
+    if element.source != "pack:rendering":
+        raise ValueError(
+            f"element {element.kind}/{element.id} from {element.source!r} has no "
+            "component.tsx; refusing to hide a broken custom component"
+        )
+    if element.id in _public_registry_ids()[element.kind]:
         return False
     raise ValueError(
-        f"element {element.kind}/{element.id} from {element.source!r} has no "
-        "component.tsx; refusing to hide a broken custom component"
+        f"broken rendering component {element.kind}/{element.id} from "
+        f"{element.source!r}: no component.tsx and the installed public "
+        "Composition registry does not supply it"
     )
+
+
+def _public_registry_ids() -> dict[str, frozenset[str]]:
+    """Return IDs exposed by the installed Composition registry.
+
+    The generated host map must not duplicate the public package's component
+    implementations. Membership comes from Composition's existing public
+    registry resolver rather than a copied list of bundled IDs.
+    """
+    project = Path(
+        os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or TOOLS_DIR / "remotion"
+    ).resolve()
+    package = (project / "node_modules" / "@banodoco" / "timeline-composition").resolve()
+    manifest = package / "package.json"
+    if not manifest.is_file():
+        raise ValueError(
+            "cannot verify missing rendering components: installed public "
+            f"Composition package is missing at {manifest}"
+        )
+    node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
+    if not node:
+        raise ValueError(
+            "cannot verify missing rendering components: no Node executable "
+            "is available for Composition's public registry API"
+        )
+    node_path = str(Path(node).resolve())
+    cache_key = (str(project), node_path)
+    cached = _PUBLIC_REGISTRY_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+    try:
+        result = subprocess.run(
+            [node_path, "--input-type=module", "-e", _PUBLIC_REGISTRY_NODE_SCRIPT],
+            cwd=project,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ValueError(
+            "cannot verify missing rendering components through the installed "
+            f"public Composition registry API: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip().splitlines()
+        reason = detail[-1] if detail else f"Node exited {result.returncode}"
+        raise ValueError(
+            "cannot verify missing rendering components through the installed "
+            f"public Composition registry API: {reason}"
+        )
+    try:
+        raw = json.loads(result.stdout)
+        membership = {
+            kind: frozenset(str(item) for item in raw[kind])
+            for kind in ("effects", "animations", "transitions")
+            if isinstance(raw, dict) and isinstance(raw.get(kind), list)
+        }
+    except (TypeError, ValueError, KeyError) as exc:
+        raise ValueError(
+            "installed public Composition registry API returned invalid "
+            f"membership: {result.stdout!r}"
+        ) from exc
+    if set(membership) != {"effects", "animations", "transitions"}:
+        raise ValueError(
+            "installed public Composition registry API returned incomplete "
+            f"membership: {result.stdout!r}"
+        )
+    _PUBLIC_REGISTRY_CACHE[cache_key] = membership
+    return membership
 
 
 def discover_effects(
