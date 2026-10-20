@@ -336,3 +336,40 @@ describe('explicit raw parent ownership', () => {
     await session.dispose();
   });
 });
+
+
+describe('delete route ownership from the original session basis', () => {
+  it.each(['projectId', 'parentDocumentId', 'occurrenceId', 'shotId', 'revisionId',
+    'internalTimelineRevisionId', 'outputIdentity', 'rawClipId', 'ownerRef', 'clipRef'])('refuses forged occurrence %s without capturing or mutating', async (key) => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    const env = await environment(raw);
+    const session = await env.mount();
+    const current = projectedDisplay(env);
+    const clip = current.resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!;
+    expect(session.clipDeletePort.resolveOwner({ clipId: clip.id, current })).toBe('occurrence:occ-0');
+    expect(session.clipDeletePort.resolveOwner({ clipId: 'x', current })).toBe('parent');
+    const forged = copy(current);
+    const target = forged.resolvedConfig.clips.find((row) => row.id === clip.id)!;
+    (target.app!.canonical as unknown as Record<string, unknown>)[key] = 'forged';
+    const before = copy(forged);
+    expect(() => session.clipDeletePort.resolveOwner({ clipId: clip.id, current: forged })).toThrow('validated occurrence');
+    expect(forged).toEqual(before);
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
+
+  it('refuses an unbound display ID despite a plausible shot and track, without inferring ownership', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    const current = copy(env.current());
+    const row = current.resolvedConfig.clips[0];
+    row.id = 'occ-0:x';
+    row.app = { canonical: { shotId: 'shot-1', track: 'V1' } };
+    expect(() => session.clipDeletePort.resolveOwner({ clipId: row.id, current })).toThrow('validated occurrence');
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
+});

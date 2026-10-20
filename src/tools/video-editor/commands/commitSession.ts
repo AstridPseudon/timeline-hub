@@ -365,7 +365,7 @@ export async function createTimelineCommandSession(options: Options) {
     },
   };
   const clipDeletePort: ClipDeleteCapturePort = {
-    capture({ clipId, current, ownerRef }) {
+    resolveOwner({ clipId, current }) {
       assertReady();
       if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
         || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
@@ -373,10 +373,13 @@ export async function createTimelineCommandSession(options: Options) {
         throw new Error('Displayed timeline does not match the raw authoring basis');
       }
       const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
-      const raw = new AuthoredState(bundle);
-      if (matches.length !== 1 || ownerRef !== 'parent'
-        || !/^parent\/clip:(?!.*::)[^/]+$/.test(`parent/clip:${clipId}`)
-        || !raw.entity(`parent/clip:${clipId}`, true)) {
+      if (matches.length !== 1) throw new Error('Delete requires one unambiguous raw clip identity');
+      const select = resolveOwnedClipRef(clipId, matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined,
+        undefined, 'Delete requires a matching raw parent or validated occurrence binding');
+      return select.slice(0, select.lastIndexOf('/')) as 'parent' | `occurrence:${string}`;
+    },
+    capture({ clipId, current, ownerRef }) {
+      if (ownerRef !== 'parent' || clipDeletePort.resolveOwner({ clipId, current }) !== 'parent') {
         throw new Error('Delete requires one raw parent clip identity');
       }
       // Parent ownership is an explicit request; authored app.canonical JSON is never authority.

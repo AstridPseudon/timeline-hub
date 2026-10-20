@@ -204,6 +204,7 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before deleting');
         };
         session.clipDeletePort = {
+          resolveOwner(input) { return deletePort.resolveOwner(input); },
           capture(input) { requireCleanDelete(); return deletePort.capture(input); },
           finish(basis) { requireCleanDelete(); return deletePort.finish(basis); },
           submit(input) { requireCleanDelete(); deletePort.submit(input); },

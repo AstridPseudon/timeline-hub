@@ -1,3 +1,4 @@
+import type { ClipDeleteCapturePort } from '@/tools/video-editor/commands/clipDeleteGesture.ts';
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import type { ClipScalarCapturePort } from '@/tools/video-editor/commands/clipScalarGesture.ts';
 import type { ClipTrimCapturePort } from '@/tools/video-editor/commands/clipTrimGesture.ts';
@@ -142,6 +143,7 @@ export interface TimelineEditorDataContextValue {
 export interface TimelineEditorOpsContextValue {
   /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
   clipMove?: ClipMoveCapturePort;
+  clipDelete?: ClipDeleteCapturePort;
   trackLabel?: TrackLabelCapturePort;
   clipParams?: ClipParamsCapturePort;
   clipScalar?: ClipScalarCapturePort;

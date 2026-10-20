@@ -14,6 +14,7 @@ import { authoringBundleFromDocument } from '../authoringBundle.ts';
 import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
 import { executeClipTrim } from '../clipTrimCapture.ts';
+import { executeClipDelete } from '../clipDeleteCapture.ts';
 import { executeClipSet } from '../clipScalarCapture.ts';
 import type { AssetRegistry } from '../../types/index.ts';
 import trimFixture from '../fixtures/recipe_m2_clip_trim.json';
@@ -108,11 +109,12 @@ export async function environment(initialDocument = document()) {
       response.data.previous_revision_id = serverHead.revisionId;
       response.data.previous_publication_id = serverHead.publicationId;
       const before = structuredClone(serverDocument);
-      if (['clip.move', 'track.set', 'clip.trim', 'clip.set-params', 'clip.set'].includes(request.commands[0].op)) {
+      if (['clip.move', 'track.set', 'clip.trim', 'clip.set-params', 'clip.set', 'clip.delete'].includes(request.commands[0].op)) {
         let result;
         try {
           const bundle = await authoringBundleFromDocument(serverDocument);
-          result = request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
+          result = request.commands[0].op === 'clip.delete' ? executeClipDelete(bundle, request.commands[0])
+            : request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
             : request.commands[0].op === 'clip.trim' ? executeClipTrim(bundle, request.commands[0])
             : request.commands[0].op === 'clip.set' ? executeClipSet(bundle, request.commands[0])
             : request.commands[0].op === 'track.set'

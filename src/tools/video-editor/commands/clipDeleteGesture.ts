@@ -5,6 +5,7 @@ import { assertFiniteJson, equal, freezeJson } from './clipMovePrimitives.ts';
 import type { JsonObject } from './types.ts';
 
 export interface ClipDeleteCapturePort {
+  resolveOwner(input: { clipId: string; current: TimelineData }): 'parent' | `occurrence:${string}`;
   capture(input: { clipId: string; current: TimelineData; ownerRef: 'parent' }): JsonObject;
   finish(basis: JsonObject): { command: EditCommand };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;

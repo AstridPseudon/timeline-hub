@@ -1,3 +1,4 @@
+import type { ClipDeleteCapturePort } from '../../commands/clipDeleteGesture.ts';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
 import type {
@@ -12,6 +13,7 @@ export type DeleteClipOptions = {
 };
 
 export interface ClipEditingContext {
+  clipDeletePort?: ClipDeleteCapturePort;
   dataRef: MutableRefObject<TimelineData | null>;
   resolvedConfig: TimelineData['resolvedConfig'] | null;
   selectedClipId: string | null;

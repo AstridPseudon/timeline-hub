@@ -5,6 +5,7 @@ import { captureClipDeleteEdit, submitClipDeleteEdit, type ClipDeleteCapturePort
 function setup() {
   const basis = { original: { nullable: null, at: 5 } };
   const port: ClipDeleteCapturePort = {
+    resolveOwner: () => 'parent',
     capture: vi.fn(() => basis),
     finish: vi.fn(() => ({ command: { schema_version: 1, op: 'clip.delete', version: '1',
       select: 'parent/clip:x', args: {} } })),

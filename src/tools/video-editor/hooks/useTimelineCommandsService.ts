@@ -44,6 +44,7 @@ import {
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { captureClipDeleteEdit, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
 export type TimelineCommandErrorCode =
@@ -848,6 +849,19 @@ export function createTimelineCommands(
       // --- M3 managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
+
+      if (!isPinnedGroupClip(current, input.clipId)) {
+        try {
+          const port = state.ops.clipDelete;
+          if (!port) throw new Error('clip.delete capture is unavailable.');
+          if (port.resolveOwner({ clipId: input.clipId, current }) === 'parent') {
+            submitClipDeleteEdit(captureClipDeleteEdit(port, current, input.clipId, 'parent'));
+            return success({ clipId: input.clipId });
+          }
+        } catch (cause) {
+          return failure('mutation_failed', cause instanceof Error ? cause.message : 'Clip deletion failed.', { cause });
+        }
+      }
 
       const nextRows = current.rows.map((row) => ({
         ...row,
