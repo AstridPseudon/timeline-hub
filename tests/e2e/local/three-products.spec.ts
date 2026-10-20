@@ -32,7 +32,7 @@ import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI, waitForAudit } from './support/app.ts';
-import { timelineBase as runtimeTimelineBase, type TimelineScope } from './support/timeline-scope.ts';
+import { timelineBase as runtimeTimelineBase, timelineFromList, type TimelineListPage, type TimelineScope } from './support/timeline-scope.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
@@ -1162,17 +1162,21 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   const projectId = createdProjectUrl.searchParams.get('project');
   expect(projectId, 'the production project creator must return a Runtime project ID').toBeTruthy();
   await expect(page.getByRole('combobox', { name: 'Select project' })).toContainText(projectName);
-  const list = await harness.runtimeJson<{ items: Array<{ timeline_id: string; is_shot?: boolean }> }>(
-    'GET',
-    `/v1/projects/${projectId}/timelines`,
-  );
-  expect(list.status, JSON.stringify(list.body)).toBe(200);
   await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible(CEILING);
   await expect(firstTrackName(page)).toBeVisible(CEILING);
   await expect(page).toHaveURL(/\/tools\/video-editor\?project=[^&]+&timeline=[^&]+/, CEILING);
   const selectedTimelineId = new URL(page.url()).searchParams.get('timeline');
   expect(selectedTimelineId, 'the production initializer must select the created canonical timeline').toBeTruthy();
-  const selectedTimeline = list.body.items.find((timeline) => timeline.timeline_id === selectedTimelineId);
+  await expect.poll(async () => (await commandOutboxes(page, selectedTimelineId!))
+    .find((owner) => owner.scope.projectId === projectId && owner.scope.timelineId === selectedTimelineId)?.scope, CEILING)
+    .toMatchObject({ realmId: harness.realmId, projectId, timelineId: selectedTimelineId });
+  let list!: { status: number; body: TimelineListPage };
+  await expect.poll(async () => {
+    list = await harness.runtimeJson<TimelineListPage>('GET', `/v1/projects/${projectId}/timelines`);
+    return list.status === 200 && Boolean(timelineFromList(list.body, selectedTimelineId!));
+  }, CEILING).toBe(true);
+  expect(list.status, JSON.stringify(list.body)).toBe(200);
+  const selectedTimeline = timelineFromList(list.body, selectedTimelineId!);
   expect(selectedTimeline, 'the UI-selected timeline must belong to the created project').toMatchObject({ timeline_id: selectedTimelineId });
   expect(selectedTimeline?.is_shot, 'the bootstrap scope must be the document timeline, not a shot').not.toBe(true);
 
