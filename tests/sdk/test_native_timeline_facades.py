@@ -94,6 +94,31 @@ def test_remote_default_timeline_must_belong_to_selected_project() -> None:
     }
 
 
+def test_legacy_timeline_recover_refuses_without_reading_or_forwarding() -> None:
+    class NoLegacyRoute(_SelectedNativeTransport):
+        def list_timelines(self, *args, **kwargs):
+            raise AssertionError("legacy recover must not resolve or mutate a timeline")
+
+        def recover_timeline(self, *args, **kwargs):
+            raise AssertionError("legacy recover writer must not be forwarded")
+
+    result = RemoteTimelines(NoLegacyRoute()).recover(
+        "project-1", "main", version=7, idempotency_key="legacy-recover"
+    )
+    assert not result.ok
+    assert result.idempotency_key == "legacy-recover"
+    assert result.error.code == "retired_route"
+    assert result.error.details == {
+        "status": 410,
+        "operation": "recover_timeline",
+        "replacement": "timeline.restore",
+        "next_action": "Use TimelineSession.restore(revision_id, content_digest) with the exact historical revision.",
+        "version_is_not_revision": True,
+    }
+    assert "timeline.restore" in result.error.message
+    assert "version" in result.error.message
+
+
 def test_remote_open_composition_uses_runtime_inspection_authority() -> None:
     transport = _NativeTransport()
     result = RemoteTimelines(transport).open_composition(

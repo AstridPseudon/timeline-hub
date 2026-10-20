@@ -512,6 +512,12 @@ python3 astrid/packs/rendering/docs/scripts/timeline_document.py publish \
 # archive — event-backed terminal mutation
 python3 -m astrid timelines archive --project demo primary --json
 
+# recover — legacy flat-version recovery is visibly refused; it never rewrites
+# flat shots/references or guesses a revision from a numeric version. Exact
+# historical restoration uses TimelineSession.restore(revision_id, content_digest)
+# and the native timeline.restore command through the public SDK.
+python3 -m astrid timelines recover --project demo primary --json
+
 # history — ordered lifecycle events (read)
 python3 -m astrid timelines history --project demo primary --json
 

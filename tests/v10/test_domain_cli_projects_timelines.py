@@ -236,11 +236,18 @@ class _RecordingTimelines:
                 {"project": project, "ref": ref, "idempotency_key": idempotency_key},
             )
         )
-        key = idempotency_key or "generated-key"
-        return DomainResult.success(
-            {"timeline_id": "T-1", "status": "active", "changed": True},
-            receipt=_receipt("timeline.recover", key),
-            idempotency_key=key,
+        return DomainResult.failure(
+            ErrorObject(
+                "retired_route",
+                "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
+                {
+                    "status": 410,
+                    "operation": "recover_timeline",
+                    "replacement": "timeline.restore",
+                    "version_is_not_revision": True,
+                },
+            ),
+            idempotency_key=idempotency_key or "generated-key",
         )
 
     def history(self, project, ref):
@@ -1751,14 +1758,17 @@ def test_timelines_list_and_recover_are_one_sdk_call(capsys) -> None:
         ["recover", "--project", "demo", "main", "--json"],
         client=client,
     )
-    assert rc == 0
+    assert rc != 0
     assert client.calls == [
         (
             "timelines.recover",
             {"project": "demo", "ref": "main", "idempotency_key": None},
         )
     ]
-    assert json.loads(capsys.readouterr().out)["data"]["status"] == "active"
+    envelope = json.loads(capsys.readouterr().out)
+    assert envelope["ok"] is False
+    assert envelope["error"]["code"] == "retired_route"
+    assert "timeline.restore" in envelope["error"]["message"]
 
 
 def test_timelines_history_is_one_sdk_call(capsys) -> None:

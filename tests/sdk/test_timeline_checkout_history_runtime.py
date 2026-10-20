@@ -79,10 +79,10 @@ def test_retained_restore_does_not_reopen_consumed_draft_steps(
         accepted = session.move('parent/clip:music-bed', 2)
         draft._reset_base(client=client)
         assert draft.base_revision == accepted['data']['accepted_revision_id']
-        restored = client._remote._transport._generated.restore_project_parent_composition_revision(
-            fixture.project_id, fixture.timeline_id, original['base_parent']['revision_id'],
-            expected_head=accepted['data']['accepted_revision_id'],
-            expected_publication_id=accepted['receipt']['receipt_id'],
+        restore_session = TimelineSession.open(fixture.project_id, fixture.timeline_id, client=client)
+        restored = restore_session.restore(
+            original['base_parent']['revision_id'],
+            original['base_parent']['content_digest'],
             idempotency_key='restore-retained-draft-base',
         )
         assert restored['data']['accepted_revision_id'] == original['base_parent']['revision_id']

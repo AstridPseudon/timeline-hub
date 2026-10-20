@@ -303,6 +303,32 @@ class TimelineSession:
             self.outbox.write(state)
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
+    def restore(self, revision_id, content_digest, *, idempotency_key=None, dry_run=False, via="python"):
+        """Restore one exact retained revision through the native commit path.
+
+        The revision and digest are caller-supplied historical identity pins;
+        neither is inferred from a legacy numeric version.  Staging and flush
+        retain the normal outbox draft and exact-retry guarantees.
+        """
+        if not isinstance(revision_id, str) or not revision_id:
+            raise TimelineEditError("restore requires an exact nonempty revision_id")
+        if not isinstance(content_digest, str) or not content_digest:
+            raise TimelineEditError("restore requires the exact nonempty content_digest")
+        command = {
+            "schema_version": 1,
+            "op": "timeline.restore",
+            "version": "1",
+            "select": None,
+            "args": {"revision_id": revision_id, "content_digest": content_digest},
+        }
+        with self.outbox.locked():
+            state = self._state()
+            if state["pending"] and state["pending"] != [command]:
+                raise TimelineEditError("flush pending intent before restore")
+            state["pending"] = [command]
+            self.outbox.write(state)
+        return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+
     def flush(self, *, idempotency_key=None, dry_run=False, via="python"):
         """Send/retry exactly one prefix; leave newer local commands untouched."""
         with self.outbox.locked():

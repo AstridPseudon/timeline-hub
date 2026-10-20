@@ -100,7 +100,10 @@ The gateway families and their verbs:
   `stale_version` and changes nothing. `visualize` emits a run-owned evidence
   pack, while `render` accepts a pinned canonical timeline and follows its
   task to terminal completion by default. `--detach` is the explicit
-  admission-only mode and reports `state=admitted`.
+  admission-only mode and reports `state=admitted`. `recover` is retained as
+  a visible refusal for legacy flat-version recovery; it never maps a legacy
+  version ID to a revision. Use the public SDK `TimelineSession.restore` with
+  an exact revision ID and content digest.
 - **`media`** — `import`, `list`, `show`, `verify`, `relate`.
   The only supported realm is the runtime-managed `managed_local` CAS;
   reference-in-place (`external_local`), `remote`, and `relocate` are not

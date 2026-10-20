@@ -411,7 +411,6 @@ class _RemoteFamily:
             elif operation == "promote_project_shot_candidate": value = self._client.promote_project_shot_candidate(*args, **kwargs)
             elif operation == "recover_project_reference": value = self._client.recover_project_reference(*args, **kwargs)
             elif operation == "recover_project_shot": value = self._client.recover_project_shot(*args, **kwargs)
-            elif operation == "recover_timeline": value = self._client.recover_timeline(*args, **kwargs)
             elif operation == "register_capability": value = self._client.register_capability(*args, **kwargs)
             elif operation == "register_executor": value = self._client.register_executor(*args, **kwargs)
             elif operation == "remove_shot_item": value = self._client.remove_shot_item(*args, **kwargs)
@@ -1609,11 +1608,20 @@ class RemoteTimelines(_RemoteFamily):
         return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key)
     def recover(self, project, ref, *, expected_version=None, version=None, idempotency_key=None):
         key = idempotency_key or uuid.uuid4().hex
-        try:
-            current_version = self._version(project, ref, expected_version)
-        except WorkspaceClientError as exc:
-            return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
-        return self._typed("recover_timeline", ref, key=key, expected_version=current_version, version=int(version) if version is not None else max(1, current_version - 1), idempotency_key=key)
+        return DomainResult.failure(
+            ErrorObject(
+                "retired_route",
+                "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
+                {
+                    "status": 410,
+                    "operation": "recover_timeline",
+                    "replacement": "timeline.restore",
+                    "next_action": "Use TimelineSession.restore(revision_id, content_digest) with the exact historical revision.",
+                    "version_is_not_revision": True,
+                },
+            ),
+            idempotency_key=key,
+        )
 
 
 class RemoteMedia(_RemoteFamily):
