@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
+import { MOBILE_SHEET_CLASS } from '@/tools/video-editor/lib/mobile-sheet.ts';
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx';
 
 /**
@@ -22,7 +23,7 @@ export function TimelineMobileInspectorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         data-testid="timeline-clip-sheet"
-        className="top-auto bottom-0 flex max-h-[78dvh] flex-col w-full max-w-none translate-x-[-50%] translate-y-0 gap-0 overflow-hidden rounded-t-2xl border-x-0 border-b-0 border-border bg-background p-0 pb-[env(safe-area-inset-bottom)] sm:max-w-xl sm:border-x data-[ending-style]:slide-out-to-bottom-[100%] data-[open]:slide-in-from-bottom-[100%] motion-reduce:animate-none motion-reduce:transition-none [&>[data-dialog-close]]:hidden"
+        className={MOBILE_SHEET_CLASS}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{title}</DialogTitle>

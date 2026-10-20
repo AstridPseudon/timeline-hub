@@ -260,7 +260,7 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx', () 
       <div data-testid="timeline-editor">
         Timeline Editor
         {/* One clip, with a control drawn inside it, for the phone's tap-to-open sheet. */}
-        <div className="clip-action" role="button" tabIndex={0} data-testid="mock-clip">
+        <div className="clip-action" role="button" tabIndex={0} data-testid="mock-clip" data-selected={__selectedClipIds.has('clip-1') ? 'true' : undefined}>
           Clip
           <button type="button">Clip control</button>
         </div>
@@ -1701,10 +1701,30 @@ describe('TimelineEditorShellCore — phone layout', () => {
     expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
     unmount();
 
+    // Armed, a tap on a clip that is not selected is the start of a drag, not a sheet.
     __interactionMode = 'move';
+    __selectedClipIds = new Set();
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     fireEvent.click(screen.getByTestId('mock-clip'));
     expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
+  });
+
+  it('reopens the sheet on every tap of the same clip after it is closed', async () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    for (let tap = 0; tap < 3; tap += 1) {
+      fireEvent.click(screen.getByTestId('mock-clip'));
+      expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
+      fireEvent.keyDown(screen.getByTestId('timeline-clip-sheet'), { key: 'Escape' });
+      await waitFor(() => expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull());
+    }
+  });
+
+  it('tapping the selected clip while Move or Trim is armed releases it and opens the sheet', () => {
+    __interactionMode = 'trim';
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    fireEvent.click(screen.getByTestId('mock-clip'));
+    expect(__editorOps.setInteractionMode).toHaveBeenCalledWith('browse');
+    expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
   });
 
   it('opens Astrid and the gallery from its own bar, and the app\'s floating pane tabs step aside', () => {
@@ -1721,18 +1741,14 @@ describe('TimelineEditorShellCore — phone layout', () => {
     expect(paneControlsHosted()).toBe(false);
   });
 
-  it('adds text at the playhead from the bar and opens it in the clip sheet', () => {
-    const handleAddText = vi.fn();
-    __chromeOverrides = { handleAddText };
-    try {
-      render(<TimelineEditorShellCore timelineId="test-timeline" />);
-      expect(screen.queryByTestId('timeline-clip-sheet')).toBeNull();
-      fireEvent.click(within(screen.getByTestId('touch-agent-bar')).getByRole('button', { name: 'Add text' }));
-      expect(handleAddText).toHaveBeenCalledTimes(1);
-      expect(screen.getByTestId('timeline-clip-sheet')).toBeTruthy();
-    } finally {
-      __chromeOverrides = {};
-    }
+  it('has no Text button in the bar: Gallery and Ask Astrid only', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    const bar = screen.getByTestId('touch-agent-bar');
+    expect(within(bar).queryByRole('button', { name: 'Add text' })).toBeNull();
+    expect(within(bar).getAllByRole('button').map((button) => button.getAttribute('aria-label') ?? button.textContent)).toEqual([
+      'Open gallery',
+      'Ask Astrid…',
+    ]);
   });
 
   it('says on the bar when Astrid is working, and the bar still opens the chat', () => {
