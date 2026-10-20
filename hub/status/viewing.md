@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T03:53:12Z | dispatcher heartbeat 14s -->
+<!-- viewing | 2026-10-20T03:58:24Z | dispatcher heartbeat 11s -->
 # viewing — 2026-10-20 03:51 UTC
 Milestone: M0 COMPLETE. Viewing M1 closure f8164bef remains valid/unaffected by saved cleanup windows; globalM1 UNRECORDED, M2/M3 consumer merges HELD. Gate6 OPEN.
 Integrated: Compositionc04ada57/0.0.10 tree9c9a7d3f; FRESH authorizedcleanupreplay composition-full-1020032729-7262: npm test63PASS0FAIL0SKIP/4s, ALL22exposedoldSubtestnamesretained+41new. Lockedbuild/repeatpack/freshESM+SSR+NodeNext/peeridentity PASS retained. Artifact77files58008B SHA256cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7 ORCH+hub/artifacts;9fa94immutable. App/Agent STILL8/93bc/React18.3.1/Remotion4.0.509.
@@ -23,3 +23,5 @@ Inbox: through03:28leadutilizationACK;03:17/03:20audio decisionsACK/PLANreread. 
 Resources:11GiB03:15, standing10GiB leadrecycleonly. PreserveAgentb70/Runtimelease2/f816/8a/sharedgraphs; QUIETCLOSED03:36, noactivecapture. No managerproduct/infra/gitmutation/push.
 
 CleanupALL7affectedfamiliesaccounted/P1–P4COMPLETE, THREEcitedPASSreproduced. Exactcommands/counts/sourcechecks workers/vw-m3-central-deletion-evidence-audit/MANAGER-REPLAYS-COMPLETE.md; no escalationtrigger. Newsourceworkerspublic-audio-clock-eleven, render-result-qualification, same-export-av-join-prep, continuous-reference-instrument, mouth-compat-agent-proposal; M4cleanupfoundNOsafedeletion/productunchanged (35neighborPASS;broader17old8missingclipOpacity failuresnotregressions). AllM3consumersstillheld; no artifact11publishedyet.
+
+03:54 live: ONEfourcase e2e-viewing-render-result-qualified submitted(newnonblockingobserver+completeartifact-onlyresultRangecancelclassification135unitPASS). COMPOSITIONc04SOURCEHOLDuntilitsfinally/postflightCOMPLETE; doNOTmerge11midrun.11sourcecandidate5filesreviewed/private77file58344B/dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601, twoexactpacks+freshESM/SSR/strictNodeNextPASS; packagewrapper tarEPERM/manualequivalentdisclosed. Merge+ONEfull/artifactpublicationNEXTafterframejob.03:25clock11+mouthcompatapprovalACK(Agentreviewbeforemouthscopechange), actualprivatecropretained. AllcleanupP1–P4DONE/no citedpassregression.
