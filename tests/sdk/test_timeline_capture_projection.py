@@ -178,13 +178,11 @@ def saved_runtime(tmp_path):
     from tests.sdk import test_capture_source_runtime as captures
 
     use_runtime(commit="4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136")
-    yield from captures.runtime.__wrapped__(tmp_path)
+    yield from captures.open_source_runtime(tmp_path, before_provider=publish_golden)
 
 
-@pytest.fixture
-def saved_closure(saved_runtime):
-    """Public publication with reference order different from canonical sort order."""
-    runtime = saved_runtime
+def publish_golden(runtime):
+    """Untracked saved chain, published before the provider; reference order differs from canonical sort order."""
     project_id = runtime.project_id
     parent = runtime.get_project_parent_composition_revision(project_id, "main", "parent-1")
     shot = runtime.get_project_shot_revision(project_id, "shot-shared", "shot-rev-1")
@@ -223,9 +221,13 @@ def saved_closure(saved_runtime):
         "parent_revision_id": "parent-golden", "parent_composition": payload,
         "shot_revisions": shots, "internal_timeline_revisions": internals,
     }, idempotency_key="golden")
-    commits, _ = runtime.service._timeline_commits()
-    document = commits.revision_closure(project_id, "main", "parent-golden")
-    return runtime, document
+
+
+@pytest.fixture
+def saved_closure(saved_runtime):
+    commits, _ = saved_runtime.service._timeline_commits()
+    document = commits.revision_closure(saved_runtime.project_id, "main", "parent-golden")
+    return saved_runtime, document
 
 
 @pytest.mark.integration

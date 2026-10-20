@@ -123,6 +123,15 @@ class CaptureRuntime:
 
 @pytest.fixture
 def runtime(tmp_path):
+    yield from open_source_runtime(tmp_path)
+
+
+def open_source_runtime(tmp_path, before_provider=lambda runtime: None):
+    """Saved parent-1 is published untracked; ``before_provider`` may publish more saved revisions first.
+
+    A provider bootstraps tracked heads at create_timeline and refuses untracked publications, so the
+    provider is registered only after the saved chain. Runtime then installs that chain as verified legacy.
+    """
     use_runtime()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
@@ -133,11 +142,8 @@ def runtime(tmp_path):
     try:
         from astrid.sdk.timeline.commit import create_runtime_commit_service
 
-        service.register_timeline_commit_provider(create_runtime_commit_service())
         project = service.create_project({"slug": "source-probe", "name": "Source probe"})["id"]
         service.create_timeline(project, "main", idempotency_key="timeline")
-        service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
-        service.register_executor({"executor_id": "probe", "capabilities": [CAPABILITY]})
         replacements = {}
         for old, data in ((OLD, b"source picture"), (AUDIO, b"source audio")):
             replacements[old] = service.ingest(project, data, idempotency_key="media-" + old.split(":")[1])["data"]["object_id"]
@@ -151,7 +157,12 @@ def runtime(tmp_path):
             "parent_revision_id": "parent-1", "parent_composition": parent["payload"],
             "shot_revisions": shots, "internal_timeline_revisions": internals,
         }, idempotency_key="source")
-        yield CaptureRuntime(service, project)
+        runtime = CaptureRuntime(service, project)
+        before_provider(runtime)
+        service.register_timeline_commit_provider(create_runtime_commit_service())
+        service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
+        service.register_executor({"executor_id": "probe", "capabilities": [CAPABILITY]})
+        yield runtime
     finally:
         service.close()
 
@@ -199,6 +210,9 @@ def test_missing_candidate_explicit_cas_preview_stays_uncertified(runtime, tmp_p
     assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
 
 
+# Runtime admits a working-copy marker without its candidate today. Restored by Runtime's candidate
+# preflight before any write (rt-m3-capture-candidate-actual-pair; not yet on tl/integration).
+@pytest.mark.xfail(strict=True, reason="Runtime admits a working-copy capture without its candidate certificate")
 @pytest.mark.parametrize("inline", [False, True])
 def test_missing_candidate_certificate_refuses_before_admission_writes(runtime, inline):
     from runtime_protocol.errors import RuntimeErrorBase
