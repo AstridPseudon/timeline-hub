@@ -5,6 +5,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {pathToFileURL} from 'node:url';
 import {bundle} from '@remotion/bundler';
 import {openBrowser, renderStill, selectComposition} from '@remotion/renderer';
+import {exposeDeclaredImages} from './bundle-assets.mjs';
 
 assert.equal(process.env.VIEWING_INTENDED_DIP_CENTRAL, '1', 'central grant required');
 const browserExecutable = process.env.ASTRID_REMOTION_BROWSER_EXECUTABLE;
@@ -16,6 +17,7 @@ for (const project of projects) {
   bundles.push(await bundle({entryPoint: path.join(project, 'src/index.ts'), rootDir: project,
     publicDir: path.join(project, 'public'), outDir: path.join(project, 'frame-bundle'),
     enableCaching: false, webpackOverride: remotionPrimitiveAliasesFor(project)}));
+  exposeDeclaredImages(bundles.at(-1));
 }
 const browser = await openBrowser('chrome', {browserExecutable,
   chromiumOptions: {gl: 'swangle'},

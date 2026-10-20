@@ -5,11 +5,50 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from tests.packs.rendering.intended_dip_fixture.proof import compare_frames, prepare_pair
-from tests.packs.rendering.intended_dip_fixture.stage import locked_archive, stage
+from tests.core.timeline.test_onscreen_more import _independent_fades_config
+from tests.packs.rendering.intended_dip_fixture.proof import compare_frames, prepare_pair, run_node
+from tests.packs.rendering.intended_dip_fixture.stage import FIXTURE, digest, locked_archive, stage
 
 ROOT = Path(__file__).resolve().parents[3]
 pytestmark = pytest.mark.integration
+
+
+@pytest.mark.parametrize('host', ['main', 'unified'])
+def test_bundle_root_contains_the_original_declared_image_routes(tmp_path, host):
+    project = tmp_path / host
+    public = project / 'public'
+    public.mkdir(parents=True)
+    routes = {clip['params']['src'] for clip in _independent_fades_config()['clips']}
+    assert routes == {'/plate.png', '/footage.png'}
+    for route in routes:
+        image = public / route.removeprefix('/')
+        Image.new('RGB', (1920, 1080), (240, 240, 240)).save(image)
+        assert digest(image) == '38e1647dbb753fa4956ed5f0d056c6c123019d93793455d4ee09db7d4dd31bf5'
+    bundle = project / 'frame-bundle'
+    bundle.mkdir()
+    (bundle / 'index.html').write_text('original bundle entry')
+    # Execute Remotion's real public-copy step, without webpack or a server.
+    run_node(project, '--input-type=module', '-e', """
+import assert from 'node:assert/strict';
+import {existsSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const [adapter, publicDir, bundle] = process.argv.slice(1);
+const require = createRequire(import.meta.url);
+const {copyDir} = require(path.join(process.env.ASTRID_COMPOSITION_TEST_NODE_MODULES,
+  '@remotion/bundler/dist/copy-dir.js'));
+await copyDir({src: publicDir, dest: path.join(bundle, 'public')});
+assert.equal(existsSync(path.join(bundle, 'plate.png')), false);
+assert.equal(existsSync(path.join(bundle, 'footage.png')), false);
+const {exposeDeclaredImages} = await import(pathToFileURL(adapter).href);
+exposeDeclaredImages(bundle);
+""", FIXTURE / 'bundle-assets.mjs', public, bundle)
+    assert {p.name for p in bundle.iterdir()} == {'index.html', 'public', 'plate.png', 'footage.png'}
+    assert (bundle / 'index.html').read_text() == 'original bundle entry'
+    for route in routes:
+        name = route.removeprefix('/')
+        assert (bundle / name).read_bytes() == (bundle / 'public' / name).read_bytes() == (public / name).read_bytes()
 
 
 def test_locked_main_and_unified_real_component_bodies_match(tmp_path):

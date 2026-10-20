@@ -48,7 +48,8 @@ def test_main_opaque_vs_unified_intended_clip_look_dip_pixels(tmp_path, am_cover
 
     before = [staged_state(project) for project in projects]
     for project in projects:
-        shutil.copyfile(FIXTURE / 'frames.mjs', project / 'frames.mjs')
+        for name in ('frames.mjs', 'bundle-assets.mjs'):
+            shutil.copyfile(FIXTURE / name, project / name)
     project_list = tmp_path / 'projects.json'
     project_list.write_text(json.dumps([str(project) for project in projects]))
     observations = output / 'render-observations.json'
