@@ -292,6 +292,12 @@ export function useTimelineCommandSession(options: {
             requireCleanParentClipSwapMedia();
             parentClipSwapMediaPort.assertPreparationCurrent(preparation);
           },
+          capture(input) { requireCleanParentClipSwapMedia(); return parentClipSwapMediaPort.capture(input); },
+          finish(basis, verifiedMedia) {
+            requireCleanParentClipSwapMedia();
+            return parentClipSwapMediaPort.finish(basis, verifiedMedia);
+          },
+          submit(input) { requireCleanParentClipSwapMedia(); parentClipSwapMediaPort.submit(input); },
         };
         const occurrenceDuplicatePort = session.occurrenceDuplicatePort;
         const requireCleanDuplicate = () => {
