@@ -826,6 +826,7 @@ def _install_join_providers(custody, *, current_pid, peer_pid, patch=None):
         if list(words) != value["words"]:
             raise RelayError("CPU token words changed")
         return {k: value[k] for k in ("pid", "uid", "pidversion", "sha256")}
+    assign(custody, "default_process_identity", default_process_identity)
     assign(custody, "audit_token_details", details)
     assign(custody, "current_process_audit_token", _join_token)
     assign(custody.AuthenticatedCleanupActor, "current",
