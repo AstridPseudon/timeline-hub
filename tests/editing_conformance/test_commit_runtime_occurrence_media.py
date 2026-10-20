@@ -19,7 +19,7 @@ TARGET = OWNER + '/clip:clip-a'
 
 
 @pytest.fixture(params=['image', 'video'])
-def editing(request, tmp_path, monkeypatch, operation):
+def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes):
     runtime = use_runtime()
     monkeypatch.syspath_prepend(str(runtime / 'tests'))
     from runtime_protocol import timeline_commit_port
@@ -60,7 +60,7 @@ def editing(request, tmp_path, monkeypatch, operation):
 
     try:
         outputs = [
-            _output(name.encode(), output_port=kind, group_key='main', variant_key=name,
+            _output(source_bytes(kind, name), output_port=kind, group_key='main', variant_key=name,
                     ordinal=index, filename=name + ('.mp4' if kind == 'video' else '.png'),
                     media_type=kind + ('/mp4' if kind == 'video' else '/png'))
             for index, name in enumerate(('old', 'new'))]
@@ -99,6 +99,10 @@ def editing(request, tmp_path, monkeypatch, operation):
             internal['payload']['clips'][0].update({'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
         parent = document['parent_revision']['payload']
         parent['config']['output']['fps'] = 24
+        if media_owner == 'parent':
+            parent['registry']['assets']['picture']['type'] = kind
+            for rows in (parent['clips'], parent['config']['clips']):
+                rows[0].update(copy.deepcopy(internal['payload']['clips'][0]))
         for row in parent['occurrences']:
             row.update(source_offset=0, speed=1)
         parent['occurrences'][0]['placement']['start_ms'] = 8000
@@ -154,6 +158,16 @@ def editing(request, tmp_path, monkeypatch, operation):
         if 'state' in locals():
             state.service.close()
         service.close()
+
+
+@pytest.fixture
+def source_bytes():
+    return lambda kind, name: name.encode()
+
+
+@pytest.fixture
+def media_owner():
+    return OWNER
 
 
 @pytest.fixture(params=['add', 'swap'])

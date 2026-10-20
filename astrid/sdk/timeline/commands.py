@@ -38,7 +38,12 @@ def operations():
     from .capture import MOVE_INTENT, move, track_create
     from .native_occurrence_delete import occurrence_delete
     from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
-    from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
+    from .native_occurrence_media_commands import (
+        MEDIA_INTENT,
+        add_media,
+        parent_swap_media,
+        swap_media,
+    )
     from .native_placement_commands import (
         PLACEMENT_INTENT,
         placement_create,
@@ -59,6 +64,8 @@ def operations():
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
+            'clip.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], parent_swap_media,
+                                         {'ownership': 'parent'}, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
             'clip.set': Operation(_SCHEMA['$defs']['ClipSetArgs'], clip_set, {}, True),
             'clip.set-element': Operation(_SCHEMA['$defs']['ClipSetElementArgs'], clip_set_element, {}, True),

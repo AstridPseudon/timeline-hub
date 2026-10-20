@@ -259,7 +259,12 @@ def _asset_dependents(state, ref):
         return isinstance(value, list) and any(references(child, local) for child in value)
 
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in state.bundle['placements'])]
-    return (any(references(state.config(other), other == owner) for other in owners)
+    # During reversal the parent mirror may still contain the swapped asset.
+    # Dependents use the authoritative raw rows, just as normal selection does.
+    parent = {**state.bundle['parent'], 'clips': state.collection('parent', 'clip'),
+              'config': {**state.config('parent'), 'clips': state.collection('parent', 'clip')}}
+    return (any(references(parent if other == 'parent' else state.config(other), other == owner)
+                for other in owners)
             or any(references(shot['payload'], False) for shot in state.bundle['shots'].values()))
 
 

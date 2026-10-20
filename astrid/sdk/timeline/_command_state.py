@@ -128,6 +128,8 @@ def logical_address(ref, path):
         return ref.removesuffix('/shot'), path
     if ref == 'parent' and path[:1] == ('clips',):
         path = ('config', *path)
+    if ref == 'parent' and path[:1] == ('registry',):
+        path = ('config', *path)
     return ref, path
 
 
@@ -190,7 +192,7 @@ class State:
                 return None
         if '/asset:' in ref:
             owner, identity = ref.rsplit('/asset:', 1)
-            assets = self.config(owner).get('registry', {}).get('assets', {})
+            assets = self.entity(owner + '/registry').get('assets', {})
             if not isinstance(assets, dict):
                 raise CommandError('asset collection must be an object', ref=ref)
             if identity not in assets and not optional:
@@ -341,13 +343,23 @@ class State:
     def set(self, ref, path, state):
         if '/asset:' in ref and not path:
             owner, identity = ref.rsplit('/asset:', 1)
-            assets = self.config(owner)['registry']['assets']
-            if state['state'] == 'absent':
-                assets.pop(identity, None)
-            elif isinstance(state['value'], dict):
-                assets[identity] = copy.deepcopy(state['value'])
-            else:
+            if state['state'] != 'absent' and not isinstance(state['value'], dict):
                 raise CommandError('asset binding must be an object', ref=ref)
+            registry = self.entity(owner + '/registry')
+            registries = [registry]
+            if owner == 'parent':
+                # Both declarations are one namespace. Preserve their locations
+                # without copying or normalizing registry contents.
+                parent = self.bundle['parent']
+                registries = [node['registry'] for node in (parent, self.config(owner))
+                              if isinstance(node.get('registry'), dict)]
+            if not registries or any(not isinstance(row.get('assets'), dict) for row in registries):
+                raise CommandError('asset write requires an authored registry', ref=ref)
+            for row in registries:
+                if state['state'] == 'absent':
+                    row['assets'].pop(identity, None)
+                else:
+                    row['assets'][identity] = copy.deepcopy(state['value'])
             return
         if ref == "timeline":
             pin = state.get('value', {})

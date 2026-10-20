@@ -189,7 +189,8 @@
         "ownership": {
           "enum": [
             "shared",
-            "occurrence"
+            "occurrence",
+            "parent"
           ]
         },
         "position": {
@@ -1460,6 +1461,41 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.swap-media"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^parent/clip:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "parent"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -1728,7 +1764,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
     },
     "ClipTrimArgs": {
       "type": "object",
