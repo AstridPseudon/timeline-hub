@@ -16,7 +16,7 @@ import pytest
 
 from astrid_runtime_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.errors import RetiredRouteError, RuntimeErrorBase
+from runtime_protocol.errors import NotFoundError, RetiredRouteError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import route_path
@@ -197,6 +197,23 @@ def test_http_authenticated_legacy_family_refuses_without_writes(http_case, monk
         assert case.service.store.conn.total_changes == changes
 
 
+@pytest.mark.parametrize("family", ("archive_timeline", "recover_timeline"))
+@pytest.mark.parametrize("timeline", STATES)
+def test_http_visibility_routes_preserve_auth_without_writes(http_case, family, timeline):
+    case = http_case
+    method, path, body = legacy_request(case, family, timeline)
+    before, changes = snapshot(case.service), case.service.store.conn.total_changes
+    reader_token, _ = case.daemon.credentials.provision("visibility-reader", ["projects:read"])
+    for client in (WorkspaceClient(case.daemon.endpoint, None),
+                   WorkspaceClient(case.daemon.endpoint, reader_token)):
+        with pytest.raises(ApiError) as error:
+            client._request(method, path, body=json.dumps(body).encode(),
+                            headers={"Content-Type": "application/json", "Idempotency-Key": "visibility-request"})
+        assert error.value.status == 401
+        assert snapshot(case.service) == before
+        assert case.service.store.conn.total_changes == changes
+
+
 def test_service_publish_parent_composition_refuses_tracked_timeline_without_writes(service_case):
     case = service_case
     _, _, body = legacy_request(case, "publish_parent_composition", "tracked")
@@ -312,30 +329,38 @@ def test_service_exact_new_visibility_replay_survives_catalog_version_change(ser
     assert snapshot(service) == before
 
 
-def test_service_historical_recover_refuses_before_legacy_replay_or_writes(service_case, monkeypatch):
+@pytest.mark.parametrize("timeline", STATES)
+def test_service_historical_recover_refuses_before_legacy_replay_or_writes(service_case, monkeypatch, timeline):
     case = service_case
     service = case.service
-    created = service.create_timeline(case.project, "historical", idempotency_key="historical-create")
-    created_data = created["data"]
-    archived = service.archive_timeline(
-        "historical", {"expected_version": created_data["version"]}, idempotency_key="historical-archive",
-    )
-    archived_data = archived["data"]
-    before = snapshot(service)
+    if timeline == "unused":
+        body = {"expected_version": 1, "version": 1}
+    else:
+        created = service.get_project_timeline(case.project, timeline)
+        archived = service.archive_timeline(
+            timeline, {"expected_version": created["version"]}, idempotency_key=f"{timeline}-historical-archive",
+        )
+        body = {"expected_version": archived["data"]["version"], "version": created["version"]}
+    before, changes = snapshot(service), service.store.conn.total_changes
 
     def replay(*args, **kwargs):
         pytest.fail("historical recover consulted a legacy idempotency replay")
 
     monkeypatch.setattr(service, "_command_replay", replay)
-    with pytest.raises(RetiredRouteError) as error:
+    with pytest.raises((NotFoundError, RetiredRouteError)) as error:
         service.recover_timeline(
-            "historical", {"expected_version": archived_data["version"], "version": created_data["version"]},
-            idempotency_key="historical-recover",
+            timeline, body, idempotency_key=f"{timeline}-historical-recover",
         )
-    assert error.value.status == 410
-    assert "timeline.restore" in str(error.value)
-    assert error.value.details["replacement"] == "timeline.restore"
+    if timeline == "unused":
+        assert error.value.status == 404
+        assert error.value.code == "not_found"
+    else:
+        assert error.value.status == 410
+        assert error.value.code == "retired_route"
+        assert "timeline.restore" in str(error.value)
+        assert error.value.details["replacement"] == "timeline.restore"
     assert snapshot(service) == before
+    assert service.store.conn.total_changes == changes
 
 
 def command_body(case, commands):
