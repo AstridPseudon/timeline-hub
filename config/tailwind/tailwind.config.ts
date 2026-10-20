@@ -4,6 +4,18 @@ import containerQueries from "@tailwindcss/container-queries";
 import { themeColors } from "./theme/themeColors";
 import { themeKeyframes } from "./theme/themeKeyframes";
 import { themeAnimations } from "./theme/themeAnimations";
+import { resolveAstridSource } from "../vite/astridSource";
+
+// Extension UI rendered from Astrid packs ships its classes in pack TSX, outside src/.
+// Only pack ui/ trees are scanned, never whole packs (Python and other files are irrelevant).
+const PACK_UI_GLOB = "packs/*/ui/**/*.{ts,tsx}";
+const astridCheckout = process.env.ASTRID_CHECKOUT?.trim()
+	? resolveAstridSource()
+	: null;
+const packUiContent = [
+	`./vendor/astrid-browser/astrid/${PACK_UI_GLOB}`,
+	...(astridCheckout ? [`${astridCheckout.sourceRoot}/${PACK_UI_GLOB}`] : []),
+];
 
 export default {
 	darkMode: ["class"],
@@ -12,6 +24,7 @@ export default {
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
+		...packUiContent,
 	],
 	prefix: "",
 	corePlugins: {
