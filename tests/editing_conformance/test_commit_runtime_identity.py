@@ -11,6 +11,7 @@ from types import SimpleNamespace
 import pytest
 
 from tests.helpers.runtime import use_runtime
+from tests.helpers.trusted_seed import seed_trusted_parent
 
 pytestmark = pytest.mark.integration
 REF = "occurrence:occurrence-1/clip:clip-1"
@@ -23,7 +24,7 @@ def identity(request, tmp_path, monkeypatch):
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
     from test_timeline_commit_integration import Editing, rows
-    from timeline_commit_film_fixture import _media, build_film_fixture
+    from timeline_commit_film_fixture import build_film_fixture
 
     from astrid.sdk.timeline.capture import capture_move
     from astrid.sdk.timeline.commit import bundle_from_document
@@ -34,6 +35,8 @@ def identity(request, tmp_path, monkeypatch):
     service = RuntimeService(fixture.duplicate_root)
     edit = Editing(service, film, agent)
     try:
+        service._timeline_commits()[0].install_verified_baseline(
+            edit.project, edit.timeline, authorize=lambda: None)
         original = edit.document()
         parent = copy.deepcopy(original["parent_revision"]["payload"])
         _, source_shot, source_internal = occurrence_image(original, "occurrence-1")
@@ -45,7 +48,7 @@ def identity(request, tmp_path, monkeypatch):
         shot.update(revision_id="identity-shot", internal_timeline_revision_id="identity-internal")
         for occurrence in parent["occurrences"][:2]:
             occurrence.update(shot_id=shot["shot_id"], shot_revision_id=shot["revision_id"])
-        service.publish_parent_composition(edit.project, edit.timeline, {
+        seed_trusted_parent(service, {
             "project_id": edit.project, "timeline_id": edit.timeline,
             "expected_head": fixture.parent_revision_id, "parent_revision_id": "identity-baseline",
             "parent_composition": parent, "internal_timeline_revisions": [internal],
@@ -65,10 +68,8 @@ def identity(request, tmp_path, monkeypatch):
             occupied = request.param == ("same-project" if project == edit.project else "other-project")
             shot_id = destination if occupied else tag + "-shot"
             service.create_timeline(project, timeline, name=tag, idempotency_key=tag + "-timeline")
-            service.create_project_shot(project, {"shot_id": shot_id, "name": tag,
-                                        "metadata": {"opaque": [None, {"keep": tag}]}},
-                                        idempotency_key=tag + "-shot")
-            media = _media(service, project, tag.encode(), tag + ".mp4", "video/mp4")
+            media = service.ingest(project, tag.encode(), original_name=tag + ".mp4",
+                                   media_type="video/mp4", idempotency_key=tag + "-media")["data"]["object_id"]
             other_internal, other_shot = copy.deepcopy(internal), copy.deepcopy(shot)
             other_internal.update(timeline_id=timeline, revision_id=tag + "-internal")
             other_internal["payload"]["registry"] = {"assets": {"picture-1": {
@@ -76,7 +77,7 @@ def identity(request, tmp_path, monkeypatch):
             other_internal["payload"]["clips"][0].pop("elementRef", None)
             other_shot.update(shot_id=shot_id, revision_id=tag + "-revision",
                               internal_timeline_revision_id=other_internal["revision_id"])
-            other_shot["payload"].update(metadata={"opaque": [None, {"keep": tag}]},
+            other_shot["payload"].update(name=tag, metadata={"opaque": [None, {"keep": tag}]},
                 text_bindings=[], provenance={"source_media": media}, items=[{
                     "item_id": tag + f"-item-{index}", "media_id": media, "source_frame": index,
                     "metadata": {"opaque": [None, {"keep": index}]},
@@ -86,7 +87,7 @@ def identity(request, tmp_path, monkeypatch):
                 **copy.deepcopy(parent["occurrences"][0]), "occurrence_id": "unrelated",
                 "shot_id": shot_id, "shot_revision_id": other_shot["revision_id"],
             }])
-            service.publish_parent_composition(project, timeline, {
+            seed_trusted_parent(service, {
                 "project_id": project, "timeline_id": timeline, "expected_head": None,
                 "parent_revision_id": tag + "-parent", "parent_composition": other_parent,
                 "internal_timeline_revisions": [other_internal], "shot_revisions": [other_shot],
