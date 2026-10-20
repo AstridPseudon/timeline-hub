@@ -13,7 +13,9 @@ from PIL import Image
 
 from astrid.core.timeline import scene_answers
 from astrid.core.timeline.cuts import find_cut
-from astrid.packs.rendering.actions.timeline_visualize.composed_frame import CaptureSceneLabels
+from astrid.packs.rendering.actions.timeline_visualize.composed_frame import (
+    CaptureSceneLabels,
+)
 from astrid.packs.rendering.actions.timeline_visualize.layers import builtin
 from astrid.packs.rendering.actions.timeline_visualize.motion import model, sheet
 from tests.packs.rendering import test_presenter_crop_equivalence as crop_helpers
@@ -69,6 +71,9 @@ def public_capture_rows(presenter_query, retained):
     answer = json.loads(result.stdout)
     assert answer["controls"] == ["missing-compiled-id", "ambiguous-compiled-id",
                                   "foreign-owner", "stale-params"]
+    assert answer["aggregateControls"] == ["changed-state", "changed-codebook", "omitted-selection"]
+    assert answer["aggregate"]["frames"] == retained["frames"]
+    assert [row["frame"] for row in answer["aggregate"]["rows"]] == retained["frames"]
     assert [row["frame"] for row in answer["answers"]] == retained["frames"]
     return answer["answers"]
 
@@ -91,6 +96,9 @@ def public_zero(presenter_query, retained):
     answer = json.loads(result.stdout)
     assert answer["controls"] == ["missing-compiled-id", "ambiguous-compiled-id",
                                    "foreign-owner", "stale-params"]
+    assert answer["aggregateControls"] == ["changed-state", "changed-codebook", "omitted-selection"]
+    assert answer["aggregate"]["frames"] == retained["frames"]
+    assert [row["frame"] for row in answer["aggregate"]["rows"]] == retained["frames"]
     assert answer["zero"] == {k: v for k, v in retained["rows"][0].items() if k != "erase"}
     return answer["zero"]
 

@@ -1,4 +1,4 @@
-"""Actual registered presenter draw and capability against immutable public12."""
+"""Actual registered presenter draw and capability against immutable public13."""
 import hashlib
 import json
 import os
@@ -13,7 +13,7 @@ from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.theme._schema import BUILTIN_DEFAULT_THEME
 from scripts import gen_effect_registry
 
-SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
+SHA256 = "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"
 
 ROOT = Path(__file__).resolve().parents[3]
 PRESENTER = Path("astrid/packs/astrid_motion/rendering/elements/effects/am-presenter")
@@ -23,7 +23,7 @@ pytestmark = pytest.mark.integration
 @pytest.fixture(scope="module")
 def presenter_query(tmp_path_factory):
     artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
-        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")))
+        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz")))
     # Explicit immutable releases only; this override does not change the host pin.
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(
