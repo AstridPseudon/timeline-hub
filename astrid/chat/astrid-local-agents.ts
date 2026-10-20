@@ -1,9 +1,8 @@
-import { execFile } from 'node:child_process';
+import { discoveryProbe as execFileAsync } from './discoveryProbe.ts';
 import { readFileSync } from 'node:fs';
 import { access, constants } from 'node:fs/promises';
 import { userInfo } from 'node:os';
 import { delimiter, dirname, join, win32 as win32Path } from 'node:path';
-import { promisify } from 'node:util';
 import { LOCAL_AGENT_TABLE, type LocalAgentChoice, type LocalAgentId } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 
@@ -13,7 +12,6 @@ type Options = { env?: NodeJS.ProcessEnv; cwd?: string; platform?: NodeJS.Platfo
 type LaunchOptions = Pick<Options, 'platform' | 'registryReader' | 'passwdReader' | 'systemShellReader'>;
 type AuthStatus = 'signed-in' | 'signed-out' | 'unknown';
 type ExternalAgent = Exclude<LocalAgentId, 'astrid'>;
-const execFileAsync = promisify(execFile);
 const LOGIN_PATH_MARKER = '__ASTRID_LOGIN_PATH__';
 const AUTH_PROBE_OPTIONS = { encoding: 'utf8', timeout: 5_000, killSignal: 'SIGKILL' } as const;
 

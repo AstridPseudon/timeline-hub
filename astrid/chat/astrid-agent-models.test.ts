@@ -2,7 +2,8 @@ import { test } from 'bun:test';
 import assert from 'node:assert/strict';
 import { chmodSync, existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getAstridAgentModelCatalog } from './astrid-agent-models.ts';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
 import { discoverLocalAgents } from './astrid-local-agents.ts';
@@ -148,6 +149,53 @@ setInterval(() => {}, 1000);
   } finally {
     if (existsSync(pidFile)) {
       try { process.kill(Number(readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch { /* Already reaped. */ }
+    }
+    rmSync(directory, { recursive: true, force: true });
+  }
+}, 12_000);
+
+test('the Python Astrid model wrapper and its nested OMP CLI exit on discovery timeout', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-python-probe-tree-'));
+  const pids = join(directory, 'pids.jsonl');
+  const previous = { OMP_BIN: process.env.OMP_BIN, PYTHONPATH: process.env.PYTHONPATH };
+  try {
+    const command = process.env.ASTRID_TEST_ASTRID ?? join(directory, 'astrid');
+    if (!process.env.ASTRID_TEST_ASTRID) {
+      writeFileSync(command, '#!/usr/bin/env python3\nfrom astrid.omp_agent import main\nraise SystemExit(main())\n', { mode: 0o755 });
+    }
+    const omp = join(directory, 'omp');
+    writeFileSync(omp, `#!${process.execPath}
+const fs = require('node:fs');
+fs.appendFileSync(${JSON.stringify(pids)}, JSON.stringify({ pid: process.ppid, role: 'wrapper' }) + '\\n');
+fs.appendFileSync(${JSON.stringify(pids)}, JSON.stringify({ pid: process.pid, role: 'omp', args: process.argv.slice(2) }) + '\\n');
+require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(`
+require('node:fs').appendFileSync(${JSON.stringify(pids)}, JSON.stringify({ pid: process.pid, role: 'nested-cli' }) + '\\n');
+process.on('SIGTERM', () => {});
+setInterval(() => {}, 1000);
+`)}], { stdio: 'inherit' });
+process.on('SIGTERM', () => {});
+setInterval(() => {}, 1000);
+`, { mode: 0o755 });
+    process.env.OMP_BIN = omp;
+    process.env.PYTHONPATH = [fileURLToPath(new URL('../../', import.meta.url)), previous.PYTHONPATH].filter(Boolean).join(delimiter);
+    await assert.rejects(getAstridAgentModelCatalog({ command, cwd: directory }), {
+      message: 'Astrid model operation failed. Run `astrid agent models` in a terminal for details.',
+    });
+    const children = readFileSync(pids, 'utf8').trim().split('\n').map(line => JSON.parse(line) as { pid: number; role: string; args?: string[] });
+    assert.deepEqual(children.map(child => child.role), ['wrapper', 'omp', 'nested-cli']);
+    assert.deepEqual(children[1]!.args?.slice(0, 3), ['models', 'ls', '--json']);
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (children.every(child => { try { process.kill(child.pid, 0); return false; } catch { return true; } })) break;
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    for (const child of children) assert.throws(() => process.kill(child.pid, 0), { code: 'ESRCH' });
+  } finally {
+    for (const [name, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+    if (existsSync(pids)) for (const line of readFileSync(pids, 'utf8').trim().split('\n')) {
+      try { process.kill((JSON.parse(line) as { pid: number }).pid, 'SIGKILL'); } catch { /* Already reaped. */ }
     }
     rmSync(directory, { recursive: true, force: true });
   }

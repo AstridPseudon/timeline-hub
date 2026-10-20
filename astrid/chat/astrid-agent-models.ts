@@ -1,9 +1,7 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { discoveryProbe as execFileAsync } from './discoveryProbe.ts';
 import { modelCatalogSchema, type AcpModelCatalog } from './modelCatalog.ts';
 import { ASTRID_ACP_COMMAND } from './astridAcpLauncher.ts';
 
-const execFileAsync = promisify(execFile);
 type UsageLimit = NonNullable<AcpModelCatalog['providers'][number]['usage']>['limits'][number];
 
 /** The documented `astrid agent models --json` v1 response. */
