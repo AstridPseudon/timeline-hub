@@ -54,7 +54,10 @@ def shot_pool(ctx, command):
             row = ctx.state.entity(ref)
             if alias in (row.get('asset'), row.get('asset_id')):
                 raise CommandError('media is already placed in the shot', kind='identity_conflict', ref=ref)
-        _registry(ctx, owner, pin, kind, create=True)
+        # Unplace retains its binding, including opaque metadata. Reuse it rather
+        # than requiring equality with a newly constructed, narrower binding.
+        _registry(ctx, owner, pin, kind,
+                  create=ctx.state.get(owner + '/asset:' + alias, []) == ABSENT)
         if members is None:
             ctx.object(source, POOL[:1])
             ctx.object(source, POOL[:2])

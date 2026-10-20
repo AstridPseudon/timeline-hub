@@ -21,6 +21,19 @@ def _unrelated(ctx, ref, prefixes, keys):
                                    kind='unsupported_dependency', ref=ref, path=[*prefix, key])
 
 
+def _unreferenced(ctx):
+    """Refuse declared dependencies before removing a raw clip in either scope."""
+    owners = ['parent', *ctx.select('collection.occurrences', 'parent')]
+    for owner in owners:
+        config_ref, prefix = ('parent', ['config']) if owner == 'parent' else (owner + '/source', [])
+        _unrelated(ctx, config_ref, [prefix], ('pinnedShotGroups',))
+        _unrelated(ctx, config_ref, [prefix, [*prefix, 'app'], [*prefix, 'app', 'astrid']],
+                   ('sequences', 'formulas', 'slots'))
+        for member in ctx.select('collection.clips', owner):
+            _unrelated(ctx, member, [[]], ('transition',))
+            _unrelated(ctx, member, [['app'], ['app', 'astrid']], RELATIONS)
+
+
 def delete(ctx, command):
     ref = command['select']
     if not isinstance(ref, str) or re.fullmatch(r'parent/clip:(?!.*::)[^/]+', ref) is None:
@@ -35,13 +48,5 @@ def delete(ctx, command):
         raise CommandError('clip.delete cannot remove legacy shot ownership', kind='unsupported_ownership', ref=ref)
     if any(row.get(key) is not None for key in ('clips', 'children')):
         raise CommandError('clip.delete cannot remove nested clip ownership', kind='unsupported_ownership', ref=ref)
-    owners = ['parent', *ctx.select('collection.occurrences', 'parent')]
-    for owner in owners:
-        config_ref, prefix = ('parent', ['config']) if owner == 'parent' else (owner + '/source', [])
-        _unrelated(ctx, config_ref, [prefix], ('pinnedShotGroups',))
-        _unrelated(ctx, config_ref, [prefix, [*prefix, 'app'], [*prefix, 'app', 'astrid']],
-                   ('sequences', 'formulas', 'slots'))
-        for member in ctx.select('collection.clips', owner):
-            _unrelated(ctx, member, [[]], ('transition',))
-            _unrelated(ctx, member, [['app'], ['app', 'astrid']], RELATIONS)
+    _unreferenced(ctx)
     ctx.clear(ref, [])
