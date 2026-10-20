@@ -2,7 +2,14 @@ import { AstridRuntimeClient, initializeWorkspaceRuntimeIdentity, RUNTIME_CLIENT
 import { runtimeApiBase, runtimeOrigin } from './connection.ts';
 import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS, RUNTIME_TARGETED_EXECUTION_CAPABILITY } from './contract-metadata.ts';
 import { decodeAcceptedTimelineCommit } from './dataProvider.ts';
-import { ApiError, PROTOCOL, type CommitAcceptedMutation, type Transport } from './generated.ts';
+import {
+  ApiError,
+  PROTOCOL,
+  type CommitAcceptedMutation,
+  type Task,
+  type Transport,
+  WorkspaceClient,
+} from './generated.ts';
 import type { OutboxRequest, OutboxScope } from '@/tools/video-editor/commands/commitOutbox.ts';
 
 const OPERATION_PATH = '/runtime-config/v1/operation';
@@ -190,6 +197,9 @@ export class RuntimeOperationHost {
       };
       const client = new AstridRuntimeClient({ baseUrl: base, transport, expectedIdentity: { ...expected }, identityStore: new Map() });
       await client.ensureSession();
+      // The generated client is transport-only here: negotiation and identity
+      // remain owned by the operation above, so this cannot rediscover a session.
+      const generated = new WorkspaceClient(base, undefined, transport);
       active();
       if (!authenticated || !healthDigest || !handshakeDigest || realmId !== authenticated.realmId) throw new Error('Incomplete operation negotiation');
       negotiated = { ...authenticated };
@@ -208,6 +218,24 @@ export class RuntimeOperationHost {
         try { active(); } catch { return false; }
         return !!negotiated && negotiated.actorId === expectedIdentity.actorId && negotiated.realmId === expectedIdentity.realmId;
       };
+      const admitPreparedTask = (request: OutboxRequest) => run(async () => {
+        const saved = { ...request };
+        if (saved.method !== 'POST' || saved.path !== '/v1/tasks' || !text(saved.key)) {
+          throw new Error('Exact task admission request is not canonical');
+        }
+        const response = await transport(saved.method, saved.path, {
+          Accept: 'application/json', 'Content-Type': 'application/json', 'Idempotency-Key': saved.key,
+        }, new TextEncoder().encode(saved.body));
+        if (response.status !== 200 && response.status !== 201) {
+          const value = record(JSON.parse(new TextDecoder().decode(response.body)));
+          throw new ApiError(response.status, typeof value.code === 'string' ? value.code : 'http_error',
+            typeof value.message === 'string' ? value.message : 'Runtime task admission failed', '',
+            value.details as Record<string, unknown> | undefined);
+        }
+        const value = record(JSON.parse(new TextDecoder().decode(response.body)));
+        if (!value.data || !value.receipt) throw new Error('Invalid task admission response');
+        return record(value.data) as unknown as Task;
+      });
       return Object.freeze({
         retire: () => binding.retire(),
         isCurrentIdentity,
@@ -221,8 +249,12 @@ export class RuntimeOperationHost {
         listManagedOutputs: (...args: Parameters<AstridRuntimeClient['listManagedOutputs']>) => run(() => client.listManagedOutputs(...args)),
         getManagedOutput: (...args: Parameters<AstridRuntimeClient['getManagedOutput']>) => run(() => client.getManagedOutput(...args)),
         getProjectMediaSelection: (...args: Parameters<AstridRuntimeClient['getProjectMediaSelection']>) => run(() => client.getProjectMediaSelection(...args)),
+        getProjectVerifiedMedia: (...args: Parameters<WorkspaceClient['getProjectVerifiedMedia']>) => run(() => generated.getProjectVerifiedMedia(...args)),
+        listCapabilities: (...args: Parameters<WorkspaceClient['listCapabilities']>) => run(() => generated.listCapabilities(...args)),
+        listProjectObjects: (...args: Parameters<WorkspaceClient['listProjectObjects']>) => run(() => generated.listProjectObjects(...args)),
         getObject: (...args: Parameters<AstridRuntimeClient['getObject']>) => run(() => client.getObject(...args)),
         headObject: (...args: Parameters<AstridRuntimeClient['headObject']>) => run(() => client.headObject(...args)),
+        admitPreparedTask,
         transmit: (scope: OutboxScope, saved: OutboxRequest) => {
           const request = { ...saved };
           const selectedScope = { ...scope };

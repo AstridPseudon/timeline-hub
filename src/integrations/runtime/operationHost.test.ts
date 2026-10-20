@@ -74,6 +74,12 @@ describe('same-origin operation owner (inactive)', () => {
     await op.listManagedOutputs('task'); await op.getManagedOutput('association');
     await op.getProjectMediaSelection('project', { association_id: 'association', object_id: 'object', version: 1 });
     await op.getObject('object'); await op.headObject('object');
+    f.setData({ items: [], next_cursor: null });
+    await op.listCapabilities(); await op.listProjectObjects('project');
+    f.setData({ asset: 'variant', generation_id: 'generation', variant_id: 'variant', object_id: 'object', catalog_digest: 'catalog' });
+    await op.getProjectVerifiedMedia('project', { association_id: 'association', object_id: 'object', version: 1 });
+    f.setData({ data: { task_id: 'task', run_id: 'run', project_id: 'project', state: 'queued' }, receipt: {} });
+    await op.admitPreparedTask({ method: 'POST', path: '/v1/tasks', body: '{}', key: 'prepared-key' });
     const result = await op.transmit(scope, saved);
     expect(result.accepted).toEqual({ revisionId: 'r2', publicationId: 'p2' });
     const bound = f.calls.filter(call => call.path.startsWith(`${O}/runtime/`));

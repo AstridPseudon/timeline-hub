@@ -10,6 +10,8 @@ export const IMAGE_PLACEMENT_UNAVAILABLE = 'Automatic placement is unavailable: 
 export type EditorImagePlacementHost = {
   client: NonNullable<CreateTaskOptions['client']>;
   isCurrentIdentity(scope: OutboxScope): boolean;
+  /** Retires the operation before the editor releases its claimed session. */
+  retire?(): void;
 };
 
 /** Uses the editor's existing claim and accepted closure; no ambient editor authority. */
