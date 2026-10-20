@@ -33,6 +33,7 @@ from .schema import (
     load_element_definition,
 )
 
+
 class ElementRegistryError(ElementValidationError):
     """Raised when element registry state is inconsistent."""
 
@@ -373,8 +374,9 @@ def _load_pack_elements_with_diagnostics(
     elements: list[ElementDefinition] = []
     skipped: list[SkippedElement] = []
     for pack in packs:
-        # All discovered packs share the same priority.  Discovery order is
-        # canonical; the local editable pack cannot shadow a source pack.
+        # Discovery order is canonical.  The normal registry keeps its
+        # source descriptor as the winner; host generation may resolve an
+        # executable local override through this same registry entry.
         priority = 30
         for kind, manifest in iter_element_manifest_paths(
             pack,

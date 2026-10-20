@@ -66,6 +66,40 @@ class RemotionElementGenerationTest(unittest.TestCase):
         self.assertIn("@pack-local-elements-animations/fade/component", generated)
         self.assertNotIn("@pack-rendering-elements-animations/fade/component", generated)
 
+    def test_default_local_component_wins_source_less_public_descriptor(self) -> None:
+        from astrid.core.element.registry import load_default_registry
+
+        registry = load_default_registry(project_root=ROOT)
+        winner = registry.get("effects", "text-card")
+        self.assertEqual(winner.source, "pack:rendering")
+        self.assertFalse(winner.component.is_file())
+        self.assertEqual(winner.metadata["pack_id"], "rendering")
+
+        generated = gen_effect_registry.generate_element_registry("effects")
+        self.assertIn("@pack-local-elements-effects/text-card/component", generated)
+        self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
+
+    def test_missing_non_public_component_is_diagnostic(self) -> None:
+        from astrid.core.element.registry import ElementRegistry
+        from astrid.core.element.schema import ElementDefinition
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "custom" / "missing"
+            root.mkdir(parents=True)
+            missing = ElementDefinition(
+                id="missing", kind="effects", root=root, source="pack:custom",
+                editable=True, priority=0, component=root / "component.tsx",
+                schema={}, defaults={}, metadata={"pack_id": "custom"},
+                runtime={"adapter": "remotion"},
+            )
+            old_registry = gen_effect_registry._element_registry
+            gen_effect_registry._element_registry = lambda: ElementRegistry((missing,))
+            try:
+                with self.assertRaisesRegex(ValueError, "broken custom component"):
+                    gen_effect_registry.generate_element_registry("effects")
+            finally:
+                gen_effect_registry._element_registry = old_registry
+
     def test_remotion_alias_files_do_not_reference_workspace_element_aliases(self) -> None:
         checked = [
             ROOT / "scripts" / "gen_effect_registry.py",

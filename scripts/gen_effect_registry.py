@@ -85,7 +85,10 @@ def discover_plugins(
     registry = _element_registry()
     plugins: dict[str, PluginRecord] = {}
     if include_local:
-        elements = registry.list(kind=kind)
+        elements = tuple(
+            _host_element_for_entry(registry, element)
+            for element in registry.list(kind=kind)
+        )
     else:
         elements = tuple(
             definitions[0]
@@ -100,10 +103,41 @@ def discover_plugins(
     # Their descriptors remain in the normal element registry so authored
     # defaults, metadata and validation stay discoverable, but a source-less
     # descriptor must not produce a host import for a file that was retired.
-    elements = tuple(element for element in elements if element.component.is_file())
+    elements = tuple(
+        element
+        for element in elements
+        if _component_is_host_importable(element)
+    )
     for element in elements:
         plugins[element.id] = _plugin_from_element(element)
     return plugins
+
+
+def _host_element_for_entry(
+    registry: ElementRegistry,
+    winner: ElementDefinition,
+) -> ElementDefinition:
+    """Resolve an executable local override without changing catalog winners."""
+    candidates = registry._entries.get((winner.kind, winner.id), ())
+    local = next(
+        (element for element in candidates if element.source == "pack:local"),
+        None,
+    )
+    if local is not None:
+        _component_is_host_importable(local)
+        return local
+    return winner
+
+
+def _component_is_host_importable(element: ElementDefinition) -> bool:
+    if element.component.is_file():
+        return True
+    if element.source == "pack:rendering":
+        return False
+    raise ValueError(
+        f"element {element.kind}/{element.id} from {element.source!r} has no "
+        "component.tsx; refusing to hide a broken custom component"
+    )
 
 
 def discover_effects(
@@ -359,6 +393,11 @@ def _generate_effect_registry(
         if not include_local and element.source == "pack:local":
             continue
         if element.id not in effects:
+            continue
+        if not _component_is_host_importable(element):
+            # A source-less public descriptor is supplied by the installed
+            # Composition registry.  It is not a host import and must not be
+            # treated as an owner candidate for a custom winner.
             continue
         pack_id = ElementRegistry._pack_id(element)
         plugin = _plugin_from_element(element)
