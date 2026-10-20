@@ -17,6 +17,7 @@ const configs = [
   'config/testing/vitest.astrid-renderer.config.ts',
   'config/testing/vitest.edge.config.ts',
   'scripts/astrid-landing/public-host-browser/vite.config.ts',
+  'examples/embed-demo/vite.config.ts',
 ];
 
 test('root and lock use the approved immutable public12 artifact', () => {
@@ -77,3 +78,13 @@ for (const configFile of configs) {
     }
   });
 }
+
+test('Node SSR can import the public Composition consumer subpaths', async () => {
+  const [themeApi, registry] = await Promise.all([
+    import(`${packageName}/theme-api`),
+    import(`${packageName}/registry.generated`),
+  ]);
+  assert.equal(typeof themeApi.composeAnimations, 'function');
+  assert.ok(themeApi.DEFAULT_THEME);
+  assert.ok(registry.THEME_PACKAGE_REGISTRY);
+});
