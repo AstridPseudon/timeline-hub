@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import type { CanonicalDocument, CommandRecord, EditCommand, JSON as JsonValue } from '@/integrations/runtime/timeline-commit-types.ts';
+import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import {
   captureClipTrim,
@@ -8,6 +9,7 @@ import {
 } from './clipTrimCapture.ts';
 import type { AuthoredBundle } from './clipTrimCapture.ts';
 import fixture from './fixtures/recipe_m2_clip_trim.json';
+import boundaries from './fixtures/recipe_m2_clip_trim_boundaries.json';
 
 type TrimFixture = {
   input: CanonicalDocument;
@@ -186,5 +188,70 @@ describe('trim retained source and opaque controls', () => {
     registry.assets.picture[key] = key === 'duration' ? 11 : 'different-media';
     expect(() => executeClipTrim(current, { ...detached(captured.command), args: { in_s: 1, out_s: 5 } }))
       .toThrow('original capture');
+  });
+});
+
+describe('Agent exact binary64 trim precision contract', () => {
+  it.each(boundaries.cases)('$id', async (vector) => {
+    const document = detached(golden.input);
+    const registry = document.parent_revision.payload.registry as { assets: Record<string, Record<string, JsonValue>> };
+    registry.assets.picture.duration = vector.duration;
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    const input = await authoringBundleFromDocument(document);
+    const before = detached(input);
+    const command = { ...detached(golden.commands[0]), args: vector.args };
+
+    if (vector.error) {
+      expect(() => captureClipTrim(input, ref, vector.args)).toThrow(vector.error);
+      expect(() => executeClipTrim(input, command)).toThrow(vector.error);
+    } else {
+      const basis = captureClipTrim(input, ref, vector.args);
+      const result = executeClipTrim(basis.bundle, basis.command);
+      expect(result).toEqual(executeClipTrim(input, command));
+      expect(executeClipTrim(input, result.command)).toEqual(result);
+      expect(clip(result.bundle)).toEqual({ ...golden.output.parent_revision.payload.clips[0], ...vector.applied });
+      expect(clip(result.bundle).to).toBeLessThanOrEqual(vector.duration);
+      const config = result.bundle.parent.config as Record<string, JsonValue>;
+      expect((config.clips as Record<string, JsonValue>[]).find((row) => row.id === 'clip-a'))
+        .toEqual(clip(result.bundle));
+      expect(config.output).toEqual({ fps: { numerator: 30000, denominator: 1001 } });
+      expect(result.bundle.parent.registry).toEqual(before.parent.registry);
+      expect(result.bundle.placements).toEqual(before.placements);
+      expect(result.bundle.shots).toEqual(before.shots);
+      expect(result.bundle.source_mapping).toEqual(before.source_mapping);
+      expect((result.bundle.parent.clips as JsonValue[]).slice(1)).toEqual((before.parent.clips as JsonValue[]).slice(1));
+    }
+    expect(input).toEqual(before);
+  });
+
+  it.each([undefined, null])('resolves %j endpoints before rounding the raw file end', async (endpoint) => {
+    const input = await bundle();
+    const registry = input.parent.registry as { assets: Record<string, Record<string, JsonValue>> };
+    registry.assets.picture.duration = 9.9999999;
+    for (const key of ['from', 'to']) {
+      if (endpoint === undefined) delete clip(input)[key];
+      else clip(input)[key] = endpoint;
+    }
+    const before = detached(input);
+    const result = executeClipTrim(input, {
+      ...detached(golden.commands[0]), args: endpoint === undefined ? {} : { in_s: null, out_s: null },
+    });
+    expect(clip(result.bundle)).toMatchObject({ from: 0, to: 9.999999, hold: 9.999999, speed: 2 });
+    expect(input).toEqual(before);
+  });
+
+  it.each([NaN, Infinity, -Infinity])('refuses nonfinite raw input %s before mutation', async (value) => {
+    const input = await bundle();
+    const before = detached(input);
+    for (const key of ['in_s', 'out_s']) {
+      expect(() => executeClipTrim(input, {
+        ...detached(golden.commands[0]), args: { in_s: 0, out_s: 5, [key]: value },
+      })).toThrow('finite');
+    }
+    expect(input).toEqual(before);
+    (input.parent.registry as { assets: Record<string, Record<string, JsonValue>> }).assets.picture.duration = value;
+    const invalid = detached(input);
+    expect(() => captureClipTrim(input, ref)).toThrow('finite');
+    expect(input).toEqual(invalid);
   });
 });

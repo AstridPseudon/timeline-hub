@@ -48,8 +48,24 @@ function number(value: unknown, label: string, positive = false): number {
   return value;
 }
 
-function rounded(value: number): number {
-  return Number(value.toFixed(6));
+// Trim uses Python round(binary64, 6), with an exact inward floor at the file end.
+// Decode the nonnegative input itself: value * 1e6 can erase a tie or fraction.
+function rounded(value: number, inward = false): number {
+  const bytes = new DataView(new ArrayBuffer(8));
+  bytes.setFloat64(0, value);
+  const bits = bytes.getBigUint64(0);
+  const exponent = Number((bits >> 52n) & 0x7ffn);
+  const significand = (bits & ((1n << 52n) - 1n)) | (exponent ? 1n << 52n : 0n);
+  const shift = exponent ? exponent - 1075 : -1074;
+  const scaled = significand * 1_000_000n;
+  const numerator = shift >= 0 ? scaled << BigInt(shift) : scaled;
+  const denominator = shift >= 0 ? 1n : 1n << BigInt(-shift);
+  let units = numerator / denominator;
+  const twiceRemainder = 2n * (numerator % denominator);
+  if (!inward && (twiceRemainder > denominator ||
+    twiceRemainder === denominator && units % 2n !== 0n)) units++;
+  // Parse the exact decimal rational once, avoiding Number(units) / 1e6 double rounding.
+  return Number(`${units}e-6`);
 }
 
 function present(value: unknown): value is JSON {
@@ -180,14 +196,20 @@ function trim(bundle: AuthoredBundle, command: EditCommand) {
   if (sourceIn < 0 || sourceOut > limit || sourceOut <= sourceIn) {
     throw new ClipMoveError(`source range must fit inside the file (0–${limit} s)`);
   }
-  const hold = rounded(sourceOut - sourceIn);
-  if (rounded(sourceOut) <= rounded(sourceIn) || hold <= 0) {
+  const appliedIn = rounded(sourceIn);
+  const nearestOut = rounded(sourceOut);
+  const appliedOut = nearestOut > limit ? rounded(limit, true) : nearestOut;
+  if (appliedOut <= appliedIn) {
+    throw new ClipMoveError('source range collapses at authored precision');
+  }
+  const hold = rounded(appliedOut - appliedIn);
+  if (hold <= 0) {
     throw new ClipMoveError('source range collapses at authored precision');
   }
   ctx.dependency('trim.source', 'entity', { asset, source });
   ctx.bind('trim.target', ref, ['trim.source']);
   const writes: Array<readonly [string, number]> = [
-    ['from', rounded(sourceIn)], ['to', rounded(sourceOut)], ['hold', hold],
+    ['from', appliedIn], ['to', appliedOut], ['hold', hold],
   ];
   for (const [key, value] of writes) {
     ctx.write(ref, [key], value);
