@@ -7,7 +7,7 @@ import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
-import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
+import { captureClipMove, executeClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
 import { AuthoredState, assertFiniteJson, copy, equal, freezeJson, object } from './clipMovePrimitives.ts';
 import type { CanonicalProjectedClipIdentity } from '../data/shotCompositionProjection.ts';
@@ -44,6 +44,9 @@ type Options = {
 const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 const paramsPending = 'Selected parameters PENDING provider acceptance; draft preserved';
+const paramsUnsent = 'Selected parameters PENDING an accepted original basis; unsent draft preserved';
+const hasServerAfter = (commands: EditCommand[]) => commands.some((command) =>
+  command.op === 'clip.set-params' || command.op === 'timeline.inverse');
 const json = (value: unknown): JSON => JSON.parse(JSON.stringify(value)) as JSON;
 const hasChildTrack = (bundle: AuthoredBundle, trackId: string) => Object.values(bundle.shots).some((shot) =>
   Array.isArray(shot.internal_timeline.tracks) && shot.internal_timeline.tracks.some((track) =>
@@ -105,8 +108,41 @@ export async function createTimelineCommandSession(options: Options) {
     if (stopped) return;
     state = { ...state, status, error, canDiscardRejected: rejected() && !!options.loadLatest,
       canReapplyLabel: rejected() && !!options.loadLatest && !!labelIntent(), canUndo: !persistenceFailed && !resolving
-      && ((status === 'saved' && !!undos.length) || (status === 'dirty' && !!record?.intents.length && !record.pending)) };
+      && ((status === 'saved' && !!undos.length) || ((status === 'dirty' || (status === 'pending' && error === paramsUnsent))
+        && !!record?.intents.length && !record.pending)) };
     options.changed(state);
+  }
+  function publishDrafts() {
+    const selected = record?.intents.find((entry) => (entry.payload as unknown as Payload).selectedParams);
+    const basis = (selected?.payload as unknown as Payload | undefined)?.selectedParams?.basis;
+    publish(selected ? 'pending' : record?.intents.length ? 'dirty' : 'saved',
+      selected ? basis?.acceptedBasisAvailable !== true || 'after' in selected.basis ? paramsUnsent : paramsPending : null);
+  }
+  function workingBundle() {
+    const next = new AuthoredState(copy(acceptedBundle));
+    let moved = false;
+    for (const entry of record?.intents ?? []) {
+      const payload = entry.payload as unknown as Payload;
+      if (payload.selectedParams) continue;
+      for (const command of payload.commands) {
+        if (command.op === 'timeline.inverse') continue;
+        // Replay only ordinary preview writes from their ORIGINAL capture. Never recapture guards.
+        const result = command.op === 'clip.move' ? executeClipMove(payload.before, command)
+          : finishTrackLabel({ bundle: payload.before, command }, command.args as TrackLabelArgs);
+        moved ||= command.op === 'clip.move';
+        for (const write of result.record.writes) {
+          const current = next.get(write.ref, write.path);
+          if (write.after.state === 'present' && object(write.after.value) && !Object.keys(write.after.value).length
+            && current.state === 'present' && object(current.value)) continue;
+          next.set(write.ref, write.path, write.after);
+        }
+      }
+    }
+    const config = next.bundle.parent.config;
+    if (moved && Array.isArray(next.bundle.parent.clips) && object(config) && Array.isArray(config.clips)) {
+      config.clips = copy(next.bundle.parent.clips);
+    }
+    return next.bundle;
   }
   function publishRefusal() {
     const failure = record?.pending?.outcome?.kind === 'rejected'
@@ -152,7 +188,7 @@ export async function createTimelineCommandSession(options: Options) {
         const intent = record.intents[0];
         const payload = intent.payload as unknown as Payload;
         if (payload.selectedParams && (payload.selectedParams.basis.acceptedBasisAvailable !== true || 'after' in intent.basis)) {
-          publish('pending', 'Selected parameters PENDING an accepted original basis; unsent draft preserved');
+          publish('pending', paramsUnsent);
           return;
         }
         publish(payload.selectedParams ? 'pending' : 'saving', payload.selectedParams ? paramsPending : null);
@@ -191,10 +227,11 @@ export async function createTimelineCommandSession(options: Options) {
           const commands = result.response.data.commands;
           if (commands.some((command) => command.op === 'timeline.inverse')) undos.pop();
           else if (undos[undos.length - 1] !== result.accepted.publicationId) undos.push(result.accepted.publicationId);
-          if (payload.selectedParams && (record.intents.length || appendedGeneration !== localGeneration)) {
-            // Only the accepted closure supplies PARAM after-state; retain newer previews.
+          if (hasServerAfter(commands) && (record.intents.length || appendedGeneration !== localGeneration)) {
+            // Only the accepted closure supplies PARAM/inverse after-state; retain newer previews.
             await chain;
             record = await box.read();
+            bundle = workingBundle();
             await project(acceptedBasis, record.intents.map((entry) => (entry.payload as unknown as Payload).preview)
               .filter((patch): patch is TimelinePatch => patch !== null));
           }
@@ -525,12 +562,13 @@ export async function createTimelineCommandSession(options: Options) {
         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
           : displayBasis;
         acceptedBundle = await authoringBundleFromDocument(acceptedBasis.canonicalDocument) as AuthoredBundle;
-        // Submission advances with A's ACK; B's display retains its original closure.
-        await project(displayBasis,
+        // Ordinary recovery retains B's original display; server-only effects come from acceptance.
+        const serverAfter = savedAcceptance && hasServerAfter(savedAcceptance.response.data.commands);
+        if (serverAfter) bundle = workingBundle();
+        await project(serverAfter ? acceptedBasis : displayBasis,
           record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));
       }
-      if (!publishRefusal()) publish(record.intents.some((entry) => (entry.payload as unknown as Payload).selectedParams) ? 'pending'
-        : record.intents.length ? 'dirty' : 'saved');
+      if (!publishRefusal()) publishDrafts();
       ready();
       await new Promise<void>((resolve) => { release = resolve; if (stopped) resolve(); });
     };
@@ -585,13 +623,13 @@ export async function createTimelineCommandSession(options: Options) {
         const tail = record.intents[record.intents.length - 1];
         await box!.cancel(tail.id);
         record = await box!.read();
-        bundle = (tail.payload as unknown as Payload).before;
+        bundle = workingBundle();
         lastIntent = record.intents[record.intents.length - 1]?.id;
         localGeneration++;
         appendedGeneration = localGeneration;
         await project(acceptedBasis, record.intents.map((intent) => (intent.payload as unknown as Payload).preview)
           .filter((patch): patch is TimelinePatch => patch !== null));
-        publish(record.intents.length ? 'dirty' : 'saved');
+        publishDrafts();
         return;
       }
       const publication = undos[undos.length - 1];

@@ -239,3 +239,138 @@ describe('selected PARAM server authority staging (synthetic normal-port transpo
     await session.dispose();
   });
 });
+
+describe('selected server lifecycle regressions', () => {
+  it('projects an accepted selected inverse while its selected suffix stays permanently unsent', async () => {
+    const { env, f, session, capture, project } = await setup();
+    submitClipParamsEdit(capture(), edit(f.pin));
+    await session.flush();
+    const pause = env.pause();
+    const undoing = session.undo();
+    await vi.waitFor(() => expect(env.commits()).toHaveLength(2));
+    const pendingCapture = capture();
+    expect(pendingCapture.basis.acceptedBasisAvailable).toBe(false);
+    submitClipParamsEdit(pendingCapture, { ...edit(f.pin), values: { seed: 9 } });
+    pause.resolve();
+    await undoing;
+    await expect(session.flush()).rejects.toThrow('accepted original basis');
+    const [saved] = await env.outboxes.list(scope);
+    expect(saved.accepted!.head.publicationId).toBe('p2');
+    expect((saved.accepted!.value as any).canonicalDocument.parent_revision.payload.clips[0].params.seed).toBe(4);
+    expect(saved.intents).toHaveLength(1);
+    expect(saved.intents[0].payload).toMatchObject({ commands: [{ args: { values: { seed: 9 } } }],
+      selectedParams: { basis: { acceptedBasisAvailable: false } } });
+    expect(env.commits()).toHaveLength(2);
+    await session.dispose();
+    expect(project.mock.calls.at(-1)![0].canonicalDocument.parent_revision.payload.clips[0].params.seed).toBe(4);
+  });
+
+  it('recovery retains accepted selected params when only the refused ordinary suffix remains', async () => {
+    const { env, f, session, capture, project, mount } = await setup();
+    const send = env.provider.commitTimeline.bind(env.provider);
+    vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (request, key) => {
+      const result = await send(request, key);
+      if (request.commands[0].op === 'clip.set-params') env.setFault('conflict');
+      return result;
+    });
+    const pause = env.pause();
+    submitClipParamsEdit(capture(), edit(f.pin));
+    await vi.waitFor(() => expect(env.commits()).toHaveLength(1));
+    env.move(session, 5);
+    pause.resolve();
+    await expect(session.flush()).rejects.toThrow();
+    const [saved] = await env.outboxes.list(scope);
+    expect(saved.accepted!.head.publicationId).toBe('p1');
+    expect(saved.intents).toHaveLength(1);
+    expect(saved.intents[0].payload).toMatchObject({ commands: [{ op: 'clip.move' }] });
+    expect(project.mock.calls.at(-1)![0].canonicalDocument.parent_revision.payload.clips[0].params.seed).toBe(8);
+    await session.dispose();
+    const reopened = await mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
+    await reopened.recover(saved.ownerId);
+    expect(reopened.getState().status).toBe('conflict');
+    expect((await env.outboxes.list(scope))[0].intents).toEqual(saved.intents);
+    await reopened.dispose();
+    expect(project.mock.calls.at(-1)![0].canonicalDocument.parent_revision.payload.clips[0].params.seed).toBe(8);
+  });
+
+  it('canceling an ordinary tail keeps the remaining unsent selected draft visibly pending', async () => {
+    const { env, f, session, capture } = await setup();
+    const pause = env.pause();
+    env.move(session, 5);
+    await vi.waitFor(() => expect(env.commits()).toHaveLength(1));
+    submitClipParamsEdit(capture(), edit(f.pin));
+    env.move(session, 7);
+    pause.resolve();
+    await expect(session.flush()).rejects.toThrow('accepted original basis');
+    await session.undo();
+    const [saved] = await env.outboxes.list(scope);
+    expect(saved.intents).toHaveLength(1);
+    expect(saved.intents[0].payload).toMatchObject({ selectedParams: { basis: { acceptedBasisAvailable: false } } });
+    expect(env.commits()).toHaveLength(1);
+    const state = session.getState();
+    await session.dispose();
+    expect(state).toMatchObject({ status: 'pending', error: expect.stringContaining('unsent draft preserved') });
+  });
+
+  it('a fresh selected capture after explicitly canceling the inverse suffix uses the accepted closure', async () => {
+    const { env, f, session, capture } = await setup();
+    submitClipParamsEdit(capture(), edit(f.pin));
+    await session.flush();
+    const pause = env.pause();
+    const undoing = session.undo();
+    await vi.waitFor(() => expect(env.commits()).toHaveLength(2));
+    submitClipParamsEdit(capture(), { ...edit(f.pin), values: { seed: 9 } });
+    pause.resolve();
+    await undoing;
+    await expect(session.flush()).rejects.toThrow('accepted original basis');
+    await session.undo();
+    expect((await env.outboxes.list(scope))[0].intents).toHaveLength(0);
+    expect(session.getState().status).toBe('saved');
+    const fresh = capture();
+    await session.dispose();
+    expect(fresh.basis).toMatchObject({ acceptedBasisAvailable: true,
+      bundle: { parent: { clips: [{ params: { seed: 4 } }] } } });
+  });
+
+  it('canceling successive tails retains original selected and ordinary suffixes over the accepted inverse', async () => {
+    const { env, f, session, capture, move } = await setup();
+    submitClipParamsEdit(capture(), edit(f.pin));
+    await session.flush();
+    const pause = env.pause();
+    const undoing = session.undo();
+    await vi.waitFor(() => expect(env.commits()).toHaveLength(2));
+    const pendingCapture = capture();
+    const originalBasis = structuredClone(pendingCapture.basis);
+    submitClipParamsEdit(pendingCapture, { ...edit(f.pin), values: { seed: 9 } });
+    move(5);
+    move(7);
+    pause.resolve();
+    await undoing;
+    await expect(session.flush()).rejects.toThrow('accepted original basis');
+    const [original] = await env.outboxes.list(scope);
+    expect(original.intents).toHaveLength(3);
+    await session.undo();
+    const [remaining] = await env.outboxes.list(scope);
+    expect(remaining.intents).toEqual(original.intents.slice(0, 2));
+    expect(pendingCapture.basis).toEqual(originalBasis);
+    expect(session.getState()).toMatchObject({ status: 'pending', canUndo: true,
+      error: expect.stringContaining('unsent draft preserved') });
+    expect(capture().basis).toMatchObject({ acceptedBasisAvailable: false,
+      bundle: { parent: { clips: [{ at: 5, params: { seed: 4, opaque: [null, false, {}] } }] } } });
+    await session.undo();
+    expect((await env.outboxes.list(scope))[0].intents).toEqual(original.intents.slice(0, 1));
+    await session.undo();
+    expect(session.getState().status).toBe('saved');
+    const fresh = capture();
+    expect(fresh.basis).toMatchObject({ acceptedBasisAvailable: true,
+      localBasis: { head: { revisionId: 'r2', publicationId: 'p2' } },
+      bundle: { parent: { clips: [{ at: 1, params: { seed: 4, opaque: [null, false, {}] } }] } } });
+    submitClipParamsEdit(fresh, { ...edit(f.pin), values: { seed: 6 } });
+    await session.flush();
+    expect(env.commits()).toHaveLength(3);
+    expect(env.commits()[2].body).toMatchObject({ base_revision_id: 'r2', base_publication_id: 'p2',
+      commands: [{ op: 'clip.set-params', args: { values: { seed: 6 } } }] });
+    expect(pendingCapture.basis).toEqual(originalBasis);
+    await session.dispose();
+  });
+});
