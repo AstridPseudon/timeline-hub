@@ -51,6 +51,22 @@ def _node_roundtrip(value):
     return json.loads(result.stdout)
 
 
+def _claim_identity(target):
+    return {
+        "actor": EXECUTOR,
+        "scopes": ["worker:execute"],
+        "execution_binding": {
+            "actual": target,
+            "verification": {
+                "method": "credential_claim",
+                "evidence_digest": _digest(_bytes(target)),
+                "verified": True,
+            },
+            "executor_incarnation": "proposal-worker/incarnation-1",
+        },
+    }
+
+
 @pytest.fixture
 def producer(tmp_path):
     root = tmp_path / "realm"
@@ -229,6 +245,104 @@ def test_fixture_has_real_admission_settlement_and_managed_cas_output(producer):
                           if key != "proposal_digest"})) == producer.pin["proposal_digest"]
     assert output["digest"] != producer.pin["proposal_digest"]
     assert producer.service.store.timeline_render_publication(producer.task) is None
+
+
+def test_admitted_utf8_script_input_stays_pinned_after_source_update_and_restart(producer):
+    service = producer.service
+    _settle(producer)
+    old_script = "Café — original take\n"
+    new_script = "Café — revised take\n"
+    source = service.create_document(
+        producer.project,
+        {"document_id": "voiceover-script", "kind": "producer.config",
+         "content": {"schema": "voiceover.script/v1", "text": old_script}},
+        idempotency_key="voiceover-script-v1",
+    )["data"]
+    old_bytes = old_script.encode("utf-8")
+    old_object_id = service.ingest(
+        producer.project,
+        old_bytes,
+        media_type="text/plain; charset=utf-8",
+        original_name="voiceover-script.txt",
+        idempotency_key="voiceover-script-object-v1",
+    )["data"]["digest"]
+    descriptor = {
+        "name": "script", "object_id": old_object_id,
+        "filename": "voiceover-script.txt", "required": True,
+        "digest": old_object_id,
+    }
+    execution_target = {"kind": "machine", "id": "machine-1"}
+    request = {
+        "schema_version": 1,
+        "target": execution_target,
+        "inputs": [descriptor],
+    }
+    task_spec = {
+        "capability_id": CAPABILITY,
+        "kind": "executor",
+        "inputs": {"script": descriptor},
+        "runtime_dependencies": {
+            "publication": {"admitted_target": copy.deepcopy(producer.pin["admitted_target"])},
+        },
+        "outputs": {"authoring_proposal": {
+            "type": "file", "artifact_type": "timeline/authoring-proposal",
+        }},
+    }
+    admission = {
+        "project": producer.project,
+        "capability_id": CAPABILITY,
+        "capability_digest": _digest(CAPABILITY.encode()),
+        "input_object_ids": [old_object_id],
+        "spec": task_spec,
+        "execution_request": request,
+        "idempotency_key": "voiceover-script-task",
+    }
+    admitted = service.create_task(admission, enforce_readiness=True)
+    task_id = admitted["task"]["id"]
+    assert admitted["task"]["status"] == "queued", admitted
+    claimed = service.claim_next(
+        {"executor_id": EXECUTOR, "capability_ids": [CAPABILITY],
+             "runtime_epoch": service.health()["runtime_epoch"], "target": execution_target},
+        idempotency_key="claim-voiceover-script-task",
+        identity=_claim_identity(execution_target),
+    )
+    assert claimed.get("task_id") == task_id, claimed
+
+    updated = service.update_document(
+        producer.project,
+        source["document_id"],
+        {"expected_version": source["version"],
+         "content": {"schema": "voiceover.script/v1", "text": new_script}},
+        idempotency_key="voiceover-script-v2",
+    )["data"]
+    assert updated["version"] == 2
+    assert updated["content"]["text"] == new_script
+
+    expected_request_bytes = canonical_json(request).encode("utf-8")
+    task = service.task(task_id)["task"]
+    assert task["spec"]["input_object_ids"] == [old_object_id]
+    assert task["spec"]["spec"]["inputs"]["script"] == descriptor
+    assert task["spec"]["spec"]["runtime_dependencies"]["publication"]["admitted_target"] == producer.pin["admitted_target"]
+    assert task["execution_request"]["inputs"] == [descriptor]
+    assert canonical_json(task["execution_request"]).encode("utf-8") == expected_request_bytes
+    assert service.cas.read(old_object_id.removeprefix("sha256:")) == old_bytes
+
+    root = producer.root
+    service.close()
+    restarted = RuntimeService(root)
+    producer.service = restarted
+    try:
+        replay = restarted.create_task(admission)
+        replay_task = replay["task"]
+        assert replay_task["id"] == task_id
+        assert replay_task["run_id"] == admitted["run"]["id"]
+        assert replay_task["spec"]["input_object_ids"] == [old_object_id]
+        assert replay_task["spec"]["spec"]["inputs"]["script"] == descriptor
+        assert replay_task["spec"]["spec"]["runtime_dependencies"]["publication"]["admitted_target"] == producer.pin["admitted_target"]
+        assert replay_task["execution_request"]["inputs"] == [descriptor]
+        assert restarted.cas.read(old_object_id.removeprefix("sha256:")) == old_bytes
+    finally:
+        restarted.close()
 
 
 def test_protocol_declares_additive_producer_attempt_method():
