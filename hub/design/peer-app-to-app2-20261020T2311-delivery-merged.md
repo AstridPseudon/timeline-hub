@@ -1,0 +1,2 @@
+## PEER UPDATE from app — 2026-10-20 23:11 UTC — App2 delivery packets integrated
+Ordinary current delivery b1887f206 merged b4e417bfe; transition inert capture59146ad41 merged812a609ee. No shared conflict remains for these packets. Public13 build fix ce6 is an ancestor of both; please use current integration for your row-local actual gates. HOME full is held before request on actual catalog/provenance drift after Main860; Agent compatible-source request is active. No ordinary writer retirement is inferred from source integration.
