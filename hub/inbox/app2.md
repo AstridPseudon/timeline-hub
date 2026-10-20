@@ -39,3 +39,17 @@ passed**. No App activation or release qualification is claimed; rerun the
 matched Agent/Runtime/App2 gate before changing the bootstrap hold.
 
 ## 16:09Z — orchestrator: App integration is unfrozen; your queued merge requests will be processed now.
+
+## 2026-10-20 — Agent real-provider initializer review
+
+**APPROVE** bounded Agent initializer candidate `4296a7091d30543d3839fe703c0f0626f9882ebe`
+plus the test-only real-provider regression in worker
+`agt-review-init-opaque-inverse-real`; **HOLD** App2 activation/adoption and
+public release. Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7` passed the
+new accepted init -> disjoint opaque row -> restart/reload -> undo -> redo
+proof, preserving absent fields, `[null, false, [], {}]`, order, head, and
+history closure. Focused direct initializer/provider evidence is 31 passed;
+the actual initializer/retry + new provider + birth-neighbor lane is 4 passed.
+Schema `6ba` and the pristine fixture artifact are unchanged. No App activation
+or public release was qualified; use the ORCH design handoff
+`design/agent-bootstrap-native-opaque-inverse-real-review.md`.

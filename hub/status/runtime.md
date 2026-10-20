@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T16:09:50Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 25 | status age 4m -->
+<!-- main | 2026-10-20T16:11:03Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 25 | status age 5m -->
 # runtime — 2026-10-20T16:05:47Z
 Milestone: M1 RECORDED; M2 migrations active. M3/M4 OPEN, no exit claim.
 Integrated: Runtime tl/integration6ab3243972f8dc49105819e6d7ba7aef1a2888b8. Catalog promotion81f +selected-media CASa51 +unplaced catalog text9f +strengthened native clip parity6ab merged sequentially after independent APPROVE. Original2promotion+4binding positives run; text181targeted/69neighbors/3catalog-fence, clip13native/1existingparent-schemaxfail/10deselect. c45 native historical render retry and16ac audit synchronization retained. Public013 artifacts unchanged.
