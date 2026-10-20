@@ -180,8 +180,9 @@ function close(server: Server): Promise<void> {
 }
 
 const test = base.extend<ProbeFixtures>({
-  fixtureUrl: async (fixtures, provide) => {
-    void fixtures;
+  // Playwright reads fixture dependencies from the destructuring pattern; this fixture has none.
+  // eslint-disable-next-line no-empty-pattern
+  fixtureUrl: async ({}, provide) => {
     const server = startProbeServer();
     await listen(server);
     try {
