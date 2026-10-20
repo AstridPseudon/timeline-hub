@@ -314,7 +314,12 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
 
 
 @pytest.mark.integration  # a real Runtime from a second checkout
-def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
+def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path, monkeypatch):
+    from tests.helpers.runtime import use_runtime
+    from tests.helpers.trusted_seed import seed_trusted_parent
+
+    runtime = use_runtime(commit="a0dca16975dfe8f5e762703b99d9791a16cf7fd7")
+    monkeypatch.syspath_prepend(str(runtime / "tests"))
     from runtime_protocol import service as service_module
     from runtime_protocol import store as store_module
 
@@ -364,7 +369,7 @@ def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
         publication = json.loads(
             json.dumps(publication).replace(OLD, old).replace(AUDIO, old_audio)
         )
-        service.publish_parent_composition(project_id, "main", publication, idempotency_key="seed")
+        seed_trusted_parent(service, publication, idempotency_key="seed")
         work = open_authoring_bundle(
             service.get_project_parent_composition_revision(project_id, "main", "parent-1"),
             shot_revisions=[
