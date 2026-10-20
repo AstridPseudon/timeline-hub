@@ -305,13 +305,32 @@ describe('native parent clip delete in the shared durable command session', () =
       expect((await env.outboxes.list(scope))[0].intents).toHaveLength(0);
       await session.dispose();
     });
-  it('accepts an unknown display publication when the revision still matches', async () => {
+  it.each(['accepted', 'local'] as const)('accepts a publication-null display with a matching %s projection fact', async (kind) => {
     const env = await deleteEnvironment();
     const session = await env.mount();
     const current = structuredClone(env.current());
     current.head!.headPublicationId = null;
+    current.editProjection = kind === 'accepted'
+      ? { kind, head: { revisionId: 'r0', publicationId: 'p0' } }
+      : { kind, base: { revisionId: 'r0', publicationId: 'p0' }, generation: 1 };
     expect(() => captureClipDeleteEdit(session.clipDeletePort, current, 'x')).not.toThrow();
     expect(env.calls).toHaveLength(0);
+    await session.dispose();
+  });
+  it.each([
+    ['stale projection', { kind: 'accepted', head: { revisionId: 'r0', publicationId: 'stale' } }],
+    ['null projection fact', null],
+    ['absent projection fact', undefined],
+  ] as const)('refuses a publication-null display with a %s', async (_name, projection) => {
+    const env = await deleteEnvironment();
+    const session = await env.mount();
+    const current = structuredClone(env.current());
+    current.head!.headPublicationId = null;
+    Object.assign(current, { editProjection: projection });
+    expect(() => captureClipDeleteEdit(session.clipDeletePort, current, 'x')).toThrow('Displayed timeline');
+    expect(env.calls).toHaveLength(0);
+    expect(env.previews).not.toHaveBeenCalled();
+    expect((await env.outboxes.list(scope))[0].intents).toHaveLength(0);
     await session.dispose();
   });
   it.each(['unrelated', 'target opaque', 'target source', 'membership', 'order', 'dependency'])(
