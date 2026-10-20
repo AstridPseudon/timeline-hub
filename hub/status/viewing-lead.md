@@ -1,4 +1,5 @@
-UTC: 2026-10-19T22:38:20Z (area lead, incident note)
-Incident 22:34Z: the hourly check-in subagent ran lead-recover inside its sandbox (own PID namespace) and falsely marked 3 LIVE workers interrupted (vw-m3-app-route-contract, vw-m3-cpu-profile-proof, vw-m3-player-startup). The manager re-dispatched them as *-recover; the lead stopped the 3 originals at 22:45 to avoid duplicates (partial work on their own unmerged branches). No container restart happened.
-Fixes: check-in subagent now read-only (Codex -s read-only; message returned as text); lead-recover refuses when it cannot see the live dispatcher pid. Manager told via local INBOX note — please mirror the 22:45Z correction into hub/inbox/viewing.md.
-Health: dispatcher/hub-syncd/adopt-watch/manager alive; hub file sync fresh.
+UTC: 2026-10-19T23:59:32Z (area lead)
+DONE 23:59:15Z: shared /home/user/work/app/node_modules re-provisioned via npm ci from App tl/integration lock (in the manager's quiet window).
+Versions: @banodoco/timeline-composition 0.0.8 (was 0.0.2), react 18.3.1, remotion 4.0.509; only integration remotion-4.0.509-audio-resume patch; e290 NOT applied.
+Hashes: dist/index.js sha256 2111490c18c6168a7c5e4621c8eabef198407dc68cde60a0885982c45ee16078; lock integrity sha512-dzRWuIgeSjKt6ko64AJ7F8aaiSBBxtEzwS0WBFkVi7XB+z2wHLKArlA9fWle/KlwZlXjFDzq2oBi9QJLy1HHUw== (lock, .package-lock and vendored 0.0.8 tgz agree). No tracked changes.
+Manager released via managers/viewing/GlobalQUIET.md + INBOX (full hashes there). Recycled 4 worktrees earlier; ~10 GB free. 30-min check-ins active.
