@@ -206,7 +206,7 @@ function rawClipId(rawClip: JsonRecord): string | undefined {
 }
 
 function clipMatchesTarget(value: unknown, rawClip: JsonRecord): boolean {
-  const candidate = isRecord(value);
+  const candidate = isRecord(value) ? value : undefined;
   return !!candidate && candidate.id === rawClipId(rawClip)
     && same(elementFromClip(candidate), elementFromClip(rawClip));
 }
@@ -244,8 +244,9 @@ function occurrenceShotFromDocument(
   if (!internalId) return undefined;
   const internals = document.internal_timeline_revisions.filter((value) => isRecord(value)
     && value.revision_id === internalId);
-  if (internals.length !== 1 || !clipsFromTimeline((internals[0] as JsonRecord).payload)
-    ?.some((value) => clipMatchesTarget(value, rawClip))) return undefined;
+  const clips = internals.length === 1
+    ? clipsFromTimeline((internals[0] as JsonRecord).payload) : undefined;
+  if (!clips || !clips.some((value) => clipMatchesTarget(value, rawClip))) return undefined;
   return shotId;
 }
 

@@ -786,7 +786,27 @@ export class RuntimeDataProvider implements DataProvider {
 
   /** Public verified history pins plus scoped immutable reads, never projected rows. */
   async loadTimelineCommandBasis(timelineId: string): Promise<TimelineCommandBasis> {
-    const history = await this.listTimelineCommits(timelineId);
+    const firstHistory = await this.listTimelineCommits(timelineId);
+    const pages = [firstHistory];
+    const seenCursors = new Set<string>();
+    while (pages[pages.length - 1]!.next_cursor !== null) {
+      const cursor = pages[pages.length - 1]!.next_cursor!;
+      if (seenCursors.has(cursor)) {
+        throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a cyclic timeline history cursor');
+      }
+      seenCursors.add(cursor);
+      const next = await this.listTimelineCommits(timelineId, cursor);
+      if (next.head.revision_id !== firstHistory.head.revision_id
+        || next.head.publication_id !== firstHistory.head.publication_id) {
+        throw new TimelineSchemaIncompatibleError('Workspace Runtime changed the captured timeline history head');
+      }
+      pages.push(next);
+    }
+    const history: HistoryPage = {
+      ...firstHistory,
+      items: pages.flatMap((page) => page.items),
+      next_cursor: null,
+    };
     const head = history.head;
     if (!head?.revision_id || !head.publication_id) {
       throw new TimelineSchemaIncompatibleError('Timeline has no verified authoring history head');

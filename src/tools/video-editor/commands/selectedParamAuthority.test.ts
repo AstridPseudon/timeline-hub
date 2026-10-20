@@ -83,6 +83,29 @@ describe('resolveSelectedParamAuthority', () => {
     expect(resolveSelectedParamAuthority(selectedHistory(root, first, second))).toEqual(p2);
   });
 
+  it('preserves an accepted occurrence pin when the canonical shot materialization is concrete', () => {
+    const occurrenceSelect = 'occurrence:occ-a/clip:effect';
+    const root = entry('p0', 'r0', null, [], 'bootstrap');
+    const selected = entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [
+      record(p1, 'clip.set-element', {}, occurrenceSelect),
+    ]);
+    const input = selectedHistory(root, selected);
+    input.select = occurrenceSelect;
+    Object.assign(input, occurrenceBasis(input.rawClip));
+    expect(resolveSelectedParamAuthority(input)).toEqual(p1);
+  });
+
+  it('refuses an occurrence pin when its concrete shot materialization is missing', () => {
+    const occurrenceSelect = 'occurrence:occ-a/clip:effect';
+    const root = entry('p0', 'r0', null, [], 'bootstrap');
+    const selected = entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [
+      record(p1, 'clip.set-element', {}, occurrenceSelect),
+    ]);
+    const input = selectedHistory(root, selected);
+    input.select = occurrenceSelect;
+    expect(() => resolveSelectedParamAuthority(input)).toThrow(SelectedParamAuthorityError);
+  });
+
   it('refuses an authenticated history page whose items are out of predecessor order', () => {
     const root = entry('p0', 'r0', null, [], 'bootstrap');
     const selected = entry('p1', 'r1', { publication_id: 'p0', revision_id: 'r0' }, [record(p1)]);

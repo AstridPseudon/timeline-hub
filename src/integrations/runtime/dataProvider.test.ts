@@ -13,6 +13,7 @@ import { sanitizeTimelineClipSnapshot } from '@/tools/video-editor/lib/timeline-
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import type { ProjectObjectMetadata } from '@astrid/editor-sdk';
 import { MANAGED_OBJECT_DIGEST, MANAGED_OBJECT_ID, PROJECT_ID, TIMELINE_ID, json, runtimeFixture, sha256Digest } from '@/test/fakeWorkspaceRuntime.ts';
+import type { HistoryEntry, HistoryPage } from './generated.ts';
 
 const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
 
@@ -851,6 +852,73 @@ describe('RuntimeDataProvider', () => {
     });
     expect(loaded).not.toHaveProperty('thumbUrl');
     expect(requests).toContain('GET /v1/generations/generation-lightbox/variants?limit=200&cursor=variants-page-2');
+  });
+
+  it('loads the command basis from every authenticated history page', async () => {
+    const parentComposition = {
+      ...compactParentComposition(),
+      dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
+    };
+    const fixture = runtimeFixture({ parentComposition });
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        const response = await fixture.transport(method, path, headers, body);
+        if (path.endsWith('/composition-revisions/parent-r1')) {
+          const parent = JSON.parse(new TextDecoder().decode(response.body)) as Record<string, unknown>;
+          parent.dependency_manifest = parentComposition.dependency_manifest;
+          return { ...response, body: json(parent) };
+        }
+        return response;
+      },
+    });
+    const head = { revision_id: 'parent-r1', publication_id: 'publication-current' };
+    const entry = (publication_id: string, revision_id: string, previous: HistoryEntry['previous']) => ({
+      publication_id, revision_id, previous, intent: 'recorded', records: null,
+    } as unknown as HistoryEntry);
+    const first = {
+      items: [entry('publication-old', 'parent-old', null)], next_cursor: 'history-page-2', head,
+    } as HistoryPage;
+    const second = {
+      items: [entry('publication-current', 'parent-r1', { publication_id: 'publication-old', revision_id: 'parent-old' })],
+      next_cursor: null, head,
+    } as HistoryPage;
+    const list = vi.spyOn(provider, 'listTimelineCommits')
+      .mockResolvedValueOnce(first)
+      .mockResolvedValueOnce(second);
+
+    const basis = await provider.loadTimelineCommandBasis(TIMELINE_ID);
+
+    expect(list).toHaveBeenNthCalledWith(1, TIMELINE_ID);
+    expect(list).toHaveBeenNthCalledWith(2, TIMELINE_ID, 'history-page-2');
+    expect(basis.history?.items.map((item) => item.publication_id)).toEqual([
+      'publication-old', 'publication-current',
+    ]);
+    expect(basis.history?.next_cursor).toBeNull();
+  });
+
+  it.each([
+    ['a cyclic cursor', (provider: RuntimeDataProvider, head: HistoryPage['head']) => {
+      vi.spyOn(provider, 'listTimelineCommits')
+        .mockResolvedValue({ items: [], next_cursor: 'same', head });
+    }],
+    ['a changed captured head', (provider: RuntimeDataProvider, head: HistoryPage['head']) => {
+      vi.spyOn(provider, 'listTimelineCommits')
+        .mockResolvedValueOnce({ items: [], next_cursor: 'history-page-2', head })
+        .mockResolvedValueOnce({ items: [], next_cursor: null,
+          head: { revision_id: 'changed-revision', publication_id: 'changed-publication' } });
+    }],
+  ])('refuses %s while loading the command basis', async (_label, setup) => {
+    const parentComposition = {
+      ...compactParentComposition(),
+      dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
+    };
+    const fixture = runtimeFixture({ parentComposition });
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+    const head = { revision_id: 'parent-r1', publication_id: 'publication-current' };
+    setup(provider, head);
+
+    await expect(provider.loadTimelineCommandBasis(TIMELINE_ID)).rejects.toThrow(TimelineSchemaIncompatibleError);
   });
 
   it('uses the authenticated generated client for canonical read/save/readback/reload', async () => {
