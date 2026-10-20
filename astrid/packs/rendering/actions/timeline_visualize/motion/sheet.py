@@ -109,6 +109,7 @@ def plan_motion_frames(
 def build_context(
     snapshot: Mapping[str, Any], cut: Mapping[str, Any], frames: Mapping[int, Path], *, fps: float,
     frame_size: tuple[int, int], beats: Mapping[str, Any] | None = None, layer_names: Sequence[str] = (),
+    frame_provider: Any | None = None,
 ) -> LayerContext:
     occurrences, elements = snapshot_elements(snapshot)
     cuts = picture_cuts(occurrences, fps=fps)
@@ -150,6 +151,24 @@ def build_context(
     ctx.shared["layer_names"] = tuple(layer_names)
     config = snapshot.get("config")
     ctx.shared["config"] = config if isinstance(config, Mapping) else {}
+    # Internal handoff only: facts come from the exact successful fresh Root
+    # callback or this owner's trusted cache entry. PNG-only/mixed misses stay
+    # out of the map so consumers retain their established fallbacks.
+    public_scene = {}
+    if frame_provider is not None:
+        source_identity = getattr(frame_provider, "source_identity", "")
+        scene_for_frame = getattr(frame_provider, "scene_for_frame", None)
+        if source_identity and callable(scene_for_frame):
+            for frame in sorted(frames):
+                capture = scene_for_frame(frame)
+                facts = getattr(capture, "_frame_facts", None) if capture is not None else None
+                if not callable(facts):
+                    continue
+                try:
+                    public_scene[frame] = facts(frame, source_identity=source_identity)
+                except Exception:  # noqa: BLE001 - public facts are optional
+                    public_scene.pop(frame, None)
+    ctx.shared["public_scene"] = public_scene
     return ctx
 
 

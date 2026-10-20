@@ -99,6 +99,16 @@ class CaptureSceneLabels:
             raise SceneQueryUnavailable("scene unavailable for this capture source/frame")
         return copy.deepcopy(self._answers[frame])
 
+    def _frame_facts(self, frame: int, *, source_identity: str) -> dict[str, Any]:
+        """Return retained public facts for an internal visualize consumer."""
+        answer = self.frame(frame, source_identity=source_identity)
+        return {
+            "answer": answer,
+            "basis": {"width": self._basis["width"], "height": self._basis["height"],
+                      "fps": self._basis["fps"]},
+            "addresses": dict(self._addresses),
+        }
+
     def labels(self, frame: int, *, source_identity: str):
         from .overlays.labels import labels_for_scene
 
