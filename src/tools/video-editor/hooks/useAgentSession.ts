@@ -475,14 +475,14 @@ export class AstridAgentSessionStore {
     return { ...catalog, selectedAgent: agent };
   }
   async setModel(model: string, sessionId?: string | null, projectId?: string | null) {
-    if (this.activePrompts.size > 0) throw new Error('Wait for the active agent turn before switching models.');
+    if (sessionId && this.activePrompts.has(sessionId)) throw new Error('Wait for the active agent turn before switching models.');
     if (!sessionId || !projectId) throw new Error('Select a project and chat to choose its model.');
     const agent = sessionAgentId(sessionId);
     await this.assertOwned(projectId, sessionId);
     const connectionId = await this.connection(agent);
     await this.load(connectionId, sessionId);
     await this.pullEvents();
-    this.assertWriter(sessionId);
+    this.assertCanStartTurn(sessionId);
     const { models } = await this.client.acp.setSessionModel(connectionId, sessionId, model, projectId);
     if (!models) throw new Error('This agent did not report a model selection.');
     await this.pullEvents();
@@ -1052,9 +1052,17 @@ export function useAgentModels(enabled = true, sessionId?: string | null, projec
 export function useSetAgentModel(sessionId?: string | null, projectId?: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (selection: string | { sessionId: string; model?: string; thoughtLevel?: string }) => typeof selection === 'string'
-      ? sessionId ? agentStore.setModel(selection, sessionId, projectId) : agentStore.setModel(selection)
-      : agentStore.configureSessionSelection(selection.sessionId, projectId, selection.model, selection.thoughtLevel),
+    mutationFn: async (selection: string | { sessionId: string; model?: string; thoughtLevel?: string }) => {
+      if (typeof selection === 'string') return sessionId ? agentStore.setModel(selection, sessionId, projectId) : agentStore.setModel(selection);
+      // Join the new session's initial options read if the panel already started
+      // it. Use its explicit ID rather than the previous render's active chat.
+      await queryClient.fetchQuery({
+        queryKey: [...agentModelsQueryKey, selection.sessionId, projectId ?? null],
+        queryFn: () => agentStore.models(selection.sessionId, projectId),
+        retry: false,
+      });
+      return agentStore.configureSessionSelection(selection.sessionId, projectId, selection.model, selection.thoughtLevel);
+    },
     onSuccess: () => { void queryClient.invalidateQueries({ queryKey: agentModelsQueryKey }); },
   });
 }

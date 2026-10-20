@@ -991,6 +991,8 @@ function AvailableAgentChatPanel({
       const saved = savedLocalAgentModel(chosen);
       const target = model ?? (saved && (chosen === 'astrid' || agentModelLists[chosen].some(choice => choice.id === saved)) ? saved : undefined);
       sessionId = await handleNewSession();
+      // The selection mutation awaits this session's first options read before
+      // setting the model, refreshing its options, and applying the level.
       if (sessionId) await setAgentModel.mutateAsync({ sessionId, model: target, thoughtLevel });
     } catch (error) {
       setStartFailure({ agent: chosen, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error) });

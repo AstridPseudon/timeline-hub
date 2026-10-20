@@ -86,6 +86,7 @@ function payloadKey(params: unknown): string {
 }
 
 type JsonRecord = Record<string, unknown>;
+type ConfigChange = { method: 'session/set_model' | 'session/set_config_option'; params?: unknown };
 
 function editorRequestId(params: unknown): string | null {
   const input = object(params);
@@ -115,6 +116,7 @@ function payloadText(params: unknown): string {
 
 export class SharedAcpSessions {
   private readonly sessions = new Map<string, Session>();
+  private readonly pendingRequests = new WeakMap<AcpProcessHost, Promise<void>>();
 
   constructor(
     private readonly emit: (client: SharedAcpSessionClient, notification: AcpRpcNotification) => void,
@@ -122,6 +124,48 @@ export class SharedAcpSessions {
   ) {}
 
   async request(client: SharedAcpSessionClient, method: string, params?: unknown): Promise<unknown> {
+    const id = sessionId(params);
+    const session = id ? this.sessions.get(id) : undefined;
+    if (method === 'session/set_model' || method === 'session/set_config_option') {
+      return this.changeConfig(client, id ?? '', () => ({ method, params }));
+    }
+    // Prompts keep their own session reservation; cancellation and cached replay
+    // must remain available during a turn. All native non-prompt RPCs share the
+    // physical connection's queue, including writes forwarded by another tab.
+    if (method === 'session/prompt' || ((method === 'session/load' || method === 'session/resume') && session)) {
+      return this.dispatch(client, method, params);
+    }
+    return this.enqueue(session?.host ?? client.host, () => this.dispatch(client, method, params));
+  }
+
+  async changeConfig(client: SharedAcpSessionClient, id: string, resolve: (snapshot: unknown) => ConfigChange): Promise<unknown> {
+    const target = this.requireSession(client, id);
+    this.requireWriter(target, client);
+    this.requireNoPrompt(target);
+    return this.enqueue(target.host, async () => {
+      const session = this.requireSession(client, id);
+      this.requireWriter(session, client);
+      this.requireNoPrompt(session);
+      // Resolve advertised IDs/values only after pending loads and setters have
+      // updated the snapshot, rather than validating against stale options.
+      const change = resolve(session.loadedResult);
+      return this.dispatch(client, change.method, change.params);
+    });
+  }
+
+  private enqueue(host: AcpProcessHost, run: () => Promise<unknown>): Promise<unknown> {
+    const prior = this.pendingRequests.get(host);
+    const result = prior ? prior.then(run) : run();
+    // A failed read or setter must not poison the rest of the queue.
+    const settled = result.then(() => {}, () => {});
+    this.pendingRequests.set(host, settled);
+    void settled.then(() => {
+      if (this.pendingRequests.get(host) === settled) this.pendingRequests.delete(host);
+    });
+    return result;
+  }
+
+  private async dispatch(client: SharedAcpSessionClient, method: string, params?: unknown): Promise<unknown> {
     if (method === 'session/new') {
       const result = await client.host.request(method, params);
       const id = sessionId(result);
@@ -139,6 +183,7 @@ export class SharedAcpSessions {
     if (method === 'session/prompt') return this.prompt(client, session, params);
     if (method === 'session/close' || method === 'session/fork' || method === 'session/set_config_option' || method === 'session/set_model') {
       this.requireWriter(session, client);
+      if (method === 'session/set_config_option' || method === 'session/set_model') this.requireNoPrompt(session);
       this.requireIdle(session);
       session.changing = true;
       try {
@@ -358,6 +403,10 @@ export class SharedAcpSessions {
 
   private requireIdle(session: Session): void {
     if (session.activeRequestId !== null || session.changing) throw new ChatError(409, 'session_busy', 'This session has an active request.');
+  }
+
+  private requireNoPrompt(session: Session): void {
+    if (session.activeRequestId !== null) throw new ChatError(409, 'acp_request_in_progress', 'Wait for the current ACP request to finish before changing models or settings');
   }
 
   private broadcast(session: Session, notification: AcpRpcNotification): void {

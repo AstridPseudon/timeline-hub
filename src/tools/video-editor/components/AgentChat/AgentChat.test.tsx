@@ -402,11 +402,14 @@ describe('AgentChat', () => {
     state.projectChats['project-1'].selected_session_id = oldId;
     state.projectChats['project-1'].sessions = [{ id: oldId }];
     state.activeSessionData.id = oldId;
-    state.createSession.mutateAsync.mockImplementationOnce(async () => {
-      state.projectChats['project-1'].selected_session_id = newId;
-      state.projectChats['project-1'].sessions.push({ id: newId });
-      return { id: newId };
-    });
+    let finishCreation!: () => void;
+    state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(yes => {
+      finishCreation = () => {
+        state.projectChats['project-1'].selected_session_id = newId;
+        state.projectChats['project-1'].sessions.push({ id: newId });
+        yes({ id: newId });
+      };
+    }));
     mockFromState(state);
     mocks.useAgentModels.mockReturnValue({ data: { providers: [], currentModel: null, localModels: {
       currentModelId: 'sol', availableModels: [{ modelId: 'sol', name: 'Sol' }], thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low',
@@ -425,6 +428,10 @@ describe('AgentChat', () => {
     expect(selection).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Choose a thinking level for Sol' })).toHaveTextContent('Low');
     fireEvent.click(screen.getByRole('option', { name: /Sol/ }));
+    await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledOnce());
+    expect(selection).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox')).toBeDisabled();
+    await act(async () => { finishCreation(); });
     await waitFor(() => expect(selection).toHaveBeenCalledWith({ sessionId: newId, model: 'sol', thoughtLevel: 'low' }));
     expect(screen.getByRole('textbox')).toBeDisabled();
     await act(async () => { if (outcome === 'success') resolve(); else reject(new Error('Effort rejected')); });

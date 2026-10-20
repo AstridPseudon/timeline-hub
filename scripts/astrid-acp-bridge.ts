@@ -480,16 +480,16 @@ export class AstridAcpBridge {
         if (!body || Object.keys(body).some(key => !['sessionId', 'modelId', 'project_id'].includes(key)) || typeof body.sessionId !== 'string' || typeof body.modelId !== 'string' || !body.sessionId || !body.modelId || (body.project_id !== undefined && typeof body.project_id !== 'string')) {
           throw new ChatError(400, 'invalid_body', 'sessionId and modelId are required');
         }
-        if (connection.inFlight > 1) throw new ChatError(409, 'acp_request_in_progress', 'Wait for the current ACP request to finish before changing models');
         if (!connection.sessions.has(body.sessionId)) throw new ChatError(403, 'session_not_owned', 'This ACP connection does not own that session');
-        this.rememberSession(connection, 'session/load', body, this.sharedSessions.snapshot(connection, body.sessionId));
-        const models = connection.models.get(body.sessionId);
-        if (!models?.availableModels.some(model => model.modelId === body.modelId)) throw new ChatError(409, 'model_unavailable', 'The requested model was not advertised for this session');
-        const configId = models.modelConfigId;
-        const usesConfigOption = Boolean(configId);
-        const result = usesConfigOption
-          ? await this.sharedSessions.request(connection, 'session/set_config_option', { sessionId: body.sessionId, configId, value: body.modelId })
-          : await this.sharedSessions.request(connection, 'session/set_model', { sessionId: body.sessionId, modelId: body.modelId });
+        const { sessionId, modelId } = body;
+        const result = await this.sharedSessions.changeConfig(connection, sessionId, snapshot => {
+          this.rememberSession(connection, 'session/load', body, snapshot);
+          const models = connection.models.get(sessionId);
+          if (!models?.availableModels.some(model => model.modelId === modelId)) throw new ChatError(409, 'model_unavailable', 'The requested model was not advertised for this session');
+          return models.modelConfigId
+            ? { method: 'session/set_config_option', params: { sessionId, configId: models.modelConfigId, value: modelId } }
+            : { method: 'session/set_model', params: { sessionId, modelId } };
+        });
         this.updateLocalModelState(connection, body.sessionId, body.modelId);
         connection.defaultModelId = body.modelId;
         if (typeof body.project_id === 'string') await this.chatRegistry?.setSessionModel(body.project_id, body.sessionId, body.modelId);
@@ -870,12 +870,17 @@ export class AstridAcpBridge {
       if (!connection.sessions.has(input.sessionId)) throw new Error('config option sessionId is not owned by this ACP connection');
       if (typeof input.configId !== 'string' || !input.configId) throw new Error('config option id is required');
       if (typeof input.value !== 'string' || !input.value) throw new Error('config option value is required');
-      this.rememberSession(connection, 'session/load', input, this.sharedSessions.snapshot(connection, input.sessionId));
-      const allowedValues = connection.configOptions.get(input.sessionId)?.get(input.configId);
-      if (!allowedValues?.has(input.value)) throw new Error('config option value was not advertised for this session');
     }
     let result = method === 'session/takeover'
       ? await this.sharedSessions.takeover(connection, String(asRecord(params)?.sessionId ?? ''))
+      : method === 'session/set_config_option'
+      ? await this.sharedSessions.changeConfig(connection, String(asRecord(params)?.sessionId), snapshot => {
+        const input = asRecord(params)!;
+        this.rememberSession(connection, 'session/load', input, snapshot);
+        const allowedValues = connection.configOptions.get(input.sessionId as string)?.get(input.configId as string);
+        if (!allowedValues?.has(input.value as string)) throw new Error('config option value was not advertised for this session');
+        return { method: 'session/set_config_option', params };
+      })
       : await this.sharedSessions.request(connection, method, params);
     if (method === 'session/new' || method === 'session/load' || method === 'session/resume' || method === 'session/fork') {
       this.rememberSession(connection, method, params, result);

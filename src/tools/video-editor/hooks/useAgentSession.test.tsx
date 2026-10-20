@@ -443,6 +443,63 @@ describe('timeline agent ACP chat', () => {
     expect(acp.setConfigOption).toHaveBeenCalledWith('connection', sessionId, configId, thoughtLevel ?? 'high');
   });
 
+  it.each(['success', 'failure'] as const)('awaits the new chat options already being read before configuring its model and level (%s)', async outcome => {
+    let finishOptions!: (value: { providers: []; currentModel: null }) => void;
+    let failOptions!: (error: Error) => void;
+    const options = new Promise<{ providers: []; currentModel: null }>((yes, no) => { finishOptions = yes; failOptions = no; });
+    const models = vi.spyOn(AstridAgentSessionStore.prototype, 'models').mockReturnValue(options);
+    const configure = vi.spyOn(AstridAgentSessionStore.prototype, 'configureSessionSelection').mockResolvedValue(undefined);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const hook = renderHook(() => ({
+      models: useAgentModels(true, 'claude-code:new', 'project'),
+      // Startup still holds a callback from the previous active chat's render.
+      selection: useSetAgentModel('claude-code:old', 'project'),
+    }), { wrapper: wrapperWithClient(client) });
+    try {
+      await waitFor(() => expect(models).toHaveBeenCalledWith('claude-code:new', 'project'));
+      const selection = { sessionId: 'claude-code:new', model: 'opus', thoughtLevel: 'high' };
+      let startup!: Promise<unknown>;
+      await act(async () => {
+        startup = hook.result.current.selection.mutateAsync(selection).catch(error => error);
+      });
+      expect(configure).not.toHaveBeenCalled();
+      expect(models).toHaveBeenCalledOnce(); // the mutation joins the panel's query
+      const failure = new Error('Options read failed');
+      await act(async () => {
+        if (outcome === 'success') finishOptions({ providers: [], currentModel: null });
+        else failOptions(failure);
+        await startup;
+      });
+      if (outcome === 'success') expect(configure).toHaveBeenCalledExactlyOnceWith('claude-code:new', 'project', 'opus', 'high');
+      else {
+        expect(await startup).toBe(failure);
+        expect(configure).not.toHaveBeenCalled();
+      }
+    } finally { hook.unmount(); client.clear(); }
+  });
+
+  it('allows configuring an idle chat while another chat has an active prompt', async () => {
+    let finishPrompt!: () => void;
+    const promptWait = new Promise<void>(yes => { finishPrompt = yes; });
+    const acp = {
+      projectChat: vi.fn(async () => ({ sessions: [{ id: 'codex:busy' }, { id: 'codex:idle' }] })),
+      connect: vi.fn(async () => ({ connection_id: 'connection' })),
+      loadSession: vi.fn(async () => ({})),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
+      promptProjectSession: vi.fn(async () => { await promptWait; }),
+      setSessionModel: vi.fn(async () => ({ models: { currentModelId: 'b', availableModels: [] } })),
+      sessionModels: vi.fn(async () => ({ models: { currentModelId: 'b', availableModels: [] } })),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    const prompt = store.prompt('codex:busy', { message: 'hello' }, { tool: 'video-editor', projectId: 'project', projectSlug: null, timelineId: null, timelineName: null });
+    try {
+      await vi.waitFor(() => expect(acp.promptProjectSession).toHaveBeenCalledOnce());
+      await expect(store.setModel('b', 'codex:busy', 'project')).rejects.toThrow('Wait for the active agent turn');
+      await store.configureSessionSelection('codex:idle', 'project', 'b');
+      expect(acp.setSessionModel).toHaveBeenCalledExactlyOnceWith('connection', 'codex:idle', 'b', 'project');
+    } finally { finishPrompt(); await prompt; }
+  });
+
   it.each(['hermes:no-levels', 'omp-no-levels'])('does not set effort when %s has no levels', async sessionId => {
     const setConfigOption = vi.fn();
     const store = new AstridAgentSessionStore({ acp: {
