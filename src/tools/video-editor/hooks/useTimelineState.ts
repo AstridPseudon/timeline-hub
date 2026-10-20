@@ -1239,6 +1239,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     trackLabel: save.commands.trackLabelPort,
     shotSet: save.commands.shotSetPort,
     parentClipAddMedia: save.commands.parentClipAddMediaPort,
+    parentClipSwapMedia: save.commands.parentClipSwapMediaPort,
     occurrenceDuplicate: save.commands.occurrenceDuplicatePort,
     transcriptHost,
     setInputModality: editor.setInputModality,
@@ -1301,7 +1302,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
     save.commands.port, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipParamsPort,
     save.commands.elementPort, save.commands.trackLabelPort, save.commands.shotSetPort,
-    save.commands.parentClipAddMediaPort, save.commands.occurrenceDuplicatePort]);
+    save.commands.parentClipAddMediaPort, save.commands.parentClipSwapMediaPort, save.commands.occurrenceDuplicatePort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,
