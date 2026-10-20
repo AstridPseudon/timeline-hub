@@ -1,6 +1,6 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { stat } from 'node:fs/promises';
-import { isAbsolute, join } from 'node:path';
+import { delimiter, isAbsolute, join } from 'node:path';
 import type { DirectHarness } from '../../local/support/harness';
 
 export interface PackHostSession {
@@ -35,18 +35,19 @@ export async function startRealPackHost(
     throw new Error('Approved Agent pack-host helper is absent from frozen ASTRID_CHECKOUT');
   }
   if (options.signal?.aborted) throw new Error('Pack-host startup aborted');
+  env.PYTHONPATH = [source, env.PYTHONPATH].filter(Boolean).join(delimiter);
+  const startupDeadline = performance.now() + (options.startupTimeoutMs ?? 210_000);
   let child: ChildProcessWithoutNullStreams;
   try {
-    child = (options.spawn ?? spawn)(python, [helper,
+    child = (options.spawn ?? spawn)(python, ['-m', 'tests.packs.rendering.real_pack_host',
       '--realm-dir', harness.realmDir, '--support-dir', harness.supportDir,
       '--discovery-file', join(harness.supportDir, 'discovery.json'),
       '--source-checkout', source, '--runtime-instance-id', harness.runtimeInstanceId,
-    ], { cwd: harness.tmp, env, stdio: 'pipe', detached: false }) as ChildProcessWithoutNullStreams;
+    ], { cwd: source, env, stdio: 'pipe', detached: false }) as ChildProcessWithoutNullStreams;
   } catch {
     throw new Error('Pack-host helper could not be spawned');
   }
 
-  const startupTimeout = options.startupTimeoutMs ?? 210_000;
   const stopTimeout = options.stopTimeoutMs ?? 30_000;
   const changed = new Set<() => void>();
   const notify = () => { for (const wake of changed) wake(); };
@@ -117,7 +118,7 @@ export async function startRealPackHost(
     notify();
   });
 
-  function waitUntil(done: () => boolean, timeout: number, label: string, checkFailure = true): Promise<void> {
+  function waitUntil(done: () => boolean, deadline: number, label: string, checkFailure = true): Promise<void> {
     return new Promise((resolve, reject) => {
       const finish = (error?: Error) => {
         clearTimeout(timer);
@@ -126,10 +127,11 @@ export async function startRealPackHost(
       };
       const wake = () => {
         if (checkFailure && failure) finish(failure);
+        else if (performance.now() >= deadline) finish(new Error(label));
         else if (done()) finish();
         else if (checkFailure && closed) finish(new Error('Pack-host helper exited during startup'));
       };
-      const timer = setTimeout(() => finish(new Error(label)), timeout);
+      const timer = setTimeout(() => finish(new Error(label)), Math.max(0, deadline - performance.now()));
       changed.add(wake);
       wake();
     });
@@ -141,12 +143,12 @@ export async function startRealPackHost(
       if (!closed) {
         try { child.stdin.end('stop\n'); } catch { fail('Pack-host helper input failed'); }
         try {
-          await waitUntil(() => closed, stopTimeout, 'Pack-host helper cleanup timed out', false);
+          await waitUntil(() => closed, performance.now() + stopTimeout, 'Pack-host helper cleanup timed out', false);
         } catch {
           // Only the direct helper receives this signal. The approved Agent
           // helper must clean its owned host on SIGTERM, including during launch.
           child.kill('SIGTERM');
-          await waitUntil(() => closed, stopTimeout, 'Pack-host helper did not exit after SIGTERM', false);
+          await waitUntil(() => closed, performance.now() + stopTimeout, 'Pack-host helper did not exit after SIGTERM', false);
           throw new Error('Pack-host helper cleanup timed out; SIGTERM was required');
         }
       }
@@ -156,11 +158,11 @@ export async function startRealPackHost(
   }
 
   try {
-    await waitUntil(() => ready, startupTimeout, 'Pack-host helper readiness timed out');
+    await waitUntil(() => ready, startupDeadline, 'Pack-host helper readiness timed out');
     let catalogReady = false;
     void Promise.resolve().then(checkReady).then(() => { catalogReady = true; notify(); },
       () => fail('Runtime rendering capability readiness check failed', false));
-    await waitUntil(() => catalogReady, startupTimeout, 'Runtime rendering capability readiness timed out');
+    await waitUntil(() => catalogReady, startupDeadline, 'Runtime rendering capability readiness timed out');
     if (stopped || closed) throw new Error('Pack-host helper stopped during startup');
     options.signal?.removeEventListener('abort', aborted);
     return { stop };

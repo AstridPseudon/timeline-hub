@@ -3,7 +3,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { test } from 'node:test';
 import { startRealPackHost } from './bootstrap';
@@ -84,11 +84,13 @@ test('passes exact harness argv and parent environment; waits for catalog readin
     assert.equal(returned, false);
     release();
     const session = await pending;
-    assert.deepEqual(options.calls, [[f.env.ASTRID_PYTHON, [f.helperPath,
+    assert.deepEqual(options.calls, [[f.env.ASTRID_PYTHON, ['-m', 'tests.packs.rendering.real_pack_host',
       '--realm-dir', f.harness.realmDir, '--support-dir', f.harness.supportDir,
       '--discovery-file', join(f.harness.supportDir, 'discovery.json'),
       '--source-checkout', f.source, '--runtime-instance-id', f.harness.runtimeInstanceId,
-    ], { cwd: f.root, env: { ...f.env, ...f.runtimeEnv }, stdio: 'pipe', detached: false }]]);
+    ], { cwd: f.source, env: { ...f.env, ...f.runtimeEnv,
+      PYTHONPATH: [f.source, f.runtimeEnv.PYTHONPATH].join(delimiter),
+    }, stdio: 'pipe', detached: false }]]);
     const first = session.stop();
     assert.equal(session.stop(), first);
     await first;
@@ -97,6 +99,67 @@ test('passes exact harness argv and parent environment; waits for catalog readin
     assert.equal(helper.closed, true);
   } finally { await f.cleanup(); }
 });
+
+for (const catalogDelay of [70, 100]) {
+  test(`helper and catalog share one startup budget (120ms + ${catalogDelay}ms, budget 200ms)`, async t => {
+    const f = await fixture();
+    try {
+      let now = 0;
+      t.mock.method(performance, 'now', () => now);
+      t.mock.timers.enable({ apis: ['setTimeout'] });
+      let cleaning!: () => void;
+      const cleaningUp = new Promise<void>(resolve => { cleaning = resolve; });
+      const helper = new Helper(peer => {
+        // Cleanup has its own budget after startup expires.
+        setTimeout(() => { peer.send(STOPPED); peer.close(0); }, 40);
+        cleaning();
+      });
+      let spawned!: () => void;
+      const spawning = new Promise<void>(resolve => { spawned = resolve; });
+      let entered!: () => void;
+      const checkingCatalog = new Promise<void>(resolve => { entered = resolve; });
+      const options = { ...f.options(helper, spawned), startupTimeoutMs: 200 };
+      const pending = startRealPackHost(f.harness, () => {
+        entered();
+        return new Promise<void>(resolve => { setTimeout(resolve, catalogDelay); });
+      }, options);
+      const rejected = catalogDelay === 100
+        ? assert.rejects(pending, /^Error: Runtime rendering capability readiness timed out$/)
+        : undefined;
+      await spawning;
+      now = 120;
+      t.mock.timers.tick(120);
+      helper.send(READY);
+      await checkingCatalog;
+      now = catalogDelay === 70 ? 190 : 200;
+      t.mock.timers.tick(now - 120);
+      if (rejected) {
+        await cleaningUp;
+        // A late catalog result must not replace the startup timeout.
+        now = 220;
+        t.mock.timers.tick(20);
+        await Promise.resolve();
+        now = 240;
+        t.mock.timers.tick(20);
+        await rejected;
+      } else {
+        const session = await pending;
+        const stopping = session.stop();
+        await cleaningUp;
+        now = 230;
+        t.mock.timers.tick(40);
+        await stopping;
+      }
+      assert.equal(helper.input, 'stop\n');
+      assert.equal(helper.closed, true);
+      assert.deepEqual(helper.signals, []);
+    } finally {
+      t.mock.restoreAll();
+      t.mock.timers.reset();
+      await f.cleanup();
+    }
+  });
+}
 
 test('fails closed for absent or non-frozen source selection without spawning', async () => {
   const f = await fixture();
