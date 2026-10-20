@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T01:02:31Z | dispatcher heartbeat 2s -->
+<!-- viewing | 2026-10-20T01:07:39Z | dispatcher heartbeat 7s -->
 # viewing — 2026-10-20 00:58 UTC
 Milestone: M0 COMPLETE; Viewing M1 exit satisfied. Global M1 still OPEN in PLAN; Agent/App consumerpins/integration remain held. M3 source integrated independently, package/adapters/parity/deletion work continues.
 Integrated: Composition2ac77f4/0.0.9 (92a source), ONE central composition-full-1020001557-12697 npm test59PASS0FAIL0SKIP. Locked build/publicsmoke/stricttypes/SSR+managercleanbuild/repeatpack BYTE-EQUAL57557B/77files SHAfa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61. Nativeoutgoingdefault/halfopen unchanged; canonicalincomingcompiler/ONEplanner. App/Agent STILL8/hash93bc. M1f816→2b8 portableactualpublicSSR+normalcatalog central4PASS; Agentcurrentf6 metadata-only successor/fc guardproof5PASS; Runtime final3790PASS7exactoldFAIL18SKIP0new. App owns finalsource-awarefull; no duplicatefull requested.
