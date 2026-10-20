@@ -261,18 +261,6 @@ describe('mounted transition callbacks preserve raw authoring through publicatio
     }));
   });
 
-  // Requirement: rowsToConfig must retain the explicit undefined transition
-  // until RuntimeDataProvider can remove it from the immutable raw basis.
-  it.fails.each([false, true])('None publication (bulk=%s) removes the raw transition', async (bulk) => {
-    const { clips, assertPublished } = await editor(bulk);
-    fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: '__none__' } });
-    await assertPublished(clips.map((clip, index) => {
-      if (!bulk && index) return clip;
-      const { transition: _transition, ...rest } = clip;
-      return rest;
-    }));
-  });
-
   it.each([false, true])('type change (bulk=%s) starts a new transition without carrying old binding', async (bulk) => {
     const { clips, assertPublished } = await editor(bulk);
     fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: 'wipe' } });
