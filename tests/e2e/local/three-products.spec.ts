@@ -1258,7 +1258,7 @@ test('M2 native occurrence duplicate: lost ACK, Agent label, local label, restar
 
   // A disjoint Agent publication lands after the duplicate but before its ACK reaches the App.
   const agentEdit = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(duplicate),
-    { kind: 'label', trackId: 'V1', label: 'F2 Agent duplicate sibling' }, 'f2-duplicate-agent-label');
+    { kind: 'label', trackId: 'S1', label: 'F2 Agent duplicate sibling' }, 'f2-duplicate-agent-label');
   expect((agentEdit.data.canonical_document as any).parent_revision.payload.config.x_f2_opaque).toEqual(seed3.opaque.config);
 
   // B is captured over A and remains local until A's uncertain result is recovered.
@@ -1308,7 +1308,10 @@ test('M2 native occurrence duplicate: lost ACK, Agent label, local label, restar
   expect(localLabel.data.status).toBe('rebased');
   expect(JSON.parse(wire.posts[2].body).commands).toEqual(commandsOf(owner.intents[1].payload));
   expect((localLabel.data.canonical_document as any).parent_revision.payload.config).toMatchObject({
-    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'F2 duplicate local label' })]),
+    tracks: expect.arrayContaining([
+      expect.objectContaining({ id: 'V1', label: 'F2 duplicate local label' }),
+      expect.objectContaining({ id: 'S1', label: 'F2 Agent duplicate sibling' }),
+    ]),
     x_f2_opaque: seed3.opaque.config,
   });
   const postRecoveryDocument = localLabel.data.canonical_document;
@@ -1325,7 +1328,7 @@ test('M2 native occurrence duplicate: lost ACK, Agent label, local label, restar
     schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [localLabel.receipt.receipt_id] },
   }]);
   expect((undoLabel.data.canonical_document as any).parent_revision.payload.config).toMatchObject({
-    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'F2 Agent duplicate sibling' })]),
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'S1', label: 'F2 Agent duplicate sibling' })]),
   });
   expect((undoLabel.data.canonical_document.parent_revision.payload.occurrences as Array<Record<string, any>>)
     .some((occurrence) => occurrence.occurrence_id === duplicateOccurrenceId)).toBe(true);
