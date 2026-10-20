@@ -194,6 +194,7 @@ def renderer_environment_identity() -> str:
         *element_source_roots(checkout),
         ("local-elements", checkout / "astrid/packs/local/rendering/elements"),
         ("renderer-backend", checkout / "astrid/packs/rendering/rendering/renderers/remotion/run.py"),
+        ("renderer-root-preparation", checkout / "astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py"),
         ("rendering-elements", checkout / "astrid/packs/rendering/rendering/elements"),
         ("capture-provider", checkout / "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py"),
         ("element-catalog", checkout / "astrid/packs/rendering/rendering/elements/catalog.ts"),

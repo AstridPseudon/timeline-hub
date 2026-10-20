@@ -10,6 +10,7 @@ import os
 import struct
 import subprocess
 import wave
+from contextlib import nullcontext
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -375,3 +376,34 @@ def test_shared_threejs_executor_keeps_its_existing_source_path(normal_run, monk
     normal_run.expected_source_count = 0
     normal_run.execute(composition_id="ThreeTimelineComposition")
     assert normal_run.events == ["server-enter", "consume", "server-exit"]
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_read_only_root_context_holds_normal_pcm_until_query_exits(normal_run, tmp_path, failure):
+    state = normal_run
+    output = tmp_path / "out.mp4"
+    with pytest.raises(RuntimeError, match="query failed") if failure else nullcontext():
+        with remotion._prepared_remotion_root(
+            state.timeline_path, state.registry, output,
+            provenance_out_path=output,
+            project_dir=Path(os.environ["ASTRID_REMOTION_PROJECT_DIR"]),
+            composition_id="TimelineComposition", theme_path=None, min_free_gb=None,
+            materialized_objects=state.materialized_objects, staging_parent=tmp_path,
+            window=state.render_request.window,
+            composition_duration_frames=remotion._composition_duration_from_request(state.render_request),
+        ) as prepared:
+            props, props_path = prepared[:2]
+            assert state.server.alive and state.events == ["server-enter"]
+            assert json.loads(props_path.read_text()) == props
+            for clip in props["timeline"]["clips"]:
+                source = clip.get("audio", {}).get("render_source")
+                if source:
+                    path = state.server.root / source["file"].removeprefix("http://attempt.invalid/")
+                    assert path.is_file() and path.read_bytes().startswith(b"RIFF")
+                    state.paths.append(path)
+            assert len(state.paths) == state.expected_source_count
+            if failure:
+                raise RuntimeError("query failed")
+    assert state.events == ["server-enter", "server-exit"]
+    assert not output.exists() and not props_path.exists()
+    assert all(not path.exists() for path in state.paths)
