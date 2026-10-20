@@ -1,0 +1,5 @@
+astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+tests/packs/rendering/presenter_scene_capability.mjs
+tests/packs/rendering/test_presenter_crop_equivalence.py

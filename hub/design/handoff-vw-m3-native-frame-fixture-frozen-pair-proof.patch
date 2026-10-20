@@ -1,0 +1,8 @@
+Generated from:
+
+    git diff dba11c8432cee8df6e8bced4eae4d82e79f2b652 -- tests/e2e/timeline/viewing-parity/native-fixture.integration.test.ts
+
+The exact executable patch is intentionally represented by the source-tree diff command
+above; the worker worktree remains the merge source of truth. Final source file SHA-256:
+
+    b1c43e437b55d11b4dd0845eb89a25332e1c5921c3d31baa49bdb5144c4b967b

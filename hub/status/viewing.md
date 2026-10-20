@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T14:19:33Z | dispatcher heartbeat 14s -->
+<!-- viewing | 2026-10-20T14:24:57Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | status age 7m -->
 # viewing — 2026-10-20 14:18 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Gates6/7 OPEN.
 Integrated: Composition5a4e9b72f/tree13e37553, public0.0.13 additive admission export ONLY; central composition-full-1020134123-9841 npmtest76PASS/0FAIL/0SKIP. Immutable58477B/77members SHA9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738; old12/11 unchanged. Flat archive+manifest+AppFIRST/AgentTHEN instructions design/release13-current-consumer-handoff.md. Main67b8 ancestry joined unchanged earlier.

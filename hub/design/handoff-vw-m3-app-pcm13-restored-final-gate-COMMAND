@@ -1,0 +1,17 @@
+Independent source checks:
+git -C /home/user/banodoco/reigh-app show tl/vw-m3-app-pcm13-actual-consumer-unit:src/tools/video-editor/compositions/AudioTrack.tsx | sha256sum
+git -C /home/user/banodoco/reigh-app show tl/vw-m3-app-pcm13-preserve-audible-cases:src/tools/video-editor/compositions/AudioTrack.tsx | sha256sum
+cmp <(git -C /home/user/banodoco/reigh-app show tl/vw-m3-app-pcm13-actual-consumer-unit:src/tools/video-editor/compositions/AudioTrack.tsx) <(git -C /home/user/banodoco/reigh-app show tl/vw-m3-app-pcm13-preserve-audible-cases:src/tools/video-editor/compositions/AudioTrack.tsx)
+git -C /home/user/banodoco/reigh-app diff --check b1ef4b9b9..tl/vw-m3-app-pcm13-preserve-audible-cases
+git -C /home/user/banodoco/reigh-app diff --check 2e9939810cbe600d1f7cfcf16d987e50bdecaaeb..tl/vw-m3-app-pcm13-preserve-audible-cases
+
+Restored regression groups (private exact six-file overlay, own cache, no shared writes):
+/home/user/work/app/node_modules/.bin/vitest run --no-cache --configLoader=runner --maxWorkers=1 --config /tmp/vw-m3-app-pcm13-restored-final-gate-review.1x6a9c/.pcm13-review.config.mjs --testNamePattern='keeps unsupported fade values|sanitizes invalid authored speed|applies the public continuous PCM envelope|preserves exact authored fade boundaries|multiplies overlapping fade ramps|preserves continuous PCM for the retained fade matrix|uses an authored public envelope before legacy fades|transitions between native and prepared envelope sources|keeps boosted fade frames below unity|applies nested|retains Web Audio admission for a nested boost|keeps boosted PCM samples in authored time' src/tools/video-editor/compositions/AudioTrack.test.tsx src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+Result: exit 0; 2 files / 34 selected tests passed; 56 unselected.
+
+Valid positive plus four forged admission cases:
+/home/user/work/app/node_modules/.bin/vitest run --no-cache --configLoader=runner --maxWorkers=1 --config /tmp/vw-m3-app-pcm13-restored-final-gate-review.1x6a9c/.pcm13-review.config.mjs --testNamePattern='keeps the public full-source PCM/WAV positive exact|plays a matching prepared positive|refuses (wrong envelope|raw fractional origin|wrong child rate|non-attempt URL)' src/tools/video-editor/compositions/continuousPCM.contract.test.tsx
+Result: exit 0; 1 file / 6 selected tests passed.
+
+Prior completed-branch evidence (reviewed, not repeated as a full matrix):
+exact five-file public13 overlay 116/116; lifetime 44/44; targeted ESLint exit 0.
