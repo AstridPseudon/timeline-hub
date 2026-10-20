@@ -47,6 +47,22 @@ const paramsPending = 'Selected parameters PENDING provider acceptance; draft pr
 const paramsUnsent = 'Selected parameters PENDING an accepted original basis; unsent draft preserved';
 const hasServerAfter = (commands: EditCommand[]) => commands.some((command) =>
   command.op === 'clip.set-params' || command.op === 'timeline.inverse');
+function selectedParamStates(bundle: AuthoredBundle) {
+  const state = new AuthoredState(bundle);
+  const params: Record<string, ReturnType<AuthoredState['get']>> = {};
+  for (const owner of ['parent', ...bundle.placements.map((row) => `occurrence:${row.occurrence_id}`)]) {
+    const direct = bundle.parent.clips;
+    const clips = owner === 'parent' && Array.isArray(direct) && direct.length ? direct : state.config(owner).clips;
+    for (const clip of Array.isArray(clips) ? clips : []) {
+      if (!object(clip)) continue;
+      const selected = object(clip.elementRef) && Object.keys(clip.elementRef).length ? clip.elementRef : clip.element_ref;
+      if (!object(selected) || typeof selected.packId !== 'string' || !selected.packId) continue;
+      const ref = `${owner}/clip:${clip.id}`;
+      params[ref] = state.get(ref, ['params']);
+    }
+  }
+  return params;
+}
 const json = (value: unknown): JSON => JSON.parse(JSON.stringify(value)) as JSON;
 const hasChildTrack = (bundle: AuthoredBundle, trackId: string) => Object.values(bundle.shots).some((shot) =>
   Array.isArray(shot.internal_timeline.tracks) && shot.internal_timeline.tracks.some((track) =>
@@ -559,11 +575,16 @@ export async function createTimelineCommandSession(options: Options) {
           || displayBasis.canonicalDocument?.parent_revision?.revision_id !== displayBasis.head.revisionId) {
           throw new Error('Recovered move has no verified original display basis');
         }
-        acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
+        const followsAcceptance = savedAcceptance && 'after' in basis && basis.after === record.accepted?.intentId;
+        acceptedBasis = followsAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
           : displayBasis;
         acceptedBundle = await authoringBundleFromDocument(acceptedBasis.canonicalDocument) as AuthoredBundle;
-        // Ordinary recovery retains B's original display; server-only effects come from acceptance.
-        const serverAfter = savedAcceptance && hasServerAfter(savedAcceptance.response.data.commands);
+        // Only B's accepted predecessor can replace its original display, never an older acceptance.
+        // Ordinary ACKs can carry earlier PARAM/inverse effects even after their commands are gone.
+        const serverAfter = followsAcceptance
+          && (hasServerAfter(savedAcceptance.response.data.commands)
+            || !equal(selectedParamStates(acceptedBundle), selectedParamStates(
+              await authoringBundleFromDocument(displayBasis.canonicalDocument) as AuthoredBundle)));
         if (serverAfter) bundle = workingBundle();
         await project(serverAfter ? acceptedBasis : displayBasis,
           record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));

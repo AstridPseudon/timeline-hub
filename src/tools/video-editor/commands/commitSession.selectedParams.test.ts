@@ -374,3 +374,86 @@ describe('selected server lifecycle regressions', () => {
     await session.dispose();
   });
 });
+
+describe('independent neighboring lifecycle probes', () => {
+  it.each(['selected', 'inverse'] as const)('recovers the accepted %s value after an intervening ordinary ACK and ordinary refusal', async (mode) => {
+    const { env, f, session, capture, project, mount, move } = await setup();
+    let pause = env.pause();
+    let accepting: Promise<unknown>;
+    if (mode === 'selected') {
+      submitClipParamsEdit(capture(), edit(f.pin));
+      accepting = session.flush();
+    } else {
+      pause.resolve();
+      submitClipParamsEdit(capture(), edit(f.pin));
+      await session.flush();
+      pause = env.pause();
+      accepting = session.undo();
+    }
+    const startCount = mode === 'selected' ? 1 : 2;
+    await vi.waitFor(() => expect(env.commits()).toHaveLength(startCount));
+    move(5);
+    move(7);
+    await vi.waitFor(async () => expect((await env.outboxes.list(scope))[0].intents).toHaveLength(3));
+    const [before] = await env.outboxes.list(scope);
+    // Trigger the refusal only after the first ordinary suffix has actually been accepted.
+    const send = env.provider.commitTimeline.bind(env.provider);
+    vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (request, key) => {
+      const result = await send(request, key);
+      if (request.commands[0].op === 'clip.move' && request.commands[0].args.on === 5) env.setFault('conflict');
+      return result;
+    });
+    pause.resolve();
+    if (mode === 'selected') await expect(accepting).rejects.toThrow('conflict');
+    else await accepting;
+    await expect(session.flush()).rejects.toThrow('conflict');
+    expect(session.getState().status).toBe('conflict');
+    const [saved] = await env.outboxes.list(scope);
+    expect(saved.intents).toHaveLength(1);
+    expect(saved.intents[0].payload).toEqual(before.intents.at(-1)!.payload);
+    expect((saved.accepted!.value as any).response.data.commands[0].op).toBe('clip.move');
+    const seed = mode === 'selected' ? 8 : 4;
+    expect((saved.accepted!.value as any).canonicalDocument.parent_revision.payload.clips[0].params.seed).toBe(seed);
+    expect(project.mock.calls.at(-1)![0].canonicalDocument.parent_revision.payload.clips[0].params.seed).toBe(seed);
+    await session.dispose();
+    const reopened = await mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
+    await reopened.recover(saved.ownerId);
+    expect(reopened.getState().status).toBe('conflict');
+    expect((await env.outboxes.list(scope))[0].intents).toEqual(saved.intents);
+    const recoveredSeed = project.mock.calls.at(-1)![0].canonicalDocument.parent_revision.payload.clips[0].params.seed;
+    await reopened.dispose();
+    expect(recoveredSeed).toBe(seed);
+  });
+
+  it.each(['selected', 'inverse'] as const)('keeps a newer original display closure when the last local acceptance was %s', async (mode) => {
+    const { env, f, session, capture, project, mount, move } = await setup();
+    submitClipParamsEdit(capture(), edit(f.pin));
+    await session.flush();
+    if (mode === 'inverse') await session.undo();
+    const remote = await env.external((raw) => {
+      const rows = raw.parent_revision.payload.clips as { params: Record<string, JSON> }[];
+      rows[0].params.seed = 6;
+      (raw.parent_revision.payload.config as { clips: unknown }).clips = structuredClone(rows);
+    });
+    session.observe(remote);
+    await vi.waitFor(() => expect(project.mock.calls.at(-1)![0]).toEqual(remote));
+    env.setFault('conflict');
+    move(5);
+    await expect(session.flush()).rejects.toThrow('conflict');
+    const [saved] = await env.outboxes.list(scope);
+    expect(saved.intents[0].basis).toEqual({ head: remote.head });
+    expect(saved.accepted!.head).not.toEqual(remote.head);
+    await session.dispose();
+    const count = env.commits().length;
+    const reopened = await mount(remote);
+    await reopened.recover(saved.ownerId);
+    expect(project.mock.calls.at(-1)).toEqual([remote, [(saved.intents[0].payload as { preview: TimelinePatch }).preview]]);
+    expect(reopened.getState().status).toBe('conflict');
+    const [recovered] = await env.outboxes.list(scope);
+    expect(recovered.intents).toEqual(saved.intents);
+    expect(recovered.pending).toEqual(saved.pending);
+    expect(recovered.accepted).toEqual(saved.accepted);
+    expect(env.commits()).toHaveLength(count);
+    await reopened.dispose();
+  });
+});
