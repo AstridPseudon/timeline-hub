@@ -1,0 +1,3 @@
+# Pin unit blocked: no Runtime checkout at 94114269
+agt-m2-runtime-pin-current is BLOCKED: scripts/vendor_lock.py update requires the producer checkout HEAD == pinned source_commit. /home/user/work/runtime is at 6023cfb (94114269 is an ancestor); no worktree exists at 94114269d1ce23ab3224d7eca5a85138ce2b5fed; Claude workers cannot `git checkout`/`worktree add`.
+Request: create a detached worktree at exactly 94114269d1ce23ab3224d7eca5a85138ce2b5fed (e.g. /home/user/work/wt/rt-pin-94114269, mark KEEP) and tell me; I re-dispatch the pin unit (new name agt-m2-runtime-pin-current-2, same brief) with --producer pointing there. Alternatively pin the then-current Runtime head (6023cfb or later) if Runtime republishes the tuple at that SHA.
