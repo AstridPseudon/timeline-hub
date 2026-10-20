@@ -33,6 +33,7 @@ import { buildBasicModeGenerationRequest as buildBasicModePhaseConfig } from '..
 import { UseShotSettingsReturn } from './useShotSettings';
 import type { PresetMetadata } from '@/shared/types/presetMetadata';
 import type { ActiveLora } from '@/domains/lora/types/lora';
+import type { ShotSetSettingsValues } from '@/tools/video-editor/commands/shotSetGesture.ts';
 
 interface UseVideoTravelSettingsHandlersParams {
   /** Ref to the shot settings - used to access current settings without triggering re-renders */
@@ -43,6 +44,8 @@ interface UseVideoTravelSettingsHandlersParams {
   selectedShot: Shot | null;
   /** Function to optimistically update the generation mode cache */
   updateShotMode: (shotId: string, mode: 'batch' | 'timeline' | 'by-pair') => void;
+  /** Capture a supported canonical setting before its local form update. */
+  onSettingsIntent?: (settings: Pick<ShotSetSettingsValues, 'prompt'>) => void;
 }
 
 export interface VideoTravelSettingsHandlers {
@@ -105,6 +108,7 @@ export const useVideoTravelSettingsHandlers = ({
   currentShotId,
   selectedShot,
   updateShotMode,
+  onSettingsIntent,
 }: UseVideoTravelSettingsHandlersParams): VideoTravelSettingsHandlers => {
   
   // Use refs to avoid recreating callbacks when these values change
@@ -147,8 +151,16 @@ export const useVideoTravelSettingsHandlers = ({
   // BATCH VIDEO SETTINGS
   // =============================================================================
   const handleBatchVideoPromptChange = useCallback((prompt: string) => {
+    try {
+      onSettingsIntent?.({ prompt });
+    } catch (error) {
+      // Keep the user's draft visible; canonical persistence will refuse it
+      // again without native authority instead of falling back to a snapshot.
+      shotSettingsRef.current.updateField('prompt', prompt);
+      throw error;
+    }
     shotSettingsRef.current.updateField('prompt', prompt);
-  }, [shotSettingsRef]);
+  }, [onSettingsIntent, shotSettingsRef]);
 
   const handleNegativePromptChange = useCallback((prompt: string) => {
     shotSettingsRef.current.updateField('negativePrompt', prompt);

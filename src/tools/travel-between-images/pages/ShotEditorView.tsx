@@ -367,8 +367,8 @@ export function ShotEditorView({
       });
       throw error;
     }
-    if (capturedSettingsEditRef.current) return;
     try {
+      if (capturedSettingsEditRef.current && equal(capturedSettingsEditRef.current.settings, settings)) return;
       capturedSettingsEditRef.current = {
         edit: captureShotSettingsEdit(
           shotSetPort,
@@ -538,6 +538,7 @@ export function ShotEditorView({
             availableLoras={availableLoras}
             updateShotMode={updateShotMode}
             shotSettingsPersistence={canonicalSettingsPersistence}
+            onSettingsIntent={editorReadOnly ? undefined : handleSettingsIntent}
           >
             <SettingsAutoDisable
               shotId={shotToEdit.id}
