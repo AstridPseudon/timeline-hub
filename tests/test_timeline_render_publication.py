@@ -9,10 +9,7 @@ import pytest
 from runtime_protocol.errors import ConflictError, LeaseError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-
-# The fixture authors its timeline document through create_timeline_document, which D04 retires.
-# D13 (the commit/render handoff that replaces publishTimelineRender) must restore these positives.
-pytestmark = pytest.mark.xfail(strict=True, reason="D13: publishTimelineRender fixture needs the commit-path replacement")
+from runtime_protocol.util import canonical_json, now
 
 
 def _digest(value: str | bytes) -> str:
@@ -48,9 +45,14 @@ def _ready_authoring_attempt(service):
         {"executor_id": "worker", "capabilities": list(digests), "max_concurrency": 4},
         idempotency_key="register-worker",
     )
-    service.create_timeline_document(
-        project["id"], {"timeline_id": "main", "slug": "main", "name": "Main", "config": {}, "registry": {}},
-        idempotency_key="create-timeline",
+    service.create_timeline(project["id"], "main", idempotency_key="create-timeline")
+    # publish_timeline_render still reads the timeline's config document; the retired
+    # create_timeline_document route was the only writer, so seed that row directly.
+    timestamp = now()
+    service.store.conn.execute(
+        "INSERT INTO project_documents VALUES (?, ?, ?, ?, 1, ?, ?)",
+        ("timeline:main", project["id"], "timeline.composition",
+         canonical_json({"slug": "main", "name": "Main", "config": {}, "registry": {}}), timestamp, timestamp),
     )
     children = []
     for index in range(2):
