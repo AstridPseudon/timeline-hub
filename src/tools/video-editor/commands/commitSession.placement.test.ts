@@ -11,6 +11,8 @@ import type { CommitAcceptedMutation, CommitRequest, Task } from '@/integrations
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { createCommitOutbox } from './commitOutbox.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
+import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 
 vi.mock('@/integrations/runtime/client.ts', async (original) => ({
   ...await original<typeof import('@/integrations/runtime/client.ts')>(),
@@ -121,7 +123,7 @@ function environment() {
   };
   const projected: TimelineCommandBasis[] = [];
   const directSend = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>(async () => { throw new Error('Placement must use the bound operation'); });
-  const mount = async (basis = initial) => {
+  const mount = async (basis = initial, project?: (basis: TimelineCommandBasis) => Promise<void>) => {
     const operationHost = new RuntimeOperationHost(fetchImpl as typeof fetch);
     operationHosts.push(operationHost);
     const operation = await operationHost.bind();
@@ -133,13 +135,14 @@ function environment() {
         return () => { events.delete(notify); unsubscribe(); };
       } },
       send: directSend, preview: () => { throw new Error('Automatic placement has no optimistic preview'); }, changed: () => {},
-      project: async (accepted) => { await projection?.promise; projected.push(accepted); },
+      project: async (accepted) => { await projection?.promise; await project?.(accepted); projected.push(accepted); },
     });
     sessions.push(session);
     return { session, operationHost, operation };
   };
-  async function admit(session: Awaited<ReturnType<typeof mount>>['session']) {
-    const prepared = await session.imageGeneration.prepare({ ownerRef: 'occurrence:occ-0', lane: 'V1', anchor: null });
+  async function admit(session: Awaited<ReturnType<typeof mount>>['session'],
+    target = { ownerRef: 'occurrence:occ-0', lane: 'V1', anchor: null as string | null }) {
+    const prepared = await session.imageGeneration.prepare(target);
     await prepared.client.tasks.admit(admission, prepared.reservation.key, prepared.reservation);
   }
   return { initial, outboxes, task, calls, receipts, projected, directSend, events, mount, admit,
@@ -228,6 +231,60 @@ describe('production command session automatic image continuation', () => {
     expect(accepted.placementContinuations![0].input).toEqual(original);
     expect(accepted.placementContinuations![0].mediaPin).toEqual(pin);
     expect(accepted.placementContinuations![0].placement?.accepted?.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+  });
+
+  it('projects the original saved placement closure before retrying a lost ACK after reload', async () => {
+    const env = environment();
+    const internal = env.initial.canonicalDocument.internal_timeline_revisions[0];
+    (internal.payload.tracks as Array<Record<string, unknown>>).push({ id: 'V2', kind: 'visual' });
+    internal.content_digest = fixtureDigest(internal.payload);
+    env.initial.canonicalDocument.dependency_manifest.internal_timelines[0].content_digest = internal.content_digest;
+    const first = await env.mount();
+    env.loseAdmission();
+    await expect(env.admit(first.session, { ownerRef: 'occurrence:occ-0', lane: 'V2', anchor: 'child-title' })).rejects.toThrow();
+    await first.session.dispose();
+    const [reserved] = await env.outboxes.list(scope);
+    env.task.state = 'succeeded'; env.loseCommit();
+    const second = await env.mount();
+    await second.session.recover(reserved.ownerId);
+    expect(second.session.getState().status).toBe('retry');
+    await second.session.dispose();
+    const [saved] = await env.outboxes.list(scope);
+    const exact = structuredClone(saved.pending!.request);
+    const continuation = structuredClone(saved.placementContinuations![0]);
+    expect(JSON.parse(exact.body).commands[0]).toMatchObject({ op: 'occurrence.add-media', select: 'occurrence:occ-0',
+      args: { row: { track: 'V2', clipType: 'image' }, media: pin } });
+    expect(continuation.input).toMatchObject({ autoApprove: true, lane: 'V2', anchor: 'child-title' });
+    // Production automatic capture saves the original document without a graph.
+    expect(saved.intents[0].payload).toMatchObject({ displayBasis: { head: h0 } });
+    expect((saved.intents[0].payload as { displayBasis: unknown }).displayBasis).not.toHaveProperty('graph');
+    const read = vi.fn(async () => { throw new Error('Recovery cannot refresh the original closure'); });
+    const adapter = createShotCompositionAdapter({ load: read });
+    const project = vi.fn(async (basis: TimelineCommandBasis) => {
+      if (basis.canonicalDocument.parent_revision.payload.occurrences.length) {
+        // The editor's projection boundary requires a complete pinned shot graph.
+        if (!basis.graph) throw new Error('Accepted shot closure cannot be projected');
+        projectCanonicalComposition(adapter.prepare(basis.graph));
+      }
+    });
+    const reads = env.calls.filter((call) => /tasks|media-selection/.test(call.path)).length;
+    const newer = { ...env.initial, head: { revisionId: 'newer', publicationId: 'newer-p' },
+      canonicalDocument: { ...env.initial.canonicalDocument, parent_revision: { ...env.initial.canonicalDocument.parent_revision, revision_id: 'newer' } } };
+    const recovered = await env.mount(newer, project);
+    await recovered.session.recover(saved.ownerId);
+    expect(project.mock.calls[0][0]).toMatchObject({ head: h0, canonicalDocument: env.initial.canonicalDocument });
+    expect(recovered.session.getState()).toMatchObject({ status: 'saved', canUndo: true });
+    expect(env.commits().map(({ body, key }) => ({ body, key }))).toEqual([
+      { body: exact.body, key: exact.key }, { body: exact.body, key: exact.key },
+    ]);
+    const [accepted] = await env.outboxes.list(scope);
+    expect(accepted.pending).toBeUndefined();
+    expect(accepted.intents).toEqual([]);
+    expect(accepted.placementContinuations![0]).toMatchObject({ input: continuation.input, mediaPin: continuation.mediaPin,
+      placement: { intentId: continuation.placement!.intentId, accepted: { head: { revisionId: 'r1', publicationId: 'p1' },
+        value: { response: env.receipts.get(exact.key) } } } });
+    expect(env.calls.filter((call) => /tasks|media-selection/.test(call.path))).toHaveLength(reads);
+    expect(read).not.toHaveBeenCalled();
   });
 
   it('honors explicit recovery while an observation is already resuming the saved placement', async () => {

@@ -2214,7 +2214,7 @@ function runtimeGraphToContract(
   };
 }
 
-function runtimeGraphToContractFromCanonicalDocument(
+export function runtimeGraphToContractFromCanonicalDocument(
   projectId: string,
   timelineId: string,
   document: CanonicalDocument,
