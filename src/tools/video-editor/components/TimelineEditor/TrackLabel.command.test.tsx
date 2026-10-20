@@ -30,10 +30,10 @@ async function setup(deviceClass: TimelineDeviceClass) {
   const submit = vi.fn<TrackLabelCapturePort['submit']>();
   const applyEdit = vi.fn();
   const port = { capture, finish, submit };
-  function Track() {
+  function Track({ labelPort = port }: { labelPort?: TrackLabelCapturePort }) {
     const ops = useTimelineTrackManagement({
       dataRef, resolvedConfig: dataRef.current.resolvedConfig, selectedClipId: null,
-      setSelectedTrackId: vi.fn(), applyEdit, trackLabelPort: port,
+      setSelectedTrackId: vi.fn(), applyEdit, trackLabelPort: labelPort,
     });
     return <AIInputModeProvider><TrackLabelContent
       track={dataRef.current.resolvedConfig.tracks[0]} deviceClass={deviceClass}
@@ -54,7 +54,7 @@ async function setup(deviceClass: TimelineDeviceClass) {
     dataRef.current.resolvedConfig.tracks[0] = { ...config.tracks[0], label: 'Remote' };
     view.rerender(<Track />);
   }
-  return { ...view, input, remote, bundle, dataRef, capture, finish, submit, applyEdit };
+  return { ...view, Track, input, remote, bundle, dataRef, capture, finish, submit, applyEdit };
 }
 
 describe.each(['desktop', 'phone', 'tablet'] as const)('%s production track rename', (deviceClass) => {
@@ -193,4 +193,126 @@ it.each(['phone', 'tablet'] as const)('releases clean %s sheet capture on close 
   expect(env.submit.mock.calls[0][0].command.expect).toEqual({
     'parent/track:V1::label': { state: 'present', value: 'Remote' },
   });
+});
+
+// Independent review reproduction: a rejected draft must survive row teardown.
+it.each(['desktop', 'phone', 'tablet'] as const)('retains the refused %s draft when the same row is remounted', async (deviceClass) => {
+  const env = await setup(deviceClass);
+  env.submit.mockImplementation(() => { throw new Error('Original label guard no longer holds.'); });
+  const input = env.input();
+  fireEvent.focus(input);
+  fireEvent.change(input, { target: { value: 'Keep after refused teardown' } });
+  env.unmount();
+  expect(env.submit).toHaveBeenCalledTimes(1);
+  expect(env.applyEdit).not.toHaveBeenCalled();
+  render(<env.Track />);
+  const reopened = env.input();
+  expect(reopened).toHaveValue('Keep after refused teardown');
+  expect(screen.getByRole('alert')).toHaveTextContent('Original label guard no longer holds.');
+});
+
+// Remount is presentation recovery, never a new capture or a submission trigger.
+describe.each(['desktop', 'phone', 'tablet'] as const)('%s refused teardown retry', (deviceClass) => {
+  it.each(['finish', 'submit'] as const)('retains the original capture after %s refusal and remote change', async (phase) => {
+    const env = await setup(deviceClass);
+    env[phase].mockImplementation(() => { throw new Error('Original label guard no longer holds.'); });
+    const input = env.input();
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Keep my original intent' } });
+    env.remote();
+    env.unmount();
+    expect(env.finish).toHaveBeenCalledTimes(1);
+    expect(env.submit).toHaveBeenCalledTimes(phase === 'submit' ? 1 : 0);
+    const originalBasis = env.finish.mock.calls[0][0];
+    const reopenedView = render(<env.Track />);
+    const reopened = env.input();
+    expect(reopened).toHaveValue('Keep my original intent');
+    expect(screen.getByRole('alert')).toHaveTextContent('Original label guard no longer holds.');
+    expect(env.capture).toHaveBeenCalledTimes(1);
+    expect(env.finish).toHaveBeenCalledTimes(1);
+    expect(env.submit).toHaveBeenCalledTimes(phase === 'submit' ? 1 : 0);
+    fireEvent.focus(reopened);
+    fireEvent.blur(reopened);
+    expect(env.finish.mock.calls[1][0]).toBe(originalBasis);
+    expect(env.finish.mock.calls[1][1]).toEqual({ values: { label: 'Keep my original intent' }, clear: [] });
+    if (phase === 'submit') {
+      expect(env.submit).toHaveBeenCalledTimes(2);
+      expect(env.submit.mock.calls[1][0]).toEqual(env.submit.mock.calls[0][0]);
+      expect(env.submit.mock.calls[1][0].command.expect).toEqual({
+        'parent/track:V1::label': { state: 'present', value: 'Original' },
+      });
+    } else {
+      expect(env.submit).not.toHaveBeenCalled();
+    }
+    expect(env.capture).toHaveBeenCalledTimes(1);
+    reopenedView.unmount();
+    expect(env.finish).toHaveBeenCalledTimes(2);
+    expect(env.applyEdit).not.toHaveBeenCalled();
+  });
+});
+
+it.each(['desktop', 'phone', 'tablet'] as const)('retains %s capture refusal and typed input through row teardown', async (deviceClass) => {
+  const env = await setup(deviceClass);
+  env.capture.mockImplementation(() => { throw new Error('Ambiguous track identity.'); });
+  const input = env.input();
+  fireEvent.focus(input);
+  fireEvent.change(input, { target: { value: 'Keep without capture' } });
+  env.unmount();
+  render(<env.Track />);
+  const reopened = env.input();
+  expect(reopened).toHaveValue('Keep without capture');
+  expect(screen.getByRole('alert')).toHaveTextContent('Ambiguous track identity.');
+  fireEvent.focus(reopened);
+  fireEvent.keyDown(reopened, { key: 'Enter' });
+  expect(env.capture).toHaveBeenCalledTimes(1);
+  expect(env.finish).not.toHaveBeenCalled();
+  expect(env.submit).not.toHaveBeenCalled();
+  expect(env.applyEdit).not.toHaveBeenCalled();
+});
+
+it('keeps a refused draft with its command owner when the same row shows another session', async () => {
+  const env = await setup('desktop');
+  env.submit.mockImplementation(() => { throw new Error('Original owner refuses.'); });
+  const input = env.input();
+  fireEvent.focus(input);
+  fireEvent.change(input, { target: { value: 'Original owner draft' } });
+  fireEvent.blur(input);
+  const otherPort = { capture: vi.fn(env.capture), finish: vi.fn(finishTrackLabel), submit: vi.fn() };
+  env.rerender(<env.Track labelPort={otherPort} />);
+  expect(env.input()).toHaveValue('Original');
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  fireEvent.focus(env.input());
+  fireEvent.change(env.input(), { target: { value: 'Other owner draft' } });
+  fireEvent.blur(env.input());
+  expect(otherPort.submit).toHaveBeenCalledTimes(1);
+  expect(otherPort.submit.mock.calls[0][0].command.args).toEqual({ values: { label: 'Other owner draft' }, clear: [] });
+  expect(env.submit).toHaveBeenCalledTimes(1);
+  env.rerender(<env.Track />);
+  expect(env.input()).toHaveValue('Original owner draft');
+  expect(screen.getByRole('alert')).toHaveTextContent('Original owner refuses.');
+  fireEvent.focus(env.input());
+  fireEvent.keyDown(env.input(), { key: 'Enter' });
+  expect(env.submit).toHaveBeenCalledTimes(2);
+  expect(otherPort.submit).toHaveBeenCalledTimes(1);
+  expect(env.applyEdit).not.toHaveBeenCalled();
+});
+
+it.each(['desktop', 'phone', 'tablet'] as const)('releases a clean %s capture on row teardown before the next edit', async (deviceClass) => {
+  const env = await setup(deviceClass);
+  fireEvent.focus(env.input());
+  env.remote();
+  env.unmount();
+  expect(env.submit).not.toHaveBeenCalled();
+  render(<env.Track />);
+  const reopened = env.input();
+  expect(reopened).toHaveValue('Remote');
+  fireEvent.focus(reopened);
+  fireEvent.change(reopened, { target: { value: 'Next intent' } });
+  fireEvent.blur(reopened);
+  expect(env.capture).toHaveBeenCalledTimes(2);
+  expect(env.submit).toHaveBeenCalledTimes(1);
+  expect(env.submit.mock.calls[0][0].command.expect).toEqual({
+    'parent/track:V1::label': { state: 'present', value: 'Remote' },
+  });
+  expect(env.applyEdit).not.toHaveBeenCalled();
 });

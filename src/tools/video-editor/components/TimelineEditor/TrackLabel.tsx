@@ -22,6 +22,7 @@ import { isTrackMuted } from '@/tools/video-editor/lib/editor-utils.ts';
 import { trackLabelAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
 import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import type { TrackBlendMode, TrackDefinition, TrackFit } from '@/tools/video-editor/types/index.ts';
+import type { TrackLabelDraft, TrackLabelEditStart } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import type { TargetContextPayload } from '@astrid/editor-sdk';
 
 interface TrackLabelProps {
@@ -32,7 +33,7 @@ interface TrackLabelProps {
   deviceClass?: TimelineDeviceClass;
   onSelect: (trackId: string) => void;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
-  onLabelEditStart?: (trackId: string) => (label: string) => void;
+  onLabelEditStart?: TrackLabelEditStart;
   onRemove: (trackId: string) => void;
 }
 
@@ -45,7 +46,7 @@ interface TrackLabelContentProps {
   deviceClass?: TimelineDeviceClass;
   onSelect: (trackId: string) => void;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
-  onLabelEditStart?: (trackId: string) => (label: string) => void;
+  onLabelEditStart?: TrackLabelEditStart;
   onRemove: (trackId: string) => void;
   readOnly?: boolean;
   rowDragging?: boolean;
@@ -404,86 +405,88 @@ export function TrackLabelContent({
   dragAttributes,
 }: TrackLabelContentProps) {
   const runtime = useContext(VideoEditorRuntimeContext);
-  const [nameDraft, setNameDraft] = useState<string | null>(null);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const nameEditRef = useRef<{
-    dirty: boolean;
-    finish?: (label: string) => void;
-    error?: string;
+  const localNameDrafts = useRef(new Map<string, TrackLabelDraft>());
+  const nameDrafts = onLabelEditStart?.drafts ?? localNameDrafts.current;
+  const [, updateNameDraft] = useState(0);
+  const refreshNameDraft = () => updateNameDraft((version) => version + 1);
+  const nameEdit = nameDrafts.get(track.id);
+  const nameError = nameEdit?.error ?? null;
+  const [submittedName, setSubmittedName] = useState<{
+    owner: typeof nameDrafts; trackId: string; value: string;
   } | null>(null);
-  const nameValueRef = useRef(track.label);
-
-  useEffect(() => {
-    if (!nameEditRef.current) setNameDraft(null);
-  }, [track.label]);
+  useEffect(() => setSubmittedName(null), [track.label, track.id, nameDrafts]);
+  const nameValue = nameEdit?.value ?? (submittedName?.owner === nameDrafts && submittedName.trackId === track.id
+    ? submittedName.value : track.label);
 
   const beginNameEdit = () => {
-    if (nameEditRef.current || rowDragging) return;
-    nameValueRef.current = nameDraft ?? track.label;
-    setNameDraft(nameValueRef.current);
+    if (nameDrafts.has(track.id) || rowDragging) return;
+    const edit: TrackLabelDraft = { value: nameValue, dirty: false };
+    nameDrafts.set(track.id, edit);
     try {
       if (!onLabelEditStart && runtime) throw new Error('Track label command capture is unavailable.');
-      nameEditRef.current = {
-        dirty: false,
-        finish: onLabelEditStart?.(track.id),
-      };
-      setNameError(null);
+      edit.finish = onLabelEditStart?.(track.id);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Track rename is unavailable.';
-      nameEditRef.current = { dirty: false, error: message };
-      setNameError(message);
+      edit.captureError = message;
+      edit.error = message;
     }
+    refreshNameDraft();
   };
 
   const finishNameEdit = () => {
-    const edit = nameEditRef.current;
+    const edit = nameDrafts.get(track.id);
     if (!edit) return;
-    if (edit.error) return;
+    if (edit.captureError) return;
     if (edit.dirty) {
       try {
-        edit.finish?.(nameValueRef.current);
+        edit.finish?.(edit.value);
       } catch (error) {
-        setNameError(error instanceof Error ? error.message : 'Track rename was refused.');
+        edit.error = error instanceof Error ? error.message : 'Track rename was refused.';
+        refreshNameDraft();
         return;
       }
+      setSubmittedName({ owner: nameDrafts, trackId: track.id, value: edit.value });
     } else {
-      setNameDraft(null);
+      setSubmittedName(null);
     }
-    nameEditRef.current = null;
-    setNameError(null);
+    nameDrafts.delete(track.id);
+    refreshNameDraft();
   };
 
-  const nameInputFocusedRef = useRef(false);
-  const finishNameEditRef = useRef(finishNameEdit);
-  finishNameEditRef.current = finishNameEdit;
+  // Detachment finishes the focused owner's edit, even if callback props change.
+  const nameInputFocusedRef = useRef<(() => void) | null>(null);
   const nameInputRef = useCallback((node: HTMLInputElement | null) => {
     if (!node && nameInputFocusedRef.current) {
-      nameInputFocusedRef.current = false;
-      finishNameEditRef.current();
+      const finish = nameInputFocusedRef.current;
+      nameInputFocusedRef.current = null;
+      finish();
     }
   }, []);
 
   const nameInputProps = {
     ref: nameInputRef,
-    value: nameDraft ?? track.label,
+    value: nameValue,
     'aria-label': 'Track name',
     'aria-invalid': nameError ? true : undefined,
     onFocus: () => {
-      nameInputFocusedRef.current = true;
+      nameInputFocusedRef.current = finishNameEdit;
       beginNameEdit();
     },
     onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
       if (rowDragging) return;
       beginNameEdit();
       // Typing away and back still expresses an explicit choice of name.
-      if (nameEditRef.current) nameEditRef.current.dirty = true;
-      nameValueRef.current = event.target.value;
-      setNameDraft(event.target.value);
+      const edit = nameDrafts.get(track.id);
+      if (edit) {
+        edit.dirty = true;
+        edit.value = event.target.value;
+      }
+      refreshNameDraft();
       // Detached controlled presentations keep their existing callback contract.
       if (!onLabelEditStart && !runtime) onChange(track.id, { label: event.target.value });
     },
     onBlur: () => {
-      nameInputFocusedRef.current = false;
+      nameInputFocusedRef.current = null;
       finishNameEdit();
     },
     onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -648,8 +651,9 @@ export function TrackLabelContent({
           open={trackSheetOpen}
           onOpenChange={(open) => {
             if (!open && nameInputFocusedRef.current) {
-              nameInputFocusedRef.current = false;
-              finishNameEdit();
+              const finish = nameInputFocusedRef.current;
+              nameInputFocusedRef.current = null;
+              finish();
             }
             setTrackSheetOpen(open);
           }}

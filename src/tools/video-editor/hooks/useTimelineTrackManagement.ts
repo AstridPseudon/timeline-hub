@@ -20,7 +20,7 @@ import type { TimelineApplyEdit } from '@/tools/video-editor/hooks/timeline-stat
 import type { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 import { allowTimelineEdits, type TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
-import { captureTrackLabelEdit, submitTrackLabelEdit, type TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
+import { captureTrackLabelEdit, submitTrackLabelEdit, type TrackLabelCapturePort, type TrackLabelEditStart } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import { toast } from '@/shared/components/ui/toast.tsx';
 
 const NO_PROTECTED_TRACKS: ReadonlySet<string> = new Set();
@@ -45,7 +45,7 @@ export interface UseTimelineTrackManagementArgs {
 
 export interface UseTimelineTrackManagementResult {
   handleAddTrack: (kind: TrackKind) => void;
-  handleTrackLabelEditStart: (trackId: string) => (label: string) => void;
+  handleTrackLabelEditStart: TrackLabelEditStart;
   handleTrackPopoverChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
   handleMoveTrack: (activeId: string, overId: string, lanes?: readonly DataLaneView[]) => void;
   handleRemoveTrack: (trackId: string) => void;
@@ -903,7 +903,7 @@ export function useTimelineTrackManagement({
     applyEdit({ type: 'config', resolvedConfig: nextResolvedConfig }, { selectedTrackId: nextTrack?.id ?? null });
   }, [applyEdit, resolvedConfig]);
 
-  const handleTrackLabelEditStart = useCallback((trackId: string) => {
+  const handleTrackLabelEditStart = useMemo(() => Object.assign((trackId: string) => {
     const current = dataRef.current;
     if (!current) throw new Error('Timeline data is not ready.');
     const checkEditable = () => {
@@ -923,7 +923,7 @@ export function useTimelineTrackManagement({
       checkEditable();
       submitTrackLabelEdit(captured, { values: { label }, clear: [] });
     };
-  }, [dataRef, trackLabelPort]);
+  }, { drafts: trackLabelPort ? trackLabelPort.drafts ??= new Map() : undefined }), [dataRef, trackLabelPort]);
 
   const handleTrackPopoverChange = useCallback((trackId: string, patch: Partial<TrackDefinition>) => {
     if (Object.prototype.hasOwnProperty.call(patch, 'label')) {

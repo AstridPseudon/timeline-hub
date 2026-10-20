@@ -5,7 +5,21 @@ import { equal, freezeJson } from './clipMovePrimitives.ts';
 import type { TrackLabelArgs } from './trackLabelCapture.ts';
 import type { JsonObject } from './types.ts';
 
+export interface TrackLabelDraft {
+  value: string;
+  dirty: boolean;
+  finish?: (label: string) => void;
+  captureError?: string;
+  error?: string;
+}
+
+export type TrackLabelEditStart = ((trackId: string) => (label: string) => void) & {
+  drafts?: Map<string, TrackLabelDraft>;
+};
+
 export interface TrackLabelCapturePort {
+  // Unsent input belongs to this command owner, including a refused row teardown.
+  drafts?: Map<string, TrackLabelDraft>;
   capture(input: { trackId: string; current: TimelineData }): JsonObject;
   finish(basis: JsonObject, args: TrackLabelArgs): { command: EditCommand };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
