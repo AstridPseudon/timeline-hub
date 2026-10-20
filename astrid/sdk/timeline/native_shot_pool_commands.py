@@ -38,6 +38,7 @@ def shot_pool(ctx, command):
     ctx.state.occurrence(owner)
     ctx.bind('pool.owner', owner)
     _exclusive(ctx, owner)
+    ctx.read('parent', ['config', 'pinnedShotGroups'])
     action, pin = command['args']['action'], command['args']['media']
     alias = pin['asset']
     _, kind = _verified(ctx, pin)

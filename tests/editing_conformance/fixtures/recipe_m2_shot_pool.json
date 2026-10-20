@@ -66,6 +66,16 @@
           },
           {
             "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
               "app",
               "astrid",
               "pool"
@@ -280,6 +290,16 @@
             },
             {
               "path": [
+                "config",
+                "pinnedShotGroups"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "absent"
+              }
+            },
+            {
+              "path": [
                 "app",
                 "astrid",
                 "pool"
@@ -451,6 +471,16 @@
             "state": {
               "state": "present",
               "value": "chapter-shot"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
             }
           },
           {
@@ -704,6 +734,16 @@
           },
           {
             "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
               "app",
               "astrid",
               "pool"
@@ -898,6 +938,16 @@
             },
             {
               "path": [
+                "config",
+                "pinnedShotGroups"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "absent"
+              }
+            },
+            {
+              "path": [
                 "app",
                 "astrid",
                 "pool"
@@ -1053,6 +1103,16 @@
             "state": {
               "state": "present",
               "value": "chapter-shot"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
             }
           },
           {
@@ -1262,6 +1322,16 @@
           },
           {
             "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
               "app",
               "astrid",
               "pool"
@@ -1384,6 +1454,16 @@
             },
             {
               "path": [
+                "config",
+                "pinnedShotGroups"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "absent"
+              }
+            },
+            {
+              "path": [
                 "app",
                 "astrid",
                 "pool"
@@ -1472,6 +1552,16 @@
             "state": {
               "state": "present",
               "value": "chapter-shot"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
             }
           },
           {

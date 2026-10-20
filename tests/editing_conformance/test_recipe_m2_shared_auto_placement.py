@@ -11,6 +11,7 @@ from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute, validate_command
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_auto_placement import auto_place_shared, unplace_shared
+from astrid.sdk.timeline.native_shot_pool_commands import POOL, capture_shot_pool
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
@@ -315,3 +316,105 @@ def test_keep_as_pooled_removes_the_clip_and_keeps_membership():
     plan = execute(placed, unplaced['commands'], verified_media=verified)
     assert 'placed' not in {row['id'] for row in State(plan.bundle).collection(OWNER, 'clip')}
     assert State(plan.bundle).config(OWNER)['app']['astrid']['pool'] == ['reserved-new']
+
+
+def bound_case(kind, pool_state, **mode):
+    _, bundle, _, verified = build(kind)
+    pin = verified[1]['selection']
+    State(bundle).config(OWNER)['registry']['assets'][pin['asset']] = {
+        'media_id': pin['object_id'], 'type': kind,
+        'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
+    if pool_state == 'empty':
+        State(bundle).config(OWNER).setdefault('app', {}).setdefault('astrid', {})['pool'] = []
+    result = auto_place_shared(bundle, OWNER, 'placed', pin, ownership='occurrence',
+                               verified_media=verified, **mode)
+    return bundle, result, verified
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+@pytest.mark.parametrize('mode', [{}, {'frame': CLIP_B_START}, {'anchor': 'clip-c'}])
+@pytest.mark.parametrize('pool_state', ['absent', 'empty'])
+def test_original_birth_refuses_a_native_pool_add_even_when_the_exact_alias_was_already_bound(
+        kind, mode, pool_state):
+    bundle, result, verified = bound_case(kind, pool_state, **mode)
+    original = copy.deepcopy(result)
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    assert len(plan.commands) == 1
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    assert inverse(plan.bundle, plan.records).bundle == bundle
+    pin = verified[1]['selection']
+    added = execute(bundle, [capture_shot_pool(bundle, OWNER, 'add', pin, ownership='occurrence',
+                                              verified_media=verified)], verified_media=verified)
+    # Isolate pool membership: adding this already-bound alias creates no registry binding.
+    assert [write['path'] for write in added.records[0]['writes']][-1] == POOL
+    assert not added.records[0]['created']
+    head = copy.deepcopy(added.bundle)
+    with pytest.raises(CommandError) as error:
+        replay(plan, head, intervening_records=added.records, verified_media=verified)
+    assert error.value.kind == 'dependency_changed'
+    assert head == added.bundle
+    assert result == original
+    assert State(head).get(OWNER + '/source', POOL)['value'] == [pin['asset']]
+    assert CHILD not in {OWNER + '/clip:' + clip['id'] for clip in State(head).collection(OWNER, 'clip')}
+    # This is a separate new capture, never a replacement for the original request.
+    fresh = auto_place_shared(head, OWNER, 'placed', pin, ownership='occurrence',
+                              verified_media=verified, **mode)
+    assert fresh['capture']['promoted'] is True
+    assert [command['op'] for command in fresh['commands']][1:] == ['shot.pool']
+    assert fresh['commands'][1]['args']['action'] == 'remove'
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+@pytest.mark.parametrize('mode', [{}, {'frame': CLIP_B_START}, {'anchor': 'clip-c'}, {'pooled': True}])
+@pytest.mark.parametrize('eligibility', ['absent', 'null', 'empty'])
+def test_original_shared_request_refuses_a_changed_legacy_group_eligibility(kind, mode, eligibility):
+    _, bundle, _, verified = build(kind)
+    config = State(bundle).config('parent')
+    if eligibility != 'absent':
+        config['pinnedShotGroups'] = None if eligibility == 'null' else []
+    result = auto_place_shared(bundle, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+                               verified_media=verified, **mode)
+    original = copy.deepcopy(result)
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    assert inverse(plan.bundle, plan.records).bundle == bundle
+    # No native writer introduces legacy groups in this registry; use an explicit head fixture.
+    head = copy.deepcopy(bundle)
+    State(head).config('parent')['pinnedShotGroups'] = [
+        {'shotId': 'legacy', 'clipIds': [], 'poolGenerationIds': []}]
+    before = copy.deepcopy(head)
+    with pytest.raises(CommandError) as error:
+        replay(plan, head, verified_media=verified)
+    assert error.value.kind == 'dependency_changed'
+    with pytest.raises(CommandError) as error:
+        auto_place_shared(head, OWNER, 'placed', verified[1]['selection'], ownership='occurrence',
+                          verified_media=verified, **mode)
+    assert error.value.kind == 'migration_needed'
+    assert head == before
+    assert result == original
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+@pytest.mark.parametrize('pool_state', ['absent', 'empty'])
+def test_birth_reads_come_from_the_handler_and_other_owner_pool_edits_rebase(kind, pool_state):
+    bundle, result, verified = bound_case(kind, pool_state)
+    original = json.loads(json.dumps(result))
+    command = result['commands'][0]
+    plain = {key: command[key] for key in ('schema_version', 'op', 'version', 'select', 'args', 'intent')}
+    plan = execute(bundle, [plain], verified_media=verified)
+    assert plan.commands == result['commands']
+    reads = plan.records[0]['reads']
+    for ref, path in [(OWNER + '/source', POOL), ('parent', ['config', 'pinnedShotGroups'])]:
+        assert {'ref': ref, 'path': path, 'state': State(bundle).get(ref, path)} in reads
+    other = 'occurrence:occ-b'
+    command = capture_shot_pool(bundle, other, 'add', verified[1]['selection'], ownership='occurrence',
+                                verified_media=verified)
+    added = execute(bundle, [command], verified_media=verified)
+    added.bundle['parent']['name'] = 'Unrelated rename'
+    State(added.bundle).config(OWNER).setdefault('app', {})['unrelated'] = True
+    rebased = replay(plan, added.bundle, intervening_records=added.records, verified_media=verified)
+    assert rebased.commands == result['commands']
+    assert rebased.bundle['parent'] == added.bundle['parent']
+    assert State(rebased.bundle).config(other) == State(added.bundle).config(other)
+    assert inverse(rebased.bundle, rebased.records).bundle == added.bundle
+    assert result == original

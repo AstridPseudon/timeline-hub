@@ -286,6 +286,27 @@
             }
           },
           {
+            "path": [
+              "app",
+              "astrid",
+              "pool"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
             "path": [],
             "ref": "occurrence:occ-a/collection:clip",
             "state": {
@@ -741,6 +762,27 @@
             }
           },
           {
+            "path": [
+              "app",
+              "astrid",
+              "pool"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
             "path": [],
             "ref": "occurrence:occ-a/collection:clip",
             "state": {
@@ -1183,6 +1225,27 @@
               "source_window"
             ],
             "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "pool"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
             "state": {
               "state": "absent"
             }
@@ -1652,6 +1715,27 @@
               "source_window"
             ],
             "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "app",
+              "astrid",
+              "pool"
+            ],
+            "ref": "occurrence:occ-a/source",
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "path": [
+              "config",
+              "pinnedShotGroups"
+            ],
+            "ref": "parent",
             "state": {
               "state": "absent"
             }
