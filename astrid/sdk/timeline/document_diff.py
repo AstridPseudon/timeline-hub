@@ -312,13 +312,6 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
                            f"candidate.shots[{shot_id!r}].internal_timeline.clips")
         if list(before_rows) != list(pinned_rows) or list(before_rows) != list(after_rows):
             raise DocumentDiffError(f"{owner} clip membership/order is held by the document view")
-        for clip_id, before in before_rows.items():
-            _check_clip_baseline(before, pinned_rows[clip_id], owner=owner, clip_id=clip_id)
-            after = after_rows[clip_id]
-            _check_clip_shape(before, after, owner=owner, clip_id=clip_id)
-            working, emitted = _emit_clip_commands(working, owner, before, after)
-            commands.extend(emitted)
-
         media_changes = _same_alias_changes(
             canonical_shots[shot_id]["internal_timeline"], shot["internal_timeline"], owner=owner
         )
@@ -353,6 +346,12 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
                 ) from exc
             commands.append(command)
             working = result.bundle
+        for clip_id, before in before_rows.items():
+            _check_clip_baseline(before, pinned_rows[clip_id], owner=owner, clip_id=clip_id)
+            after = after_rows[clip_id]
+            _check_clip_shape(before, after, owner=owner, clip_id=clip_id)
+            working, emitted = _emit_clip_commands(working, owner, before, after)
+            commands.extend(emitted)
         _require_explicit_rows(
             shot["internal_timeline"].get("clips", []),
             working["shots"][shot_id]["internal_timeline"].get("clips", []),

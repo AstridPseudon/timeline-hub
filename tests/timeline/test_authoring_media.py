@@ -600,7 +600,16 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(document))
     checkout = json.loads(document.read_text())
     first_id = first_shot['shot_id']
-    checkout['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['local_path'] = new_path.name
+    checkout_shot = checkout['shots'][first_id]
+    checkout_timeline = checkout_shot['internal_timeline']
+    checkout_clip = next(row for row in checkout_timeline['clips'] if row['id'] == 'clip-1')
+    original_narration = copy.deepcopy(checkout_shot['payload'].get('text_bindings'))
+    original_metadata = copy.deepcopy(checkout_shot['payload'].get('metadata'))
+    original_source_window = {
+        key: checkout_clip.get(key) for key in ('from', 'to', 'source_window')
+    }
+    checkout_clip.update(at=0.125, hold=0.75)
+    checkout_timeline['registry']['assets']['picture-1']['local_path'] = new_path.name
     document.write_text(json.dumps(checkout))
 
     base_bundle = fetch_bundle(project, 'film', revision_id='wc6-baseline', client=client)
@@ -613,13 +622,19 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     publication_receipt = json.loads(publication_file.read_text())
     publication = publication_receipt['publication']
     assert publication['data']['status'] == 'accepted'
-    assert publication['data']['commands'][0]['op'] == 'occurrence.swap-media'
+    assert [command['op'] for command in publication['data']['commands']] == [
+        'occurrence.swap-media', 'clip.move', 'clip.set',
+    ]
     published_document = publication['data']['canonical_document']
     new_digest = 'sha256:' + hashlib.sha256(new_path.read_bytes()).hexdigest()
     published_internal = next(
         row for row in published_document['internal_timeline_revisions']
         if row['revision_id'] == published_document['shot_revisions'][0]['internal_timeline_revision_id']
     )
+    published_clip = next(row for row in published_internal['payload']['clips'] if row['id'] == 'clip-1')
+    assert published_clip['at'] == 0.125
+    assert published_clip['hold'] == 0.75
+    assert {key: published_clip.get(key) for key in ('from', 'to', 'source_window')} == original_source_window
     published_entry = published_internal['payload']['registry']['assets']['picture-1']
     assert published_entry['media_id'] == new_digest
     assert list(published_internal['payload']['registry']['assets']) == original_alias_order
@@ -629,12 +644,15 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     assert published_shot['payload']['items'][0]['media_id'] == new_digest
     assert published_shot['payload']['assets'][0]['source']['media_id'] == new_digest
     assert published_shot['payload']['opaque_namespace']['media'] == old_media['object_id']
+    assert published_shot['payload']['text_bindings'] == original_narration
+    assert published_shot['payload']['metadata'] == original_metadata
     second_shot = next(row for row in published_document['shot_revisions'] if row['shot_id'] == 'shot-2')
     baseline_second = next(row for row in baseline['shot_revisions'] if row['shot_id'] == 'shot-2')
     assert second_shot == baseline_second
-    record = publication['data']['commands'][0]
-    assert record['args']['old_media']['object_id'] == old_media['object_id']
-    assert record['args']['media']['object_id'] == new_digest
+    records = publication['data']['commands']
+    media_record = next(record for record in records if record['op'] == 'occurrence.swap-media')
+    assert media_record['args']['old_media']['object_id'] == old_media['object_id']
+    assert media_record['args']['media']['object_id'] == new_digest
     history = client.timelines.history(project, 'film', limit=100).data
     assert any(row['receipt']['receipt_id'] == publication['receipt']['receipt_id'] for row in history['items'])
 
@@ -744,14 +762,21 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     # Re-read the exact Runtime-verified inputs after restart; this preserves
     # the F1 media guard while replaying the unchanged command record.
     redo_verified_media = [
-        transport.get_project_verified_media(project, record['args'][key])
+        transport.get_project_verified_media(project, media_record['args'][key])
         for key in ('old_media', 'media')
     ]
     redone = redo_session.commit_many(
-        [record], idempotency_key='wc6-aba-rebind', via='python',
+        records, idempotency_key='wc6-aba-rebind', via='python',
         verified_media=redo_verified_media,
     )
-    assert redone['data']['canonical_document']['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
+    redone_document = redone['data']['canonical_document']
+    assert redone_document['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
+    redone_internal = next(
+        row for row in redone_document['internal_timeline_revisions']
+        if row['revision_id'] == redone_document['shot_revisions'][0]['internal_timeline_revision_id']
+    )
+    redone_clip = next(row for row in redone_internal['payload']['clips'] if row['id'] == 'clip-1')
+    assert (redone_clip['at'], redone_clip['hold']) == (0.125, 0.75)
     aba_before = client2.timelines.history(project, 'film', limit=100).data
     with pytest.raises(CommitConflict) as conflict:
         redo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-aba-undo')
