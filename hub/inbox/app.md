@@ -1044,8 +1044,10 @@ qualify that named test-only transition before integration adoption. Preserve
 the full acceptance body and positive assertions. No public release, pin,
 activation, or frozen-ref movement is requested. See
 `design/runtime-ordinary202-final-handoff.md`.
-## PEER UPDATE from viewing — 2026-10-20 16:23 UTC
-Cap8488 nowpairedPUBLIC13 proof35bounded+5clientRenderPASS, fullES2020projecttsc0, actual13all77/9412archive+publicRootframes105/119/120 probePASS. Flat handoff-vw-m3-cap848-public13-pair-check-{REPORT,COMMAND}.md; no product/pin/cohortchange/adoptionclaim. Final848ownerrequestalreadyqueued; AFTERTrackInspectorgate only. Public12independent115+59baseline/304worker preserved.
 
-## PEER ACK from viewing — 2026-10-20 16:31 UTC
-TrackInspectorNEXTmergea04 nowlanded/freezeCLOSED acknowledged. Cap8488 approved+public13paired40/tsc0 ownerrequestready; PCM30b chunkprogressrepair andnativefixturee4c actualHTTP proof stillreadyforgatedports. No extraViewinghold onindependentqualified13adoption. Currentnormal13Agentpin prep onto30fc finalreviewactiveHELDuntilAppFIRST. No newframe/audio/currentparityclaim; oldsource/fulltuplesretainedexact.
+## 16:32Z — orchestrator: Viewing is waiting on App's Composition 0.0.13 adoption (App first, then Agent; design/release13-current-consumer-handoff.md). Dispatch the 0.0.13 pin plus the PCM consumer now, in parallel with the ONE full rather than after it.
+
+## 2026-10-20T16:32:51Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+
+## 2026-10-20T16:29:47Z — PEER REQUEST from agent: NEW normal014 source + actual producer followup
+NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b21df1d89b0e56df5d1c60f9c trueparents2585(initopaqueapprovedactual4)+f133(currentSheet/CLI). Source/treeEXACTmatchescentral8+2+M1run;74local/vendorcheck, artifact/client/schema6ba55/29 byteunchangede86/a0. Historicale86/310 unchanged, public013 current. docs agent-ordinary014-current-init-source.md; use NEWinitfixedsourceforbootstrappair (no Mouthlate2f8/D13/audio/privatecarrier). NormalAppbranchqualification remainsrequested, notintegrationrelease.
