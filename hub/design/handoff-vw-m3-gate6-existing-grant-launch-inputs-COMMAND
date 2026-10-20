@@ -1,0 +1,9 @@
+# Gate6 manager-only command
+
+Use the worker command at
+`/home/user/work/wt/vw-m3-gate6-existing-grant-launch-inputs/COMMAND`.
+It derives the final App source/tree, verifies the fixed Agent/Runtime/
+Composition/Node identities, carries the owner-approved tuple/grant/marker
+requirements, and submits the one registered central suite. It is a template;
+this worker did not execute it and it must not reuse consumed18861 or old
+source/marker paths.
