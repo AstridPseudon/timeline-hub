@@ -446,17 +446,56 @@ def _generate_effect_registry(
     *,
     include_local: bool = True,
 ) -> str:
+    registry = _element_registry()
     effects = discover_effects(include_local=include_local)
+    all_elements = registry.list(kind="effects", include_shadowed=True)
+
+    # A source-less public winner is still the canonical registry entry.  If a
+    # valid shadow exists, retain that winner in the host map so the existing
+    # owner selector can route the qualified local reference without changing
+    # canonical registry precedence.
+    for element in all_elements:
+        if element.id in effects or (not include_local and element.source == "pack:local"):
+            continue
+        winner = registry.get("effects", element.id)
+        if element is winner:
+            continue
+        if (
+            winner.source == "pack:rendering"
+            and not winner.component.is_file()
+            and element.id in _public_registry_ids()["effects"]
+        ):
+            _component_is_host_importable(element)
+            effects[element.id] = _plugin_from_element(winner)
+
     effect_ids = sorted(effects)
+    public_effects = {
+        effect_id: effect
+        for effect_id, effect in effects.items()
+        if effect.scope == "pack:rendering"
+        and not effect.root.joinpath("component.tsx").is_file()
+    }
     imports = [
         f"import {_component_name(effect_id)} from '{_import_path(effects[effect_id])}';"
         for effect_id in effect_ids
+        if effect_id not in public_effects
     ]
+    winner_symbols = {
+        effect_id: (
+            f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
+            if effect_id in public_effects
+            else _component_name(effect_id)
+        )
+        for effect_id in effect_ids
+    }
     # Keep public IDs and the unqualified winner. Components receive the
     # existing editor ref through their clip props, so no composition schema
     # or second dispatch identity is needed for retained owner candidates.
     owners: dict[str, dict[str, str]] = {effect_id: {} for effect_id in effect_ids}
-    for element in _element_registry().list(kind="effects", include_shadowed=True):
+    for effect_id, effect in public_effects.items():
+        pack_id = effect.meta.get("pack_id") or effect.scope.removeprefix("pack:")
+        owners[effect_id][pack_id] = winner_symbols[effect_id]
+    for element in all_elements:
         if not include_local and element.source == "pack:local":
             continue
         if element.id not in effects:
@@ -476,7 +515,7 @@ def _generate_effect_registry(
         owners[element.id].setdefault(pack_id, symbol)
     registry_entries = [
         f"  {_ts_string(effect_id)}: selectOwnedEffect({_ts_string(effect_id)}, "
-        f"{_component_name(effect_id)}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
+        f"{winner_symbols[effect_id]}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
         for effect_id in effect_ids
     ]
     fingerprint_entries = [
@@ -495,6 +534,16 @@ def _generate_effect_registry(
         "import {createElement} from 'react';",
         "",
         "import type {SceneCapableComponent, ComponentCapabilityContext} from '@banodoco/timeline-composition/evaluation';",
+        *(
+            [
+                "import {DEFAULT_THEME} from '@banodoco/timeline-composition/theme-api';",
+                "import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';",
+                "",
+                "const PUBLIC_EFFECT_REGISTRY = resolveElementRegistries(DEFAULT_THEME).effects;",
+            ]
+            if public_effects
+            else []
+        ),
         "",
         "function selectOwnedEffect(id: string, winner: EffectComponent, owners: Record<string, EffectComponent>): EffectComponent {",
         "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string}}): EffectComponent & SceneCapableComponent => {",

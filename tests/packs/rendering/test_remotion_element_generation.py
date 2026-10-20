@@ -70,7 +70,7 @@ class RemotionElementGenerationTest(unittest.TestCase):
         self.assertIn("@pack-rendering-elements-animations/fade/component", generated)
         self.assertNotIn("@pack-local-elements-animations/fade/component", generated)
 
-    def test_public_composition_supplies_source_less_builtin(self) -> None:
+    def test_public_source_less_winner_preserves_local_owner(self) -> None:
         from astrid.core.element.registry import load_default_registry
 
         registry = load_default_registry(project_root=ROOT)
@@ -82,7 +82,10 @@ class RemotionElementGenerationTest(unittest.TestCase):
         public_ids = gen_effect_registry._public_registry_ids()
         self.assertIn("text-card", public_ids["effects"])
         generated = gen_effect_registry.generate_element_registry("effects")
-        self.assertNotIn("'text-card':", generated)
+        self.assertIn("'text-card': selectOwnedEffect(", generated)
+        self.assertIn("PUBLIC_EFFECT_REGISTRY['text-card']", generated)
+        self.assertIn("'local': OwnerElement", generated)
+        self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card']", generated)
         self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
 
     def test_public_membership_uses_composition_registry_api(self) -> None:
