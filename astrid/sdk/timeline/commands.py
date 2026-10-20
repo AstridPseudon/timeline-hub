@@ -37,6 +37,7 @@ def operations():
     from .capture import MOVE_INTENT, move, track_create
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
     from .native_placement_commands import placement_move
+    from .producer import producer_guard
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
@@ -48,7 +49,8 @@ def operations():
             'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
-            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
+            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
+            'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {})}
 
 
 @dataclass
@@ -86,6 +88,10 @@ def validate_command(command):
             raise CommandError("track.create requires parent or occurrence owner")
         if command.get('intent', {}) != {}:
             raise CommandError("track.create has no intention overrides")
+    if command['op'] == 'producer.guard':
+        pin = command['args']['pin']
+        if any(type(pin[key]) is not int for key in ('fence', 'runtime_epoch')):
+            raise CommandError('producer fence and epoch must be positive integers')
 
 
 def _normalize(command):
@@ -123,7 +129,7 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None, verified_media=(), schema_inputs=(), realm_id=None):
+            closures=None, verified_media=(), schema_inputs=(), realm_id=None, verified_producer=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -134,6 +140,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
 
     if not commands:
         raise CommandError("command batch must not be empty")
+    from .producer import guard_pin
+    guard_pin(commands)
     if id_map and any(key != value for key, value in id_map.items()):
         raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
     if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:
@@ -142,7 +150,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
         ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media,
-                        schema_inputs=schema_inputs, realm_id=realm_id)
+                        schema_inputs=schema_inputs, realm_id=realm_id,
+                        verified_producer=verified_producer)
         _verify_claims(ctx, command)
         operation = operations().get(command['op'])
         if operation is not None:
