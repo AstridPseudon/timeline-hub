@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T04:19:05Z | dispatcher heartbeat 2s -->
+<!-- viewing | 2026-10-20T04:24:16Z | dispatcher heartbeat 13s -->
 # viewing — 2026-10-20 04:17 UTC
 Milestone: M0 COMPLETE; M1 RECORDED inPLAN~03:55. M2/M3mergesOPEN oneCURRENT-tuplegatedunitatime, qualifieddeletionsFIRST; frozenBundle1/2unchanged. ViewingM3unification/parity/deletionsunfinished, gate6OPEN.
 Integrated: Compositionff0536bb53d84db5008b859be304b932b1dd5252/treecc5491fbd9289d63554a92061a99d7a1822b95b5/0.0.11. ONEcentralpostmerge composition-full-1020040915-15314 npm test65PASS0FAIL0SKIP. Only2existingpureclockexports+metadata/docs/tests; privatecodeBYTEUNCHANGED. Build/targeteval/repeatpack/freshpackedESM+SSR/strictNodeNextPASS; packagewrapper tarEPERM/manualequivalentdisclosed. Immutable11 77files58344B/dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601 publishedORCH+hub/artifacts withbare.sha256.8/9/10immutable.
