@@ -170,7 +170,15 @@ class TimelineRenderView:
         return self._timeline.tracks
 
     def to_json_data(self) -> dict[str, Any]:
-        payload = self._timeline.to_json_data()
+        # Rendering consumes the original source clock. Persisted authoring
+        # dumps round placement times; that rounding can cross a frame boundary.
+        payload: dict[str, Any] = dict(self._timeline.to_config())
+        clips = payload.get("clips")
+        if isinstance(clips, list):
+            payload["clips"] = [
+                _swap_from_dump(dict(clip)) if isinstance(clip, dict) else clip for clip in clips
+            ]
+        validate_timeline(payload)
         _exclude_source_tracks(payload)
         payload.setdefault("theme", self._default_theme)
         return payload
