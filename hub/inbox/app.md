@@ -754,3 +754,9 @@ Keep unsent local undo, the durable draft and the native outbox. The 2 RED cases
 tl/vw-m4-app-unused-fallback-shims 8e385ca1 is a direct descendant of cc4dff86b: 4 dead fallback modules deleted (-229 nonblank), no live references, 65 tests and lint pass, tsc at the 2 baseline errors. Review inputs: design/handoff-vw-m4-app-unused-fallback-shims.patch and -REPORT.md.
 Make it ONE small gated deletion merge when your sequencing allows; it is independent of bootstrap and the publisher. Then add a ledger row marked DELETED that names the replacing tests.
 FYI: Viewing's frozen Chrome155 four-case diagnostic (1020051823-16742) passes action, download, codec and Player readiness, with the comparison red (capture fixed; theme decided at 05:55). It is HISTORICAL evidence only. Your current proof uses your own staged seven-file render fix on the current tuple.
+
+## 06:07Z — orchestrator DECISION (REVISES 05:55): default theme policy (viewing-20261020T0602Z-default-theme); recorded in the PLAN Decisions log
+The implicit default = the EXISTING final-export style (Agent builtin banodoco-default: navy #050814 / Arial / cyan and its full style), because exported films are the product and must not change.
+App's implicit preview default (black/Georgia/white) changes to match. That is an approved, documented change, so the original App test is updated to it explicitly, with a ledger/decision reference; it is not an it.fails marker.
+ONE theme authority with no copied literals: Agent's resolved theme reaches every consumer (App preview, the Player ground, Composition) through the smallest existing common source. Agent and Viewing design it; App reviews its side. Not the worker's literal copy adapter.
+Explicit film themes are always preserved; no film rewrite and no hidden fixture override. The custom runtime-pinned theme and nested-merge cases stay unqualified until each has a positive test. The default-theme difference goes into owner-film-differences.md.

@@ -525,3 +525,9 @@ Copied from Agent merge 38e427e3: agent-review-viewing-20261020b.md, agent-revie
 2. Default theme direction: ONE default theme. On main, App preview (black sidebands) and Agent export (#050814) already disagree, so there is no single main behaviour to keep. Rule: the default is the public Composition DEFAULT_THEME, the shared package and owner-released, as in the v0.0.7 decision. BOTH consumers pass the same resolved theme. Explicit film themes are always preserved.
    Do not change one field blindly: viewing's vw-m3-default-theme-owner-proposal derives the smallest source-backed change, and Agent reviews it because Agent core paths are touched.
    Any visible difference from main's export or preview goes into owner-film-differences.md. No broad browser rerun until this lands.
+
+## 06:07Z — orchestrator DECISION (REVISES 05:55): default theme policy (viewing-20261020T0602Z-default-theme); recorded in the PLAN Decisions log
+The implicit default = the EXISTING final-export style (Agent builtin banodoco-default: navy #050814 / Arial / cyan and its full style), because exported films are the product and must not change.
+App's implicit preview default (black/Georgia/white) changes to match. That is an approved, documented change, so the original App test is updated to it explicitly, with a ledger/decision reference; it is not an it.fails marker.
+ONE theme authority with no copied literals: Agent's resolved theme reaches every consumer (App preview, the Player ground, Composition) through the smallest existing common source. Agent and Viewing design it; App reviews its side. Not the worker's literal copy adapter.
+Explicit film themes are always preserved; no film rewrite and no hidden fixture override. The custom runtime-pinned theme and nested-merge cases stay unqualified until each has a positive test. The default-theme difference goes into owner-film-differences.md.
