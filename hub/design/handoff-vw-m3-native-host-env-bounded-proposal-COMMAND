@@ -1,0 +1,75 @@
+# Commands and witness results
+
+All commands below used a private temporary archive of Agent `30fc8dd15`; no
+Agent worktree, shared dependency, browser, renderer, live service, or network
+was used.
+
+## Patch applicability
+
+```text
+proposal=.../scratchpad/orch/design/handoff-vw-m3-native-host-env-bounded-proposal-proposal.patch
+overlay=$(mktemp -d /tmp/vw-m3-native-host-env-agent.XXXXXX)
+git -C /home/user/work/agent archive HEAD | tar -x -C "$overlay"
+git -C "$overlay" apply --check "$proposal"
+```
+
+Result: **PASS**.
+
+## Focused native host/env tests
+
+```text
+PYTHONDONTWRITEBYTECODE=1 TMPDIR="$overlay/tmp" \
+/home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider --override-ini='addopts=' \
+  "$overlay/tests/core/test_subprocess_env.py::test_remotion_browser_executable_is_parent_owned_and_unlisted_env_is_dropped" \
+  "$overlay/tests/core/execution/test_remotion_host_session.py::test_child_start_forwards_only_parent_owned_browser_selector" \
+  "$overlay/tests/core/execution/test_remotion_host_session.py::test_child_start_environment_does_not_include_runtime_credentials" \
+  "$overlay/tests/core/execution/test_remotion_host_session.py::test_task_cannot_modify_host_scope_inputs_or_escape_attempt" \
+  "$overlay/tests/core/execution/test_remotion_host_session.py::test_unexpected_render_fields_refused_before_native_allocation"
+```
+
+Result: **9 passed in 0.62s**.
+
+The proposed witness observed child selector bytes/value:
+
+```text
+lease/caller ASTRID_REMOTION_BROWSER_EXECUTABLE = /caller/browser
+parent      ASTRID_REMOTION_BROWSER_EXECUTABLE = /parent/browser
+child       ASTRID_REMOTION_BROWSER_EXECUTABLE = /parent/browser
+child       ASTRID_UNLISTED_BASE = absent
+```
+
+The test reaches `HostRemotionSession.request()` and `_validate_request()`;
+`popen_owned_group` is replaced only at the final native allocation boundary.
+It does not fake validation success or launch a renderer.
+
+## Source witness
+
+```text
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -B - <<'PY' "$overlay"
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+run = (root / 'astrid/packs/rendering/rendering/renderers/remotion/run.py').read_text()
+assert 'remotion_env_additions["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())' not in run
+host = (root / 'astrid/core/execution/remotion_host_session.py').read_text()
+assert '"ASTRID_REMOTION_BROWSER_EXECUTABLE"' in host
+print('SOURCE_WITNESS=PASS project-dir caller field absent; browser selector projection present')
+PY
+```
+
+Result: **PASS**.
+
+## Lint differential
+
+Ruff was compared on the three files before and after applying the proposal,
+normalizing filename, code, and message (line shifts excluded):
+
+```text
+RUFF_BASELINE_DIAGNOSTICS=14
+RUFF_CANDIDATE_DIAGNOSTICS=14
+RUFF_NEW_DIAGNOSTICS=[]
+RUFF_REMOVED_DIAGNOSTICS=[]
+```
+
+No full suite or central test-service request was made; the brief did not ask
+for one and the requested evidence is focused host request/env behavior.

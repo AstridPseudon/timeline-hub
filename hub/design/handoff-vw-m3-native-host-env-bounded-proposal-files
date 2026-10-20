@@ -1,0 +1,23 @@
+# Files handed off
+
+## Agent files in the unapplied proposal
+
+- `astrid/core/execution/remotion_host_session.py` — forward the existing
+  parent-owned browser selector into the child projection.
+- `astrid/packs/rendering/rendering/renderers/remotion/run.py` — remove the
+  redundant owned `ASTRID_REMOTION_PROJECT_DIR` request-environment entry.
+- `tests/core/execution/test_remotion_host_session.py` — exact selector
+  parent-precedence/unlisted-drop witness at the host request boundary.
+
+## Related existing precedent, intentionally unchanged
+
+- `astrid/core/subprocess_env.py` already admits the selector and gives the
+  parent value precedence.
+- `tests/core/test_subprocess_env.py` already proves parent precedence and
+  unlisted-env dropping.
+- `HostRemotionSession._validate_request` remains closed to
+  `ASTRID_REMOTION_PROJECT_DIR`; the caller no longer emits that redundant
+  field in its request environment.
+
+The actual patch is adjacent as
+`handoff-vw-m3-native-host-env-bounded-proposal-proposal.patch`.

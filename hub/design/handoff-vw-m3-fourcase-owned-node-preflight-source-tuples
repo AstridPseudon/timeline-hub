@@ -1,0 +1,13 @@
+# Fourcase owned-Node preflight source tuples
+
+| Component | Source / tree or artifact | Status |
+| --- | --- | --- |
+| App public13 candidate | `30b8df2895536c471e270faf83ce710acd847065` / `0bf9c9f7fb849cb0938bf29fc72eca069014f623` | pending consumer adoption |
+| Final worker candidate tree | `23d7f8b138fb3d65f1010609833f24075e5b789e` | exact post-edit working-tree tree; harness commit SHA pending |
+| Agent13 | `d8749a9ce12a699672faf3ad96b4e4cbea9245c2` / `75354d38c898729bac09619679f5421faba319ed` | source-held |
+| Runtime13 | `2c4ac180c2220bdad966bc01e95ad230e99ce26a` / `7ab412cc4bcbe517efcfa806e092336390312e18` | source-held |
+| Composition13 | `af98594dce80c0350a1fc21dfc44839b2279edf1` / artifact `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738` | 77-member archive, source-held |
+| Chrome155 | executable `cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76`; tree `5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e` | unchanged guard |
+| Node20.19.4 | executable `43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490` at the retained own path | admitted, full hash/version guarded |
+
+Control state remains `APP13.status = pending-consumer-adoption`, `CONTROL.app13Consumer = pending`, and `CONTROL.physicalMixClaim = false`. No readiness grant, actual browser/render/capture, Agent13 normal pin, Runtime provisioning, or Render/native-host qualification is asserted.

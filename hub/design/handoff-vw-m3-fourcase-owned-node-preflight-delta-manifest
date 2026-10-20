@@ -1,0 +1,20 @@
+# Fourcase owned-Node preflight delta manifest
+
+Base candidate: `cc9c77b1f235d831200e629fe7ad253c084faf4f`, base tree `0be6372fcd92744fe72d447e35a78d1dfab49d4d`.
+
+| Worker delta | Paths | Scope |
+| --- | ---: | --- |
+| Owned Node20.19.4 preflight | 2 | Existing viewing-parity controller and controller unit only |
+
+Changed paths:
+
+```text
+tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+```
+
+The composed candidate's original 33-path App-public13/cap/native-fixture/tab delta remains exactly the reviewed manifest at `handoff-vw-m3-reviewed-fourcase-cohort-compose-delta-manifest`.
+
+Final working-tree tree after this worker delta: `23d7f8b138fb3d65f1010609833f24075e5b789e`.
+
+No package, lockfile, runtime API, environment contract, Composition source, Agent source, Runtime source, product writer, global symlink, borrowed runtime, or fake install was added.

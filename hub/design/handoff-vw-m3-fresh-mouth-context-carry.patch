@@ -1,0 +1,13 @@
+# Patch artifact
+
+The authoritative patch is the uncommitted worktree diff:
+
+```sh
+git diff -- astrid/packs/rendering/actions/timeline_visualize/composed_frame.py \
+  astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py \
+  astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py \
+  astrid/packs/rendering/actions/timeline_visualize/motion/sheet.py \
+  tests/packs/rendering/presenter_selected_cut_query.mjs \
+  tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+```
+

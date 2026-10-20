@@ -1,0 +1,32 @@
+{
+  "verdict": "offline-ready-pending-central-terminal",
+  "appCommit": "6323b5bd6fdfc1bb680eba6f8a1a46f21acf6adb",
+  "appTree": "132ed7f49cc42398676c3d32f80d445ca106e9be",
+  "sourceWorktree": "/home/user/work/wt/vw-m3-stereo-owned-state-guard-fix",
+  "runMode": "stereo",
+  "nativeChannelRequirement": 2,
+  "leftToneHz": 1760,
+  "rightToneHz": 1980,
+  "maxLeakage": 0.02,
+  "maxLeakageRatio": 0.25,
+  "minimumToneAmplitude": 0.001,
+  "oldMonoArtifact": {
+    "bytes": 80477,
+    "sha256": "f35483bab8f4992489ccd617ca4c2375599dc9337f1fbc7b37c2e3d0820eb6c8",
+    "scope": "tone-presence-and-native-PTS-only",
+    "stereoClaim": false
+  },
+  "central": {
+    "terminalId": null,
+    "grant": "manager-only-fresh-grant-pending",
+    "capture": "not-run-by-audit",
+    "browser": "not-launched-by-audit"
+  },
+  "claimsExcluded": [
+    "Player/export parity",
+    "Composition parity",
+    "Gate 6 completion",
+    "product regression",
+    "amplitude or phase parity"
+  ]
+}
