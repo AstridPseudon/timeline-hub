@@ -56,3 +56,5 @@ AST parse of tests/test_timeline_public_s2_mixed_cli_journey.py
 ```
 
 No full suite was run or requested.
+
+Exact final observer evidence: service run rt-m2-real-cli-response-observer-capture-legacy-integration-1020180747-17219 froze Runtime tree2dfb32a211d84b220f577efa1454f7fa0e6ad94f, equal committed18d0d62d tree. Its recorded external Agent source was3f770a45769361a17fe2c350cd5f54db9231a898. This is not the separate frozen f97/7d original failed-node pair, and it does not qualify historical media.
