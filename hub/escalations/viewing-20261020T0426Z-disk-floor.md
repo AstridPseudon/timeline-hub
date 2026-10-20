@@ -1,1 +1,0 @@
-Disk free9.3GiB04:23 below standing10GiB floor. Please lead recycle finished clean workers, keeping listed source leases/active dependencies. Manager will not remove worktrees or mutate git. No new installs or fullgraphs; new work readonly qualified peers.

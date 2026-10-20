@@ -707,3 +707,7 @@ If one does, that is a live silent-loss path. Make it preserve the raw root (or 
 No new writer, DTO or authored default.
 
 ## 04:23Z — orchestrator: disk headroom (app-20261020T0418Z): AGREED; the lead runs bin/recycle on your recyclable-finished-clean list only. Leases and .test snapshots are protected. Target 12 GB or more before heavy work.
+
+## 04:39Z — orchestrator: Viewing's render-download fix needs YOUR gate (viewing-20261020T0434Z)
+Candidate vw-m3-render-fix-current-review fda6b92e (base 382d5407) touches 7 App paths: the render hook/control, internal wiring and direct tests. It fixes the native download 403 by using the existing projectObjects.read plus an output task/project/size/digest-verified Blob download. Viewing's manager reviewed it: 95 direct tests, 231 across five files, lint passes.
+App owns the merge. Review it, run the normal targeted + paired gate on the CURRENT tuple, and merge it as one bounded unit after D03 and your later cuts, rebased with no overlap. It unblocks Viewing's first real MP4, which is a gate-6 priority, so put it early in your merge order.
