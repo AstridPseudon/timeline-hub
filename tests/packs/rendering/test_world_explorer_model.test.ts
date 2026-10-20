@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ExtensionSettingsService, TimelineSnapshot } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../../../astrid/packs/rendering/ui/threejs-live-editor/identity';
 import {
@@ -11,6 +11,7 @@ import {
   newClipId,
   readLibrary,
   removeFromLibrary,
+  saveStops,
   setStretchEnd,
   setStretchStart,
   stretchDuration,
@@ -133,6 +134,38 @@ describe('library persistence', () => {
     settings.set(libraryKey('p1'), [entry('ok'), { objectId: 'bad' }, null, { ...entry('neg'), duration: -1 }, { ...entry('stop'), stops: [{ time: 'x' }] }]);
     expect(readLibrary(settings, 'p1').map((e) => e.objectId)).toEqual(['ok']);
     expect(readLibrary(settings, undefined).map((e) => e.objectId)).toEqual([]);
+  });
+});
+
+describe('saveStops', () => {
+  it('writes reported stops only when they differ from the library entry', () => {
+    const settings = fakeSettings();
+    addToLibrary(settings, 'p1', entry('A'));
+    const set = vi.spyOn(settings, 'set');
+
+    expect(saveStops(settings, 'p1', 'A@r1', [{ time: 1, name: 'hit' }])).toBe(false);
+    expect(set).not.toHaveBeenCalled();
+
+    expect(saveStops(settings, 'p1', 'A@r1', [{ time: 2, name: 'Bridge' }])).toBe(true);
+    expect(set).toHaveBeenCalledTimes(1);
+    expect(readLibrary(settings, 'p1')).toEqual([{ ...entry('A'), stops: [{ time: 2, name: 'Bridge' }] }]);
+
+    expect(saveStops(settings, 'p1', 'A@r1', [{ time: 2, name: 'Bridge' }])).toBe(false);
+    expect(set).toHaveBeenCalledTimes(1);
+
+    expect(saveStops(settings, 'p1', 'A@r1', [])).toBe(true);
+    expect(readLibrary(settings, 'p1')[0].stops).toEqual([]);
+  });
+
+  it('ignores worlds that are not in this project library', () => {
+    const settings = fakeSettings();
+    addToLibrary(settings, 'p1', entry('A'));
+    const set = vi.spyOn(settings, 'set');
+
+    expect(saveStops(settings, 'p1', 'B@r1', [{ time: 0, name: 'x' }])).toBe(false);
+    expect(saveStops(settings, 'p2', 'A@r1', [{ time: 0, name: 'x' }])).toBe(false);
+    expect(set).not.toHaveBeenCalled();
+    expect(readLibrary(settings, 'p1')[0].stops).toEqual([{ time: 1, name: 'hit' }]);
   });
 });
 

@@ -90,6 +90,17 @@ export function removeFromLibrary(settings: ExtensionSettingsService, projectId:
   return writeLibrary(settings, projectId, readLibrary(settings, projectId).filter((e) => worldKey(e) !== key));
 }
 
+const sameStops = (a: readonly Stop[], b: readonly Stop[]) =>
+  a.length === b.length && a.every((stop, i) => stop.time === b[i].time && stop.name === b[i].name);
+
+/** Keeps the stops a library world's scene reported. Writes only when the entry exists and the stops differ; returns whether it wrote. */
+export function saveStops(settings: ExtensionSettingsService, projectId: string | null | undefined, key: string, stops: readonly Stop[]): boolean {
+  const entry = readLibrary(settings, projectId).find((e) => worldKey(e) === key);
+  if (!entry || sameStops(entry.stops, stops)) return false;
+  addToLibrary(settings, projectId, { ...entry, stops: [...stops] });
+  return true;
+}
+
 export const stretchDuration = (s: Stretch) => (s.to - s.from) / s.speed;
 
 const MIN_STRETCH = 0.1;

@@ -9,6 +9,8 @@ import {
   keyAction,
   newClipId,
   readLibrary,
+  removeFromLibrary,
+  saveStops,
   setStretchEnd,
   setStretchStart,
   stretchDuration,
@@ -234,8 +236,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const viewHeight = Math.round(viewWidth / aspect);
   const liveScene = loaded && selected && loaded.key === selected.key ? loaded.liveScene : undefined;
   const ready = Boolean(liveScene) && sceneReady && !sceneError;
+  // A scene's reported stops win, even when empty: they are what the library keeps for it.
   const stops = selected
-    ? (reported?.key === selected.key && reported.stops.length ? reported.stops : selected.stops)
+    ? (reported?.key === selected.key ? reported.stops : selected.stops)
     : [];
   const sampleSaved = library.some((entry) => entry.name === SAMPLE_LABEL);
   const projectReady = Boolean(snap?.projectId && snap?.timelineId);
@@ -395,12 +398,45 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   function handleReady(info: { stops: ReadonlyArray<{ time: number; name: string }> }) {
     if (!selected) return;
-    setReported({ key: selected.key, stops: info.stops.map((stop) => ({ time: stop.time, name: stop.name })) });
+    const reportedStops = info.stops.map((stop) => ({ time: stop.time, name: stop.name }));
+    setReported({ key: selected.key, stops: reportedStops });
+    // A library world keeps its reported stops, so the next visit shows them before the scene loads.
+    if (saveStops(settings, projectId, selected.key, reportedStops)) setLibrary(readLibrary(settings, projectId));
   }
 
   function pick(key: string) {
     const row = allRows.find((candidate) => candidate.key === key);
     if (row) openWorld(row);
+  }
+
+  /** Clears the viewer when no world is left to show. */
+  function clearWorld() {
+    openRequest.current++;
+    clockRef.current = null;
+    readyRef.current = false;
+    setSelected(null);
+    setFollowedClipId(null);
+    setLoaded(null);
+    setLoadError(null);
+    setSceneReady(false);
+    setSceneError(null);
+    setReported(null);
+    setRenderTime(0);
+    setShownTime(0);
+    setPlaying(false);
+    setNotice(null);
+  }
+
+  /** Removes a library entry only. Clips keep their own scene, and the project object stays. */
+  function removeWorld(row: Row) {
+    const index = allRows.findIndex((candidate) => candidate.key === row.key);
+    const remaining = allRows.filter((candidate) => candidate.key !== row.key);
+    setLibrary(removeFromLibrary(settings, projectId, row.key));
+    if (selected?.key !== row.key) return;
+    // The next world takes its place, or the one before it when it was last.
+    const next = remaining[Math.min(index, remaining.length - 1)];
+    if (next) openWorld(next);
+    else clearWorld();
   }
 
   function changeSpeed(speed: number) {
@@ -603,6 +639,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   return (
     <section className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-3 text-sm" aria-label="World Explorer">
+      {/* The remove action stays quiet until its row is hovered or has focus inside it. */}
+      <style>{'.world-explorer-remove{opacity:0}.world-explorer-library-row:hover .world-explorer-remove,.world-explorer-library-row:focus-within .world-explorer-remove{opacity:1}'}</style>
       {allRows.length > 0 ? (
         <div className="flex min-w-0 items-center gap-2">
           <select
@@ -636,6 +674,33 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             onChange={(event) => { void importFile(event); }}
           />
         </div>
+      ) : null}
+
+      {rows.library.length ? (
+        <ul aria-label="Library" className="flex flex-col gap-0.5">
+          {rows.library.map((row) => (
+            <li key={row.key} className="world-explorer-library-row flex min-w-0 items-center gap-1 rounded-md hover:bg-muted">
+              <button
+                type="button"
+                className="min-h-8 min-w-0 flex-1 truncate rounded-md px-2 py-1 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-current={row.key === selected?.key ? 'true' : undefined}
+                onClick={() => pick(row.key)}
+              >
+                {row.name} <span className="tabular-nums text-muted-foreground">{clockText(row.duration)}</span>
+              </button>
+              <button
+                type="button"
+                aria-label={`Remove ${row.name} from library`}
+                title={`Remove ${row.name} from library`}
+                disabled={busy}
+                className="world-explorer-remove flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                onClick={() => removeWorld(row)}
+              >
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </li>
+          ))}
+        </ul>
       ) : null}
 
       {allRows.length > 0 && !sampleSaved ? (

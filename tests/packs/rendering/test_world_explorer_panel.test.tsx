@@ -460,4 +460,84 @@ describe('World Explorer panel', () => {
     frames(4);
     expect(scene.renders.length).toBe(renders);
   });
+
+  it('saves the stops a library scene reports, only when they differ, and shows them on the next visit', async () => {
+    const harness = makeHarness();
+    const view = mount(harness);
+    await addSampleWorld(view);
+    await waitFor(() => expect(harness.settings.store.get('worldLibrary:p1')).toHaveLength(1));
+    const set = vi.spyOn(harness.settings, 'set');
+
+    act(() => scene.onReady!({ stops: [{ time: 0, name: 'Dawn' }, { time: 3, name: 'Lanterns' }] }));
+    expect(set).not.toHaveBeenCalled();
+
+    act(() => scene.onReady!({ stops: [{ time: 1, name: 'Bridge' }] }));
+    expect(set).toHaveBeenCalledTimes(1);
+    expect(harness.settings.store.get('worldLibrary:p1')).toEqual([
+      expect.objectContaining({ stops: [{ time: 1, name: 'Bridge' }] }),
+    ]);
+    expect(view.getByRole('button', { name: 'Bridge 0:01' })).toBeTruthy();
+    expect(view.queryByRole('button', { name: 'Dawn 0:00' })).toBeNull();
+
+    act(() => scene.onReady!({ stops: [{ time: 1, name: 'Bridge' }] }));
+    expect(set).toHaveBeenCalledTimes(1);
+
+    view.unmount();
+    const again = mount(harness);
+    fireEvent.click(again.getByRole('button', { name: /^Lantern Valley/ }));
+    expect(again.getByRole('button', { name: 'Bridge 0:01' })).toBeTruthy();
+    expect(again.queryByRole('button', { name: 'Dawn 0:00' })).toBeNull();
+  });
+
+  /** Two library worlds: the sample (real package) and a spare entry that has no package behind it. */
+  async function seededLibrary() {
+    const storage = makeStorage();
+    const parsed = await parsePreparedScenePackage(new TextEncoder().encode(SAMPLE_WORLD.packageJson));
+    const ingested = await ingestPreparedPackage(storage, parsed);
+    const lantern = {
+      objectId: ingested.package.object_id,
+      revision: ingested.package.digest,
+      name: 'Lantern Valley',
+      duration: parsed.manifest.duration,
+      authoredFps: parsed.manifest.authoredFps,
+      stops: [{ time: 0, name: 'Dawn' }],
+    };
+    const spare = { ...lantern, objectId: 'sha256:spare', revision: 'sha256:spare', name: 'Spare' };
+    const settings = makeSettings(new Map<string, unknown>([['worldLibrary:p1', [lantern, spare]]]));
+    return { storage, settings, lantern, spare };
+  }
+
+  it('removes a library world without changing a different selection', async () => {
+    const { storage, settings, lantern } = await seededLibrary();
+    const harness = makeHarness({ settings, storage });
+    const view = mount(harness);
+    fireEvent.click(view.getByRole('button', { name: /^Lantern Valley/ }));
+    expect(view.getByRole('combobox', { name: 'World' })).toHaveValue(`${lantern.objectId}@${lantern.revision}`);
+
+    fireEvent.click(view.getByRole('button', { name: 'Remove Spare from library' }));
+
+    expect(settings.store.get('worldLibrary:p1')).toEqual([lantern]);
+    expect(view.queryByRole('button', { name: 'Remove Spare from library' })).toBeNull();
+    expect(view.getByRole('combobox', { name: 'World' })).toHaveValue(`${lantern.objectId}@${lantern.revision}`);
+    expect(view.queryByRole('button', { name: /^Spare/ })).toBeNull();
+  });
+
+  it('selects the next library world when the selected one is removed, then shows the empty state', async () => {
+    const { storage, settings, lantern, spare } = await seededLibrary();
+    const harness = makeHarness({ settings, storage });
+    const view = mount(harness);
+    fireEvent.click(view.getByRole('button', { name: /^Lantern Valley/ }));
+
+    fireEvent.click(view.getByRole('button', { name: 'Remove Lantern Valley from library' }));
+
+    expect(settings.store.get('worldLibrary:p1')).toEqual([spare]);
+    expect(view.getByRole('combobox', { name: 'World' })).toHaveValue(`${spare.objectId}@${spare.revision}`);
+
+    fireEvent.click(view.getByRole('button', { name: 'Remove Spare from library' }));
+
+    expect(settings.store.get('worldLibrary:p1')).toEqual([]);
+    expect(view.getByText(/A world is a live 3D scene/)).toBeTruthy();
+    expect(view.queryByRole('combobox', { name: 'World' })).toBeNull();
+    expect(storage.objects.has(lantern.objectId)).toBe(true);
+  });
 });
