@@ -97,3 +97,6 @@ test -z "$(git status --porcelain)"
 ```
 
 The `ours` join and its tree/merge-base/dry-run postconditions are intentionally not claimed until the lead observes them.
+
+## History join COMPLETE — lead09:16, independently checked09:23
+Lead executedapprovedoursjoin e80c46baf5aa4b50a10b77a5ceadcb7ec4ab27ab, parentsa62e7d266 and67b8aa3d. Managerread-onlyverification: bothpre/posttrees23a994070b8e25aba18703af1c6a0c840df1ab62 identical; gitdiff--exit-code a62e7d266 tl/integration exit0; merge-baseorigin/main tl/integration=67b8aa3d0d6831d3e3504a340ff583c3da253707; cleanworktree. Leadactualdrymerge--no-commit--no-ff origin/main reportedAlreadyuptodate/clean, abortthenHEADunchanged. Managerneverranmerge. Latest69testfull1020091054-4980 isonsame23a994tree, no duplicatefullrequired. RootdeliveryrefreshblockerRESOLVED.

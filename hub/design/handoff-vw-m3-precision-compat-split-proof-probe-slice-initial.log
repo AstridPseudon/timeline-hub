@@ -1,0 +1,136 @@
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-full] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:88: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:65: in consume
+    sliced = next(c for c in RenderService._window_timeline(serialized, FrameWindow(15, 45, (30000, 1001)))['clips']
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1162: in _window_timeline
+    clipped = cls._window_clip(raw_clip, start=start, end=end, window=window)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1200: in _window_clip
+    clip_end = cls._clip_end(clip, clip_start=clip_start)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1262: in _clip_end
+    raise ValueError("media clip must declare a source to bound")
+E   ValueError: media clip must declare a source to bound
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-window] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:88: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:65: in consume
+    sliced = next(c for c in RenderService._window_timeline(serialized, FrameWindow(15, 45, (30000, 1001)))['clips']
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1162: in _window_timeline
+    clipped = cls._window_clip(raw_clip, start=start, end=end, window=window)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1200: in _window_clip
+    clip_end = cls._clip_end(clip, clip_start=clip_start)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1262: in _clip_end
+    raise ValueError("media clip must declare a source to bound")
+E   ValueError: media clip must declare a source to bound
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-layer] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:88: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:65: in consume
+    sliced = next(c for c in RenderService._window_timeline(serialized, FrameWindow(15, 45, (30000, 1001)))['clips']
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1162: in _window_timeline
+    clipped = cls._window_clip(raw_clip, start=start, end=end, window=window)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1200: in _window_clip
+    clip_end = cls._clip_end(clip, clip_start=clip_start)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1262: in _clip_end
+    raise ValueError("media clip must declare a source to bound")
+E   ValueError: media clip must declare a source to bound
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-full] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:88: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:65: in consume
+    sliced = next(c for c in RenderService._window_timeline(serialized, FrameWindow(15, 45, (30000, 1001)))['clips']
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1162: in _window_timeline
+    clipped = cls._window_clip(raw_clip, start=start, end=end, window=window)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1200: in _window_clip
+    clip_end = cls._clip_end(clip, clip_start=clip_start)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1262: in _clip_end
+    raise ValueError("media clip must declare a source to bound")
+E   ValueError: media clip must declare a source to bound
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-window] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:88: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:65: in consume
+    sliced = next(c for c in RenderService._window_timeline(serialized, FrameWindow(15, 45, (30000, 1001)))['clips']
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1162: in _window_timeline
+    clipped = cls._window_clip(raw_clip, start=start, end=end, window=window)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1200: in _window_clip
+    clip_end = cls._clip_end(clip, clip_start=clip_start)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1262: in _clip_end
+    raise ValueError("media clip must declare a source to bound")
+E   ValueError: media clip must declare a source to bound
+_ test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-layer] _
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:88: in test_actual_normal_full_window_layer_retains_final_serialized_original
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py:65: in consume
+    sliced = next(c for c in RenderService._window_timeline(serialized, FrameWindow(15, 45, (30000, 1001)))['clips']
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1162: in _window_timeline
+    clipped = cls._window_clip(raw_clip, start=start, end=end, window=window)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1200: in _window_clip
+    clip_end = cls._clip_end(clip, clip_start=clip_start)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/core/rendering/service.py:1262: in _clip_end
+    raise ValueError("media clip must declare a source to bound")
+E   ValueError: media clip must declare a source to bound
+=========================== short test summary info ============================
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-full]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-window]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[candidate-precise-layer]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-full]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-window]
+FAILED ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-precision-compat-split-proof-probe.py::test_actual_normal_full_window_layer_retains_final_serialized_original[compat-serialized-layer]
+6 failed in 5.10s

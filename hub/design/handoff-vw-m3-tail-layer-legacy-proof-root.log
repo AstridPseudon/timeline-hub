@@ -1,3 +1,3 @@
-2019d7e69: 200 real service rows; both Root metadata callbacks + 2D tail tree passed
-abd41eb2: 200 real service rows; both Root metadata callbacks + 2D tail tree passed
-120 ordinary/full-timeline-only rows unchanged across revisions
+2019d7e69: 296 real service rows; both Root metadata callbacks + 2D tail tree passed
+abd41eb2: 296 real service rows; both Root metadata callbacks + 2D tail tree passed
+176 ordinary/full-timeline-only rows unchanged across revisions

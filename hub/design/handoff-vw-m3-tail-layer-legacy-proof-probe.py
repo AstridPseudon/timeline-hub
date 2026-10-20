@@ -56,7 +56,7 @@ with tempfile.TemporaryDirectory(prefix="tail-legacy-probe-") as directory:
         assert all(t["id"] != "reference" for t in original["tracks"])
         assert original["app"]["astrid_render_clock"] == clock
         cases = [("ordinary-full", None, None, True)]
-        for start, end in ((0, 330), (150, 180), (285, 315), (300, 330)):
+        for start, end in ((0, 330), (0, 30), (150, 165), (150, 180), (285, 315), (300, 330)):
             window = FrameWindow(start, end, (30, 1))
             cases.append((f"ordinary-window-{start}-{end}", None, window, True))
             for track, z in (("bottom", 0), ("top", 1), ("reference", 2)):
@@ -84,6 +84,9 @@ with tempfile.TemporaryDirectory(prefix="tail-legacy-probe-") as directory:
             if layer is None:
                 assert duration == {"value": 330}
                 assert native_argument == {"value": None if window is None else f"--frames={window.start_frame}-{window.end_frame - 1}"}
+            if shape == "sparse-early" and name == "top-0-30-supports-True" and adapted.window is None:
+                assert len(selected["clips"]) == 1
+                assert (selected["clips"][0]["at"], selected["clips"][0]["from"], selected["clips"][0]["to"]) == (0, 0, 1)
             rows.append({"shape": shape, "source_role": source_role, "case": name,
                          "original_raw_duration": raw_duration,
                          "window": None if adapted.window is None else [adapted.window.start_frame, adapted.window.end_frame],

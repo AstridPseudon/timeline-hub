@@ -16,13 +16,13 @@ Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratch
 PY
 ```
 
-Python probes (each exit 0; 200 cases per revision):
+Python probes (each exit 0; 296 cases per revision):
 ```bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/vw-m3-tail-layer-legacy-proof /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tail-layer-legacy-proof-probe.py abd41eb2 > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tail-layer-legacy-proof-new.json
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tail-layer-legacy-proof/old-source /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tail-layer-legacy-proof-probe.py 2019d7e69 > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tail-layer-legacy-proof-old.json
 ```
 
-Actual Root callbacks and component tree (exit 0; 200 rows per revision; both registered metadata callbacks; 120 ordinary/full-timeline-only rows identical):
+Actual Root callbacks and component tree (exit 0; 296 rows per revision; both registered metadata callbacks; 176 ordinary/full-timeline-only rows identical):
 ```bash
 node /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tail-layer-legacy-proof-root.cjs > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tail-layer-legacy-proof-root.log 2>&1
 ```

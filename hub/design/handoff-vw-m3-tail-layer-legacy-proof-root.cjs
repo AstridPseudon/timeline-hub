@@ -114,6 +114,17 @@ function walk(node, visit) {
   assert.deepEqual(pick('new', 'sparse-end', 'top-300-330-supports-True').native_boundary,
     {value: '--frames=300-329'});
   assert.equal(pick('new', 'sparse-end', 'top-300-330-supports-True').tail_from, 300);
+  // A covered sparse window had a correct bounded old declaration: its tail
+  // Sequence begins exactly at the exclusive end and contributes no frames.
+  const covered = pick('old', 'sparse-early', 'top-0-30-supports-True');
+  assert.equal(covered.root_duration, 30);
+  assert.equal(covered.tail_from, 30);
+  assert.deepEqual(covered.native_boundary, {value: null});
+  assert.deepEqual(pick('new', 'sparse-early', 'top-0-30-supports-True').native_boundary, {error: mismatch});
+  const middleCovered = pick('old', 'sparse-middle', 'top-150-165-supports-True');
+  assert.equal(middleCovered.root_duration, 15);
+  assert.equal(middleCovered.tail_from, 15);
+  assert.deepEqual(pick('new', 'sparse-middle', 'top-150-165-supports-True').native_boundary, {error: mismatch});
   const unchanged = rows => rows.filter(row => row.case.startsWith('ordinary-') || row.case.endsWith('supports-False'));
   assert.deepEqual(unchanged(summaries.old), unchanged(summaries.new));
   console.log(`${unchanged(summaries.old).length} ordinary/full-timeline-only rows unchanged across revisions`);

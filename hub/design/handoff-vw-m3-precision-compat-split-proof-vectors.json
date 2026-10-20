@@ -42,6 +42,12 @@
         }
       ]
     },
+    "sliceClock": {
+      "source_from": 0.7674333333333333,
+      "playback_rate": 1.5
+    },
+    "maxSliceDifference": 0,
+    "maxRestartDifference": 0.25,
     "wavBytes": 720044,
     "wavSha256": "abcc7088475c77c7443a5e72db2be8e6066b214ae476c80d6ee890f044b2e2a6",
     "rawWavSha256": "defbb61dffd7886a99e3b7b3c638c12782425d247f356adeb2107e6eb9588072",
@@ -131,6 +137,12 @@
         }
       ]
     },
+    "sliceClock": {
+      "source_from": 0.7674333333333333,
+      "playback_rate": 1.5
+    },
+    "maxSliceDifference": 0,
+    "maxRestartDifference": 0.25,
     "wavBytes": 720044,
     "wavSha256": "abcc7088475c77c7443a5e72db2be8e6066b214ae476c80d6ee890f044b2e2a6",
     "rawWavSha256": "defbb61dffd7886a99e3b7b3c638c12782425d247f356adeb2107e6eb9588072",
@@ -220,6 +232,12 @@
         }
       ]
     },
+    "sliceClock": {
+      "source_from": 0.7674333333333333,
+      "playback_rate": 1.5
+    },
+    "maxSliceDifference": 0,
+    "maxRestartDifference": 0.25,
     "wavBytes": 720044,
     "wavSha256": "abcc7088475c77c7443a5e72db2be8e6066b214ae476c80d6ee890f044b2e2a6",
     "rawWavSha256": "defbb61dffd7886a99e3b7b3c638c12782425d247f356adeb2107e6eb9588072",
@@ -309,6 +327,12 @@
         }
       ]
     },
+    "sliceClock": {
+      "source_from": 0.7674333333333333,
+      "playback_rate": 1.5
+    },
+    "maxSliceDifference": 0,
+    "maxRestartDifference": 0.25,
     "wavBytes": 720044,
     "wavSha256": "abcc7088475c77c7443a5e72db2be8e6066b214ae476c80d6ee890f044b2e2a6",
     "rawWavSha256": "defbb61dffd7886a99e3b7b3c638c12782425d247f356adeb2107e6eb9588072",
@@ -398,6 +422,12 @@
         }
       ]
     },
+    "sliceClock": {
+      "source_from": 0.7674333333333333,
+      "playback_rate": 1.5
+    },
+    "maxSliceDifference": 0,
+    "maxRestartDifference": 0.25,
     "wavBytes": 720044,
     "wavSha256": "abcc7088475c77c7443a5e72db2be8e6066b214ae476c80d6ee890f044b2e2a6",
     "rawWavSha256": "defbb61dffd7886a99e3b7b3c638c12782425d247f356adeb2107e6eb9588072",
@@ -487,6 +517,12 @@
         }
       ]
     },
+    "sliceClock": {
+      "source_from": 0.7674333333333333,
+      "playback_rate": 1.5
+    },
+    "maxSliceDifference": 0,
+    "maxRestartDifference": 0.25,
     "wavBytes": 720044,
     "wavSha256": "abcc7088475c77c7443a5e72db2be8e6066b214ae476c80d6ee890f044b2e2a6",
     "rawWavSha256": "defbb61dffd7886a99e3b7b3c638c12782425d247f356adeb2107e6eb9588072",

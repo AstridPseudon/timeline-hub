@@ -1,0 +1,68 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_____ test_render_serialization_preserves_submillisecond_source_placement ______
+tests/packs/rendering/test_normal_audio_run.py:101: in test_render_serialization_preserves_submillisecond_source_placement
+    assert actual == raw
+E   AssertionError: assert {'clips': [{'...l': 'Other'}]} == {'clips': [{'...l': 'Other'}]}
+E     
+E     Omitting 3 identical items, use -vv to show
+E     Differing items:
+E     {'clips': [{'app': {'astrid_slice_origin': {'at': 99}, 'opaque': [1, {'keep': True}]}, 'asset': 'sound', 'at': 0.017, ...lipType': 'am-sprite', 'hold': 4, 'id': 'sprite', ...}, {'asset': 'sound', 'at': 0, 'from': 0, 'id': 'excluded', ...}]} != {'clips': [{'app': {'astrid_slice_origin': {'at': 99}, 'opaque': [1, {'keep': True}]}, 'asset': 'sound', 'at': 0.01668...lipType': 'am-sprite', 'hold': 4, 'id': 'sprite', ...}, {'asset': 'sound', 'at': 0, 'from': 0, 'id': 'excluded', ...}]}
+E     Use -v to get more diff
+_ test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[full] _
+tests/packs/rendering/test_normal_audio_run.py:240: in test_actual_normal_props_prepare_native_source_without_baking_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+tests/packs/rendering/test_normal_audio_run.py:224: in consume
+    assert actual == expected
+E   AssertionError: assert {'app': {'ast...': 0.051, ...} == {'app': {'ast...': 0.051, ...}
+E     
+E     Omitting 9 identical items, use -vv to show
+E     Differing items:
+E     {'at': 0.017} != {'at': 0.016682}
+E     Use -v to get more diff
+_ test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[window] _
+tests/packs/rendering/test_normal_audio_run.py:240: in test_actual_normal_props_prepare_native_source_without_baking_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+tests/packs/rendering/test_normal_audio_run.py:224: in consume
+    assert actual == expected
+E   AssertionError: assert {'app': {'ast...': 0.051, ...} == {'app': {'ast...': 0.051, ...}
+E     
+E     Omitting 9 identical items, use -vv to show
+E     Differing items:
+E     {'at': 0.017} != {'at': 0.016682}
+E     Use -v to get more diff
+_ test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[layer] _
+tests/packs/rendering/test_normal_audio_run.py:240: in test_actual_normal_props_prepare_native_source_without_baking_scalar_gain
+    state.execute()
+tests/packs/rendering/test_normal_audio_run.py:194: in execute
+    return remotion._execute_remotion_locked(
+astrid/packs/rendering/rendering/renderers/remotion/run.py:1326: in _execute_remotion_locked
+    completed = subprocess.run(
+tests/packs/rendering/test_normal_audio_run.py:187: in command
+    state.consume()
+tests/packs/rendering/test_normal_audio_run.py:224: in consume
+    assert actual == expected
+E   AssertionError: assert {'app': {'ast...': 0.051, ...} == {'app': {'ast...': 0.051, ...}
+E     
+E     Omitting 9 identical items, use -vv to show
+E     Differing items:
+E     {'at': 0.017} != {'at': 0.016682}
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_render_serialization_preserves_submillisecond_source_placement
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[full]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[window]
+FAILED tests/packs/rendering/test_normal_audio_run.py::test_actual_normal_props_prepare_native_source_without_baking_scalar_gain[layer]
+4 failed in 3.93s

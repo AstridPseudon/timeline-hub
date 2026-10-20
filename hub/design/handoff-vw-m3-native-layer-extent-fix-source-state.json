@@ -1,0 +1,20 @@
+{
+  "base": "abd41eb2a6a8fe9224028018ac65225018e490bd",
+  "worktree": "/home/user/work/wt/vw-m3-native-layer-extent-fix",
+  "files": {
+    "astrid/core/rendering/service.py": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff",
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": "e640ddb5a05a948730875556832e21ac1959ce5ca533b576abdb1b3647aa4eb3",
+    "remotion/src/Root.tsx": "321736875ffe7aec5b85a32f60be27af7663fd7a56544765584962e82e9f0407",
+    "tests/packs/rendering/test_normal_audio_run.py": "13a6a778f8a8ce7df34a632cccca4dc768418235abb3f1c461e477d3f9ba3e7c",
+    "tests/packs/rendering/test_native_layer_extent.py": "aca525c89645a2f2f19f620e3ad8dd99f99489d21542d181ed64b489508edb48"
+  },
+  "unchanged_from_candidate": {
+    "astrid/core/timeline/banodoco_composer.py": "5cf8139312e813143adaf84c5a9a9e45d9ad6ce6be9a5dabd667df0048203a4f",
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": "00e46437f1199488260fa6b3409297eddbb2b827ec7a1d0be1b6fff3fbf2b74a",
+    "remotion/package.json": "58460ce59e2473d74f44238a2e5e78e2d4bd8a79a0bd94e430f7ae5eb6c2778a",
+    "remotion/package-lock.json": "cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597",
+    "remotion/normal-audio-sources.mjs": "dc260d6980f3fc6ff0340b364d810cd4310cc3c663db836ab9c84f6ee5dd14e4",
+    "remotion/compiled-audio-source-clock.mjs": "6ce210e91547d8bca901dc23fe3b06eae0d463fa18d6e1cb79d23494f5145ffc",
+    "remotion/attempt-envelope-pcm.mjs": "db7bc06d2b3c9efecac015d59d965ef4dfa718e13f1ef303f190c3831bc95719"
+  }
+}

@@ -4,10 +4,13 @@ import importlib.util
 import json
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
 
+from astrid.core.rendering.service import RenderService
+from astrid.core.rendering.contracts import FrameWindow
 from astrid.core.timeline.banodoco_composer import TimelineRenderView
 from astrid.core.timeline.duration import clip_start_frame, clip_end_frame
 from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
@@ -59,10 +62,15 @@ def test_actual_normal_full_window_layer_retains_final_serialized_original(norma
         assert actual['at'] == (0.017 if policy == 'compat-serialized' else 0.016682)
         prepared = actual['audio']['render_source']
         wav_path = state.server.root / prepared['file'].removeprefix('http://attempt.invalid/')
-        result = subprocess.run(
+        sliced = next(c for c in RenderService._window_timeline(serialized, FrameWindow(15, 45, (30000, 1001)), tracks=('A1',))['clips']
+                      if c['id'] == expected['id'] + '_15_45')
+        source = state.server.root / state.props['assets']['assets'][expected['asset']]['file'].removeprefix('http://attempt.invalid/')
+        with tempfile.TemporaryDirectory(prefix='slice-probe-', dir=TASK) as slice_directory:
+          result = subprocess.run(
             [os.environ['ASTRID_NODE_EXECUTABLE'], str(TASK / 'audio-project/compare.mjs')],
             input=json.dumps({'clip': expected, 'rawChild': DATA['raw_child'], 'prepared': prepared,
-                              'fps': 30000 / 1001, 'path': str(wav_path)}),
+                              'fps': 30000 / 1001, 'path': str(wav_path), 'source': str(source),
+                              'sliced': sliced, 'sliceDirectory': slice_directory}),
             text=True, capture_output=True, check=False,
         )
         assert result.returncode == 0, result.stderr

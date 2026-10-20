@@ -1,0 +1,36 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_______________ test_original_layer_span_is_renderable[False-10] _______________
+../test_original_bad_cases.py:32: in test_original_layer_span_is_renderable
+    assert remotion._native_window_argument(adapted.window, selected, profile, **kwargs) == "--frames=150-179"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/packs/rendering/rendering/renderers/remotion/run.py:911: in _native_window_argument
+    raise ValueError("Remotion window extends beyond the full composition")
+E   ValueError: Remotion window extends beyond the full composition
+_______________ test_original_layer_span_is_renderable[False-20] _______________
+../test_original_bad_cases.py:32: in test_original_layer_span_is_renderable
+    assert remotion._native_window_argument(adapted.window, selected, profile, **kwargs) == "--frames=150-179"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/packs/rendering/rendering/renderers/remotion/run.py:911: in _native_window_argument
+    raise ValueError("Remotion window extends beyond the full composition")
+E   ValueError: Remotion window extends beyond the full composition
+_______________ test_original_layer_span_is_renderable[True-10] ________________
+../test_original_bad_cases.py:32: in test_original_layer_span_is_renderable
+    assert remotion._native_window_argument(adapted.window, selected, profile, **kwargs) == "--frames=150-179"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/packs/rendering/rendering/renderers/remotion/run.py:911: in _native_window_argument
+    raise ValueError("Remotion window extends beyond the full composition")
+E   ValueError: Remotion window extends beyond the full composition
+_______________ test_original_layer_span_is_renderable[True-20] ________________
+../test_original_bad_cases.py:32: in test_original_layer_span_is_renderable
+    assert remotion._native_window_argument(adapted.window, selected, profile, **kwargs) == "--frames=150-179"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/packs/rendering/rendering/renderers/remotion/run.py:911: in _native_window_argument
+    raise ValueError("Remotion window extends beyond the full composition")
+E   ValueError: Remotion window extends beyond the full composition
+=========================== short test summary info ============================
+FAILED ../test_original_bad_cases.py::test_original_layer_span_is_renderable[False-10]
+FAILED ../test_original_bad_cases.py::test_original_layer_span_is_renderable[False-20]
+FAILED ../test_original_bad_cases.py::test_original_layer_span_is_renderable[True-10]
+FAILED ../test_original_bad_cases.py::test_original_layer_span_is_renderable[True-20]
+4 failed in 3.03s

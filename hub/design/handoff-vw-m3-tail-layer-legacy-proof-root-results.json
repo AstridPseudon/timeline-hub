@@ -129,6 +129,222 @@
     {
       "shape": "empty",
       "source_role": false,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "bottom-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "top-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "bottom-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "top-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -567,6 +783,222 @@
       "root_duration": 330,
       "tail_from": 30,
       "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "bottom-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "top-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "bottom-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "top-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
       "trim_before": 300,
       "trim_after": 330,
       "duration_boundary": {
@@ -1029,6 +1461,222 @@
     {
       "shape": "sparse-middle",
       "source_role": false,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "bottom-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "top-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "bottom-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "top-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -1471,6 +2119,222 @@
       "trim_after": 330,
       "duration_boundary": {
         "value": 330
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "bottom-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "top-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "bottom-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "top-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
       },
       "native_boundary": {
         "value": null
@@ -1957,6 +2821,306 @@
         330
       ],
       "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "bottom-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "top-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "reference-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "reference-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "bottom-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "top-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "reference-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "reference-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
       "tail_from": 1,
       "tail_duration": 329,
       "trim_before": 300,
@@ -2589,6 +3753,306 @@
     {
       "shape": "sparse-early",
       "source_role": true,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "bottom-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "top-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "reference-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "reference-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "bottom-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "top-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "reference-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "reference-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -3207,6 +4671,306 @@
     {
       "shape": "sparse-middle",
       "source_role": true,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "bottom-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "top-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "reference-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "reference-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "bottom-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "top-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "reference-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "reference-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -3811,6 +5575,306 @@
         330
       ],
       "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "bottom-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "top-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "reference-0-30-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "reference-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "bottom-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "top-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "reference-150-165-supports-True",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "reference-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
       "tail_from": 1,
       "tail_duration": 329,
       "trim_before": 300,
@@ -4409,6 +6473,234 @@
     {
       "shape": "empty",
       "source_role": false,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "bottom-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "top-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "bottom-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "top-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": false,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -4883,6 +7175,234 @@
     {
       "shape": "sparse-early",
       "source_role": false,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "bottom-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "top-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "bottom-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "top-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": false,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -5357,6 +7877,234 @@
     {
       "shape": "sparse-middle",
       "source_role": false,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "bottom-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "top-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 165,
+      "tail_duration": 165,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "bottom-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "top-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 165,
+      "tail_duration": 165,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": false,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -5823,6 +8571,234 @@
       "trim_after": 330,
       "duration_boundary": {
         "value": 330
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "bottom-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "top-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "bottom-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "top-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": false,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
       },
       "native_boundary": {
         "value": null
@@ -6336,6 +9312,324 @@
         330
       ],
       "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "bottom-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "top-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "reference-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "reference-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "bottom-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "top-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "reference-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "empty",
+      "source_role": true,
+      "case": "reference-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
       "tail_from": 1,
       "tail_duration": 329,
       "trim_before": 300,
@@ -7004,6 +10298,324 @@
     {
       "shape": "sparse-early",
       "source_role": true,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "bottom-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "top-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "reference-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "reference-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "bottom-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "top-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "reference-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
+      "case": "reference-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-early",
+      "source_role": true,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -7658,6 +11270,324 @@
     {
       "shape": "sparse-middle",
       "source_role": true,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "bottom-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "top-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 165,
+      "tail_duration": 165,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "reference-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "reference-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "bottom-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "top-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 165,
+      "tail_duration": 165,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "reference-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
+      "case": "reference-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-middle",
+      "source_role": true,
       "case": "ordinary-window-150-180",
       "window": [
         150,
@@ -8298,6 +12228,324 @@
         330
       ],
       "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "ordinary-window-0-30",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "bottom-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "bottom-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 30,
+      "tail_duration": 300,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "top-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=0-29"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "top-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "reference-0-30-supports-True",
+      "window": [
+        0,
+        30
+      ],
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "reference-0-30-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        0,
+        30
+      ],
+      "root_duration": 30,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "ordinary-window-150-165",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "bottom-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "bottom-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 15,
+      "tail_duration": 315,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "top-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 300,
+      "tail_duration": 30,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "value": 330
+      },
+      "native_boundary": {
+        "value": "--frames=150-164"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "top-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "value": null
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "reference-150-165-supports-True",
+      "window": [
+        150,
+        165
+      ],
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 330,
+      "tail_from": 1,
+      "tail_duration": 329,
+      "trim_before": 300,
+      "trim_after": 330,
+      "duration_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      },
+      "native_boundary": {
+        "error": "render clock authored_duration_frames must match the authored clip extent"
+      }
+    },
+    {
+      "shape": "sparse-end",
+      "source_role": true,
+      "case": "reference-150-165-supports-False",
+      "window": null,
+      "selected_absolute_window": [
+        150,
+        165
+      ],
+      "root_duration": 15,
       "tail_from": 1,
       "tail_duration": 329,
       "trim_before": 300,

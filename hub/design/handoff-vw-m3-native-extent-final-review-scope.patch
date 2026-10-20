@@ -1,0 +1,530 @@
+diff --git a/astrid/core/rendering/service.py b/astrid/core/rendering/service.py
+index ad9fa310c..0d132b2f9 100644
+--- a/astrid/core/rendering/service.py
++++ b/astrid/core/rendering/service.py
+@@ -1069,6 +1069,11 @@ class RenderService:
+         concrete backend identities.
+         """
+ 
++        extent_key = "astrid_composition_duration_frames"
++        if extent_key in request.metadata:
++            request = replace(request, metadata={
++                key: value for key, value in request.metadata.items() if key != extent_key
++            })
+         supports_windows = candidate.manifest.capabilities.get("supports_windows") is not False
+         if segment.layer is None and supports_windows:
+             return request, {}
+@@ -1090,6 +1095,18 @@ class RenderService:
+                 details={"timeline_path": str(timeline_path)},
+             )
+         if supports_windows and segment.layer is not None:
++            from astrid.core.timeline.banodoco_composer import Timeline
++            from astrid.core.timeline.duration import timeline_render_duration_frames
++
++            # Measure the original render view before isolating tracks. Source
++            # references do not contribute; an empty layer still spans this clock.
++            render_view = Timeline.from_json_data(timeline_data).for_render().to_json_data()
++            total = timeline_render_duration_frames(
++                render_view, segment.window.fps_rational[0] / segment.window.fps_rational[1]
++            )
++            if segment.window.end_frame > total:
++                raise ValueError("planned window extends beyond the full composition")
++            request = replace(request, metadata={**request.metadata, extent_key: str(total)})
+             # Isolate the layer without restarting fades, media or animation.
+             # Keep all its original clips, including overlap/transition peers.
+             allowed_tracks = set(segment.layer.tracks)
+diff --git a/astrid/packs/rendering/rendering/renderers/remotion/run.py b/astrid/packs/rendering/rendering/renderers/remotion/run.py
+index 1f1829d1e..f0a0d43e2 100644
+--- a/astrid/packs/rendering/rendering/renderers/remotion/run.py
++++ b/astrid/packs/rendering/rendering/renderers/remotion/run.py
+@@ -885,15 +885,42 @@ def _available_remotion_port() -> int:
+         return int(probe.getsockname()[1])
+ 
+ 
++def _composition_duration_from_request(request: RenderRequest) -> int | None:
++    key = "astrid_composition_duration_frames"
++    if key not in request.metadata:
++        return None
++    value = request.metadata[key]
++    if (not isinstance(value, str) or len(value) > 16
++            or re.fullmatch(r"[1-9][0-9]*", value) is None
++            or int(value) > 9007199254740991):
++        raise ValueError("composition duration must be a positive safe integer")
++    return int(value)
++
++
+ def _native_window_argument(
+     window: FrameWindow | None,
+     timeline_data: Mapping[str, Any],
+     profile: RenderProfile,
++    *,
++    composition_duration_frames: int | None = None,
+ ) -> str | None:
+     """Select absolute frames of the untouched composition, with half-open input."""
++    metadata = timeline_data.get("metadata")
++    if composition_duration_frames is not None:
++        if (type(composition_duration_frames) is not int
++                or not 1 <= composition_duration_frames <= 9007199254740991):
++            raise ValueError("composition duration must be a positive safe integer")
++        layer = metadata.get("astrid_layer") if isinstance(metadata, Mapping) else None
++        if (window is None or not isinstance(layer, Mapping)
++                or type(layer.get("z")) is not int or layer["z"] < 0
++                or type(layer.get("alpha")) is not bool or layer["alpha"] != (layer["z"] > 0)):
++            raise ValueError("composition duration requires a native isolated layer window")
++        app = timeline_data.get("app")
++        if ((isinstance(metadata, Mapping) and "source_window_start_seconds" in metadata)
++                or (isinstance(app, Mapping) and "astrid_render_clock" in app)):
++            raise ValueError("composition duration conflicts with an existing render clock")
+     if window is None:
+         return None
+-    metadata = timeline_data.get("metadata")
+     if (isinstance(metadata, Mapping)
+             and "source_window_start_seconds" in metadata
+             and type(metadata.get("duration_seconds")) in (int, float)):
+@@ -907,6 +934,11 @@ def _native_window_argument(
+     total = timeline.timeline_render_duration_frames(
+         timeline_data, profile.fps_rational[0] / profile.fps_rational[1]
+     )
++    if composition_duration_frames is not None:
++        if composition_duration_frames < total:
++            raise ValueError("composition duration is shorter than the isolated clip extent")
++        # This is the service's invocation fact, not authored/source authority.
++        total = composition_duration_frames
+     if window.end_frame > total:
+         raise ValueError("Remotion window extends beyond the full composition")
+     return f"--frames={window.start_frame}-{window.end_frame - 1}"
+@@ -935,6 +967,7 @@ def _execute_remotion(
+     frame_session: PersistentRemotionFrameSession | None = None,
+     frame_session_identity: str | None = None,
+     window: FrameWindow | None = None,
++    composition_duration_frames: int | None = None,
+ ) -> _ExecutionDetails:
+     """Render one private video and return the data needed for provenance."""
+ 
+@@ -964,6 +997,7 @@ def _execute_remotion(
+                 frame_session=frame_session,
+                 frame_session_identity=frame_session_identity,
+                 window=window,
++                composition_duration_frames=composition_duration_frames,
+             )
+ 
+     # Direct backend callers may pass the final output as the staging path.
+@@ -1004,6 +1038,7 @@ def _execute_remotion(
+                 frame_session=frame_session,
+                 frame_session_identity=frame_session_identity,
+                 window=window,
++                composition_duration_frames=composition_duration_frames,
+             )
+         os.replace(isolated_stage, final_path)
+         return details
+@@ -1034,17 +1069,19 @@ def _execute_remotion_locked(
+     frame_session: PersistentRemotionFrameSession | None = None,
+     frame_session_identity: str | None = None,
+     window: FrameWindow | None = None,
++    composition_duration_frames: int | None = None,
+ ) -> _ExecutionDetails:
+     """Execute one render while the caller owns the non-recursive outer lock."""
+ 
+     if window is not None and frame_numbers is not None:
+         raise ValueError("native render windows cannot be combined with frame_numbers")
+     window_argument = None
+-    if window is not None:
++    if window is not None or composition_duration_frames is not None:
+         window_argument = _native_window_argument(
+             window,
+             _serialize_timeline(timeline_path),
+             _canonical_profile(timeline_path, _load_registry_mapping(assets_path), theme_path),
++            composition_duration_frames=composition_duration_frames,
+         )
+     runtime_tools = _validate_project_dir(project_dir)
+     _regenerate_element_registries(project_dir, theme_path)
+@@ -1111,6 +1148,8 @@ def _execute_remotion_locked(
+                 "theme": theme_for_props,
+                 "review": review,
+             }
++            if composition_duration_frames is not None:
++                merged_props["astridCompositionDurationInFrames"] = composition_duration_frames
+             # Batch 4 (layer stack): the service stamps
+             # ``metadata.astrid_layer.alpha = z > 0`` onto the materialized
+             # timeline of z-layer segments.  When the stamp says alpha, emit
+@@ -1599,7 +1638,10 @@ def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
+             # has none) and always muxes at the 90 kHz timescale; support must
+             # describe the same contract render() implements.
+             try:
+-                _native_window_argument(request.window, timeline_data, canonical)
++                _native_window_argument(
++                    request.window, timeline_data, canonical,
++                    composition_duration_frames=_composition_duration_from_request(request),
++                )
+             except ValueError as exc:
+                 reasons.append(str(exc))
+             features["audio_ownership"] = AudioOwnership.RENDERED.value
+@@ -1732,6 +1774,7 @@ def _protocol_render(request: RenderRequest, *, workspace: Path) -> RenderResult
+                 staging_parent=workspace,
+                 materialized_objects=request.materialized_objects,
+                 window=request.window,
++                composition_duration_frames=_composition_duration_from_request(request),
+                 encode_aac_at_stitch=True,
+             )
+             os.replace(staged_video, output_path)
+diff --git a/remotion/src/Root.tsx b/remotion/src/Root.tsx
+index 7e16a0a56..e278c986c 100644
+--- a/remotion/src/Root.tsx
++++ b/remotion/src/Root.tsx
+@@ -21,6 +21,7 @@ import type {ReviewContext} from './ReviewOverlay';
+ import {resolveInvocationAsset} from './asset-source';
+ 
+ type ReviewProps = TimelineCompositionProps & {
++  astridCompositionDurationInFrames?: number;
+   review?: ReviewContext | null;
+   astridFrameDiagnostics?: boolean;
+   astridBounds?: boolean;
+@@ -139,7 +140,7 @@ const getCanvas = (props: TimelineCompositionProps): CanvasOverride => {
+ const getMetadata = async ({
+   props,
+ }: {
+-  props: TimelineCompositionProps;
++  props: ReviewProps;
+ }): Promise<{
+   width: number;
+   height: number;
+@@ -153,11 +154,22 @@ const getMetadata = async ({
+   const windowDuration = metadata?.source_window_start_seconds !== undefined
+     && typeof metadata.duration_seconds === 'number'
+     ? Math.round(metadata.duration_seconds * fps) : undefined;
++  const originalDuration = props.astridCompositionDurationInFrames;
++  if (originalDuration !== undefined) {
++    if (!Number.isSafeInteger(originalDuration) || originalDuration < 1
++      || originalDuration < getTimelineDurationInFrames(props.timeline, fps)) {
++      throw new Error('composition duration must be a positive safe integer covering the isolated clips');
++    }
++    const app = (props.timeline as typeof props.timeline & {app?: Record<string, unknown>}).app;
++    if (metadata?.source_window_start_seconds !== undefined || app?.astrid_render_clock !== undefined) {
++      throw new Error('composition duration conflicts with an existing render clock');
++    }
++  }
+   return {
+     width: canvas.width ?? 1920,
+     height: canvas.height ?? 1080,
+     fps,
+-    durationInFrames: Math.max(1, windowDuration ?? clock?.render_duration_frames ?? getTimelineDurationInFrames(props.timeline, fps)),
++    durationInFrames: Math.max(1, originalDuration ?? windowDuration ?? clock?.render_duration_frames ?? getTimelineDurationInFrames(props.timeline, fps)),
+   };
+ };
+ 
+diff --git a/tests/packs/rendering/test_native_layer_extent.py b/tests/packs/rendering/test_native_layer_extent.py
+new file mode 100644
+index 000000000..ea261f888
+--- /dev/null
++++ b/tests/packs/rendering/test_native_layer_extent.py
+@@ -0,0 +1,272 @@
++"""Original composition bounds survive native layer isolation, without rendering."""
++
++from __future__ import annotations
++
++import json
++from dataclasses import replace
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.core.rendering.contracts import SCHEMA_VERSION, FrameWindow, RenderProfile, RenderRequest
++from astrid.core.rendering.service import RenderService
++from astrid.core.timeline.duration import timeline_render_duration_frames
++from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
++
++EXTENT_KEY = "astrid_composition_duration_frames"
++
++
++def _profile(pair=(30, 1)):
++    return RenderProfile(320, 180, pair, (1, 90000), "h264", "yuv420p")
++
++
++def _adapt(tmp_path, *, shape="empty", hold=10, pair=(30, 1), end=180,
++           native=True, layer=True, metadata=None):
++    raw = {
++        "theme": "banodoco-default",
++        "tracks": [{"id": key, "kind": "visual", "label": key} for key in ("bottom", "top")],
++        "clips": [{"id": "plate", "track": "bottom", "asset": "plate", "at": 0, "hold": hold, "from": 0, "to": hold}],
++        "metadata": {"duration_seconds": 999, "opaque": {"keep": [None, False]}},
++    }
++    if shape == "sparse":
++        raw["clips"].append({"id": "early", "track": "top", "at": 0.016682, "hold": 1})
++    if shape == "source":
++        raw["tracks"].append({"id": "reference", "kind": "visual", "label": "Reference", "role": "source"})
++        raw["clips"].append({"id": "reference", "track": "reference", "asset": "reference", "at": 0, "hold": 40})
++    path = tmp_path / "timeline.json"
++    path.write_text(json.dumps(raw))
++    before = path.read_bytes()
++    window = FrameWindow(150, end, pair)
++    request = RenderRequest(SCHEMA_VERSION, str(path), "out.mp4", window=window,
++                            metadata=metadata or {})
++    adapted, hashes = RenderService._segment_request(
++        object.__new__(RenderService), request,
++        candidate=SimpleNamespace(id="fixture", manifest=SimpleNamespace(capabilities={"supports_windows": native})),
++        segment=SimpleNamespace(window=window, layer=SimpleNamespace(tracks=("top",), z=1) if layer else None),
++        index=0, workspace=tmp_path,
++    )
++    assert path.read_bytes() == before
++    return request, adapted, remotion._serialize_timeline(Path(adapted.timeline_path)), hashes
++
++
++@pytest.mark.parametrize("pair", [(30, 1), (30000, 1001)])
++@pytest.mark.parametrize("shape", ["empty", "sparse", "source"])
++def test_native_layer_keeps_original_extent_and_absolute_window(tmp_path, pair, shape):
++    original, adapted, selected, hashes = _adapt(tmp_path, pair=pair, shape=shape,
++                                                metadata={EXTENT_KEY: "999999", "review": "{}"})
++    assert adapted.metadata == {EXTENT_KEY: "300", "review": "{}"}
++    assert adapted.window is original.window
++    assert "materialized_timeline" in hashes
++    assert selected["metadata"] == {
++        "duration_seconds": 999, "opaque": {"keep": [None, False]}, "astrid_layer": {"z": 1, "alpha": True},
++    }
++    raw = json.loads(Path(original.timeline_path).read_text())
++    assert selected["clips"] == [clip for clip in raw["clips"] if clip["track"] == "top"]
++    assert timeline_render_duration_frames(selected, pair[0] / pair[1]) < 150
++    total = remotion._composition_duration_from_request(adapted)
++    assert remotion._native_window_argument(adapted.window, selected, _profile(pair),
++                                            composition_duration_frames=total) == "--frames=150-179"
++
++
++def test_identical_empty_layers_retain_distinct_original_extents(tmp_path):
++    _, first, selected_first, _ = _adapt(tmp_path, hold=10)
++    _, second, selected_second, _ = _adapt(tmp_path, hold=20)
++    assert selected_first == selected_second
++    assert [first.metadata[EXTENT_KEY], second.metadata[EXTENT_KEY]] == ["300", "600"]
++
++
++def test_authored_extent_metadata_does_not_enlarge_direct_bounds(tmp_path):
++    request, _, raw, _ = _adapt(tmp_path, layer=False)
++    raw["metadata"][EXTENT_KEY] = "999999"
++    with pytest.raises(ValueError, match="beyond the full composition"):
++        remotion._native_window_argument(FrameWindow(150, 301, (30, 1)), raw, _profile())
++    assert EXTENT_KEY not in request.metadata
++
++
++@pytest.mark.parametrize("shape", ["empty", "source"])
++def test_caller_cannot_enlarge_original_layer_bounds(tmp_path, shape):
++    with pytest.raises(ValueError, match="beyond the full composition"):
++        _adapt(tmp_path, shape=shape, end=301, metadata={EXTENT_KEY: "999999"})
++
++
++@pytest.mark.parametrize("native,layer", [(True, False), (False, False), (False, True)])
++def test_reserved_caller_extent_stripped_outside_native_layers(tmp_path, native, layer):
++    _, adapted, _, _ = _adapt(tmp_path, native=native, layer=layer,
++                              metadata={EXTENT_KEY: "999999", "review": "{}"})
++    assert adapted.metadata == {"review": "{}"}
++    assert (adapted.window is not None) == native
++
++
++@pytest.mark.parametrize("raw", ["", "0", "-1", "1.5", "NaN", "Infinity", "true", " 300", "+300", "0300", "3e2", "9007199254740992", "9" * 5000])
++def test_reserved_extent_rejects_malformed_request_values(tmp_path, raw):
++    request = SimpleNamespace(metadata={EXTENT_KEY: raw})
++    with pytest.raises(ValueError, match="positive safe integer"):
++        remotion._composition_duration_from_request(request)
++
++
++def _support_setup(monkeypatch, profile):
++    monkeypatch.setattr(remotion, "_canonical_profile", lambda *a: profile)
++    monkeypatch.setattr(remotion, "_settings_from_request", lambda *a: SimpleNamespace(
++        project_dir=Path("/unused"), composition_id="TimelineComposition", theme_path=None, min_free_gb=None))
++    monkeypatch.setattr(remotion, "_validate_project_dir", lambda *a: object())
++    monkeypatch.setattr(remotion, "_resolve_timeline_element_references", lambda *a, **k: None)
++
++
++def test_support_and_protocol_forward_service_extent(tmp_path, monkeypatch):
++    _, adapted, _, _ = _adapt(tmp_path)
++    _support_setup(monkeypatch, _profile())
++    report = remotion.support(adapted, workspace=tmp_path)
++    assert report.supported, report.reasons
++
++    class ExecutionObserved(Exception):
++        pass
++
++    def execute(*args, **kwargs):
++        assert kwargs["composition_duration_frames"] == 300
++        assert kwargs["window"] is adapted.window
++        raise ExecutionObserved()
++
++    monkeypatch.setattr(remotion, "_execute_remotion", execute)
++    with pytest.raises(ExecutionObserved):
++        remotion._protocol_render(adapted, workspace=tmp_path)
++
++
++@pytest.mark.parametrize("fault", ["overlong", "short", "fps", "speed", "source_range", "full", "unlayered", "legacy", "tail", "malformed"])
++def test_support_and_locked_execution_reject_same_extent_conflicts(tmp_path, monkeypatch, fault):
++    _, request, selected, _ = _adapt(tmp_path, shape="sparse")
++    total = 300
++    if fault == "overlong":
++        request = replace(request, window=FrameWindow(150, 301, (30, 1)))
++    elif fault == "short":
++        total = 1
++    elif fault == "fps":
++        request = replace(request, window=FrameWindow(150, 180, (30000, 1001)))
++    elif fault == "speed":
++        request = replace(request, window=replace(request.window, speed=2))
++    elif fault == "source_range":
++        request = replace(request, window=replace(request.window, source_range=(150, 180)))
++    elif fault == "full":
++        request = replace(request, window=None)
++    elif fault == "unlayered":
++        selected["metadata"].pop("astrid_layer")
++    elif fault == "legacy":
++        selected["metadata"].update(source_window_start_seconds=5, duration_seconds=1)
++    elif fault == "tail":
++        # A real tail clock remains a separate policy; the scalar must not replace it.
++        authored = timeline_render_duration_frames(selected, 30)
++        selected["app"] = {"astrid_render_clock": {
++            "authored_duration_frames": authored, "render_duration_frames": 300,
++            "tail": {"policy": "unmapped_excess_rendered_region", "source_asset": "plate",
++                     "start_frame": authored, "end_frame": 300,
++                     "source_start_frame": authored, "source_end_frame": 300},
++        }}
++        assert timeline_render_duration_frames(selected, 30) == 300
++        assert remotion._native_window_argument(request.window, selected, _profile()) == "--frames=150-179"
++    elif fault == "malformed":
++        total = True
++    Path(request.timeline_path).write_text(json.dumps(selected))
++    request = replace(request, metadata={EXTENT_KEY: str(total)})
++    (tmp_path / "assets").write_text('{"assets": {}}')
++    _support_setup(monkeypatch, _profile())
++    report = remotion.support(request, workspace=tmp_path)
++    assert not report.supported
++    monkeypatch.setattr(remotion, "_validate_project_dir", lambda *a: pytest.fail("allocated before extent refusal"))
++    with pytest.raises(ValueError):
++        remotion._execute_remotion_locked(
++            Path(request.timeline_path), tmp_path / "assets", tmp_path / "out.mp4",
++            provenance_out_path=tmp_path / "out.mp4", project_dir=tmp_path,
++            composition_id="TimelineComposition", theme_path=None, min_free_gb=None,
++            window=request.window, composition_duration_frames=total,
++        )
++
++
++def test_direct_unlayered_metadata_cannot_extend_bounds(tmp_path, monkeypatch):
++    _, adapted, _, _ = _adapt(tmp_path, layer=False)
++    _support_setup(monkeypatch, _profile())
++    forged = replace(adapted, window=FrameWindow(150, 301, (30, 1)), metadata={EXTENT_KEY: "999999"})
++    assert not remotion.support(forged, workspace=tmp_path).supported
++
++
++@pytest.mark.parametrize("extent", [True, 1.5, float("inf"), 0, -1, 9007199254740992])
++def test_direct_executor_extent_requires_positive_safe_integer(tmp_path, extent):
++    selected = {"clips": [], "metadata": {"astrid_layer": {"z": 1, "alpha": True}}}
++    with pytest.raises(ValueError, match="positive safe integer"):
++        remotion._native_window_argument(FrameWindow(150, 180, (30, 1)), selected, _profile(),
++                                          composition_duration_frames=extent)
++
++
++@pytest.mark.parametrize("direct_output", [False, True])
++def test_both_execution_staging_paths_forward_extent(tmp_path, monkeypatch, direct_output):
++    from contextlib import nullcontext
++
++    monkeypatch.setattr(remotion.remotion_lock, "remotion_render_lock", nullcontext)
++    final = tmp_path / "out.mp4"
++
++    def execute(*args, **kwargs):
++        assert kwargs["composition_duration_frames"] == 300
++        args[2].write_bytes(b"test consumption only")
++        return "observed"
++
++    monkeypatch.setattr(remotion, "_execute_remotion_locked", execute)
++    assert remotion._execute_remotion(
++        tmp_path / "timeline", tmp_path / "assets", final if direct_output else tmp_path / "stage.mp4",
++        provenance_out_path=final, project_dir=tmp_path, composition_id="TimelineComposition",
++        theme_path=None, min_free_gb=None, composition_duration_frames=300,
++    ) == "observed"
++
++
++@pytest.mark.parametrize("pair", [(30, 1), (30000, 1001)])
++@pytest.mark.parametrize("shape", ["empty", "sparse"])
++@pytest.mark.parametrize("z", [0, 1])
++def test_locked_normal_props_keep_full_extent_and_original_layer(tmp_path, monkeypatch, pair, shape, z):
++    _, request, selected, _ = _adapt(tmp_path, pair=pair, shape=shape)
++    selected["metadata"]["astrid_layer"] = {"z": z, "alpha": z > 0}
++    Path(request.timeline_path).write_text(json.dumps(selected))
++    assets = tmp_path / "assets.json"
++    assets.write_text('{"assets": {}}')
++    project = tmp_path / "project"
++    project.mkdir()
++    output = tmp_path / ("out.mov" if z else "out.mp4")
++    runtime = SimpleNamespace(node_executable=Path("/unused/node"), remotion_cli=Path("/unused/cli"), node_version="v20.19.4")
++    monkeypatch.setattr(remotion, "_validate_project_dir", lambda *a: runtime)
++    monkeypatch.setattr(remotion, "_regenerate_element_registries", lambda *a: None)
++    monkeypatch.setattr(remotion, "_validate_renderer_effect_registry", lambda *a: None)
++    monkeypatch.setattr(remotion, "_effective_registry_state", lambda *a: {"hash": "fixture"})
++    monkeypatch.setattr(remotion, "_canonical_profile", lambda *a: _profile(pair))
++    monkeypatch.setattr(remotion, "_resolved_theme_for_render", lambda *a: {
++        "id": "banodoco-default", "visual": {"canvas": {"width": 320, "height": 180, "fps": pair[0] / pair[1]}},
++    })
++    monkeypatch.setattr(remotion, "_stage_effect_assets_for_timeline", lambda *a, **k: {"effects": []})
++    monkeypatch.setattr(remotion, "_available_remotion_port", lambda: 32101)
++    monkeypatch.setattr(remotion, "InvocationAssetServer", lambda *a, **k: pytest.fail("unexpected socket"))
++    monkeypatch.setenv("ASTRID_REMOTION_STREAM_MEMORY_BUDGET_BYTES", "0")
++    monkeypatch.delenv("ASTRID_PROGRESS_PATH", raising=False)
++
++    class CommandObserved(Exception):
++        pass
++
++    def command(argv, **kwargs):
++        props = json.loads(Path(argv[argv.index("--props") + 1]).read_text())
++        assert props["astridCompositionDurationInFrames"] == 300
++        assert props["timeline"] == selected
++        assert props["theme"]["visual"]["canvas"]["fps"] == pair[0] / pair[1]
++        if z:
++            assert props["theme"]["visual"]["color"]["bg"] == "transparent"
++        else:
++            assert "color" not in props["theme"]["visual"]
++        assert [arg for arg in argv if arg.startswith("--frames=")] == ["--frames=150-179"]
++        assert ("--codec=prores" in argv) == (z > 0)
++        assert ("--audio-codec=pcm-16" in argv) == (z == 0)
++        raise CommandObserved()
++
++    monkeypatch.setattr(remotion.subprocess, "run", command)
++    with pytest.raises(CommandObserved):
++        remotion._execute_remotion_locked(
++            Path(request.timeline_path), assets, output, provenance_out_path=output, project_dir=project,
++            composition_id="TimelineComposition", theme_path=None, min_free_gb=None, window=request.window,
++            composition_duration_frames=remotion._composition_duration_from_request(request), encode_aac_at_stitch=True,
++        )
++    assert not (tmp_path / ".remotion-props.json").exists()
++    assert not list(tmp_path.glob(".remotion-runtime-*"))
++    assert not list(tmp_path.glob("astrid-render-assets-*"))
+diff --git a/tests/packs/rendering/test_normal_audio_run.py b/tests/packs/rendering/test_normal_audio_run.py
+index bebfc7db9..fc8a33d5c 100644
+--- a/tests/packs/rendering/test_normal_audio_run.py
++++ b/tests/packs/rendering/test_normal_audio_run.py
+@@ -137,7 +137,9 @@ def normal_run(tmp_path, monkeypatch, request):
+     monkeypatch.setattr(remotion, "_validate_project_dir", lambda *a: runtime)
+     monkeypatch.setattr(remotion, "_effective_registry_state", lambda *a: {"hash": "fixture"})
+     monkeypatch.setattr(remotion, "_canonical_profile", lambda *a: _profile())
+-    monkeypatch.setattr(remotion, "_resolved_theme_for_render", lambda *a: {"id": "banodoco-default"})
++    monkeypatch.setattr(remotion, "_resolved_theme_for_render", lambda *a: {
++        "id": "banodoco-default", "visual": {"canvas": {"width": 320, "height": 180, "fps": 30000 / 1001}},
++    })
+     monkeypatch.setattr(remotion, "_stage_effect_assets_for_timeline", lambda *a, **k: {"effects": []})
+     monkeypatch.setattr(remotion, "_available_remotion_port", lambda: 32101)
+     state = SimpleNamespace(paths=[], events=[], props=None, consume=lambda: None,
+@@ -196,11 +198,13 @@ def normal_run(tmp_path, monkeypatch, request):
+             project_dir=project, composition_id="TimelineComposition", theme_path=None,
+             min_free_gb=None, materialized_objects=state.materialized_objects, staging_parent=tmp_path,
+             window=render_request.window,
++            composition_duration_frames=remotion._composition_duration_from_request(render_request),
+         )
+ 
+     state.execute = execute
+     state.timeline_path = timeline_path
+     state.registry = registry
++    state.composition_duration_frames = remotion._composition_duration_from_request(render_request)
+     yield state
+     assert timeline_path.read_bytes() == original
+     assert not list(tmp_path.glob("astrid-render-assets-*"))
+@@ -214,6 +218,8 @@ def test_actual_normal_props_prepare_native_source_without_baking_scalar_gain(no
+     def consume():
+         props = state.props
+         assert "compiledTransitions" not in props
++        assert props.get("astridCompositionDurationInFrames") == state.composition_duration_frames
++        assert props["theme"]["visual"]["canvas"]["fps"] == 30000 / 1001
+         raw = json.loads(state.timeline_path.read_text())
+         assert props["timeline"]["tracks"] == raw["tracks"]
+         for expected, actual in zip(raw["clips"], props["timeline"]["clips"], strict=True):

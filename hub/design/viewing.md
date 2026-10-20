@@ -59,7 +59,7 @@ but inactive until the current source join is qualified.
 
 ## Composition 0.0.12
 
-Current Composition source is `a62e7d266`; the restored Makefile is present and
+Current Composition source is `e80c46baf` (history joined; tree equal to `a62e7d266`); the restored Makefile is present and
 the package is immutable:
 
 ```text

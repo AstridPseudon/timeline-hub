@@ -1,0 +1,88 @@
+{
+  "base": "abd41eb2a6a8fe9224028018ac65225018e490bd",
+  "candidate": "61f1a420f1f355ee0d16ffb0dbeb617b83b1b044",
+  "candidate_tree": "2e1c782c0cf02316193905292d578ec00ec0497d",
+  "producer_exit": "0",
+  "setup": {
+    "baseline": "abd41eb2a6a8fe9224028018ac65225018e490bd",
+    "patch_sha256": "02c59a0aeabff71307e209dc79b9d9b1b794f02ed21252f2ee8a6049b5062161",
+    "public12_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "scope_real_directory": true,
+    "shared_writes": 0
+  },
+  "files": {
+    "astrid/core/rendering/service.py": {
+      "candidate_sha256": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff",
+      "candidate_bytes": 97111,
+      "baseline_sha256": "930f7d6914bc4cb36d65e266e7fbaf83e625e6ed9466ce6426551631f477ec22"
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": {
+      "candidate_sha256": "e640ddb5a05a948730875556832e21ac1959ce5ca533b576abdb1b3647aa4eb3",
+      "candidate_bytes": 84749,
+      "baseline_sha256": "37a43a6bfcc2806d09f0b9149c9301c2c833cd6a807c624c77e19076151b284a"
+    },
+    "remotion/src/Root.tsx": {
+      "candidate_sha256": "321736875ffe7aec5b85a32f60be27af7663fd7a56544765584962e82e9f0407",
+      "candidate_bytes": 6832,
+      "baseline_sha256": "f5b7474e19fa282c55ab6b56d4ee7a74db9b78b8dbc0e2b8891a2e88e8a5bf76"
+    },
+    "tests/packs/rendering/test_native_layer_extent.py": {
+      "candidate_sha256": "aca525c89645a2f2f19f620e3ad8dd99f99489d21542d181ed64b489508edb48",
+      "candidate_bytes": 14203,
+      "baseline_sha256": null
+    },
+    "tests/packs/rendering/test_normal_audio_run.py": {
+      "candidate_sha256": "13a6a778f8a8ce7df34a632cccca4dc768418235abb3f1c461e477d3f9ba3e7c",
+      "candidate_bytes": 14029,
+      "baseline_sha256": "b49a1413f96a9569bf6dd9569cc0d455e2b13dc54fac77bbb56881cb01c7340c"
+    },
+    "astrid/core/timeline/banodoco_composer.py": {
+      "candidate_sha256": "5cf8139312e813143adaf84c5a9a9e45d9ad6ce6be9a5dabd667df0048203a4f",
+      "baseline_sha256": "5cf8139312e813143adaf84c5a9a9e45d9ad6ce6be9a5dabd667df0048203a4f",
+      "unchanged": true
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": {
+      "candidate_sha256": "00e46437f1199488260fa6b3409297eddbb2b827ec7a1d0be1b6fff3fbf2b74a",
+      "baseline_sha256": "00e46437f1199488260fa6b3409297eddbb2b827ec7a1d0be1b6fff3fbf2b74a",
+      "unchanged": true
+    },
+    "astrid/core/timeline/duration.py": {
+      "candidate_sha256": "cbdb18bffebc6c9d5a07a3d144fcbfa558ba6249fda5c2a8dd8016b87a3fd3db",
+      "baseline_sha256": "cbdb18bffebc6c9d5a07a3d144fcbfa558ba6249fda5c2a8dd8016b87a3fd3db",
+      "unchanged": true
+    },
+    "remotion/normal-audio-sources.mjs": {
+      "candidate_sha256": "dc260d6980f3fc6ff0340b364d810cd4310cc3c663db836ab9c84f6ee5dd14e4",
+      "baseline_sha256": "dc260d6980f3fc6ff0340b364d810cd4310cc3c663db836ab9c84f6ee5dd14e4",
+      "unchanged": true
+    },
+    "remotion/attempt-envelope-pcm.mjs": {
+      "candidate_sha256": "db7bc06d2b3c9efecac015d59d965ef4dfa718e13f1ef303f190c3831bc95719",
+      "baseline_sha256": "db7bc06d2b3c9efecac015d59d965ef4dfa718e13f1ef303f190c3831bc95719",
+      "unchanged": true
+    }
+  },
+  "review_artifacts": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-extent-final-review-exacttests.py": {
+      "sha256": "0a8f20139f2b7cb3eaf1b4d27582dff696ff85bab03e75ff237a80af0b56b60c",
+      "bytes": 7073
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-extent-final-review-probe.py": {
+      "sha256": "4c32653939f863183b6f5127a2768c8df72b6638169a20a2ecc3583fb7e3d49f",
+      "bytes": 2193
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-native-extent-final-review-root-supplement.test.cjs": {
+      "sha256": "ec413f6a88f6eec3d7b6b59eb04867ade556be41f43f647960df36aafc969404",
+      "bytes": 4367
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-native-extent-final-review/candidate/remotion/tests/root-metadata.test.cjs": {
+      "sha256": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc",
+      "bytes": 7532
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-root-extent-regressions-final.patch": {
+      "sha256": "02c59a0aeabff71307e209dc79b9d9b1b794f02ed21252f2ee8a6049b5062161",
+      "bytes": 8213
+    }
+  },
+  "private_test_only_patch": "Applied only to private archived baseline and candidate; not in producer commit."
+}

@@ -1,0 +1,20 @@
+TAP version 13
+# Subtest: both callbacks distinguish identical empty and sparse layers with original 300/600 extents and rational FPS
+ok 1 - both callbacks distinguish identical empty and sparse layers with original 300/600 extents and rational FPS
+  ---
+  duration_ms: 139.566301
+  ...
+# Subtest: boolean retained extents are refused by both callbacks
+ok 2 - boolean retained extents are refused by both callbacks
+  ---
+  duration_ms: 23.639504
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 170.576533
