@@ -7,7 +7,7 @@ import { RUNTIME_SCHEMA_DIGEST, RUNTIME_TARGETED_EXECUTION_CAPABILITY } from '@/
 import { RuntimeOperationHost } from '@/integrations/runtime/operationHost.ts';
 import { createEditorImagePlacementHost } from '@/integrations/runtime/clientLocalAdapter.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
-import type { CommitAcceptedMutation, CommitRequest, Task } from '@/integrations/runtime/generated.ts';
+import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, Task } from '@/integrations/runtime/generated.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { createCommitOutbox } from './commitOutbox.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
@@ -285,6 +285,45 @@ describe('production command session automatic image continuation', () => {
         value: { response: env.receipts.get(exact.key) } } } });
     expect(env.calls.filter((call) => /tasks|media-selection/.test(call.path))).toHaveLength(reads);
     expect(read).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing dependency manifest', (document: CanonicalDocument) => {
+      delete (document as unknown as Record<string, unknown>).dependency_manifest;
+    }, 'dependency_manifest'],
+    ['changed project scope', (document: CanonicalDocument) => { document.project_id = 'other-project'; }, 'outside the requested project/timeline'],
+  ] as const)('refuses a corrupt original closure (%s) and retains the saved draft', async (_name, corrupt, reason) => {
+    const env = environment(), first = await env.mount();
+    env.loseAdmission();
+    await expect(env.admit(first.session)).rejects.toThrow();
+    await first.session.dispose();
+    const [saved] = await env.outboxes.list(scope);
+    env.task.state = 'succeeded'; env.loseCommit();
+    const second = await env.mount();
+    await second.session.recover(saved.ownerId);
+    expect(second.session.getState().status).toBe('retry');
+    await second.session.dispose();
+    const [pending] = await env.outboxes.list(scope);
+    const beforeRefusal = { intents: structuredClone(pending.intents), pending: structuredClone(pending.pending) };
+    const newer = { ...env.initial, head: { revisionId: 'newer', publicationId: 'newer-p' },
+      canonicalDocument: { ...env.initial.canonicalDocument, parent_revision: { ...env.initial.canonicalDocument.parent_revision, revision_id: 'newer' } } };
+    const recovered = await env.mount(newer);
+    const recover = env.outboxes.recover;
+    vi.spyOn(env.outboxes, 'recover').mockImplementation((outboxScope, owner, work) => recover(outboxScope, owner, async (box) => work({
+      ...box,
+      read: async () => {
+        const record = await box.read();
+        const payload = record.intents[0]?.payload as unknown as { displayBasis?: { canonicalDocument?: CanonicalDocument } } | undefined;
+        if (payload?.displayBasis?.canonicalDocument) corrupt(payload.displayBasis.canonicalDocument);
+        return record;
+      },
+    })));
+    await expect(recovered.session.recover(pending.ownerId)).rejects.toThrow(reason);
+    expect(recovered.session.getState()).toMatchObject({ status: 'error' });
+    expect(env.projected).toEqual([]);
+    expect(env.commits()).toHaveLength(1);
+    const [retained] = await env.outboxes.list(scope);
+    expect({ intents: retained.intents, pending: retained.pending }).toEqual(beforeRefusal);
   });
 
   it('honors explicit recovery while an observation is already resuming the saved placement', async () => {

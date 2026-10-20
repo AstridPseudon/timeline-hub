@@ -4,7 +4,10 @@ import type { PlacementProgress } from './placementRequester.ts';
 import type { CommitRequest, EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
-import { runtimeGraphToContractFromCanonicalDocument } from '@/integrations/runtime/dataProvider.ts';
+import {
+  runtimeGraphToContractFromCanonicalDocument,
+  validateAcceptedCanonicalDocument,
+} from '@/integrations/runtime/dataProvider.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { clipScalarPreview, type ClipScalarArgs, type ClipScalarCapturePort } from './clipScalarGesture.ts';
@@ -889,11 +892,17 @@ export async function createTimelineCommandSession(options: Options) {
           || displayBasis.canonicalDocument?.parent_revision?.revision_id !== displayBasis.head.revisionId) {
           throw new Error('Recovered move has no verified original display basis');
         }
+        const originalDocument = validateAcceptedCanonicalDocument(
+          displayBasis.canonicalDocument,
+          options.scope.projectId,
+          options.scope.timelineId,
+          displayBasis.head.revisionId,
+        );
         // Automatic placement persists the original document, not a derived graph.
-        const recoveredBasis: TimelineCommandBasis = { ...displayBasis };
-        if (displayBasis.canonicalDocument.parent_revision.payload.occurrences.length) {
+        const recoveredBasis: TimelineCommandBasis = { ...displayBasis, canonicalDocument: originalDocument };
+        if (originalDocument.parent_revision.payload.occurrences.length) {
           recoveredBasis.graph = runtimeGraphToContractFromCanonicalDocument(
-            options.scope.projectId, options.scope.timelineId, displayBasis.canonicalDocument, displayBasis.head.publicationId);
+            options.scope.projectId, options.scope.timelineId, originalDocument, displayBasis.head.publicationId);
         }
         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
           : recoveredBasis;
