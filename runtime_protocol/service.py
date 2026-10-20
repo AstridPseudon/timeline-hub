@@ -1901,7 +1901,7 @@ class RuntimeService:
         if replay is not None:
             return replay
         if self.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (timeline_id,)).fetchone():
-            raise ConflictError("timeline already exists", details={"timeline_id": timeline_id})
+            return self._adopt_empty_shell_create(project["id"], timeline_id, name, idempotency_key, request_hash)
         timestamp = now()
         self.store.conn.execute("INSERT INTO timelines(id, project_id, version, name, created_at, archived_at) VALUES (?, ?, 1, ?, ?, NULL)", (timeline_id, project["id"], name, timestamp))
         resource = self._timeline_resource(timeline_id)
@@ -1928,6 +1928,28 @@ class RuntimeService:
                 return self._command_replay("timeline.create", "timelines", idempotency_key, request_hash, project_id=project["id"])
             return resource
         return result
+
+    def _adopt_empty_shell_create(self, project_id, timeline_id, name, idempotency_key, request_hash):
+        """Repair an exact same-ID empty headless shell inside this create's transaction.
+
+        Anything else (headed, non-empty, archived, another project, or another
+        name) keeps the original conflict and writes nothing.
+        """
+        from .timeline_commit import CommitRejected
+        row = self.store.conn.execute("SELECT project_id, name, archived_at FROM timelines WHERE id=?", (timeline_id,)).fetchone()
+        commits = self._timeline_commits()[0] if self._timeline_commit_provider is not None else None
+        if commits is None or row["project_id"] != project_id or row["archived_at"] is not None or (name is not None and name != row["name"]):
+            raise ConflictError("timeline already exists", details={"timeline_id": timeline_id})
+        try:
+            publication_event_id = commits.adopt_empty_shell(project_id, timeline_id, authorize=self._assert_mutation_admitted)
+        except (CommitRejected, ConflictError) as exc:
+            raise ConflictError("timeline already exists", details={"timeline_id": timeline_id}) from exc
+        resource = self._timeline_resource(timeline_id)
+        self._command_record("timeline.create", "timelines", idempotency_key, request_hash, resource,
+                             project_id=project_id, event_ids=(publication_event_id,))
+        if idempotency_key is not None:
+            return self._command_replay("timeline.create", "timelines", idempotency_key, request_hash, project_id=project_id)
+        return resource
 
     @_durable_mutation
     def create_timeline_document(self, project_id, body, *, idempotency_key=None):

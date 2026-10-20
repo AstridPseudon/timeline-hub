@@ -792,6 +792,27 @@ class TimelineCommitStore:
             self._install_entries(project_id, timeline_id, plan)
             return detached(plan["head"])
 
+    def adopt_empty_shell(self, project_id, timeline_id, *, authorize):
+        """Install the verified empty publication of a headless shell as its head.
+
+        Refuses before any write unless the shell is exactly one unpublished
+        empty bootstrap. Returns the publication event that was adopted.
+        """
+        from .cas import ContentAddressedStore
+        from .timeline_commit_baseline import bootstrap_install_plan
+
+        with self.store._mutex, self.store._transaction():
+            authorize()
+            self._membership(project_id, timeline_id)
+            current = self.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
+                                        (project_id, timeline_id)).fetchone()
+            if current is None or current["revision_id"] is None or current["publication_id"] is not None:
+                reject("history_unavailable")
+            plan = bootstrap_install_plan(self.conn, project_id, timeline_id,
+                                          read_object=ContentAddressedStore(self.store.cas_root).read)
+            self._install_entries(project_id, timeline_id, plan)
+            return plan["entries"][0]["receipt"]["event_ids"][0]
+
     def bootstrap(self, project_id, timeline_id, *, authorize):
         from .cas import ContentAddressedStore
         from .timeline_commit_baseline import bootstrap_install_plan, empty_bootstrap_document
