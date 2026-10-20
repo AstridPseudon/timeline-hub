@@ -3,6 +3,7 @@
 import os
 import shutil
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -15,8 +16,23 @@ from astrid.installer.core import write_json
 from astrid.installer.service import LABEL, default_program_root
 
 
+@pytest.fixture(name="tmp_path")
+def compact_installer_path():
+    # Pytest/xdist path nesting must not trip the real Windows root-length guard.
+    with TemporaryDirectory(prefix="ia-") as directory:
+        yield Path(directory)
+
+
+@pytest.fixture
+def windows_move(monkeypatch):
+    # Keep durable_replace and its Windows retry/flush path; fake only Win32.
+    move = Mock(side_effect=os.replace)
+    monkeypatch.setattr(platform, "_move_file_write_through", move)
+    return move
+
+
 @pytest.mark.parametrize("custom_root", [False, True])
-def test_windows_installer_lock_stays_outside_program_and_workspace(tmp_path, monkeypatch, custom_root):
+def test_windows_installer_lock_stays_outside_program_and_workspace(tmp_path, monkeypatch, custom_root, windows_move):
     local = tmp_path / "local"
     log_dir = local / "Astrid Runtime" / "logs"
     root = tmp_path / "custom" if custom_root else local / "Astrid"
@@ -57,6 +73,7 @@ def test_windows_installer_lock_stays_outside_program_and_workspace(tmp_path, mo
     assert len(locks) == 1
     unlock.assert_called_once_with(locks[0])
     installer.run.assert_called_once()
+    windows_move.assert_any_call(root / "install.json.tmp", root / "install.json")
 
 
 @pytest.mark.parametrize("directory", ["program", "state"])
@@ -93,7 +110,7 @@ def test_windows_installer_does_not_bypass_existing_directory_validation(tmp_pat
     assert not (root / "install.json").exists()
 
 
-def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path, monkeypatch, capsys):
+def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path, monkeypatch, capsys, windows_move):
     local = tmp_path / "local"
     monkeypatch.setenv("LOCALAPPDATA", str(local))
     monkeypatch.setattr(cli, "sys", SimpleNamespace(platform="win32"))
@@ -145,6 +162,7 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path
     output = capsys.readouterr().out
     assert "Astrid was uninstalled." in output
     assert "Remaining:" not in output
+    windows_move.assert_any_call(root / "install.json.tmp", root / "install.json")
 
 
 @pytest.mark.parametrize("selected", ["root", "data"])
