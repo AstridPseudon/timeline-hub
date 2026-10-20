@@ -104,7 +104,9 @@ export function serializeProjectedTimelineConfig<T extends TimelineConfig>(
   return { ...config, clips: config.clips.map((clip) => {
     if (!counterparts.has(clip.id)) {
       if (parentClips.filter((raw) => raw.id === clip.id).length === 1) return clip;
-      throw new Error(`The projected clip ${clip.id} has no verified raw counterpart; keep the draft`);
+      // A clip outside the retained projection is a new editor-authored clip;
+      // it has no raw graph counterpart to restore and must pass through as-is.
+      return clip;
     }
     const raw = counterparts.get(clip.id);
     if (!raw) throw new Error('The projected clip has no unambiguous raw counterpart');

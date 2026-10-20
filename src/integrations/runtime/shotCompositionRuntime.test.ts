@@ -18,6 +18,17 @@ import { duplicateIndependentShot } from '@/tools/video-editor/data/shotComposit
 const PROJECT_ID = 'project-001';
 const TIMELINE_ID = 'document-primary';
 
+function expectedPersistedPopupConfig<T extends { clips?: Array<{ app?: { canonicalTiming?: unknown } }> }>(config: T): T {
+  const persisted = structuredClone(config);
+  for (const clip of persisted.clips ?? []) {
+    const timing = clip.app?.canonicalTiming;
+    if (timing && typeof timing === 'object' && !Array.isArray(timing)) {
+      Reflect.deleteProperty(timing, 'storedOccurrenceDurationMs');
+    }
+  }
+  return persisted;
+}
+
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
 
 function json(value: unknown): Uint8Array {
@@ -292,7 +303,7 @@ describe('Runtime shot-composition port', () => {
       const first = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
       await expect(first.saveTimeline(recoveryId, next, 1)).rejects.toThrow('connection dropped after durable commit');
       const kept = await loadTimelineDraft(recoveryId);
-      expect(kept?.draft.config).toEqual(next);
+      expect(kept?.draft.config).toEqual(expectedPersistedPopupConfig(next));
       const reopened = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
       expect((await reopened.loadTimeline(recoveryId)).config).toEqual(next);
       await reopened.saveTimeline(recoveryId, next, 1);
@@ -366,9 +377,10 @@ describe('Runtime shot-composition port', () => {
     await expect(stalePopup.saveTimeline(recoveryId, newerDraft, 1)).rejects.toMatchObject({ code: 'stale_write' });
     const recovery = await loadTimelineDraft(recoveryId);
     expect(recovery?.draft).toMatchObject({
-      config: newerDraft,
+      config: expectedPersistedPopupConfig(newerDraft),
       canonicalPublication: { expectedHeadRevisionId: composition.headRevisionId },
     });
+    expect((await stalePopup.loadTimeline(recoveryId)).config).toEqual(newerDraft);
     await clearTimelineDraft(recoveryId);
   });
 
