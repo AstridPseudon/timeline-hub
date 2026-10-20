@@ -1,4 +1,5 @@
 import { chromium, test as base, type Browser } from '@playwright/test';
+import { deepStrictEqual } from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { lstat, readFile, readdir, realpath } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
@@ -175,6 +176,20 @@ export async function sourceVersions() {
   };
 }
 
+export type SourceVersionGraph = Pick<Awaited<ReturnType<typeof sourceVersions>>,
+  'compositionFiles' | 'renderGraphHashes'>;
+
+/** Keep the release-declared package files and Remotion/Player targets immutable during browser setup/use. */
+export function assertSourceVersionsUnchanged(before: SourceVersionGraph, after: SourceVersionGraph): void {
+  for (const field of ['compositionFiles', 'renderGraphHashes'] as const) {
+    try {
+      deepStrictEqual(after[field], before[field]);
+    } catch {
+      throw new Error(`source dependency graph changed during browser fixture: ${field}`);
+    }
+  }
+}
+
 export async function readyRenderCapability(harness: DirectHarness): Promise<Capability> {
   let cursor: string | null = null;
   do {
@@ -216,8 +231,24 @@ export const test = base.extend<object, {
   }, { scope: 'worker', timeout: 240_000 }],
   browser: [async ({ harness, fixture }, provide) => {
     void fixture;
-    const browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: INSTALLED_BROWSER });
-    try { await provide(browser); } finally { await browser.close(); }
+    const preflight = await sourceVersions();
+    let browser: Browser | undefined;
+    let failure: unknown;
+    try {
+      browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: INSTALLED_BROWSER });
+      await provide(browser);
+    } catch (error) {
+      failure = error;
+    }
+    try { await browser?.close(); } catch (error) {
+      if (failure === undefined) failure = error;
+    }
+    try {
+      assertSourceVersionsUnchanged(preflight, await sourceVersions());
+    } catch (error) {
+      if (failure === undefined) failure = error;
+    }
+    if (failure !== undefined) throw failure;
   }, { scope: 'worker' }],
   context: async ({ browser, harness }, provide) => {
     const context = await browser.newContext({ ...harness.contextOptions,

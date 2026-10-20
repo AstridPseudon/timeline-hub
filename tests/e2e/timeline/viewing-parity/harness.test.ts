@@ -3,8 +3,8 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
 import { mediaHash } from './media';
-import { verifyFileGraph } from './harness';
 
 async function fixture(files: Record<string, string>): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'viewing-parity-graph-'));
@@ -65,4 +65,19 @@ test('fails closed when installed bytes or the exact package set changes', async
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test('fails postflight when a declared dependency graph changes', () => {
+  const before = {
+    compositionFiles: { app: { 'package/index.js': 'sha256:composition' } },
+    renderGraphHashes: { app: { 'node_modules/remotion.js': 'sha256:app' } },
+  } as const;
+  assertSourceVersionsUnchanged(before, before);
+  assert.throws(
+    () => assertSourceVersionsUnchanged(before, {
+      ...before,
+      renderGraphHashes: { app: { 'node_modules/remotion.js': 'sha256:changed' } },
+    }),
+    /source dependency graph changed during browser fixture: renderGraphHashes/,
+  );
 });
