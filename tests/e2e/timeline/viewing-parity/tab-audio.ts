@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import type { Page, TestInfo } from '@playwright/test';
+import type { PlayerRef } from '@remotion/player';
 
 const execAsync = promisify(execFile);
 
@@ -144,9 +145,7 @@ export async function recordTabStream(
     observations.push({ label, ...(await backend.observe(label)) });
   };
   function createPageBackend(): CaptureBackend {
-    const player = (window as Window & { __frameParityPlayer?: {
-      play: () => Promise<void>; pause: () => void; isPlaying: () => boolean;
-    } }).__frameParityPlayer;
+    const player = (window as Window & { __frameParityPlayer?: PlayerRef }).__frameParityPlayer;
     if (!player) throw new Error('Mounted actual Player ref is required before tab capture');
     const waitForPlaying = async () => {
       const deadline = Date.now() + 10_000;
