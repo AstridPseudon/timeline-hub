@@ -3,6 +3,15 @@ import type { TimelinePatch, TimelinePatchOperation } from '@/sdk/video/timeline
 import { assembleTimelineData, type TimelineData } from '../lib/timeline-data.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import {
+  captureOrdinaryMoveMember,
+  executeOrdinaryMoveMember,
+  finishOrdinaryMoveMember,
+} from './ordinaryMoveMember.ts';
+import {
+  captureOrdinaryScalarMember,
+  executeOrdinaryScalarMember,
+} from './ordinaryScalarMember.ts';
+import {
   AuthoredState,
   ClipMoveError,
   MoveRecording,
@@ -31,6 +40,27 @@ export class GenericPatchRefusal extends Error {
   }
 }
 
+function scalarPatchPayload(operation: TimelinePatchOperation): boolean {
+  const payload = operation.payload;
+  if (!object(payload) || !equal(Object.keys(payload).sort(), ['clear', 'values'])
+    || !object(payload.values) || !Array.isArray(payload.clear)) return false;
+  const values = payload.values;
+  const clear = payload.clear;
+  if (Object.keys(values).some((key) => key !== 'hold')
+    || (has(values, 'hold') && (typeof values.hold !== 'number' || !Number.isFinite(values.hold) || values.hold <= 0))
+    || clear.some((key) => typeof key !== 'string' || !['hold', 'asset', 'transition'].includes(key))
+    || new Set(clear).size !== clear.length
+    || Object.keys(values).some((key) => clear.includes(key))
+    || (!Object.keys(values).length && !clear.length)) return false;
+  return true;
+}
+
+function qualified(operation: TimelinePatchOperation): boolean {
+  return operation.op === 'clip.move'
+    || (operation.op === 'clip.update' && object(operation.payload)
+      && (has(operation.payload, 'values') || has(operation.payload, 'clear')));
+}
+
 function supported(operation: TimelinePatchOperation): boolean {
   const payload = operation.payload;
   if (Object.keys(operation).some((key) => !['op', 'target', 'payload', 'order'].includes(key))
@@ -40,8 +70,14 @@ function supported(operation: TimelinePatchOperation): boolean {
     return typeof payload.label === 'string' && Object.keys(payload).every((key) => key === 'label' || key === 'mode')
       && (!('mode' in payload) || payload.mode === 'merge');
   }
-  return operation.op === 'clip.update' && equal(Object.keys(payload), ['hold'])
-    && typeof payload.hold === 'number' && Number.isFinite(payload.hold) && payload.hold > 0;
+  if (operation.op === 'clip.move') {
+    return equal(Object.keys(payload), ['at'])
+      && typeof payload.at === 'number' && Number.isFinite(payload.at) && payload.at >= 0;
+  }
+  if (operation.op === 'clip.update' && equal(Object.keys(payload), ['hold'])) {
+    return typeof payload.hold === 'number' && Number.isFinite(payload.hold) && payload.hold > 0;
+  }
+  return operation.op === 'clip.update' && scalarPatchPayload(operation);
 }
 
 export type GenericPatchSupport = 'supported' | 'unsupported' | 'mixed';
@@ -49,7 +85,11 @@ export type GenericPatchSupport = 'supported' | 'unsupported' | 'mixed';
 /** Classify the complete patch before native capture or owner resolution. */
 export function classifyGenericPatch(patch: TimelinePatch): GenericPatchSupport {
   const supportedCount = patch.operations.filter(supported).length;
-  if (supportedCount === 0) return 'unsupported';
+  const qualifiedCount = patch.operations.filter(qualified).length;
+  if (qualifiedCount === 0) {
+    if (supportedCount === patch.operations.length) return 'supported';
+    return supportedCount ? 'mixed' : 'unsupported';
+  }
   return supportedCount === patch.operations.length ? 'supported' : 'mixed';
 }
 
@@ -366,8 +406,12 @@ export function executeGenericPatch(bundle: AuthoredBundle, commands: readonly E
   for (const [ordinal, command] of commands.entries()) {
     const result = command.op === 'track.set'
       ? executeTrackSet(after, command, ordinal)
+      : command.op === 'clip.move'
+        ? executeOrdinaryMoveMember(after, command, ordinal)
       : command.op === 'clip.set'
-        ? executeClipSet(after, command, ordinal)
+        ? object(command.args) && Array.isArray(command.args.clear) && command.args.clear.length
+          ? executeOrdinaryScalarMember(after, command, ordinal)
+          : executeClipSet(after, command, ordinal)
         : (() => { throw new Error('Unsupported native patch member'); })();
     after = result.bundle;
     records.push(result.record);
@@ -375,7 +419,7 @@ export function executeGenericPatch(bundle: AuthoredBundle, commands: readonly E
   return { bundle: after, records };
 }
 
-/** Only merge-mode label SET and positive hold SET; ownership comes from the host resolver. */
+/** Native ordinary members; ownership comes from the host resolver. */
 export function captureGenericPatch(
   bundle: AuthoredBundle,
   patch: TimelinePatch,
@@ -385,8 +429,11 @@ export function captureGenericPatch(
   const original = freezeJson(copy(patch));
   const failures = new Map<number, string>();
   original.operations.forEach((operation, index) => {
-    if (!supported(operation)) failures.set(index,
-      'Requires a parent label-only merge or exact positive hold SET');
+    if (!supported(operation)) failures.set(index, qualified(operation)
+      ? operation.op === 'clip.move'
+        ? 'Requires an absolute clip.move with one finite non-negative at value'
+        : 'Requires clip.set-compatible values and explicit clears'
+      : 'Requires a parent label-only merge or exact positive hold SET');
   });
   if (!original.operations.length || !Number.isSafeInteger(original.version) || original.version < 0) {
     throw new Error('Native patch requires operations and a non-negative integer version');
@@ -409,13 +456,36 @@ export function captureGenericPatch(
   let after = copy(bundle);
   const commands: EditCommand[] = [];
   const records: CommandRecord[] = [];
+  const previewOperations: TimelinePatchOperation[] = [];
   for (const { operation, index } of ordered) {
     try {
-      const result = operation.op === 'track.update'
-        ? finishTrackLabel(captureTrackLabel(after, owners[index]), {
+      let result;
+      if (operation.op === 'track.update') {
+        result = finishTrackLabel(captureTrackLabel(after, owners[index]), {
           values: { label: operation.payload!.label as string }, clear: [],
-        })
-        : executeClipSet(after, captureClipSet(after, owners[index], operation.payload!.hold as number), commands.length);
+        });
+        previewOperations.push({ op: operation.op, target: operation.target, payload: { label: operation.payload!.label } });
+      } else if (operation.op === 'clip.move') {
+        const basis = captureOrdinaryMoveMember(after, operation, owners[index]);
+        const move = finishOrdinaryMoveMember(basis, commands.length);
+        result = move;
+        previewOperations.push({ op: operation.op, target: operation.target, payload: { at: move.previewAt } });
+      } else if (object(operation.payload) && (has(operation.payload, 'values') || has(operation.payload, 'clear'))) {
+        const values = operation.payload.values as Record<string, JSON>;
+        const clear = operation.payload.clear as string[];
+        if (clear.length) {
+          const command = captureOrdinaryScalarMember(after, { select: owners[index], values, clear });
+          result = executeOrdinaryScalarMember(after, command, commands.length);
+        } else {
+          result = executeClipSet(after, captureClipSet(after, owners[index], values.hold as number), commands.length);
+        }
+        previewOperations.push({ op: operation.op, target: operation.target, payload: {
+          values: copy(values), clear: [...clear],
+        } });
+      } else {
+        result = executeClipSet(after, captureClipSet(after, owners[index], operation.payload!.hold as number), commands.length);
+        previewOperations.push({ op: operation.op, target: operation.target, payload: { hold: operation.payload!.hold } });
+      }
       result.record.ordinal = commands.length;
       result.record.derived_writes.forEach((write) => { write.cause = commands.length; });
       after = result.bundle;
@@ -428,14 +498,8 @@ export function captureGenericPatch(
   if (failures.size) throw new GenericPatchRefusal(original, failures);
   const preview: TimelinePatch = {
     version: 1,
-    source: 'timeline.native-label-hold',
-    operations: ordered.map(({ operation }) => ({
-      op: operation.op,
-      target: operation.target,
-      payload: operation.op === 'track.update'
-        ? { label: operation.payload!.label }
-        : { hold: operation.payload!.hold },
-    })),
+    source: 'timeline.native-ordinary',
+    operations: previewOperations,
   };
   return freezeJson({ patch: original, owners, commands, records, bundle: after, preview });
 }
@@ -455,7 +519,7 @@ export interface GenericPatchCapturePort {
 
 /** One local projection, preserving exact authored values and unrelated display state. */
 export function projectGenericPatchPreview(patch: TimelinePatch, current: TimelineData): TimelineData | undefined {
-  if (patch.source !== 'timeline.native-label-hold') return undefined;
+  if (patch.source !== 'timeline.native-label-hold' && patch.source !== 'timeline.native-ordinary') return undefined;
   assertFiniteJson(patch);
   if (patch.version !== 1 || !patch.operations.length || patch.operations.some((operation) => !supported(operation))) {
     throw new Error('Invalid native patch preview');
@@ -467,7 +531,15 @@ export function projectGenericPatchPreview(patch: TimelinePatch, current: Timeli
       const rows = operation.op === 'track.update' ? target.tracks ?? [] : target.clips;
       const matches = rows.filter((row) => row.id === operation.target);
       if (matches.length !== 1) throw new Error('Native patch preview requires one displayed target');
-      Object.assign(matches[0], copy(operation.payload));
+      if (operation.op === 'clip.update' && object(operation.payload)
+        && (has(operation.payload, 'values') || has(operation.payload, 'clear'))) {
+        const values = object(operation.payload.values) ? operation.payload.values : {};
+        const clear = Array.isArray(operation.payload.clear) ? operation.payload.clear : [];
+        Object.assign(matches[0], copy(values));
+        for (const key of clear) delete matches[0][key];
+      } else {
+        Object.assign(matches[0], copy(operation.payload));
+      }
     }
   }
   return { ...current, ...assembleTimelineData({ ...current, config, resolvedConfig }), dataLanes: current.dataLanes };

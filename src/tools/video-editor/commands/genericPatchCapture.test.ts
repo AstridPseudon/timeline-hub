@@ -3,6 +3,7 @@ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import {
   captureGenericPatch,
+  classifyGenericPatch,
   executeGenericPatch,
   GenericPatchRefusal,
   projectGenericPatchPreview,
@@ -21,6 +22,20 @@ async function authoredBundle() {
 }
 
 describe('bounded native generic patch capture', () => {
+  it('classifies the complete patch before native capture', () => {
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { label: 'Native' } },
+      { op: 'clip.update', target: 'x', payload: { hold: 1.25 } },
+    ] })).toBe('supported');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { label: 'Native' } },
+      { op: 'project-data.write', target: 'extension', payload: { value: 1 } },
+    ] })).toBe('mixed');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'project-data.write', target: 'extension', payload: { value: 1 } },
+    ] })).toBe('unsupported');
+  });
+
   it('captures one ordered command list against one sequential authored bundle', async () => {
     const { bundle } = await authoredBundle();
     const input = nativePatch(1.23456789);
@@ -43,6 +58,31 @@ describe('bounded native generic patch capture', () => {
     expect(input).toEqual(originalPatch);
     expect(Object.isFrozen(result.patch.operations[0].payload)).toBe(true);
     expect(Object.isFrozen(result.commands[0].expect)).toBe(true);
+  });
+
+  it('composes hold/clear, label, and absolute move into one replayable batch', async () => {
+    const { bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    (bundle.parent.clips[0] as Record<string, unknown>).transition = { type: 'wipe' };
+    const patch: TimelinePatch = { version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 4 }, clear: ['transition'] }, order: 0 },
+      { op: 'track.update', target: 'V1', payload: { label: 'Picture' }, order: 1 },
+      { op: 'clip.move', target: 'x', payload: { at: 4 }, order: 2 },
+    ] };
+    const result = captureGenericPatch(bundle, patch, (operation) => operation.op === 'track.update'
+      ? 'parent/track:V1' : 'parent/clip:x');
+
+    expect(result.commands.map((command) => command.op)).toEqual(['clip.set', 'track.set', 'clip.move']);
+    expect(result.records.map((record) => record.ordinal)).toEqual([0, 1, 2]);
+    expect(result.preview.operations).toEqual([
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 4 }, clear: ['transition'] } },
+      { op: 'track.update', target: 'V1', payload: { label: 'Picture' } },
+      { op: 'clip.move', target: 'x', payload: { at: 4 } },
+    ]);
+    const replay = executeGenericPatch(copy(bundle), result.commands);
+    expect(replay).toEqual({ bundle: result.bundle, records: result.records });
+    expect(result.bundle.parent.clips[0]).toMatchObject({ hold: 4, at: 4 });
+    expect(result.bundle.parent.clips[0]).not.toHaveProperty('transition');
   });
 
   it('refuses the complete batch before resolving any owner or executing a member', async () => {
@@ -69,6 +109,25 @@ describe('bounded native generic patch capture', () => {
         expect.objectContaining({ operationIndex: 2, reason: expect.stringContaining('another patch member') }),
       ]);
     }
+    expect(resolved).toBe(false);
+  });
+
+  it('routes malformed qualified move and scalar shapes to visible native refusal', async () => {
+    const { bundle } = await authoredBundle();
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'clip.move', target: 'x', payload: { at: -1 } },
+    ] })).toBe('mixed');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { values: { asset: 'bad' }, clear: [] } },
+    ] })).toBe('mixed');
+    let resolved = false;
+    expect(() => captureGenericPatch(bundle, {
+      version: 1,
+      operations: [{ op: 'clip.move', target: 'x', payload: { at: -1 } }],
+    }, () => {
+      resolved = true;
+      return 'parent/clip:x';
+    })).toThrow(GenericPatchRefusal);
     expect(resolved).toBe(false);
   });
 
