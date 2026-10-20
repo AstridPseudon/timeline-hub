@@ -108,6 +108,7 @@ export interface ClaimedOutbox {
   recordRenderTask(target: OutboxRenderTarget, request: OutboxRequest, taskLocator: OutboxJson): Promise<OutboxRenderContinuation>;
   reservePlacementAdmission(id: string, input: OutboxPlacementInput): Promise<OutboxPlacementContinuation>;
   recordPlacementTask(id: string, request: OutboxRequest, taskLocator: NonNullable<OutboxPlacementContinuation['taskLocator']>): Promise<OutboxPlacementContinuation>;
+  recordPlacementConflict(id: string, error: OutboxJson): Promise<OutboxPlacementContinuation>;
   capturePlacement(id: string, mediaPin: OutboxJson, capture: OutboxPlacementCapture): Promise<OutboxPlacementContinuation>;
   dispatch(
     build: OutboxRequestBuilder,
@@ -390,6 +391,14 @@ export function createCommitOutbox(options: {
               throw new Error('Placement task locator cannot change');
             }
             continuation.taskLocator = locator;
+            return detached(continuation);
+          });
+        },
+        async recordPlacementConflict(id, error) {
+          const conflict = detached(error);
+          return access('readwrite', (record) => {
+            const continuation = placementFor(record, id);
+            if (!continuation.placement && continuation.conflict === undefined) continuation.conflict = conflict;
             return detached(continuation);
           });
         },

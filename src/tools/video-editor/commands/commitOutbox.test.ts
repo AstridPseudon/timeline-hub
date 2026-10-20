@@ -115,6 +115,27 @@ function environment() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('durable command outbox', () => {
+  it('retains requester refusal atomically without replacing a linked placement or earlier conflict', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, ownerId) => {
+      owner = ownerId;
+      await box.reservePlacementAdmission('generation', placementInput);
+      env.fault.abortNextWrite = true;
+      await expect(box.recordPlacementConflict('generation', { message: 'task rejected' })).rejects.toThrow('aborted');
+      expect((await box.read()).placementContinuations![0].conflict).toBeUndefined();
+      await box.recordPlacementConflict('generation', { message: 'task rejected' });
+      const original = await box.recordPlacementConflict('generation', { message: 'replacement' });
+      expect(original.conflict).toEqual({ message: 'task rejected' });
+      await box.reservePlacementAdmission('linked', { ...placementInput, request: { ...placementInput.request, key: 'other-key' } });
+      await box.recordPlacementTask('linked', { ...placementInput.request, key: 'other-key' }, placementLocator);
+      const linked = await box.capturePlacement('linked', mediaPin, async () => placementCapture.payload);
+      expect(await box.recordPlacementConflict('linked', { message: 'late completion' })).toEqual(linked);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      expect((await box.read()).placementContinuations![0].conflict).toEqual({ message: 'task rejected' });
+    });
+  });
   it('discovers task-only and accepted-only placement owners with the original scope after restart', async () => {
     const env = environment();
     let owner = '';
