@@ -32,7 +32,12 @@ def render() -> dict[str, str]:
     agent = json.loads((ROOT / "contract/schemas/edit-command.json").read_text())[
         "$defs"
     ]
-    definitions = {**agent, **runtime}
+    task = json.loads((ROOT / "contract/schemas/task.json").read_text())["definitions"]
+    definitions = {
+        **agent,
+        **runtime,
+        **{name: task[name] for name in ("CanonicalRenderRevision", "RenderTimelineAuthority")},
+    }
     # Resolve the imported Agent aliases without maintaining a second leaf schema.
     for name, schema in list(definitions.items()):
         if schema.get("$ref", "").startswith("edit-command.json#/$defs/"):

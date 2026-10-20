@@ -1227,6 +1227,35 @@
                   }
                 }
               }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
+                    "const": "producer.guard"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/ProducerGuardArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "select": {
+                    "type": "null"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
             }
           ],
           "description": "Client recorder fields are claims only. Provider verifies/reconstructs all observations; authorship is write classification, never authenticated actor identity. Unknown operations pass the envelope only and require installed registered schemas/handlers.",
@@ -1473,6 +1502,122 @@
           ],
           "type": "object"
         },
+        "ProducerAdmittedTarget": {
+          "additionalProperties": false,
+          "properties": {
+            "base_publication_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "base_revision_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "project_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "timeline_id": {
+              "pattern": "\\S",
+              "type": "string"
+            }
+          },
+          "required": [
+            "project_id",
+            "timeline_id",
+            "base_revision_id",
+            "base_publication_id"
+          ],
+          "type": "object"
+        },
+        "ProducerAttemptPin": {
+          "additionalProperties": false,
+          "properties": {
+            "admitted_target": {
+              "$ref": "#/$defs/ProducerAdmittedTarget"
+            },
+            "attempt_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "executor_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "fence": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "proposal_digest": {
+              "$ref": "#/$defs/Digest",
+              "maxLength": 71,
+              "minLength": 71
+            },
+            "runtime_epoch": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "task_id": {
+              "pattern": "\\S",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "attempt_id",
+            "executor_id",
+            "fence",
+            "runtime_epoch",
+            "admitted_target",
+            "proposal_digest"
+          ],
+          "type": "object"
+        },
+        "ProducerGuardArgs": {
+          "additionalProperties": false,
+          "properties": {
+            "pin": {
+              "$ref": "#/$defs/ProducerAttemptPin"
+            }
+          },
+          "required": [
+            "pin"
+          ],
+          "type": "object"
+        },
+        "ProducerIdentity": {
+          "additionalProperties": false,
+          "properties": {
+            "attempt_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "executor_id": {
+              "pattern": "\\S",
+              "type": "string"
+            },
+            "fence": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "runtime_epoch": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "task_id": {
+              "pattern": "\\S",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "attempt_id",
+            "executor_id",
+            "fence",
+            "runtime_epoch"
+          ],
+          "type": "object"
+        },
         "PropertyPath": {
           "description": "R4 token path; empty is the whole entity. Parse JSON bracket atoms before overlap comparison. No entity array-position selectors.",
           "pattern": "^(?:(?:[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])(?:\\.[A-Za-z_][\\w-]*|\\[(?:(?:0|[1-9][0-9]*)|\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9A-Fa-f]{4}))*\")\\])*)?$",
@@ -1497,6 +1642,41 @@
         "ScopedId": {
           "pattern": "^(?:(?:parent|shot:[^/]+|occurrence:[^/]+)/(?:clip|track|asset):[^/]+|shot:(?:(?!::)[^/])+|occurrence:[^/]+(?:/shot)?|cut:[^/:]+)$",
           "type": "string"
+        },
+        "SettledProducerProposal": {
+          "additionalProperties": false,
+          "properties": {
+            "admitted_target": {
+              "$ref": "#/$defs/ProducerAdmittedTarget"
+            },
+            "commands": {
+              "$ref": "#/$defs/CommandBatch"
+            },
+            "producer": {
+              "$ref": "#/$defs/ProducerIdentity"
+            },
+            "proposal_digest": {
+              "$ref": "#/$defs/Digest",
+              "maxLength": 71,
+              "minLength": 71
+            },
+            "rationale": {
+              "type": "string"
+            },
+            "schema_version": {
+              "const": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "schema_version",
+            "producer",
+            "admitted_target",
+            "commands",
+            "rationale",
+            "proposal_digest"
+          ],
+          "type": "object"
         },
         "TargetKey": {
           "description": "R4 id::path or bare path (including empty); bare form requires exactly one resolved target. Provider parses and checks identity/path ambiguity, including :: inside a quoted property token.",

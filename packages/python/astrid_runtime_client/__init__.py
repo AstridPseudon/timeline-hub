@@ -34,6 +34,7 @@ from .generated import (
     WorkspaceClient,
 )
 from .timeline_commit_types import (
+    CanonicalRenderRevision,
     ClipAddArgs,
     ClipDeleteArgs,
     ClipMoveArgs,
@@ -46,11 +47,17 @@ from .timeline_commit_types import (
     MediaSelection,
     OccurrenceAddMediaArgs,
     OccurrenceSwapMediaArgs,
+    ProducerAdmittedTarget,
+    ProducerAttemptPin,
+    ProducerGuardArgs,
+    ProducerIdentity,
+    RenderTimelineAuthority,
     RestoreArgs,
+    SettledProducerProposal,
     TrackCreateArgs,
     TrackSetArgs,
     VerifiedDocument,
     VerifiedDocumentObject,
 )
 
-__all__ = ["CONTRACT_VERSION", "ApiError", "AttemptFence", "ByteResponse", "Capability", "ClaimWaiting", 'ClipAddArgs', 'ClipDeleteArgs', 'ClipMoveArgs', 'ClipSetArgs', 'ClipSetParamsArgs', 'ClipSplitArgs', 'ClipTrimArgs', 'DocumentPin', "Event", "Executor", "Generation", "GenerationVariant", "Handshake", "Health", "IntegrityCheck", "IntegrityReport", 'InverseArgs', "ManagedObject", "ManagedOutput", 'MediaSelection', "MutationResult", "ObjectLocation", 'OccurrenceAddMediaArgs', 'OccurrenceSwapMediaArgs', "PreferenceMutationResult", "PreferenceResource", "Project", "ProjectDocument", "Realm", "RealmLifecycle", "RecoveryAuthorization", "RecoveryCheckpointReceipt", "RecoveryReceipt", "RecoveryResumeReceipt", 'RestoreArgs', "ShotTextBinding", "Task", 'TrackCreateArgs', 'TrackSetArgs', 'VerifiedDocument', 'VerifiedDocumentObject', "WorkspaceClient"]
+__all__ = ["CONTRACT_VERSION", "ApiError", "AttemptFence", "ByteResponse", "CanonicalRenderRevision", "Capability", "ClaimWaiting", 'ClipAddArgs', 'ClipDeleteArgs', 'ClipMoveArgs', 'ClipSetArgs', 'ClipSetParamsArgs', 'ClipSplitArgs', 'ClipTrimArgs', 'DocumentPin', "Event", "Executor", "Generation", "GenerationVariant", "Handshake", "Health", "IntegrityCheck", "IntegrityReport", 'InverseArgs', "ManagedObject", "ManagedOutput", 'MediaSelection', "MutationResult", "ObjectLocation", 'OccurrenceAddMediaArgs', 'OccurrenceSwapMediaArgs', "PreferenceMutationResult", "PreferenceResource", "ProducerAdmittedTarget", "ProducerAttemptPin", "ProducerGuardArgs", "ProducerIdentity", "Project", "ProjectDocument", "Realm", "RealmLifecycle", "RecoveryAuthorization", "RecoveryCheckpointReceipt", "RecoveryReceipt", "RecoveryResumeReceipt", "RenderTimelineAuthority", 'RestoreArgs', "SettledProducerProposal", "ShotTextBinding", "Task", 'TrackCreateArgs', 'TrackSetArgs', 'VerifiedDocument', 'VerifiedDocumentObject', "WorkspaceClient"]

@@ -52,6 +52,10 @@ def test_track_label_union_imports_and_retains_field_types(module_name):
 def test_object_unions_keep_shared_and_branch_required_fields(tmp_path, monkeypatch, keyword):
     schemas = tmp_path / "contract/schemas"
     schemas.mkdir(parents=True)
+    (schemas / "task.json").write_text(json.dumps({"definitions": {
+        "CanonicalRenderRevision": {"type": "object"},
+        "RenderTimelineAuthority": {"type": "object"},
+    }}))
     (schemas / "timeline-commit.json").write_text(json.dumps({"$defs": {}}))
     (schemas / "edit-command.json").write_text(json.dumps({"$defs": {
         "ChangeArgs": {

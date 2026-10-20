@@ -1,6 +1,5 @@
-export type { ClipAddArgs, ClipDeleteArgs, ClipMoveArgs, ClipSetArgs, ClipSetParamsArgs, ClipSplitArgs, ClipTrimArgs, InverseArgs, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, RestoreArgs, TrackCreateArgs, TrackSetArgs, DocumentPin, VerifiedDocument, VerifiedDocumentObject } from "./timeline-commit-types.js";
+export type { ClipAddArgs, ClipDeleteArgs, ClipMoveArgs, ClipSetArgs, ClipSetParamsArgs, ClipSplitArgs, ClipTrimArgs, InverseArgs, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, RestoreArgs, TrackCreateArgs, TrackSetArgs, DocumentPin, MediaSelection, VerifiedDocument, VerifiedDocumentObject, ProducerAdmittedTarget, ProducerAttemptPin, ProducerGuardArgs, ProducerIdentity, SettledProducerProposal, CanonicalRenderRevision, RenderTimelineAuthority } from "./timeline-commit-types.js";
 import type { CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, HistoryPage, MediaSelection, MediaSelectionQuery } from "./timeline-commit-types.js";
-export type { CommitAcceptedMutation, CommitPreviewResponse, CommitRequest, HistoryPage, MediaSelection, MediaSelectionQuery, EditCommand, CanonicalDocument, HeadPin, Recorder, PreparedCommit, CommitAccepted, CommitPreview, TimelineCommitPage } from "./timeline-commit-types.js";
 /** Generated from contract/openapi/workspace-v1.yaml; do not edit by hand. */
 export const PROTOCOL = "workspace.v1" as const;
 export type HeadersLike = Record<string, string>;

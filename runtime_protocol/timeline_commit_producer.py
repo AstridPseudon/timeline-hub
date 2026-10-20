@@ -8,26 +8,13 @@ import math
 import re
 from typing import TypedDict
 
+from . import timeline_commit_types as dto
 from .cas import IO_CHUNK_BYTES
 from .errors import RuntimeErrorBase, ValidationError
 from .timeline_commit_port import command_leaves, refused
 
-
-class ProducerAdmittedTarget(TypedDict):
-    project_id: str
-    timeline_id: str
-    base_revision_id: str
-    base_publication_id: str
-
-
-class ProducerAttemptPin(TypedDict):
-    task_id: str
-    attempt_id: str
-    executor_id: str
-    fence: int
-    runtime_epoch: int
-    admitted_target: ProducerAdmittedTarget
-    proposal_digest: str
+ProducerAdmittedTarget = dto.ProducerAdmittedTarget
+ProducerAttemptPin = dto.ProducerAttemptPin
 
 
 class VerifiedProducerAttempt(TypedDict):

@@ -115,9 +115,12 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
 def render_typescript_client() -> str:
     """Render the source-frame thumbnail operations into the typed TS client."""
     source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
-    native_exports = 'export type { ClipAddArgs, ClipDeleteArgs, ClipMoveArgs, ClipSetArgs, ClipSetParamsArgs, ClipSplitArgs, ClipTrimArgs, InverseArgs, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, RestoreArgs, TrackCreateArgs, TrackSetArgs, DocumentPin, VerifiedDocument, VerifiedDocumentObject } from "./timeline-commit-types.js";'
-    if native_exports not in source:
-        source = native_exports + "\n" + source
+    native_exports = 'export type { ClipAddArgs, ClipDeleteArgs, ClipMoveArgs, ClipSetArgs, ClipSetParamsArgs, ClipSplitArgs, ClipTrimArgs, InverseArgs, OccurrenceAddMediaArgs, OccurrenceSwapMediaArgs, RestoreArgs, TrackCreateArgs, TrackSetArgs, DocumentPin, MediaSelection, VerifiedDocument, VerifiedDocumentObject, ProducerAdmittedTarget, ProducerAttemptPin, ProducerGuardArgs, ProducerIdentity, SettledProducerProposal, CanonicalRenderRevision, RenderTimelineAuthority } from "./timeline-commit-types.js";'
+    source = re.sub(
+        r'^export type \{ [^\n]+ \} from "\./timeline-commit-types\.js";\n',
+        "", source, flags=re.MULTILINE,
+    )
+    source = native_exports + "\n" + source
     child_authority_types = (
         'export interface ChildAuthorityChild { child_id: string; capability_id: string; capability_digest: string }\n'
         'export interface DerivedInputDescriptor { name: string; output_port: string; filename: string; object_id: string; size: number; media_type: string }\n'
