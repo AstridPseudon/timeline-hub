@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
+import zipfile
 from collections.abc import Mapping
 from copy import deepcopy
 from fractions import Fraction
+from pathlib import PurePosixPath
 from typing import Any
 
 from .exceptions import CapabilityValidationError
@@ -1285,6 +1288,11 @@ def _scene_only_authority(context: Mapping[str, Any]) -> dict[str, Any] | None:
     metadata = snapshot.get("metadata")
     if not isinstance(metadata, Mapping):
         return None
+    capture_identity = context.get("capture_identity")
+    if not isinstance(capture_identity, str) or not capture_identity:
+        return None
+    if metadata.get("capture_identity") != capture_identity:
+        return None
     clip_map = metadata.get("scene_clips")
     if not isinstance(clip_map, Mapping) or not clip_map:
         return None
@@ -1297,13 +1305,57 @@ def _scene_only_authority(context: Mapping[str, Any]) -> dict[str, Any] | None:
         "video_digest", "video_object_id", "managed_object_reference", "capture_identity",
     )):
         return None
+    capture_authority = metadata.get("capture_authority")
+    if not isinstance(capture_authority, Mapping):
+        return None
+    expected_label = _scene_only_expected_label(snapshot)
+    if expected_label is None:
+        return None
     return {
         "capture_identity": context["capture_identity"],
         "video_digest": context["video_digest"],
         "video_object_id": context["video_object_id"],
         "managed_object_reference": context["managed_object_reference"],
         "scene_clips": deepcopy(dict(clip_map)),
-        "source_label": metadata.get("source_label"),
+        "snapshot_label": expected_label,
+        "timeline_id": snapshot.get("timeline_id"),
+    }
+
+
+def _scene_only_expected_label(snapshot: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Project the prepared capture's admitted source kind into label fields.
+
+    This is only a comparison target.  The SDK never turns these fields into
+    authority; the executor's label in ``scene-answers.json`` must match them.
+    """
+    metadata = snapshot.get("metadata")
+    if not isinstance(metadata, Mapping):
+        return None
+    capture = metadata.get("capture_authority")
+    if not isinstance(capture, Mapping):
+        return None
+    working_copy = metadata.get("working_copy")
+    if not isinstance(working_copy, Mapping):
+        working_copy = capture.get("working_copy")
+    if isinstance(working_copy, Mapping):
+        base_parent = working_copy.get("base_parent")
+        base_revision = base_parent.get("revision_id") if isinstance(base_parent, Mapping) else None
+        if not isinstance(base_revision, str) or not base_revision:
+            return None
+        return {
+            "status": "candidate",
+            "label": f"unsaved candidate based on committed revision {base_revision}",
+            "actual_revision_id": None,
+            "base_revision_id": base_revision,
+        }
+    revision = capture.get("parent_revision_id")
+    if not isinstance(revision, str) or not revision:
+        return None
+    return {
+        "status": "committed",
+        "label": f"committed revision {revision}",
+        "actual_revision_id": revision,
+        "base_revision_id": None,
     }
 
 
@@ -1326,6 +1378,7 @@ def _scene_only_request(
         "formats": list(_SCENE_ONLY_FORMATS),
         "composed_capture": True,
         "include_media": True,
+        "every_frames": 1,
     })
     context = prepare_filmstrip(request, project=project, client=client)
     if _scene_only_authority(context) is None:
@@ -1352,36 +1405,145 @@ def _scene_only_candidate_request(
     }, project=project, client=client)
 
 
-def _scene_only_result_payload(result: Any) -> Mapping[str, Any] | None:
-    """Find the private Scene result in the existing managed-output result."""
+def _scene_only_result_sources(result: Any) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
+    """Return the managed bundle row and its task artifact row, if both exist."""
     ok = result.get("ok") if isinstance(result, Mapping) else getattr(result, "ok", True)
-    if result is None or ok is False:
+    if ok is False:
         return None
     candidates = [
         getattr(result, "outputs", None),
         getattr(result, "raw_result", None),
         result if isinstance(result, Mapping) else None,
     ]
+    managed: list[Mapping[str, Any]] = []
+    artifacts: list[Mapping[str, Any]] = []
+    seen: set[int] = set()
     while candidates:
         value = candidates.pop(0)
-        if not isinstance(value, Mapping):
+        if not isinstance(value, Mapping) or id(value) in seen:
             continue
-        if isinstance(value.get("scene_result"), Mapping):
-            return value["scene_result"]
-        if isinstance(value.get("scene_answers"), list):
-            return value
-        managed = value.get("managed_outputs")
-        if isinstance(managed, list):
-            candidates.extend(managed)
-        for key in ("payload", "data", "value", "result"):
+        seen.add(id(value))
+        rows = value.get("managed_outputs")
+        if isinstance(rows, list):
+            managed.extend(row for row in rows if isinstance(row, Mapping))
+        rows = value.get("artifacts")
+        if isinstance(rows, list):
+            artifacts.extend(row for row in rows if isinstance(row, Mapping))
+        for key in ("outputs", "payload", "data", "value", "result"):
             payload = value.get(key)
             if isinstance(payload, Mapping):
                 candidates.append(payload)
-    return None
+
+    def is_bundle(row: Mapping[str, Any]) -> bool:
+        return row.get("output_port", row.get("name")) == "filmstrip_bundle"
+
+    managed_rows = [row for row in managed if is_bundle(row) and row.get("role", "result") == "result"]
+    artifact_rows = [row for row in artifacts if is_bundle(row)]
+    if len(managed_rows) != 1 or (artifact_rows and len(artifact_rows) != 1):
+        return None
+    managed_row = managed_rows[0]
+    artifact_row = artifact_rows[0] if artifact_rows else managed_row
+    managed_digest = managed_row.get("digest") or managed_row.get("object_id")
+    artifact_digest = artifact_row.get("digest") or artifact_row.get("object_id") or artifact_row.get("content_hash")
+    if not isinstance(managed_digest, str) or not isinstance(artifact_digest, str):
+        return None
+    if managed_digest.removeprefix("sha256:") != artifact_digest.removeprefix("sha256:"):
+        return None
+    managed_size = managed_row.get("size", managed_row.get("size_bytes"))
+    artifact_size = artifact_row.get("size", artifact_row.get("bytes"))
+    if artifact_rows and managed_size is not None and artifact_size is not None and managed_size != artifact_size:
+        return None
+    return managed_row, artifact_row
+
+
+def _scene_only_bundle_payload(
+    result: Any, *, client: Any = None,
+) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
+    """Read the executor's verified ``filmstrip_bundle`` Scene sidecar."""
+    sources = _scene_only_result_sources(result)
+    if sources is None:
+        return None
+    managed_row, artifact_row = sources
+    digest = str(managed_row.get("digest") or managed_row.get("object_id") or "")
+    normalized = digest.removeprefix("sha256:")
+    if len(normalized) != 64 or any(char not in "0123456789abcdef" for char in normalized):
+        return None
+    size = managed_row.get("size", managed_row.get("size_bytes"))
+    if type(size) is not int or size <= 0:
+        return None
+    reader = getattr(getattr(client, "media", None), "read_bytes", None)
+    if not callable(reader):
+        return None
+    try:
+        bundle = reader("sha256:" + normalized)
+    except Exception:  # noqa: BLE001 - unavailable managed output is advisory
+        return None
+    if not isinstance(bundle, bytes) or len(bundle) != size or hashlib.sha256(bundle).hexdigest() != normalized:
+        return None
+    try:
+        with zipfile.ZipFile(io.BytesIO(bundle)) as archive:
+            members = archive.infolist()
+            names: set[str] = set()
+            for member in members:
+                path = PurePosixPath(member.filename)
+                if (path.is_absolute() or not path.parts or ".." in path.parts
+                        or "\\" in member.filename or member.filename in names
+                        or (member.external_attr >> 16) & 0o170000 == 0o120000):
+                    return None
+                names.add(member.filename)
+            manifest_name = "manifest.json"
+            if manifest_name not in names:
+                return None
+            manifest = json.loads(archive.read(manifest_name))
+            if not isinstance(manifest, Mapping) or manifest.get("kind") != "timeline_filmstrip":
+                return None
+            declared = manifest.get("outputs")
+            if not isinstance(declared, list):
+                return None
+            verified: set[str] = set()
+            for entry in declared:
+                if not isinstance(entry, Mapping) or not isinstance(entry.get("path"), str):
+                    return None
+                member_name = entry["path"]
+                member_path = PurePosixPath(member_name)
+                if (member_path.is_absolute() or not member_path.parts or ".." in member_path.parts
+                        or "\\" in member_name or member_name in verified or member_name == manifest_name
+                        or member_name not in names):
+                    return None
+                member_bytes = archive.read(member_name)
+                if (entry.get("bytes") != len(member_bytes)
+                        or entry.get("content_hash") != "sha256:" + hashlib.sha256(member_bytes).hexdigest()):
+                    return None
+                verified.add(member_name)
+            actual_files = {member.filename for member in members if not member.is_dir()}
+            if actual_files != verified | {manifest_name}:
+                return None
+            entrypoints = manifest.get("entrypoints")
+            scene_name = entrypoints.get("scene_answers") if isinstance(entrypoints, Mapping) else None
+            if scene_name != "scene-answers.json" or scene_name not in names:
+                return None
+            if scene_name not in verified:
+                return None
+            scene_bytes = archive.read(scene_name)
+            payload = json.loads(scene_bytes)
+    except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError, zipfile.BadZipFile):
+        return None
+    if not isinstance(payload, Mapping) or set(payload) != {"answers", "scene_clips", "snapshot_label"}:
+        return None
+    if not isinstance(managed_row.get("provenance"), Mapping) and isinstance(artifact_row.get("provenance"), Mapping):
+        managed_row = {**managed_row, "provenance": artifact_row["provenance"]}
+    return payload, managed_row
+
+
+def _scene_only_result_payload(result: Any, *, client: Any = None) -> Mapping[str, Any] | None:
+    """Read the private Scene result from the existing managed bundle."""
+    source = _scene_only_bundle_payload(result, client=client)
+    return source[0] if source is not None else None
 
 
 def _scene_only_spans(
     result: Any, context: Mapping[str, Any], *, duration_frames: int | None = None,
+    client: Any = None,
 ) -> list:
     """Join a bound Scene result to the existing ``_scene_problems`` span shape.
 
@@ -1391,39 +1553,44 @@ def _scene_only_spans(
     from types import SimpleNamespace
 
     authority = _scene_only_authority(context)
-    payload = _scene_only_result_payload(result)
+    source = _scene_only_bundle_payload(result, client=client)
+    payload = source[0] if source is not None else None
+    managed_row = source[1] if source is not None else None
     if authority is None or payload is None:
         return _scene_only_unavailable(context)
-    if payload.get("capture_identity") != authority["capture_identity"]:
-        return _scene_only_unavailable(context, reason="stale scene capture")
-    source_label = payload.get("source_label")
-    if not isinstance(source_label, str) or not source_label.strip():
-        return _scene_only_unavailable(context, reason="scene source label unavailable")
-    source_binding = payload.get("managed_object_reference") or payload.get("video_object_id")
-    if source_binding is not None:
-        allowed_bindings = {
-            authority["managed_object_reference"], authority["video_object_id"], authority["video_digest"],
-        }
-        if isinstance(source_binding, Mapping):
-            source_binding = source_binding.get("object_id") or source_binding.get("digest")
-        if source_binding not in allowed_bindings:
-            return _scene_only_unavailable(context, reason="stale scene source")
-    compiled = payload.get("compiled_id_address_map")
+    provenance = managed_row.get("provenance") if isinstance(managed_row, Mapping) else None
+    if not isinstance(provenance, Mapping) or provenance.get("video_digest") != authority["capture_identity"]:
+        return _scene_only_unavailable(context, reason="scene source binding unavailable")
+    if authority.get("timeline_id") is not None and provenance.get("timeline_id") != authority["timeline_id"]:
+        return _scene_only_unavailable(context, reason="stale scene source")
+    label = payload.get("snapshot_label")
+    if not isinstance(label, Mapping) or label != authority["snapshot_label"]:
+        return _scene_only_unavailable(context, reason="scene snapshot label unavailable")
+    if label.get("status") not in {"committed", "candidate"}:
+        return _scene_only_unavailable(context, reason="scene snapshot label unavailable")
+    compiled = payload.get("scene_clips")
     if not isinstance(compiled, Mapping):
         return _scene_only_unavailable(context, reason="scene address map unavailable")
     expected = authority["scene_clips"]
     actual = {}
     for key, value in compiled.items():
-        if isinstance(value, Mapping):
-            value = value.get("address")
-        if not isinstance(key, str) or not isinstance(value, str):
+        if not isinstance(key, str) or not isinstance(value, Mapping) or not isinstance(value.get("address"), str):
             return _scene_only_unavailable(context, reason="scene address map invalid")
-        actual[key] = value
-    if actual != {key: value["address"] for key, value in expected.items()}:
+        actual[key] = dict(value)
+    if actual != expected:
         return _scene_only_unavailable(context, reason="stale scene address map")
-    answers = payload.get("scene_answers")
+    addresses = {key: value["address"] for key, value in actual.items()}
+    answers = payload.get("answers")
     if not isinstance(answers, list) or not answers:
         return _scene_only_unavailable(context)
+    expected_duration = duration_frames
+    if expected_duration is None:
+        snapshot = context.get("capture_snapshot") or context.get("filmstrip_snapshot")
+        expected_duration = snapshot.get("duration_frames") if isinstance(snapshot, Mapping) else None
+    if type(expected_duration) is not int or expected_duration <= 0:
+        return _scene_only_unavailable(context, reason="scene frame extent unavailable")
+    if [answer.get("frame") if isinstance(answer, Mapping) else None for answer in answers] != list(range(expected_duration)):
+        return _scene_only_unavailable(context, reason="scene answers incomplete")
 
     spans = []
     for answer in sorted(answers, key=lambda item: item.get("frame", -1) if isinstance(item, Mapping) else -1):
@@ -1439,7 +1606,7 @@ def _scene_only_spans(
             bounds_source = layer.get("bounds_source", layer.get("boundsSource"))
             if bounds_source is not None and not isinstance(bounds_source, str):
                 return _scene_only_unavailable(context, reason="scene bounds source unavailable")
-            clips.append(actual[layer["clipId"]])
+            clips.append(addresses[layer["clipId"]])
         findings = answer.get("findings") or ()
         if isinstance(findings, Mapping):
             findings = [json.dumps(dict(findings), sort_keys=True, separators=(",", ":"))]
@@ -1461,11 +1628,6 @@ def _scene_only_spans(
                 previous.end_frame = span.end_frame
                 continue
         spans.append(span)
-    if duration_frames is not None and spans and spans[-1].end_frame < duration_frames:
-        spans.append(SimpleNamespace(
-            start_frame=spans[-1].end_frame, end_frame=duration_frames,
-            cls="UNAVAILABLE", content=None, clips=(), findings=("scene frame result incomplete",),
-        ))
     return spans
 
 
@@ -1485,7 +1647,7 @@ def _invoke_scene_only(
         "rendering.timeline_visualize", kind="executor", project=project,
         inputs=request, wait=True, read_managed_outputs=True,
     )
-    return _scene_only_spans(result, context), context
+    return _scene_only_spans(result, context, client=client), context
 
 
 def latest_render(client: Any, *, project_id: str, timeline_id: str, scan: int = 12) -> dict[str, Any] | None:
