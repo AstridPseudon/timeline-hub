@@ -1,9 +1,10 @@
-import { useSyncExternalStore } from 'react';
+import { useRef, useSyncExternalStore } from 'react';
 import { getAdmittedElementSelection, subscribeAdmittedElements } from '../../runtime/admitted-elements';
 import { CodePathParamEditor } from '@/tools/video-editor/components/SequenceCreator/CodePathParamEditor.tsx';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { ClipPanelProps } from './ClipPanelBody.tsx';
-import { resolveAstridElementParamDescriptor } from './astrid-element-param-descriptor.ts';
+import { resolveAstridElementParamDescriptor, type AstridElementParamDescriptor } from './astrid-element-param-descriptor.ts';
+import { SelectedElementParamFields } from './SelectedElementParamFields.tsx';
 
 /** Editable host-provided parameters for the exact pinned Astrid element revision. */
 export function AstridElementParams({
@@ -11,16 +12,25 @@ export function AstridElementParams({
   readOnly,
   registry,
   onChange,
-}: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange'>) {
+  retainedDocumentPin,
+  timelineOps,
+  commandState,
+}: Pick<ClipPanelProps, 'clip' | 'readOnly' | 'registry' | 'onChange' | 'retainedDocumentPin' | 'timelineOps' | 'commandState'>) {
   useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
   const runtime = useVideoEditorRuntime();
   const descriptors = runtime.astridElementHost?.descriptors ?? [];
+  const retained = useRef<{ clipId: string; descriptor: AstridElementParamDescriptor }>();
+  if (retained.current?.clipId !== clip?.id || !retainedDocumentPin) retained.current = undefined;
   const descriptor = resolveAstridElementParamDescriptor(
     clip,
-    descriptors,
+    retainedDocumentPin && retained.current ? [retained.current.descriptor] : descriptors,
     readOnly,
     runtime.timelineEditability,
   );
+  // Keep display hints through live pack replacement/removal, never schema authority.
+  if (clip && descriptor && retainedDocumentPin && !retained.current) {
+    retained.current = { clipId: clip.id, descriptor: structuredClone(descriptor) };
+  }
   if (!clip || !descriptor) return null;
 
   const params = { ...(clip.params ?? {}) };
@@ -54,12 +64,19 @@ export function AstridElementParams({
         <h3 className="text-sm font-medium text-foreground">{label} parameters</h3>
         <p className="text-xs text-muted-foreground">Values save with this pinned element revision.</p>
       </div>
-      <CodePathParamEditor
+      {retainedDocumentPin ? <SelectedElementParamFields
+        key={clip.id}
+        clip={clip}
+        descriptor={descriptor}
+        retainedDocumentPin={retainedDocumentPin}
+        timelineOps={timelineOps}
+        commandState={commandState}
+      /> : <CodePathParamEditor
         schemaJson={descriptor.schema}
         values={params}
         allowedAssetKeys={Object.keys(registry)}
         onChange={saveParams}
-      />
+      />}
     </section>
   );
 }
