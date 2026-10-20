@@ -44,6 +44,50 @@ def film(base_film):
     return fixture, parent, baseline
 
 
+@pytest.fixture
+def gate3_film(base_film):
+    """Keep Gate3 on the captured, ordinary admitted closure.
+
+    The shared ``film`` fixture changes the historical audio row to the
+    legacy ``media`` shape for trim coverage.  That is useful for the
+    neighbouring editing cases but the captured child closure also contains
+    a historical partial element reference.  Gate3 publishes a fresh parent
+    through Runtime with that child removed and a real built-in element
+    declaration, so composed preflight reaches the unavailable executor.
+    """
+    from runtime_protocol.service import RuntimeService
+
+    fixture, parent, _ = base_film
+    parent = copy.deepcopy(parent)
+    parent['occurrences'] = []
+    parent['clips'].append({
+        'id': 'gate3-title',
+        'at': 0,
+        'track': 'picture',
+        'clipType': 'text-card',
+        'hold': 1,
+        'params': {'content': 'Gate3'},
+        'elementRef': {'packId': 'rendering', 'kind': 'effects', 'id': 'text-card'},
+    })
+    parent['config']['clips'] = copy.deepcopy(parent['clips'])
+    service = RuntimeService(fixture.duplicate_root)
+    try:
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
+        baseline = service.publish_parent_composition(fixture.project_id, fixture.timeline_id, {
+            'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
+            'expected_head': head, 'parent_revision_id': 'gate3-valid-baseline',
+            'parent_composition': parent,
+        }, idempotency_key='gate3-valid-baseline')
+    finally:
+        service.close()
+    return fixture, parent, baseline
+
+
+@pytest.fixture
+def gate3_renderer_off(gate3_film, monkeypatch):
+    m1._disable_scene(monkeypatch)
+
+
 @pytest.mark.parametrize('conflicting', [False, True])
 def test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo(
     tmp_path, monkeypatch, film, wire, real_runtime, conflicting,
@@ -154,10 +198,10 @@ def test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_hist
 
 
 def test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable(
-    tmp_path, monkeypatch, film, renderer_off, real_runtime,
+    tmp_path, monkeypatch, gate3_film, gate3_renderer_off, real_runtime,
 ):
     """The Runtime door accepts authoring while the production renderer is stopped."""
-    fixture, _, _ = film
+    fixture, _, _ = gate3_film
     daemon = real_runtime(
         fixture.duplicate_root,
         support_root=tmp_path / 'support',
@@ -201,6 +245,8 @@ def test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_previ
         )
 
     assert not preview.ok
-    assert preview.error['sdk_error'] == 'CapabilityValidationError'
-    assert preview.error['sdk_category'] == 'validation'
-    assert 'element resource binding requires exact clip/element/kind identities' in preview.error['message']
+    assert preview.error['sdk_error'] == 'CapabilityRuntimeError', preview.error
+    assert preview.error['sdk_category'] == 'runtime'
+    assert preview.error['code'] == 'not_found'
+    assert preview.error['details']['capability_id'] == 'rendering.timeline_visualize'
+    assert preview.error['message'] == 'capability is not registered'
