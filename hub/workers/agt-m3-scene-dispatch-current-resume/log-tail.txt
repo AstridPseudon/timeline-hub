@@ -1,137 +1,3 @@
-+    def __init__(self, snapshot):
-+        self.snapshot = snapshot
-+
-+    def validate_snapshot(self, snapshot):
-+        assert snapshot == self.snapshot
-+
-+    def read(self):
-+        return {"snapshot": self.snapshot}
-+
-+
-+def test_scene_only_writes_no_png_and_binds_receipt_to_capture(tmp_path, monkeypatch):
-+    args = _args(tmp_path)
-+    authority = _authority()
-+    source = _Source(authority["capture_snapshot"])
-+    monkeypatch.setattr(
-+        "astrid.core.rendering.verified_source.inherited_source",
-+        lambda timeline, assets: source,
-+    )
-+    monkeypatch.setattr(
-+        filmstrip_execution,
-+        "snapshot_label",
-+        lambda snapshot, *, source: {
-+            "status": "committed", "label": "committed revision revision",
-+            "actual_revision_id": "revision", "base_revision_id": None,
-+        },
-+    )
-+    monkeypatch.setattr(
-+        scene_answers,
-+        "_prepared_host_frames_at",
-+        lambda timeline, assets, frames, **kwargs: [
-+            {
-+                "frame": frame,
-+                "width": 1920,
-+                "height": 1080,
-+                "coverage": "COVERED",
-+                "content": "CONTENT",
-+                "layers": [{"clipId": "compiled:clip"}],
-+                "findings": [],
-+            }
-+            for frame in frames
-+        ],
-+    )
-+
-+    result = filmstrip_execution.execute_filmstrip(args, authority=authority)
-+
-+    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
-+    assert [answer["frame"] for answer in payload["answers"]] == [0, 1, 2, 3]
-+    assert payload["scene_clips"] == {"compiled:clip": {"address": "c01.layer"}}
-+    assert not list((args.out / "filmstrip-view").glob("*.png"))
-+    host_manifest = json.loads((args.out / "manifest.json").read_text(encoding="utf-8"))
-+    bundle = next(row for row in host_manifest["outputs"] if row["name"] == "filmstrip_bundle")
-+    assert bundle["provenance"] == {
-+        "video_digest": "sha256:" + "a" * 64, "timeline_id": "timeline",
-+    }
-+    with zipfile.ZipFile(result["outputs"]["filmstrip_bundle"]) as archive:
-+        assert archive.namelist() == ["manifest.json", "scene-answers.json"]
-+    bundle_bytes = Path(result["outputs"]["filmstrip_bundle"]).read_bytes()
-+    sdk_context = {
-+        **authority,
-+        "mode": "composed_capture",
-+        "scene_only": True,
-+        "video_digest": "sha256:" + "b" * 64,
-+        "video_object_id": "sha256:" + "b" * 64,
-+        "managed_object_reference": "sha256:" + "b" * 64,
-+    }
-+    sdk_result = {
-+        "ok": True,
-+        "outputs": {
-+            "managed_outputs": [{
-+                "output_port": "filmstrip_bundle",
-+                "role": "result",
-+                "digest": bundle["content_hash"],
-+                "size": len(bundle_bytes),
-+                "provenance": bundle["provenance"],
-+            }],
-+        },
-+    }
-+    assert timeline_filmstrip._scene_only_authority(sdk_context) is not None
-+    bundle_source = timeline_filmstrip._scene_only_bundle_payload(
-+        sdk_result,
-+        client=SimpleNamespace(media=SimpleNamespace(read_bytes=lambda _: bundle_bytes)),
-+    )
-+    assert bundle_source is not None
-+    assert bundle_source[0]["snapshot_label"] == timeline_filmstrip._scene_only_authority(sdk_context)["snapshot_label"]
-+    spans = timeline_filmstrip._scene_only_spans(
-+        sdk_result,
-+        sdk_context,
-+        client=SimpleNamespace(media=SimpleNamespace(read_bytes=lambda _: bundle_bytes)),
-+    )
-+    assert [(item.start_frame, item.end_frame, item.cls, item.clips) for item in spans] == [
-+        (0, 4, "COVERED", ("c01.layer",)),
-+    ], spans[0].findings
-+
-+
-+def test_scene_only_failure_is_advisory_and_has_no_partial_answers(tmp_path, monkeypatch):
-+    args = _args(tmp_path)
-+    monkeypatch.setattr(
-+        "astrid.core.rendering.verified_source.inherited_source",
-+        lambda timeline, assets: None,
-+    )
-+
-+    result = filmstrip_execution.execute_filmstrip(args, authority=_authority())
-+
-+    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
-+    assert result["returncode"] == 0
-+    assert payload["answers"] == []
-+    assert payload["scene_clips"] == {}
-+    assert payload["snapshot_label"]["status"] == "unavailable"
-diff --git a/tests/sdk/test_scene_caller_preservation.py b/tests/sdk/test_scene_caller_preservation.py
-index 3b9f55abc3ac878c75f7f05256fc67ed7c9aa562..0351060631684c80f0b812d05d93763496596ca1
---- a/tests/sdk/test_scene_caller_preservation.py
-+++ b/tests/sdk/test_scene_caller_preservation.py
-@@ -1,8 +1,13 @@
- """Formatter positives with supplied scene spans; these do not certify a renderer/source."""
-+import hashlib
-+import io
-+import json
-+import zipfile
- from types import SimpleNamespace
- 
- import pytest
- 
-+from astrid.sdk import timeline_filmstrip
- from astrid.sdk.timeline_checkout import Checkout
- from tests.sdk.test_coverage_empty_cut import _empty_cut_bundle
- from tests.sdk.test_timeline_reflow_golden import film
-@@ -89,3 +94,110 @@
-     report = checkout.check()
-     assert not report.valid
-     assert any('invalid:' in line for line in report.problems)
-+
-+
-+def _scene_context():
-+    return {
 +        'mode': 'composed_capture',
 +        'scene_only': True,
 +        'capture_identity': 'sha256:capture',
@@ -392,9 +258,143 @@ index 0000000000000000000000000000000000000000..4cc86091c7aef2443344ae5e15541f7c
 +    assert result.data['capability_digest'] == digest
 +    assert calls == [None, 'next']
 
-codex
-The only post-proof source change is removal of an unused import from the new test. To keep the handoff’s source fingerprint exact, I’m validating that final tree with one replacement central targeted proof (a concrete lint-only fix, not a blind resubmission), followed by the offline lane once more.
 exec
-/bin/bash -lc 'R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test agt-m3-scene-dispatch-current-resume targeted --files "tests/integrations/test_d09_managed_scene_only.py tests/packs/rendering/real_pack_host.py") && echo "$R" && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"' in /home/user/work/wt/agt-m3-scene-dispatch-current-resume
+/bin/bash -lc 'ruff check --no-cache --isolated --select F astrid/core/timeline/scene_answers.py astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py astrid/sdk/invocation.py astrid/sdk/timeline_filmstrip.py tests/sdk/test_scene_caller_preservation.py tests/sdk/test_scene_dispatch_contract.py tests/packs/rendering/test_scene_only_executor.py tests/integrations/test_d09_managed_scene_only.py tests/packs/rendering/real_pack_host.py; lint_status=$?; git diff --check; find . -type d '"\\( -name __pycache__ -o -name .pytest_cache \\) -print; git status --short; exit "'$lint_status' in /home/user/work/wt/agt-m3-scene-dispatch-current-resume
+ exited 1 in 0ms:
+F401 [*] `.filmstrip_cards._png_ellipsis` imported but unused
+    --> astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py:1238:45
+     |
+1236 |     from PIL import Image, ImageDraw
+1237 |     from .filmstrip_cards import (
+1238 |         _png_bounded_lines, _png_draw_text, _png_ellipsis, _png_font,
+     |                                             ^^^^^^^^^^^^^
+1239 |         _png_shot_label, _png_text_width, _png_waveform_for_card,
+1240 |         _png_card_metrics, _png_frame_aspect, _PNG_CARD_WIDTH, _PNG_IMAGE_HEIGHT, _PNG_AUDIO_HEIGHT,
+     |
+help: Remove unused import
+     |
+1237 |     from .filmstrip_cards import (
+     -         _png_bounded_lines, _png_draw_text, _png_ellipsis, _png_font,
+     -         _png_shot_label, _png_text_width, _png_waveform_for_card,
+     -         _png_card_metrics, _png_frame_aspect, _PNG_CARD_WIDTH, _PNG_IMAGE_HEIGHT, _PNG_AUDIO_HEIGHT,
+1238 +         _png_bounded_lines, _png_draw_text, _png_font,
+1239 +         _png_shot_label, _png_text_width, _png_card_metrics, _png_frame_aspect, _PNG_AUDIO_HEIGHT,
+1240 |         _PNG_PAGE_WIDTH_STRIDE, _word_caption_text,
+     |
+
+F401 [*] `.filmstrip_cards._png_waveform_for_card` imported but unused
+    --> astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py:1239:43
+     |
+1237 |     from .filmstrip_cards import (
+1238 |         _png_bounded_lines, _png_draw_text, _png_ellipsis, _png_font,
+1239 |         _png_shot_label, _png_text_width, _png_waveform_for_card,
+     |                                           ^^^^^^^^^^^^^^^^^^^^^^
+1240 |         _png_card_metrics, _png_frame_aspect, _PNG_CARD_WIDTH, _PNG_IMAGE_HEIGHT, _PNG_AUDIO_HEIGHT,
+1241 |         _PNG_PAGE_WIDTH_STRIDE, _word_caption_text,
+     |
+help: Remove unused import
+     |
+1237 |     from .filmstrip_cards import (
+     -         _png_bounded_lines, _png_draw_text, _png_ellipsis, _png_font,
+     -         _png_shot_label, _png_text_width, _png_waveform_for_card,
+     -         _png_card_metrics, _png_frame_aspect, _PNG_CARD_WIDTH, _PNG_IMAGE_HEIGHT, _PNG_AUDIO_HEIGHT,
+1238 +         _png_bounded_lines, _png_draw_text, _png_font,
+1239 +         _png_shot_label, _png_text_width, _png_card_metrics, _png_frame_aspect, _PNG_AUDIO_HEIGHT,
+1240 |         _PNG_PAGE_WIDTH_STRIDE, _word_caption_text,
+     |
+
+F401 [*] `.filmstrip_cards._PNG_CARD_WIDTH` imported but unused
+    --> astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py:1240:47
+     |
+1238 |         _png_bounded_lines, _png_draw_text, _png_ellipsis, _png_font,
+1239 |         _png_shot_label, _png_text_width, _png_waveform_for_card,
+1240 |         _png_card_metrics, _png_frame_aspect, _PNG_CARD_WIDTH, _PNG_IMAGE_HEIGHT, _PNG_AUDIO_HEIGHT,
+     |                                               ^^^^^^^^^^^^^^^
+1241 |         _PNG_PAGE_WIDTH_STRIDE, _word_caption_text,
+1242 |         _PNG_TEXT_LINE_HEIGHT,
+     |
+help: Remove unused import
+     |
+1237 |     from .filmstrip_cards import (
+     -         _png_bounded_lines, _png_draw_text, _png_ellipsis, _png_font,
+     -         _png_shot_label, _png_text_width, _png_waveform_for_card,
+     -         _png_card_metrics, _png_frame_aspect, _PNG_CARD_WIDTH, _PNG_IMAGE_HEIGHT, _PNG_AUDIO_HEIGHT,
+1238 +         _png_bounded_lines, _png_draw_text, _png_font,
+1239 +         _png_shot_label, _png_text_width, _png_card_metrics, _png_frame_aspect, _PNG_AUDIO_HEIGHT,
+1240 |         _PNG_PAGE_WIDTH_STRIDE, _word_caption_text,
+     |
+
+F401 [*] `.filmstrip_cards._PNG_IMAGE_HEIGHT` imported but unused
+    --> astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py:1240:64
+     |
+1238 |         _png_bounded_lines, _png_draw_text, _png_ellipsis, _png_font,
+1239 |         _png_shot_label, _png_text_width, _png_waveform_for_card,
+1240 |         _png_card_metrics, _png_frame_aspect, _PNG_CARD_WIDTH, _PNG_IMAGE_HEIGHT, _PNG_AUDIO_HEIGHT,
+     |                                                                ^^^^^^^^^^^^^^^^^
+1241 |         _PNG_PAGE_WIDTH_STRIDE, _word_caption_text,
+1242 |         _PNG_TEXT_LINE_HEIGHT,
+     |
+help: Remove unused import
+     |
+1237 |     from .filmstrip_cards import (
+     -         _png_bounded_lines, _png_draw_text, _png_ellipsis, _png_font,
+     -         _png_shot_label, _png_text_width, _png_waveform_for_card,
+     -         _png_card_metrics, _png_frame_aspect, _PNG_CARD_WIDTH, _PNG_IMAGE_HEIGHT, _PNG_AUDIO_HEIGHT,
+1238 +         _png_bounded_lines, _png_draw_text, _png_font,
+1239 +         _png_shot_label, _png_text_width, _png_card_metrics, _png_frame_aspect, _PNG_AUDIO_HEIGHT,
+1240 |         _PNG_PAGE_WIDTH_STRIDE, _word_caption_text,
+     |
+
+Found 4 errors.
+[*] 4 fixable with the `--fix` option.
+ M astrid/core/timeline/scene_answers.py
+ M astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+ M astrid/sdk/invocation.py
+ M astrid/sdk/timeline_filmstrip.py
+ M tests/sdk/test_scene_caller_preservation.py
+?? tests/integrations/test_d09_managed_scene_only.py
+?? tests/packs/rendering/real_pack_host.py
+?? tests/packs/rendering/test_scene_only_executor.py
+?? tests/sdk/test_scene_dispatch_contract.py
+
+exec
+/bin/bash -lc "wc -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-dispatch-current-resume/DONE; sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-dispatch-current-resume/commit-msg; git diff --check" in /home/user/work/wt/agt-m3-scene-dispatch-current-resume
+ succeeded in 0ms:
+0 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m3-scene-dispatch-current-resume/DONE
+feat(scene): dispatch managed scene-only queries
+
+Port the bounded private managed Scene invocation and artifact path onto the current SDK, with preservation and live managed-bundle proof coverage.
+
 codex
-The exact-final-tree live proof remains in the normal multi-minute validation phase. This is the last live request; once it returns, I’ll update the handoff fingerprint and run only the short final checks needed for handoff.
+Implemented the bounded current-base Scene dispatch continuation.
+
+- Added private scene-only invocation, authority/capture binding, executor artifact ZIP, catalog pagination, and preservation/dispatch tests.
+- Added real Runtime/pack-host proof for saved and frozen-candidate queries with cleanup guarantees.
+- Published [handoff](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-scene-current-dispatch-handoff.md>).
+- Wrote commit message and `DONE` sentinel.
+
+Tests:
+
+- Offline targeted: `224 passed, 2 skipped, 44 deselected`.
+- Central managed proof `agt-m3-scene-dispatch-current-resume-targeted-1020213245-7374`: `1 passed`.
+- `git diff --check`: passed.
+- Focused Ruff found only four pre-existing F401s in `filmstrip_execution.py`; no new lint issue.
+
+No full suite run. Ordinary activation remains held.
+tokens used
+925,678
+Implemented the bounded current-base Scene dispatch continuation.
+
+- Added private scene-only invocation, authority/capture binding, executor artifact ZIP, catalog pagination, and preservation/dispatch tests.
+- Added real Runtime/pack-host proof for saved and frozen-candidate queries with cleanup guarantees.
+- Published [handoff](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-scene-current-dispatch-handoff.md>).
+- Wrote commit message and `DONE` sentinel.
+
+Tests:
+
+- Offline targeted: `224 passed, 2 skipped, 44 deselected`.
+- Central managed proof `agt-m3-scene-dispatch-current-resume-targeted-1020213245-7374`: `1 passed`.
+- `git diff --check`: passed.
+- Focused Ruff found only four pre-existing F401s in `filmstrip_execution.py`; no new lint issue.
+
+No full suite run. Ordinary activation remains held.
