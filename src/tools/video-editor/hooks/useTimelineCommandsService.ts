@@ -4,6 +4,8 @@ import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { useMemo } from 'react';
 import {
   addTrack as addTrackToConfig,
+  canSplitClipAtTime,
+  createSplitClipId,
   getClipEndSeconds,
   getTrackById,
   isHoldClip,
@@ -44,6 +46,7 @@ import {
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { captureClipSplitEdit, submitClipSplitEdit } from '../commands/clipSplitGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
 export type TimelineCommandErrorCode =
@@ -803,25 +806,33 @@ export function createTimelineCommands(
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
-      const splitResult = splitClipAtPlayhead(current.resolvedConfig, input.clipId, input.time);
-      if (!splitResult.nextSelectedClipId) {
+      if (!canSplitClipAtTime(clip, input.time)) {
         return failure('invalid_argument', 'The requested split time is outside the clip’s playable range.');
       }
 
-      return applyValidatedMutation(
-        store,
-        current,
-        {
-          type: 'config',
-          resolvedConfig: splitResult.config,
-        },
-        { clipId: input.clipId, nextClipId: splitResult.nextSelectedClipId },
-        {
-          selectedClipId: splitResult.nextSelectedClipId,
-          selectedTrackId: clip.track,
-          semantic: true,
-        },
-      );
+      const permission = options?.timelineEditability?.check({ clipId: input.clipId,
+        sourceTrackId: clip.track, targetTrackId: clip.track });
+      if (permission?.allowed === false) {
+        return failure('timeline_read_only', `Clip cannot be split (${permission.reason ?? 'editing locked'}).`);
+      }
+
+      // Nonmedia splitting remains a separate ingress until it has a native contract.
+      if (clip.clipType !== 'media') {
+        const splitResult = splitClipAtPlayhead(current.resolvedConfig, input.clipId, input.time);
+        return applyValidatedMutation(store, current, { type: 'config', resolvedConfig: splitResult.config },
+          { clipId: input.clipId, nextClipId: splitResult.nextSelectedClipId! },
+          { selectedClipId: splitResult.nextSelectedClipId!, selectedTrackId: clip.track, semantic: true });
+      }
+      try {
+        const rightId = createSplitClipId(current.resolvedConfig.clips.map((entry) => entry.id), input.clipId);
+        const captured = captureClipSplitEdit(state.ops.clipSplit, current, input.clipId, input.time, rightId);
+        submitClipSplitEdit(captured);
+        state.ops.selectClip(rightId);
+        state.ops.setSelectedTrackId(clip.track);
+        return success({ clipId: input.clipId, nextClipId: rightId });
+      } catch (cause) {
+        return failure('mutation_failed', cause instanceof Error ? cause.message : 'Clip split failed.', { cause });
+      }
     },
 
     deleteClip(input) {

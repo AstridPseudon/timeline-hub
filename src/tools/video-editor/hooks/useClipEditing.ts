@@ -1,3 +1,5 @@
+import type { ClipSplitCapturePort } from '../commands/clipSplitGesture.ts';
+import type { TimelineEditability } from '../lib/timeline-editability.ts';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -35,6 +37,8 @@ export interface UseClipEditingArgs {
   selectClip: (clipId: string, opts?: SelectClipOptions) => void;
   setSelectedTrackId: Dispatch<SetStateAction<string | null>>;
   applyEdit: TimelineApplyEdit;
+  clipSplitPort?: ClipSplitCapturePort;
+  editability?: TimelineEditability;
 }
 
 export interface UseClipEditingResult {
@@ -70,6 +74,8 @@ export function useClipEditing({
   selectClip,
   setSelectedTrackId,
   applyEdit,
+  clipSplitPort,
+  editability,
 }: UseClipEditingArgs): UseClipEditingResult {
   const currentTimeRef = useRef(currentTime);
 
@@ -290,6 +296,8 @@ export function useClipEditing({
     currentTimeRef,
     applyRowsEdit,
     applyConfigEdit,
+    clipSplitPort,
+    editability,
     isPinnedGroupMember,
     notifyPinnedGroupEditBlocked,
     getValidClipIds,

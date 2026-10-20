@@ -1,4 +1,10 @@
 // @vitest-environment jsdom
+import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import { useClipEditing } from './useClipEditing.ts';
+import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
+import { createTimelineEditability, type TimelineEditability } from '../lib/timeline-editability.ts';
+import { captureClipSplitEdit } from '../commands/clipSplitGesture.ts';
+import splitFixture from '../commands/fixtures/recipe_m2_clip_split.json';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createElement, useEffect, type ReactNode } from 'react';
@@ -7,7 +13,7 @@ import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from 
 import { createInteractionState } from '../lib/interaction-state.ts';
 import { buildPendingDragSession, commitDraggingSession } from './useClipDrag.helpers.ts';
 import { document as commandDocument, environment, scope, trimDocument } from '../commands/__tests__/commitSessionEnvironment.ts';
-import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createTimelineStore } from './timelineStore.ts';
 import { useTimelineSave } from './useTimelineSave.ts';
 import { loadTimelineDraft } from '../data/timelineDraftIndexedDb.ts';
@@ -45,6 +51,9 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
   const saveTimeline = vi.spyOn(env.provider, 'saveTimeline');
   const saveTimelineAtHead = vi.spyOn(env.provider, 'saveTimelineAtHead');
   const store = createTimelineStore();
+  const selectClip = vi.fn();
+  const setSelectedTrackId = vi.fn();
+  const legacyApplyEdit = vi.fn();
   store.getState().setMounted(true);
   const initial = env.current();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -55,7 +64,7 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
   const interactionStateRef = { current: createInteractionState() };
   const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client: queryClient },
     createElement(VideoEditorRuntimeProvider, { value: runtime }, children));
-  const hook = renderHook(() => {
+  const hook = renderHook(({ currentTime, editability }: { currentTime: number; editability?: TimelineEditability }) => {
     const save = useTimelineSave(queries, env.provider, interactionStateRef, store, initial);
     const history = useTimelineHistory({ dataRef: save.dataRef, commitData: save.commitData,
       interactionStateRef, pendingOpsRef: save.pendingOpsRef });
@@ -63,14 +72,18 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
     useEffect(() => save.eventBus.on('remoteCommit', history.onRemoteData), [save.eventBus, history.onRemoteData]);
     store.getState().syncSlices({
       data: { ...store.getState().data, data: save.data, resolvedConfig: save.data?.resolvedConfig ?? null, dataRef: save.dataRef },
-      ops: { ...store.getState().ops, clipMove: save.commands.port },
+      ops: { ...store.getState().ops, clipMove: save.commands.port, clipSplit: save.commands.clipSplitPort,
+        selectClip, setSelectedTrackId, applyEdit: legacyApplyEdit },
     });
-    return { commands: save.commands, commit: save, history };
-  }, { wrapper });
+    const editing = useClipEditing({ dataRef: save.dataRef, resolvedConfig: save.data?.resolvedConfig ?? null,
+      selectedClipId: 'clip-a', selectedTrack: null, currentTime, editability,
+      selectClip, setSelectedTrackId, applyEdit: legacyApplyEdit, clipSplitPort: save.commands.clipSplitPort });
+    return { commands: save.commands, commit: save, history, editing };
+  }, { wrapper, initialProps: { currentTime: 3, editability: undefined } });
   hook.result.current.commit.eventBus.on('scheduleSave', snapshotSaves);
   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
   const service = createTimelineCommands(store);
-  return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead };
+  return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead, selectClip, setSelectedTrackId, legacyApplyEdit, store };
 }
 
 async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
@@ -100,7 +113,273 @@ async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
     setLegacyClean: (clean: boolean) => { legacyClean = clean; } };
 }
 
+function splitDocument(children = false) {
+  const raw = children ? acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+    { revision_id: 'initial', publication_id: 'initial' }, { children: true }).data.canonical_document : commandDocument();
+  const occurrences = raw.parent_revision.payload.occurrences;
+  raw.parent_revision.payload = structuredClone(splitFixture.input.parent_revision.payload);
+  if (children) {
+    raw.parent_revision.payload.occurrences = occurrences;
+    const config = raw.parent_revision.payload.config as { tracks: Array<{ id: string; kind: string }> };
+    config.tracks.push({ id: 'V1', kind: 'visual' });
+    raw.parent_revision.payload.tracks = structuredClone(config.tracks);
+  }
+  raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+  return raw;
+}
+
 describe('mounted timeline command session', () => {
+  it.each(['selected', 'pointer', 'facade'] as const)('submits %s single split through the mounted native port with one installation', async (ingress) => {
+    const env = await environment(splitDocument());
+    env.setFault('lost');
+    const { hook, service, store, selectClip, legacyApplyEdit, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(env);
+    const port = hook.result.current.commands.clipSplitPort!;
+    expect(store.getState().ops.clipSplit).toBe(port);
+    const capture = vi.spyOn(port, 'capture');
+    const finish = vi.spyOn(port, 'finish');
+    const submit = vi.spyOn(port, 'submit');
+    const before = hook.result.current.commit.data!;
+    before.sourceItemsBySchemaRef = { 'custom/v1': [{ id: 'source-1', shape: 'point', domain: 'timeline_seconds',
+      extent: { start: 0 }, schemaRef: 'custom/v1', payload: { keep: [null, false] },
+      sourceArtifactRef: { assetId: 'picture' }, provenance: { adapterId: 'test', adapterVersion: '1' } }] };
+    before.transcriptReferences = { schema: 'media.transcript.references/v1',
+      associations: [{ assetId: 'picture', documentId: 'transcript-1' }] };
+    const install = vi.fn();
+    hook.result.current.commit.eventBus.on('pruneSelection', install);
+    const on = ingress === 'selected' ? 3 : 3.000000123;
+    vi.spyOn(Date, 'now').mockReturnValue(123456);
+    act(() => {
+      if (ingress === 'selected') hook.result.current.editing.handleSplitSelectedClip();
+      else if (ingress === 'pointer') hook.result.current.editing.handleSplitClipAtTime('clip-a', on);
+      else expect(service.splitClip({ clipId: 'clip-a', time: on })).toEqual({ ok: true,
+        data: { clipId: 'clip-a', nextClipId: 'clip-a-123456' } });
+    });
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    expect(capture).toHaveBeenCalledExactlyOnceWith({ current: before, clipId: 'clip-a', on, rightId: 'clip-a-123456' });
+    expect(finish).toHaveBeenCalledTimes(1);
+    expect(submit).toHaveBeenCalledTimes(1);
+    const command = submit.mock.calls[0][0].command;
+    expect(command).toMatchObject({ op: 'clip.split', select: 'parent/clip:clip-a',
+      args: { on, right_id: 'clip-a-123456' }, created: ['parent/clip:clip-a-123456'] });
+    expect(env.commits()[0].body!.commands).toEqual([command]);
+    const draft = hook.result.current.commit.data!;
+    const [left, right, neighbor] = draft.config.clips;
+    expect(left).toEqual({ ...before.config.clips[0], hold: (on - 1) * 2, to: 2 + (on - 1) * 2,
+      app: { ...before.config.clips[0].app, astrid: { ...before.config.clips[0].app!.astrid, for: on - 1 } } });
+    expect(right).toEqual({ ...before.config.clips[0], id: 'clip-a-123456', at: on, from: 2 + (on - 1) * 2,
+      hold: 8 - (on - 1) * 2,
+      app: { ...before.config.clips[0].app, astrid: { ...before.config.clips[0].app!.astrid, for: 5 - on } } });
+    expect(neighbor).toEqual(before.config.clips[1]);
+    expect(draft.rows[0].actions).toMatchObject([{ id: 'clip-a', start: 1, end: on },
+      { id: 'clip-a-123456', start: on, end: 5 }, { id: 'clip-b' }]);
+    expect(draft.meta['clip-a-123456']).toMatchObject({ from: right.from, to: 10, speed: 2, hold: right.hold });
+    expect(draft.registry).toEqual(before.registry);
+    expect(draft.sourceItemsBySchemaRef).toEqual(before.sourceItemsBySchemaRef);
+    expect(draft.transcriptReferences).toEqual(before.transcriptReferences);
+    expect(selectClip).toHaveBeenCalledExactlyOnceWith('clip-a-123456');
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    await act(async () => { await hook.result.current.commands.retry(); });
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('saved'));
+    expect(env.commits()[1].bodyBytes).toEqual(env.commits()[0].bodyBytes);
+    expect(env.commits()[1].key).toBe(env.commits()[0].key);
+    expect(hook.result.current.commit.data!.config.clips).toEqual(draft.config.clips);
+    hook.unmount();
+  });
+
+  it('keeps the installed split draft on definitive refusal without a second installation or snapshot write', async () => {
+    const env = await environment(splitDocument());
+    env.setFault('conflict');
+    const { hook, legacyApplyEdit, snapshotSaves, selectClip } = await mounted(env);
+    const install = vi.fn();
+    hook.result.current.commit.eventBus.on('pruneSelection', install);
+    act(() => hook.result.current.editing.handleSplitSelectedClip());
+    const draft = hook.result.current.commit.data!;
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commit.data).toBe(draft);
+    expect(draft.config.clips).toHaveLength(3);
+    expect(selectClip).toHaveBeenCalledTimes(1);
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it('toasts a synchronous native refusal once and returns a structured facade failure while preserving the draft and selection', async () => {
+    const raw = splitDocument();
+    const clips = raw.parent_revision.payload.clips as Array<Record<string, JSON>>;
+    clips[0].transition = { type: 'crossfade' };
+    (raw.parent_revision.payload.config as Record<string, unknown>).clips = structuredClone(clips);
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const { hook, service, selectClip, legacyApplyEdit, snapshotSaves } = await mounted(await environment(raw));
+    const before = hook.result.current.commit.data;
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    act(() => hook.result.current.editing.handleSplitSelectedClip());
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(service.splitClip({ clipId: 'clip-a', time: 3 })).toMatchObject({ ok: false,
+      error: { code: 'mutation_failed', message: 'clip.split v1 does not support transition' } });
+    expect(hook.result.current.commit.data).toBe(before);
+    expect(selectClip).not.toHaveBeenCalled();
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it.each(['capture', 'finish', 'submit'] as const)('handles %s port refusal once without changing existing work or selection', async (phase) => {
+    const env = await environment(splitDocument());
+    env.setFault('lost');
+    const { hook, selectClip, service, legacyApplyEdit, snapshotSaves } = await mounted(env);
+    act(() => hook.result.current.editing.handleSplitSelectedClip());
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    selectClip.mockClear();
+    const port = hook.result.current.commands.clipSplitPort!;
+    vi.spyOn(port, phase).mockImplementation(() => { throw new Error(`${phase} refused`); });
+    const draft = hook.result.current.commit.data!;
+    const install = vi.fn();
+    hook.result.current.commit.eventBus.on('pruneSelection', install);
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    act(() => hook.result.current.editing.handleSplitClipAtTime('clip-a', 2));
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(service.splitClip({ clipId: 'clip-a', time: 2 })).toMatchObject({ ok: false,
+      error: { code: 'mutation_failed' } });
+    expect(hook.result.current.commit.data).toBe(draft);
+    expect(selectClip).not.toHaveBeenCalled();
+    expect(install).not.toHaveBeenCalled();
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(1);
+    hook.unmount();
+  });
+
+  it('visibly refuses a missing UI port and returns structured missing-port failure from the facade', async () => {
+    const { hook, store, service, selectClip, legacyApplyEdit } = await mounted(await environment(splitDocument()));
+    const before = hook.result.current.commit.data!;
+    const ui = renderHook(() => useClipEditing({ dataRef: { current: before }, resolvedConfig: before.resolvedConfig,
+      selectedClipId: 'clip-a', selectedTrack: null, currentTime: 3, selectClip,
+      setSelectedTrackId: vi.fn(), applyEdit: legacyApplyEdit }));
+    store.setState((state) => ({ ops: { ...state.ops, clipSplit: undefined } }));
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    act(() => ui.result.current.handleSplitSelectedClip());
+    expect(error).toHaveBeenCalledExactlyOnceWith('clip.split capture is unavailable.');
+    expect(service.splitClip({ clipId: 'clip-a', time: 3 })).toMatchObject({ ok: false,
+      error: { code: 'mutation_failed', message: 'clip.split capture is unavailable.' } });
+    expect(hook.result.current.commit.data).toBe(before);
+    expect(selectClip).not.toHaveBeenCalled();
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    ui.unmount();
+    hook.unmount();
+  });
+
+  it('uses current dataRef rather than a render-stale resolved config, and keeps boundary splits as no-ops', async () => {
+    const { hook, legacyApplyEdit } = await mounted(await environment(splitDocument()));
+    const current = hook.result.current.commit.data!;
+    const port = hook.result.current.commands.clipSplitPort!;
+    const capture = vi.spyOn(port, 'capture');
+    const selectClip = vi.fn();
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    const ui = renderHook(() => useClipEditing({ dataRef: hook.result.current.commit.dataRef,
+      resolvedConfig: { ...current.resolvedConfig, clips: [] }, selectedClipId: 'clip-a',
+      selectedTrack: null, currentTime: 3, selectClip, setSelectedTrackId: vi.fn(),
+      applyEdit: legacyApplyEdit, clipSplitPort: port }));
+    act(() => {
+      ui.result.current.handleSplitClipAtTime('clip-a', 1);
+      ui.result.current.handleSplitClipAtTime('clip-a', 5);
+      ui.result.current.handleSplitClipAtTime('missing', 3);
+    });
+    expect(capture).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+    act(() => ui.result.current.handleSplitSelectedClip());
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(capture.mock.calls[0][0].current).toBe(current);
+    expect(selectClip).toHaveBeenCalledTimes(1);
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    ui.unmount();
+    hook.unmount();
+  });
+
+  it('refuses a wrong displayed head and an occupied reserved identity without installing or saving', async () => {
+    const { hook, legacyApplyEdit, selectClip, env } = await mounted(await environment(splitDocument()));
+    const current = hook.result.current.commit.data!;
+    const port = hook.result.current.commands.clipSplitPort!;
+    expect(() => captureClipSplitEdit(port, current, 'clip-a', 3, 'clip-b')).toThrow('literal parent clip');
+    current.head = { ...current.head!, headRevisionId: 'wrong-head' };
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    act(() => hook.result.current.editing.handleSplitSelectedClip());
+    expect(error).toHaveBeenCalledExactlyOnceWith('Displayed timeline does not match the raw authoring basis');
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(selectClip).not.toHaveBeenCalled();
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+
+  it('checks the current playhead and editability before capture', async () => {
+    const { hook, selectClip, legacyApplyEdit } = await mounted(await environment(splitDocument()));
+    const capture = vi.spyOn(hook.result.current.commands.clipSplitPort!, 'capture');
+    const before = hook.result.current.commit.data;
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => 'toast');
+    hook.rerender({ currentTime: 2.000000123, editability: createTimelineEditability({ readOnly: true }) });
+    act(() => hook.result.current.editing.handleSplitSelectedClip());
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(capture).not.toHaveBeenCalled();
+    expect(selectClip).not.toHaveBeenCalled();
+    expect(hook.result.current.commit.data).toBe(before);
+    hook.rerender({ currentTime: 2.000000123, editability: undefined });
+    act(() => hook.result.current.editing.handleSplitSelectedClip());
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(capture.mock.calls[0][0].on).toBe(2.000000123);
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it('binds colon-containing raw parent IDs despite opaque canonical metadata and preserves the shared closure', async () => {
+    const raw = splitDocument(true);
+    const row = (raw.parent_revision.payload.clips as Array<Record<string, JSON>>)[0];
+    const id = 'parent:clip:a';
+    row.id = id;
+    row.speed = null;
+    const app = row.app as Record<string, JSON>;
+    const canonical = { occurrenceId: 'occ-0', clipRef: 'occurrence:occ-0/clip:child-title', unknown: [null, false] };
+    app.canonical = canonical;
+    (app.astrid as Record<string, JSON>).for = 8;
+    (raw.parent_revision.payload.config as Record<string, unknown>).clips = structuredClone(raw.parent_revision.payload.clips);
+    raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+    const env = await environment(raw);
+    env.setFault('lost');
+    const { hook, service, legacyApplyEdit } = await mounted(env);
+    const before = hook.result.current.commit.data!;
+    const children = before.config.clips.filter((clip) => clip.id !== row.id && clip.id !== 'clip-b');
+    expect(children.length).toBeGreaterThan(0);
+    const result = service.splitClip({ clipId: id, time: 3 });
+    expect(result.ok).toBe(true);
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    const draft = hook.result.current.commit.data!;
+    const right = draft.config.clips.find((clip) => clip.id !== row.id && (clip.app?.canonical as Record<string, unknown> | undefined)?.unknown)!;
+    expect(right).toMatchObject({ at: 3, from: 4, to: 10, hold: 6, speed: null, app: { canonical } });
+    expect(env.commits()[0].body!.commands[0]).toMatchObject({ select: 'parent/clip:parent:clip:a', args: { on: 3 } });
+    expect(draft.config.clips.filter((clip) => children.some((child) => child.id === clip.id))).toEqual(children);
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it('refuses real projected children and a duplicate parent/projected display identity before any installation', async () => {
+    const { hook, env, legacyApplyEdit } = await mounted(await environment(splitDocument(true)));
+    const port = hook.result.current.commands.clipSplitPort!;
+    const current = hook.result.current.commit.data!;
+    const child = current.resolvedConfig.clips.find((clip) => clip.id === 'occ-0:child-title')!;
+    expect(child.app!.canonical).toMatchObject({ occurrenceId: 'occ-0', clipRef: 'occurrence:occ-0/clip:child-title' });
+    expect(() => captureClipSplitEdit(port, current, child.id, 0.5, 'right:part')).toThrow('literal parent clip');
+    const parent = current.resolvedConfig.clips.find((clip) => clip.id === 'clip-a')!;
+    current.resolvedConfig.clips.push({ ...child, id: parent.id });
+    expect(() => captureClipSplitEdit(port, current, parent.id, 3, 'right:part')).toThrow('unambiguous clip identity');
+    expect(env.commits()).toHaveLength(0);
+    expect(legacyApplyEdit).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
   it('exposes the staged split port and fences capture behind earlier legacy saves', async () => {
     const { hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.clipSplitPort!;

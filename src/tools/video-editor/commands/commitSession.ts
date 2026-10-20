@@ -604,15 +604,15 @@ export async function createTimelineCommandSession(options: Options) {
         throw new Error('Displayed timeline does not match the raw authoring basis');
       }
       const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
-      const identity = matches[0]?.app?.canonical as { clipRef?: string; occurrenceId?: string } | undefined;
-      if (matches.length !== 1 || identity?.occurrenceId !== undefined
-        || (identity?.clipRef !== undefined && identity.clipRef !== `parent/clip:${clipId}`)
+      const identity = matches[0]?.app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+      const select = resolveOwnedClipRef(clipId, identity, undefined, 'Split requires one literal parent clip identity');
+      if (matches.length !== 1 || select !== `parent/clip:${clipId}`
         || current.config.pinnedShotGroups?.some((group) => group.clipIds.includes(clipId))
         || current.config.clips.some((clip) => clip.id === rightId)
         || current.resolvedConfig.clips.some((clip) => clip.id === rightId)) {
         throw new Error('Split requires one literal parent clip identity');
       }
-      return freezeJson(json({ ...captureClipSplit(bundle, `parent/clip:${clipId}`, { on, right_id: rightId }),
+      return freezeJson(json({ ...captureClipSplit(bundle, select, { on, right_id: rightId }),
         localGeneration, localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ClipSplitCapturePort['capture']>;
     },
     finish(basis) {

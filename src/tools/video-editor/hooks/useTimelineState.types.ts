@@ -1,4 +1,5 @@
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
+import type { ClipSplitCapturePort } from '@/tools/video-editor/commands/clipSplitGesture.ts';
 import type { ClipScalarCapturePort } from '@/tools/video-editor/commands/clipScalarGesture.ts';
 import type { ClipTrimCapturePort } from '@/tools/video-editor/commands/clipTrimGesture.ts';
 import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
@@ -146,6 +147,7 @@ export interface TimelineEditorOpsContextValue {
   clipParams?: ClipParamsCapturePort;
   clipScalar?: ClipScalarCapturePort;
   clipTrim?: ClipTrimCapturePort;
+  clipSplit?: ClipSplitCapturePort;
   setInputModality: (inputModality: TimelineInputModality) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
   setInteractionMode: (mode: TimelineInteractionMode) => void;

@@ -13,6 +13,7 @@ import { captureClipMove, submitClipMove } from '../semanticGestures.ts';
 import { authoringBundleFromDocument } from '../authoringBundle.ts';
 import { ClipMoveError, executeClipMove } from '../clipMoveCapture.ts';
 import { finishTrackLabel, type TrackLabelArgs } from '../trackLabelCapture.ts';
+import { executeClipSplit } from '../clipSplitCapture.ts';
 import { executeClipTrim } from '../clipTrimCapture.ts';
 import { executeClipSet } from '../clipScalarCapture.ts';
 import type { AssetRegistry } from '../../types/index.ts';
@@ -108,11 +109,12 @@ export async function environment(initialDocument = document()) {
       response.data.previous_revision_id = serverHead.revisionId;
       response.data.previous_publication_id = serverHead.publicationId;
       const before = structuredClone(serverDocument);
-      if (['clip.move', 'track.set', 'clip.trim', 'clip.set-params', 'clip.set'].includes(request.commands[0].op)) {
+      if (['clip.move', 'track.set', 'clip.trim', 'clip.split', 'clip.set-params', 'clip.set'].includes(request.commands[0].op)) {
         let result;
         try {
           const bundle = await authoringBundleFromDocument(serverDocument);
           result = request.commands[0].op === 'clip.move' ? executeClipMove(bundle, request.commands[0])
+            : request.commands[0].op === 'clip.split' ? executeClipSplit(bundle, request.commands[0])
             : request.commands[0].op === 'clip.trim' ? executeClipTrim(bundle, request.commands[0])
             : request.commands[0].op === 'clip.set' ? executeClipSet(bundle, request.commands[0])
             : request.commands[0].op === 'track.set'

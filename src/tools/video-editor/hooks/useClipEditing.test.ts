@@ -214,6 +214,32 @@ describe('useClipEditing duration recalculation', () => {
   });
 });
 
+describe('useClipEditing unconverted nonmedia single splits', () => {
+  it.each(['text', 'hold'] as const)('preserves the positive %s split ingress independently of native media capture', (clipType) => {
+    const current = makeConfigTimelineData({
+      output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual' }],
+      clips: [{ id: 'nonmedia', track: 'V1', clipType, at: 1, hold: 4, text: { content: 'keep' } }],
+    }, { assets: {} });
+    const applyEdit = vi.fn();
+    const port = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const { result } = renderHook(() => useClipEditing({ dataRef: { current }, resolvedConfig: current.resolvedConfig,
+      selectedClipId: 'nonmedia', selectedTrack: null, currentTime: 3, selectClip: vi.fn(),
+      setSelectedTrackId: vi.fn(), applyEdit, clipSplitPort: port }));
+    act(() => result.current.handleSplitSelectedClip());
+    expect(applyEdit).toHaveBeenCalledTimes(1);
+    const [mutation, options] = applyEdit.mock.calls[0];
+    expect(mutation.type).toBe('config');
+    expect(mutation.resolvedConfig.clips).toEqual([
+      { ...current.resolvedConfig.clips[0], hold: 2 },
+      { ...current.resolvedConfig.clips[0], id: options.selectedClipId, at: 3, hold: 2 },
+    ]);
+    expect(port.capture).not.toHaveBeenCalled();
+    expect(port.finish).not.toHaveBeenCalled();
+    expect(port.submit).not.toHaveBeenCalled();
+  });
+});
+
 describe('useClipEditing pinned group guards', () => {
   it('allows explicit full-group deletion through the shot menu path', () => {
     vi.mocked(toast.error).mockClear();

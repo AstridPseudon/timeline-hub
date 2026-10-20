@@ -1,3 +1,5 @@
+import type { ClipSplitCapturePort } from '../../commands/clipSplitGesture.ts';
+import type { TimelineEditability } from '../../lib/timeline-editability.ts';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
 import type {
@@ -12,6 +14,8 @@ export type DeleteClipOptions = {
 };
 
 export interface ClipEditingContext {
+  clipSplitPort?: ClipSplitCapturePort;
+  editability?: TimelineEditability;
   dataRef: MutableRefObject<TimelineData | null>;
   resolvedConfig: TimelineData['resolvedConfig'] | null;
   selectedClipId: string | null;
