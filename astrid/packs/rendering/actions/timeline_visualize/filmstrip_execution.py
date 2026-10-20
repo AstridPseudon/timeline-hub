@@ -1681,6 +1681,192 @@ def _materialized_asset_files(registry_path) -> dict[str, str]:
     }
 
 
+def _scene_only_label_unavailable() -> dict[str, object]:
+    """Use the existing revision-label shape when Scene is advisory unavailable."""
+    return {
+        "status": "unavailable",
+        "label": "revision unavailable",
+        "actual_revision_id": None,
+        "base_revision_id": None,
+    }
+
+
+def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
+    """Return public Scene answers through the ordinary filmstrip artifact."""
+    from astrid.core.foundation.paths import REPO_ROOT
+    from astrid.core.timeline.scene_answers import (
+        SceneQueryUnavailable,
+        _prepared_host_frames_at,
+    )
+    from astrid.core.rendering.verified_source import inherited_source
+    from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
+
+    snapshot = authority.get("capture_snapshot") or authority.get("filmstrip_snapshot")
+    if not isinstance(snapshot, Mapping) or snapshot.get("project_slug") != args.project_slug:
+        raise ValueError("Scene-only authority does not match the project.")
+    timeline_path = getattr(args, "timeline", None)
+    assets_path = getattr(args, "assets_registry", None)
+    if timeline_path is None or assets_path is None:
+        raise ValueError("Scene-only authority did not receive the materialized timeline and registry.")
+    duration_frames = snapshot.get("duration_frames")
+    if type(duration_frames) is not int or duration_frames <= 0:
+        raise ValueError("Scene-only authority has no positive canonical frame extent.")
+    frames = range(duration_frames)
+    metadata = snapshot.get("metadata")
+    scene_clips = metadata.get("scene_clips") if isinstance(metadata, Mapping) else None
+    label = snapshot_label(snapshot)
+    try:
+        source = inherited_source(timeline_path, assets_path)
+        if source is None:
+            raise SceneQueryUnavailable("exact retained Runtime source required")
+        source.validate_snapshot(snapshot)
+        if not isinstance(scene_clips, Mapping):
+            raise SceneQueryUnavailable("compiled scene address map unavailable")
+        bound = source.read()
+        bound_snapshot = bound.get("snapshot") if isinstance(bound, Mapping) else None
+        bound_metadata = bound_snapshot.get("metadata") if isinstance(bound_snapshot, Mapping) else None
+        if (not isinstance(bound_metadata, Mapping)
+                or bound_metadata.get("scene_clips") != scene_clips):
+            raise SceneQueryUnavailable("compiled scene address map differs from retained source")
+        config = snapshot.get("config")
+        config_clips = config.get("clips") if isinstance(config, Mapping) else None
+        if isinstance(config_clips, list):
+            config_ids = {clip.get("id") for clip in config_clips if isinstance(clip, Mapping)}
+            if config_ids != set(scene_clips):
+                raise SceneQueryUnavailable("compiled scene IDs differ from retained address map")
+        out_root = args.out.expanduser().resolve()
+        out_root.mkdir(parents=True, exist_ok=True)
+        project_dir = Path(
+            os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or (REPO_ROOT / "remotion")
+        ).resolve()
+        with tempfile.TemporaryDirectory(prefix=".scene-only-", dir=str(out_root)) as temporary:
+            answers = _prepared_host_frames_at(
+                Path(timeline_path),
+                Path(assets_path),
+                frames,
+                staged_video=out_root / ".scene-only-unused.mp4",
+                provenance_out_path=out_root / ".scene-only-provenance.json",
+                project_dir=project_dir,
+                composition_id=remotion.DEFAULT_COMPOSITION_ID,
+                theme_path=getattr(args, "theme_path", None),
+                min_free_gb=None,
+                frame_output_dir=Path(temporary),
+                materialized_root=getattr(args, "materialized_root", None),
+                materialized_objects=getattr(args, "materialized_objects", None),
+            )
+        if any(
+            layer.get("clipId") not in scene_clips
+            for answer in answers
+            for layer in answer.get("layers", [])
+            if isinstance(layer, Mapping)
+        ):
+            raise SceneQueryUnavailable("public Scene returned an unaddressed compiled ID")
+        source.validate_snapshot(snapshot)
+    except (SceneQueryUnavailable, OSError, TypeError, ValueError, KeyError):
+        answers = []
+        label = _scene_only_label_unavailable()
+
+    out_root = args.out.expanduser().resolve()
+    scene_clips_output = dict(scene_clips) if isinstance(scene_clips, Mapping) else {}
+    pack_root = out_root / "filmstrip-view"
+    pack_root.mkdir(parents=True, exist_ok=True)
+    scene_path = pack_root / "scene-answers.json"
+    scene_path.write_text(
+        json.dumps(
+            {
+                "answers": answers,
+                "scene_clips": scene_clips_output,
+                "snapshot_label": label,
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ),
+        encoding="utf-8",
+    )
+    nested_manifest = build_manifest(
+        kind="timeline_filmstrip",
+        created="1970-01-01T00:00:00Z",
+        inputs={
+            "timeline_id": snapshot.get("timeline_id"),
+            "render_run_id": snapshot.get("render_run_id"),
+            "scene_only": True,
+        },
+        outputs=[
+            {
+                "path": scene_path.name,
+                "type": "file",
+                "role": "result",
+                "is_primary": True,
+                "label": scene_path.name,
+            }
+        ],
+        entrypoints={"scene": scene_path.name},
+        timeline_ids=[snapshot.get("timeline_id")],
+    )
+    nested_manifest_path = pack_root / "manifest.json"
+    write_manifest(nested_manifest_path, nested_manifest)
+    bundle = out_root / "filmstrip-bundle.zip"
+    _write_zip_atomic(bundle, pack_root)
+
+    def receipt_entry(name: str, path: Path, *, primary: bool = False) -> dict[str, Any]:
+        return {
+            "name": name,
+            "path": path.relative_to(out_root).as_posix(),
+            "content_hash": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
+            "bytes": path.stat().st_size,
+            "role": "result" if primary else "auxiliary",
+            "is_primary": primary,
+            "durability": "durable" if primary else "temporary",
+        }
+
+    host_manifest_path = out_root / "manifest.json"
+    write_manifest(
+        host_manifest_path,
+        build_manifest(
+            kind="timeline_filmstrip_result",
+            created="1970-01-01T00:00:00Z",
+            inputs={
+                "timeline_id": snapshot.get("timeline_id"),
+                "render_run_id": snapshot.get("render_run_id"),
+                "scene_only": True,
+            },
+            outputs=[
+                receipt_entry("filmstrip_manifest", nested_manifest_path),
+                receipt_entry("filmstrip_bundle", bundle, primary=True),
+            ],
+            entrypoints={
+                "manifest": "filmstrip-view/manifest.json",
+                "scene": "filmstrip-view/scene-answers.json",
+                "bundle": "filmstrip-bundle.zip",
+            },
+        ),
+    )
+    manifest_digest = "sha256:" + hashlib.sha256(nested_manifest_path.read_bytes()).hexdigest()
+    bundle_digest = "sha256:" + hashlib.sha256(bundle.read_bytes()).hexdigest()
+    entrypoints = {
+        "manifest": "filmstrip-view/manifest.json",
+        "scene": "filmstrip-view/scene-answers.json",
+        "bundle": "filmstrip-bundle.zip",
+    }
+    return {
+        "returncode": 0,
+        "run_root": str(out_root),
+        "manifest_path": str(nested_manifest_path),
+        "timeline_ids": [snapshot.get("timeline_id")],
+        "snapshot_label": label,
+        "cas": {"filmstrip_manifest": manifest_digest, "filmstrip_bundle": bundle_digest},
+        "entrypoints": entrypoints,
+        "outputs": {
+            "pack_root": str(pack_root),
+            "manifest_path": str(nested_manifest_path),
+            "scene_answers": str(scene_path),
+            "filmstrip_bundle": str(bundle),
+            "entrypoints": entrypoints,
+            "snapshot_label": label,
+        },
+    }
+
+
 def execute_filmstrip(args, *, authority=None):
     started_at = time.time()
     if getattr(args, "view", None) == "diff":
@@ -1707,8 +1893,10 @@ def execute_filmstrip(args, *, authority=None):
             except (OSError, json.JSONDecodeError) as exc:
                 raise ValueError("filmstrip authority handoff is not valid JSON") from exc
         authority = parsed_authority
-    if not isinstance(authority, dict) or authority.get('mode') not in {'filmstrip', 'input_only', 'composed_capture'}:
+    if not isinstance(authority, dict) or authority.get('mode') not in {'filmstrip', 'input_only', 'composed_capture', 'scene_only'}:
         raise ValueError('Rendered filmstrips require managed SDK admission.')
+    if authority.get("mode") == "scene_only":
+        return _execute_scene_only(args, authority)
     if authority.get('mode') == 'input_only':
         return execute_input_only(args, authority)
     capture_mode = (
