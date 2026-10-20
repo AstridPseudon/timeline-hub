@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-20T22:59:43Z | dispatcher heartbeat 12s | live 4 (sol 0, luna 4, other 0) | busy30 33 | status age 0m -->
-# viewing — 2026-10-20 22:58 UTC
+<!-- viewing | 2026-10-20T23:05:35Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 35 | status age 1m -->
+# viewing — 2026-10-20 23:07 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3/M4 OPEN. PLAN and MANAGER-COMMON rules revision 2026-10-20 re-read 22:42.
 Integrated: Composition ac918bb645d2ee4e8e36bbb98df02fb732176475/tree d23317a0. npm test: central composition-full-1020223241-16395 PASS: 78 passed, 0 failed, 0 skipped. Public0.0.13 source 5a4e9b72 and immutable 9412ae25 archive / all 77 files unchanged.
 Delivery: Current Composition patch 60a82dff and bundle c49d2638 recovered to durable worker delivery paths, independently APPROVED. Exact 113/113 patched tree equals source; bundle verifies main 67b8 ancestor. Runtime notified via flat handoff. Whole ZIP, macOS and owner-film review NOT RUN.
@@ -31,3 +31,6 @@ Gates: 3/M1 accepted;6/7 OPEN. No foundation, current physical parity, whole ZIP
 Latest source findings: broad onscreen retirement is still blocked by 12 live imports and unmerged current Scene lifetime; no deletion made. App old per-frame audio callback is already absent; continuous PCM is live, so no fabricated callback cut. Browser export source-only follow-up identifies AAC/WebCodecs client stall; no proven harness defect, no retry or unsupported-codec claim.
 
 Gate 6 current blocker (23:01): final App source e9d04f4bf / tree 8f67cc34e freezes clean, but its controller literals do not match the reviewed d0a / 8f server / 2c4 producer / public13 source cohort. Worker vw-m3-gate6-controller-qualified-tuple-port owns the bounded correction and direct tests; independent custody review and App owner gate follow. No central Gate6 request was made. Five live workers: this gate worker plus AUDIO and D09 prerequisites, scanner payload and fixture diet.
+
+Gate 6 physical-audio correction (23:07): source inspection proves case 4 never reaches compareNativeAudio; it captures and probes only. Full 1185 comparator source passing is not physical parity. Exact unapplied real captured-PCM versus same-export-PCM positive plus half-gain negative patch has cheap tests; current landable source worker is active, App informed. Controller cohort correction passed direct tests and strict wrong-source/tree negatives; independent custody review active. No marker, grant or central physical request consumed.
+Current capacity: Five Luna workers requested/live: Vite alias fix (D08 deletion preservation), full physical PCM caller (AUDIO-STEP), selected-cut actual caller hunk (D09), cohort custody review (Gate 6), small smoke-fixture central qualification (M4). Prior selected-cut result was tests-only, so no live migration or deletion claim; correction requests an actual bounded caller hunk or a precise source blocker.

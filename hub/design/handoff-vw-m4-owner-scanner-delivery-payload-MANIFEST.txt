@@ -1,0 +1,27 @@
+# Owner scanner 1.0.8 payload manifest
+
+scanner_zip=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-owner-scanner-delivery-payload/payload/owner_film_cliplook_scan-v1.0.8.zip
+scanner_zip_bytes=12221
+scanner_zip_sha256=204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee
+scanner_zip_members=
+  README.md (7033 bytes; stored)
+  owner_film_cliplook_scan.py (38074 bytes; stored)
+
+owner_instructions=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-owner-scanner-delivery-payload/payload/owner-film-differences.md
+owner_instructions_bytes=10519
+owner_instructions_sha256=969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220
+
+scanner_agent_imports=
+  astrid.core.timeline.audio_curves
+  astrid.core.timeline.clip_fields
+  astrid.core.timeline.duration.clip_end_frame
+  astrid.core.timeline.duration.clip_start_frame
+  astrid.core.timeline.shot_composition_projection.project_runtime_parent_composition
+  astrid.sdk.timeline.capture.rate
+durable_agent_source_root=/home/user/work/agent
+durable_projector_source=/home/user/work/agent/astrid/core/timeline/shot_composition_projection.py
+durable_clip_codec_source=/home/user/work/agent/astrid/core/timeline/clip_fields.py
+durable_duration_source=/home/user/work/agent/astrid/core/timeline/duration.py
+agent_root_argument=--agent-root /path/to/extracted/astrid-agent
+owner_input_argument=--input /path/to/owner-provided/canonical_document.json
+owner_output_argument=--json-out /path/to/local/owner-film-cliplook-scan.json

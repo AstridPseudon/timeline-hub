@@ -1,0 +1,7 @@
+# Gate6 AUDIO-STEP physical comparator handoff
+# No browser/render/full suite was launched by this worker.
+node --import tsx --test tests/e2e/timeline/viewing-parity/audio-join.test.ts
+node --import tsx --test tests/e2e/timeline/viewing-parity/canvas.test.ts
+node --import tsx --test tests/e2e/timeline/viewing-parity/tab-audio.test.ts
+# Candidate-only validation: apply proposal.patch, run canvas.test.ts and ESLint, then reverse it.
+node_modules/.bin/eslint tests/e2e/timeline/viewing-parity/cases.ts tests/e2e/timeline/viewing-parity/canvas.test.ts --max-warnings 0

@@ -1,0 +1,32 @@
+# Exact approved payload
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-owner-scanner-delivery-payload
+ZIP="$W/payload/owner_film_cliplook_scan-v1.0.8.zip"
+INSTRUCTIONS="$W/payload/owner-film-differences.md"
+MANIFEST="$W/payload/MANIFEST.txt"
+sha256sum "$ZIP" "$INSTRUCTIONS" "$MANIFEST"
+# ZIP SHA-256 must be 204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee.
+unzip -Z1 "$ZIP"
+
+# Runtime handoff: the existing packer has no extras carrier. Apply the
+# UNAPPLIED patch from the hub/kit directory, then use the normal packer.
+cd /home/user/timeline-hub/hub/kit
+patch -p0 < "$W/delivery-build-owner-scanner-extra.unapplied.patch"
+SCRIPT=bin/delivery-build
+SCRIPT_SHA=$(sha256sum "$SCRIPT" | cut -d' ' -f1)
+test "$SCRIPT_SHA" = 7dbef8fba0ab22021b77846edf7d2becf5141f7ac7358a4a11a711a3986b1469
+GIT_CONFIG_GLOBAL=/dev/null TIMELINE_DELIVERY_SCRIPT_SHA="$SCRIPT_SHA" \
+  python3 "$SCRIPT" --repos "agent runtime app composition" \
+  --extra "extras/owner_film_cliplook_scan-v1.0.8.zip=$ZIP" \
+  --extra "extras/owner-film-differences.md=$INSTRUCTIONS" \
+  --extra "extras/owner-scanner-payload.manifest=$MANIFEST"
+
+# Owner-local run, after extracting the scanner ZIP and using the qualified
+# Agent environment and matching extracted Agent checkout:
+OWNER_AGENT_PYTHON=/path/to/qualified/Agentenv/bin/python
+AGENT_ROOT=/path/to/extracted/astrid-agent
+OWNER_FILM_INPUT=/path/to/owner-provided/canonical_document.json
+OWNER_SCAN_OUTPUT=/path/to/local/owner-film-cliplook-scan.json
+PYTHONPATH="$AGENT_ROOT" "$OWNER_AGENT_PYTHON" -B owner_film_cliplook_scan.py \
+  --agent-root "$AGENT_ROOT" \
+  --input "$OWNER_FILM_INPUT" \
+  --json-out "$OWNER_SCAN_OUTPUT"

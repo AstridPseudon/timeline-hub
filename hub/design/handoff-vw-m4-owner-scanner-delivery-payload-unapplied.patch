@@ -1,0 +1,65 @@
+--- bin/delivery-build
++++ bin/delivery-build
+@@ -21,6 +21,7 @@
+ import subprocess
+ import time
+ import zipfile
++from pathlib import PurePosixPath
+ 
+ ORCH = "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"
+ DELIVERY = os.path.join(ORCH, "delivery")
+@@ -335,6 +336,33 @@
+                   for root, _, files in os.walk(staging) for name in files)
+ 
+ 
++def parse_extra(value):
++    """Parse one destination=source input for an existing delivery staging tree."""
++    destination, separator, source = value.partition("=")
++    if not separator or not destination or not source:
++        raise ValueError("--extra must be DESTINATION=SOURCE")
++    if "\\" in destination:
++        raise ValueError("--extra destination must use POSIX separators")
++    path = PurePosixPath(destination)
++    if path.is_absolute() or any(part in ("", ".", "..") for part in path.parts):
++        raise ValueError("--extra destination must stay below the delivery root")
++    source_path = os.path.expanduser(source)
++    if os.path.islink(source_path) or not os.path.isfile(source_path):
++        raise ValueError(f"--extra source must be a regular non-symlink file: {source}")
++    return path.as_posix(), os.path.realpath(source_path)
++
++
++def add_extras(staging, values):
++    """Copy explicitly named, regular files into the normal delivery staging tree."""
++    for value in values:
++        destination, source = parse_extra(value)
++        target = os.path.join(staging, *PurePosixPath(destination).parts)
++        if os.path.lexists(target):
++            raise ValueError(f"--extra destination already exists: {destination}")
++        os.makedirs(os.path.dirname(target), exist_ok=True)
++        shutil.copyfile(source, target)
++
++
+ def mib(n):
+     return f"{n / 1048576:.1f} MiB"
+ 
+@@ -345,6 +373,8 @@
+                         help="build and verify everything, print sizes, do not write the ZIP")
+     parser.add_argument("--repos", default=" ".join(ALL_REPOS),
+                         help='space-separated subset of: %(default)s')
++    parser.add_argument("--extra", action="append", default=[], metavar="DESTINATION=SOURCE",
++                        help="copy an existing regular file into the delivery ZIP (repeatable)")
+     args = parser.parse_args()
+     expected_sha = os.environ.get("TIMELINE_DELIVERY_SCRIPT_SHA")
+     if expected_sha:
+@@ -384,6 +414,11 @@
+ 
+     with open(os.path.join(staging, "README.md"), "w") as f:
+         f.write(render_readme(results))
++    try:
++        add_extras(staging, args.extra)
++    except ValueError as e:
++        shutil.rmtree(staging)
++        parser.error(str(e))
+     write_checksums(staging)
+ 
+     failed = [r["name"] for r in results if r["status"] != "PASS"]
