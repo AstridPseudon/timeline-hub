@@ -547,16 +547,16 @@ test('native retained frame fixture restores and admits one normal render task',
     assert.ok(actualAdmission, 'normal CPU export must perform the Runtime task admission');
     assert.equal(actualAdmission.status, 201);
     const actualRequest = actualAdmission.body as {
-      data: { task_id: string; capability_id: string; spec: { params: Record<string, unknown>; output_policy: Record<string, unknown> } };
+      data: { task_id: string; capability_id: string; spec: { spec: { params: Record<string, unknown>; output_policy: Record<string, unknown> } } };
     };
     assert.equal(actualRequest.data.task_id, actualTaskId);
     assert.equal(actualRequest.data.capability_id, 'rendering.render');
-    assert.equal(actualRequest.data.spec.params.timeline_ref, fixture.timelineId);
-    assert.equal(actualRequest.data.spec.params.selector, 'rendering.remotion');
-    assert.equal(actualRequest.data.spec.params.canonical_project_id, fixture.projectId);
-    assert.equal(actualRequest.data.spec.params.canonical_head_revision_id, fixture.headRevisionId);
-    assert.deepEqual(actualRequest.data.spec.params.canonical_occurrence_ids, [fixture.occurrenceId]);
-    assert.deepEqual(actualRequest.data.spec.output_policy, {
+    assert.equal(actualRequest.data.spec.spec.params.timeline_ref, fixture.timelineId);
+    assert.equal(actualRequest.data.spec.spec.params.selector, 'rendering.remotion');
+    assert.equal(actualRequest.data.spec.spec.params.canonical_project_id, fixture.projectId);
+    assert.equal(actualRequest.data.spec.spec.params.canonical_head_revision_id, fixture.headRevisionId);
+    assert.deepEqual(actualRequest.data.spec.spec.params.canonical_occurrence_ids, [fixture.occurrenceId]);
+    assert.deepEqual(actualRequest.data.spec.spec.output_policy, {
       format: 'mp4', destination: 'download', filename: built.payload!.output_filename,
     });
 
@@ -566,7 +566,7 @@ test('native retained frame fixture restores and admits one normal render task',
     assert.equal(actualInitial.capability_id, 'rendering.render');
     assert.equal(actualInitialSpec.spec.params.selector, 'rendering.remotion');
     assert.equal(actualInitialSpec.spec.params.timeline_ref, fixture.timelineId);
-    assert.deepEqual(actualInitialSpec.spec.output_policy, actualRequest.data.spec.output_policy);
+    assert.deepEqual(actualInitialSpec.spec.output_policy, actualRequest.data.spec.spec.output_policy);
     const actualAuthority = actualInitialSpec.spec.inputs.timeline_authority as Record<string, unknown>;
     assert.equal(actualAuthority.project_id, fixture.projectId);
     assert.equal(actualAuthority.timeline_id, fixture.timelineId);
