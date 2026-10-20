@@ -276,22 +276,9 @@ class RequestCommitPort:
         return self._read(read)
 
     def media_info(self, pin):
-        """Read metadata for one exact media pin observed in the base closure.
-
-        This is deliberately separate from the five-field generation/variant
-        selection.  The memo is request-scoped; acceptance rechecks only the
-        pins consumed through this method.
-        """
         def read():
-            if (not isinstance(pin, dict) or set(pin) != {"media_id", "content_digest"}
-                    or not isinstance(pin["media_id"], str) or not _OBJECT_ID.fullmatch(pin["media_id"])
-                    or pin["content_digest"] != pin["media_id"]):
-                raise ValidationError("media info requires one exact media pin")
-            base = self.__closures.get(self.__request["base_revision_id"])
-            if base is None:
-                base = self.revision_closure(self.__request["base_revision_id"])
-            if pin not in base["dependency_manifest"]["media"]:
-                raise refused("dependency_unavailable", "media info requires an exact base-closure media pin")
+            if pin not in self.__declared:
+                raise refused("dependency_unavailable", "media info requires an exact declared pin")
             key = canonical_json(pin)
             if key in self.__media_info:
                 return self.__media_info[key][1]
