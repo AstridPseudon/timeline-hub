@@ -118,6 +118,14 @@ async function waitForRequestedMedia(page: Page, frame: number): Promise<void> {
 
 /** Capture only the native composition viewport after exact Player/media seek. */
 export async function capturePlayerFrame(page: Page, frame: number, testInfo: TestInfo, name: string): Promise<RgbFrame> {
+  // Render completion opens a modal above the mounted Player. A locator
+  // screenshot includes that modal/backdrop even when the Player is ready.
+  const resultDialog = page.getByRole('dialog', { name: 'Rendered film', exact: true });
+  if (await resultDialog.isVisible()) {
+    await resultDialog.getByRole('button', { name: 'Close', exact: true }).click();
+    await resultDialog.waitFor({ state: 'detached' });
+  }
+  await page.locator('[data-dialog-backdrop]').waitFor({ state: 'detached' });
   await seekPlayerFrame(page, frame);
   const composition = page.locator(PLAYER_COMPOSITION).first();
   await expect(composition).toBeVisible();
