@@ -171,6 +171,7 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, envelope, s
   const [playable, setPlayable] = useState(false);
   const [starved, setStarved] = useState(false);
   const elementRef = useRef<HTMLAudioElement | null>(null);
+  const preparationProgress = useRef<() => void>(() => {});
   const isMounted = attempt.phase === 'mounted';
   const [prepared, setPrepared] = useState<{ mount: number; src: string; url: string }>();
   const playbackSrc = envelope
@@ -193,7 +194,27 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, envelope, s
     const prepare = async () => {
       const response = await fetch(src, { signal: abort.signal, credentials: mediaFetchCredentials(src) });
       if (!response.ok) throw new Error(`audio fetch ${response.status}`);
-      const bytes = await response.arrayBuffer();
+      // Keep the existing progress-based hold while the original source is
+      // downloading, before there is a native WAV element to emit progress.
+      let bytes: ArrayBuffer;
+      if (response.body) {
+        const reader = response.body.getReader();
+        const chunks: Uint8Array[] = [];
+        let length = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done || cancelled) break;
+          chunks.push(value);
+          length += value.byteLength;
+          preparationProgress.current();
+        }
+        const joined = new Uint8Array(length);
+        let offset = 0;
+        for (const chunk of chunks) { joined.set(chunk, offset); offset += chunk.byteLength; }
+        bytes = joined.buffer;
+      } else {
+        bytes = await response.arrayBuffer();
+      }
       if (cancelled) return;
       const context = new AudioContext();
       let decoded: AudioBuffer;
@@ -292,9 +313,11 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, envelope, s
       window.clearTimeout(timer);
       timer = window.setTimeout(() => setStarved(true), AUDIO_HOLD_LIMIT_MS);
     };
+    preparationProgress.current = onProgress;
     element?.addEventListener('progress', onProgress);
     return () => {
       window.clearTimeout(timer);
+      preparationProgress.current = () => {};
       element?.removeEventListener('progress', onProgress);
     };
   }, [attempt.mount, holdsPlayer, isMounted, playbackSrc]);
