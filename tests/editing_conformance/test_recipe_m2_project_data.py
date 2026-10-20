@@ -133,6 +133,89 @@ def test_disjoint_keys_rebase_and_same_key_aba_refuses():
     assert error.value.kind == "intervening_write"
 
 
+def test_disjoint_key_rebase_births_an_absent_namespace_without_losing_the_other_key():
+    original = bundle()
+    first = execute(original, [command("source", "A")])
+    other = execute(original, [command("source-map", {"id": "B"})])
+
+    rebased = replay(first, other.bundle, intervening_records=other.records)
+
+    assert project_data(rebased.bundle)[TARGET] == {
+        "source-map": {"id": "B"},
+        "source": "A",
+    }
+
+
+def test_disjoint_key_rebase_merges_through_a_null_namespace():
+    original = bundle()
+    original["parent"]["config"]["app"] = {TARGET: None}
+    first = execute(original, [command("source", "A")])
+    other = execute(original, [command("source-map", {"id": "B"})])
+
+    rebased = replay(first, other.bundle, intervening_records=other.records)
+
+    assert project_data(rebased.bundle)[TARGET] == {
+        "source-map": {"id": "B"},
+        "source": "A",
+    }
+
+
+def test_container_birth_keeps_empty_namespace_rebase_and_inverse_exact():
+    original = bundle()
+    original["parent"]["config"]["app"] = {TARGET: {}}
+    first = execute(original, [command("source", "A")])
+    other = execute(original, [command("source-map", {"id": "B"})])
+
+    rebased = replay(first, other.bundle, intervening_records=other.records)
+    assert project_data(rebased.bundle)[TARGET] == {
+        "source-map": {"id": "B"},
+        "source": "A",
+    }
+    assert inverse(first.bundle, first.records).bundle == original
+
+
+def test_inverse_of_container_birth_refuses_a_later_dependent_key_write():
+    original = bundle()
+    first = execute(original, [command("source", "A")])
+    later = execute(first.bundle, [command("source-map", {"id": "B"})])
+
+    with pytest.raises(CommandError) as error:
+        inverse(later.bundle, first.records, later.records)
+
+    assert error.value.kind == "intervening_write"
+    assert project_data(later.bundle)[TARGET]["source-map"] == {"id": "B"}
+
+
+def test_outer_key_is_trim_canonical_bounded_and_reserved():
+    original = bundle()
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        execute(original, [command(" source", 1)])
+    with pytest.raises(CommandError):
+        execute(original, [command("__proto__", 1)])
+    with pytest.raises(CommandError):
+        execute(original, [command("é" * 129, 1)])
+    assert original == before
+
+
+def test_project_data_entry_total_and_count_limits_are_enforced():
+    oversized = bundle()
+    with pytest.raises(CommandError):
+        execute(oversized, [command("large", "x" * (64 * 1024 - 1))])
+
+    total = bundle()
+    total["parent"]["config"]["app"] = {
+        TARGET: {f"entry-{index}": "x" * (64 * 1024 - 2) for index in range(16)}
+    }
+    with pytest.raises(CommandError):
+        execute(total, [command("next", "x")])
+
+    count = bundle()
+    count["parent"]["config"]["app"] = {TARGET: {f"entry-{index}": index for index in range(128)}}
+    with pytest.raises(CommandError):
+        execute(count, [command("next", "x")])
+
+
 @pytest.mark.parametrize(
     "bad",
     [

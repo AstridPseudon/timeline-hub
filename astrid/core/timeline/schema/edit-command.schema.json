@@ -2187,7 +2187,16 @@
         },
         "key": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^\\S(?:[\\s\\S]*\\S)?$",
+          "not": {
+            "enum": [
+              "__proto__",
+              "constructor",
+              "prototype"
+            ]
+          }
         },
         "value": {
           "$ref": "#/$defs/JSON"
