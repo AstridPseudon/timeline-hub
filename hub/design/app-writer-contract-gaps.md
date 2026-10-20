@@ -153,6 +153,64 @@ Recommend these bounded owner workers first, then an App
 capture goldens, reusing the current session/outbox and retiring this publisher
 only with the complete behavior qualified.
 
+## Placement candidate review — 2026-10-20
+
+Reviewed App `c8566f12` against Agent candidate **`a6c2db3d14c14da3be61c7e28b615c0e4202e619`**
+(`hub/timeline/agent/tl/agt-m2-placement-create-unplace-b`, frozen027 base).
+**Keep placement OPEN.** Fresh explicit image creation and plain removal have
+native captures; this is not a qualified replacement for the service. The
+candidate's advertised same-ID remove/create composition fails provider admission.
+Canonical contract/schema and product/tests are unchanged by this review.
+
+App paths below are relative to the App repo; Agent paths to the candidate.
+
+| Actual producer / behavior | Proposed supported mapping and remaining boundary |
+|---|---|
+| `shared/hooks/shots/addImageToShotHelpers.ts:31-47` forwards `shot_id`, generation, project and optional frame. `useShotGenerationMutations.ts:66-115,344-369` wraps add/pool/auto-position. Reference upload `referenceDomainService.ts:252` and backfill `useGenerationBackfillMigration.ts:119` also call place with no frame. | None supplies an occurrence owner or raw child ID. Resolve ownership from the original accepted canonical bundle, never from `shotId` spelling or first occurrence. Parent/shared shapes remain uncovered. The projection exposes occurrence/raw-child identities (`data/shotCompositionProjection.ts:336-354,498-502`); the service currently picks a default timeline (`placementService.ts:112-118,149-154`). Migration/resolution must precede command capture. |
+| Fresh, explicit, noncolliding image placement | Candidate `capture_placement_create` accepts `occurrence:O`, a never-reserved raw clip ID, five-field pin, absolute global seconds and literal `hold:4`. Owner must be exclusive, active/translation-only, with matching rational fps, no source window, existing active visual lane/registry and interval within occurrence. See `native_placement_commands.py:81-103,137-145` and `native_occurrence_media_commands.py:15-62`. Convert an already explicit frame using the pinned fps; capture before preview and persist IDs/pins through retry. No auto/collision policy is supplied. |
+| Media selection / image and video | `placementService.ts:173-190` consumes R13 `resolveGenerationAsset`; resolver `:84-97,103-138,259-273` picks primary-or-first variant and supports video/audio as well as image. It returns URLs/registry metadata, not a catalog digest or authoritative verified media. Use existing `getProjectMediaSelection` (`integrations/runtime/client.ts:632`, types `:65-78`) for `{asset,generation_id,variant_id,object_id,catalog_digest}` and the owner-approved immutable-media capture seam; never fabricate verification from URLs/MIME or refresh selection at ACK. Candidate create is image-only. Its exact create-or-require registry binding is not the legacy registry refresh/merge. Video creation remains uncovered. |
+| `undefined` append, `null` pool, collision shift, pooled promotion/batch | `documentPlacement.ts:197-218,223-266,307-330` implements these distinct positive behaviors. Create accepts only numeric global `on`; it neither selects last occupancy/next-free-frame nor records pool membership. Do not precompute these policies in App without Agent-recorded reads/intent. No mapping yet. |
+| Re-place same `(shot,generation)` | Legacy `documentPlacement.ts:233-237` removes/recreates deterministic `clip-sg-<shot>-<generation>` (`:45-48`). Candidate ordinary `unplace` + `create` with that same reserved ID is **not supported** (admission evidence below). Existing `placement.move` is a possible narrow mapping only for an already placed, unchanged-media clip with explicit time and no collision shift; registry refresh/pooling/replacement is not covered by move. |
+| Plain unplace / `keepAsPooled` | `capture_placement_unplace` removes one raw child and keeps the registry, guarding membership/whole row/binding/declared relations (`native_placement_commands.py:106-123,148-154`). Only removal without pooling matches. Actual hook caller `useShotGenerationMutations.ts:151-169` always requests `keepAsPooled:true`, then optional frame shifts; that full user action remains uncovered. Unplace accepts `clipType:media/image`; it does not itself establish video-create support. |
+
+**Reservation and undo blockers, executed through Agent's real
+`RuntimeCommitService.commit` with its existing detached `MediaRealm` port:**
+
+* After accepted create, pure `execute([unplace,create(same ID)])` succeeds;
+  provider commit rejects both that batch and a separate post-unplace create
+  with **409 `identity_collision`**, ref `occurrence:occ-a/clip:placed`.
+  `commit.py:523-618` scans accepted boundaries/created records monotonically;
+  `:773` calls it before `port.accept`. This agrees with `edit-recipe.md:43` /
+  `m2-move-draft.md:299-306`: ordinary retired-ID reuse is forbidden, trusted
+  inverse/redo can restore identity. Keep that rule; correct the candidate's
+  same-ID re-place claim. Prefer existing move for the narrow matching case.
+* Create → unplace → undo(unplace) restores the exact post-create document;
+  undo(create) then rejects **409 `intervening_write`** on that child root.
+  `commit.py:713-722` / `inverse.py:144-201` treats removal and its inverse as
+  overlapping publications. Single-step undo/redo passes, but ordinary LIFO
+  stack use is blocked. Agent/history owner must reconcile this concrete
+  sequence with lossless undo while preserving concurrent/other-author ABA
+  refusals; App must not bypass guards or silently drop the undo step.
+
+**Evidence/next qualification:** unchanged App placement/caller tests **40 PASS**,
+media resolver **5 PASS**; candidate placement conformance **35 PASS**. Diagnostic
+script and exact failures: `workers/app-m2-placement-contract-review/notes/placement-provider-probe.{py,json}`.
+This is detached provider evidence, **not real Runtime acceptance** (candidate
+tests fake ABI exceptions/metadata and use an in-memory port). Local Runtime
+`4bb1d0f7` has no `placement.create` in its packaged command schema; no matching
+official pair was run. Runtime owner recipe: release the candidate schema/pair
+normally; ingest real image generation/variant and bootstrap the golden's
+occurrence closure; get the public five-field selection; commit captured create
+and reload; submit same-ID unplace/create in one batch and separately, proving
+reservation rejection with unchanged head/history; then create → unplace →
+undo(unplace) → undo(create), asserting the original authored state as the
+required positive outcome (currently blocked). Repeat restart/exact retry and
+other-author ABA/dependency controls. No digest override, new port/DTO/op or
+legacy publisher fallback. Keep all existing positive auto/pool/collision/
+re-place/keepAsPooled/batch tests unchanged until their real replacement passes;
+if temporarily removed, retain their positive assertions with the mandated
+expected-failure marker. No tests were changed here.
+
 Retain all seven `createDefaultTimeline.test.ts` positives: existing head reuse,
 atomic fresh creation, same-ID headless repair, reassigned Main, metadata CAS,
 additional timeline and identical lost-ACK retry. Their publisher-specific
