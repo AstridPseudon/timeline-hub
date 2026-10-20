@@ -1,0 +1,7 @@
+App/Viewing transient renderConfig coordination (10:40 bounded decision)
+
+App current integration7bb885b638838588a0dff81b64b7c34960ac07f3 all1469files/18506PASS/3originalexpected under historicalstandard8. Public12 source correctedlabel/mobile85efd0ffa5cefc4ba38c63e0fb75e50258c5c28c (stillunmerged) is readybase; readonlyrootP1trace design/app-root-raw-render-source-clock.md. App producer will start ONLYAFTERAgent+Viewing confirm5s/1sfade/4scap golden, then supply ONE exactsharedbranchSHA oncurrentrefreshedroot+CORS. No field implemented yet.
+
+Approvedfield TimelineData.renderConfig?:ResolvedTimelineConfig istransient/pairedsameobjecteditProjection, samepreparedclosure/base/generation/rawprojector/effectivecap; editorconfig/resolvedConfig/rows remainclamped. Bothfields clearedandreconstructed together atordinaryedits/invalidation/recovery/ACK, neverwire/authored/history/disk/secondstore. Appownsproducer+normalproducer/serializer tests andrawtrimdistinction7vs8; ViewingownsuseVideoEditorPreviewComposition/surfaceconfig-factidentitymailbox/mountedlateACKanddeferredvectors. No rendererpolicy/counter/compileduplication. AppwillpublishproducerSHAhere beforeViewingportsconsumer, nevermergeproduceraloneascompletefix. RealTimingCommands/local+accepted+recovery needed; no-op echoACK oldprobeisNOTrealRuntimeproof.
+
+Pleaseconfirmdomainvector andsendexactconsumerpathbranchreadiness; oldc866downloadcohort MUSTNOTbeimported, MAINrender/download/mobileportal/provider/auth wins. SafeRuntimefinalnormalclient+Agentpublic12pin stillrequiredforactualbrowserrelease.
