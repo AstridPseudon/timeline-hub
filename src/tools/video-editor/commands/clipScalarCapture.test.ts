@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CommandRecord, EditCommand, JSON as JsonValue } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { AgentState, CommandRecord, EditCommand, JSON as JsonValue } from '@/integrations/runtime/timeline-commit-types.ts';
 import {
   captureClipClear,
   captureClipSet,
@@ -26,6 +26,19 @@ const clip = (bundle: AuthoredBundle, ref: string): Record<string, JsonValue> =>
 };
 
 describe('Agent built-in clip.set capture parity', () => {
+  it('writes prototype-looking authored leaves as own data', () => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const row = clip(input, ref);
+    row.transition = JSON.parse('{"params":{}}') as JsonValue;
+    const state = new AuthoredState(input);
+    const after: AgentState = { state: 'present', value: { literal: true } };
+    state.set(ref, ['transition', 'params', '__proto__'], after);
+    expect(Object.hasOwn((row.transition as Record<string, JsonValue>).params as object, '__proto__')).toBe(true);
+    expect(state.get(ref, ['transition', 'params', '__proto__'])).toEqual(after);
+    expect(Object.getPrototypeOf((row.transition as Record<string, JsonValue>).params)).toBe(Object.prototype);
+  });
+
   it('matches all three frozen App fixture commands, records, and authored output exactly', () => {
     const input = detached(golden.bundle);
     const result = executeClipSetBatch(input, golden.commands);
