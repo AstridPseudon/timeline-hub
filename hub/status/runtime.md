@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T21:48:40Z | dispatcher heartbeat 1s | live 5 (sol 0, luna 5, other 0) | busy30 21 | status age 0m -->
+<!-- main | 2026-10-20T21:54:52Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 23 | status age 6m -->
 # runtime — 2026-10-20T21:48:35Z
 Milestone: M1 recorded. M2/M3 active. No completion, release or physical parity claim.
 Integrated: Runtime tl/integrationb88a56f. Shared process observer09b2969 matches Main/Agent boot UUID plus start ticks;85 CPU assertions preserved and scoped startup/successor controls pass, plus9 commit cases. Failed-only pytest retention86ce14f fixes actual full temp growth. Independently approved baseline-double fixes5c32832 pass7 targets/36 neighbors. History3b900, auth/reference guards and additive generic admission regressions remain. Published013 producer2c4/artifacts unchanged.
