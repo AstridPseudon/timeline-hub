@@ -4,18 +4,26 @@ import { Audio as MediaAudio } from '@remotion/media';
 import {
   getClipDurationInFrames,
   getSanitizedMediaSrc,
-  getSanitizedMediaTrimProps,
-  getSanitizedPlaybackRate,
   getSanitizedVolume,
   secondsToFrames,
 } from '@/tools/video-editor/lib/config-utils.ts';
-import { AudioEnvelopeError, audioEnvelopeAt, compileAudioEnvelope, type AudioEnvelope } from '@banodoco/timeline-composition/evaluation';
+import {
+  AudioEnvelopeError,
+  applyAudioEnvelope,
+  audioEnvelopeWav,
+  compileAudioEnvelope,
+  computeMediaTrim,
+  encodedEnvelopeSource,
+  type AudioEnvelope,
+  type EncodedEnvelopeSource,
+} from '@banodoco/timeline-composition/evaluation';
 import { MediaErrorBoundary } from '@/tools/video-editor/compositions/MediaErrorBoundary.tsx';
 import { useOptionalPreviewAudioFailureReporter } from '@/tools/video-editor/compositions/PreviewMediaFailureContext.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import { boundCanonicalClipToOccurrence } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
 import { playerEvaluationClip } from '@/tools/video-editor/compositions/playerEvaluation.ts';
-import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
+import { mediaCrossOrigin, mediaFetchCredentials } from '@/shared/lib/media/mediaCrossOrigin';
+import { compiledAudioSourceClock } from '@/tools/video-editor/compositions/compiledAudioSourceClock';
 
 /**
  * Audio mounts this far ahead of its first frame. Remotion keeps a premounted
@@ -79,8 +87,10 @@ type PreviewAudioProps = {
   trimBefore: number;
   trimAfter?: number;
   playbackRate: number;
-  volume: number | ((frame: number) => number);
+  volume: number;
   amplify: boolean;
+  envelope?: AudioEnvelope;
+  sourceFrom: number;
 };
 
 function isCanonicalAudioEnvelopeError(error: Error): boolean {
@@ -103,6 +113,7 @@ const authoredAudioSemantics = (clip: ResolvedTimelineClip) => {
 
   return {
     authoredEnvelope,
+    prepared: (authoredAudio as { render_source?: EncodedEnvelopeSource } | undefined)?.render_source,
     authoredDuck,
     clipType: clip.clipType,
     from: clip.from,
@@ -117,6 +128,13 @@ const authoredAudioSemantics = (clip: ResolvedTimelineClip) => {
 };
 
 const authoredAudioIdentity = (clip: ResolvedTimelineClip): string => JSON.stringify(authoredAudioSemantics(clip));
+
+const authoredPreparedAudioIdentity = (clip: ResolvedTimelineClip): string => {
+  const authoredAudio = (clip as ResolvedTimelineClip & { audio?: unknown }).audio;
+  return authoredAudio && typeof authoredAudio === 'object'
+    ? JSON.stringify((authoredAudio as { render_source?: unknown }).render_source)
+    : '';
+};
 
 // Validated curves stay between their keyframe values. If every node is <=1,
 // multiplication/minimum cannot amplify. A declared boost conservatively uses
@@ -145,7 +163,7 @@ const envelopeMayAmplify = (envelope: AudioEnvelope): boolean => (
  * - After the bounded retries the clip gives up, which releases the Player,
  *   and reports to the editor chrome. The composition itself renders nothing.
  */
-const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, ...media }) => {
+const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, envelope, sourceFrom, ...media }) => {
   const reporter = useOptionalPreviewAudioFailureReporter();
   const premounting = useContext(Internals.SequenceContext)?.premounting ?? false;
   const buffer = useBufferState();
@@ -153,7 +171,68 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, ...media })
   const [playable, setPlayable] = useState(false);
   const [starved, setStarved] = useState(false);
   const elementRef = useRef<HTMLAudioElement | null>(null);
+  const preparationProgress = useRef<() => void>(() => {});
   const isMounted = attempt.phase === 'mounted';
+  const [prepared, setPrepared] = useState<{ mount: number; src: string; url: string }>();
+  const playbackSrc = envelope
+    ? prepared?.mount === attempt.mount && prepared.src === src ? prepared.url : null
+    : src;
+
+  useEffect(() => {
+    if (!isMounted) return;
+    setPlayable(false);
+    setStarved(false);
+  }, [attempt.mount, isMounted]);
+
+  // Preparation shares the existing attempt: failure backs off, abandonment
+  // aborts the fetch, and a late decoder cannot publish into the next mount.
+  useEffect(() => {
+    if (!isMounted || !envelope) return undefined;
+    const abort = new AbortController();
+    let cancelled = false;
+    let url: string | undefined;
+    const prepare = async () => {
+      const response = await fetch(src, { signal: abort.signal, credentials: mediaFetchCredentials(src) });
+      if (!response.ok) throw new Error(`audio fetch ${response.status}`);
+      // Keep the existing progress-based hold while the original source is
+      // downloading, before there is a native WAV element to emit progress.
+      let bytes: ArrayBuffer;
+      if (response.body) {
+        const reader = response.body.getReader();
+        const chunks: Uint8Array[] = [];
+        let length = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done || cancelled) break;
+          chunks.push(value);
+          length += value.byteLength;
+          preparationProgress.current();
+        }
+        const joined = new Uint8Array(length);
+        let offset = 0;
+        for (const chunk of chunks) { joined.set(chunk, offset); offset += chunk.byteLength; }
+        bytes = joined.buffer;
+      } else {
+        bytes = await response.arrayBuffer();
+      }
+      if (cancelled) return;
+      const context = new AudioContext();
+      let decoded: AudioBuffer;
+      try { decoded = await context.decodeAudioData(bytes); }
+      finally { await context.close(); }
+      if (cancelled) return;
+      const channels = Array.from({ length: decoded.numberOfChannels }, (_, i) => decoded.getChannelData(i));
+      applyAudioEnvelope(channels, decoded.sampleRate, envelope, sourceFrom, media.playbackRate);
+      url = URL.createObjectURL(new Blob([audioEnvelopeWav(channels, decoded.sampleRate)], { type: 'audio/wav' }));
+      setPrepared({ mount: attempt.mount, src, url });
+    };
+    void prepare().catch(() => { if (!cancelled) dispatch('failed'); });
+    return () => {
+      cancelled = true;
+      abort.abort();
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [attempt.mount, envelope, isMounted, media.playbackRate, sourceFrom, src]);
 
   useEffect(() => {
     if (attempt.phase !== 'backoff') return undefined;
@@ -188,7 +267,7 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, ...media })
     const element = elementRef.current;
     if (!isMounted || !element) return undefined;
     return () => releaseMediaRequest(element);
-  }, [attempt.mount, isMounted]);
+  }, [attempt.mount, isMounted, playbackSrc]);
 
   useEffect(() => {
     const element = elementRef.current;
@@ -203,7 +282,6 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, ...media })
       dispatch('playable');
       clearFailure?.(clipId);
     };
-    setStarved(false);
     updatePlayable();
     for (const type of READINESS_EVENTS) element.addEventListener(type, updatePlayable);
     element.addEventListener('error', onError);
@@ -213,7 +291,7 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, ...media })
       element.removeEventListener('error', onError);
       element.removeEventListener('canplay', onPlayable);
     };
-  }, [attempt.mount, clearFailure, clipId, isMounted]);
+  }, [attempt.mount, clearFailure, clipId, isMounted, playbackSrc]);
 
   // A browser that ignores `preload` (iOS Safari) leaves the element idle with
   // nothing buffered; start it once the clip is due. A request in flight is
@@ -222,38 +300,40 @@ const PreviewAudio: FC<PreviewAudioProps> = ({ clipId, src, amplify, ...media })
     const element = elementRef.current;
     if (!isMounted || premounting || !element) return;
     if (element.networkState === element.NETWORK_IDLE && element.readyState < element.HAVE_FUTURE_DATA) element.load();
-  }, [attempt.mount, isMounted, premounting]);
+  }, [attempt.mount, isMounted, playbackSrc, premounting]);
 
   // Hold limit: runs only while this clip holds the Player for data. Every
   // received chunk restarts it; once it fires, playback continues without
   // the clip until the clip can play.
   useEffect(() => {
     const element = elementRef.current;
-    if (!holdsPlayer || !isMounted || !element) return undefined;
+    if (!holdsPlayer || !isMounted) return undefined;
     let timer = window.setTimeout(() => setStarved(true), AUDIO_HOLD_LIMIT_MS);
     const onProgress = () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => setStarved(true), AUDIO_HOLD_LIMIT_MS);
     };
-    element.addEventListener('progress', onProgress);
+    preparationProgress.current = onProgress;
+    element?.addEventListener('progress', onProgress);
     return () => {
       window.clearTimeout(timer);
-      element.removeEventListener('progress', onProgress);
+      preparationProgress.current = () => {};
+      element?.removeEventListener('progress', onProgress);
     };
-  }, [attempt.mount, holdsPlayer, isMounted]);
+  }, [attempt.mount, holdsPlayer, isMounted, playbackSrc]);
 
-  if (!isMounted) return null;
+  if (!isMounted || !playbackSrc) return null;
 
   return (
     <Html5Audio
       key={attempt.mount}
       ref={elementRef}
-      src={src}
+      src={playbackSrc}
       {...media}
       // Native media volume stops at 1. Remotion's Web Audio gain supports
-      // the renderer's boosted volume, including its per-frame fade ramp.
+      // the renderer's boosted volume and baked PCM envelope.
       useWebAudioApi={amplify || undefined}
-      crossOrigin={amplify ? 'anonymous' : mediaCrossOrigin(src)}
+      crossOrigin={amplify ? 'anonymous' : mediaCrossOrigin(playbackSrc)}
       // Buffer the whole premount window, not just metadata.
       preload="auto"
       // The hold above replaces Remotion's, which restarts requests in flight.
@@ -291,8 +371,8 @@ const AudioTrackComponent: FC<{
           || assetType.startsWith('audio/')
           || assetType.startsWith('video/');
         const effectiveVolume = track.muted ? 0 : getSanitizedVolume(track.volume) * getSanitizedVolume(renderClip.volume);
-        const playbackRate = getSanitizedPlaybackRate(renderClip.speed);
-        const trimProps = getSanitizedMediaTrimProps(renderClip, fps);
+        const playbackRate = compiledAudioSourceClock(renderClip, fps).playback_rate;
+        const trimProps = computeMediaTrim(renderClip, fps);
         const clipAudio = (source: string) => (
           <ClipAudio
             clip={clip}
@@ -319,7 +399,7 @@ const AudioTrackComponent: FC<{
             {mediaSrc && isPlayableAudio ? isRendering ? clipAudio(mediaSrc) : (
               <MediaErrorBoundary
                 clipId={renderClip.id}
-                resetKey={`${renderClip.id}:${mediaSrc}:${trimProps.trimBefore}:${trimProps.trimAfter ?? 'none'}:${playbackRate}:${effectiveVolume}:${fps}:${authoredAudioIdentity(clip)}:audio`}
+                resetKey={`${renderClip.id}:${mediaSrc}:${trimProps.trimBefore}:${trimProps.trimAfter ?? 'none'}:${playbackRate}:${effectiveVolume}:${fps}:${authoredAudioIdentity(clip)}:${authoredPreparedAudioIdentity(clip)}:audio`}
                 fallback={null}
                 onError={(error) => reportCanonicalAudioFailure(renderClip.id, mediaSrc, error)}
               >
@@ -346,7 +426,7 @@ const ClipAudio: FC<{
   trimAfter?: number;
   playbackRate: number;
 }> = ({ clip, renderClip, fps, baseVolume, isRendering, src, trimBefore, trimAfter, playbackRate }) => {
-  const { authoredDuck } = authoredAudioSemantics(clip);
+  const { authoredDuck, prepared } = authoredAudioSemantics(clip);
   const audioIdentity = authoredAudioIdentity(clip);
   // The public compiler reads only authored audio/app/params and timing fields;
   // keep those semantic dependencies so equivalent clip objects stay stable.
@@ -356,23 +436,23 @@ const ClipAudio: FC<{
     [authoredDuck, audioIdentity, fps],
   );
   /* eslint-enable react-hooks/exhaustive-deps */
-  const frameOffset = secondsToFrames(renderClip.at, fps) - secondsToFrames(clip.at, fps);
-  const volume = useMemo(
-    () => envelope
-      ? (frame: number) => baseVolume * audioEnvelopeAt(envelope, (frame + frameOffset) / fps)
-      : baseVolume,
-    [baseVolume, envelope, frameOffset, fps],
-  );
+  // Bake against the original compiled child clock. Occurrence bounds only
+  // shorten its native playback window; they do not start a new fade.
+  const sourceFrom = compiledAudioSourceClock(clip, fps).source_from;
+  if (prepared && !envelope) throw new AudioEnvelopeError('prepared audio requires a compiled envelope');
+  const playbackSrc = envelope && (isRendering || prepared)
+    ? encodedEnvelopeSource(prepared, envelope, sourceFrom, playbackRate)
+    : src;
   const amplify = baseVolume > 0 && (baseVolume > 1 || (envelope !== undefined && envelopeMayAmplify(envelope)));
 
   if (isRendering) {
     return (
       <MediaAudio
-        src={src}
+        src={playbackSrc}
         trimBefore={trimBefore}
         trimAfter={trimAfter}
         playbackRate={playbackRate}
-        volume={volume}
+        volume={baseVolume}
       />
     );
   }
@@ -381,7 +461,7 @@ const ClipAudio: FC<{
     <PreviewAudio
       key={JSON.stringify([
         renderClip.id,
-        src,
+        playbackSrc,
         renderClip.at,
         trimBefore,
         trimAfter,
@@ -389,14 +469,17 @@ const ClipAudio: FC<{
         getClipDurationInFrames(renderClip, fps),
         fps,
         amplify,
+        audioIdentity,
       ])}
       clipId={renderClip.id}
-      src={src}
+      src={playbackSrc}
       trimBefore={trimBefore}
       trimAfter={trimAfter}
       playbackRate={playbackRate}
-      volume={volume}
+      volume={baseVolume}
       amplify={amplify}
+      envelope={prepared ? undefined : envelope}
+      sourceFrom={sourceFrom}
     />
   );
 };

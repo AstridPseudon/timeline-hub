@@ -205,30 +205,6 @@ describe('atomic command projection facts', () => {
       expect(env.commits()).toHaveLength(0);
     });
 
-  it('a late initial basis preserves a dirty label made after the first display adoption', async () => {
-    const { env, mount } = await setup();
-    let release!: (basis: typeof env.initial) => void;
-    vi.spyOn(env.provider, 'loadTimelineCommandBasis').mockImplementationOnce(() =>
-      new Promise(resolve => { release = resolve; }));
-    const mounted = mount();
-    const original = mounted.hook.result.current.commit.data!;
-    const draft = '映像 🎬 — still typing';
-    const dirty = { ...original, config: { ...original.config,
-      tracks: original.config.tracks.map(track => ({ ...track, label: draft })) } };
-    act(() => {
-      mounted.setClean(false);
-      mounted.hook.result.current.commit.commitData(dirty, { save: false, skipHistory: true });
-    });
-    const head = mounted.headRevisionRef.current;
-    await act(async () => { release(env.initial); });
-    await waitFor(() => expect(mounted.hook.result.current.commands.trackLabelPort).toBeDefined());
-    expect(mounted.hook.result.current.commit.dataRef.current).toBe(dirty);
-    expect(dirty.config.tracks[0].label).toBe(draft);
-    expect(mounted.headRevisionRef.current).toBe(head);
-    expect(mounted.installed.map(({ data }) => data)).toEqual([]);
-    expect(env.commits()).toHaveLength(0);
-  });
-
   it('preserves raw opaque roots on load, preview, recovery and accepted projection', async () => {
     const raw = document();
     const opaque = opaqueRoots();

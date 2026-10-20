@@ -45,6 +45,11 @@ import {
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
+import {
+  captureClipDeleteEdit,
+  isParentClipDeleteTarget,
+  submitClipDeleteEdit,
+} from '../commands/clipDeleteGesture.ts';
 
 export type TimelineCommandErrorCode =
   | 'editor_not_mounted'
@@ -848,6 +853,15 @@ export function createTimelineCommands(
       // --- M3 managed-object guard ---
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
+
+      if (state.ops.clipDelete && isParentClipDeleteTarget(current, input.clipId)) {
+        try {
+          submitClipDeleteEdit(captureClipDeleteEdit(state.ops.clipDelete, current, input.clipId));
+          return success({ clipId: input.clipId });
+        } catch (cause) {
+          return failure('mutation_failed', cause instanceof Error ? cause.message : 'Clip delete failed.', { cause });
+        }
+      }
 
       const nextRows = current.rows.map((row) => ({
         ...row,

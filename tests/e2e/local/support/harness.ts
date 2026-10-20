@@ -683,7 +683,7 @@ export class DirectHarness {
    * the shot `f2-shot` (occurrence on parent track `S1`, 0 s to 12 s), which the App draws as one block, not as its clips. The shot
    * also holds a full-length `f2-plate` so the film stays covered when the agent clears an asset (Astrid refuses to publish a gap).
    */
-  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT): Promise<ThreeProductsSeed> {
+  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT, variant: 'ordinary' | 'parent-delete' = 'ordinary'): Promise<ThreeProductsSeed> {
     if (this.threeProductsSeed) return this.threeProductsSeed;
     const { projectId, timelineId, image, video, headRevisionId } = this.seed;
     const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
@@ -703,6 +703,17 @@ export class DirectHarness {
       { id: ids.appClipId, at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
       { id: ids.transitionClipId, at: referenceAt, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
     ];
+    if (variant === 'parent-delete') {
+      // Native delete refuses semantic dependencies. Keep the ordinary M1 seed intact.
+      delete parentClips[1].transition;
+      parentClips[0] = { ...parentClips[0], ...JSON.parse(`{
+        "opaque":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},
+        "app":{"canonical":{"future":{"nullable":null,"ordered":[0,false,""]},
+          "__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},
+          "future":{"prototype":false}},
+        "__proto__":{"raw":true},"constructor":{"prototype":{"literal":true}},"prototype":null
+      }`) };
+    }
     const shotClips = [
       { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },
       { id: ids.agentClipId, at: 3, track: 'V2', clipType: 'media', asset: 'f2-placeholder', hold: 3, app: { f2Opaque: THREE_PRODUCTS_OPAQUE.clip } },

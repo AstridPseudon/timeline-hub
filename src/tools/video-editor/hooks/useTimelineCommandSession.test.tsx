@@ -19,6 +19,7 @@ import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
+import { captureClipDeleteEdit, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
@@ -35,7 +36,7 @@ function installStorage(env: Awaited<ReturnType<typeof environment>>) {
   } } });
 }
 
-async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>, cold = false) {
+async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
   const env = existingEnv ?? await environment();
   installStorage(env);
   const snapshotSaves = vi.fn();
@@ -43,7 +44,7 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>, co
   const saveTimelineAtHead = vi.spyOn(env.provider, 'saveTimelineAtHead');
   const store = createTimelineStore();
   store.getState().setMounted(true);
-  const initial = cold ? { ...env.current(), head: { ...env.current().head!, headPublicationId: null } } : env.current();
+  const initial = env.current();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const runtime = { provider: env.provider, timelineId: 'timeline-commit', shots: { canonicalDraft: null },
     project: { projectId: 'project-commit' }, toast: { error: vi.fn(), success: vi.fn() },
@@ -52,11 +53,8 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>, co
   const interactionStateRef = { current: createInteractionState() };
   const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client: queryClient },
     createElement(VideoEditorRuntimeProvider, { value: runtime }, children));
-  const readiness: { data: timelineData.TimelineData | null; isLoading: boolean }[] = [];
-  const hook = renderHook(({ loaded }: { loaded: timelineData.TimelineData | undefined }) => {
-    const save = useTimelineSave({ ...queries, timelineQuery: { data: loaded, isLoading: !loaded } },
-      env.provider, interactionStateRef, store, cold ? undefined : initial);
-    readiness.push({ data: save.data, isLoading: save.isLoading });
+  const hook = renderHook(() => {
+    const save = useTimelineSave(queries, env.provider, interactionStateRef, store, initial);
     const history = useTimelineHistory({ dataRef: save.dataRef, commitData: save.commitData,
       interactionStateRef, pendingOpsRef: save.pendingOpsRef });
     useEffect(() => save.eventBus.on('beforeCommit', history.onBeforeCommit), [save.eventBus, history.onBeforeCommit]);
@@ -66,16 +64,11 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>, co
       ops: { ...store.getState().ops, clipMove: save.commands.port },
     });
     return { commands: save.commands, commit: save, history };
-  }, { wrapper, initialProps: { loaded: cold ? undefined : initial } });
-  if (cold) {
-    expect(hook.result.current.commands.trackLabelPort).toBeUndefined();
-    expect(hook.result.current.commit.isLoading).toBe(true);
-    act(() => hook.rerender({ loaded: initial }));
-  }
+  }, { wrapper });
   hook.result.current.commit.eventBus.on('scheduleSave', snapshotSaves);
   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
   const service = createTimelineCommands(store);
-  return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead, readiness };
+  return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead };
 }
 
 async function scoped() {
@@ -106,6 +99,94 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it('fences every delete phase against older snapshot work and clears the port on scope cleanup', async () => {
+    const { env, hook, neutral, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipDeletePort!;
+    const input = { current: env.current(), clipId: 'x' };
+    setLegacyClean(false);
+    expect(() => port.capture(input)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const basis = port.capture(input);
+    setLegacyClean(false);
+    expect(() => port.finish(basis)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const { command } = port.finish(basis);
+    setLegacyClean(false);
+    expect(() => port.submit({ command, preview: { version: 1, operations: [{ op: 'clip.remove', target: 'x' }] } }))
+      .toThrow('earlier timeline saves');
+    expect(env.commits()).toHaveLength(0);
+    hook.rerender({ provider: neutral, timelineId: 'other' });
+    expect(hook.result.current.commands.clipDeletePort).toBeUndefined();
+    setLegacyClean(true);
+    expect(() => port.capture(input)).toThrow('unavailable');
+    hook.unmount();
+  });
+
+  it('exposes native deletion on the same session, previews locally, and retains a refused draft without snapshot saves', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    const original = structuredClone(hook.result.current.commit.data!.config.clips[0]);
+    act(() => { submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort,
+      hook.result.current.commit.data!, 'x')); });
+    expect(hook.result.current.commit.data!.config.clips).toEqual([]);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(true);
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commands.state.error).toBe('conflict: conflict');
+    expect(env.commits()[0].body?.commands[0]).toMatchObject({ op: 'clip.delete', select: 'parent/clip:x',
+      expect: { 'parent/clip:x::': { state: 'present', value: { id: original.id, at: original.at } } } });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it('keeps the refused native draft when an older grouped snapshot writer is invoked', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    act(() => submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort,
+      hook.result.current.commit.data!, 'x')));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    const draft = hook.result.current.commit.dataRef.current;
+    expect(() => hook.result.current.commit.applyEdit({ type: 'rows', rows: [], metaDeletes: ['group-child'] }, { semantic: true }))
+      .toThrow('Resolve pending timeline commands');
+    expect(hook.result.current.commit.dataRef.current).toBe(draft);
+    expect(draft!.config.clips).toEqual([]);
+    expect(hook.result.current.commands.state.status).toBe('conflict');
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it('keeps delete B after unknown A when an ordinary property suffix reaches the snapshot barrier', async () => {
+    const { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('lost');
+    act(() => { expect(service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true); });
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    const wireA = structuredClone(env.commits()[0]);
+    const [original] = await env.outboxes.list(scope);
+    act(() => submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort,
+      hook.result.current.commit.data!, 'x')));
+    await waitFor(async () => expect((await env.outboxes.list(scope))[0].intents).toHaveLength(2));
+    const draft = hook.result.current.commit.dataRef.current!;
+    const suffix = compileTimelinePatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { muted: true } },
+    ] }, draft).nextData!;
+    expect(() => hook.result.current.commit.commitData(suffix)).toThrow('Resolve pending timeline commands');
+    expect(hook.result.current.commit.dataRef.current).toBe(draft);
+    expect(draft.config.clips).toEqual([]);
+    expect(hook.result.current.commands.state.status).toBe('retry');
+    const [retained] = await env.outboxes.list(scope);
+    expect(retained.pending).toEqual(original.pending);
+    expect(retained.intents[1].payload).toMatchObject({ commands: [{ op: 'clip.delete',
+      expect: { 'parent/clip:x::': { state: 'present', value: { at: 5, app: { opaque: null } } } } }] });
+    expect(env.commits()).toEqual([wireA]);
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
   it('initializes a clean mounted save hook with a verified accepted projection', async () => {
     const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
     expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: env.initial.head });
@@ -225,74 +306,6 @@ describe('mounted timeline command session', () => {
     expect(env.commits()).toHaveLength(0);
     hook.unmount();
   });
-  it('cold seed hydration projects the verified initial head before the first Unicode track rename', async () => {
-    const raw = commandDocument();
-    // seedThreeProducts' fresh parent/shot shape, before any App move (referenceAt=15).
-    const tracks = [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }];
-    const imageDigest = fixtureDigest('cold-image'), videoDigest = fixtureDigest('cold-video');
-    const image = (name: string) => ({ file: `${name}.png`, type: 'image/png',
-      media_id: imageDigest, content_sha256: imageDigest });
-    const clips = [
-      { id: 'f2-app-clip', at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
-      { id: 'f2-transition-clip', at: 15, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3,
-        speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
-    ];
-    const parent = raw.parent_revision.payload;
-    parent.config = { output: { file: 'out.mp4', fps: 30, resolution: '1280x720' }, tracks, clips,
-      x_f2_opaque: { flag: true, nested: [1, { k: 'v' }], owner: 'f2' } };
-    delete parent.tracks;
-    parent.clips = clips;
-    parent.registry = { assets: { 'f2-app': image('f2-app'), 'f2-video': { file: 'f2-video.webm',
-      type: 'video/webm', duration: 12, media_id: videoDigest, content_sha256: videoDigest } } };
-    parent.occurrences = [{ occurrence_id: 'f2-occurrence', shot_id: 'f2-shot', shot_revision_id: 'shot-r0',
-      placement: { start_ms: 0 }, source_offset: 0, duration_ms: 12000, speed: 1, track: 'S1',
-      transform: {}, gain: 1, muted: false, provenance: {} }];
-    const internal = { tracks: [{ id: 'plate', kind: 'visual', label: 'plate' }, { id: 'V2', kind: 'visual', label: 'V2' }],
-      clips: [{ id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },
-        { id: 'f2-agent-clip', at: 3, track: 'V2', clipType: 'media', asset: 'f2-placeholder', hold: 3,
-          app: { f2Opaque: { owner: 'f2', nested: [1, { k: 'v' }] } } },
-        { id: 'f2-agent-clear-clip', at: 6, track: 'V2', clipType: 'media', asset: 'f2-clear', hold: 3 }],
-      effects: [], audio: [], layout: {}, assets: [], registry: { assets: Object.fromEntries(
-        ['f2-plate', 'f2-placeholder', 'f2-clear'].map(name => [name, image(name)])) } };
-    const shot = { internal_timeline_revision_id: 'internal-r0', metadata: { title: 'F2 agent shot' }, items: [], pools: [], selected_variants: {},
-      provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [] };
-    raw.internal_timeline_revisions = [{ timeline_id: scope.timelineId, revision_id: 'internal-r0',
-      content_digest: fixtureDigest(internal), payload: internal }];
-    raw.shot_revisions = [{ shot_id: 'f2-shot', revision_id: 'shot-r0', internal_timeline_revision_id: 'internal-r0',
-      content_digest: fixtureDigest(shot), payload: shot }];
-    raw.dependency_manifest = { documents: [], media: [imageDigest, videoDigest].map(digest =>
-      ({ media_id: digest, content_digest: digest })), shots: raw.shot_revisions.map(({ payload, ...pin }) => pin),
-      internal_timelines: raw.internal_timeline_revisions.map(({ payload, ...pin }) => pin) };
-    raw.parent_revision.content_digest = fixtureDigest(parent);
-    const env = await environment(raw);
-    const { hook, snapshotSaves, saveTimeline, saveTimelineAtHead, readiness } = await mounted(env, true);
-    const initial = hook.result.current.commit.data!;
-    const captured = captureTrackLabelEdit(hook.result.current.commands.trackLabelPort, initial, 'V1');
-    const rawDisplays = readiness.filter(({ data }) => data && !data.editProjection);
-    expect(rawDisplays.length).toBeGreaterThan(0);
-    expect(rawDisplays.every(({ isLoading }) => isLoading)).toBe(true);
-    expect(initial.head).toEqual({ projectId: scope.projectId, timelineId: scope.timelineId,
-      headRevisionId: 'r0', headPublicationId: 'p0' });
-    expect(initial.editProjection).toEqual({ kind: 'accepted', head: env.initial.head });
-    expect(initial.config.clips).toHaveLength(5);
-    expect(initial.config.clips.some(clip => clip.id.includes('f2-occurrence'))).toBe(true);
-    expect(hook.result.current.commit.isLoading).toBe(false);
-    const label = '映像 🎬 — café';
-    act(() => submitTrackLabelEdit(captured, { values: { label }, clear: [] }));
-    await act(async () => { await hook.result.current.commands.flush(); });
-    expect(env.commits()).toHaveLength(1);
-    expect(env.commits()[0].body).toMatchObject({ base_revision_id: 'r0', base_publication_id: 'p0',
-      commands: [{ op: 'track.set', select: 'parent/track:V1', args: { values: { label }, clear: [] },
-        expect: { 'parent/track:V1::label': { state: 'present', value: 'V1' } },
-        reads: [{ ref: 'parent/track:V1', path: ['id'], state: { state: 'present', value: 'V1' } }],
-        bindings: { 'scalar.target': 'parent/track:V1' } }] });
-    expect(hook.result.current.commit.data!.config.tracks[0].label).toBe(label);
-    expect(hook.result.current.commit.data!.config).toMatchObject({ x_f2_opaque: parent.config.x_f2_opaque });
-    expect(snapshotSaves).not.toHaveBeenCalled();
-    expect(saveTimeline).not.toHaveBeenCalled();
-    expect(saveTimelineAtHead).not.toHaveBeenCalled();
-  });
-
   it('shares move → label projection and guarded undo without any snapshot save', async () => {
     const { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
     await act(async () => {

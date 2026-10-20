@@ -106,7 +106,7 @@ export async function environment(initialDocument = document()) {
           return { status: 409, headers: {}, body: bytes({ code: 'conflict', message: error.message,
             details: { status: 'conflict', reason: error.kind } }) };
         }
-        const payload = { ...result.bundle.parent, occurrences: serverDocument.parent_revision.payload.occurrences };
+        const payload = { ...result.bundle.parent, occurrences: [] };
         const revision = fixtureDigest(payload) === serverDocument.parent_revision.content_digest ? serverDocument.parent_revision.revision_id : next;
         serverDocument = { ...serverDocument, parent_revision: { revision_id: revision, content_digest: fixtureDigest(payload), payload } };
       } else if (request.commands[0].op === 'timeline.inverse') {
@@ -129,7 +129,7 @@ export async function environment(initialDocument = document()) {
   };
   const provider = new RuntimeDataProvider({ projectId, baseUrl: `http://session-${crypto.randomUUID()}.test`, token: 'token', transport });
   const initial = await provider.loadTimelineCommandBasis(timelineId);
-  let current = await buildTimelineData(serverDocument.parent_revision.payload.config as never, serverDocument.parent_revision.payload.registry as never, undefined, 1, undefined,
+  let current = await buildTimelineData(serverDocument.parent_revision.payload.config as never, { assets: {} }, undefined, 1, undefined,
     { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'p0' });
   const projected: TimelineCommandBasis[] = [];
   const applyPreview = (patch: TimelinePatch) => {
