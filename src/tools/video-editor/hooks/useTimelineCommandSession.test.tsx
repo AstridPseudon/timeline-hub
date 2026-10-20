@@ -19,6 +19,7 @@ import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
+import { captureClipDeleteEdit, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
@@ -73,6 +74,7 @@ async function scoped() {
   const env = await environment();
   installStorage(env);
   const initial = env.current();
+  let legacyClean = true;
   const snapshotWriteBlockedRef = { current: false };
   const headRevisionRef = { current: initial.head };
   const configVersionRef = { current: initial.configVersion };
@@ -82,7 +84,7 @@ async function scoped() {
   const recoveryConfig = createRecoveryConfig();
   const hook = renderHook(({ provider, timelineId }: { provider: DataProvider; timelineId: string }) => {
     const commit = useTimelineCommit({ eventBus, lastSavedSignatureRef, initialData: initial, snapshotWriteBlockedRef });
-    const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => true,
+    const commands = useTimelineCommandSession({ provider, timelineId, commit, legacyClean: () => legacyClean,
       resolveAssetUrl: async (file) => file, loaded: undefined, snapshotWriteBlockedRef, headRevisionRef,
       configVersionRef, lastSavedSignatureRef, store, recoveryConfig, shots: { shots: undefined, isLoading: false, error: null,
         refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
@@ -91,10 +93,51 @@ async function scoped() {
   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
   const neutral: DataProvider = { persistenceEnabled: false, loadTimeline: vi.fn(), loadAssetRegistry: vi.fn(),
     saveTimeline: vi.fn(), resolveAssetUrl: async (file) => file };
-  return { env, hook, neutral, snapshotWriteBlockedRef, headRevisionRef, configVersionRef, store, recoveryConfig };
+  return { env, hook, neutral, snapshotWriteBlockedRef, headRevisionRef, configVersionRef, store, recoveryConfig, setLegacyClean: (value: boolean) => { legacyClean = value; } };
 }
 
 describe('mounted timeline command session', () => {
+  it('fences every delete phase against older snapshot work and clears the port on scope cleanup', async () => {
+    const { env, hook, neutral, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipDeletePort!;
+    const input = { current: env.current(), clipId: 'x' };
+    setLegacyClean(false);
+    expect(() => port.capture(input)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const basis = port.capture(input);
+    setLegacyClean(false);
+    expect(() => port.finish(basis)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const { command } = port.finish(basis);
+    setLegacyClean(false);
+    expect(() => port.submit({ command, preview: { version: 1, operations: [{ op: 'clip.remove', target: 'x' }] } }))
+      .toThrow('earlier timeline saves');
+    expect(env.commits()).toHaveLength(0);
+    hook.rerender({ provider: neutral, timelineId: 'other' });
+    expect(hook.result.current.commands.clipDeletePort).toBeUndefined();
+    setLegacyClean(true);
+    expect(() => port.capture(input)).toThrow('unavailable');
+    hook.unmount();
+  });
+
+  it('exposes native deletion on the same session, previews locally, and retains a refused draft without snapshot saves', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    const original = structuredClone(hook.result.current.commit.data!.config.clips[0]);
+    act(() => { submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort,
+      hook.result.current.commit.data!, 'x')); });
+    expect(hook.result.current.commit.data!.config.clips).toEqual([]);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(true);
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commands.state.error).toBe('conflict: conflict');
+    expect(env.commits()[0].body?.commands[0]).toMatchObject({ op: 'clip.delete', select: 'parent/clip:x',
+      expect: { 'parent/clip:x::': { state: 'present', value: { id: original.id, at: original.at } } } });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
   it('clears command ownership and the snapshot block on provider cleanup, fencing an old ACK', async () => {
     const { env, hook, neutral, snapshotWriteBlockedRef } = await scoped();
     const gate = env.pause();

@@ -129,6 +129,15 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
           return realPort.capture(input);
         } };
+        const deletePort = session.clipDeletePort;
+        const requireCleanDelete = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before deleting');
+        };
+        session.clipDeletePort = {
+          capture(input) { requireCleanDelete(); return deletePort.capture(input); },
+          finish(basis) { requireCleanDelete(); return deletePort.finish(basis); },
+          submit(input) { requireCleanDelete(); deletePort.submit(input); },
+        };
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
@@ -182,6 +191,7 @@ export function useTimelineCommandSession(options: {
   const flush = useCallback(async () => { await requireSession().flush(); }, [requireSession]);
   const recover = useCallback(async (ownerId: string) => { await requireSession().recover(ownerId); }, [requireSession]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
+    clipDeletePort: enabled ? sessionRef.current?.clipDeletePort : undefined,
     retry, undo, flush, recover };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>;
