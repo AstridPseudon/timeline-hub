@@ -4,6 +4,7 @@ import pytest
 
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.remote import RemoteTimelines
+from astrid.sdk.workspace_client import WorkspaceClientError
 
 
 class _NativeTransport:
@@ -35,8 +36,8 @@ class _NativeTransport:
             }],
         }
 
-    def create_timeline_view(self, project, timeline, *, options):
-        self.view_calls.append((project, timeline, options))
+    def create_timeline_view(self, project, timeline, *, options, idempotency_key):
+        self.view_calls.append((project, timeline, options, idempotency_key))
         return {
             "inspection": {"revision_id": "rev-7", "snapshot_digest": "sha256:snapshot", "selectors": options},
             "evidence_kind": "declared_inputs",
@@ -275,6 +276,68 @@ def test_inputs_mode_never_reads_render_history() -> None:
     assert transport.view_calls
 
 
+def test_inputs_mode_reuses_exact_key_and_options_for_a_transport_retry() -> None:
+    transport = _NativeTransport()
+    timelines = RemoteTimelines(transport)
+    options = {"revision_id": "rev-7", "formats": ["md"]}
+
+    first = timelines._typed(
+        "create_timeline_view",
+        "project-1",
+        "tl-1",
+        options=options,
+        key="view-retry-1",
+    )
+    replay = timelines._typed(
+        "create_timeline_view",
+        "project-1",
+        "tl-1",
+        options=options,
+        key="view-retry-1",
+    )
+
+    assert first.ok and replay.ok
+    assert transport.view_calls == [
+        ("project-1", "tl-1", options, "view-retry-1"),
+        ("project-1", "tl-1", options, "view-retry-1"),
+    ]
+
+
+def test_inputs_mode_allocates_a_fresh_key_for_a_new_head_request() -> None:
+    transport = _NativeTransport()
+    timelines = RemoteTimelines(transport)
+
+    first = timelines.visualize("project-1", "main", mode="inputs")
+    refreshed = timelines.visualize("project-1", "main", mode="inputs")
+
+    assert first.ok and refreshed.ok
+    assert first.idempotency_key
+    assert refreshed.idempotency_key
+    assert first.idempotency_key != refreshed.idempotency_key
+    assert transport.view_calls[0][2] == transport.view_calls[1][2]
+    assert transport.view_calls[0][3] == first.idempotency_key
+    assert transport.view_calls[1][3] == refreshed.idempotency_key
+
+
+def test_inputs_mode_surfaces_read_only_refusal_before_view_write() -> None:
+    class ReadOnlyTransport(_NativeTransport):
+        def create_timeline_view(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            raise WorkspaceClientError(
+                401,
+                "forbidden",
+                "projects:write is required to create a timeline view",
+                {"required_scope": "projects:write"},
+            )
+
+    result = RemoteTimelines(ReadOnlyTransport()).visualize(
+        "project-1", "main", mode="inputs"
+    )
+
+    assert not result.ok
+    assert result.error.code == "forbidden"
+    assert result.error.details == {"required_scope": "projects:write"}
+
+
 def test_composed_mode_fails_closed_when_no_exact_render_reader_exists() -> None:
     result = RemoteTimelines(_NativeTransport()).visualize(
         "project-1", "main", mode="composed", occurrence="occ-1"
@@ -396,3 +459,32 @@ def test_visualize_honors_explicit_revision_for_composed_capture() -> None:
     assert inputs["composed_capture"] is True
     assert inputs["revision_id"] == "saved-revision-2"
     assert "render_run" not in inputs
+
+
+@pytest.mark.parametrize("method", ["show", "inspect"])
+def test_read_paths_never_create_view_artifacts(method) -> None:
+    transport = _NativeTransport()
+    result = getattr(RemoteTimelines(transport), method)("project-1", "main")
+    assert result.ok
+    assert transport.inspect_calls
+    assert transport.view_calls == []
+
+
+def test_view_retry_preserves_original_key_and_input_after_lost_ack() -> None:
+    class LostAckTransport(_NativeTransport):
+        def create_timeline_view(self, project, timeline, *, options, idempotency_key):
+            result = super().create_timeline_view(
+                project, timeline, options=options, idempotency_key=idempotency_key)
+            if len(self.view_calls) == 1:
+                raise WorkspaceClientError(503, "unavailable", "Acknowledgement lost", {})
+            return result
+
+    transport = LostAckTransport()
+    timelines = RemoteTimelines(transport)
+    options = {"revision_id": "rev-7", "formats": ["md"]}
+    first = timelines._typed("create_timeline_view", "project-1", "tl-1", options=options)
+    assert not first.ok and first.idempotency_key
+    recovered = timelines._typed("create_timeline_view", "project-1", "tl-1", options=options,
+                                 key=first.idempotency_key)
+    assert recovered.ok and recovered.idempotency_key == first.idempotency_key
+    assert transport.view_calls[0] == transport.view_calls[1]

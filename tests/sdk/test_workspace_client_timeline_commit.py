@@ -99,6 +99,34 @@ def test_workspace_client_commit_preserves_preview_null_receipt() -> None:
     )
 
 
+def test_workspace_client_create_timeline_view_forwards_explicit_key() -> None:
+    class Generated:
+        def create_timeline_view(
+            self,
+            project: str,
+            timeline: str,
+            options: dict[str, Any],
+            *,
+            idempotency_key: str,
+        ):
+            assert (project, timeline, options, idempotency_key) == (
+                "project-1",
+                "timeline-1",
+                {"revision_id": "revision-1", "formats": ["md"]},
+                "view-retry-1",
+            )
+            return {"artifact_id": "artifact-1"}
+
+    result = _client(Generated()).create_timeline_view(
+        "project-1",
+        "timeline-1",
+        {"revision_id": "revision-1", "formats": ["md"]},
+        idempotency_key="view-retry-1",
+    )
+
+    assert result == {"artifact_id": "artifact-1"}
+
+
 def test_workspace_client_lists_exact_commit_history_page() -> None:
     class Generated:
         def list_timeline_commits(
