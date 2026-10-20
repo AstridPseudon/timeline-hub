@@ -1,4 +1,4 @@
-# Viewing lead handoff — 2026-10-20 ~20:30Z (read LEAD.md first; this is machine-specific)
+# Viewing lead handoff — 2026-10-20 ~21:25Z (read LEAD.md first; this is machine-specific)
 Machine: viewing (home of composition). ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch. Orchestrator: session_01NCfFG4UM2PAWDGuSNXfJtu (send_message). Codex signed in here (ChatGPT login); bwrap, PulseAudio 16.1, ffmpeg, Chrome 155 (H.264) at /opt/google/chrome/chrome.
 ## Start / recover (all from the lead's own shell, NEVER inside a subagent sandbox)
 - `$ORCH/bin/lead-recover` (LOCAL, idempotent): aborts a stuck hub-clone rebase; finishes finished-but-unfinalized workers (DONE/report) or marks dead ones 137+INTERRUPTED (only if no process AND log idle 10 min); marks dead tests; starts any dead daemon: dispatcher-daemon, `hub-syncd viewing`, adopt-watch; restarts the manager (`bin/run-manager viewing`, 3 h Codex rounds) unless STATUS says COMPLETE/BLOCKED. Refuses if it can't see the live dispatcher pid. Run it after every "worker process was restarted".
@@ -23,3 +23,9 @@ Machine: viewing (home of composition). ORCH=/tmp/claude-0/-home-user-repo/7dc61
 - Check-in subagent once ran lead-recover inside its sandbox (22:34Z, 10-19) and falsely interrupted 3 live workers → it is now read-only and lead-recover refuses in a sandbox.
 - My 10-19 lead-recover deleted live wt/.test-* snapshots at check-ins until 03:12Z; runs listed in INBOX 03:12Z/04:09Z were re-run.
 - Notifications from the orchestrator queue behind a long turn: call ReadNotifications between every wait.
+## Update 21:25Z
+- f816 re-drift culprit (19:46Z): vw-m3-d09-labels-native-clean-proof tar-through-symlink style write; rule = real scope dirs + `ln -sfnT` + realpath check; manager/orch informed (design/handoff-lead-f816-selflinks-1946-culprit.md). f816 + scene-host stay KEEP until orchestrator OKs release (manager STATUS says lead may end obsolete protections after reader checks).
+- Disk: sweep-tmp + npm/pip cache purge gave 13.5 GB free (owner target 13.0e9 decimal; manager-measured MP4 stage 580 MB). Re-run `bin/sweep-tmp` first when short.
+- Lead line format (hub/status/viewing-lead.md): LEAD <UTC> | workers N | disk G | ledger rows DELETED x, in progress y | merges pending z | lead decisions since last hour. Report each work-list item 0-4,7.
+- Gate 6 failing cases: cases.ts:239 (native-size Player frames vs CPU Remotion output), cases.ts:249 (picture-only patch mismatch after full baseline). Standing worker vw-m3-gate6-current-suite-owner.
+- lead-watch now only flags vw-* worker exits (agt-* imported workers ignored).
