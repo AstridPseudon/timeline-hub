@@ -28,6 +28,18 @@ describe('Player planning with the built Composition evaluator', () => {
           .toBeCloseTo(0.4 / 16, 12);
         expect(preparePlayerClipOpacity({ ...clip, effects: { fade_in: -1, fade_out: NaN } }, fps)(6)).toBe(0.4);
         expect(preparePlayerClipOpacity({ ...clip, opacity: 0 }, fps)(12)).toBe(0);
+        for (const speed of [0.5, 1, 2]) {
+          for (const source of [{ hold: 30 * speed / fps },
+            { hold: undefined, from: 90 / fps, to: (90 + 30 * speed) / fps }]) {
+            expect(preparePlayerClipOpacity({ ...clip, ...source, speed }, fps)(24)).toBeCloseTo(0.2, 12);
+          }
+        }
+        for (const speed of [undefined, 0, -1, NaN, Infinity]) {
+          expect(preparePlayerClipOpacity({ ...clip, hold: 30 / fps, speed }, fps)(24)).toBeCloseTo(0.2, 12);
+        }
+        for (const [duration, expected] of [[30.49, 0.2], [30.51, 0.4 * 7 / 12]]) {
+          expect(preparePlayerClipOpacity({ ...clip, hold: duration * 2 / fps }, fps)(24)).toBeCloseTo(expected, 12);
+        }
         expect(clip).toEqual(original);
       }
     }
