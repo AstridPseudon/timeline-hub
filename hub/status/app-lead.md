@@ -11,3 +11,4 @@
 - Infra changes this check: none. (Lead decided 13:52Z: restarted manager 23766 -> 18362 because STATUS was stale since 13:16Z; ACKed 13:56Z.)
 - Open blockers: none in infra. Manager-stated external blockers: selected-PARAM original pin (Agent since 12:16Z), duplicate exact inverse (Agent since 11:55Z).
 - Questions for the orchestrator: none.
+- 15:00Z Lead decided: tightened the lead watcher manager-restart rule to match the 13:51Z owner direction and the 14:57Z capacity nudge. Now: fewer than 5 App workers for 30 min -> restart the manager unless it dispatched in the last 10 min. A running full suite or a stated blocker no longer excuses under-staffing; fully idle still respects an "external gate" blocker. At 14:57Z: 7 workers running.

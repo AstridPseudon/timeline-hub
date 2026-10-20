@@ -35,6 +35,8 @@ NODE_OPTIONS='--require=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94
 
 `focused-exact.log` contains the result. Native move/label capture parity and strict draft/recovery/history neighbors are included.
 
+Development-only two-file runs used the same Vitest flags with `useTimelineCommandSession.test.tsx useTimelineCommandSession.projection.test.tsx`: `focused-first.log` 40 passed; `focused-second.log` 40 passed / 1 failed because the new shot fixture lacked Runtime's normalized internal revision field; `focused-third.log` 40 passed / 1 failed because the test initially expected a placeholder occurrence clip instead of the actual five flattened clips; `focused-fourth.log` 41 passed after correcting those fixture/assertion mistakes. `focused-final.log` and the final exact-tree `focused-exact.log` both have 360/360 passing. No behavior expectation was weakened, skipped or removed.
+
 Original-source countercheck: `python3 -B /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-cold-label-initial-basis-fix/notes/check-original.py` temporarily supplies only the two original product files, executes the same Vitest runner on `useTimelineCommandSession.test.tsx -t 'cold seed hydration'`, and restores the fix in `finally`. Expected exit 1, observed **exact original capture mismatch** at `commitSession.ts:279`. `original-regression.log` retains the stack. Other tests are filtered only for this countercheck.
 
 ```bash
@@ -61,4 +63,27 @@ $ORCH/bin/wait-test app-m3-cold-label-initial-basis-fix-e2e-cold-label-initial-b
 
 This invokes `npm exec -- playwright test --config playwright.track-label.config.ts --grep 'M2 cold-open'` in the verified snapshot. **PASS, exit 0, 1 test passed, 92 s including build/postflight.** All75/all77/source/peer/cache guards passed. Snapshot commit `d136172098a0931cf51efe340554f7db0f7758ef` has the final tree above. The real fresh browser completes rename as the first edit, emits the original exact head pair/track guards, preserves opaque config, reloads and performs guarded UI undo, with no legacy writer traffic.
 
-Because the readiness seam also initializes native moves and regular labels, those two neighbor lanes are required if cold passes. Results will be appended here. Release selection remains with source review/manager; no broader release qualification is claimed.
+Because the readiness seam also initializes native moves and regular labels, both neighbor lanes are required on the same tree.
+
+```bash
+$ORCH/bin/request-test app-m3-cold-label-initial-basis-fix e2e-cold-label-initial-basis-74130f68-labels
+$ORCH/bin/wait-test app-m3-cold-label-initial-basis-fix-e2e-cold-label-initial-basis-74130f68-labels-1020145454-15009
+```
+
+Regular labels: **PASS, exit 0, 3 tests passed, 115 s including build/postflight.** Actual browser command is `npm exec -- playwright test --config playwright.track-label.config.ts --grep-invert 'M2 cold-open'`. Same tree, snapshot commit `08f7a39c271af915b0a06182fac953266752d7b9`. All75/all77/source/peer/cache guards passed.
+
+```bash
+$ORCH/bin/request-test app-m3-cold-label-initial-basis-fix e2e-cold-label-initial-basis-74130f68-native
+$ORCH/bin/wait-test app-m3-cold-label-initial-basis-fix-e2e-cold-label-initial-basis-74130f68-native-1020145454-10038
+```
+
+Native: **PASS, exit 0, 3 tests passed, 294 s including serialized browser-lock wait/build/postflight.** Actual browser command is `npm run test:e2e:three-products -- --grep 'M1 real'` (three unchanged journeys). Snapshot commit `e23693a710ae552a9e7356cdba54c2f438b95642` has the same final tree. All75/all77/source/peer/cache guards passed.
+
+Release selection remains with source review/manager; no broader release qualification is claimed.
+
+
+## Handoff and limits
+
+**KEEP.** No blockers or plan deviations. The fix belongs at initialization/readiness because the strict capture guard correctly detected a real publication-null display. No head is inferred and no captured identity/guard is refreshed.
+
+Recommended next step: manager/source review followed by the imminent root gate using tree `74130f681f6b0c87a7c61cb33d4ae6a092c03046` (or its byte-identical harness commit). No full suite, project tsc, frame/PCM qualification or broader release approval is claimed. The two serial fixture fixes and all browser assertions remain byte-identical to the supplied base. Runner notes and browser artifacts remain under this worker for reuse. Private local dependency/cache output was removed and the worktree's original shared node_modules symlink restored without writing through it.
