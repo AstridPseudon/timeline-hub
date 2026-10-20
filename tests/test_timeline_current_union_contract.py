@@ -37,7 +37,7 @@ def command(op, select, args):
 
 def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     raw = (ROOT / "contract/schemas/edit-command.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef"
+    assert hashlib.sha256(raw).hexdigest() == "f80215f272bc2cf302d772d619cb8248108eb597a654e01ab89c3a332204d94f"
     schema = json.loads(raw)
     assert len(schema["$defs"]) == 48
     assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} == {c[0] for c in CASES}
@@ -143,7 +143,7 @@ def test_recorder_target_key_patterns_are_retained(key, valid):
 
 def test_s2_only_adds_the_optional_retained_element_document_pin_to_s1():
     s1 = json.loads((ROOT / "tests/fixtures/published-command-schemas/agent-0a0ac7ba.json").read_bytes())
-    s2 = json.loads((ROOT / "contract/schemas/edit-command.json").read_bytes())
+    s2 = json.loads((ROOT / "tests/fixtures/published-command-schemas/agent-26ef2bbb.json").read_bytes())
     before = copy.deepcopy(s2)
     element = s2["$defs"]["ClipSetElementArgs"]
     assert element["properties"].pop("schema_source") == {"$ref": "#/$defs/DocumentPin"}

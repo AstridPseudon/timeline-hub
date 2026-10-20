@@ -109,10 +109,6 @@ def test_legacy_identity_maps_still_preview_without_writes(realm, boundary, mapp
     assert snapshot(service) == before
 
 
-# M2 source-bound materialization requires the exact manager-ACKed paired
-# Agent capture/parser/compiler + normally generated Runtime item-ref artifact.
-@pytest.mark.xfail(strict=True, raises=(ValidationError, CommitRejected),
-                   reason="M2 native positive requires reviewed Agent and normally generated matching item-ref artifact")
 @pytest.mark.parametrize("boundary", ["port", "store"])
 def test_complete_captured_join_previews_original_map_without_writes(realm, boundary):
     pair = seal(joined(realm), preview=True)

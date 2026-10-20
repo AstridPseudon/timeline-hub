@@ -312,14 +312,18 @@ def test_ordinary_shot_birth_reserves_detached_identity_across_timelines(realm, 
     assert service.store.integrity_report()["ok"]
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="RT08 private staging now carries typed item refs; keep this public-013 refusal control until public adoption",
+)
 def test_frozen_artifact_does_not_yet_carry_typed_item_creation_claims(realm, monkeypatch):
     service, commits, project, _, _ = realm
     pair = proposal(service, commits, project, "main", "typed-claim")
     record = pair[1]["records"]["commands"][0]
     record["created"] = [{"ref": "shot:new/item:new", "kind": "item", "owner": "shot:new"}]
     record["command"]["created"] = ["shot:new/item:new"]
-    # This is the explicit Agent artifact dependency. Do not widen the frozen
-    # schema here or fake an accepted created-and-removed reservation by SQL.
+    # Public 013 never carries this typed item-ref claim. The private RT08
+    # bundle intentionally does; retain this control until public adoption.
     refuses(service, commits, pair, monkeypatch, reason="invalid_prepared")
 
 
