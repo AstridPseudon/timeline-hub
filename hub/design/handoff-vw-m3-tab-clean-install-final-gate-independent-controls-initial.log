@@ -1,0 +1,56 @@
+node:internal/child_process:1123
+    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);
+                   ^
+
+<ref *1> Error: spawnSync git EPERM
+    at Object.spawnSync (node:internal/child_process:1123:20)
+    at spawnSync (node:child_process:877:24)
+    at execFileSync (node:child_process:920:15)
+    at file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-final-gate/independent-controls.mjs:11:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'spawnSync git',
+  path: 'git',
+  spawnargs: [
+    'show',
+    '0ea988bdd2907c876b82fd2620820e3fb6d6ea84:vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz'
+  ],
+  error: [Circular *1],
+  status: 0,
+  signal: null,
+  output: [
+    null,
+    Buffer(58444) [Uint8Array] [
+       31, 139,   8,   0,   0,   0,   0,   0,   2, 255, 236, 189,
+      121, 123,  27,  55, 146,  56,  60, 127, 251,  83,  32, 189,
+      158, 152, 180,  73, 138,  58, 236, 241, 208,  86, 244, 115,
+      100, 121, 162,  29,  95, 143,  44,  39,  59, 171, 104, 237,
+       22,   9,  74,  29,  55, 187, 153, 238, 166, 142, 145, 245,
+      221, 223, 167,  14,   0,   5, 116,  55,  37, 101,  60, 222,
+      153, 125, 227, 221, 137, 216,  56,  11, 133,   2,  80,  40,
+      212,  49, 143, 199, 159, 226,  99, 189,  50,  73, 202, 106,
+       37, 206, 146,  89,
+      ... 58344 more items
+    ],
+    Buffer(0) [Uint8Array] []
+  ],
+  pid: 50,
+  stdout: Buffer(58444) [Uint8Array] [
+     31, 139,   8,   0,   0,   0,   0,   0,   2, 255, 236, 189,
+    121, 123,  27,  55, 146,  56,  60, 127, 251,  83,  32, 189,
+    158, 152, 180,  73, 138,  58, 236, 241, 208,  86, 244, 115,
+    100, 121, 162,  29,  95, 143,  44,  39,  59, 171, 104, 237,
+     22,   9,  74,  29,  55, 187, 153, 238, 166, 142, 145, 245,
+    221, 223, 167,  14,   0,   5, 116,  55,  37, 101,  60, 222,
+    153, 125, 227, 221, 137, 216,  56,  11, 133,   2,  80,  40,
+    212,  49, 143, 199, 159, 226,  99, 189,  50,  73, 202, 106,
+     37, 206, 146,  89,
+    ... 58344 more items
+  ],
+  stderr: Buffer(0) [Uint8Array] []
+}
+
+Node.js v20.19.4

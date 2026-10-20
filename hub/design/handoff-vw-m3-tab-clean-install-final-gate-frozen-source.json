@@ -1,0 +1,30 @@
+{
+  "sourceSha": "a7b8a8137ec06d7f767cece75a1a4577fb5c7b68",
+  "sourceTree": "df8dacedcf74fab8118ac70f0457eea78e32b687",
+  "baseSha": "0ea988bdd2907c876b82fd2620820e3fb6d6ea84",
+  "changes": [
+    "A\ttests/e2e/timeline/setup-tab-audio-capture.sh",
+    "A\ttests/e2e/timeline/tab-audio-capture.analysis.mjs",
+    "A\ttests/e2e/timeline/tab-audio-capture.analysis.test.mjs",
+    "A\ttests/e2e/timeline/tab-audio-capture.config.ts",
+    "A\ttests/e2e/timeline/tab-audio-capture.controller.mjs",
+    "A\ttests/e2e/timeline/tab-audio-capture.controller.test.mjs",
+    "A\ttests/e2e/timeline/tab-audio-capture.environment.test.mjs",
+    "A\ttests/e2e/timeline/tab-audio-capture.probe.ts"
+  ],
+  "files": {
+    "tests/e2e/timeline/setup-tab-audio-capture.sh": "dfa87db3b28ce947cfb4a1c518d9153241d3adb22990868ae0d1bcf9e31207b9",
+    "tests/e2e/timeline/tab-audio-capture.analysis.mjs": "152a1a18bc4d08355e021a581f49f91a42ad3a03a1fff23ee014ca7b848c8173",
+    "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs": "c2952408d21f707e753499cab9669e8bf9e18fe7b6530a5bc53a27fd493e06d7",
+    "tests/e2e/timeline/tab-audio-capture.config.ts": "1b28c12092e9e40c02c1959b89b80cc55d06ec2a7e1a9f60f6abe18ab33b5ee0",
+    "tests/e2e/timeline/tab-audio-capture.controller.mjs": "50bbcd0aff447a97f3e21feeddbd783d07c4f6bf7e4a104656cf75f99901dd3b",
+    "tests/e2e/timeline/tab-audio-capture.controller.test.mjs": "3a576930736b41b47f3696f9e9cfb9853fd93deee654157368c413e80e142c9d",
+    "tests/e2e/timeline/tab-audio-capture.environment.test.mjs": "a69f128fb1ae7dccba5916ebc8afa5c0860c67595d5693da5082284f2395d9c4",
+    "tests/e2e/timeline/tab-audio-capture.probe.ts": "51de3cb5b6f024171f5079c6f11b42f92c2b1f22e648052f879c5f5c1bffec8d"
+  },
+  "fullTrackedHash": "14f1c4d334a4b8dc4cd529637973771abdeaafcdc2aa54c6f8ecc117b4ab51fa",
+  "inputHash": "730bb8d9d9e16bce8c025ae5db90518353ddaa13cc7cc58ba3b0ecbfc75815d1",
+  "trackedFileCount": 5835,
+  "flatSourcesMatchCommit": true,
+  "emptyGrantTemplateBytes": 0
+}

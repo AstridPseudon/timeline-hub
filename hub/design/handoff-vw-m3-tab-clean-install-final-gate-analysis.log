@@ -1,0 +1,45 @@
+TAP version 13
+# Subtest: capability check requires one live video and one live tab-audio track
+ok 1 - capability check requires one live video and one live tab-audio track
+  ---
+  duration_ms: 2.194851
+  ...
+# Subtest: visual event check requires both exact marker colors in decoded frames
+ok 2 - visual event check requires both exact marker colors in decoded frames
+  ---
+  duration_ms: 0.645324
+  ...
+# Subtest: decoded marker data is diagnostic and makes no phase claim
+ok 3 - decoded marker data is diagnostic and makes no phase claim
+  ---
+  duration_ms: 0.315784
+  ...
+# Subtest: raw PTS checks retain native per-stream timestamps without alignment
+ok 4 - raw PTS checks retain native per-stream timestamps without alignment
+  ---
+  duration_ms: 0.666913
+  ...
+# Subtest: tone check observes decoded channels without resampling or level normalization
+ok 5 - tone check observes decoded channels without resampling or level normalization
+  ---
+  duration_ms: 25.271005
+  ...
+# Subtest: full-tab source controls distinguish the independent oscillator and HTMLAudio tones
+ok 6 - full-tab source controls distinguish the independent oscillator and HTMLAudio tones
+  ---
+  duration_ms: 29.460142
+  ...
+# Subtest: synthetic HTMLAudio source is a finite native 48 kHz stereo PCM WAV
+ok 7 - synthetic HTMLAudio source is a finite native 48 kHz stereo PCM WAV
+  ---
+  duration_ms: 15.507699
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 83.355104

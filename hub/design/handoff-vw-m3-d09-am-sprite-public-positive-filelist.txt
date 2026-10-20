@@ -1,0 +1,2 @@
+/home/user/work/wt/vw-m3-d09-am-sprite-public-positive/astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx
+/home/user/work/wt/vw-m3-d09-am-sprite-public-positive/tests/packs/rendering/test_sprite_scene_capability.py

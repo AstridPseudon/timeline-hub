@@ -1,0 +1,28 @@
+PASS independent actual 77-member tar reconstruction; changed-file and added-file controls reject
+PASS private resolution react /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/react/package.json
+PASS private resolution react-dom /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/react-dom/package.json
+PASS private resolution remotion /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/remotion/package.json
+PASS private resolution @remotion/media /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/@remotion/media/package.json
+PASS private resolution @remotion/player /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/@remotion/player/package.json
+PASS private resolution @remotion/layout-utils /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/@remotion/layout-utils/package.json
+PASS private resolution @banodoco/timeline-composition /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/@banodoco/timeline-composition/package.json
+PASS private resolution @playwright/test /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/@playwright/test/package.json
+PASS private resolution playwright /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/playwright/package.json
+PASS private resolution playwright-core /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/playwright-core/package.json
+PASS private resolution @remotion/web-renderer /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/@remotion/web-renderer/package.json
+node:internal/modules/esm/resolve:322
+  return new ERR_PACKAGE_PATH_NOT_EXPORTED(
+         ^
+
+Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No "exports" main defined in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-final-gate/source/node_modules/@remotion/media/package.json
+    at exportsNotFound (node:internal/modules/esm/resolve:322:10)
+    at packageExportsResolve (node:internal/modules/esm/resolve:613:13)
+    at resolveExports (node:internal/modules/cjs/loader:636:36)
+    at Module._findPath (node:internal/modules/cjs/loader:716:31)
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1198:27)
+    at Function.resolve (node:internal/modules/helpers:193:19)
+    at file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-final-gate/independent-controls.mjs:32:178 {
+  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'
+}
+
+Node.js v20.19.4

@@ -1,0 +1,52 @@
+
+ RUN  v4.1.5 /home/user/work/wt/vw-m3-app-continuous-pcm-consumer
+
+ ❯ src/tools/video-editor/compositions/AudioTrack.test.tsx (0 test)
+ ❯ src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/tools/video-editor/compositions/AudioTrack.test.tsx [ src/tools/video-editor/compositions/AudioTrack.test.tsx ]
+Error: Failed to resolve import "@banodoco/timeline-composition/evaluation" from "src/tools/video-editor/compositions/AudioTrack.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/user/work/wt/vw-m3-app-continuous-pcm-consumer/src/tools/video-editor/compositions/AudioTrack.test.tsx:5:0
+  53 |  const __vi_import_0__ = await import("react");
+  54 |  const __vi_import_1__ = await import("@testing-library/react");
+  55 |  const __vi_import_2__ = await import("@banodoco/timeline-composition/evaluation");
+     |                                       ^
+  56 |  const __vi_import_3__ = await import("@/tools/video-editor/compositions/AudioTrack");
+  57 |  const __vi_import_4__ = await import("@/tools/video-editor/compositions/PreviewMediaFailureContext");
+ ❯ TransformPluginContext._formatLog ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
+ ❯ TransformPluginContext.error ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
+ ❯ normalizeUrl ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
+ ❯ TransformPluginContext.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
+ ❯ EnvironmentPluginContainer.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
+ ❯ loadAndTransform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx [ src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx ]
+Error: Failed to resolve import "@astrid/editor-sdk" from "src/tools/video-editor/runtime/composition/shaderValidation.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/user/work/wt/vw-m3-app-continuous-pcm-consumer/src/tools/video-editor/runtime/composition/shaderValidation.ts:7:7
+  1  |  import { contributionRefKey } from "@astrid/editor-sdk";
+     |                                      ^
+  2  |  const GRAPH_VISIBLE_REFERENCE_STATES = new Set(["resolved", "missing"]);
+  3  |  export function sameCompositionShaderIdentity(left, right) {
+ ❯ TransformPluginContext._formatLog ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
+ ❯ TransformPluginContext.error ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
+ ❯ normalizeUrl ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
+ ❯ TransformPluginContext.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
+ ❯ EnvironmentPluginContainer.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
+ ❯ loadAndTransform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  12:25:46
+   Duration  1.29s (transform 319ms, setup 362ms, import 0ms, tests 0ms, environment 987ms)
+

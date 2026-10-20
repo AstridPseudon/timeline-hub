@@ -1,0 +1,4 @@
+STATIC CANDIDATE READY, not granted. Final report: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-clean-install-source-compose-REPORT.md
+Exact patch: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-clean-install-source-compose-exact.patch
+Manager commands: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-clean-install-source-compose-COMMAND.md
+Fresh physical READY graph unchanged before/after all checks. 19 Node tests + 20 Vitest tests, strict TypeScript, no-cache ESLint, actual one-test Playwright list PASS. No browser, central request, permission or parity claim. Final harness SHA must be frozen/rechecked before a new grant.

@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: grant requires final SHA to match the actual committed source, not only an environment value
+ok 1 - grant requires final SHA to match the actual committed source, not only an environment value
+  ---
+  duration_ms: 1.301352
+  ...
+# Subtest: grant rejects changed full source, selected input, browser, or package identity
+ok 2 - grant rejects changed full source, selected input, browser, or package identity
+  ---
+  duration_ms: 0.371025
+  ...
+# Subtest: postflight rejects a dependency graph change
+ok 3 - postflight rejects a dependency graph change
+  ---
+  duration_ms: 1.253645
+  ...
+# Subtest: hashTree uses canonical whole-tuple framing for physical fixtures
+ok 4 - hashTree uses canonical whole-tuple framing for physical fixtures
+  ---
+  duration_ms: 6.749638
+  ...
+# Subtest: whole private graph and real discovery are mandatory grant bindings
+ok 5 - whole private graph and real discovery are mandatory grant bindings
+  ---
+  duration_ms: 0.226796
+  ...
+# Subtest: physical graph accepts internal file links and rejects shared leaves, cycles and external hardlinks
+ok 6 - physical graph accepts internal file links and rejects shared leaves, cycles and external hardlinks
+  ---
+  duration_ms: 1.954799
+  ...
+# Subtest: postflight rejects whole private graph or discovery identity changes
+ok 7 - postflight rejects whole private graph or discovery identity changes
+  ---
+  duration_ms: 0.220805
+  ...
+# Subtest: discovery state stays in this worker folder and rejects an external output
+not ok 8 - discovery state stays in this worker folder and rejects an external output
+  ---
+  duration_ms: 0.375951
+  location: '/home/user/work/wt/vw-m3-tab-clean-install-source-compose/tests/e2e/timeline/tab-audio-capture.controller.test.mjs:168:1'
+  failureType: 'testCodeFailure'
+  error: 'Reviewer write boundary: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose/tmp'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    allowed (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-final-gate/write-guard.mjs:11:55)
+    object.<computed> (file:///tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-final-gate/write-guard.mjs:20:3)
+    isolatedEnvironment (file:///home/user/work/wt/vw-m3-tab-clean-install-source-compose/tests/e2e/timeline/tab-audio-capture.controller.mjs:121:5)
+    TestContext.<anonymous> (file:///home/user/work/wt/vw-m3-tab-clean-install-source-compose/tests/e2e/timeline/tab-audio-capture.controller.test.mjs:172:22)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: hashTree sorts complete relative paths before hashing directory-prefix siblings
+ok 9 - hashTree sorts complete relative paths before hashing directory-prefix siblings
+  ---
+  duration_ms: 1.083968
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 8
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 23.229697

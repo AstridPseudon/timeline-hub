@@ -1,0 +1,54 @@
+
+ RUN  v4.1.5 /home/user/work/wt/vw-m3-app-continuous-pcm-consumer
+
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx (0 test)
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/compiledAudioSourceClock.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/compiledAudioSourceClock.test.ts [ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/compiledAudioSourceClock.test.ts ]
+Error: Failed to resolve import "@banodoco/timeline-composition/evaluation" from "../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/compiledAudioSourceClock.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/compiledAudioSourceClock.test.ts:10:7
+  1  |  import { Buffer } from "node:buffer";
+  2  |  import { describe, expect, it } from "vitest";
+  3  |  ...nvelope, computeMediaTrim, getSanitizedPlaybackRate } from "@banodoco/timeline-composition/evaluation";
+     |                                                                 ^
+  4  |  import { compiledAudioSourceClock } from "./compiledAudioSourceClock";
+  5  |  const cases = [
+ ❯ TransformPluginContext._formatLog ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
+ ❯ TransformPluginContext.error ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
+ ❯ normalizeUrl ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
+ ❯ TransformPluginContext.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
+ ❯ EnvironmentPluginContainer.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
+ ❯ loadAndTransform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx [ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx ]
+Error: Failed to resolve import "@banodoco/timeline-composition/evaluation" from "../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-continuous-pcm-consumer/continuousPCM.contract.test.tsx:5:0
+  32 |  const __vi_import_0__ = await import("react");
+  33 |  const __vi_import_1__ = await import("@testing-library/react");
+  34 |  const __vi_import_2__ = await import("@banodoco/timeline-composition/evaluation");
+     |                                       ^
+  35 |  const __vi_import_3__ = await import("@/tools/video-editor/compositions/AudioTrack");
+  36 |  const __vi_import_4__ = await import("@/tools/video-editor/compositions/playerEvaluation");
+ ❯ TransformPluginContext._formatLog ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30375:39
+ ❯ TransformPluginContext.error ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30372:14
+ ❯ normalizeUrl ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27654:18
+ ❯ ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27717:30
+ ❯ TransformPluginContext.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:27685:4
+ ❯ EnvironmentPluginContainer.transform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:30164:14
+ ❯ loadAndTransform ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules/vitest/node_modules/vite/dist/node/chunks/node.js:24512:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  12:26:36
+   Duration  1.11s (transform 47ms, setup 415ms, import 0ms, tests 0ms, environment 1.18s)
+
