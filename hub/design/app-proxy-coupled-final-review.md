@@ -1,0 +1,57 @@
+# Final inactive proxy composition review
+
+**HOLD** `tl/app-m2-proxy-browser-server-coupled-stage` at **`79c2ad29a1ce04756a3887201209812c1c99ad96`**, tree **`7e1ba6f2c485705bec39b51074b9a2f510fc63cf`**. One explicitly requested permanent regression is incomplete: browser-facing credential/operation-handle response headers are not challenged and asserted absent. No new product defect or reproduced leak was found. Activation remains HOLD independently of this test gap.
+
+Read PLAN first, the Runtime agreement, both independent reviews, final repair/coupled reports and App INBOX 10:51. This review does not change a settled decision. No product edits or new suite requests.
+
+## Required finding
+
+**R1 — owner-required response regression missing.** In candidate `scripts/runtime-discovery-proxy-operation.test.mjs:506–537`, the actual Vite/proxy upstream fixture sends nominated `X-Reply-Leak`/`ETag` and `Set-Cookie` (`:513–515`); the browser-facing assertions reject those and CORS (`:535`). Request-side assertions correctly reject the local handle, Cookie and Proxy-Authorization and require the pinned Runtime bearer (`:533–534`). The expanded actual-hop test (`:539–617`) additionally verifies that request Authorization is absent on the Vite→proxy hop and equals the pinned bearer only at Runtime (`:570–577`).
+
+However, neither that fixture nor the new coupled fixture injects response **Authorization, Proxy-Authorization or X-Astrid-Operation-Handle**, and neither asserts their absence at the browser-facing response. Coupled fixture `scripts/runtime-operation-host-integration.test.mjs:88–90,179–184` challenges only Set-Cookie on its object response. Browser unit `operationHost.test.ts:90` checks outbound Authorization absence, not a hostile upstream response. Thus the 10:51 instruction to add the credential/handle negative regression in both directions is only partially fulfilled. This is a test-coverage finding, not evidence of a current credential leak: production `scripts/runtime-discovery-proxy.mjs:210–222,298` strips the handle/Authorization and returns only an eight-header response allowlist plus no-store; the other credential headers are outside that allowlist.
+
+**Smallest follow-up:** extend the existing permanent actual-Vite test with synthetic upstream Authorization, Proxy-Authorization, Cookie and operation-handle response headers and assert their absence at the browser-facing response, retaining the existing Set-Cookie, nomination, CORS, payload and request-side assertions. Keep the positive upstream assertion that Authorization is exactly the pinned Runtime bearer. Centrally run only that meaningful new socket target on the amended tree, then re-review R1. No product repair or duplicate 363-case run is requested. This HOLD is based on the owner's explicit test instruction, not a new protocol requirement.
+
+## Source findings
+
+All line references are against the pinned candidate.
+
+| Area | Assessment |
+| --- | --- |
+| Literal Vite repair | `config/vite/runtimeProxy.ts:10–23,74–88` collects every raw Connection occurrence, trims/lowercases nominations and strips normalized/raw pairs **before** http-proxy copies them or replaces Connection. It does not depend on proxyReq, which Expect bypasses. Original admission and post-strip admission both run. A nominated private handle refuses with 400, including control/replacement and ordinary alternative paths; it cannot become a fresh acquisition/fallback. |
+| Permanent original leak regression | `scripts/runtime-discovery-proxy-operation.test.mjs:506–537` retains x-first/x-second negative assertions through actual Vite. `:539–617` covers repeated raw mixed-case lines, multiple tokens, Expect, nominated key, both observed request hops, exact body/path/method/Range and invalid original Origin/metadata. A stripped Origin cannot repair originally forbidden admission. Origin-less safe reads still require surviving same-origin metadata. |
+| Pinned dispatch and retirement | `scripts/runtime-discovery-proxy.mjs:159–207,255–321,334–385,447–450` retains one frozen endpoint/bearer/Node-dispatch snapshot, retires before replacement selection/body await, fences before actual Node request and at response/chunk/drain/end, and retires controls/streams on shutdown. Missing/unknown handles return 410 within the operation branch. Ordinary rediscovery is separate at `:402`. Existing socket tests cover expiry, partial upload, late ACKs, streaming, failed replacement and proxy restart; independent repaired-server evidence covers stopped-reader backpressure and incomplete acquisition. |
+| Browser authority | `src/integrations/runtime/operationHost.ts:104–168,182–195` copies launch/acquire identity and validates authenticated response bytes synchronously before generated handshake exposure or another await. Used field types, exact scope membership/count, capability, actor/realm/instance, accepted schema and health/handshake agreement remain enforced. Authority uses private scalar copies, not mutable handshakeInfo. |
+| Old/new callbacks and saved descriptor | `operationHost.ts:65–103,169–205,207–254` closes every operation over its original binding/client/handle, retires the predecessor synchronously, fences fetch/body/result completion and never obtains a replacement client from host.current. `:226–244` copies saved scope/request before its first await and sends original UTF-8 body/key. Normal tests `operationHost.test.ts:95–161,181–223,295–320` and the unchanged independent probes exercise callback/alias/descriptor mutation and propagation intervals. These mutation permutations are in-process evidence; the socket fixture separately covers rotation, late ACK, disposal and equal-identity replacement, not every permutation. |
+| Shared normal decoder | `dataProvider.ts:734–753,1547–1572` extracts the ordinary accepted/rebased, project/kind/receipt, digest, canonical closure and identity-map checks; provider retains cache/registry and late-ACK guards. `operationHost.ts:230–249` checks original actor/realm/project/timeline/path/body and uses that same decoder. Coupled `:186–197,208–213` checks receipt identity, closure and original bytes/key. Synthetic fixture receipts are not Runtime acceptance. |
+| Actual chain | Coupled fixture `scripts/runtime-operation-host-integration.test.mjs:112–154` loads the actual host/client/generated/decoder modules with Vite SSR, reads the real launch-config route and uses immediate Node fetch → real Vite admission/options → real discovery proxy → synthetic HTTP upstream. It does not mock transmit or replace the host with a toy client. `:162–343` verifies transport behavior and decoded fixture results. It deliberately uses private config aliases rather than full App startup and supplies browser-like Origin/Fetch Metadata; it is not Chrome qualification. |
+
+## Exact composition and preserved behavior
+
+Independent byte checks passed: six server paths equal final **`66fc28fafabcc074c688e7a7b50b296df41fc70f`** (not the defective a81 candidate), and three browser paths equal **`be27b45066947e920cda8da67991976b432ccb33`**. The only additional file is the 343-line coupled test. Exactly ten paths differ from current base **`7bb885b638838588a0dff81b64b7c34960ac07f3`**; every other repository path is identical. Current origin/main is an ancestor. Package/lock/runtime pins, generated/client metadata, root/provider wiring, UI, requester/outbox, media CORS and ordinary cache helper are preserved. Ordinary Vite proxy options are preserved and no global CORS policy changes; only operation responses remove Vite's CORS allowance.
+
+All original 16 server cases/helpers remain unchanged after removing the three new test blocks and their added blank separator. The browser test and decoder files are byte-equal to the independently reviewed browser input; all 25 independent probes differ only by import redirection, including the three explicitly historical requester-interface probes. Relative to that browser input, other differences are only the server/coupled test and current CORS pair. No new generated pin, duplicate outbox, activation caller or retired writer was introduced. Main chat/New/Make Main and neighboring tests remain unchanged and are covered by the cited central lane.
+
+## Verification and limits
+
+Executed from the assigned review worktree:
+
+```sh
+python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m2-proxy-coupled-final-review/source-audit.py
+git diff --check 7bb885b638838588a0dff81b64b7c34960ac07f3 79c2ad29a1ce04756a3887201209812c1c99ad96
+git status --porcelain=v1 --untracked-files=all
+```
+
+All **exit 0**; source audit passed eight checks, whitespace clean, assigned product worktree empty. An earlier ad hoc original-test byte comparison flagged the extra blank separator; the final audit explicitly verifies that sole separator plus unchanged original bytes. No product failure was found by that diagnostic.
+
+Inspected prior evidence; **not rerun**. Here `ORCH` is the shared orchestration directory and `W=$ORCH/workers/app-m2-proxy-browser-server-coupled-stage`:
+
+| Evidence | Exact command / result |
+| --- | --- |
+| Exact-tree central lane | `$ORCH/bin/request-test app-m2-proxy-browser-server-coupled-stage proxy-browser-host-coupled-integration` then `$ORCH/bin/wait-test app-m2-proxy-browser-server-coupled-stage-proxy-browser-host-coupled-integration-1020105558-7656 0`: **exit 0; 363 pass** = 90 Node + 12 chat + 261 Vitest. Summary/snap identify the candidate tree above. [Summary](../tests/app-m2-proxy-browser-server-coupled-stage-proxy-browser-host-coupled-integration-1020105558-7656/summary), [log](../tests/app-m2-proxy-browser-server-coupled-stage-proxy-browser-host-coupled-integration-1020105558-7656/log.txt). |
+| Independent browser probes on composed files | `node --require $ORCH/managers/app/notes/snapshot-vitest-runner.cjs node_modules/vitest/vitest.mjs run --config $W/notes/review.config.ts --configLoader=runner --no-cache --maxWorkers=1`: **exit 0, 25 pass**, including 80 propagation intervals. [Log](../workers/app-m2-proxy-browser-server-coupled-stage/notes/independent.log). |
+| Pure server checks | `node --test --experimental-test-isolation=none --test-name-pattern='^pure:' scripts/runtime-discovery-proxy-operation.test.mjs`: **exit 0, 7 pass**, zero failed/skipped/cancelled. [Log](../workers/app-m2-proxy-browser-server-coupled-stage/notes/pure.log). |
+
+No duplicate central run or pure-suite replay was needed for this read-only review. No full/build/browser/tsc/install/local socket/external network run; no shared dependency/cache/venv write, branch/ref change, product edit or worktree artifact. No KEEP. Review task is complete, not blocked; R1 is a follow-up for the implementation owner.
+
+**Activation gates still missing after R1:** freeze and qualify the supported current Runtime tuple; real Runtime command acceptance and original receipt replay under exact retry/lost ACK/restart (and required undo journey); same-store requester/claim/outbox mutation and native-capture composition; actual browser behavior on the supported same-origin chain. Proxy-map restart rejection is not persisted-outbox/restarted-Runtime recovery. Remote silent expiry/revocation remains unobservable locally until a response, and retirement cannot undo already handed-off acceptance. Hosted/paired/absolute-door automatic requesting remains outside this agreement. Neither fixtures nor the 363-case transport pass close those gates.
