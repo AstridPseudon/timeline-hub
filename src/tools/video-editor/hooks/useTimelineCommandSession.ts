@@ -187,6 +187,15 @@ export function useTimelineCommandSession(options: {
           finish(basis) { requireCleanGenericPatch(); return genericPatchPort.finish(basis); },
           submit(input) { requireCleanGenericPatch(); genericPatchPort.submit(input); },
         };
+        const occurrenceDuplicatePort = session.occurrenceDuplicatePort;
+        const requireCleanDuplicate = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before duplicating a shot');
+        };
+        session.occurrenceDuplicatePort = {
+          capture(input) { requireCleanDuplicate(); return occurrenceDuplicatePort.capture(input); },
+          finish(basis) { requireCleanDuplicate(); return occurrenceDuplicatePort.finish(basis); },
+          submit(input) { requireCleanDuplicate(); occurrenceDuplicatePort.submit(input); },
+        };
         const labelPort = session.trackLabelPort;
         const requireCleanLabelEdit = () => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
@@ -281,6 +290,7 @@ export function useTimelineCommandSession(options: {
     elementPort: sessionRef.current?.elementPort,
     trackLabelPort: sessionRef.current?.trackLabelPort,
     clipScalarPort: sessionRef.current?.clipScalarPort,
+    occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>

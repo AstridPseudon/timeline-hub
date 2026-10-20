@@ -10,9 +10,11 @@ import type { CanonicalProjectedClipIdentity } from '../data/shotCompositionProj
 import { authoringBundleFromDocument, type AuthoringBundle } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
-import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
+import { AuthoredState, assertFiniteJson, copy, equal, freezeJson } from './clipMovePrimitives.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+import { captureOccurrenceDuplicate, executeOccurrenceDuplicate, finishOccurrenceDuplicate } from './occurrenceDuplicateCapture.ts';
+import type { OccurrenceDuplicateCapturePort } from './occurrenceDuplicateGesture.ts';
 import {
   captureElementBasis,
   finishElementEdit,
@@ -335,6 +337,40 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const occurrenceDuplicatePort: OccurrenceDuplicateCapturePort = {
+    capture({ ownerRef, args, current }) {
+      assertReady();
+      if (bundle.project_id !== options.scope.projectId || bundle.timeline_id !== options.scope.timelineId
+        || current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      return freezeJson(json({ ...captureOccurrenceDuplicate(bundle, ownerRef, args), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<OccurrenceDuplicateCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the duplicate');
+      const original = finishOccurrenceDuplicate(basis);
+      const result = executeOccurrenceDuplicate(bundle, original.command);
+      freezeJson(result.command);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview: null,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command };
+    },
+    submit({ command }) {
+      assertReady();
+      assertFiniteJson(command);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'occurrence.duplicate' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Duplicate was not captured by this session or the timeline changed');
+      }
+      prepared.delete(key);
+      enqueue(entry.payload, null, entry.basis);
+    },
+  };
   const elementPort: ElementCapturePort = {
     capture({ clipId, current, edit }) {
       assertReady();
@@ -621,6 +657,7 @@ export async function createTimelineCommandSession(options: Options) {
     elementPort,
     genericPatchPort,
     trackLabelPort,
+    occurrenceDuplicatePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
