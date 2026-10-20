@@ -210,6 +210,27 @@ describe('public compiled media adapter conformance (no decoded AV claim)', () =
     }
   });
 
+  it.each([
+    { entrypoint: 'public', lane: 'preparation requirement' },
+    { entrypoint: 'App', lane: 'control' },
+  ])('$lane: $entrypoint accepts authored params fades without test-injected render_source', ({ entrypoint }) => {
+    const fps = 30;
+    const clip = { ...media('sound', 'A1', 30, fps), params: { fadeIn: 0.4, fadeOut: 0.4 } };
+    const config: ResolvedTimelineConfig = {
+      output: { fps, resolution: '1920x1080', file: 'audio.mp4' }, registry: {},
+      tracks: [visual, audio], clips: [media('picture', 'V1', 30, fps), clip],
+    };
+    // The prepared-source positive above fabricates attempt PCM metadata. This
+    // requirement deliberately stays red at the public export boundary until
+    // the normal render owner supplies it; no refusal is accepted as success.
+    const content = entrypoints(config).find(([name]) => name === entrypoint)![1];
+    const endpoint = renderFrame(content, 36, fps).querySelector('[data-kind="audio"]');
+    expect(endpoint).not.toBeNull();
+    expect(endpoint).toHaveAttribute('data-trim-before', '90');
+    expect(endpoint).toHaveAttribute('data-trim-after', '330');
+    expect(endpoint).toHaveAttribute('data-rate', '2');
+  });
+
   for (const entrypoint of ['public', 'App']) {
     it.each([24, 30, 24000 / 1001])(`${entrypoint} keeps video fades separate from native audio gain and mute at fps %s`, fps => {
       for (const gain of [0.5, 2]) {
