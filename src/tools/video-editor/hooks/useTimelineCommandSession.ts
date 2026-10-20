@@ -259,7 +259,10 @@ export function useTimelineCommandSession(options: {
           submitBatch(input) { requireCleanScalarEdit(); scalarPort.submitBatch!(input); },
         };
         sessionRef.current = session;
-        setState({ ...session.getState() });
+        // The initial session state may already own an accepted publication
+        // after a reload. Keep the history ownership side effects in sync with
+        // the state exposed to the toolbar.
+        changed(session.getState());
       }
     })().catch((error) => {
       disposeSession();

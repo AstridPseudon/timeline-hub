@@ -119,6 +119,39 @@ describe('mounted timeline command session', () => {
     expect(saveTimelineAtHead).not.toHaveBeenCalled();
     hook.unmount();
   });
+  it('keeps command history ownership when an accepted publication is present on reload', async () => {
+    const first = await mounted();
+    const current = first.hook.result.current.commit.data!;
+    act(() => {
+      submitTrackLabelEdit(captureTrackLabelEdit(first.hook.result.current.commands.trackLabelPort, current, 'V1'),
+        { values: { label: 'accepted before reload' }, clear: [] });
+    });
+    await act(async () => { await first.hook.result.current.commands.flush(); });
+    first.hook.unmount();
+
+    const accepted = await first.env.provider.loadTimelineCommandBasis('timeline-commit');
+    vi.spyOn(first.env.provider, 'loadTimelineCommandBasis').mockResolvedValue({
+      ...accepted,
+      history: {
+        ...accepted.history,
+        items: [{
+          publication_id: accepted.head.publicationId,
+          revision_id: accepted.head.revisionId,
+          previous: null,
+          receipt: {} as never,
+          intent: 'recorded',
+          records: {} as never,
+          provider_version: null,
+          compiler_version: null,
+          publisher: scope.actorId,
+        }],
+      },
+    });
+    const reopened = await mounted(first.env);
+    expect(reopened.hook.result.current.commands.state).toMatchObject({ status: 'saved', canUndo: true });
+    expect(reopened.hook.result.current.commands.ownsHistoryRef.current).toBe(true);
+    reopened.hook.unmount();
+  });
   it('projects Use latest as a normal accepted read pin only after durable explicit discard', async () => {
     const { env, hook, snapshotWriteBlockedRef, headRevisionRef } = await scoped();
     env.setFault('conflict');
