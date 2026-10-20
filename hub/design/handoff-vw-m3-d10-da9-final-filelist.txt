@@ -1,0 +1,16 @@
+M	astrid/packs/rendering/elements/catalog.ts
+M	astrid/packs/rendering/pack.yaml
+D	astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx
+D	astrid/packs/rendering/rendering/elements/animations/fade/component.tsx
+D	astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx
+D	astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx
+D	astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx
+D	astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx
+D	astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx
+D	astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx
+D	astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx
+M	scripts/gen_effect_registry.py
+M	scripts/gen_element_catalog.py
+M	tests/packs/rendering/test_effect_registry_target.py
+M	tests/packs/rendering/test_remotion_element_generation.py
+M	tests/packs/test_composition_elements.py

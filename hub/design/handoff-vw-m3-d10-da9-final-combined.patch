@@ -1,0 +1,781 @@
+diff --git a/astrid/packs/rendering/elements/catalog.ts b/astrid/packs/rendering/elements/catalog.ts
+index 05f1c33f8..05707e0bf 100644
+--- a/astrid/packs/rendering/elements/catalog.ts
++++ b/astrid/packs/rendering/elements/catalog.ts
+@@ -76,7 +76,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:d5c66e08523f9a52e58fdf0fdbb506665a46f6068e2ebb0984c2a1c54ab3bff3",
++    "revision": "sha256:98ac929d20ef0e6e2cef8c9e6f485525ce76b66eafc0c0e2ba834dbdf0ab7c15",
+     "runtime": {
+       "adapter": "remotion"
+     },
+@@ -124,7 +124,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:b3f945f89233a264766a7b2f9eee45a1de381d07889709109d61c5506c89edca",
++    "revision": "sha256:ff2441e102e98e8bc7aa61faf524b7170f14a6cff57236e0e81858156bc3b5be",
+     "runtime": {
+       "adapter": "remotion"
+     },
+@@ -172,7 +172,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:2833cc7a4d9d7c45cea70bc1e0c8c6a82d224cd7dfeb65ef1058a4250d73f9f5",
++    "revision": "sha256:b53171551804e4579fd8cad219e400b6f24ed69b6585d6a27af17b1eb4c65456",
+     "runtime": {
+       "adapter": "remotion"
+     },
+@@ -220,7 +220,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:7bb58fe6873d000c55ca16e715117dad600edda4a5618c2b16328ac18c9adcf6",
++    "revision": "sha256:86a8b45a6007b8f454aa628675f71f0d0c057affc224583b9e4a23d2aeea7783",
+     "runtime": {
+       "adapter": "remotion"
+     },
+@@ -268,7 +268,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:d3fc405ad86e70968bdfe84f34d8bb413b5360495c3b8d486cad68855fdc6a40",
++    "revision": "sha256:09acf51ae8c9836b240d510c60847405b77cb77ee7ac117521e485755600b84c",
+     "runtime": {
+       "adapter": "remotion"
+     },
+@@ -320,7 +320,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:f6caf670755e590fdf1ba85e421631c9c3ec243ef325dc5f9c118f634a172e96",
++    "revision": "sha256:e628b73e9165344e188a0ca9f5bf850223ce6c33c0cb0ac9a1dfd9a0d8e9920b",
+     "runtime": {
+       "adapter": "remotion"
+     },
+@@ -5742,7 +5742,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:05749d28c818f8894770884cf52933cceed0e58a6d7d8702033ab4b869d1304b",
++    "revision": "sha256:6575848081267d8ac02b802f109dd8fedb4bddb94469b914190f83b2e73be56f",
+     "runtime": {
+       "adapter": "remotion"
+     },
+@@ -6085,7 +6085,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:568fc1ad4404a8d317ecaf416eadfb2e195cda830a664e74b7c2871a6ff9216c",
++    "revision": "sha256:30fa91cf8af7aa9460e05e90a8f9bf058974d6f0164dd8ec34d412d54342bfe1",
+     "runtime": {
+       "adapter": "remotion"
+     },
+@@ -6131,7 +6131,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "supported",
+       "workerExport": "supported"
+     },
+-    "revision": "sha256:df6f5140ce9a6b5b0b0a0d1a6118b53b15183de0beb9df3e5a3aa6da27649749",
++    "revision": "sha256:e68bac9cac9d42bc5827e39e8266bbecabfbaf54c0cf7fe9c22fe6c2e7d031d3",
+     "runtime": {
+       "adapter": "remotion"
+     },
+diff --git a/astrid/packs/rendering/pack.yaml b/astrid/packs/rendering/pack.yaml
+index 027183297..68718443f 100644
+--- a/astrid/packs/rendering/pack.yaml
++++ b/astrid/packs/rendering/pack.yaml
+@@ -1265,39 +1265,21 @@ rendering:
+   animations/fade:
+     type: element
+     path: rendering/elements/animations/fade/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/animations/fade/component.tsx
+   animations/fade-up:
+     type: element
+     path: rendering/elements/animations/fade-up/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/animations/fade-up/component.tsx
+   animations/scale-in:
+     type: element
+     path: rendering/elements/animations/scale-in/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/animations/scale-in/component.tsx
+   animations/slide-left:
+     type: element
+     path: rendering/elements/animations/slide-left/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/animations/slide-left/component.tsx
+   animations/slide-up:
+     type: element
+     path: rendering/elements/animations/slide-up/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/animations/slide-up/component.tsx
+   animations/type-on:
+     type: element
+     path: rendering/elements/animations/type-on/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/animations/type-on/component.tsx
+   effects/audio-reactive-colour:
+     type: element
+     path: rendering/elements/effects/audio-reactive-colour/element.yaml
+@@ -1307,21 +1289,12 @@ rendering:
+   effects/text-card:
+     type: element
+     path: rendering/elements/effects/text-card/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/effects/text-card/component.tsx
+   transitions/cross-fade:
+     type: element
+     path: rendering/elements/transitions/cross-fade/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/transitions/cross-fade/component.tsx
+   transitions/fade:
+     type: element
+     path: rendering/elements/transitions/fade/element.yaml
+-    resources:
+-    - kind: implementation
+-      path: rendering/elements/transitions/fade/component.tsx
+ ui:
+   transcript:
+     type: editor
+diff --git a/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx b/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx
+deleted file mode 100644
+index c185ed8f5..000000000
+--- a/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {ANIMATION_REGISTRY} from '@banodoco/timeline-composition/animations.generated';
+-
+-export default ANIMATION_REGISTRY['fade-up'];
+diff --git a/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx b/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx
+deleted file mode 100644
+index 603f9036a..000000000
+--- a/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {ANIMATION_REGISTRY} from '@banodoco/timeline-composition/animations.generated';
+-
+-export default ANIMATION_REGISTRY['fade'];
+diff --git a/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx b/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx
+deleted file mode 100644
+index 3cd3d76de..000000000
+--- a/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {ANIMATION_REGISTRY} from '@banodoco/timeline-composition/animations.generated';
+-
+-export default ANIMATION_REGISTRY['scale-in'];
+diff --git a/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx b/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx
+deleted file mode 100644
+index cbca723b4..000000000
+--- a/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {ANIMATION_REGISTRY} from '@banodoco/timeline-composition/animations.generated';
+-
+-export default ANIMATION_REGISTRY['slide-left'];
+diff --git a/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx b/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx
+deleted file mode 100644
+index c8bcbdf5c..000000000
+--- a/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {ANIMATION_REGISTRY} from '@banodoco/timeline-composition/animations.generated';
+-
+-export default ANIMATION_REGISTRY['slide-up'];
+diff --git a/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx b/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx
+deleted file mode 100644
+index bb77c8b3a..000000000
+--- a/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {ANIMATION_REGISTRY} from '@banodoco/timeline-composition/animations.generated';
+-
+-export default ANIMATION_REGISTRY['type-on'];
+diff --git a/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx b/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx
+deleted file mode 100644
+index c24239218..000000000
+--- a/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {EFFECT_REGISTRY} from '@banodoco/timeline-composition/effects.generated';
+-
+-export default EFFECT_REGISTRY['text-card'];
+diff --git a/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx b/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx
+deleted file mode 100644
+index 6b6653fc2..000000000
+--- a/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {TRANSITION_REGISTRY} from '@banodoco/timeline-composition/transitions.generated';
+-
+-export default TRANSITION_REGISTRY['cross-fade'];
+diff --git a/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx b/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx
+deleted file mode 100644
+index 6566a7002..000000000
+--- a/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx
++++ /dev/null
+@@ -1,3 +0,0 @@
+-import {TRANSITION_REGISTRY} from '@banodoco/timeline-composition/transitions.generated';
+-
+-export default TRANSITION_REGISTRY['fade'];
+diff --git a/scripts/gen_effect_registry.py b/scripts/gen_effect_registry.py
+index 632fc3dc0..b3955da5d 100644
+--- a/scripts/gen_effect_registry.py
++++ b/scripts/gen_effect_registry.py
+@@ -8,6 +8,8 @@ import hashlib
+ import json
+ import os
+ import re
++import shutil
++import subprocess
+ import sys
+ from dataclasses import dataclass
+ from pathlib import Path
+@@ -31,6 +33,19 @@ OUTPUTS = {
+ ElementKind = Literal["effects", "animations", "transitions"]
+ REGISTRY_STATE_VERSION = 1
+ 
++_PUBLIC_REGISTRY_NODE_SCRIPT = r'''
++import {DEFAULT_THEME} from '@banodoco/timeline-composition';
++import {resolveElementRegistries} from '@banodoco/timeline-composition/registries';
++
++const registries = resolveElementRegistries(DEFAULT_THEME);
++console.log(JSON.stringify({
++  effects: Object.keys(registries.effects ?? {}),
++  animations: Object.keys(registries.animations ?? {}),
++  transitions: Object.keys(registries.transitions ?? {}),
++}));
++'''
++_PUBLIC_REGISTRY_CACHE: dict[tuple[str, str], dict[str, frozenset[str]]] = {}
++
+ 
+ @dataclass(frozen=True)
+ class PluginRecord:
+@@ -88,19 +103,110 @@ def discover_plugins(
+         elements = registry.list(kind=kind)
+     else:
+         elements = tuple(
+-            definitions[0]
+-            for (item_kind, _), definitions in registry._entries.items()
+-            if item_kind == kind
+-            for definitions in [
+-                [element for element in definitions if element.source != "pack:local"]
+-            ]
+-            if definitions
++            element for element in registry.list(kind=kind)
++            if element.source != "pack:local"
+         )
++    # The public Composition package owns the bundled wrapper implementations.
++    # Their descriptors remain in the normal element registry so authored
++    # defaults, metadata and validation stay discoverable, but a source-less
++    # descriptor must not produce a host import for a file that was retired.
++    elements = tuple(
++        element
++        for element in elements
++        if _component_is_host_importable(element)
++    )
+     for element in elements:
+         plugins[element.id] = _plugin_from_element(element)
+     return plugins
+ 
+ 
++def _component_is_host_importable(element: ElementDefinition) -> bool:
++    if element.component.is_file():
++        return True
++    if element.source != "pack:rendering":
++        raise ValueError(
++            f"element {element.kind}/{element.id} from {element.source!r} has no "
++            "component.tsx; refusing to hide a broken custom component"
++        )
++    if element.id in _public_registry_ids()[element.kind]:
++        return False
++    raise ValueError(
++        f"broken rendering component {element.kind}/{element.id} from "
++        f"{element.source!r}: no component.tsx and the installed public "
++        "Composition registry does not supply it"
++    )
++
++
++def _public_registry_ids() -> dict[str, frozenset[str]]:
++    """Return IDs exposed by the installed Composition registry.
++
++    The generated host map must not duplicate the public package's component
++    implementations. Membership comes from Composition's existing public
++    registry resolver rather than a copied list of bundled IDs.
++    """
++    project = Path(
++        os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or TOOLS_DIR / "remotion"
++    ).resolve()
++    package = (project / "node_modules" / "@banodoco" / "timeline-composition").resolve()
++    manifest = package / "package.json"
++    if not manifest.is_file():
++        raise ValueError(
++            "cannot verify missing rendering components: installed public "
++            f"Composition package is missing at {manifest}"
++        )
++    node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
++    if not node:
++        raise ValueError(
++            "cannot verify missing rendering components: no Node executable "
++            "is available for Composition's public registry API"
++        )
++    node_path = str(Path(node).resolve())
++    cache_key = (str(project), node_path)
++    cached = _PUBLIC_REGISTRY_CACHE.get(cache_key)
++    if cached is not None:
++        return cached
++    try:
++        result = subprocess.run(
++            [node_path, "--input-type=module", "-e", _PUBLIC_REGISTRY_NODE_SCRIPT],
++            cwd=project,
++            capture_output=True,
++            text=True,
++            check=False,
++            timeout=15,
++        )
++    except (OSError, subprocess.SubprocessError) as exc:
++        raise ValueError(
++            "cannot verify missing rendering components through the installed "
++            f"public Composition registry API: {exc}"
++        ) from exc
++    if result.returncode != 0:
++        detail = (result.stderr or result.stdout).strip().splitlines()
++        reason = detail[-1] if detail else f"Node exited {result.returncode}"
++        raise ValueError(
++            "cannot verify missing rendering components through the installed "
++            f"public Composition registry API: {reason}"
++        )
++    try:
++        raw = json.loads(result.stdout)
++        membership = {
++            kind: frozenset(str(item) for item in raw[kind])
++            for kind in ("effects", "animations", "transitions")
++            if isinstance(raw, dict) and isinstance(raw.get(kind), list)
++        }
++    except (TypeError, ValueError, KeyError) as exc:
++        raise ValueError(
++            "installed public Composition registry API returned invalid "
++            f"membership: {result.stdout!r}"
++        ) from exc
++    if set(membership) != {"effects", "animations", "transitions"}:
++        raise ValueError(
++            "installed public Composition registry API returned incomplete "
++            f"membership: {result.stdout!r}"
++        )
++    _PUBLIC_REGISTRY_CACHE[cache_key] = membership
++    return membership
++
++
+ def discover_effects(
+     *,
+     include_local: bool = True,
+@@ -355,6 +461,11 @@ def _generate_effect_registry(
+             continue
+         if element.id not in effects:
+             continue
++        if not _component_is_host_importable(element):
++            # A source-less public descriptor is supplied by the installed
++            # Composition registry.  It is not a host import and must not be
++            # treated as an owner candidate for a custom winner.
++            continue
+         pack_id = ElementRegistry._pack_id(element)
+         plugin = _plugin_from_element(element)
+         if plugin.root == effects[element.id].root:
+diff --git a/scripts/gen_element_catalog.py b/scripts/gen_element_catalog.py
+index 0a17cc549..688a923f5 100644
+--- a/scripts/gen_element_catalog.py
++++ b/scripts/gen_element_catalog.py
+@@ -18,6 +18,7 @@ from astrid.core.element.catalog import (  # noqa: E402
+     _clear_registry_cache,
+     list_element_descriptors,
+ )
++from scripts.gen_effect_registry import _public_registry_ids  # noqa: E402
+ 
+ DEFAULT_OUTPUT = REPO_ROOT / "astrid" / "packs" / "rendering" / "elements" / "catalog.ts"
+ 
+@@ -53,6 +54,7 @@ def generate() -> str:
+         logger.removeHandler(warnings)
+     if warnings.messages:
+         raise ValueError("Cannot generate an incomplete element catalog:\n" + "\n".join(warnings.messages))
++    descriptors = _preserve_public_renderability(descriptors)
+     payload = json.dumps(descriptors, indent=2, sort_keys=True, ensure_ascii=False)
+     return "\n".join(
+         (
+@@ -111,6 +113,52 @@ def generate() -> str:
+     )
+ 
+ 
++def _preserve_public_renderability(
++    descriptors: tuple[dict[str, object], ...],
++) -> tuple[dict[str, object], ...]:
++    """Keep public Composition wrappers renderable after source deletion.
++
++    The Agent registry retains the canonical descriptors for the nine bundled
++    wrappers, while their executable implementations now live in Composition.
++    Membership comes from Composition's public registry resolver; no bundled
++    ID list is duplicated here.  A source-backed descriptor keeps the normal
++    renderability result, and an unknown source-less rendering descriptor is
++    supported only when Composition actually publishes that ID.
++    """
++    public_ids = _public_registry_ids()
++    projected: list[dict[str, object]] = []
++    for descriptor in descriptors:
++        renderability = descriptor.get("renderability")
++        kind = descriptor.get("kind")
++        element_id = descriptor.get("id")
++        if (
++            descriptor.get("source") == "pack:rendering"
++            and isinstance(renderability, dict)
++            and renderability.get("preview") == "unknown"
++        ):
++            if not isinstance(kind, str) or not isinstance(element_id, str):
++                raise ValueError(
++                    "Cannot generate an incomplete element catalog: invalid "
++                    "rendering descriptor identity"
++                )
++            if element_id not in public_ids.get(f"{kind}s", frozenset()):
++                raise ValueError(
++                    f"Cannot generate an incomplete element catalog: rendering "
++                    f"element {kind}/{element_id} has no component and is not "
++                    "supplied by Composition's public registry"
++                )
++            descriptor = {
++                **descriptor,
++                "renderability": {
++                    "preview": "supported",
++                    "browserExport": "supported",
++                    "workerExport": "supported",
++                },
++            }
++        projected.append(descriptor)
++    return tuple(projected)
++
++
+ def build_parser() -> argparse.ArgumentParser:
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument("output", nargs="?", type=Path, default=DEFAULT_OUTPUT)
+diff --git a/tests/packs/rendering/test_effect_registry_target.py b/tests/packs/rendering/test_effect_registry_target.py
+index 6efd0bc61..eea04d573 100644
+--- a/tests/packs/rendering/test_effect_registry_target.py
++++ b/tests/packs/rendering/test_effect_registry_target.py
+@@ -1,4 +1,5 @@
+ """Generation is confined to the selected host, including with an installed package."""
++import json
+ import os
+ import subprocess
+ import sys
+@@ -7,28 +8,64 @@ from pathlib import Path
+ ROOT = Path(__file__).resolve().parents[3]
+ 
+ 
++def _install_public_registry_probe(project: Path) -> Path:
++    """Stage a private API-only Composition graph for generator target tests."""
++    from astrid.core.element.registry import load_default_registry
++
++    package = project / "node_modules/@banodoco/timeline-composition"
++    dist = package / "dist"
++    dist.mkdir(parents=True, exist_ok=True)
++    public_ids = {
++        kind: [
++            element.id
++            for element in load_default_registry(project_root=ROOT).list(kind=kind)
++            if element.source == "pack:rendering" and not element.component.is_file()
++        ]
++        for kind in ("effects", "animations", "transitions")
++    }
++    (package / "package.json").write_text(json.dumps({
++        "type": "module",
++        "exports": {
++            ".": "./dist/index.js",
++            "./registries": "./dist/registries.js",
++        },
++    }), encoding="utf-8")
++    (dist / "index.js").write_text("export const DEFAULT_THEME = {id: 'default'};\n", encoding="utf-8")
++    (dist / "registries.js").write_text(
++        "export const resolveElementRegistries = () => ({\n"
++        + "\n".join(
++            f"  {kind}: Object.fromEntries({json.dumps(ids)}.map((id) => [id, () => null])),"
++            for kind, ids in public_ids.items()
++        )
++        + "\n});\n",
++        encoding="utf-8",
++    )
++    return package
++
++
+ def test_generator_targets_host_and_leaves_installed_package_unchanged(tmp_path):
+     installed = tmp_path / "node_modules/@banodoco/timeline-composition/dist"
+     installed.mkdir(parents=True)
+     sentinel = installed / "effects.generated.js"
+     sentinel.write_text("immutable package\n")
++    _install_public_registry_probe(tmp_path)
+     env = {**os.environ, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path),
+            "ASTRID_TIMELINE_COMPOSITION_SRC": str(installed)}
+     subprocess.run([sys.executable, str(ROOT / "scripts/gen_effect_registry.py")],
+                    env=env, capture_output=True, text=True, check=True)
+     for kind in ("effects", "animations", "transitions"):
+         assert (tmp_path / "src" / f"{kind}.generated.ts").is_file()
+-    assert list(installed.iterdir()) == [sentinel]
+     assert sentinel.read_text() == "immutable package\n"
+ 
+ 
+ def test_generator_refuses_host_staging_linked_into_installed_package(tmp_path):
+     installed = tmp_path / "node_modules/@banodoco/timeline-composition/dist"
+     installed.mkdir(parents=True)
++    _install_public_registry_probe(tmp_path)
+     (tmp_path / "src").symlink_to(installed, target_is_directory=True)
+     result = subprocess.run([sys.executable, str(ROOT / "scripts/gen_effect_registry.py")],
+                             env={**os.environ, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path)},
+                             capture_output=True, text=True)
+     assert result.returncode != 0
+     assert "outside installed packages" in result.stderr
+-    assert list(installed.iterdir()) == []
++    assert not (installed / "effects.generated.ts").exists()
+diff --git a/tests/packs/rendering/test_remotion_element_generation.py b/tests/packs/rendering/test_remotion_element_generation.py
+index 3b1833ba4..1680794f1 100644
+--- a/tests/packs/rendering/test_remotion_element_generation.py
++++ b/tests/packs/rendering/test_remotion_element_generation.py
+@@ -1,11 +1,12 @@
+ import importlib.util
+ import json
+ import re
++import subprocess
+ import sys
+ import tempfile
+ import unittest
+ from pathlib import Path
+-
++from unittest import mock
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+ GENERATOR = ROOT / "scripts" / "gen_effect_registry.py"
+@@ -24,9 +25,149 @@ class RemotionElementGenerationTest(unittest.TestCase):
+             generated = gen_effect_registry.generate_element_registry(kind)
+             self.assertIn("@banodoco/timeline-composition/theme-api", generated)
+             self.assertNotIn("./effects.types", generated)
+-            self.assertRegex(generated, r"@(pack-(local|rendering)|managed)-elements-")
+             self.assertNotIn("@workspace-", generated)
+             self.assertNotIn("primitive-root", generated)
++        self.assertIn("@pack-rendering-elements-effects/audio-reactive-colour/component", gen_effect_registry.generate_element_registry("effects"))
++
++    def test_canonical_registry_winner_is_not_replaced_by_local_shadow(self) -> None:
++        from astrid.core.element.registry import ElementRegistry
++        from astrid.core.element.schema import ElementDefinition
++
++        with tempfile.TemporaryDirectory() as tmp:
++            root = Path(tmp)
++            public_root = root / "rendering" / "fade"
++            public_root.mkdir(parents=True)
++            public_component = public_root / "component.tsx"
++            public_component.write_text("export default function PublicFade() { return null; }\n", encoding="utf-8")
++            override_root = root / "local" / "fade"
++            override_root.mkdir(parents=True)
++            override_component = override_root / "component.tsx"
++            override_component.write_text("export default function FadeOverride() { return null; }\n", encoding="utf-8")
++
++            public_descriptor = ElementDefinition(
++                id="fade", kind="animations", root=public_root, source="pack:rendering",
++                editable=False, priority=30, component=public_component,
++                schema={}, defaults={"durationFrames": 12},
++                metadata={"pack_id": "rendering", "kind": "wrapper"},
++                runtime={"adapter": "remotion"},
++            )
++            override = ElementDefinition(
++                id="fade", kind="animations", root=override_root, source="pack:local",
++                editable=True, priority=30, component=override_component, schema={},
++                defaults={"durationFrames": 24}, metadata={"pack_id": "local"},
++                runtime={"adapter": "remotion"},
++            )
++            old_registry = gen_effect_registry._element_registry
++            gen_effect_registry._element_registry = lambda: ElementRegistry(
++                (public_descriptor, override)
++            )
++            try:
++                generated = gen_effect_registry.generate_element_registry("animations")
++            finally:
++                gen_effect_registry._element_registry = old_registry
++
++        self.assertIn("'fade'", generated)
++        self.assertIn("@pack-rendering-elements-animations/fade/component", generated)
++        self.assertNotIn("@pack-local-elements-animations/fade/component", generated)
++
++    def test_public_composition_supplies_source_less_builtin(self) -> None:
++        from astrid.core.element.registry import load_default_registry
++
++        registry = load_default_registry(project_root=ROOT)
++        winner = registry.get("effects", "text-card")
++        self.assertEqual(winner.source, "pack:rendering")
++        self.assertFalse(winner.component.is_file())
++        self.assertEqual(winner.metadata["pack_id"], "rendering")
++
++        public_ids = gen_effect_registry._public_registry_ids()
++        self.assertIn("text-card", public_ids["effects"])
++        generated = gen_effect_registry.generate_element_registry("effects")
++        self.assertNotIn("'text-card':", generated)
++        self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
++
++    def test_public_membership_uses_composition_registry_api(self) -> None:
++        with tempfile.TemporaryDirectory() as tmp:
++            project = Path(tmp)
++            package = project / "node_modules" / "@banodoco" / "timeline-composition"
++            package.mkdir(parents=True)
++            (package / "package.json").write_text("{}\n", encoding="utf-8")
++            response = json.dumps({
++                "effects": ["package-effect"],
++                "animations": ["package-animation"],
++                "transitions": ["package-transition"],
++            })
++            old_cache = gen_effect_registry._PUBLIC_REGISTRY_CACHE
++            gen_effect_registry._PUBLIC_REGISTRY_CACHE = {}
++            try:
++                with mock.patch.dict(
++                    gen_effect_registry.os.environ,
++                    {
++                        "ASTRID_REMOTION_PROJECT_DIR": str(project),
++                        "ASTRID_NODE_EXECUTABLE": "/node20",
++                    },
++                    clear=False,
++                ), mock.patch.object(
++                    gen_effect_registry.subprocess,
++                    "run",
++                    return_value=subprocess.CompletedProcess(
++                        ["/node20"], 0, stdout=response, stderr=""
++                    ),
++                ) as run:
++                    membership = gen_effect_registry._public_registry_ids()
++            finally:
++                gen_effect_registry._PUBLIC_REGISTRY_CACHE = old_cache
++
++        self.assertEqual(membership["effects"], {"package-effect"})
++        command = run.call_args.args[0]
++        self.assertIn("resolveElementRegistries", command[-1])
++        self.assertNotIn("text-card", command[-1])
++
++    def test_missing_non_public_component_is_diagnostic(self) -> None:
++        from astrid.core.element.registry import ElementRegistry
++        from astrid.core.element.schema import ElementDefinition
++
++        with tempfile.TemporaryDirectory() as tmp:
++            root = Path(tmp) / "custom" / "missing"
++            root.mkdir(parents=True)
++            missing = ElementDefinition(
++                id="missing", kind="effects", root=root, source="pack:custom",
++                editable=True, priority=0, component=root / "component.tsx",
++                schema={}, defaults={}, metadata={"pack_id": "custom"},
++                runtime={"adapter": "remotion"},
++            )
++            old_registry = gen_effect_registry._element_registry
++            gen_effect_registry._element_registry = lambda: ElementRegistry((missing,))
++            try:
++                with self.assertRaisesRegex(ValueError, "broken custom component"):
++                    gen_effect_registry.generate_element_registry("effects")
++            finally:
++                gen_effect_registry._element_registry = old_registry
++
++    def test_unknown_rendering_component_is_not_silently_omitted(self) -> None:
++        from astrid.core.element.registry import ElementRegistry
++        from astrid.core.element.schema import ElementDefinition
++
++        with tempfile.TemporaryDirectory() as tmp:
++            root = Path(tmp) / "rendering" / "unknown"
++            root.mkdir(parents=True)
++            missing = ElementDefinition(
++                id="unknown", kind="effects", root=root, source="pack:rendering",
++                editable=False, priority=30, component=root / "component.tsx",
++                schema={}, defaults={}, metadata={"pack_id": "rendering"},
++                runtime={"adapter": "remotion"},
++            )
++            old_registry = gen_effect_registry._element_registry
++            old_public_ids = gen_effect_registry._public_registry_ids
++            gen_effect_registry._element_registry = lambda: ElementRegistry((missing,))
++            gen_effect_registry._public_registry_ids = lambda: {
++                "effects": frozenset(), "animations": frozenset(), "transitions": frozenset(),
++            }
++            try:
++                with self.assertRaisesRegex(ValueError, "broken rendering component"):
++                    gen_effect_registry.generate_element_registry("effects")
++            finally:
++                gen_effect_registry._element_registry = old_registry
++                gen_effect_registry._public_registry_ids = old_public_ids
+ 
+     def test_remotion_alias_files_do_not_reference_workspace_element_aliases(self) -> None:
+         checked = [
+diff --git a/tests/packs/test_composition_elements.py b/tests/packs/test_composition_elements.py
+index 8407a1ec8..7b38ec38d 100644
+--- a/tests/packs/test_composition_elements.py
++++ b/tests/packs/test_composition_elements.py
+@@ -3,6 +3,7 @@ import re
+ import sys
+ import unittest
+ from pathlib import Path
++from unittest import mock
+ 
+ from astrid.core import timeline
+ from astrid.core.element import catalog as effects_catalog
+@@ -33,8 +34,9 @@ def _timeline_composition_source() -> Path:
+ class CompositionElementTest(unittest.TestCase):
+     def _assert_animation_plugin(self, animation_id: str, kind: str) -> None:
+         root = ROOT / "astrid" / "packs" / "rendering" / "rendering" / "elements" / "animations" / animation_id
+-        for filename in ("component.tsx", "element.yaml"):
++        for filename in ("element.yaml",):
+             self.assertTrue((root / filename).is_file(), f"{root / filename} missing")
++        self.assertFalse((root / "component.tsx").exists())
+         self.assertEqual(effects_catalog.read_animation_meta(animation_id)["kind"], kind)
+         self.assertIn("durationFrames", effects_catalog.read_animation_defaults(animation_id))
+ 
+@@ -68,8 +70,9 @@ class CompositionElementTest(unittest.TestCase):
+         self.assertEqual(set(expected), set(effects_catalog.list_animation_ids()))
+         for animation_id, kind in expected.items():
+             root = ROOT / "astrid" / "packs" / "rendering" / "rendering" / "elements" / "animations" / animation_id
+-            for filename in ("component.tsx", "element.yaml"):
++            for filename in ("element.yaml",):
+                 self.assertTrue((root / filename).is_file(), f"{root / filename} missing")
++            self.assertFalse((root / "component.tsx").exists())
+             self.assertEqual(effects_catalog.read_animation_meta(animation_id)["kind"], kind)
+ 
+     def test_transition_plugin_is_discoverable_and_validated(self) -> None:
+@@ -88,14 +91,24 @@ class CompositionElementTest(unittest.TestCase):
+             timeline.validate_timeline(config)
+ 
+     def test_bundled_element_registries_generate_together(self) -> None:
+-        effects = gen_effect_registry.generate_element_registry("effects", include_local=False)
+-        animations = gen_effect_registry.generate_element_registry("animations", include_local=False)
+-        transitions = gen_effect_registry.generate_element_registry("transitions", include_local=False)
+-
+-        self.assertIn("'text-card'", effects)
+-        self.assertRegex(effects, r"@pack-rendering-elements-effects/text-card/component")
+-        self.assertRegex(animations, r"@pack-rendering-elements-animations/fade-up/component")
+-        self.assertRegex(transitions, r"@pack-rendering-elements-transitions/cross-fade/component")
++        public_ids = {
++            kind: frozenset(
++                element.id
++                for element in gen_effect_registry._element_registry().list(kind=kind)
++                if element.source == "pack:rendering" and not element.component.is_file()
++            )
++            for kind in ("effects", "animations", "transitions")
++        }
++        with mock.patch.object(gen_effect_registry, "_public_registry_ids", return_value=public_ids):
++            effects = gen_effect_registry.generate_element_registry("effects", include_local=False)
++            animations = gen_effect_registry.generate_element_registry("animations", include_local=False)
++            transitions = gen_effect_registry.generate_element_registry("transitions", include_local=False)
++
++        self.assertNotIn("'text-card'", effects)
++        self.assertNotIn("@pack-rendering-elements-effects/text-card/component", effects)
++        self.assertNotIn("@pack-rendering-elements-animations/fade-up/component", animations)
++        self.assertNotIn("@pack-rendering-elements-transitions/cross-fade/component", transitions)
++        self.assertIn("'audio-reactive-colour'", effects)
+ 
+     def test_hype_composition_preserves_absolute_sequence_path_with_transition_series(self) -> None:
+         source_path = _timeline_composition_source()

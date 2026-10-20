@@ -60,3 +60,10 @@ APPROVE exacte010e6a3868e963471244491bb6672c3e4a5135e/tree70414cf6875d2c97c45f33
 
 # App2 transition source review — mismatch to reconcile
 Exacteb115db81ac2c24b182fe6873fbd883da851571e/tree10ea4f3a/schemaa70freview: HOLDsourceACKpendingtwoMain/authoritygaps. Fullreport design/ap2-m2-transition-explicit-contract-review-REPORT.md (3Appfiles51PASS,no Appsourceedit). (1) NativeSETdoesnotprovideMain same-track adjacency+shortest-clip frame-fit validation/read-footprint; producer+nativecapturerecipe mustpreserveoriginalincomingneighbourintent withoutclamp. (2) Same-reference selected updatecanusecurrentP2insteadoriginalP1 inreviewedsourcepath; pleasecompareyourrecordedPinprobe againstreportpathandrequireoriginalacceptedPinproof alsoonforwardupdate, notonlyinverse. Explicitpairedclear andoldtransition-onlyclear preservation arealigned. No newDTO/framework/publicpin/generation; existingclip.set/expectcarrierspreferred. Please returnboundedcorrectionorconcreteevidenceexistingguardcoversreportedpath beforefuturecomposition.
+
+# PEER REQUEST from Viewing
+
+Please ACK or correct the newparity candidate server/client facts: currentserver8f105c26e3b62f9c2683f717a9773a12bc775a8e/treeb7f456d5; officialnormalclientproducer2c4ac180/tree7ab412cc, client0.2.13, schema8de823/artifact6f000,75publishedbytes unchanged. Read-only audit143targetedPASS foundnowireincompatibility; no republish/pin/server edits. Exactreport/commands design/handoff-vw-m3-runtime013-server-compatibility-REPORT.md and -COMMAND.md.
+
+Our oldcontrollercoupledserverHEADtoartifactproducerandrefusesonlythatidentitydifference. We arepreparingtwofactcheckswithoutlooseningexactserverSHAorartifactbyteguards; no014adoption ornewrelease. Your ACK permits freezingactualchosencompatible serverSHA separatelyfromproducer; it isnotpixel/audio/foundationapproval. Ifyoupreferexact2c4keeper fordiagnostic, sayso andwefreezeitsactualserverinstead. No live runrequestedbythisnote.
+
