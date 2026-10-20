@@ -27,9 +27,10 @@ from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
 from runtime_protocol.timeline_commit_store import request_identity
 from runtime_protocol.util import canonical_json
 from test_timeline_commit_port import PreparedProvider, commit, prepared, request
+from test_timeline_render_publication import _settle as settle_visual
 
 
-CAPABILITY = "fixture.settled-producer"
+CAPABILITY = "rendering.assemble_timeline"
 EXECUTOR = "proposal-worker"
 
 
@@ -67,12 +68,27 @@ def producer(tmp_path):
                   ("project_id", "timeline_id", "base_revision_id", "base_publication_id")}
         capability_digest = _digest(CAPABILITY.encode())
         service.register_capability({"capability_id": CAPABILITY, "definition_digest": capability_digest})
-        service.register_executor({"executor_id": EXECUTOR, "capabilities": [CAPABILITY]},
+        child_capability = "fixture.visual"
+        child_digest = _digest(child_capability.encode())
+        service.register_capability({"capability_id": child_capability, "definition_digest": child_digest})
+        service.register_executor({"executor_id": EXECUTOR, "capabilities": [CAPABILITY, child_capability]},
                                   idempotency_key="register-worker")
-        # A test capability takes the agreed target object as its immutable
-        # inputs. This does not qualify the assembler's production spec
-        # nesting for the original base pair or add a Task wire field.
-        spec = {"capability_id": CAPABILITY, "kind": "executor", "inputs": target,
+        # Exercise the actual assembler continuation admission, including its
+        # ordered settled visual outputs and frozen original target.
+        children = []
+        for index in range(2):
+            child = service.create_task({"project": project, "capability_id": child_capability,
+                "capability_digest": child_digest, "input_object_ids": [], "spec": {"index": index},
+                "idempotency_key": f"visual-{index}"})
+            claim = service.claim_next({"executor_id": EXECUTOR, "capability_ids": [child_capability],
+                "runtime_epoch": service.health()["runtime_epoch"]}, idempotency_key=f"claim-visual-{index}")
+            settle_visual(service, claim, f"settle-visual-{index}", f"visual-{index}")
+            children.append(child["task"]["id"])
+        spec = {"capability_id": CAPABILITY, "kind": "executor", "inputs": {},
+                "runtime_dependencies": {"publication": {"admitted_target": target},
+                    "edges": [{"from_task_id": task_id, "to": "self", "requires_event": "task.succeeded",
+                               "fence": "runtime_task"} for task_id in children],
+                    "aggregation": {"kind": "ordered_cas_inputs"}},
                 "outputs": {"authoring_proposal": {"type": "file", "artifact_type": "timeline/authoring-proposal"}}}
         admitted = service.create_task({"project": project, "capability_id": CAPABILITY,
             "capability_digest": capability_digest, "input_object_ids": [], "spec": spec,
@@ -80,6 +96,7 @@ def producer(tmp_path):
         attempt = service.claim_next({"executor_id": EXECUTOR, "capability_ids": [CAPABILITY],
             "runtime_epoch": service.health()["runtime_epoch"]}, idempotency_key="claim-producer")
         assert attempt["task_id"] == admitted["task"]["id"]
+        spec = service.task(attempt["task_id"])["task"]["spec"]["spec"]
         proposal = {"schema_version": 1,
             "producer": {"task_id": attempt["task_id"], "attempt_id": attempt["attempt_id"],
                          "executor_id": EXECUTOR, "fence": attempt["fence"], "runtime_epoch": attempt["runtime_epoch"]},
@@ -513,7 +530,6 @@ def test_exact_accepted_replay_after_cancel_expiry_restart_and_head_advance_uses
     monkeypatch.setattr("runtime_protocol.store.datetime", ExpiredClock)
     monkeypatch.setattr("runtime_protocol.service.datetime", ExpiredClock)
     assert ExpiredClock.now(timezone.utc) > datetime.fromisoformat(deadline)
-    service.register_timeline_commit_provider(PreparedProvider())
     commit(service, request(service), key="unrelated-head-advance")
     service.close()
     restarted = RuntimeService(producer.root)
