@@ -211,6 +211,9 @@ export function useKeyboardShortcuts({
       if (isEditableTarget(event.target)) {
         return;
       }
+      // A panel handled this key before it bubbled to window (this listener
+      // is bubble-phase, not capture), so leave it to that panel.
+      if (event.defaultPrevented) return;
 
       const isModifierPressed = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();

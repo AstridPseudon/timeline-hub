@@ -196,6 +196,46 @@ describe('useKeyboardShortcuts time-axis nudge', () => {
   });
 });
 
+describe('useKeyboardShortcuts panel-handled keys', () => {
+  it('leaves Space alone when a panel already called preventDefault on it', () => {
+    const togglePlayPause = vi.fn();
+    const button = document.createElement('button');
+    button.addEventListener('keydown', (event) => event.preventDefault());
+    document.body.appendChild(button);
+
+    try {
+      mountShortcuts({ options: makeOptions({ togglePlayPause }) });
+
+      const event = dispatchKey(button, { key: ' ', code: 'Space' });
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(togglePlayPause).not.toHaveBeenCalled();
+    } finally {
+      button.remove();
+    }
+  });
+
+  it('still toggles playback on Space when no panel handled it', () => {
+    const togglePlayPause = vi.fn();
+
+    mountShortcuts({ options: makeOptions({ togglePlayPause }) });
+
+    dispatchKey(window, { key: ' ', code: 'Space' });
+
+    expect(togglePlayPause).toHaveBeenCalledTimes(1);
+  });
+
+  it('still seeks on ArrowRight when no panel handled it', () => {
+    const seekRelative = vi.fn();
+
+    mountShortcuts({ options: makeOptions({ seekRelative }) });
+
+    dispatchKey(window, { key: 'ArrowRight' });
+
+    expect(seekRelative).toHaveBeenCalledWith(1);
+  });
+});
+
 describe('useKeyboardShortcuts extension keybindings', () => {
   it('invokes a matching extension command once after built-ins decline', async () => {
     const registry = createCommandRegistry();
