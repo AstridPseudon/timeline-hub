@@ -139,14 +139,14 @@ describe('AgentChatNewChatButton', () => {
     const { onBrowseAgent } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: false } });
     fireEvent.keyDown(document.querySelector('[cmdk-root]') as HTMLElement, { key: 'ArrowRight' });
     expect(onBrowseAgent).not.toHaveBeenCalledWith('hermes');
-    expect(screen.queryByPlaceholderText('Search Hermes models...')).toBeNull();
+    expect(screen.queryByPlaceholderText('Search Hermes models…')).toBeNull();
   });
 
   it('closes the Hermes model picker when a session reports an empty list', async () => {
     const { onNewChat, onBrowseAgent, view } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: true } });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Hermes model' }));
     view.rerender(<AgentChatNewChatButton defaultAgent="hermes" agents={ready} onNewChat={onNewChat} onBrowseAgent={onBrowseAgent} agentCanBrowse={{ hermes: true }} agentModels={{ agent: 'hermes', models: [], loading: false }} />);
-    await waitFor(() => expect(screen.queryByPlaceholderText('Search Hermes models...')).toBeNull());
+    await waitFor(() => expect(screen.queryByPlaceholderText('Search Hermes models…')).toBeNull());
     expect(onBrowseAgent).toHaveBeenLastCalledWith(null);
   });
 
@@ -174,7 +174,7 @@ describe('AgentChatNewChatButton', () => {
     const { onBrowseAgent, view } = openMenu();
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
     view.rerender(<AgentChatNewChatButton defaultAgent="claude-code" agents={ready} onNewChat={vi.fn()} onBrowseAgent={onBrowseAgent} agentModels={claudeModels} />);
-    const search = screen.getByPlaceholderText('Search Claude Code models...');
+    const search = screen.getByPlaceholderText('Search Claude Code models…');
     fireEvent.change(search, { target: { value: 'complex' } });
     expect(screen.getByRole('option', { name: /Opus/ })).toBeTruthy();
     expect(screen.queryByRole('option', { name: /Sonnet/ })).toBeNull();
@@ -212,12 +212,35 @@ describe('AgentChatNewChatButton', () => {
       options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }],
   };
 
-  it('shows a touch-sized selector with the level Enter will use', () => {
+  it('keeps the compact, borderless selector on the name line with the description underneath', () => {
+    openMenu({ agentModels: { ...effortModels, models: [{ ...effortModels.models[0], detail: 'For complex work with a description that can wrap across the full row' }] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    const row = screen.getByRole('option', { name: /Opus/ });
+    const selector = within(row).getByRole('button', { name: 'Choose a thinking level for Opus' });
+    const name = within(row).getByText('Opus');
+    const detail = within(row).getByText(/For complex work/);
+    expect(selector.parentElement).toBe(name.parentElement);
+    expect(name.parentElement).toHaveClass('flex');
+    expect(name.parentElement?.nextElementSibling).toBe(detail);
+    expect(detail.parentElement).toHaveClass('flex-1', 'flex-col');
+    expect(detail).not.toHaveClass('truncate');
+    expect(selector).toHaveTextContent('High');
+    expect(selector).toHaveClass('ml-auto', 'self-start', 'h-6', 'px-1.5', 'rounded', '[@media(pointer:coarse)]:min-h-[44px]');
+    expect(selector.className.split(/\s+/).some(token => token === 'border' || token.startsWith('border-'))).toBe(false);
+    expect(selector).not.toHaveClass('min-h-[44px]', 'min-w-[44px]');
+    expect(screen.getByPlaceholderText('Search Claude Code models…')).toHaveClass('normal-case');
+  });
+
+  it('highlights the selector while its level popover is open', () => {
     openMenu({ agentModels: effortModels });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
-    const selector = within(screen.getByRole('option', { name: /Opus/ })).getByRole('button', { name: 'Choose a thinking level for Opus' });
-    expect(selector).toHaveTextContent('High');
-    expect(selector).toHaveClass('min-h-[44px]', 'min-w-[44px]');
+    const selector = screen.getByRole('button', { name: 'Choose a thinking level for Opus' });
+    expect(selector).toHaveClass('aria-expanded:bg-accent', 'aria-expanded:text-foreground');
+    expect(selector).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(selector);
+    expect(selector).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.keyDown(screen.getByRole('option', { name: 'Low' }), { key: 'Escape' });
+    expect(selector).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('starts immediately from a model with the recommended effort', async () => {
@@ -232,13 +255,14 @@ describe('AgentChatNewChatButton', () => {
     const user = userEvent.setup();
     const { onNewChat } = openMenu({ agentModels: effortModels });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
-    const search = screen.getByPlaceholderText('Search Claude Code models...');
+    const search = screen.getByPlaceholderText('Search Claude Code models…');
     fireEvent.change(search, { target: { value: 'Opus' } });
     await user.click(screen.getByRole('button', { name: 'Choose a thinking level for Opus' }));
     const high = within(screen.getByRole('group', { name: 'Thinking level' })).getByRole('option', { name: /High/ });
     expect(high).toHaveAttribute('aria-current', 'true');
     expect(high).toHaveTextContent('Recommended');
-    expect(high).toHaveClass('min-h-[44px]');
+    expect(high).toHaveClass('min-h-8', '[@media(pointer:coarse)]:min-h-[44px]');
+    expect(high).not.toHaveClass('min-h-[44px]');
     expect(high.closest('[data-side]')).toHaveAttribute('data-side', 'top');
     expect(search).toHaveValue('Opus');
     expect(screen.getByRole('option', { name: /Opus/ })).toBeInTheDocument();
@@ -255,7 +279,7 @@ describe('AgentChatNewChatButton', () => {
     fireEvent.click(screen.getByRole('option', { name: 'Low' }));
     expect(onNewChat).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Choose a thinking level for Opus' })).toHaveTextContent('Low');
-    expect(screen.getByPlaceholderText('Search Claude Code models...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search Claude Code models…')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Thinking level')).toBeNull());
     view.unmount();
 
@@ -273,7 +297,7 @@ describe('AgentChatNewChatButton', () => {
     const user = userEvent.setup();
     const { onNewChat } = openMenu({ agentModels: effortModels });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
-    const search = screen.getByPlaceholderText('Search Claude Code models...');
+    const search = screen.getByPlaceholderText('Search Claude Code models…');
     const row = screen.getByRole('option', { name: /Opus/ });
     await waitFor(() => expect(row).toHaveAttribute('aria-selected', 'true'));
     search.focus();

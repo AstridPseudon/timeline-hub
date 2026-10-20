@@ -83,7 +83,7 @@ function ThinkingLevelSelector({ model, levels, value, open, onOpenChange, onSel
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <button type="button" aria-label={`Choose a thinking level for ${model}`} title="Choose a thinking level (→ or Space)"
-          className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 rounded border border-border px-2 text-[11px] text-muted-foreground hover:bg-background/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="ml-auto inline-flex h-6 shrink-0 self-start items-center justify-center gap-1 rounded px-1.5 text-[11px] text-muted-foreground hover:bg-background/40 hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-[44px]"
           onPointerDown={event => event.stopPropagation()}
           onKeyDown={event => event.stopPropagation()}
           onClick={event => event.stopPropagation()}>
@@ -100,7 +100,7 @@ function ThinkingLevelSelector({ model, levels, value, open, onOpenChange, onSel
           <CommandList>
             <CommandGroup heading="Thinking level">
               {levels.options.map(level => (
-                <CommandItem key={level.value} value={level.value} aria-current={level.value === value ? 'true' : undefined} className="min-h-[44px] items-start gap-2"
+                <CommandItem key={level.value} value={level.value} aria-current={level.value === value ? 'true' : undefined} className="min-h-8 items-start gap-2 [@media(pointer:coarse)]:min-h-[44px]"
                   onSelect={() => { onSelect(level.value); onOpenChange(false); }}>
                   <Check className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', level.value === value ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -239,7 +239,7 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
         <PopoverContent align="end" className="w-72 max-w-[calc(100vw-2rem)] p-0" initialFocus={root}>
           <Command ref={root} loop shouldFilter={false} value={highlighted} onValueChange={setHighlighted} onKeyDown={onKeyDown} className="outline-none">
             {browsing && (
-              <CommandInput ref={search} autoFocus placeholder={`Search ${agentNames[browsing]} models...`} className="h-8" value={query} onValueChange={setQuery} />
+              <CommandInput ref={search} autoFocus placeholder={`Search ${agentNames[browsing]} models…`} className="h-8 normal-case" value={query} onValueChange={setQuery} />
             )}
             <CommandList className="max-h-96">
               {!browsing ? (
@@ -300,20 +300,22 @@ export function AgentChatNewChatButton({ defaultAgent, agents, agentModelNames, 
                         <CommandItem key={model.id} value={`model:${model.id}`} aria-current={isDefault ? 'true' : undefined} className="items-center gap-2" onSelect={() => start(browsing, model.id, level)}>
                           <Check className={cn('h-3.5 w-3.5 shrink-0', isDefault ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
                           <span className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate normal-case">{model.name}</span>
-                            {model.detail && <span className="truncate text-[11px] text-muted-foreground normal-case">{model.detail}</span>}
+                            <span className="flex min-w-0 items-center gap-2">
+                              <span className="truncate normal-case">{model.name}</span>
+                              {levels && level !== undefined && (
+                                <ThinkingLevelSelector model={model.name} levels={levels} value={level} open={openLevelSelector === model.id} returnFocus={search}
+                                  onOpenChange={next => {
+                                    setOpenLevelSelector(next ? model.id : null);
+                                    setHighlighted(`model:${model.id}`);
+                                  }}
+                                  onSelect={value => {
+                                    rememberModelThoughtSelection(browsing, model.id, value);
+                                    setLevelSelections(current => ({ ...current, [browsing]: { ...current[browsing], [model.id]: value } }));
+                                  }} />
+                              )}
+                            </span>
+                            {model.detail && <span className="text-[11px] text-muted-foreground normal-case">{model.detail}</span>}
                           </span>
-                          {levels && level !== undefined && (
-                            <ThinkingLevelSelector model={model.name} levels={levels} value={level} open={openLevelSelector === model.id} returnFocus={search}
-                              onOpenChange={next => {
-                                setOpenLevelSelector(next ? model.id : null);
-                                setHighlighted(`model:${model.id}`);
-                              }}
-                              onSelect={value => {
-                                rememberModelThoughtSelection(browsing, model.id, value);
-                                setLevelSelections(current => ({ ...current, [browsing]: { ...current[browsing], [model.id]: value } }));
-                              }} />
-                          )}
                         </CommandItem>
                       );
                     })}
