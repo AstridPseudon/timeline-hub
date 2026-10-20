@@ -10,6 +10,7 @@ import { createTimelineCommandSession, type CommandSessionState, type TimelineCo
 import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import type { VideoEditorShotsHost } from '../runtime/ports.ts';
+import { projectClipTrimPreview } from '../commands/clipTrimGesture.ts';
 
 export function useTimelineCommandSession(options: {
   legacyClean: () => boolean;
@@ -70,7 +71,8 @@ export function useTimelineCommandSession(options: {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const compiled = compileTimelinePatch(patch, commit.dataRef.current);
+          const trimmed = projectClipTrimPreview(patch, commit.dataRef.current);
+          const compiled = trimmed ? { valid: true, nextData: trimmed } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
           ownsHistoryRef.current = true;
@@ -106,7 +108,8 @@ export function useTimelineCommandSession(options: {
           let data = await buildTimelineData(config, registry, resolve,
             context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
           for (const preview of previews) {
-            const compiled = compileTimelinePatch(preview, data);
+            const trimmed = projectClipTrimPreview(preview, data);
+            const compiled = trimmed ? { valid: true, nextData: trimmed } : compileTimelinePatch(preview, data);
             if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
             data = compiled.nextData;
           }
@@ -137,6 +140,15 @@ export function useTimelineCommandSession(options: {
           capture(input) { requireCleanLabelEdit(); return labelPort.capture(input); },
           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
+        };
+        const trimPort = session.clipTrimPort;
+        const requireCleanTrim = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before trimming');
+        };
+        session.clipTrimPort = {
+          capture(input) { requireCleanTrim(); return trimPort.capture(input); },
+          finish(basis, args) { requireCleanTrim(); return trimPort.finish(basis, args); },
+          submit(input) { requireCleanTrim(); trimPort.submit(input); },
         };
         sessionRef.current = session;
         setState({ ...session.getState() });
@@ -192,6 +204,7 @@ export function useTimelineCommandSession(options: {
   const recover = useCallback(async (ownerId: string) => { await requireSession().recover(ownerId); }, [requireSession]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     trackLabelPort: sessionRef.current?.trackLabelPort,
+    clipTrimPort: sessionRef.current?.clipTrimPort,
     retry, undo, flush, recover };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>;

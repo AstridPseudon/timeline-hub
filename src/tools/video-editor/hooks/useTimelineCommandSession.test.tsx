@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { createInteractionState } from '../lib/interaction-state.ts';
 import { buildPendingDragSession, commitDraggingSession } from './useClipDrag.helpers.ts';
-import { document as commandDocument, environment } from '../commands/__tests__/commitSessionEnvironment.ts';
+import { document as commandDocument, environment, trimDocument } from '../commands/__tests__/commitSessionEnvironment.ts';
 import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createTimelineStore } from './timelineStore.ts';
 import { useTimelineSave } from './useTimelineSave.ts';
@@ -21,6 +21,7 @@ import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
+import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -70,8 +71,8 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>) {
   return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead };
 }
 
-async function scoped() {
-  const env = await environment();
+async function scoped(existingEnv?: Awaited<ReturnType<typeof environment>>) {
+  const env = existingEnv ?? await environment();
   installStorage(env);
   const initial = env.current();
   const snapshotWriteBlockedRef = { current: false };
@@ -346,6 +347,109 @@ describe('mounted timeline command session', () => {
     await act(async () => { await hook.result.current.commands.retry(); });
     expect(hook.result.current.commit.data?.config.clips[0].at).toBe(7);
     expect(hook.result.current.commit.data?.head?.headPublicationId).toBe('p2');
+    hook.unmount();
+  });
+});
+
+
+describe('mounted parent trim port', () => {
+  it('shares the move outbox, preserves source units and opaque rows, and never schedules a snapshot save', async () => {
+    const { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(await environment(trimDocument()));
+    env.setFault('lost');
+    let otherBefore: unknown;
+    act(() => {
+      expect(service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true);
+      const port = hook.result.current.commands.clipTrimPort;
+      const current = hook.result.current.commit.dataRef.current!;
+      otherBefore = structuredClone(current.config.clips.find((clip) => clip.id === 'other'));
+      submitClipTrimEdit(captureClipTrimEdit(port, current, 'x'), { in_s: 1.0001, out_s: 5 });
+    });
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    const current = hook.result.current.commit.data!;
+    expect(current.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ at: 5, from: 1.0001, to: 5, hold: 3.9999, speed: 2,
+      app: { astrid: { fixed_start: true, opaque: [null, false] }, 'org.example': { literal: 'x', clear: null } } });
+    expect(current.config.clips.find((clip) => clip.id === 'x')!.app!.astrid).not.toHaveProperty('for');
+    expect(current.config.clips.find((clip) => clip.id === 'x')!.app!.astrid).not.toHaveProperty('until');
+    expect(current.config.clips.find((clip) => clip.id === 'other')).toEqual(otherBefore);
+    const original = structuredClone(env.commits()[0]);
+    await act(async () => { await hook.result.current.commands.retry(); });
+    expect(env.commits()[1]).toEqual(original);
+    expect(env.commits()[2].body!.commands[0]).toMatchObject({ op: 'clip.trim',
+      args: { in_s: 1.0001, out_s: 5 }, expect: { 'parent/clip:x::from': { state: 'present', value: 2 } } });
+    expect(hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ at: 5, from: 1.0001, to: 5, hold: 3.9999, speed: 2 });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    await act(async () => { await hook.result.current.commands.undo(); await hook.result.current.commands.flush(); });
+    expect(hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ at: 5, from: 2, to: 6, hold: 17, speed: 2 });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+  it('recovers the exact native trim preview and pending request after a hook remount', async () => {
+    const env = await environment(trimDocument());
+    const first = await mounted(env);
+    env.setFault('lost');
+    act(() => submitClipTrimEdit(captureClipTrimEdit(first.hook.result.current.commands.clipTrimPort,
+      first.hook.result.current.commit.data!, 'x'), { in_s: 9.8999, out_s: 10 }));
+    await waitFor(() => expect(first.hook.result.current.commands.state.status).toBe('retry'));
+    const original = structuredClone(env.commits()[0]);
+    const owner = first.hook.result.current.commands.state.ownerId!;
+    first.hook.unmount();
+    const second = await mounted(env);
+    expect(second.hook.result.current.commands.state.status).toBe('recovery');
+    env.setFault('busy');
+    await act(async () => { await second.hook.result.current.commands.recover(owner); });
+    expect(second.hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ from: 9.8999, to: 10, hold: 0.1001, speed: 2 });
+    expect(second.hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!.app!.astrid).not.toHaveProperty('for');
+    expect(env.commits()[1]).toEqual(original);
+    env.setFault(null);
+    await act(async () => { await second.hook.result.current.commands.retry(); });
+    expect(env.commits()[2]).toEqual(original);
+    expect(second.hook.result.current.commands.state.status).toBe('saved');
+    expect(second.saveTimeline).not.toHaveBeenCalled();
+    expect(second.saveTimelineAtHead).not.toHaveBeenCalled();
+    expect(second.snapshotSaves).not.toHaveBeenCalled();
+    second.hook.unmount();
+  });
+  it('fences trim capture, finish and submission behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped(await environment(trimDocument()));
+    const port = hook.result.current.commands.clipTrimPort!;
+    const current = hook.result.current.commit.data!;
+    setLegacyClean(false);
+    expect(() => captureClipTrimEdit(port, current, 'x')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipTrimEdit(port, current, 'x');
+    const args = { in_s: 1, out_s: 5 };
+    setLegacyClean(false);
+    expect(() => submitClipTrimEdit(captured, args)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finish(captured.basis, args);
+    setLegacyClean(false);
+    expect(() => port.submit(prepared)).toThrow('earlier timeline saves');
+    expect(args).toEqual({ in_s: 1, out_s: 5 });
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('keeps the exact local preview when storage fails and saves through the same session after retry', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(await environment(trimDocument()));
+    const open = env.factory.open.bind(env.factory);
+    env.factory.open = () => { throw new Error('disk full'); };
+    act(() => submitClipTrimEdit(captureClipTrimEdit(hook.result.current.commands.clipTrimPort,
+      hook.result.current.commit.data!, 'x'), { in_s: 1, out_s: 5 }));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('error'));
+    expect(hook.result.current.commands.state.error).toContain('disk full');
+    expect(hook.result.current.commit.data!.config.clips.find((clip) => clip.id === 'x')!).toMatchObject({ from: 1, to: 5, hold: 4, speed: 2 });
+    expect(env.commits()).toHaveLength(0);
+    env.factory.open = open;
+    await act(async () => { await hook.result.current.commands.retry(); });
+    expect(env.commits()).toHaveLength(1);
+    expect(hook.result.current.commands.state.status).toBe('saved');
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
     hook.unmount();
   });
 });
