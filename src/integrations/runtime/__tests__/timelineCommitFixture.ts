@@ -1,5 +1,26 @@
 import { createHash } from 'node:crypto';
 import type { CommitAcceptedMutation, CommitRequest, HeadPin } from '../generated.ts';
+import type { HistoryEntry } from '../timeline-commit-types.ts';
+
+export function historyEntry(
+  head: HeadPin,
+  options: { projectId: string; timelineId: string },
+  overrides: Partial<HistoryEntry> = {},
+): HistoryEntry {
+  const accepted = acceptedCommit(head, head, options);
+  return {
+    publication_id: head.publication_id,
+    revision_id: head.revision_id,
+    previous: null,
+    receipt: accepted.receipt,
+    intent: 'recorded',
+    records: { schema_version: 1, commands: [], undo_of: [], restored_from: null },
+    provider_version: accepted.data.provider_version,
+    compiler_version: accepted.data.compiler_version,
+    publisher: accepted.data.publisher,
+    ...overrides,
+  };
+}
 
 // Fixture hashes use Runtime's sorted, compact canonical JSON for these JSON-only
 // payloads. Production digest/semantic verification remains Runtime-owned.

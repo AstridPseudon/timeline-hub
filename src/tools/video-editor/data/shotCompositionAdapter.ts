@@ -48,11 +48,16 @@ export type ShotCompositionPublicationReceipt = Readonly<{
 
 export type CanonicalShotCompositionHistoryEntry = Readonly<{
   revisionId: string;
+  publicationId?: string;
   projectId: string;
   parentDocumentId: string;
   contentDigest: string;
   createdAt: string;
   isCurrentHead: boolean;
+  intent?: 'recorded' | 'legacy_unknown' | 'bootstrap';
+  publisher?: string | null;
+  label?: string;
+  rationale?: string;
 }>;
 
 export type ShotCompositionHistoryRequest = ShotCompositionReadRequest;

@@ -194,33 +194,82 @@ export class RuntimeDataProvider implements DataProvider {
       }
     },
     listHistory: async (request) => {
+      if (request.projectId !== this.projectId || !request.parentDocumentId) {
+        throw new ShotCompositionUnavailableError('Timeline history requires the provider project and a timeline identity');
+      }
       const entries: CanonicalShotCompositionHistoryEntry[] = [];
+      const cursors = new Set<string>();
+      const publications = new Set<string>();
+      let head: HistoryPage['head'] | undefined;
       let cursor: string | undefined;
       do {
-        const pageKey = JSON.stringify([request.projectId, request.parentDocumentId, cursor ?? null]);
-        const page = await this.readImmutableInFlight(pageKey, () => this.client.listProjectParentCompositionRevisions(
-          request.projectId,
-          request.parentDocumentId,
-          cursor,
+        const pageKey = JSON.stringify(['commits', request.projectId, request.parentDocumentId, cursor ?? null]);
+        const page = await this.readImmutableInFlight(pageKey, () => this.listTimelineCommits(
+          request.parentDocumentId, cursor,
         ));
-        for (const value of page.items) {
-          const revisionId = requiredString(value.revision_id, 'composition history.revision_id');
-          const projectId = requiredString(value.project_id, 'composition history.project_id');
-          const parentDocumentId = requiredString(value.timeline_id, 'composition history.timeline_id');
-          if (projectId !== request.projectId || parentDocumentId !== request.parentDocumentId) {
-            throw new ShotCompositionUnavailableError('Workspace Runtime returned history outside the requested project and timeline');
-          }
-          entries.push({
-            revisionId,
-            projectId,
-            parentDocumentId,
-            contentDigest: requiredString(value.content_digest, 'composition history.content_digest'),
-            createdAt: requiredString(value.created_at, 'composition history.created_at'),
-            isCurrentHead: value.is_current_head === true,
-          });
+        const pageHead = requiredRecord(page.head, 'composition history.head');
+        const revisionId = requiredString(pageHead.revision_id, 'composition history.head.revision_id');
+        const publicationId = requiredString(pageHead.publication_id, 'composition history.head.publication_id');
+        if (head && (head.revision_id !== revisionId || head.publication_id !== publicationId)) {
+          throw new ShotCompositionUnavailableError('Workspace Runtime history head changed during pagination; refresh history');
         }
+        head = { revision_id: revisionId, publication_id: publicationId };
+        entries.push(...await Promise.all(array(page.items, 'composition history.items').map(async (value): Promise<CanonicalShotCompositionHistoryEntry> => {
+          const revisionId = requiredString(value.revision_id, 'composition history.revision_id');
+          const publicationId = requiredString(value.publication_id, 'composition history.publication_id');
+          const receipt = requiredRecord(value.receipt, 'composition history.receipt');
+          if (receipt.project_id !== request.projectId || receipt.receipt_id !== publicationId) {
+            throw new ShotCompositionUnavailableError('Workspace Runtime returned history with a mismatched project or publication');
+          }
+          if (publications.has(publicationId)) {
+            throw new ShotCompositionUnavailableError('Workspace Runtime returned a duplicate history publication');
+          }
+          publications.add(publicationId);
+          const intent = value.intent;
+          if (intent !== 'recorded' && intent !== 'legacy_unknown' && intent !== 'bootstrap') {
+            throw new ShotCompositionUnavailableError('Workspace Runtime returned an invalid history intent');
+          }
+          const createdAt = requiredString(receipt.created_at, 'composition history.receipt.created_at');
+          if (!Number.isFinite(Date.parse(createdAt))) {
+            throw new ShotCompositionUnavailableError('Workspace Runtime returned an invalid history timestamp');
+          }
+          const publisher = nullableString(value.publisher, 'composition history.publisher');
+          if ((value.label !== undefined && typeof value.label !== 'string')
+            || (value.rationale !== undefined && typeof value.rationale !== 'string')) {
+            throw new ShotCompositionUnavailableError('Workspace Runtime returned invalid history display metadata');
+          }
+          const { label, rationale } = value;
+          // History identifies publications; the scoped immutable read supplies
+          // the revision digest without inferring it from an acceptance envelope.
+          const parent = await this.readParentCompositionAtHead(request.projectId, request.parentDocumentId, revisionId);
+          const contentDigest = requiredString(parent.content_digest, 'composition history.content_digest');
+          acceptedDigest(contentDigest, 'history content_digest');
+          return {
+            revisionId,
+            publicationId,
+            projectId: request.projectId,
+            parentDocumentId: request.parentDocumentId,
+            contentDigest,
+            createdAt,
+            isCurrentHead: revisionId === pageHead.revision_id && publicationId === pageHead.publication_id,
+            intent,
+            publisher,
+            ...(label !== undefined ? { label } : {}),
+            ...(rationale !== undefined ? { rationale } : {}),
+          };
+        })));
+        if (page.next_cursor !== null && (typeof page.next_cursor !== 'string' || page.next_cursor.length === 0)) {
+          throw new ShotCompositionUnavailableError('Workspace Runtime returned an invalid history cursor');
+        }
+        if (page.next_cursor && cursors.has(page.next_cursor)) {
+          throw new ShotCompositionUnavailableError('Workspace Runtime returned a repeated history cursor');
+        }
+        if (page.next_cursor) cursors.add(page.next_cursor);
         cursor = page.next_cursor ?? undefined;
       } while (cursor);
+      if (!entries.some((entry) => entry.isCurrentHead)) {
+        throw new ShotCompositionUnavailableError('Workspace Runtime history omitted the current head publication');
+      }
       return entries;
     },
     restoreHistory: async (request) => {

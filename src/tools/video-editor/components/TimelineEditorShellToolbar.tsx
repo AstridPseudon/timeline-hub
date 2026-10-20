@@ -143,14 +143,14 @@ export function TimelineEditorShellToolbar({
             ) : (
               chrome.canonicalHistory.map((entry) => (
                 <DropdownMenuItem
-                  key={entry.revisionId}
+                  key={entry.publicationId ?? entry.revisionId}
                   className="flex flex-col items-start gap-1 py-2"
                   disabled={entry.isCurrentHead || chrome.restoringCanonicalRevisionId !== null}
                   onClick={() => void chrome.restoreCanonicalRevision(entry.revisionId)}
                 >
                   <div className="flex w-full items-start justify-between gap-2">
                     <span className="truncate font-mono text-xs text-foreground">
-                      {entry.revisionId.slice(0, 16)}
+                      {entry.label ?? entry.revisionId.slice(0, 16)}
                     </span>
                     {entry.isCurrentHead ? (
                       <Badge variant="secondary" className="shrink-0 px-1.5 py-0 text-[9px] uppercase tracking-[0.12em]">
@@ -162,6 +162,17 @@ export function TimelineEditorShellToolbar({
                       </Badge>
                     ) : null}
                   </div>
+                  {entry.publisher ? (
+                    <span className="text-[11px] text-muted-foreground">{entry.publisher}</span>
+                  ) : null}
+                  {entry.rationale ? (
+                    <span className="text-[11px] text-muted-foreground">{entry.rationale}</span>
+                  ) : null}
+                  {entry.intent === 'legacy_unknown' ? (
+                    <span className="text-[11px] text-muted-foreground">Legacy history · command intent unknown</span>
+                  ) : entry.intent === 'bootstrap' ? (
+                    <span className="text-[11px] text-muted-foreground">Initial timeline</span>
+                  ) : null}
                   <span className="text-[11px] text-muted-foreground">
                     {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
                   </span>

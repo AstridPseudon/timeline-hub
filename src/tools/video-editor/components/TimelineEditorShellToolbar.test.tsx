@@ -47,6 +47,91 @@ describe('TimelineEditorShellToolbar', () => {
     await waitFor(() => expect(refreshCanonicalHistory).toHaveBeenCalledTimes(1));
   });
 
+  it('shows publication metadata and restores a legacy revision even when another publication reuses it', async () => {
+    const restoreCanonicalRevision = vi.fn(async () => {});
+    const store = createTimelineStore();
+    const legacy = {
+      revisionId: 'shared-revision', publicationId: 'legacy-publication',
+      projectId: 'project-1', parentDocumentId: 'timeline-1', contentDigest: `sha256:${'a'.repeat(64)}`,
+      createdAt: '2026-10-19T00:00:00Z', isCurrentHead: false,
+      intent: 'legacy_unknown' as const, publisher: null,
+    };
+    store.setState((state) => ({ chrome: {
+      ...state.chrome,
+      canonicalHistorySupported: true,
+      canonicalHistory: [legacy, {
+        ...legacy, publicationId: 'recorded-publication', intent: 'recorded', isCurrentHead: true,
+        publisher: 'actor-1', label: 'Restore opening', rationale: 'Keep the original framing',
+      }],
+      refreshCanonicalHistory: vi.fn(async () => {}),
+      restoreCanonicalRevision,
+    } }));
+    render(
+      <TimelineStoreProvider store={store}>
+        <TimelineEditorShellToolbar
+          touchChrome={false}
+          condensed={false}
+          toolbarModeSwitcher={null}
+          onDividerPointerDown={() => {}}
+          onDividerPointerMove={() => {}}
+          onDividerPointerUp={() => {}}
+          onDividerPointerCancel={() => {}}
+          onDividerLostPointerCapture={() => {}}
+          isTimelineMaximized={false}
+          setIsTimelineMaximized={() => {}}
+          onOpenElements={() => {}}
+        />
+      </TimelineStoreProvider>,
+    );
+
+    fireEvent.click(screen.getByTitle('History'));
+    const recorded = await screen.findByRole('menuitem', { name: /Restore opening/ });
+    expect(recorded.getAttribute('aria-disabled')).toBe('true');
+    expect(screen.getByText('actor-1')).toBeTruthy();
+    expect(screen.getByText('Keep the original framing')).toBeTruthy();
+    expect(screen.getAllByText('Current')).toHaveLength(1);
+    const historical = screen.getByRole('menuitem', { name: /Legacy history · command intent unknown/ });
+    expect(historical.getAttribute('aria-disabled')).not.toBe('true');
+    fireEvent.click(historical);
+    await waitFor(() => expect(restoreCanonicalRevision).toHaveBeenCalledWith('shared-revision'));
+  });
+
+  it('shows canonical history failures as an alert without offering stale entries', async () => {
+    const store = createTimelineStore();
+    store.setState((state) => ({ chrome: {
+      ...state.chrome,
+      canonicalHistorySupported: true,
+      canonicalHistoryError: 'Workspace Runtime returned a repeated history cursor',
+      canonicalHistory: [{
+        revisionId: 'stale-revision', projectId: 'project-1', parentDocumentId: 'timeline-1',
+        contentDigest: `sha256:${'a'.repeat(64)}`, createdAt: '2026-10-19T00:00:00Z', isCurrentHead: false,
+      }],
+      refreshCanonicalHistory: vi.fn(async () => {}),
+    } }));
+    render(
+      <TimelineStoreProvider store={store}>
+        <TimelineEditorShellToolbar
+          touchChrome={false}
+          condensed={false}
+          toolbarModeSwitcher={null}
+          onDividerPointerDown={() => {}}
+          onDividerPointerMove={() => {}}
+          onDividerPointerUp={() => {}}
+          onDividerPointerCancel={() => {}}
+          onDividerLostPointerCapture={() => {}}
+          isTimelineMaximized={false}
+          setIsTimelineMaximized={() => {}}
+          onOpenElements={() => {}}
+        />
+      </TimelineStoreProvider>,
+    );
+
+    fireEvent.click(screen.getByTitle('History'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('repeated history cursor');
+    expect(screen.queryByText('stale-revision')).toBeNull();
+    expect(screen.queryByText('No published revisions yet.')).toBeNull();
+  });
+
   describe('the save badge', () => {
     const renderToolbar = (saveStatus: 'saved' | 'saving' | 'dirty' | 'retrying' | 'error', isConflictExhausted = false) => {
       const store = createTimelineStore();

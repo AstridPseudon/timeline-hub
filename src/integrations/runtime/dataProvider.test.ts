@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AstridRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
-import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
+import { acceptedCommit, fixtureDigest, historyEntry } from './__tests__/timelineCommitFixture.ts';
 import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
 import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, isOwnUnacknowledgedSaveError } from '@/tools/video-editor/data/DataProvider.ts';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
@@ -647,6 +647,14 @@ describe('RuntimeDataProvider', () => {
       revision_id: 'parent-old', content_digest: accepted.data.canonical_document.parent_revision.content_digest,
     } }];
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      if (args[0] === 'GET' && args[1].endsWith('/commits?limit=50')) {
+        const head = { revision_id: 'parent-r1', publication_id: 'publication-current' };
+        const scope = { projectId: PROJECT_ID, timelineId: TIMELINE_ID };
+        return { status: 200, headers: {}, body: json({ head, next_cursor: null, items: [
+          historyEntry(head, scope),
+          historyEntry({ revision_id: 'parent-old', publication_id: 'publication-old' }, scope),
+        ] }) };
+      }
       if (args[0] === 'GET' && args[1] === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
         headReads += 1;
         return { status: 200, headers: {}, body: json(restoreHeadResource()) };
@@ -662,6 +670,7 @@ describe('RuntimeDataProvider', () => {
 
     const history = await provider.shotComposition.listHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID });
     expect(history.map((entry) => entry.revisionId)).toEqual(['parent-r1', 'parent-old']);
+    const historyReads = fixture.requests.filter((request) => request.path.includes('/composition-revisions/'));
     const restored = provider.shotComposition.restoreHistory!({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID, revisionId: 'parent-old' });
     if (complete) {
       await expect(restored).resolves.toEqual({ newHead: 'restore-parent-old' });
@@ -674,7 +683,7 @@ describe('RuntimeDataProvider', () => {
     }]);
     expect(headReads).toBe(1);
     expect(fixture.requests.some((request) => request.path.endsWith('/inspect'))).toBe(false);
-    expect(fixture.requests.some((request) => request.method === 'GET' && request.path.includes('/composition-revisions/'))).toBe(false);
+    expect(fixture.requests.filter((request) => request.path.includes('/composition-revisions/'))).toEqual(historyReads);
   });
 
   it.each([
