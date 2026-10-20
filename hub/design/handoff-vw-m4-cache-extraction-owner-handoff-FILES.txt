@@ -1,0 +1,16 @@
+candidate branch: tl/vw-m4-cache-extraction-owner-handoff
+candidate commit: 32c72018d7c8fbeab5c3596d638ce4a3bb0b060d
+candidate tree: 81fd1f0f8ec4af09ae6cc54f00654578de65a1cd
+comparison parent: f711cbd29be0b0cb1a51328ea5093b954db3c158
+
+changed files (exactly 2):
+astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py (new, 63 lines)
+astrid/packs/rendering/actions/timeline_visualize/filmstrip_cards.py (1968 -> 1917 lines)
+
+unchanged behavior/test inventory:
+tests/packs/rendering/test_scene_cache_payload.py (12 test functions; key/PNG/source/fallback/no-mint)
+tests/packs/rendering/test_timeline_visualize_labels.py (9 test functions; address/overlay/default-off)
+tests/packs/rendering/test_labels_overlay.py (8 test functions; address/public-row behavior)
+tests/packs/rendering/test_timeline_filmstrip_cards.py (37 test functions; PNG/card behavior)
+tests/packs/rendering/test_scene_source_carry.py (17 test functions; source/fallback/refusal behavior)
+tests/reshape/test_compare_baselines.py::test_the_tree_has_exactly_the_baselined_structure_violations (structure gate)
