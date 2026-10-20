@@ -26,7 +26,8 @@ from tests.timeline.test_authoring_bundle import AUDIO, OLD, _replace_values
 pytestmark = pytest.mark.integration
 
 
-def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path):
+@pytest.mark.parametrize('mode', ['scalar', 'compound', 'separate'])
+def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path, mode):
     use_runtime()
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
@@ -84,7 +85,20 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path):
 
     try:
         original = current()
-        calls = app_calls(bundle_from_document(original))
+        state = bundle_from_document(original)
+        moves = []
+        if mode != 'scalar':
+            from astrid.sdk.timeline.capture import capture_move
+            from astrid.sdk.timeline.commands import execute
+
+            moves = [capture_move(state, CHILD, 4)]
+            state = execute(state, moves).bundle
+        calls = app_calls(state)
+        if mode == 'separate':
+            submit(request(moves), 'move-before-scalars')
+            original = current()
+        elif mode == 'compound':
+            calls = moves + calls
         body = request(calls)
         accepted = submit(body, 'app-scalars')
         assert accepted['data']['commands'] == calls
@@ -92,6 +106,9 @@ def test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba(tmp_path):
         assert current() == document
         state = bundle_from_document(document)
         assert clip(state, CHILD)['hold'] == 4
+        if mode != 'scalar':
+            assert clip(state, CHILD)['at'] == 4
+            assert clip(state, CHILD)['app']['astrid'] == {'fixed_start': True, 'for': 4}
         assert 'asset' not in clip(state, CLEAR)
         assert 'transition' not in clip(state, PARENT)
         service.close()

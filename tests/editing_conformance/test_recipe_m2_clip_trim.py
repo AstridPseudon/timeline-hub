@@ -252,3 +252,13 @@ def test_portable_golden_and_closed_schema():
         assert list(validator.iter_errors({**plan.commands[0], **changes}))
     absent_app = execute(bundle(app=None), [capture_clip_trim(bundle(app=None), REF)])
     assert absent_app.records[0]['writes'][-1]['after'] == ABSENT
+
+
+def test_trim_accepts_static_move_intent_but_refuses_dynamic_follow():
+    original = bundle(app={'astrid': {'fixed_start': True, 'for': 2}})
+    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
+    assert clip(plan.bundle)['app']['astrid']['fixed_start'] is True
+    assert 'for' not in clip(plan.bundle)['app']['astrid']
+    dynamic = bundle(app={'astrid': {'on': 'word:one'}})
+    with pytest.raises(CommandError, match='does not support'):
+        capture_clip_trim(dynamic, REF, in_s=1, out_s=5)

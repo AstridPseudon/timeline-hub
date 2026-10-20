@@ -7,6 +7,7 @@ import types
 
 import pytest
 
+from astrid.sdk.timeline._trim_commands import capture_clip_trim
 from astrid.sdk.timeline.commit import (
     _digest,
     bundle_from_document,
@@ -250,6 +251,33 @@ class DetachedPort:
 def inverse(publications):
     return {"schema_version": 1, "op": "timeline.inverse", "version": "1",
             "select": None, "args": {"publications": publications}}
+
+
+def trim_document():
+    document = document_fixture(shared=False)
+    payload = document["parent_revision"]["payload"]
+    for rows in (payload["clips"], payload["config"]["clips"]):
+        rows[0].update(at=1, **{"from": 2, "to": 6, "speed": 2, "hold": 17})
+    payload["registry"] = copy.deepcopy(payload["registry"])
+    payload["registry"]["assets"]["picture"].update(type="image", duration=10)
+    document["parent_revision"]["content_digest"] = _digest(payload)
+    return document
+
+
+def test_provider_accepts_trim_after_move_and_undoes_only_trim():
+    realm = DetachedRealm(trim_document())
+    moved = realm.call([realm.move()])
+    command = capture_clip_trim(
+        bundle_from_document(realm.documents[realm.head["revision_id"]]),
+        "parent/clip:clip-a", in_s=1, out_s=5)
+    accepted = realm.call([command])
+    row = bundle_from_document(realm.documents[realm.head["revision_id"]])["parent"]["clips"][0]
+    assert row["at"] == 3.003
+    assert row["hold"] == 4
+    assert row["app"]["astrid"]["fixed_start"] is True
+    assert "for" not in row["app"]["astrid"]
+    undone = realm.call([inverse([accepted["receipt"]["receipt_id"]])])
+    assert undone["data"]["canonical_document"] == moved["data"]["canonical_document"]
 
 
 def track_create(identity="reserved-track", owner="parent"):

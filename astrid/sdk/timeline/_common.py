@@ -4,7 +4,7 @@ from __future__ import annotations
 import difflib
 import math
 import re
-from typing import Any
+from typing import Any, Mapping
 
 
 
@@ -37,6 +37,16 @@ POSITION_KEYS = frozenset({"x", "y"})
 
 class TimelineEditError(ValueError):
     """An edit that cannot be applied; the message says what to do instead."""
+
+
+def _media_kind(entry: Mapping[str, Any]) -> str | None:
+    """Normalize registry MIME types and legacy kind names to image/audio/video."""
+    value = str(entry.get("type") or "").strip().lower().split(";", 1)[0]
+    if "/" in value:
+        value = value.split("/", 1)[0]
+    if value.startswith(("image", "audio", "video")):
+        return value.split("-", 1)[0]
+    return value if value in {"image", "audio", "video"} else None
 
 
 def _length_seconds(value: Any, fps: float) -> float:

@@ -206,3 +206,38 @@ def test_selected_pack_refuses_a_port_without_document_object(selected_effect, m
     with pytest.raises(CommitRejected, match='document_object support is required'):
         commit(realm, [command])
     assert (realm.head, realm.entries, realm.documents) == before
+
+
+def test_inverse_of_older_param_record_uses_only_selected_identity(selected_effect, monkeypatch):
+    realm, selected, _ = selected_effect
+    row = copy.deepcopy(State(current(realm)).entity(REF))
+    row['id'] = 'legacy-alias'
+    # The ignored alias names another real admitted revision in this same pin.
+    admissions = realm.schema_options['schema_inputs'][0][0]['document']['content']['admissions']
+    other = next(item for item in admissions if item['revision'] != selected['revision'])
+    row['element_ref'] = {key: other[key] for key in ('id', 'kind', 'revision')}
+    row['element_ref']['packId'] = selected['packId']
+    ref = 'parent/clip:legacy-alias'
+    commit(realm, [capture_clip_add(current(realm), 'parent', row)])
+    accepted = commit(realm, [capture_clip_set_params(
+        current(realm), ref, values={'seed': 8}, **realm.schema_options)])
+    # Represent the predecessor's accepted record shape, preserving all its
+    # original source pin, authored writes, identity reads and expectations.
+    record = realm.entries[-1]['records']['commands'][0]
+    record['dependencies'] = [dep for dep in record['dependencies'] if dep['key'] != 'params.snapshot']
+    for binding in record['bindings']:
+        if binding['key'] == 'params.element':
+            binding['dependencies'] = ['params.schema']
+    reads = []
+    original = DetachedPort.document_object
+
+    def read(port, pin, object_id):
+        reads.append((pin, object_id))
+        return original(port, pin, object_id)
+
+    monkeypatch.setattr(DetachedPort, 'document_object', read)
+    commit(realm, [inverse([accepted['receipt']['receipt_id']])])
+    assert State(current(realm)).entity(ref) == row
+    selected_object = next(item['snapshot_object']['object_id'] for item in admissions
+                           if item['revision'] == selected['revision'])
+    assert reads == [(realm.schema_options['schema_source'], selected_object)]

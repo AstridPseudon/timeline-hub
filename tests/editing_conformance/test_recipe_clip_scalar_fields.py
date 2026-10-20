@@ -252,3 +252,119 @@ def test_hold_clear_does_not_substitute_a_legacy_duration_codec_for_source_windo
     clip(original, REF)['duration_ms'] = 1000
     with pytest.raises(CommandError, match='surviving source window'):
         capture_clip_set(original, REF, clear=['hold'])
+
+
+@pytest.mark.parametrize('ref,on', [('parent/clip:direct', 4.004), (REF, 12.012)])
+@pytest.mark.parametrize('fps', [30, {'numerator': 30000, 'denominator': 1001}])
+@pytest.mark.parametrize('clear', [False, True])
+def test_move_then_hold_compiles_source_units_and_roundtrips_own_write_stages(ref, on, fps, clear):
+    from astrid.core.timeline.duration import clip_end_frame, clip_timeline_duration
+    from astrid.core.timeline.shot_composition_projection import project_runtime_parent_composition
+    from astrid.sdk.timeline.capture import capture_move, rate
+
+    original = bundle(fps=fps)
+    row = clip(original, ref)
+    row.update({'hold': 2, 'speed': 2, 'from': 1, 'to': 7,
+                'app': {'opaque': [None, False], 'astrid': {'opaque': {'order': [2, 1]}}}})
+    if ref.startswith('parent'):
+        original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    move = capture_move(original, ref, on)
+    moved = execute(original, [move])
+    edit = capture_clip_set(moved.bundle, ref, **({'clear': ['hold']} if clear else {'values': {'hold': 8}}))
+    plan = execute(original, [move, edit])
+    assert plan.commands == [move, edit]
+    assert execute(moved.bundle, [edit]).bundle == plan.bundle
+    expected = copy.deepcopy(clip(moved.bundle, ref))
+    if clear:
+        expected.pop('hold')
+    else:
+        expected['hold'] = 8
+    expected['app']['astrid']['for'] = 3 if clear else 4
+    assert clip(plan.bundle, ref) == expected
+    assert [w['path'] for w in plan.records[1]['writes']] == [['app', 'astrid', 'for'], ['hold']]
+    assert State(plan.bundle).config('occurrence:occ-2') == State(original).config('occurrence:occ-2')
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == original
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+    assert replay(plan, original).records == plan.records
+
+    publication = compile_authoring_candidate(plan.bundle).publication
+    parent = {'project_id': original['project_id'], 'timeline_id': original['timeline_id'],
+              'revision_id': publication['parent_revision_id'], 'content_digest': publication['content_digest'],
+              'payload': publication['parent_composition']}
+    shots = [dict(r, project_id=original['project_id']) for r in publication['shot_revisions']]
+    internals = [dict(r, project_id=original['project_id']) for r in publication['internal_timeline_revisions']]
+    readback = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    assert clip(readback, ref) == expected
+    projection = project_runtime_parent_composition(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    identity = 'direct' if ref.startswith('parent') else 'occ-1:picture-1'
+    compiled = next(r for r in projection.config['clips'] if r['id'] == identity)
+    assert clip_timeline_duration(compiled) == expected['app']['astrid']['for']
+    assert compiled['at'] == pytest.approx(expected['at'] + (0 if ref.startswith('parent') else 10))
+    assert clip_end_frame(compiled, float(rate(fps))) == clip_end_frame(
+        dict(expected, at=compiled['at']), float(rate(fps)))
+
+
+@pytest.mark.parametrize('prefix', [[], ['app'], ['app', 'astrid']])
+def test_matching_static_duration_leaves_only_and_unchanged_aba_guards(prefix):
+    original = bundle(app={'astrid': {}})
+    for path in (['for'], ['app', 'for'], ['app', 'astrid', 'for']):
+        State(original).set(REF, path, present(1))
+    plan = execute(original, [capture_clip_set(original, REF, values={'hold': 1})])
+    assert plan.bundle == original
+    assert [w['path'] for w in plan.records[0]['writes']] == [
+        ['for'], ['app', 'for'], ['app', 'astrid', 'for'], ['hold']]
+    path = prefix + ['for']
+    for history in ([later(REF, path, 1)], [later(REF, path, 2), later(REF, path, 1)]):
+        with pytest.raises(CommandError, match='intervening'):
+            inverse(plan.bundle, plan.records, history)
+        with pytest.raises(CommandError, match='intervening'):
+            replay(plan, original, intervening_records=history)
+    changed = execute(original, [capture_clip_set(original, REF, values={'hold': 2})])
+    assert all(w['after'] == present(2) for w in changed.records[0]['writes'])
+    head = copy.deepcopy(changed.bundle)
+    clip(head, REF)['app']['astrid']['sibling'] = {'keep': [None, 0]}
+    restored = inverse(head, changed.records)
+    assert clip(restored.bundle, REF)['app']['astrid']['sibling'] == {'keep': [None, 0]}
+    assert clip(restored.bundle, REF)['hold'] == 1
+
+
+@pytest.mark.parametrize('prefix', [[], ['app'], ['app', 'astrid']])
+@pytest.mark.parametrize('key,value', [('for', 2), ('for', True), ('for', '2s'), ('for', {'anchor': 'end'}),
+    ('on', 'clip:other'), ('until', 'end'), ('fixed_start', 'dynamic'), ('formulas', {'hold': 'x'})])
+def test_hold_after_move_still_refuses_independent_or_dynamic_intent(prefix, key, value):
+    from astrid.sdk.timeline.capture import capture_move
+
+    original = bundle()
+    moved = execute(original, [capture_move(original, REF, 12)]).bundle
+    State(moved).set(REF, prefix + [key], present(value))
+    before = copy.deepcopy(moved)
+    with pytest.raises(CommandError) as error:
+        capture_clip_set(moved, REF, values={'hold': 2})
+    assert error.value.kind == 'unsupported_timing'
+    assert moved == before
+
+
+@pytest.mark.parametrize('field,value', [('time_map', {}), ('timeMap', []), ('from_ms', 0),
+    ('to_ms', 1000), ('duration', 1), ('duration_ms', 1000)])
+def test_hold_after_move_still_refuses_maps_and_incompatible_duration_codecs(field, value):
+    from astrid.sdk.timeline.capture import capture_move
+
+    moved = execute(bundle(), [capture_move(bundle(), REF, 12)]).bundle
+    clip(moved, REF)[field] = value
+    with pytest.raises(CommandError):
+        capture_clip_set(moved, REF, values={'hold': 2})
+
+
+def test_hold_after_move_retains_half_open_occurrence_and_frame_guards():
+    from astrid.sdk.timeline.capture import capture_move
+
+    original = bundle(fps={'numerator': 30000, 'denominator': 1001})
+    clip(original, REF).update(hold=2, speed=2)
+    moved = execute(original, [capture_move(original, REF, 11.011)]).bundle
+    # Local start 1.011 leaves exactly 8.989 timeline seconds at speed two.
+    plan = execute(moved, [capture_clip_set(moved, REF, values={'hold': 17.978})])
+    assert clip(plan.bundle, REF)['app']['astrid']['for'] == pytest.approx(8.989)
+    with pytest.raises(CommandError) as error:
+        capture_clip_set(moved, REF, values={'hold': 17.98})
+    assert error.value.kind == 'occurrence_boundary'

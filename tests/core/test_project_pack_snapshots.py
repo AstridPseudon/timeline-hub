@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -81,6 +82,111 @@ def test_noop_readmission_after_cache_loss_reuses_original_cas_receipt(admitted,
     assert again['documentVersion'] == result['documentVersion']
     assert configured.rows == before and len(configured.media.imports) == uploads
     assert (Path(record['snapshot']['root']) / '.build-receipt.json').read_bytes() == source[3]
+
+
+def test_mixed_admission_retains_old_records_closures_and_pins(configured):
+    root, directory, manifest = test_project_packs.seed()
+    other = test_project_packs.add_second_element(root, directory, manifest)
+    first = packs.admit_project_pack('realm', 'project')
+    old_records = {e['descriptor']['id']: e for e in first['elements']}
+    old_sources = [capture_input(configured, record) for record in first['elements']]
+    old_row = copy.deepcopy(configured.rows[('project', first['documentId'])])
+    old_objects = copy.deepcopy(configured.media.objects)
+    component = other / 'component.tsx'
+    component.write_text(component.read_text() + '\n// B only, preserve original bytes\n')
+    second = packs.admit_project_pack('realm', 'project')
+    current = {e['descriptor']['id']: e for e in second['elements']}
+    updated = configured.rows[('project', second['documentId'])]
+    assert second['documentVersion'] == first['documentVersion'] + 1
+    assert updated['content']['admissions'][:2] == old_row['content']['admissions']
+    assert len(updated['content']['admissions']) == 3
+    assert current['reveal'] == old_records['reveal']
+    index = Path(second['manifestPath'])
+    selected = json.loads(index.read_bytes())
+    assert selected['elements'][:2] == first['elements']
+    for source, record in zip(old_sources, first['elements']):
+        assert capture_input(configured, record)[2:] == source[2:]
+        assert source[1]['document']['content'] == old_row['content']
+        assert source[1]['pin']['content_digest'] == packs._json_digest(old_row['content'])
+    for key, raw in old_objects.items():
+        assert configured.media.objects[key] == raw
+
+    sources = [capture_input(configured, record)
+               for record in (*first['elements'], current['fade'])]
+    new_admission = updated['content']['admissions'][-1]
+    new_data = configured.media.objects[('project', new_admission['snapshot_object']['object_id'])]
+    new_files, new_receipt = packs._snapshot_resources(new_data)
+    assert new_files == {name: (root / name).read_bytes() for name in packs._resources(root)[1]}
+    assert new_receipt == sources[-1][3]
+    assert {e['id'] for e in json.loads(new_receipt)['elements']} == {'reveal', 'fade'}
+    assert new_admission['snapshot_object'] != old_row['content']['admissions'][0]['snapshot_object']
+
+    # A retry restores the current closure's original receipt after cache loss.
+    before = copy.deepcopy(configured.rows)
+    writes, uploads, index_bytes = len(configured.writes), len(configured.media.imports), index.read_bytes()
+    shutil.rmtree(Path(current['fade']['snapshot']['root']))
+    assert packs.admit_project_pack('realm', 'project')['elements'] == second['elements']
+    assert configured.rows == before and index.read_bytes() == index_bytes
+    assert (len(configured.writes), len(configured.media.imports)) == (writes, uploads)
+    assert (Path(current['fade']['snapshot']['root']) / '.build-receipt.json').read_bytes() == new_receipt
+
+    shutil.rmtree(root)
+    shutil.rmtree(packs.artifact_root())
+    for source, record in zip(sources, (*first['elements'], current['fade'])):
+        admission = next(a for a in source[1]['document']['content']['admissions']
+                         if all(a[k] == source[0][k] for k in ('id', 'kind', 'revision')))
+        descriptor = admission['snapshot_object']
+        data = configured.media.objects[('project', descriptor['object_id'])]
+        snapshot = {**descriptor, 'bytes_base64': base64.b64encode(data).decode('ascii')}
+        assert packs.admitted_element_snapshot_descriptor('realm', 'project', *source[:2], snapshot) == record['descriptor']
+    # Immutable old pins still decode their old full closures too.
+    for source, record in zip(old_sources, first['elements']):
+        assert packs.admitted_element_descriptor('realm', 'project', *source) == record['descriptor']
+
+
+@pytest.mark.parametrize('two_elements', [False, True])
+def test_manifest_only_readmission_keeps_current_selection(configured, two_elements):
+    root, directory, manifest = test_project_packs.seed()
+    if two_elements:
+        test_project_packs.add_second_element(root, directory, manifest)
+    first = packs.admit_project_pack('realm', 'project')
+    before = copy.deepcopy(configured.rows)
+    index = Path(first['manifestPath'])
+    index_bytes = index.read_bytes()
+    writes, uploads = len(configured.writes), len(configured.media.imports)
+    manifest['description'] += ' metadata only'
+    (root / 'pack.yaml').write_text(yaml.safe_dump(manifest))
+    again = packs.admit_project_pack('realm', 'project')
+    assert again['documentVersion'] == first['documentVersion']
+    assert again['elements'] == first['elements']
+    assert configured.rows == before and index.read_bytes() == index_bytes
+    assert (len(configured.writes), len(configured.media.imports)) == (writes, uploads)
+
+
+@pytest.mark.parametrize('failure', ['build', 'upload', 'document_cas'])
+def test_failed_mixed_admission_keeps_old_selection(configured, monkeypatch, failure):
+    root, directory, manifest = test_project_packs.seed()
+    other = test_project_packs.add_second_element(root, directory, manifest)
+    first = packs.admit_project_pack('realm', 'project')
+    before, objects = copy.deepcopy(configured.rows), copy.deepcopy(configured.media.objects)
+    index = Path(first['manifestPath'])
+    index_bytes = index.read_bytes()
+    component = other / 'component.tsx'
+    component.write_text(component.read_text() + '\n// B only\n')
+    with monkeypatch.context() as build:
+        if failure == 'build':
+            build.setenv(packs.BUILD_ENV, json.dumps([sys.executable, '-c', 'raise SystemExit(1)']))
+        configured.media.reject = failure == 'upload'
+        configured.reject_update = failure == 'document_cas'
+        with pytest.raises(ValueError, match='build verification failed|ingest failed|CAS rejected'):
+            packs.admit_project_pack('realm', 'project')
+    assert configured.rows == before and index.read_bytes() == index_bytes
+    assert all(configured.media.objects[key] == raw for key, raw in objects.items())
+    configured.media.reject = configured.reject_update = False
+    second = packs.admit_project_pack('realm', 'project')
+    assert second['documentVersion'] == first['documentVersion'] + 1
+    if failure != 'build':
+        assert configured.media.imports[-2] == configured.media.imports[-1]
 
 
 def test_explicit_legacy_readmission_backfills_one_identity(admitted, configured):

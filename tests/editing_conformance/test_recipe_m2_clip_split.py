@@ -229,6 +229,73 @@ def test_image_hold_only_and_legacy_literal_for_presence():
     assert_refusal_unchanged(original, lambda: split(original))
 
 
+def test_split_accepts_the_default_main_registry_fixture():
+    document = document_fixture(shared=False)
+    payload = document['parent_revision']['payload']
+    for rows in (payload['clips'], payload['config']['clips']):
+        rows[0].update(at=1, **{'from': 2, 'to': 10, 'speed': 2})
+        rows[0].pop('hold', None)
+    payload['registry'] = copy.deepcopy(payload['registry'])
+    payload['registry']['assets']['picture']['duration'] = 20
+    document['parent_revision']['content_digest'] = _digest(payload)
+    plan = split(bundle_from_document(document))
+    assert [row['id'] for row in plan.bundle['parent']['clips'][:2]] == ['clip-a', 'right']
+
+
+@pytest.mark.parametrize('source_type', ['video/mp4', 'audio/wav', 'image/png'])
+def test_split_uses_main_registry_mime_kind_normalizer(source_type):
+    original = bundle_from_document(source_document(source_type=source_type))
+    plan = split(original)
+    assert plan.bundle['parent']['clips'][1]['asset'] == 'picture'
+
+
+def test_native_move_split_mime_fixture_has_no_renderer_or_legacy_writer_imports():
+    import os
+    import subprocess
+    import sys
+
+    source = '''
+import importlib.abc, json, sys
+class Block(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, *args):
+        if fullname.startswith((
+                'astrid.packs.rendering', 'astrid.core.rendering', 'astrid.sdk.authoring_render_preview',
+                'astrid.core.timeline.compatibility', 'composition', 'runtime_protocol',
+                'astrid.sdk.timeline.edits', 'astrid.sdk.timeline.model', 'astrid.sdk.timeline.journal')):
+            raise AssertionError('native save imported ' + fullname)
+sys.meta_path.insert(0, Block())
+from astrid.sdk.timeline._split_commands import capture_clip_split
+from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
+document = json.load(sys.stdin)
+original = bundle_from_document(document)
+moved = execute(original, [capture_move(original, 'parent/clip:clip-a', 3.003)]).bundle
+plan = execute(moved, [capture_clip_split(moved, 'parent/clip:clip-a', on=4, right_id='right')])
+assert [row['id'] for row in plan.bundle['parent']['clips'][:2]] == ['clip-a', 'right']
+assert plan.bundle['parent']['registry']['assets']['picture']['type'] == 'video/mp4'
+'''
+    result = subprocess.run(
+        [sys.executable, '-c', source],
+        input=json.dumps(source_document(source_type='video/mp4')),
+        env={**os.environ, 'PYTHONPATH': str(Path(__file__).parents[2]), 'PYTHONDONTWRITEBYTECODE': '1'},
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_split_preserves_static_move_intent_and_splits_literal_for():
+    from astrid.sdk.timeline.capture import capture_move
+
+    original = bundle_from_document(source_document())
+    moved = execute(original, [capture_move(original, TARGET, 3.003)]).bundle
+    plan = split(moved, on=4, right_id='right')
+    left, right = plan.bundle['parent']['clips'][:2]
+    assert left['app']['astrid']['fixed_start'] is True
+    assert right['app']['astrid']['fixed_start'] is True
+    assert left['app']['astrid']['for'] + right['app']['astrid']['for'] == pytest.approx(4)
+
+
 @pytest.mark.parametrize('change', [
     {'args': {'on': 3}}, {'args': {'on': 3, 'right_id': 'r', 'index': 1}},
     {'args': {'on': 3, 'right_id': 'bad/id'}}, {'args': {'on': 3, 'right_id': 'bad::id'}},

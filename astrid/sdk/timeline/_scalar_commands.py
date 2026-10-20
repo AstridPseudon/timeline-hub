@@ -118,7 +118,10 @@ def _selected_schema(ctx, command, ref, selected):
     except ValueError as exc:
         raise CommandError(str(exc), ref=ref) from exc
     ctx.dependency('params.schema', 'source', pin)
-    ctx.bind('params.element', ref, dependencies=['params.schema'])
+    ctx.dependency('params.snapshot', 'entity', {
+        'source': pin, 'element': selected,
+        'object': admission['snapshot_object']})
+    ctx.bind('params.element', ref, dependencies=['params.schema', 'params.snapshot'])
     captures = ctx.state.bundle['source_mapping'].setdefault('pinned_documents', [])
     if not any(capture['pin'] == pin for capture in captures):
         captures.append(copy.deepcopy(verified))
