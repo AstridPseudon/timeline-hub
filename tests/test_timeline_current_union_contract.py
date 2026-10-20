@@ -29,6 +29,15 @@ CASES = ORDINARY_CASES + [
     ("occurrence.delete", "occurrence:o", {}),
     ("producer.guard", None, {"pin": PIN}),
 ]
+NEW_OPERATIONS = {
+    "timeline.assembled-target",
+    "clip.add-media",
+    "timeline.init",
+    "clip.anchor",
+    "occurrence.create",
+    "clip.swap-media",
+    "text-binding.set",
+}
 
 
 def command(op, select, args):
@@ -41,7 +50,8 @@ def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     schema = json.loads(raw)
     assert len(schema["$defs"]) == 55
     assert len(schema["$defs"]["EditCommand"]["allOf"]) == 29
-    assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} >= {c[0] for c in CASES}
+    expected_operations = {c[0] for c in CASES} | NEW_OPERATIONS
+    assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} == expected_operations
     bundle = json.loads((ROOT / "runtime_protocol/schemas/timeline-commit-bundle.json").read_bytes())
     assert bundle["resources"]["https://astrid.haus/workspace/v1/schemas/edit-command.json"] == schema
 
@@ -103,12 +113,10 @@ def test_packaged_read_shape_keeps_token_paths_and_presence(read):
 def test_public_python_union_types_and_nested_item_references_resolve():
     schema = json.loads((ROOT / "contract/schemas/edit-command.json").read_bytes())
     names = [name for name in schema["$defs"] if name.endswith("Args") or name.startswith("Producer")]
-    names += ["ElementRef", "SettledProducerProposal"]
-    public_names = set(client.__all__)
+    names += ["ElementRef", "SettledProducerProposal", "WordAnchor"]
     for name in names:
-        assert hasattr(dto, name)
-        if name in public_names:
-            assert getattr(client, name) is getattr(dto, name)
+        assert getattr(client, name) is getattr(dto, name)
+        assert name in client.__all__
     assert get_type_hints(dto.ClipSetElementArgs)["schema_source"] is dto.DocumentPin
     assert get_type_hints(dto.ProducerGuardArgs)["pin"] is dto.ProducerAttemptPin
     assert get_type_hints(dto.ProducerAttemptPin)["admitted_target"] is dto.ProducerAdmittedTarget
