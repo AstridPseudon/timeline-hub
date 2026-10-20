@@ -51,6 +51,8 @@ def _fake_checkout(calls):
         def check(self):
             return "valid"
 
+        _check_core = check
+
         def reflow(self):
             return []
 

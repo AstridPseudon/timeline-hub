@@ -61,6 +61,8 @@ def test_edit_replace_asset_and_swap_asset_forward_to_the_sdk(monkeypatch, capsy
         def check(self):
             return "valid"
 
+        _check_core = check
+
     checkout = FakeCheckout()
     monkeypatch.setattr(timeline_cli, "_edit_checkout", lambda _parsed: checkout)
     monkeypatch.setattr(timeline_cli, "_describe_edit", lambda *_args: [])
