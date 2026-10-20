@@ -1,197 +1,152 @@
-# Viewing: M1 labels and M3 unified viewing
-
-Design revision: 2026-10-20, after source and gate review. PLAN.md and design/viewing-coordination.md govern. This is the living design, not a product gate. Checkpoint A is approved; global M1 remains open while the coordinated consumer pins and Gate 6 evidence are held.
-
-Inspected bases: Composition `2ac77f4` on `tl/integration`, with the current Agent/App/Runtime coordination snapshots recorded in `design/viewing-coordination.md`. Paths below are relative to the named repository. Frozen R4 App/Agent code is reference material only.
-
-## 1. Decisions and current evidence
-
-M1 adds small host metadata tied to the snapshot actually displayed and runs the early Linux Player-audio capture feasibility experiment required by reviews/checkpoint-a-changes.md. It does not depend on installing a new package, porting playerEvaluation, or deleting evaluators. M3 moves both consumers to the same immutable, built Composition tarball and retires duplicate viewer math after behavioral coverage. Save, dry run, retry, rebase and inverse never import or call Composition/Node/the renderer.
-
-The public 0.0.9 boundary has one planner: canonical parent/internal `clip.transition` is **incoming** for every producer, and the canonical compiler emits one serializable `compiledTransitions` vector in the native compiled/outgoing form. Preview and export consume that same vector. Alias normalization and first/gap/overlap/oversized handling belong to this conversion; selection comes from verified admitted source/closure facts, never shape, status or receipt heuristics. Native/custom inputs retain their existing outgoing default.
-
-The no-registry distribution is **one self-contained Composition tarball with compiled default component registries**, plus exact host React/Remotion dependencies. Resolve every current generated workspace/theme component into that tarball at build time. Do not make consumers generate or modify files inside the installed package. Additional project/theme components remain host adapters using main's pack/element host. This chooses a single recipe; there is no consumer-regeneration or new workspace-package alternative below.
-
-Code observations:
-
-- Composition `typescript/src/evaluation.ts` exposes the pure planner and scene API without importing React/Remotion/component registries. `scene-evaluation.ts`, `lib/transition-spans.ts`, and `TimelineComposition.tsx` share requested-frame planning. `TimelineComposition.tsx` still performs actual media/component rendering, including track/audio handling. Unknown component geometry/alpha stays unknown; a layer plan does not prove pixels or audio.
-- `typescript/src/types.ts:1-7` explicitly declares package-local render interfaces. Searching **all Composition source and scripts** finds no import of `@banodoco/timeline-schema`. Only package metadata declares it. Remove that npm dependency; do not introduce it to satisfy stale required-package probes. This does not remove App's independent schema imports or Agent's Python schema validation dependency.
-- Composition now exposes built public exports from the integrated source; the 0.0.9 locked build, declarations, public smoke, SSR and repeat-pack checks are recorded below. The package artifact is self-contained and does not require consumer source aliases. These checks do not establish consumer pin adoption or audiovisual parity.
-- Main App `compositions/TimelineRenderer.tsx` independently mounts/sequences layers, uses App duration helpers, and dispatches App media/audio/elements. Main `RemotionPreview.tsx` mounts the actual `@remotion/player` with the resolved local config. Neither uses the shared scene planner today. Frozen R4 `playerEvaluation.ts` and its tests provide a translation pattern (including incoming App transitions versus outgoing Composition transitions); port only the needed adapter and conservative capability declarations, not its lifecycle/attestation dependencies.
-- Agent `timeline_visualize/fast_lane.py` and `sweep.py` orchestrate real managed renders and decoded pixel comparisons; retain them. `core/timeline/onscreen.py` and visibility/box fallback tables in `motion/model.py` duplicate viewer decisions. Retire those decisions after scene queries exist; keep diagnostic labels and unknown results. Keep the command timing compiler and `_timing_evaluators.py` unchanged as compiler authority. R4 `scene_answers.py` is a reference for a thin query/status adapter, not a transport to port wholesale.
-
-## 2. Concrete package contents and closure
-
-### Canonical source and generated imports
-
-Keep source in Composition and distribute its build, never a second Composition source tree. Approved in the 2026-10-19 orchestrator package-source-ownership decision, for gated M3: **move** the following already-working default implementations from main App into Composition `typescript/src/builtins/` (delete the App originals when their consumers migrate). This is a small source relocation (560 component lines across 13 files, plus metadata), not a new plugin framework. Viewing may relocate the listed static component/default/meta sources. App deletes obsolete vendor copies and owns its root package/lock/bundler edits, coordinated with Viewing. Preserve their implementations; change obsolete type import paths to Composition's real `effects-types`/`theme-api` contracts and typecheck them without ambient fake modules.
-
-| Existing generated imports (Composition) | Canonical M3 source and build resolution |
-| --- | --- |
-| `effects.generated.ts`: `@workspace-effects/text-card/component` | `builtins/effects/text-card/component.tsx`, from App `vendor/banodoco-effects/text-card/component.tsx`. Retain the `text` alias and defaults. |
-| `animations.generated.ts`: `@workspace-animations/{fade,fade-up,scale-in,slide-left,slide-up,type-on}/component` | The six corresponding App `vendor/banodoco-animations` implementations, under `builtins/animations/`; retain metadata/defaults and real motion. |
-| `transitions.generated.ts`: `@workspace-transitions/{cross-fade,fade}/component` | The two corresponding App `vendor/banodoco-transitions` implementations, under `builtins/transitions/`; retain cross-fade/fade declarations and parameter defaults. |
-| `registry.generated.ts`: `@banodoco/timeline-theme-2rp/src/effects/{art-card,cta-card,resource-card,section-hook}/component` | The four main App `vendor/timeline-theme-2rp/src/effects` implementations under `builtins/themes/2rp/effects/`, with their theme/effect metadata/defaults. Use relative generated imports. |
-
-The generated registry entries retain clip IDs and behavior, but their `source` descriptions must say bundled rather than claim a separately installed theme package. Generate/check these four registries from an explicit package-local input list and metadata; do not scan arbitrary ancestor `node_modules` or a neighboring workspace when building the release artifact. Existing generator support for host-installed themes belongs in host-generated registries, separate from the immutable package output. A project pack can still override/provide components through main's host resolver. A newly installed theme must not mutate a released Composition package.
-
-Why these source choices: main Agent's declared rendering pack is the right **loading infrastructure**, but its `rendering/elements/animations/*` currently passes children through, and its `transitions/{cross-fade,fade}` returns `{presentation: null, timing: null}`. Main App's corresponding files implement real motion/transitions. Replacing working film effects with the Agent defaults would regress playback. Preserve the real main App implementations as the shared defaults while retaining main's scoped element loader and declared pack discovery. Agent's package URL names theme `v0.1.1`; the local App theme is `0.1.0`. Remote v0.1.1 behavior was not available/verified here: this plan does not claim equivalence or silently use its version label. Existing-film comparison remains a release requirement.
-
-The package includes the evaluator, TimelineComposition, VisualClip/AudioTrack, transition/fade/look/audio-envelope implementations, local render types, the above default components/metadata, generated registries, declarations and package metadata. It excludes tests, generators as runtime entry points, consumer adapters, media/fonts, Runtime clients, source vendors and tracked stale dist. Theme components' imports of `@banodoco/timeline-composition/theme-api` resolve to the package's own module, with **one** ThemeContext instance. Do not bundle another React or Remotion runtime.
-
-### Built public API
-
-The current Composition source is **`@banodoco/timeline-composition@0.0.9`**, private/unpublished. It is the integrated source and public API candidate, not yet a consumer pin. Build browser-compatible ESM plus declarations. Use `dist/index.js`/`dist/index.d.ts` for main/types and explicit export maps:
-
-| Export | Built targets and purpose |
-| --- | --- |
-| `.` | `dist/index.js`, `dist/index.d.ts`: current composition API, duration helper, public render types and evaluator re-exports. |
-| `./evaluation` | `dist/evaluation.js`, `.d.ts`: pure scene/track queries, declared capabilities and the additive pure `clipOpacity` export, with no React/theme/Remotion runtime dependency. |
-| `./theme-api` | `dist/theme-api.js`, `.d.ts`: stable component/theme contracts and shared context/helpers. |
-| `./registry.generated` | `dist/registry.generated.js`, `.d.ts`: bundled default theme dispatch. |
-| `./effects.generated`, `./animations.generated`, `./transitions.generated` | Corresponding `dist/*.js`, `.d.ts`: existing default registries, defaults and metadata. |
-| `./package.json` | Package identity/version and installed export discovery. |
-
-`types` conditions precede runtime conditions. `import`, `remotion` and `default` point at the same built ESM; omit the false CommonJS `require` condition. Remove `./typescript/src/*` exports once callers migrate; no wildcard source export. Public declarations must resolve without the source checkout or consumer aliases. Export the render types already used by consumers from the root; migrate the App test that directly imports vendored AudioTrack to public composition behavior rather than adding a test-only deep export.
-
-Concrete build direction: the locked TypeScript declaration/typecheck pass plus locked esbuild multi-entry ESM build with shared chunks has run for 0.0.9, externalizing `react`, `react/*`, `react-dom`, `react-dom/*`, `remotion`, `@remotion/media`, `@remotion/layout-utils`. Package-internal imports resolve to one module graph; no consumer source alias is part of the artifact. Keep the pure evaluation output separately importable without pulling in renderer chunks.
-
-### Version closure: main wins
-
-Use **React/React DOM 18.3.1** and **Remotion 4.0.509** throughout both consumers and Composition's build/dev setup. All used `@remotion/*` packages use 4.0.509 (Player/web-renderer on App; CLI/renderer/bundler on Agent; media/layout-utils in the common closure). Do not downgrade to Composition's old 4.0.448. Exact release peer requirements are React/React DOM 18.3.1, Remotion/media/layout-utils 4.0.509; each host declares these direct dependencies, with package locks preventing a nested copy. Existing Three/mediabunny host dependencies remain main's responsibility.
-
-Local evidence, read from `/home/user/work/app/node_modules/*/package.json`: React and React DOM are 18.3.1; React DOM peers on `react ^18.3.1`. Remotion, Player and media are 4.0.509 and peer on React/React DOM `>=16.8.0`; Player/media depend on exactly Remotion 4.0.509. Layout-utils is 4.0.509. Installed theme metadata is 0.1.0, peers on Composition `*`, React `>=18`, Remotion `>=4`; section-hook and cta-card import layout-utils. This metadata admits the selected versions; it does **not** prove working playback. Agent `remotion/package.json` already pins Remotion packages to 4.0.509 and permits React 18.3.1, but its node_modules was absent, so no installed Agent peer graph was verified.
-
-There is no final Composition npm schema dependency and no separate required npm theme package for the bundled defaults. Remove those two requirements from **Composition deployment probes only** after imports migrate. App still needs its schema package for schema-owned behavior; Agent still needs `banodoco_timeline_schema` Python files in `remotion_runtime.py`. A host-installed additional theme/pack remains a real host dependency, with its own immutable identity and main admission checks. Bundling defaults must not turn off project pack admission or unknown-component diagnostics.
-
-## 3. Immutable file distribution and fresh ZIP install
-
-Use one release-relative artifact directory shared by the sibling applied checkouts. For example, `timeline-release/repos/{agent,runtime,app,composition}` plus `timeline-release/artifacts/timeline-composition-0.0.9-<sha256>.tgz`. Runtime/delivery owns final ZIP layout; this is the proposed relative package location, not an expansion of its delivery contract.
-
-Composition builds/tests/packs once from its committed lockfile. Agent/App install the same tarball bytes, never a `file:` source directory, git URL or npm link. For the example layout, App uses `file:../../artifacts/<artifact>.tgz`; Agent/remotion uses `file:../../../artifacts/<artifact>.tgz`. Each npm lock records file resolution and integrity. The artifact name includes its SHA-256; a changed build gets a new version/artifact and intentional pin updates in both consumers.
-
-Release verification remains: install both consumers from their committed locks after the coordinated pin and run real bundle/typecheck plus `npm ls react react-dom remotion @remotion/media @remotion/layout-utils @banodoco/timeline-composition`. Check identical Composition integrity and one compatible runtime per consumer. Preserve main's inspected lifecycle scripts, including App's audio-resume and Agent's renderer patches; do not make `--ignore-scripts` the release default.
-
-The Composition artifact must be local in the ZIP or generated once at setup from the supplied Composition checkout before consumer installation. Other dependencies follow the existing delivery setup and normal locked npm installation. No new requirement to ship a full npm cache, browser, Node, ffmpeg or Python environment is introduced here. A network-free package-resolution probe can prove that the Composition tarball itself contains all of its internal/generated code; this is narrower than an entirely offline installation. Full offline delivery would be separate owner scope.
-
-The 0.0.9 source/package recipe has been exercised through the locked build, public smoke, strict types, SSR, repeat-pack and central 59-test package lane. Consumer adoption and a fresh final ZIP remain unverified; the actual consumers still use 0.0.8 until the coordinated post-M1 pin.
-
-## 4. Code-backed M3 migration map
-
-| Owner / current path | Required migration and retained behavior |
-| --- | --- |
-| Composition `package.json`, build configs, generators, tracked `typescript/dist` | Unmasked clean build/tests/lock first; then built exports/default-component relocation above. Remove tracked stale output. Published tarball contains freshly built output. |
-| App `package.json`, lock, `vendor/timeline-composition` | Install tarball; delete Composition source vendor and stale dist, and retire its source-location tests in favor of package import/behavior checks. Move the nine primitive/four theme implementations as above; remove the now-unused direct npm theme dependency in both consumers and delete obsolete App primitive/theme vendors after all callers use the package. |
-| App `config/vite/vite.config.ts`, `config/testing/vitest{,.boundary}.config.ts`, `vitest.edge.aliases.ts`, public-host-browser Vite config | Remove Composition source/deep-path aliases, Composition registry/theme-api source-existence fallbacks, and `@workspace-{effects,animations,transitions}` aliases. Use normal public package exports; retain React/Remotion dedupe. Retain explicit narrow unit mocks where needed, but exercise real package exports in integration/parity tests. Do not remove App's independent schema alias/dependency as part of this work. |
-| App `TimelineRenderer.tsx`, `RemotionPreview.tsx`, current media/audio components | Port the minimal `playerEvaluation` translation onto main's host. Let Composition answer layer existence/frame/transition planning; keep App media URL resolution, buffering/error handling, output projection, local fonts, canonical shot expansion, live/dynamic component loading and actual media/audio implementations until shared equivalents prove equivalent. Keep music beds, fades, speed/trim, mute/volume, transitions and film playback. |
-| Agent `remotion/package.json`, `remotion/tsconfig.json`, `remotion/src/workspace-aliases.d.ts` | File tarball pin; remove theme-api source `paths` override and unused ambient workspace aliases. Root/Three host entrypoints import built exports. Remove any legacy `remotion/vendor/timeline-composition` and source-identity file if present in the applied lineage; they were not found in this main checkout. |
-| Agent `remotion/webpack-alias.mjs`, CLI config and `__smoke__/bundle.mjs` | Package imports need no workspace alias. Retain main's **declared** `@pack-*` and active-theme aliases where host-selected extensions still need them; remove only obsolete aliases used by the package's former static workspace imports. Both CLI and smoke remain on the same main override. |
-| Agent `astrid/core/rendering/remotion_runtime.py`; `astrid/packs/rendering/rendering/renderers/remotion/run.py` | Replace `_timeline_composition_src`, `_registry_output_paths`, source overrides and package-specific TS-file requirements with installed package-root/public built-entry checks. `_REQUIRED_PACKAGES` / `_validate_project_dir` currently require npm composition/schema/theme; revise to actual installed runtime closure, keeping Python schema checks. Preserve main installation binding/host validation/locks, without importing R4 custody/attestation expansion. |
-| Agent registry generation (`scripts/gen_remotion_types.py` and renderer generator calls) | Stop setting `ASTRID_TIMELINE_COMPOSITION_SRC` to node_modules and stop repairing/generating package registries at launch. Package defaults are immutable. Generate project/pack overrides in the existing host-owned Remotion staging/output area and pass them via the host adapter; keep main's pack discovery and admission. Installed-file validation checks built artifacts, not mutable package source. |
-| Agent visualize/check adapters | Ask the shared evaluator through a thin scene-query adapter; preserve unknown/unavailable responses and exact render snapshots. Remove private viewer visibility/bounds/transition math after tests cover replacements. Keep `fast_lane`, `sweep`, decoded-pixel checks and the command compiler. |
-
-A host supplies the loaded/compiled timeline and pinned linked-shot closure, assets/authorized URLs, canvas/fps/output projection, selected runtime theme values, component/sequence dispatch and capability declarations, fonts/media readiness, and revision/local-state labels. Composition supplies shared scene answers, default registries and reusable rendering implementations. It performs no Runtime fetch, save, history acceptance, lease management or application state reconciliation.
-
-The Agent trusted-source port is still not published. The SDK capture/working-copy handoff is a prepared agreement and source contract, not source-port certification or production activation; it must preserve the same verified authority tuple through host, RenderService and Root and include forged/replacement negatives before consumer pins move.
-
-The orchestrator requires the moved defaults to register through the **same element-registration seam** as host loaders and custom packs; they are its first registered elements. Use normal admitted descriptors/contracts and duplicate-ID rules. Their source is package-local, but no clip-name special case, private default-only registry, hard-wired theme dispatch or separate loader is permitted. Preserve declared capabilities and unknown-element diagnostics. The existing component/modifier/transition contracts remain typed within that seam; this prepares ordinary elements without building the deferred extension framework. Per Checkpoint A, markers/signals before the hard stop are bounded pinned reference/resolver interfaces plus core fixtures only. Generalised signal binding, detector reconciliation, new extension registration and policy orchestration stay deferred. Missing-marker republication refuses atomically; no retained-orphan success policy is introduced.
-
-Additional host element/transition registrations use main's host interfaces and package contracts through **one registration seam**. Concretely, add one optional in-process `registries` prop to TimelineComposition, and the same optional final argument to `prepareCompositionScene`: effects/clip aliases, animations/defaults/meta and transitions/defaults/meta, using the existing generated-module map types. For effects, the ordinary registration pass admits the packaged core/theme defaults for the selected runtime theme; this is necessary because the current TimelineComposition dispatches only core EFFECT_REGISTRY while App separately resolves theme components. Other omitted members use their immutable bundled defaults. A supplied member is the host's complete resolved map for that category (host resolves pack/theme precedence once). Thread that same selection through component dispatch, animation/transition helpers and capability preparation, scoped to this composition instance; never assign mutable module globals. Host-generated modules live outside the package and import its public contracts. This small rendering input is not a transport/save DTO. There is no second custom-cut seam or private evaluator path. App can continue mounting its necessary host components from the shared scene answer. Do not replace its renderer wholesale with the narrower Composition component and silently lose existing features.
-
-### Completed M0 build groundwork
-
-The Composition source is integrated at **2ac77f4**. The central `npm test` run is **59 passed, 0 failed, 0 skipped**; locked build, public smoke, strict types, SSR and repeat-pack checks also pass, producing the immutable 0.0.9 candidate (77 files, 57,557 bytes, SHA-256 `fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61`). This proves source/package behavior and repeatability, not consumer adoption or audiovisual parity.
-
-The typed host-alias boundary and optional installed-theme generation remain explicit M0 limitations. Public defaults and custom host components use one registration seam; no custom-cut evaluator path is part of the API. App and Agent still consume 0.0.8 bytes (SHA-256 `93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa`) pending review and the coordinated pin after M1. The 0.0.10 additive `clipOpacity` candidate is approved for release after review, with App/Agent pins coordinated after M1; it does not alter the frozen 0.0.9 bytes.
-
-## 5. M1: exact loaded revision, small host labels
-
-### Current implementation and package status (2026-10-20)
-
-Composition `2ac77f4` contains the built public 0.0.9 source: immutable package-local generation, instance-scoped host maps, ordinary easing metadata and the canonical incoming-to-compiled transition vector. The central package suite is **59 passed, 0 failed, 0 skipped**. D1/D2 scene facts are available through the 0.0.9 public capability/scene contract; unknown font metrics, media alpha, custom-element internals and RenderClockTail remain unknown rather than inferred. Existing private formulas/tests and legitimate adapters remain until named public equivalents cover their behavior.
-
-The frozen 0.0.9 artifact is `ORCH/artifacts/banodoco-timeline-composition-0.0.9.tgz` (77 files, 57,557 bytes), SHA-256 `fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61`. It must not be repacked or modified. Actual consumers remain on 0.0.8 bytes (App/Agent SHA-256 `93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa`) by deliberate M1 coordination, not because the 0.0.9 source is absent. The additive pure-function `clipOpacity` export is approved as the 0.0.10 release candidate; release follows review, then one coordinated App/Agent pin after M1. The future 0.0.10 artifact is not a replacement for frozen 0.0.9.
-
-M1 labels are integrated and the renderer-off slice is proven, but global M1 remains open. Native inspection labels use `inspection.revision_id` (with `head_revision_id` separate); managed render labels use the admitted `snapshot_label`. The real move/retry/restart/undo journey and coordinated consumer adoption remain outside this design's evidence.
-
-### Existing sources of identity
-
-Runtime `runtime_protocol/timeline_inspection.py:552-680,715-757` freezes a selected parent plus its pinned children under the caller's lock. It accepts `revision_id` or selects the head. The response distinguishes `representation: canonical_head` / `canonical_revision` and has `revision_id`, `head_revision_id`, `is_current_head`, `parent_content_digest`, `snapshot_digest` and per-occurrence `shot_id`, `shot_revision_id`, `internal_timeline_revision_id` and digests. Scope also includes the selectors/page; inspect is a bounded projection, not the full renderer document.
-
-Runtime `service.py:2484-2516` returns immutable parent/shot/internal revision records with scoped identity, `content_digest` and `payload`. Existing door/server routes expose parent composition revisions and inspect; use those exact GETs for full payloads. Resolve every occurrence from the **selected parent's** shot pin and then that shot's internal timeline pin, not from latest child heads. Validate project/timeline/shot scope and all returned revision IDs. A missing/mismatched child makes the requested closure unavailable, not partly current. A parent pin identifies the closure only because these immutable links are honored; a provider/compiler version or digest alone is not a revision.
-
-App already has `LoadedTimeline.head` / `TimelineHeadRevision` in `data/DataProvider.ts:31-54`. `src/integrations/runtime/dataProvider.ts:577-645` reads an exact parent revision and its exact shot/internal revisions, verifies their identities and constructs the graph. `adapters/app/useAstridShotsHost.ts:117-137,203-220` protects against late acknowledgements and stale heads. Reuse these reads and graph pins. The head carried by a loaded graph is the identity of that load, not a promise that it remains the newest head forever. Current Player props have no corresponding evaluated-revision label.
-
-Agent checkout/store retains `bundle.base_parent` and linked data (`sdk/timeline/checkout.py`, `store.fetch_bundle`). `fast_lane._base_revision` refuses a missing exact base revision; `prepare_pair` retains exact base/working managed run and filmstrip snapshot identities. Keep that behavior. Working candidate render IDs remain candidate identities, not accepted revision IDs. `sdk/timeline/revisions.py` comments about lacking a history list lag Runtime's current list route: use executable routes/response fields as evidence, not those comments.
-
-### Minimal local state and rules
-
-No universal transport DTO, new scene request envelope, per-frame revision manifest, or evaluator digest on every result. In each host, keep the following few facts next to the **loaded snapshot / preview input generation** (project/timeline scope already exists):
-
-- base immutable parent revision and its already-loaded pinned graph;
-- committed revision actually evaluated/displayed, if any;
-- separately observed known head;
-- local draft sequence/generation only when evaluating local edits;
-- pending/unavailable target and reason, separately from the displayed result.
-
-These are local implementation concepts, not another Runtime API. Bind config and metadata atomically at the loader/preview boundary; a metadata update cannot relabel old frames. A load/seek completion for an older input generation cannot install newer labels. Keep closure records once per loaded graph/run; do not rebuild a serialized closure for each frame.
-
-| Situation | Display/result identity and behavior |
-| --- | --- |
-| Exact committed parent R and linked closure loaded | `Committed R`; known head H is independent. If R differs from H, say historical/stale committed preview. |
-| Local commands applied to base R | `Unsaved local, based on R` plus local sequence if needed. No accepted evaluated revision for the changed pixels. Base linked pins remain known; locally changed children are local candidates, not fabricated committed pins. |
-| Commit acknowledgement accepts R2, but displayed input is still R1 | Keep `Committed R1` or the actual local candidate label. R2 is the pending target until its matching config/closure is installed. Receipt acceptance alone cannot update the display label. |
-| Local suffix exists after an acknowledged prefix | Retain the local candidate label, with its actual accepted base after reconciliation; never label the whole optimistic snapshot as R2 merely because a prefix saved. Server owns semantic rebase. |
-| Target R2 cannot load/evaluate, cached committed R1 still plays | **Keep `Committed R1`**, its closure and cached input generation. Separately say `Preview of R2 unavailable` with the reason and known head. Do not call R1 pixels unsaved-local and do not relabel them R2. |
-| Cached local candidate remains while a target is unavailable | Keep `Unsaved local, based on R` and its sequence; mark target unavailability separately. |
-| No usable cached preview | Show unavailable/loading for the requested target, with no evaluated revision claim. |
-
-Historical inspect pagination can be invalidated by a changed observed head because the current cursor scope contains head identity. Restart the bounded read with the same explicit selected revision if needed; never silently switch it to latest. Full preview loads use exact immutable GETs and may retain a verified cached historical closure.
-
-M1 owner map: App loading/persistence exposes the existing base/loaded/known-head facts to Viewing's preview boundary; Viewing labels current preview inputs/results. Agent labels committed read/check/visualize results from the existing bundle/run snapshots and labels working candidates separately. Native inspection uses `inspection.revision_id`; managed execution uses its `snapshot_label`. Runtime's current admission validates the supplied canonical project/document/head/occurrence metadata and freezes the immutable closure; this is not a new DTO. Publication/receipt identity stays with history/outbox; two acceptances can refer to identical content without becoming a new pixel identity.
-
-Export keeps main's save barrier (`hooks/useRenderState.ts:841-920`) and managed admission (`lib/renderRouter.ts:935-1010`), independent of preview success. `expected_version` is a concurrency guard, not evaluated identity. Runtime now consumes the existing canonical project/document/head/occurrence fields to validate and freeze the admitted closure; readback must still prove that authority matches the displayed fixture. Do not attach a requested target label to different output. Reuse managed snapshot provenance/readback (`snapshot_refs.py`) and admitted closure, not a new browser document authority. A historical-render selector remains an additive Runtime decision only if the existing admission contract cannot carry it.
-
-M1 validation to add in the owners' normal suites: committed historical load; pinned shot/internal load despite child-head advances; local draft and late-ack/suffix labeling; R2 unavailable while R1 retains committed identity; no-cache unavailable; renderer-off commit/restart/readback/undo. App's initial canonical read also depends on the producer's atomic `editProjection`/accepted-basis handoff with generation and race guards; do not stamp an old loaded config or head as the initial verified basis. These checks do not require the M3 package/evaluator migration.
-
-## 6. M3 Player/export parity on Linux
-
-The acceptance comparison is **actual App Player output versus actual final export**, using the same immutable parent/linked closure, frame numbers, rational fps, dimensions, media/font bytes, package artifact and toolchain. Two exports are not this comparison. Semantic scene JSON, a timing oracle, source WAV, offline/synthetic PCM, or two decodes of one export are not captured Player audio.
-
-Existing evidence is narrower than the old inventory suggested:
-
-- Agent `tests/packs/rendering/test_timeline_visualize_parity.py` and `tests/fixtures/timeline_visualize/compositor_parity/F1-F10` check timing/semantic facts; e.g. F4's audio clip has no real media source. They are not a ready-made audiovisual Player fixture.
-- Agent `core/rendering/fixtures/renderer_parity/transition-windows.timeline.json` references black video and silence; useful for render plumbing, insufficient for audible mismatch detection.
-- App `tests/e2e/timeline/audio-reactive-colour-export.spec.ts:240-295` checks actual audio element readiness, playing state and advancing currentTime after a user gesture. Its later cases screenshot preview frame 0, perform real browser export twice, and decode exported picture/PCM (`:140-205,325-385`). They do not capture Player PCM or compare Player frames to those export frames. Reuse its browser/managed-object/export/ffmpeg helpers, not its two-export assertion as parity evidence.
-
-### Fixture and positive comparison
-
-Start with App's checked-in `public/audio-reactive-colour-tone.wav` and its managed-object fixture for **non-silent real media**. Extend that small fixture with two visibly different picture sections and a fade/transition, plus an audio bed with a trim/offset and volume ramp. Keep the existing actual Player and normal export path (the App render action; select its real Remotion path for this lane). Publish/freeze one test revision and pin its linked closure; do not fetch unrelated latest heads for the two hosts. This is a required fixture extension, not a claim that an existing fixture already covers it.
-
-Record one run-level test artifact with revision/closure references, tarball integrity, Node/Remotion/browser/ffmpeg versions, fonts/media identities, rational fps, sample format and selected frames. No per-frame product manifests. For pictures, seek the actual Player via its ref, wait for the requested frame and decoded-media/font readiness, capture the composition viewport at native resolution (no editor chrome/scaling/loading cover), and compare to the same decoded final-export frames. Include first/last frame, before/at cut, transition middle and a nontrivial media frame. Use a pinned simple-color fixture for an initially strict comparator: RGB per-channel error at most 2/255 and no more than 0.1% pixels exceeding that bound; publish any calibrated codec/color adjustment as an explicit test change, not automatic tolerance widening.
-
-For audio, play the **actual** Player after a user gesture, capture its mixed output over the test interval, and decode the actual export to the same 44.1 kHz stereo PCM domain. Measure non-silence, sample count, onset/offset, channel balance, waveform error and drift; RMS alone is insufficient. For the short tone/ramp fixture, initial comparison bounds are normalized waveform RMS error <= 0.02 of reference RMS and gain error <= 0.25 dB, with duration/onset/offset within one video frame. Determine a single capture-start latency from the measured playback/capture clocks; allow no per-clip realignment or arbitrary correlation that hides scheduling errors. These are proposed initial bounds pending real capture/codec measurement, not demonstrated tolerances. A fixture gain change of 6 dB must fail decisively. Reject an empty/silent capture, dropped samples or missing channel as a test failure, never a parity pass.
-
-### Independent required negative controls
-
-Implement and run both as separate tests against a successful positive baseline:
-
-1. **Picture only, exactly one host:** add a test-only opaque visible patch to the App Player's composition viewport at a selected frame, after its normal rendering. Keep revision, fps, media, audio, package and export unchanged. Require the picture comparison to fail for that frame and the audio comparison to remain passing.
-2. **Audio only, exactly one host:** apply test-only 0.5 gain to the Player's real mixed output after normal mixing, before capture. Keep picture/input/revision/fps/export unchanged. Require the captured-Player-versus-export audio comparison to fail and picture comparison to remain passing.
-
-The hooks exist only in the parity harness, scoped to one selected host. They must not edit shared input data, the common evaluator, both hosts, or the comparator. Assert the expected comparator failure reason/metric in each test so a setup failure cannot masquerade as mismatch detection. Positive parity, picture mismatch detection and audio mismatch detection are three distinct required outcomes; "frame and/or audio" is insufficient.
-
-### Early M1 Linux audio capture feasibility (Checkpoint A decision)
-
-The actual App helper qualification is **1 pass in 43.8s**: production pack-host launch/readiness/stop and dependency identity were verified, but it did not render a frame, capture Player audio, compare Player/export output, or close Gate 6. Keep those claims separate. The real no-primer/before-warm audio baseline is **5 passed, 1 failed**; the first cold DOM media/frame median was 37.333ms against the unchanged <33.333ms target. The stable positive requirement is not met, and mixed/negative/control parity is not qualified. The physical-WAV comparator itself passed all six checks, which is not Player capture evidence.
-
-The capture path must include native Html5Audio, Web Audio amplification and video audio, with mute/volume/fade and sample timing proved on the same Player. Raw Chromium diagnostics identify the backend observation cause but are not Player parity. Do not replace this with two exports, synthetic PCM or wider timing limits. Keep the existing `fast_lane`/sweep pixel verification and `_timing_evaluators.py`; do not claim all fallback math has been deleted.
-
-Keep the existing `fast_lane`/sweep pixel verification throughout. No new framework, R4 lifecycle machinery, universal renderer DTO, receipt wrapper or attestation system is needed for this test.
-
-## 7. Evidence and remaining work
-
-Evidence is deliberately split. Composition source/package evidence is the locked build/public-smoke/strict-type/SSR/repeat-pack lane plus **59 passed, 0 failed, 0 skipped** in the central package suite. The App helper's **43.8s pass** proves only launcher/readiness/cleanup and dependency identity. It is not actual render, Player frame, Player audio or audiovisual parity. Audio remains **5/6 red** at the real-capture baseline. The Agent source-port handoff is not published or certified. The actual consumers remain on 0.0.8; the approved 0.0.10 `clipOpacity` candidate is release-after-review and coordinated-pins-after-M1 work.
-
-Remaining: finish the trusted Agent source handoff and App initial verified read/`editProjection` dependency; run the actual pinned App Player-versus-export frame and audio comparison with both independent negative controls; then retire private viewer formulas only alongside named public behavior tests. Verify the final ZIP and owner film before M4 delivery. Font metrics, media alpha, custom-element internals and RenderClockTail remain unknown until measured. No new universal DTO, receipt/attestation wrapper or custom-cut evaluator is authorized.
-
+# Viewing architecture and delivery — M4 current handoff
+
+Status: M0 is complete and M1 is recorded. Composition is ready for the
+coordinated consumer update. App and Agent 0.0.12 adoption is still pending,
+M3 consumer activation is not integrated, Gates 6 and 7 are open, and M5 has
+not started. This page is the current build and delivery contract; the PLAN
+remains authoritative for project-wide decisions.
+
+## Architecture
+
+There is one public Composition evaluator package:
+`@banodoco/timeline-composition`. It supplies pure scene and track answers,
+the TimelineComposition renderer, bundled defaults, and the one registration
+seam for host-resolved elements, animations, effects, and transitions. The
+canonical transition boundary is incoming-authored input converted once to the
+serializable compiled vector consumed by scene preparation and rendering.
+
+The evaluator answers what the supplied scene means. It does not prove pixel
+or audio parity. It does not fetch Runtime data, save, accept history, certify
+source authority, or reconcile application state. App and Agent remain thin
+hosts: they supply the already selected timeline and pinned linked closure,
+assets and authorized URLs, actual canvas and rational fps, resolved theme,
+host registries/dispatch, media and font readiness, and the local or committed
+identity for the input being displayed. The host keeps its existing media,
+audio, export, and lifecycle behavior; Composition is not a replacement host.
+
+The current public scene transport is a thin input adapter, not an authority
+factory. It accepts supplied props and basis and returns public scene rows,
+preserving unknown or unavailable answers. Production activation still needs
+the Agent source-owner join from the exact post-resolve or historical source,
+occurrence mapping, and materialized Root props at the same host lifetime.
+Shape, status, receipts, or source-looking metadata cannot certify those
+inputs. No new source factory, certificate API, universal renderer DTO, or
+Runtime transport is part of this handoff.
+
+The current capture callback is equally narrow: the existing
+`on_scene_props(merged_props, actual_capture_frames)` observer runs after the
+final props JSON is written, with resolved assets/theme and staged parameters,
+inside the existing asset-server lifetime. It is synchronous and read-only;
+omitted or `None` preserves the old call shape, and an observer failure uses
+the existing cleanup path. Capture still has no delivered profile, so the
+profile must come from `_canonical_profile(...)` over the same frozen
+materialized inputs, including width, height, and rational fps. This callback
+is not source certification or a production consumer activation seam.
+
+Keep the existing `fast_lane` and `sweep` pixel verification, private pixel
+checks/statistics, legitimate adapters, and Agent `_timing_evaluators.py`.
+Retire duplicate viewer formulas only after named public behavior tests and
+the trusted source join cover them. Unknown font metrics, media alpha,
+custom-element internals, and RenderClockTail remain unknown rather than
+guessed.
+
+## Identity, delivery, and saving
+
+Native inspection and managed render labels are different facts:
+
+- Native inputs use the actual `inspection.revision_id`; `head_revision_id` is
+  separate context and never relabels the inspected revision.
+- Managed inputs use the admitted `snapshot_label` tied to the delivered
+  immutable config and closure.
+- A receipt, global save status, or newly observed head does not relabel old
+  frames. A failed target leaves the cached config, closure, and label intact
+  while reporting the target as unavailable.
+
+App's initial canonical read must pair the accepted basis with the factual
+local `editProjection` through the existing callback, generation, and race
+guards. That paired fact is local preview state, not authored or wire data.
+Only the matching delivered config/closure may receive the corresponding
+accepted or local label. An acknowledgement by itself, or an old loaded
+config/head, is not proof of what the player displays. A local suffix remains
+local until its matching delivered accepted basis is installed.
+
+Saving is renderer-independent. Commit, reload, retry, rebase, undo, and
+history acceptance must work with Composition, Node, and the renderer stopped.
+Preview failure reports unavailable input honestly and does not block or
+silently rewrite the save path. Runtime remains responsible for admission and
+the immutable accepted closure; no second certification or snapshot rewrite is
+introduced here.
+
+## Composition 0.0.12 artifact and consumer instructions
+
+Use the immutable artifact, not a rebuild or source checkout:
+
+```text
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-release12/artifacts/banodoco-timeline-composition-0.0.12.tgz
+sha256 0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3
+sha512 490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==
+bytes 58444; files 77
+```
+
+The package source is the final `5e06f401` lineage. Locked build, repeat-pack,
+fresh ESM/SSR, strict NodeNext, and the central 69-test package lane pass;
+the built public root/theme API also matches the Agent default-theme object.
+The host peer tuple is React and React DOM 18.3.1, Remotion/media/layout-utils
+4.0.509, qualified with Node 20.19.4 and npm 10.8.2. Keep package bytes
+immutable and do not regenerate package files in a consumer.
+
+Adopt 0.0.12 directly as one App/Agent pair after the official matching
+Runtime/client tuple is published. That pair is pending and is not integrated
+in this handoff. Consumer owners own their package, lock, bundler, and host
+changes; the package remains opaque to them. Explicit themes remain explicit;
+the package's final `banodoco-default` is the existing Agent navy/Arial/cyan
+default (`bg #050814`, `fg #FAFAFA`, `accent #67E8F9`).
+
+The old 0.0.11 artifact and source remain immutable historical references only:
+`dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601`.
+
+## Build and test commands
+
+Composition's real-repository checks are:
+
+```sh
+cd /home/user/work/composition
+npm run build
+npm run gen-registry:check
+npm run build:test
+node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/*.test.js
+npm test
+```
+
+The central service uses the repository's allow-listed `composition full`
+suite (`npm test`), requested once after the last source change:
+
+```sh
+R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test <worker-name> full)
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"
+```
+
+After the App/Agent pair and official Runtime tuple land, use the central
+consumer suites rather than local browser or socket runs: `agent full`,
+`app full`, `app full-e2e-timeline`, and the named
+`app e2e-viewing-frame-parity` lane for actual Player/export comparison.
+The frame lane must use the same delivered closure and package bytes and must
+include its independent picture-only and audio-only negative controls.
+
+## Delivery status and gates
+
+The App helper's 43.8-second qualification proves host launch/readiness/stop
+and dependency identity only. It is not a rendered frame, Player audio,
+Player/export parity, or Gate 6 result. Snapshot-deletion incident replays are
+complete; do not rerun them without a new cause.
+
+Gate 6 remains open until the actual App Player and final export pass picture
+and mixed-audio comparison on the pinned closure, with both one-host mismatch
+controls. Existing private pixel verification and timing evidence do not close
+that gate. Gate 7 remains open until repository gates, the coordinated ZIP,
+fresh-main application, and owner-film viewing are complete. No macOS claim is
+made.
+
+M4 work is therefore delivery and qualified cleanup around the existing
+interfaces, not a new framework or another evaluator. M5 extension work waits
+for the PLAN hard stop and has not started.

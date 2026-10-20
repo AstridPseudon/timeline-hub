@@ -38,7 +38,7 @@ diff --git a/package-lock.json b/package-lock.json
 diff --git a/config/vite/timelineCompositionPackage.test.mjs b/config/vite/timelineCompositionPackage.test.mjs
 --- a/config/vite/timelineCompositionPackage.test.mjs
 +++ b/config/vite/timelineCompositionPackage.test.mjs
-@@ -19,16 +19,16 @@
+@@ -19,17 +19,17 @@
    'scripts/astrid-landing/public-host-browser/vite.config.ts',
  ];
  
@@ -61,9 +61,21 @@ diff --git a/config/vite/timelineCompositionPackage.test.mjs b/config/vite/timel
    assert.equal(installed.resolved, `file:${artifact}`);
    assert.equal(installed.integrity, `sha512-${createHash('sha512').update(bytes).digest('base64')}`);
    assert.equal(root.dependencies['@remotion/layout-utils'], '4.0.509');
-@@ -49,7 +49,7 @@
+@@ -38,16 +38,16 @@
+ for (const configFile of configs) {
+   test(`${configFile} resolves Composition public exports and shared peers`, async () => {
+     const previousCheckout = process.env.ASTRID_CHECKOUT;
+     const previousPublicCheckout = process.env.ASTRID_PUBLIC_CHECKOUT;
+     const checkout = previousCheckout || path.join(appRoot, 'vendor/astrid-browser');
+     process.env.ASTRID_CHECKOUT = checkout;
+     process.env.ASTRID_PUBLIC_CHECKOUT = previousPublicCheckout || checkout;
+     try {
+       const config = await resolveConfig({ configFile: path.join(appRoot, configFile) }, 'build');
+       const resolve = config.createResolver();
+       const importers = [
+         path.join(appRoot, 'src/tools/video-editor/compositions/TimelineRenderer.tsx'),
          path.join(checkout, 'remotion/src/ThreeTimelineComposition.tsx'),
        ];
-      assert.equal(manifest.version, '0.0.10');
+-      assert.equal(manifest.version, '0.0.10');
 +      assert.equal(manifest.version, '0.0.12');
        for (const [subpath, entry] of Object.entries(manifest.exports)) {

@@ -1,0 +1,87 @@
+diff --git a/src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx b/src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx
+--- a/src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx
++++ b/src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx
+@@ -88,39 +88,39 @@
+ vi.mock('@banodoco/timeline-composition/theme-api', async () => {
+   const reactModule = await import('react');
+   const runtimeThemeValue = {
+     color: {
+-      accent: '#ffffff',
+-      bg: '#000000',
+-      fg: '#ffffff',
++      accent: '#67E8F9',
++      bg: '#050814',
++      fg: '#FAFAFA',
+     },
+     type: {
+       families: {
+-        heading: 'Georgia, serif',
+-        body: 'Inter, system-ui, sans-serif',
+-        mono: 'JetBrains Mono, ui-monospace, monospace',
++        heading: 'Arial',
++        body: 'Arial',
++        mono: 'monospace',
+       },
+       size: {
+-        base: 56,
+-        small: 32,
+-        large: 128,
++        base: 32,
++        small: 22,
++        large: 84,
+       },
+       weight: {
+-        normal: 300,
+-        bold: 500,
++        normal: 400,
++        bold: 600,
+       },
+-      lineHeight: 1.1,
++      lineHeight: 1.2,
+     },
+     motion: {
+-      fadeMs: 500,
++      fadeMs: 450,
+     },
+     canvas: {
+       width: 1920,
+       height: 1080,
+       fps: 30,
+     },
+   };
+ 
+   const DEFAULT_THEME = {
+-    id: 'default',
++    id: 'banodoco-default',
+     visual: runtimeThemeValue,
+   };
+@@ -263,15 +263,15 @@
+ vi.mock('@banodoco/timeline-composition/theme-api', async () => {
+   const React = await import('react');
+   const DEFAULT_THEME = {
+-    id: 'default',
++    id: 'banodoco-default',
+     visual: {
+       color: {
+-        accent: '#ffffff',
+-        bg: '#000000',
++        accent: '#67E8F9',
++        bg: '#050814',
+       },
+       type: {
+         families: {
+-          heading: 'Georgia, serif',
++          heading: 'Arial',
+         },
+       },
+     },
+@@ -735,6 +735,6 @@
+ 
+     const sequence = screen.getByTestId('registered-sequence');
+-    expect(sequence).toHaveAttribute('data-accent', '#ffffff');
+-    expect(sequence).toHaveAttribute('data-bg', '#000000');
+-    expect(sequence).toHaveAttribute('data-heading', 'Georgia, serif');
++    expect(sequence).toHaveAttribute('data-accent', '#67E8F9');
++    expect(sequence).toHaveAttribute('data-bg', '#050814');
++    expect(sequence).toHaveAttribute('data-heading', 'Arial');
+   });
