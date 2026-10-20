@@ -57,7 +57,7 @@ def legacy_runtime(tmp_path, monkeypatch, request):
     use_runtime()
     # Runtime owns this helper: it uses normal storage acceptance and retained
     # inputs, without claiming an Agent migration or repairing the old writer.
-    helper = runtime_checkout('7c6e4eabf88d914d9c98c0097b06ea298ba11866')
+    helper = runtime_checkout('382f523ef957afb2bd299c5e21424ca821b23f05')
     monkeypatch.syspath_prepend(str(helper / 'tests'))
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
