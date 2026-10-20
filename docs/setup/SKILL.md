@@ -26,6 +26,14 @@ run the same install line with `--doctor`, attach the bundle, and follow
 [Troubleshooting](troubleshooting.md#asking-for-help). For updates, see
 [Troubleshooting](troubleshooting.md#update-astrid).
 
-Once setup is complete, follow [Astrid’s core skill](../../astrid/packs/_core/docs/SKILL.md)
-and the relevant pack for the work they want to do. Guide any provider
-credential entry locally; never ask the user to paste a secret into chat.
+Once setup is complete, give outside agents the stable launcher path for their
+OS. It is an absolute path and does not require adding Astrid to the caller's
+PATH:
+
+- Linux: `"${XDG_DATA_HOME:-$HOME/.local/share}/astrid/run-astrid"`
+- macOS: `"$HOME/.local/share/astrid/run-astrid"`
+- Windows PowerShell: `& "$env:LOCALAPPDATA\Astrid\run-astrid.cmd"`
+
+Then follow [Astrid’s core skill](../../astrid/packs/_core/docs/SKILL.md) and
+the relevant pack for the work they want to do. Guide any provider credential
+entry locally; never ask the user to paste a secret into chat.

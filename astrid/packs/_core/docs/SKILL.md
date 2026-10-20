@@ -48,6 +48,37 @@ irm https://astrid.haus/install.ps1 | iex
 Then open [astrid.haus](https://astrid.haus) and follow its setup steps. Do not
 install or clone `astrid-app`; it is for app developers.
 
+## Commands for outside agents
+
+Use the installed stable launcher by its absolute path from the outside
+agent's terminal. Linux honors `XDG_DATA_HOME`; macOS uses
+`~/.local/share/astrid`. In Windows PowerShell, use the call operator `&` so
+the quoted path executes correctly.
+
+Linux:
+
+```sh
+"${XDG_DATA_HOME:-$HOME/.local/share}/astrid/run-astrid" projects list
+```
+
+macOS:
+
+```sh
+"$HOME/.local/share/astrid/run-astrid" projects list
+```
+
+Windows PowerShell:
+
+```powershell
+& "$env:LOCALAPPDATA\Astrid\run-astrid.cmd" projects list
+```
+
+The CLI examples below use `python3 -m astrid` as shorthand for commands
+inside Astrid's managed environment. For outside-agent use, replace the
+`python3 -m astrid` prefix with the stable launcher path for that OS, keeping
+the subcommand and its arguments. In Windows PowerShell, invoke the quoted
+launcher path with `&`.
+
 ## Start here
 
 ## Preferences and project documents
