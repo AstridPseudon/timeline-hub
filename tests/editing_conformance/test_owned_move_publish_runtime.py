@@ -56,6 +56,29 @@ def test_http_original_sdk_move_publish_disjoint_rebase_reload_undo(runtime):
     assert State(loaded.bundle).entity('parent/track:picture')['label'] == 'Peer label'
 
 
+def test_http_original_sdk_parent_hold_publish_reload_and_undo(runtime):
+    seed(runtime)
+    tl = attach(runtime)
+    original = copy.deepcopy(tl.clip(REF).data)
+    clip = tl.clip(REF)
+    clip.hold_for(2)
+    captured = json.loads(tl.session.outbox.path.read_bytes())['pending']
+    assert len(captured) == 1
+    assert captured[0]['op'] == 'clip.set'
+    assert captured[0]['select'] == REF
+    assert captured[0]['args'] == {'values': {'hold': 2.0}, 'clear': []}
+
+    accepted = tl.publish('Hold the opening', idempotency_key='sdk-parent-hold')
+    body = json.loads(runtime.calls[-1][0])
+    assert body['commands'] == captured
+    assert accepted['receipt']['result']['commands'] == captured
+    runtime.restart()
+    loaded = attach(runtime)
+    assert loaded.clip(REF).data == dict(original, hold=2.0)
+    loaded.undo([accepted['receipt']['receipt_id']])
+    assert loaded.clip(REF).data == original
+
+
 def test_http_lost_ack_restart_exact_retry_and_unrelated_global_nonconsumption(runtime):
     seed(runtime)
     tl = attach(runtime)
