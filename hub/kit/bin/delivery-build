@@ -68,6 +68,49 @@ def fresh_repo(path):
     return path
 
 
+def private_source_view(name, repo, base, tip, tmp):
+    """Return a read-only object view when a source repo hides real parents.
+
+    The App checkout is shallow at a commit whose parent object is present in its
+    object store.  Bundle creation honors the shallow boundary, so use a private
+    repository with an alternates file and pinned refs instead.  The source
+    repository and its metadata remain untouched; all writes are under tmp.
+    """
+    if name != "app" or git(repo, "rev-parse", "--is-shallow-repository") != "true":
+        return repo
+
+    view = os.path.join(tmp, name, "source-view")
+    fresh_repo(view)
+    objects = git(repo, "rev-parse", "--git-path", "objects")
+    if not os.path.isabs(objects):
+        objects = os.path.join(repo, objects)
+    objects = os.path.realpath(objects)
+    if not os.path.isdir(objects):
+        raise RuntimeError(f"source object store is not a directory: {objects}")
+    alternates = os.path.join(view, ".git", "objects", "info", "alternates")
+    with open(alternates, "w") as f:
+        f.write(objects + "\n")
+    git(view, "update-ref", "refs/heads/main", base)
+    git(view, "update-ref", f"refs/heads/{BRANCH}", tip)
+
+    if git(view, "rev-parse", "--is-shallow-repository") != "false":
+        raise RuntimeError("private App source view unexpectedly has shallow metadata")
+    shallow = git(view, "rev-parse", "--git-path", "shallow")
+    if not os.path.isabs(shallow):
+        shallow = os.path.join(view, shallow)
+    if os.path.exists(shallow):
+        raise RuntimeError(f"private App source view has shallow file: {shallow}")
+    missing = git(view, "rev-list", "--objects", "--missing=print", base, tip)
+    missing = [line for line in missing.splitlines() if line.startswith("?")]
+    if missing:
+        raise RuntimeError(f"private App source view has {len(missing)} missing reachable object(s)")
+    if git(view, "rev-parse", f"{BRANCH}^{{commit}}") != tip:
+        raise RuntimeError("private App source view changed the pinned tip")
+    if git(view, "rev-parse", f"{BRANCH}^{{tree}}") != git(repo, "rev-parse", f"{tip}^{{tree}}"):
+        raise RuntimeError("private App source view changed the pinned tip tree")
+    return view
+
+
 def is_test(path):
     parts = path.split("/")
     name = parts[-1]
@@ -171,28 +214,29 @@ def build_repo(name, staging, tmp):
     repo = os.path.join(WORK, name)
     base = git(repo, "rev-parse", f"{BASE}^{{commit}}")
     tip = git(repo, "rev-parse", f"{BRANCH}^{{commit}}")
-    ranged = git_ok(repo, "merge-base", "--is-ancestor", base, tip)
+    source = private_source_view(name, repo, base, tip, tmp)
+    ranged = git_ok(source, "merge-base", "--is-ancestor", base, tip)
     result = {
         "name": name,
         "tip": tip,
         "base": base,
-        "ahead": int(git(repo, "rev-list", "--count", f"{base}..{tip}")),
+        "ahead": int(git(source, "rev-list", "--count", f"{base}..{tip}")),
         "ranged": ranged,
-        "shortstat": git(repo, "diff", "--shortstat", base, tip),
-        "split": line_split(repo, base, tip),
+        "shortstat": git(source, "diff", "--shortstat", base, tip),
+        "split": line_split(source, base, tip),
     }
     problems = []
 
     patches = os.path.join(staging, "patches", name)
     os.makedirs(patches)
-    attempt(problems, "squash", squash, name, repo, base, tip, ranged, result["ahead"], patches, tmp)
+    attempt(problems, "squash", squash, name, source, base, tip, ranged, result["ahead"], patches, tmp)
 
     bundle = os.path.join(staging, "bundles", f"{name}.bundle")
     os.makedirs(os.path.dirname(bundle), exist_ok=True)
     # Keep the advertised integration ref as the bundle endpoint; git bundle
     # requires a ref endpoint for this ranged form.  The exclusion is pinned.
     bundle_args = ["bundle", "create", bundle, BRANCH, *([f"^{base}"] if ranged else [])]
-    attempt(problems, "bundle create", git, repo, *bundle_args)
+    attempt(problems, "bundle create", git, source, *bundle_args)
 
     result.update(verify(name, repo, base, tip, bundle, patches, ranged, tmp, problems))
     for ref, pinned in ((BASE, base), (BRANCH, tip)):
