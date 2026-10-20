@@ -229,6 +229,9 @@ describe('bounded native generic patch capture', () => {
     expect(classifyGenericPatch({ version: 1, operations: [
       { op: 'clip.update', target: 'x', payload: { values: { asset: 'bad' }, clear: [] } },
     ] })).toBe('mixed');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { values: { hold: 0 }, clear: [] } },
+    ] })).toBe('mixed');
     let resolved = false;
     expect(() => captureGenericPatch(bundle, {
       version: 1,

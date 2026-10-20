@@ -712,9 +712,9 @@ export function buildAlignShotsPatch(
       operations.push({
         op: 'clip.update',
         target: alignment.clipId,
-        // The explicit values/clear envelope is the generic scalar member
-        // shape. It preserves a positive hold SET without inventing clears.
-        payload: { values: { hold: alignment.hold }, clear: [] },
+        payload: nativeMoveBatch
+          ? { values: { hold: alignment.hold }, clear: [] }
+          : { hold: alignment.hold, mode: 'merge' },
       });
     }
   });
