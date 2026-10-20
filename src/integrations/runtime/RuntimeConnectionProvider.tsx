@@ -43,7 +43,7 @@ import {
 import { autoConnectRequested, takeAutoConnectRequest } from './autoConnectRequest.ts';
 import type { Realm } from './generated.ts';
 
-const POLL_INTERVAL_MS = 3000;
+export const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
 const CONNECTED_BEFORE_KEY = 'astrid.runtime.connectedBefore';
 /** The `error` codes of the Runtime door's refusals (astrid-runtime runtime_protocol/door.py): the only error bodies the page reads as the door's. */
