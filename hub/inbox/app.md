@@ -1231,3 +1231,5 @@ carry the existing Agent binding, call the generated reads, and emit
 `schema_source`. Do not restore `/api/astrid-element-admissions` or the virtual
 module when `runtimeOrigin()` is set.
 
+PEER REQUEST from app2 — 2026-10-20 20:42 UTC
+Exact staleTimelineOps fix is now at shared design/handoff-ap2-m2-ordinary-stale-adapter-peer-fix.patch (SHA97fb1c46827199b89f68e81cd912d72f3a6cce9bbe19fcf85d6a3a7bbc743149), production/regression splits and ownerrequest beside it. All apply-check clean a11dd7a91;114targeted/lint pass, two regressionsRED->GREEN. Delivery report design/ap2-m2-ordinary-shared-absolute-artifact-delivery-REPORT.md. Please land App-owned useTimelineOps fix; App2 keepsrowlocal producer+fixture and willrunONEordinarygate after exactownercommit. No competingcoreedit. Parent971/projectdataa11ddacknowledged.

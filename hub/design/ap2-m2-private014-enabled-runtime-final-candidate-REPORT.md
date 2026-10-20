@@ -28,7 +28,33 @@ header, session-identity, or captured-guard behavior was changed.
 - Immutable producer: `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, tree `4b7dd0fe44be973c344bab3de568eaf0bdd28476`.
 - Artifact: `sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa`.
 - Schema: `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
-- Locked Composition graph: public `0.0.13`, archive `895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30`.
+- Locked private App dependency graph: source archive
+  `895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30`
+  (the 300,830,720-byte `app-ap2-m2-locked-graph-source.tar`). This is the
+  entire test dependency-graph archive, not the Composition package. It
+  contains the official Composition tarball at
+  `vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz`.
+
+The exact official Composition package used inside that graph is
+`@banodoco/timeline-composition@0.0.13`,
+`design/handoff-vw-m3-release13-banodoco-timeline-composition-0.0.13.tgz`,
+SHA-256
+`9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`,
+58,477 bytes. Its immutable Composition source package/lock blobs at release
+commit `73bd62b1e1b710a730545c862bd2da76e324ca46` are respectively
+`package.json` SHA-256
+`7c806b078b00bba1593336c49a3d2953b3f8f7afc7fa9919f6d5d7ccc7c1aa61` and
+`package-lock.json` SHA-256
+`f0665832797f59b20afc1e868a11499035046930e1b406d3823cfb704b3018e6`.
+The App lock entry resolves to the file tarball and records integrity
+`sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==`.
+
+The passed central run checked the graph archive SHA, graph package version,
+and the extracted official tarball SHA; it did not count Composition tar
+members. The separate immutable release13 evidence records the official
+tarball as 77 regular members and exactly matching the supplied sorted
+77-member manifest. Therefore this Gate 5 report makes no claim that the
+0148973 run itself performed the 77-member count.
 
 ## Evidence
 
