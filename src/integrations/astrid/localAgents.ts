@@ -1,24 +1,11 @@
 import { z } from 'zod';
 
-/** One shared table for the service's agent names and the exact recovery lines shown in the menu. */
+/** Names for local agents; install and sign-in instructions come from the service. */
 export const LOCAL_AGENT_TABLE = {
-  astrid: { name: 'Astrid', signInLine: 'Use the sign-in instructions from Astrid on this computer.' },
-  'claude-code': {
-    name: 'Claude Code',
-    signInLine: 'Run `claude auth login`, then come back.',
-    notInstalledLine: 'Install with `curl -fsSL https://claude.ai/install.sh | bash`',
-  },
-  codex: {
-    name: 'Codex',
-    signInLine: 'Run `codex login`, then come back.',
-    notInstalledLine: 'Install with `npm install -g @openai/codex`',
-  },
-  hermes: {
-    name: 'Hermes',
-    signInLine: 'Run `hermes setup`, then come back.',
-    notInstalledLine: 'Install with `curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash`',
-    notInstalledLineWindows: 'Install with `iex (irm https://hermes-agent.nousresearch.com/install.ps1)`',
-  },
+  astrid: { name: 'Astrid' },
+  'claude-code': { name: 'Claude Code' },
+  codex: { name: 'Codex' },
+  hermes: { name: 'Hermes' },
 } as const;
 
 export type LocalAgentId = keyof typeof LOCAL_AGENT_TABLE;
@@ -79,8 +66,3 @@ export function isExternalAgentSession(sessionId: string, agent?: typeof EXTERNA
   return agent ? sessionId.startsWith(`${agent}:`) : EXTERNAL_AGENT_IDS.some(id => sessionId.startsWith(`${id}:`));
 }
 
-export function localAgentInstallLine(agent: LocalAgentId, platform?: 'windows' | 'posix'): string | null {
-  const install: { name: string; notInstalledLine?: string; notInstalledLineWindows?: string } = LOCAL_AGENT_TABLE[agent];
-  const targetPlatform = platform ?? (typeof navigator !== 'undefined' && /Win/i.test(navigator.userAgent) ? 'windows' : 'posix');
-  return targetPlatform === 'windows' ? install.notInstalledLineWindows ?? install.notInstalledLine ?? null : install.notInstalledLine ?? null;
-}

@@ -43,7 +43,7 @@ describe('AgentChatNewChatButton', () => {
 
   it.each(['sign-in', 'not-installed'] as const)('shows Hermes and opens the menu when the default agent is %s', (state) => {
     const onNewChat = vi.fn();
-    render(<AgentChatNewChatButton defaultAgent="hermes" agents={[{ id: 'hermes', name: 'Hermes', state, line: state === 'sign-in' ? LOCAL_AGENT_TABLE.hermes.signInLine : LOCAL_AGENT_TABLE.hermes.notInstalledLine }]} onNewChat={onNewChat} />);
+    render(<AgentChatNewChatButton defaultAgent="hermes" agents={[{ id: 'hermes', name: 'Hermes', state, line: state === 'sign-in' ? 'Run `hermes setup`, then come back.' : 'Install with `curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash`' }]} onNewChat={onNewChat} />);
     expect(screen.getByRole('button', { name: 'New chat' })).toHaveAttribute('title', 'New chat with Hermes');
     fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
     expect(onNewChat).not.toHaveBeenCalled();
@@ -53,19 +53,22 @@ describe('AgentChatNewChatButton', () => {
   it('does not copy or start a chat when a non-ready row is clicked', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const astridSignIn = 'Use Astrid sign-in instructions.';
+    const claudeSignIn = 'Run `claude auth login`, then come back.';
+    const codexInstall = 'Use the Codex installer.';
     const { onNewChat } = openMenu({ agents: [
-      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: LOCAL_AGENT_TABLE.astrid.signInLine, models: [], defaultModel: null },
-      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'sign-in', line: LOCAL_AGENT_TABLE['claude-code'].signInLine, models: [], defaultModel: null },
-      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.codex.notInstalledLine!, models: [], defaultModel: null },
+      { id: 'astrid', name: LOCAL_AGENT_TABLE.astrid.name, state: 'sign-in', line: astridSignIn, models: [], defaultModel: null },
+      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'sign-in', line: claudeSignIn, models: [], defaultModel: null },
+      { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'not-installed', line: codexInstall, models: [], defaultModel: null },
     ] });
     const astrid = screen.getByRole('option', { name: /Astrid/ });
     const claude = screen.getByRole('option', { name: /Claude Code/ });
     const codex = screen.getByRole('option', { name: /Codex/ });
     expect(astrid).toHaveTextContent('Sign in');
-    expect(astrid).toHaveTextContent(plainLine(LOCAL_AGENT_TABLE.astrid.signInLine));
-    expect(claude).toHaveTextContent(plainLine(LOCAL_AGENT_TABLE['claude-code'].signInLine));
+    expect(astrid).toHaveTextContent(plainLine(astridSignIn));
+    expect(claude).toHaveTextContent(plainLine(claudeSignIn));
     expect(codex).toHaveTextContent('Not installed');
-    expect(codex).toHaveTextContent(plainLine(LOCAL_AGENT_TABLE.codex.notInstalledLine!));
+    expect(codex).toHaveTextContent(plainLine(codexInstall));
     for (const row of [astrid, claude, codex]) expect(row).not.toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(claude);
     expect(writeText).not.toHaveBeenCalled();
@@ -78,7 +81,7 @@ describe('AgentChatNewChatButton', () => {
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const command = 'curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash';
     const { onNewChat } = openMenu({ agents: [
-      { id: 'hermes', name: LOCAL_AGENT_TABLE.hermes.name, state: 'not-installed', line: LOCAL_AGENT_TABLE.hermes.notInstalledLine! },
+      { id: 'hermes', name: LOCAL_AGENT_TABLE.hermes.name, state: 'not-installed', line: 'Install with `curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash`' },
     ] });
     const hermes = screen.getByRole('option', { name: /Hermes/ });
     const copyButton = within(hermes).getByRole('button', { name: 'Copy command' });
@@ -112,7 +115,7 @@ describe('AgentChatNewChatButton', () => {
 
   it('opens the model menu for a ready agent before starting a chat', async () => {
     const { onNewChat, onBrowseAgent } = openMenu({ agents: [
-      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'not-installed', line: LOCAL_AGENT_TABLE['claude-code'].notInstalledLine!, models: [], defaultModel: null },
+      { id: 'claude-code', name: LOCAL_AGENT_TABLE['claude-code'].name, state: 'not-installed', line: 'Use the Claude Code installer.', models: [], defaultModel: null },
       { id: 'codex', name: LOCAL_AGENT_TABLE.codex.name, state: 'ready', line: null, models: [], defaultModel: null },
     ] });
     expect(screen.getByRole('option', { name: /Claude Code/ })).not.toHaveAttribute('aria-disabled', 'true');

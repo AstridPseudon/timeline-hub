@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
+import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
 import { installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
 type WorkspaceIdentity = { name: string; realmId: string };
+const PASTE_NEXT_STATUS = 'Steps copied. Paste them into your agent.';
 
 /**
  * The details are for an agent to find the person's work, not for the person to inspect. Each Astrid install keeps its
@@ -31,6 +33,7 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
   const [showDetails, setShowDetails] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const [didCopy, setDidCopy] = useState(false);
+  const { connectedBefore } = useRuntimeConnection();
   const copiedTimer = useRef<number | null>(null);
   const identity = useQuery({
     queryKey: ['runtime', 'empty-workspace-identity'],
@@ -72,6 +75,7 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
   };
 
   // The card around this already says "No projects yet", so the guidance starts at the question it answers.
+  if (!connectedBefore) return null;
   return <div className="space-y-3 text-sm text-muted-foreground">
     <p>Expected to see your work? It may be in another Astrid folder on this computer.</p>
     <details onToggle={event => setShowDetails(event.currentTarget.open)}>
@@ -85,7 +89,7 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
           </Button>}
           <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
         </div>
-        {identity.data && didCopy && <p role="status">{copy.pasteNext}</p>}
+        {identity.data && didCopy && <p role="status">{PASTE_NEXT_STATUS}</p>}
         {identity.data && copyState === 'failed' && <div className="space-y-2">
           <p role="status">{copy.copyFailed}</p>
           <textarea aria-label={copy.copyFailed} readOnly value={diagnostic} rows={6} onFocus={event => event.currentTarget.select()} className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground" />

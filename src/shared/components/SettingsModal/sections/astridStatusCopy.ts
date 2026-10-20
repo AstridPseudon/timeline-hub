@@ -4,14 +4,13 @@ export const ASTRID_STATUS_COPY = {
   description: "Your workspace and what's running on this computer.",
   connecting: 'Looking for Astrid…',
   connected: 'Connected',
-  degraded: "Connected, but part of Astrid isn't working.",
+  degraded: "Part of Astrid isn't working. Run this line to restart it.",
   checking: 'Reading details…',
   unavailable: "Astrid's details aren't available right now.",
   setUp: 'Not found yet',
   notRunning: 'Not running',
   updateNeeded: 'Needs an update',
   blocked: "Blocked by your browser's settings",
-  restartNeeded: 'Needs a restart',
   workspace: 'Workspace',
   workspaceName: 'Name',
   connectionDetails: 'Connection details',
@@ -30,8 +29,6 @@ export const ASTRID_STATUS_COPY = {
     switch (name) {
       case 'pack-host': return 'Task host';
       case 'chat': return 'Chat';
-      case 'astrid-chat': return 'Chat';
-      case 'comfyui': return 'ComfyUI';
       default: return name;
     }
   },
@@ -46,7 +43,6 @@ export function connectionStatusCopy(status: string): string {
     case 'not_running': return ASTRID_STATUS_COPY.notRunning;
     case 'update_needed': return ASTRID_STATUS_COPY.updateNeeded;
     case 'blocked': return ASTRID_STATUS_COPY.blocked;
-    case 'restart_needed': return ASTRID_STATUS_COPY.restartNeeded;
     default: return ASTRID_STATUS_COPY.unavailable;
   }
 }

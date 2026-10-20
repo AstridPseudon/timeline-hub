@@ -10,6 +10,7 @@ export function connectionFor(state: RuntimeConnectionState, overrides: Partial<
     gated: true,
     state,
     isConnected: state.status === 'connected',
+    connectedBefore: true,
     isBooting: false,
     isChecking: false,
     awaitingConnect: false,

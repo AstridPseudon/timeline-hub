@@ -128,6 +128,15 @@ describe('granted', () => {
     expect(window.localStorage.getItem(STORAGE_KEY)).toBe('1');
   });
 
+  it.each([false, true])('keeps the mount-time connection history when a new probe connects (had connected before: %s)', async (hadConnectedBefore) => {
+    if (hadConnectedBefore) window.localStorage.setItem(STORAGE_KEY, '1');
+    const gateway = fakeGateway();
+    renderProvider(gateway, fakePermissions('granted').permissions);
+
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(latest.connectedBefore).toBe(hadConnectedBefore);
+  });
+
   it.each([
     ['unknown', 'sha256:unknown'],
     ['missing', undefined],
@@ -293,14 +302,14 @@ describe('granted', () => {
     expect(latest.state).toEqual({ status: 'not_running' });
   });
 
-  it('shows runtime_identity_mismatch as restart_needed immediately', async () => {
+  it('shows the same restart line as not_running after a runtime identity mismatch', async () => {
     const code = 'runtime_identity_mismatch';
     const gateway = fakeGateway();
     gateway.gatewayDown(code);
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
     await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(status()).toBe('restart_needed'));
-    expect(latest.state).toEqual({ status: 'restart_needed' });
+    await waitFor(() => expect(status()).toBe('not_running'));
+    expect(latest.state).toEqual({ status: 'not_running' });
   });
 
   it('a 503 with no readable body remains a transient check, not a stopped verdict', async () => {

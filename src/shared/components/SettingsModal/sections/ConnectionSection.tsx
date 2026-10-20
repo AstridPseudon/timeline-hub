@@ -49,8 +49,6 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
       return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: LOOKING };
     case 'not_running':
       return { title: COPY.notRunning.title, detail: COPY.notRunning.sentence, checks: LOOKING };
-    case 'restart_needed':
-      return { title: COPY.restartNeeded.title, detail: COPY.restartNeeded.sentence, checks: LOOKING };
   }
 }
 

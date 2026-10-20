@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner.tsx';
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
+import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyInstallCommand } from './CopyInstallCommand.tsx';
@@ -31,6 +32,8 @@ interface PanelFrameProps {
   readonly action?: ReactNode;
   /** The one quiet line under the action. */
   readonly footer?: ReactNode;
+  /** Help for the person when the connection needs attention. */
+  readonly showHelp?: boolean;
   /** Content between the sentence and the action (the blocked state's steps). */
   readonly children?: ReactNode;
   /** The word on a hand-drawn arrow, outside the card, aimed at the top left of the window: the browser's prompt is there. */
@@ -42,7 +45,7 @@ interface PanelFrameProps {
  * sentence (two only on set up), at most one primary button and at most one quiet line. Everything is centred, and
  * balanced so no line ends on a lone word at phone width.
  */
-function PanelFrame({ dataState, title, sentence, detail, action, footer, children, pointer }: PanelFrameProps) {
+function PanelFrame({ dataState, title, sentence, detail, action, footer, children, pointer, showHelp = false }: PanelFrameProps) {
   return (
     <section
       aria-label={COPY.panelLabel}
@@ -61,6 +64,7 @@ function PanelFrame({ dataState, title, sentence, detail, action, footer, childr
         {children}
         {action && <div className="flex flex-col items-center">{action}</div>}
         {footer && <p className="text-balance text-sm text-muted-foreground">{footer}</p>}
+        {showHelp && <a className="text-sm text-muted-foreground underline underline-offset-4" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a>}
         {pointer && <ToolbarPointer label={pointer} corner="top-left" tone="page" />}
       </div>
     </section>
@@ -176,19 +180,7 @@ function NotRunningPanel() {
       title={notRunning.title}
       sentence={withCommandShell(notRunning.sentence)}
       action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
-    />
-  );
-}
-
-/** Astrid changed while it was running: the same install line repairs and restarts it. */
-function RestartNeededPanel() {
-  const { restartNeeded } = COPY;
-  return (
-    <PanelFrame
-      dataState="restart_needed"
-      title={restartNeeded.title}
-      sentence={withCommandShell(restartNeeded.sentence)}
-      action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
+      showHelp
     />
   );
 }
@@ -201,6 +193,7 @@ function UpdateNeededPanel() {
       title={updateNeeded.title}
       sentence={withCommandShell(updateNeeded.sentence)}
       action={<CopyInstallCommand label={COPY.agent.copy} mode="update" />}
+      showHelp
     />
   );
 }
@@ -227,8 +220,6 @@ export function RuntimeConnectionPanel({ connection }: RuntimeConnectionPanelPro
       return phone ? <PhonePanel /> : <NotRunningPanel />;
     case 'blocked':
       return phone ? <PhonePanel /> : <BlockedPanel />;
-    case 'restart_needed':
-      return phone ? <PhonePanel /> : <RestartNeededPanel />;
     case 'update_needed':
       return phone ? <PhonePanel /> : <UpdateNeededPanel />;
   }

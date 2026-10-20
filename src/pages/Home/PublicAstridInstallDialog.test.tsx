@@ -96,7 +96,7 @@ describe('PublicAstridInstallDialog', () => {
     expect(trigger).toHaveFocus();
   });
 
-  it('names PowerShell in the setup subtitle on Windows', () => {
+  it('names how to open the matching shell on Windows', () => {
     setNavigator(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36',
       'Win32',
@@ -104,7 +104,7 @@ describe('PublicAstridInstallDialog', () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
 
-    expect(screen.getByText('Run one line in PowerShell to set up Astrid on your computer.')).toBeInTheDocument();
+    expect(screen.getByText('Open Terminal on a Mac, PowerShell on Windows, or a terminal on Linux, then run one line to set up Astrid.')).toBeInTheDocument();
   });
 
   it.each([
@@ -120,10 +120,24 @@ describe('PublicAstridInstallDialog', () => {
     if (scenario === 'mobile') expect(screen.getByText(new RegExp(copy))).toBeInTheDocument();
     else {
       expect(screen.getByRole('heading', { name: 'Set up Astrid' })).toBeInTheDocument();
-      if (scenario === 'chromium') expect(screen.getByText('Run one line in a terminal to set up Astrid on your computer.')).toBeInTheDocument();
+      if (scenario === 'chromium') expect(screen.getByText('Open Terminal on a Mac, PowerShell on Windows, or a terminal on Linux, then run one line to set up Astrid.')).toBeInTheDocument();
       expect(screen.getByText(/https:\/\/astrid\.haus\/install/)).toBeInTheDocument();
       expect(screen.getByText('Add a browser shortcut')).toBeInTheDocument();
     }
+  });
+
+  it('shows the browser arrow only after the shortcut steps are expanded', () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+
+    expect(document.querySelector('svg.astrid-toolbar-pointer')).toBeNull();
+    const guide = screen.getByText('Add a browser shortcut').closest('details')!;
+    guide.open = true;
+    fireEvent(guide, new Event('toggle'));
+    expect(document.querySelector('svg.astrid-toolbar-pointer')).not.toBeNull();
+    guide.open = false;
+    fireEvent(guide, new Event('toggle'));
+    expect(document.querySelector('svg.astrid-toolbar-pointer')).toBeNull();
   });
 
   it('renders the installed variant without an install prompt action', () => {

@@ -2,9 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ ensureSession: vi.fn(), clipboard: vi.fn() }));
+const mocks = vi.hoisted(() => ({ ensureSession: vi.fn(), clipboard: vi.fn(), connectedBefore: true }));
 vi.mock('@/integrations/runtime/client.ts', () => ({ AstridRuntimeClient: class { ensureSession = mocks.ensureSession; } }));
 vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeApiBase: () => 'http://127.0.0.1:17340/api/runtime' }));
+vi.mock('@/integrations/runtime/RuntimeConnectionProvider.tsx', () => ({ useRuntimeConnection: () => ({ connectedBefore: mocks.connectedBefore }) }));
 vi.mock('@/shared/lib/browser/clipboard.ts', () => ({ writeClipboardTextSafe: mocks.clipboard }));
 
 import { EmptyWorkspaceGuidance } from './EmptyWorkspaceGuidance.tsx';
@@ -23,6 +24,7 @@ function openDetails() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.connectedBefore = true;
   mocks.ensureSession.mockResolvedValue({
     realm: { realm_id: 'realm-existing', display_name: 'My workspace' },
     health: { runtime_instance_id: 'instance-existing' },
@@ -48,7 +50,7 @@ describe('connected empty workspace guidance', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy steps for your agent' }));
     await waitFor(() => expect(screen.getByRole('button', { name: RUNTIME_CONNECTION_COPY.agent.copied })).toBeInTheDocument());
-    expect(screen.getByText(RUNTIME_CONNECTION_COPY.agent.pasteNext)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Steps copied. Paste them into your agent.');
     const copied = mocks.clipboard.mock.calls[0][0];
     expect(copied).toContain('My workspace');
     expect(copied).toContain('realm-existing');
@@ -69,7 +71,6 @@ describe('connected empty workspace guidance', () => {
     expect(copied).not.toContain('private-session-value');
     expect(copied).not.toContain('private-credential-value');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Copy steps for your agent' })).toBeInTheDocument(), { timeout: 3000 });
-    expect(screen.getByText(RUNTIME_CONNECTION_COPY.agent.pasteNext)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
     expect(onRefresh).toHaveBeenCalledOnce();
@@ -94,5 +95,11 @@ describe('connected empty workspace guidance', () => {
     expect(await screen.findByRole('button', { name: 'Copy steps for your agent' })).toBeInTheDocument();
     expect(onRefresh).toHaveBeenCalledOnce();
     expect(mocks.ensureSession).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not suggest missing work before this browser has connected to Astrid', () => {
+    mocks.connectedBefore = false;
+    showGuidance();
+    expect(screen.queryByText('Expected to see your work? It may be in another Astrid folder on this computer.')).toBeNull();
   });
 });

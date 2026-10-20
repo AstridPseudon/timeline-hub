@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Check, Link2, Monitor, Share, X } from 'lucide-react';
 import {
   APP_ENTRY_PATH,
@@ -10,7 +10,6 @@ import { detectInstallScenario, type InstallScenario } from './installScenario.t
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
 import { useSendLinkToComputer } from './useSendLinkToComputer.ts';
 import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
-import { withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import './PublicAstridInstallDialog.css';
 
 const AVATAR_SRC = '/astrid-app-icon-192.png';
@@ -19,7 +18,7 @@ const HOME_PATH = '/home';
 /** Landing page wording is kept together here for the product copy pass. */
 export const SET_UP_ASTRID_COPY = {
   title: 'Set up Astrid',
-  subtitle: 'Run one line in a terminal to set up Astrid on your computer.',
+  subtitle: 'Open Terminal on a Mac, PowerShell on Windows, or a terminal on Linux, then run one line to set up Astrid.',
   copyCommand: 'Copy',
   browserShortcut: 'Add a browser shortcut',
   installNow: 'Add the shortcut',
@@ -246,6 +245,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
   const desktop = scenario !== 'mobile';
   const copy = desktop ? DESKTOP_COPY[scenario] : null;
   const pointsUp = scenario === 'chromium' || scenario === 'safari';
+  const [shortcutExpanded, setShortcutExpanded] = useState(false);
 
   return (
     <dialog
@@ -266,7 +266,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
       }}
     >
       <div className="astrid-install-card">
-        {open && pointsUp && !installed ? (
+        {open && shortcutExpanded && pointsUp && !installed ? (
           <ToolbarPointer label={scenario === 'safari' ? 'Share, up here' : 'Up here'} />
         ) : null}
         <button ref={closeButtonRef} type="button" className="astrid-install-close" onClick={requestClose} aria-label="Close">
@@ -276,7 +276,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
           <img className="astrid-install-avatar" src={AVATAR_SRC} alt="" />
           <div>
             <h2 id="astrid-install-title">{SET_UP_ASTRID_COPY.title}</h2>
-            <p>{withCommandShell(SET_UP_ASTRID_COPY.subtitle)}</p>
+            <p>{SET_UP_ASTRID_COPY.subtitle}</p>
           </div>
         </header>
 
@@ -286,7 +286,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
           <>
             <CopyInstallCommand label={SET_UP_ASTRID_COPY.copyCommand} />
             <div className="astrid-install-actions">
-              <details className="astrid-install-guide">
+              <details className="astrid-install-guide" onToggle={event => setShortcutExpanded(event.currentTarget.open)}>
                 <summary>{SET_UP_ASTRID_COPY.browserShortcut}</summary>
                 <div className="astrid-install-body">
                   {scenario === 'chromium' ? <ChromiumVisual /> : null}

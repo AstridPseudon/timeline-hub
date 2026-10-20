@@ -135,6 +135,8 @@ export interface RuntimeConnectionValue {
   gated: boolean;
   state: RuntimeConnectionState;
   isConnected: boolean;
+  /** This browser has reached Astrid before, so missing-work guidance can distinguish a return visit from first setup. */
+  connectedBefore: boolean;
   /** The permission or the first probe is still pending: nothing can be shown yet, so the app renders nothing. */
   isBooting: boolean;
   /** An explicit Connect probe is in flight; background checks never enter a visible checking state. */
@@ -178,6 +180,7 @@ export function RuntimeConnectionProvider({
   const [failedReadings, setFailedReadings] = useState(0);
   const [gatewayAnswered, setGatewayAnswered] = useState(false);
   const [connectedBefore, setConnectedBefore] = useState(() => gated && readConnectedBefore());
+  const [connectedBeforeAtMount] = useState(() => !gated || readConnectedBefore());
 
   const mounted = useRef(true);
   const inFlight = useRef<AbortController | null>(null);
@@ -299,6 +302,7 @@ export function RuntimeConnectionProvider({
         gated: false,
         state: { status: 'connected', realm: { realm_id: '', display_name: '' } },
         isConnected: true,
+        connectedBefore: true,
         isBooting: false,
         isChecking: false,
         awaitingConnect: false,
@@ -307,7 +311,7 @@ export function RuntimeConnectionProvider({
         connect,
       };
     }
-    const base = { gated: true, isChecking, connect } as const;
+    const base = { gated: true, isChecking, connect, connectedBefore: connectedBeforeAtMount } as const;
     if (outcome?.kind === 'connected') {
       return { ...base, state: { status: 'connected', realm: outcome.realm }, isConnected: true, isBooting: false, awaitingConnect: false, realmName: outcome.realm.display_name, schemaDigest: outcome.schemaDigest };
     }
@@ -320,13 +324,13 @@ export function RuntimeConnectionProvider({
       state: { status: connectedBefore || isChecking ? 'connecting' : 'set_up' },
       isBooting: false,
     };
-    if (outcome?.kind === 'restart') return { ...notConnected, state: { status: 'restart_needed' }, isBooting: false };
+    if (outcome?.kind === 'restart') return { ...notConnected, state: { status: 'not_running' }, isBooting: false };
     if (outcome?.kind === 'update_needed') return { ...notConnected, state: { status: 'update_needed' }, isBooting: false };
     if (failedReadings >= 2) {
       return { ...notConnected, state: { status: connectedBefore || gatewayAnswered ? 'not_running' : 'set_up' }, isBooting: false };
     }
     return { ...notConnected, state: { status: 'connecting' }, isBooting: true };
-  }, [gated, outcome, permission, isChecking, connectedBefore, connect, failedReadings, gatewayAnswered]);
+  }, [gated, outcome, permission, isChecking, connectedBeforeAtMount, connectedBefore, connect, failedReadings, gatewayAnswered]);
 
   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;
 }

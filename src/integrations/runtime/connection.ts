@@ -117,8 +117,7 @@ export type RuntimeConnectionState =
   /** Runtime schema is not accepted by this hosted app. */
   | { status: 'update_needed' }
   /** The browser's local-network permission is denied. */
-  | { status: 'blocked' }
-  | { status: 'restart_needed' };
+  | { status: 'blocked' };
 
 /**
  * Query-key roots that read the Runtime through the gateway. The boot gate invalidates them when the

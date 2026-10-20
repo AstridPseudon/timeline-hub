@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { SetupStatusLine } from '@/shared/components/OnboardingModal/components/SetupStatusLine.tsx';
 import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { connectionStatus } from './ConnectionSection.tsx';
+import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
 import { Card } from '@/shared/components/ui/card';
 import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 import { ASTRID_STATUS_COPY as COPY, connectionStatusCopy } from './astridStatusCopy.ts';
@@ -95,14 +96,14 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
   const services = Array.isArray(rawServices) ? rawServices.filter(isRuntimeService) : [];
   const needsRepair = details?.health.status === 'degraded' || services.some((service) => service.state === 'failed');
   const statusText = connected
-    ? loadFailed ? COPY.unavailable : details?.health.status === 'degraded' ? COPY.degraded : details ? COPY.connected : COPY.checking
+    ? loadFailed ? COPY.unavailable : needsRepair ? COPY.degraded : details ? COPY.connected : COPY.checking
     : connectionStatusCopy(status);
 
   return (
     <section className="mb-6" aria-labelledby="astrid-status-title">
       <Card className="p-4">
         <div className="flex items-start gap-3">
-          {statusIcon(connected ? 'connected' : status)}
+          {statusIcon(connected ? needsRepair ? 'degraded' : 'connected' : status)}
           <div className="min-w-0 flex-1 space-y-3">
             <div>
               <h2 id="astrid-status-title" className="text-base font-semibold">{COPY.title}</h2>
@@ -114,7 +115,14 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
             {!connected && summary.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{summary.detail}</p>}
             {summary.connect && <Button type="button" variant="retro-secondary" size="retro-sm" onClick={() => connection.connect()}>{RUNTIME_CONNECTION_COPY.permission.connect}</Button>}
             {connected && details && needsRepair && (
-              <CopyInstallCommand label={RUNTIME_CONNECTION_COPY.agent.copy} mode="install" />
+              <>
+                <CopyInstallCommand label={RUNTIME_CONNECTION_COPY.agent.copy} mode="install" />
+                <a className="text-sm text-muted-foreground underline underline-offset-4" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a>
+              </>
+            )}
+
+            {(loadFailed || !connected && status !== 'set_up' && status !== 'connecting') && (
+              <a className="text-sm text-muted-foreground underline underline-offset-4" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a>
             )}
 
             {connected && details && (

@@ -49,7 +49,6 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
   ['blocked', () => connectionFor({ status: 'blocked' })],
   ['set up', () => connectionFor({ status: 'set_up' })],
   ['not running', () => connectionFor({ status: 'not_running' })],
-  ['restart needed', () => connectionFor({ status: 'restart_needed' })],
 ];
 
 describe('RuntimeConnectionPanel', () => {
@@ -234,7 +233,6 @@ describe('RuntimeConnectionPanel', () => {
     const windowsSentences: ReadonlyArray<[RuntimeConnectionValue, string]> = [
       [connectionFor({ status: 'set_up' }), "This browser hasn't found Astrid here yet. Run this line in PowerShell to set it up, or to start it if it's already installed."],
       [connectionFor({ status: 'not_running' }), 'Run this line in PowerShell to start it again. It keeps your work as it is. This page opens by itself.'],
-      [connectionFor({ status: 'restart_needed' }), 'Astrid on this computer changed while it was running. Run this line in PowerShell to restart it. This page opens by itself.'],
       [connectionFor({ status: 'update_needed' }), 'Astrid on this computer is older than this page. Run this line in PowerShell to update it. It backs up your work first.'],
     ];
 
@@ -260,21 +258,6 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
     expect(shownText()).not.toMatch(/reload/i);
     expect(screen.queryByText('Set up Astrid on this computer')).not.toBeInTheDocument();
-  });
-
-  it('restart needed: one screen with the install command', async () => {
-    const writeText = vi.fn(async (_text: string) => undefined);
-    stubClipboard(writeText);
-    panel(connectionFor({ status: 'restart_needed' }));
-
-    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'restart_needed');
-    expect(screen.getByRole('heading', { name: 'Astrid needs a restart' })).toBeInTheDocument();
-    expect(screen.getByText('Astrid on this computer changed while it was running. Run this line in a terminal to restart it. This page opens by itself.')).toBeInTheDocument();
-    expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
-    await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
-    expect(String(writeText.mock.calls[0][0])).toBe(installCommand('install'));
   });
 
   describe('on a phone', () => {

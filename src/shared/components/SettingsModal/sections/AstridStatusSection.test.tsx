@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AstridStatusSection } from './AstridStatusSection.tsx';
 import { RUNTIME_CONNECTION_COPY as CONNECTION_COPY, installCommand } from '@/shared/components/RuntimeConnection/copy.ts';
+import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
 
 const mocks = vi.hoisted(() => ({
   readStatus: vi.fn(),
@@ -85,11 +86,14 @@ describe('AstridStatusSection', () => {
     expect(screen.getByText('workspace.v1')).toBeInTheDocument();
     expect(screen.queryByText('Versions')).not.toBeInTheDocument();
     expect(screen.getByText('Task host')).toBeInTheDocument();
-    expect(screen.getByText('ComfyUI')).toBeInTheDocument();
+    expect(screen.getByText('comfyui')).toBeInTheDocument();
     expect(screen.getByText('Chat')).toBeInTheDocument();
     expect(screen.getByText('Starting…')).toBeInTheDocument();
     expect(screen.getByText('Running')).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent("Part of Astrid isn't working. Run this line to restart it.");
+    expect(screen.getByRole('link', { name: 'Get help' })).toHaveAttribute('href', ASTRID_HELP_URL);
+    expect(document.querySelector('svg.lucide-circle-alert')).not.toBeNull();
     expect(screen.getByText(/Restarts: 3/)).toBeInTheDocument();
     expect(screen.queryByText('Restarts: 0')).not.toBeInTheDocument();
     expect(screen.queryByText(/Last exit code|Reason:|startup_failed/)).not.toBeInTheDocument();
@@ -133,7 +137,7 @@ describe('AstridStatusSection', () => {
     });
     render(<AstridStatusSection isOpen />);
 
-    expect(await screen.findByRole('status')).toHaveTextContent("Connected, but part of Astrid isn't working.");
+    expect(await screen.findByRole('status')).toHaveTextContent("Part of Astrid isn't working. Run this line to restart it.");
     expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
     expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
   });
@@ -183,7 +187,7 @@ describe('AstridStatusSection', () => {
     view.rerender(<AstridStatusSection isOpen={false} />);
     view.rerender(<AstridStatusSection isOpen />);
 
-    expect(await screen.findByText("Connected, but part of Astrid isn't working.")).toBeInTheDocument();
+    expect(await screen.findByText("Part of Astrid isn't working. Run this line to restart it.")).toBeInTheDocument();
     expect(await screen.findByText('Failed')).toBeInTheDocument();
     expect(mocks.readStatus).toHaveBeenCalledTimes(2);
   });

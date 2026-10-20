@@ -11,7 +11,7 @@ import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection
  * - Screen headings, body text, command lines and Copy labels live here.
  * - Visible text says Astrid and never names a Runtime, workspace, port or command outside the code block.
  * - Straight apostrophes only: the journey matches `Astrid isn't running` exactly.
- * - Gate states name their screens: connecting, blocked, set_up, not_running, restart_needed, update_needed and connected.
+ * - Gate states name their screens: connecting, blocked, set_up, not_running, update_needed and connected.
  *   Permission, pending and phone screens come from browser context. Polling never adds a checking indicator.
  * - The setup, repair and update screens all show the command that matches the state and OS.
  * - Each phrase the journey looks for (`tests/e2e/local/direct-journey.spec.ts`) appears in one element of its
@@ -79,8 +79,6 @@ export interface RuntimeConnectionCopy {
   readonly setUp: Message;
   /** Nothing answers on a return visit, or the gateway answered on this page. */
   readonly notRunning: Message;
-  /** Astrid changed while it was running: only a restart helps. */
-  readonly restartNeeded: Message;
   readonly updateNeeded: Message;
   /** A phone can never reach Astrid on a computer: the link goes there instead. */
   readonly phone: Message & { readonly button: string; readonly copied: string };
@@ -95,7 +93,6 @@ export interface RuntimeConnectionCopy {
   readonly agent: {
     readonly copy: string;
     readonly copied: string;
-    readonly pasteNext: string;
     /** Shown with the command in a text box, only when the clipboard write failed. */
     readonly copyFailed: string;
     readonly note: string;
@@ -145,11 +142,6 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     sentence: 'Run this line in a terminal to start it again. It keeps your work as it is. This page opens by itself.',
   },
 
-  restartNeeded: {
-    title: 'Astrid needs a restart',
-    sentence: 'Astrid on this computer changed while it was running. Run this line in a terminal to restart it. This page opens by itself.',
-  },
-
   updateNeeded: {
     title: 'Update Astrid',
     sentence: 'Astrid on this computer is older than this page. Run this line in a terminal to update it. It backs up your work first.',
@@ -189,7 +181,6 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   agent: {
     copy: 'Copy',
     copied: 'Copied',
-    pasteNext: 'Now paste them into your agent.',
     copyFailed: "Copying didn't work. Select the text below and copy it.",
     note: 'Or paste it into a coding agent to run for you.',
   },
