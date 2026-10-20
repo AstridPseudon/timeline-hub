@@ -32,6 +32,22 @@ describe('clip scalar gesture', () => {
       schema_version: 1, op: 'clip.set', version: '1', select: basis.select, args },
     preview: { version: 1, operations: [{ op: 'clip.update', target: 'o1:raw', payload: args.values, clear: args.clear }] } })));
   });
+  it('omits empty preview clear metadata for a native transition set', () => {
+    const { port, current, submit } = setup();
+    const captured = captureClipScalarEdit(port, current, 'o1:raw');
+    const args: ClipScalarArgs = {
+      values: {
+        transition: { type: 'crossfade', duration: 0.5, revision: 'sha256:r1' },
+        elementRef: { id: 'crossfade', kind: 'transition', revision: 'sha256:r1' },
+      },
+      clear: [],
+    };
+    submitClipScalarEdit(captured, args);
+    expect(submit.mock.calls[0][0].preview).toEqual({
+      version: 1,
+      operations: [{ op: 'clip.update', target: 'o1:raw', payload: args.values }],
+    });
+  });
   it('refuses missing/ambiguous display identities before capture', () => {
     const { port, current } = setup();
     expect(() => captureClipScalarEdit(undefined, current, 'o1:raw', 'occurrence:o1')).toThrow('unavailable');
