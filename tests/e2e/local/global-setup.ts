@@ -6,8 +6,13 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const INPUTS = ['src', 'config', 'public', 'vendor', 'index.html', 'package.json', 'package-lock.json', 'tsconfig.json'];
-/** The Runtime door's origin `npm run build:hosted` compiles in (package.json). A dist without it came from another mode. */
-const HOSTED_ORIGIN = 'http://127.0.0.1:17340';
+/** The default Runtime door origin `npm run build:hosted` compiles in (package.json). */
+const DEFAULT_HOSTED_ORIGIN = 'http://127.0.0.1:17340';
+
+/** A central browser lane may give the hosted build an owned per-run door port. */
+function hostedOrigin(): string {
+  return process.env.VITE_RUNTIME_ORIGIN?.trim() || DEFAULT_HOSTED_ORIGIN;
+}
 
 function newestMtime(entry: string): number {
   let stat;
@@ -26,7 +31,7 @@ export function distIsHosted(dist = path.join(root, 'dist')): boolean {
   const assets = path.join(dist, 'assets');
   if (!existsSync(assets)) return false;
   return readdirSync(assets).some((name) => name.endsWith('.js')
-    && readFileSync(path.join(assets, name), 'utf8').includes(HOSTED_ORIGIN));
+    && readFileSync(path.join(assets, name), 'utf8').includes(hostedOrigin()));
 }
 
 export function distIsCurrent(dist = path.join(root, 'dist')): boolean {
@@ -42,7 +47,8 @@ export default function globalSetup() {
     console.log('[direct] hosted dist is current; skipping the build');
     return;
   }
-  console.log('[direct] building the hosted production bundle (npm run build:hosted)');
-  execFileSync('npm', ['run', 'build:hosted'], { cwd: root, stdio: 'inherit', env: { ...process.env, NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096' } });
-  if (!distIsHosted()) throw new Error(`npm run build:hosted did not compile ${HOSTED_ORIGIN} into dist/assets`);
+  const script = process.env.VITE_RUNTIME_ORIGIN?.trim() ? 'build' : 'build:hosted';
+  console.log(`[direct] building the hosted production bundle (npm run ${script})`);
+  execFileSync('npm', ['run', script], { cwd: root, stdio: 'inherit', env: { ...process.env, NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096' } });
+  if (!distIsHosted()) throw new Error(`npm run ${script} did not compile ${hostedOrigin()} into dist/assets`);
 }
