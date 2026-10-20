@@ -1,4 +1,8 @@
-"""Unit-level fast-lane timing and snapshot provenance checks."""
+"""Unit-level fast-lane timing and snapshot provenance checks.
+
+VW-LABEL: metadata-only/legacy inputs remain usable as UNCERTIFIED previews.
+The host-minted positive path is covered in test_live_source_label_native.py.
+"""
 
 from __future__ import annotations
 
@@ -49,9 +53,9 @@ def test_historical_snapshot_label_uses_the_revision_actually_rendered():
     label = snapshot_label(_snapshot("R1", requested_revision_id="R2", current_head_revision_id="R2"))
 
     assert label == {
-        "status": "committed",
-        "label": "committed revision R1",
-        "actual_revision_id": "R1",
+        "status": "uncertified",
+        "label": "UNCERTIFIED preview (claimed revision R1)",
+        "actual_revision_id": None,
         "base_revision_id": None,
     }
 
@@ -70,9 +74,9 @@ def test_input_only_parent_closure_label_uses_immutable_parent_not_current_head(
     )
 
     assert label == {
-        "status": "committed",
-        "label": "committed revision R1",
-        "actual_revision_id": "R1",
+        "status": "uncertified",
+        "label": "UNCERTIFIED preview (claimed revision R1)",
+        "actual_revision_id": None,
         "base_revision_id": None,
     }
 
@@ -90,10 +94,11 @@ def test_input_only_candidate_uses_only_working_copy_base_parent():
         }
     )
 
-    assert label["status"] == "candidate"
+    assert label["status"] == "uncertified"
     assert label["base_revision_id"] == "R1"
     assert label["actual_revision_id"] is None
-    assert "R2" not in label["label"]
+    assert "R2" in label["label"]
+    assert "committed" not in label["label"]
 
 
 def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
@@ -111,8 +116,8 @@ def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
     )
 
     assert label == {
-        "status": "candidate",
-        "label": "unsaved candidate based on committed revision R1",
+        "status": "uncertified",
+        "label": "UNCERTIFIED unsaved candidate C1 (base R1)",
         "actual_revision_id": None,
         "base_revision_id": "R1",
     }
@@ -134,9 +139,10 @@ def test_composed_candidate_label_uses_working_copy_base_not_capture_parent():
         }
     )
 
-    assert label["status"] == "candidate"
+    assert label["status"] == "uncertified"
     assert label["base_revision_id"] == "R1"
-    assert "C1" not in label["label"]
+    assert "C1" in label["label"]
+    assert "committed" not in label["label"]
 
 
 def test_candidate_with_missing_marker_base_stays_unsaved_without_fabricating_candidate_id():
@@ -153,8 +159,8 @@ def test_candidate_with_missing_marker_base_stays_unsaved_without_fabricating_ca
     )
 
     assert label == {
-        "status": "candidate",
-        "label": "unsaved candidate (committed base unavailable)",
+        "status": "uncertified",
+        "label": "UNCERTIFIED unsaved candidate C1 (base revision unavailable)",
         "actual_revision_id": None,
         "base_revision_id": None,
     }
@@ -170,7 +176,7 @@ def test_authoring_preview_only_is_candidate_and_uses_its_marker_base():
         }
     )
 
-    assert label["status"] == "candidate"
+    assert label["status"] == "uncertified"
     assert label["base_revision_id"] == "R1"
 
 
@@ -185,8 +191,8 @@ def test_conflicting_admitted_candidate_bases_are_unavailable():
     )
 
     assert label == {
-        "status": "unavailable",
-        "label": "candidate revision unavailable",
+        "status": "uncertified",
+        "label": "UNCERTIFIED unsaved candidate C1 (base revision unavailable: contradictory markers)",
         "actual_revision_id": None,
         "base_revision_id": None,
     }
@@ -195,7 +201,7 @@ def test_conflicting_admitted_candidate_bases_are_unavailable():
 def test_requested_revision_without_actual_snapshot_identity_is_unavailable():
     label = snapshot_label(_snapshot(None, requested_revision_id="R2"))
 
-    assert label["status"] == "unavailable"
+    assert label["status"] == "uncertified"
     assert label["actual_revision_id"] is None
     assert "R2" not in label["label"]
 
@@ -218,7 +224,7 @@ def test_mismatched_requested_revision_cannot_relabel_actual_snapshot():
         requested_revision_id="R2",
     )
 
-    assert snapshot_label(snapshot)["label"] == "committed revision R1"
+    assert snapshot_label(snapshot)["label"] == "UNCERTIFIED preview (claimed revision R1)"
 
 
 def test_renderer_outage_status_says_output_is_unavailable():

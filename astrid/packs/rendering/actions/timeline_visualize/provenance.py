@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from astrid.core.rendering.verified_source import VerifiedTimelineSource
 
 
 def _first_string(*values: Any) -> str | None:
@@ -32,7 +36,7 @@ def _candidate_markers(
     canonical: Mapping[str, Any],
     capture: Mapping[str, Any],
 ) -> list[Mapping[str, Any]]:
-    """Return admission-owned candidate markers from either render path."""
+    """Return candidate identity hints; these never confer admission."""
     markers: list[Mapping[str, Any]] = []
     for source in (metadata, canonical, capture):
         for key in ("working_copy", "authoring_preview"):
@@ -43,7 +47,7 @@ def _candidate_markers(
 
 
 def _marker_base_revision(marker: Mapping[str, Any]) -> tuple[str | None, bool]:
-    """Read only the accepted base from a candidate marker.
+    """Read only the claimed base from a candidate marker.
 
     The other parent fields in a candidate authority identify the unpublished
     candidate (for example ``candidate_parent_revision_id`` / ``parent_revision_id``);
@@ -66,7 +70,7 @@ def _marker_base_revision(marker: Mapping[str, Any]) -> tuple[str | None, bool]:
 def _candidate_base_revision(
     markers: list[Mapping[str, Any]],
 ) -> tuple[str | None, bool]:
-    """Return a shared accepted base, or mark contradictory markers invalid."""
+    """Return a shared claimed base, or mark contradictory markers invalid."""
     bases: set[str] = set()
     contradictory = False
     for marker in markers:
@@ -77,20 +81,45 @@ def _candidate_base_revision(
     return (next(iter(bases), None) if len(bases) <= 1 else None), contradictory or len(bases) > 1
 
 
-def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
-    """Describe the revision represented by an admitted visualize snapshot.
+def snapshot_label(
+    snapshot: Mapping[str, Any] | None, *, source: VerifiedTimelineSource | None = None,
+) -> dict[str, Any]:
+    """Label the exact frozen input, using only host-minted source for authority.
 
-    The snapshot's canonical authority is the only source of revision identity.
-    In particular, ``requested_revision_id`` and current-head fields are not
-    used: they can describe a request or a later mutable state rather than the
-    bytes that were actually rendered.
+    Metadata without that source is useful as a draft/base hint, never proof of
+    an accepted revision. Runtime owns admission; this consumer only checks that
+    its snapshot is the one paired with the internal source.
     """
+    if source is not None:
+        from astrid.core.rendering.verified_source import VerifiedTimelineSource
+
+        if type(source) is not VerifiedTimelineSource:
+            raise ValueError("snapshot label requires a host-owned verified source")
+        binding = source.read()
+
+        def encoded(value):
+            return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+        if encoded(snapshot) != encoded(binding["snapshot"]):
+            raise ValueError("snapshot label differs from verified source snapshot")
+        ref = binding["ref"]
+        if ref["source_kind"] == "revision":
+            actual = ref["revision_id"]
+            return {
+                "status": "committed", "label": f"committed revision {actual}",
+                "actual_revision_id": actual, "base_revision_id": None,
+            }
+        if ref["source_kind"] == "working_copy":
+            base = ref["working_copy"]["base_revision_id"]
+            return {
+                "status": "candidate", "label": f"unsaved candidate based on committed revision {base}",
+                "actual_revision_id": None, "base_revision_id": base,
+            }
+        raise ValueError("snapshot label requires an admitted revision or working copy")
     if not isinstance(snapshot, Mapping):
         return {
-            "status": "unavailable",
-            "label": "revision unavailable",
-            "actual_revision_id": None,
-            "base_revision_id": None,
+            "status": "unavailable", "label": "revision unavailable",
+            "actual_revision_id": None, "base_revision_id": None,
         }
 
     metadata = snapshot.get("metadata")
@@ -99,56 +128,26 @@ def snapshot_label(snapshot: Mapping[str, Any] | None) -> dict[str, Any]:
     canonical = canonical if isinstance(canonical, Mapping) else {}
     capture = metadata.get("capture_authority")
     capture = capture if isinstance(capture, Mapping) else {}
-    input_only_parent = None
-    if (
-        str(metadata.get("selection") or "").strip().lower() == "input_only"
-        and metadata.get("authority") == "canonical_parent_revision_closure"
-    ):
-        input_only_parent = metadata.get("parent_revision_id")
-    # A composed capture has its own authority block; ordinary managed renders
-    # use canonical_timeline. Prefer the capture block only when it carries the
-    # immutable parent, never a requested/current-head hint.
-    authority = capture if _first_string(
-        capture.get("parent_revision_id"), capture.get("head_revision_id"), capture.get("revision_id")
-    ) else canonical
-    actual = _first_string(
-        input_only_parent,
-        authority.get("parent_revision_id"), authority.get("head_revision_id"), authority.get("revision_id")
-    )
     markers = _candidate_markers(metadata, canonical, capture)
-    candidate = _is_candidate(metadata, authority) or bool(markers)
-    if candidate:
+    if _is_candidate(metadata, canonical) or _is_candidate(metadata, capture) or markers:
         base, contradictory = _candidate_base_revision(markers)
+        draft = _first_string(*(marker.get("candidate_parent_revision_id") for marker in markers))
+        label = "UNCERTIFIED unsaved candidate" + (f" {draft}" if draft else "")
         if contradictory:
-            return {
-                "status": "unavailable",
-                "label": "candidate revision unavailable",
-                "actual_revision_id": None,
-                "base_revision_id": None,
-            }
-        if base is None:
-            return {
-                "status": "candidate",
-                "label": "unsaved candidate (committed base unavailable)",
-                "actual_revision_id": None,
-                "base_revision_id": None,
-            }
+            label += " (base revision unavailable: contradictory markers)"
+        else:
+            label += f" (base {base})" if base else " (base revision unavailable)"
         return {
-            "status": "candidate",
-            "label": f"unsaved candidate based on committed revision {base}",
-            "actual_revision_id": None,
-            "base_revision_id": base,
+            "status": "uncertified", "label": label,
+            "actual_revision_id": None, "base_revision_id": base if not contradictory else None,
         }
-    if actual is None:
-        return {
-            "status": "unavailable",
-            "label": "revision unavailable",
-            "actual_revision_id": None,
-            "base_revision_id": None,
-        }
+    claimed = _first_string(
+        metadata.get("parent_revision_id"),
+        *(authority.get(key) for authority in (capture, canonical)
+          for key in ("parent_revision_id", "head_revision_id", "revision_id")),
+    )
     return {
-        "status": "committed",
-        "label": f"committed revision {actual}",
-        "actual_revision_id": actual,
-        "base_revision_id": None,
+        "status": "uncertified",
+        "label": "UNCERTIFIED preview" + (f" (claimed revision {claimed})" if claimed else " (revision unavailable)"),
+        "actual_revision_id": None, "base_revision_id": None,
     }
