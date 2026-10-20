@@ -59,9 +59,10 @@ def test_live_docs_name_runtime_bootstrap_and_authority() -> None:
             continue
         text = path.read_text(encoding="utf-8")
         assert re.search(r"(?:astrid|workspace)\s+runtime", text, re.I), path
-    assert "astrid-runtime up --profile astrid" in (
-        ROOT / "docs" / "getting-started.md"
-    ).read_text(encoding="utf-8")
+    getting_started = (ROOT / "docs" / "getting-started.md").read_text(encoding="utf-8")
+    assert "curl -fsSL https://astrid.haus/install | sh" in getting_started
+    assert "irm https://astrid.haus/install.ps1 | iex" in getting_started
+    assert "astrid-runtime up" not in getting_started
 
 
 def test_authoritative_pack_docs_do_not_prescribe_retired_installer() -> None:
