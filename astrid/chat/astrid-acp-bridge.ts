@@ -964,14 +964,21 @@ export class AstridAcpBridge {
       const modelConfigId = sharedSessionModels(this.sharedSessions.snapshot(connection, input.sessionId))?.modelConfigId;
       if (input.configId === 'model' || input.configId === modelConfigId) throw new ChatError(409, 'session_model_fixed', 'To use another model, start a new chat.');
       if (typeof input.value !== 'string' || !input.value) throw new Error('config option value is required');
-      this.rememberSession(connection, 'session/load', input, this.sharedSessions.snapshot(connection, input.sessionId));
-      const allowedValues = connection.configOptions.get(input.sessionId)?.get(input.configId);
-      if (!allowedValues?.has(input.value)) throw new Error('config option value was not advertised for this session');
     }
     let result = method === 'session/new'
       ? await this.createSession(connection, params)
       : method === 'session/takeover'
       ? await this.sharedSessions.takeover(connection, String(asRecord(params)?.sessionId ?? ''))
+      : method === 'session/set_config_option'
+      ? await this.sharedSessions.changeConfig(connection, String(asRecord(params)?.sessionId), snapshot => {
+        const input = asRecord(params)!;
+        const modelConfigId = sharedSessionModels(snapshot)?.modelConfigId;
+        if (input.configId === 'model' || input.configId === modelConfigId) throw new ChatError(409, 'session_model_fixed', 'To use another model, start a new chat.');
+        this.rememberSession(connection, 'session/load', input, snapshot);
+        const allowedValues = connection.configOptions.get(input.sessionId as string)?.get(input.configId as string);
+        if (!allowedValues?.has(input.value as string)) throw new Error('config option value was not advertised for this session');
+        return { method: 'session/set_config_option', params };
+      })
       : await this.sharedSessions.request(connection, method, params);
     if (method === 'session/new' || method === 'session/load' || method === 'session/resume' || method === 'session/fork') {
       this.rememberSession(connection, method, params, result);

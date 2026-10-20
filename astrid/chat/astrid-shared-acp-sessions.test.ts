@@ -230,15 +230,116 @@ test('a model switch reserves the native session across takeover until its ackno
   await registry.takeover(follower, params.sessionId);
   const fail = failures();
   await fail(registry.request(follower, 'session/prompt', { ...params, prompt: [] }), 'session_busy');
-  await fail(registry.request(follower, 'session/set_model', { ...params, modelId: 'a' }), 'session_busy');
+  const nextSwitch = registry.request(follower, 'session/set_model', { ...params, modelId: 'a' });
+  assert.equal(host.requests.filter(item => item.method === 'session/set_model').length, 1);
   await fail(registry.request(writer, 'session/set_model', { ...params, modelId: 'a' }), 'session_read_only');
   registry.detach(writer);
   assert.equal(registry.retainsHost(writer), true);
   setter.resolve({}); // legacy ACP adapters may acknowledge without an event
   await switching;
-  assert.equal((registry.snapshot(follower, params.sessionId) as { models: { currentModelId: string } }).models.currentModelId, 'b');
-  assert.deepEqual(host.requests.map(item => item.method), ['session/new', 'session/set_model']);
+  await nextSwitch;
+  assert.equal((registry.snapshot(follower, params.sessionId) as { models: { currentModelId: string } }).models.currentModelId, 'a');
+  assert.deepEqual(host.requests.map(item => item.method), ['session/new', 'session/set_model', 'session/set_model']);
   await registry.request(follower, 'session/prompt', { ...params, prompt: [] });
   assert.equal(host.requests.at(-1)?.method, 'session/prompt');
+  registry.close();
+});
+
+test('queued config changes recheck prompt state after a non-prompt RPC fails', async () => {
+  const read = deferred<unknown>();
+  const turn = deferred<unknown>();
+  const host = fakeHost(method => method === 'session/new' ? { sessionId: 'codex:queued' }
+    : method === 'session/list' ? read.promise
+    : method === 'session/prompt' ? turn.promise : {});
+  const registry = new SharedAcpSessions(() => {});
+  const writer = client('writer', 'codex', host.host);
+  await registry.request(writer, 'session/new');
+  const listing = registry.request(writer, 'session/list');
+  const change = registry.request(writer, 'session/set_config_option', { sessionId: 'codex:queued', configId: 'effort', value: 'high' });
+  const prompt = registry.request(writer, 'session/prompt', { sessionId: 'codex:queued', prompt: [] });
+  const failedRead = assert.rejects(listing, /read failed/);
+  const busy = failures()(change, 'acp_request_in_progress');
+  read.reject(new Error('read failed'));
+  await failedRead;
+  await busy;
+  assert.equal(host.requests.some(item => item.method === 'session/set_config_option'), false);
+  turn.resolve({});
+  await prompt;
+  await registry.request(writer, 'session/set_config_option', { sessionId: 'codex:queued', configId: 'effort', value: 'high' });
+  assert.equal(host.requests.at(-1)?.method, 'session/set_config_option');
+  registry.close();
+});
+
+test('forwarded config waits on the physical session host after creator handoff', async () => {
+  const id = 'codex:handoff';
+  const read = deferred<unknown>();
+  const original = fakeHost(method => method === 'session/new' ? { sessionId: id } : method === 'session/list' ? read.promise : {});
+  const other = fakeHost(() => { throw new Error('forwarded setter used the subscriber host'); });
+  const registry = new SharedAcpSessions(() => {});
+  const creator = client('creator', 'codex', original.host);
+  const survivor = client('survivor', 'codex', other.host);
+  await registry.request(creator, 'session/new');
+  await registry.request(survivor, 'session/load', { sessionId: id });
+  const listing = registry.request(creator, 'session/list');
+  registry.detach(creator);
+  let resolved = false;
+  const change = registry.changeConfig(survivor, id, () => {
+    resolved = true;
+    return { method: 'session/set_config_option', params: { sessionId: id, configId: 'effort', value: 'high' } };
+  });
+  await Promise.resolve();
+  assert.equal(resolved, false);
+  assert.equal(registry.retainsHost(creator), true);
+  read.resolve({});
+  await Promise.all([listing, change]);
+  assert.equal(resolved, true);
+  assert.equal(original.requests.at(-1)?.method, 'session/set_config_option');
+  assert.equal(other.requests.length, 0);
+  registry.close();
+});
+
+for (const transition of ['takeover', 'detach'] as const) {
+  test(`queued config rechecks attachment and writer after ${transition}`, async () => {
+    const id = 'codex:queued-writer';
+    const read = deferred<unknown>();
+    const original = fakeHost(method => method === 'session/new' ? { sessionId: id } : method === 'session/list' ? read.promise : {});
+    const registry = new SharedAcpSessions(() => {});
+    const writer = client('writer', 'codex', original.host);
+    const follower = client('follower', 'codex', fakeHost().host);
+    await registry.request(writer, 'session/new');
+    await registry.request(follower, 'session/load', { sessionId: id });
+    const listing = registry.request(writer, 'session/list');
+    const change = registry.changeConfig(writer, id, () => { throw new Error('stale writer reached config validation'); });
+    const rejection = failures()(change, transition === 'takeover' ? 'session_read_only' : 'session_not_attached');
+    if (transition === 'takeover') await registry.takeover(follower, id);
+    else registry.detach(writer);
+    read.resolve({});
+    await Promise.all([listing, rejection]);
+    assert.equal(original.requests.some(request => request.method === 'session/set_config_option'), false);
+    registry.close();
+  });
+}
+
+test('queued validation receives metadata accepted by the previous setter', async () => {
+  const id = 'codex:queued-options';
+  const setter = deferred<unknown>();
+  const options = [{ id: 'updated-effort', category: 'thought_level', type: 'select', currentValue: 'low', options: [{ value: 'low' }, { value: 'high' }] }];
+  const original = fakeHost((method, params) => method === 'session/new' ? { sessionId: id }
+    : method === 'session/set_model' ? setter.promise : { configOptions: options.map(option => ({ ...option, currentValue: (params as Json).value })) });
+  const registry = new SharedAcpSessions(() => {});
+  const writer = client('writer', 'codex', original.host);
+  await registry.request(writer, 'session/new');
+  const first = registry.request(writer, 'session/set_model', { sessionId: id, modelId: 'b' });
+  let resolved = false;
+  const second = registry.changeConfig(writer, id, snapshot => {
+    resolved = true;
+    const current = (snapshot as { configOptions: typeof options }).configOptions[0];
+    assert.equal(current.id, 'updated-effort');
+    return { method: 'session/set_config_option', params: { sessionId: id, configId: current.id, value: 'high' } };
+  });
+  assert.equal(resolved, false);
+  setter.resolve({ configOptions: options });
+  await Promise.all([first, second]);
+  assert.equal(((registry.snapshot(writer, id) as Json).configOptions as Json[])[0].currentValue, 'high');
   registry.close();
 });

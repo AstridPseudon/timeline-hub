@@ -1,6 +1,6 @@
 import { test } from 'bun:test';
 import assert from 'node:assert/strict';
-import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig, assertLocalMediaOnly } from './astrid-acp-bridge.ts';
+import { createAstridAcpHttpServer, resolveAstridAcpBridgeConfig, assertLocalMediaOnly, type AstridAcpBridge } from './astrid-acp-bridge.ts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,6 +13,19 @@ function deferred<T = void>() {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>(yes => { resolve = yes; });
   return { promise, resolve };
+}
+
+function directInvoker(bridge: AstridAcpBridge) {
+  return async (url: string, body?: unknown) => {
+    const request = Object.assign(Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]), {
+      method: body === undefined ? 'GET' : 'POST', url,
+      headers: { authorization: 'Bearer test', 'x-astrid-bridge-version': 'v1' },
+    });
+    let output = '';
+    const response = { statusCode: 200, setHeader() {}, end(value: string) { output = value; } };
+    await bridge.handle(request as never, response as never);
+    return { status: response.statusCode, body: JSON.parse(output) as Json };
+  };
 }
 
 const mediaForms = [
@@ -153,6 +166,60 @@ test('session model and thought-level routes use advertised config IDs and refre
     } finally { await bridge.close(); server.close(); }
   }
 });
+
+for (const busyMethod of ['session/list', 'session/load', 'session/prompt'] as const) {
+  test(`thinking level ${busyMethod === 'session/prompt' ? 'refuses an active prompt' : `waits for ${busyMethod}`} without a socket`, async () => {
+    const sessionId = 'claude-code:race';
+    const started = deferred();
+    const finish = deferred();
+    const setters: string[] = [];
+    const snapshot = () => ({ sessionId,
+      models: { currentModelId: 'a', availableModels: [{ modelId: 'a', name: 'A' }, { modelId: 'b', name: 'B' }] },
+      configOptions: [
+        { id: 'effort', category: 'thought_level', type: 'select', currentValue: 'low', options: [{ value: 'low' }, { value: 'high' }] },
+      ],
+    });
+    const host = {
+      initialize: async () => ({}), dispose: async () => undefined,
+      request: async (method: string) => {
+        if (method === busyMethod) { started.resolve(); await finish.promise; }
+        if (method === 'session/set_config_option') setters.push(method);
+        return { ...snapshot(), ...(method === 'session/list' ? { sessions: [{ sessionId }] } : {}) };
+      },
+    };
+    const { server, bridge } = createAstridAcpHttpServer({
+      config: { token: 'test', port: 0, cwd: '/tmp/local' }, idFactory: () => 'c',
+      localAgentHostFactory: async () => host as never,
+    });
+    const invoke = directInvoker(bridge);
+    const change = () => invoke('/c/rpc', { method: 'session/set_config_option', params: { sessionId, configId: 'effort', value: 'high' } });
+    try {
+      assert.equal((await invoke('/connect', { agent: 'claude-code' })).status, 200);
+      assert.equal((await invoke('/c/rpc', { method: busyMethod === 'session/load' ? 'session/list' : 'session/new', params: {} })).status, 200);
+      const busy = invoke('/c/rpc', { method: busyMethod, params: { sessionId, prompt: [] } });
+      await started.promise;
+      let settled = false;
+      const changing = change().then(result => { settled = true; return result; });
+      if (busyMethod === 'session/prompt') {
+        const rejected = await changing;
+        assert.equal(rejected.status, 409);
+        assert.equal(rejected.body.error, 'acp_request_in_progress');
+        assert.match(String(rejected.body.detail), /Wait for the current ACP request to finish/);
+      } else {
+        // Drain request-body processing without a timing threshold.
+        await new Promise<void>(resolve => setImmediate(resolve));
+        assert.equal(settled, false);
+      }
+      assert.deepEqual(setters, []);
+      assert.equal((await invoke('/c/events')).status, 200);
+      finish.resolve();
+      assert.equal((await busy).status, 200);
+      if (busyMethod !== 'session/prompt') assert.equal((await changing).status, 200);
+      else assert.equal((await change()).status, 200);
+      assert.deepEqual(setters, ['session/set_config_option']);
+    } finally { finish.resolve(); await bridge.close(); server.close(); }
+  });
+}
 
 async function listen(server: import('node:http').Server) {
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
