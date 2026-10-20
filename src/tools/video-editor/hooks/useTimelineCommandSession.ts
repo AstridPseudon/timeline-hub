@@ -5,6 +5,7 @@ import { projectCanonicalComposition } from '../data/shotCompositionProjection.t
 import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
+import { projectClipSplitPreview } from '../commands/clipSplitGesture.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
 import { createTimelineCommandSession, type CommandSessionState, type TimelineCommandSession } from '../commands/commitSession.ts';
@@ -92,7 +93,8 @@ export function useTimelineCommandSession(options: {
         let data = await buildTimelineData(config, registry, resolve,
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
-          const compiled = compileTimelinePatch(preview, data);
+          const native = projectClipSplitPreview(preview, data);
+          const compiled = native ? { valid: true, nextData: native } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
           data = compiled.nextData;
         }
@@ -129,7 +131,8 @@ export function useTimelineCommandSession(options: {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const compiled = compileTimelinePatch(patch, commit.dataRef.current);
+          const native = projectClipSplitPreview(patch, commit.dataRef.current);
+          const compiled = native ? { valid: true, nextData: native } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
           ownsHistoryRef.current = true;
@@ -166,6 +169,16 @@ export function useTimelineCommandSession(options: {
           capture(input) { requireCleanLabelEdit(); return labelPort.capture(input); },
           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
+        };
+        const splitPort = session.clipSplitPort;
+        const requireCleanSplit = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before splitting');
+        };
+        session.clipSplitPort = {
+          supports: splitPort.supports,
+          capture(input) { requireCleanSplit(); return splitPort.capture(input); },
+          finish(basis) { requireCleanSplit(); return splitPort.finish(basis); },
+          submit(input) { requireCleanSplit(); splitPort.submit(input); },
         };
         sessionRef.current = session;
         setState({ ...session.getState() });
@@ -238,6 +251,7 @@ export function useTimelineCommandSession(options: {
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     trackLabelPort: sessionRef.current?.trackLabelPort,
+    clipSplitPort: sessionRef.current?.clipSplitPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
