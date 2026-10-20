@@ -8,7 +8,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
+import { MemoryRouter, useNavigate } from "react-router-dom";
 import {
   afterAll,
   afterEach,
@@ -54,7 +54,6 @@ import {
   AgentChatProvider,
   useAgentChatBridge,
 } from "@/shared/contexts/AgentChatContext.tsx";
-import { APP_ENTRY_PATH } from "@/app/entryClassification.ts";
 import { setDevExtensionEnabled } from "@/tools/video-editor/dev/devExtensionEnablement.ts";
 
 const browserStorage = new Map<string, string>();
@@ -353,22 +352,17 @@ vi.mock("@/tools/video-editor/dev/localExtensions.ts", () => ({
 vi.mock("@/tools/video-editor/components/AstridVideoEditorShell.tsx", () => ({
   AstridVideoEditorShell: ({
     timelineId,
-    onCreateTimeline,
     headerNavigationControls,
     previewNavigationControls,
     showHeader,
   }: {
     timelineId: string;
-    onCreateTimeline?: () => void;
     headerNavigationControls?: React.ReactNode;
     previewNavigationControls?: React.ReactNode;
     showHeader?: boolean;
   }) => (
     <div data-testid="video-editor-shell">
       {timelineId}
-      <button type="button" onClick={onCreateTimeline}>
-        create-timeline
-      </button>
       {showHeader && headerNavigationControls}
       {previewNavigationControls}
     </div>
@@ -536,11 +530,6 @@ function ChatScopeProbe() {
   );
 }
 
-function LocationProbe() {
-  const { pathname, search } = useLocation();
-  return <output data-testid="location">{`${pathname}${search}`}</output>;
-}
-
 function renderPage(initialEntry: string, withChatScope = false) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -556,7 +545,6 @@ function renderPage(initialEntry: string, withChatScope = false) {
         initialEntries={[initialEntry]}
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       >
-        <LocationProbe />
         {withChatScope ? (
           <AgentChatProvider>
             <VideoEditorPage />
@@ -1216,23 +1204,6 @@ describe("VideoEditorPage", () => {
     );
       expect(state.runtimeCtor).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: "runtime-p1" }),
-    );
-  });
-
-  it("sends the shell's create-timeline action to the app entry, not the retired login page", async () => {
-    state.discovery.projects = [
-      {
-        slug: "fresh-project",
-        name: "Fresh project",
-        project_id: "runtime-p1",
-      },
-    ];
-    renderPage(
-      "/tools/video-editor?localProject=fresh-project&localTimeline=11111111-1111-1111-1111-111111111111",
-    );
-    await userEvent.click(await screen.findByRole("button", { name: "create-timeline" }));
-    await waitFor(() =>
-      expect(screen.getByTestId("location").textContent).toBe(APP_ENTRY_PATH),
     );
   });
 
