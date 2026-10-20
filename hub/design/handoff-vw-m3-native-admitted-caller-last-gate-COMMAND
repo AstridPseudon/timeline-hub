@@ -1,0 +1,7 @@
+Review exact SHA: ed6b371e3acbb83ed990e36809a2bc2bd7916a46
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_scene_source_carry.py::test_native_caller_binds_actual_frame_session_to_admitted_project tests/core/execution/test_remotion_host_session.py::test_child_cannot_select_a_different_native_executable_or_project tests/core/execution/test_remotion_host_session.py::test_task_cannot_modify_host_scope_inputs_or_escape_attempt tests/core/execution/test_remotion_host_session.py::test_actual_frame_session_uses_inherited_host_lease
+# Result: 9 passed in 3.70s
+
+git diff --check
+# Result: passed

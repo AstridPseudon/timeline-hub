@@ -1,0 +1,172 @@
+diff --git a/astrid/core/timeline/scene_answers.py b/astrid/core/timeline/scene_answers.py
+index 1d3f0879f..fd8176c50 100644
+--- a/astrid/core/timeline/scene_answers.py
++++ b/astrid/core/timeline/scene_answers.py
+@@ -7,6 +7,7 @@ import os
+ import subprocess
+ import sys
+ from collections.abc import Iterable, Mapping
++from pathlib import Path
+ from typing import Any
+ 
+ from astrid.core.env_vars import ASTRID_PACKS_PATH
+@@ -114,3 +115,74 @@ def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
+     declarations = element_coverage({c.get("clipType", "") for c in clips})
+     roles = {c["id"]: role_of(c, c.get("track"), declarations) for c in clips}
+     return _query({"props": dict(props), "basis": dict(basis), "roles": roles}, frames)
++
++
++def _prepared_host_frames_at(
++    timeline_path: Path,
++    assets_path: Path,
++    frames: Iterable[int],
++    *,
++    staged_video: Path,
++    provenance_out_path: Path,
++    project_dir: Path,
++    composition_id: str,
++    theme_path: Path | None,
++    min_free_gb: float | None,
++    frame_output_dir: Path,
++    review: Mapping[str, Any] | None = None,
++    materialized_root: Path | None = None,
++    staging_parent: Path | None = None,
++    materialized_objects: Mapping[str, str] | None = None,
++    composition_clip_types: frozenset[str] = frozenset(),
++    encode_aac_at_stitch: bool = False,
++    composition_duration_frames: int | None = None,
++) -> list[dict[str, Any]]:
++    """Query the public host from the renderer's exact prepared Root lifetime.
++
++    The caller supplies the already-retained render inputs and invocation paths;
++    this adapter does not admit a source, construct a fallback registry/theme,
++    or launch a renderer.  ``host_frames_at`` runs before the preparation
++    context closes, so its asset URLs, staged effects and PCM attempt (when the
++    shared preparer selects one) have the same lifetime as a normal render.
++    """
++    requested = tuple(frames)
++    try:
++        from astrid.core.rendering.profile import resolve_render_profile
++        from astrid.packs.rendering.rendering.renderers.remotion import lock
++        from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (
++            _prepared_remotion_root,
++        )
++
++        with lock.remotion_render_lock(), _prepared_remotion_root(
++            timeline_path,
++            assets_path,
++            staged_video,
++            provenance_out_path=provenance_out_path,
++            project_dir=project_dir,
++            composition_id=composition_id,
++            theme_path=theme_path,
++            min_free_gb=min_free_gb,
++            review=review,
++            materialized_root=materialized_root,
++            staging_parent=staging_parent,
++            materialized_objects=materialized_objects,
++            composition_clip_types=composition_clip_types,
++            encode_aac_at_stitch=encode_aac_at_stitch,
++            frame_numbers=requested,
++            frame_output_dir=frame_output_dir,
++            composition_duration_frames=composition_duration_frames,
++        ) as prepared:
++            props = prepared[0]
++            profile = resolve_render_profile(
++                props["timeline"], props["assets"], theme=props["theme"],
++            )
++            basis = {
++                "width": profile.width,
++                "height": profile.height,
++                "fps": profile.fps_rational[0] / profile.fps_rational[1],
++            }
++            return host_frames_at(props, basis, requested)
++    except SceneQueryUnavailable:
++        raise
++    except (OSError, RuntimeError, TypeError, ValueError, KeyError) as exc:
++        raise SceneQueryUnavailable(f"scene preparation unavailable: {exc}") from exc
+diff --git a/tests/packs/rendering/test_scene_answers.py b/tests/packs/rendering/test_scene_answers.py
+index af9bd2a23..aa63d9c0f 100644
+--- a/tests/packs/rendering/test_scene_answers.py
++++ b/tests/packs/rendering/test_scene_answers.py
+@@ -7,6 +7,7 @@ import os
+ import shutil
+ import subprocess
+ import tarfile
++from contextlib import contextmanager
+ from pathlib import Path
+ from types import SimpleNamespace
+
+@@ -260,2 +261,72 @@ def test_invalid_resolved_inputs_are_unavailable(installed, change):
+     with pytest.raises(scene_answers.SceneQueryUnavailable):
+         scene_answers.frames_at(payload, frames)
++
++
++def test_prepared_host_query_uses_final_root_inside_lock(monkeypatch, tmp_path):
++    props = {
++        "timeline": {"tracks": [], "clips": []},
++        "assets": {"assets": {}},
++        "theme": {"visual": {}},
++    }
++    events = []
++    calls = []
++
++    @contextmanager
++    def lock():
++        events.append("lock-enter")
++        yield
++        events.append("lock-exit")
++
++    @contextmanager
++    def prepare(*args, **kwargs):
++        calls.append((args, kwargs))
++        events.append("prepare-enter")
++        yield (props, tmp_path / ".props.json")
++        events.append("prepare-exit")
++
++    from astrid.core.rendering import profile
++    from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
++    from astrid.packs.rendering.rendering.renderers.remotion import root_preparation
++
++    monkeypatch.setattr(remotion_lock, "remotion_render_lock", lock)
++    monkeypatch.setattr(root_preparation, "_prepared_remotion_root", prepare)
++    monkeypatch.setattr(profile, "resolve_render_profile", lambda *args, **kwargs:
++                        SimpleNamespace(width=641, height=359, fps_rational=(30000, 1001)))
++
++    def query(received_props, basis, frames):
++        assert received_props is props
++        assert basis == {"width": 641, "height": 359, "fps": 30000 / 1001}
++        assert tuple(frames) == (7, 0, 7)
++        assert events == ["lock-enter", "prepare-enter"]
++        return [{"frame": frame} for frame in frames]
++
++    monkeypatch.setattr(scene_answers, "host_frames_at", query)
++    result = scene_answers._prepared_host_frames_at(
++        tmp_path / "timeline.json", tmp_path / "assets.json", (7, 0, 7),
++        staged_video=tmp_path / "unused.mp4", provenance_out_path=tmp_path / "provenance.json",
++        project_dir=tmp_path / "remotion", composition_id="TimelineComposition",
++        theme_path=None, min_free_gb=None, frame_output_dir=tmp_path / "frames",
++    )
++
++    assert result == [{"frame": 7}, {"frame": 0}, {"frame": 7}]
++    assert calls[0][1]["frame_numbers"] == (7, 0, 7)
++    assert calls[0][1]["frame_output_dir"] == tmp_path / "frames"
++    assert events == ["lock-enter", "prepare-enter", "prepare-exit", "lock-exit"]
++
++
++def test_prepared_host_query_reports_unavailable_without_fallback(monkeypatch, tmp_path):
++    @contextmanager
++    def prepare(*args, **kwargs):
++        raise RuntimeError("source admission failed")
++        yield  # pragma: no cover
++
++    from astrid.packs.rendering.rendering.renderers.remotion import root_preparation
++
++    monkeypatch.setattr(root_preparation, "_prepared_remotion_root", prepare)
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="source admission failed"):
++        scene_answers._prepared_host_frames_at(
++            tmp_path / "timeline.json", tmp_path / "assets.json", [0],
++            staged_video=tmp_path / "unused.mp4", provenance_out_path=tmp_path / "provenance.json",
++            project_dir=tmp_path / "remotion", composition_id="TimelineComposition",
++            theme_path=None, min_free_gb=None, frame_output_dir=tmp_path / "frames",
++        )

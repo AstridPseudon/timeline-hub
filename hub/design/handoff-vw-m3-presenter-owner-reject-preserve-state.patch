@@ -1,0 +1,258 @@
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+index 5790a5194..69918c5e8 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+@@ -33,12 +33,19 @@ export type PixelRect = {x: number; y: number; w: number; h: number};
+ // The drawing erases this rectangle before the half/open mouth pixels.
+ export const mouthEraseRect = (m: Anchor): PixelRect => ({x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4});
+ 
+-// Public compatibility inspection area around the actual drawing geometry,
+-// including closed pose. The drawing still uses mouthAnchor() for its natural
+-// normalized meaning. This seam keeps the old pixel consumer's input rules:
+-// an absent mouth skips inspection, while an authored x/y without w retains
+-// the old width-16 footprint. Invalid or non-integral anchors do not invent a
+-// crop, even though drawing normalization remains safe and deterministic.
++// Public state area around the actual drawing geometry, including closed pose.
++// It deliberately follows the same normalization as drawing, so defaults,
++// partial anchors and raw-invalid anchors retain their known public region.
++export const mouthStateRect = (raw: unknown): PixelRect => {
++  const r = mouthEraseRect(mouthAnchor(raw));
++  return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
++};
++
++// Legacy compatibility inspection area around the actual drawing geometry.
++// This seam keeps the old pixel consumer's input rules: an absent mouth skips
++// inspection, while an authored x/y without w retains the old width-16
++// footprint. Invalid or non-integral anchors do not invent a crop, even though
++// drawing normalization remains safe and deterministic.
+ export const mouthInspectionRect = (raw: unknown): PixelRect | null => {
+   const value = narrowParams<{mouth?: unknown}>(raw).mouth;
+   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+index e3349c8f8..bb134c5db 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+@@ -2,7 +2,7 @@ import type {ComponentCapabilityContext, PreparedComponentCapability} from '@ban
+ import type {ElementComponentProps} from '../../../../../rendering/shared/element_contracts';
+ import {clipFrames, narrowParams} from '../../_shared/am';
+ import {mosaicBlockAt, type MosaicRamp} from '../../_shared/mosaic';
+-import {motionAt, mouthInspectionRect, pixelGeometry, presenterAt} from './motion';
++import {motionAt, mouthStateRect, pixelGeometry, presenterAt} from './motion';
+ 
+ export const presenterMosaicAt = (raw: unknown, clip: ElementComponentProps['clip'], frame: number, fps: number): boolean => {
+   const p = narrowParams<{mosaicIn?: MosaicRamp | null; mosaicOut?: MosaicRamp | null}>(raw);
+@@ -14,8 +14,7 @@ export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapab
+   // The public scene supplies the same speed-remapped frame as the component.
+   frame: frame => {
+     const {view} = presenterAt(clip.params, frame, fps);
+-    const inspection = mouthInspectionRect(clip.params);
+-    const geometry = inspection ? pixelGeometry(inspection, view) : null;
++    const geometry = pixelGeometry(mouthStateRect(clip.params), view);
+     return {
+       presence: 'unknown',
+       opaqueSupport: 'none',
+@@ -23,12 +22,10 @@ export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapab
+       bounds: {status: 'known', rect: {x: 0, y: 0, width, height}},
+       diagnostics: {
+         motion: motionAt(clip.params, frame, fps),
+-        // Padded inspection ROI, including closed pose; no plate or alpha claim.
++        // Padded mouth ROI, including closed pose; no plate or alpha claim.
+         mouth: presenterMosaicAt(clip.params, clip, frame, fps)
+           ? {status: 'unknown', reason: 'Presenter mouth overlay is hidden by mosaic'}
+-          : geometry
+-            ? {status: 'known', rect: {x: geometry.left, y: geometry.top, width: geometry.width, height: geometry.height}}
+-            : {status: 'unknown', reason: 'Presenter mouth has no compatible authored anchor'},
++          : {status: 'known', rect: {x: geometry.left, y: geometry.top, width: geometry.width, height: geometry.height}},
+       },
+     };
+   },
+diff --git a/tests/packs/rendering/presenter_crop_geometry.mjs b/tests/packs/rendering/presenter_crop_geometry.mjs
+index 1c5d2d486..efd4172ba 100644
+--- a/tests/packs/rendering/presenter_crop_geometry.mjs
++++ b/tests/packs/rendering/presenter_crop_geometry.mjs
+@@ -12,6 +12,14 @@ export const eraseRegion = (raw, frame, fps) => {
+   return {status: 'known', rect: {x, y, width, height}};
+ };
+ 
++export const legacyInspectionRegion = (raw, frame, fps) => {
++  const rect = shared.mouthInspectionRect(raw);
++  if (!rect) return null;
++  const {left: x, top: y, width, height} = shared.pixelGeometry(
++    rect, shared.presenterAt(raw, frame, fps).view);
++  return {status: 'known', rect: {x, y, width, height}};
++};
++
+ export const basis = {width: 1920, height: 1080, fps: 30};
+ export const frames = [0, 3, 4, 5, 15, 29];
+ export const params = {mouth: {x: 151, y: 104, w: 19}, words: [[.1, .4]],
+@@ -32,7 +40,9 @@ export const inspect = (props, b = basis, selected = frames) => {
+     assert.equal(answer.layers.length, 1);
+     const layer = answer.layers[0];
+     assert.equal(layer.clipId, props.timeline.clips[0].id);
+-    return {frame, mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
++    return {frame, mouth: layer.diagnostics.mouth,
++      legacyInspection: legacyInspectionRegion(props.timeline.clips[0].params, frame, b.fps),
++      motion: layer.diagnostics.motion};
+   });
+ };
+ 
+diff --git a/tests/packs/rendering/presenter_scene_capability.mjs b/tests/packs/rendering/presenter_scene_capability.mjs
+index d385c525e..a768f8f23 100644
+--- a/tests/packs/rendering/presenter_scene_capability.mjs
++++ b/tests/packs/rendering/presenter_scene_capability.mjs
+@@ -122,10 +122,8 @@ if (mode === 'snapshots') {
+   };
+   const erase = (c, frame, fps) => pixelRect(source.pixelGeometry(
+     source.mouthEraseRect(source.mouthAnchor(c.params)), presenterAt(c.params, frame, fps).view));
+-  const inspection = (c, frame, fps) => {
+-    const rect = source.mouthInspectionRect(c.params);
+-    return rect ? pixelRect(source.pixelGeometry(rect, presenterAt(c.params, frame, fps).view)) : null;
+-  };
++  const stateRegion = (c, frame, fps) => pixelRect(source.pixelGeometry(
++    source.mouthStateRect(c.params), presenterAt(c.params, frame, fps).view));
+   const support = (c, frame, b = basis) => source.Presenter.prepareSceneCapability({clip: c, ...b,
+     rendererIdentity: 'registered-ssr', fontDigests: {}}).frame(frame);
+   const drawnOverlay = (c, frame, b = basis) => render({clip: c, params: c.params, fps: b.fps}, frame, b,
+@@ -157,9 +155,7 @@ if (mode === 'snapshots') {
+           seen.add(state);
+           const html = render(props, frame, b);
+           assert.ok(html.includes(drawnOverlay(c, frame, b)), `registered drawing ${fps}:${frame}`);
+-          const expected = inspection(c, frame, fps);
+-          if (expected) assert.deepEqual(layer.diagnostics.mouth.rect, expected);
+-          else assert.equal(layer.diagnostics.mouth.status, 'unknown');
++          assert.deepEqual(layer.diagnostics.mouth.rect, stateRegion(c, frame, fps));
+           const mouth = erase(c, frame, fps);
+           assert.equal(html.includes(eraseStyle(mouth) + '#EDB98E'), state !== 'closed');
+         }
+@@ -192,11 +188,10 @@ if (mode === 'snapshots') {
+         const layer = querySceneFrame(scene, frame).layers[0];
+         assertMotion(c, frame, b, layer);
+         assert.deepEqual(layer.diagnostics.mouth, support(c, frame, b).diagnostics.mouth);
+-        const expected = inspection(c, frame, fps);
+-        assert.equal(layer.diagnostics.mouth.status, expected ? 'known' : 'unknown');
++        assert.equal(layer.diagnostics.mouth.status, 'known');
+         const state = mouthStateAt(presenterAt(c.params, frame, fps).timing, frame);
+         const html = render(props, frame, b);
+-        if (expected) assert.deepEqual(layer.diagnostics.mouth.rect, expected);
++        assert.deepEqual(layer.diagnostics.mouth.rect, stateRegion(c, frame, fps));
+         if (state !== 'closed') assert.ok(html.includes(eraseStyle(erase(c, frame, fps)) + '#EDB98E'));
+         assert.equal(layer.visible, 'unknown');
+         assert.equal(layer.opaqueSupport, 'none');
+@@ -207,14 +202,19 @@ if (mode === 'snapshots') {
+     assert.deepEqual(query(clip({mouth: {x: 151, y: 104, w: 19}}), 0).diagnostics.mouth.rect,
+       {x: 894, y: 606, width: 138, height: 48});
+     assert.deepEqual(query(clip({mouth: {x: 151, y: 104}}), 0).diagnostics.mouth.rect,
+-      {x: 894, y: 606, width: 120, height: 48});
++      {x: 894, y: 606, width: 138, height: 48});
+     assert.deepEqual(source.mouthAnchor({mouth: {x: 151, y: 104}}), {x: 151, y: 104, w: 19});
+-    assert.equal(query(clip(), 0).diagnostics.mouth.status, 'unknown');
+-    assert.equal(query(clip({mouth: {x: 'bad', y: null, w: 900}}), 0).diagnostics.mouth.status, 'unknown');
++    assert.deepEqual(source.mouthInspectionRect({mouth: {x: 151, y: 104}}), {x: 149, y: 101, w: 20, h: 8});
++    assert.equal(source.mouthInspectionRect({}), null);
++    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect,
++      {x: 894, y: 606, width: 138, height: 48});
+     const malformed = {mouth: {x: 'bad', y: null, w: 900}};
+     assert.deepEqual(source.mouthAnchor(malformed), {x: 151, y: 104, w: 40});
+     assert.deepEqual(motionAt(malformed, 0, basis.fps), motionAt({mouth: {x: 151, y: 104, w: 40}}, 0, basis.fps));
+-    assert.equal(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.status, 'unknown');
++    assert.equal(source.mouthInspectionRect(malformed), null);
++    assert.deepEqual(query(clip(malformed), 0).diagnostics.mouth.rect,
++      {x: 894, y: 606, width: 264, height: 48});
++    assert.equal(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.status, 'known');
+     const small = {...basis, width: 960, height: 540};
+     const layer = query(clip({mouth: {x: 151, y: 104, w: 19}}), 0, small);
+     // Logical overlay pixels are not rescaled to an invented 320x180 viewport.
+@@ -230,7 +230,7 @@ if (mode === 'snapshots') {
+     const s = support(c, 0);
+     assert.equal(s.presence, 'unknown');
+     assert.equal(s.opaqueSupport, 'none');
+-    assert.equal(s.diagnostics.mouth.status, 'unknown'); // absent raw mouth skips compatibility inspection
++    assert.equal(s.diagnostics.mouth.status, 'known'); // normalized footprint, not occupied pixels
+     assert.equal(querySceneFrame(prepareHostScene(props, basis, {}), 0).coverage, 'UNKNOWN');
+     for (const missing of [{asset: 'missing'}, {params: {...c.params, src: '/not-a-presenter-asset.png'}}]) {
+       const other = {...c, ...missing};
+diff --git a/tests/packs/rendering/test_presenter_crop_equivalence.py b/tests/packs/rendering/test_presenter_crop_equivalence.py
+index 48b00af70..39ac8454f 100644
+--- a/tests/packs/rendering/test_presenter_crop_equivalence.py
++++ b/tests/packs/rendering/test_presenter_crop_equivalence.py
+@@ -60,17 +60,22 @@ def public_box(row, key="mouth"):
+     return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
+ 
+ 
++def legacy_box(row):
++    assert row["legacyInspection"]["status"] == "known"
++    r = row["legacyInspection"]["rect"]
++    return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
++
++
+ def area(crop):
+     return (crop[2] - crop[0]) * (crop[3] - crop[1])
+ 
+ 
+ def legacy_qualified(case):
+-    # Eligibility for the compatibility ROI: drawing normalization remains a
+-    # separate semantic fact, while this seam accepts the legacy partial width.
++    # Legacy equivalence is qualified only for complete normalized anchors.
+     raw = case["props"]["timeline"]["clips"][0]["params"].get("mouth")
+-    return (isinstance(raw, dict) and type(raw.get("x")) is int and type(raw.get("y")) is int
+-            and 0 <= raw["x"] < 320 and 0 <= raw["y"] < 180
+-            and ("w" not in raw or (type(raw["w"]) is int and 1 <= raw["w"] <= 40)))
++    return isinstance(raw, dict) and all(
++        type(raw.get(key)) is int and raw[key] == case["normalizedMouth"][key]
++        for key in ("x", "y", "w"))
+ 
+ 
+ def test_registered_default_and_clamped_anchors_are_not_legacy_defaults(crop_cases):
+@@ -79,25 +84,26 @@ def test_registered_default_and_clamped_anchors_are_not_legacy_defaults(crop_cas
+         row = case["rows"][0]
+         if case["name"] == "default":
+             assert old is None
+-            assert row["mouth"]["status"] == "unknown"
++            assert public_box(row) == (894, 606, 1032, 654)
+         elif case["name"] == "partial":
+             assert old == (894, 606, 1014, 654)  # legacy w=16, actual drawing w=19
+-            assert public_box(row) == (894, 606, 1014, 654)
++            assert legacy_box(row) == (894, 606, 1014, 654)
++            assert public_box(row) == (894, 606, 1032, 654)
+         elif case["name"] == "rawInvalid":
+-            assert row["mouth"]["status"] == "unknown"
++            assert public_box(row) == (894, 606, 1158, 654)
+         elif case["name"] == "clamps":
+             assert old == (-132, 5976, -108, 6024)
+-            assert row["mouth"]["status"] == "unknown"
++            assert public_box(row) == (-12, 1056, 18, 1104)
+         elif case["name"] == "fractional":
+             assert old == (903, 604.2, 1050.6, 652.2)
+-            assert row["mouth"]["status"] == "unknown"
++            assert public_box(row) == (906, 606, 1056, 654)
+ 
+ 
+ @pytest.mark.parametrize("size", [(1920, 1080), (640, 360), (641, 361), (720, 405)])
+ def test_same_frame_compatibility_and_separate_erase_denominators(crop_cases, size):
+     seen = set()
+     for case in crop_cases:
+-        if case["name"] not in ("custom", "partial", "zoom", "focusClamp", "push", "punch", "bob"):
++        if case["name"] not in ("custom", "fractional", "zoom", "focusClamp", "push", "punch", "bob"):
+             continue
+         element = legacy_element(case)
+         for row in case["rows"]:
+@@ -112,7 +118,7 @@ def test_same_frame_compatibility_and_separate_erase_denominators(crop_cases, si
+             if legacy_qualified(case):
+                 assert old == compat, (case["name"], frame, size)
+             else:
+-                assert case["name"] == "partial"
++                assert case["name"] == "fractional"
+                 assert old != compat
+             # The retained private fallback cannot fix erase's padding mismatch.
+             fallback = png_crop(model.mouth_box(legacy_element(case, own_view=False), frame), size)
+@@ -157,7 +163,5 @@ def test_public_known_normalization_is_not_legacy_qualification(crop_cases):
+     for case in crop_cases:
+         if case["name"] in ("mosaic", "outer"):
+             continue
+-        expected_known = case["name"] not in ("default", "clamps", "rawInvalid", "fractional")
+-        assert all(row["mouth"]["status"] == ("known" if expected_known else "unknown")
+-                   for row in case["rows"])
+-        assert legacy_qualified(case) is expected_known
++        assert all(row["mouth"]["status"] == "known" for row in case["rows"])
++        assert legacy_qualified(case) == (case["name"] not in ("default", "partial", "clamps", "rawInvalid", "fractional"))
+

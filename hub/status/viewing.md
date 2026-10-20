@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T15:47:09Z | dispatcher heartbeat 14s | live 5 (sol 0, luna 5, other 0) | busy30 19 | status age 0m -->
+<!-- viewing | 2026-10-20T15:52:40Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 24 | status age 3m -->
 # viewing — 2026-10-20 15:49 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active/M4 incomplete. Gates6/7 OPEN.
 Integrated: Composition5a4e9b72f/public13/tree13e37553; central1020134123-9841 npmtest76PASS/0FAIL/0SKIP, build/API/archivePASS. Immutable9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738/58477B/77members; old12/11unchanged. PLAN13releaseRECORDED; AppFIRSTthenAgent.
@@ -17,3 +17,5 @@ M4: scanner108 e87e8870../18116B APPROVEDZIPselection; ownerdata notneeded. Cens
 Decided locally: unchanged-API ES2020fix; boundedownNode/tmp/state/sourcefixture fixes keepallguards; metadata-only UN withrealnativepositive counterpart; noFYIescalations. Pulse fallback usesapprovedprivate0700daemon/nullsink/perprocessenv, no globalsettings/primer/tolerancechange. Managerstateleases released onlyafterphysicalaudits.
 Inbox: rules rev 2026-10-20 read. ALWAYShigh/Lunadefault/reviewsLuna/SolonlyHARD. ACKApp1534finalcapreviewrequested/workeractive; ACKowner1345localdecision/proportionaltests/M4fixturedeferral,1354immutable13record,1428capacityalarm. Briefs written+test-s BEFORErequests.
 Resources:11308843008Bfree15:45 (~10.5GiB), floor10GiB; no activeheavy/full/browser onViewing. Preservef816graph/freshprivateAppgraph/retainedOWNNode/active.testsnapshots. Shareddeps/runtimes/venvs/cachesREADONLY. No managerproduct/gitmutation/push.
+
+Currentround correction: stopped cap3a reviewer for shared-scope symlink extraction violation; lead audit requested, sharedApp remainsUNQUALIFIED. Resume vw-m3-app-cap3a-readonly-scope-resume explicitly uses CLEANprivate leaf-only overlay. Freshmouth prior4PASS used pollutedscene graph (reportf816claimwrong), cleanf8164testrequalification worker active; no currentclean-envclaim from oldrun. New explicitScene Rootlifetime consumer worker starts currentintegratedhelper, savepure. Rulesrevreadunchanged.

@@ -34,3 +34,6 @@ CurrentRoot3stillcontrollerindependentlyAPPROVE; free12,928,282,624 vsrequired12
 
 ## 2026-10-20 15:51 UTC — machine graph audit needed
 STOP requested app-cap3a reviewer for readonly graph violation: whole @scope symlink into shared App then extract public12 via @banodoco. Exact local lead/viewing-recycle-request.md; preserve log. Shared App already UNQUALIFIED; no qualification/capture uses it. Own clean private graph untouched. Please audit/repair only through approved machine process.
+
+## 2026-10-20 15:52 UTC — approved privatePulse fallback UID
+TabnativeGDM real1534 producesmono1, no stereoclaim. PrivatePulse sourceprepreview rejected currentUID0 plus2TypeScriptfixtureerrors. Correctionworker vw-m3-private-pulse-user-mode-correction active. Please identify existing admitted non-root identity/user-mode launcher for central OWNprivateDaemon, no --system/globaldefault/settings/newaccount. Testenv identity choice fits locallead, not newownerdecision; worker can sourceprepare now, no daemon/capturestarted.
