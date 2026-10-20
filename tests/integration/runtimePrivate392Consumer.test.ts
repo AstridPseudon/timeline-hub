@@ -220,7 +220,6 @@ describe('private392 App consumer through the real Runtime Door', () => {
     const primaryProvider = new RuntimeDataProvider({
       projectId,
       baseUrl: harness.doorBase,
-      token: harness.productToken,
       transport: doorTransport(harness, primaryWire, true),
     });
     const primaryScope: OutboxScope = { projectId, timelineId, realmId: harness.realmId, actorId: PRODUCT_ACTOR };
@@ -255,7 +254,6 @@ describe('private392 App consumer through the real Runtime Door', () => {
     const reloadedProvider = new RuntimeDataProvider({
       projectId,
       baseUrl: harness.doorBase,
-      token: harness.productToken,
       transport: doorTransport(harness, primaryWire),
     });
     const reloaded = await makeSession({
