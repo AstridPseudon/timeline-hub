@@ -289,9 +289,19 @@ class TimelineSession:
             # Runtime recomputes the descriptor from the exact manifest pin.
             from astrid.sdk.timeline.commit import _raw_audio_trim_pin
 
+            def read_manifest():
+                original = self.client._remote._transport.get_project_parent_composition_revision(
+                    self.project_id, self.timeline_id, state['base']['revision_id'])
+                if (original.get('project_id') != self.project_id
+                        or original.get('timeline_id') != self.timeline_id
+                        or original.get('revision_id') != state['base']['revision_id']
+                        or original.get('content_digest') != bundle['base_parent']['content_digest']):
+                    raise TimelineEditError('Runtime returned a different original trim basis')
+                return original['dependency_manifest']
+
             pin = _raw_audio_trim_pin(bundle, {
                 'op': 'clip.trim', 'select': select,
-            })
+            }, read_manifest=read_manifest)
             verified_media = ()
             if pin is not None:
                 try:

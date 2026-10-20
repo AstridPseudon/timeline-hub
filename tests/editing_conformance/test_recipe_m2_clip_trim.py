@@ -155,6 +155,26 @@ def test_raw_audio_trim_pin_is_the_exact_retained_base_pin():
     }
 
 
+@pytest.mark.parametrize('damage', [None, 'missing', 'digest', 'duplicate'])
+def test_public_raw_audio_trim_pin_uses_only_the_supplied_original_manifest(damage):
+    original, pin = raw_audio_bundle()
+    private = original['source_mapping'].pop('_runtime_document')
+    row = {'media_id': pin, 'content_digest': pin}
+    manifest = {'media': [row]}
+    if damage == 'missing':
+        manifest['media'] = []
+    elif damage == 'digest':
+        row['content_digest'] = 'sha256:' + '4' * 64
+    elif damage == 'duplicate':
+        manifest['media'].append(copy.deepcopy(row))
+    # Even a retained private pin cannot fill a missing public-base member.
+    private['dependency_manifest']['media'].append({'media_id': pin, 'content_digest': pin})
+    if damage is not None:
+        original['source_mapping']['_runtime_document'] = private
+    assert _raw_audio_trim_pin(original, {'op': 'clip.trim', 'select': REF},
+        read_manifest=lambda: manifest) == (row if damage is None else None)
+
+
 @pytest.mark.parametrize('metadata', [
     None,
     {'object_id': 'sha256:' + '4' * 64, 'media_type': 'audio/wav', 'size': 1234,

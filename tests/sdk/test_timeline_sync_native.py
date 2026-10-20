@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import copy
+import io
 import json
+import wave
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -18,6 +21,52 @@ from tests.sdk.test_timeline_sync import initial_bundle, open_session
 
 connected = test_timeline_sync.connected
 REF = 'parent/track:picture'
+
+
+@pytest.mark.parametrize('damage', [None, 'project_id', 'timeline_id', 'revision_id',
+                                  'content_digest', 'membership'])
+def test_raw_trim_reads_original_manifest_after_peer_head_advances(connected, monkeypatch, damage):
+    client, generated, path = connected
+    bundle = generated.bundles['r0']
+    media = 'sha256:' + '3' * 64
+    bundle['parent']['registry'] = {'assets': {'voice': {'object_id': media, 'type': 'audio'}}}
+    bundle['parent']['config']['tracks'][0]['kind'] = 'audio'
+    bundle['parent']['clips'][0].update(clipType='audio', asset='voice', params={})
+    original = {**bundle['base_parent'], 'project_id': 'p', 'timeline_id': 't',
+                'dependency_manifest': {'media': [{'media_id': media, 'content_digest': media}]}}
+    original['revision_id'] = 'r0'
+    if damage == 'membership':
+        original['dependency_manifest']['media'] = []
+    elif damage is not None:
+        original[damage] = 'peer-value'
+    audio = io.BytesIO()
+    with wave.open(audio, 'wb') as output:
+        output.setparams((1, 2, 8000, 0, 'NONE', 'not compressed'))
+        output.writeframes(b'\x00\x00' * 48000)
+    reads = []
+
+    def revision(project, timeline, identity):
+        reads.append((project, timeline, identity))
+        return copy.deepcopy(original)
+
+    monkeypatch.setattr(client._remote._transport, 'get_project_parent_composition_revision', revision)
+    client.media = SimpleNamespace(read_bytes=lambda identity: audio.getvalue()
+        if identity == media else pytest.fail('read another media object'))
+    session = open_session(connected)
+    monkeypatch.setattr(session, 'flush', lambda **options: session.outbox.read()['pending'])
+    generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
+    persisted = path.read_bytes()
+    if damage is None:
+        command, = session.trim('parent/clip:a', out_s=4)
+        assert {'ref': 'media:' + media, 'path': ['duration_seconds'],
+                'state': {'state': 'present', 'value': 6}} in command['reads']
+        assert session.outbox.read()['base'] == {'revision_id': 'r0', 'publication_id': 'pub0'}
+    else:
+        with pytest.raises(TimelineEditError):
+            session.trim('parent/clip:a', out_s=4)
+        assert path.read_bytes() == persisted
+    assert reads == [('p', 't', 'r0')]
+    assert generated.calls == []
 
 
 def label(value='', *, clear=False):

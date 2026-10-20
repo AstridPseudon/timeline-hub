@@ -404,7 +404,7 @@ def _load(port, context, revision):
     return bundle_from_document(document)
 
 
-def _raw_audio_trim_pin(bundle, call):
+def _raw_audio_trim_pin(bundle, call, *, read_manifest=None):
     """Return the already-retained raw audio pin needed by a duration read."""
     if call.get('op') != 'clip.trim' or not isinstance(call.get('select'), str):
         return None
@@ -428,8 +428,9 @@ def _raw_audio_trim_pin(bundle, call):
     content_digest = source.get('content_digest') or source.get('digest') or media_id
     if not isinstance(media_id, str) or content_digest != media_id:
         return None
-    manifest = bundle.get('source_mapping', {}).get('_runtime_document', {}) \
-        .get('dependency_manifest', {}).get('media', [])
+    manifest = (read_manifest() if read_manifest is not None else
+                bundle.get('source_mapping', {}).get('_runtime_document', {})
+                .get('dependency_manifest', {})).get('media', [])
     pins = [pin for pin in manifest if isinstance(pin, Mapping)
             and pin.get('media_id') == media_id
             and pin.get('content_digest') == media_id]
