@@ -24,6 +24,7 @@ import {
 } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import { readPositiveDurationSeconds } from '@/tools/video-editor/lib/timeline-asset-durations.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { moveTrackWithinKind } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import {
   hasMountedTimelineAvailability,
@@ -95,6 +96,9 @@ export interface AddClipCommandInput {
 type QualifiedPreparedAsset = TimelineProvisionedAsset & { mediaSelection: MediaSelection };
 type QualifiedAddClipCommandInput = Omit<AddClipCommandInput, 'preparedAsset'> & {
   preparedAsset: QualifiedPreparedAsset;
+};
+type VerifiedMediaProvider = DataProvider & {
+  getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
 };
 
 export interface UpdateClipCommandInput {
@@ -449,8 +453,12 @@ export function createTimelineCommands(
     return patch;
   };
 
-  const commands: TimelineCommands = {
-    addClip(input) {
+  function addClip(input: QualifiedAddClipCommandInput): Promise<TimelineCommandResult<{ clipId: string; trackId: string }>>;
+  function addClip(input: AddClipCommandInput): TimelineCommandResult<{ clipId: string; trackId: string }>;
+  function addClip(
+    input: AddClipCommandInput,
+  ): TimelineCommandResult<{ clipId: string; trackId: string }>
+    | Promise<TimelineCommandResult<{ clipId: string; trackId: string }>> {
       const readOnly = checkTimelineEditable();
       if (readOnly) return readOnly;
       const state = getMountedState();
@@ -683,7 +691,10 @@ export function createTimelineCommands(
         },
         targetPlan.preparedCurrent,
       );
-    },
+  }
+
+  const commands: TimelineCommands = {
+    addClip,
 
     updateClip(input) {
       const readOnly = checkTimelineEditable();
@@ -1145,14 +1156,13 @@ export function useTimelineCommandsService(): TimelineCommands {
   const store = useTimelineStoreApi();
   const runtime = useOptionalVideoEditorRuntime();
   const editability = runtime?.timelineEditability;
-  const parentMediaRuntime = runtime?.provider && typeof (runtime.provider as {
-    getProjectVerifiedMedia?: unknown;
-  }).getProjectVerifiedMedia === 'function'
+  const provider = runtime?.provider as VerifiedMediaProvider | undefined;
+  const projectId = runtime?.project.projectId;
+  const getProjectVerifiedMedia = provider?.getProjectVerifiedMedia;
+  const parentMediaRuntime = typeof getProjectVerifiedMedia === 'function' && typeof projectId === 'string'
     ? {
-        projectId: runtime.project.projectId,
-        getProjectVerifiedMedia: (runtime.provider as {
-          getProjectVerifiedMedia: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
-        }).getProjectVerifiedMedia.bind(runtime.provider),
+        projectId,
+        getProjectVerifiedMedia: getProjectVerifiedMedia.bind(provider),
       }
     : undefined;
   return useMemo(() => createTimelineCommands(store, { timelineEditability: editability, parentMediaRuntime }), [store, editability, parentMediaRuntime]);
@@ -1167,14 +1177,13 @@ export function useTimelineCommandsService(): TimelineCommands {
 export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
   const runtime = useOptionalVideoEditorRuntime();
   const editability = runtime?.timelineEditability;
-  const parentMediaRuntime = runtime?.provider && typeof (runtime.provider as {
-    getProjectVerifiedMedia?: unknown;
-  }).getProjectVerifiedMedia === 'function'
+  const provider = runtime?.provider as VerifiedMediaProvider | undefined;
+  const projectId = runtime?.project.projectId;
+  const getProjectVerifiedMedia = provider?.getProjectVerifiedMedia;
+  const parentMediaRuntime = typeof getProjectVerifiedMedia === 'function' && typeof projectId === 'string'
     ? {
-        projectId: runtime.project.projectId,
-        getProjectVerifiedMedia: (runtime.provider as {
-          getProjectVerifiedMedia: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
-        }).getProjectVerifiedMedia.bind(runtime.provider),
+        projectId,
+        getProjectVerifiedMedia: getProjectVerifiedMedia.bind(provider),
       }
     : undefined;
   const store = useTimelineStoreApiSafe();
