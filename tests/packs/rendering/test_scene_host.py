@@ -33,7 +33,7 @@ def host_project(tmp_path_factory):
     project = project_root / "remotion"
     (project / "src").mkdir(parents=True)
     (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
-    # Reuse a coherent peer graph read-only, with the actual pinned public12
+    # Reuse a coherent peer graph read-only, with the actual pinned public13
     # extracted into this test's private project. No install or shared mutation.
     peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
     assert (peers / "esbuild").is_dir(), "requires provisioned renderer peers"
@@ -48,9 +48,9 @@ def host_project(tmp_path_factory):
         target = modules / peer
         target.parent.mkdir(parents=True, exist_ok=True)
         target.symlink_to(source.resolve(), target_is_directory=True)
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
+        "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738")
     with tarfile.open(artifact) as archive:
         archive.extractall(project, filter="data")
     package = modules / "@banodoco/timeline-composition"
@@ -69,6 +69,12 @@ def host_project(tmp_path_factory):
         source = (REMOTION / "tests" / f"custom-{kind}.tsx").read_text()
         if element_id == "custom":
             source = "import {probeWidth} from 'probe-dependency';\n" + source.replace("width: 1920", "width: probeWidth")
+            source = source.replace(
+                "(props) => createElement('b',",
+                "(props) => props.params?.kind === 'absent' ? null : createElement('b',")
+            source = source.replace(
+                "frame: () => ({presence: 'present',",
+                "frame: () => ({presence: clip.params?.kind === 'absent' ? 'absent' : 'present',")
         (element / "component.tsx").write_text(source)
         (element / "element.yaml").write_text(f"id: {element_id}\nkind: {kind[:-1]}\n")
         rendering[f"{kind}/{element_id}"] = {"type": "element", "path": f"{kind}/{element_id}/element.yaml"}
@@ -87,7 +93,7 @@ def host_project(tmp_path_factory):
         patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
         for kind in ("effects", "animations", "transitions"):
             (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.12"
+    assert json.loads((package / "package.json").read_text())["version"] == "0.0.13"
     def hashes():
         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in package.rglob("*") if p.is_file()}
@@ -132,6 +138,36 @@ def test_native_host_default_custom_alias_capability_and_immutable_props(native_
     p["timeline"]["clips"][0]["elementRef"]["packId"] = "missing"
     with pytest.raises(scene_answers.SceneQueryUnavailable, match="Unknown effect owner"):
         scene_answers.host_frames_at(p, BASIS, [0])
+
+
+def test_native_host_audio_only_track_is_gap_without_visual_layers(native_host):
+    p = props([{"id": "audio-only", "track": "music", "clipType": "custom-alias", "at": 0, "hold": 1}])
+    p["timeline"]["tracks"] = [{"id": "music", "kind": "audio"}]
+
+    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
+
+    assert answer["layers"] == []
+    assert answer["coverage"] == "GAP" and answer["content"] is None
+
+
+def test_native_host_absent_element_is_not_visual_but_unknown_custom_stays_unknown(native_host):
+    p = props([
+        {"id": "absent", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1,
+         "params": {"kind": "absent"}},
+        {"id": "unsupported", "track": "plate", "clipType": "unsupported-custom", "at": 0, "hold": 1},
+    ])
+
+    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
+    absent = next(layer for layer in answer["layers"] if layer["clipId"] == "absent")
+    unsupported = next(layer for layer in answer["layers"] if layer["clipId"] == "unsupported")
+
+    assert absent["visible"] is False
+    assert absent["opacity"] == 0 and absent["opaqueSupport"] == "none"
+    assert absent["findings"] == []
+    assert [layer["clipId"] for layer in answer["layers"] if layer["visible"] is not False] == ["unsupported"]
+    assert unsupported["visible"] == "unknown"
+    assert unsupported["opacity"] is None and unsupported["opaqueSupport"] == "unknown"
+    assert answer["coverage"] == "UNKNOWN"
 
 
 def test_native_host_uses_exact_assets_and_runtime_theme(native_host):
