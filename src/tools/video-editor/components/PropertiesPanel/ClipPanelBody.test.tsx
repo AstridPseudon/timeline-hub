@@ -66,10 +66,7 @@ describe('ClipPanelBody Astrid form ownership', () => {
 });
 
 describe('ClipPanelBody timing value commits', () => {
-  it.each([
-    ['Speed', 2, { speed: 2 }],
-    ['Source In', 1, { from: 1 }],
-  ] as const)('reapplies %s if the controlled clip value resets before blur', (label, value, expectedPatch) => {
+  it('reapplies Speed if the controlled clip value resets before blur', () => {
     const onChange = vi.fn();
     const initialClip = { id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1 };
     const props = {
@@ -79,24 +76,55 @@ describe('ClipPanelBody timing value commits', () => {
       onChange,
     };
     const { rerender } = render(<ClipPanelBody {...props} />);
-    const input = screen.getByText(label).parentElement?.querySelector('input');
+    const input = screen.getByText('Speed').parentElement?.querySelector('input');
     expect(input).not.toBeNull();
 
     input!.focus();
     expect(document.activeElement).toBe(input);
-    fireEvent.change(input!, { target: { value: String(value) } });
-    expect(onChange).toHaveBeenLastCalledWith(expectedPatch);
+    fireEvent.change(input!, { target: { value: '2' } });
+    expect(onChange).toHaveBeenLastCalledWith({ speed: 2 });
 
     // The timeline first adopts the edit, then an external refresh restores the
     // old controlled clip while Base UI still preserves the typed text.
-    rerender(<ClipPanelBody {...props} clip={{ ...initialClip, ...expectedPatch }} />);
+    rerender(<ClipPanelBody {...props} clip={{ ...initialClip, speed: 2 }} />);
     expect(document.activeElement).toBe(input);
     rerender(<ClipPanelBody {...props} />);
     expect(document.activeElement).toBe(input);
     fireEvent.blur(input!);
 
-    expect(onChange).toHaveBeenLastCalledWith(expectedPatch);
+    expect(onChange).toHaveBeenLastCalledWith({ speed: 2 });
     expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  // D01-app-parent-source-window: the native parent trim control replaces this legacy writer.
+  it.fails('does not retain the removed legacy source-window snapshot writer', () => {
+    const onChange = vi.fn();
+    const clip = { id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1 } as const;
+    render(<ClipPanelBody {...bodyProps()} clip={clip} activeTab="timing" onChange={onChange} />);
+    const input = screen.getByLabelText('Source In').querySelector('input:not([aria-hidden="true"])');
+    expect(input).not.toBeNull();
+
+    input!.focus();
+    fireEvent.change(input!, { target: { value: '1' } });
+    fireEvent.blur(input!);
+
+    expect(onChange).toHaveBeenCalledWith({ from: 1 });
+  });
+
+  it('refuses a source edit without the displayed timeline and keeps the dirty draft', () => {
+    const onChange = vi.fn();
+    const clip = { id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1 } as const;
+    render(<ClipPanelBody {...bodyProps()} clip={clip} activeTab="timing" onChange={onChange} />);
+    const input = screen.getByLabelText('Source In').querySelector('input:not([aria-hidden="true"])');
+    expect(input).not.toBeNull();
+
+    input!.focus();
+    fireEvent.change(input!, { target: { value: '1' } });
+    fireEvent.blur(input!);
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveValue('1');
+    expect(screen.getByRole('alert')).toHaveTextContent('Source trim requires the displayed timeline.');
   });
 
   it('activates the labelled source ScrubField and edits its native input', async () => {
