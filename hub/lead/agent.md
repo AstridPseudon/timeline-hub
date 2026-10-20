@@ -9,4 +9,5 @@ WORK LIST NOW (report each as done / blocked):
 4. The one agt worker still finishing on main: when its branch is on hub/tl/<worker>, review and merge it here.
 5. Upstream main for agent: refresh-main is now YOUR machine's job (bin/refresh-main --check daily; merge-forward via a worker on conflict).
 9. (21:27Z) MAIN DRIFT: upstream agent main is 147 commits ahead. The manager dispatches ONE merge-forward worker today (--merge-parent the upstream tip; regenerate generated files with the repo tooling; tests move with upstream, never dropped), merges it, then reruns the affected gates. Report the merge sha. If a published contract or pin changes, tell me.
+6. (22:03Z, deep audit) Finish the Scene and audio consumers. Keep admission-only evidence clearly separate from completed workflows; don't count a test-only admission as a finished workflow.
 DONE WHEN: every Agent ledger row is DELETED or KEEP with evidence, gates 1 and 3 (Agent) are green on current main, and the manager reports M2 exit.

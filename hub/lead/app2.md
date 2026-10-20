@@ -6,4 +6,5 @@ WORK LIST NOW:
 1. ordinary-batch first: useTimelineOps.ts:298 snapshot ingress is the central remaining App writer. Report its status.
 2. Your 4 earlier branches are IN App integration (20ea14c26); don't redo them. Mark their rows' progress.
 3. Mark each row DELETED in design/deletion-ledger.app.md (or tell App's manager) the moment its deletion merges.
+4. (22:03Z, deep audit) Duplicate is DELETED, good. Next: ordinary-batch now that 7d42fcd3a landed, coordinated with App item 10 (the mounted journey).
 DONE WHEN: all 7 rows are DELETED with merge shas.
