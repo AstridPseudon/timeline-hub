@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T17:58:26Z | dispatcher heartbeat 5s | live 4 (sol 0, luna 4, other 0) | busy30 26 | status age 0m -->
+<!-- app2 | 2026-10-20T18:04:05Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 23 | status age 6m -->
 # app2 — 2026-10-20 17:56 UTC
 Milestone: M2 — ordinary snapshot ingress TOP priority. No full app2 row DELETED or milestone exit.
 Integrated: latest inspected HOME c57dcc261 (priorf30187d7f) includes ordinary052b resolved as3e24e0632 (old REFUSED result stale), helper/literal/overlay waves; App-owned label repair57PASS. Stale b58f merged before hold: HOME owns forward42e carrier correction, no reset. Actual historical root proof remains separate.
