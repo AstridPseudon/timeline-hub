@@ -1311,7 +1311,10 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const commandHistory = save.commands.ownsHistoryRef.current;
   const chrome = useMemo(() => ({
     ...baseChrome,
-    commandSession: save.commands.enabled ? { state: save.commands.state, retry: save.commands.retry, recover: save.commands.recover } : undefined,
+    commandSession: save.commands.enabled ? {
+      state: save.commands.state, retry: save.commands.retry, recover: save.commands.recover,
+      useLatest: save.commands.useLatest, keepLabelChanges: save.commands.keepLabelChanges,
+    } : undefined,
     ...(commandHistory ? {
       undo: () => { void save.commands.undo().catch((error) => runtime.toast.error(error instanceof Error ? error.message : String(error))); },
       canUndo: save.commands.state.canUndo,

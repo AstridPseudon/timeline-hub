@@ -2,7 +2,7 @@
  * Shared support for the direct journey (Plan A): the Chromium resolution, the worker-scoped fixtures, and the App
  * helpers that drive the hosted page. Moved out of direct-journey.spec.ts without changes (card F2-A).
  */
-import { chromium, expect, test as base, type Browser, type Page } from '@playwright/test';
+import { chromium, expect, test as base, type Browser, type Page, type Request } from '@playwright/test';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
@@ -90,15 +90,27 @@ export async function editFirstTrackName(page: Page, name: string) {
   await field.blur();
 }
 
-/**
- * Holds every save of a composition revision in flight, so the Runtime never receives it and an edit stays an unsaved
- * draft by construction. The editor autosaves 500 ms after an edit, so without this a restart that follows the edit
- * only keeps the draft when it happens to win that race. Returns the release (later saves go through).
- */
-export async function holdTimelineSaves(page: Page) {
-  const saves = /\/timelines\/[^/]+\/composition-revisions$/;
-  await page.route(saves, (route) => (route.request().method() === 'POST' ? new Promise<void>(() => {}) : route.fallback()));
-  return () => page.unroute(saves);
+/** Hold command delivery before the Runtime sees it; persisted request identity remains product-owned. */
+export async function holdCommandRequests(page: Page) {
+  const commits = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
+  const requests: Request[] = [];
+  let release!: (send: boolean) => void;
+  const gate = new Promise<boolean>((resolve) => { release = resolve; });
+  const intercept = async (route: import('@playwright/test').Route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    requests.push(route.request());
+    const send = await gate;
+    // Reload may have already cancelled the held browser request.
+    await (send ? route.continue() : route.abort('connectionreset')).catch(() => {});
+  };
+  await page.route(commits, intercept);
+  return {
+    requests,
+    async release(send = false) {
+      await page.unroute(commits, intercept);
+      release(send);
+    },
+  };
 }
 
 export async function revisionBody(harness: DirectHarness, revisionId: string) {
