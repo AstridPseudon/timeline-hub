@@ -2678,6 +2678,14 @@ export const assertValidTimelineConfigSnapshot = (config: TimelineConfig): void 
   }
 };
 
+/** Internal edits allow opaque roots while retaining every serialized-field guard. */
+export const assertValidTimelineEditSnapshot = (config: TimelineConfig): void => {
+  const validation = validateSerializedConfig(config, 'config-only', false);
+  if (!validation.ok) {
+    throw new TimelineDomainError(validation.level, validation.issues);
+  }
+};
+
 export const assertValidTimelinePair = (config: TimelineConfig, registry: AssetRegistry): void => {
   const validation = validateTimelinePair(config, registry);
   if (!validation.ok) {

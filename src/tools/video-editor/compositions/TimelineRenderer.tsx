@@ -1751,7 +1751,7 @@ const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiled
       enabled={needsAudioAnalysis}
     >
       <LocalFontFaces />
-      <AbsoluteFill style={{ backgroundColor: 'black', overflow: 'hidden' }}>
+      <AbsoluteFill style={{ backgroundColor: theme.visual.color.bg, overflow: 'hidden' }}>
         <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
           <AbsoluteFill style={{ position: 'relative', overflow: 'hidden' }}>
             {visualContent}

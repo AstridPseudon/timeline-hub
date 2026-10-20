@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { compilePlayerTransitions } from './playerEvaluation.ts';
 import { TimelineRenderer as TimelineRendererImplementation } from '@/tools/video-editor/compositions/TimelineRenderer';
+import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
 import type { ComponentProps, FC, PropsWithChildren } from 'react';
@@ -730,13 +731,31 @@ describe('TimelineRenderer registered sequences', () => {
     expect(sequence).toHaveAttribute('data-heading', "'Sixtyfour', 'Sixtyfour Variable', monospace");
   });
 
-  it('uses the DEFAULT_THEME fallback when the timeline has no theme', () => {
+  it('uses the DEFAULT_THEME fallback when the timeline has no theme', async () => {
     render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig()} />);
 
+    const resolvedTheme = resolveTimelineRenderTheme(buildConfig());
     const sequence = screen.getByTestId('registered-sequence');
-    expect(sequence).toHaveAttribute('data-accent', '#ffffff');
-    expect(sequence).toHaveAttribute('data-bg', '#000000');
-    expect(sequence).toHaveAttribute('data-heading', 'Georgia, serif');
+    expect(sequence).toHaveAttribute('data-accent', resolvedTheme.visual.color.accent);
+    expect(sequence).toHaveAttribute('data-bg', resolvedTheme.visual.color.bg);
+    expect(sequence).toHaveAttribute('data-heading', resolvedTheme.visual.type.families.heading);
+    expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({
+      backgroundColor: resolvedTheme.visual.color.bg,
+    });
+  });
+
+  it('paints the live canvas from the resolved authored background', () => {
+    render(<TimelineRenderer astridElementHost={fixtureAstridElementHost} config={buildConfig({
+      theme_overrides: {
+        visual: {
+          color: {
+            bg: '#123456',
+          },
+        },
+      },
+    })} />);
+
+    expect(screen.getAllByTestId('absolute-fill')[0]).toHaveStyle({ backgroundColor: '#123456' });
   });
 
   it('materializes registry asset keys into component-facing preview URLs for registered sequences', () => {

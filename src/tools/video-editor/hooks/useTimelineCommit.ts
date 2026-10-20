@@ -536,6 +536,7 @@ export function useTimelineCommit({
           serializeResolvedTimelineEdit(
             mutation.resolvedConfig,
             mutation.pinnedShotGroupsOverride ?? current.config.pinnedShotGroups,
+            current.config,
           ),
           current,
         ),

@@ -10,6 +10,7 @@ import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
 import { previewTimelineMutation } from '@/tools/video-editor/lib/timeline-mutation-engine.ts';
 import { compileTimelinePatch } from '@/tools/video-editor/lib/timeline-patch.ts';
 import { applyTimelineCommandEffect } from '@/tools/video-editor/commands/runner.ts';
+import { applyPreparedMediaCommand } from '@/tools/video-editor/commands/media.ts';
 import { serializeForDisk, validateSerializedConfig } from '@/tools/video-editor/lib/serialize.ts';
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from '@/tools/video-editor/runtime/element-adapter.ts';
 import { buildAstridAgentElementContext } from '@/tools/video-editor/runtime/element-contract.ts';
@@ -20,8 +21,7 @@ const roots = () => JSON.parse(`{
   "__proto__":{"literal":true},"constructor":{"prototype":[null]},"prototype":false
 }`);
 
-async function editor() {
-  const raw = roots();
+async function editor(raw = roots()) {
   const fixture = runtimeFixture({ initialConfig: raw, initialClips: [
     { id: 'a', track: 'V1', at: 0, hold: 4, clipType: 'hold' },
   ] });
@@ -88,6 +88,69 @@ describe('opaque roots at live writer serialization boundaries', () => {
     expect(outgoing.parent_composition.config).toEqual(authored);
     const reopened = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
     const reloaded = await reopened.loadTimeline(TIMELINE_ID);
+    const { output: _reloadedOutput, ...reloadedAuthored } = reloaded.config;
+    expect(reloadedAuthored).toEqual(authored);
+    expect(JSON.stringify(initial.config)).toBe(before);
+    hook.unmount();
+  });
+
+  it.each(['data', 'config', 'prepared-media', 'resolved-config', 'resolved-edit', 'resolved-preview'] as const)('%s retains the authored registry root separately from preview assets through save and reload', async (path) => {
+    const raw = { ...roots(), registry: JSON.parse('{"legacy":[null,false,0,""],"__proto__":{"ordered":[3,1,2]}}') };
+    const { fixture, provider, loaded, initial, saves, hook } = await editor(raw);
+    const before = JSON.stringify(initial.config);
+    expect(initial.resolvedConfig.registry).not.toEqual(raw.registry);
+    const config = { ...initial.config, clips: initial.config.clips.map((clip) => ({ ...clip, opacity: 0.4 })) };
+    const resolvedConfig = { ...initial.resolvedConfig, clips: initial.resolvedConfig.clips.map((clip) => ({ ...clip, opacity: 0.4 })) };
+    act(() => {
+      if (path === 'data' || path === 'config') {
+        hook.result.current.commitData(applyTimelineCommandEffect(initial, {
+          mutation: path === 'data' ? { type: 'data', data: { ...initial, config } } : { type: 'config', config },
+        }));
+      } else if (path === 'prepared-media') {
+        const prepared = applyPreparedMediaCommand(initial, {
+          type: 'place-prepared-media', payload: {
+            asset: { assetKey: 'prepared', mediaType: 'video', durationSeconds: null,
+              entry: { file: 'prepared.mp4', type: 'video/mp4' }, source: 'registered' },
+            at: 4, forceNewTrack: true,
+          },
+        });
+        expect(prepared).not.toBeNull();
+        hook.result.current.commitData(prepared!.nextData);
+      } else if (path === 'resolved-edit') {
+        hook.result.current.applyEdit({ type: 'config', resolvedConfig });
+      } else if (path === 'resolved-preview') {
+        const preview = previewTimelineMutation(initial, { type: 'config', resolvedConfig });
+        expect(preview.ok).toBe(true);
+        if (!preview.ok) throw new Error(preview.error.message);
+        hook.result.current.commitData(preview.nextData);
+      } else {
+        hook.result.current.commitData(applyTimelineCommandEffect(initial, {
+          mutation: { type: 'resolved-config', resolvedConfig },
+        }));
+      }
+    });
+    expect(saves).toHaveLength(1);
+    const saved = saves[0];
+    const recovered = buildDataFromSnapshot(saved.config, saved.registry, initial);
+    for (const data of [saved, recovered]) {
+      for (const [key, value] of Object.entries(raw)) {
+        expect(Object.hasOwn(data.config, key), key).toBe(true);
+        expect(Reflect.get(data.config, key), key).toEqual(value);
+      }
+      expect(Reflect.get(data.config, 'registry')).not.toEqual(data.resolvedConfig.registry);
+    }
+    if (path === 'prepared-media') {
+      expect(saved.config.clips).toHaveLength(2);
+      expect(saved.registry.assets.prepared).toEqual({ file: 'prepared.mp4', type: 'video/mp4' });
+    } else expect(saved.config.clips[0].opacity).toBe(0.4);
+    await provider.saveTimelineAtHead(TIMELINE_ID, saved.config, loaded.head!, saved.registry);
+    const publications = fixture.requests.filter(({ method, path }) => method === 'POST' && path.endsWith('/composition-revisions'));
+    expect(publications).toHaveLength(1);
+    const outgoing = publications[0].body as { parent_composition: { config: unknown; registry: unknown } };
+    const { output: _output, ...authored } = saved.config;
+    expect(outgoing.parent_composition.config).toEqual(authored);
+    expect(outgoing.parent_composition.registry).toEqual(saved.registry);
+    const reloaded = await new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport }).loadTimeline(TIMELINE_ID);
     const { output: _reloadedOutput, ...reloadedAuthored } = reloaded.config;
     expect(reloadedAuthored).toEqual(authored);
     expect(JSON.stringify(initial.config)).toBe(before);
