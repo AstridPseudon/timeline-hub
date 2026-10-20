@@ -14,7 +14,15 @@ def active(row):
 
 
 def selection(state, key, owner, members=()):
-    if key == "move.target":
+    if key == 'selection.clips':
+        result = [ref for ref in order(state, owner, 'clip') if ref in members]
+    elif key == 'lane.members':
+        lane = owner.removeprefix('parent/track:')
+        result = [ref for ref in order(state, 'parent', 'clip')
+                  if state.entity(ref).get('track') == lane]
+        result += ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
+                   if (row.get('placement') or {}).get('track', row.get('track')) == lane]
+    elif key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
     elif key in KINDS:
         result = order(state, owner, KINDS[key])

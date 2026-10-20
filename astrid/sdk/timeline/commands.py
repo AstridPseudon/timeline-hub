@@ -35,9 +35,11 @@ def operations():
     """Native recipe entries; the full extensible registry belongs to M2."""
     from ._clip_commands import clip_add
     from ._delete_commands import delete
+    from ._move_set import move_set
     from ._scalar_commands import clip_set_params, track_set
     from .capture import MOVE_INTENT, move, track_create
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'clip.move-set': Operation(_SCHEMA['$defs']['ClipMoveSetArgs'], move_set, MOVE_INTENT),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
@@ -146,7 +148,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                 raise CommandError("unsupported operation intention policy")
             ctx.record['command']['intent'] = dict(intent)
             operation.handler(ctx, command)
-            ctx.record['command']['resolved'] = [command['select']] if operation.singleton else []
+            ctx.record['command']['resolved'] = ([m['clip'] for m in command['args']['members']]
+                if command['op'] == 'clip.move-set' else [command['select']] if operation.singleton else [])
         elif command['op'] == 'timeline.restore':
             ctx.read('timeline')
             ctx.write('timeline', [], command['args'])

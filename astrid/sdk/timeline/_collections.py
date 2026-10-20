@@ -104,6 +104,40 @@ def arrange(state, owner, kind, expected):
 
 
 def selection_overlap(selected, write):
+    if selected['key'] == 'selection.clips':
+        ref, path = logical_address(write['ref'], write['path'])
+        if ref != selected['owner']:
+            return ref == 'timeline' and not path
+        prefix = ('config', 'clips')
+        if prefix[:len(path)] == path:
+            return True
+        rest = path[len(prefix):] if path[:len(prefix)] == prefix else ()
+        return bool(rest and isinstance(rest[0], tuple) and
+                    'parent/clip:' + rest[0][1] in selected['members'] and
+                    (len(rest) == 1 or rest[1:] == ('id',)))
+    if selected['key'] == 'lane.members':
+        ref, path = logical_address(write['ref'], write['path'])
+        lane = selected['owner'].removeprefix('parent/track:')
+        if ref == 'parent' and path in ((), ('config',), ('occurrences',)):
+            return True
+        if ref == 'parent' and path[:2] == ('config', 'clips'):
+            if len(path) <= 2 or not isinstance(path[2], tuple):
+                return True
+            if len(path) == 3:
+                return any(isinstance(w.get('value'), dict) and w['value'].get('track') == lane
+                           for w in (write['before'], write['after']))
+            return path[3:] == ('track',) and any(w.get('value') == lane
+                                                   for w in (write['before'], write['after']))
+        if ref.startswith('occurrence:') and '/' not in ref:
+            if not path:
+                return any(isinstance(w.get('value'), dict) and
+                           (w['value'].get('placement') or {}).get('track', w['value'].get('track')) == lane
+                           for w in (write['before'], write['after']))
+            return path in (('track',), ('placement',), ('placement', 'track')) and (
+                ref in selected['members'] or any(w.get('value') == lane or
+                    isinstance(w.get('value'), dict) and w['value'].get('track') == lane
+                    for w in (write['before'], write['after'])))
+        return ref in ('parent', 'timeline') and not path
     kind = KINDS.get(selected['key'])
     if kind is None:
         return False

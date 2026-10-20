@@ -100,15 +100,7 @@ def _provenance(ctx, owner):
     ctx.dependency('move.images', 'entity', pin)
 
 
-def move(ctx, command):
-    ref = command['select']
-    if not isinstance(ref, str) or '/clip:' not in ref or '::' in ref:
-        raise CommandError("clip.move requires a scoped clip identity")
-    owner = ref.rsplit('/', 1)[0]
-    if owner != 'parent' and not owner.startswith('occurrence:'):
-        raise CommandError("clip.move v1 requires parent or occurrence ownership")
-    if ctx.select('move.target', owner, [ref]) != [ref]:
-        raise CommandError("move target disappeared", kind='identity_conflict', ref=ref)
+def clip_inputs(ctx, ref, owner, binding_key='move'):
     for field in CLIP_FIELDS:
         ctx.read(ref, [field])
     clip = ctx.state.entity(ref)
@@ -136,8 +128,8 @@ def move(ctx, command):
         ctx.read(track_ref, [field])
     if ctx.state.entity(track_ref, optional=True) is None:
         raise CommandError("move track disappeared", kind='identity_conflict', ref=track_ref)
-    ctx.bind('move.track', track_ref)
-    ctx.bind('move.owner', owner)
+    ctx.bind(binding_key + '.track', track_ref)
+    ctx.bind(binding_key + '.owner', owner)
     asset = clip.get('asset', clip.get('asset_id'))
     source_dependencies = []
     if asset is not None:
@@ -146,8 +138,55 @@ def move(ctx, command):
         for key in ('media_id', 'object_id', 'digest', 'content_digest', 'type', 'duration',
                     'duration_ms', 'duration_seconds', 'source'):
             source[key] = ctx.read(registry_ref, ['assets', str(asset), key])
-        ctx.dependency('move.source', 'entity', {'ref': registry_ref, 'asset': asset, 'source': source})
-        source_dependencies.append('move.source')
+        ctx.dependency(binding_key + '.source', 'entity', {'ref': registry_ref, 'asset': asset, 'source': source})
+        source_dependencies.append(binding_key + '.source')
+    return clip, source_dependencies
+
+
+def write_move(ctx, ref, clip, local, duration):
+    ctx.write(ref, ['at_ms'] if 'at_ms' in clip and 'at' not in clip else ['at'],
+              local * 1000 if 'at_ms' in clip and 'at' not in clip else local)
+    if 'at' in clip and 'at_ms' in clip:
+        ctx.write(ref, ['at_ms'], local * 1000)
+    ctx.object(ref, ['app'])
+    ctx.object(ref, ['app', 'astrid'])
+    for prefix in (['app'], ['app', 'astrid']):
+        for key in ('on', 'until', 'until_film_end'):
+            ctx.clear(ref, prefix + [key])
+    ctx.write(ref, ['app', 'astrid', 'fixed_start'], True)
+    ctx.write(ref, ['app', 'astrid', 'for'], duration)
+
+
+def quantized_on(on, fps, ref=None):
+    on = number(on, 'on')
+    if on < 0:
+        raise CommandError("on must not be negative")
+    try:
+        frame = clip_start_frame({'at': on, 'hold': 1}, float(fps))
+    except (ValueError, OverflowError) as exc:
+        raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
+    return Fraction(frame, 1) / fps
+
+
+def move_duration(clip, ref=None):
+    try:
+        return _duration(clip)
+    except ValueError as exc:
+        if isinstance(exc, CommandError):
+            raise
+        raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
+
+
+def move(ctx, command):
+    ref = command['select']
+    if not isinstance(ref, str) or '/clip:' not in ref or '::' in ref:
+        raise CommandError("clip.move requires a scoped clip identity")
+    owner = ref.rsplit('/', 1)[0]
+    if owner != 'parent' and not owner.startswith('occurrence:'):
+        raise CommandError("clip.move v1 requires parent or occurrence ownership")
+    if ctx.select('move.target', owner, [ref]) != [ref]:
+        raise CommandError("move target disappeared", kind='identity_conflict', ref=ref)
+    clip, source_dependencies = clip_inputs(ctx, ref, owner)
     fps = rate(ctx.read('parent', ['config', 'output', 'fps']))
     if owner != 'parent':
         child_fps = ctx.read(owner + '/source', ['output', 'fps'])
@@ -157,20 +196,8 @@ def move(ctx, command):
     ctx.dependency('move.quantization', 'time-map', {'numerator': fps.numerator,
                                                    'denominator': fps.denominator,
                                                    'rounding': 'half-toward-positive-infinity'})
-    on = number(command['args']['on'], 'on')
-    if on < 0:
-        raise CommandError("on must not be negative")
-    try:
-        frame = clip_start_frame({'at': on, 'hold': 1}, float(fps))
-    except (ValueError, OverflowError) as exc:
-        raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
-    quantized = Fraction(frame, 1) / fps
-    try:
-        duration = _duration(clip)
-    except ValueError as exc:
-        if isinstance(exc, CommandError):
-            raise
-        raise CommandError(str(exc), kind='unsupported_timing', ref=ref) from exc
+    quantized = quantized_on(command['args']['on'], fps, ref)
+    duration = move_duration(clip, ref)
     origin = 0.0
     if owner != 'parent':
         ctx.read(owner, ['occurrence_id'])
@@ -208,17 +235,7 @@ def move(ctx, command):
         raise CommandError("moved interval precedes its occurrence", kind='occurrence_boundary', ref=owner)
     _provenance(ctx, owner)
     ctx.bind('move.target', ref, dependencies=['move.images', 'move.quantization', *source_dependencies])
-    ctx.write(ref, ['at_ms'] if 'at_ms' in clip and 'at' not in clip else ['at'],
-              local * 1000 if 'at_ms' in clip and 'at' not in clip else local)
-    if 'at' in clip and 'at_ms' in clip:
-        ctx.write(ref, ['at_ms'], local * 1000)
-    ctx.object(ref, ['app'])
-    ctx.object(ref, ['app', 'astrid'])
-    for prefix in (['app'], ['app', 'astrid']):
-        for key in ('on', 'until', 'until_film_end'):
-            ctx.clear(ref, prefix + [key])
-    ctx.write(ref, ['app', 'astrid', 'fixed_start'], True)
-    ctx.write(ref, ['app', 'astrid', 'for'], duration)
+    write_move(ctx, ref, clip, local, duration)
 
 
 def track_create(ctx, command):
