@@ -244,7 +244,8 @@ def apply_inverse(ctx, records, intervening_records):
                     raise CommandError('created track has surviving dependents', kind='surviving_dependents',
                                        ref=write['ref'])
             root = root_identity(write['ref'])
-            if root is not None and not write['path'] and write['after'] == ABSENT:
+            if (root is not None and not write['path'] and write['after'] == ABSENT
+                    and write['before']['state'] == 'present'):
                 staged.create_entity(write['ref'], kind=root[0],
                                      owner=None if root[0] == 'shot' else 'parent',
                                      value=write['before']['value'], restoring=True)
@@ -265,7 +266,9 @@ def apply_inverse(ctx, records, intervening_records):
             ctx.select(selected['key'], selected['owner'], selected['members'])
     for write in reversed(changes):
         ctx.read(write['ref'], write['path'])
-        if not write['path'] and write['after'] == ABSENT:
+        # An absent-to-absent edge still records authored intent, but restores
+        # no entity and must not allocate an identity or dereference a value.
+        if not write['path'] and write['after'] == ABSENT and write['before']['state'] == 'present':
             root = root_identity(write['ref'])
             if root is not None:
                 ctx.create_entity(write['ref'], kind=root[0],

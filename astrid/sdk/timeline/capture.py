@@ -248,3 +248,9 @@ def capture_track_create(bundle, owner, row):
     """Small structural proof: caller allocates the row ID once, before sending."""
     return _capture(bundle, {'schema_version': 1, 'op': 'track.create', 'version': '1',
                              'select': owner, 'args': {'row': copy.deepcopy(row)}, 'intent': {}})
+
+
+def capture_clip_delete(bundle, select):
+    """Capture a bounded parent removal through the authoritative executor."""
+    return _capture(bundle, {'schema_version': 1, 'op': 'clip.delete', 'version': '1',
+                             'select': select, 'args': {}, 'intent': {}})

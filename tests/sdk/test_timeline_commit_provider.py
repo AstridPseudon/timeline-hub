@@ -1234,3 +1234,158 @@ def test_multiple_targeted_restores_load_each_authenticated_reverse_stage():
         realm.call([inverse([undone['receipt']['receipt_id']])])
     assert error.value.failure['details']['reason'] == 'intervening_write'
     assert realm.head == head and len(realm.accepted) == count
+
+
+@pytest.mark.parametrize('identity', ['clip-a', 'clip-b', 'clip-c'])
+@pytest.mark.parametrize('source_kind', ['transcript', 'config'])
+def test_native_clip_delete_reload_inverse_redo_preserves_rows_order_and_retained_pins(identity, source_kind):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+    from tests.editing_conformance.test_recipe_clip_delete import delete_document
+
+    document = delete_document()
+    source = source_fixture(source_kind)
+    document['dependency_manifest']['documents'] = [source['pin']]
+    realm = DetachedRealm(document)
+    key = _digest(source['pin'])
+    realm.live_sources[key] = detached(source)
+    call = capture_clip_delete(bundle_from_document(document), 'parent/clip:' + identity)
+    deleted = realm.call([call])
+    removed_document = detached(deleted['data']['canonical_document'])
+    assert deleted['data']['commands'] == [call] and deleted['data']['id_map'] == {}
+    assert removed_document['shot_revisions'] == document['shot_revisions']
+    assert removed_document['internal_timeline_revisions'] == document['internal_timeline_revisions']
+    assert removed_document['dependency_manifest'] == document['dependency_manifest']
+    assert removed_document['parent_revision']['payload']['registry'] == document['parent_revision']['payload']['registry']
+    assert realm.retained_sources[key] == source
+    # Every call constructs a fresh provider and reloads detached accepted JSON.
+    realm.live_sources.clear()
+    undo = realm.call([inverse([deleted['receipt']['receipt_id']])])
+    restored = undo['data']['canonical_document']['parent_revision']['payload']
+    assert restored == document['parent_revision']['payload']
+    assert json.dumps(restored['clips']) == json.dumps(document['parent_revision']['payload']['clips'])
+    assert undo['data']['canonical_document']['dependency_manifest'] == document['dependency_manifest']
+    redo = realm.call([inverse([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == removed_document
+    assert realm.retained_sources[key] == source
+
+
+def test_native_delete_stale_disjoint_opaque_publications_preserve_both():
+    from astrid.sdk.timeline._recording import Recording
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    realm = DetachedRealm()
+    original = detached(realm.documents['parent-1'])
+    base = detached(realm.head)
+    call = capture_clip_delete(bundle_from_document(original), 'parent/clip:clip-a')
+    candidate = bundle_from_document(original)
+    ctx = Recording(candidate, {'schema_version': 1, 'op': 'fixture.property', 'version': '1',
+                                'select': 'parent/clip:clip-b', 'args': {}}, 0)
+    ctx.write('parent/clip:clip-b', ['earlier'], {'nullable': None})
+    ctx.compile_mirrors()
+    accept_recorded_fixture(realm, candidate, [ctx.finish(capture=True)])
+    removed = realm.call([call], base=base)
+    assert removed['data']['status'] == 'rebased'
+    candidate = bundle_from_document(realm.documents[realm.head['revision_id']])
+    ctx = Recording(candidate, {'schema_version': 1, 'op': 'fixture.property', 'version': '1',
+                                'select': 'parent/clip:clip-b', 'args': {}}, 0)
+    ctx.write('parent/clip:clip-b', ['opaque'], {'literal': 'parent/clip:clip-a', 'nullable': None})
+    ctx.compile_mirrors()
+    accept_recorded_fixture(realm, candidate, [ctx.finish(capture=True)])
+    undone = realm.call([inverse([removed['receipt']['receipt_id']])])
+    rows = undone['data']['canonical_document']['parent_revision']['payload']['clips']
+    assert [row['id'] for row in rows] == ['clip-a', 'clip-b']
+    assert rows[0] == original['parent_revision']['payload']['clips'][0]
+    assert rows[1]['earlier'] == {'nullable': None}
+    assert rows[1]['opaque'] == {'literal': 'parent/clip:clip-a', 'nullable': None}
+
+
+@pytest.mark.parametrize('change', ['membership', 'order-aba', 'dependency-aba', 'target-source-aba'])
+def test_native_delete_provider_refuses_structural_or_dependency_publications_atomically(change):
+    from astrid.sdk.timeline._command_state import ABSENT
+    from astrid.sdk.timeline._recording import Recording
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    realm = DetachedRealm()
+    base = detached(realm.head)
+    original = bundle_from_document(realm.documents['parent-1'])
+    command = capture_clip_delete(original, 'parent/clip:clip-a')
+    accepted = realm.call([command])
+    candidate = bundle_from_document(realm.documents[realm.head['revision_id']])
+    ctx = Recording(candidate, {'schema_version': 1, 'op': 'fixture.property', 'version': '1',
+                                'select': 'parent/clip:clip-b', 'args': {}}, 0)
+    if change == 'membership':
+        ctx.create('parent', 'clip', {'id': 'new', 'track': 'picture', 'at': 9, 'hold': 1})
+    elif change == 'order-aba':
+        ctx.write('parent', ['clips'], detached(candidate['parent']['clips']))
+    elif change == 'dependency-aba':
+        ctx.write('parent/clip:clip-b', ['app', 'on'], 'c01')
+        ctx.assign('parent/clip:clip-b', ['app', 'on'], ABSENT)
+    else:
+        # The deleted identity is still absent after the intervening publication.
+        ctx.write('parent/clip:clip-a', [], detached(original['parent']['clips'][0]))
+        ctx.assign('parent/clip:clip-a', [], ABSENT)
+    ctx.compile_mirrors()
+    accept_recorded_fixture(realm, candidate, [ctx.finish(capture=True)])
+    head, count = detached(realm.head), len(realm.accepted)
+    for call, on in ((inverse([accepted['receipt']['receipt_id']]), head), (command, base)):
+        with pytest.raises(CommitRejected) as error:
+            realm.call([call], base=on)
+        assert error.value.failure['details']['reason'] in {'intervening_write', 'selection_changed'}
+        assert realm.head == head and len(realm.accepted) == count
+
+
+@pytest.mark.parametrize('previously_created', [False, True])
+def test_native_delete_retired_clip_identity_cannot_be_reallocated(native_staging_operations, previously_created):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    realm = DetachedRealm()
+    identity = 'created' if previously_created else 'clip-a'
+    row = {'id': identity, 'track': 'picture', 'at': 3, 'hold': 1}
+    create = {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1',
+              'select': 'parent', 'args': {'row': row}}
+    if previously_created:
+        realm.call([create])
+    bundle = bundle_from_document(realm.documents[realm.head['revision_id']])
+    deletion = realm.call([capture_clip_delete(bundle, 'parent/clip:' + identity)])
+    head, count = detached(realm.head), len(realm.accepted)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([create])
+    assert error.value.failure['details']['reason'] == 'identity_collision'
+    assert realm.head == head and len(realm.accepted) == count
+    # Historical restoration remains the only admitted reuse.
+    restored = realm.call([inverse([deletion['receipt']['receipt_id']])])
+    assert any(clip['id'] == identity for clip in restored['data']['canonical_document']['parent_revision']['payload']['clips'])
+
+
+def test_native_delete_then_reallocate_in_same_batch_is_atomic(native_staging_operations):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    realm = DetachedRealm()
+    document = detached(realm.documents['parent-1'])
+    deletion = capture_clip_delete(bundle_from_document(document), 'parent/clip:clip-a')
+    create = {'schema_version': 1, 'op': 'fixture.clip-create', 'version': '1',
+              'select': 'parent', 'args': {'row': document['parent_revision']['payload']['clips'][0]}}
+    head = detached(realm.head)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([deletion, create])
+    assert error.value.failure['details']['reason'] == 'identity_collision'
+    assert realm.head == head and realm.accepted == [] and realm.documents == {'parent-1': document}
+
+
+def test_native_move_then_delete_succeeds_and_unsupported_batch_keeps_original_document():
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    realm = DetachedRealm()
+    realm.call([realm.move()])
+    document = detached(realm.documents[realm.head['revision_id']])
+    call = capture_clip_delete(bundle_from_document(document), 'parent/clip:clip-a')
+    deletion = realm.call([call])
+    undo = realm.call([inverse([deletion['receipt']['receipt_id']])])
+    assert undo['data']['canonical_document'] == document
+    head, count = detached(realm.head), len(realm.accepted)
+    invalid = {'schema_version': 1, 'op': 'clip.delete', 'version': '1',
+               'select': 'occurrence:occ-a/clip:clip-a', 'args': {}}
+    with pytest.raises(CommitRejected) as error:
+        realm.call([realm.move(), invalid])
+    assert error.value.failure['details']['reason'] == 'unsupported_ownership'
+    assert realm.head == head and len(realm.accepted) == count

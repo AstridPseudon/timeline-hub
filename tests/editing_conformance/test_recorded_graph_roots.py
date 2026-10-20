@@ -287,3 +287,33 @@ def test_public_registry_and_closed_track_args_are_unchanged():
         commands.validate_command({'schema_version': 1, 'op': 'track.create', 'version': '1',
                                    'select': 'parent', 'args': {'row': {'id': 'v', 'kind': 'visual'},
                                                              'payload': {}}})
+
+
+def test_generic_net_zero_root_edges_inverse_redo_preserve_absence_and_created_facts(root_ops, monkeypatch):
+    def remove(ctx, command):
+        for root in reversed(root_values()):
+            ctx.clear(root['ref'], [])
+
+    registered = commands.operations
+    monkeypatch.setattr(commands, 'operations', lambda: {
+        **registered(), 'test.remove-roots': commands.Operation({'type': 'object'}, remove, {}),
+    })
+    original = bundle_from_document(document_fixture())
+    remove_command = {'schema_version': 1, 'op': 'test.remove-roots', 'version': '1',
+                      'select': 'parent', 'args': {}}
+    plan = commands.execute(original, [create_command(), remove_command])
+    records = copy.deepcopy(plan.records)
+    assert document_from_bundle(plan.bundle) == document_fixture()
+    unchanged = [{'ref': root['ref'], 'path': [], 'before': ABSENT, 'after': ABSENT}
+                 for root in reversed(root_values())]
+    undone = commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
+    assert undone.records[0]['writes'] == unchanged
+    assert undone.records[0]['created'] == []
+    assert document_from_bundle(undone.bundle) == document_fixture()
+    redone = commands.execute(undone.bundle, [inverse_command()], inverse_records=undone.records)
+    assert redone.records[0]['writes'] == list(reversed(unchanged))
+    assert redone.records[0]['created'] == []
+    assert document_from_bundle(redone.bundle) == document_fixture()
+    assert plan.records == records
+    assert plan.records[0]['created'] == [
+        {key: root[key] for key in ('ref', 'kind', 'owner')} for root in root_values()]

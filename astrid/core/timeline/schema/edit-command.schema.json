@@ -391,6 +391,11 @@
       ],
       "additionalProperties": false
     },
+    "ClipDeleteArgs": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
     "ClipMoveArgs": {
       "type": "object",
       "properties": {
@@ -634,6 +639,19 @@
       "additionalProperties": false,
       "description": "Client recorder fields are claims only. Provider verifies/reconstructs all observations; authorship is write classification, never authenticated actor identity. Unknown operations pass the envelope only and require installed registered schemas/handlers.",
       "allOf": [
+        {
+          "if": {
+            "properties": {"op": {"const": "clip.delete"}},
+            "required": ["op"]
+          },
+          "then": {
+            "properties": {
+              "version": {"const": "1"},
+              "args": {"$ref": "#/$defs/ClipDeleteArgs"},
+              "intent": {"type": "object", "additionalProperties": false}
+            }
+          }
+        },
         {
           "if": {
             "properties": {
