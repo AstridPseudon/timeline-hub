@@ -1,8 +1,9 @@
 // Public facts from the ordinary generated host; no renderer or clock mirror.
 import assert from 'node:assert/strict';
 import {DEFAULT_THEME} from '@banodoco/timeline-composition';
-import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
+import {queryDrawFrame, querySceneFrame} from '@banodoco/timeline-composition/evaluation';
 import {prepareHostScene as prepareRoot, source as shared} from './query.mjs';
+export {prepareRoot};
 
 // Erase control uses the actual drawing helpers, never a copied crop formula.
 export const eraseRegion = (raw, frame, fps) => {
@@ -33,6 +34,36 @@ export const inspect = (props, b = basis, selected = frames) => {
     assert.equal(layer.clipId, props.timeline.clips[0].id);
     return {frame, mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
   });
+};
+
+// The legacy series holds component-zero geometry. Resolve that frame through
+// the existing public DrawPlan clock, then query this same prepared Root once.
+// Source/owner qualification belongs to the generated-host fixture, not this
+// clip lookup; this helper is not a production source admission boundary.
+export const seriesInspection = (scene, props, clipId = 'presenter') => {
+  const targets = props.timeline.clips.filter(clip => clip.id === clipId);
+  assert.equal(targets.length, 1);
+  const target = targets[0];
+  assert.deepEqual(target.elementRef, {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});
+  const matches = scene.tracks.flatMap(track => track.clips.flatMap((clip, clipIndex) =>
+    clip.id === target.id ? [{track, clip, clipIndex, plan: track.prepared.plans[clipIndex]}] : []));
+  assert.equal(matches.length, 1);
+  const {track, clip, clipIndex, plan} = matches[0];
+  assert.deepEqual(clip, target);
+  assert.equal(track.track.id, target.track);
+  const frame = Math.max(0, plan.drawStart);
+  assert.ok(frame < plan.drawStart + plan.drawDuration);
+  assert.equal(queryDrawFrame(plan, frame - plan.drawStart).contentFrame, 0);
+  const answer = querySceneFrame(scene, frame); // the only series ROI read
+  const layers = answer.layers.filter(layer => layer.clipId === target.id);
+  assert.equal(layers.length, 1);
+  const layer = layers[0];
+  assert.equal(layer.track, target.track);
+  assert.equal(layer.clipIndex, clipIndex);
+  assert.equal(layer.contentFrame, 0);
+  assert.equal(layer.diagnostics?.mouth?.status, 'known');
+  return {frame, componentFrame: 0, clipId: target.id,
+    mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
 };
 
 if (process.argv[2] === 'geometry') {

@@ -20,8 +20,12 @@ pytestmark = pytest.mark.integration
 
 @pytest.fixture(scope="module")
 def presenter_query(tmp_path_factory):
-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
+    artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
+        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz")))
+    # Explicit immutable releases only; this override does not change the host pin.
+    assert hashlib.sha256(artifact.read_bytes()).hexdigest() in {
+        SHA256, "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    }
     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(
         ROOT / "remotion/node_modules"))).resolve()
     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
