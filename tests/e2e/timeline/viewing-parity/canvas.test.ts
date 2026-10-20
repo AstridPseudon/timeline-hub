@@ -81,15 +81,16 @@ test('original640 stays the default; only the separately named config selects na
   assertFrameWithinBound(compareRgbFrames(legacy, legacy, 0));
 });
 
-test('both entries register the same four bodies with all twelve baseline frames before the picture negative', async () => {
+test('both entries register the four baseline bodies plus tab capture before the picture negative', async () => {
   assert.equal(await readFile(new URL('../player-export-frame-parity.spec.ts', base), 'utf8'),
     "import { registerFrameParityCases } from './viewing-parity/cases';\n\nregisterFrameParityCases();\n");
   assert.equal(await readFile(new URL('../player-export-normal-profile-native1920.spec.ts', base), 'utf8'),
     "import { registerFrameParityCases } from './viewing-parity/cases';\nimport { NORMAL_PROFILE_NATIVE1920 } from './viewing-parity/canvas';\n\nregisterFrameParityCases(NORMAL_PROFILE_NATIVE1920);\n");
   const cases = await readFile(new URL('cases.ts', base), 'utf8');
-  assert.equal([...cases.matchAll(/\btest\('/g)].length, 4);
+  assert.equal([...cases.matchAll(/\btest\('/g)].length, 5);
   assert.deepEqual([...PARITY_FRAMES], [0, 37, 44, 45, 52, 89, 90, 120, 121, 135, 143, 164]);
   const negative = cases.slice(cases.indexOf("test('picture-only"));
+  assert.ok(cases.indexOf("test('captures the actual Player page") < cases.indexOf("test('picture-only"));
   assert.ok(negative.indexOf('await compareAllFrames(page, exportPath, testInfo)') < negative.indexOf('patch.dataset.testOnlyPictureMismatch'));
   assert.ok(negative.indexOf('assertFrameWithinBound(baseline, canvas)') < negative.indexOf('patch.dataset.testOnlyPictureMismatch'));
 });
