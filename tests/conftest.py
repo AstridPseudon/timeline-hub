@@ -158,7 +158,6 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path
     subprocess.run(
         [builder, "-m", "pip", "wheel", "--no-index", "--no-build-isolation", "--no-deps", "--wheel-dir", str(wheelhouse), str(source), str(client_source)],
         cwd=str(source),
-        env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
         check=True,
     )
     scripts = "Scripts" if os.name == "nt" else "bin"
