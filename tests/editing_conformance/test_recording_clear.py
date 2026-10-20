@@ -151,8 +151,7 @@ def test_generic_clear_retains_unchanged_and_aba_publication_guards(monkeypatch,
                   if aba else [])
         writes.append({'ref': REF, 'path': path,
                        'before': present('away') if aba else before, 'after': before})
-        for apply in (lambda: replay(plan, original, intervening_records=[{'writes': writes}]),
-                      lambda: inverse(original, plan.records, [{'writes': writes}])):
-            with pytest.raises(CommandError) as error:
-                apply()
-            assert error.value.kind == 'intervening_write'
+        assert replay(plan, original, intervening_records=[{'writes': writes}]).records == plan.records
+        with pytest.raises(CommandError) as error:
+            inverse(original, plan.records, [{'writes': writes}])
+        assert error.value.kind == 'intervening_write'

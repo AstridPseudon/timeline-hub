@@ -196,14 +196,13 @@ def test_batch_original_claims_one_publication_reload_inverse(runtime, tmp_path,
 
 
 @pytest.mark.parametrize('captured', [False, True])
-@pytest.mark.parametrize('peer', ['disjoint', 'relevant', pytest.param('aba', marks=pytest.mark.xfail(
-    strict=True, reason='PLAN dependent edits: equal-state ABA must allow the original suffix; '
-                        'the frozen official provider currently refuses intervening_write'))])
+@pytest.mark.parametrize('peer', ['disjoint', 'relevant', 'aba', 'delete-recreate'])
 def test_file_lost_ack_restart_exact_retry_before_original_suffix(runtime, tmp_path, capsys, captured, peer):
     runtime.session().commit_many(batch())
     base = runtime.history()['head']
     pins = {'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id']}
-    commands = [label('A'), command('clip.set-params', 'parent/clip:title',
+    commands = [command('track.create', 'parent', {'row': {'id': 'dependent', 'kind': 'visual'}}),
+                label('A'), command('clip.set-params', 'parent/clip:title',
                                   {'values': {'text': 'A'}, 'clear': []}, rationale='Batch A')]
     original = runtime.client().timelines.open_bundle(runtime.project, 'film', revision_id=base['revision_id'])
     expected = execute(original.data['bundle'], commands).commands
@@ -215,11 +214,15 @@ def test_file_lost_ack_restart_exact_retry_before_original_suffix(runtime, tmp_p
     assert code == 1 and not failure['ok']
     original_call = copy.deepcopy(runtime.calls[-1])
     session = TimelineSession.open(runtime.project, 'film', client=runtime.client())
-    suffix = session.queue_many([label('B'), command('clip.set-params', 'parent/clip:title',
+    suffix = session.queue_many([label('B'), label('B', track='dependent'),
+                                command('clip.set-params', 'parent/clip:title',
                                                    {'values': {'text': 'B'}, 'clear': []})])
     other = runtime.session(name='peer')
     if peer == 'disjoint':
         other.commit(command('track.create', 'parent', {'row': {'id': 'peer', 'kind': 'audio'}}))
+    elif peer == 'delete-recreate':
+        deleted = other.commit(command('clip.delete', 'parent/clip:title', {}))
+        other.undo([deleted['receipt']['receipt_id']])
     else:
         other.commit(label('Peer'))
         if peer == 'aba':
@@ -235,7 +238,7 @@ def test_file_lost_ack_restart_exact_retry_before_original_suffix(runtime, tmp_p
     assert len(runtime.history()['items']) == count
     assert path.read_bytes() == file_bytes
     session = TimelineSession.open(runtime.project, 'film', client=runtime.client())
-    if peer == 'relevant':
+    if peer in ('relevant', 'delete-recreate'):
         with pytest.raises(CommitConflict):
             session.flush()
         assert json.loads(session.outbox.path.read_bytes())['pending'] == suffix
@@ -245,11 +248,28 @@ def test_file_lost_ack_restart_exact_retry_before_original_suffix(runtime, tmp_p
         assert accepted['data']['status'] == 'rebased'
         assert State(bundle_from_document(accepted['data']['canonical_document'])).entity(
             'parent/track:picture')['label'] == 'B'
+        assert State(bundle_from_document(accepted['data']['canonical_document'])).entity(
+            'parent/track:dependent')['label'] == 'B'
     request = json.loads(runtime.calls[-1][0])
     assert request['commands'] == suffix
     assert request['base_revision_id'] == retry['data']['accepted_revision_id']
     assert request['base_publication_id'] == retry['receipt']['receipt_id']
     assert runtime.calls[-1][1] != 'batch-A'
+
+
+@pytest.mark.parametrize('aba', [False, True])
+def test_guarded_undo_still_refuses_intervening_equal_state_writes(runtime, aba):
+    runtime.session().commit_many(batch())
+    target = runtime.session().commit(label('A'))
+    peer = runtime.session(name='peer')
+    if aba:
+        peer.commit(label('Away'))
+    peer.commit(label('A'))
+    before = copy.deepcopy(runtime.history())
+    with pytest.raises(CommitConflict) as error:
+        runtime.session().undo([target['receipt']['receipt_id']])
+    assert error.value.failure['details']['reason'] == 'intervening_write'
+    assert runtime.history() == before
 
 
 @pytest.mark.parametrize('captured', [False, True])

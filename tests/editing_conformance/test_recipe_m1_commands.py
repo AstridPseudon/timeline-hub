@@ -191,10 +191,9 @@ def test_disjoint_same_child_rebase_and_original_guards_after_materialization():
     with pytest.raises(CommandError) as error:
         execute(changed, [b_command])
     assert error.value.kind == 'dependency_changed'
-    # Dependent handoff predicates allow equal-state A->A; accepted inverse does not.
+    # Ordinary handoff and rebase allow equal final state; inverse does not.
     execute(head, [b_command])
-    with pytest.raises(CommandError):
-        replay(b, head, intervening_records=[later(ref, ['at'], 2)])
+    assert replay(b, head, intervening_records=[later(ref, ['at'], 2)]).commands == b.commands
 
 
 @pytest.mark.parametrize('change', ['owner', 'source', 'rate', 'blocker', 'order'])
@@ -219,15 +218,17 @@ def test_changed_map_source_owner_and_query_order_refuse(change):
         replay(plan, head)
 
 
-def test_replay_permits_disjoint_and_rejects_leaf_ancestor_aba_and_noop():
+def test_replay_permits_disjoint_and_equal_state_while_inverse_guards_aba():
     original = bundle(app={'opaque': {'x': 1}, 'astrid': {'opaque': 2}})
     plan = execute(original, [capture_move(original, 'parent/clip:direct', 4)])
     head = copy.deepcopy(original)
     clip(head)['app']['opaque']['x'] = 2
     assert clip(replay(plan, head).bundle)['app']['opaque']['x'] == 2
     for path in (['at'], ['app'], ['app', 'astrid', 'for'], ['track']):
+        history = [later('parent/clip:direct', path, 3)]
+        assert replay(plan, original, intervening_records=history).records == plan.records
         with pytest.raises(CommandError) as error:
-            replay(plan, original, intervening_records=[later('parent/clip:direct', path, 3)])
+            inverse(plan.bundle, plan.records, history)
         assert error.value.kind == 'intervening_write'
     inverse(plan.bundle, plan.records, [later('parent/clip:direct', ['opaque'], 1)])
     with pytest.raises(CommandError) as error:
