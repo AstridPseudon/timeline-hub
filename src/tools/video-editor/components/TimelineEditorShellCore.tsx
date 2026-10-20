@@ -1,3 +1,4 @@
+import { EditorImageGeneration } from './EditorImageGeneration.tsx';
 import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
 import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
@@ -842,6 +843,7 @@ function TimelineEditorShellCoreComponent({
       {watchdogBanner}
       {recoveryBanner}
       <TimelineCommandRecovery commandSession={chrome.commandSession} />
+      {chrome.commandSession?.imageGeneration && <EditorImageGeneration placement={chrome.commandSession.imageGeneration} />}
       {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
         // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />

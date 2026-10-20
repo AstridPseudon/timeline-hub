@@ -238,7 +238,8 @@ export function useTimelineCommandSession(options: {
   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     trackLabelPort: sessionRef.current?.trackLabelPort,
+    imageGeneration: sessionRef.current?.imageGeneration,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
-  & Partial<Pick<ReturnType<typeof useTimelineCommandSession>, 'useLatest' | 'keepLabelChanges'>>;
+  & Partial<Pick<ReturnType<typeof useTimelineCommandSession>, 'useLatest' | 'keepLabelChanges' | 'imageGeneration'>>;
