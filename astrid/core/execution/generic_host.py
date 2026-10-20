@@ -8719,6 +8719,9 @@ class GenericPackHost:
                     retryable=False,
                     attempt_id=attempt_id,
                     fence=fence,
+                    runtime_epoch=int(
+                        task_data.get("runtime_epoch", self.runtime_state.get("runtime_epoch", 0))
+                    ),
                 )
             except Exception as runtime_exc:
                 raise HostError(
