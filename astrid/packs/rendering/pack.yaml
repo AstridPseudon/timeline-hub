@@ -35,7 +35,8 @@ capabilities:
 agent:
   purpose: Choose this pack for runtime-owned timeline authoring and inspection, candidate
     preview/publication, finished video rendering, deterministic visual evidence,
-    GPT Image sprite sheets, or canvas/WebGL post-processing effects.
+    GPT Image sprite sheets, canvas/WebGL post-processing effects, or explorable
+    Three.js worlds (live scenes) and their cameras.
   do_not_use_for: Publishing rendered output to external services.
   normal_entrypoints:
   - rendering.render
@@ -1382,5 +1383,7 @@ resources:
   path: docs/references/document-checkout.md
 - kind: documentation
   path: docs/references/placeholder-voiceover.md
+- kind: documentation
+  path: docs/references/worlds-authoring.md
 - kind: support
   path: shared/readiness-image.tsx

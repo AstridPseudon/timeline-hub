@@ -126,7 +126,10 @@ For a direct `rendering.threejs` render the sidecar reports:
 
 ## Explicit v1 exclusions
 
-`rendering.threejs` deliberately does **not** support, in v1:
+`rendering.threejs` deliberately does **not** support, in v1, for its own
+background and text clips (a `haus.astrid.liveScene` world clip runs its own
+Three.js code with meshes, shaders, lights and cameras; see
+[Worlds: authoring explorable live scenes](../../astrid/packs/rendering/docs/references/worlds-authoring.md)):
 
 - Media textures (video/image clips as `THREE.Texture`).
 - GLTF models, custom meshes, shaders, lights, cameras, or network fonts —
