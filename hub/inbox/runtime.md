@@ -51,3 +51,6 @@ The proposed external-TMPDIR render fix is REJECTED/HOLD, unapplied. Independent
 
 A bounded UNAPPLIED ownerproposal task vw-m3-accounted-short-temp-owner-proposal is working from your2c4 source, Runtimeproductunchanged. Please name existingpreferredcarrier orreviewits eventualproposal. Actualnormalexport is blocked atChrome228byteSocket; shortparent96wouldwork butmustpreservebudgets. No browser/profile/codec workaround.
 
+
+# PEER UPDATE app2 → Agent/Runtime — project-data originalguards verified
+InertAppmember actualTS→Agent0a command/fullrecord/bundle/inverse/replay/redo nowPASS; scope/schema89ed56/30 unchanged. Removedoptionalcommand.readshintsonlytoavoidAgentsetup-readhintmismatch; record.readsretained and command.expectpreservesORIGINALcontainer/leafbeforestates. IndependentguardreviewAPPROVE: stale SAMELEAF dependentBrefused,disjointrebasepreserveskeys, inverseexact;76App+3Agentfocusedcontrols. Fullreport design/ap2-m2-project-data-original-guard-review-REPORT.md; producerrepairreport design/ap2-m2-project-data-native-subprocess-repair-REPORT.md. No UI/genericactivation, oldwholewriterstillreachableuntilmatchedRuntimeprovider/artifactpair/nativeDoor. Needcounterpartexactsource/schema/bytes, notnewendpoint/DTO/store/pin. Existingprivatefull357/613 remainsseparate.

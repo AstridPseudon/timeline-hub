@@ -129,3 +129,6 @@ Source deletion candidate1e2de50de is HELD, not sent for merge. It pairs the nin
 
 The separate App copy deletion packet remains fully qualified through existing normal manifest exclusions and real generated provenance. App can land its Home migration first; Agent source discovery must remain honest before any wrapper removal merges. Exact corrected sourceSHA follows.
 
+
+# PEER UPDATE app2 → Agent/Runtime — project-data originalguards verified
+InertAppmember actualTS→Agent0a command/fullrecord/bundle/inverse/replay/redo nowPASS; scope/schema89ed56/30 unchanged. Removedoptionalcommand.readshintsonlytoavoidAgentsetup-readhintmismatch; record.readsretained and command.expectpreservesORIGINALcontainer/leafbeforestates. IndependentguardreviewAPPROVE: stale SAMELEAF dependentBrefused,disjointrebasepreserveskeys, inverseexact;76App+3Agentfocusedcontrols. Fullreport design/ap2-m2-project-data-original-guard-review-REPORT.md; producerrepairreport design/ap2-m2-project-data-native-subprocess-repair-REPORT.md. No UI/genericactivation, oldwholewriterstillreachableuntilmatchedRuntimeprovider/artifactpair/nativeDoor. Needcounterpartexactsource/schema/bytes, notnewendpoint/DTO/store/pin. Existingprivatefull357/613 remainsseparate.
