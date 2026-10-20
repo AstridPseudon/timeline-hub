@@ -2,7 +2,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
+import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
 import {basis, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
+import {source} from './query.mjs';
 
 const retained = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 assert.deepEqual(retained.frames, [0, 3, 4, 5]);
@@ -22,6 +24,49 @@ const {erase, ...expected} = retained.rows[0];
 // Match that same boundary; no geometry, pixel or threshold is normalized.
 assert.deepEqual(JSON.parse(JSON.stringify(zero)), expected);
 
+// The selected-cut caller asks the ordinary public evaluator for exactly the
+// retained frame keys.  The registered presenter's own motion/state codebook
+// is the authority for the semantic rows; this helper does not reproduce its
+// clock, hash, geometry or codebook in the test caller.
+const selectedCutAggregate = (props, selected, expectedFrames, codebook = source.MOUTH_LEVEL) => {
+  assert.deepEqual(selected, expectedFrames);
+  const target = props.timeline.clips.find(clip => clip.id === 'presenter');
+  assert.ok(target);
+  assert.deepEqual(target.elementRef,
+    {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});
+  const targetInScene = scene.tracks.flatMap(track => track.clips).find(clip => clip.id === target.id);
+  assert.deepEqual(targetInScene, target);
+  assert.deepEqual(codebook, source.MOUTH_LEVEL);
+  const rows = selected.map(frame => {
+    const answer = querySceneFrame(scene, frame);
+    const layers = answer.layers.filter(layer => layer.clipId === target.id);
+    assert.equal(layers.length, 1);
+    const layer = layers[0];
+    assert.equal(layer.contentFrame, frame);
+    const state = source.mouthStateAt(
+      source.presenterAt(target.params, layer.contentFrame, retained.basis.fps).timing,
+      layer.contentFrame);
+    assert.equal(layer.diagnostics.motion.mouth, codebook[state]);
+    assert.deepEqual(layer.diagnostics.motion,
+      source.motionAt(target.params, layer.contentFrame, retained.basis.fps));
+    return {frame, state, motion: layer.diagnostics.motion, mouth: layer.diagnostics.mouth};
+  });
+  return {frames: selected, rows, states: rows.map(row => row.state)};
+};
+
+const aggregate = selectedCutAggregate(retained.props, retained.frames, retained.frames);
+const aggregateControls = [];
+assert.throws(() => selectedCutAggregate(
+  {...retained.props, timeline: {...retained.props.timeline,
+    clips: [{...retained.props.timeline.clips[0], params: {...retained.props.timeline.clips[0].params, seed: 9}}]}},
+  retained.frames, retained.frames));
+aggregateControls.push('changed-state');
+assert.throws(() => selectedCutAggregate(retained.props, retained.frames, retained.frames,
+  {closed: 0, half: 0.25, open: 1}));
+aggregateControls.push('changed-codebook');
+assert.throws(() => selectedCutAggregate(retained.props, [0, 3, 5], retained.frames));
+aggregateControls.push('omitted-selection');
+
 // Invalid selections refuse before the helper reaches querySceneFrame.
 const controls = [];
 const refuse = (name, props, id) => {
@@ -36,4 +81,4 @@ const changed = patch => ({...retained.props, timeline: {...retained.props.timel
 refuse('foreign-owner', changed({elementRef: {kind: 'effect', id: 'am-presenter', packId: 'probe'}}));
 refuse('stale-params', changed({params: {...retained.props.timeline.clips[0].params, seed: 9}}));
 assert.equal(JSON.stringify(retained), original);
-console.log(JSON.stringify({zero, controls}));
+console.log(JSON.stringify({zero, aggregate, aggregateControls, controls}));

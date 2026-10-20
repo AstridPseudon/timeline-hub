@@ -1,7 +1,8 @@
-"""UNAPPLIED consumer proposal: one retained public10 pixel fixture only.
+"""Selected-cut public aggregate and private pixel-caller equivalence.
 
-The public adapter below is test-only. Production lipsync still uses mouth_box;
-this test does not certify a working-copy/historical source or migrate a caller.
+The public semantic aggregate is queried from the registered presenter Root;
+the pixel adapter below remains test-only. Production lipsync still uses
+mouth_box, because cached cards do not retain public scene rows.
 """
 
 import hashlib
@@ -71,8 +72,11 @@ def public_zero(presenter_query, retained):
     answer = json.loads(result.stdout)
     assert answer["controls"] == ["missing-compiled-id", "ambiguous-compiled-id",
                                   "foreign-owner", "stale-params"]
+    assert answer["aggregateControls"] == ["changed-state", "changed-codebook", "omitted-selection"]
+    assert answer["aggregate"]["frames"] == retained["frames"]
+    assert [row["frame"] for row in answer["aggregate"]["rows"]] == retained["frames"]
     assert answer["zero"] == {k: v for k, v in retained["rows"][0].items() if k != "erase"}
-    return answer["zero"]
+    return {"zero": answer["zero"], "aggregate": answer["aggregate"]}
 
 
 def context(case, order=(0, 3, 4, 5)):
@@ -128,7 +132,7 @@ def private_statistic(ctx):
 
 
 def public_statistic(ctx, zero):
-    """UNAPPLIED minimal ROI adapter; reuse the current comparator/conversion.
+    """Test-only ROI bridge; reuse the current comparator/conversion.
 
     This preserves the builtin's selected-key denominator and resets adjacency
     on a missing image. It intentionally makes no semantic-mouth-state query.
@@ -163,16 +167,19 @@ def test_actual_selected_cut_aggregate(retained, public_zero):
     assert cut_ref(ctx) == {"index": 1, "clip_id": "presenter", "occurrence_id": "",
                             "shot_id": "", "track": "overlay", "start": 0, "end": 2}
     presenter = ctx.elements[0]
-    assert presenter.id == public_zero["clipId"] == "presenter"
+    assert presenter.id == public_zero["zero"]["clipId"] == "presenter"
     # No attached maths/semantic double: this is the caller's current fallback.
     assert presenter.maths is None
     old = png_crop(model.mouth_box(presenter, 0), ctx.frame_size)
-    assert old == png_crop(public_box(public_zero), ctx.frame_size) == (298, 202, 345, 219)
+    assert old == png_crop(public_box(public_zero["zero"]), ctx.frame_size) == (298, 202, 345, 219)
     for f in retained["frames"]:
         image = ctx.frame_image(f)
-        assert image.crop(old).tobytes() == image.crop(png_crop(public_box(public_zero), ctx.frame_size)).tobytes()
+        assert image.crop(old).tobytes() == image.crop(png_crop(public_box(public_zero["zero"]), ctx.frame_size)).tobytes()
+    assert public_zero["aggregate"]["states"] == [
+        model.mouth_state(presenter, frame, ctx.fps) for frame in retained["frames"]
+    ]
     actual = private_statistic(ctx)
-    assert actual == public_statistic(ctx, public_zero)
+    assert actual == public_statistic(ctx, public_zero["zero"])
     assert actual["selected"] == actual["reads"] == [0, 3, 4, 5]
     assert actual["pairs"] == [[0, 3], [3, 4], [4, 5]]
     assert actual["changed_pixels"] == [336, 336, 336]
@@ -189,13 +196,13 @@ def test_order_and_duplicate_frame_keys(retained, public_zero, order):
     # capture. Both the capture API and LayerContext use unique frame keys.
     actual = private_statistic(context(retained, order))
     assert actual == private_statistic(context(retained))
-    assert actual == public_statistic(context(retained, order), public_zero)
+    assert actual == public_statistic(context(retained, order), public_zero["zero"])
 
 
 def test_missing_key_changes_adjacency_and_denominator(retained, public_zero):
     ctx = context(retained, (0, 4, 5))
     actual = private_statistic(ctx)
-    assert actual == public_statistic(ctx, public_zero)
+    assert actual == public_statistic(ctx, public_zero["zero"])
     assert actual["pairs"] == [[0, 4], [4, 5]]
     # 0 and 4 are independent retained captures with identical original bytes.
     assert actual["changed_pixels"] == [0, 336]
@@ -210,7 +217,7 @@ def test_missing_image_resets_pairs_but_retains_key_denominator(retained, public
     read = ctx.frame_image
     monkeypatch.setattr(ctx, "frame_image", lambda f: None if f == missing else read(f))
     actual = private_statistic(ctx)
-    assert actual == public_statistic(ctx, public_zero)
+    assert actual == public_statistic(ctx, public_zero["zero"])
     assert actual["reads"] == [0, 3, 4, 5]
     assert actual["pairs"] == pairs
     assert actual["fractions"] == [336 / 799]
@@ -230,7 +237,7 @@ def test_selection_window_boundaries(retained, public_zero, start, end, selected
     original = context(retained)
     ctx = replace(original, cut={**original.cut, "start": start, "end": end})
     actual = private_statistic(ctx)
-    assert actual == public_statistic(ctx, public_zero)
+    assert actual == public_statistic(ctx, public_zero["zero"])
     assert actual["selected"] == selected
     assert (actual["changes"], actual["denominator"]) == (changes, denominator)
     assert actual["reads"] == (selected if denominator is not None else [])
@@ -243,7 +250,7 @@ def test_absent_file_is_an_error_not_zero_motion(retained, public_zero, tmp_path
     with pytest.raises(FileNotFoundError):
         private_statistic(ctx)
     with pytest.raises(FileNotFoundError):
-        public_statistic(ctx, public_zero)
+        public_statistic(ctx, public_zero["zero"])
 
 
 @pytest.mark.parametrize("selector", ["2", "foreign:presenter"])
@@ -259,11 +266,11 @@ def test_strict_two_percent_boundary_on_memory_only_copy(retained, public_zero, 
     ctx = context(retained)
     original = ctx.frame_image(0)
     altered = original.copy()
-    crop = png_crop(public_box(public_zero), ctx.frame_size)
+    crop = png_crop(public_box(public_zero["zero"]), ctx.frame_size)
     for i in range(count):
         point = (crop[0] + i, crop[1])
         altered.putpixel(point, (255, 255, 255) if sum(original.getpixel(point)) < 384 else (0, 0, 0))
-    for box in (model.mouth_box(ctx.elements[0], 0), public_box(public_zero)):
+    for box in (model.mouth_box(ctx.elements[0], 0), public_box(public_zero["zero"])):
         region = png_crop(box, ctx.frame_size)
         fraction, mask = builtin._diff_fraction(original.crop(region), altered.crop(region))
         assert mask.histogram()[255] == count
