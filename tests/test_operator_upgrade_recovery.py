@@ -15,13 +15,13 @@ import pytest
 from astrid_runtime import operator_upgrade
 from runtime_protocol.store import SCHEMA_VERSION
 from runtime_protocol.upgrade import inspect_canonical_schema
+from lanes import requires_posix_process_groups
 from test_operator_upgrade import _Boundary, _fixture
 
 
 @pytest.mark.parametrize("state", ["planned", "stopping", "stopped", "activated", "restarted", "complete"])
+@requires_posix_process_groups
 def test_sigkill_keeps_upgrade_transaction_identity_at_every_journal_step(tmp_path, state):
-    if sys.platform != "linux":
-        pytest.skip("SIGKILL crash evidence runs on Linux")
     env = {**os.environ, "PYTHONPATH": os.pathsep.join([
         str(Path(__file__).resolve().parents[1]), os.environ.get("PYTHONPATH", ""),
     ])}
