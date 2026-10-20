@@ -181,6 +181,8 @@ def test_project_patch_and_run_cancel_retry_are_durable_and_idempotent(daemon, t
         restarted.stop()
 
 
+# The reference half of this journey is the KEPT catalog (RK01, test_project_reference_catalog.py); the shot half needs the retired writers.
+@pytest.mark.xfail(strict=True, reason="RT02 held: direct shot/item writers are retired (410); restored by the recorded-command replacement")
 def test_project_shot_reference_crud_isolated_idempotent_and_restart_durable(daemon, tmp_path):
     client = WorkspaceClient(daemon.endpoint, daemon.token)
     first = client.create_project("shots-a", idempotency_key="shots-project-a")
