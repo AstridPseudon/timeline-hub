@@ -30,8 +30,8 @@ Reference for "audible today": `origin/main` e51595c6. The Python compiler is `a
 
 The source clock follows what main plays, and nothing else:
 
-- `source_from` = the child's trim start (`from`, the same value `computeMediaTrim` uses).
-- `playback_rate` = the child's `speed` (absent means 1).
+- `source_from` = the public `computeMediaTrim(compiledClip, fps).trimBefore / fps`, not raw `from`. The public helper rounds to a frame (`composition/typescript/src/lib/trim.ts`), so `from=0.125` gives trimBefore 4 at both 30 and 30000/1001 fps and the origin is `4/30` or `4/(30000/1001)`; `from=0.05` gives trimBefore 2 at 30 and 1 at 30000/1001. Those distinct origins must reach prepared-source admission unchanged.
+- `playback_rate` = the public `getSanitizedPlaybackRate(compiledClip.speed)` (the child's `speed`; absent means 1).
 - The occurrence `source_offset` and occurrence `speed` are **not** clock inputs (decision 3).
 - Gain is never part of the clock. Constant base gain (`track.volume * clip.volume * occurrence.gain`) is passed separately from the envelope.
 
@@ -44,9 +44,9 @@ The public package already reads the curve from the same place main writes it:
 - Compiler output therefore only has to keep `params.fadeInCurve` / `params.fadeOutCurve` on the clip. Linear is the absence of the key, as `clip_fields.py:515-516` already writes it.
 - Not verified: the pinned 0.0.10 package's copy of `audio-envelope.ts`. The composition repo HEAD was read instead.
 
-## Golden vectors (14)
+## Golden vectors (15)
 
-Vectors 1-11 are the vectors in `audio_compile_contract.json`. The 03:17 decision says Viewing's 11 goldens should become exactly this set. Viewing's authored set (`vw-m3-audio-projection-goldens2`) was not reachable from this worktree, so vectors 1-11 are reconstructed from the decision text and the 03:17 escalation. **Viewing must reconcile them with its authored 11 before the set is treated as shared.** Vectors 12-14 are added for decision 5.
+Vectors 1-11 and 15 are the shared audio set; each is reconciled against Viewing's authored 11 in the table below. Vectors 12-14 are Agent-authored for decision 5.
 
 | # | id | Input (child / occurrence) | Expected | Status |
 |---|---|---|---|---|
@@ -56,7 +56,7 @@ Vectors 1-11 are the vectors in `audio_compile_contract.json`. The 03:17 decisio
 | 4 | gain-unity-keeps-volume-absent | absent / gain 1 | no volume key | pass |
 | 5 | gain-zero-is-silent-not-absent | absent / gain 0 | volume 0 | pass |
 | 6 | muted-occurrence-silences-child-gain | volume 0.8 / gain 0.5, muted | volume 0, muted true | pass |
-| 7 | source-offset-is-metadata-only | trim 0.125..1.125 / source_offset 0.35 | trim unchanged; offset 0.35 as metadata | pass |
+| 7 | source-offset-is-metadata-only | trim 0.125..1.125 / source_offset 350 (ms) | trim unchanged; offset 350 as metadata | pass |
 | 8 | occurrence-speed-not-inherited | child speed absent / speed 1.5 | speed absent; 1.5 as metadata | pass |
 | 9 | child-speed-wins-over-occurrence-speed | speed 2 / speed 1.5 | speed 2; 1.5 as metadata | pass |
 | 10 | fade-in-needs-prepared-envelope-source | params.fadeIn 0.5 | `audio.render_source` present | **xfail (strict)** |
@@ -64,6 +64,7 @@ Vectors 1-11 are the vectors in `audio_compile_contract.json`. The 03:17 decisio
 | 12 | fade-in-curve-is-kept-on-the-compiled-clip | fadeIn 0.5, fadeInCurve equal-power | `params.fadeInCurve` equal-power | pass |
 | 13 | fade-out-curve-is-kept-on-the-compiled-clip | fadeOut 0.5, fadeOutCurve exponential-slow | `params.fadeOutCurve` exponential-slow | pass |
 | 14 | linear-fade-has-no-curve-key | fadeIn 0.5, no curve | `params.fadeInCurve` absent | pass |
+| 15 | gain-unity-keeps-child-volume | volume 0.8 / gain 1 | volume 0.8 | pass |
 
 Vectors 1-9 and 12-14 pass on the current projection. Vectors 1-9 are main's behaviour. Vectors 12-14 pin the curve as metadata that survives compilation. Vectors 10-11 are strict xfails: no producer of `audio.render_source` exists in this tree (grep finds it only in the fixture). Strict means that when the join lands, the xfail flips to a failure and the marker has to come out. The join's envelope must apply the curve. That is a requirement on the join, and this tree cannot yet check it.
 
@@ -71,18 +72,34 @@ The vector test now checks an absent dotted key with `_lookup(...) is None`. The
 
 The occurrence-offset and occurrence-speed rows (7-8) deliberately **do not** match App's current adapter, which applies both. App must drop that application; this is the narrow App repair the 03:17 decision asks for.
 
-### Reconciliation with Viewing's 11 (04:44 item 2): not done, Viewing's originals unreachable
+### Reconciliation with Viewing's authored 11 (2026-10-20)
 
-Viewing's authored set, `vw-m3-audio-projection-goldens2`, is not in the orchestrator's `workers/` directory, not in any worktree under `/home/user/work/wt`, and not on any branch or path searched under `/home/user/work`, `/home/user/peteromallet` or `/home/user/banodoco`. So vectors 1-11 cannot be compared with the originals.
+Source: Viewing's `shotCompositionAudio.fixture.json` (11 rows, base clip `from 0.125, to 1.125`) and its `audio-corpus-map.json`. No pair of complete authored inputs is identical to ours, so "same" means the same rule on the same occurrence/child values, not the same graph. Both sets stay as authored; nothing is converted to make them agree.
 
-What is on record: the closed escalation `viewing-20261020T0309Z-audio-projection-export.md` quotes four of Viewing's values. They match this file's vectors 1, 2, 7 and 8:
+| Viewing original | Ours | Verdict |
+|---|---|---|
+| 1 unity gain, child 0.8 | 15 gain-unity-keeps-child-volume (added) | same rule: volume 0.8 |
+| 2 absent child volume, gain 0.5 | 3 gain-child-absent-is-unity | same: 0.5; trim and placement differ |
+| 3 mute, child 0.8, gain 0.5 | 6 muted-occurrence-silences-child-gain | same: volume 0, muted metadata |
+| 4 child 0.8 x gain 0.5 | 1 gain-child-x-occurrence | same: 0.4 |
+| 5 child 1.5 x gain 2 | 2 gain-boost-x-occurrence | same: 3 |
+| 6 source_offset **350** | 7 source-offset-is-metadata-only | **differed in value** (ours was 0.35); now 350, see the unit decision below. Same rule: trim unchanged, offset kept as metadata |
+| 7 occurrence speed 1.5, child absent | 8 occurrence-speed-not-inherited | same: child speed absent, 1.5 metadata |
+| 8 hold 10 capped at next occurrence | none | Viewing-only: a projection cap, not audio policy. Covered by Viewing's corpus map (hold 7.5); not duplicated |
+| 9 trim to 10.125 capped | none | Viewing-only, same reason (to 7.625) |
+| 10 params fades 0.1 in/out on .05..0.55 | 10 and 11 (fade 0.5, from 0) | differs: combined vs separate, other durations and origin. Both stay `ENVELOPE_UNRENDERED` / strict xfail. Viewing's `.05` origin is the clock counterexample above |
+| 11 `effects:[{fade_in,fade_out}]` | none | Viewing-only: opaque shape, no public envelope, no compiler rule to pin |
 
-- gain 0.8 x 0.5: App 0.8, Agent 0.4 (vector 1);
-- gain 1.5 x 2: App 1.5, Agent 3 (vector 2);
-- source_offset 0.35 on trim 0.125..1.125: App applies the offset to the trim, Agent keeps the trim and the metadata (vector 7);
-- occurrence speed 1.5 with the child speed absent: App uses 1.5, Agent keeps the child speed absent and the metadata (vector 8).
+Ours without a Viewing counterpart: 4 (unity keeps volume absent), 5 (gain 0 is silent), 9 (child speed beats occurrence speed), 12-14 (curve). No disagreement on any scalar rule (gain, mute, metadata-only offset/speed).
 
-**Needs Viewing sign-off** (against the authored originals, not the escalation): vectors 1, 2, 7 and 8 for the exact inputs and expectations, and vectors 3, 4, 5, 6, 9, 10 and 11, none of which the escalation quotes. Vectors 12-14 are Agent-authored under the 04:24 curve decision and have no Viewing counterpart. Any disagreement goes to the orchestrator, not into a quiet edit of either set.
+**Unit decision: occurrence `source_offset` is milliseconds. 350 is canonical; 0.35 was our error.** Evidence in the tree:
+
+- Runtime `runtime_protocol/visual_seam.py:291-294` reads `source_offset` (alias `source_offset_ms`, or the `{start,end}` start) and divides by 1000.
+- App `shotCompositionProjection.ts:361` converts `sourceOffsetMs / 1000` to seconds; `shotCompositionAdapter.ts:245-246` feeds it `occurrence.source_offset`.
+- Agent `shot_composition_migration.py:779` accepts the legacy name `source_offset_ms`; authoring placements carry `source_offset: {start, end}` beside `duration_ms`.
+- Agent `shot_composition_projection.py:353` passes the value through verbatim, so the compiler is unit-agnostic. Only the consumers that apply it scale, and they scale from milliseconds. Nothing treats it as seconds.
+
+Our 0.35 read a milliseconds field as seconds. The compiler result is identical either way (metadata only), so only the fixture value and this note change.
 
 ## ENVELOPE_UNRENDERED join plan
 
@@ -104,7 +121,7 @@ Plan (Agent side; Viewing wires its inactive helper to it afterwards, per the 03
 ## Open items for the orchestrator (not decided here)
 
 1. **`curve=` on audio fades: RESOLVED, honoured** (decision 5, orchestrator 04:24Z). Owner visibility: the films that use `curve=` are listed in `design/owner-film-differences.md`. That scan found no owner film in reach, so the list is open.
-2. **Viewing's 11.** Reconcile these vectors with Viewing's authored set. Any disagreement goes to the orchestrator, not into a quiet edit of either set.
+2. **Viewing's 11.** Reconciled above; the unit question is closed (milliseconds).
 
 ## Not verified
 
