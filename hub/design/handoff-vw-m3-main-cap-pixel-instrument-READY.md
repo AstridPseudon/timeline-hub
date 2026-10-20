@@ -2,7 +2,7 @@
 
 The diagnostic code is in the worker branch at:
 
-`/home/user/work/wt/vw-m3-main-cap-pixel-instrument/tools/measure_main_image_cap.py`
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py`
 
 It is independent of MAIN's renderer and does not choose an expected visual
 golden. It accepts exactly the frozen fixture's source image (16x16 RGB240),
@@ -16,7 +16,7 @@ background basis can be consumed with frame90 as the control:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python \
-  /home/user/work/wt/vw-m3-main-cap-pixel-instrument/tools/measure_main_image_cap.py \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py \
   --source /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-image.png \
   --background-rgb 5 8 20 \
   --control /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-frame-90.png \
@@ -42,10 +42,12 @@ Built-in calibration:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python \
-  /home/user/work/wt/vw-m3-main-cap-pixel-instrument/tools/measure_main_image_cap.py \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py \
   --self-test
 ```
 
 This verifies synthetic fractions 1, 0.5, and 1/30, and fail-closed wrong
 color, uninformative control, wrong dimensions, and uninformative background
 cases.
+
+Manager handoff: exact9aaf8778 diagnostic copied flat above; repo tools branch is evidence-only and MUST NOT be merged. Worktree may be recycled normally. No actual opacity assertion is authorized by this instrument.

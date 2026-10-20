@@ -1,0 +1,9 @@
+PASS: seven reserve/headroom/QUIET/absent-grant/no-allocation guards
+{
+  "status": "MOCK_ONLY",
+  "blockers": [],
+  "free_bytes": 1073741824000,
+  "required_before_extraction_bytes": 0
+}
+REPRODUCED: refused pre-existing stage still passed to shutil.rmtree in finally (deletion mocked; sentinel intact)
+No source extraction, renderer, browser, sockets, service request, or shared write occurred

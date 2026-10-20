@@ -1,0 +1,5 @@
+reproducibility: PASS (two identical scans; one projector call per scan)
+explicit clear/open extension: PASS (asset=None retained; extension retained by projector; marker redacted)
+free-form transition mapping: PASS
+malformed transition bounded: PASS
+bounded errors/unknown/no leaked raw values: PASS

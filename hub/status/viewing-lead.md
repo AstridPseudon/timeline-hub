@@ -1,3 +1,3 @@
-UTC: 2026-10-20T10:14:25Z (area lead)
-Kit dispatch fix present (line 40 MP=...). Recovered 5 stuck workers (exit+running, no ended, no process): committed vw-m3-current-extent-landable-unit da10b0b76 and vw-m4-conditional-viewer-cut-counts a9fc0d3a2 with their commit-msg; 3 had nothing to commit; running removed, ended written; none re-run; none had merge-parent.
-Disk 11 GB (8 more worktrees recycled via bin/recycle after adding missing worktree= to imported metas). Link repairs: awaiting owner confirmation in this session.
+UTC: 2026-10-20T11:15:05Z (area lead, disk)
+Disk 9.9 GB -> 12 GB free: bin/recycle on the manager-released vw-m3-audio-monitor-control (HEAD e2902cf1) and vw-m3-observed-player-baseline (HEAD 8a315eb6) — branches/reports/evidence kept; also removed my own 138 MB Chrome .deb and cleared the npm cache. vw-m1-ssr-snapshot graph, leases, KEEP markers, .test-* and shared node_modules untouched. MAIN reference capture can run.
+106+6 link repairs: still awaiting the owner's confirmation in this session.

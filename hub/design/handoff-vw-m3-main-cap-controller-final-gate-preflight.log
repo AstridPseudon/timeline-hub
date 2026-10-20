@@ -1,0 +1,17 @@
+fatal: cannot change to '/home/user/work/wt/vw-m3-main-cap-capture-controller': No such file or directory
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-final-gate-commands.py", line 23, in <module>
+    result = m.preflight()
+             ^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-controller.py", line 200, in preflight
+    source = source_check()
+             ^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-controller.py", line 149, in source_check
+    original = subprocess.check_output(['git', '-C', str(REPO), 'archive', MAIN, *SOURCE_PATHS])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['git', '-C', '/home/user/work/wt/vw-m3-main-cap-capture-controller', 'archive', 'a411628f8fd6129f9c58c332019b56769d997384', 'astrid', 'scripts/gen_effect_registry.py', 'remotion/src', 'remotion/public', 'remotion/webpack-alias.mjs', 'remotion/package.json', 'remotion/package-lock.json', 'pyproject.toml', 'tests']' returned non-zero exit status 128.

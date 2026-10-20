@@ -1,0 +1,27 @@
+All commands run from /home/user/work/wt/vw-m3-main-cap-controller-final-gate.
+No capture or service command was executed.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-final-gate-commands.py preflight
+RESULT: exit1; real source_check cannot git archive from the recycled creator worktree (git exit128). Only evidence/disk paths are redirected to the reviewer. Full traceback in sibling preflight.log.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-final-gate-commands.py preflight-diagnostic-repo
+RESULT: exit1; source/locked archive/full graph/six peers pre/post PASS, then STAGE_BLOCKED: free12625637376 < required13021077036. This diagnostic additionally redirects REPO to the reviewer's existing read-only git object store; no target script edits. Full result in sibling preflight.json, inventory in graph-pre.json, summary in preflight-diagnostic-repo.log. No extraction.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-final-gate-commands.py self-check
+RESULT: exit0; seven reserve/headroom/QUIET/absent-grant/no-allocation cases PASS. Cleanup defect REPRODUCED: real refusal/finally path calls mocked rmtree on pre-existing private stage. Sentinel preserved; all admission/graph/process functions mocked; no renderer or service execution. Full output in sibling self-check.log. Private temporary sentinel directory automatically removed afterwards.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache --isolated --select E4,E7,E9,F /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-controller.py
+RESULT: exit0, All checks passed!
+
+/tmp/vw-m3-agent-gate-node20.19.4/bin/node --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-capture-controller-render.mjs
+RESULT: exit0. Syntax only; renderer module was not executed.
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-pixel-instrument-measure.py --self-test
+RESULT: exit0; PASS synthetic fractions1,0.5,1/30; wrong-color, uninformative-control, wrong-dimension and uninformative-background cases fail closed. In-memory calibration only. Exact instrument SHA25614273d682c07047e5bead807224a714de835b8314ea4f947fe68afb2c76b9997.
+
+git status --porcelain=v1 --untracked-files=all
+git diff --check
+RESULT: exit0 / empty for both; no repository edits or build output.
+
+Initial sha256sum and final independent hashlib reads agree for controller.py,
+render.mjs, COMMAND.txt, REPORT.md. Exact values retained in sibling reviewed-sha256.json.

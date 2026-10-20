@@ -1,0 +1,1719 @@
+{
+  "allowed_controls": 29,
+  "known_bad_expected": 101,
+  "rows": [
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[0].opacity is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[0].opacity is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[0].opacity is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[0].opacity is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[0].opacity is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[0].opacity is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 1.5
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[0].opacity is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -0.1
+    },
+    {
+      "allowed": true,
+      "case": 7,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[0].opacity is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].opacity",
+      "family": "opacity",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "type": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "duration": "BAD",
+        "type": "fade"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "duration": 0,
+        "type": "fade"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 7,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "duration": -1,
+        "type": "fade"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[0].entrance is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].entrance",
+      "family": "entrance",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "type": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "duration": "BAD",
+        "type": "fade"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "duration": 0,
+        "type": "fade"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 7,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "duration": -1,
+        "type": "fade"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[1].exit is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[1].exit",
+      "family": "exit",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[0].cropTop is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[0].cropTop is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[0].cropTop is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[0].cropTop is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[0].cropTop is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[0].cropTop is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 1.5
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[0].cropTop is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -0.1
+    },
+    {
+      "allowed": true,
+      "case": 7,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[0].cropTop is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].cropTop",
+      "family": "cropTop",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[0].cropRight is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[0].cropRight is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[0].cropRight is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[0].cropRight is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[0].cropRight is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[0].cropRight is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 1.5
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[0].cropRight is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -0.1
+    },
+    {
+      "allowed": true,
+      "case": 7,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[0].cropRight is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].cropRight",
+      "family": "cropRight",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[0].cropBottom is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[0].cropBottom is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[0].cropBottom is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[0].cropBottom is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[0].cropBottom is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[0].cropBottom is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 1.5
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[0].cropBottom is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -0.1
+    },
+    {
+      "allowed": true,
+      "case": 7,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[0].cropBottom is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].cropBottom",
+      "family": "cropBottom",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[0].cropLeft is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[0].cropLeft is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[0].cropLeft is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[0].cropLeft is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[0].cropLeft is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[0].cropLeft is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 1.5
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[0].cropLeft is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -0.1
+    },
+    {
+      "allowed": true,
+      "case": 7,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[0].cropLeft is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].cropLeft",
+      "family": "cropLeft",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[0].speed is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[0].speed is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[0].speed is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[0].speed is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[0].speed is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[0].speed is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[0].speed is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": true,
+      "case": 7,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": 0.5
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[0].speed is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "0.5"
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].speed",
+      "family": "speed",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[0].volume is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[0].volume is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[0].volume is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[0].volume is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": true,
+      "case": 4,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": 1.5
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[0].volume is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -0.1
+    },
+    {
+      "allowed": true,
+      "case": 6,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 7,
+      "errors": [
+        "parent_revision.payload.clips[0].volume is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[0].volume is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "0.5"
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[0].volume",
+      "family": "volume",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD_FADE"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD_FADE"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": false,
+      "case": 7,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "0.5"
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeIn is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "frames": 1
+      }
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeIn",
+      "family": "fadeIn",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": false,
+      "case": 0,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "BAD_FADE"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD_FADE"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": false,
+      "case": 5,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 0
+    },
+    {
+      "allowed": false,
+      "case": 6,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": -1
+    },
+    {
+      "allowed": false,
+      "case": 7,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": "0.5"
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOut is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "frames": 1
+      }
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOut",
+      "family": "fadeOut",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": true,
+      "case": 0,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "unknown_curve_finding": true,
+      "value": "BAD_CURVE"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeInCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD_CURVE"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeInCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeInCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeInCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": true,
+      "case": 5,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "unknown_curve_finding": true,
+      "value": "not-a-registered-curve"
+    },
+    {
+      "allowed": true,
+      "case": 6,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": "linear"
+    },
+    {
+      "allowed": true,
+      "case": 7,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": "equal-power"
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeInCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 7
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeInCurve",
+      "family": "fadeInCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    },
+    {
+      "allowed": true,
+      "case": 0,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "unknown_curve_finding": true,
+      "value": "BAD_CURVE"
+    },
+    {
+      "allowed": false,
+      "case": 1,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOutCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": [
+        "BAD_CURVE"
+      ]
+    },
+    {
+      "allowed": false,
+      "case": 2,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOutCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": true
+    },
+    {
+      "allowed": false,
+      "case": 3,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOutCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {}
+    },
+    {
+      "allowed": false,
+      "case": 4,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOutCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": {
+        "caption": "BAD"
+      }
+    },
+    {
+      "allowed": true,
+      "case": 5,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "unknown_curve_finding": true,
+      "value": "not-a-registered-curve"
+    },
+    {
+      "allowed": true,
+      "case": 6,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": "linear"
+    },
+    {
+      "allowed": true,
+      "case": 7,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": "equal-power"
+    },
+    {
+      "allowed": false,
+      "case": 8,
+      "errors": [
+        "parent_revision.payload.clips[3].params.fadeOutCurve is unreadable"
+      ],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "incomplete",
+      "value": 7
+    },
+    {
+      "allowed": true,
+      "case": 9,
+      "errors": [],
+      "expected_path": "parent_revision.payload.clips[3].params.fadeOutCurve",
+      "family": "fadeOutCurve",
+      "input_unchanged": true,
+      "leaked_raw": false,
+      "status": "complete",
+      "value": null
+    }
+  ],
+  "total": 130
+}

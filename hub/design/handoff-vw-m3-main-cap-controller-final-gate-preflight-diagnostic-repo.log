@@ -1,0 +1,8 @@
+{
+  "status": "STAGE_BLOCKED",
+  "blockers": [
+    "disk BLOCKED: free=12625637376, required=13021077036 (10 GiB reserve + 2283658796 staging/headroom bytes)"
+  ],
+  "free_bytes": 12625637376,
+  "required_before_extraction_bytes": 13021077036
+}
