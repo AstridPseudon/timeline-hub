@@ -1169,6 +1169,14 @@ export class RuntimeDataProvider implements DataProvider {
     file: File,
     options: MediaImportOptions = {},
   ): Promise<PreparedMediaImport> {
+    return this.prepareMediaImportAtBoundary(file, options, true);
+  }
+
+  private async prepareMediaImportAtBoundary(
+    file: File,
+    options: MediaImportOptions,
+    captureNativeSelection: boolean,
+  ): Promise<PreparedMediaImport> {
     assertRuntimeMediaImportSize(file);
     const importOperationId = generateUUID();
     const mediaType = options.mediaType ?? file.type;
@@ -1208,12 +1216,13 @@ export class RuntimeDataProvider implements DataProvider {
       );
     }
 
-    const prepared = toPreparedMediaImport(
+    const prepared = await toPreparedMediaImport(
       this.client,
       imported,
       mediaType,
       filename,
       options.durationSeconds,
+      captureNativeSelection && typeof this.client.getProjectMediaSelection === 'function',
     );
     persistMediaImportOperation(this.projectId, importOperationId, prepared);
     this.activeRegistry = {
@@ -1228,9 +1237,9 @@ export class RuntimeDataProvider implements DataProvider {
   async prepareAsset(file: File, options: UploadAssetOptions): Promise<UploadedAssetResult> {
     // AssetPanel and external drops use this seam. User media must take the
     // same validated host import/catalog operation as gallery imports.
-    const prepared = await this.prepareMediaImport(file, {
+    const prepared = await this.prepareMediaImportAtBoundary(file, {
       filename: options.filename ?? file.name,
-    });
+    }, false);
     const entry: AssetRegistryEntry = {
       ...prepared.entry,
       metadata: {
@@ -1504,13 +1513,14 @@ async function recoverMediaImportAfterLostAck(
   }
 }
 
-function toPreparedMediaImport(
+async function toPreparedMediaImport(
   client: AstridRuntimeClient,
   imported: MediaImport,
   fallbackMediaType: string,
   fallbackFilename: string,
   fallbackDuration?: number,
-): PreparedMediaImport {
+  captureNativeSelection = false,
+): Promise<PreparedMediaImport> {
   if (
     imported.provider !== 'runtime'
     || imported.status !== 'completed'
@@ -1521,6 +1531,25 @@ function toPreparedMediaImport(
     || typeof imported.asset_id !== 'string'
   ) {
     throw new Error('Workspace Runtime returned an incomplete media import descriptor');
+  }
+
+  let mediaSelection: PreparedMediaImport['mediaSelection'];
+  if (captureNativeSelection) {
+    const selected = await client.getProjectMediaSelection(imported.project, {
+      asset: imported.asset_id,
+      generation_id: imported.generation_id,
+      variant_id: imported.variant_id,
+    });
+    if (
+      selected.asset !== imported.asset_id
+      || selected.generation_id !== imported.generation_id
+      || selected.variant_id !== imported.variant_id
+      || selected.object_id !== imported.entry.object_id
+    ) {
+      throw new Error('Workspace Runtime media selection does not match the prepared import');
+    }
+    Object.freeze(selected);
+    mediaSelection = selected;
   }
 
   const mediaType = imported.entry.media_type || fallbackMediaType;
@@ -1555,6 +1584,7 @@ function toPreparedMediaImport(
     variantId: imported.variant_id,
     assetId: imported.asset_id,
     entry,
+    ...(mediaSelection ? { mediaSelection } : {}),
   };
 }
 
