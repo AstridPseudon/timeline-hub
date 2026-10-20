@@ -1,4 +1,5 @@
-# Default run per push (testing plan UA.1). Heavy lanes (integration, live, opt_in) run nightly elsewhere.
+# Default run per push (testing plan UA.1). The heavy lanes (integration, darwin_native, live, opt_in;
+# tests/lanes.py) have no scheduled run yet: they run only on request, locally (testing plan, Owned debt).
 name: CI
 
 on:

@@ -1,9 +1,10 @@
 """Test lanes (testing plan R-2).
 
 Lanes. The default run deselects tests marked ``integration``, ``darwin_native``,
-``live`` or ``opt_in`` (see ``addopts`` in pyproject.toml). The nightly lane runs exactly
-those: ``pytest -m "integration or darwin_native or live or opt_in"``. Together the two lanes are the
-whole suite, by construction. A ``darwin_native`` test is skipped off macOS.
+``live`` or ``opt_in`` (see ``addopts`` in pyproject.toml). The heavy lane is exactly those:
+``pytest -m "integration or darwin_native or live or opt_in"`` (no workflow schedules it yet; see the
+testing plan's Owned debt). Together the two lanes are the whole suite, by construction. A
+``darwin_native`` test is skipped off macOS.
 
 Skips on import (testing plan R-6). ``pytest.importorskip`` is allowed locally but fails in a required
 lane, where a skip would hide a broken install: any lane run by CI (``CI`` set) and any run that selects
