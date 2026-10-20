@@ -1,3 +1,4 @@
+import { useClipScalarControl, useClipScalarControls } from '@/tools/video-editor/hooks/useClipScalarControl.ts';
 import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
 import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
 import { memo, useEffect, useMemo, useRef, type ComponentType, type ReactNode } from 'react';
@@ -235,9 +236,11 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
     patchRegistry,
   });
   const { addVariantAsGenerationAfterClip, isPending: isAddingVariantAsGenerationPending } = useAddVariantAsGeneration();
+  const captureScalarEdit = useClipScalarControl(selectedClip?.id);
   const prevClipIdRef = useRef(selectedClip?.id);
   const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
+  const captureScalarEdits = useClipScalarControls(selectedClipIdsList);
   // dataKind V2: resolve lane items from the SAME patched lane plane the
   // canvas renders — the render-side `useDataLanes` merge — never the
   // store's frozen-empty `dataLanes` default. Fetching goes through the
@@ -498,6 +501,7 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
           <DataLaneSummarySection lane={selectedDataLaneView} />
         ) : selectedClipIds.size > 1 ? (
           <BulkClipPanel
+            onScalarEditsStart={captureScalarEdits}
             clips={bulkSelectedClips}
             visibleTabs={bulkVisibleTabs}
             compositionWidth={compositionSize.width}
@@ -540,6 +544,7 @@ function PropertiesPanelComponent(_props: PropertiesPanelProps) {
             precisionEnabled={precisionEnabled}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={handleSelectedClipChange}
+            onScalarEditStart={captureScalarEdit}
             onResetPosition={handleResetClipPosition}
             onClose={clearSelection}
             onDelete={selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}

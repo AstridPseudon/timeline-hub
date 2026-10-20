@@ -1,6 +1,14 @@
-import { fireEvent, render, renderHook, screen, within } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen, within, waitFor } from '@testing-library/react';
 import { Children, isValidElement, type ComponentProps, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { createTimelineCommandSession } from '@/tools/video-editor/commands/commitSession.ts';
+import { document, environment, scope } from '@/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts';
+import { captureClipScalarEdit, submitClipTransitionClears } from '@/tools/video-editor/commands/clipScalarGesture.ts';
+import { captureClipMove, submitClipMove } from '@/tools/video-editor/commands/semanticGestures.ts';
+import { AuthoredState } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
+import { compileTimelinePatch } from '@/tools/video-editor/lib/timeline-patch.ts';
+import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { PROJECT_ID, TIMELINE_ID, runtimeFixture } from '@/test/fakeWorkspaceRuntime.ts';
 import { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
@@ -103,19 +111,7 @@ async function editor(bulk: boolean, clips = [rawClip('a', 5), rawClip('b', 9)])
     });
   };
   const selected = initial.resolvedConfig.clips.filter((clip) => clip.id !== 'predecessor');
-  const first = selected[0];
-  render(<>{bulk ? <BulkClipPanelBody
-    clips={selected} visibleTabs={['effects']} activeTab="effects" setActiveTab={vi.fn()}
-    compositionWidth={1920} compositionHeight={1080} effectResources={createVideoEditorEffectCatalog()}
-    sharedEntrance={null} sharedExit={null} sharedContinuous={null} sharedText={null}
-    sharedEntranceType={null} sharedExitType={null} sharedContinuousType={null}
-    sharedTransition={first.transition!} sharedTransitionType="crossfade"
-    sharedTransitionDuration={clips.every((clip) => clip.transition?.duration === first.transition?.duration) ? first.transition!.duration : null}
-    sharedSpeed={null} sharedFrom={null} sharedTo={null} sharedX={null} sharedY={null}
-    sharedWidth={null} sharedHeight={null} sharedOpacity={null} sharedVolume={null}
-    sharedFontSize={null} sharedTextColor={null}
-    onChange={vi.fn()} onChangeDeep={onChangeDeep} onResetPosition={vi.fn()} onToggleMute={vi.fn()} onClose={vi.fn()}
-  /> : <ClipTransitionSection clip={first} onChange={onChange} />}</>);
+  renderControls(bulk, selected, onChange, onChangeDeep);
 
   function assertAuthored(expectedClips: TimelineClip[]) {
     expect(patches).toHaveLength(bulk ? clips.length : 1);
@@ -158,6 +154,67 @@ async function editor(bulk: boolean, clips = [rawClip('a', 5), rawClip('b', 9)])
     hook.unmount();
   }
   return { clips, patches, assertAuthored, assertPublished };
+}
+
+function renderControls(
+  bulk: boolean,
+  selected: TimelineData['resolvedConfig']['clips'],
+  onChange: ComponentProps<typeof ClipTransitionSection>['onChange'],
+  onChangeDeep: BulkClipPanelProps['onChangeDeep'],
+  capture?: (id: string) => ReturnType<typeof captureClipScalarEdit>,
+) {
+  const first = selected[0];
+  render(<>{bulk ? <BulkClipPanelBody
+    clips={selected} visibleTabs={['effects']} activeTab="effects" setActiveTab={vi.fn()}
+    compositionWidth={1920} compositionHeight={1080} effectResources={createVideoEditorEffectCatalog()}
+    sharedEntrance={null} sharedExit={null} sharedContinuous={null} sharedText={null}
+    sharedEntranceType={null} sharedExitType={null} sharedContinuousType={null}
+    sharedTransition={first.transition!} sharedTransitionType="crossfade"
+    sharedTransitionDuration={selected.every((clip) => clip.transition?.duration === first.transition?.duration) ? first.transition!.duration : null}
+    sharedSpeed={null} sharedFrom={null} sharedTo={null} sharedX={null} sharedY={null}
+    sharedWidth={null} sharedHeight={null} sharedOpacity={null} sharedVolume={null}
+    sharedFontSize={null} sharedTextColor={null}
+    onScalarEditsStart={capture ? () => selected.map((clip) => capture(clip.id)) : undefined}
+    onChange={vi.fn()} onChangeDeep={onChangeDeep} onResetPosition={vi.fn()} onToggleMute={vi.fn()} onClose={vi.fn()}
+  /> : <ClipTransitionSection clip={first} onChange={onChange} onScalarEditStart={capture ? () => capture(first.id) : undefined} />}</>);
+}
+
+async function nativeEditor(bulk: boolean) {
+  // The same input and expected removal as the two original RED publication cases.
+  const clips = [rawClip('a', 5), rawClip('b', 9)];
+  const predecessor: TimelineClip = { id: 'predecessor', track: 'V1', at: 0, hold: 5, clipType: 'hold' };
+  const raw = document();
+  const parent = raw.parent_revision.payload;
+  parent.clips = JSON.parse(JSON.stringify([predecessor, ...clips]));
+  parent.config = { ...parent.config as object, clips: structuredClone(parent.clips) };
+  raw.parent_revision.content_digest = fixtureDigest(parent);
+  const env = await environment(raw);
+  let current = env.current();
+  const snapshots = vi.fn();
+  const save = vi.spyOn(env.provider, 'saveTimelineAtHead');
+  const mount = () => createTimelineCommandSession({ scope, initial: env.initial, outboxes: env.outboxes,
+    send: (request, key) => env.provider.commitTimeline(request, key),
+    preview: (patch) => {
+      const compiled = compileTimelinePatch(patch, current);
+      if (!compiled.nextData) throw new Error('invalid native clear preview');
+      current = compiled.nextData;
+    },
+    project: async (basis, previews) => {
+      const payload = basis.canonicalDocument.parent_revision.payload;
+      current = await buildTimelineData({ ...payload.config as object, clips: payload.clips } as never,
+        { assets: {} }, undefined, 1, undefined, { projectId: scope.projectId, timelineId: scope.timelineId,
+          headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId });
+      for (const preview of previews) {
+        const compiled = compileTimelinePatch(preview, current);
+        if (!compiled.nextData) throw new Error('invalid recovered native clear preview');
+        current = compiled.nextData;
+      }
+    }, changed: () => {},
+  });
+  const session = await mount();
+  const selected = current.resolvedConfig.clips.filter((clip) => clip.id !== 'predecessor');
+  renderControls(bulk, selected, snapshots, snapshots, (id) => captureClipScalarEdit(session.clipScalarPort, current, id));
+  return { env, session, mount, current: () => current, clips, predecessor, snapshots, save };
 }
 
 function transitionSection() {
@@ -267,5 +324,156 @@ describe('mounted transition callbacks preserve raw authoring through publicatio
     await assertPublished(clips.map((clip, index) => !bulk && index ? clip : {
       ...clip, transition: { type: 'wipe', duration: 0.5, params: undefined },
     }));
+  });
+});
+
+
+describe('native None publication (unit transport; no Runtime registry acceptance claim)', () => {
+  it.each([false, true])('None publication (bulk=%s) removes the raw transition', async (bulk) => {
+    const host = await nativeEditor(bulk);
+    const before = JSON.stringify(host.current());
+    const paused = host.env.pause();
+    fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: '__none__' } });
+    await waitFor(() => expect(host.env.commits()).toHaveLength(1));
+    const expectedClips = host.clips.map((clip, index) => {
+      if (!bulk && index) return clip;
+      const { transition: _transition, ...rest } = clip;
+      return rest;
+    });
+    const expected = [host.predecessor, ...expectedClips];
+    const [stored] = await host.env.outboxes.list(scope);
+    expect(stored.intents).toHaveLength(1);
+    const payload = stored.intents[0].payload as { commands: EditCommand[]; after: never };
+    expect(payload.commands).toHaveLength(bulk ? 2 : 1);
+    expect(JSON.parse(stored.pending!.request.body).commands).toEqual(payload.commands);
+    for (const [index, command] of payload.commands.entries()) {
+      const clip = host.clips[index];
+      expect(command).toMatchObject({ op: 'clip.set', version: '1', select: `parent/clip:${clip.id}`,
+        args: { values: {}, clear: ['transition'] },
+        expect: { [`parent/clip:${clip.id}::transition`]: { state: 'present', value: clip.transition } } });
+    }
+    expect(new AuthoredState(payload.after).bundle.parent.clips).toEqual(expected);
+    expect(host.current().config.clips).toEqual(expected);
+    paused.resolve();
+    await host.session.flush();
+    const accepted = await host.env.provider.loadTimelineCommandBasis(scope.timelineId);
+    const parent = accepted.canonicalDocument.parent_revision.payload;
+    expect(parent.clips).toEqual(expected);
+    expect((parent.config as { clips: unknown }).clips).toEqual(expected);
+    expect(JSON.stringify(parent.clips)).toBe(JSON.stringify(expected));
+    expect(JSON.stringify((parent.config as { clips: unknown }).clips)).toBe(JSON.stringify(expected));
+    expect(host.snapshots).not.toHaveBeenCalled();
+    expect(host.save).not.toHaveBeenCalled();
+    expect(host.current()).not.toEqual(JSON.parse(before));
+    await host.session.dispose();
+  });
+
+  it('bulk Remove submits one atomic clear batch', async () => {
+    const host = await nativeEditor(true);
+    fireEvent.click(within(transitionSection()).getByRole('button', { name: 'Remove' }));
+    await host.session.flush();
+    await waitFor(() => expect(host.env.commits()).toHaveLength(1));
+    expect(host.env.commits()[0].body!.commands).toHaveLength(2);
+    const accepted = await host.env.provider.loadTimelineCommandBasis(scope.timelineId);
+    expect((accepted.canonicalDocument.parent_revision.payload.clips as TimelineClip[]).slice(1)
+      .every((clip) => !Object.prototype.hasOwnProperty.call(clip, 'transition'))).toBe(true);
+    expect(host.snapshots).not.toHaveBeenCalled();
+    await host.session.dispose();
+  });
+
+  it('bulk None visibly refuses an unsupported selected target without clearing any clip', async () => {
+    const host = await nativeEditor(true);
+    const before = structuredClone(host.current());
+    const records = await host.env.outboxes.list(scope);
+    const capture = host.session.clipScalarPort.capture;
+    host.session.clipScalarPort.capture = (input) => {
+      if (input.clipId === 'b') throw new Error('Unsupported selected target; draft retained');
+      return capture(input);
+    };
+    fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: '__none__' } });
+    expect(screen.getByRole('alert')).toHaveTextContent('Unsupported selected target; draft retained');
+    expect(host.current()).toEqual(before);
+    expect(await host.env.outboxes.list(scope)).toEqual(records);
+    expect(host.env.commits()).toHaveLength(0);
+    expect(host.snapshots).not.toHaveBeenCalled();
+    await host.session.dispose();
+  });
+
+  it('retains an entire refused batch and exact request through restart and retry', async () => {
+    const host = await nativeEditor(true);
+    host.env.setFault('validation');
+    fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: '__none__' } });
+    await waitFor(() => expect(host.session.getState().status).toBe('error'));
+    const [original] = await host.env.outboxes.list(scope);
+    const request = original.pending!.request;
+    expect(host.current().config.clips.slice(1).every((clip) => !Object.prototype.hasOwnProperty.call(clip, 'transition'))).toBe(true);
+    expect((await host.env.provider.loadTimelineCommandBasis(scope.timelineId)).canonicalDocument.parent_revision.payload.clips)
+      .toEqual([host.predecessor, ...host.clips]);
+    await host.session.dispose();
+    const recovered = await host.mount();
+    expect(recovered.getState().status).toBe('recovery');
+    await recovered.recover(original.ownerId);
+    const expected = [host.predecessor, ...host.clips.map(({ transition: _transition, ...clip }) => clip)];
+    expect(host.current().config.clips).toEqual(expected);
+    expect(host.current().resolvedConfig.clips).toEqual(expected);
+    const accepted = (await host.env.provider.loadTimelineCommandBasis(scope.timelineId)).canonicalDocument.parent_revision.payload;
+    expect(accepted.clips).toEqual([host.predecessor, ...host.clips]);
+    expect((accepted.config as { clips: unknown }).clips).toEqual([host.predecessor, ...host.clips]);
+    expect((await host.env.outboxes.list(scope))[0].pending!.request).toEqual(request);
+    expect((await host.env.outboxes.list(scope))[0].intents).toEqual(original.intents);
+    // A definitive rejection remains retained until explicit resolution.
+    await recovered.retry();
+    expect(host.env.commits()).toHaveLength(1);
+    expect(host.snapshots).not.toHaveBeenCalled();
+    await recovered.dispose();
+  });
+
+  it('retries a lost batch ACK exactly and preserves a newer mixed suffix with original guards', async () => {
+    const host = await nativeEditor(true);
+    host.env.setFault('lost');
+    fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: '__none__' } });
+    await waitFor(() => expect(host.session.getState().status).toBe('retry'));
+    const [original] = await host.env.outboxes.list(scope);
+    const request = original.pending!.request;
+    const retry = host.env.pause();
+    submitClipMove(captureClipMove(host.session.port, host.current(), 'b'), 14);
+    await waitFor(async () => expect((await host.env.outboxes.list(scope))[0].intents).toHaveLength(2));
+    const [queued] = await host.env.outboxes.list(scope);
+    const suffix = queued.intents[1];
+    expect(queued.pending!.request).toEqual(request);
+    expect(queued.intents[0]).toEqual(original.intents[0]);
+    retry.resolve();
+    await host.session.flush();
+    expect(host.env.commits()).toHaveLength(3);
+    expect(JSON.stringify(host.env.commits()[1].body)).toBe(request.body);
+    expect(host.env.commits()[1].key).toBe(request.key);
+    expect(host.env.commits()[2].body!.commands).toEqual((suffix.payload as { commands: EditCommand[] }).commands);
+    expect(host.env.commits()[2].body).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1' });
+    expect(host.current().config.clips.find((clip) => clip.id === 'b')).toMatchObject({ at: 14 });
+    expect(host.current().config.clips.slice(1).every((clip) => !Object.prototype.hasOwnProperty.call(clip, 'transition'))).toBe(true);
+    expect(host.snapshots).not.toHaveBeenCalled();
+    await host.session.dispose();
+  });
+
+  it('refuses a batch containing a missing raw target atomically and keeps the existing draft', async () => {
+    const host = await nativeEditor(true);
+    host.env.setFault('unavailable');
+    submitClipMove(captureClipMove(host.session.port, host.current(), 'a'), 6);
+    await waitFor(() => expect(host.session.getState().status).toBe('retry'));
+    const before = structuredClone(host.current());
+    const records = await host.env.outboxes.list(scope);
+    const first = captureClipScalarEdit(host.session.clipScalarPort, host.current(), 'a');
+    const second = captureClipScalarEdit(host.session.clipScalarPort, host.current(), 'b');
+    const bad = { ...second, basis: { ...second.basis, select: 'parent/clip:missing' } };
+    expect(() => submitClipTransitionClears([first, bad])).toThrow();
+    expect(host.current()).toEqual(before);
+    expect(await host.env.outboxes.list(scope)).toEqual(records);
+    expect(host.env.commits()).toHaveLength(1);
+    expect(() => host.session.clipScalarPort.finishBatch!([first.basis, second.basis],
+      { values: { hold: 7 }, clear: ['transition'] })).toThrow('only explicit transition clears');
+    expect(host.current()).toEqual(before);
+    expect(await host.env.outboxes.list(scope)).toEqual(records);
+    expect(host.snapshots).not.toHaveBeenCalled();
+    await host.session.dispose();
   });
 });

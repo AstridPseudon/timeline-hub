@@ -1,3 +1,4 @@
+import { captureClipScalarEdit, submitClipScalarEdit, submitClipTransitionClears } from '../commands/clipScalarGesture.ts';
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -446,4 +447,60 @@ describe('mounted timeline command session', () => {
     expect(hook.result.current.commit.data?.head?.headPublicationId).toBe('p2');
     hook.unmount();
   });
+  it('exposes the scalar port and fences capture, finish and submit behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipScalarPort!;
+    const current = hook.result.current.commit.data!;
+    const args = { values: {}, clear: ['asset'] } as const;
+    setLegacyClean(false);
+    expect(() => captureClipScalarEdit(port, current, 'x', 'parent')).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const captured = captureClipScalarEdit(port, current, 'x', 'parent');
+    setLegacyClean(false);
+    expect(() => submitClipScalarEdit(captured, { values: {}, clear: ['asset'] })).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finish(captured.basis, { values: {}, clear: ['asset'] });
+    setLegacyClean(false);
+    expect(() => port.submit({ command: prepared.command,
+      preview: { version: 1, operations: [{ op: 'clip.update', target: 'x', payload: {}, clear: ['asset'] }] } })).toThrow('earlier timeline saves');
+    expect(args.clear).toEqual(['asset']);
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('fences atomic transition clear finish and submit behind earlier legacy saves', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipScalarPort!;
+    const current = hook.result.current.commit.data!;
+    const captured = captureClipScalarEdit(port, current, 'x', 'parent');
+    setLegacyClean(false);
+    expect(() => submitClipTransitionClears([captured])).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const prepared = port.finishBatch!([captured.basis], { values: {}, clear: ['transition'] });
+    setLegacyClean(false);
+    expect(() => port.submitBatch!({ commands: prepared.commands,
+      preview: { version: 1, operations: [{ op: 'clip.update', target: 'x', payload: {}, clear: ['transition'] }] } }))
+      .toThrow('earlier timeline saves');
+    expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('previews scalar ABSENT through the mounted hook and keeps the draft on command refusal without snapshot traffic', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    act(() => submitClipScalarEdit(captureClipScalarEdit(hook.result.current.commands.clipScalarPort!,
+      hook.result.current.commit.data!, 'x', 'parent'), { values: {}, clear: ['asset'] }));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commit.data!.config.clips[0]).not.toHaveProperty('asset');
+    expect(hook.result.current.commit.data!.resolvedConfig.clips[0]).not.toHaveProperty('asset');
+    expect(env.commits()[0].body!.commands[0]).toMatchObject({ op: 'clip.set', select: 'parent/clip:x',
+      args: { values: {}, clear: ['asset'] }, expect: { 'parent/clip:x::asset': { state: 'absent' } } });
+    expect(env.calls.filter((call) => call.method !== 'GET' && call.path !== '/v1/handshake')
+      .every((call) => call.path.endsWith('/commit'))).toBe(true);
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
 });
