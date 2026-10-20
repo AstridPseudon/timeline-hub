@@ -1,11 +1,13 @@
 """Native sheet CLI keeps the original export in the existing scoped outbox."""
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 
 import pytest
 
+from astrid.core.timeline.authoring_bundle import _digest, open_authoring_bundle
 from astrid.packs.timeline import cli
 from astrid.sdk import storage_root
 from astrid.sdk.timeline._command_state import State
@@ -14,8 +16,51 @@ from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.outbox import request_bytes
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
+from tests.timeline.test_authoring_bundle import _closure
 from tests.sdk.test_timeline_sheet_native import edit_cell
 from tests.sdk.test_timeline_sync import connected, initial_bundle  # noqa: F401
+
+
+RATIONAL_FPS = {'numerator': 30000, 'denominator': 1001}
+OCCURRENCE_CLIP = 'occurrence:occ-1/clip:picture-1'
+RATIONAL_ON = 1001 / 30000
+
+
+def rational_occurrence_bundle():
+    """The smallest real occurrence closure needed by the three native frontends."""
+    parent, shots, internals = _closure(shared=True)
+    parent.update(project_id='p', timeline_id='t')
+    parent['payload']['config']['output'] = {'fps': copy.deepcopy(RATIONAL_FPS)}
+    for index, row in enumerate(parent['payload']['occurrences']):
+        row.update(placement={'start_ms': index * 10000}, duration_ms=10000,
+                   source_offset=0, speed=1)
+    for image in [*shots, *internals]:
+        image['project_id'] = 'p'
+        image['timeline_id'] = 't'
+    clip = next(row for row in internals[0]['payload']['clips'] if row['id'] == 'picture-1')
+    clip.update({'from': 2, 'to': 6, 'hold': 4,
+                 'opaque': {'source': [None, False, 1, {'keep': 'yes'}]}})
+    for image in [parent, *shots, *internals]:
+        image['content_digest'] = _digest(image['payload'])
+    bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    bundle['base_parent']['revision_id'] = 'r0'
+    return bundle
+
+
+def assert_rational_occurrence_move(generated, original, publication):
+    moved = generated.bundles['r1']
+    target = State(moved).entity(OCCURRENCE_CLIP)
+    sibling = State(moved).entity('occurrence:occ-2/clip:picture-1')
+    source = State(original).entity(OCCURRENCE_CLIP)
+    assert target['at'] == pytest.approx(RATIONAL_ON)
+    assert target['asset'] == source['asset']
+    assert target['from'] == source['from'] and target['to'] == source['to']
+    assert target['hold'] == source['hold']
+    assert target['opaque'] == source['opaque']
+    assert target['app'] == source.get('app', {}) | {'astrid': {'fixed_start': True, 'for': 4.0}}
+    assert target['at'] + target['hold'] < 10  # half-open interval stays inside this occurrence
+    assert sibling == State(original).entity('occurrence:occ-2/clip:picture-1')
+    assert publication == 'pub1'
 
 
 @pytest.fixture
@@ -263,3 +308,36 @@ def test_cli_trim_clear_and_params_are_one_captured_batch(native_cli, tmp_path, 
     capsys.readouterr()
     assert generated.bundles['r2'] == original
     assert path.read_text() == edited
+
+
+@pytest.mark.parametrize('entry', ['cli', 'python', 'sheet'])
+def test_rational_explicit_occurrence_move_is_lossless_across_native_frontends(
+        native_cli, capsys, entry):
+    """One scoped child move uses the same clip.move recipe at a non-integral rate."""
+    run, client, generated = native_cli
+    original = rational_occurrence_bundle()
+    generated.bundles['r0'] = copy.deepcopy(original)
+    session = TimelineSession.open(original['project_id'], original['timeline_id'], client=client)
+
+    if entry == 'cli':
+        assert run('edit', 't', '--clip', OCCURRENCE_CLIP, '--on', str(RATIONAL_ON), '--json') == 0
+        result = json.loads(capsys.readouterr().out)
+        commands = json.loads(generated.calls[-1][0])['commands']
+    elif entry == 'python':
+        result = session.move(OCCURRENCE_CLIP, RATIONAL_ON)
+        commands = json.loads(generated.calls[-1][0])['commands']
+    else:
+        from astrid.sdk.timeline_sheet import NativeSheet
+
+        sheet = NativeSheet.export(session, occurrence='occ-1', clip='picture-1')
+        edited = edit_cell(sheet.text, OCCURRENCE_CLIP, str(RATIONAL_ON))
+        result = sheet.apply(edited, session=session, dry_run=False)
+        commands = result['data']['commands']
+
+    assert commands == [capture_move(original, OCCURRENCE_CLIP, RATIONAL_ON)]
+    assert_rational_occurrence_move(generated, original, result['receipt']['receipt_id'])
+
+    assert State(generated.bundles['r1']).entity(OCCURRENCE_CLIP)['at'] == pytest.approx(RATIONAL_ON)
+    TimelineSession.open(original['project_id'], original['timeline_id'], client=client).undo(
+        [result['receipt']['receipt_id']])
+    assert generated.bundles['r2'] == original

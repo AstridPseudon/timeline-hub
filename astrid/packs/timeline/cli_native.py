@@ -109,7 +109,7 @@ def commit_move(session, parsed, options):
     # a display id or recaptures it after a lost acknowledgement.
     bundle = session._bundle({**state, 'pending': []})
     select = _trim_selector(bundle, parsed)
-    if select is None or not select.startswith('parent/clip:'):
+    if select is None:
         return NotImplemented
     return session.move(select, float(parsed.on), **options)
 
