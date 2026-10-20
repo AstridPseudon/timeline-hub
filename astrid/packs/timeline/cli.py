@@ -3295,7 +3295,7 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if not changed:
         print("no change (the working copy already matches)")
         return 3
-    report = tl.check()
+    report = tl._check_core()
     changes = _describe_edit(before, tl.document(), tl)
     cuts = _edit_cuts(before, tl)
     if voice_ops:

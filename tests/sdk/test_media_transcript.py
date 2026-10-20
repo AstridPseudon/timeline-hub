@@ -146,7 +146,7 @@ def test_publish_registers_after_timeline_commit_and_survives_document_failure(m
     bundle = {"project_id": "p", "timeline_id": "t", "placements": [], "shots": {}, "parent": {"clips": []}}
     tl = Checkout(bundle)
     monkeypatch.setattr(tl, "_sync_film_length", lambda: [])
-    monkeypatch.setattr(tl, "check", lambda: SimpleNamespace(valid=True))
+    monkeypatch.setattr(tl, "_check_core", lambda: SimpleNamespace(valid=True))
     monkeypatch.setattr(tl, "edits", lambda: {"changes": ["take"]})
     monkeypatch.setattr(tl, "narration_changes", lambda: {})
     monkeypatch.setattr(tl, "stored_document", lambda **_kwargs: bundle)

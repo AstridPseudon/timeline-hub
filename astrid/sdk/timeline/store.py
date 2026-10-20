@@ -309,8 +309,8 @@ def three_way(base: Mapping[str, Any], head: Mapping[str, Any], candidate: Mappi
 def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client: Any = None, force: bool = False) -> dict[str, Any]:
     from astrid.sdk.timeline.checkout import Checkout
     """One parent compare-and-swap publication with an overwrite guard (see ``Checkout.publish``)."""
+    from astrid.core.timeline.authoring_bundle import publish_authoring_candidate
     from astrid.sdk import AstridClient
-    from astrid.sdk.authoring_bundle import publish_authoring_candidate
     from astrid.sdk.autobootstrap import ensure_runtime
     from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
 

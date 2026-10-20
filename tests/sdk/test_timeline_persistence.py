@@ -71,7 +71,8 @@ def worker_main() -> None:
     """Serve JSON-line requests on stdin; answer on the real stdout. Library prints go to stderr."""
     proto = sys.stdout
     sys.stdout = sys.stderr
-    from astrid.sdk import AstridClient, authoring_bundle, autobootstrap, workspace_client
+    from astrid.core.timeline import authoring_bundle
+    from astrid.sdk import AstridClient, autobootstrap, workspace_client
     from astrid.sdk import timeline_checkout as tc
 
     def no_live_runtime(*_a, **_k):

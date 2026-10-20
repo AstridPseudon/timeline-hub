@@ -34,7 +34,7 @@ class _PublishMixin:
         overwrites their change, explicitly. Nothing is ever overwritten silently.
         """
         self.notes.extend(self._sync_film_length())  # the film's length follows its content, before the check
-        report = self.check()
+        report = self._check_core()
         if not report.valid:
             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
