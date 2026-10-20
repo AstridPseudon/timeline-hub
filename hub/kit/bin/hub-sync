@@ -40,7 +40,7 @@ cd $H
 # self-heal: a sync killed mid-rebase leaves the clone stuck and every later files push rejected
 if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ]; then git rebase --abort 2>/dev/null || rm -rf .git/rebase-merge .git/rebase-apply; echo "$(date -u +%FT%TZ) hub-sync: aborted stuck rebase" >&2; fi
 git pull -q --rebase origin main 2>/dev/null || { git rebase --abort 2>/dev/null; git pull -q --no-rebase -X theirs origin main 2>/dev/null; }
-mkdir -p hub/status hub/escalations/closed hub/inbox hub/design hub/merge-requests hub/merge-results
+mkdir -p hub/status hub/escalations/closed hub/inbox hub/design hub/merge-requests hub/merge-results $ORCH/escalations/closed
 
 # --- handover handshake ---
 if [ $M = main ]; then
