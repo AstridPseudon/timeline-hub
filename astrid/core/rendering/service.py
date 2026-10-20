@@ -1185,6 +1185,23 @@ class RenderService:
             return None
 
         result = dict(clip)
+        # The slice rewrites at/from/to, so a fade would restart at the cut.
+        # Record the original source phase (host-owned; overwrites any
+        # authored value) for the audio envelope to translate against.
+        params = clip.get("params")
+        app = clip.get("app")
+        if isinstance(app, Mapping) and "astrid_slice_origin" in app:
+            result["app"] = {k: v for k, v in app.items() if k != "astrid_slice_origin"}
+        if isinstance(params, Mapping) and (params.get("fadeIn") or params.get("fadeOut")):
+            result["app"] = {
+                **(result["app"] if isinstance(result.get("app"), Mapping) else {}),
+                "astrid_slice_origin": {
+                    "id": clip.get("id"),
+                    "at": clip.get("at", 0),
+                    "from": clip.get("from", 0),
+                    "to": clip.get("to"),
+                },
+            }
         result["at"] = float(visible_start - start)
         result["id"] = (
             f"{clip.get('id', 'clip')}_{window.start_frame}_{window.end_frame}"

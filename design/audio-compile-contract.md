@@ -128,3 +128,9 @@ Plan (Agent side; Viewing wires its inactive helper to it afterwards, per the 03
 - No PCM was rendered and no Player or export was compared. The vectors test the compiler's output fields only.
 - The pinned 0.0.8 artifact's `AudioTrack` was not read (see above).
 - App's tests were not run from this worktree.
+
+## Slice phase (PCM source-phase preservation)
+
+`RenderService._window_clip` rewrites `at`/`from`/`to`, so a fade restarts at the cut: a 0..2 s clip with `fadeIn` 0.5 sliced at 0.5 s has (.25, -.125) at source 0.5 in the original and (0, -0) in the slice. Two different originals can slice to the identical clip, so the phase cannot be recovered afterwards. The host slicer now records `app.astrid_slice_origin = {id, at, from, to}` on fade-bearing clips (host-owned; any authored value is dropped).
+
+The prepared-source producer (step 2 above) must: compile E0 once from the original clip, take `q0`/`q1` from the public rounded `computeMediaTrim` of original and sliced clip, `r` from the child speed, and translate every keyframe `at` of E0 by `-(q1-q0)/r` into the derived `audio.envelope`. Then source sample 15000 of the slice equals the original. The four PCM tests in `tests/packs/rendering/test_normal_audio_source_phase.py` stay strict xfail until that producer exists.
