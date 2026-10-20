@@ -51,7 +51,7 @@ Vector 2 is a labelled variant, not App output. It exists so that `clampToOccurr
 - occ-c is on the picture lane at 2 s, 1.5 s long (window `[2, 3.5)` s). It pins the native `shot-1` revision.
 - Its source-window child `clip-a` (at 1, hold 4, from 2, to 6, speed 2) is 2 s on the timeline, so absolute `[3, 5)` s. It overhangs the occurrence end by 1.5 s.
 - **Clamp on** (the one policy the compiler has): visible `[3, 3.5)` s. Frames at 30000/1001 are `start 90`, `end 105`, `duration 15`.
-- **Clamp off** (not a compiler mode): the unclamped child `[3, 5)` s. Frames would be `end 150`, `duration 60`. The compiler emits only the clamp-on row, so these two rows are strict xfails. The reason names the decision that removes the unclamped mode.
+- **Clamp off** (not a compiler mode): the unclamped child `[3, 5)` s. Frames would be `end 150`, `duration 60`. Decision (03:46, applied 06:18): there is no unclamped mode, so the two clamp-off rows are dropped from the fixture, not kept as xfails.
 - **Physical reference: pending** (`overhang_closure.physical_reference`). It comes from Viewing's executable analog, as in section 1. No values are recorded.
 
 Open against MAIN: Viewing's probe reports that MAIN's default projection (`clampToOccurrenceDuration` on) cuts the native closure's A children at 10 s, which is B's start, not at A's end (18 s). That is `occ-a:clip-a` `to 4` (1 s visible, end 10) against the compiler's `to 6` (end 11), and `reserved-child` `to 5.75` against `to 6`. The compiler clamps only to the occurrence end. Which of these is the intended clamp is open (section "Open", item 1). This document does not choose.
@@ -91,17 +91,15 @@ The render-facing rows are the source-window child of each occurrence. Vector 1 
 | overhang-clamp-on-end-frame | vector 2, occ-c / clip-a (visible end 3.5 s) | end_frame | 105 | pass |
 | overhang-clamp-on-duration-frames | vector 2, occ-c / clip-a | duration_frames | 15 | pass |
 | `test_overhang_child_is_clamped_to_its_occurrence_end` | vector 2, occ-c / clip-a | at, visible duration | 3.0 s, 0.5 s | pass |
-| overhang-clamp-off-end-frame | vector 2, occ-c / clip-a (unclamped end 5 s) | end_frame | 150 | **xfail (strict)**: no clamp-off mode |
-| overhang-clamp-off-duration-frames | vector 2, occ-c / clip-a | duration_frames | 60 | **xfail (strict)**: no clamp-off mode |
 
-The six native rows are unchanged. Every clamp-on row is produced on this branch, and the clip look is already in this tree. The two clamp-off rows are the only xfails added. The compiler truly has no unclamped mode, and the decision does not add one.
+The six native rows are unchanged. Every clamp-on row is produced on this branch, and the clip look is already in this tree. No rows were added or kept as xfails for clamp off: the compiler has no unclamped mode, and the decision does not add one.
 
-Measured on this branch with `tests/editing_conformance/test_compile_contracts.py`, `targeted` request `agt-visual-vector2-targeted-1020050917-11665`: 26 passed, 4 xfailed. The 4 xfails are the two audio vectors 10-11 and the two clamp-off rows.
+Measured on this branch with `tests/editing_conformance/test_compile_contracts.py`, `targeted` request `agt-visual-vector2-targeted-1020050917-11665`: 26 passed, 4 xfailed (before the clamp-off drop). After the drop, `targeted` request `agt-m3-mouth-product-and-xfail-drop-targeted-1020062459-10614`: 27 passed, 2 xfailed. The 2 xfails are the audio vectors 10-11.
 
 ## Open
 
 1. **Clamp: which clamp is intended.** Two items, both for the orchestrator.
-   - Whether an unclamped mode is wanted at all. The 03:46 decision removes the per-call option, so the clamp-off rows may be wrong to keep as xfails. If the decision holds, drop them rather than leave them as xfails.
+   - Whether an unclamped mode is wanted at all. Decided 06:18: the 03:46 decision holds, so the clamp-off rows are dropped rather than kept as xfails.
    - MAIN's default clamp (Viewing's probe) does not match the compiler on vector 1. MAIN cuts A's children at B's start (10 s); the compiler cuts at A's end (18 s). Viewing's evidence says the MAIN clamp for the native closure ends at 10 s, not 18 s. Not verified from source here.
 2. **Overlapping occurrence spans on the picture lane.** A (8-18 s) and B (10-20 s) overlap by 8 s. Main accepts it, and the source-window children do not overlap. App confirms the spans through the hub (orchestrator asked, 04:57). Vector 1 stays as native until then.
 3. **Physical reference.** Viewing produces it (analog, MAIN at `Fraction(30000, 1001)`) for both closures and checks the rows against it. Not done here. The overhang closure's reference is `pending` in the fixture.

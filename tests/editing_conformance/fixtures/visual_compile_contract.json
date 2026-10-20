@@ -547,26 +547,6 @@
       "source_clip_id": "clip-a",
       "field": "duration_frames",
       "expect": 15
-    },
-    {
-      "id": "overhang-clamp-off-end-frame",
-      "closure": "overhang",
-      "clamp": "off",
-      "occurrence_id": "occ-c",
-      "source_clip_id": "clip-a",
-      "field": "end_frame",
-      "expect": 150,
-      "xfail": "The compiler has one clamp policy (clamp on, 03:46 decision) and no unclamped mode. This row restores only if an unclamped mode is reinstated for this closure, which the decision does not do."
-    },
-    {
-      "id": "overhang-clamp-off-duration-frames",
-      "closure": "overhang",
-      "clamp": "off",
-      "occurrence_id": "occ-c",
-      "source_clip_id": "clip-a",
-      "field": "duration_frames",
-      "expect": 60,
-      "xfail": "The compiler has one clamp policy (clamp on, 03:46 decision) and no unclamped mode. This row restores only if an unclamped mode is reinstated for this closure, which the decision does not do."
     }
   ]
 }
