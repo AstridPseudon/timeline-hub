@@ -283,8 +283,13 @@ function mediaRegistry(ctx: MoveRecording, alias: string, pin: MediaSelection, k
   const path = has(parent, 'registry') || !has(config, 'registry') ? ['registry'] : ['config', 'registry'];
   ctx.object('parent', path);
   ctx.object('parent', [...path, 'assets']);
-  const assets = (path.length === 1 ? parent.registry : config.registry) as Record<string, JSON>;
-  const assetMap = assets.assets as Record<string, JSON>;
+  // Equal parent registry mirrors are one effective registry. Record the
+  // container creation once, then materialize it in both authored mirrors.
+  if (path.length === 1 && object(config.registry) && !has(config.registry, 'assets')) {
+    ctx.state.set('parent', ['config', 'registry', 'assets'], { state: 'present', value: {} });
+  }
+  const registry = (path.length === 1 ? parent.registry : config.registry) as Record<string, JSON>;
+  const assetMap = registry.assets as Record<string, JSON>;
   const ref = `parent/asset:${alias}`;
   const before: AgentState = has(assetMap, alias) ? { state: 'present', value: copy(assetMap[alias]) } : { state: 'absent' };
   mediaRead(ctx, ref, before);
@@ -407,6 +412,14 @@ export function executeParentClipAddMedia(
     ? direct : mirror;
   if (!Array.isArray(rows)) throw new ClipMoveError('structural edit requires an authored entity collection', 'identity_conflict');
   rows.push(copy(row));
+  if (Array.isArray(direct) && Array.isArray(mirror)) {
+    const before = ctx.state.get('parent', ['config', 'clips']);
+    const after: AgentState = { state: 'present', value: copy(direct) };
+    if (!equal(before, after)) {
+      ctx.record.derived_writes.push({ ref: 'parent', path: ['config', 'clips'], before, after, cause: 0 });
+      ctx.state.set('parent', ['config', 'clips'], after);
+    }
+  }
   ctx.compile();
   for (const key of MEDIA_CLAIMS) {
     if (has(command, key) && !equal(command[key], ctx.command[key])) {

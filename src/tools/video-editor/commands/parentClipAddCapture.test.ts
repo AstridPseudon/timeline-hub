@@ -290,4 +290,43 @@ describe('native parent clip.add-media capture', () => {
     expect(result.record.writes.every((write) => write.ref !== 'parent/asset:reserved-new')).toBe(true);
     expect((result.bundle.parent.registry as Record<string, JSON>).assets).toHaveProperty('reserved-new');
   });
+
+  it('creates one effective binding across opaque mirrored registries without assets', () => {
+    const bundle = parentMediaInput();
+    const registry = { opaque: { keep: [null, false, {}] } } as Record<string, JSON>;
+    bundle.parent.registry = copy(registry);
+    (bundle.parent.config as Record<string, JSON>).registry = copy(registry);
+    const result = finishParentClipAddMedia(captureParentClipAddMedia(
+      bundle, parentMediaRow, parentMediaPin, [parentMediaVerified],
+    ));
+    const expected = {
+      ...registry,
+      assets: { 'reserved-new': {
+        media_id: parentMediaPin.object_id, type: 'video', generationId: 'generation-new', variantId: 'variant-new',
+      } },
+    };
+    expect(result.bundle.parent.registry).toEqual(expected);
+    expect((result.bundle.parent.config as Record<string, JSON>).registry).toEqual(expected);
+    expect(result.record.writes.slice(0, 2)).toEqual([
+      { ref: 'parent', path: ['registry', 'assets'], before: { state: 'absent' }, after: { state: 'present', value: {} } },
+      { ref: 'parent/asset:reserved-new', path: [], before: { state: 'absent' }, after: { state: 'present', value: expected.assets['reserved-new'] } },
+    ]);
+    expect(finishParentClipAddMedia(JSON.parse(JSON.stringify(
+      captureParentClipAddMedia(bundle, parentMediaRow, parentMediaPin, [parentMediaVerified]),
+    )))).toEqual(result);
+  });
+
+  it('mirrors a media birth into equal empty parent clip arrays with a derived write', () => {
+    const bundle = parentMediaInput();
+    bundle.parent.clips = [];
+    (bundle.parent.config as Record<string, JSON>).clips = [];
+    const result = finishParentClipAddMedia(captureParentClipAddMedia(
+      bundle, parentMediaRow, parentMediaPin, [parentMediaVerified],
+    ));
+    expect((result.bundle.parent.config as Record<string, JSON>).clips).toEqual(result.bundle.parent.clips);
+    expect(result.record.derived_writes).toEqual([{
+      ref: 'parent', path: ['config', 'clips'], before: { state: 'present', value: [] },
+      after: { state: 'present', value: [parentMediaRow] }, cause: 0,
+    }]);
+  });
 });
