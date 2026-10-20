@@ -587,6 +587,7 @@ const env = {
   ...(astridCheckout ? { ASTRID_CHECKOUT: astridCheckout } : {}),
   ...(configuredAstridPublicCheckout ? { ASTRID_PUBLIC_CHECKOUT: configuredAstridPublicCheckout } : {}),
   PORT: port,
+  ASTRID_RUNTIME_OPERATION_ORIGIN: `http://127.0.0.1:${port}`,
   VITE_ASTRID_EDITOR_ONLY: '1',
   VITE_ASTRID_BRIDGE_PORT: runtimeProxyPort,
   ASTRID_BRIDGE_TOKEN: credential.token,
@@ -709,7 +710,8 @@ let connector;
 // only the hosted origin.
 const runtimeProxy = spawnService(process.execPath, ['scripts/runtime-discovery-proxy.mjs'], {
   stdio: piped,
-  env: serviceEnvironment({ ASTRID_RUNTIME_PROXY_PORT: runtimeProxyPort, ASTRID_WORKSPACE_DISCOVERY: discoveryPath }),
+  env: serviceEnvironment({ ASTRID_RUNTIME_PROXY_PORT: runtimeProxyPort, ASTRID_WORKSPACE_DISCOVERY: discoveryPath,
+    ASTRID_RUNTIME_OPERATION_ORIGIN: env.ASTRID_RUNTIME_OPERATION_ORIGIN }),
 });
 const proxyOutput = watch(runtimeProxy);
 const proxyReady = await waitForPort(runtimeProxyPort);

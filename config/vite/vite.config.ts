@@ -16,7 +16,7 @@ import {
   resolveAstridBridgePort,
   resolveAstridBridgeProxyPolicy,
 } from "./astridBridgeProxy";
-import { createWorkspaceRuntimeProxyOptions, RUNTIME_TOKEN_FILE_ENV } from "./runtimeProxy";
+import { createRuntimeOperationAdmissionPlugin, createRuntimeOperationProxyOptions, createWorkspaceRuntimeProxyOptions, RUNTIME_TOKEN_FILE_ENV } from "./runtimeProxy";
 import {AstridRuntimeClient} from '../../src/integrations/runtime/client';
 import { createElementAdmissionsPlugin } from "./astridElementAdmissions";
 import { resolveAstridSource, validateAstridToolCatalog } from "./astridSource";
@@ -90,6 +90,7 @@ export default defineConfig(({ command }) => {
   const runtimeToken = readRuntimeProxyToken(runtimeTokenFile);
   const runtimeProxy: Record<string, string | ProxyOptions> = runtimeTarget
     ? {
+      "/runtime-config/v1/operation": createRuntimeOperationProxyOptions(runtimeTarget),
       "/api/runtime": createWorkspaceRuntimeProxyOptions(runtimeTarget, runtimeToken),
       "/runtime-config/v1/workspace.json": { target: runtimeTarget, changeOrigin: true },
     }
@@ -141,6 +142,7 @@ export default defineConfig(({ command }) => {
       proxy: { ...astridAcpBridgeProxy, ...astridBridgeProxy, ...runtimeProxy },
     },
     plugins: [
+      createRuntimeOperationAdmissionPlugin(process.env.ASTRID_RUNTIME_OPERATION_ORIGIN),
       createElementAdmissionsPlugin(elementAdmissions),
       pairedRelay,
       astridBridgeAuthPlugin,
