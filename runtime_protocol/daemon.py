@@ -50,8 +50,10 @@ def _authority_path(value, label):
 class RuntimeDaemon:
     """Loopback-only daemon owning one realm and its storage."""
 
-    def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None, door=None, authoring_profile=None):
-        if host not in ("127.0.0.1", "localhost", "::1"):
+    def __init__(self, root, *, support_root=None, export_root=None, display_name="Workspace", host="127.0.0.1", port=0, realm_id=None, owner_lock=None, bootstrap_token_file=None, reboot_executor=None, reboot_allowlist=None, admission_timeout=None, local_worker_profiles=None, local_worker_preparer=None, local_worker_inspector=None, door=None, authoring_profile=None, services=None, log_directory=None):
+        if ":" in host:
+            raise ValueError("runtime daemon requires IPv4 loopback; IPv6 is not supported yet")
+        if host not in ("127.0.0.1", "localhost"):
             raise ValueError("runtime daemon only binds to loopback")
         self.root = _authority_path(root, "realm root").resolve()
         self.support_root = (_authority_path(support_root, "support root").resolve() if support_root else self.root / "support")
@@ -78,6 +80,9 @@ class RuntimeDaemon:
         self.door = door
         self.door_httpd = None
         self.door_thread = None
+        self.services = services
+        self.service_supervisor = None
+        self.log_directory = Path(log_directory) if log_directory is not None else platform.log_dir()
         self.catalog = RealmCatalog(self.support_root / "catalog.json")
         self.discovery = LiveDiscovery(self.support_root / "discovery.json")
         # CredentialStore creates its directory. Defer that side effect until
@@ -173,6 +178,9 @@ class RuntimeDaemon:
             self.bootstrap_token_file.unlink(missing_ok=True)
 
     def _shutdown_http(self):
+        if self.service_supervisor is not None:
+            self.service_supervisor.stop()
+            self.service_supervisor = None
         if self.door_httpd:
             if self.door_thread is not None and self.door_thread.is_alive():
                 self.door_httpd.shutdown()
@@ -191,6 +199,8 @@ class RuntimeDaemon:
         self.thread = None
 
     def _revoke_readiness(self, report):
+        if self.service_supervisor is not None:
+            self.service_supervisor.begin_shutdown()
         if self.service is None:
             return
         try:
@@ -277,7 +287,20 @@ class RuntimeDaemon:
         if self.door_httpd is not None:
             self.door_thread = threading.Thread(target=self.door_httpd.serve_forever, name="astrid-runtime-door", daemon=True)
             self.door_thread.start()
+        if self.services is not None and self.services.services:
+            from .services import ServiceSupervisor
+            self.service_supervisor = ServiceSupervisor(self.services, support_root=self.support_root,
+                realm_root=self.root, realm_id=self.service.realm["id"], runtime_endpoint=self.endpoint,
+                log_directory=self.log_directory)
+            try:
+                self.service_supervisor.start()
+            except BaseException:
+                self.stop()
+                raise
         return self
+
+    def service_status(self):
+        return self.service_supervisor.snapshot() if self.service_supervisor is not None else []
 
     def _create_local_worker_launcher(self):
         from .local_worker import LocalWorkerLauncher
@@ -1407,6 +1430,8 @@ class RuntimeDaemon:
         for listener in (self.httpd, self.door_httpd):
             if listener is not None:
                 listener.accepting_authenticated_requests = False
+        if self.service_supervisor is not None:
+            self.service_supervisor.begin_shutdown()
         if self.local_worker_launcher is not None:
             worker_handles = self.local_worker_launcher.begin_shutdown()
         if self.service is not None:

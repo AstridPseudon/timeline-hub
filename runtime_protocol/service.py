@@ -742,18 +742,36 @@ class RuntimeService:
             raise ConflictError("whole-realm purge requires a tombstoned realm")
         raise ConflictError("whole-realm purge is offline-only; stop the runtime and use the purge command", details={"next_action": "astrid-runtime-protocol purge --root <realm> --confirm 'PURGE <realm_id>'"})
 
-    def health(self):
+    def health(self, *, identity_probe=False):
         # ``doctor`` performs the full quick-check, foreign-key, event-chain,
         # and CAS walk. Health is called frequently, so keep it to a cheap
         # liveness query while retaining the cached startup admission state.
-        with self.store._mutex:
+        # Ordinary health retains the primary handle and mutation ordering;
+        # boundary identity probes must observe a separate committed snapshot.
+        if identity_probe:
             try:
-                row = self.store.conn.execute("SELECT 1").fetchone()
-                live = row is not None and int(row[0]) == 1
+                with self.store._read_snapshot() as connection:
+                    row = connection.execute("SELECT id FROM realm LIMIT 1").fetchone()
+                    live = row is not None and row[0] == self.realm["id"]
             except (sqlite3.DatabaseError, OSError, ValueError, TypeError):
                 live = False
-                self._verified = False
-                self._admission_failure = {"reason": "runtime_liveness_failed"}
+            if not live:
+                # Admission loss remains serialized with whole mutations. A
+                # successful identity probe must not wait on a fenced writer.
+                with self.store._mutex:
+                    self._verified = False
+                    self._admission_failure = {"reason": "runtime_liveness_failed"}
+        else:
+            with self.store._mutex:
+                try:
+                    if self.store.conn is None:
+                        raise sqlite3.ProgrammingError("realm store is closed")
+                    row = self.store.conn.execute("SELECT 1").fetchone()
+                    live = row is not None and int(row[0]) == 1
+                except (sqlite3.DatabaseError, OSError, ValueError, TypeError):
+                    live = False
+                    self._verified = False
+                    self._admission_failure = {"reason": "runtime_liveness_failed"}
         return {"status": "ok" if self._verified and live else "degraded", "protocol": PROTOCOL, "schema_digest": SCHEMA_DIGEST, "runtime_epoch": self._runtime_state["runtime_epoch"], "runtime_session_id": self.runtime_session_id}
 
     def _assert_mutation_admitted(self):
@@ -769,9 +787,16 @@ class RuntimeService:
         value["runtime_session_id"] = self.runtime_session_id
         return value
 
-    def realm_resource(self):
-        row = self.store.realm
-        lifecycle = self.store.realm_lifecycle()
+    def realm_resource(self, *, identity_probe=False):
+        if identity_probe:
+            with self.store._read_snapshot() as connection:
+                row = connection.execute("SELECT * FROM realm LIMIT 1").fetchone()
+                lifecycle = connection.execute("SELECT * FROM realm_lifecycle WHERE realm_id=?", (row["id"],)).fetchone()
+                if lifecycle is None:
+                    lifecycle = {"state": "active", "tombstoned_at": None, "version": 1}
+        else:
+            row = self.store.realm
+            lifecycle = self.store.realm_lifecycle()
         return {"realm_id": row["id"], "display_name": row["display_name"], "version": 1, "created_at": row["created_at"], "state": lifecycle["state"], "tombstoned_at": lifecycle["tombstoned_at"], "lifecycle_version": lifecycle["version"]}
 
     def handshake(self, body):

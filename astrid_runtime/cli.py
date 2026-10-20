@@ -382,16 +382,18 @@ def _wait_for_door(paths: RuntimePaths, result: BootstrapResult, boundary: Local
 
 
 def _run_foreground(paths: RuntimePaths, config: BootstrapConfig, *, json_mode: bool) -> int:
+    from runtime_protocol.logs import RotatingLog
     logs = platform.log_dir(paths.home)
     logs.mkdir(parents=True, exist_ok=True)
     platform.owner_only(logs)
     log_path = logs / "runtime.log"
     boundary = ForegroundRuntimeBoundary()
+    boundary._log_directory = logs
     stopped = threading.Event()
     restore = platform.install_stop_handlers(lambda *_: stopped.set())
     failure = None
     try:
-        with log_path.open("a", encoding="utf-8", buffering=1) as log:
+        with RotatingLog(log_path) as log:
             platform.owner_only(log_path)
             with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
                 try:

@@ -426,7 +426,13 @@ def test_audit_lines_without_credentials(tmp_path):
         for entry in lines:
             assert set(entry) == {"at", "method", "path", "origin", "status", "response_bytes"}
 
-        health, obj, foreign = lines
+        # Each request is audited on its own handler thread after its response,
+        # so rows can land in any order; identify them by content.
+        assert len(lines) == 3
+        (obj,) = [entry for entry in lines if entry["path"].startswith("/v1/objects/")]
+        (foreign,) = [entry for entry in lines if entry["origin"] == EVIL]
+        (health,) = [entry for entry in lines if entry is not obj and entry is not foreign]
+        assert health["path"] == "/v1/health"
         assert health["status"] == 200 and health["method"] == "GET"
         assert obj["path"] == f"/v1/objects/{object_id}"
         assert obj["status"] == 200

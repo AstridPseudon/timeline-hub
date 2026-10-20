@@ -2,7 +2,7 @@
 import {
   CONTRACT_VERSION, WorkspaceClient, OperationHost, OperationHandle, OperationRetiredError,
   type OperationIdentity, type OperationConnection,
-  type Health, type Handshake, type PreferenceResource, type MutationResult, type TrackSetArgs,
+  type Health, type Handshake, type PreferenceResource, type MutationResult, type ServiceStatus, type TrackSetArgs,
   type MutationReceipt as MainMutationReceipt,
 } from "@astrid/runtime-client";
 import type { MutationReceipt as CommitMutationReceipt } from "../src/timeline-commit-types.js";
@@ -13,6 +13,7 @@ const health: Promise<Health> = client.health();
 const handshake: Promise<Handshake> = client.handshake("consumer", version, []);
 const preference: Promise<PreferenceResource> = client.getPreferences("user");
 const mutation: Promise<MutationResult<unknown>> = client.createProject("consumer", "key");
+const service: ServiceStatus = { name: "example", state: "starting", last_exit: null, restart_count: 0 };
 declare const commitReceipt: CommitMutationReceipt;
 declare const mainReceipt: MainMutationReceipt;
 const mainReceiptFromCommit: MainMutationReceipt = commitReceipt;
@@ -43,7 +44,7 @@ const invalidTrackLabel: TrackSetArgs = { values: { label: false }, clear: [] };
 const invalidTrackClear: TrackSetArgs = { values: {}, clear: ["volume"] };
 
 void [
-  health, handshake, preference, mutation, mainReceiptFromCommit, commitReceiptFromMain,
+  health, handshake, preference, mutation, service, mainReceiptFromCommit, commitReceiptFromMain,
   projectSequence, labeledTrack, clearedTrack, missingTrackFields, missingTrackClear,
   missingTrackValues, invalidTrackLabel, invalidTrackClear,
   operationIdentity, current, recovery, operationClient, retiredError,

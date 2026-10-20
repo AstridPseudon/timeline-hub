@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import math
 import os
@@ -16,6 +17,7 @@ from .local_worker_composition import load_local_worker_composition
 from .backup import create_backup, restore_backup, structured_export
 from .errors import RuntimeErrorBase
 from .store import REALM_ADMISSION_TIMEOUT_SECONDS, RealmStore
+from .sqlite_uri import sqlite_file_uri
 from .upgrade import (
     DEFAULT_UPGRADE_TIMEOUT_SECONDS,
     GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION,
@@ -23,7 +25,6 @@ from .upgrade import (
     migrate_historical_managed_outputs,
     migrate_canonical_v24_to_v25,
     migrate_canonical_to_current,
-    compact_idempotency_ledger,
     repair_generic_media_types,
     upgrade_realm,
 )
@@ -54,6 +55,10 @@ def _parser():
     start.add_argument("--bootstrap-token-file")
     start.add_argument("--admission-timeout", type=float, help="bounded startup integrity budget in seconds")
     start.add_argument("--worker-profile", help="absolute installed local Worker composition profile")
+    start.add_argument("--service-declaration", help="absolute profile service declaration")
+    start.add_argument("--service-python", help="declaring environment's installed Python")
+    start.add_argument("--service-source-checkout", help="declaring profile's source checkout")
+    start.add_argument("--log-file", help="Runtime-owned rotating log")
     start.add_argument("--authoring-profile", choices=("neutral", "astrid"), default="neutral", help="trusted semantic authoring provider profile")
     start.add_argument("--door-origin", help="exact HTTPS origin of the hosted page; opens the browser door")
     start.add_argument("--door-port", type=int, default=DEFAULT_DOOR_PORT, help="the browser door's loopback port")
@@ -142,6 +147,15 @@ def _parser():
 
 def main(argv=None):
     args = _parser().parse_args(argv)
+    if args.command == "start" and args.log_file:
+        from .logs import RotatingLog
+        with RotatingLog(args.log_file) as log:
+            with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
+                return _main(args)
+    return _main(args)
+
+
+def _main(args):
     if args.command == "identity":
         from . import release_identity
         try:
@@ -191,7 +205,7 @@ def main(argv=None):
         if not database.is_file() or database.is_symlink():
             print(json.dumps({"status": "unavailable", "reason": "realm database is unavailable", "root": str(root)}, sort_keys=True))
             return 1
-        connection = sqlite3.connect(f"file:{database}?mode=ro", uri=True, timeout=30.0)
+        connection = sqlite3.connect(sqlite_file_uri(database), uri=True, timeout=30.0)
         connection.row_factory = sqlite3.Row
         try:
             result = audit_active_timeline_heads(connection, project_id=args.project_id)
@@ -356,6 +370,9 @@ def main(argv=None):
                 support_root=Path(args.support_root).expanduser().resolve() if args.support_root else Path(args.root).expanduser().resolve() / "support",
                 runtime_instance_id="pending-startup",
             )
+        from .services import load_service_configuration
+        services = load_service_configuration(args.service_declaration,
+            python=args.service_python, source_checkout=args.service_source_checkout)
         daemon = RuntimeDaemon(
             args.root,
             support_root=args.support_root,
@@ -371,6 +388,8 @@ def main(argv=None):
             local_worker_preparer=composition.preparer if composition else None,
             local_worker_inspector=composition.inspector if composition else None,
             door=door,
+            services=services,
+            log_directory=Path(args.log_file).parent if args.log_file else None,
             authoring_profile=args.authoring_profile,
         ).start()
     except KeyboardInterrupt:

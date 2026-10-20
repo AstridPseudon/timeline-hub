@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 import sqlite3
+import shutil
+from types import SimpleNamespace
 
 import pytest
 
@@ -14,6 +16,21 @@ from runtime_protocol.upgrade import inspect_canonical_schema
 from runtime_protocol.store import SCHEMA_VERSION
 from runtime_protocol import platform as runtime_platform
 from tests.schema_fixtures import walk_back_to_v30
+
+
+@pytest.fixture(autouse=True)
+def _adoption_capacity(monkeypatch):
+    # Adoption budgets a 4 GiB reserve plus copy and migration space; give these
+    # filesystem-isolated tests a stable capacity observation.
+    from collections import namedtuple
+    from astrid_runtime import workspace_adopt
+
+    usage = namedtuple("usage", "total used free")
+    monkeypatch.setattr(
+        workspace_adopt,
+        "shutil",
+        SimpleNamespace(disk_usage=lambda *_: usage(16 * 1024**3, 0, 16 * 1024**3), rmtree=shutil.rmtree),
+    )
 
 
 class _Boundary:

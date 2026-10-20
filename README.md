@@ -4,7 +4,13 @@
 
 Run locally with `python -m pytest -q -n 2`; avoid `-n auto` on small machines.
 Run the full default lane (`python -m pytest -q -n 2`) before pushing.
-Run the nightly lane with `ASTRID_CHECKOUT` set: `python -m pytest -q -m "integration or darwin_native or live"`.
+Run the full nightly lane with `ASTRID_CHECKOUT` set:
+`python -m pytest -q -m "integration or darwin_native or live"`.
+Nightly CI runs the integration subset on Linux with the pinned Astrid checkout
+installed into the runner interpreter. For a local integration run, use:
+`ASTRID_CHECKOUT=/path/to/astrid-agent .venv/bin/python -m pytest -m integration`.
+When the checkout has its own `.venv`, host materialization uses that interpreter
+so Astrid's dependencies stay in the agent environment.
 
 Independent neutral runtime and protocol repository for the Astrid Stage 1 beta and later Astrid App integration.
 
@@ -67,6 +73,10 @@ reconnects Astrid and returns after its browser door is ready. Open
 https://astrid.haus. A service manager should execute `astrid-runtime run`:
 the daemon and door run in that process until it receives a stop signal, and
 startup or listener failure exits non-zero with a reason and log path.
+
+Both commands supervise the optional long-running services declared by the
+active source profile. See [profile services](docs/profile-services.md) for the
+JSON Schema, interpreter tokens, restart policies, logs and health readback.
 
 Defaults are native per-user paths:
 

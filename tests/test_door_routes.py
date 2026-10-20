@@ -90,9 +90,7 @@ PRODUCT_CALLS = [
     # ACP agent chat
     ("POST", astrid("/acp/connect"), "acp"),
     ("GET", astrid("/acp/models"), "acp"),
-    ("POST", astrid("/acp/model"), "acp"),
     ("GET", astrid("/acp/conn-1/models?sessionId=codex%3Aabc-123"), "acp"),
-    ("POST", astrid("/acp/conn-1/model"), "acp"),
     ("POST", astrid("/acp/conn-1/rpc"), "acp"),
     ("GET", astrid("/acp/conn-1/events"), "acp"),
     ("POST", astrid("/acp/conn-1/cancel"), "acp"),
@@ -110,6 +108,8 @@ PRODUCT_CALLS = [
 ]
 
 FORBIDDEN = [
+    ("POST", astrid("/acp/model")),
+    ("POST", astrid("/acp/conn-1/model")),
     ("DELETE", astrid("/acp/models")),
     ("POST", astrid("/acp/models")),
     ("GET", astrid("/acp/model")),

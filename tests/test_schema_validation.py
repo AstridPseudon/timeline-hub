@@ -216,7 +216,7 @@ def test_health_schema_has_exact_closed_runtime_identity_contract() -> None:
     fields = ["status", "protocol", "schema_digest", "runtime_epoch", "runtime_session_id", "runtime_instance_id"]
     assert schema["additionalProperties"] is False
     assert list(schema["required"]) == fields
-    assert list(schema["properties"]) == fields
+    assert list(schema["properties"]) == [*fields, "services"]
 
     value = {
         "status": "ok",

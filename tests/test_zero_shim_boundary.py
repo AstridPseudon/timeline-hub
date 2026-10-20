@@ -4,6 +4,7 @@ import inspect
 import os
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -74,7 +75,10 @@ def test_connect_uses_installed_client_without_mutating_import_path(monkeypatch)
     assert connection._client.endpoint == "http://127.0.0.1:1"
 
 
-def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
+@pytest.mark.parametrize("host", ["darwin", "linux"])
+def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path, host):
+    from astrid_runtime import custody_broker as custody
+    from astrid_runtime import runtime_boundary as module
     captured = {}
 
     class FakeProcess:
@@ -82,16 +86,19 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
         returncode = None
 
         def poll(self):
-            return None
+            return self.returncode
 
     def fake_popen(argv, **kwargs):
         captured.update(argv=argv, kwargs=kwargs)
         return FakeProcess()
 
+    def fake_spawn_tree(argv, *, detached, **kwargs):
+        assert detached
+        return fake_popen(argv, **kwargs)
+
     class FakeBroker:
-        # The custody broker is the one substituted layer: it normally waits for
-        # the real wrapper child to seal itself, and the fake Popen starts none.
-        # The launch arguments under test are still the ones start() builds.
+        # Darwin's broker normally waits for the real wrapper child to seal
+        # itself, and the fake Popen starts none.
         def __init__(self, **_kwargs):
             pass
 
@@ -105,15 +112,13 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
             pass
 
     boundary = LocalRuntimeBoundary()
-    # The fake broker and wrapper environment assertions cover the broker-backed
-    # launch path; Linux otherwise correctly uses native custody and has no
-    # broker-provided environment to inspect.
-    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setattr(module, "sys", SimpleNamespace(platform=host, exc_info=sys.exc_info))
+    monkeypatch.setattr(custody, "sys", SimpleNamespace(platform=host))
+    monkeypatch.setattr(module.platform, "log_dir", lambda: tmp_path / "logs")
+    monkeypatch.setattr(module.platform, "spawn_tree", fake_spawn_tree)
     monkeypatch.setattr("astrid_runtime.runtime_boundary.RoleBoundCustodyBroker", FakeBroker)
-    monkeypatch.setattr(
-        "astrid_runtime.runtime_boundary.default_process_identity",
-        lambda pid: {"pid": pid, "uid": os.getuid(), "birth_id": "birth"},
-    )
+    monkeypatch.setattr("astrid_runtime.runtime_boundary.default_process_identity",
+                        lambda pid: {"pid": pid, "uid": module.platform.current_user(), "birth_id": "birth"})
     monkeypatch.setattr("astrid_runtime.runtime_boundary.publish_active_capability", lambda *_a, **_k: None)
     monkeypatch.setattr("astrid_runtime.runtime_boundary.subprocess.Popen", fake_popen)
     monkeypatch.setattr(boundary, "_wait_endpoint", lambda _support, _process: "http://127.0.0.1:1")
@@ -134,10 +139,11 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path):
     boundary.start(realm_id="realm", realm_root=tmp_path / "realm", owner_lock=owner_lock, source_profile=profile)
     kwargs = captured["kwargs"]
     assert "cwd" not in kwargs
-    # The custody wrapper needs its own variables in env; nothing derived from
-    # either checkout may be added, so the import path is the host's own.
-    assert kwargs["env"].get("PYTHONPATH") == os.environ.get("PYTHONPATH")
-    assert not any(str(source_checkout) in str(value) for value in kwargs["env"].values())
+    # Darwin's wrapper passes env explicitly; native launches inherit it.
+    # Neither path may derive imports from either checkout.
+    environment = kwargs.get("env", os.environ)
+    assert environment.get("PYTHONPATH") == os.environ.get("PYTHONPATH")
+    assert not any(str(source_checkout) in str(value) for value in environment.values())
     assert not any(str(source_checkout) in part for part in captured["argv"])
     assert "PYTHONPATH" not in kwargs
 
