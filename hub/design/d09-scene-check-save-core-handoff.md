@@ -71,3 +71,43 @@ formatted by `Checkout._scene_problems`. Viewing owns the executor/query inside
 source label without PNG rendering. Ordinary `Checkout.check()` activation stays
 held until that executor is ready; `_check_core`, save, publish, and transaction
 paths remain pure core paths and do not use this adapter.
+
+## Agent/View exact managed join boundary — 2026-10-20
+
+This section supersedes the guessed `scene_result` packet above and the earlier
+`scene_answers` manifest-entrypoint spelling. The current executor contract is
+the source of truth. On the Agent candidate at `9b887e232934c210575007680c8d26a52e6a6946`,
+the private request remains the existing managed `rendering.timeline_visualize`
+invocation with `mode: "scene_only"`, `view: "filmstrip"`, `formats: ["md"]`,
+and no PNG request. The request is prepared through the existing saved or
+admitted candidate `prepare_filmstrip` path; it does not add a Scene to save,
+introduce a DTO/SourceFactory, or edit `run.py`/Root-prep/authority code.
+
+The actual current executor produces a `filmstrip-bundle.zip` whose stable
+members are `manifest.json` and `scene-answers.json`. The nested manifest is
+`kind: "timeline_filmstrip"` and names the existing answer entrypoint as
+`entrypoints.scene: "scene-answers.json"`. The answer document is exact-key
+`{answers, scene_clips, snapshot_label}`. The SDK now reads this actual
+`entrypoints.scene` field and rejects traversal, digest, byte-count, kind,
+answer-key, frame-extent, scene-clip/address-map, and snapshot-label mismatches
+as advisory `UNAVAILABLE`; it does not accept an invented packet shape.
+
+The remaining join blocker is in the current managed executor receipt path:
+its `filmstrip_bundle` receipt entry does not carry the existing source
+provenance needed by the SDK gate (`provenance.video_digest` equal to the
+prepared capture identity, plus the existing `timeline_id` when one was
+prepared). Therefore the SDK correctly keeps the managed result advisory
+`UNAVAILABLE`; it does not infer provenance from the ZIP or create a new
+provenance schema. Viewing should populate the existing receipt provenance map
+from the already-bound prepared source, preserving the exact fields and no new
+DTO. No ordinary Scene-check activation or D09 deletion claim is made until
+that managed receipt field and the stale controls qualify.
+
+Evidence from this worker: the focused SDK preservation/save/filmstrip lanes
+pass `89 passed`; the actual saved/candidate preparation and source-runtime
+checks pass `2 passed`, with the native renderer parametrization blocked by the
+missing current Remotion/React peer graph; the actual candidate transport lane
+passes `1 passed`. The current Node/Remotion12 managed executor acceptance path
+and an ordinary positive managed join remain unverified for that environment.
+The flat Viewing coordination note is
+`peer-agent-to-viewing-20261020T-scene-real-join-response.md`.

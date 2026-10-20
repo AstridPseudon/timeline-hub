@@ -24,6 +24,8 @@ printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nw
 [ -d /home/user/work/app/node_modules ] && [ $REPO = app ] && [ ! -e $WT/node_modules ] && ln -s /home/user/work/app/node_modules $WT/node_modules
 NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=true)
 touch $D/running
+# per-worker temp dir (2026-10-20): short path (browser sockets have a ~100-char limit), removed when the worker finishes
+TD=/tmp/w-$(echo -n $N | md5sum | cut -c1-10); mkdir -p $TD; echo $TD > $D/tmpdir; export TMPDIR=$TD TMP=$TD TEMP=$TD
 ( { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Leave no build output or temp files in the worktree. When the WHOLE task is complete, create the empty file $D/DONE; if genuinely blocked, write the reason to $D/BLOCKED."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
   if [[ $M == claude-* ]]; then   # MODELS.md fallback: Claude instead of Codex
     # claude -p ends after one turn: resume the same session until DONE/BLOCKED, the time budget, or 15 resumes.
@@ -42,7 +44,7 @@ touch $D/running
   # commit becomes a true two-parent merge (HEAD + that sha) with the worker's resolved tree. Sandboxed workers cannot write .git themselves.
   MP=; [ -s $D/merge-parent ] && MP=$(tr -d ' \n' < $D/merge-parent); if [ -n "$MP" ] && git -C $WT rev-parse -q --verify "$MP^{commit}" >/dev/null; then git -C $WT rev-parse "$MP^{commit}" > "$(git -C $WT rev-parse --path-format=absolute --git-path MERGE_HEAD)"; echo "merge-parent $MP recorded" >> $D/commit.log; fi
   if [ -n "$(git -C $WT status --porcelain)" ] || [ -n "$MP" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } >> $D/commit.log 2>&1; fi
-  rm -f $D/running; date -u +%FT%TZ > $D/ended
+  rm -f $D/running; date -u +%FT%TZ > $D/ended; [ -f $D/KEEP ] || rm -rf "$TD"
   # recycle-on-finish (owner disk rule 2026-10-20): drop a finished, clean worktree; the branch tl/$N and the reports stay, managers review by branch, test-run recreates it if needed. Skip KEEP/leased.
   [ -f $D/KEEP ] || grep -lqsw -- "$N" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null || { [ -z "$(git -C $WT status --porcelain 2>/dev/null | head -1)" ] && git -C /home/user/work/$REPO worktree remove $WT 2>/dev/null && touch $D/recycled; } ) >/dev/null 2>&1 &
 echo "dispatched $N in $WT (base $BASE)"

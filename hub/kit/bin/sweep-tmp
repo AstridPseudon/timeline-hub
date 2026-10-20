@@ -1,0 +1,14 @@
+#!/bin/bash
+# sweep-tmp [HOURS] — remove leaked worker temp dirs at the top of /tmp. Only directories older than HOURS (default 3) by
+# mtime, never /tmp/claude-*, hidden dirs or system dirs, never one that a live process uses (cwd or open file under it),
+# and never a running worker's own /tmp/w-* dir. Safe to run hourly on every machine. Prints what it freed.
+H=${1:-3}; O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+B=$(df -BM --output=avail /tmp | tail -1 | tr -d ' M'); used=$(for p in /proc/[0-9]*; do readlink $p/cwd; ls -l $p/fd 2>/dev/null | sed -n 's/.*-> //p'; done 2>/dev/null | grep '^/tmp/' | cut -d/ -f1-3 | sort -u)
+live=$(cat $O/workers/*/tmpdir 2>/dev/null | while read t; do d=$(dirname $(ls $O/workers/*/tmpdir | head -1)); echo $t; done | sort -u)
+n=0; for d in /tmp/*/; do d=${d%/}; b=$(basename $d)
+  case $b in claude-*|.*|systemd-*|snap*|pw-*|node-compile-cache|v8-compile-cache*|hsperfdata*|tmux-*|ssh-*) continue;; esac
+  [ -n "$(find $d -maxdepth 0 -mmin -$((H*60)) 2>/dev/null)" ] && continue
+  grep -qxF "$d" <<< "$used" && continue
+  for w in $O/workers/*/; do [ -f $w/running ] && [ "$(cat $w/tmpdir 2>/dev/null)" = "$d" ] && continue 2; done
+  rm -rf "$d" && n=$((n+1)); done
+echo "sweep-tmp: removed $n dirs older than ${H}h; /tmp free ${B}M -> $(df -BM --output=avail /tmp | tail -1 | tr -d ' ')"

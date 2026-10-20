@@ -1,6 +1,6 @@
 # Runtime historical-audio fixture proposal
 
-**Status:** UNAPPLIED REVIEW PROPOSAL — owner decision required
+**Status:** ADVISORY PROPOSAL — bounded local test setup is authorized; no architecture decision is implied
 
 **Date:** 2026-10-20 UTC
 
@@ -12,7 +12,7 @@
 
 ## Decision boundary
 
-The historical journey remains the original strict `xfail` until the owner approves this fixture setup. The peer instruction forbids converting the archived fixture in place, so this proposal does not convert, repair, or adopt the existing CAS object. It creates fresh genuine source bytes before capture through Runtime's existing Main object/bootstrap APIs. That is a setup change requiring an explicit owner decision.
+The historical journey remains the original strict `xfail` until the peer-owned Agent capture support is ready. The local worker task authorizes this bounded test-environment setup repair; it is not a conversion of the archived fixture and does not require a new owner approval. The peer instruction forbids converting the archived fixture in place, so the setup does not repair or adopt the existing CAS object. It creates fresh genuine source bytes before capture through Runtime's existing Main object/bootstrap APIs.
 
 No Agent file, Agent qualifying test, Runtime product code, or original journey assertion was changed. The patch is a review artifact only; it is not merged and the journey is not green.
 
@@ -74,4 +74,4 @@ The patch has exactly two target files: one new setup helper and one setup-branc
 
 No old journey was run unchanged, and no full or live-socket suite was requested. The only verification performed was the non-mutating patch applicability check above; the worktree remained clean and shared dependencies were untouched.
 
-Owner approval is required before applying this setup proposal and running the targeted historical journey with Agent 9bf/f97. If the owner rejects fixture authoring, retain the existing strict `xfail`; do not fake hold duration, add metadata, override reads/schema/health, or alter the original assertions.
+The bounded setup repair may be applied and locally read back with the targeted journey prerequisites, while the existing strict `xfail` remains until Agent 9bf/f97 support is paired. Do not fake hold duration, add metadata, override reads/schema/health, or alter the original assertions.
