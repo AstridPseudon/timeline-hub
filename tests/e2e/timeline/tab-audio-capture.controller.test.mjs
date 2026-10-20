@@ -1,16 +1,21 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync, linkSync} from 'node:fs';
+import {chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync, linkSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {
   assertFingerprintUnchanged,
   assertPhysicalGraph,
   assertGrant,
+  assertSocketPathBudget,
+  allocateTaskTempDir,
   BROWSER_EXECUTABLE,
   BROWSER_VERSION,
+  cleanupTaskTempDir,
   hashTree,
   isolatedEnvironment,
+  TASK_TEMP_PREFIX,
+  TASK_TEMP_ROOT,
   WORKER_STATE_ROOT,
   PROFILE,
 } from './tab-audio-capture.controller.mjs';
@@ -165,20 +170,40 @@ test('postflight rejects whole private graph or discovery identity changes', () 
   }
 });
 
-test('discovery state stays in this worker folder and rejects an external output', () => {
+test('Chrome gets one short owned temp while caches and output stay in this worker folder', () => {
   const previous = process.env.PLAYWRIGHT_OUTPUT_DIR;
+  const previousTaskTemp = process.env.TAB_AUDIO_TASK_TMPDIR;
+  const taskTempDir = allocateTaskTempDir();
+  const preexistingTempDir = mkdtempSync(join(TASK_TEMP_ROOT, TASK_TEMP_PREFIX));
   try {
     delete process.env.PLAYWRIGHT_OUTPUT_DIR;
+    process.env.TAB_AUDIO_TASK_TMPDIR = taskTempDir;
     const isolated = isolatedEnvironment();
-    for (const key of ['TMPDIR', 'TMP', 'TEMP', 'XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'PWTEST_CACHE_DIR', 'PLAYWRIGHT_OUTPUT_DIR']) {
+    assert.equal(isolated.TMPDIR, taskTempDir);
+    assert.equal(isolated.TMP, taskTempDir);
+    assert.equal(isolated.TEMP, taskTempDir);
+    assert.ok(isolated.TMPDIR.startsWith(`${TASK_TEMP_ROOT}/${TASK_TEMP_PREFIX}`));
+    assert.deepEqual(assertSocketPathBudget(WORKER_STATE_ROOT, taskTempDir), {
+      oldPath: `${WORKER_STATE_ROOT}/com.google.Chrome.12345678901234567890/SingletonSocket`,
+      oldLength: 175,
+      newPath: `${taskTempDir}/com.google.Chrome.12345678901234567890/SingletonSocket`,
+      newLength: 85,
+    });
+    for (const key of ['XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'PWTEST_CACHE_DIR', 'PLAYWRIGHT_OUTPUT_DIR']) {
       assert.ok(isolated[key].startsWith(`${WORKER_STATE_ROOT}/`));
     }
     assert.equal(isolated.NODE_PATH, '');
     process.env.PLAYWRIGHT_OUTPUT_DIR = '/outside-worker/output';
     assert.throws(() => isolatedEnvironment(), /own worker folder/);
+    assert.throws(() => cleanupTaskTempDir(preexistingTempDir), /not allocated by this process/);
+    assert.ok(existsSync(preexistingTempDir));
   } finally {
     if (previous === undefined) delete process.env.PLAYWRIGHT_OUTPUT_DIR;
     else process.env.PLAYWRIGHT_OUTPUT_DIR = previous;
+    if (previousTaskTemp === undefined) delete process.env.TAB_AUDIO_TASK_TMPDIR;
+    else process.env.TAB_AUDIO_TASK_TMPDIR = previousTaskTemp;
+    cleanupTaskTempDir(taskTempDir);
+    rmSync(preexistingTempDir, {recursive: true, force: true});
   }
 });
 

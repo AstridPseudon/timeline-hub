@@ -10,19 +10,32 @@ NODE=${TAB_AUDIO_NODE_EXECUTABLE:-/tmp/vw-m3-agent-gate-node20.19.4/bin/node}
 [[ -x "$NODE" ]] || { echo "Pinned Node executable is missing: $NODE" >&2; exit 2; }
 [[ "$("$NODE" --version)" == v20.19.4 ]] || { echo "Pinned Node must be v20.19.4" >&2; exit 2; }
 export PATH="$(dirname "$NODE"):$PATH"
-STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose
-export TMPDIR="$STATE/tmp" TMP="$STATE/tmp" TEMP="$STATE/tmp"
+STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix
 export XDG_CACHE_HOME="$STATE/cache" XDG_CONFIG_HOME="$STATE/config"
 export PWTEST_CACHE_DIR="$STATE/playwright-transform"
 export NODE_PATH=''
-mkdir -p "$TMPDIR" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$PWTEST_CACHE_DIR"
-LOCK_PATH=${TAB_AUDIO_LOCK_PATH:-/tmp/timeline-viewing-browser.lock}
-export TAB_AUDIO_LOCK_PATH="$LOCK_PATH"
-export TAB_AUDIO_LOCK_FD=9
+mkdir -p "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$PWTEST_CACHE_DIR"
+TASK_TMPDIR=''
+TASK_TMPDIR_ID=''
 
-exec 9>"$LOCK_PATH"
-flock -n 9 || { echo 'central browser flock is already held' >&2; exit 75; }
-export VIEWING_BROWSER_FLOCK_HELD=1
+cleanup_task_tmpdir() {
+  local path=$1
+  [[ -n "$path" ]] || return 0
+  [[ -e "$path" ]] || return 0
+  if [[ -L "$path" || ! -d "$path" || "$(dirname -- "$path")" != /tmp \
+    || "$(basename -- "$path")" != timeline-tab-audio-* \
+    || "$(realpath -- "$path")" != "$path" \
+    || "$(stat -c '%d:%i' -- "$path")" != "$TASK_TMPDIR_ID" ]]; then
+    echo "refusing to remove non-owned Chrome task temp: $path" >&2
+    return 1
+  fi
+  rm -rf -- "$path"
+}
+
+unset TAB_AUDIO_TASK_TMPDIR
+TASK_TMPDIR=$(mktemp -d /tmp/timeline-tab-audio-XXXXXX)
+TASK_TMPDIR_ID=$(stat -c '%d:%i' -- "$TASK_TMPDIR")
+export TAB_AUDIO_TASK_TMPDIR="$TASK_TMPDIR" TMPDIR="$TASK_TMPDIR" TMP="$TASK_TMPDIR" TEMP="$TASK_TMPDIR"
 
 cleanup() {
   status=$?
@@ -33,9 +46,22 @@ cleanup() {
       status=$postflight_status
     fi
   fi
+  task_temp_status=0
+  cleanup_task_tmpdir "$TASK_TMPDIR" || task_temp_status=$?
+  if [[ $status == 0 && $task_temp_status != 0 ]]; then
+    status=$task_temp_status
+  fi
   exit "$status"
 }
 trap cleanup EXIT
+
+LOCK_PATH=${TAB_AUDIO_LOCK_PATH:-/tmp/timeline-viewing-browser.lock}
+export TAB_AUDIO_LOCK_PATH="$LOCK_PATH"
+export TAB_AUDIO_LOCK_FD=9
+
+exec 9>"$LOCK_PATH"
+flock -n 9 || { echo 'central browser flock is already held' >&2; exit 75; }
+export VIEWING_BROWSER_FLOCK_HELD=1
 
 if [[ ${TAB_AUDIO_RUN:-0} != 1 ]]; then
   "$NODE" "$CONTROLLER" --prepare

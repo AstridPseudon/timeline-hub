@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
+import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {createRequire} from 'node:module';
-import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
+import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, REPO_ROOT, TASK_TEMP_PREFIX, TASK_TEMP_ROOT, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
 
 test('package graph fingerprint collects every package with an expected version', () => {
   const {packages} = packageGraphFingerprint();
@@ -35,4 +36,18 @@ test('browser and Playwright trees retain their exact frozen hashes', () => {
     sha256: '6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d',
     fileCount: 106,
   });
+});
+
+test('launcher binds one fresh short task temp and cleans it after every attempt', () => {
+  const setup = readFileSync(join(REPO_ROOT, 'tests/e2e/timeline/setup-tab-audio-capture.sh'), 'utf8');
+
+  assert.match(setup, new RegExp(`mktemp -d ${TASK_TEMP_ROOT}/${TASK_TEMP_PREFIX}XXXXXX`));
+  assert.match(setup, /unset TAB_AUDIO_TASK_TMPDIR/);
+  assert.match(setup, /TASK_TMPDIR_ID=''/);
+  assert.match(setup, /TASK_TMPDIR_ID=\$\(stat -c/);
+  assert.match(setup, /trap cleanup EXIT/);
+  assert.match(setup, /cleanup_task_tmpdir \"\$TASK_TMPDIR\"/);
+  assert.match(setup, /TAB_AUDIO_TASK_TMPDIR=\"\$TASK_TMPDIR\"/);
+  assert.match(setup, /TMPDIR=\"\$TASK_TMPDIR\" TMP=\"\$TASK_TMPDIR\" TEMP=\"\$TASK_TMPDIR\"/);
+  assert.doesNotMatch(setup, /export HOME=|PULSE_SERVER=|PULSE_RUNTIME_PATH=/);
 });

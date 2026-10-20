@@ -22,7 +22,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const PROFILE = 'native-codec-chrome155-clean-install-public12';
 export const BASE_SOURCE_SHA = '0ea988bdd2907c876b82fd2620820e3fb6d6ea84';
-export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose';
+export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix';
+export const TASK_TEMP_ROOT = '/tmp';
+export const TASK_TEMP_PREFIX = 'timeline-tab-audio-';
+export const UNIX_SOCKET_PATH_LIMIT = 108;
+const CHROME_SINGLETON_SOCKET_SUFFIX = 'com.google.Chrome.12345678901234567890/SingletonSocket';
 export const MIN_FREE_BYTES = 10 * 1024 ** 3;
 // Fresh npm-ci graph published READY by vw-m3-app-private12-clean-install.
 // Consumers keep all state outside this shared read-only graph.
@@ -104,24 +108,79 @@ const FROZEN_RENDER_GRAPH_HASHES = {
 const ORCH_ROOT = process.env.ORCH_ROOT
   ?? '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch';
 const QUIET_FILES = [join(ORCH_ROOT, 'QUIET.md'), join(ORCH_ROOT, 'managers/viewing/QUIET.md')];
+const OWNED_TASK_TEMP_DIRS = new Set();
 
+function taskTempPath(path) {
+  const absolute = resolve(path);
+  if (dirname(absolute) !== TASK_TEMP_ROOT || !absolute.startsWith(`${TASK_TEMP_ROOT}/${TASK_TEMP_PREFIX}`)) {
+    throw new Error('Chrome task temp must be a direct, short-lived /tmp allocation');
+  }
+  if (!lstatSync(absolute).isDirectory() || realpathSync(absolute) !== absolute) {
+    throw new Error('Chrome task temp must be an owned real directory');
+  }
+  return absolute;
+}
 
-export function isolatedEnvironment() {
+export function chromeSingletonSocketPath(tempDir) {
+  return join(tempDir, CHROME_SINGLETON_SOCKET_SUFFIX);
+}
+
+export function assertSocketPathBudget(oldTempDir, newTempDir) {
+  const oldPath = chromeSingletonSocketPath(oldTempDir);
+  const newPath = chromeSingletonSocketPath(newTempDir);
+  if (oldPath.length <= UNIX_SOCKET_PATH_LIMIT) {
+    throw new Error(`Expected the old Chrome singleton socket path to exceed ${UNIX_SOCKET_PATH_LIMIT} bytes`);
+  }
+  if (newPath.length >= UNIX_SOCKET_PATH_LIMIT) {
+    throw new Error(`Chrome task temp leaves the singleton socket path at ${newPath.length} bytes`);
+  }
+  return {oldPath, oldLength: oldPath.length, newPath, newLength: newPath.length};
+}
+
+export function allocateTaskTempDir() {
+  const tempDir = mkdtempSync(join(TASK_TEMP_ROOT, TASK_TEMP_PREFIX));
+  try {
+    taskTempPath(tempDir);
+    assertSocketPathBudget(WORKER_STATE_ROOT, tempDir);
+    OWNED_TASK_TEMP_DIRS.add(tempDir);
+    return tempDir;
+  } catch (error) {
+    rmSync(tempDir, {recursive: true, force: true});
+    throw error;
+  }
+}
+
+export function cleanupTaskTempDir(tempDir) {
+  const absolute = resolve(tempDir);
+  if (!OWNED_TASK_TEMP_DIRS.has(absolute)) throw new Error('Refusing to remove a task temp not allocated by this process');
+  if (!existsSync(absolute)) {
+    OWNED_TASK_TEMP_DIRS.delete(absolute);
+    return;
+  }
+  taskTempPath(absolute);
+  rmSync(tempDir, {recursive: true, force: true});
+  OWNED_TASK_TEMP_DIRS.delete(absolute);
+}
+
+export function isolatedEnvironment(taskTempDir = process.env.TAB_AUDIO_TASK_TMPDIR) {
+  if (!taskTempDir) throw new Error('Chrome task temp must be allocated explicitly for this attempt');
+  taskTempPath(taskTempDir);
+  assertSocketPathBudget(WORKER_STATE_ROOT, taskTempDir);
   const paths = {
-    TMPDIR: join(WORKER_STATE_ROOT, 'tmp'),
-    TMP: join(WORKER_STATE_ROOT, 'tmp'),
-    TEMP: join(WORKER_STATE_ROOT, 'tmp'),
+    TMPDIR: taskTempDir,
+    TMP: taskTempDir,
+    TEMP: taskTempDir,
     XDG_CACHE_HOME: join(WORKER_STATE_ROOT, 'cache'),
     XDG_CONFIG_HOME: join(WORKER_STATE_ROOT, 'config'),
     PWTEST_CACHE_DIR: join(WORKER_STATE_ROOT, 'playwright-transform'),
     PLAYWRIGHT_OUTPUT_DIR: process.env.PLAYWRIGHT_OUTPUT_DIR ?? join(WORKER_STATE_ROOT, 'playwright-output'),
   };
-  for (const path of Object.values(paths)) {
+  for (const path of [paths.XDG_CACHE_HOME, paths.XDG_CONFIG_HOME, paths.PWTEST_CACHE_DIR, paths.PLAYWRIGHT_OUTPUT_DIR]) {
     if (!resolve(path).startsWith(`${WORKER_STATE_ROOT}/`)) throw new Error('Probe state must stay inside its own worker folder');
     mkdirSync(path, {recursive: true});
     if (!realpathSync(path).startsWith(`${WORKER_STATE_ROOT}/`)) throw new Error('Probe state symlink escapes its worker folder');
   }
-  return {...process.env, ...paths, NODE_PATH: ''};
+  return {...process.env, ...paths, TAB_AUDIO_TASK_TMPDIR: taskTempDir, NODE_PATH: ''};
 }
 
 function sha256(bytes) {
@@ -393,14 +452,18 @@ function requiredEnv(name) {
 export function discover() {
   const fingerprint = sourceFingerprint();
   const root = FROZEN_PRIVATE_GRAPH.root;
-  const env = isolatedEnvironment();
-  const directory = mkdtempSync(join(WORKER_STATE_ROOT, 'discovery-'));
-  const outputPath = join(directory, 'stdout');
-  const errorPath = join(directory, 'stderr');
-  const stdoutFd = openSync(outputPath, 'wx');
-  const stderrFd = openSync(errorPath, 'wx');
+  const ownedTaskTempDir = process.env.TAB_AUDIO_TASK_TMPDIR ? undefined : allocateTaskTempDir();
+  let directory;
+  let stdoutFd;
+  let stderrFd;
   let output;
   try {
+    const env = isolatedEnvironment(ownedTaskTempDir ?? process.env.TAB_AUDIO_TASK_TMPDIR);
+    directory = mkdtempSync(join(WORKER_STATE_ROOT, 'discovery-'));
+    const outputPath = join(directory, 'stdout');
+    const errorPath = join(directory, 'stderr');
+    stdoutFd = openSync(outputPath, 'wx');
+    stderrFd = openSync(errorPath, 'wx');
     // Regular files preserve the actual CLI output in restricted worker processes.
     const result = spawnSync(NODE_EXECUTABLE, [join(root, 'playwright/cli.js'), 'test',
       '--config', join(REPO_ROOT, 'tests/e2e/timeline/tab-audio-capture.config.ts'),
@@ -411,9 +474,10 @@ export function discover() {
       throw new Error(`Playwright discovery failed: ${result.error?.message ?? result.status} ${readFileSync(errorPath, 'utf8')}`);
     }
   } finally {
-    closeSync(stdoutFd);
-    closeSync(stderrFd);
-    rmSync(directory, {recursive: true, force: true});
+    if (stdoutFd !== undefined) closeSync(stdoutFd);
+    if (stderrFd !== undefined) closeSync(stderrFd);
+    if (directory) rmSync(directory, {recursive: true, force: true});
+    if (ownedTaskTempDir) cleanupTaskTempDir(ownedTaskTempDir);
   }
   if (!/Total: 1 test in 1 file/.test(output)
     || !/\[native-codec-chrome155-tab-audio\].*tab-audio-capture\.probe\.ts:\d+:\d+ › captures whole-tab video and tab audio in one Chrome155 MediaRecorder clock/.test(output)) throw new Error('Expected exactly one discovered capability test');
