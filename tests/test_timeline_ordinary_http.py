@@ -237,10 +237,6 @@ def test_ordinary_http_empty_bootstrap_must_be_reachable(
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="pending Main014 Agent pin: clip.add source-window authoring must qualify first",
-)
 def test_ordinary_http_authored_source_window_hold_clear_preserves_timing(
     tmp_path, monkeypatch, astrid_importable,
 ):
