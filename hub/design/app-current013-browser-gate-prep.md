@@ -16,7 +16,7 @@ parity lane.
 
 The wrapper delegates to the existing `npm run test:e2e:three-products`
 configuration and `tests/e2e/local/three-products.spec.ts`; it does not change
-any of the six existing cases, the 21 existing helpers, or their assertions.
+any of the seven existing cases, the 21 existing helpers, or their assertions.
 That suite includes the additive M2 after-ACK Gate 5 case already present in
 the 0ea/current source. It does not invoke `viewing-parity` or any frame grant.
 
@@ -31,7 +31,7 @@ flock -w 600 /home/user/work/.app-m1-browser.lock env \
   TIMELINE_CURRENT013_APP_TREE="$FINAL_APP_TREE" \
   TIMELINE_CURRENT013_AGENT_SHA="$FINAL_AGENT_SHA" \
   TIMELINE_CURRENT013_RUNTIME_SHA=2c4ac180c2220bdad966bc01e95ad230e99ce26a \
-  TIMELINE_CURRENT013_RUNTIME_PRODUCER_CHECKOUT=/home/user/work/wt/rt-m2-pin-2c4ac180 \
+  TIMELINE_CURRENT013_RUNTIME_PRODUCER_CHECKOUT="${FINAL_RUNTIME_PRODUCER_CHECKOUT:?supply retained checkout at the published Runtime SHA}" \
   ASTRID_CHECKOUT="$FINAL_AGENT_CHECKOUT" \
   ASTRID_RUNTIME_CHECKOUT="$FINAL_RUNTIME_CHECKOUT" \
   ASTRID_PYTHON="$FINAL_AGENT_PYTHON" \
@@ -39,11 +39,21 @@ flock -w 600 /home/user/work/.app-m1-browser.lock env \
   node scripts/testing/current013-integration.mjs
 ```
 
-The named central suite invokes the same wrapper:
+The existing named central suite is an incomplete placeholder and MUST NOT be requested as qualification:
 
 ```text
 app e2e-current013-integration flock -w 600 /home/user/work/.app-m1-browser.lock env TIMELINE_CURRENT013_RUN=1 node scripts/testing/current013-integration.mjs
 ```
+
+`request-test` does not forward the requester's environment or cache variables.
+When the final Agent is published, the manager will add ONE new exact named
+suite command with literal retained checkout/producer/venv paths, the actual
+full Agent SHA and final App TREE, and private cache/output paths. Its new
+suite name and complete command must encode that exact pair/cache identity;
+worker-local exports or dispatcher environment changes are insufficient.
+Do not edit the existing suite line, `bin/test-run`, or other central bins
+for this repair. See `app-current013-wrapper-fix-compose.md` for the recipe.
+No exact final Agent SHA or central command is claimed here.
 
 The wrapper refuses missing inputs, refuses the old/moving checkout defaults,
 rejects `ASTRID_APP_DIRECT_DIST`, and passes the validated Agent/Runtime SHAs
@@ -66,7 +76,10 @@ checks:
 - `TIMELINE_CURRENT013_RUNTIME_PRODUCER_CHECKOUT`: the read-only producer
   checkout at that same Runtime SHA. The exact path is an input, not a moving
   repo default.
-- `ASTRID_PYTHON` and `ASTRID_RUNTIME_PYTHON`: existing executable files.
+- `ASTRID_PYTHON` and `ASTRID_RUNTIME_PYTHON`: absolute executable files;
+  retain the supplied venv entry points without realpath normalization.
+- App tracked/staged and untracked source must be clean at both boundaries;
+  normal ignored build/test output is allowed. App identity stays TREE based.
 
 It compares both App and Agent normal Runtime locks to the published current
 tuple: source `2c4ac180...`, contract `0.2.13`, schema
@@ -94,14 +107,13 @@ dist cannot bypass its normal freshness check.
 ## Still pending
 
 - Agent’s final matching public12/current-tuple SHA is not supplied.
-- The App normal-pin worker’s final App tree is not supplied; the current
-  worktree tree is `e71d670ca010fe0aab0ff26842cbaf0eb08edf2a` before this
-  wrapper is committed and is not a final-pair claim.
-- No exact final Runtime checkout path/Python paths were supplied for the
-  future central invocation.
-- The current App lock/metadata and Agent checkout are intentionally not
-  current 0.2.13/Agent-pair values, so this wrapper is expected to fail closed
-  until the manager supplies the final pair.
+- Approved App normal013 root is `171a259acbeb3ced855ca8f72fed0943a2f5a5cb`
+  (tree `f33b5268678efe390a5732022d81b53f35ccf509`); the two wrapper
+  paths are composed onto it by the repair worker. This is source preparation,
+  not exact-pair browser evidence.
+- No exact final Runtime producer checkout or final Agent checkout has been
+  supplied for the future central invocation. Existing venv paths must be
+  supplied literally by the manager as part of that exact command.
 - Actual M1 renderer-off browser evidence, Gate 5 acceptance, and any later
   frame/audio parity grant remain unrun.
 

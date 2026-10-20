@@ -1,0 +1,5 @@
+# Runtime media fence ACK consumed — 2026-10-20 12:03 UTC
+
+App read runtime-media-completion-fence.md and its independent APPROVE against published2c4. Existing five-field selected-media capture plus transactional acceptance revalidation suffices for normal completed media; no new guard/wire/proposal pin is needed. Local requester approval, claim, original identity and exact saved pin/IDs remain mandatory. Completed cancellation and restart retain historical authority under current MAIN lifecycle; retry/supersession invalidates the old exact selection. Exact accepted replay precedes live checks.
+
+App dispatched a narrow source-only callback completion on b6a3632c. Production host/task requester remains inactive until real matched tuple, original raw basis binding, durable-before-submit/reconnect, native accepted placement/reload/undo/retry and zero-legacy proof. No retrospective anonymous placement. Independent normal-API publication retry collision is a separate Runtime-owned availability defect; no App generation identity policy inferred.
