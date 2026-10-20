@@ -1,0 +1,54 @@
+diff --git a/astrid/core/execution/remotion_host_session.py b/astrid/core/execution/remotion_host_session.py
+--- a/astrid/core/execution/remotion_host_session.py
++++ b/astrid/core/execution/remotion_host_session.py
+@@ -184,6 +184,7 @@ class HostRemotionSession:
+         # Fixed host-known renderer projection; never transport Runtime worker
+         # credentials, capability grants, arbitrary NODE_OPTIONS or preloaders.
+         environment = {key: lease.environment[key] for key in
+-                       ("HOME", "LANG", "LC_ALL", "LC_CTYPE", "PATH") if key in lease.environment}
++                       ("HOME", "LANG", "LC_ALL", "LC_CTYPE", "PATH",
++                        "ASTRID_REMOTION_BROWSER_EXECUTABLE") if key in lease.environment}
+         environment.update(ASTRID_FRAME_WORKER_ROOT=str(self.root / "worker"),
+                            TMPDIR=str(self.root), TMP=str(self.root), TEMP=str(self.root))
+         (self.root / "worker").mkdir(exist_ok=True, mode=0o700)
+diff --git a/tests/core/execution/test_remotion_host_session.py b/tests/core/execution/test_remotion_host_session.py
+--- a/tests/core/execution/test_remotion_host_session.py
++++ b/tests/core/execution/test_remotion_host_session.py
+@@ -425,4 +425,35 @@ def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkeypatch, change):
+         manager.close()
+ 
+ 
++def test_child_start_forwards_only_parent_owned_browser_selector(tmp_path, monkeypatch):
++    manager, _ = owner(tmp_path)
++    env = environment(tmp_path)
++    selector = "ASTRID_REMOTION_BROWSER_EXECUTABLE"
++    env[selector] = "/caller/browser"
++    env["ASTRID_UNLISTED_BASE"] = "must-not-reach-child"
++    monkeypatch.setenv(selector, "/parent/browser")
++    observed = []
++
++    def start(argv, **kwargs):
++        observed.append(kwargs["env"])
++        raise RuntimeError("before native allocation")
++
++    monkeypatch.setattr(host, "popen_owned_group", start)
++    lease = manager.lease(env, attempt=tmp_path)
++    try:
++        with pytest.raises(RuntimeError, match="before native allocation"):
++            manager.request(lease, request(env))
++        assert observed[0][selector] == "/parent/browser"
++        assert "ASTRID_UNLISTED_BASE" not in observed[0]
++
++        caller_override = request(env)
++        caller_override["request"]["environment"] = {selector: "/request/browser"}
++        with pytest.raises(ValueError, match="outside admitted projection"):
++            manager.request(lease, caller_override)
++        assert len(observed) == 1
++    finally:
++        lease.close()
++        manager.close()
++
++
+ def test_child_start_environment_does_not_include_runtime_credentials(tmp_path, monkeypatch):
+     manager, _ = owner(tmp_path)
+     env = environment(tmp_path)

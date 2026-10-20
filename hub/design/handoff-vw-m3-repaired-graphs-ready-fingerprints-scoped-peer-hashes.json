@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2026-10-20T16:56:48.029Z",
+  "app": {
+    "react": {
+      "version": "18.3.1",
+      "manifestSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c",
+      "tree": {
+        "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+        "fileCount": 20
+      }
+    },
+    "react-dom": {
+      "version": "18.3.1",
+      "manifestSha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+      "tree": {
+        "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+        "fileCount": 32
+      }
+    },
+    "remotion": {
+      "version": "4.0.509",
+      "manifestSha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01",
+      "tree": {
+        "sha256": "d5e4274cbb682d097d1caf9ffef7a9e410073e12c18bcad9a305d2b405ed087a",
+        "fileCount": 400
+      }
+    },
+    "@remotion/media": {
+      "version": "4.0.509",
+      "manifestSha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95",
+      "tree": {
+        "sha256": "a79082c432c9e57c46b4ad9c80c6d795e564d844fe0c3743370cb85b8ce297ad",
+        "fileCount": 784
+      }
+    },
+    "@remotion/player": {
+      "version": "4.0.509",
+      "manifestSha256": "89595cb2ec1e0231f576cf32408e81aa3dab522ebe0c2154dc4adb41746f7abf",
+      "tree": {
+        "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+        "fileCount": 108
+      }
+    },
+    "@remotion/layout-utils": {
+      "version": "4.0.509",
+      "manifestSha256": "244521ec2c97085930463bd476366cdf7f6392793a57d787b6f0576dbdeaafda",
+      "tree": {
+        "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+        "fileCount": 13
+      }
+    }
+  },
+  "scene": {
+    "react": {
+      "version": "18.3.1",
+      "manifestSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c",
+      "tree": {
+        "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+        "fileCount": 20
+      }
+    },
+    "react-dom": {
+      "version": "18.3.1",
+      "manifestSha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+      "tree": {
+        "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+        "fileCount": 32
+      }
+    },
+    "remotion": {
+      "version": "4.0.509",
+      "manifestSha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01",
+      "tree": {
+        "sha256": "20c668f523ff2a89a7ab2f40fbf767d5b49b9ef8a4aafb264ae7086de477812f",
+        "fileCount": 400
+      }
+    },
+    "@remotion/media": {
+      "version": "4.0.509",
+      "manifestSha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95",
+      "tree": {
+        "sha256": "5c6498f88c1aa1a2fdff1f8cc9732830354019f9efa9522dd1a86dee2ec390a8",
+        "fileCount": 66
+      }
+    },
+    "@remotion/player": {
+      "version": "4.0.509",
+      "manifestSha256": "89595cb2ec1e0231f576cf32408e81aa3dab522ebe0c2154dc4adb41746f7abf",
+      "tree": {
+        "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+        "fileCount": 108
+      }
+    },
+    "@remotion/layout-utils": {
+      "version": "4.0.509",
+      "manifestSha256": "244521ec2c97085930463bd476366cdf7f6392793a57d787b6f0576dbdeaafda",
+      "tree": {
+        "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+        "fileCount": 13
+      }
+    }
+  }
+}

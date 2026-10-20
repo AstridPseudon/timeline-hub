@@ -1,0 +1,2123 @@
+{
+  "schema": "timeline.viewing.graph-ready.v1",
+  "generatedAt": "2026-10-20T16:56:48.029Z",
+  "status": "GRAPH_READY_ONLY",
+  "captureGrantReady": false,
+  "node": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node",
+    "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node",
+    "version": "v20.19.4",
+    "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "firstFileVerified": true
+  },
+  "chrome155": {
+    "executable": "/opt/google/chrome/chrome",
+    "realpath": "/opt/google/chrome/chrome",
+    "version": "155.0.8059.84-1",
+    "executableSha256": "cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76",
+    "tree": {
+      "sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+      "fileCount": 255
+    }
+  },
+  "app": {
+    "root": "/home/user/work/app/node_modules",
+    "realpath": "/home/user/work/app/node_modules",
+    "physicalManifest": {
+      "entryCount": 35465,
+      "sha256": "567c0c2b1c8fb31fdbd0f7157d2f7814a8601e4977b618e901f33281d13ce6a6"
+    },
+    "hashTree": {
+      "sha256": "9686f3d7743cba4332e61e3bd4f6cecfca466c40f25dbee5f48ba8fed984cedd",
+      "fileCount": 32319
+    },
+    "packageGraphFingerprint": {
+      "packages": {
+        "@playwright/test": {
+          "version": "1.60.0",
+          "tree": {
+            "sha256": "f60bd1f10036df0b0ef01bc3ac410d6ffb103be61b6d3fad19e8adb05805eb7e",
+            "fileCount": 11
+          }
+        },
+        "playwright": {
+          "version": "1.60.0",
+          "tree": {
+            "sha256": "01324f07c148278641a19b627ed2f80a608858807abbd3cfefb45b7997af7bf7",
+            "fileCount": 62
+          }
+        },
+        "playwright-core": {
+          "version": "1.60.0",
+          "tree": {
+            "sha256": "6a78060c81886b7ba6f631d5b1193d50f0362c779f5b2dff2d784a31a6acc46d",
+            "fileCount": 106
+          }
+        },
+        "react": {
+          "version": "18.3.1",
+          "tree": {
+            "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+            "fileCount": 20
+          }
+        },
+        "react-dom": {
+          "version": "18.3.1",
+          "tree": {
+            "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+            "fileCount": 32
+          }
+        },
+        "remotion": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "d5e4274cbb682d097d1caf9ffef7a9e410073e12c18bcad9a305d2b405ed087a",
+            "fileCount": 400
+          }
+        },
+        "@remotion/player": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+            "fileCount": 108
+          }
+        },
+        "@remotion/media": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "a79082c432c9e57c46b4ad9c80c6d795e564d844fe0c3743370cb85b8ce297ad",
+            "fileCount": 784
+          }
+        },
+        "@remotion/web-renderer": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "cfa5ffb399b0974899de70c62935aa3df7a8510c16e7d65f1840360d2a59544f",
+            "fileCount": 96
+          }
+        },
+        "@remotion/layout-utils": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+            "fileCount": 13
+          }
+        },
+        "@banodoco/timeline-composition": {
+          "version": "0.0.13",
+          "tree": {
+            "sha256": "cd7be9200ca5440e0b1c22f68f0398f0880794eafb7e5adea1edba7bd20b2ea9",
+            "fileCount": 77
+          }
+        }
+      },
+      "sha256": "13e0b228a13ae33712f4d57fa5cd245ba40335b17f39184bee653b9f39b333ec",
+      "privateGraph": {
+        "root": "/home/user/work/app/node_modules",
+        "tree": {
+          "sha256": "9686f3d7743cba4332e61e3bd4f6cecfca466c40f25dbee5f48ba8fed984cedd",
+          "fileCount": 32319
+        }
+      }
+    },
+    "scopedPeerHashes": {
+      "react": {
+        "version": "18.3.1",
+        "manifestSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c",
+        "tree": {
+          "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+          "fileCount": 20
+        }
+      },
+      "react-dom": {
+        "version": "18.3.1",
+        "manifestSha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+        "tree": {
+          "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+          "fileCount": 32
+        }
+      },
+      "remotion": {
+        "version": "4.0.509",
+        "manifestSha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01",
+        "tree": {
+          "sha256": "d5e4274cbb682d097d1caf9ffef7a9e410073e12c18bcad9a305d2b405ed087a",
+          "fileCount": 400
+        }
+      },
+      "@remotion/media": {
+        "version": "4.0.509",
+        "manifestSha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95",
+        "tree": {
+          "sha256": "a79082c432c9e57c46b4ad9c80c6d795e564d844fe0c3743370cb85b8ce297ad",
+          "fileCount": 784
+        }
+      },
+      "@remotion/player": {
+        "version": "4.0.509",
+        "manifestSha256": "89595cb2ec1e0231f576cf32408e81aa3dab522ebe0c2154dc4adb41746f7abf",
+        "tree": {
+          "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+          "fileCount": 108
+        }
+      },
+      "@remotion/layout-utils": {
+        "version": "4.0.509",
+        "manifestSha256": "244521ec2c97085930463bd476366cdf7f6392793a57d787b6f0576dbdeaafda",
+        "tree": {
+          "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+          "fileCount": 13
+        }
+      }
+    },
+    "composition": {
+      "version": "0.0.13",
+      "tree": {
+        "sha256": "cd7be9200ca5440e0b1c22f68f0398f0880794eafb7e5adea1edba7bd20b2ea9",
+        "fileCount": 77
+      },
+      "entries": [
+        {
+          "path": "README.md",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 23481,
+          "sha256": "d877fcc7ba8c55efabcb00d1c74e7ffb05c79968066e2b821ccdb33d90cabd36",
+          "device": 65024,
+          "inode": 861357,
+          "links": 1
+        },
+        {
+          "path": "dist/AudioTrack.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 317,
+          "sha256": "eec7d7c05133ff85fb47cfd4494d1c1cbfc77e00d69b500d6a2cc2ac392bfe3f",
+          "device": 65024,
+          "inode": 870549,
+          "links": 1
+        },
+        {
+          "path": "dist/ClipAnimationPhase.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 690,
+          "sha256": "7de95ce9c33bd647625f89a626e6ddb7af39a18e42ffe2787fa1a5730e34e653",
+          "device": 65024,
+          "inode": 870557,
+          "links": 1
+        },
+        {
+          "path": "dist/ClipLook.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 946,
+          "sha256": "5be635d470accfbd0618ab02ff451e9401c176c93aca6b7851a7db61be9fee09",
+          "device": 65024,
+          "inode": 870560,
+          "links": 1
+        },
+        {
+          "path": "dist/RegistryContext.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 338,
+          "sha256": "a603bf7ba688c5a3ecabbfbb6295278fa4170e1cda42437e4f7f5284fd6e398d",
+          "device": 65024,
+          "inode": 871368,
+          "links": 1
+        },
+        {
+          "path": "dist/ThemeContext.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1226,
+          "sha256": "5d0acfce91aaec43d2d4ea322d7666e42b49564a11163faca9885bd8393f0433",
+          "device": 65024,
+          "inode": 871380,
+          "links": 1
+        },
+        {
+          "path": "dist/TimelineComposition.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 2530,
+          "sha256": "c5ca2b228b1ef4afcc63ee09cc47ea35d50f5c1679cc319d769d0c074f6f9f98",
+          "device": 65024,
+          "inode": 871383,
+          "links": 1
+        },
+        {
+          "path": "dist/TransitionLayer.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 365,
+          "sha256": "9d11710352e33bcc265a1f6acd4c4778961a45269b90c169caca07d7130452ea",
+          "device": 65024,
+          "inode": 871391,
+          "links": 1
+        },
+        {
+          "path": "dist/VisualClip.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 345,
+          "sha256": "26bcceaf8385556c15272c17dcb469fed88827424e21a6442c3be5b3fb7e7b31",
+          "device": 65024,
+          "inode": 871408,
+          "links": 1
+        },
+        {
+          "path": "dist/animations.generated.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 549,
+          "sha256": "dcdf510c086b8638e150939808224ea0d61bd421a28a72aa99c0eccaaecb2fed",
+          "device": 65024,
+          "inode": 870538,
+          "links": 1
+        },
+        {
+          "path": "dist/animations.generated.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 245,
+          "sha256": "fa4b15b205f4dee8dc8b20f2ea2036e505ef1cdcd1e06b66c9be85863ad124ec",
+          "device": 65024,
+          "inode": 870305,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/fade/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 290,
+          "sha256": "da24676182baa4bd322130a1d3539c9e4874f1997b7b5aa9f41973ca3a5a7c63",
+          "device": 65024,
+          "inode": 878620,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/fade-up/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 287,
+          "sha256": "9e25aef76467bec99fe8e9573c11855395678e473fb25554425e8015e6c5787f",
+          "device": 65024,
+          "inode": 878267,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/scale-in/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 289,
+          "sha256": "f1dd5d3699f2361b8dd79a0c155e46a3e8c71e360a409f7c78fcb4b310d14db5",
+          "device": 65024,
+          "inode": 879009,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/slide-left/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 293,
+          "sha256": "54758f873699684fec2be4e8423bb160cc3e17a05157af9375fa7a261e54a2ae",
+          "device": 65024,
+          "inode": 879337,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/slide-up/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 284,
+          "sha256": "456c01fbe5e442e6c42ce236e1006f489d2a5e57c7068216224a8ac16ddd9a74",
+          "device": 65024,
+          "inode": 885314,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/type-on/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 275,
+          "sha256": "092f60b4b132628da2c7a3592407e5dfac08aca291091a0352b27a5c303506c4",
+          "device": 65024,
+          "inode": 892916,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/effects/text-card/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 669,
+          "sha256": "c2c42f404bc6e0e0e573121426f994669e8da8ce9f694a2bb85dd25f87cc3205",
+          "device": 65024,
+          "inode": 893029,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/themes/2rp/effects/art-card/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 433,
+          "sha256": "a05ea6ee618dd74d92c4362d1f0279c04f00d37c0126c4bf2978632b83704d7b",
+          "device": 65024,
+          "inode": 893300,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/themes/2rp/effects/cta-card/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 430,
+          "sha256": "3de063b1b5bf95128e5db98b4f300d9cab266df4bd8a231cbf13b70b11d80ac3",
+          "device": 65024,
+          "inode": 893698,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/themes/2rp/effects/resource-card/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 497,
+          "sha256": "4ae066ee665797012695650a1951b10e5011395116259481e761fbc116595bef",
+          "device": 65024,
+          "inode": 894016,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/themes/2rp/effects/section-hook/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 450,
+          "sha256": "88151343fbe05a95a8c74c6ebb72d4336e567c98dcc8cd68b74ba8c3cc678558",
+          "device": 65024,
+          "inode": 901042,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/transitions/cross-fade/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 253,
+          "sha256": "c541fa5948637d751f013a7c6dc036136533f00038754be9192bef53d38e7432",
+          "device": 65024,
+          "inode": 900928,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/transitions/fade/component.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 128,
+          "sha256": "99f36cd1e1421b85139bc0c9a92d68fabe1ef5e0ba94e414b797dd8edd08fcce",
+          "device": 65024,
+          "inode": 900784,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-BLDFPOW3.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 12419,
+          "sha256": "e296054fd6189c1458196dddb549381eccaa07056ed752f5c083e583fa10f6bf",
+          "device": 65024,
+          "inode": 870308,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-DMRW7SC3.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 41521,
+          "sha256": "6b611144f2f9689048ff739e0c33a3700010999b13897fe03448336da07d3b1d",
+          "device": 65024,
+          "inode": 870312,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-DUR3GNZH.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 5856,
+          "sha256": "7761523b704a585a09c0d9e45f2dd0edc0f6c9889aaf2d0d9d679cfc8ec23df3",
+          "device": 65024,
+          "inode": 870339,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-GWYPEUCA.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 11312,
+          "sha256": "0423ede380691a48bd734c4d8aa356d697bdf1f268ee302bbc6e5f605d1d31ee",
+          "device": 65024,
+          "inode": 870350,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-IPYPAILB.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1096,
+          "sha256": "b899ad286e5b4664f200cd89f4ba1afaf009aa0596fe823ff601a1919b8111b4",
+          "device": 65024,
+          "inode": 870390,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-KA66CXRB.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 13284,
+          "sha256": "749a3a8408d705f22239fd9401b4eeb15450d0f298805356153c7d8fa059e65c",
+          "device": 65024,
+          "inode": 870404,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-LG3Y3LFP.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1170,
+          "sha256": "9f38188840874ae37ca1ec3bb5a64316e47d479ee2a017b57a86eceff846be7e",
+          "device": 65024,
+          "inode": 870423,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-SE4TPVLW.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 17300,
+          "sha256": "887441a18596fd09bd145381f6745ca986372cd32fb59278733f6b8d161f494b",
+          "device": 65024,
+          "inode": 870429,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-SZIJH2BM.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 4351,
+          "sha256": "51e13b71a8b0db6663c05c994bb7e39c2cc97e173d032837ee3cd0825c9997bb",
+          "device": 65024,
+          "inode": 870447,
+          "links": 1
+        },
+        {
+          "path": "dist/effects-types.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 3892,
+          "sha256": "64d0351954aa506f4198fcd5d0641cf00c26f2796a26f9e722c37d0c81cde8d4",
+          "device": 65024,
+          "inode": 871315,
+          "links": 1
+        },
+        {
+          "path": "dist/effects.generated.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 546,
+          "sha256": "f294ad0885043dc58eacba78a9011fe5c9a92a0471ba45dfc6a56888fabbfa6b",
+          "device": 65024,
+          "inode": 871318,
+          "links": 1
+        },
+        {
+          "path": "dist/effects.generated.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 323,
+          "sha256": "d263b83ba162baa42e1735cc0335a36f5fa8beabed498a87974cfbf187166d9c",
+          "device": 65024,
+          "inode": 870467,
+          "links": 1
+        },
+        {
+          "path": "dist/evaluation.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 3200,
+          "sha256": "fb7226d0e817c15931593a1493646248a7de34bda1be3c80b615b6d02912d285",
+          "device": 65024,
+          "inode": 871320,
+          "links": 1
+        },
+        {
+          "path": "dist/evaluation.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1546,
+          "sha256": "e27ed545e9e0c28cf863e7bccd4a720f61e1002e04f2946dd3afca5e5f478155",
+          "device": 65024,
+          "inode": 870474,
+          "links": 1
+        },
+        {
+          "path": "dist/index.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 2471,
+          "sha256": "da76faee7226e65a18f91a2fb45e2a260f33aef8768609093872c7eff1a76e03",
+          "device": 65024,
+          "inode": 871327,
+          "links": 1
+        },
+        {
+          "path": "dist/index.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 29533,
+          "sha256": "364460a558df5b0b9c6633113943f3414fd1c1873cb1357d01ecf7d279a41e52",
+          "device": 65024,
+          "inode": 870480,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/animation-easing.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 418,
+          "sha256": "566b706fd93cbee4977f220af6750fccbeaa3e5a8a48968f5da1c3ffecfda9d3",
+          "device": 65024,
+          "inode": 877526,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/animations.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1430,
+          "sha256": "2572f661cb08d12a849aaeee33120edc61e5af465d2c1d0dcc4bbe5f147acb86",
+          "device": 65024,
+          "inode": 877584,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/audio-curves.generated.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 587,
+          "sha256": "fb1570159b5f5ed5fc9253bb8e22a967c7a16708090a2abba7e5b0ce81193687",
+          "device": 65024,
+          "inode": 877681,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/audio-envelope.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 2107,
+          "sha256": "176f12817826ef20e4e7b495ea5c05174ac05e409bacb0ffc1fd0f8c520b9dd6",
+          "device": 65024,
+          "inode": 877722,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/beat-loop.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1254,
+          "sha256": "9e397a7601da1f9d96366de6e8214dc4a75c4f138516ed91899c235d4611c0a5",
+          "device": 65024,
+          "inode": 877828,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/clip-look.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1446,
+          "sha256": "2020bebe2f4c361e1ad926c54aac35925a48b370b51bad41c2a6b06896b4ca55",
+          "device": 65024,
+          "inode": 877880,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/duration.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 680,
+          "sha256": "df349bd9b431a410e325aba2361319ff339634798324ae9c0e463948fb98dac0",
+          "device": 65024,
+          "inode": 883045,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/effect-params.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 118,
+          "sha256": "813c795eb50af4ec8a22546fb01b88d211622b5c0ac664bbe42199d1ba75e990",
+          "device": 65024,
+          "inode": 883066,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/fade.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 131,
+          "sha256": "693ef17faa4b8a82941a7041d7213d431f9f5aed7d70e065e5a0908f6b979249",
+          "device": 65024,
+          "inode": 883126,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/keyframe-easing.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 254,
+          "sha256": "48269f559ebbaaa14f3763e44b85ab9e6813c9374ec7a26fb30d68cb4c8d9370",
+          "device": 65024,
+          "inode": 883155,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/keyframe-origin.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1215,
+          "sha256": "8e6e7f6aa32e88cec5556188d91258b304d9015f2dd8d6c9c1c3c20e5d15e6e6",
+          "device": 65024,
+          "inode": 883167,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/modifier-admission.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 395,
+          "sha256": "a39547d7f7bca2d1131bfff58470893cd257e55b9c602bb017762d2761e0107b",
+          "device": 65024,
+          "inode": 883179,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/modifier-bounds.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 322,
+          "sha256": "7f1e4d7011909e3cfc0ee295e2447958c04994eaa957072072e6c5aca3fb9645",
+          "device": 65024,
+          "inode": 883191,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/modifier-keyframes.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 847,
+          "sha256": "1343b772dbd9bc3dc6bd632bdb2b5fcdf38eac3b8663d7e72fdf202fb27ba685",
+          "device": 65024,
+          "inode": 883202,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/modifiers.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 704,
+          "sha256": "3dc2380942a77d37908ef0de745162e3e6e62d75549d273013b2403c0a1b0258",
+          "device": 65024,
+          "inode": 883222,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/motion-curves.generated.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1106,
+          "sha256": "31bf18b3642279150d5929ed29c1c842158e7217990a71a908545fa4eb1c7808",
+          "device": 65024,
+          "inode": 883242,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/render-bounds.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1433,
+          "sha256": "2a76cab5181640eb98bf6cd40a9c7f652d6c2df205638e9124c34b3a8bd6540c",
+          "device": 65024,
+          "inode": 883289,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/tracks.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 291,
+          "sha256": "2f0b573259ff14991d317cfcf4e11f8347d4d2da01e99f13b62a2b850732c42d",
+          "device": 65024,
+          "inode": 883366,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/transition-declarations.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 2141,
+          "sha256": "188fc5dadcda032c4fc2212adfc21902e1eb0936bc8c0be0f030cebf21253f59",
+          "device": 65024,
+          "inode": 883379,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/transition-spans.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1730,
+          "sha256": "ce6087e85a0f3b59baaa056399cb372de852b96e10423a5796ba546dbe783174",
+          "device": 65024,
+          "inode": 883390,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/transitions.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 652,
+          "sha256": "c0ac047b7a3283f0e359c22225036a2df51540c427122d2c8851a32e289b8ff4",
+          "device": 65024,
+          "inode": 883409,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/trim.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 208,
+          "sha256": "708239edae3993e8c7050fdc246e85b3a9da64a4db074df1a7c75b97ab1c75bb",
+          "device": 65024,
+          "inode": 883427,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/use-audio-envelope.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 257,
+          "sha256": "a5a802a551b54d56aec3872ec670bab8c180f780ae12eef4d07f458c9a2052a8",
+          "device": 65024,
+          "inode": 883451,
+          "links": 1
+        },
+        {
+          "path": "dist/modifier-types.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 2701,
+          "sha256": "51e5409a3468eda0fd1bf9a34dee4740e67b7fc2cbb91799f057440c854eebf7",
+          "device": 65024,
+          "inode": 871347,
+          "links": 1
+        },
+        {
+          "path": "dist/modifiers.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 583,
+          "sha256": "8847e2db3c2da608dae8985ab7f6f6bee5ec528d0bf37538a63365ac46917d8f",
+          "device": 65024,
+          "inode": 871355,
+          "links": 1
+        },
+        {
+          "path": "dist/registries.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1275,
+          "sha256": "566c301b6a48c34ce65b84f3619b61378c1456f36e202b8056ec4f660c96832f",
+          "device": 65024,
+          "inode": 871363,
+          "links": 1
+        },
+        {
+          "path": "dist/registries.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 425,
+          "sha256": "dd8b245ba3a2204af3cef9ae6858148a146997d84315c0ce8def3e7133f9019c",
+          "device": 65024,
+          "inode": 870499,
+          "links": 1
+        },
+        {
+          "path": "dist/registry.generated.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1656,
+          "sha256": "14179f9151f6a172d247426c9fa1b1bd79547fd0f7513027acd9ff5e1b1d82d5",
+          "device": 65024,
+          "inode": 871366,
+          "links": 1
+        },
+        {
+          "path": "dist/registry.generated.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 457,
+          "sha256": "e4a55bcec4b2496dd2728f62757619f3aade270f81ef36bec199601e2a272f63",
+          "device": 65024,
+          "inode": 870504,
+          "links": 1
+        },
+        {
+          "path": "dist/scene-capabilities.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 2805,
+          "sha256": "8b50046828d459c99fbee0bb6ec5c4d834e3a13afbfd16204d8e44fa9baffcc7",
+          "device": 65024,
+          "inode": 871374,
+          "links": 1
+        },
+        {
+          "path": "dist/scene-evaluation.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 2921,
+          "sha256": "8f4d7bf5271c74eec7eb87c651384ce77f6bfdf78a5bb55ee807fc46be48a2b3",
+          "device": 65024,
+          "inode": 871376,
+          "links": 1
+        },
+        {
+          "path": "dist/theme-api.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 2841,
+          "sha256": "c35fd5f289dbb6e208a23475c17746572615a5068fc7bb7e411ba5d1d01459dd",
+          "device": 65024,
+          "inode": 871378,
+          "links": 1
+        },
+        {
+          "path": "dist/theme-api.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 1593,
+          "sha256": "30184b842965a640022817033e81fc2f27d30361afbb7355d1db2e00e917603c",
+          "device": 65024,
+          "inode": 870508,
+          "links": 1
+        },
+        {
+          "path": "dist/transitions.generated.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 506,
+          "sha256": "064f3cb031312045501d3e6be07cb18e45d77060915209ae1375c3b04ab3bc92",
+          "device": 65024,
+          "inode": 871394,
+          "links": 1
+        },
+        {
+          "path": "dist/transitions.generated.js",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 253,
+          "sha256": "a5f126233840e53378fbc53d4948d4eba405c6b496cac73f31d4bc5f56ec77af",
+          "device": 65024,
+          "inode": 870510,
+          "links": 1
+        },
+        {
+          "path": "dist/types.d.ts",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 3143,
+          "sha256": "d1c8f4088362f2935c96bc0c442ebc640af8a8954c396b03faaa36b8be75a95c",
+          "device": 65024,
+          "inode": 871401,
+          "links": 1
+        },
+        {
+          "path": "package.json",
+          "mode": 292,
+          "kind": "file",
+          "bytes": 3170,
+          "sha256": "7c806b078b00bba1593336c49a3d2953b3f8f7afc7fa9919f6d5d7ccc7c1aa61",
+          "device": 65024,
+          "inode": 861326,
+          "links": 1
+        }
+      ]
+    },
+    "lock": {
+      "packageJsonSha256": "a2ac9c9d946bd2d0ee1b2283154d94adad926f6282fff4417aeaf7520f138437",
+      "packageLockSha256": "7f1bfcea48cef38d4c6f1163aa34190b8d5e71c9f08c7378e01a962d6696fc14",
+      "hiddenLockSha256": "4a0b613e7dc615aadd6c6fcc6152ee9113f4f2450335c8ffabc1b272ca32dcaf",
+      "packagePin": "file:vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz",
+      "packageLockEntry": {
+        "version": "0.0.13",
+        "resolved": "file:vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz",
+        "integrity": "sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==",
+        "peerDependencies": {
+          "@remotion/layout-utils": "4.0.509",
+          "@remotion/media": "4.0.509",
+          "react": "18.3.1",
+          "react-dom": "18.3.1",
+          "remotion": "4.0.509"
+        }
+      },
+      "hiddenLockEntry": {
+        "version": "0.0.13",
+        "resolved": "file:vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz",
+        "integrity": "sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ==",
+        "peerDependencies": {
+          "@remotion/layout-utils": "4.0.509",
+          "@remotion/media": "4.0.509",
+          "react": "18.3.1",
+          "react-dom": "18.3.1",
+          "remotion": "4.0.509"
+        }
+      },
+      "lockfileVersion": 3
+    },
+    "archive": {
+      "bytes": 58477,
+      "sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+      "count": 77,
+      "members": [
+        "package/README.md",
+        "package/dist/AudioTrack.d.ts",
+        "package/dist/ClipAnimationPhase.d.ts",
+        "package/dist/ClipLook.d.ts",
+        "package/dist/RegistryContext.d.ts",
+        "package/dist/ThemeContext.d.ts",
+        "package/dist/TimelineComposition.d.ts",
+        "package/dist/TransitionLayer.d.ts",
+        "package/dist/VisualClip.d.ts",
+        "package/dist/animations.generated.d.ts",
+        "package/dist/animations.generated.js",
+        "package/dist/builtins/animations/fade-up/component.d.ts",
+        "package/dist/builtins/animations/fade/component.d.ts",
+        "package/dist/builtins/animations/scale-in/component.d.ts",
+        "package/dist/builtins/animations/slide-left/component.d.ts",
+        "package/dist/builtins/animations/slide-up/component.d.ts",
+        "package/dist/builtins/animations/type-on/component.d.ts",
+        "package/dist/builtins/effects/text-card/component.d.ts",
+        "package/dist/builtins/themes/2rp/effects/art-card/component.d.ts",
+        "package/dist/builtins/themes/2rp/effects/cta-card/component.d.ts",
+        "package/dist/builtins/themes/2rp/effects/resource-card/component.d.ts",
+        "package/dist/builtins/themes/2rp/effects/section-hook/component.d.ts",
+        "package/dist/builtins/transitions/cross-fade/component.d.ts",
+        "package/dist/builtins/transitions/fade/component.d.ts",
+        "package/dist/chunk-BLDFPOW3.js",
+        "package/dist/chunk-DMRW7SC3.js",
+        "package/dist/chunk-DUR3GNZH.js",
+        "package/dist/chunk-GWYPEUCA.js",
+        "package/dist/chunk-IPYPAILB.js",
+        "package/dist/chunk-KA66CXRB.js",
+        "package/dist/chunk-LG3Y3LFP.js",
+        "package/dist/chunk-SE4TPVLW.js",
+        "package/dist/chunk-SZIJH2BM.js",
+        "package/dist/effects-types.d.ts",
+        "package/dist/effects.generated.d.ts",
+        "package/dist/effects.generated.js",
+        "package/dist/evaluation.d.ts",
+        "package/dist/evaluation.js",
+        "package/dist/index.d.ts",
+        "package/dist/index.js",
+        "package/dist/lib/animation-easing.d.ts",
+        "package/dist/lib/animations.d.ts",
+        "package/dist/lib/audio-curves.generated.d.ts",
+        "package/dist/lib/audio-envelope.d.ts",
+        "package/dist/lib/beat-loop.d.ts",
+        "package/dist/lib/clip-look.d.ts",
+        "package/dist/lib/duration.d.ts",
+        "package/dist/lib/effect-params.d.ts",
+        "package/dist/lib/fade.d.ts",
+        "package/dist/lib/keyframe-easing.d.ts",
+        "package/dist/lib/keyframe-origin.d.ts",
+        "package/dist/lib/modifier-admission.d.ts",
+        "package/dist/lib/modifier-bounds.d.ts",
+        "package/dist/lib/modifier-keyframes.d.ts",
+        "package/dist/lib/modifiers.d.ts",
+        "package/dist/lib/motion-curves.generated.d.ts",
+        "package/dist/lib/render-bounds.d.ts",
+        "package/dist/lib/tracks.d.ts",
+        "package/dist/lib/transition-declarations.d.ts",
+        "package/dist/lib/transition-spans.d.ts",
+        "package/dist/lib/transitions.d.ts",
+        "package/dist/lib/trim.d.ts",
+        "package/dist/lib/use-audio-envelope.d.ts",
+        "package/dist/modifier-types.d.ts",
+        "package/dist/modifiers.d.ts",
+        "package/dist/registries.d.ts",
+        "package/dist/registries.js",
+        "package/dist/registry.generated.d.ts",
+        "package/dist/registry.generated.js",
+        "package/dist/scene-capabilities.d.ts",
+        "package/dist/scene-evaluation.d.ts",
+        "package/dist/theme-api.d.ts",
+        "package/dist/theme-api.js",
+        "package/dist/transitions.generated.d.ts",
+        "package/dist/transitions.generated.js",
+        "package/dist/types.d.ts",
+        "package/package.json"
+      ],
+      "entries": {},
+      "installedByteComparison": {
+        "archiveFileCount": 77,
+        "installedFileCount": 77,
+        "mismatches": [],
+        "allBytesMatch": true
+      }
+    },
+    "fullManifestPath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-repaired-graphs-ready-fingerprints-app-physical-manifest.json",
+    "baselineClassification": "APPROVED_CHANGED_BASELINE_CURRENT13"
+  },
+  "scene": {
+    "root": "/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules",
+    "realpath": "/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules",
+    "physicalManifest": {
+      "entryCount": 23026,
+      "sha256": "fc5b559f886d8c4892f271436901973af690ecd7ad6d9072cb15c0ad5a4cdf96"
+    },
+    "hashTree": {
+      "sha256": "afcb508b2c702769c23eab94453e1584e9f9c018de5504c1263c2a612c11624a",
+      "fileCount": 21462
+    },
+    "scopedPeerHashes": {
+      "react": {
+        "version": "18.3.1",
+        "manifestSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c",
+        "tree": {
+          "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+          "fileCount": 20
+        }
+      },
+      "react-dom": {
+        "version": "18.3.1",
+        "manifestSha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+        "tree": {
+          "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+          "fileCount": 32
+        }
+      },
+      "remotion": {
+        "version": "4.0.509",
+        "manifestSha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01",
+        "tree": {
+          "sha256": "20c668f523ff2a89a7ab2f40fbf767d5b49b9ef8a4aafb264ae7086de477812f",
+          "fileCount": 400
+        }
+      },
+      "@remotion/media": {
+        "version": "4.0.509",
+        "manifestSha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95",
+        "tree": {
+          "sha256": "5c6498f88c1aa1a2fdff1f8cc9732830354019f9efa9522dd1a86dee2ec390a8",
+          "fileCount": 66
+        }
+      },
+      "@remotion/player": {
+        "version": "4.0.509",
+        "manifestSha256": "89595cb2ec1e0231f576cf32408e81aa3dab522ebe0c2154dc4adb41746f7abf",
+        "tree": {
+          "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+          "fileCount": 108
+        }
+      },
+      "@remotion/layout-utils": {
+        "version": "4.0.509",
+        "manifestSha256": "244521ec2c97085930463bd476366cdf7f6392793a57d787b6f0576dbdeaafda",
+        "tree": {
+          "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+          "fileCount": 13
+        }
+      }
+    },
+    "composition": {
+      "version": "0.0.8",
+      "tree": {
+        "sha256": "1f2309ae721b6ac5b9200294d5c372a062e76f1afdfbe909f9bec719da118451",
+        "fileCount": 77
+      },
+      "entries": [
+        {
+          "path": "README.md",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 15234,
+          "sha256": "1093f6633f5c2f16f557a81e8204bbc1c327f0102cb5e68c85fc68312b26265d",
+          "device": 65024,
+          "inode": 1813868,
+          "links": 1
+        },
+        {
+          "path": "dist/AudioTrack.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 317,
+          "sha256": "eec7d7c05133ff85fb47cfd4494d1c1cbfc77e00d69b500d6a2cc2ac392bfe3f",
+          "device": 65024,
+          "inode": 1821521,
+          "links": 1
+        },
+        {
+          "path": "dist/ClipAnimationPhase.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 690,
+          "sha256": "7de95ce9c33bd647625f89a626e6ddb7af39a18e42ffe2787fa1a5730e34e653",
+          "device": 65024,
+          "inode": 1821593,
+          "links": 1
+        },
+        {
+          "path": "dist/ClipLook.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 946,
+          "sha256": "5be635d470accfbd0618ab02ff451e9401c176c93aca6b7851a7db61be9fee09",
+          "device": 65024,
+          "inode": 1821621,
+          "links": 1
+        },
+        {
+          "path": "dist/RegistryContext.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 338,
+          "sha256": "a603bf7ba688c5a3ecabbfbb6295278fa4170e1cda42437e4f7f5284fd6e398d",
+          "device": 65024,
+          "inode": 1822868,
+          "links": 1
+        },
+        {
+          "path": "dist/ThemeContext.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1226,
+          "sha256": "5d0acfce91aaec43d2d4ea322d7666e42b49564a11163faca9885bd8393f0433",
+          "device": 65024,
+          "inode": 1822908,
+          "links": 1
+        },
+        {
+          "path": "dist/TimelineComposition.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2104,
+          "sha256": "bb4e2fcd61cf84e18e56e7c6fb4bcaa987bdd35ea448a0ba3d1fd6652668a904",
+          "device": 65024,
+          "inode": 1822914,
+          "links": 1
+        },
+        {
+          "path": "dist/TransitionLayer.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 365,
+          "sha256": "9d11710352e33bcc265a1f6acd4c4778961a45269b90c169caca07d7130452ea",
+          "device": 65024,
+          "inode": 1822945,
+          "links": 1
+        },
+        {
+          "path": "dist/VisualClip.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 345,
+          "sha256": "26bcceaf8385556c15272c17dcb469fed88827424e21a6442c3be5b3fb7e7b31",
+          "device": 65024,
+          "inode": 1822979,
+          "links": 1
+        },
+        {
+          "path": "dist/animations.generated.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 549,
+          "sha256": "dcdf510c086b8638e150939808224ea0d61bd421a28a72aa99c0eccaaecb2fed",
+          "device": 65024,
+          "inode": 1821434,
+          "links": 1
+        },
+        {
+          "path": "dist/animations.generated.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 245,
+          "sha256": "fa4b15b205f4dee8dc8b20f2ea2036e505ef1cdcd1e06b66c9be85863ad124ec",
+          "device": 65024,
+          "inode": 1819055,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/fade/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 290,
+          "sha256": "da24676182baa4bd322130a1d3539c9e4874f1997b7b5aa9f41973ca3a5a7c63",
+          "device": 65024,
+          "inode": 1835467,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/fade-up/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 287,
+          "sha256": "9e25aef76467bec99fe8e9573c11855395678e473fb25554425e8015e6c5787f",
+          "device": 65024,
+          "inode": 1835383,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/scale-in/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 289,
+          "sha256": "f1dd5d3699f2361b8dd79a0c155e46a3e8c71e360a409f7c78fcb4b310d14db5",
+          "device": 65024,
+          "inode": 1835554,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/slide-left/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 293,
+          "sha256": "54758f873699684fec2be4e8423bb160cc3e17a05157af9375fa7a261e54a2ae",
+          "device": 65024,
+          "inode": 1835638,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/slide-up/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 284,
+          "sha256": "456c01fbe5e442e6c42ce236e1006f489d2a5e57c7068216224a8ac16ddd9a74",
+          "device": 65024,
+          "inode": 1835712,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/animations/type-on/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 275,
+          "sha256": "092f60b4b132628da2c7a3592407e5dfac08aca291091a0352b27a5c303506c4",
+          "device": 65024,
+          "inode": 1835774,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/effects/text-card/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 669,
+          "sha256": "c2c42f404bc6e0e0e573121426f994669e8da8ce9f694a2bb85dd25f87cc3205",
+          "device": 65024,
+          "inode": 1835853,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/themes/2rp/effects/art-card/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 433,
+          "sha256": "a05ea6ee618dd74d92c4362d1f0279c04f00d37c0126c4bf2978632b83704d7b",
+          "device": 65024,
+          "inode": 1835953,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/themes/2rp/effects/cta-card/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 430,
+          "sha256": "3de063b1b5bf95128e5db98b4f300d9cab266df4bd8a231cbf13b70b11d80ac3",
+          "device": 65024,
+          "inode": 1836114,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/themes/2rp/effects/resource-card/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 497,
+          "sha256": "4ae066ee665797012695650a1951b10e5011395116259481e761fbc116595bef",
+          "device": 65024,
+          "inode": 1836273,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/themes/2rp/effects/section-hook/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 450,
+          "sha256": "88151343fbe05a95a8c74c6ebb72d4336e567c98dcc8cd68b74ba8c3cc678558",
+          "device": 65024,
+          "inode": 1836429,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/transitions/cross-fade/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 253,
+          "sha256": "c541fa5948637d751f013a7c6dc036136533f00038754be9192bef53d38e7432",
+          "device": 65024,
+          "inode": 1836500,
+          "links": 1
+        },
+        {
+          "path": "dist/builtins/transitions/fade/component.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 128,
+          "sha256": "99f36cd1e1421b85139bc0c9a92d68fabe1ef5e0ba94e414b797dd8edd08fcce",
+          "device": 65024,
+          "inode": 1836613,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-3ZOH3R7U.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 13284,
+          "sha256": "b4eb2529f1ac9fb5a7d5ded7c4861ad076c04f498393cc502e69242cbc6e41cf",
+          "device": 65024,
+          "inode": 1819248,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-BLDFPOW3.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 12419,
+          "sha256": "e296054fd6189c1458196dddb549381eccaa07056ed752f5c083e583fa10f6bf",
+          "device": 65024,
+          "inode": 1819372,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-DUR3GNZH.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 5856,
+          "sha256": "7761523b704a585a09c0d9e45f2dd0edc0f6c9889aaf2d0d9d679cfc8ec23df3",
+          "device": 65024,
+          "inode": 1819770,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-H6GRHVIL.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 11303,
+          "sha256": "7ee214c9ef324e288b49a668c99948fb6e2d3a14ea3e93a5d6b0289b689bccfc",
+          "device": 65024,
+          "inode": 1820066,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-IPYPAILB.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1096,
+          "sha256": "b899ad286e5b4664f200cd89f4ba1afaf009aa0596fe823ff601a1919b8111b4",
+          "device": 65024,
+          "inode": 1820157,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-QHXOB7ZR.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 32229,
+          "sha256": "cfa173cccfcfeaabe042ad3c75a0636ccec18ae2009b6d628acdbaec5e24d8a5",
+          "device": 65024,
+          "inode": 1820236,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-SE4TPVLW.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 17300,
+          "sha256": "887441a18596fd09bd145381f6745ca986372cd32fb59278733f6b8d161f494b",
+          "device": 65024,
+          "inode": 1820438,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-SZIJH2BM.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 4351,
+          "sha256": "51e13b71a8b0db6663c05c994bb7e39c2cc97e173d032837ee3cd0825c9997bb",
+          "device": 65024,
+          "inode": 1820654,
+          "links": 1
+        },
+        {
+          "path": "dist/chunk-XIJFC4F7.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1170,
+          "sha256": "5711320c6bfaff4cf4a9a0d388cbddcc3d4eb9c9d558d7bb7aa5422264b0c10f",
+          "device": 65024,
+          "inode": 1820716,
+          "links": 1
+        },
+        {
+          "path": "dist/effects-types.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 3754,
+          "sha256": "14799a0e83aab85293e5893009a0e13ce6d763b733b2376f8955f4ffda877fa8",
+          "device": 65024,
+          "inode": 1822721,
+          "links": 1
+        },
+        {
+          "path": "dist/effects.generated.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 546,
+          "sha256": "f294ad0885043dc58eacba78a9011fe5c9a92a0471ba45dfc6a56888fabbfa6b",
+          "device": 65024,
+          "inode": 1822743,
+          "links": 1
+        },
+        {
+          "path": "dist/effects.generated.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 323,
+          "sha256": "d263b83ba162baa42e1735cc0335a36f5fa8beabed498a87974cfbf187166d9c",
+          "device": 65024,
+          "inode": 1820768,
+          "links": 1
+        },
+        {
+          "path": "dist/evaluation.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2732,
+          "sha256": "93f85e909cc519a75afe3bd417b49aba7721d4c0ad7ee5c8511f90f36e5133d2",
+          "device": 65024,
+          "inode": 1822751,
+          "links": 1
+        },
+        {
+          "path": "dist/evaluation.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1324,
+          "sha256": "0ee058ca8657a6bbdbe8c127359297f856c5a7b1cb68258bd3bdc20846d98b96",
+          "device": 65024,
+          "inode": 1820818,
+          "links": 1
+        },
+        {
+          "path": "dist/index.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2125,
+          "sha256": "afd74b9c5a107921c8d724d45064d1ddf7e29fd06bcab4aa45809afc184be794",
+          "device": 65024,
+          "inode": 1822769,
+          "links": 1
+        },
+        {
+          "path": "dist/index.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 25184,
+          "sha256": "2111490c18c6168a7c5e4621c8eabef198407dc68cde60a0885982c45ee16078",
+          "device": 65024,
+          "inode": 1820868,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/animation-easing.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 418,
+          "sha256": "566b706fd93cbee4977f220af6750fccbeaa3e5a8a48968f5da1c3ffecfda9d3",
+          "device": 65024,
+          "inode": 1835188,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/animations.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1430,
+          "sha256": "2572f661cb08d12a849aaeee33120edc61e5af465d2c1d0dcc4bbe5f147acb86",
+          "device": 65024,
+          "inode": 1835202,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/audio-curves.generated.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 587,
+          "sha256": "fb1570159b5f5ed5fc9253bb8e22a967c7a16708090a2abba7e5b0ce81193687",
+          "device": 65024,
+          "inode": 1835245,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/audio-envelope.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2107,
+          "sha256": "176f12817826ef20e4e7b495ea5c05174ac05e409bacb0ffc1fd0f8c520b9dd6",
+          "device": 65024,
+          "inode": 1835259,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/beat-loop.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1254,
+          "sha256": "9e397a7601da1f9d96366de6e8214dc4a75c4f138516ed91899c235d4611c0a5",
+          "device": 65024,
+          "inode": 1835279,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/clip-look.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 959,
+          "sha256": "e58211ac631f7ed1a742554a8bc5c4538c9a4a82da8f4c99ab76c030b4b53215",
+          "device": 65024,
+          "inode": 1835291,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/duration.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 680,
+          "sha256": "df349bd9b431a410e325aba2361319ff339634798324ae9c0e463948fb98dac0",
+          "device": 65024,
+          "inode": 1836629,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/effect-params.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 118,
+          "sha256": "813c795eb50af4ec8a22546fb01b88d211622b5c0ac664bbe42199d1ba75e990",
+          "device": 65024,
+          "inode": 1836649,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/fade.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 131,
+          "sha256": "693ef17faa4b8a82941a7041d7213d431f9f5aed7d70e065e5a0908f6b979249",
+          "device": 65024,
+          "inode": 1836741,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/keyframe-easing.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 254,
+          "sha256": "48269f559ebbaaa14f3763e44b85ab9e6813c9374ec7a26fb30d68cb4c8d9370",
+          "device": 65024,
+          "inode": 1836775,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/keyframe-origin.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1215,
+          "sha256": "8e6e7f6aa32e88cec5556188d91258b304d9015f2dd8d6c9c1c3c20e5d15e6e6",
+          "device": 65024,
+          "inode": 1836790,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/modifier-admission.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 395,
+          "sha256": "a39547d7f7bca2d1131bfff58470893cd257e55b9c602bb017762d2761e0107b",
+          "device": 65024,
+          "inode": 1836808,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/modifier-bounds.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 322,
+          "sha256": "7f1e4d7011909e3cfc0ee295e2447958c04994eaa957072072e6c5aca3fb9645",
+          "device": 65024,
+          "inode": 1836824,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/modifier-keyframes.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 847,
+          "sha256": "1343b772dbd9bc3dc6bd632bdb2b5fcdf38eac3b8663d7e72fdf202fb27ba685",
+          "device": 65024,
+          "inode": 1836834,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/modifiers.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 704,
+          "sha256": "3dc2380942a77d37908ef0de745162e3e6e62d75549d273013b2403c0a1b0258",
+          "device": 65024,
+          "inode": 1836851,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/motion-curves.generated.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1106,
+          "sha256": "31bf18b3642279150d5929ed29c1c842158e7217990a71a908545fa4eb1c7808",
+          "device": 65024,
+          "inode": 1836878,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/render-bounds.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1433,
+          "sha256": "2a76cab5181640eb98bf6cd40a9c7f652d6c2df205638e9124c34b3a8bd6540c",
+          "device": 65024,
+          "inode": 1836926,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/tracks.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 291,
+          "sha256": "2f0b573259ff14991d317cfcf4e11f8347d4d2da01e99f13b62a2b850732c42d",
+          "device": 65024,
+          "inode": 1837046,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/transition-declarations.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2068,
+          "sha256": "b6ec66075b047ba52d41b0083bb2fb668c01644db0cf9a6c901c56bdb68a3f07",
+          "device": 65024,
+          "inode": 1837059,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/transition-spans.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 900,
+          "sha256": "588cf8246f60f80695dadfa6f305e79cc929f1b0b3f8d4ca9bb0dcabd865b236",
+          "device": 65024,
+          "inode": 1837071,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/transitions.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 558,
+          "sha256": "45f155949d00f177c9fbbdb9c0cf86727126e886423f490274c864d48c7a824e",
+          "device": 65024,
+          "inode": 1837107,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/trim.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 208,
+          "sha256": "708239edae3993e8c7050fdc246e85b3a9da64a4db074df1a7c75b97ab1c75bb",
+          "device": 65024,
+          "inode": 1837142,
+          "links": 1
+        },
+        {
+          "path": "dist/lib/use-audio-envelope.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 257,
+          "sha256": "a5a802a551b54d56aec3872ec670bab8c180f780ae12eef4d07f458c9a2052a8",
+          "device": 65024,
+          "inode": 1837178,
+          "links": 1
+        },
+        {
+          "path": "dist/modifier-types.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2701,
+          "sha256": "51e5409a3468eda0fd1bf9a34dee4740e67b7fc2cbb91799f057440c854eebf7",
+          "device": 65024,
+          "inode": 1822818,
+          "links": 1
+        },
+        {
+          "path": "dist/modifiers.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 583,
+          "sha256": "8847e2db3c2da608dae8985ab7f6f6bee5ec528d0bf37538a63365ac46917d8f",
+          "device": 65024,
+          "inode": 1822835,
+          "links": 1
+        },
+        {
+          "path": "dist/registries.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1275,
+          "sha256": "566c301b6a48c34ce65b84f3619b61378c1456f36e202b8056ec4f660c96832f",
+          "device": 65024,
+          "inode": 1822850,
+          "links": 1
+        },
+        {
+          "path": "dist/registries.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 425,
+          "sha256": "50acbe4e7d2e77c6e85aadc0c89cba117db86f6ffd14891f8488b94888201cb4",
+          "device": 65024,
+          "inode": 1820998,
+          "links": 1
+        },
+        {
+          "path": "dist/registry.generated.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1656,
+          "sha256": "14179f9151f6a172d247426c9fa1b1bd79547fd0f7513027acd9ff5e1b1d82d5",
+          "device": 65024,
+          "inode": 1822859,
+          "links": 1
+        },
+        {
+          "path": "dist/registry.generated.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 457,
+          "sha256": "8641b89e99f44bb9db6f08372d9d85a4ccba6858a12f1e2b65936931af23eb26",
+          "device": 65024,
+          "inode": 1821036,
+          "links": 1
+        },
+        {
+          "path": "dist/scene-capabilities.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1989,
+          "sha256": "f57cb6e1712ed3f4b3e3b25cec9d6caf3c922a4b314cb8e78e5f4e3abbdec74b",
+          "device": 65024,
+          "inode": 1822884,
+          "links": 1
+        },
+        {
+          "path": "dist/scene-evaluation.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2230,
+          "sha256": "f31f101aad72c03ad10d96d91bdbb0a96d52362ccf7feb17cf292fca8cb93e1f",
+          "device": 65024,
+          "inode": 1822893,
+          "links": 1
+        },
+        {
+          "path": "dist/theme-api.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2841,
+          "sha256": "c35fd5f289dbb6e208a23475c17746572615a5068fc7bb7e411ba5d1d01459dd",
+          "device": 65024,
+          "inode": 1822901,
+          "links": 1
+        },
+        {
+          "path": "dist/theme-api.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 1593,
+          "sha256": "fab3b38eacddf9c02932659b2942620cec433aee2d4063772b5919cd7c901800",
+          "device": 65024,
+          "inode": 1821075,
+          "links": 1
+        },
+        {
+          "path": "dist/transitions.generated.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 506,
+          "sha256": "064f3cb031312045501d3e6be07cb18e45d77060915209ae1375c3b04ab3bc92",
+          "device": 65024,
+          "inode": 1822954,
+          "links": 1
+        },
+        {
+          "path": "dist/transitions.generated.js",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 253,
+          "sha256": "a5f126233840e53378fbc53d4948d4eba405c6b496cac73f31d4bc5f56ec77af",
+          "device": 65024,
+          "inode": 1821105,
+          "links": 1
+        },
+        {
+          "path": "dist/types.d.ts",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 2969,
+          "sha256": "a7f82c077a5b29c799c09b3675f1a3f14fda5db7e208782b651316c73c0a8cae",
+          "device": 65024,
+          "inode": 1822969,
+          "links": 1
+        },
+        {
+          "path": "package.json",
+          "mode": 420,
+          "kind": "file",
+          "bytes": 3169,
+          "sha256": "3d93e0bbc1fd3cd5666a5e83e11da76b81a169b9423f90f1f8e7dd2cb733868b",
+          "device": 65024,
+          "inode": 1813861,
+          "links": 1
+        }
+      ]
+    },
+    "controllerPackageScope": {
+      "packages": {
+        "react": {
+          "version": "18.3.1",
+          "tree": {
+            "sha256": "2f56e0708f2b43ad352087679b7b728e13d873197949013aa1d3362cd19dcb07",
+            "fileCount": 20
+          }
+        },
+        "react-dom": {
+          "version": "18.3.1",
+          "tree": {
+            "sha256": "9ca1761200e64fb5671d26f2772453571bafc53eda3e3b66fe83bf35c0cd97c2",
+            "fileCount": 32
+          }
+        },
+        "remotion": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "20c668f523ff2a89a7ab2f40fbf767d5b49b9ef8a4aafb264ae7086de477812f",
+            "fileCount": 400
+          }
+        },
+        "@remotion/media": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "5c6498f88c1aa1a2fdff1f8cc9732830354019f9efa9522dd1a86dee2ec390a8",
+            "fileCount": 66
+          }
+        },
+        "@remotion/player": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "6de5135118e232772317773a1ec65eca97ed25d74e231a521e55ca73568493d7",
+            "fileCount": 108
+          }
+        },
+        "@remotion/layout-utils": {
+          "version": "4.0.509",
+          "tree": {
+            "sha256": "76a94579d6f198109e5f2b35ee9ae3e44ff6cb2505b20532281979acd059581a",
+            "fileCount": 13
+          }
+        }
+      },
+      "packageGraphHash": "0ad1847732e3e68904c0edf1e7719c9c5d7eab34bd707ffee40ef52904497106"
+    },
+    "fullManifestPath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-repaired-graphs-ready-fingerprints-scene-physical-manifest.json",
+    "retainedReadyBaseline": {
+      "entryCount": 21495,
+      "graphSha256": "cf6eecfcec4a6d7eabca56a56c46bb24f26302aa86d76add65cab2127b346faa"
+    },
+    "repairComparison": {
+      "missing": 0,
+      "changed": 0,
+      "added": 0,
+      "removedSelfLinks": 106,
+      "candidatesPath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/lead/node-modules-repair-candidates.txt"
+    }
+  },
+  "thirdF816": {
+    "root": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules",
+    "realpath": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules",
+    "controllerHashTree": {
+      "sha256": "e75755f5da0b16c6dbce869f86bf2642960f9568a5598e94cd537fb94789ecdd",
+      "fileCount": 21532
+    },
+    "beforeRepairD1Expected": {
+      "controllerEntryCount": 21488
+    },
+    "observedBeforeRepair": {
+      "controllerEntryCount": 21565,
+      "source": "lead repair audit / D1 observation"
+    },
+    "currentReadOnlyObservation": {
+      "controllerHashTree": {
+        "sha256": "e75755f5da0b16c6dbce869f86bf2642960f9568a5598e94cd537fb94789ecdd",
+        "fileCount": 21532
+      },
+      "note": "Distinct retained graph; not used to qualify either repaired target."
+    },
+    "qualification": "UNQUALIFIED",
+    "classification": "DISTINCT_RETAINED_GRAPH_EXCLUDED_FROM_BLESSING"
+  },
+  "sourceController": {
+    "path": "/home/user/work/wt/vw-m3-pulse-private-graph-final-preflight/tests/e2e/timeline/tab-audio-capture.controller.mjs",
+    "sha256": "d6a050dbbadb1dcb19d1597858f40a65c6da638644b9778f39a0c8c32ec92cda",
+    "packageGraphFingerprintUsed": true,
+    "hashTreeUsed": true
+  },
+  "repairAudit": {
+    "leadCompareScript": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/lead/node-modules-repair-compare.py",
+    "retainedBaselinePath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-root-smoke-central-ready-prepare-pre.json",
+    "retainedBaselineEntryCount": 21495,
+    "exactPostRepairComparison": "0 missing / 0 changed / 0 added",
+    "oldFileBytes": "All retained baseline path digests compare equal post-repair; only the 106 listed package-directory self-links were removed.",
+    "addedPathsBeforeRepair": [
+      "@babel/code-frame/code-frame",
+      "@babel/compat-data/compat-data",
+      "@babel/core/core",
+      "@babel/generator/generator",
+      "@babel/helper-compilation-targets/helper-compilation-targets",
+      "@babel/helper-globals/helper-globals",
+      "@babel/helper-module-imports/helper-module-imports",
+      "@babel/helper-module-transforms/helper-module-transforms",
+      "@babel/helper-string-parser/helper-string-parser",
+      "@babel/helper-validator-identifier/helper-validator-identifier",
+      "@babel/helper-validator-option/helper-validator-option",
+      "@babel/helpers/helpers",
+      "@babel/parser/parser",
+      "@babel/runtime/runtime",
+      "@babel/template/template",
+      "@babel/traverse/traverse",
+      "@babel/types/types",
+      "@dimforge/rapier3d-compat/rapier3d-compat",
+      "@esbuild/linux-x64/linux-x64",
+      "@jridgewell/gen-mapping/gen-mapping",
+      "@jridgewell/remapping/remapping",
+      "@jridgewell/resolve-uri/resolve-uri",
+      "@jridgewell/source-map/source-map",
+      "@jridgewell/sourcemap-codec/sourcemap-codec",
+      "@jridgewell/trace-mapping/trace-mapping",
+      "@mediabunny/aac-encoder/aac-encoder",
+      "@mediabunny/flac-encoder/flac-encoder",
+      "@mediabunny/mp3-encoder/mp3-encoder",
+      "@module-federation/error-codes/error-codes",
+      "@module-federation/runtime-core/runtime-core",
+      "@module-federation/runtime-tools/runtime-tools",
+      "@module-federation/runtime/runtime",
+      "@module-federation/sdk/sdk",
+      "@module-federation/webpack-bundler-runtime/webpack-bundler-runtime",
+      "@react-three/fiber/fiber",
+      "@remotion/bundler/bundler",
+      "@remotion/captions/captions",
+      "@remotion/cli/cli",
+      "@remotion/compositor-linux-x64-gnu/compositor-linux-x64-gnu",
+      "@remotion/google-fonts/google-fonts",
+      "@remotion/layout-utils/layout-utils",
+      "@remotion/licensing/licensing",
+      "@remotion/media-parser/media-parser",
+      "@remotion/media-utils/media-utils",
+      "@remotion/media/media",
+      "@remotion/player/player",
+      "@remotion/renderer/renderer",
+      "@remotion/streaming/streaming",
+      "@remotion/studio-codemods/studio-codemods",
+      "@remotion/studio-protocol/studio-protocol",
+      "@remotion/studio-server/studio-server",
+      "@remotion/studio-shared/studio-shared",
+      "@remotion/studio/studio",
+      "@remotion/three/three",
+      "@remotion/timeline-utils/timeline-utils",
+      "@remotion/web-renderer/web-renderer",
+      "@remotion/zod-types/zod-types",
+      "@rspack/binding-linux-x64-gnu/binding-linux-x64-gnu",
+      "@rspack/binding/binding",
+      "@rspack/core/core",
+      "@rspack/lite-tapable/lite-tapable",
+      "@rspack/plugin-react-refresh/plugin-react-refresh",
+      "@svgr/babel-plugin-add-jsx-attribute/babel-plugin-add-jsx-attribute",
+      "@svgr/babel-plugin-remove-jsx-attribute/babel-plugin-remove-jsx-attribute",
+      "@svgr/babel-plugin-remove-jsx-empty-expression/babel-plugin-remove-jsx-empty-expression",
+      "@svgr/babel-plugin-replace-jsx-attribute-value/babel-plugin-replace-jsx-attribute-value",
+      "@svgr/babel-plugin-svg-dynamic-title/babel-plugin-svg-dynamic-title",
+      "@svgr/babel-plugin-svg-em-dimensions/babel-plugin-svg-em-dimensions",
+      "@svgr/babel-plugin-transform-react-native-svg/babel-plugin-transform-react-native-svg",
+      "@svgr/babel-plugin-transform-svg-component/babel-plugin-transform-svg-component",
+      "@svgr/babel-preset/babel-preset",
+      "@svgr/core/core",
+      "@svgr/hast-util-to-babel-ast/hast-util-to-babel-ast",
+      "@svgr/plugin-jsx/plugin-jsx",
+      "@tweenjs/tween.js/tween.js",
+      "@types/dom-mediacapture-transform/dom-mediacapture-transform",
+      "@types/dom-webcodecs/dom-webcodecs",
+      "@types/eslint-scope/eslint-scope",
+      "@types/eslint/eslint",
+      "@types/estree/estree",
+      "@types/json-schema/json-schema",
+      "@types/node/node",
+      "@types/prop-types/prop-types",
+      "@types/react-dom/react-dom",
+      "@types/react-reconciler/react-reconciler",
+      "@types/react/react",
+      "@types/stats.js/stats.js",
+      "@types/three/three",
+      "@types/webxr/webxr",
+      "@webassemblyjs/ast/ast",
+      "@webassemblyjs/floating-point-hex-parser/floating-point-hex-parser",
+      "@webassemblyjs/helper-api-error/helper-api-error",
+      "@webassemblyjs/helper-buffer/helper-buffer",
+      "@webassemblyjs/helper-numbers/helper-numbers",
+      "@webassemblyjs/helper-wasm-bytecode/helper-wasm-bytecode",
+      "@webassemblyjs/helper-wasm-section/helper-wasm-section",
+      "@webassemblyjs/ieee754/ieee754",
+      "@webassemblyjs/leb128/leb128",
+      "@webassemblyjs/utf8/utf8",
+      "@webassemblyjs/wasm-edit/wasm-edit",
+      "@webassemblyjs/wasm-gen/wasm-gen",
+      "@webassemblyjs/wasm-opt/wasm-opt",
+      "@webassemblyjs/wasm-parser/wasm-parser",
+      "@webassemblyjs/wast-printer/wast-printer",
+      "@xtuc/ieee754/ieee754",
+      "@xtuc/long/long"
+    ],
+    "currentSceneManifestSha256": "fc5b559f886d8c4892f271436901973af690ecd7ad6d9072cb15c0ad5a4cdf96"
+  }
+}
