@@ -147,7 +147,10 @@ function mediaRegistry(ctx: MoveRecording, alias: string, pin: MediaSelection, k
   const before: AgentState = has(assetMap, alias) ? { state: 'present', value: copy(assetMap[alias]) } : { state: 'absent' };
   mediaRead(ctx, ref, before);
   const expected: JSON = { media_id: pin.object_id, type: kind, generationId: pin.generation_id, variantId: pin.variant_id };
-  if (before.state === 'present' && !equal(before.value, expected)) {
+  const entry = before.state === 'present' ? before.value : undefined;
+  if (before.state === 'present' && (!object(entry) ||
+    Object.entries(expected).some(([key, value]) => entry[key] !== value) ||
+    (has(entry, 'catalog_digest') && entry.catalog_digest !== pin.catalog_digest))) {
     throw new ClipMoveError('existing registry binding differs from exact selection', 'dependency_changed');
   }
   if (before.state === 'absent') {
@@ -161,6 +164,85 @@ function mediaRegistry(ctx: MoveRecording, alias: string, pin: MediaSelection, k
     ctx.command.created!.push(ref);
   }
   ctx.dependency('media.new', 'media', pin);
+}
+
+/** Read a parent selection, or check an exact Runtime selection against main's binding. */
+export function parentClipMediaSelection(bundle: AuthoredBundle, clipId: string, selected?: MediaSelection): MediaSelection {
+  const rows = mediaRows(bundle, 'clip');
+  const matches = rows.filter((candidate) => object(candidate) && candidate.id === clipId);
+  const row = matches.length === 1 ? matches[0] : undefined;
+  if (!object(row) || typeof row.asset !== 'string' || !identity(row.asset)) {
+    throw new ClipMoveError('parent media swap requires an exact authored target clip', 'identity_conflict');
+  }
+  const registry = parentMediaRegistry(bundle);
+  const entry = object(registry.assets) ? registry.assets[row.asset] : undefined;
+  if (!object(entry)) throw new ClipMoveError('parent media swap requires an authored registry binding', 'dependency_changed');
+  const selection = selected ?? {
+    asset: row.asset,
+    generation_id: entry.generationId,
+    variant_id: entry.variantId,
+    object_id: entry.media_id,
+    catalog_digest: entry.catalog_digest,
+  };
+  validateMediaSelection(selection);
+  if (selection.asset !== row.asset || selection.object_id !== entry.media_id ||
+    (has(entry, 'generationId') && selection.generation_id !== entry.generationId) ||
+    (has(entry, 'variantId') && selection.variant_id !== entry.variantId)) {
+    throw new ClipMoveError('old registry binding differs from selection', 'dependency_changed');
+  }
+  return copy(selection);
+}
+
+function parentMediaRegistry(bundle: AuthoredBundle): Row {
+  const parent = bundle.parent;
+  if (parent.config != null && !object(parent.config)) throw new ClipMoveError('parent.config must be an object');
+  const config = object(parent.config) ? parent.config : {};
+  for (const container of [parent, config]) {
+    if (has(container, 'registry') && (!object(container.registry) ||
+      (has(container.registry, 'assets') && !object(container.registry.assets)))) {
+      throw new ClipMoveError('media edit requires an authored asset registry');
+    }
+  }
+  if (has(parent, 'registry') && has(config, 'registry') && !equal(parent.registry, config.registry)) {
+    throw new ClipMoveError('parent.registry conflicts with parent.config.registry');
+  }
+  return (parent.registry ?? config.registry ?? { assets: {} }) as Row;
+}
+
+function swapRegistry(ctx: MoveRecording, alias: string, pin: MediaSelection, kind: 'image' | 'video', create = false): void {
+  if (!identity(alias)) throw new ClipMoveError('media requires a reserved raw asset alias');
+  const registry = parentMediaRegistry(ctx.state.bundle);
+  mediaRead(ctx, 'parent/collection:asset', { state: 'present', value: mediaCollectionShape(ctx.state.bundle, 'asset') });
+  if (!object(registry.assets)) throw new ClipMoveError('media edit requires an authored asset registry');
+  const assets = registry.assets;
+  const ref = `parent/asset:${alias}`;
+  const before: AgentState = has(assets, alias) ? { state: 'present', value: copy(assets[alias]) } : { state: 'absent' };
+  const entry = before.state === 'present' ? before.value : undefined;
+  if (entry !== undefined && !object(entry)) throw new ClipMoveError('asset binding must be an object');
+  mediaRead(ctx, ref, before);
+  const expected = { media_id: pin.object_id, type: kind, generationId: pin.generation_id, variantId: pin.variant_id };
+  if (create && before.state === 'absent') {
+    ctx.command.expect![`${ref}::`] = before;
+    ctx.command.authorship![`${ref}::`] = 'direct';
+    ctx.record.writes.push({ ref, path: [], before, after: { state: 'present', value: copy(expected) } });
+    const parent = ctx.state.bundle.parent;
+    const config = object(parent.config) ? parent.config : {};
+    for (const registry of [parent.registry, config.registry]) {
+      if (object(registry) && object(registry.assets)) registry.assets[alias] = copy(expected);
+    }
+    ctx.record.created.push({ ref, kind: 'asset', owner: 'parent' });
+    ctx.command.created!.push(ref);
+  } else if (!object(entry) || (create ? !equal(entry, expected) :
+    entry.media_id !== pin.object_id || entry.type !== kind ||
+    Object.entries(expected).some(([key, value]) => has(entry, key) && entry[key] !== value))) {
+    throw new ClipMoveError('registry binding differs from exact selection', 'dependency_changed');
+  }
+  if (!create && object(entry) &&
+    ['object_id', 'digest', 'content_digest', 'content_sha256', 'file', 'path', 'local_path', 'src', 'source', 'format']
+      .some((key) => has(entry, key))) {
+    throw new ClipMoveError('unsupported old registry identity codec', 'unsupported_media');
+  }
+  ctx.dependency(create ? 'media.new' : 'media.old', 'media', pin);
 }
 
 function validateParentMediaCommand(command: EditCommand): { row: Row; media: MediaSelection } {
@@ -184,7 +266,28 @@ function validateParentMediaCommand(command: EditCommand): { row: Row; media: Me
   return { row, media: command.args.media };
 }
 
-function validateMediaRow(ctx: MoveRecording, row: Row, kind: 'image' | 'video', input: VerifiedMedia): void {
+function validateParentMediaSwapCommand(command: EditCommand): { ref: string; oldMedia: MediaSelection; media: MediaSelection } {
+  const fields = ['schema_version', 'op', 'version', 'select', 'args', 'intent', 'rationale', 'group_id', ...MEDIA_CLAIMS];
+  if (Object.keys(command).some((key) => !fields.includes(key)) ||
+    (has(command, 'rationale') && typeof command.rationale !== 'string') ||
+    (has(command, 'group_id') && (typeof command.group_id !== 'string' || !command.group_id))) {
+    throw new ClipMoveError('clip.swap-media requires the closed EditCommand envelope');
+  }
+  if (command.schema_version !== 1 || command.op !== 'clip.swap-media' || command.version !== '1' ||
+    typeof command.select !== 'string' || !/^parent\/clip:(?!.*::)[^/]+$/.test(command.select) ||
+    !object(command.args) || !equal(Object.keys(command.args).sort(), ['media', 'old_media'].sort())) {
+    throw new ClipMoveError('clip.swap-media requires one explicit raw parent clip and two media selections');
+  }
+  if (!equal(command.intent, { ownership: 'parent' })) throw new ClipMoveError('clip.swap-media requires parent ownership');
+  validateMediaSelection(command.args.old_media);
+  validateMediaSelection(command.args.media);
+  return { ref: command.select, oldMedia: command.args.old_media, media: command.args.media };
+}
+
+function validateMediaRow(
+  ctx: MoveRecording, row: Row, kind: 'image' | 'video', inputs: readonly VerifiedMedia[],
+  rawWindow = false,
+): void {
   if (row.clipType !== 'media' && row.clipType !== kind ||
     ['asset_id', 'media_id', 'object_id', 'clip_type'].some((key) => has(row, key))) {
     throw new ClipMoveError('media edit requires one matching media clip');
@@ -196,18 +299,21 @@ function validateMediaRow(ctx: MoveRecording, row: Row, kind: 'image' | 'video',
   const app = row.app, nested = object(app) ? app.astrid : undefined;
   for (const container of [row, app, nested]) {
     if (container != null && !object(container)) throw new ClipMoveError('intent container must be object or null');
-    if (object(container) && [...MEDIA_RELATIONS, 'beats', 'word', 'words', 'transcript', 'source_id']
+    if (object(container) && [...MEDIA_RELATIONS, 'beats', 'word', 'words', 'transcript', 'source_id', ...(rawWindow ? ['standin', 'standin_intent'] : [])]
       .some((key) => container[key] != null)) throw new ClipMoveError('media edit requires literal child timing', 'unsupported_timing');
   }
-  if (row.transition != null) throw new ClipMoveError('media edit does not support transition', 'unsupported_timing');
-  const at = mediaNumber(row.at, 'clip.at'), hold = mediaNumber(row.hold, 'clip.hold', true);
+  if (!rawWindow && row.transition != null) throw new ClipMoveError('media edit does not support transition', 'unsupported_timing');
+  const at = mediaNumber(row.at, 'clip.at');
+  const hold = mediaNumber(rawWindow && row.hold == null && kind === 'video'
+    ? mediaNumber(row.to, 'clip.to') - mediaNumber(row.from, 'clip.from') : row.hold, 'clip.hold', true);
   const speed = row.speed == null ? 1 : mediaNumber(row.speed, 'clip.speed', true);
   if (at < 0) throw new ClipMoveError('clip.at must be non-negative', 'unsupported_timing');
   if (kind === 'image') {
     if (speed !== 1 || row.from != null || row.to != null) throw new ClipMoveError('image requires hold without a source window', 'unsupported_timing');
   } else {
-    const from = mediaNumber(row.from, 'clip.from'), to = mediaNumber(row.to, 'clip.to');
-    if (from < 0 || to <= from || to - from !== hold || to > mediaNumber(input.duration_seconds, 'intrinsic duration', true)) {
+    const from = rawWindow && row.from == null ? 0 : mediaNumber(row.from, 'clip.from');
+    const to = rawWindow && row.to == null ? from + hold : mediaNumber(row.to, 'clip.to');
+    if (from < 0 || to <= from || to - from !== hold || inputs.some((input) => to > mediaNumber(input.duration_seconds, 'intrinsic duration', true))) {
       throw new ClipMoveError('source window differs from hold or exceeds media', 'unsupported_timing');
     }
   }
@@ -241,7 +347,7 @@ export function executeParentClipAddMedia(
     throw new ClipMoveError('parent source_window is unsupported', 'unsupported_map');
   }
   ctx.bind('media.owner', 'parent');
-  validateMediaRow(ctx, row, kind, value);
+  validateMediaRow(ctx, row, kind, [value]);
   for (const occurrence of mediaSelection(ctx, 'collection.occurrences')) {
     for (const path of [['placement', 'track'], ['track']]) {
       if (ctx.read(occurrence, path) === row.track) {
@@ -281,6 +387,45 @@ export function executeParentClipAddMedia(
     }
   }
   Object.assign(ctx.command, copy(command), { intent: {} });
+  return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
+}
+
+/** Local authored execution of Agent clip.swap-media; only the raw asset binding changes. */
+export function executeParentClipSwapMedia(
+  bundle: AuthoredBundle, command: EditCommand, inputs: readonly VerifiedMedia[],
+) {
+  assertFiniteJson(bundle);
+  assertFiniteJson(command);
+  assertFiniteJson(inputs);
+  if (!Array.isArray(inputs) || inputs.some((input) => !object(input))) {
+    throw new ClipMoveError('media capture requires detached verified inputs');
+  }
+  const { ref, oldMedia, media } = validateParentMediaSwapCommand(command);
+  const previous = verifiedMedia(oldMedia, inputs);
+  const { value, kind } = verifiedMedia(media, inputs);
+  if (previous.kind !== kind) throw new ClipMoveError('media swap preserves media kind', 'unsupported_media');
+  const ctx = new MoveRecording(bundle, copy(command));
+  // Private014 carrier; the unactivated public013 DTO does not admit parent ownership.
+  ctx.command.intent = { ownership: 'parent' } as unknown as EditCommand['intent'];
+  ctx.bind('media.owner', 'parent');
+  const members = mediaSelection(ctx, 'collection.clips');
+  if (!members.includes(ref)) throw new ClipMoveError('missing raw parent clip identity', 'identity_conflict');
+  const row = ctx.read(ref, []);
+  if (!object(row)) throw new ClipMoveError('missing raw parent clip identity', 'identity_conflict');
+  // Parent raw swaps preserve timing and transitions; both immutable sources
+  // must cover the original window. Occurrence ownership is a separate recipe.
+  validateMediaRow(ctx, row, kind, [previous.value, value], true);
+  swapRegistry(ctx, row.asset as string, oldMedia, kind);
+  swapRegistry(ctx, media.asset, media, kind, true);
+  ctx.bind('media.target', ref, ['media.old', 'media.new']);
+  ctx.write(ref, ['asset'], media.asset);
+  ctx.compile();
+  for (const key of MEDIA_CLAIMS) {
+    if (has(command, key) && !equal(command[key], ctx.command[key])) {
+      throw new ClipMoveError(`submitted ${key} does not match original capture`, 'capture_mismatch');
+    }
+  }
+  Object.assign(ctx.command, copy(command), { intent: { ownership: 'parent' } });
   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
 }
 
