@@ -5,6 +5,7 @@ import { mkdir, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join, relative } from 'node:path';
 import { test } from 'node:test';
+import { EXPLICIT_CANVAS_640, NORMAL_PROFILE_NATIVE1920, ORIGINAL_640, type ParityCanvas } from './canvas';
 
 const FROZEN_SOURCES = {
   runtimeServer: {
@@ -89,7 +90,7 @@ function pythonSourceProof(python: string, runtime: string, agent: string) {
   return proof;
 }
 
-test('native retained frame fixture restores through /v1 with immutable media pins', async () => {
+async function assertNativeFixtureRestoresThroughV1(canvas: ParityCanvas): Promise<void> {
   const sourceTemp = await mkdtemp(join(tmpdir(), 'native-frame-frozen-pair-'));
   const previousEnv = { ...process.env };
   let harness: import('../../local/support/harness').DirectHarness | undefined;
@@ -106,7 +107,6 @@ test('native retained frame fixture restores through /v1 with immutable media pi
     const moduleProof = pythonSourceProof(runtimePython, archived.runtimeServer.root, archived.agent.root);
     const { DirectHarness } = await import('../../local/support/harness');
     const { assertCanonicalNativeMedia, nativeFrameParitySetup, prepareFrameParityFixture, prepareNativeFrameParityRealm, readRuntimeJson, timelineBase } = await import('./fixture');
-    const { ORIGINAL_640 } = await import('./canvas');
     const before = {
       app: { source: 'App test source is the current integration snapshot; no App source archive is substituted' },
       runtimeServer: { commit: FROZEN_SOURCES.runtimeServer.commit, tree: archived.runtimeServer.tree,
@@ -122,7 +122,7 @@ test('native retained frame fixture restores through /v1 with immutable media pi
     console.log(`[native-frame-source-proof] before ${JSON.stringify(before)}`);
     harness = new DirectHarness();
     await harness.start({ seed: false, beforeRuntimeStart: async current => {
-      await prepareNativeFrameParityRealm(current, ORIGINAL_640);
+      await prepareNativeFrameParityRealm(current, canvas);
     }});
     const python = process.env.ASTRID_PYTHON;
     assert.ok(python, 'ASTRID_PYTHON must select the accepted current Agent source');
@@ -143,7 +143,7 @@ test('native retained frame fixture restores through /v1 with immutable media pi
       head_publication_id: setup.head.publication_id,
     });
 
-    const fixture = await prepareFrameParityFixture(harness, ORIGINAL_640, setup);
+    const fixture = await prepareFrameParityFixture(harness, canvas, setup);
     assert.equal(fixture.media.length, 3);
     assert.deepEqual(fixture.media.map(pin => pin.name), ['image', 'video', 'audio']);
     assert.equal(fixture.sourceVideoMediaId, fixture.media.find(pin => pin.name === 'video')!.objectId);
@@ -151,7 +151,7 @@ test('native retained frame fixture restores through /v1 with immutable media pi
     assert.deepEqual(setup.document.dependency_manifest.media,
       fixture.media.map(pin => ({ media_id: pin.objectId, content_digest: pin.digest }))
         .sort((a, b) => a.media_id.localeCompare(b.media_id)));
-    assertCanonicalNativeMedia(fixture, ORIGINAL_640);
+    assertCanonicalNativeMedia(fixture, canvas);
 
     // Setup is native and the only accepted mutation is the ordinary restore command.
     assert.equal(harness.audit().filter(entry => entry.method === 'POST' && entry.path.endsWith('/composition-revisions')).length, 0);
@@ -196,5 +196,17 @@ test('native retained frame fixture restores through /v1 with immutable media pi
     Object.assign(process.env, previousEnv);
     await rm(sourceTemp, { recursive: true, force: true });
   }
+}
+
+test('native retained frame fixture restores through /v1 with immutable media pins', async () => {
+  await assertNativeFixtureRestoresThroughV1(ORIGINAL_640);
+});
+
+test('native retained frame fixture restores through /v1 with the actual default native1920 profile', async () => {
+  await assertNativeFixtureRestoresThroughV1(NORMAL_PROFILE_NATIVE1920);
+});
+
+test('native retained frame fixture restores through /v1 with an explicit theme canvas640 profile', async () => {
+  await assertNativeFixtureRestoresThroughV1(EXPLICIT_CANVAS_640);
 });
 
