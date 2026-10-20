@@ -330,6 +330,7 @@ function projectClip(
   clipIndex: number,
   clipIdentities: Map<string, CanonicalProjectedClipIdentity>,
   clampToOccurrenceDuration: boolean,
+  storedOccurrenceDurationMs: number,
 ): TimelineClip | null {
   assertSupportedChildClip(rawClip, occurrence);
   const rawClipId = text(rawClip.id) ?? null;
@@ -432,6 +433,7 @@ function projectClip(
         durationMs,
         occurrenceStartMs: occurrence.atMs,
         occurrenceDurationMs: occurrence.durationMs,
+        storedOccurrenceDurationMs,
       },
     },
   };
@@ -528,6 +530,7 @@ export function projectCanonicalComposition(
           index,
           clipIdentities,
           options.clampToOccurrenceDuration !== false,
+          occurrence.durationMs,
         );
         if (projected) {
           if (Array.isArray(timeline.effects) && timeline.effects.length > 0) {
