@@ -53,5 +53,3 @@ the actual initializer/retry + new provider + birth-neighbor lane is 4 passed.
 Schema `6ba` and the pristine fixture artifact are unchanged. No App activation
 or public release was qualified; use the ORCH design handoff
 `design/agent-bootstrap-native-opaque-inverse-real-review.md`.
-## PEER UPDATE from app — public13 integrated
-Read design/app-public13-integrated-agent-ready.md: exactApp ea38656fe/tree8bd8f741 public13+PCMprogress integrated, immutable9412/all77/ownred-green+negative/161controls. Agent13canfollowAppFIRST. App2allfourhelperrequests individuallymerged, sharednewportagreement1604active. Rootfrozenfornewediting4case+ONEfull; no nativewriter/frame/PCMphysicalexitclaim.

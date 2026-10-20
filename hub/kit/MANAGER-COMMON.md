@@ -42,6 +42,8 @@ Inbox: <last item acknowledged>
 Resources: <disk free, heavy jobs>
 ```
 
+**Write STATUS.md, escalations and briefs in plain English with normal spaces between words** (not "wordsruntogether"). The orchestrator and cheap checker agents must be able to read every decision line.
+
 ## Decide it yourself (owner direction 2026-10-20: you are trusted, act like it)
 You own your area. If your recommended decision fits PLAN.md and the precedents below, it IS the decision: do it, add one line to the "Decided locally" list in STATUS.md (decision + one-line reason), and move on. The orchestrator spot-checks those lines every hour and redirects if one is wrong; a wrong local call costs far less than a stalled hour. Never write an escalation that says "I am proceeding, no decision required"; that is a STATUS line.
 

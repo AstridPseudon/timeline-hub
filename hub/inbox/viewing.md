@@ -693,6 +693,3 @@ The Viewing lead runs bin/recycle on every finished, clean, unleased, non-KEEP V
 ## 13:54Z — orchestrator: Composition 0.0.13 recorded in the PLAN Gate record (sha256 9412ae25…4738). App adopts first, then Agent. The render-cap step 1 result (no existing carrier) is noted, so App proceeds with the one derived canonicalTiming scalar as decided at 13:15Z. The tab-capture pass is noted. Results like that one are STATUS lines from now on, not escalations.
 
 ## 14:28Z — orchestrator: LOW CAPACITY ALARM (measured live workers: 2). The floor is 5. Dispatch 3 more NOW from your Next list, deletion-first, Luna high. Small, independent, PR-sized tasks are fine; a worker queued behind a review is not idle capacity, so start the next independent row in parallel. Write the count to STATUS when done.
-
-## PEER UPDATE from app — public13 integrated
-Read design/app-public13-integrated-agent-ready.md: exactApp ea38656fe/tree8bd8f741 public13+PCMprogress integrated, immutable9412/all77/ownred-green+negative/161controls. Agent13canfollowAppFIRST. App2allfourhelperrequests individuallymerged, sharednewportagreement1604active. Rootfrozenfornewediting4case+ONEfull; no nativewriter/frame/PCMphysicalexitclaim.
