@@ -70,6 +70,7 @@ export const MIN_FREE_BYTES = 10 * 1024 ** 3;
 export const SHORT_TEMP_PREFIX = 'timeline-tab-audio-';
 export const APP_SOURCE_ENV = 'TIMELINE_VIEWING_APP_SOURCE';
 export const APP_TREE_ENV = 'TIMELINE_VIEWING_APP_TREE';
+const APP_OWNER_INTEGRATION_REF = 'refs/heads/tl/integration';
 
 const FULL_SHA = /^[a-f0-9]{40}$/;
 
@@ -125,7 +126,15 @@ const OWN_LEAF = new Set([
 ]);
 
 function git(root, args) {
-  return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
+  try {
+    return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
+  } catch (error) {
+    // The sandbox can report EPERM after git has successfully returned its
+    // output. Preserve that output; genuine non-zero git failures still fail
+    // closed below.
+    if (error.status === 0 && typeof error.stdout === 'string') return error.stdout.trim();
+    throw error;
+  }
 }
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
@@ -238,8 +247,23 @@ export function assertRuntimeArtifact(facts = RUNTIME13_ARTIFACT) {
   return facts;
 }
 
-export function assertAppOwnLeaf(appRoot, base = readAppSourceSelection().source) {
-  const changed = git(appRoot, ['diff', '--name-only', `${base}...HEAD`]).split('\n').filter(Boolean);
+export function assertAppOwnerBase(appRoot, app = readAppSourceSelection()) {
+  const source = typeof app === 'string' ? app : app.source;
+  const selectedTree = git(appRoot, ['rev-parse', `${source}^{tree}`]);
+  if (typeof app !== 'string' && selectedTree !== app.tree) {
+    throw new Error(`selected App source/tree does not name the selected commit: ${source}/${app.tree}`);
+  }
+  const integration = git(appRoot, ['rev-parse', `${APP_OWNER_INTEGRATION_REF}^{commit}`]);
+  if (git(appRoot, ['merge-base', source, integration]) !== source) {
+    throw new Error(`selected App source ${source} is not an actual App integration ancestor`);
+  }
+  return { source, tree: selectedTree };
+}
+
+export function assertAppOwnLeaf(appRoot, base = readAppSourceSelection()) {
+  const source = typeof base === 'string' ? base : base.source;
+  assertAppOwnerBase(appRoot, base);
+  const changed = git(appRoot, ['diff', '--name-only', `${source}...HEAD`]).split('\n').filter(Boolean);
   const forbidden = changed.filter(file => !OWN_LEAF.has(file));
   if (forbidden.length) throw new Error(`App product/root/pin/DTO/source changes are not owned by this leaf: ${forbidden.join(', ')}`);
   return changed;

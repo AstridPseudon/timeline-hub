@@ -4,7 +4,7 @@ import {
   APP13, AGENT13, RUNTIME13, RUNTIME13_ARTIFACT, AGENT13_RUNTIME, COMPOSITION13, CHROME155, CONTROL, NODE20,
   VIEWING_QUALIFICATIONS,
   MISSING_OWNER_PORTS, OWNER_PORTS,
-  assertCandidateTuple, assertFrozenRuntimeGraph, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
+  assertAppOwnerBase, assertAppOwnLeaf, assertCandidateTuple, assertFrozenRuntimeGraph, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
   assertRuntimeArtifact, readAppSourceSelection,
 } from './tab-audio.controller.mjs';
 
@@ -51,6 +51,21 @@ test('controller refuses empty, whitespace-only, and partial current App selecti
     { TIMELINE_VIEWING_APP_SOURCE: '20ea14c26526fe4924354f10a177aebbaf6002bc' },
     { TIMELINE_VIEWING_APP_TREE: '83cfad527f8b2264085571316cede1c6ae482b5f' },
   ]) assert.throws(() => readAppSourceSelection(env), /must be supplied together/);
+});
+
+test('leaf refuses a candidate that self-selects as its owner base', () => {
+  assert.throws(() => assertAppOwnLeaf(process.cwd(), '05de08cecabeaea2d0d955475e6190acc685111a'),
+    /not an actual App integration ancestor/);
+});
+
+test('leaf accepts the actual current App owner base lineage and tree', () => {
+  assert.deepEqual(assertAppOwnerBase(process.cwd(), {
+    source: '20ea14c26526fe4924354f10a177aebbaf6002bc',
+    tree: '83cfad527f8b2264085571316cede1c6ae482b5f',
+  }), {
+    source: '20ea14c26526fe4924354f10a177aebbaf6002bc',
+    tree: '83cfad527f8b2264085571316cede1c6ae482b5f',
+  });
 });
 
 test('immutable d0 Runtime graph retains its lock, whole graph, and six peers', () => {
