@@ -317,6 +317,63 @@ def test_materialization_remaps_only_item_codec_and_declared_source_links(codec,
     assert (parent, shots, timelines) == original
 
 
+@pytest.mark.parametrize("codec", ["item_id", "id", "both", "opaque-id"])
+@pytest.mark.parametrize("descriptor_location", ["metadata", "root"])
+def test_materialization_remaps_only_item_codec_and_declared_source_links(codec, descriptor_location):
+    parent, shots, timelines = _closure(shared=True)
+    payload = shots[0]["payload"]
+    opaque = {"org.example.notes/v1": {
+        "item_id": "item-1", "id": "item-1", "source_item_id": "item-1",
+        "source_item": "item-audio", "foreign_item_id": "item-audio",
+        "foreign_item_ids": ["item-audio", None, "item-1", "item-audio"],
+        "selected_item_id": "item-1", "parent_item_id": "item-audio",
+        "item-1": None, "literal": "item-1", "nested": [{"item_id": "item-1"}],
+    }}
+    for field in ("data", "app", "opaque", "metadata", "provenance", "selected_variants",
+                  "generation_inputs"):
+        payload[field] = copy.deepcopy(opaque)
+    for field in ("pools", "audio_bindings", "text_bindings"):
+        payload[field] = [copy.deepcopy(opaque)]
+    for item in payload["items"]:
+        if codec in ("id", "both", "opaque-id"):
+            item["id"] = item["item_id"] if codec != "opaque-id" else "opaque-identity"
+        if codec == "id":
+            del item["item_id"]
+        for field in ("data", "app", "opaque"):
+            item[field] = copy.deepcopy(opaque)
+        item["metadata"] = copy.deepcopy(opaque)
+        descriptor = item["metadata"] if descriptor_location == "metadata" else item
+        if descriptor_location == "root":
+            del item["metadata"]
+        descriptor.update(source_item_id="item-1", source_item="item-audio")
+    shots[0]["content_digest"] = _digest(payload)
+    original = copy.deepcopy((parent, shots, timelines))
+    bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=timelines)
+    first = bundle["shots"][bundle["placements"][0]["shot_id"]]
+    copied = first["payload"]
+    identity = "id" if codec == "id" else "item_id"
+    remap = {item[identity]: copied_item[identity]
+             for item, copied_item in zip(payload["items"], copied["items"])}
+    expected = copy.deepcopy(payload)
+    for item in expected["items"]:
+        source = item[identity]
+        item[identity] = remap[source]
+        if codec == "both":
+            item["id"] = remap[source]
+        descriptor = item["metadata"] if descriptor_location == "metadata" else item
+        descriptor.update(source_item_id=remap["item-1"], source_item=remap["item-audio"])
+    assert copied == expected
+    assert all(source != target for source, target in remap.items())
+    assert (parent, shots, timelines) == original
+    first["internal_timeline"]["clips"][0]["at"] = 0.25
+    publication = compile_authoring_candidate(bundle).publication
+    materialized = next(row for row in publication["shot_revisions"] if row["shot_id"] == first["shot_id"])
+    # The compiler owns only this derived child revision link.
+    expected["internal_timeline_revision_id"] = materialized["internal_timeline_revision_id"]
+    assert materialized["payload"] == expected
+    assert (parent, shots, timelines) == original
+
+
 def test_independent_unique_shot_reuses_untouched_revision_and_direct_edits_compile_identically():
     parent, shots, timelines = _closure(shared=False)
     helper_candidate = open_authoring_bundle(

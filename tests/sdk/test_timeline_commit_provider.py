@@ -1032,6 +1032,29 @@ def test_restore_refuses_unavailable_or_corrupt_retained_input(damage):
     assert realm.head == head and len(realm.accepted) == 1
 
 
+@pytest.mark.parametrize("damage", ["missing", "revision", "gap", "scope", "digest"])
+def test_inverse_historical_source_requires_authenticated_boundaries(damage):
+    realm = DetachedRealm()
+    original = detached(realm.head)
+    realm.call([realm.move()])
+    target = realm.call([realm.move("parent/clip:clip-b", 8.008)])
+    previous = realm.entries[-1]["previous"]
+    if damage == "missing":
+        realm.entries[-1]["previous"] = None
+    elif damage == "revision":
+        previous["revision_id"] = "wrong-revision"
+    elif damage == "gap":
+        realm.entries[-1]["previous"] = original
+    elif damage == "scope":
+        realm.documents[previous["revision_id"]]["project_id"] = "foreign-project"
+    else:
+        realm.documents[previous["revision_id"]]["shot_revisions"][0]["payload"]["unknown"] = "tampered"
+    head, accepted = detached(realm.head), detached(realm.accepted)
+    with pytest.raises(CommitRejected):
+        realm.call([inverse([target["receipt"]["receipt_id"]])])
+    assert realm.head == head and realm.accepted == accepted
+
+
 def accept_recorded_fixture(realm, candidate, records, *, undo_of=None):
     """Publish recorder fixtures for structural commands outside the M1 registry."""
     from astrid.sdk.timeline.commit import document_from_bundle
