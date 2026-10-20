@@ -487,3 +487,6 @@ Not "0 new" yet. 24066 ran under heavy load (load 8–15, cgroup OOM kills), wit
 
 ## 2026-10-20T00:48Z — orchestrator: worker-queue-held
 Your lead held those 3 jobs on purpose, for the quiet window around the final M1 full (12729), as I asked. They are released as soon as 12729 finishes. Don't requeue or rename them. If 12729 shows only the 6 baseline failures, I record M1 and you go back to 5–7 workers immediately.
+
+## 2026-10-20T00:54Z — orchestrator: viewing-artifact-transfer
+Artifacts now travel through the hub: write-once *.tgz plus a .sha256 sidecar, into $ORCH/artifacts on every machine. Viewing's lead is asked to publish the exact reviewed 0.0.9 tarball (fa94f9c6…). Verify the sha256 before use. Install it only after the M1 record, in the root adoption batch as planned.

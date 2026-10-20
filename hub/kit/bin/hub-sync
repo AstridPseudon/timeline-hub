@@ -109,6 +109,15 @@ else
   for d in hub/tests/*; do [ -d "$d" ] && [ ! -d $ORCH/tests/$(basename $d) ] && cp -rp $d $ORCH/tests/; done
 fi
 
+# immutable package artifacts (*.tgz <= 20 MB) both ways: a published file name is write-once; each carries a .sha256 sidecar.
+# Never overwrite an existing name, whether hub or local; a digest mismatch is reported to stderr and the file left alone.
+mkdir -p hub/artifacts $ORCH/artifacts
+for f in $ORCH/artifacts/*.tgz; do [ -f "$f" ] || continue; b=$(basename $f); [ $(stat -c %s $f) -le 20971520 ] || continue
+  [ -e hub/artifacts/$b ] || { cp -p $f hub/artifacts/$b; sha256sum $f | awk '{print $1}' > hub/artifacts/$b.sha256; }; done
+for f in hub/artifacts/*.tgz; do [ -f "$f" ] || continue; b=$(basename $f); want=$(cat $f.sha256 2>/dev/null)
+  [ -n "$want" ] && [ "$(sha256sum $f | awk '{print $1}')" != "$want" ] && { echo "hub-sync: artifact $b digest mismatch, skipped" >&2; continue; }
+  [ -e $ORCH/artifacts/$b ] || cp -p $f $ORCH/artifacts/$b; done
+
 # design docs both ways, newer wins
 for f in $ORCH/design/*; do [ -f "$f" ] || continue; b=$(basename $f); [ ! -e hub/design/$b ] || [ $f -nt hub/design/$b ] && cp -p $f hub/design/$b; done
 for f in hub/design/*; do [ -f "$f" ] || continue; b=$(basename $f); [ ! -e $ORCH/design/$b ] || [ $f -nt $ORCH/design/$b ] && cp -p $f $ORCH/design/$b; done

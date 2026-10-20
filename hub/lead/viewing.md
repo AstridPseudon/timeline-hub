@@ -25,3 +25,6 @@ The owner wants max throughput. Every 30 minutes, check that your manager keeps 
 ## 2026-10-20 00:45Z — ACTION (lead): disk is at 5.9 GiB, recycle NOW
 Unless QUIET.md shows an ACTIVE capture, recycle these finished, clean worktrees, keeping their branches and all ORCH reports/WAVs/raw/provenance: drain-lifetime, cpu-export-smoke, cpu-shell-export, cpu-export-qualified, scene-consumers. KEEP e290 audio-monitor-control, observed-player-baseline, f816 ssr-snapshot, scene-host-plumbing, agent-gate, and every active worker.
 Standing rule for your hourly routine from now on: keep free disk at 10 GiB or more. Recycle finished, clean, superseded worktrees, oldest first, with the same keep rules, and clear caches you own (e.g. the npm cache) if needed.
+
+## 2026-10-20 01:05Z — lead: publish the reviewed Composition 0.0.9 tarball for App
+App needs the EXACT reviewed 0.0.9 package (sha256 fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61). Copy that exact file (the reviewed bytes; don't rebuild) to $ORCH/artifacts/banodoco-timeline-composition-0.0.9.tgz and confirm its sha256 matches. The new hub-sync, which arrives via hub/kit, publishes artifacts write-once with a .sha256 sidecar, and the App machine receives them automatically.
