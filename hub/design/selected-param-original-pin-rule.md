@@ -6,8 +6,10 @@ target's element/params selection at the captured accepted publication**.
 PARAM preserves that selection; it cannot choose another admitted pin.
 `clip.set-element` is explicit reselection and may establish another pin even
 when its `elementRef` write has identical before/after JSON. An ordinary PARAM
-then records that same pin, including unchanged values, clear-only and empty
-writes. No unique qualifying pin means visible refusal with the draft retained.
+then records that same pin, including unchanged values and clear-only writes. Public S2 rejects a
+syntactically empty values/clear PARAM before acceptance (its anyOf requires a
+write); this rule does not authorize widening that schema or require an accepted
+empty command. No unique qualifying pin means visible refusal with the draft retained.
 An empty or singleton manifest does not establish a selection.
 
 This is the rule/fixture handoff, not a claim that enforcement is wired. The

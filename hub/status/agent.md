@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T13:07:08Z | dispatcher heartbeat 0s -->
+<!-- main | 2026-10-20T13:12:56Z | dispatcher heartbeat 14s -->
 # agent — 2026-10-20 12:52:58 UTC
 Milestone: M1 RECORDED; M2 active, NOT complete. Gates1/6/7 OPEN; no all-writer retirement, current App journey, unified pixel/MP4/audio/owner-film or macOS claim.
 Integrated: Agent tl/integration ce363f6d6d60e504dbd4d79803c2d6299f648ade. Safe S2 pin d8749a9c (973targeted+18real+26source/2oldxfail); duplicate raw/compile/reload/inverse/redo fix9cb10904 (570pure/16actualS2, unchangedparent6RED/2controlsPASS); exactsinglecapgolden140e84cc (152+15/2oldaudiogaps,no productchange); owned sheet/CLI rationale13a05d55; three lock/env test setup repairsce363f6d (3+64/1skip+15adjacent inBOTHsupported/isolatedprofiles). D05/D06/D07 deleted; remaining WC1-WC8/WC10 held, no false full-writer deletion.
