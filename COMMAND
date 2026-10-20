@@ -1,0 +1,39 @@
+# Source identity and ancestry
+git status --short --branch
+git rev-parse HEAD HEAD^{tree} origin/main origin/main^{tree}
+git merge-base origin/main HEAD
+git merge-base --is-ancestor origin/main HEAD
+
+# Refresh the clean-main delivery artifacts
+git diff --binary --full-index --no-ext-diff --no-renames origin/main HEAD > composition-origin-main-to-ac918bb64.patch
+git bundle create composition-origin-main-to-ac918bb64.bundle origin/main..HEAD
+git bundle verify composition-origin-main-to-ac918bb64.bundle
+sha256sum composition-origin-main-to-ac918bb64.patch > composition-origin-main-to-ac918bb64.patch.sha256
+sha256sum composition-origin-main-to-ac918bb64.bundle > composition-origin-main-to-ac918bb64.bundle.sha256
+
+# Fresh archive application, with staging outside any Git worktree
+stage=$(mktemp -d /tmp/timeline-composition-proof.XXXXXX)
+mkdir -p "$stage/origin-main" "$stage/origin-main-patched" "$stage/head"
+git archive --format=tar origin/main | tar -xf - -C "$stage/origin-main"
+git archive --format=tar origin/main | tar -xf - -C "$stage/origin-main-patched"
+git archive --format=tar HEAD | tar -xf - -C "$stage/head"
+(cd "$stage/origin-main-patched" && git apply --binary --check /home/user/work/wt/vw-m4-composition-ac918-delivery-proof-refresh/composition-origin-main-to-ac918bb64.patch)
+(cd "$stage/origin-main-patched" && git apply --binary /home/user/work/wt/vw-m4-composition-ac918-delivery-proof-refresh/composition-origin-main-to-ac918bb64.patch)
+# Result: PATCH_APPLY=PASS
+
+# Exact tracked path, mode, and blob comparison
+python3 <inline comparison of git ls-tree paths/modes/blob hashes against the three extracted archives>
+# Result: origin/main 29/29 PASS; patched HEAD 113/113 PASS; archived HEAD 113/113 PASS;
+# PATCHED_EQUALS_HEAD_TREE=PASS; zero missing, extra, mode, or blob mismatches.
+
+# Integrity and immutable archive checks
+git diff --check origin/main HEAD
+sha256sum -c composition-origin-main-to-ac918bb64.patch.sha256
+sha256sum -c composition-origin-main-to-ac918bb64.bundle.sha256
+sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.13.tgz
+tar -tzf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.13.tgz | wc -l
+# Results: DIFF_CHECK=PASS; both sidecars OK; public archive SHA-256
+# 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738; 77 members.
+
+# Reused central evidence; no full rerun
+# composition-full-1020223241-16395: PASSED78/0fail/0skip
