@@ -1,6 +1,7 @@
 # Astrid's bootstrap, PowerShell 5.1+. Run with -NoProfile -ExecutionPolicy Bypass.
 # A child scope keeps irm | iex from changing the caller's error preference.
 & {
+    param([bool]$FileInvocation)
     $InstallerArgs = @($args)
     $ErrorActionPreference = 'Stop'
     $UvVersion = '0.11.32'
@@ -10,33 +11,23 @@
     $Log = Join-Path $LogDir 'install.log'
     $Temp = Join-Path ([IO.Path]::GetTempPath()) ('astrid-install-' + [Guid]::NewGuid().ToString('N'))
     $CoreFailure = $null
+    $NativeExitCode = 1
 
-    # Read native streams through .NET: PS 5.1 otherwise turns stderr progress
-    # into terminating errors under ErrorActionPreference Stop, even on exit 0.
-    function Invoke-InstallerCommand([string]$FilePath, [string[]]$Arguments, [switch]$LogOutput) {
+    # The readers run in .NET so stderr never becomes a PS 5.1 terminating
+    # error, and progress bypasses the function's captured success output.
+    function Invoke-InstallerCommand([string]$FilePath, [string[]]$Arguments, [switch]$LogOutput, [switch]$StreamOutput) {
         $Quoted = foreach ($Argument in $Arguments) {
             '"' + ([regex]::Replace($Argument, '(\\*)"', '$1$1\"') -replace '(\\+)$', '$1$1') + '"'
         }
-        $Process = New-Object Diagnostics.Process
-        try {
-            $Process.StartInfo.FileName = $FilePath
-            $Process.StartInfo.Arguments = $Quoted -join ' '
-            $Process.StartInfo.UseShellExecute = $false
-            $Process.StartInfo.CreateNoWindow = $true
-            $Process.StartInfo.RedirectStandardOutput = $true
-            $Process.StartInfo.RedirectStandardError = $true
-            $Process.Start() | Out-Null
-            $OutputTask = $Process.StandardOutput.ReadToEndAsync()
-            $ErrorTask = $Process.StandardError.ReadToEndAsync()
-            $Process.WaitForExit()
-            $OutputText = $OutputTask.GetAwaiter().GetResult()
-            $ErrorText = $ErrorTask.GetAwaiter().GetResult()
-            if ($ErrorText) { Add-Content -Encoding UTF8 -Path $Log -Value $ErrorText }
-            if ($LogOutput -and $OutputText) { Add-Content -Encoding UTF8 -Path $Log -Value $OutputText }
-            return [pscustomobject]@{ ExitCode = $Process.ExitCode; Output = $OutputText }
-        } finally {
-            $Process.Dispose()
-        }
+        $Info = New-Object Diagnostics.ProcessStartInfo
+        $Info.FileName = $FilePath
+        $Info.Arguments = $Quoted -join ' '
+        $Info.UseShellExecute = $false
+        # A detached child would miss the console's Ctrl+C event on Windows.
+        $Info.CreateNoWindow = $false
+        $Info.RedirectStandardOutput = $true
+        $Info.RedirectStandardError = $true
+        return [AstridInstallerProcess]::Run($Info, $Log, $LogOutput.IsPresent, $StreamOutput.IsPresent)
     }
 
     try {
@@ -46,6 +37,66 @@
         $Enforced = $Policy | Where-Object { $_.Scope -in @('MachinePolicy','UserPolicy') -and $_.ExecutionPolicy -in @('Restricted','AllSigned') }
         if ($Enforced) {
             throw 'An organization execution policy may block setup. Process-level Bypass cannot override Group Policy; ask your administrator to allow the Astrid installer.'
+        }
+        if (-not ('AstridInstallerProcess' -as [type])) {
+            Add-Type -TypeDefinition @'
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+public sealed class AstridInstallerProcess {
+    public int ExitCode;
+    public string Output;
+    public bool FailureDisplayed;
+    public static AstridInstallerProcess Run(ProcessStartInfo info, string log, bool logOutput, bool streamOutput) {
+        var output = new StringBuilder();
+        var errors = new StringBuilder();
+        var gate = new object();
+        bool failurePending = false, interrupted = false, failureDisplayed = false;
+        ConsoleCancelEventHandler onCancel = (sender, args) => { lock (gate) interrupted = true; };
+        using (var process = new Process()) {
+            process.StartInfo = info;
+            process.OutputDataReceived += (sender, data) => {
+                if (data.Data == null) return;
+                lock (gate) {
+                    output.AppendLine(data.Data);
+                    if (data.Data == "Astrid could not finish; your workspace and any update backup have been kept.") failurePending = true;
+                    // The final failure paragraph is thrown once by the caller.
+                    if (streamOutput && !failurePending) Console.WriteLine(data.Data);
+                }
+            };
+            process.ErrorDataReceived += (sender, data) => {
+                if (data.Data != null) lock (gate) errors.AppendLine(data.Data);
+            };
+            Console.CancelKeyPress += onCancel;
+            try {
+                process.Start();
+                try {
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                } finally {
+                    // The child shares our console and receives Ctrl+C itself.
+                    // Keep its readers alive until cooperative recovery completes.
+                    process.WaitForExit();
+                    // The core opens this same log. Append only after it exits,
+                    // so Windows sharing and independent file offsets cannot clash.
+                    if (errors.Length > 0) File.AppendAllText(log, errors.ToString(), new UTF8Encoding(false));
+                    if (logOutput) File.AppendAllText(log, output.ToString(), new UTF8Encoding(false));
+                    // Ctrl+C can stop the PS pipeline before its catch can run.
+                    if (streamOutput && interrupted && failurePending) {
+                        string text = output.ToString();
+                        Console.WriteLine(text.Substring(text.IndexOf("Astrid could not finish; your workspace and any update backup have been kept.", StringComparison.Ordinal)).TrimEnd());
+                        failureDisplayed = true;
+                    }
+                }
+                return new AstridInstallerProcess { ExitCode = process.ExitCode, Output = output.ToString(), FailureDisplayed = failureDisplayed };
+            } finally {
+                Console.CancelKeyPress -= onCancel;
+            }
+        }
+    }
+}
+'@
         }
         $Manifest = Join-Path $Temp 'manifest.json'
         $ManifestUrl = if ($env:ASTRID_INSTALL_MANIFEST_URL) { $env:ASTRID_INSTALL_MANIFEST_URL } else { 'https://astrid.haus/install-manifest.json' }
@@ -108,22 +159,32 @@
         foreach ($Name in @('runtime','agent')) {
             $RunArgs += @('--with', (Get-GitRequirement $Name))
         }
-        $RunArgs += @('python','-I','-m','astrid','install','--manifest',$Manifest)
+        $RunArgs += @('python','-u','-I','-m','astrid','install','--manifest',$Manifest)
         $RunArgs += $InstallerArgs
-        $Result = Invoke-InstallerCommand $Uv $RunArgs
+        $Result = Invoke-InstallerCommand $Uv $RunArgs -StreamOutput
+        $NativeExitCode = $Result.ExitCode
+        $global:LASTEXITCODE = $NativeExitCode
         if ($Result.ExitCode -ne 0) {
             if ($Result.Output.Contains('Astrid could not finish; your workspace and any update backup have been kept.')) {
-                $CoreFailure = $Result.Output.TrimEnd()
+                $CoreFailure = $Result.Output.Substring($Result.Output.IndexOf('Astrid could not finish; your workspace and any update backup have been kept.')).TrimEnd()
+            }
+            if ($Result.FailureDisplayed) {
+                if ($FileInvocation) { exit $NativeExitCode }
+                return
             }
             throw 'The Astrid installer did not finish; see the log.'
         }
-        if ($Result.Output) { Write-Output $Result.Output.TrimEnd() }
     } catch {
         $_ | Out-String | Add-Content -Encoding UTF8 -Path $Log -ErrorAction SilentlyContinue
+        $Message = if ($CoreFailure) { $CoreFailure } else { "Astrid could not get ready.`nDetails: $Log" }
+        $global:LASTEXITCODE = $NativeExitCode
+        if ($FileInvocation) {
+            [Console]::Error.WriteLine($Message)
+            exit $NativeExitCode
+        }
         # Throw instead of exit: irm | iex must never close the user's shell.
-        if ($CoreFailure) { throw $CoreFailure }
-        throw "Astrid could not get ready.`nDetails: $Log"
+        throw $Message
     } finally {
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $Temp
     }
-} @args
+} ([bool]$PSCommandPath -and $MyInvocation.MyCommand -is [Management.Automation.ExternalScriptInfo]) @args

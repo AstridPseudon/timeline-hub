@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { failure, fixture, repo } from './fixture.mjs';
+import { failure, fixture, observe, repo, terminalInterrupt } from './fixture.mjs';
 
 async function scenario(fn) {
   const context = await fixture();
@@ -93,4 +93,55 @@ test('POSIX accepts localhost file URLs as local pinned repositories', () => sce
   assert.equal(result.code, 0, result.stderr);
   assert.equal(result.stdout.trim(), 'Astrid is ready.');
   assert.ok((await context.calls()).at(-1).includes(`git+${local}@${context.manifest.agent.sha}`));
+}));
+
+test('POSIX streams an unbuffered installer stage before the transaction can finish', () => scenario(async (context) => {
+  const release = path.join(context.root, 'release-stage');
+  const child = await context.start('/bin/sh', [path.join(repo, 'public/install')], { MOCK_STAGE_RELEASE: release });
+  const output = observe(child);
+  try {
+    await output.until('Installing the pinned Astrid version.');
+    assert.equal(child.exitCode, null);
+  } finally { await writeFile(release, 'continue'); }
+  const result = await output.result;
+  assert.equal(result.code, 0, result.stderr);
+  assert.match(result.stdout, /Astrid is ready\./);
+  assert.ok((await context.calls()).at(-1).includes('-u'));
+}));
+
+test('POSIX preserves a native core exit code without the core failure paragraph', () => scenario(async (context) => {
+  const result = await run(context, [], { MOCK_CORE_RAW_EXIT: '27' });
+  assert.equal(result.code, 27);
+  assert.equal((result.stderr.match(/Astrid could not get ready\./g) || []).length, 1);
+  assert.equal((result.stderr.match(/Details:/g) || []).length, 1);
+  assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /raw core diagnostic/);
+}));
+
+test('POSIX terminal Ctrl+C reaches the installer and waits for cooperative recovery', () => scenario(async (context) => {
+  const receipt = path.join(context.root, 'interrupted');
+  const result = await context.run('python3', ['-c', terminalInterrupt, '/bin/sh', path.join(repo, 'public/install')], {
+    MOCK_STAGE_RELEASE: path.join(context.root, 'never-release'), MOCK_INTERRUPTED: receipt,
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const terminal = JSON.parse(result.stdout);
+  assert.equal(terminal.interrupted, true);
+  assert.equal(terminal.code, 19, terminal.output);
+  assert.match(await readFile(receipt, 'utf8'), /KeyboardInterrupt reached installer/);
+  assert.equal(terminal.output.split(failure).length - 1, 1);
+  assert.equal((terminal.output.match(/Details:/g) || []).length, 1);
+  assert.doesNotMatch(terminal.output, /Astrid could not get ready/);
+}));
+
+test('POSIX piped bootstrap preserves terminal stdin for uv cancellation', () => scenario(async (context) => {
+  const receipt = path.join(context.root, 'interrupted');
+  const result = await context.run('python3', ['-c', terminalInterrupt, '/bin/bash', '--noprofile', '--norc', '-i', '-c', 'cat "$1" | sh', 'piped-installer', path.join(repo, 'public/install')], {
+    MOCK_STAGE_RELEASE: path.join(context.root, 'never-release'), MOCK_INTERRUPTED: receipt, MOCK_REQUIRE_TTY: '1',
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const terminal = JSON.parse(result.stdout);
+  assert.equal(terminal.interrupted, true);
+  assert.equal(terminal.code, 19, terminal.output);
+  assert.match(await readFile(receipt, 'utf8'), /KeyboardInterrupt reached installer/);
+  assert.equal(terminal.output.split(failure).length - 1, 1);
+  assert.equal((terminal.output.match(/Details:/g) || []).length, 1);
 }));

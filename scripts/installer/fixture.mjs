@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { chmod, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,7 +9,7 @@ const execute = promisify(execFile);
 export const repo = fileURLToPath(new URL('../../', import.meta.url));
 export const failure = 'Astrid could not finish; your workspace and any update backup have been kept.';
 const mockUv = `#!/usr/bin/env python3
-import json, os, pathlib, shutil, subprocess, sys
+import json, os, pathlib, shutil, subprocess, sys, time
 args = sys.argv[1:]
 with open(os.environ['MOCK_CALLS'], 'a') as stream: stream.write(json.dumps(args) + '\\n')
 print('native progress on stderr', file=sys.stderr)
@@ -24,7 +24,33 @@ if args[:2] == ['python', 'install']:
     sys.exit(int(os.environ.get('MOCK_PYTHON_EXIT', '0')))
 if '-c' in args:
     start = args.index('-c')
-    sys.exit(subprocess.call([sys.executable, '-I', '-c', args[start + 1], *args[start + 2:]]))
+    os.execv(sys.executable, [sys.executable, '-u', '-I', '-c', args[start + 1], *args[start + 2:]])
+if os.environ.get('MOCK_REQUIRE_TTY'):
+    assert sys.stdin.isatty(), 'uv must see terminal stdin to avoid duplicate SIGINT'
+if os.environ.get('MOCK_CORE_APPEND_LOG'):
+    with open(os.environ['MOCK_LOG'], 'a') as stream:
+        if os.name == 'posix':
+            import fcntl
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        stream.write('core opened its own log\\n')
+        stream.flush()
+        print('Core is writing its log.', flush=True)
+        stream.write('core kept its own diagnostic\\n')
+if os.environ.get('MOCK_STAGE_RELEASE'):
+    # Emulate Python's stdout buffering according to the forwarded -u flag.
+    sys.stdout.reconfigure(line_buffering='-u' in args)
+    try:
+        print('Installing the pinned Astrid version.')
+        while not pathlib.Path(os.environ['MOCK_STAGE_RELEASE']).exists(): time.sleep(0.01)
+    except KeyboardInterrupt:
+        pathlib.Path(os.environ['MOCK_INTERRUPTED']).write_text('KeyboardInterrupt reached installer')
+        time.sleep(0.4)  # Cooperative rollback must finish before readers close.
+        print(${JSON.stringify(failure)})
+        print('Details: ' + os.environ['MOCK_LOG'])
+        sys.exit(19)
+if os.environ.get('MOCK_CORE_RAW_EXIT'):
+    print('raw core diagnostic', file=sys.stderr)
+    sys.exit(int(os.environ['MOCK_CORE_RAW_EXIT']))
 if os.environ.get('MOCK_REMOVE_BOOTSTRAP'):
     shutil.rmtree(pathlib.Path(sys.argv[0]).parent)
 if os.environ.get('MOCK_CORE_EXIT'):
@@ -56,7 +82,7 @@ export async function fixture() {
     MOCK_CALLS: path.join(root, 'calls.jsonl'),
     MOCK_LOG: path.join(root, 'state/astrid-runtime/logs/install.log'),
   };
-  for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION']) delete env[key];
+  for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION', 'MOCK_STAGE_RELEASE', 'MOCK_INTERRUPTED', 'MOCK_CORE_RAW_EXIT', 'MOCK_CORE_APPEND_LOG', 'MOCK_REQUIRE_TTY']) delete env[key];
   await writeFile(path.join(bootstrap, 'uv'), mockUv, { mode: 0o755 });
   await writeFile(path.join(bin, 'curl'), `#!/usr/bin/env python3
 import os, pathlib, shutil, sys
@@ -76,6 +102,10 @@ shutil.copyfile(os.environ['MOCK_MANIFEST'], sys.argv[sys.argv.index('--output')
         if (typeof error.code !== 'number') throw error;
         return { stdout: error.stdout, stderr: error.stderr, code: error.code };
       }
+    },
+    async start(file, args, overrides = {}) {
+      await writeFile(manifestFile, JSON.stringify(manifest));
+      return spawn(file, args, { cwd: repo, env: { ...env, ...overrides }, timeout: 30_000 });
     },
     async calls() {
       try { return (await readFile(env.MOCK_CALLS, 'utf8')).trim().split('\n').map((line) => JSON.parse(line)); }
@@ -108,6 +138,7 @@ try {
 }
 [Console]::WriteLine('SHELL-ALIVE')
 [Console]::WriteLine('PREFERENCE: ' + $ErrorActionPreference)
+[Console]::WriteLine('NATIVE-STATUS: ' + $global:LASTEXITCODE)
 `);
       env.MOCK_INSTALL_SCRIPT = path.join(repo, 'public/install.ps1');
       return harness;
@@ -115,3 +146,68 @@ try {
     cleanup() { return rm(root, { recursive: true, force: true }); },
   };
 }
+
+export function observe(child) {
+  let stdout = '';
+  let stderr = '';
+  const waiting = [];
+  child.stdout.on('data', (chunk) => {
+    stdout += chunk;
+    for (const item of waiting) if (stdout.includes(item.marker)) item.resolve();
+  });
+  child.stderr.on('data', (chunk) => { stderr += chunk; });
+  const result = new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('close', (code, signal) => {
+      for (const item of waiting) if (!stdout.includes(item.marker)) item.reject(new Error(`Exited before ${item.marker}: ${stderr}`));
+      resolve({ stdout, stderr, code, signal });
+    });
+  });
+  return {
+    result,
+    until(marker) {
+      if (stdout.includes(marker)) return Promise.resolve();
+      return new Promise((resolve, reject) => waiting.push({ marker, resolve, reject }));
+    },
+  };
+}
+
+// pty.fork supplies a real controlling terminal. Writing ^C exercises the
+// terminal's foreground process-group delivery instead of killing one PID.
+export const terminalInterrupt = `
+import errno, json, os, pty, select, signal, sys, time
+pid, terminal = pty.fork()
+if pid == 0:
+    os.execvp(sys.argv[1], sys.argv[1:])
+output = bytearray()
+interrupted = False
+deadline = time.monotonic() + 20
+try:
+    while time.monotonic() < deadline:
+        readable, _, _ = select.select([terminal], [], [], 0.05)
+        if readable:
+            try: chunk = os.read(terminal, 65536)
+            except OSError as error:
+                if error.errno != errno.EIO: raise
+                break
+            if not chunk: break
+            output.extend(chunk)
+            if not interrupted and b'Installing the pinned Astrid version.' in output:
+                os.write(terminal, b'\\x03')
+                interrupted = True
+        finished, status = os.waitpid(pid, os.WNOHANG)
+        if finished:
+            pid = None
+            break
+    else:
+        raise TimeoutError('installer did not recover after terminal Ctrl+C')
+    if pid is not None:
+        _, status = os.waitpid(pid, 0)
+        pid = None
+    print(json.dumps(dict(output=output.decode(errors='replace'), code=os.waitstatus_to_exitcode(status), interrupted=interrupted)))
+finally:
+    if pid is not None:
+        os.killpg(pid, signal.SIGKILL)
+        os.waitpid(pid, 0)
+    os.close(terminal)
+`;

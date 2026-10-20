@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { failure, fixture, repo } from './fixture.mjs';
+import { failure, fixture, observe, repo, terminalInterrupt } from './fixture.mjs';
 
 // Run explicitly with a PowerShell 7 executable on POSIX. Native Windows
 // PowerShell 5.1 also needs qualification on Windows before release.
@@ -90,6 +90,7 @@ test('PowerShell preserves one core failure paragraph and keeps iex shell', () =
   const result = await run([], { MOCK_CORE_EXIT: '23' });
   alive(result);
   assert.ok(result.stdout.includes(`CAUGHT: ${failure}`));
+  assert.match(result.stdout, /NATIVE-STATUS: 23/);
   assert.equal(result.stdout.split(failure).length - 1, 1);
   assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
   assert.doesNotMatch(result.stdout, /Astrid could not get ready/);
@@ -117,7 +118,6 @@ test('PowerShell drains simultaneous multi-megabyte native output without deadlo
   assert.ok(log.includes('o'.repeat(4194304)));
   assert.ok(log.includes('e'.repeat(4194304)));
 }));
-
 
 test('PowerShell handles stderr progress from native uv bootstrap setup', () => scenario(async (context, run) => {
   await rm(path.join(context.env.LOCALAPPDATA, 'Astrid/bootstrap/uv.exe'));
@@ -162,7 +162,7 @@ for (const coreExit of ['0', '23']) {
         assert.equal(result.code, 0, result.stderr);
         assert.match(result.stdout, /Astrid is ready\./);
       } else {
-        assert.notEqual(result.code, 0);
+        assert.equal(result.code, 23);
         assert.match(result.stderr, /Astrid could not finish/);
         assert.doesNotMatch(result.stderr, /Astrid could not get ready/);
       }
@@ -188,4 +188,94 @@ test('PowerShell accepts localhost file URLs as local pinned repositories', () =
   assert.match(result.stdout, /Astrid is ready\./);
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
   assert.ok((await context.calls()).at(-1).includes(`git+${local}@${context.manifest.agent.sha}`));
+}));
+
+test('PowerShell streams an unbuffered installer stage before the transaction can finish', () => scenario(async (context) => {
+  const harness = await context.powershell();
+  const release = path.join(context.root, 'release-stage');
+  const child = await context.start(powershell, ['-NoProfile', '-NonInteractive', '-File', harness], { MOCK_STAGE_RELEASE: release });
+  const output = observe(child);
+  try {
+    await output.until('Installing the pinned Astrid version.');
+    assert.equal(child.exitCode, null);
+  } finally { await writeFile(release, 'continue'); }
+  const result = await output.result;
+  alive(result);
+  assert.match(result.stdout, /Astrid is ready\./);
+  assert.match(result.stdout, /NATIVE-STATUS: 0/);
+  assert.ok((await context.calls()).at(-1).includes('-u'));
+}));
+
+test('PowerShell preserves native core failure status without closing the scriptblock caller', () => scenario(async (_context, run) => {
+  const result = await run(['--update'], { MOCK_CORE_EXIT: '31' });
+  alive(result);
+  assert.match(result.stdout, /NATIVE-STATUS: 31/);
+  assert.equal(result.stdout.split(failure).length - 1, 1);
+  assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
+}));
+
+test('PowerShell preserves a native core failure status and logs diagnostics before the core paragraph', () => scenario(async (context, run) => {
+  const result = await run([], { MOCK_CORE_RAW_EXIT: '27' });
+  alive(result);
+  assert.match(result.stdout, /NATIVE-STATUS: 27/);
+  assert.equal((result.stdout.match(/Astrid could not get ready\./g) || []).length, 1);
+  assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
+  assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /raw core diagnostic/);
+}));
+
+test('PowerShell console interruption reaches the child and waits for recovery', () => scenario(async (context) => {
+  const harness = await context.powershell();
+  const receipt = path.join(context.root, 'interrupted');
+  const result = await context.run('python3', ['-c', terminalInterrupt, powershell, '-NoProfile', '-NonInteractive', '-File', harness], {
+    MOCK_STAGE_RELEASE: path.join(context.root, 'never-release'), MOCK_INTERRUPTED: receipt,
+  });
+  assert.equal(result.code, 0, result.stderr);
+  const terminal = JSON.parse(result.stdout);
+  assert.equal(terminal.interrupted, true);
+  assert.match(await readFile(receipt, 'utf8'), /KeyboardInterrupt reached installer/);
+  assert.equal(terminal.output.split(failure).length - 1, 1, terminal.output);
+  assert.equal((terminal.output.match(/Details:/g) || []).length, 1, terminal.output);
+}));
+
+test('PowerShell leaves the shared log available to the running core and retains both diagnostics', () => scenario(async (context, run) => {
+  const result = await run([], { MOCK_CORE_APPEND_LOG: '1', MOCK_CORE_EXIT: '23' });
+  alive(result);
+  assert.match(result.stdout, /Core is writing its log\./);
+  assert.match(result.stdout, /NATIVE-STATUS: 23/);
+  assert.equal(result.stdout.split(failure).length - 1, 1);
+  const log = await readFile(context.env.MOCK_LOG, 'utf8');
+  assert.match(log, /core opened its own log/);
+  assert.match(log, /core kept its own diagnostic/);
+  assert.match(log, /native progress on stderr/);
+}));
+
+test('PowerShell command configuration inherits the console used to deliver Ctrl+C', () => scenario(async (context) => {
+  const unit = path.join(context.root, 'console-forwarding.ps1');
+  await writeFile(unit, `
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition @'
+using System.Diagnostics;
+public class AstridInstallerProcess {
+    public static ProcessStartInfo Run(ProcessStartInfo info, string log, bool logOutput, bool streamOutput) { return info; }
+}
+'@
+$Tokens = $null
+$Errors = $null
+$Ast = [Management.Automation.Language.Parser]::ParseFile($env:MOCK_INSTALL_SCRIPT, [ref]$Tokens, [ref]$Errors)
+if ($Errors) { throw $Errors[0] }
+$Function = $Ast.Find({ param($Node) $Node -is [Management.Automation.Language.FunctionDefinitionAst] -and $Node.Name -eq 'Invoke-InstallerCommand' }, $true)
+Invoke-Expression $Function.Extent.Text
+$Log = $env:MOCK_LOG
+$Info = Invoke-InstallerCommand 'native-child' @('python','-u','-I','-m','astrid','install') -StreamOutput
+[Console]::WriteLine(($Info | Select-Object UseShellExecute, CreateNoWindow, RedirectStandardInput, RedirectStandardOutput, RedirectStandardError, Arguments | ConvertTo-Json -Compress))
+`);
+  const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', unit]);
+  assert.equal(result.code, 0, result.stderr);
+  const info = JSON.parse(result.stdout);
+  assert.equal(info.UseShellExecute, false);
+  assert.equal(info.CreateNoWindow, false);
+  assert.equal(info.RedirectStandardInput, false);
+  assert.equal(info.RedirectStandardOutput, true);
+  assert.equal(info.RedirectStandardError, true);
+  assert.equal(info.Arguments, '"python" "-u" "-I" "-m" "astrid" "install"');
 }));

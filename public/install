@@ -11,7 +11,11 @@ case "$(uname -s)" in
 bootstrap="$data_home/astrid/bootstrap"
 mkdir -p "$bootstrap" "$(dirname "$log")"
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/astrid-install.XXXXXXXX")
-trap 'rm -rf "$tmp"' EXIT HUP INT TERM
+trap 'rm -rf "$tmp"' EXIT
+trap 'exit 129' HUP
+trap 'exit 143' TERM
+# Let the foreground installer finish its rollback after the first Ctrl+C.
+trap ':' INT
 fetch() {
     if command -v curl >/dev/null 2>&1; then
         curl --fail --silent --show-error --location "$1" --output "$2"
@@ -37,9 +41,16 @@ fi
 export UV_PYTHON_INSTALL_DIR="$bootstrap/python"
 export ASTRID_INSTALL_UV="$uv"
 "$uv" python install "$PYTHON_VERSION" --no-bin >>"$log" 2>&1 || fail
+# With curl | sh, uv would inherit the script pipe and forward a second
+# SIGINT after the terminal already delivered one. Keep interactive stdin.
+if (: </dev/tty) 2>/dev/null; then exec 3</dev/tty; else exec 3</dev/null; fi
+# Keep stdout live and retain its status independently of the progress reader.
+mkfifo "$tmp/progress"
+tee -i "$tmp/core.out" <"$tmp/progress" &
+progress_pid=$!
 # This only resolves manifest pins and hands off; the package owns every step.
-if "$uv" run --no-project --python "$PYTHON_VERSION" python -I -c '
-import json, os, re, subprocess, sys
+if "$uv" run --no-project --python "$PYTHON_VERSION" python -u -I -c '
+import json, os, re, sys
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import url2pathname
@@ -69,11 +80,14 @@ def git_requirement(name):
 args = [os.environ["ASTRID_INSTALL_UV"], "run", "--no-project", "--python", pins["tools"]["python"]["version"]]
 for name in ("runtime", "agent"):
     args += ["--with", git_requirement(name)]
-args += ["python", "-I", "-m", "astrid", "install", "--manifest", manifest, *flags]
-raise SystemExit(subprocess.call(args))
-' "$tmp/manifest.json" "$@" >"$tmp/core.out" 2>>"$log"; then status=0; else status=$?; fi
-cat "$tmp/core.out"
+args += ["python", "-u", "-I", "-m", "astrid", "install", "--manifest", manifest, *flags]
+os.execv(args[0], args)
+' "$tmp/manifest.json" "$@" <&3 >"$tmp/progress" 2>>"$log"; then status=0; else status=$?; fi
+wait "$progress_pid"
 if [ "$status" -ne 0 ]; then
-    if ! grep -Fq 'Astrid could not finish; your workspace and any update backup have been kept.' "$tmp/core.out"; then fail; fi
+    if ! grep -Fq 'Astrid could not finish; your workspace and any update backup have been kept.' "$tmp/core.out"; then
+        echo 'Astrid could not get ready.' >&2
+        echo "Details: $log" >&2
+    fi
     exit "$status"
 fi
