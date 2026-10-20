@@ -61,14 +61,14 @@ it('separates Inspector/Extensions, limits tools to admitted panels and retains 
   const user = userEvent.setup(); render(<Harness />);
   expect(screen.getByRole('tab', {name:'Extensions'})).toHaveAttribute('aria-selected','true');
   expect(screen.getByRole('tablist').parentElement).toContainElement(screen.getByRole('button', {name:'Panel display'}));
-  const active = screen.getByRole('button', {name:'Active extension'});
+  const active = screen.getByRole('button', {name:'Displayed extension'});
   const manage = screen.getByRole('button', {name:'Manage extensions'});
-  expect(active).toHaveTextContent('Active · Transcript');
+  expect(active).toHaveTextContent('Display: Transcript');
   expect(manage).toHaveTextContent('Manage');
   expect(active).toHaveClass('flex-1'); expect(manage.parentElement).toHaveClass('flex-1');
-  expect(screen.getByRole('button', {name:'Active extension'}).parentElement).not.toContainElement(screen.getByRole('button', {name:'Panel display'}));
+  expect(screen.getByRole('button', {name:'Displayed extension'}).parentElement).not.toContainElement(screen.getByRole('button', {name:'Panel display'}));
   const draft = screen.getByRole('textbox', {name:'Retained draft'}); fireEvent.change(draft, {target:{value:'Unsent draft'}});
-  screen.getByRole('button',{name:'Active extension'}).focus(); await user.keyboard('{ArrowDown}');
+  screen.getByRole('button',{name:'Displayed extension'}).focus(); await user.keyboard('{ArrowDown}');
   expect(screen.getByRole('menuitemradio',{name:'Transcript'})).toBeTruthy(); expect(screen.getByRole('menuitemradio',{name:'Beat Cue'})).toBeTruthy(); expect(screen.queryByRole('menuitemradio',{name:'Properties'})).toBeNull(); expect(screen.queryByRole('menuitemradio',{name:'Closed'})).toBeNull();
   await user.keyboard('{Escape}'); await user.click(screen.getByRole('tab',{name:'Inspector'})); expect(draft).not.toBeVisible();
   await user.click(screen.getByRole('tab',{name:'Extensions'})); expect(screen.getByRole('textbox',{name:'Retained draft'})).toBe(draft);
@@ -259,19 +259,19 @@ it('Extensions with extension panels keeps the dock open and shows the tool cont
 });
 it('disabling the selected extension keeps the dock open on the next panel, with Manage still reachable', () => {
   const view = render(<Harness />);
-  expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Transcript');
+  expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Display: Transcript');
   // The Extension Manager disables Transcript: its panel unregisters while it is still the selected key.
   state.panels = [{ extensionId: 'example', id: 'beat', label: 'Beat Cue' }];
   view.rerender(<Harness />);
   expect(state.preferences.selectedRightPanelId).toBe(panelKey);
   expect(screen.getByTestId('video-editor-right-panel-dock')).toHaveAttribute('data-open', 'true');
-  expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Beat Cue');
+  expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Display: Beat Cue');
   expect(screen.getByRole('button', { name: 'Manage extensions' })).toBeVisible();
   expect(screen.getAllByRole('button', { name: 'Panel display' })).toHaveLength(1);
   // Re-enabling it brings the remembered panel back.
   state.panels = [{ extensionId: 'haus.astrid.transcript-lane', id: 'transcript-lane-panel', label: 'Transcript' }, { extensionId: 'example', id: 'beat', label: 'Beat Cue' }];
   view.rerender(<Harness />);
-  expect(screen.getByRole('button', { name: 'Active extension' })).toHaveTextContent('Active · Transcript');
+  expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Display: Transcript');
 });
 it('reopening from Panel display with no extension panels parks on the Extensions host key instead of staying closed', async () => {
   const user = userEvent.setup(); state.panels = [];
@@ -291,6 +291,6 @@ it('on touch, the Extensions picker lists the Transcript panel', async () => {
   }
   render(<TouchHarness />);
   await user.click(screen.getByRole('tab', { name: 'Extensions' }));
-  await user.click(screen.getByRole('button', { name: 'Active extension' }));
+  await user.click(screen.getByRole('button', { name: 'Displayed extension' }));
   expect(await screen.findByRole('menuitemradio', { name: 'Transcript' })).toBeInTheDocument();
 });
