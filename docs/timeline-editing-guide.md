@@ -13,6 +13,42 @@ that same candidate. Freezing candidate JSON is not a visual preview. If the
 required preview fails or is unavailable, report that and leave the candidate
 unpublished. A render after saving cannot satisfy a preview-before-save request.
 
+## Accepted undo and unsent draft edits
+
+Accepted history lives in Runtime. Keep the publication ID returned by a native
+command commit. Python and CLI undo send a guarded inverse through the same
+crash-safe outbox; redo reverses the **undo publication**, using its new ID:
+
+```python
+from astrid.sdk.timeline_checkout import Checkout
+
+checkout = Checkout.open(project_id, timeline_ref, client=client)
+undone = checkout.undo(publications=[publication_id], client=client)
+redone = checkout.redo(publications=[undone["receipt"]["receipt_id"]], client=client)
+```
+
+```sh
+astrid timelines undo TL --project PROJECT --publication PUBLICATION
+astrid timelines redo TL --project PROJECT --publication UNDO_PUBLICATION
+```
+
+Both commands accept `--dry-run`, `--idempotency-key`, and `--json`. Repeat
+`--publication` oldest first to reverse a group. Runtime checks intervening
+writes and retains the original revisions. Reopen the timeline to read the new
+head; publication undo leaves detached working copies untouched.
+
+`checkout.undo()` / `redo()` without publication IDs, and the CLI equivalents
+without `--publication`, operate on unsent draft edits. Their snapshots stop at
+the draft's published base, so a publish/reset cannot be undone by restoring an
+old file. New unsent edits on that base remain locally undoable.
+
+The legacy cut sheet still edits a detached draft. `apply_sheet(checkout, text,
+client=client)` can recover an older sheet's basis from retained Runtime
+revisions; local snapshots and exported copies are used only within the current
+base. It does not publish or restore an accepted revision. Its existing
+three-way draft merge and whole-candidate publish remain pending migration to
+native commands.
+
 ## Shared timeline and shot contracts
 
 `@banodoco/timeline-schema` owns `TimelineConfig` and timeline clip semantics.
