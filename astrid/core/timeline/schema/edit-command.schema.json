@@ -983,6 +983,76 @@
           "if": {
             "properties": {
               "op": {
+                "const": "placement.create"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/PlacementCreateArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "placement.unplace"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/PlacementUnplaceArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "track.create"
               }
             },
@@ -1184,6 +1254,41 @@
           "$ref": "#/$defs/MediaSelection"
         }
       },
+      "additionalProperties": false
+    },
+    "PlacementCreateArgs": {
+      "type": "object",
+      "required": [
+        "id",
+        "on",
+        "hold",
+        "media"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$",
+          "description": "Caller-reserved raw child clip ID; an occupied ID refuses."
+        },
+        "on": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute timeline seconds; quantized once with pinned rational fps, then made occurrence-local."
+        },
+        "hold": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Literal occurrence-local image duration in seconds."
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      }
+    },
+    "PlacementUnplaceArgs": {
+      "type": "object",
+      "properties": {},
       "additionalProperties": false
     },
     "TrackCreateArgs": {

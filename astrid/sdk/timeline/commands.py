@@ -36,9 +36,18 @@ def operations():
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
-    from .native_placement_commands import placement_move
+    from .native_placement_commands import (
+        PLACEMENT_INTENT,
+        placement_create,
+        placement_move,
+        placement_unplace,
+    )
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
+            'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
+                                          PLACEMENT_INTENT, True),
+            'placement.unplace': Operation(_SCHEMA['$defs']['PlacementUnplaceArgs'], placement_unplace,
+                                           PLACEMENT_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
