@@ -6,6 +6,62 @@
  * normalize levels, resample, or make a parity claim.
  */
 
+export const CONTROLLED_AUDIO = Object.freeze({
+  sampleRate: 48_000,
+  channels: 2,
+  durationSeconds: 6,
+  webAudioFrequency: 880,
+  webAudioAmplitude: 0.2,
+  htmlAudioFrequency: 1_320,
+  htmlAudioAmplitude: 0.18,
+});
+
+function writeAscii(bytes, offset, value) {
+  for (let index = 0; index < value.length; index += 1) bytes[offset + index] = value.charCodeAt(index);
+}
+
+/**
+ * Build the private fixture's declared PCM source. This is a finite, native
+ * 48 kHz stereo signal; it is not a substitute for decoded capture output.
+ */
+export function createSyntheticPcmWav({
+  sampleRate = CONTROLLED_AUDIO.sampleRate,
+  channels = CONTROLLED_AUDIO.channels,
+  durationSeconds = CONTROLLED_AUDIO.durationSeconds,
+  frequency = CONTROLLED_AUDIO.htmlAudioFrequency,
+  amplitude = CONTROLLED_AUDIO.htmlAudioAmplitude,
+} = {}) {
+  if (!Number.isInteger(sampleRate) || sampleRate <= 0 || channels !== 2
+    || !Number.isInteger(durationSeconds) || durationSeconds <= 0
+    || !Number.isFinite(frequency) || frequency <= 0
+    || !Number.isFinite(amplitude) || amplitude <= 0 || amplitude > 1) {
+    throw new Error('Synthetic WAV parameters are invalid');
+  }
+  const frameCount = sampleRate * durationSeconds;
+  const bytes = Buffer.alloc(44 + frameCount * channels * 2);
+  writeAscii(bytes, 0, 'RIFF');
+  bytes.writeUInt32LE(bytes.length - 8, 4);
+  writeAscii(bytes, 8, 'WAVE');
+  writeAscii(bytes, 12, 'fmt ');
+  bytes.writeUInt32LE(16, 16);
+  bytes.writeUInt16LE(1, 20);
+  bytes.writeUInt16LE(channels, 22);
+  bytes.writeUInt32LE(sampleRate, 24);
+  bytes.writeUInt32LE(sampleRate * channels * 2, 28);
+  bytes.writeUInt16LE(channels * 2, 32);
+  bytes.writeUInt16LE(16, 34);
+  writeAscii(bytes, 36, 'data');
+  bytes.writeUInt32LE(bytes.length - 44, 40);
+  for (let frame = 0; frame < frameCount; frame += 1) {
+    const value = Math.round(amplitude * 32_767 * Math.sin(2 * Math.PI * frequency * frame / sampleRate));
+    for (let channel = 0; channel < channels; channel += 1) bytes.writeInt16LE(value, 44 + (frame * channels + channel) * 2);
+  }
+  return bytes;
+}
+
+/** @param {Array<{kind: string, readyState: string}>} tracks
+ * @param {{mimeType?: string, requestedAudio?: boolean}} options
+ */
 export function assertCaptureCapabilities(tracks, {mimeType, requestedAudio = true} = {}) {
   if (!requestedAudio) throw new Error('The probe must request tab audio');
   if (!Array.isArray(tracks)) throw new Error('getDisplayMedia did not return a track list');

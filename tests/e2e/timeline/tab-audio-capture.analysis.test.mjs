@@ -6,6 +6,8 @@ import {
   assertRawPts,
   assertTone,
   assertVisualEvent,
+  CONTROLLED_AUDIO,
+  createSyntheticPcmWav,
   diagnoseVisualEvent,
 } from './tab-audio-capture.analysis.mjs';
 
@@ -85,11 +87,74 @@ test('tone check observes decoded channels without resampling or level normaliza
   const sampleRate = 48_000;
   const samples = new Float32Array(sampleRate * 2);
   for (let index = 0; index < sampleRate; index += 1) {
-    const tone = 0.1 * Math.sin(2 * Math.PI * 880 * index / sampleRate);
+    const tone = 0.1 * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.webAudioFrequency * index / sampleRate);
     samples[index * 2] = tone;
     samples[index * 2 + 1] = tone;
   }
-  assert.equal(assertTone(samples, {sampleRate, channels: 2, frequency: 880}).channels, 2);
-  assert.throws(() => assertTone(new Float32Array(samples.length), {sampleRate, channels: 2, frequency: 880}), /not present/);
+  assert.equal(assertTone(samples, {sampleRate, channels: 2, frequency: CONTROLLED_AUDIO.webAudioFrequency}).channels, 2);
+  assert.throws(() => assertTone(new Float32Array(samples.length), {
+    sampleRate,
+    channels: 2,
+    frequency: CONTROLLED_AUDIO.webAudioFrequency,
+  }), /not present/);
+});
+
+test('full-tab source controls distinguish the independent oscillator and HTMLAudio tones', () => {
+  const sampleRate = CONTROLLED_AUDIO.sampleRate;
+  const samples = new Float32Array(sampleRate * 2);
+  for (let index = 0; index < sampleRate; index += 1) {
+    const webAudio = CONTROLLED_AUDIO.webAudioAmplitude
+      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.webAudioFrequency * index / sampleRate);
+    const htmlAudio = CONTROLLED_AUDIO.htmlAudioAmplitude
+      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.htmlAudioFrequency * index / sampleRate);
+    samples[index * 2] = webAudio + htmlAudio;
+    samples[index * 2 + 1] = webAudio + htmlAudio;
+  }
+  assert.doesNotThrow(() => assertTone(samples, {
+    sampleRate,
+    channels: 2,
+    frequency: CONTROLLED_AUDIO.webAudioFrequency,
+  }));
+  assert.doesNotThrow(() => assertTone(samples, {
+    sampleRate,
+    channels: 2,
+    frequency: CONTROLLED_AUDIO.htmlAudioFrequency,
+  }));
+
+  const pureWebAudio = new Float32Array(samples.length);
+  for (let index = 0; index < sampleRate; index += 1) {
+    const value = CONTROLLED_AUDIO.webAudioAmplitude
+      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.webAudioFrequency * index / sampleRate);
+    pureWebAudio[index * 2] = value;
+    pureWebAudio[index * 2 + 1] = value;
+  }
+  assert.throws(() => assertTone(pureWebAudio, {
+    sampleRate,
+    channels: 2,
+    frequency: CONTROLLED_AUDIO.htmlAudioFrequency,
+  }), /not present/);
+  const pureHtmlAudio = new Float32Array(samples.length);
+  for (let index = 0; index < sampleRate; index += 1) {
+    const value = CONTROLLED_AUDIO.htmlAudioAmplitude
+      * Math.sin(2 * Math.PI * CONTROLLED_AUDIO.htmlAudioFrequency * index / sampleRate);
+    pureHtmlAudio[index * 2] = value;
+    pureHtmlAudio[index * 2 + 1] = value;
+  }
+  assert.throws(() => assertTone(pureHtmlAudio, {
+    sampleRate,
+    channels: 2,
+    frequency: CONTROLLED_AUDIO.webAudioFrequency,
+  }), /not present/);
+});
+
+test('synthetic HTMLAudio source is a finite native 48 kHz stereo PCM WAV', () => {
+  const wav = createSyntheticPcmWav();
+  assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
+  assert.equal(wav.toString('ascii', 8, 12), 'WAVE');
+  assert.equal(wav.readUInt16LE(20), 1);
+  assert.equal(wav.readUInt16LE(22), CONTROLLED_AUDIO.channels);
+  assert.equal(wav.readUInt32LE(24), CONTROLLED_AUDIO.sampleRate);
+  assert.equal(wav.readUInt16LE(34), 16);
+  assert.equal(wav.readUInt32LE(40), wav.length - 44);
 });
 
