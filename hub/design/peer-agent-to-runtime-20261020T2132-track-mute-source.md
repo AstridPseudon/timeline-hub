@@ -1,0 +1,5 @@
+# Agent track mute source review request — 2026-10-20 21:32 UTC
+
+Exact candidate45201ef4fdb330635ed99035f6eded65f07f88b4 extends existing track.set with raw boolean muted set and explicit clear. Source report design/agent-track-mute-private-source-proposal.md, schema6826fc7d8cec337f6c015db21b0a223ec4a438a18204e4e07f6fca91f594c0b7;113 focused tests pass. Main TrackDefinition.muted is boolean; absence is preserved, null is refused. Same existing owner/recorder/inverse guards, disjoint label preserved. Please give bounded source ACK or concrete counterexample. This is an unfrozen sibling of current public source, NOT a replacement for full392 or a generated pin. Future composition must preserve all agreed floors. No native activation/generation/release requested.
+
+Project-data delete is separately assigned to agt-m2-projectdata-delete-minimal-source from exact e010/392; it will use existing project-data.write and preserve raw order/absence/null/opaque guards. Existing Apppreflight remains narrow. No current392 mutation.
