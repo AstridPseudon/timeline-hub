@@ -1,0 +1,242 @@
+diff --git a/src/integrations/runtime/createDefaultTimeline.test.ts b/src/integrations/runtime/createDefaultTimeline.test.ts
+index 7f9bfc42f..000d08833 100644
+--- a/src/integrations/runtime/createDefaultTimeline.test.ts
++++ b/src/integrations/runtime/createDefaultTimeline.test.ts
+@@ -1,6 +1,6 @@
+ import { describe, expect, it, vi } from 'vitest';
+ import { createFakeIndexedDB } from 'fake-indexeddb';
+-import { AstridRuntimeClient } from './client.ts';
++import { AstridRuntimeClient, RUNTIME_CLIENT_SCOPES, RUNTIME_CLIENT_VERSION } from './client.ts';
+ import { ApiError, type CanonicalDocument, type CommitRequest, type Transport } from './generated.ts';
+ import { RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
+ import fixture from '@/tools/video-editor/commands/fixtures/recipe_m2_app_bootstrap.json';
+@@ -21,8 +21,18 @@ type NativeTransportOptions = {
+   timelineId: string;
+   existing?: boolean;
+   lose?: 'create' | 'init';
++  createKey?: string;
++  initName?: string;
+ };
+ 
++const headerMap = (headers: Record<string, string>) => Object.fromEntries(
++  Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]),
++);
++
++function requireNativeRequest(condition: unknown, message: string): asserts condition {
++  if (!condition) throw new Error(`native transport contract violation: ${message}`);
++}
++
+ function nativeTransport(options: NativeTransportOptions) {
+   const parentPayload = { ...structuredClone(fixture.bundle.parent), occurrences: [] };
+   const initializedPayload = { ...structuredClone(fixture.after_bundle.parent), occurrences: [] };
+@@ -49,6 +59,17 @@ function nativeTransport(options: NativeTransportOptions) {
+   });
+   const h0Document = () => document(h0.revision_id, parentPayload);
+   const h1Document = () => document(h1.revision_id, initializedPayload);
++  const expectedCommands = (name = options.initName ?? 'Main') => {
++    const commands = structuredClone(fixture.commands);
++    commands[0].args.name = name;
++    commands[0].args.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'timeline';
++    return commands;
++  };
++  const projectPath = `/v1/projects/${encodeURIComponent(options.projectId)}`;
++  const timelinePath = () => `${projectPath}/timelines/${encodeURIComponent(options.timelineId)}`;
++  const expectedHeaders = (headers: Record<string, string>, expected: Record<string, unknown>) => {
++    expect(headerMap(headers)).toEqual(expected);
++  };
+   const h0Receipt = {
+     receipt_id: h0.publication_id,
+     command_kind: 'parent_composition.publish',
+@@ -127,19 +148,53 @@ function nativeTransport(options: NativeTransportOptions) {
+     const text = body ? new TextDecoder().decode(body as Uint8Array) : undefined;
+     const parsed = text ? JSON.parse(text) as Record<string, unknown> : undefined;
+     calls.push({ method, path, headers, body: parsed });
+-    if (path === '/v1/health') return ok({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'runtime-instance-fixture' });
+-    if (path === '/v1/handshake') return ok({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-fixture', actor_id: 'astrid-product-connector', realm_id: 'realm-fixture', scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'], capabilities: ['execution_binding.targeted.v1'] });
+-    if (path === '/v1/realm') return ok({ realm_id: 'realm-fixture', display_name: 'Fixture', version: 1, created_at: '2026-10-14T00:00:00Z' });
+-    if (method === 'GET' && path.endsWith('/commits?limit=50')) {
++    if (method === 'GET' && path === '/v1/health') {
++      expectedHeaders(headers, { accept: 'application/json' });
++      requireNativeRequest(parsed === undefined, 'health must not carry a body');
++      return ok({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, runtime_epoch: 1, runtime_instance_id: 'runtime-instance-fixture' });
++    }
++    if (method === 'POST' && path === '/v1/handshake') {
++      expectedHeaders(headers, { accept: 'application/json', 'content-type': 'application/json' });
++      expect(parsed).toEqual({
++        protocol: 'workspace.v1',
++        client_name: 'astrid-browser',
++        client_version: RUNTIME_CLIENT_VERSION,
++        requested_scopes: RUNTIME_CLIENT_SCOPES,
++      });
++      return ok({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST, session_id: 'session-fixture', actor_id: 'astrid-product-connector', realm_id: 'realm-fixture', scopes: RUNTIME_CLIENT_SCOPES, capabilities: ['execution_binding.targeted.v1'] });
++    }
++    if (method === 'GET' && path === '/v1/realm') {
++      expectedHeaders(headers, { accept: 'application/json' });
++      requireNativeRequest(parsed === undefined, 'realm must not carry a body');
++      return ok({ realm_id: 'realm-fixture', display_name: 'Fixture', version: 1, created_at: '2026-10-14T00:00:00Z' });
++    }
++    if (method === 'GET' && path === `${timelinePath()}/commits?limit=50`) {
++      expectedHeaders(headers, { accept: 'application/json' });
++      requireNativeRequest(parsed === undefined, 'history must not carry a body');
+       const current = history();
+       return ok({ head: current.head, next_cursor: current.next_cursor, items: current.items });
+     }
+-    if (method === 'GET' && path.includes('/composition-revisions/')) {
++    if (method === 'GET' && (path === `${timelinePath()}/composition-revisions/${h0.revision_id}`
++      || path === `${timelinePath()}/composition-revisions/${h1.revision_id}`)) {
++      expectedHeaders(headers, { accept: 'application/json' });
++      requireNativeRequest(parsed === undefined, 'composition revision must not carry a body');
+       const revision = path.split('/').at(-1);
+       const current = revision === h1.revision_id ? h1Document() : h0Document();
+       return ok({ project_id: current.project_id, timeline_id: current.timeline_id, ...current.parent_revision, dependency_manifest: current.dependency_manifest });
+     }
+-    if (method === 'POST' && path === `/v1/projects/${options.projectId}/timelines`) {
++    if (method === 'POST' && path === `${projectPath}/timelines`) {
++      expectedHeaders(headers, { accept: 'application/json', 'content-type': 'application/json', 'idempotency-key': expect.any(String) });
++      requireNativeRequest(parsed?.timeline_id && typeof parsed.timeline_id === 'string',
++        'create must identify a timeline');
++      requireNativeRequest(Object.keys(parsed).every((key) => key === 'timeline_id' || key === 'name'),
++        'create has unexpected fields');
++      requireNativeRequest(parsed.name === undefined || typeof parsed.name === 'string',
++        'create name must be a string when present');
++      expect(headers['Idempotency-Key'] ?? headers['idempotency-key']).toBe(options.createKey ?? expect.any(String));
++      expect(parsed).toEqual({
++        timeline_id: parsed.timeline_id,
++        ...(options.existing ? {} : { name: options.initName ?? 'Main' }),
++      });
+       createAttempts += 1;
+       createRequest = parsed as typeof createRequest;
+       options.timelineId = createRequest.timeline_id;
+@@ -150,7 +205,23 @@ function nativeTransport(options: NativeTransportOptions) {
+       const data = { project_id: options.projectId, timeline_id: options.timelineId, archived: false, head_revision_id: h0.revision_id, head_publication_id: h0.publication_id };
+       return ok({ data, receipt: { receipt_id: 'create-receipt', command_kind: 'timeline.create', idempotency_key: key, request_hash: 'create-hash', project_id: options.projectId, project_seq: [1, 1], event_ids: ['create-event'], result: data, created_at: '2026-10-20T00:00:00Z' } });
+     }
+-    if (method === 'POST' && path.startsWith(`/v1/projects/${options.projectId}/timelines/`) && path.endsWith('/commit')) {
++    if (method === 'POST' && path === `${timelinePath()}/commit`) {
++      expectedHeaders(headers, { accept: 'application/json', 'content-type': 'application/json', 'idempotency-key': expect.any(String) });
++      const expectedRequest = {
++        api_version: 1,
++        project_id: options.projectId,
++        timeline_id: options.timelineId,
++        base_revision_id: h0.revision_id,
++        base_publication_id: h0.publication_id,
++        commands: expectedCommands(),
++        source: { via: 'app' },
++      };
++      expect(parsed).toEqual(expectedRequest);
++      requireNativeRequest(parsed.dry_run === undefined, 'bootstrap commit must not be a preview');
++      const key = headers['Idempotency-Key'] ?? headers['idempotency-key'];
++      requireNativeRequest(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/.test(key ?? ''),
++        'commit must carry a valid idempotency key');
++      if (initRequest) expect(parsed).toEqual(initRequest);
+       initAttempts += 1;
+       initRequest = parsed as unknown as CommitRequest;
+       initialized = true;
+@@ -160,6 +231,10 @@ function nativeTransport(options: NativeTransportOptions) {
+       if (options.lose === 'init' && initAttempts === 1) throw new Error('simulated lost response after init');
+       return ok(response);
+     }
++    if (method === 'POST' && (path === `${timelinePath()}/composition-revisions`
++      || path === `${projectPath}/timeline-documents`)) {
++      throw new Error(`legacy bootstrap route rejected: ${method} ${path}`);
++    }
+     throw new Error(`unexpected ${method} ${path}`);
+   };
+   return { transport, calls, state: () => ({ createAttempts, initAttempts, created, initialized, createRequest, initRequest }) };
+@@ -215,7 +290,9 @@ describe('ensureProjectHasTimeline', () => {
+   it('creates and initializes a canonical empty timeline through the native Runtime transport', async () => {
+     const projectId = 'project-native-create';
+     const timelineId = 'timeline-native-create';
+-    const { client, native } = nativeClient(projectId, [], { projectId, timelineId });
++    const { client, native } = nativeClient(projectId, [], {
++      projectId, timelineId, createKey: `astrid-first-timeline-${projectId}`, initName: 'Main',
++    });
+     installNativeHarness(native.transport);
+ 
+     const createdId = await ensureProjectHasTimeline(projectId, client);
+@@ -233,7 +310,9 @@ describe('ensureProjectHasTimeline', () => {
+   it('repairs an existing headless shell without creating a second timeline', async () => {
+     const projectId = 'project-native-repair';
+     const timelineId = 'headless-shell';
+-    const { client, native } = nativeClient(projectId, [{ timeline_id: timelineId, head_revision_id: null }], { projectId, timelineId, existing: true });
++    const { client, native } = nativeClient(projectId, [{ timeline_id: timelineId, head_revision_id: null }], {
++      projectId, timelineId, existing: true, createKey: `astrid-first-timeline-${projectId}`, initName: 'Main',
++    });
+     installNativeHarness(native.transport);
+ 
+     await expect(ensureProjectHasTimeline(projectId, client)).resolves.toBe(timelineId);
+@@ -241,6 +320,7 @@ describe('ensureProjectHasTimeline', () => {
+     const state = native.state();
+     expect(state.createAttempts).toBe(1);
+     expect(state.initAttempts).toBe(1);
++    expect(state.createRequest).toEqual({ timeline_id: timelineId });
+     expect(state.initRequest?.base_revision_id).toBe('parent-0');
+     expect(state.initRequest?.base_publication_id).toBe('bootstrap-p0');
+     expect(client.publishParentComposition).not.toHaveBeenCalled();
+@@ -323,7 +403,9 @@ describe('ensureProjectHasTimeline', () => {
+   it('merges a newly created Main pointer with concurrent chat metadata after a CAS conflict', async () => {
+     const projectId = 'project-native-cas';
+     const timelineId = 'timeline-native-cas';
+-    const { client, native } = nativeClient(projectId, [], { projectId, timelineId });
++    const { client, native } = nativeClient(projectId, [], {
++      projectId, timelineId, createKey: `astrid-first-timeline-${projectId}`, initName: 'Main',
++    });
+     installNativeHarness(native.transport);
+     vi.mocked(client.getProject).mockResolvedValueOnce({ version: 1, metadata: {} } as never)
+       .mockResolvedValueOnce({ version: 1, metadata: {} } as never)
+@@ -339,7 +421,9 @@ describe('ensureProjectHasTimeline', () => {
+   it('creates an additional canonical timeline with its own idempotency key', async () => {
+     const projectId = 'project-native-additional';
+     const timelineId = 'project-timeline-2';
+-    const { client, native } = nativeClient(projectId, [], { projectId, timelineId });
++    const { client, native } = nativeClient(projectId, [], {
++      projectId, timelineId, createKey: `astrid-timeline-create-${projectId}-${timelineId}`, initName: 'Timeline 2',
++    });
+     installNativeHarness(native.transport);
+ 
+     await expect(createCanonicalTimeline(projectId, {
+@@ -358,7 +442,9 @@ describe('ensureProjectHasTimeline', () => {
+     const projectId = 'project-native-retry';
+     const timelineId = 'timeline-native-retry';
+     const idempotencyKey = 'timeline-native-retry-key';
+-    const { client, native } = nativeClient(projectId, [], { projectId, timelineId, lose: 'init' });
++    const { client, native } = nativeClient(projectId, [], {
++      projectId, timelineId, lose: 'init', createKey: idempotencyKey, initName: 'Retry',
++    });
+     installNativeHarness(native.transport);
+ 
+     await expect(createCanonicalTimeline(projectId, { name: 'Retry', timelineId, idempotencyKey }, client))
+@@ -370,19 +456,33 @@ describe('ensureProjectHasTimeline', () => {
+     const commits = native.calls.filter(({ method, path }) => method === 'POST' && path.endsWith('/commit'));
+     expect(creates).toHaveLength(1);
+     expect(commits).toHaveLength(2);
++    expect(creates[0]?.body).toEqual({ timeline_id: timelineId, name: 'Retry' });
+     expect(commits[0]).toEqual(commits[1]);
++    expect(commits[0]?.path).toBe(`/v1/projects/${projectId}/timelines/${timelineId}/commit`);
++    expect(headerMap(commits[0]?.headers ?? {})).toEqual({
++      accept: 'application/json',
++      'content-type': 'application/json',
++      'idempotency-key': expect.any(String),
++    });
+     expect(commits[0]?.body).toEqual(expect.objectContaining({
++      api_version: 1,
++      project_id: projectId,
++      timeline_id: timelineId,
+       base_revision_id: 'parent-0',
+       base_publication_id: 'bootstrap-p0',
+       commands: expect.arrayContaining([
+         expect.objectContaining({ op: 'timeline.init', args: expect.objectContaining({ name: 'Retry', slug: 'retry' }) }),
+       ]),
++      source: { via: 'app' },
+     }));
+     expect(commits[0]?.headers['Idempotency-Key'] ?? commits[0]?.headers['idempotency-key']).toBe(
+       commits[1]?.headers['Idempotency-Key'] ?? commits[1]?.headers['idempotency-key'],
+     );
+     expect(creates[0]?.headers['Idempotency-Key']).toBe(idempotencyKey);
+     expect(native.state().initAttempts).toBe(2);
++    expect(native.calls.some(({ method, path }) => method === 'POST' && path.endsWith('/composition-revisions'))).toBe(false);
++    expect(native.calls.some(({ path }) => path.includes('/timeline-documents'))).toBe(false);
++    expect(native.calls.filter(({ method, path }) => method === 'POST' && path === '/v1/handshake')).not.toHaveLength(0);
+     expect(client.publishParentComposition).not.toHaveBeenCalled();
+   });
+ });
