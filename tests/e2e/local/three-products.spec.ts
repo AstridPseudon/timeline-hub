@@ -1018,6 +1018,11 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
   let c!: CommitAcceptedMutation;
+  const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
+  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, THREE_PRODUCTS_REFERENCE_AT);
+  const reset = await resetResponse;
+  expect(reset.status(), await reset.text()).toBe(200);
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
   const { wire, before, a, owner } = await prepareAfterAckLossMoves(page, harness, seed3, async (acceptedA, commandWire) => {
     c = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(acceptedA),
       { kind: 'track', id: 'f2-independent-C' }, 'f2-gate5-independent-C');
