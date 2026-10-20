@@ -1,0 +1,248 @@
+#!/bin/bash
+# provision-agent-machine [--verify-only] [--list] [NAME ...]
+# Rebuilds, at the SAME paths, every environment the Agent test suites (tests/suites.conf `agent ...` lines and
+# tests/*.env) use, on a fresh machine. Idempotent: an environment that already exists is only VERIFIED, never
+# modified (shared installs are never written after creation). Builds go to <dest>.partial (or, for venvs, in place
+# and rolled back on failure). Needs network: nodejs.org, PyPI, github.com, the hub remote.
+# Prerequisites on the fresh machine: git, curl, tar, xz, sha256sum, python3.13 (set PYTHON313=/path if elsewhere),
+# /home/user/work/agent and /home/user/work/runtime cloned (branch tl/integration), `hub` remote (added if absent).
+# Exit status 0 only if every selected environment verified. See $ORCH/AGENT-MACHINE.md.
+W=${W:-/home/user/work}      # (override only to rehearse in a scratch root)
+AGENT=${AGENT:-$W/agent}
+RUNTIME=${RUNTIME:-$W/runtime}
+HUB_URL=https://github.com/AstridPseudon/timeline-hub
+ORCH=${ORCH:-$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)}
+PROV=${PROV:-$ORCH/tests/provision}
+PYTHON313=${PYTHON313:-python3.13}
+NODE_VER=20.19.4
+NODE_DIR=$W/toolchain/node-v$NODE_VER-linux-x64
+NODE_BIN=$NODE_DIR/bin
+NODE_TGZ_SHA=7a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4
+NODE_SUMS_SHA=f8537bd20c8fdc951a20a4278e380e03e58e0a1689eaaa5c170b221435f3a22e
+VIBECOMFY_URL=https://github.com/peteromallet/VibeComfy.git
+VIBECOMFY_SHA=31f90bb03d330283b76e7dbdda51197be787090d
+
+# Agent commits that carry the committed remotion/ locks (all reachable from tl/integration or `git fetch hub`).
+C008=cbd91c3bc8fca99256974e992c4f06f7d053bde7    # Composition 0.0.8 consumer
+C010=fc6c1f2615b1b37ae6bc2121397e64ee9d8061f5    # Composition 0.0.10 adoption
+C012=5f6c81309d96e7cd7abc2f22b32a377621c29092    # Composition 0.0.12 (lock/package.json byte-equal to f29a9475, b24a2acf)
+CCUR=7970544bb17dfcf234bd1cc1bb55ab5d713decd8    # remotion/ source of agent-remotion-current
+C013=30da0a5e05d4529a2b97b3c1818cf9e15842d628    # Composition 0.0.13 consumer pin
+# Artifact sha256 (git blobs are the same bytes)
+A008=93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa
+A010=cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7
+A012=0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3
+# package-lock.json sha256 / node_modules/.package-lock.json sha256 (as built on the source machine)
+L008=35cea68df7ee4cc009438e7a079e6b871e4721f1856e14352ba38e48e74224df; H008=61e6ef1d566442b8b0b89a62e3696142e27f37b573395401756d14eb87dd2b71
+L010=390a29eed8c4c95e448807c522622fc7bc174e1daedd92d93d811ff7372708d7; H010=ee426da6ebd6a021d189a34f76e4844bdd62a7aad1c4e89887c6608297259f56
+L012=cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597; H012=27515b4e4a32f77057b66da97818b82a0e799d8eb289fa7587a990c01dab824f
+L013=c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24; H013=e207343a5c79a56e70516c493ec837a16bd8451ffad5d51cecbf1dd7abcfede7
+# venv-agent-child / -s2 install `astrid` (non-editable, --no-deps) from these Agent commits (tl/integration)
+ASTRID_CHILD=86405964ecb713ad42a375f9de7960b3f9dc259b
+ASTRID_S2=d8749a9ce12a699672faf3ad96b4e4cbea9245c2
+
+VERIFY_ONLY=0; LIST=0; SEL=(); FAILS=0; OKS=0
+for a in "$@"; do case "$a" in --verify-only) VERIFY_ONLY=1;; --list) LIST=1;; -*) echo "unknown flag $a" >&2; exit 2;; *) SEL+=("$a");; esac; done
+log() { echo "[provision] $*"; }
+want() { [ ${#SEL[@]} -eq 0 ] && return 0; local s; for s in "${SEL[@]}"; do [ "$s" = "$1" ] && return 0; done; return 1; }
+sha() { sha256sum "$1" | cut -d' ' -f1; }
+export PYTHONDONTWRITEBYTECODE=1   # verification must not write __pycache__ into shared installs
+export GIT_OPTIONAL_LOCKS=0         # git status must not refresh the index of existing checkouts
+
+ensure_hub() { git -C "$1" remote get-url hub >/dev/null 2>&1 || git -C "$1" remote add hub "$HUB_URL"; }
+need_commit() { # repo sha
+  git -C "$1" cat-file -e "$2^{commit}" 2>/dev/null && return 0
+  ensure_hub "$1"; git -C "$1" fetch -q hub 2>&1 | tail -2
+  git -C "$1" cat-file -e "$2^{commit}" 2>/dev/null || { echo "commit $2 not in $1 even after 'git fetch hub'" >&2; return 1; }
+}
+
+# step NAME DEST BUILD_FN VERIFY_FN : build if DEST absent (in a set -e subshell), then always verify; print CHECK line.
+step() {
+  local name=$1 dest=$2 build=$3 verify=$4 rc out
+  want "$name" || return 0
+  if [ -e "$dest" ]; then
+    log "$name: $dest exists -> verify only (not modified)"
+  elif [ $VERIFY_ONLY = 1 ]; then
+    echo "CHECK $name: FAIL missing $dest"; FAILS=$((FAILS+1)); return 0
+  else
+    log "$name: building $dest"
+    ( set -eu -o pipefail; $build ); rc=$?
+    if [ $rc -ne 0 ]; then rm -rf "$dest" "$dest.partial"; echo "CHECK $name: FAIL build rc=$rc (partial output removed)"; FAILS=$((FAILS+1)); return 0; fi
+  fi
+  out=$($verify 2>&1); rc=$?
+  if [ $rc -eq 0 ]; then echo "CHECK $name: OK $out"; OKS=$((OKS+1)); else echo "CHECK $name: FAIL $out"; FAILS=$((FAILS+1)); fi
+}
+
+# ---------------------------------------------------------------- node toolchain
+build_node() {
+  local dl=$W/toolchain/dl base=https://nodejs.org/dist/v$NODE_VER f=node-v$NODE_VER-linux-x64.tar.xz
+  mkdir -p "$dl"; rm -rf "$NODE_DIR.partial"
+  [ -f "$dl/$f" ] && [ "$(sha "$dl/$f")" = $NODE_TGZ_SHA ] || { curl -fsSL -o "$dl/$f.part" "$base/$f"; mv "$dl/$f.part" "$dl/$f"; }
+  [ "$(sha "$dl/$f")" = $NODE_TGZ_SHA ] || { echo "node tarball sha mismatch"; rm -f "$dl/$f"; exit 1; }
+  [ -f "$dl/SHASUMS256.txt" ] || curl -fsSL -o "$dl/SHASUMS256.txt" "$base/SHASUMS256.txt"
+  [ "$(sha "$dl/SHASUMS256.txt")" = $NODE_SUMS_SHA ] || echo "warning: SHASUMS256.txt differs from the one saved on the source machine"
+  mkdir -p "$NODE_DIR.partial" && tar -xJf "$dl/$f" -C "$NODE_DIR.partial" --no-same-owner
+  mv "$NODE_DIR.partial/node-v$NODE_VER-linux-x64" "$NODE_DIR"; rmdir "$NODE_DIR.partial"
+}
+verify_node() {
+  local n m; n=$("$NODE_BIN/node" -v) || return 1
+  m=$("$NODE_BIN/node" "$NODE_DIR/lib/node_modules/npm/bin/npm-cli.js" -v) || return 1
+  [ "$n" = v$NODE_VER ] && [ "$m" = 10.8.2 ] || { echo "node $n npm $m (want v$NODE_VER / 10.8.2)"; return 1; }
+  echo "node $n npm $m"
+}
+
+# ---------------------------------------------------------------- python venvs
+norm() { sed -E 's#^astrid @ .*#astrid @ LOCAL#' | LC_ALL=C sort; }
+# build_venv NAME FREEZE_FILE [ASTRID_SHA ASTRID_SRC_DIR]
+build_venv() {
+  local name=$1 freeze=$2 sha=${3:-} src=${4:-} d=$W/$1 py
+  command -v "$PYTHON313" >/dev/null || { echo "python3.13 not found (set PYTHON313=/path/to/python3.13)"; exit 1; }
+  "$PYTHON313" -m venv "$d"; py=$d/bin/python
+  "$py" -m pip install --no-cache-dir 'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3'
+  grep -v -e '^astrid @' -e '^pip==' -e '^setuptools==' -e '^wheel==' "$freeze" > "$d/.provision-requirements.txt"
+  "$py" -m pip install --no-cache-dir --no-deps -r "$d/.provision-requirements.txt"   # full freeze => exact, no resolver
+  if [ -n "$sha" ]; then
+    need_commit "$AGENT" "$sha"; mkdir -p "$W/wt"; rm -rf "$src"; mkdir -p "$src"
+    git -C "$AGENT" archive "$sha" | tar -x -C "$src"
+    "$py" -m pip install --no-cache-dir --no-deps "$src"       # non-editable, like the source machine
+    rm -rf "$src"; echo "$sha" > "$d/.astrid-source-commit"
+  fi
+}
+verify_venv() { # NAME FREEZE [ASTRID_SHA]
+  local name=$1 freeze=$2 sha=${3:-} py=$W/$1/bin/python got want v n
+  v=$("$py" -c 'import sys; assert sys.version_info[:2]==(3,13); print(sys.version.split()[0])') || { echo "python is not 3.13"; return 1; }
+  got=$("$py" -m pip freeze --all | norm); want=$(norm < "$freeze")
+  [ "$got" = "$want" ] || { echo "freeze differs from $freeze:"; diff <(echo "$got") <(echo "$want") | head -10; return 1; }
+  n=$(echo "$want" | wc -l)
+  "$py" -c 'import pytest, xdist, jsonschema, referencing, yaml, banodoco_timeline_schema, runpod_lifecycle' || return 1
+  if [ -n "$sha" ]; then
+    [ "$(cat "$W/$name/.astrid-source-commit" 2>/dev/null)" = "$sha" ] || { echo "astrid source commit marker != $sha"; return 1; }
+    "$py" -c 'import importlib.metadata as m, astrid, astrid_runtime_client; assert m.version("astrid")=="0.1.0"' || return 1
+    echo "python $v; $n pins match; astrid@${sha:0:8} + astrid_runtime_client import ok"
+  else
+    echo "python $v; $n pins match; import ok"
+  fi
+}
+
+# ---------------------------------------------------------------- node runtimes
+npm_ci() { ( cd "$1" && PATH=$NODE_BIN:$PATH npm ci --no-audit --no-fund --loglevel=error ); }
+# build_sub DEST COMMIT LOCKSHA ART... : the minimal project the old shared runtimes have: package.json, lock, .npmrc,
+# patches/, scripts/, artifacts/ (each ART = COMMIT:FILE:SHA256, copied from that commit), empty src/, then npm ci.
+build_sub() {
+  local d=$1 c=$2 lock=$3 t=$1.partial a ac af as; shift 3
+  need_commit "$AGENT" "$c"; rm -rf "$t"; mkdir -p "$t/artifacts" "$t/src"
+  git -C "$AGENT" archive "$c" remotion/package.json remotion/package-lock.json remotion/.npmrc remotion/patches remotion/scripts \
+    | tar -x -C "$t" --strip-components=1
+  for a in "$@"; do ac=${a%%:*}; af=${a#*:}; as=${af#*:}; af=${af%%:*}
+    need_commit "$AGENT" "$ac"; git -C "$AGENT" show "$ac:remotion/artifacts/$af" > "$t/artifacts/$af"
+    [ "$(sha "$t/artifacts/$af")" = "$as" ] || { echo "artifact $af sha mismatch"; exit 1; }
+  done
+  [ "$(sha "$t/package-lock.json")" = "$lock" ] || { echo "lock sha mismatch at $c"; exit 1; }
+  npm_ci "$t"; mv "$t" "$d"
+}
+build_deps008() { build_sub "$W/deps/agent-remotion-0.0.8" $C008 $L008 "$C008:banodoco-timeline-composition-0.0.8.tgz:$A008" \
+  && rm -f "$W/deps/agent-remotion-0.0.8/scripts/fetch-shared-browser.mjs" && rmdir "$W/deps/agent-remotion-0.0.8/src"; }
+# build_full DEST COMMIT LOCKSHA : whole remotion/ tree of that commit + npm ci (what bin/make-runtime does)
+build_full() {
+  local d=$1 c=$2 lock=$3 t=$1.partial
+  need_commit "$AGENT" "$c"; rm -rf "$t"; mkdir -p "$t"
+  git -C "$AGENT" archive "$c" remotion | tar -x -C "$t" --strip-components=1
+  [ "$(sha "$t/package-lock.json")" = "$lock" ] || { echo "lock sha mismatch at $c"; exit 1; }
+  npm_ci "$t"; echo "$lock" > "$t/node_modules/.astrid-package-lock.sha256"; echo "$c" > "$t/.source-commit"
+  mv "$t" "$d"
+}
+build_current() { build_full "$W/runtimes/agent-remotion-current" $CCUR $L012; }   # same lock+package.json as 0012 => same node_modules
+build_0013() { build_full "$W/runtimes/agent-remotion-0013" $C013 $L013
+  find "$W/runtimes/agent-remotion-0013" -path '*/node_modules/.cache' -prune -o -type f -exec chmod a-w {} +; }
+# verify_rt DIR COMMIT LOCKSHA HIDDENSHA COMPOSITION_VERSION
+verify_rt() {
+  local d=$1 c=$2 lock=$3 hid=$4 cv=$5 got rv
+  need_commit "$AGENT" "$c" || return 1
+  [ "$(sha "$d/package-lock.json")" = "$lock" ] || { echo "package-lock.json sha != $lock"; return 1; }
+  [ "$(git -C "$AGENT" hash-object "$d/package-lock.json")" = "$(git -C "$AGENT" rev-parse "$c:remotion/package-lock.json")" ] || { echo "lock not byte-identical to ${c:0:8}:remotion/package-lock.json"; return 1; }
+  [ "$(git -C "$AGENT" hash-object "$d/package.json")" = "$(git -C "$AGENT" rev-parse "$c:remotion/package.json")" ] || { echo "package.json differs from ${c:0:8}"; return 1; }
+  [ "$(sha "$d/node_modules/.package-lock.json")" = "$hid" ] || { echo "node_modules/.package-lock.json differs from source machine's install"; return 1; }
+  got=$("$NODE_BIN/node" -e "console.log(require('$d/node_modules/@banodoco/timeline-composition/package.json').version, require('$d/node_modules/remotion/package.json').version)") || return 1
+  [ "$got" = "$cv 4.0.509" ] || { echo "composition/remotion = $got (want $cv 4.0.509)"; return 1; }
+  echo "lock==${c:0:8}:remotion/package-lock.json; composition $cv; remotion 4.0.509; node_modules/.package-lock.json ok"
+}
+verify_0010() { verify_rt $W/runtimes/agent-remotion-0010 $C010 $L010 $H010 0.0.10; }
+verify_0012() { verify_rt $W/runtimes/agent-remotion-0012 $C012 $L012 $H012 0.0.12; }
+verify_0013() { verify_rt $W/runtimes/agent-remotion-0013 $C013 $L013 $H013 0.0.13; }
+verify_008()  { verify_rt $W/runtimes/agent-remotion $C008 $L008 $H008 0.0.8; }
+verify_deps() { verify_rt $W/deps/agent-remotion-0.0.8 $C008 $L008 $H008 0.0.8; }
+verify_current() {
+  local d=$W/runtimes/agent-remotion-current r
+  r=$(verify_rt $d $CCUR $L012 $H012 0.0.12) || { echo "$r"; return 1; }
+  [ "$(cat $d/.source-commit)" = $CCUR ] && [ "$(cat $d/node_modules/.astrid-package-lock.sha256)" = $L012 ] || { echo "marker files wrong"; return 1; }
+  [ -f $d/src/index.ts ] && [ -f $d/normal-audio-sources.mjs ] || { echo "remotion/ source tree incomplete"; return 1; }
+  "$NODE_BIN/node" --check $d/normal-audio-sources.mjs || return 1
+  echo "$r; source $CCUR; node --check ok"
+}
+
+# ---------------------------------------------------------------- vibecomfy fixture (read-only clone, detached)
+build_vibe() {
+  local d=$W/fixtures/vibecomfy t=$W/fixtures/vibecomfy.partial
+  mkdir -p "$W/fixtures"; rm -rf "$t"
+  git clone -q "$VIBECOMFY_URL" "$t"
+  git -C "$t" -c advice.detachedHead=false checkout -q --detach "$VIBECOMFY_SHA"
+  git -C "$t" remote set-url --push origin DISABLED_NO_PUSH
+  mv "$t" "$d"; chmod -R a-w "$d"       # tests must COPY from it, never write into it
+}
+verify_vibe() {
+  local d=$W/fixtures/vibecomfy h
+  h=$(git -C $d rev-parse HEAD) || return 1
+  [ "$h" = $VIBECOMFY_SHA ] || { echo "HEAD $h != $VIBECOMFY_SHA"; return 1; }
+  [ -z "$(git -C $d status --porcelain)" ] || { echo "fixture is dirty"; return 1; }
+  echo "git rev-parse HEAD = ${h:0:12} (clean, detached)"
+}
+
+# ---------------------------------------------------------------- Runtime worktrees used as ASTRID_RUNTIME_CHECKOUT pins
+RT_WT=(
+  rt-pin-20207411:202074110717146fc7f08af2306a8dd7f695b0b1
+  rt-pin-2c4ac180:2c4ac180c2220bdad966bc01e95ad230e99ce26a
+  rt-pin-7d1cfa6b:7d1cfa6b1da0c50bb8a9d3430dcaa6272b20b55e
+  rt-pin-94114269:94114269d1ce23ab3224d7eca5a85138ce2b5fed
+  rt-pin-a0dca169:a0dca16975dfe8f5e762703b99d9791a16cf7fd7
+  rt-pin-a6a11a80:a6a11a806a51262192447fdeccc726b01ffd78fb
+  rt-m2-track-public-export:6be970633cc82ab412428151e6bf42f3e7fc3081
+  rt-m2-null-speed-clean-candidate:4c145dc62192f0e942e3ee3922a11488aefe9b41
+)
+WT_NAME=; WT_SHA=
+build_wt() { need_commit "$RUNTIME" "$WT_SHA"; mkdir -p "$W/wt"; git -C "$RUNTIME" worktree add -q --detach "$W/wt/$WT_NAME" "$WT_SHA"; }
+verify_wt() {
+  local h; h=$(git -C "$W/wt/$WT_NAME" rev-parse HEAD) || return 1
+  [ "$h" = "$WT_SHA" ] || { echo "HEAD $h != $WT_SHA"; return 1; }
+  [ -z "$(git -C "$W/wt/$WT_NAME" status --porcelain)" ] || { echo "worktree dirty"; return 1; }
+  echo "git rev-parse HEAD = ${h:0:12} (clean)"
+}
+
+# ================================================================ main
+if [ $LIST = 1 ]; then
+  echo "node-toolchain venv-agent venv-agent-child venv-agent-child-s2 agent-remotion deps-agent-remotion-0.0.8 agent-remotion-0010 agent-remotion-0012 agent-remotion-current agent-remotion-0013 vibecomfy"
+  for e in "${RT_WT[@]}"; do echo -n "${e%%:*} "; done; echo; exit 0
+fi
+for t in git curl tar xz sha256sum; do command -v $t >/dev/null || { echo "missing prerequisite: $t" >&2; exit 2; }; done
+for r in "$AGENT" "$RUNTIME"; do git -C "$r" rev-parse --git-dir >/dev/null 2>&1 || { echo "$r is not a git clone" >&2; exit 2; }; done
+for f in venv-agent venv-agent-child venv-agent-child-s2; do [ -f "$PROV/$f.txt" ] || { echo "missing $PROV/$f.txt" >&2; exit 2; }; done
+
+step node-toolchain "$NODE_DIR" build_node verify_node
+# node first: everything below needs it
+step venv-agent "$W/venv-agent" "build_venv venv-agent $PROV/venv-agent.txt" "verify_venv venv-agent $PROV/venv-agent.txt"
+step venv-agent-child "$W/venv-agent-child" "build_venv venv-agent-child $PROV/venv-agent-child.txt $ASTRID_CHILD $W/wt/.child-install" \
+  "verify_venv venv-agent-child $PROV/venv-agent-child.txt $ASTRID_CHILD"
+step venv-agent-child-s2 "$W/venv-agent-child-s2" "build_venv venv-agent-child-s2 $PROV/venv-agent-child-s2.txt $ASTRID_S2 $W/wt/.orch-astrid-d8749a9c" \
+  "verify_venv venv-agent-child-s2 $PROV/venv-agent-child-s2.txt $ASTRID_S2"
+step agent-remotion "$W/runtimes/agent-remotion" "build_sub $W/runtimes/agent-remotion $C008 $L008 $C008:banodoco-timeline-composition-0.0.8.tgz:$A008" verify_008
+step deps-agent-remotion-0.0.8 "$W/deps/agent-remotion-0.0.8" build_deps008 verify_deps
+step agent-remotion-0010 "$W/runtimes/agent-remotion-0010" \
+  "build_sub $W/runtimes/agent-remotion-0010 $C010 $L010 $C010:banodoco-timeline-composition-0.0.10.tgz:$A010 $C008:banodoco-timeline-composition-0.0.8.tgz:$A008" verify_0010
+step agent-remotion-0012 "$W/runtimes/agent-remotion-0012" \
+  "build_sub $W/runtimes/agent-remotion-0012 $C012 $L012 $C012:banodoco-timeline-composition-0.0.12.tgz:$A012 $C010:banodoco-timeline-composition-0.0.10.tgz:$A010 $C008:banodoco-timeline-composition-0.0.8.tgz:$A008" verify_0012
+step agent-remotion-current "$W/runtimes/agent-remotion-current" build_current verify_current
+step agent-remotion-0013 "$W/runtimes/agent-remotion-0013" build_0013 verify_0013
+step vibecomfy "$W/fixtures/vibecomfy" build_vibe verify_vibe
+for e in "${RT_WT[@]}"; do WT_NAME=${e%%:*}; WT_SHA=${e#*:}; step "$WT_NAME" "$W/wt/$WT_NAME" build_wt verify_wt; done
+
+echo "SUMMARY: $OKS ok, $FAILS failed"
+[ $FAILS -eq 0 ]

@@ -1057,25 +1057,10 @@ NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b
 ## 17:22Z — orchestrator: please write STATUS.md decision lines in plain English WITH SPACES (MANAGER-COMMON.md). The hourly checker can't read "wordsruntogether", and unreadable decisions get flagged as UNCLEAR.
 
 ## 17:48Z — orchestrator: OWNER DIRECTION, speed. Re-read MANAGER-COMMON.md "Review is proportionate" and "Deletion sweeper". Independent reviews only for the listed risky categories; everything else merges on targeted tests plus your own diff read. Dispatch each HELD row's deletion the same round its blocker clears.
-## PEER UPDATE from app2 — private014 exact central qualification
-Exact Agent3c4/Runtime202074+producera0 tuple,75artifacts/schema6ba guarded. Central required full parent swap positive under--runxfail PASS1 (app-normal014-integration-parent-media-accepted-1020173445-31361). Gate5 E2E did NOT start: private graph missing .bin/vite, hosted build failed before journey. Harness-only repair and ONE fresh central E2E assigned, no pin/release/activation. Exact snapshot/logs in workers/ap2-m2-normal014-central-qualification/report.md.
-
-## PEER REQUEST from app2 — ordinary trim capture prerequisite
-ordinaryTrimMember built reusing approved aa0531ec7 existing clipTrimCapture contract;67privateApp+115Agent and actual TS->Agent fullrecord/bundle/inverse/replay/redo PASS. Current App integration lacks clipTrimCapture.ts +fixture/sessionport. Please confirm HOME owner/landing plan for approved aa0531 exactcapture source (no duplicate trim gesture implementation requested). App2 will independently review member and add only ordinary membership dispatch after prerequisite. This is ordinary-batch remaining family, no new API/DTO/pin.
-
-## PEER UPDATE from app2 — normal014 gate and seam source
-Private014 parent positive1PASS stands. Vitebin private harness repaired, exacthostedbuildPASS; fresh E2E6901 actually reached ownerreadiness then timedoutready:false90s. Firstfailingguardtriage active; no Gate5/privatepinadoption claim. Two typefixesbf485/3ba595 HOMEpending ACK. New seam6da47add9 remote merge request independentlyAPPROVE26/typebaselineidentical, report-only no snapshots/oldopaque reports retained; authoredseam nativecarrier remainsOPEN.
-
-## PEER REQUEST from app2 — prepared media provider final join
-Corrected real manual prepared video addClip/session/outbox path on landed42e,255focusedPASS (89capture/session/import+66Provider+100RuntimeProvider). Originalfive copied/deepfrozen beforeawait, mutableinput race fixed, finishchecks generation/head/bundle. CurrentRuntimeDataProvider lacks getProjectVerifiedMedia facadecapability; App owns Provider finaljoin and should supply EXISTINGverified-read wrapper, no newDTO/endpoint. Independentreview next. Please confirm exact provider seam/hunk ownership. No productactivation claim until actual verifiedpath/browser durable proof. Disk8G leadrecycle status flagged.
-
-## PEER REQUEST from app2 — private014 first failing readiness guard
-Exact014 hostedbuild/artifact/lock/schema/sourceguards PASS, parentnative positive1PASS. Gate5 central6901 fails BEFOREowner/outboxclaim because command session waits on initialRecoveryChecked; worker traced likely b77 readiness-generation race,75targetedPASS but no sourcefix. Please take App-owned initialization/recovery seam with regression guidance in design/ap2-m2-normal014-owner-ready-triage.md. No App2 edit toexisting initialization, no weakenedreadytimeout/guard, no privatepinadoption. Return exactfix/source so ONE justified fresh run canqualify. App2 ordinarynewport workcontinues.
-
-## PEER RESPONSE from app2 — exact helper type local adoption
-bf485 exactremote ref is already local tl/ap2-m2-five-helper-types-fix HERE and requestremote sent; App2 cannot create HOME .git refs. HOME usual harness import: dispatch tiny Luna worker on --base hub/tl/ap2-m2-five-helper-types-fix (or hub/timeline/app/tl/ap2-m2-five-helper-types-fix as present), brief “no changes, verify exactbf485152f64d084f3bbdafa66fb2b586d2bb481c, createDONE”; harness creates local tl/<newworker> at identical source, then request-merge thatworker. No productcontentchange/review needed, typepacket approved46/native. Merge consumer3ba595 afterward. If importscript specific home has anotherstandard route useit, no newsourceimplementation. Newowner17:48 proportionatereview ACK, no futureindependentreview onordinary narrowing/deletion.
-
-## PEER UPDATE from app2 — exact bounded joins ready
-New merge requests parent-existing-verified-wrapper (3files142PASS): forwards generated verifiedmedia existingendpoint, exactfive unchanged/wrongprojectbeforetransport. Element-current-real-consumer has ONLYONEprodline VideoEditorProvider editorOps element:editor.element +regression;228+117+75PASS, own diff read. Please finaljoin/overlapcheck as Providerowner, preservesautomaticlifetime. Preparedconsumer475 reviewed264/85native willjoinwith wrapper oncurrentroot viaapp2 worker, no unsuppliedtestcapability. Duplicateactualconsumerd379 pending merge,72PASS, deletion+actualjourneyworker active.
 
 ## 18:09Z — orchestrator: ALARM, no deletion-ledger row has turned DELETED in 2 hours (still 21). This round, (1) list in STATUS the ledger rows that are ONE step from deletion and what that step is; (2) dispatch those steps now as small Luna workers (deletion sweeper); (3) mark a row DELETED in your design/deletion-ledger.<area>.md the moment its deletion merges, with the merge sha. Migration work without deletions does not move M2.
+
+## 2026-10-20T18:13:53Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+
+# Runtime peer reply — 2026-10-20T18:13:14.694134+00:00
+ACK App18:02 automatic pre-admission event wait. Runtime rt-m2-auto-event-cursor-contract is tracing exact frozen2c4 event request/response and initial-empty/cursor semantics, without changes to frozen source or new contract. Will send actual payload/source/test evidence; App retains its live hard diagnosis and owns its adapter. No new public tuple/pin or activation claim. Existing HTTP200 alone is not a ready cursor proof.

@@ -1,72 +1,78 @@
 # Runtime Timeline-core size census
 
-Refreshed for M4 on 2026-10-20. This is a rough-guide measurement, not a gate
-or a target to optimize against. It follows PLAN's settled boundary: authored
-Runtime product code that implements Timeline Read/See/Edit. It excludes
-untouched worker/execution/catalog/custody infrastructure, generated DTOs,
-generated schemas and clients, tests, fixtures, and package data.
+Pinned for M4 on 2026-10-20. This is a rough-guide measurement, not a gate or
+a target to optimize against. It follows PLAN's settled boundary: authored
+Runtime product code implementing Timeline Read/See/Edit. It excludes untouched
+worker/execution/catalog/custody infrastructure, generated contracts/clients,
+tests, fixtures, and package data.
 
 ## Exact source revisions
 
-| label | commit | tree |
-|---|---|---|
-| main baseline | `origin/main` `29d0954b6d78a7d7937d81bc36567b6dee7ca976` | `eb06dfd08e6d489204f03d65e55951bcf521b326` |
-| current integration | `tl/integration` `7f6dd8920e1ceec41b137358df5e7fecc304888d` | `4cccb2d643194df7df95d624e89a6cd9f6f268fc` |
+The current-integration measurement is pinned to the task's assigned base,
+`cc3796a`; the mutable `tl/integration` ref advanced while this census was in
+progress and is deliberately not used as an input. The private `a6a` candidate
+is measured separately and was not merged.
 
-The current integration SHA is the live Runtime integration ref in
-`/home/user/work/runtime` and in this worker's read-only ref view. Frozen R4
-candidate branches are not included. No prior-hold branch delta is included;
-the current integration diff is measured directly from the exact two commits
-above.
+| label | commit | tree | commit date |
+|---|---|---|---|
+| main baseline (`origin/main`) | `240d5bb202af709294551045554012f079fd06ca` | `2e77d0df220885e978c5fbdf5d6072292ac07284` | `2026-10-20T17:31:38+02:00` |
+| current integration snapshot | `cc3796a0c333b956b171c68dc876d41f40f6219f` | `18e037810a8b61551c23fc33e5639775b7da8623` | `2026-10-20T17:58:50+00:00` |
+| private `a6a` snapshot (not merged) | `a6a11a806a51262192447fdeccc726b01ffd78fb` | `8c027992e34ddf9a940d3e90cd38f7b9e11e4c25` | `2026-10-20T17:53:10+00:00` |
 
 ## Boundary and method
 
-The count is committed-blob source lines, including blank lines, with one
-explicit manifest applied to both revisions. For shared files, the manifest
-selects named top-level AST functions/methods and counts each selected node's
+Counts are committed-blob physical source lines (`splitlines`, blank lines
+included), with one manifest applied to all three revisions. For mixed files,
+the manifest selects named top-level AST methods and counts each selected node's
 inclusive `lineno..end_lineno` range. Overlapping ranges are unioned. This
-prevents whole `service.py`, `store.py`, or `server.py` totals from being
+keeps whole `service.py`, `store.py`, and `server.py` totals from being
 presented as Timeline code.
 
-Single-purpose handwritten Timeline modules are counted in full. The generated
-`runtime_protocol/timeline_commit_types.py`,
+Single-purpose handwritten Timeline modules are counted in full. The private
+`runtime_protocol/timeline_materialization.py` module is included because it is
+authored source-bound Edit-path product code; it is zero in main and current.
+The generated `runtime_protocol/timeline_commit_types.py`,
 `runtime_protocol/schemas/timeline-commit-bundle.json`, contract schemas,
-generated Python/TypeScript clients, and all tests/fixtures are excluded.
+generated Python/TypeScript clients and metadata, and all tests/fixtures are
+excluded.
 
 ### Selected-range census
 
-| path | main | current | delta | selection |
-|---|---:|---:|---:|---|
-| `runtime_protocol/canonical_schema.py` | 121 | 139 | +18 | Timeline SQL ranges; current `TIMELINE_COMMIT_SCHEMA_SQL` included |
-| `runtime_protocol/cli.py` | 37 | 37 | 0 | `audit-timelines` parser/handler ranges |
-| `runtime_protocol/server.py` | 670 | 794 | +124 | Timeline helpers, commit routing, and `RuntimeHandler._route` AST range |
-| `runtime_protocol/service.py` | 2,112 | 1,706 | −406 | named `RuntimeService` Timeline/commit/projection/view ranges |
-| `runtime_protocol/store.py` | 117 | 117 | 0 | named Timeline projector/publication/event ranges |
-| `runtime_protocol/capture_validation.py` | 0 | 225 | +225 | full handwritten capture module |
-| `runtime_protocol/managed_render_snapshot.py` | 217 | 217 | 0 | full handwritten Timeline See module |
-| `runtime_protocol/seam_intent.py` | 88 | 88 | 0 | full handwritten Timeline See module |
-| `runtime_protocol/shot_dependencies.py` | 155 | 155 | 0 | full handwritten Timeline See module |
-| `runtime_protocol/snapshot_refs.py` | 224 | 278 | +54 | full handwritten Timeline snapshot/projector module |
-| `runtime_protocol/timeline_commit.py` | 0 | 55 | +55 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_baseline.py` | 0 | 441 | +441 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_execution.py` | 0 | 115 | +115 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_inputs.py` | 0 | 707 | +707 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_port.py` | 0 | 933 | +933 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_producer.py` | 0 | 285 | +285 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_producer_checkpoint.py` | 0 | 163 | +163 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_provider.py` | 0 | 93 | +93 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_store.py` | 0 | 995 | +995 | full handwritten commit module |
-| `runtime_protocol/timeline_commit_validation.py` | 0 | 103 | +103 | full handwritten commit module |
-| `runtime_protocol/timeline_cutover.py` | 217 | 217 | 0 | full handwritten Timeline audit module |
-| `runtime_protocol/timeline_inspection.py` | 845 | 844 | −1 | full handwritten Timeline Read module |
-| `runtime_protocol/timeline_view.py` | 214 | 214 | 0 | full handwritten Timeline Read/See module |
-| `runtime_protocol/visual_boundary.py` | 228 | 228 | 0 | full handwritten Timeline See module |
-| `runtime_protocol/visual_seam.py` | 465 | 471 | +6 | full handwritten Timeline See/projector module |
-| **selected Timeline-core total** | **5,710** | **9,620** | **+3,910** | |
+| path | main | current `cc3796a` | delta | private `a6a` | delta | selection |
+|---|---:|---:|---:|---:|---:|---|
+| `runtime_protocol/canonical_schema.py` | 121 | 139 | +18 | 139 | +18 | explicit Timeline SQL ranges; current commit schema included |
+| `runtime_protocol/cli.py` | 37 | 37 | 0 | 37 | 0 | `audit-timelines` parser/handler ranges |
+| `runtime_protocol/server.py` | 670 | 794 | +124 | 794 | +124 | selected `RuntimeHandler` helpers, commit routing, and `_route` |
+| `runtime_protocol/service.py` | 2,112 | 1,729 | −383 | 1,729 | −383 | selected `RuntimeService` Timeline/commit/projection/view methods |
+| `runtime_protocol/store.py` | 117 | 117 | 0 | 117 | 0 | selected Timeline projector/publication/event methods |
+| `runtime_protocol/capture_validation.py` | 0 | 225 | +225 | 225 | +225 | full handwritten capture module |
+| `runtime_protocol/managed_render_snapshot.py` | 217 | 217 | 0 | 217 | 0 | full handwritten Timeline See module |
+| `runtime_protocol/seam_intent.py` | 88 | 88 | 0 | 88 | 0 | full handwritten Timeline See module |
+| `runtime_protocol/shot_dependencies.py` | 155 | 155 | 0 | 155 | 0 | full handwritten Timeline See module |
+| `runtime_protocol/snapshot_refs.py` | 224 | 278 | +54 | 278 | +54 | full handwritten Timeline snapshot/projector module |
+| `runtime_protocol/timeline_commit.py` | 0 | 55 | +55 | 59 | +59 | full handwritten commit module |
+| `runtime_protocol/timeline_commit_baseline.py` | 0 | 441 | +441 | 441 | +441 | full handwritten commit module |
+| `runtime_protocol/timeline_commit_execution.py` | 0 | 115 | +115 | 115 | +115 | full handwritten commit module |
+| `runtime_protocol/timeline_commit_inputs.py` | 0 | 707 | +707 | 707 | +707 | full handwritten commit module |
+| `runtime_protocol/timeline_commit_port.py` | 0 | 941 | +941 | 1,041 | +1,041 | full handwritten commit port |
+| `runtime_protocol/timeline_commit_producer.py` | 0 | 285 | +285 | 285 | +285 | full handwritten producer module |
+| `runtime_protocol/timeline_commit_producer_checkpoint.py` | 0 | 163 | +163 | 163 | +163 | full handwritten producer module |
+| `runtime_protocol/timeline_commit_provider.py` | 0 | 93 | +93 | 93 | +93 | full handwritten provider module |
+| `runtime_protocol/timeline_commit_store.py` | 0 | 1,008 | +1,008 | 1,184 | +1,184 | full handwritten commit store |
+| `runtime_protocol/timeline_commit_validation.py` | 0 | 103 | +103 | 103 | +103 | full handwritten validation module |
+| `runtime_protocol/timeline_cutover.py` | 217 | 217 | 0 | 217 | 0 | full handwritten Timeline audit module |
+| `runtime_protocol/timeline_inspection.py` | 845 | 844 | −1 | 844 | −1 | full handwritten Timeline Read module |
+| `runtime_protocol/timeline_view.py` | 214 | 214 | 0 | 214 | 0 | full handwritten Timeline Read/See module |
+| `runtime_protocol/visual_boundary.py` | 228 | 228 | 0 | 228 | 0 | full handwritten Timeline See module |
+| `runtime_protocol/visual_seam.py` | 465 | 471 | +6 | 471 | +6 | full handwritten Timeline See/projector module |
+| `runtime_protocol/timeline_materialization.py` | 0 | 0 | 0 | 183 | +183 | full private handwritten source-bound materialization join |
+| **selected Timeline-core total** | **5,710** | **9,664** | **+3,954** | **10,127** | **+4,417** | |
 
-The current additions are visible as the handwritten commit/capture modules;
-the selected shared-code delta also records the current retirement of old
-direct timeline writers and the current Runtime route/service changes.
+The current and private revisions share the same selected baseline product
+surface except for the private source-bound candidate. Relative to current,
+private `a6a` adds **+463 selected product lines**: `timeline_commit.py` +4,
+`timeline_commit_port.py` +100, `timeline_commit_store.py` +176, and the new
+`timeline_materialization.py` +183.
 
 ### AST method manifest for mixed files
 
@@ -84,7 +90,7 @@ _timeline_path, _timeline_commit, _is_timeline_commit, _route
 ```
 
 The baseline has only `_project_mutation_body`, `_timeline_options`, and
-`_route`; current-only names are skipped at the baseline.
+`_route`; current/private-only names are skipped at the baseline.
 
 `runtime_protocol/store.py`, class `RealmStore`:
 
@@ -126,7 +132,7 @@ list_timeline_commits, get_project_media_selection, get_project_verified_media,
 get_project_verified_document_object, get_project_verified_document
 ```
 
-The `server._route`, selected service replay/publication helpers, and selected
+`server._route`, selected service replay/publication helpers, and selected
 store projector helpers are shared with non-Timeline concerns inside one AST
 node. Their complete node ranges are retained so the result is reproducible;
 their generic portions are an explicit allocation uncertainty, not silently
@@ -138,50 +144,92 @@ The module-level non-AST ranges are also explicit:
 
 ```text
 origin/main canonical_schema.py: 112-124, 153-165, 276-290, 322-388, 403-415
-tl/integration canonical_schema.py: 12-27, 131-144, 172-184, 295-309,
+current/private canonical_schema.py: 12-27, 131-144, 172-184, 295-309,
   341-408, 424-436
 origin/main cli.py: 124-139, 181-201
-tl/integration cli.py: 125-140, 182-202
+current/private cli.py: 125-140, 182-202
 ```
 
-### Reproduction
+## Private generator versus product delta
 
-The source identity and per-file whole-blob context can be reproduced without
-checking out either ref:
+The complete `a6a`-versus-assigned-current diff is 35 files (+5,167/−683
+physical lines), but only four handwritten product paths contribute the +463
+selected-line delta above. The remaining changes are private generator source,
+contract/schema data, generated Python/TypeScript clients and metadata, or
+tests/fixtures. They are deliberately not counted as Runtime Timeline-core
+product lines. In particular, a generated command union or its checked-in
+schema is not evidence of additional authored Read/See/Edit implementation.
+
+The private source-bound join is therefore reported twice only in the useful
+sense: its handwritten Runtime implementation is counted in the private
+product total, while its generated contract/client consequences remain outside
+the total. `a6a` is a private qualification candidate, not current
+integration, and this census makes no consumer-adoption or release claim.
+
+## Existing post-D01 cuts and holds
+
+These are already named Runtime ledger rows, recorded here for size context;
+they are not new deletion proposals and this documentation task performs none
+of them. See
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.runtime.md`.
+
+| ledger row | existing named cut/hold | current decision boundary |
+|---|---|---|
+| `D04` | legacy canonical timeline publication bodies | held until both App D01 and Agent whole-candidate/`clip.set-element` migration qualify; no speculative removal here |
+| `D13` / `RT07` | producer-uncustodied render admission and the legacy `publish_timeline_render` direct writer | authority primitives are merged, but the registered replacement remains open; cut only after accepted proposal/custody, duplicate-CAS, lost-ACK/restart, and revision-pinned proof |
+| `RT08` | blanket identity-only `id_map` admission / missing source-bound allocation join | open/held current cohort; private `a6a` is the separately measured candidate, not an integrated cut |
+| `WC10` | restored `publish_parent_composition` route | held until its named `remote.create_empty`, `reference_realm.py`, and `shot_composition_migration.py` consumers migrate |
+
+`RT06` commit-path deduplication is already recorded as merged, not an
+additional post-D01 size claim. No threshold, target, gate, or ledger status is
+changed by this census.
+
+## Reproduction
+
+Pin identities without checking out either revision:
 
 ```sh
-git show -s --format='%H %T' origin/main
-git show -s --format='%H %T' tl/integration
-git show tl/integration:runtime_protocol/service.py | wc -l
+for rev in \
+  240d5bb202af709294551045554012f079fd06ca \
+  cc3796a0c333b956b171c68dc876d41f40f6219f \
+  a6a11a806a51262192447fdeccc726b01ffd78fb
+do
+  git show -s --format='%H %T %cI' "$rev"
+done
 ```
 
-For the selected total, parse each `git show REV:path` blob with Python's
-`ast.parse`, resolve the exact class/method names above, sum inclusive
-`lineno..end_lineno` ranges after unioning overlaps, and add the full-line
-counts for the dedicated-module paths in the table. This produced **5,710 →
-9,620 (+3,910)**. Re-running that procedure against the two exact commits is
-the intended final-M4 refresh method.
+For the selected total, run Python's `ast.parse` on each
+`git show REV:path` blob, resolve the exact class/method names in the manifest
+above, sum inclusive `lineno..end_lineno` ranges after unioning overlaps, and
+add `splitlines()` counts for the dedicated-module paths in the table. Apply
+the explicit module-level ranges exactly as listed. The reproducible result is:
 
-## Whole-file context only
+```text
+                         main     current cc3796a     private a6a
+selected Timeline core   5,710    9,664 (+3,954)      10,127 (+4,417)
+```
 
-These figures are deliberately not the census: they show why the old document
-was misleading. Counting the same authored path family as complete blobs gives
-**19,917** lines at `origin/main` and **23,769** at `tl/integration` (**+3,852**),
-including generic worker/execution and other unrelated code in the mixed
-files. They must not be compared with the selected Timeline-core total or used
-as a target.
+The same committed path family counted as complete blobs, solely as context,
+is 19,917 lines at main, 24,304 at current, and 24,767 at private. Those
+whole-file figures include generic code inside mixed files and must not be
+compared with the selected total or used as a target.
 
 ## Exclusions and evidence status
 
 - `runtime_protocol/local_*`, `remote_worker_*`, `verified_host_launch.py`,
   `astrid_runtime/`, and generic auth/backup/CAS/platform/lifecycle paths are
   outside the Timeline Read/See/Edit boundary.
-- Contract/OpenAPI schemas, `runtime_protocol/timeline_commit_types.py`,
-  generated clients/metadata, conformance output, tests, fixtures, archives,
-  and package data are excluded even when Timeline-named.
+- Contract/OpenAPI schemas, generated clients/metadata,
+  `runtime_protocol/timeline_commit_types.py`,
+  `runtime_protocol/schemas/timeline-commit-bundle.json`, conformance output,
+  tests, fixtures, archives, and package data are excluded even when
+  Timeline-named.
 - Project-shot/reference catalog CRUD and generic media/catalog/task execution
   code are not counted as Timeline core; only the selected projection,
   publication, history, commit, and Timeline route ranges are included.
-- This refresh changed no product repository, test, dependency, cache, branch,
-  or ref. No test or full suite was run by this docs-only worker.
-- This document makes no architecture-complete or delivery-complete claim.
+- This refresh changed no product repository, dependency, cache, branch, or
+  ref. No product tests or full suite were run; only read-only Git/blob and
+  AST arithmetic was performed.
+- This document makes no architecture-complete, delivery-complete, target-met,
+  or gate-met claim. Known mixed-node allocation uncertainty and the exclusion
+  of generated/test surfaces remain explicit omission bounds.
