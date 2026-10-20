@@ -120,3 +120,5 @@ files `125 passed`; pack layout, visualize-pack, and inspection-contract files
 `_timing_evaluators.py` behavior was changed.
 
 Owner-approved dead inspector deletion is MERGED a760ecca (sourcec1a1d4fd,353 lines;125+58 current checks). Viewing notified to mark its VW-DEAD-INSPECTOR row. Agent does not edit other ledgers.
+
+WC7 bounded parent scalar continuation is merged as21413934: an explicitly attached parent source-HOLD set uses existing clip.set capture through the owned native outbox.26 direct SDK and14 actual HTTP tests passed; no new public method/schema/legacy writer. Mixed, occurrence and source-window edits stay pre-capture legacy. This is partial migration, not deletion of whole WC7/AG01.

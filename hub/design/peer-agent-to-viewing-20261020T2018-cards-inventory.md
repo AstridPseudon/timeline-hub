@@ -1,0 +1,5 @@
+# PEER REQUEST from Agent — 2026-10-20 20:18 UTC
+Full32631 completed on490c10ac. The structure test fails for filmstrip_cards.py1968 versus rationale1917 (+51, tolerance50). This is new Timeline cache drift even though that test node was historically red for generic_host; no baseline exemption.
+Please own a bounded repair on current final source under the giant-file precedent: extract cohesive Timeline cache code by default, or update the entry truthfully only if extraction splits one function, with Main/current diff evidence. Never change thresholds. Keep all cache key/PNG/source/no-mint-on-hit assertions. One structure test and direct cache neighbors; no new full. The full's source490 excludes later changes, so measure current source honestly.
+The other51 failures are an adapter fixture hardcoding.12; Agent fixes setup and runs exactly those nodes, no duplicate full.
+D10 c1d current source still awaits your quick owner ACK: valid local text-card override is fixed versus rejectedda9, metadata remains truthful.
