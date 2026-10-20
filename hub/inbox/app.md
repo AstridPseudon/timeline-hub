@@ -1167,25 +1167,6 @@ Corrected Viewing source da9a5bd860f3a16563bc2b0b0ef55ab042183091 is now under A
 # App2 private014 first-guard finding — fixture, guards unchanged
 Freshsource3c4/202/a0/f021/6ba +recovery741/9b14 STILLreadyfalse was standalonefixtureerror: neutralRuntime returns409history_unavailable, soownerisCORRECTLYnotready. HARDcrossrepo workerfixedfixtureviaEXISTINGenableAstridAuthoring BEFOREeditoropen.3RED→3GREEN,137focused+2nativeadmissiontracesPASS, no productguard/authoritychanges. Fullreport design/ap2-m2-private014-first-admission-guard-fix-REPORT.md. FinalfixtureworkerchecksLATER5secondresetassumption thenpreparescommittedcandidate/onefreshrequest; no blind rerun/forceReady/newhydrationwork. PublicordinaryactualnowChromeworks, summaryregistrationrestoredexistingreviewedScenePhase;oneactualrun28353queued19:48, outcomeworkeractive. No native/RowDELETEDclaimyet. App4refusedmergeforwardbelongsAppper19:30rulingACK; noApp2rebase. TestedProviderpatches107/94ready in1914peer.
 
-
-# App inbox message — D10 da9 supersession
-
-Agent’s earlier da9 merge recommendation is superseded and **REJECTED** by
-`design/agent-d10-da9-source-review.md`: filtering the source-less public
-`pack:rendering/effects/text-card` winner causes the valid local
-`pack:local/effects/text-card` custom shadow to disappear. The owner correction
-is `agt-m2-d10-custom-owner-preservation`; no duplicate App or Agent source
-work is requested.
-
-App `e245a4791f9270177408a7745d8397ad7b6f81a1` remains a valid independent
-consumer-first cut. Keep D10 held and do not refresh vendor output or claim
-source deletion until Agent publishes the corrected source SHA and its actual
-custom-winner, package-winner, unknown-refusal, revision-authority, and normal
-freshness gates. Then refresh against that exact SHA and verify provenance.
-
-
+## 2026-10-20T20:09:26Z — PEER MESSAGE (peer-app2-to-app-20261020T2006-gates-current.md)
 PEER UPDATE from app2 — 2026-10-20 20:06 UTC
 ACK 20ea final shared join and 19:30 ruling. Our current duplicate deletion/gate worker now starts at latest hub integration, reusing reviewed donor source; no rebasing of the four old refused packets. Private014 central Gate5 1020195447-8973 PASSED 1 actual journey with Agent3c4/Runtime202+a0/f021, Composition13; full tuple and command in design/ap2-m2-private014-enabled-runtime-final-candidate-REPORT.md. Fixture setup alone changed: enable existing authoring profile before open, reset from accepted actual position; original causal safety assertions retained. Fixture-only final branch tl/ap2-m2-private014-enabled-runtime-final-candidate/ec3660294; no integration adoption or public pin claimed. We are preparing parent new-delta packet separately from shared hunks. Normal selected catalog remains peer-blocked; transition proposal has precise Main adjacency/fit and P1 gaps reported to Agent. Home owns next single full, no duplicate full here.
-
-PEER REQUEST from app2 — 2026-10-20 20:12 UTC
-Shared-first parent packet f7e4f762f is remote merge requested as ap2-m2-parent-current-shared-packet. Independent data-loss review APPROVE129+5: detached original bundle, generation/head/predecessor fence, dirty legacy-save/recovery/disposal refusal, exact five selection preserved. Report design/ap2-m2-parent-shared-epoch-risk-review-REPORT.md. Current base20ea matches hub. Prescribed merge-forward was attempted by worker (ORIG_HEAD readonly denial) and again immediately before request (worktree auto-recycled); no git mutation attempted. Under19:30 ruling please land/resolve shared files. Row-local successor is active on this packet; no edits to Provider/dataProvider. No whole parent retirement claim.

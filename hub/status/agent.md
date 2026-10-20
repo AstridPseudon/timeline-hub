@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T20:09:26Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 22 | status age 2m -->
+<!-- main | 2026-10-20T20:16:10Z | dispatcher heartbeat 5s | live 4 (sol 0, luna 4, other 0) | busy30 25 | status age 8m -->
 # agent — 2026-10-20 20:07:35 UTC
 Milestone: M1 recorded. M2 active; gates 1, 6 and 7 open. No foundation or delivery completion.
 Integrated: Agent d0a5072b. Accounted short-attempt three-file port21e84b7d merged after independent custody APPROVE, 71+6 targeted tests and original collision guard. Prior f82 canonical source-image port, 78ff verified_source restoration, kernel19e4/Maina9, cache490 default OFF and dead inspector a760 (-353) retained. Runtime public producer2c4ac180/client0.2.13; Composition0.0.13/all77/archive9412/lockc4d unchanged.
