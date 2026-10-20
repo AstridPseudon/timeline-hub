@@ -1,0 +1,84 @@
+{
+  "main": "a411628f8fd6129f9c58c332019b56769d997384",
+  "read_only_object_store": "/home/user/work/composition",
+  "hub_refs": {
+    "v0.1.0": "4974bdb471cf4dda0ce39d2cc24a1d62420a1305",
+    "v0.1.1": "1db8440aabf0769b01453831a06f3c609bbc90c9"
+  },
+  "commit": "1db8440aabf0769b01453831a06f3c609bbc90c9",
+  "tree": "80668658f789ff77947b02acd9398d5da4489b52",
+  "version": "0.1.1",
+  "main_dependency": "https://github.com/banodoco/timeline-theme-2rp/archive/refs/tags/v0.1.1.tar.gz",
+  "main_lock_entry": {
+    "version": "0.1.1",
+    "resolved": "https://github.com/banodoco/timeline-theme-2rp/archive/refs/tags/v0.1.1.tar.gz",
+    "integrity": "sha512-cBylVKa6Dw/sPgCXAJ0pjiqD+JLu1YbV0ttDDLKy9hWcK42kEHctjV8AwHpK061XMZ9pffrR4mJai1Rn5Qahhw==",
+    "peerDependencies": {
+      "react": ">=18",
+      "remotion": ">=4"
+    },
+    "peerDependenciesMeta": {
+      "react": {
+        "optional": false
+      },
+      "remotion": {
+        "optional": false
+      }
+    }
+  },
+  "member_count": 20,
+  "member_sha256": {
+    "README.md": "898da7d959dd2ec7c945374e16e971bccd76f1ba161a1e6ea860186eead00030",
+    "package.json": "696af22e4c00dd5d2a8815917dba59be3a1cf1b90fef5165adebafaf2467497b",
+    "src/effects/art-card/component.tsx": "68d2e84a9383fcd7e0a719d75bac0a983239d52035ece36aad2986892c42654e",
+    "src/effects/art-card/defaults.json": "e895cd025f1c83dc6729a6b5c2eddcde00be94a70897ce865a41238278c61759",
+    "src/effects/art-card/meta.json": "efb114d3e64b13a95c29d7a66b1ec5141ad940162639490fad7af2eddd0f2d01",
+    "src/effects/art-card/schema.json": "608ff2560415a65d0d177cc3203fcf7ab36b1fdc64f0777a07a31dc0092ea1df",
+    "src/effects/cta-card/component.tsx": "4b1e3bfb1b69201db0e703e5c2343f1f99faff573bbd0fde0648ded7516517fd",
+    "src/effects/cta-card/defaults.json": "8e575c8677d88245911cd57b3364b54d2ba01cd703d7571424f02ef834c86b48",
+    "src/effects/cta-card/meta.json": "a57775df9fec4a29b1cda6c04d6b1abfbd220c5cd325fd9bdf71ae7f9fb35fe2",
+    "src/effects/cta-card/schema.json": "99df0ce77e1300d694637996f25d04bff35ae37112eaa2f77b8b6b762003d9de",
+    "src/effects/resource-card/component.tsx": "f91fe6674f7fbee3b505043fccd344e6937de4d9a1cfe73a690a3619c1db8215",
+    "src/effects/resource-card/defaults.json": "8c801db4d4eb8d2c3d1c5c0cd33cc32241f10aa138e8c5642088b433525f1827",
+    "src/effects/resource-card/meta.json": "636f1d2f51052a3e4b02ad6b8b3613511df00f50cb4177f01d15448d8d7a17fe",
+    "src/effects/resource-card/schema.json": "f8de0278f1f3de195a81575c2e80996a7361d1431c2493228afff337591d2a96",
+    "src/effects/section-hook/component.tsx": "3a26ba4ce0aadb9c037921a56b63dda88ee1dab09d08d2db002460c316dd2ffd",
+    "src/effects/section-hook/defaults.json": "bd4ba5debe1de852c68068aef69617e74e39b4211129dea2382613e0e32b3faa",
+    "src/effects/section-hook/meta.json": "8719607d7fe1147efed0338d22a1f9c9285d697239e25bb64c136b465b08d5bd",
+    "src/effects/section-hook/schema.json": "c7186d3db29a40d0f9a9c62f45fd0e9b121dab1d85735b1ecb524d9f7379c5df",
+    "src/index.ts": "ccc6d031c57119181b608ebd88e2374478fd0fe60ca16284198dfa1cb2010734",
+    "theme.json": "885cffe2c50074dea6a628338bef44fd074aeab8ef8f2f2bcaff65db01c199e3"
+  },
+  "v0.1.0_member_sha256": {
+    "README.md": "898da7d959dd2ec7c945374e16e971bccd76f1ba161a1e6ea860186eead00030",
+    "package.json": "6de7923a194d5fd82969b57dc6c46f758b234a52d0f670cb00a3b2bc828db811",
+    "src/effects/art-card/component.tsx": "68d2e84a9383fcd7e0a719d75bac0a983239d52035ece36aad2986892c42654e",
+    "src/effects/art-card/defaults.json": "e895cd025f1c83dc6729a6b5c2eddcde00be94a70897ce865a41238278c61759",
+    "src/effects/art-card/meta.json": "efb114d3e64b13a95c29d7a66b1ec5141ad940162639490fad7af2eddd0f2d01",
+    "src/effects/art-card/schema.json": "608ff2560415a65d0d177cc3203fcf7ab36b1fdc64f0777a07a31dc0092ea1df",
+    "src/effects/cta-card/component.tsx": "4b1e3bfb1b69201db0e703e5c2343f1f99faff573bbd0fde0648ded7516517fd",
+    "src/effects/cta-card/defaults.json": "8e575c8677d88245911cd57b3364b54d2ba01cd703d7571424f02ef834c86b48",
+    "src/effects/cta-card/meta.json": "a57775df9fec4a29b1cda6c04d6b1abfbd220c5cd325fd9bdf71ae7f9fb35fe2",
+    "src/effects/cta-card/schema.json": "99df0ce77e1300d694637996f25d04bff35ae37112eaa2f77b8b6b762003d9de",
+    "src/effects/resource-card/component.tsx": "f91fe6674f7fbee3b505043fccd344e6937de4d9a1cfe73a690a3619c1db8215",
+    "src/effects/resource-card/defaults.json": "8c801db4d4eb8d2c3d1c5c0cd33cc32241f10aa138e8c5642088b433525f1827",
+    "src/effects/resource-card/meta.json": "636f1d2f51052a3e4b02ad6b8b3613511df00f50cb4177f01d15448d8d7a17fe",
+    "src/effects/resource-card/schema.json": "f8de0278f1f3de195a81575c2e80996a7361d1431c2493228afff337591d2a96",
+    "src/effects/section-hook/component.tsx": "3a26ba4ce0aadb9c037921a56b63dda88ee1dab09d08d2db002460c316dd2ffd",
+    "src/effects/section-hook/defaults.json": "bd4ba5debe1de852c68068aef69617e74e39b4211129dea2382613e0e32b3faa",
+    "src/effects/section-hook/meta.json": "8719607d7fe1147efed0338d22a1f9c9285d697239e25bb64c136b465b08d5bd",
+    "src/effects/section-hook/schema.json": "c7186d3db29a40d0f9a9c62f45fd0e9b121dab1d85735b1ecb524d9f7379c5df",
+    "src/index.ts": "ccc6d031c57119181b608ebd88e2374478fd0fe60ca16284198dfa1cb2010734",
+    "theme.json": "885cffe2c50074dea6a628338bef44fd074aeab8ef8f2f2bcaff65db01c199e3"
+  },
+  "v0.1.0_to_v0.1.1_changed_members": [
+    "package.json"
+  ],
+  "implementation_equal": true,
+  "local_git_archive_sha256": "796f0691882f78ae8627cd384f6a46561e73c007f3816bc3afb75d444496f3e2",
+  "local_git_archive_bytes": 40960,
+  "github_archive_integrity_verified": false,
+  "archive_proof_status": "not re-verified: archive URL 403; source verified by git tag tree",
+  "authority": "managers/viewing/INBOX.md: 2026-10-19 orchestrator theme source + consumer readiness (line 150); 2026-10-19 21:50Z decisions, item 3 theme-refs accepted (line 196)",
+  "archive_note": "This is a local git archive, NOT the GitHub lock archive. Its hash is not compared to or claimed equal to MAIN lock sha512."
+}

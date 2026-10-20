@@ -1,0 +1,51 @@
+{
+  "source_unchanged": true,
+  "full_graph_and_six_peers_unchanged": true,
+  "graph": {
+    "path": "/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules",
+    "checkout": "f8164bef73215272562c4d6974acadbd82c2898a",
+    "entries": 21488,
+    "sha256": "9e556a876a02ee4f4ed3e8215eaaf793ac0ba66a6d85e503747f635521acc425",
+    "six_peer_hashes": {
+      "@remotion/player/dist/cjs/PlayerUI.js": "5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb",
+      "@remotion/player/dist/cjs/use-player-methods.js": "ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46",
+      "@remotion/player/dist/cjs/use-playback.js": "6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0",
+      "@remotion/player/dist/esm/index.mjs": "d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12",
+      "remotion/dist/esm/index.mjs": "9fdfe58f3f34e6a72564a811ac5d374d1c97a0f535e2a0e3aac198670d9b7ff8",
+      "remotion/dist/cjs/audio/shared-audio-tags.js": "471b33916a91f5b9529c477bdf0ec586cb700d5a7179ab910a82dd932e172f6c"
+    },
+    "versions": {
+      "react": {
+        "version": "18.3.1",
+        "package_json_sha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c"
+      },
+      "react-dom": {
+        "version": "18.3.1",
+        "package_json_sha256": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e"
+      },
+      "remotion": {
+        "version": "4.0.509",
+        "package_json_sha256": "1260b76eb109b0ebfff6cfb57f0e2b9b5fc8c6511f18bd43b047bddca068bd01"
+      },
+      "@remotion/bundler": {
+        "version": "4.0.509",
+        "package_json_sha256": "658a19e9306810a8d8614b24508f7cd3a722db67e91ee8d82f132fd3098ef4b5"
+      },
+      "@remotion/renderer": {
+        "version": "4.0.509",
+        "package_json_sha256": "f716e3e3d99af220ecda19c4f97919d66b9139ab9229ac50dbdf1a49a1b36af0"
+      },
+      "@remotion/media": {
+        "version": "4.0.509",
+        "package_json_sha256": "59e90c2e2d182faf420dd8b9461a74bedd21d6680a627ea6f2fb66c4efb9ee95"
+      }
+    },
+    "tools": {
+      "node": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+      "browser": "63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4"
+    }
+  },
+  "free_bytes": 13172948992,
+  "capture_grant_present": false,
+  "capture_executed": false
+}

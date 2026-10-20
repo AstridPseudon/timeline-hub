@@ -1,5 +1,6 @@
 """Bind the review to the completed handoff and preserve the failed attempt."""
 import ast
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
@@ -64,10 +65,10 @@ assert theme['github_archive_integrity_verified'] is False
 independent = json.loads(path(PREFIX, 'static-resolution.json').read_text())
 target = json.loads(path(TARGET, 'dependencies.json').read_text())
 assert target['status'] == 'PASS' and not target['failures'] and not target['nonliteral']
-a = {(edge['from'], edge['specifier'], edge['resolved'].removeprefix('/__readonly_main__/'))
-     for edge in independent['edges']}
-b = {(edge['importer'], edge['request'], edge['target']) for edge in target['edges']}
-assert a == b and len(a) == 362
+a = Counter((edge['from'], edge['specifier'], edge['resolved'].removeprefix('/__readonly_main__/'))
+            for edge in independent['edges'])
+b = Counter((edge['importer'], edge['request'], edge['target']) for edge in target['edges'])
+assert a == b and a.total() == 362
 assert len(target['source_files']) == independent['parsed_files'] == 101
 assert len(target['generated_registry_bare_imports']) == 50
 assert len(target['declared_main_packages']) == 19
@@ -77,7 +78,7 @@ assert not list(ORCH.glob('design/handoff-vw-m3-main-cap-locked-theme-stage-fram
 result = {'frozen_sha256': hashes, 'preserved_files': len(preserved),
           'unchanged_controller_functions': unchanged,
           'renderer_unchanged_except_identity_flat_paths_and_theme_checks': True,
-          'source_dependency_edges_independently_equal': len(a),
+          'source_dependency_edges_independently_equal': a.total(),
           'source_files': 101, 'original_registry_bare_imports': 50, 'main_packages': 19,
           'capture_grant_marker_stage_and_pngs_absent': True}
 path(PREFIX, 'final-checks.json').write_text(json.dumps(result, indent=2) + '\n')

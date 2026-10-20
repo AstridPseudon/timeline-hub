@@ -1,0 +1,5 @@
+PASS: renderer grant block exact
+PASS: renderer grant block controller-tamper
+PASS: renderer grant block renderer-tamper
+PASS: renderer grant block path-only
+No module execution, renderer import, service read/write, source extraction, browser, or socket
