@@ -203,13 +203,6 @@ async function expectOpaqueDataKept(harness: DirectHarness, seed: ThreeProductsS
 function agentOf(astrid: AstridCli, seed: ThreeProductsSeed) {
   const common = [seed.timelineId, '--project', seed.projectSlug];
   return {
-    checkout: () => astrid.astrid(['timelines', 'checkout', ...common, '--fresh', '--json']),
-    edit: (...flags: string[]) => astrid.astrid(['timelines', 'edit', ...common, ...flags]),
-    publish: async (message: string, idempotencyKey: string) => {
-      const envelope = await astrid.json<{ new_head: string; old_head: string; idempotency_key: string; published?: boolean }>(['timelines', 'publish', ...common, '-m', message, '--idempotency-key', idempotencyKey, '--json']);
-      expect(envelope.ok, JSON.stringify(envelope)).toBe(true);
-      return envelope.data!;
-    },
     status: async () => (await astrid.json<{ current_head: string }>(['timelines', 'status', ...common, '--json'])).data!,
     show: async () => (await astrid.json<{ head_revision_id: string; rows: Array<{ layers: Array<{ clip_id: string; asset: string | null }> }> }>(['timelines', 'show', ...common, '--published', '--json'])).data!,
   };
@@ -336,8 +329,9 @@ async function plantNoReloadFlag(page: Page) {
 // ---------------------------------------------------------------------------------------------
 // 1. agent -> open App
 
-// Bundle 1 blocker: the original Agent swap below still needs native asset + registry/task-output capture.
-// Keep the task/adoption/media assertions until that operation ships; the final App label uses commands now.
+// The task output is resolved through the native managed-output/provider path. The seeded
+// placeholder is an ingested object, not a managed generation/variant, so this case remains
+// a truthful red until S2 exposes an exact old-media selection for occurrence.swap-media.
 test('agent -> open App: an Astrid task and its publication appear in the open App without a reload', async ({ page, harness, astrid, seed3 }) => {
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const agent = agentOf(astrid, seed3);
@@ -374,35 +368,35 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
 
   // The agent publishes the timeline with the task's output; the open page adopts that revision by itself.
   const before = await currentHead(harness);
-  await agent.checkout();
-  await agent.edit('--clip', seed3.agentClipId, '--swap-asset', `${seed3.markerAssetKey}=task:${taskId}/marker#0`);
-  const published = await agent.publish('agent: marker', 'f2-case1');
-  expect(published.old_head, 'the agent built on the head the App has').toBe(before);
-  expect(published.new_head).not.toBe(before);
-  expect(await currentHead(harness), 'the Runtime head is the agent\'s revision').toBe(published.new_head);
+  const published = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, (await history(harness, seed3)).head,
+    { kind: 'task-media-swap', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`, taskId, output: 'marker', asset: seed3.markerAssetKey }, 'f2-case1');
+  expect(published.data.previous_revision_id, 'the agent built on the head the App has').toBe(before);
+  expect(published.data.accepted_revision_id).not.toBe(before);
+  const publishedHead = published.data.accepted_revision_id;
+  expect(await currentHead(harness), 'the Runtime head is the agent\'s revision').toBe(publishedHead);
 
-  await expect.poll(() => reads.urls.some((url) => url.includes(`/composition-revisions/${published.new_head}`)), CEILING).toBe(true);
+  await expect.poll(() => reads.urls.some((url) => url.includes(`/composition-revisions/${publishedHead}`)), CEILING).toBe(true);
   await expect.poll(() => reads.internalRevisions.some((revision) => revision.payload?.registry?.assets?.[seed3.markerAssetKey]), CEILING).toBe(true);
   const adopted = reads.internalRevisions.find((revision) => revision.payload?.registry?.assets?.[seed3.markerAssetKey])!;
   expect(adopted.payload.registry.assets[seed3.markerAssetKey].media_id, 'the page received the revision that carries the task\'s output').toBe(output!.object_id);
   expect(await noReloadFlag(page), 'the page was never reloaded').toBe(true);
 
   // The Runtime holds the same data: the revision is the task's work, and the agent's edit kept what neither client models.
-  const state = await revisionState(harness, seed3, published.new_head);
+  const state = await revisionState(harness, seed3, publishedHead);
   expect(state.shotRegistry[seed3.markerAssetKey].media_id).toBe(output!.object_id);
   expect(state.shotClips[seed3.agentClipId].asset).toBe(seed3.markerAssetKey);
-  expect((await agent.show()).head_revision_id, 'the agent reads the head it published').toBe(published.new_head);
+  expect((await agent.show()).head_revision_id, 'the agent reads the head it published').toBe(publishedHead);
   const agentHead = (await history(harness, seed3)).head;
-  expect(agentHead.revision_id).toBe(published.new_head);
+  expect(agentHead.revision_id).toBe(publishedHead);
   // The App's next save is built on the agent's head, and the Runtime accepts it (the parent-head check of the retired handoff case).
   const appSaved = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
   await editFirstTrackName(page, 'F2 App after agent');
   const appSave = await appSaved;
   expect(appSave.status(), 'the Runtime accepts the App\'s save on the agent\'s head').toBe(200);
-  expect(appSave.request().postDataJSON()).toMatchObject({ base_revision_id: published.new_head,
+  expect(appSave.request().postDataJSON()).toMatchObject({ base_revision_id: publishedHead,
     base_publication_id: agentHead.publication_id,
     commands: [{ op: 'track.set', select: 'parent/track:V1', args: { values: { label: 'F2 App after agent' }, clear: [] } }] });
-  await expect.poll(() => currentHead(harness), CEILING).not.toBe(published.new_head);
+  await expect.poll(() => currentHead(harness), CEILING).not.toBe(publishedHead);
   const appRevision = await currentHead(harness);
   expect(await noReloadFlag(page), 'the page was still not reloaded after its own save').toBe(true);
 
@@ -411,7 +405,7 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
 
   const revisionCount = await expectOpaqueDataKept(harness, seed3);
 
-  journey.facts = { ...journey.facts, taskId, outputObjectId: output!.object_id, agentRevision: published.new_head, appRevision, revisionCount };
+  journey.facts = { ...journey.facts, taskId, outputObjectId: output!.object_id, agentRevision: publishedHead, appRevision, revisionCount };
   await sniff.expectClean(page, seed3.timelineId);
 });
 
@@ -419,8 +413,7 @@ test('agent -> open App: an Astrid task and its publication appear in the open A
 // Legacy concurrent edit
 
 /**
- * Migration blocker: Bundle 1 lacks child hold extension, child asset clear and parent transition clear capture.
- * Preserve this entire original ordering and its positive Keep/Use latest assertions until those operations ship.
+ * Preserve this entire original ordering and its positive Keep/Use latest assertions while the Agent writes migrate.
  * Track/transition writers originally used whole-document CAS saves. Replaying A must not let C overwrite B's changed shot
  * pins, extension and explicit clear. Either the provider notices B before accepting A's receipt or C receives stale_head;
  * both must retain A+C and offer an explicit resolution. Command rebase is exercised separately by the M1 move cases.
@@ -474,14 +467,16 @@ test('concurrent edit: the App\'s acknowledgement is lost, the agent publishes, 
   const headA = await currentHead(harness);
   expect(headA, 'the App\'s save is stored under its idempotency key').toBe(keyA);
 
-  // B: the agent builds on A and publishes (it extends one clip and clears another one's asset).
-  await agent.checkout();
+  // B: the agent builds on A and publishes one native command batch (it extends one clip and clears another one's asset).
   const stateA = await revisionState(harness, seed3, headA);
-  await agent.edit('--clip', seed3.agentClipId, '--extend', '1');
-  await agent.edit('--clip', seed3.agentClearClipId, '--clear-asset');
-  const published = await agent.publish('agent: extend and clear', 'f2-case2');
-  expect(published.old_head, 'the agent built on the App\'s save').toBe(headA);
-  const headB = published.new_head;
+  const published = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, headA, {
+    kind: 'batch', edits: [
+      { kind: 'hold', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`, delta: 1 },
+      { kind: 'clear-asset', select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClearClipId}` },
+    ],
+  }, 'f2-case2');
+  expect(published.data.previous_revision_id, 'the agent built on the App\'s save').toBe(headA);
+  const headB = published.data.accepted_revision_id;
   expect(await currentHead(harness)).toBe(headB);
 
   // C: the App edits again while A is unacknowledged (it clears a transition).

@@ -193,10 +193,17 @@ export class AstridCli {
   /** Read the original pinned basis in Python, then capture and commit with this client's own credential. */
   async commitCaptured(projectId: string, timelineId: string, base: HeadPin, operation:
     { kind: 'track'; id: string } | { kind: 'move'; clipId: string; on: number }
-    | { kind: 'label'; trackId: string; label: string }, key: string): Promise<CommitAcceptedMutation> {
+    | { kind: 'label'; trackId: string; label: string }
+    | { kind: 'batch'; edits: Array<
+      { kind: 'hold'; select: string; delta: number }
+      | { kind: 'clear-asset'; select: string }
+    > }
+    | { kind: 'task-media-swap'; select: string; taskId: string; output: string; asset: string }, key: string): Promise<CommitAcceptedMutation> {
     const program = `
 import json, sys
 from astrid.sdk.client import AstridClient
+from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.commit import bundle_from_document
@@ -236,15 +243,41 @@ with AstridClient.open_from_launcher(start_pack_host=False, client_name='three-p
                     parent_revision={field: parent[field] for field in ('revision_id', 'content_digest', 'payload')},
                     shot_revisions=shots, internal_timeline_revisions=internals, dependency_manifest=manifest)
     bundle = bundle_from_document(document)
+    state = State(bundle)
     if operation['kind'] == 'track':
         command = capture_track_create(bundle, 'parent', {'id': operation['id'], 'kind': 'audio', 'label': operation['id']})
     elif operation['kind'] == 'label':
         command = capture_track_set(bundle, 'parent/track:' + operation['trackId'], values={'label': operation['label']})
+    elif operation['kind'] == 'batch':
+        commands = []
+        for edit in operation['edits']:
+            if edit['kind'] == 'hold':
+                row = state.entity(edit['select'])
+                command = capture_clip_set(bundle, edit['select'], values={'hold': row['hold'] + edit['delta']})
+            elif edit['kind'] == 'clear-asset':
+                command = capture_clip_set(bundle, edit['select'], clear=['asset'])
+            else:
+                raise ValueError('unsupported native batch edit kind: ' + edit['kind'])
+            commands.append(command)
+        body_commands = commands
+    elif operation['kind'] == 'task-media-swap':
+        # The task output is available as an immutable managed-output row, but
+        # frozen S2 exposes no public SDK media-selection/provider read. Do not
+        # bypass that boundary through the generated client or manufacture a pin.
+        outputs_result = client.tasks.list_managed_outputs(operation['taskId'])
+        assert outputs_result.ok, outputs_result.as_dict()
+        output_rows = outputs_result.data[0] if isinstance(outputs_result.data, list) and outputs_result.data and isinstance(outputs_result.data[0], list) else outputs_result.data
+        output = next((row for row in output_rows if row.get('output_port') == operation['output'] and row.get('ordinal') == 0), None)
+        assert output, ('managed task output is missing', operation)
+        raise ValueError('native task-media swap is unsupported: frozen S2 public SDK exposes no exact media-selection/provider read')
     else:
         command = capture_move(bundle, 'parent/clip:' + operation['clipId'], operation['on'])
+        body_commands = [command]
+    if operation['kind'] != 'batch' and operation['kind'] != 'task-media-swap':
+        body_commands = [command]
     body = dict(api_version=1, project_id=project, timeline_id=timeline,
                 base_revision_id=base['revision_id'], base_publication_id=base['publication_id'],
-                commands=[command], source={'via': 'python'})
+                commands=body_commands, source={'via': 'python'})
     result = client.timelines.commit(project, timeline, body, idempotency_key=key)
     assert result.ok, result.as_dict()
     print(json.dumps(result.as_dict()))
