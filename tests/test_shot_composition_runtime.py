@@ -8,6 +8,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
+from threading import Barrier
 
 import pytest
 
@@ -17,7 +18,7 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-from runtime_protocol.timeline_commit import CommitRejected
+from runtime_protocol.timeline_commit import CommitRejected, StaleHead
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.timeline_commit_store import request_identity
 from runtime_protocol.util import canonical_json
@@ -60,6 +61,26 @@ def _validation_candidate(service, commits, body, key):
     context["request_hash"] = request_identity(context)
     refresh(prepared)
     return pair
+
+
+def _publication_candidate(service, commits, body, key):
+    # Capture once at authoring time. This host fixture measures store atomicity,
+    # not Agent semantics; retries retain the original base pair and command.
+    context, prepared = _validation_candidate(service, commits, body, key)
+    command = {"schema_version": 1, "op": "fixture.composition-source", "version": "1",
+               "select": None, "args": {"document": copy.deepcopy(prepared["canonical_document"])}}
+    context["request"]["commands"] = [command]
+    context["invocation"]["body"] = copy.deepcopy(context["request"])
+    context["request_hash"] = request_identity(context)
+    record = prepared["records"]["commands"][0]
+    record["command"] = copy.deepcopy(command)
+    previous = commits.revision_closure(body["project_id"], body["timeline_id"],
+                                       context["request"]["base_revision_id"])
+    record["writes"] = [{"ref": "parent", "path": [field],
+                         "before": {"state": "present", "value": previous["parent_revision"]["payload"][field]},
+                         "after": {"state": "present", "value": body["parent_composition"][field]}}
+                        for field in ("config", "registry", "clips", "occurrences")]
+    return context, prepared
 
 
 @contextmanager
@@ -754,16 +775,32 @@ def test_integrity_report_checks_timeline_event_hash_chain(tmp_path):
 def test_stale_publication_rolls_back_and_retry_conflicts(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        first = service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="publish-1")
-        before = {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in ("shot_revisions", "internal_timeline_revisions", "parent_composition_revisions", "timeline_events", "command_idempotency")}
-        stale = _publication(project_id, expected_head=None, parent_revision_id="parent-2", shot_revision_id="shot-rev-2", config={"changed": True})
-        with pytest.raises(ConflictError, match="stale"):
-            service.publish_parent_composition(project_id, "main", stale, idempotency_key="publish-2")
-        after = {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in before}
-        assert after == before
-        assert service.store.conn.execute("SELECT revision_id FROM parent_composition_heads WHERE timeline_id='main'").fetchone()[0] == first["data"]["new_head"]
-        with pytest.raises(ConflictError, match="different input"):
-            service.publish_parent_composition(project_id, "main", _publication(project_id, parent_revision_id="parent-1", config={"different": True}), idempotency_key="publish-1")
+        assert service.store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions").fetchone()[0] == 0
+        commits = _validation_baseline(service, project_id)
+        base = commits.head(project_id, "main")
+        first_pair = _publication_candidate(service, commits, _publication(project_id), "publish-1")
+        stale_body = _publication(project_id, parent_revision_id="parent-2", shot_revision_id="shot-rev-2", config={"changed": True})
+        stale_pair = _publication_candidate(service, commits, stale_body, "publish-2")
+        changed_pair = _publication_candidate(service, commits, _publication(project_id, config={"different": True}), "publish-1")
+        assert all(pair[1]["expected_head"] == base for pair in (first_pair, stale_pair, changed_pair))
+        first = commits.accept(*first_pair, authorize=lambda: None)
+        head = {"revision_id": first["data"]["accepted_revision_id"], "publication_id": first["receipt"]["receipt_id"]}
+
+        with _validation_no_writes(service):
+            for _ in range(2):
+                with pytest.raises(StaleHead) as stale:
+                    commits.accept(*copy.deepcopy(stale_pair), authorize=lambda: None)
+                assert stale.value.current_head == head
+                assert commits.lookup(stale_pair[0], authorize=lambda: None) is None
+            with pytest.raises(CommitRejected) as mismatch:
+                commits.accept(*changed_pair, authorize=lambda: None)
+            assert mismatch.value.failure["http_status"] == 409
+            assert mismatch.value.failure["details"]["reason"] == "idempotency_mismatch"
+            assert commits.head(project_id, "main") == head
+            assert commits.revision_closure(project_id, "main", base["revision_id"])["parent_revision"]["payload"] == {
+                "config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": [],
+            }
+            assert commits.revision_closure(project_id, "main", head["revision_id"]) == first_pair[1]["canonical_document"]
     finally:
         service.close()
 
@@ -771,29 +808,38 @@ def test_stale_publication_rolls_back_and_retry_conflicts(tmp_path):
 def test_lost_response_replay_returns_original_head_after_a_newer_publish(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        first_body = _publication(project_id)
-        first = service.publish_parent_composition(
-            project_id, "main", first_body, idempotency_key="publish-lost-response"
-        )
-        second_body = _publication(
-            project_id,
-            expected_head="parent-1",
-            parent_revision_id="parent-2",
-            shot_revision_id="shot-rev-2",
-            config={"writer": 2},
-        )
-        service.publish_parent_composition(
-            project_id, "main", second_body, idempotency_key="publish-second-writer"
-        )
+        commits = _validation_baseline(service, project_id)
+        first_pair = _publication_candidate(service, commits, _publication(project_id), "publish-lost-response")
+        original_request = canonical_json(first_pair[0])
+        first = commits.accept(*first_pair, authorize=lambda: None)
+        second_body = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2",
+                                   shot_revision_id="shot-rev-2", config={"writer": 2})
+        second_pair = _publication_candidate(service, commits, second_body, "publish-second-writer")
+        second = commits.accept(*second_pair, authorize=lambda: None)
+        head = {"revision_id": "parent-2", "publication_id": second["receipt"]["receipt_id"]}
+        assert head["publication_id"] != first["receipt"]["receipt_id"]
+        root = service.store.root
+        service.close()
+        service = RuntimeService(root)
+        commits, _ = service._timeline_commits()
 
-        replay = service.publish_parent_composition(
-            project_id, "main", copy.deepcopy(first_body), idempotency_key="publish-lost-response"
-        )
-
-        assert replay == first
-        assert replay["data"]["new_head"] == "parent-1"
-        assert replay["receipt"]["result"]["new_head"] == "parent-1"
-        assert service._timeline_resource("main")["head_revision_id"] == "parent-2"
+        with _validation_no_writes(service):
+            assert canonical_json(first_pair[0]) == original_request
+            assert commits.lookup(copy.deepcopy(first_pair[0]), authorize=lambda: None) == first
+            replay = commits.accept(*copy.deepcopy(first_pair), authorize=lambda: None)
+            assert canonical_json(replay) == canonical_json(first)
+            assert replay["data"]["accepted_revision_id"] == "parent-1"
+            assert replay["receipt"]["result"] == first["data"]
+            assert replay["receipt"]["result"]["accepted_revision_id"] == "parent-1"
+            assert replay["receipt"]["receipt_id"] == first["receipt"]["receipt_id"]
+            assert commits.head(project_id, "main") == head
+            public = service.get_project_timeline(project_id, "main")
+            assert (public["head_revision_id"], public["head_publication_id"]) == (head["revision_id"], head["publication_id"])
+            for pair, accepted in ((first_pair, first), (second_pair, second)):
+                assert commits.revision_closure(project_id, "main", accepted["data"]["accepted_revision_id"]) == pair[1]["canonical_document"]
+                entry = commits.history_entry(project_id, "main", accepted["receipt"]["receipt_id"])
+                assert entry["records"] == pair[1]["records"]
+            assert len(commits.history(project_id, "main", head)["items"]) == 3
     finally:
         service.close()
 
@@ -801,17 +847,49 @@ def test_lost_response_replay_returns_original_head_after_a_newer_publish(tmp_pa
 def test_same_head_concurrent_publishers_have_one_winner(tmp_path):
     service, project_id = _service(tmp_path)
     try:
-        def publish(index):
-            body = _publication(project_id, parent_revision_id=f"parent-{index}", shot_revision_id=f"shot-rev-{index}")
+        assert service.store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions").fetchone()[0] == 0
+        commits = _validation_baseline(service, project_id)
+        base = commits.head(project_id, "main")
+        pairs = [_publication_candidate(service, commits, _publication(
+            project_id, parent_revision_id=f"parent-{index}", shot_revision_id=f"shot-rev-{index}"), f"publish-{index}")
+            for index in (1, 2)]
+        assert all(pair[1]["expected_head"] == base for pair in pairs)
+        barrier = Barrier(2)
+
+        def publish(pair):
+            barrier.wait(timeout=10)
             try:
-                return service.publish_parent_composition(project_id, "main", body, idempotency_key=f"publish-{index}")
-            except ConflictError:
-                return None
+                return commits.accept(*pair, authorize=lambda: None)
+            except StaleHead as stale:
+                return stale
 
         with ThreadPoolExecutor(max_workers=2) as pool:
-            results = list(pool.map(publish, (1, 2)))
-        assert sum(value is not None for value in results) == 1
-        assert service.store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions").fetchone()[0] == 1
+            results = list(pool.map(publish, pairs))
+        assert sum(isinstance(value, dict) for value in results) == 1
+        winner = next(value for value in results if isinstance(value, dict))
+        loser = next(value for value in results if isinstance(value, StaleHead))
+        head = {"revision_id": winner["data"]["accepted_revision_id"], "publication_id": winner["receipt"]["receipt_id"]}
+        assert loser.current_head == commits.head(project_id, "main") == head
+        for pair, result in zip(pairs, results):
+            if isinstance(result, dict):
+                assert commits.lookup(pair[0], authorize=lambda: None) == winner
+                assert commits.revision_closure(project_id, "main", head["revision_id"]) == pair[1]["canonical_document"]
+            else:
+                assert commits.lookup(pair[0], authorize=lambda: None) is None
+                assert service.store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions WHERE id=?",
+                    (pair[1]["canonical_document"]["parent_revision"]["revision_id"],)).fetchone()[0] == 0
+                assert service.store.conn.execute("SELECT COUNT(*) FROM shot_revisions WHERE id=?",
+                    (pair[1]["canonical_document"]["shot_revisions"][0]["revision_id"],)).fetchone()[0] == 0
+        expected_counts = {"parent_composition_revisions": 2, "shot_revisions": 1, "internal_timeline_revisions": 2,
+                           "project_shots": 1, "shot_revision_heads": 1, "parent_composition_heads": 1,
+                           "composition_revision_occurrences": 1, "composition_revision_dependencies": 2,
+                           "timeline_commit_history": 2}
+        for table, count in expected_counts.items():
+            assert service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == count, table
+        assert service.store.conn.execute("SELECT COUNT(*) FROM command_idempotency WHERE command_kind='timeline.commit'").fetchone()[0] == 1
+        assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE kind='timeline.commit.accepted'").fetchone()[0] == 1
+        assert commits.history_entry(project_id, "main", head["publication_id"])["previous"] == base
+        assert service.store.integrity_report()["ok"]
     finally:
         service.close()
 
@@ -866,15 +944,50 @@ def test_dependency_scope_and_nesting_are_rejected(tmp_path):
 def test_failure_injection_rolls_back_every_publication_write(tmp_path, monkeypatch):
     service, project_id = _service(tmp_path)
     try:
-        command_count = service.store.conn.execute("SELECT COUNT(*) FROM command_idempotency").fetchone()[0]
-        baseline = {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in ("project_shots", "shot_items", "shot_revisions", "internal_timeline_revisions", "parent_composition_revisions", "shot_revision_heads", "parent_composition_heads", "composition_revision_occurrences", "composition_revision_dependencies")}
-        monkeypatch.setattr(service.store, "_append_timeline_event", lambda *args: (_ for _ in ()).throw(RuntimeError("injected")))
-        with pytest.raises(RuntimeError, match="injected"):
-            service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="injected")
-        for table in ("project_shots", "shot_items", "shot_revisions", "internal_timeline_revisions", "parent_composition_revisions", "shot_revision_heads", "parent_composition_heads", "composition_revision_occurrences", "composition_revision_dependencies"):
-            assert service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == baseline[table]
-        assert service.store.conn.execute("SELECT COUNT(*) FROM command_idempotency").fetchone()[0] == command_count
-        assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id='main'").fetchone()[0] == 1
+        assert service.store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions").fetchone()[0] == 0
+        commits = _validation_baseline(service, project_id)
+        base = commits.head(project_id, "main")
+        media = service.ingest(project_id, b"publication-item", media_type="video/mp4",
+                               idempotency_key="publication-item")["data"]["object_id"]
+        body = _publication(project_id)
+        body["shot_revisions"][0]["payload"]["items"] = [{"item_id": "item-1", "media_id": media, "metadata": {}}]
+        body["dependency_manifest"] = {"media": [{"media_id": media, "content_digest": media}]}
+        pair = _publication_candidate(service, commits, body, "injected")
+
+        def snapshot():
+            files = {str(path.relative_to(service.store.root)): path.read_bytes() if path.is_file() else None
+                     for root in (service.store.cas_root, service.store.staging_root) for path in root.rglob("*")}
+            return tuple(service.store.conn.iterdump()), files
+
+        baseline = snapshot()
+        for owner, method in ((service.store, "_append_timeline_event"),
+                              (service.store, "_record_command_receipt"), (commits, "_publish")):
+            original = getattr(owner, method)
+
+            def fail_after(*args, **kwargs):
+                result = original(*args, **kwargs)
+                assert service.store.conn.in_transaction
+                assert snapshot()[0] != baseline[0]
+                if method == "_publish":
+                    assert commits.head(project_id, "main") == {
+                        "revision_id": "parent-1", "publication_id": result["receipt"]["receipt_id"],
+                    }
+                    assert commits.history_entry(project_id, "main", result["receipt"]["receipt_id"])["records"] == pair[1]["records"]
+                    assert service.store.conn.execute("SELECT COUNT(*) FROM shot_items").fetchone()[0] == 1
+                raise RuntimeError("injected after " + method)
+
+            with monkeypatch.context() as patch:
+                patch.setattr(owner, method, fail_after)
+                with pytest.raises(RuntimeError, match="injected after " + method):
+                    commits.accept(*copy.deepcopy(pair), authorize=lambda: None)
+            assert snapshot() == baseline
+            assert commits.head(project_id, "main") == base
+            assert commits.lookup(pair[0], authorize=lambda: None) is None
+
+        accepted = commits.accept(*pair, authorize=lambda: None)
+        assert accepted["data"]["accepted_revision_id"] == "parent-1"
+        assert commits.revision_closure(project_id, "main", "parent-1") == pair[1]["canonical_document"]
+        assert service.store.integrity_report()["ok"]
     finally:
         service.close()
 
