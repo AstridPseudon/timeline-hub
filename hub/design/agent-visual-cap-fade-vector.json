@@ -1,0 +1,2620 @@
+{
+  "schema_version": 1,
+  "corpus": "tests/editing_conformance/fixtures/visual_compile_contract.json#cap_fade_closure",
+  "source": {
+    "repo": "app",
+    "commit": "35ebae007d848ff22d8da89461bdb66efc93472f",
+    "path": "src/tools/video-editor/data/shotComposition.fixture.json",
+    "blob": "e73ab45516a7027316712e0b969d1c20fc50b149",
+    "note": "Verbatim App fixture below, including opaque roots and metadata. Reproduces the review-described mutation with the existing withOccurrenceRevision helper: replace only occ-1 child clips with child below. This is a synthetic counterexample, not native ADD output or recovered original external test bytes."
+  },
+  "public_package": "Agent remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz; probe uses matching read-only agent-remotion-0012 installation",
+  "scope": "Source projector + public pure evaluator. This is not MAIN pixel/render/Runtime acceptance proof.",
+  "mutation": "Reproduce the review-described synthetic counterexample by replacing only prepared occ-1 child clips with child. The original external test bytes were not available.",
+  "app_fixture": {
+    "schema_version": 1,
+    "parent_composition": {
+      "config": {
+        "app": {
+          "visualSeamContract": {
+            "gaps": [
+              {
+                "kind": "pause",
+                "track": "video",
+                "startFrame": 60,
+                "endFrame": 120
+              },
+              {
+                "kind": "pause",
+                "track": "video",
+                "startFrame": 180,
+                "endFrame": 240
+              },
+              {
+                "kind": "pause",
+                "track": "video",
+                "startFrame": 318,
+                "endFrame": 330
+              },
+              {
+                "kind": "pause",
+                "track": "video",
+                "startFrame": 366,
+                "endFrame": 396
+              }
+            ]
+          }
+        }
+      }
+    },
+    "project": {
+      "project_id": "project-001",
+      "document_id": "document-primary",
+      "role": "project"
+    },
+    "primary_timeline": {
+      "document_id": "document-primary",
+      "role": "primary_timeline",
+      "head": {
+        "revision_id": "timeline-rev-2",
+        "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    "shot_revisions": [
+      {
+        "shot_id": "shot-beta",
+        "revision_id": "rev-a",
+        "document_role": "shot_revision",
+        "content_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "internal_timeline_revision": {
+          "revision_id": "timeline-beta-a",
+          "content_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "timeline": {
+            "tracks": [
+              {
+                "id": "video",
+                "kind": "visual"
+              },
+              {
+                "id": "audio",
+                "kind": "audio"
+              }
+            ],
+            "clips": [
+              {
+                "id": "beta-video",
+                "clip_type": "media",
+                "track": "video",
+                "at_ms": 0,
+                "duration_ms": 1200,
+                "asset_id": "beta-image",
+                "app": {
+                  "visualBoundary": {
+                    "intentionalPause": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "dependencies": [],
+        "assets": [
+          {
+            "asset_id": "beta-image",
+            "object_id": "object-beta-image",
+            "media_type": "image/png",
+            "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "scope": {
+              "project_id": "project-001",
+              "shot_id": "shot-beta"
+            },
+            "role": "source"
+          }
+        ],
+        "generation_inputs": [
+          {
+            "input_id": "beta-input-0",
+            "object_id": "object-beta-image",
+            "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            "ordinal": 0,
+            "role": "first_frame"
+          }
+        ],
+        "timing": {
+          "duration_ms": 1200
+        },
+        "audio": {
+          "track_id": "audio",
+          "object_id": "object-beta-audio",
+          "digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "scope": {
+            "project_id": "project-001"
+          }
+        },
+        "provenance": {
+          "source": "travel-between-images",
+          "created_by": "fixture"
+        }
+      },
+      {
+        "shot_id": "shot-alpha",
+        "revision_id": "rev-a",
+        "document_role": "shot_revision",
+        "content_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "internal_timeline_revision": {
+          "revision_id": "timeline-alpha-a",
+          "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "timeline": {
+            "tracks": [
+              {
+                "id": "video",
+                "kind": "visual"
+              },
+              {
+                "id": "audio",
+                "kind": "audio"
+              }
+            ],
+            "clips": [
+              {
+                "id": "alpha-video",
+                "clip_type": "media",
+                "track": "video",
+                "at_ms": 0,
+                "duration_ms": 2000,
+                "asset_id": "alpha-image",
+                "app": {
+                  "visualBoundary": {
+                    "intentionalPause": true
+                  }
+                }
+              },
+              {
+                "id": "alpha-audio",
+                "clip_type": "media",
+                "track": "audio",
+                "at_ms": 0,
+                "duration_ms": 2000,
+                "asset_id": "alpha-audio"
+              }
+            ]
+          }
+        },
+        "dependencies": [
+          {
+            "shot_id": "shot-beta",
+            "revision_id": "rev-a",
+            "required": true
+          }
+        ],
+        "assets": [
+          {
+            "asset_id": "alpha-image",
+            "object_id": "object-alpha-image",
+            "media_type": "image/png",
+            "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "scope": {
+              "project_id": "project-001",
+              "shot_id": "shot-alpha"
+            },
+            "role": "source"
+          }
+        ],
+        "generation_inputs": [
+          {
+            "input_id": "alpha-input-0",
+            "object_id": "object-alpha-image",
+            "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "ordinal": 0,
+            "role": "first_frame"
+          },
+          {
+            "input_id": "alpha-input-1",
+            "object_id": "object-alpha-image",
+            "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "ordinal": 1,
+            "role": "last_frame"
+          }
+        ],
+        "timing": {
+          "duration_ms": 2000
+        },
+        "audio": {
+          "track_id": "audio",
+          "object_id": "object-alpha-audio",
+          "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "scope": {
+            "project_id": "project-001"
+          }
+        },
+        "provenance": {
+          "source": "travel-between-images",
+          "created_by": "fixture",
+          "source_revision": "candidate-7"
+        }
+      },
+      {
+        "shot_id": "shot-alpha",
+        "revision_id": "rev-b",
+        "document_role": "shot_revision",
+        "content_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "internal_timeline_revision": {
+          "revision_id": "timeline-alpha-b",
+          "content_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+          "timeline": {
+            "tracks": [
+              {
+                "id": "video",
+                "kind": "visual"
+              },
+              {
+                "id": "audio",
+                "kind": "audio"
+              }
+            ],
+            "clips": [
+              {
+                "id": "alpha-video-b",
+                "clip_type": "media",
+                "track": "video",
+                "at_ms": 0,
+                "duration_ms": 2600,
+                "asset_id": "alpha-image",
+                "app": {
+                  "visualBoundary": {
+                    "intentionalPause": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "dependencies": [
+          {
+            "shot_id": "shot-beta",
+            "revision_id": "rev-a",
+            "required": true
+          }
+        ],
+        "assets": [
+          {
+            "asset_id": "alpha-image",
+            "object_id": "object-alpha-image",
+            "media_type": "image/png",
+            "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "scope": {
+              "project_id": "project-001",
+              "shot_id": "shot-alpha"
+            },
+            "role": "source"
+          }
+        ],
+        "generation_inputs": [
+          {
+            "input_id": "alpha-input-b-0",
+            "object_id": "object-alpha-image",
+            "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "ordinal": 0,
+            "role": "first_frame"
+          }
+        ],
+        "timing": {
+          "duration_ms": 2600
+        },
+        "audio": {
+          "track_id": "audio",
+          "object_id": "object-alpha-audio",
+          "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "scope": {
+            "project_id": "project-001"
+          }
+        },
+        "provenance": {
+          "source": "shot-editor",
+          "created_by": "fixture"
+        }
+      },
+      {
+        "shot_id": "shot-alpha-copy",
+        "revision_id": "rev-a",
+        "document_role": "shot_revision",
+        "content_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "internal_timeline_revision": {
+          "revision_id": "timeline-alpha-copy-a",
+          "content_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+          "timeline": {
+            "tracks": [
+              {
+                "id": "video",
+                "kind": "visual"
+              },
+              {
+                "id": "audio",
+                "kind": "audio"
+              }
+            ],
+            "clips": [
+              {
+                "id": "alpha-copy-video",
+                "clip_type": "media",
+                "track": "video",
+                "at_ms": 0,
+                "duration_ms": 2000,
+                "asset_id": "alpha-copy-image",
+                "app": {
+                  "visualBoundary": {
+                    "intentionalPause": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "dependencies": [],
+        "assets": [
+          {
+            "asset_id": "alpha-copy-image",
+            "object_id": "object-alpha-image",
+            "media_type": "image/png",
+            "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "scope": {
+              "project_id": "project-001",
+              "shot_id": "shot-alpha-copy"
+            },
+            "role": "source"
+          }
+        ],
+        "generation_inputs": [
+          {
+            "input_id": "alpha-copy-input-0",
+            "object_id": "object-alpha-image",
+            "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+            "ordinal": 0,
+            "role": "first_frame"
+          }
+        ],
+        "timing": {
+          "duration_ms": 2000
+        },
+        "audio": {
+          "track_id": "audio",
+          "object_id": "object-alpha-audio",
+          "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+          "scope": {
+            "project_id": "project-001"
+          }
+        },
+        "provenance": {
+          "source": "shot-editor",
+          "created_by": "fixture",
+          "duplication": "independent"
+        }
+      }
+    ],
+    "occurrences": [
+      {
+        "occurrence_id": "occ-1",
+        "parent_document_id": "document-primary",
+        "shot_id": "shot-alpha",
+        "revision_id": "rev-a",
+        "ordinal": 0,
+        "at_ms": 0,
+        "duration_ms": 2000,
+        "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+        "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video"
+      },
+      {
+        "occurrence_id": "occ-2",
+        "parent_document_id": "document-primary",
+        "shot_id": "shot-alpha",
+        "revision_id": "rev-a",
+        "ordinal": 1,
+        "at_ms": 4000,
+        "duration_ms": 2000,
+        "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-2",
+        "output_identity": "project/project-001/document/document-primary/occurrence/occ-2/output/final-video"
+      },
+      {
+        "occurrence_id": "occ-3",
+        "parent_document_id": "document-primary",
+        "shot_id": "shot-alpha",
+        "revision_id": "rev-b",
+        "ordinal": 2,
+        "at_ms": 8000,
+        "duration_ms": 2600,
+        "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-b/occurrence/occ-3",
+        "output_identity": "project/project-001/document/document-primary/occurrence/occ-3/output/final-video"
+      },
+      {
+        "occurrence_id": "occ-4",
+        "parent_document_id": "document-primary",
+        "shot_id": "shot-beta",
+        "revision_id": "rev-a",
+        "ordinal": 3,
+        "at_ms": 11000,
+        "duration_ms": 1200,
+        "stable_deep_link": "project/project-001/document/document-primary/shot/shot-beta/revision/rev-a/occurrence/occ-4",
+        "output_identity": "project/project-001/document/document-primary/occurrence/occ-4/output/final-video"
+      },
+      {
+        "occurrence_id": "occ-5",
+        "parent_document_id": "document-primary",
+        "shot_id": "shot-alpha-copy",
+        "revision_id": "rev-a",
+        "ordinal": 4,
+        "at_ms": 13200,
+        "duration_ms": 2000,
+        "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha-copy/revision/rev-a/occurrence/occ-5",
+        "output_identity": "project/project-001/document/document-primary/occurrence/occ-5/output/final-video"
+      }
+    ],
+    "cases": {
+      "missing_dependency": {
+        "shot_id": "shot-missing",
+        "revision_id": "rev-missing",
+        "expected": "missing_dependency"
+      },
+      "stale_write_rejection": {
+        "expected_head_revision_id": "timeline-rev-2",
+        "submitted_head_revision_id": "timeline-rev-1",
+        "expected_status": 409
+      }
+    }
+  },
+  "child": {
+    "id": "overlong-child",
+    "asset": "alpha-image",
+    "clipType": "image",
+    "track": "video",
+    "at": 0,
+    "hold": 5,
+    "effects": {
+      "fade_out": 1
+    }
+  },
+  "prepared": {
+    "contract": {
+      "schema_version": 1,
+      "parent_composition": {
+        "config": {
+          "app": {
+            "visualSeamContract": {
+              "gaps": [
+                {
+                  "kind": "pause",
+                  "track": "video",
+                  "startFrame": 60,
+                  "endFrame": 120
+                },
+                {
+                  "kind": "pause",
+                  "track": "video",
+                  "startFrame": 180,
+                  "endFrame": 240
+                },
+                {
+                  "kind": "pause",
+                  "track": "video",
+                  "startFrame": 318,
+                  "endFrame": 330
+                },
+                {
+                  "kind": "pause",
+                  "track": "video",
+                  "startFrame": 366,
+                  "endFrame": 396
+                }
+              ]
+            }
+          }
+        }
+      },
+      "project": {
+        "project_id": "project-001",
+        "document_id": "document-primary",
+        "role": "project"
+      },
+      "primary_timeline": {
+        "document_id": "document-primary",
+        "role": "primary_timeline",
+        "head": {
+          "revision_id": "timeline-rev-2",
+          "content_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "shot_revisions": [
+        {
+          "shot_id": "shot-beta",
+          "revision_id": "rev-a",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-beta-a",
+            "content_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "beta-video",
+                  "clip_type": "media",
+                  "track": "video",
+                  "at_ms": 0,
+                  "duration_ms": 1200,
+                  "asset_id": "beta-image",
+                  "app": {
+                    "visualBoundary": {
+                      "intentionalPause": true
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "dependencies": [],
+          "assets": [
+            {
+              "asset_id": "beta-image",
+              "object_id": "object-beta-image",
+              "media_type": "image/png",
+              "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-beta"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "beta-input-0",
+              "object_id": "object-beta-image",
+              "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "ordinal": 0,
+              "role": "first_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 1200
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-beta-audio",
+            "digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "travel-between-images",
+            "created_by": "fixture"
+          }
+        },
+        {
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-alpha-a",
+            "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "alpha-video",
+                  "clip_type": "media",
+                  "track": "video",
+                  "at_ms": 0,
+                  "duration_ms": 2000,
+                  "asset_id": "alpha-image",
+                  "app": {
+                    "visualBoundary": {
+                      "intentionalPause": true
+                    }
+                  }
+                },
+                {
+                  "id": "alpha-audio",
+                  "clip_type": "media",
+                  "track": "audio",
+                  "at_ms": 0,
+                  "duration_ms": 2000,
+                  "asset_id": "alpha-audio"
+                }
+              ]
+            }
+          },
+          "dependencies": [
+            {
+              "shot_id": "shot-beta",
+              "revision_id": "rev-a",
+              "required": true
+            }
+          ],
+          "assets": [
+            {
+              "asset_id": "alpha-image",
+              "object_id": "object-alpha-image",
+              "media_type": "image/png",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-alpha"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "alpha-input-0",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 0,
+              "role": "first_frame"
+            },
+            {
+              "input_id": "alpha-input-1",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 1,
+              "role": "last_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 2000
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-alpha-audio",
+            "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "travel-between-images",
+            "created_by": "fixture",
+            "source_revision": "candidate-7"
+          }
+        },
+        {
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-b",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-alpha-b",
+            "content_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "alpha-video-b",
+                  "clip_type": "media",
+                  "track": "video",
+                  "at_ms": 0,
+                  "duration_ms": 2600,
+                  "asset_id": "alpha-image",
+                  "app": {
+                    "visualBoundary": {
+                      "intentionalPause": true
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "dependencies": [
+            {
+              "shot_id": "shot-beta",
+              "revision_id": "rev-a",
+              "required": true
+            }
+          ],
+          "assets": [
+            {
+              "asset_id": "alpha-image",
+              "object_id": "object-alpha-image",
+              "media_type": "image/png",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-alpha"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "alpha-input-b-0",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 0,
+              "role": "first_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 2600
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-alpha-audio",
+            "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "shot-editor",
+            "created_by": "fixture"
+          }
+        },
+        {
+          "shot_id": "shot-alpha-copy",
+          "revision_id": "rev-a",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-alpha-copy-a",
+            "content_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "alpha-copy-video",
+                  "clip_type": "media",
+                  "track": "video",
+                  "at_ms": 0,
+                  "duration_ms": 2000,
+                  "asset_id": "alpha-copy-image",
+                  "app": {
+                    "visualBoundary": {
+                      "intentionalPause": true
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "dependencies": [],
+          "assets": [
+            {
+              "asset_id": "alpha-copy-image",
+              "object_id": "object-alpha-image",
+              "media_type": "image/png",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-alpha-copy"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "alpha-copy-input-0",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 0,
+              "role": "first_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 2000
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-alpha-audio",
+            "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "shot-editor",
+            "created_by": "fixture",
+            "duplication": "independent"
+          }
+        }
+      ],
+      "occurrences": [
+        {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 2000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video"
+        },
+        {
+          "occurrence_id": "occ-2",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 1,
+          "at_ms": 4000,
+          "duration_ms": 2000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-2",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-2/output/final-video"
+        },
+        {
+          "occurrence_id": "occ-3",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-b",
+          "ordinal": 2,
+          "at_ms": 8000,
+          "duration_ms": 2600,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-b/occurrence/occ-3",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-3/output/final-video"
+        },
+        {
+          "occurrence_id": "occ-4",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-beta",
+          "revision_id": "rev-a",
+          "ordinal": 3,
+          "at_ms": 11000,
+          "duration_ms": 1200,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-beta/revision/rev-a/occurrence/occ-4",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-4/output/final-video"
+        },
+        {
+          "occurrence_id": "occ-5",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha-copy",
+          "revision_id": "rev-a",
+          "ordinal": 4,
+          "at_ms": 13200,
+          "duration_ms": 2000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha-copy/revision/rev-a/occurrence/occ-5",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-5/output/final-video"
+        }
+      ],
+      "cases": {
+        "missing_dependency": {
+          "shot_id": "shot-missing",
+          "revision_id": "rev-missing",
+          "expected": "missing_dependency"
+        },
+        "stale_write_rejection": {
+          "expected_head_revision_id": "timeline-rev-2",
+          "submitted_head_revision_id": "timeline-rev-1",
+          "expected_status": 409
+        }
+      }
+    },
+    "projectId": "project-001",
+    "parentDocumentId": "document-primary",
+    "headRevisionId": "timeline-rev-2",
+    "occurrences": [
+      {
+        "projectId": "project-001",
+        "occurrenceId": "occ-1",
+        "parentDocumentId": "document-primary",
+        "shotId": "shot-alpha",
+        "revisionId": "rev-a",
+        "ordinal": 0,
+        "atMs": 0,
+        "durationMs": 2000,
+        "stableDeepLink": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+        "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+        "revision": {
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-alpha-a",
+            "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "overlong-child",
+                  "asset": "alpha-image",
+                  "clipType": "image",
+                  "track": "video",
+                  "at": 0,
+                  "hold": 5,
+                  "effects": {
+                    "fade_out": 1
+                  }
+                }
+              ]
+            }
+          },
+          "dependencies": [
+            {
+              "shot_id": "shot-beta",
+              "revision_id": "rev-a",
+              "required": true
+            }
+          ],
+          "assets": [
+            {
+              "asset_id": "alpha-image",
+              "object_id": "object-alpha-image",
+              "media_type": "image/png",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-alpha"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "alpha-input-0",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 0,
+              "role": "first_frame"
+            },
+            {
+              "input_id": "alpha-input-1",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 1,
+              "role": "last_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 2000
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-alpha-audio",
+            "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "travel-between-images",
+            "created_by": "fixture",
+            "source_revision": "candidate-7"
+          }
+        }
+      },
+      {
+        "projectId": "project-001",
+        "occurrenceId": "occ-2",
+        "parentDocumentId": "document-primary",
+        "shotId": "shot-alpha",
+        "revisionId": "rev-a",
+        "ordinal": 1,
+        "atMs": 4000,
+        "durationMs": 2000,
+        "stableDeepLink": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-2",
+        "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-2/output/final-video",
+        "revision": {
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-alpha-a",
+            "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "alpha-video",
+                  "clip_type": "media",
+                  "track": "video",
+                  "at_ms": 0,
+                  "duration_ms": 2000,
+                  "asset_id": "alpha-image",
+                  "app": {
+                    "visualBoundary": {
+                      "intentionalPause": true
+                    }
+                  }
+                },
+                {
+                  "id": "alpha-audio",
+                  "clip_type": "media",
+                  "track": "audio",
+                  "at_ms": 0,
+                  "duration_ms": 2000,
+                  "asset_id": "alpha-audio"
+                }
+              ]
+            }
+          },
+          "dependencies": [
+            {
+              "shot_id": "shot-beta",
+              "revision_id": "rev-a",
+              "required": true
+            }
+          ],
+          "assets": [
+            {
+              "asset_id": "alpha-image",
+              "object_id": "object-alpha-image",
+              "media_type": "image/png",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-alpha"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "alpha-input-0",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 0,
+              "role": "first_frame"
+            },
+            {
+              "input_id": "alpha-input-1",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 1,
+              "role": "last_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 2000
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-alpha-audio",
+            "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "travel-between-images",
+            "created_by": "fixture",
+            "source_revision": "candidate-7"
+          }
+        }
+      },
+      {
+        "projectId": "project-001",
+        "occurrenceId": "occ-3",
+        "parentDocumentId": "document-primary",
+        "shotId": "shot-alpha",
+        "revisionId": "rev-b",
+        "ordinal": 2,
+        "atMs": 8000,
+        "durationMs": 2600,
+        "stableDeepLink": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-b/occurrence/occ-3",
+        "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-3/output/final-video",
+        "revision": {
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-b",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-alpha-b",
+            "content_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "alpha-video-b",
+                  "clip_type": "media",
+                  "track": "video",
+                  "at_ms": 0,
+                  "duration_ms": 2600,
+                  "asset_id": "alpha-image",
+                  "app": {
+                    "visualBoundary": {
+                      "intentionalPause": true
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "dependencies": [
+            {
+              "shot_id": "shot-beta",
+              "revision_id": "rev-a",
+              "required": true
+            }
+          ],
+          "assets": [
+            {
+              "asset_id": "alpha-image",
+              "object_id": "object-alpha-image",
+              "media_type": "image/png",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-alpha"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "alpha-input-b-0",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 0,
+              "role": "first_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 2600
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-alpha-audio",
+            "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "shot-editor",
+            "created_by": "fixture"
+          }
+        }
+      },
+      {
+        "projectId": "project-001",
+        "occurrenceId": "occ-4",
+        "parentDocumentId": "document-primary",
+        "shotId": "shot-beta",
+        "revisionId": "rev-a",
+        "ordinal": 3,
+        "atMs": 11000,
+        "durationMs": 1200,
+        "stableDeepLink": "project/project-001/document/document-primary/shot/shot-beta/revision/rev-a/occurrence/occ-4",
+        "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-4/output/final-video",
+        "revision": {
+          "shot_id": "shot-beta",
+          "revision_id": "rev-a",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-beta-a",
+            "content_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "beta-video",
+                  "clip_type": "media",
+                  "track": "video",
+                  "at_ms": 0,
+                  "duration_ms": 1200,
+                  "asset_id": "beta-image",
+                  "app": {
+                    "visualBoundary": {
+                      "intentionalPause": true
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "dependencies": [],
+          "assets": [
+            {
+              "asset_id": "beta-image",
+              "object_id": "object-beta-image",
+              "media_type": "image/png",
+              "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-beta"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "beta-input-0",
+              "object_id": "object-beta-image",
+              "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "ordinal": 0,
+              "role": "first_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 1200
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-beta-audio",
+            "digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "travel-between-images",
+            "created_by": "fixture"
+          }
+        }
+      },
+      {
+        "projectId": "project-001",
+        "occurrenceId": "occ-5",
+        "parentDocumentId": "document-primary",
+        "shotId": "shot-alpha-copy",
+        "revisionId": "rev-a",
+        "ordinal": 4,
+        "atMs": 13200,
+        "durationMs": 2000,
+        "stableDeepLink": "project/project-001/document/document-primary/shot/shot-alpha-copy/revision/rev-a/occurrence/occ-5",
+        "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-5/output/final-video",
+        "revision": {
+          "shot_id": "shot-alpha-copy",
+          "revision_id": "rev-a",
+          "document_role": "shot_revision",
+          "content_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+          "internal_timeline_revision": {
+            "revision_id": "timeline-alpha-copy-a",
+            "content_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+            "timeline": {
+              "tracks": [
+                {
+                  "id": "video",
+                  "kind": "visual"
+                },
+                {
+                  "id": "audio",
+                  "kind": "audio"
+                }
+              ],
+              "clips": [
+                {
+                  "id": "alpha-copy-video",
+                  "clip_type": "media",
+                  "track": "video",
+                  "at_ms": 0,
+                  "duration_ms": 2000,
+                  "asset_id": "alpha-copy-image",
+                  "app": {
+                    "visualBoundary": {
+                      "intentionalPause": true
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "dependencies": [],
+          "assets": [
+            {
+              "asset_id": "alpha-copy-image",
+              "object_id": "object-alpha-image",
+              "media_type": "image/png",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "scope": {
+                "project_id": "project-001",
+                "shot_id": "shot-alpha-copy"
+              },
+              "role": "source"
+            }
+          ],
+          "generation_inputs": [
+            {
+              "input_id": "alpha-copy-input-0",
+              "object_id": "object-alpha-image",
+              "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+              "ordinal": 0,
+              "role": "first_frame"
+            }
+          ],
+          "timing": {
+            "duration_ms": 2000
+          },
+          "audio": {
+            "track_id": "audio",
+            "object_id": "object-alpha-audio",
+            "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+            "scope": {
+              "project_id": "project-001"
+            }
+          },
+          "provenance": {
+            "source": "shot-editor",
+            "created_by": "fixture",
+            "duplication": "independent"
+          }
+        }
+      }
+    ]
+  },
+  "raw_config": {
+    "app": {
+      "visualSeamContract": {
+        "gaps": [
+          {
+            "kind": "pause",
+            "track": "video",
+            "startFrame": 60,
+            "endFrame": 120
+          },
+          {
+            "kind": "pause",
+            "track": "video",
+            "startFrame": 180,
+            "endFrame": 240
+          },
+          {
+            "kind": "pause",
+            "track": "video",
+            "startFrame": 318,
+            "endFrame": 330
+          },
+          {
+            "kind": "pause",
+            "track": "video",
+            "startFrame": 366,
+            "endFrame": 396
+          }
+        ],
+        "version": 1,
+        "mode": "enforced",
+        "report": {
+          "version": 1,
+          "fps": 30,
+          "guardFrames": 2,
+          "boundaries": [
+            {
+              "frame": 120,
+              "timeSeconds": 4,
+              "participants": [
+                {
+                  "ownerId": "occ-2",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-2",
+                    "clip",
+                    "occ-2:alpha-video"
+                  ],
+                  "behavior": "enters",
+                  "clipId": "occ-2:alpha-video"
+                }
+              ],
+              "structuralIssues": [
+                "video: occ-1:overlong-child ends at frame 150, occ-2:alpha-video starts at frame 120"
+              ],
+              "unacknowledgedRisk": false,
+              "requiresIntent": false
+            },
+            {
+              "frame": 240,
+              "timeSeconds": 8,
+              "participants": [
+                {
+                  "ownerId": "occ-3",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-3",
+                    "clip",
+                    "occ-3:alpha-video-b"
+                  ],
+                  "behavior": "enters",
+                  "clipId": "occ-3:alpha-video-b"
+                }
+              ],
+              "structuralIssues": [],
+              "unacknowledgedRisk": false,
+              "requiresIntent": false
+            },
+            {
+              "frame": 330,
+              "timeSeconds": 11,
+              "participants": [
+                {
+                  "ownerId": "occ-4",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-4",
+                    "clip",
+                    "occ-4:beta-video"
+                  ],
+                  "behavior": "enters",
+                  "clipId": "occ-4:beta-video"
+                },
+                {
+                  "ownerId": "occ-4",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-4",
+                    "clip",
+                    "occ-4:beta-video"
+                  ],
+                  "behavior": "source-change",
+                  "clipId": "occ-4:beta-video"
+                }
+              ],
+              "structuralIssues": [],
+              "unacknowledgedRisk": false,
+              "requiresIntent": false
+            },
+            {
+              "frame": 396,
+              "timeSeconds": 13.2,
+              "participants": [
+                {
+                  "ownerId": "occ-5",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-5",
+                    "clip",
+                    "occ-5:alpha-copy-video"
+                  ],
+                  "behavior": "enters",
+                  "clipId": "occ-5:alpha-copy-video"
+                },
+                {
+                  "ownerId": "occ-5",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-5",
+                    "clip",
+                    "occ-5:alpha-copy-video"
+                  ],
+                  "behavior": "source-change",
+                  "clipId": "occ-5:alpha-copy-video"
+                }
+              ],
+              "structuralIssues": [],
+              "unacknowledgedRisk": false,
+              "requiresIntent": false
+            }
+          ],
+          "opaqueElements": [],
+          "structuralIssues": [
+            "video: occ-1:overlong-child ends at frame 150, occ-2:alpha-video starts at frame 120"
+          ],
+          "cues": [],
+          "warningCount": 0,
+          "blocked": true
+        }
+      },
+      "canonicalComposition": {
+        "projectId": "project-001",
+        "parentDocumentId": "document-primary",
+        "headRevisionId": "timeline-rev-2",
+        "occurrenceIds": [
+          "occ-1",
+          "occ-2",
+          "occ-3",
+          "occ-4",
+          "occ-5"
+        ]
+      }
+    },
+    "registry": {
+      "alpha-image": {
+        "file": "object-alpha-image",
+        "media_id": "object-alpha-image",
+        "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "type": "image/png",
+        "origin": "immutable-public",
+        "metadata": {
+          "provenance": {
+            "sourceProvider": "canonical-shot-composition",
+            "originalFilename": "alpha-image"
+          }
+        },
+        "src": "/api/astrid/v1/objects/object-alpha-image"
+      },
+      "beta-image": {
+        "file": "object-beta-image",
+        "media_id": "object-beta-image",
+        "content_sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "type": "image/png",
+        "origin": "immutable-public",
+        "metadata": {
+          "provenance": {
+            "sourceProvider": "canonical-shot-composition",
+            "originalFilename": "beta-image"
+          }
+        },
+        "src": "/api/astrid/v1/objects/object-beta-image"
+      },
+      "alpha-copy-image": {
+        "file": "object-alpha-image",
+        "media_id": "object-alpha-image",
+        "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "type": "image/png",
+        "origin": "immutable-public",
+        "metadata": {
+          "provenance": {
+            "sourceProvider": "canonical-shot-composition",
+            "originalFilename": "alpha-copy-image"
+          }
+        },
+        "src": "/api/astrid/v1/objects/object-alpha-image"
+      }
+    },
+    "output": {
+      "resolution": "1920x1080",
+      "fps": 30,
+      "file": "timeline-document-primary.mp4"
+    },
+    "tracks": [
+      {
+        "id": "video",
+        "kind": "visual",
+        "label": "video"
+      },
+      {
+        "id": "audio",
+        "kind": "audio",
+        "label": "audio"
+      }
+    ],
+    "clips": [
+      {
+        "id": "occ-1:overlong-child",
+        "at": 0,
+        "track": "video",
+        "clipType": "image",
+        "asset": "alpha-image",
+        "hold": 5,
+        "volume": 1,
+        "effects": {
+          "fade_out": 1
+        },
+        "app": {
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-1",
+            "shotId": "shot-alpha",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-alpha-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "rawClipId": "overlong-child",
+            "ownerRef": "occurrence:occ-1",
+            "clipRef": "occurrence:occ-1/clip:overlong-child"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 5000,
+            "occurrenceStartMs": 0,
+            "occurrenceDurationMs": 4000
+          }
+        },
+        "assetEntry": {
+          "file": "object-alpha-image",
+          "media_id": "object-alpha-image",
+          "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "alpha-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-alpha-image"
+        }
+      },
+      {
+        "id": "occ-2:alpha-video",
+        "at": 4,
+        "track": "video",
+        "clipType": "media",
+        "asset": "alpha-image",
+        "hold": 2,
+        "volume": 1,
+        "app": {
+          "visualBoundary": {
+            "intentionalPause": true
+          },
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-2",
+            "shotId": "shot-alpha",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-alpha-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-2/output/final-video",
+            "rawClipId": "alpha-video",
+            "ownerRef": "occurrence:occ-2",
+            "clipRef": "occurrence:occ-2/clip:alpha-video"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 2000,
+            "occurrenceStartMs": 4000,
+            "occurrenceDurationMs": 2000
+          }
+        },
+        "assetEntry": {
+          "file": "object-alpha-image",
+          "media_id": "object-alpha-image",
+          "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "alpha-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-alpha-image"
+        }
+      },
+      {
+        "id": "occ-2:alpha-audio",
+        "at": 4,
+        "track": "audio",
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "hold": 2,
+        "volume": 1,
+        "app": {
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-2",
+            "shotId": "shot-alpha",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-alpha-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-2/output/final-video",
+            "rawClipId": "alpha-audio",
+            "ownerRef": "occurrence:occ-2",
+            "clipRef": "occurrence:occ-2/clip:alpha-audio"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 2000,
+            "occurrenceStartMs": 4000,
+            "occurrenceDurationMs": 2000
+          }
+        }
+      },
+      {
+        "id": "occ-3:alpha-video-b",
+        "at": 8,
+        "track": "video",
+        "clipType": "media",
+        "asset": "alpha-image",
+        "hold": 2.6,
+        "volume": 1,
+        "app": {
+          "visualBoundary": {
+            "intentionalPause": true
+          },
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-3",
+            "shotId": "shot-alpha",
+            "revisionId": "rev-b",
+            "internalTimelineRevisionId": "timeline-alpha-b",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-3/output/final-video",
+            "rawClipId": "alpha-video-b",
+            "ownerRef": "occurrence:occ-3",
+            "clipRef": "occurrence:occ-3/clip:alpha-video-b"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 2600,
+            "occurrenceStartMs": 8000,
+            "occurrenceDurationMs": 2600
+          }
+        },
+        "assetEntry": {
+          "file": "object-alpha-image",
+          "media_id": "object-alpha-image",
+          "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "alpha-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-alpha-image"
+        }
+      },
+      {
+        "id": "occ-4:beta-video",
+        "at": 11,
+        "track": "video",
+        "clipType": "media",
+        "asset": "beta-image",
+        "hold": 1.2,
+        "volume": 1,
+        "app": {
+          "visualBoundary": {
+            "intentionalPause": true
+          },
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-4",
+            "shotId": "shot-beta",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-beta-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-4/output/final-video",
+            "rawClipId": "beta-video",
+            "ownerRef": "occurrence:occ-4",
+            "clipRef": "occurrence:occ-4/clip:beta-video"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 1200,
+            "occurrenceStartMs": 11000,
+            "occurrenceDurationMs": 1200
+          }
+        },
+        "assetEntry": {
+          "file": "object-beta-image",
+          "media_id": "object-beta-image",
+          "content_sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "beta-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-beta-image"
+        }
+      },
+      {
+        "id": "occ-5:alpha-copy-video",
+        "at": 13.2,
+        "track": "video",
+        "clipType": "media",
+        "asset": "alpha-copy-image",
+        "hold": 2,
+        "volume": 1,
+        "app": {
+          "visualBoundary": {
+            "intentionalPause": true
+          },
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-5",
+            "shotId": "shot-alpha-copy",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-alpha-copy-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-5/output/final-video",
+            "rawClipId": "alpha-copy-video",
+            "ownerRef": "occurrence:occ-5",
+            "clipRef": "occurrence:occ-5/clip:alpha-copy-video"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 2000,
+            "occurrenceStartMs": 13200,
+            "occurrenceDurationMs": 2000
+          }
+        },
+        "assetEntry": {
+          "file": "object-alpha-image",
+          "media_id": "object-alpha-image",
+          "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "alpha-copy-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-alpha-image"
+        }
+      }
+    ]
+  },
+  "editor_config": {
+    "app": {
+      "visualSeamContract": {
+        "gaps": [
+          {
+            "kind": "pause",
+            "track": "video",
+            "startFrame": 60,
+            "endFrame": 120
+          },
+          {
+            "kind": "pause",
+            "track": "video",
+            "startFrame": 180,
+            "endFrame": 240
+          },
+          {
+            "kind": "pause",
+            "track": "video",
+            "startFrame": 318,
+            "endFrame": 330
+          },
+          {
+            "kind": "pause",
+            "track": "video",
+            "startFrame": 366,
+            "endFrame": 396
+          }
+        ],
+        "version": 1,
+        "mode": "enforced",
+        "report": {
+          "version": 1,
+          "fps": 30,
+          "guardFrames": 2,
+          "boundaries": [
+            {
+              "frame": 120,
+              "timeSeconds": 4,
+              "participants": [
+                {
+                  "ownerId": "occ-1",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-1",
+                    "clip",
+                    "occ-1:overlong-child"
+                  ],
+                  "behavior": "exits",
+                  "clipId": "occ-1:overlong-child"
+                },
+                {
+                  "ownerId": "occ-2",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-2",
+                    "clip",
+                    "occ-2:alpha-video"
+                  ],
+                  "behavior": "enters",
+                  "clipId": "occ-2:alpha-video"
+                }
+              ],
+              "structuralIssues": [],
+              "unacknowledgedRisk": false,
+              "requiresIntent": false
+            },
+            {
+              "frame": 240,
+              "timeSeconds": 8,
+              "participants": [
+                {
+                  "ownerId": "occ-3",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-3",
+                    "clip",
+                    "occ-3:alpha-video-b"
+                  ],
+                  "behavior": "enters",
+                  "clipId": "occ-3:alpha-video-b"
+                }
+              ],
+              "structuralIssues": [],
+              "unacknowledgedRisk": false,
+              "requiresIntent": false
+            },
+            {
+              "frame": 330,
+              "timeSeconds": 11,
+              "participants": [
+                {
+                  "ownerId": "occ-4",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-4",
+                    "clip",
+                    "occ-4:beta-video"
+                  ],
+                  "behavior": "enters",
+                  "clipId": "occ-4:beta-video"
+                },
+                {
+                  "ownerId": "occ-4",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-4",
+                    "clip",
+                    "occ-4:beta-video"
+                  ],
+                  "behavior": "source-change",
+                  "clipId": "occ-4:beta-video"
+                }
+              ],
+              "structuralIssues": [],
+              "unacknowledgedRisk": false,
+              "requiresIntent": false
+            },
+            {
+              "frame": 396,
+              "timeSeconds": 13.2,
+              "participants": [
+                {
+                  "ownerId": "occ-5",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-5",
+                    "clip",
+                    "occ-5:alpha-copy-video"
+                  ],
+                  "behavior": "enters",
+                  "clipId": "occ-5:alpha-copy-video"
+                },
+                {
+                  "ownerId": "occ-5",
+                  "path": [
+                    "parent",
+                    "document-primary",
+                    "occurrence",
+                    "occ-5",
+                    "clip",
+                    "occ-5:alpha-copy-video"
+                  ],
+                  "behavior": "source-change",
+                  "clipId": "occ-5:alpha-copy-video"
+                }
+              ],
+              "structuralIssues": [],
+              "unacknowledgedRisk": false,
+              "requiresIntent": false
+            }
+          ],
+          "opaqueElements": [],
+          "structuralIssues": [],
+          "cues": [],
+          "warningCount": 0,
+          "blocked": false
+        }
+      },
+      "canonicalComposition": {
+        "projectId": "project-001",
+        "parentDocumentId": "document-primary",
+        "headRevisionId": "timeline-rev-2",
+        "occurrenceIds": [
+          "occ-1",
+          "occ-2",
+          "occ-3",
+          "occ-4",
+          "occ-5"
+        ]
+      }
+    },
+    "registry": {
+      "alpha-image": {
+        "file": "object-alpha-image",
+        "media_id": "object-alpha-image",
+        "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "type": "image/png",
+        "origin": "immutable-public",
+        "metadata": {
+          "provenance": {
+            "sourceProvider": "canonical-shot-composition",
+            "originalFilename": "alpha-image"
+          }
+        },
+        "src": "/api/astrid/v1/objects/object-alpha-image"
+      },
+      "beta-image": {
+        "file": "object-beta-image",
+        "media_id": "object-beta-image",
+        "content_sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "type": "image/png",
+        "origin": "immutable-public",
+        "metadata": {
+          "provenance": {
+            "sourceProvider": "canonical-shot-composition",
+            "originalFilename": "beta-image"
+          }
+        },
+        "src": "/api/astrid/v1/objects/object-beta-image"
+      },
+      "alpha-copy-image": {
+        "file": "object-alpha-image",
+        "media_id": "object-alpha-image",
+        "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "type": "image/png",
+        "origin": "immutable-public",
+        "metadata": {
+          "provenance": {
+            "sourceProvider": "canonical-shot-composition",
+            "originalFilename": "alpha-copy-image"
+          }
+        },
+        "src": "/api/astrid/v1/objects/object-alpha-image"
+      }
+    },
+    "output": {
+      "resolution": "1920x1080",
+      "fps": 30,
+      "file": "timeline-document-primary.mp4"
+    },
+    "tracks": [
+      {
+        "id": "video",
+        "kind": "visual",
+        "label": "video"
+      },
+      {
+        "id": "audio",
+        "kind": "audio",
+        "label": "audio"
+      }
+    ],
+    "clips": [
+      {
+        "id": "occ-1:overlong-child",
+        "at": 0,
+        "track": "video",
+        "clipType": "image",
+        "asset": "alpha-image",
+        "hold": 4,
+        "volume": 1,
+        "effects": {
+          "fade_out": 1
+        },
+        "app": {
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-1",
+            "shotId": "shot-alpha",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-alpha-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "rawClipId": "overlong-child",
+            "ownerRef": "occurrence:occ-1",
+            "clipRef": "occurrence:occ-1/clip:overlong-child"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 5000,
+            "occurrenceStartMs": 0,
+            "occurrenceDurationMs": 4000
+          }
+        },
+        "assetEntry": {
+          "file": "object-alpha-image",
+          "media_id": "object-alpha-image",
+          "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "alpha-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-alpha-image"
+        }
+      },
+      {
+        "id": "occ-2:alpha-video",
+        "at": 4,
+        "track": "video",
+        "clipType": "media",
+        "asset": "alpha-image",
+        "hold": 2,
+        "volume": 1,
+        "app": {
+          "visualBoundary": {
+            "intentionalPause": true
+          },
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-2",
+            "shotId": "shot-alpha",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-alpha-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-2/output/final-video",
+            "rawClipId": "alpha-video",
+            "ownerRef": "occurrence:occ-2",
+            "clipRef": "occurrence:occ-2/clip:alpha-video"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 2000,
+            "occurrenceStartMs": 4000,
+            "occurrenceDurationMs": 2000
+          }
+        },
+        "assetEntry": {
+          "file": "object-alpha-image",
+          "media_id": "object-alpha-image",
+          "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "alpha-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-alpha-image"
+        }
+      },
+      {
+        "id": "occ-2:alpha-audio",
+        "at": 4,
+        "track": "audio",
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "hold": 2,
+        "volume": 1,
+        "app": {
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-2",
+            "shotId": "shot-alpha",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-alpha-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-2/output/final-video",
+            "rawClipId": "alpha-audio",
+            "ownerRef": "occurrence:occ-2",
+            "clipRef": "occurrence:occ-2/clip:alpha-audio"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 2000,
+            "occurrenceStartMs": 4000,
+            "occurrenceDurationMs": 2000
+          }
+        }
+      },
+      {
+        "id": "occ-3:alpha-video-b",
+        "at": 8,
+        "track": "video",
+        "clipType": "media",
+        "asset": "alpha-image",
+        "hold": 2.5999999999999996,
+        "volume": 1,
+        "app": {
+          "visualBoundary": {
+            "intentionalPause": true
+          },
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-3",
+            "shotId": "shot-alpha",
+            "revisionId": "rev-b",
+            "internalTimelineRevisionId": "timeline-alpha-b",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-3/output/final-video",
+            "rawClipId": "alpha-video-b",
+            "ownerRef": "occurrence:occ-3",
+            "clipRef": "occurrence:occ-3/clip:alpha-video-b"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 2600,
+            "occurrenceStartMs": 8000,
+            "occurrenceDurationMs": 2600
+          }
+        },
+        "assetEntry": {
+          "file": "object-alpha-image",
+          "media_id": "object-alpha-image",
+          "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "alpha-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-alpha-image"
+        }
+      },
+      {
+        "id": "occ-4:beta-video",
+        "at": 11,
+        "track": "video",
+        "clipType": "media",
+        "asset": "beta-image",
+        "hold": 1.1999999999999993,
+        "volume": 1,
+        "app": {
+          "visualBoundary": {
+            "intentionalPause": true
+          },
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-4",
+            "shotId": "shot-beta",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-beta-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-4/output/final-video",
+            "rawClipId": "beta-video",
+            "ownerRef": "occurrence:occ-4",
+            "clipRef": "occurrence:occ-4/clip:beta-video"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 1200,
+            "occurrenceStartMs": 11000,
+            "occurrenceDurationMs": 1200
+          }
+        },
+        "assetEntry": {
+          "file": "object-beta-image",
+          "media_id": "object-beta-image",
+          "content_sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "beta-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-beta-image"
+        }
+      },
+      {
+        "id": "occ-5:alpha-copy-video",
+        "at": 13.2,
+        "track": "video",
+        "clipType": "media",
+        "asset": "alpha-copy-image",
+        "hold": 2,
+        "volume": 1,
+        "app": {
+          "visualBoundary": {
+            "intentionalPause": true
+          },
+          "canonical": {
+            "projectId": "project-001",
+            "parentDocumentId": "document-primary",
+            "occurrenceId": "occ-5",
+            "shotId": "shot-alpha-copy",
+            "revisionId": "rev-a",
+            "internalTimelineRevisionId": "timeline-alpha-copy-a",
+            "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-5/output/final-video",
+            "rawClipId": "alpha-copy-video",
+            "ownerRef": "occurrence:occ-5",
+            "clipRef": "occurrence:occ-5/clip:alpha-copy-video"
+          },
+          "canonicalTiming": {
+            "sourceOffsetMs": 0,
+            "speed": 1,
+            "gain": 1,
+            "muted": false,
+            "durationMs": 2000,
+            "occurrenceStartMs": 13200,
+            "occurrenceDurationMs": 2000
+          }
+        },
+        "assetEntry": {
+          "file": "object-alpha-image",
+          "media_id": "object-alpha-image",
+          "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          "type": "image/png",
+          "origin": "immutable-public",
+          "metadata": {
+            "provenance": {
+              "sourceProvider": "canonical-shot-composition",
+              "originalFilename": "alpha-copy-image"
+            }
+          },
+          "src": "/api/astrid/v1/objects/object-alpha-image"
+        }
+      }
+    ]
+  },
+  "raw_clip": {
+    "id": "occ-1:overlong-child",
+    "at": 0,
+    "track": "video",
+    "clipType": "image",
+    "asset": "alpha-image",
+    "hold": 5,
+    "volume": 1,
+    "effects": {
+      "fade_out": 1
+    },
+    "app": {
+      "canonical": {
+        "projectId": "project-001",
+        "parentDocumentId": "document-primary",
+        "occurrenceId": "occ-1",
+        "shotId": "shot-alpha",
+        "revisionId": "rev-a",
+        "internalTimelineRevisionId": "timeline-alpha-a",
+        "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+        "rawClipId": "overlong-child",
+        "ownerRef": "occurrence:occ-1",
+        "clipRef": "occurrence:occ-1/clip:overlong-child"
+      },
+      "canonicalTiming": {
+        "sourceOffsetMs": 0,
+        "speed": 1,
+        "gain": 1,
+        "muted": false,
+        "durationMs": 5000,
+        "occurrenceStartMs": 0,
+        "occurrenceDurationMs": 4000
+      }
+    },
+    "assetEntry": {
+      "file": "object-alpha-image",
+      "media_id": "object-alpha-image",
+      "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "type": "image/png",
+      "origin": "immutable-public",
+      "metadata": {
+        "provenance": {
+          "sourceProvider": "canonical-shot-composition",
+          "originalFilename": "alpha-image"
+        }
+      },
+      "src": "/api/astrid/v1/objects/object-alpha-image"
+    }
+  },
+  "editor_clip": {
+    "id": "occ-1:overlong-child",
+    "at": 0,
+    "track": "video",
+    "clipType": "image",
+    "asset": "alpha-image",
+    "hold": 4,
+    "volume": 1,
+    "effects": {
+      "fade_out": 1
+    },
+    "app": {
+      "canonical": {
+        "projectId": "project-001",
+        "parentDocumentId": "document-primary",
+        "occurrenceId": "occ-1",
+        "shotId": "shot-alpha",
+        "revisionId": "rev-a",
+        "internalTimelineRevisionId": "timeline-alpha-a",
+        "outputIdentity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+        "rawClipId": "overlong-child",
+        "ownerRef": "occurrence:occ-1",
+        "clipRef": "occurrence:occ-1/clip:overlong-child"
+      },
+      "canonicalTiming": {
+        "sourceOffsetMs": 0,
+        "speed": 1,
+        "gain": 1,
+        "muted": false,
+        "durationMs": 5000,
+        "occurrenceStartMs": 0,
+        "occurrenceDurationMs": 4000
+      }
+    },
+    "assetEntry": {
+      "file": "object-alpha-image",
+      "media_id": "object-alpha-image",
+      "content_sha256": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "type": "image/png",
+      "origin": "immutable-public",
+      "metadata": {
+        "provenance": {
+          "sourceProvider": "canonical-shot-composition",
+          "originalFilename": "alpha-image"
+        }
+      },
+      "src": "/api/astrid/v1/objects/object-alpha-image"
+    }
+  },
+  "observations": {
+    "raw": {
+      "opacity": 1,
+      "plan": {
+        "drawStart": 0,
+        "drawDuration": 120,
+        "ownOffset": 0,
+        "ownDuration": 150,
+        "fadeIn": null,
+        "fadeOut": null
+      },
+      "at119": {
+        "frame": 119,
+        "layers": [
+          {
+            "clipIndex": 0,
+            "drawLocalFrame": 119,
+            "ownFrame": 119,
+            "contentFrame": 119,
+            "opacity": 1
+          }
+        ]
+      },
+      "at120": {
+        "frame": 120,
+        "layers": []
+      }
+    },
+    "editor": {
+      "opacity": 0.5,
+      "plan": {
+        "drawStart": 0,
+        "drawDuration": 120,
+        "ownOffset": 0,
+        "ownDuration": 120,
+        "fadeIn": null,
+        "fadeOut": null
+      },
+      "at119": {
+        "frame": 119,
+        "layers": [
+          {
+            "clipIndex": 0,
+            "drawLocalFrame": 119,
+            "ownFrame": 119,
+            "contentFrame": 119,
+            "opacity": 1
+          }
+        ]
+      },
+      "at120": {
+        "frame": 120,
+        "layers": []
+      }
+    }
+  },
+  "expect": {
+    "render": {
+      "opacity": 1,
+      "own_duration_frames": 150,
+      "draw_duration_frames": 120
+    },
+    "editor": {
+      "opacity": 0.5,
+      "own_duration_frames": 120,
+      "draw_duration_frames": 120
+    }
+  },
+  "physical_reference": {
+    "status": "pending",
+    "owner": "viewing",
+    "note": "Source projector plus public evaluator only. MAIN render replay, decoded pixels and Runtime acceptance have not been run. No MAIN visible value is asserted."
+  }
+}
