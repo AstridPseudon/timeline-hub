@@ -48,7 +48,6 @@ import type { ShotSetCapturePort, CapturedShotSetEdit } from '@/tools/video-edit
 import { captureShotNameEdit, submitShotNameEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import {
   enqueueCanonicalShotPublish,
-  updateCanonicalShotName,
   updateCanonicalShotSettings,
 } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import { ShotTimelinePreview } from '../components/ShotTimelinePreview.tsx';
@@ -294,7 +293,15 @@ export function ShotEditorView({
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   const handleBeforeNameEdit = useCallback(() => {
-    if (!shotSetPort || !canonicalComposition || !canonicalOccurrence) return;
+    if (!canonicalComposition || !canonicalOccurrence) return;
+    if (!shotSetPort) {
+      const error = new Error('Mounted shot.set name authority is unavailable; draft kept.');
+      normalizeAndPresentError(error, {
+        context: 'canonical-shot:capture-name',
+        toastTitle: 'Shot name draft kept',
+      });
+      throw error;
+    }
     try {
       capturedNameEditRef.current = captureShotNameEdit(
         shotSetPort,
@@ -393,36 +400,20 @@ export function ShotEditorView({
         throw error;
       }
     }
-    if (canonicalSettingsPersistence && canonicalShotComposition && canonicalComposition && canonicalOccurrence) {
-      const editingBase = canonicalComposition;
-      void enqueueCanonicalShotPublish(
-        editingBase.projectId,
-        canonicalComposition.parentDocumentId,
-        async () => {
-          const current = editingBase;
-          const graph = await updateCanonicalShotName(current.contract, canonicalOccurrence.occurrenceId, newName);
-          const published = await canonicalShotComposition.publish?.({
-            projectId: current.projectId,
-            parentDocumentId: current.parentDocumentId,
-            expectedHeadRevisionId: current.headRevisionId,
-            graph,
-          });
-          if (published) onCanonicalCompositionPublished?.(published);
-        },
-      ).catch((error: unknown) => {
-        normalizeAndPresentError(error, {
-          context: 'canonical-shot:update-name',
-          toastTitle: 'Failed to save shot name',
-        });
+    if (canonicalComposition && canonicalOccurrence) {
+      const error = new Error('Mounted shot.set name authority is unavailable; draft kept.');
+      normalizeAndPresentError(error, {
+        context: 'canonical-shot:update-name',
+        toastTitle: 'Shot name draft kept',
       });
-      return;
+      throw error;
     }
     updateShotNameMutateRef.current({
       shotId: shotToEdit.id,
       newName: newName,
       projectId: selectedProjectId,
     });
-  }, [canonicalComposition, canonicalOccurrence, canonicalSettingsPersistence, canonicalShotComposition, onCanonicalCompositionPublished, selectedProjectId, shotSetPort, shotToEdit.id]);
+  }, [canonicalComposition, canonicalOccurrence, selectedProjectId, shotSetPort, shotToEdit.id]);
 
   const handleShotImagesUpdate = useCallback(async () => {
     invalidateGenerations(shotToEdit.id, {
