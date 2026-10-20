@@ -105,6 +105,7 @@ export async function createTimelineCommandSession(options: Options) {
   let lifetime: Promise<unknown> | undefined;
   let chain = Promise.resolve();
   let sending: Promise<void> | undefined;
+  let retryPending = false;
   let placementWake = 0;
   let lastIntent: string | undefined;
   let localGeneration = 0;
@@ -227,7 +228,9 @@ export async function createTimelineCommandSession(options: Options) {
       if (projectionPending === basis) projectionPending = undefined;
     } finally { projecting = false; }
   }
-  async function pump(retryPending = true) {
+  async function pump(allowRetry = true) {
+    // Explicit recovery may join an observation's non-retrying pump during claim.
+    retryPending ||= allowRetry;
     if (sending) return sending;
     const wake = placementWake;
     sending = (async () => {
@@ -304,6 +307,7 @@ export async function createTimelineCommandSession(options: Options) {
       }
     })().catch((error) => { publish('error', message(error)); }).finally(() => {
       sending = undefined;
+      retryPending = false;
       if (!stopped && wake !== placementWake) void pump(false);
     });
     return sending;

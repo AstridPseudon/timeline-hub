@@ -230,6 +230,57 @@ describe('production command session automatic image continuation', () => {
     expect(accepted.placementContinuations![0].placement?.accepted?.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
   });
 
+  it('honors explicit recovery while an observation is already resuming the saved placement', async () => {
+    const env = environment(), first = await env.mount();
+    env.loseAdmission();
+    await expect(env.admit(first.session)).rejects.toThrow();
+    await first.session.dispose();
+    const [reserved] = await env.outboxes.list(scope);
+    env.task.state = 'succeeded'; env.loseCommit();
+    const second = await env.mount();
+    await second.session.recover(reserved.ownerId);
+    expect(second.session.getState().status).toBe('retry');
+    await second.session.dispose();
+    const [saved] = await env.outboxes.list(scope);
+    const exact = structuredClone(saved.pending!.request);
+    const continuation = structuredClone(saved.placementContinuations![0]);
+    const recovered = await env.mount();
+    const projection = env.pauseProjection();
+    const reading = deferred<void>(), read = deferred<void>();
+    const recover = env.outboxes.recover;
+    vi.spyOn(env.outboxes, 'recover').mockImplementation((scope, owner, work) => recover(scope, owner, async (box) => {
+      let reads = 0;
+      return work({ ...box, read: async () => {
+        const record = await box.read();
+        if (++reads === 2) { reading.resolve(); await read.promise; }
+        return record;
+      } });
+    }));
+    const recovering = recovered.session.recover(saved.ownerId);
+    await vi.waitFor(() => expect(recovered.session.getState().ownerId).toBe(saved.ownerId));
+    // An in-flight canonical observation can wake the non-retrying pump while
+    // the recovered session is still projecting its original display.
+    recovered.session.observe(env.initial);
+    await reading.promise;
+    projection.resolve();
+    await vi.waitFor(() => expect(recovered.session.getState().status).toBe('dirty'));
+    read.resolve();
+    await recovering;
+    expect(recovered.session.getState()).toMatchObject({ status: 'saved', canUndo: true });
+    expect(env.commits().map(({ body, key }) => ({ body, key }))).toEqual([
+      { body: exact.body, key: exact.key }, { body: exact.body, key: exact.key },
+    ]);
+    const [accepted] = await env.outboxes.list(scope);
+    expect(accepted.pending).toBeUndefined();
+    expect(accepted.intents).toEqual([]);
+    expect(accepted.placementContinuations![0]).toEqual({ ...continuation,
+      placement: { ...continuation.placement, accepted: accepted.accepted } });
+    expect(accepted.accepted!.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+    expect((accepted.accepted!.value as unknown as TimelineCommitResult).response).toEqual(env.receipts.get(exact.key));
+    expect(env.receipts.size).toBe(1);
+    expect(env.directSend).not.toHaveBeenCalled();
+  });
+
   it.each(['cancel_requested', 'cancelled', 'failed'] as const)('retains the draft on task %s without native capture or commit', async (state) => {
     const env = environment(), { session } = await env.mount();
     await env.admit(session);
