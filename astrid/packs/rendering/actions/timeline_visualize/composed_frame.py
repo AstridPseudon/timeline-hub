@@ -16,6 +16,7 @@ import tempfile
 import threading
 import uuid
 from collections.abc import Callable, Mapping, Sequence
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -475,6 +476,22 @@ def snapshot_wants_bounds(snapshot: Mapping[str, Any]) -> bool:
     return isinstance(app, Mapping) and app.get("astrid_bounds") is True
 
 
+def _validate_capture_files(
+    snapshot: Mapping[str, Any], timeline_path: Path, assets_path: Path,
+) -> None:
+    """Check the prepared files against the closure, without certifying its source."""
+    for key, path in (("config", timeline_path), ("registry", assets_path)):
+        expected = snapshot.get(key)
+        if not isinstance(expected, Mapping):
+            raise ValueError(f"Composed frame capture snapshot has no {key}.")
+        try:
+            actual = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"Composed frame capture cannot read its prepared {key}.") from exc
+        if actual != expected:
+            raise ValueError(f"Composed frame capture prepared {key} differs from its snapshot.")
+
+
 class RemotionFrameProvider:
     """Provide PNG frames from an admitted, immutable capture snapshot."""
 
@@ -504,7 +521,11 @@ class RemotionFrameProvider:
         self.scene_occlusions: dict[str, dict] = {}
         self.scene_clip_identities: dict[str, dict] = {}
         self.scene_unavailable: str | None = None
+        self._capture_snapshot = None
         if renderer is None:
+            if "config" in snapshot:
+                self._capture_snapshot = deepcopy(dict(snapshot))
+                _validate_capture_files(self._capture_snapshot, self.timeline_path, self.assets_path)
             renderer = _acquire_shared_remotion_handle(
                 context={
                     "timeline_path": self.timeline_path,
@@ -574,6 +595,8 @@ class RemotionFrameProvider:
         out_root: Path,
         resolution: Sequence[int] | None = None,
     ) -> dict[str, Any]:
+        if self._capture_snapshot is not None:
+            _validate_capture_files(self._capture_snapshot, self.timeline_path, self.assets_path)
         self.label_batches.clear()
         self.label_canvas = None
         self.scene_frames = {}
