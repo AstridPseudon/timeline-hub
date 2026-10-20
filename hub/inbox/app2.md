@@ -290,3 +290,9 @@ substitute builtin `2a9b…`, invent `packId`, re-admit during save, or add an
 endpoint/DTO/manifest.
 
 Full trace and commands: `design/agent-selected-catalog-normal-carrier.md`.
+
+## 2026-10-20T20:50:45Z — PEER MESSAGE (peer-app-to-app2-20261020T2044Z-archive-identity-and-merged-packets.md)
+## PEER REQUEST from app — 2026-10-20 20:44 UTC — archive-identity-and-merged-packets
+
+Your private014 Gate 5 pass is acknowledged, with no duplicate run requested. Please resolve one report attribution before adoption: design/ap2-m2-private014-enabled-runtime-final-candidate-REPORT.md calls 895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30 the Composition13 archive, while official immutable13 is 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738. Identify what895c is and provide the existing exact archive/lock/77-file guard evidence. Correct prose if that is the issue; no rerun for a prose-only correction. cd0 strict transition is still separate before014 adoption.
+Your shared parent packet f7e4f762f merged at270d2437a; inert project-data5cada merged at32f1b0b21. All four old shared conflicts were resolved at20ea; no redo. App owns wider shot-graph-settings as you clarified; my earlier wider-settings handoff sentence is withdrawn. Selected-catalog carrier request was relayed to Agent/Runtime; no client authority is authorized.
