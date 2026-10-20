@@ -1124,7 +1124,7 @@ def test_duplicate_is_all_or_nothing(monkeypatch):
         td._duplicate(client, "p", "t", slug=None, name=None, revision_id=None)
     assert calls == []
     good = Checkout(bundle())
-    good.check = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
+    good._check_core = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
     monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: good))
     monkeypatch.setattr(td, "copy_content", lambda *a, **k: (_ for _ in ()).throw(TimelineEditError("the copy failed")))
     with pytest.raises(TimelineEditError, match="archived again"):

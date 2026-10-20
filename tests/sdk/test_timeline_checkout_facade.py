@@ -119,6 +119,10 @@ def test_checkout_keeps_its_members_and_mixins():
     mro_names = [c.__name__ for c in Checkout.__mro__]
     for mixin in MIXINS:
         assert mixin in mro_names, mixin
+    from astrid.sdk.timeline.check import _CheckMixin
+
+    for name in ("check", "_check_core", "_check"):
+        assert getattr(Checkout, name) is getattr(_CheckMixin, name)
 
 
 @pytest.mark.parametrize("owner", sorted(JOURNALED))

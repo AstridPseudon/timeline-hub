@@ -82,7 +82,7 @@ def test_successful_publish_with_failed_reset_does_not_reopen_old_steps(draft, m
     monkeypatch.setattr(store, "fetch_bundle", unavailable if failure == "read" else head)
     if failure == "write":
         monkeypatch.setattr(draft, "_save_locked", unavailable)
-    monkeypatch.setattr(draft, "check", lambda: SimpleNamespace(valid=True))
+    monkeypatch.setattr(draft, "_check_core", lambda: SimpleNamespace(valid=True))
     monkeypatch.setattr(draft, "_publish_narration", lambda *a, **kw: {})
     monkeypatch.setattr(publish._transcripts, "plan_narration_transcripts", lambda *a: [])
     assert draft.publish(client=object())["new_head"] == "accepted-B"

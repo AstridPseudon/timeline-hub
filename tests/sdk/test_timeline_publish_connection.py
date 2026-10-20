@@ -10,7 +10,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.sdk import AstridClient, authoring_bundle, autobootstrap
+from astrid.core.timeline import authoring_bundle
+from astrid.sdk import AstridClient, autobootstrap
 from astrid.sdk.timeline import store
 
 CANDIDATE = {"project_id": "p", "timeline_id": "t", "base_parent": {"revision_id": "rev-0"}}

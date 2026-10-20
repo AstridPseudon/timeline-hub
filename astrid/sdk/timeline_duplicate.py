@@ -149,7 +149,7 @@ def duplicate_timeline(project: str, source: str, *, slug: str | None = None, na
 def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name: str | None,
                revision_id: str | None) -> dict[str, Any]:
     src = Checkout.open(project, source, revision_id=revision_id, client=client)
-    report = src.check()  # all or nothing: refuse an invalid head BEFORE creating anything
+    report = src._check_core()  # all or nothing: refuse an invalid head BEFORE creating anything
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
                                 + "; ".join((report.blocking or report.problems or ["invalid"])[:3]) + "); nothing was created")
@@ -172,7 +172,7 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         bundle, notes = copy_content(src.bundle, dst.bundle, new_slug=slug or new_id)
         dst.bundle = bundle
         dst.notes.extend(notes)
-        report = dst.check()
+        report = dst._check_core()
         if not report.valid:
             raise TimelineEditError("the copy is invalid: " + "; ".join(report.problems or [str(report)]))
         receipt = dst.publish(f"duplicate of {source}", client=client,

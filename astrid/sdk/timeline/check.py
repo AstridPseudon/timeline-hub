@@ -532,9 +532,16 @@ class _CheckMixin:
         return out
 
     def check(self) -> "CheckReport":
-        from astrid.sdk.timeline.checkout import Checkout
         """Validate, say what moved (timeline seconds, against the checked-out head) and lint the changed cuts."""
-        from astrid.sdk.authoring_bundle import validate_authoring_candidate
+        return self._check(diagnostics=True)
+
+    def _check_core(self) -> "CheckReport":
+        """Save-time structure, timing and reference validity without scene or renderer diagnostics."""
+        return self._check(diagnostics=False)
+
+    def _check(self, *, diagnostics: bool) -> "CheckReport":
+        from astrid.core.timeline.authoring_bundle import validate_authoring_candidate
+        from astrid.sdk.timeline.checkout import Checkout
         from astrid.sdk.timeline_cuts import base_bundle, diff_bundles, render_diff
 
         resolved = self.resolve()  # formulas first: every anchored clip back on its word, every expression recalculated
@@ -552,8 +559,8 @@ class _CheckMixin:
         cut_numbers = sorted({cut.n for cut in self.cuts for clip in cut.clips if clip.id in changed})
         from astrid.sdk.timeline_address import ordinals_to_ids
 
-        lint = [ordinals_to_ids(line, self) for line in self.lint(cuts=cut_numbers)] if cut_numbers else []
-        lint_new, lint_old = _new_findings(lint, Checkout(base_bundle(candidate)))
+        lint = [ordinals_to_ids(line, self) for line in self.lint(cuts=cut_numbers)] if diagnostics and cut_numbers else []
+        lint_new, lint_old = _new_findings(lint, Checkout(base_bundle(candidate))) if diagnostics else ([], 0)
         names = []
         for n in cut_numbers:
             pic = self.cuts[n - 1].picture
@@ -566,23 +573,24 @@ class _CheckMixin:
         blocking += [f"outside {line}" for line in self._outside]
         blocking += [f"type    {line}" for line in self._type_mismatches()]
         blocking += [f"beats   {line}" for line in self._stale_beats()]
-        spans = self._on_screen()  # one pass over the film for the three readers below
-        problems += self._scene_problems(spans)
         blocking += [f"length  {line}" for line in self._length_problems()]
-        sprite_blocking, sprite_notes = self._sprite_problems()
-        blocking += sprite_blocking
+        if diagnostics:
+            spans = self._on_screen()  # one pass over the film for the three readers below
+            problems += self._scene_problems(spans)
+            sprite_blocking, sprite_notes = self._sprite_problems()
+            blocking += sprite_blocking
+            problems += [f"why     {line}" for line in self._stale_whys()]
+            problems += sprite_notes
+            problems += [f"text    {line}" for line in self._text_overflow()]
+            from astrid.sdk.timeline.look import look_unrendered
+
+            problems += [f"look    {line}" for line in look_unrendered(self)]  # set, but this composition will not show it
+            music_end = max((c.end for c in self.clips(audio=True) if c.track == "music"), default=None)
+            if music_end is not None and music_end < self.duration - 0.5:
+                problems.append(f"music: the bed ends at {music_end:.2f} s; the film runs {self.duration:.2f} s "
+                                f"({self.duration - music_end:.1f} s without music)")
         if blocking:
             valid = False
-        problems += [f"why     {line}" for line in self._stale_whys()]
-        problems += sprite_notes
-        problems += [f"text    {line}" for line in self._text_overflow()]
-        from astrid.sdk.timeline.look import look_unrendered
-
-        problems += [f"look    {line}" for line in look_unrendered(self)]  # set, but this composition will not show it
-        music_end = max((c.end for c in self.clips(audio=True) if c.track == "music"), default=None)
-        if music_end is not None and music_end < self.duration - 0.5:
-            problems.append(f"music: the bed ends at {music_end:.2f} s; the film runs {self.duration:.2f} s "
-                            f"({self.duration - music_end:.1f} s without music)")
         return CheckReport(valid=valid, validation=validation, summary=summary, lint=lint,
                            problems=blocking + problems + list(dict.fromkeys(self.notes)), changed_cuts=cut_numbers,
                            diff=diff, cut_names=names, blocking=blocking, lint_new=lint_new, lint_old=lint_old,
