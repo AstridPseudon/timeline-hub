@@ -23,6 +23,8 @@ from typing import Any
 RENDERER_IDENTITY = "astrid.remotion.frame-capture.v1|backend=1.0.0|remotion=4.0.509|fonts=local-bundle-v1"
 DEFAULT_MAX_ENTRIES = 256
 DEFAULT_MAX_BYTES = 512 * 1024 * 1024
+MAX_RESERVED_SCENE_FRAMES = 60
+MAX_SAFE_FRAME = 2**53 - 1
 _EPHEMERAL_ATTEMPT_PATH = re.compile(r"astrid-attempt-[^/]+(?=/)")
 
 
@@ -521,6 +523,8 @@ class RemotionFrameProvider:
         self.scene_occlusions: dict[str, dict] = {}
         self.scene_clip_identities: dict[str, dict] = {}
         self.scene_unavailable: str | None = None
+        self._reserved_scene_frames: tuple[int, ...] = ()
+        self._active_reserved_scene_frames: tuple[int, ...] = ()
         self._capture_snapshot = None
         if renderer is None:
             if "config" in snapshot:
@@ -540,6 +544,29 @@ class RemotionFrameProvider:
         self.worker = FrameCaptureWorker(renderer)
         self.wants_bounds = snapshot_wants_bounds(snapshot)
 
+    def reserve_scene_frames(self, frames: Sequence[int]) -> None:
+        """Reserve extra frames for the next live scene-facts observation.
+
+        Reservations affect only the metadata query made from the actual Root
+        props callback.  They never become pixel requests or filmstrip cards.
+        """
+        try:
+            candidate_frames = list(frames)
+        except TypeError as exc:
+            raise ValueError("reserved scene frames must be an iterable of safe integers") from exc
+
+        reserved: list[int] = []
+        seen: set[int] = set()
+        for frame in candidate_frames:
+            if type(frame) is not int or frame < 0 or frame > MAX_SAFE_FRAME:
+                raise ValueError("reserved scene frames must be non-negative safe integers")
+            if frame not in seen:
+                seen.add(frame)
+                reserved.append(frame)
+        if len(reserved) > MAX_RESERVED_SCENE_FRAMES:
+            raise ValueError(f"at most {MAX_RESERVED_SCENE_FRAMES} scene frames may be reserved")
+        self._reserved_scene_frames = tuple(reserved)
+
     def _scene_labels(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
         """Observe actual prepared capture props while their staging is alive."""
         from fractions import Fraction
@@ -556,7 +583,7 @@ class RemotionFrameProvider:
             fps = canvas["fps"]
             if fps != float(Fraction(*self.snapshot["fps_rational"])):
                 raise ValueError("captured Root frame rate differs from the frozen snapshot")
-            requested = list(dict.fromkeys(frames))
+            requested = list(dict.fromkeys((*frames, *self._active_reserved_scene_frames)))
             answers = scene_answers.host_frames_at(props, canvas, requested)
             self.label_canvas = canvas_of(props["timeline"], props["theme"])
             self.label_batches.update(labels_from_frames(props["timeline"], answers))
@@ -587,6 +614,8 @@ class RemotionFrameProvider:
             self.scene_unavailable = str(exc)
 
     def close(self, *, force: bool = False) -> None:
+        self._reserved_scene_frames = ()
+        self._active_reserved_scene_frames = ()
         self.worker.close(force=force)
 
     def capture(
@@ -595,6 +624,8 @@ class RemotionFrameProvider:
         out_root: Path,
         resolution: Sequence[int] | None = None,
     ) -> dict[str, Any]:
+        reserved_scene_frames = self._reserved_scene_frames
+        self._reserved_scene_frames = ()
         if self._capture_snapshot is not None:
             _validate_capture_files(self._capture_snapshot, self.timeline_path, self.assets_path)
         self.label_batches.clear()
@@ -625,6 +656,7 @@ class RemotionFrameProvider:
         temporary = None
         try:
             if misses:
+                self._active_reserved_scene_frames = reserved_scene_frames
                 temporary = Path(tempfile.mkdtemp(prefix="astrid-frame-capture-", dir=out_root.parent))
                 produced = self.worker.capture(
                     [frame for frame, _key, _destination in misses], temporary, resolution
@@ -652,6 +684,7 @@ class RemotionFrameProvider:
         finally:
             if temporary is not None:
                 shutil.rmtree(temporary, ignore_errors=True)
+            self._active_reserved_scene_frames = ()
         if any(str(card["frame"]) not in self.scene_frames for card in cards):
             self.scene_unavailable = self.scene_unavailable or (
                 "exact scene facts unavailable for cached pixels" if cached else
