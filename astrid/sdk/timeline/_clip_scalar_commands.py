@@ -84,7 +84,9 @@ def _hold_extent(ctx, ref, values, clear):
 def clip_set(ctx, command):
     ref = _target(ctx, command, 'clip')
     values, clear = _changes(command)
-    _clip_basis(ctx, ref)
+    identity = _clip_basis(ctx, ref)
+    if 'hold' in values and isinstance(identity['elementRef'] or identity['element_ref'], dict):
+        ctx.select('element.targets', ref.rsplit('/', 1)[0])
     row = ctx.state.entity(ref)
     if 'asset' in clear:
         for key in ('asset_id', 'media_id', 'object_id'):
@@ -110,6 +112,9 @@ def capture_clip_set(bundle, select, *, values=None, clear=()):
 
 def clip_set_element(ctx, command):
     ref = _target(ctx, command, 'clip')
+    ctx.select('element.targets', ref.rsplit('/', 1)[0])
+    for key in ('clipType', 'hold', 'asset', 'file', 'src', 'source', 'from', 'to'):
+        ctx.read(ref, [key])
     element = command['args']['elementRef']
     selected, alias = ctx.read(ref, ['elementRef']), ctx.read(ref, ['element_ref'])
     before = selected if selected is not None else alias

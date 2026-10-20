@@ -151,6 +151,30 @@ def open_session(connected):
     return TimelineSession.open("project-slug", "timeline-slug", client=client, outbox_path=path)
 
 
+@pytest.mark.parametrize('guard', ['sheet', 'producer'])
+def test_stage_guards_precede_even_matching_pending_retry(connected, guard):
+    session = open_session(connected)
+    _, generated, path = connected
+    command = capture_move(initial_bundle(), 'parent/clip:a', 3)
+    if guard == 'producer':
+        session.queue_proposal({'schema_version': 1, 'producer': {
+            'task_id': 'task', 'attempt_id': 'attempt', 'executor_id': 'worker',
+            'fence': 1, 'runtime_epoch': 2}, 'admitted_target': {
+                'project_id': 'p', 'timeline_id': 't',
+                'base_revision_id': 'r0', 'base_publication_id': 'pub0'},
+            'proposal_digest': 'sha256:' + 'a' * 64, 'commands': [command],
+            'rationale': 'Keep the producer batch intact'})
+        options, message = {}, 'producer proposal'
+    else:
+        session.queue(command)
+        options = {'base': {'revision_id': 'different', 'publication_id': 'different-pub'}}
+        message = 'original sheet basis'
+    before = path.read_bytes()
+    with pytest.raises(TimelineEditError, match=message):
+        session._stage(lambda state: pytest.fail('guard allowed recapture'), lambda pending: True, **options)
+    assert path.read_bytes() == before and generated.calls == []
+
+
 def test_capture_and_same_value_write_are_sent_even_without_a_diff(connected):
     session = open_session(connected)
     client, generated, path = connected
