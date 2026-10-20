@@ -281,26 +281,9 @@ def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
         project_id = project["id"]
         service.create_timeline(project_id, "main", idempotency_key="timeline")
         parent, shots, internals = _closure(shared=False)
-        # Real Runtime accepts text only through its registered binding owner.
-        # Publish the fixture's voiceover text with that authoritative descriptor.
-        service.create_project_shot(
-            project_id,
-            {"shot_id": shots[0]["shot_id"], "name": "Opening"},
-            idempotency_key="shot",
-        )
-        text_binding = service.set_project_shot_text_binding(
-            project_id,
-            {
-                "shot_id": shots[0]["shot_id"],
-                "kind": "voiceover_script",
-                "text": "hello",
-                "expected_head": 0,
-            },
-            idempotency_key="voiceover-binding",
-        )
-        shots[0]["payload"]["text_bindings"] = [
-            {**text_binding["data"], "text": "hello"}
-        ]
+        # Direct shot writes are retired, so no text binding can be registered here;
+        # this roundtrip is not testing text registration.
+        shots[0]["payload"]["text_bindings"] = []
         old = service.ingest(
             project_id, b"old-picture", media_type="image/png", idempotency_key="old-picture"
         )["data"]["object_id"]
