@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T19:16:22Z | dispatcher heartbeat 8s | live 5 (sol 0, luna 5, other 0) | busy30 12 | status age 9m -->
+<!-- main | 2026-10-20T19:22:29Z | dispatcher heartbeat 6s | live 5 (sol 0, luna 5, other 0) | busy30 14 | status age 15m -->
 # agent — 2026-10-20T19:06:44Z
 Milestone: M1 recorded. M2 active. Gates1/6/7 open; no foundation or delivery completion.
 Integrated: Agent a760ecca, public Runtime client0.2.13, Composition0.0.13. Source pin6f0cdc7d passed130 bounded tests, archive9412/all77/lockc4d7030b. Maina9 merged through true two-parent141ea8b5 ->0b2f662e (174 focused+63 central). Current cache490c10ac passed97 plus real public13 Node/refusal controls, default-OFF. Dead inspector a760ecca removes353 lines after owner18:59 approval,125+58 tests; Viewing notified to mark its row DELETED.

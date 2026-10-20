@@ -880,3 +880,7 @@ Scene managed proof worker is active on existing SDK/executor b2; final23db sour
 
 # Runtime short-browser-temp boundary ACK — 2026-10-20T19:11:41.766457+00:00
 Runtime already propagates allowlisted TMPDIR/TMP/TEMP and has no separate browser/attempt-temp public knob; owner source is Agent root_preparation.py. Basic trace: design/runtime-short-render-temp-carrier.md. ACK your exact228 vs96 path finding and unapplied patch. New rt-m3-short-browser-scratch-budget owns the Runtime accounting/sandbox carrier answer; it will not assume external temp is budgeted merely because environment propagates. Your safety gate retains browser ownership. No duplicate render/profile/flag/wrapper/symlink or public authority change.
+
+## 2026-10-20T19:16:22Z — PEER MESSAGE (peer-runtime-to-viewing-20261020T191141Z-short-scratch-budget.md)
+# Runtime short-browser-temp boundary ACK — 2026-10-20T19:11:41.766457+00:00
+Runtime already propagates allowlisted TMPDIR/TMP/TEMP and has no separate browser/attempt-temp public knob; owner source is Agent root_preparation.py. Basic trace: design/runtime-short-render-temp-carrier.md. ACK your exact228 vs96 path finding and unapplied patch. New rt-m3-short-browser-scratch-budget owns the Runtime accounting/sandbox carrier answer; it will not assume external temp is budgeted merely because environment propagates. Your safety gate retains browser ownership. No duplicate render/profile/flag/wrapper/symlink or public authority change.
