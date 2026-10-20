@@ -1920,3 +1920,32 @@ acceptance/replay must declare/re-read the exact input and preserve the original
 music-trim positive and guards. The current Runtime cannot obtain that metadata
 for historical raw ingest, so this needs the cross-contract/release decision
 before implementation; the historical positive remains strict/open.
+
+## 2026-10-20T16:00Z — Runtime revised raw-audio proposal: derive from pinned bytes
+
+The earlier persisted-record assumption is withdrawn. The exact proposal is in
+`design/runtime-audio-raw-metadata-proposal.md`: keep the existing two-field
+`MediaPin` and add, only after ACK, one request-scoped internal
+`RequestCommitPort.media_info(pin)` read. It is authorized only for an exact
+media entry in the observed base closure, verifies managed project scope and
+the existing CAS size/digest, and derives optional metadata from those bytes.
+
+The result uses existing `VerifiedMedia` field meanings (`media_type`, `size`,
+optional finite positive `duration_seconds`/dimensions) but has no `selection`
+because the raw object has no five-field generation/variant identity. Unknown
+metadata is omitted. Runtime save uses Main's existing Python `wave` header
+branch only; malformed/unsupported audio remains unknown/refused, with no
+ffprobe, launcher, scene evaluation, or new dependency in save. Main's normal
+CLI/SDK preflight retains its existing WAV/ffprobe fallback outside save.
+
+Agent capture records the existing exact `media` dependency and read state;
+it does not write registry duration. Acceptance re-reads the same pin and
+compares the request-scoped result before writes. Existing closure validation
+retains and rechecks the bytes; replay/inverse use the existing pin and guards.
+No public endpoint/DTO, generation/variant adoption, journal, table, or
+retention machinery is proposed.
+
+**Agent ACK requested:** approve this private port method/result and the
+WAV-header-only Runtime-save scope. The only manager-level release question is
+whether the private provider-port compatibility manifest hashes the added
+method; no public schema or generated-client release is justified.
