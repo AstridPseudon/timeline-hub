@@ -1,8 +1,15 @@
 """Normal-route PCM proof with the invocation's real loopback asset server.
 
-The mocked encoder is deliberately the last subprocess boundary.  It does not
-replace the runtime, materializer, server, or native WAV preparation; while it
-consumes the prepared props it performs real HTTP GETs for every URL.
+Admission is doubled at ``_validate_project_dir``; registry generation,
+validation, and state are doubled at ``_regenerate_element_registries``,
+``_validate_renderer_effect_registry``, and ``_effective_registry_state``;
+profile, theme, effect staging, and port selection are doubled at
+``_canonical_profile``, ``_resolved_theme_for_render``,
+``_stage_effect_assets_for_timeline``, and ``_available_remotion_port``; and
+only the final encoder subprocess is doubled.
+Those doubles do not replace the runtime, materializer, server, or native WAV
+preparation.  The encoder double consumes the prepared props and performs real
+HTTP GETs for every URL.
 """
 
 from __future__ import annotations
@@ -37,14 +44,44 @@ RATE = 30_000
 FRAMES = RATE * 2
 STEREO = {"sound": (8192, -4096), "other": (-16384, 2048)}
 WINDOW = FrameWindow(15, 45, (30, 1))
-ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
-PROJECT = ORCH / "workers/vw-m3-normal-pcm-producer-current/checks/remotion"
 
 
 def _project_dir() -> Path:
     value = os.environ.get("ASTRID_REMOTION_PROJECT_DIR")
-    project = Path(value) if value else PROJECT
+    project = Path(value) if value else remotion.REPO_ROOT / "remotion"
     return project.resolve(strict=True)
+
+
+def test_project_dir_defaults_to_imported_remotion_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "checkout"
+    expected = checkout / "remotion"
+    expected.mkdir(parents=True)
+    monkeypatch.setattr(remotion, "REPO_ROOT", checkout)
+    monkeypatch.delenv("ASTRID_REMOTION_PROJECT_DIR", raising=False)
+
+    assert _project_dir() == expected.resolve()
+
+
+def test_project_dir_empty_override_uses_imported_remotion_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "checkout"
+    expected = checkout / "remotion"
+    expected.mkdir(parents=True)
+    monkeypatch.setattr(remotion, "REPO_ROOT", checkout)
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", "")
+
+    assert _project_dir() == expected.resolve()
+
+
+def test_project_dir_uses_explicit_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    configured = tmp_path / "configured-remotion"
+    configured.mkdir()
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(configured))
+
+    assert _project_dir() == configured.resolve()
 
 
 def _profile() -> RenderProfile:
