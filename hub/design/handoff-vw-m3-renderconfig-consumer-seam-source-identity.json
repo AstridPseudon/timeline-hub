@@ -1,0 +1,12 @@
+{
+  "base": "5117b9da2e17828ec0b3cfbcdf3ff4987dc77ab3",
+  "worktreeBase": "667498cc49b4ec2b1ccd3a515eb87311c5126c93",
+  "observedIntegration": "7bb885b638838588a0dff81b64b7c34960ac07f3",
+  "sha256": {
+    "src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts": "2a7b2ff6d236eb306af5205d47e8193a0c4155f1d9e8f4a119e883f74ab228bb",
+    "src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx": "570cacd06aab7d9bec8fb971452064e6427332117f1e4a8ec290db6fe06c6bec",
+    "src/tools/video-editor/hooks/useRenderState.ts": "c8b3779c4b579d5e2f9941dd93e5abecbd1c4cf22e9a5f7d1a14a36cf913d1b1",
+    "src/tools/video-editor/hooks/useTimelineState.ts": "8ab575caf9dc1e4148a4dc525b8b89a83bd50d37d6152dc62cb99a1bc3513e05",
+    "src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx": "f51479b4ae4712124c25dda23a8cf94787e6e2117e5d476be9e04199b3e604a0"
+  }
+}

@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: patch changes only the five consumer/caller paths, with no producer or policy file
+ok 1 - patch changes only the five consumer/caller paths, with no producer or policy file
+  ---
+  duration_ms: 1.27307
+  type: 'test'
+  ...
+# Subtest: frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts
+ok 2 - frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts
+  ---
+  duration_ms: 9.944596
+  type: 'test'
+  ...
+# Subtest: frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
+ok 3 - frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx
+  ---
+  duration_ms: 7.110011
+  type: 'test'
+  ...
+# Subtest: frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/hooks/useRenderState.ts
+ok 4 - frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/hooks/useRenderState.ts
+  ---
+  duration_ms: 25.318415
+  type: 'test'
+  ...
+# Subtest: frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/hooks/useTimelineState.ts
+ok 5 - frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/hooks/useTimelineState.ts
+  ---
+  duration_ms: 11.485792
+  type: 'test'
+  ...
+# Subtest: frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
+ok 6 - frozen source, exact unapplied hunks and TypeScript syntax: src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
+  ---
+  duration_ms: 1.530236
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 64.995115
