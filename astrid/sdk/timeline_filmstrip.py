@@ -18,6 +18,15 @@ _AUTHORITY_IDENTITY_FIELDS = (
     'materialized_registry_hash',
 )
 
+# Private D09 handoff.  This remains an input to the existing managed
+# visualization invocation; it is not a second visualization capability.
+_SCENE_ONLY_MODE = "scene_only"
+_SCENE_ONLY_FORMATS = ("md",)
+_SCENE_ONLY_FORBIDDEN_INPUTS = frozenset({
+    "source_ref", "source", "source_path", "certification", "certificate",
+    "authority", "authority_context", "provider", "store", "endpoint",
+})
+
 
 def matching_composed_render(
     client: Any, *, project_id: str, timeline: Mapping[str, Any], limit: int = 50,
@@ -1251,6 +1260,232 @@ def prepare_filmstrip(
         result['video_object_id'] = managed_object_reference
         result['managed_object_reference'] = managed_object_reference
     return result
+
+
+def _scene_only_unavailable(context: Mapping[str, Any] | None = None, *, reason: str = "scene result unavailable") -> list:
+    """Return advisory-only Scene input for a missing or stale private result."""
+    from types import SimpleNamespace
+
+    snapshot = {}
+    if isinstance(context, Mapping):
+        snapshot = (context.get("capture_snapshot") or context.get("filmstrip_snapshot") or {})
+    duration = snapshot.get("duration_frames") if isinstance(snapshot, Mapping) else None
+    end_frame = max(1, int(duration)) if isinstance(duration, (int, float)) else 1
+    return [SimpleNamespace(
+        start_frame=0, end_frame=end_frame, cls="UNAVAILABLE", content=None,
+        clips=(), findings=(reason,),
+    )]
+
+
+def _scene_only_authority(context: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Check the exact capture/source/map binding needed by the Scene reader."""
+    snapshot = context.get("capture_snapshot") or context.get("filmstrip_snapshot")
+    if not isinstance(snapshot, Mapping):
+        return None
+    metadata = snapshot.get("metadata")
+    if not isinstance(metadata, Mapping):
+        return None
+    clip_map = metadata.get("scene_clips")
+    if not isinstance(clip_map, Mapping) or not clip_map:
+        return None
+    if not all(
+        isinstance(key, str) and isinstance(value, Mapping) and isinstance(value.get("address"), str)
+        for key, value in clip_map.items()
+    ):
+        return None
+    if not all(isinstance(context.get(key), str) and context[key] for key in (
+        "video_digest", "video_object_id", "managed_object_reference", "capture_identity",
+    )):
+        return None
+    return {
+        "capture_identity": context["capture_identity"],
+        "video_digest": context["video_digest"],
+        "video_object_id": context["video_object_id"],
+        "managed_object_reference": context["managed_object_reference"],
+        "scene_clips": deepcopy(dict(clip_map)),
+        "source_label": metadata.get("source_label"),
+    }
+
+
+def _scene_only_request(
+    inputs: Mapping[str, Any], *, project: str, client: Any = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Prepare one private Scene-only request through the existing filmstrip authority.
+
+    The request deliberately carries no caller source or authority object.  The
+    existing ``prepare_filmstrip`` path selects the exact saved/candidate
+    capture and its already-admitted managed output; the executor later owns
+    the retained Root/query lifetime.
+    """
+    if _SCENE_ONLY_FORBIDDEN_INPUTS.intersection(inputs):
+        raise CapabilityValidationError("Scene-only review accepts only managed filmstrip authority")
+    request = dict(inputs)
+    request.update({
+        "mode": _SCENE_ONLY_MODE,
+        "view": "filmstrip",
+        "formats": list(_SCENE_ONLY_FORMATS),
+        "composed_capture": True,
+        "include_media": True,
+    })
+    context = prepare_filmstrip(request, project=project, client=client)
+    if _scene_only_authority(context) is None:
+        raise CapabilityValidationError(
+            "Scene-only review has no exact saved/candidate capture and managed output"
+        )
+    return request, context
+
+
+def _scene_only_candidate_request(
+    candidate: Mapping[str, Any], *, project: str, timeline_ref: str, client: Any = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Freeze an authoring candidate, then use the same managed capture path."""
+    from astrid.core.timeline.authoring_bundle import preview_authoring_candidate
+
+    preview = (
+        deepcopy(dict(candidate))
+        if candidate.get("kind") == "authoring-candidate-preview"
+        else preview_authoring_candidate(candidate)
+    )
+    return _scene_only_request({
+        "timeline_ref": timeline_ref,
+        "authoring_preview": preview,
+    }, project=project, client=client)
+
+
+def _scene_only_result_payload(result: Any) -> Mapping[str, Any] | None:
+    """Find the private Scene result in the existing managed-output result."""
+    ok = result.get("ok") if isinstance(result, Mapping) else getattr(result, "ok", True)
+    if result is None or ok is False:
+        return None
+    candidates = [
+        getattr(result, "outputs", None),
+        getattr(result, "raw_result", None),
+        result if isinstance(result, Mapping) else None,
+    ]
+    while candidates:
+        value = candidates.pop(0)
+        if not isinstance(value, Mapping):
+            continue
+        if isinstance(value.get("scene_result"), Mapping):
+            return value["scene_result"]
+        if isinstance(value.get("scene_answers"), list):
+            return value
+        managed = value.get("managed_outputs")
+        if isinstance(managed, list):
+            candidates.extend(managed)
+        for key in ("payload", "data", "value", "result"):
+            payload = value.get(key)
+            if isinstance(payload, Mapping):
+                candidates.append(payload)
+    return None
+
+
+def _scene_only_spans(
+    result: Any, context: Mapping[str, Any], *, duration_frames: int | None = None,
+) -> list:
+    """Join a bound Scene result to the existing ``_scene_problems`` span shape.
+
+    Any missing, stale, or mismatched binding becomes one advisory UNAVAILABLE
+    span.  It never turns a Scene query failure into a structural/save failure.
+    """
+    from types import SimpleNamespace
+
+    authority = _scene_only_authority(context)
+    payload = _scene_only_result_payload(result)
+    if authority is None or payload is None:
+        return _scene_only_unavailable(context)
+    if payload.get("capture_identity") != authority["capture_identity"]:
+        return _scene_only_unavailable(context, reason="stale scene capture")
+    source_label = payload.get("source_label")
+    if not isinstance(source_label, str) or not source_label.strip():
+        return _scene_only_unavailable(context, reason="scene source label unavailable")
+    source_binding = payload.get("managed_object_reference") or payload.get("video_object_id")
+    if source_binding is not None:
+        allowed_bindings = {
+            authority["managed_object_reference"], authority["video_object_id"], authority["video_digest"],
+        }
+        if isinstance(source_binding, Mapping):
+            source_binding = source_binding.get("object_id") or source_binding.get("digest")
+        if source_binding not in allowed_bindings:
+            return _scene_only_unavailable(context, reason="stale scene source")
+    compiled = payload.get("compiled_id_address_map")
+    if not isinstance(compiled, Mapping):
+        return _scene_only_unavailable(context, reason="scene address map unavailable")
+    expected = authority["scene_clips"]
+    actual = {}
+    for key, value in compiled.items():
+        if isinstance(value, Mapping):
+            value = value.get("address")
+        if not isinstance(key, str) or not isinstance(value, str):
+            return _scene_only_unavailable(context, reason="scene address map invalid")
+        actual[key] = value
+    if actual != {key: value["address"] for key, value in expected.items()}:
+        return _scene_only_unavailable(context, reason="stale scene address map")
+    answers = payload.get("scene_answers")
+    if not isinstance(answers, list) or not answers:
+        return _scene_only_unavailable(context)
+
+    spans = []
+    for answer in sorted(answers, key=lambda item: item.get("frame", -1) if isinstance(item, Mapping) else -1):
+        if not isinstance(answer, Mapping) or type(answer.get("frame")) is not int or answer["frame"] < 0:
+            return _scene_only_unavailable(context, reason="scene answers invalid")
+        layers = answer.get("layers")
+        if not isinstance(layers, list):
+            return _scene_only_unavailable(context, reason="scene layers unavailable")
+        clips = []
+        for layer in layers:
+            if not isinstance(layer, Mapping) or layer.get("clipId") not in actual:
+                return _scene_only_unavailable(context, reason="scene layer binding unavailable")
+            bounds_source = layer.get("bounds_source", layer.get("boundsSource"))
+            if bounds_source is not None and not isinstance(bounds_source, str):
+                return _scene_only_unavailable(context, reason="scene bounds source unavailable")
+            clips.append(actual[layer["clipId"]])
+        findings = answer.get("findings") or ()
+        if isinstance(findings, Mapping):
+            findings = [json.dumps(dict(findings), sort_keys=True, separators=(",", ":"))]
+        if not isinstance(findings, (list, tuple)):
+            return _scene_only_unavailable(context, reason="scene findings invalid")
+        findings = tuple(str(item) for item in findings)
+        span = SimpleNamespace(
+            start_frame=answer["frame"], end_frame=answer["frame"] + 1,
+            cls=str(answer.get("coverage") or "UNAVAILABLE").upper(),
+            content=answer.get("content"), clips=tuple(clips), findings=findings,
+        )
+        if spans:
+            previous = spans[-1]
+            if (
+                previous.end_frame == span.start_frame
+                and previous.cls == span.cls and previous.content == span.content
+                and previous.clips == span.clips and previous.findings == span.findings
+            ):
+                previous.end_frame = span.end_frame
+                continue
+        spans.append(span)
+    if duration_frames is not None and spans and spans[-1].end_frame < duration_frames:
+        spans.append(SimpleNamespace(
+            start_frame=spans[-1].end_frame, end_frame=duration_frames,
+            cls="UNAVAILABLE", content=None, clips=(), findings=("scene frame result incomplete",),
+        ))
+    return spans
+
+
+def _invoke_scene_only(
+    inputs: Mapping[str, Any], *, project: str, client: Any = None,
+) -> tuple[list, dict[str, Any]]:
+    """Invoke the existing managed visualization executor in private Scene mode."""
+    if client is None:
+        from astrid.sdk import AstridClient
+        with AstridClient.open_from_launcher(start_pack_host=False) as connected:
+            return _invoke_scene_only(inputs, project=project, client=connected)
+    request, context = _scene_only_request(inputs, project=project, client=client)
+    invoke_result = getattr(client, "invoke_result", None)
+    if not callable(invoke_result):
+        return _scene_only_unavailable(context, reason="managed visualization invocation unavailable"), context
+    result = invoke_result(
+        "rendering.timeline_visualize", kind="executor", project=project,
+        inputs=request, wait=True, read_managed_outputs=True,
+    )
+    return _scene_only_spans(result, context), context
 
 
 def latest_render(client: Any, *, project_id: str, timeline_id: str, scan: int = 12) -> dict[str, Any] | None:
