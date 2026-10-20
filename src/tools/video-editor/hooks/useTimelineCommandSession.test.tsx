@@ -19,6 +19,7 @@ import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
+import { captureClipDeleteEdit, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
@@ -106,6 +107,94 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it('fences every delete phase against older snapshot work and clears the port on scope cleanup', async () => {
+    const { env, hook, neutral, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipDeletePort!;
+    const input = { current: env.current(), clipId: 'x' };
+    setLegacyClean(false);
+    expect(() => port.capture(input)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const basis = port.capture(input);
+    setLegacyClean(false);
+    expect(() => port.finish(basis)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const { command } = port.finish(basis);
+    setLegacyClean(false);
+    expect(() => port.submit({ command, preview: { version: 1, operations: [{ op: 'clip.remove', target: 'x' }] } }))
+      .toThrow('earlier timeline saves');
+    expect(env.commits()).toHaveLength(0);
+    hook.rerender({ provider: neutral, timelineId: 'other' });
+    expect(hook.result.current.commands.clipDeletePort).toBeUndefined();
+    setLegacyClean(true);
+    expect(() => port.capture(input)).toThrow('unavailable');
+    hook.unmount();
+  });
+
+  it('exposes native deletion on the same session, previews locally, and retains a refused draft without snapshot saves', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    const original = structuredClone(hook.result.current.commit.data!.config.clips[0]);
+    act(() => { submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort,
+      hook.result.current.commit.data!, 'x')); });
+    expect(hook.result.current.commit.data!.config.clips).toEqual([]);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(true);
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commands.state.error).toBe('conflict: conflict');
+    expect(env.commits()[0].body?.commands[0]).toMatchObject({ op: 'clip.delete', select: 'parent/clip:x',
+      expect: { 'parent/clip:x::': { state: 'present', value: { id: original.id, at: original.at } } } });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it('keeps the refused native draft when an older grouped snapshot writer is invoked', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    act(() => submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort,
+      hook.result.current.commit.data!, 'x')));
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    const draft = hook.result.current.commit.dataRef.current;
+    expect(() => hook.result.current.commit.applyEdit({ type: 'rows', rows: [], metaDeletes: ['group-child'] }, { semantic: true }))
+      .toThrow('Resolve pending timeline commands');
+    expect(hook.result.current.commit.dataRef.current).toBe(draft);
+    expect(draft!.config.clips).toEqual([]);
+    expect(hook.result.current.commands.state.status).toBe('conflict');
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
+  it('keeps delete B after unknown A when an ordinary property suffix reaches the snapshot barrier', async () => {
+    const { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('lost');
+    act(() => { expect(service.moveClip({ clipId: 'x', time: 5 }).ok).toBe(true); });
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+    const wireA = structuredClone(env.commits()[0]);
+    const [original] = await env.outboxes.list(scope);
+    act(() => submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort,
+      hook.result.current.commit.data!, 'x')));
+    await waitFor(async () => expect((await env.outboxes.list(scope))[0].intents).toHaveLength(2));
+    const draft = hook.result.current.commit.dataRef.current!;
+    const suffix = compileTimelinePatch({ version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { muted: true } },
+    ] }, draft).nextData!;
+    expect(() => hook.result.current.commit.commitData(suffix)).toThrow('Resolve pending timeline commands');
+    expect(hook.result.current.commit.dataRef.current).toBe(draft);
+    expect(draft.config.clips).toEqual([]);
+    expect(hook.result.current.commands.state.status).toBe('retry');
+    const [retained] = await env.outboxes.list(scope);
+    expect(retained.pending).toEqual(original.pending);
+    expect(retained.intents[1].payload).toMatchObject({ commands: [{ op: 'clip.delete',
+      expect: { 'parent/clip:x::': { state: 'present', value: { at: 5, app: { opaque: null } } } } }] });
+    expect(env.commits()).toEqual([wireA]);
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
+
   it('initializes a clean mounted save hook with a verified accepted projection', async () => {
     const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
     expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: env.initial.head });

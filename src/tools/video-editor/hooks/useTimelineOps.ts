@@ -36,6 +36,12 @@ import {
   submitTrackLabelEdit,
   type TrackLabelCapturePort,
 } from '../commands/trackLabelGesture.ts';
+import {
+  captureClipDeleteEdit,
+  isParentClipDeleteTarget,
+  submitClipDeleteEdit,
+  type ClipDeleteCapturePort,
+} from '../commands/clipDeleteGesture.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -74,6 +80,7 @@ export interface UseTimelineOpsArgs {
 
   /** Original authored track-label capture and the shared command outbox. */
   trackLabelPort?: TrackLabelCapturePort;
+  clipDeletePort?: ClipDeleteCapturePort;
 
   /** Host checkpoint creation (async fire-and-forget). */
   createManualCheckpoint: (label?: string) => Promise<void>;
@@ -123,6 +130,7 @@ export function useTimelineOps({
   getConfigVersion,
   flushPendingSave,
   trackLabelPort,
+  clipDeletePort,
   createManualCheckpoint,
   jumpToCheckpoint,
   checkpoints,
@@ -280,6 +288,18 @@ export function useTimelineOps({
         );
       }
 
+      const deletes = patch.operations.filter((operation) => operation.op === 'clip.remove');
+      const deleteTargetExists = current.resolvedConfig.clips.some((clip) => clip.id === deletes[0]?.target);
+      if (clipDeletePort && deletes.length > 0
+        && (!deleteTargetExists || isParentClipDeleteTarget(current, deletes[0].target))) {
+        if (patch.operations.length !== 1) {
+          throw new Error('TimelineOps.apply: only a single clip.remove is supported until shared batch commands are available.');
+        }
+        const captured = captureClipDeleteEdit(clipDeletePort, current, deletes[0].target);
+        submitClipDeleteEdit(captured);
+        return compiled.diff;
+      }
+
       const labelUpdates = patch.operations.filter((operation) =>
         operation.op === 'track.update' && operation.payload && 'label' in operation.payload);
       if (labelUpdates.length > 0) {
@@ -305,7 +325,7 @@ export function useTimelineOps({
       // 4. Return the semantic diff
       return compiled.diff;
     },
-    [assertTimelineEditable, commitData, dataRef, getCanonicalVersion, trackLabelPort],
+    [assertTimelineEditable, clipDeletePort, commitData, dataRef, getCanonicalVersion, trackLabelPort],
   );
 
   // ---- checkpoint ---------------------------------------------------------
