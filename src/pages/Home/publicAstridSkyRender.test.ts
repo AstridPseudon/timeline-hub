@@ -317,17 +317,23 @@ describe('public Astrid sky', () => {
 
 
 describe('twilight reading palette', () => {
-  const luminance = (token: string) => {
+  const rgbOf = (token: string): [number, number, number] => {
     const [h, percentS, percentL] = token.replace(/%/g, '').split(/\s+/).map(Number);
     const s = percentS / 100, l = percentL / 100;
     const a = s * Math.min(l, 1 - l);
-    const rgb = [0, 8, 4].map(n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); });
+    const [r, g, b] = [0, 8, 4].map(n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); });
+    return [r, g, b];
+  };
+  const luminanceOf = (rgb: number[]) => {
     const linear = rgb.map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
     return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
   };
-  const contrast = (a: string, b: string) => {
-    const x = luminance(a), y = luminance(b);
-    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  const ratio = (x: number, y: number) => (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  const contrast = (a: string, b: string) => ratio(luminanceOf(rgbOf(a)), luminanceOf(rgbOf(b)));
+  /** Contrast of `ink` text on `surface` once `ink` itself is laid over it at `alpha` (Tailwind's bg-<ink>/10). */
+  const contrastOnTint = (ink: string, surface: string, alpha: number) => {
+    const tint = rgbOf(ink), bg = rgbOf(surface);
+    return ratio(luminanceOf(rgbOf(ink)), luminanceOf(bg.map((c, i) => c * (1 - alpha) + tint[i] * alpha)));
   };
   it('keeps reading ink and secondary text legible on every surface across both sides of the switch', () => {
     for (let step = 0; step <= 100; step++) {
@@ -335,6 +341,34 @@ describe('twilight reading palette', () => {
       for (const surface of ['--background', '--card', '--popover', '--secondary', '--muted', '--sidebar-background']) {
         expect(contrast(tokens['--foreground'], tokens[surface]), `${step}: foreground on ${surface}`).toBeGreaterThanOrEqual(4.5);
         expect(contrast(tokens['--muted-foreground'], tokens[surface]), `${step}: muted on ${surface}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+  it('keeps the extension manager\'s state text (enabled in green, disabled in muted ink) legible on every surface it sits on', () => {
+    // PackageCard, ExtensionManager and ManagerSummaryBar colour "Enabled"/"Loaded" with text-wes-forest and "Disabled" with
+    // text-muted-foreground. A fixed Tailwind hue (text-emerald-400) is a night colour and measured 1.89:1 on the day palette.
+    for (let step = 0; step <= 100; step++) {
+      const tokens = duskTokens(step / 100);
+      for (const surface of ['--background', '--card', '--popover', '--secondary', '--muted', '--accent', '--sidebar-background']) {
+        for (const ink of ['--wes-forest', '--muted-foreground']) {
+          expect(contrast(tokens[ink], tokens[surface]), `${step}: ${ink} on ${surface}`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    }
+  });
+  it('keeps the status inks (warning, info, danger, and the forest of "enabled") legible as text on every surface and on their own 10% and 15% tint', () => {
+    // PackageDiagnostics count pills, DIAG_SEVERITY_*, PackageStateBadge and the settings rows colour text with
+    // text-ink-<status> on bg-ink-<status>/10. The fixed Tailwind 400 hues measured 1.42:1 (yellow), 2.25:1 (blue)
+    // and 2.41:1 (red) on the day card; the icon-* and destructive tokens are glyph/fill colours and also fall short.
+    for (let step = 0; step <= 100; step++) {
+      const tokens = duskTokens(step / 100);
+      for (const surface of ['--background', '--card', '--popover', '--secondary', '--muted', '--accent', '--sidebar-background']) {
+        for (const ink of ['--ink-warning', '--ink-info', '--ink-danger', '--wes-forest']) {
+          expect(contrast(tokens[ink], tokens[surface]), `${step}: ${ink} on ${surface}`).toBeGreaterThanOrEqual(4.5);
+          for (const alpha of [0.1, 0.15]) {
+            expect(contrastOnTint(tokens[ink], tokens[surface], alpha), `${step}: ${ink} on ${alpha} tint over ${surface}`).toBeGreaterThanOrEqual(4.5);
+          }
+        }
       }
     }
   });

@@ -33,7 +33,7 @@ export function PackageDiagnosticBadges({
     <div className="flex items-center gap-1" data-video-editor-extension-diagnostic-badges={extensionId}>
       {errorCount > 0 && (
         <span
-          className="inline-flex items-center gap-0.5 rounded-full bg-red-500/10 px-1.5 py-0.5 text-[10px] text-red-400 tabular-nums"
+          className="inline-flex items-center gap-0.5 rounded-full bg-ink-danger/10 px-1.5 py-0.5 text-[10px] text-ink-danger tabular-nums"
           title={`${errorCount} error${errorCount === 1 ? '' : 's'}`}
           data-video-editor-extension-diag-count="error"
         >
@@ -43,7 +43,7 @@ export function PackageDiagnosticBadges({
       )}
       {warningCount > 0 && (
         <span
-          className="inline-flex items-center gap-0.5 rounded-full bg-yellow-500/10 px-1.5 py-0.5 text-[10px] text-yellow-400 tabular-nums"
+          className="inline-flex items-center gap-0.5 rounded-full bg-ink-warning/10 px-1.5 py-0.5 text-[10px] text-ink-warning tabular-nums"
           title={`${warningCount} warning${warningCount === 1 ? '' : 's'}`}
           data-video-editor-extension-diag-count="warning"
         >
@@ -53,7 +53,7 @@ export function PackageDiagnosticBadges({
       )}
       {infoCount > 0 && (
         <span
-          className="inline-flex items-center gap-0.5 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[10px] text-blue-400 tabular-nums"
+          className="inline-flex items-center gap-0.5 rounded-full bg-ink-info/10 px-1.5 py-0.5 text-[10px] text-ink-info tabular-nums"
           title={`${infoCount} info diagnostic${infoCount === 1 ? '' : 's'}`}
           data-video-editor-extension-diag-count="info"
         >
@@ -136,10 +136,10 @@ export function PackageDiagnosticsSection({
                       {diag.message}
                     </span>
                     {diag.code && (
-                      <span className="ml-1 text-muted-foreground/60">[{diag.code}]</span>
+                      <span className={`ml-1 ${DIAG_SEVERITY_COLOR[diag.severity]}`}>[{diag.code}]</span>
                     )}
                     {diag.contributionId && (
-                      <span className="ml-1 text-muted-foreground/40">
+                      <span className={`ml-1 ${DIAG_SEVERITY_COLOR[diag.severity]}`}>
                         in {diag.contributionId}
                       </span>
                     )}

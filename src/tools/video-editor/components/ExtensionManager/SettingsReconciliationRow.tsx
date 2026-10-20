@@ -23,13 +23,13 @@ function reconciliationBadgeLabel(state: ReconciliationState): string {
 function reconciliationRowStyle(state: ReconciliationState): string {
   switch (state) {
     case 'clean':
-      return 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
+      return 'bg-wes-forest/10 border-wes-forest/30 text-wes-forest';
     case 'repaired':
-      return 'bg-blue-500/10 border-blue-500/30 text-blue-400';
+      return 'bg-ink-info/10 border-ink-info/30 text-ink-info';
     case 'needs-review':
-      return 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400';
+      return 'bg-ink-warning/10 border-ink-warning/30 text-ink-warning';
     case 'blocked':
-      return 'bg-red-500/10 border-red-500/30 text-red-400';
+      return 'bg-ink-danger/10 border-ink-danger/30 text-ink-danger';
   }
 }
 

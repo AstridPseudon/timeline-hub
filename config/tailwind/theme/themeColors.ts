@@ -48,6 +48,12 @@ export const themeColors = {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
+				// Status inks for text: legible on a surface and on that hue's own tint (see DUSK_TOKENS)
+				ink: {
+					warning: 'hsl(var(--ink-warning))',
+					info: 'hsl(var(--ink-info))',
+					danger: 'hsl(var(--ink-danger))',
+				},
 				// Expanded Wes Anderson palette
 				wes: {
 					// Legacy names (for backward compatibility)

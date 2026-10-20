@@ -233,6 +233,11 @@
     --icon-warning: 40 60% 80%;             /* Vintage Gold */
     --icon-danger: 0 70% 60%;               /* Red */
 
+    /* Status inks for text (the app overwrites these from duskTokens) */
+    --ink-warning: 35 90% 20%;
+    --ink-info: 215 75% 29%;
+    --ink-danger: 0 72% 31%;
+
     /* Retro button palette */
     --retro: 42 22% 88%;                    /* Warm cream bg #e8e4db */
     --retro-hover: 42 14% 82%;             /* Darker cream hover #d8d4cb */
@@ -333,6 +338,10 @@
     --icon-success: 150 30% 45%;            /* Forest green */
     --icon-danger: 0 55% 50%;
     --icon-warning: 45 70% 55%;             /* Mustard */
+
+    --ink-warning: 45 90% 78%;
+    --ink-info: 210 90% 88%;
+    --ink-danger: 0 90% 89%;
   }
 }
 

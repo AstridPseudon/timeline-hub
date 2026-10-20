@@ -169,6 +169,8 @@ describe('ExtensionManager — enable/disable controls', () => {
       const toggle = screen.getByRole('button', { name: /disable ext\.a/i });
       expect(toggle).toBeInTheDocument();
       expect(toggle).toHaveTextContent('Enabled');
+      // State text uses design tokens that keep 4.5:1 in every palette the sky produces, never a fixed Tailwind hue.
+      expect(screen.getAllByText('Enabled')[0]).toHaveClass('text-wes-forest');
       expect(toggle).toHaveAttribute('aria-pressed', 'true');
     });
 
@@ -187,6 +189,7 @@ describe('ExtensionManager — enable/disable controls', () => {
       const toggle = screen.getByRole('button', { name: /enable ext\.a/i });
       expect(toggle).toBeInTheDocument();
       expect(toggle).toHaveTextContent('Disabled');
+      expect(screen.getAllByText('Disabled')[0]).toHaveClass('text-muted-foreground');
       expect(toggle).toHaveAttribute('aria-pressed', 'false');
     });
 

@@ -223,8 +223,14 @@ const DUSK_TOKENS: ReadonlyArray<readonly [string, string, string, 'ink' | 'surf
   ['--wes-vintage-gold', '38 50% 78%', '38 55% 50%', 'surface'],
   ['--wes-burgundy', '20 70% 35%', '22 80% 60%', 'ink'],
   ['--wes-dark-orange', '20 70% 35%', '22 80% 60%', 'ink'],
-  ['--wes-forest', '96 28% 28%', '96 30% 62%', 'ink'],
-  ['--wes-forest-green', '96 28% 28%', '96 30% 62%', 'ink'],
+  ['--wes-forest', '96 28% 25%', '96 30% 80%', 'ink'],
+  ['--wes-forest-green', '96 28% 25%', '96 30% 80%', 'ink'],
+  // Status inks (warning, info, danger) for text on a surface or on that hue's own 10-20% tint. The icon-* and
+  // destructive tokens are for glyphs and fills and fall short of 4.5:1 as text; the fixed Tailwind 400 hues
+  // are night colours and measure 1.4-2.4:1 on the day card.
+  ['--ink-warning', '35 90% 20%', '45 90% 78%', 'ink'],
+  ['--ink-info', '215 75% 29%', '210 90% 88%', 'ink'],
+  ['--ink-danger', '0 72% 31%', '0 90% 89%', 'ink'],
 ];
 
 type Lab = [number, number, number];

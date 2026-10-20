@@ -295,7 +295,7 @@ function buildPopulatedScenario(): ScenarioData {
       }),
     ],
     diagnostics: [
-      { id: 'd1', severity: 'info', message: 'All systems operational.', extensionId: 'ext.inspector-tools', timestamp: now },
+      { id: 'd1', severity: 'info', message: 'All systems operational.', extensionId: 'ext.inspector-tools', timestamp: now, code: 'inspector/ready', contributionId: 'inspector.sections' },
       { id: 'd2', severity: 'warning', message: 'Shader "glow" uses deprecated uniform syntax.', extensionId: 'ext.shader-pack', timestamp: now - 60000, code: 'shader/deprecated-uniform' },
     ],
     activityEvents: [

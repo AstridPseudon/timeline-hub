@@ -85,13 +85,13 @@ export function ManagerRenderErrorState({
         role="alert"
         aria-label="Extension manager render error"
       >
-        <AlertTriangle className="h-8 w-8 text-red-400" />
-        <span className="text-sm font-medium text-red-400">
+        <AlertTriangle className="h-8 w-8 text-ink-danger" />
+        <span className="text-sm font-medium text-ink-danger">
           Extension Manager Error
         </span>
         {error && (
           <span
-            className="max-w-[280px] truncate text-xs text-red-400/70"
+            className="max-w-[280px] truncate text-xs text-muted-foreground"
             title={error.message}
           >
             {error.message}

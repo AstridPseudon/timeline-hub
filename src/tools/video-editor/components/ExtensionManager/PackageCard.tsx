@@ -195,20 +195,20 @@ export function PackageCard({
                 </>
               ) : isCurrentlyEnabled ? (
                 <>
-                  <ToggleRight className="h-3 w-3 text-emerald-400" />
-                  <span className="text-emerald-400">Enabled</span>
+                  <ToggleRight className="h-3 w-3 text-wes-forest" />
+                  <span className="text-wes-forest">Enabled</span>
                 </>
               ) : (
                 <>
-                  <ToggleLeft className="h-3 w-3 text-zinc-400" />
-                  <span className="text-zinc-400">Disabled</span>
+                  <ToggleLeft className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">Disabled</span>
                 </>
               )}
             </button>
           )}
           {isDirectEntry && (
             <span
-              className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/10 border-blue-500/30 text-blue-400"
+              className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium bg-ink-info/10 border-ink-info/30 text-ink-info"
               title="Direct host-supplied extension — read-only"
               data-video-editor-extension-direct-entry={extensionId}
             >
@@ -226,7 +226,7 @@ export function PackageCard({
       )}
       {saveState === 'error' && saveError && (
         <div
-          className="mt-2 rounded bg-red-500/10 border border-red-500/30 px-2 py-1 text-[11px] text-red-400"
+          className="mt-2 rounded bg-ink-danger/10 border border-ink-danger/30 px-2 py-1 text-[11px] text-ink-danger"
           role="alert"
           data-video-editor-extension-save-error={extensionId}
         >

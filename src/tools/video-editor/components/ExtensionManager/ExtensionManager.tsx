@@ -176,7 +176,7 @@ function DevLocalExtensionsSection({
                       v{row.version}
                     </span>
                   )}
-                  <span className="shrink-0 rounded border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
+                  <span className="shrink-0 rounded border border-ink-info/30 bg-ink-info/10 px-1.5 py-0.5 text-[10px] font-medium text-ink-info">
                     Direct
                   </span>
                 </div>
@@ -204,13 +204,13 @@ function DevLocalExtensionsSection({
                     reported by the summary line below. */}
                 {row.disabled ? (
                   <>
-                    <ToggleLeft className="h-3 w-3 text-zinc-400" />
-                    <span className="text-zinc-400">Disabled</span>
+                    <ToggleLeft className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-muted-foreground">Disabled</span>
                   </>
                 ) : (
                   <>
-                    <ToggleRight className="h-3 w-3 text-emerald-400" />
-                    <span className="text-emerald-400">Enabled</span>
+                    <ToggleRight className="h-3 w-3 text-wes-forest" />
+                    <span className="text-wes-forest">Enabled</span>
                   </>
                 )}
               </button>
