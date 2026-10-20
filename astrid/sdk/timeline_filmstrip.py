@@ -858,12 +858,9 @@ def prepare_filmstrip(
         if closure.get('parent_content_digest') is not None:
             authority['parent_content_digest'] = closure['parent_content_digest']
         authority['expansion'] = deepcopy(closure)
-        canvas = config.get('theme_overrides', {}).get('visual', {}).get('canvas', {})
-        fps_value = canvas.get('fps', 30) if isinstance(canvas, Mapping) else 30
-        try:
-            fps = Fraction(str(fps_value))
-        except (TypeError, ValueError, ZeroDivisionError):
-            fps = Fraction(30, 1)
+        from astrid.core.rendering.profile import resolve_render_profile
+
+        fps = Fraction(*resolve_render_profile(config, registry).fps_rational)
         capture_identity = 'sha256:' + hashlib.sha256(
             json.dumps(
                 {'authority': authority, 'config': config, 'registry': registry},
@@ -887,6 +884,25 @@ def prepare_filmstrip(
         snapshot['metadata']['selection'] = 'composed_frame_capture'
         snapshot['metadata']['capture_authority'] = deepcopy(authority)
         snapshot['metadata']['capture_identity'] = capture_identity
+        from astrid.core.timeline.astrid_ns import read_app
+
+        # The projector retains the original IDs explicitly, including opaque
+        # IDs containing colons. Keep every clip, including audio-only clips.
+        scene_clips = {}
+        for clip in config.get('clips', []):
+            clip_id = clip['id']
+            if clip_id in scene_clips:
+                _fail('Composed frame capture has duplicate projected clip IDs.')
+            app = read_app(clip)
+            source = clip.get('app', {}).get('astrid_shot_composition', {})
+            source_id = source.get('source_clip_id', clip_id)
+            cut, layer = app.get('cut'), app.get('layer')
+            scene_clips[clip_id] = {
+                'address': f'{cut}.{layer}' if cut and layer else source_id,
+                'source_clip_id': source_id,
+                'occurrence_id': source.get('occurrence_id'),
+            }
+        snapshot['metadata']['scene_clips'] = scene_clips
         snapshot['metadata']['requested_revision_id'] = requested_revision or parent_revision
         if isinstance(closure.get('working_copy'), Mapping):
             # Provenance: these frames are of an unpublished working copy, built on this base.

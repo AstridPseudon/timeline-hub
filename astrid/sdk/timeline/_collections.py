@@ -217,7 +217,7 @@ def restoration_orders(records, *, only=None):
             inserts = False
             after = [s for s in selected if s['key'].endswith('.after')]
             positioned = bool(after) and record['command']['op'] not in ('timeline.inverse', 'timeline.restore')
-            if positioned and (len(after) != 1 or len(writes) != 1
+            if positioned and (len(after) != 1 or sum(w['before'] == ABSENT for w in writes) != 1
                                or not _ordinary_create(record, writes, owner, kind)):
                 raise CommandError('ambiguous create-after proof', kind='history_unavailable')
             stages = [list(final)]

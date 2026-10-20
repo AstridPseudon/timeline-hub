@@ -7,9 +7,17 @@ from pathlib import Path
 
 import pytest
 
+from astrid.core.timeline.shot_composition_projection import project_runtime_parent_composition
+from astrid.sdk.timeline._collections import order, restoration_orders
 from astrid.sdk.timeline._command_state import CommandError, State
+from astrid.sdk.timeline.capture import capture_clip_delete
 from astrid.sdk.timeline.commands import execute, validate_command
-from astrid.sdk.timeline.commit import _digest, _manifest, bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import (
+    _digest,
+    _manifest,
+    bundle_from_document,
+    document_from_bundle,
+)
 from astrid.sdk.timeline.native_auto_placement import auto_place_completion
 from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
 from astrid.sdk.timeline.rebase import replay
@@ -17,12 +25,10 @@ from tests.editing_conformance.test_recipe_m1_commands import accepted_boundarie
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
 from tests.sdk.test_timeline_commit_provider import (
     CommitRejected,
+    runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
 )
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
-)
-from tests.sdk.test_timeline_commit_provider import (
-    runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
 )
 
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_parent_media.json'
@@ -189,13 +195,116 @@ def test_replace_removes_the_populated_clip_and_inverse_restores_its_slot():
     _, bundle, command, verified = replaced()
     plan = execute(bundle, [command], verified_media=verified)
     assert clip_ids(bundle) == ['clip-a', 'clip-b', 'ov-a', 'ov-b']
-    assert clip_ids(plan.bundle) == ['clip-a', 'clip-b', 'ov-b', 'born']
+    assert clip_ids(plan.bundle) == ['clip-a', 'clip-b', 'born', 'ov-b']
     assert command['created'] == [ASSET, CHILD]
     assert replay(plan, bundle, verified_media=verified).records == plan.records
     undone = inverse(plan.bundle, plan.records)
     assert undone.bundle == bundle
     redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
     assert redone.bundle == plan.bundle
+
+
+def ordered_parent(kind='image'):
+    document, _, new, verified = parent_inputs(kind)
+    bundle = bundle_from_document(document)
+    # Simultaneous clips on the same track have equal z priority; array order
+    # must reach the composition draw list unchanged.
+    rows = [{'id': identity, 'track': 'overlay', 'asset': 'picture', 'clipType': 'media',
+             'at': 0, 'hold': 4, 'nullable': None, 'opaque': {'values': [None, False, {}, []]}}
+            for identity in ('A', 'target', 'C')]
+    bundle['parent']['clips'] = rows
+    bundle['parent']['config']['clips'] = copy.deepcopy(rows)
+    return bundle, new, verified
+
+
+@pytest.mark.parametrize('kind', ['image', 'video'])
+@pytest.mark.parametrize('target', ['A', 'target', 'C'])
+def test_replace_first_middle_last_exact_reload_inverse_redo_and_replay(kind, target):
+    bundle, new, verified = ordered_parent(kind)
+    command = capture_clip_add_media(bundle, args(new, kind, at=0, replace=target), verified_media=verified)
+    plan = execute(bundle, [command], verified_media=verified)
+    expected = ['born' if identity == target else identity for identity in ['A', 'target', 'C']]
+    assert clip_ids(plan.bundle) == expected
+    assert restoration_orders(plan.records) == {('parent', 'clip'): (
+        order(State(bundle), 'parent', 'clip'), order(State(plan.bundle), 'parent', 'clip'))}
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+    undone = inverse(reloaded, plan.records)
+    assert undone.bundle['parent'] == bundle['parent']
+    assert all(s['members'] == s['order'] == s['boundaries'] for s in undone.commands[0]['selections']
+               if s['key'] == 'collection.clips')
+    assert replay(undone, reloaded, inverse_records=plan.records).records == undone.records
+    accepted = accepted_boundaries(undone.records, reloaded, undone.bundle)
+    redone = inverse(undone.bundle, accepted)
+    assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
+    accepted_redo = accepted_boundaries(redone.records, undone.bundle, redone.bundle)
+    assert inverse(redone.bundle, accepted_redo).bundle == undone.bundle
+
+
+def test_replace_preserves_equal_z_order_in_composition_input():
+    bundle, new, verified = ordered_parent()
+    command = capture_clip_add_media(bundle, args(new, 'image', at=0, replace='target'), verified_media=verified)
+    plan = execute(bundle, [command], verified_media=verified)
+    document = document_from_bundle(plan.bundle)
+    parent = dict(document['parent_revision'], project_id=document['project_id'], timeline_id=document['timeline_id'])
+    projection = project_runtime_parent_composition(parent, shot_revisions=document['shot_revisions'],
+        internal_timeline_revisions=document['internal_timeline_revisions'])
+    same_z = [row for row in projection.config['clips'] if row['track'] == 'overlay']
+    assert [row['id'] for row in same_z] == ['A', 'born', 'C']
+    assert all(row['at'] == 0 and row['hold'] > 0 for row in same_z)
+
+
+@pytest.mark.parametrize('damage', ['order', 'membership'])
+@pytest.mark.parametrize('undo', [False, True])
+def test_replace_keeps_order_and_membership_guards(damage, undo):
+    _, bundle, command, verified = replaced()
+    plan = execute(bundle, [command], verified_media=verified)
+    head = copy.deepcopy(plan.bundle if undo else bundle)
+    if damage == 'order':
+        head['parent']['clips'].reverse()
+        head['parent']['config']['clips'].reverse()
+    else:
+        for rows in (head['parent']['clips'], head['parent']['config']['clips']):
+            rows.append({'id': 'other', 'track': 'overlay', 'at': 9, 'hold': 1})
+    before = copy.deepcopy(head)
+    with pytest.raises(CommandError) as error:
+        if undo:
+            inverse(head, plan.records)
+        else:
+            replay(plan, head, verified_media=verified)
+    assert error.value.kind == 'selection_changed'
+    assert head == before
+
+
+@pytest.mark.parametrize('field', ['members', 'boundaries'])
+def test_replace_refuses_corrupt_insertion_proof(field):
+    _, bundle, command, verified = replaced()
+    plan = execute(bundle, [command], verified_media=verified)
+    records = copy.deepcopy(plan.records)
+    selected = next(s for s in records[0]['selections'] if s['key'].endswith('.after'))
+    selected[field] = ['parent/clip:ov-b']
+    before = copy.deepcopy(plan.bundle)
+    with pytest.raises(CommandError):
+        inverse(plan.bundle, records)
+    assert plan.bundle == before
+
+
+@pytest.mark.parametrize('create_first', [False, True])
+def test_replacement_composes_with_create_remove_neighbors(create_first):
+    bundle, new, verified = ordered_parent()
+    add = capture_clip_add_media(bundle, args(new, 'image', replace='target'), verified_media=verified)
+    delete = capture_clip_delete(bundle, 'parent/clip:A')
+    first = add if create_first else delete
+    middle = execute(bundle, [first], verified_media=verified).bundle
+    second = (capture_clip_delete(middle, 'parent/clip:A') if create_first else
+              capture_clip_add_media(middle, args(new, 'image', replace='target'), verified_media=verified))
+    plan = execute(bundle, [first, second], verified_media=verified)
+    assert clip_ids(plan.bundle) == ['born', 'C']
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == bundle
+    accepted = accepted_boundaries(undone.records, plan.bundle, undone.bundle)
+    assert inverse(undone.bundle, accepted).bundle == plan.bundle
 
 
 @pytest.mark.parametrize('damage', ['missing', 'other-track', 'not-media', 'unrelated-dependency', 'self'])
@@ -218,8 +327,9 @@ def test_replace_refuses_without_a_populated_same_track_target(damage):
     assert bundle == before
 
 
-def test_asset_alias_inverse_is_guarded_by_dependents_and_aba():
-    _, bundle, command, verified = captured()
+@pytest.mark.parametrize('replace', [False, True])
+def test_asset_alias_inverse_is_guarded_by_dependents_and_aba(replace):
+    _, bundle, command, verified = replaced() if replace else captured()
     plan = execute(bundle, [command], verified_media=verified)
     edit(plan.bundle, 'parent/clip:ov-b', asset='reserved-new')
     with pytest.raises(CommandError, match='surviving dependents'):
@@ -245,8 +355,9 @@ def test_disjoint_edit_rebases_and_a_taken_id_conflicts():
         replay(plan, taken, verified_media=verified)
 
 
-def test_provider_exact_reload_inverse_redo_and_retired_ids():
-    document, _, command, verified = captured('video')
+@pytest.mark.parametrize('replace', [False, True])
+def test_provider_exact_reload_inverse_redo_and_retired_ids(replace):
+    document, _, command, verified = replaced() if replace else captured('video')
     realm = MediaRealm(document, verified)
     created = realm.call([command])
     undo = realm.call([inverse_call([created['receipt']['receipt_id']])])

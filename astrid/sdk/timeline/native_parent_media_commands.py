@@ -74,7 +74,7 @@ def add_media(ctx, command):
             raise CommandError('replace requires a populated clip on the same track',
                                kind='unsupported_media', ref=target)
     _registry(ctx, 'parent', args['media'], kind, create=True)
-    ctx.create('parent', 'clip', row)
+    ctx.create('parent', 'clip', row, after=target)
     if target is not None:
         ctx.clear(target, [])
 

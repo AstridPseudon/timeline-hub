@@ -402,7 +402,12 @@ def apply_inverse(ctx, records, intervening_records):
         for read in record['reads']:
             ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
-            ctx.select(selected['key'], selected['owner'], selected['members'])
+            # Inverse guards the complete current collection, even when a
+            # replacement removed the historical insertion anchor checked above.
+            if selected['key'].endswith('.after'):
+                ctx.select(selected['key'].removesuffix('.after'), selected['owner'])
+            else:
+                ctx.select(selected['key'], selected['owner'], selected['members'])
     for write in reversed(changes):
         ctx.read(write['ref'], write['path'])
         # An absent-to-absent edge still records authored intent, but restores
