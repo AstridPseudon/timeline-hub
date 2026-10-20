@@ -1,0 +1,122 @@
+{
+  "retained_run": "1020043712-5716",
+  "retained_outcome": "1 PASS / 3 FAIL",
+  "retained_source_prepost_passed": true,
+  "cases": [
+    {
+      "case": "player-export-frame-parity-5c35b-al-CPU-Remotion-task-output",
+      "trace_sha256": "0c15ee3be76a30faef636befae2424ce58c1174522aae807c89d6be3e2b44352",
+      "download_click_ms": 260048.593,
+      "download_event_ms": 260286.646,
+      "native_same_page_blob": true,
+      "reads": [
+        {
+          "kind": "location",
+          "time_ms": 260229.325,
+          "method": "GET",
+          "status": 200,
+          "complete_origin_equals_actual_page": true,
+          "range_absent": true,
+          "cors_fetch": true,
+          "redirect_absent": true
+        },
+        {
+          "kind": "object",
+          "time_ms": 260256.72,
+          "method": "GET",
+          "status": 200,
+          "complete_origin_equals_actual_page": true,
+          "range_absent": true,
+          "cors_fetch": true,
+          "redirect_absent": true
+        }
+      ],
+      "same_project_task_output": true,
+      "location_object_saved_bytes_identical": true,
+      "saved_size": 1109353,
+      "saved_digest": "sha256:ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+      "old_observer_location_origin_undefined": true,
+      "failure_line": 30
+    },
+    {
+      "case": "player-export-frame-parity-806c0-without-a-parity-comparison",
+      "trace_sha256": "8bb7519ddbdba091755e8526a8488f16802225cdc4da3fc51f62c803b1039fa2",
+      "download_click_ms": 146089.541,
+      "download_event_ms": 146326.562,
+      "native_same_page_blob": true,
+      "reads": [
+        {
+          "kind": "location",
+          "time_ms": 146261.88,
+          "method": "GET",
+          "status": 200,
+          "complete_origin_equals_actual_page": true,
+          "range_absent": true,
+          "cors_fetch": true,
+          "redirect_absent": true
+        },
+        {
+          "kind": "object",
+          "time_ms": 146269.526,
+          "method": "GET",
+          "status": 200,
+          "complete_origin_equals_actual_page": true,
+          "range_absent": true,
+          "cors_fetch": true,
+          "redirect_absent": true
+        }
+      ],
+      "same_project_task_output": true,
+      "location_object_saved_bytes_identical": true,
+      "saved_size": 1109353,
+      "saved_digest": "sha256:ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+      "old_observer_location_origin_undefined": true,
+      "failure_line": 30
+    },
+    {
+      "case": "player-export-frame-parity-fbee8-r-the-full-passing-baseline",
+      "trace_sha256": "e8a7dec6556a98478c15f3592b49e42135ff7523d590d0b0b7e33febc59ee897",
+      "download_click_ms": 365057.545,
+      "download_event_ms": 365184.97,
+      "native_same_page_blob": true,
+      "reads": [
+        {
+          "kind": "location",
+          "time_ms": 365132.497,
+          "method": "GET",
+          "status": 200,
+          "complete_origin_equals_actual_page": true,
+          "range_absent": true,
+          "cors_fetch": true,
+          "redirect_absent": true
+        },
+        {
+          "kind": "object",
+          "time_ms": 365144.724,
+          "method": "GET",
+          "status": 200,
+          "complete_origin_equals_actual_page": true,
+          "range_absent": true,
+          "cors_fetch": true,
+          "redirect_absent": true
+        }
+      ],
+      "same_project_task_output": true,
+      "location_object_saved_bytes_identical": true,
+      "saved_size": 1109353,
+      "saved_digest": "sha256:ba653c490689847a31033babc48dba64f6322549fa2b98b12e615ea58658bbc9",
+      "old_observer_location_origin_undefined": true,
+      "failure_line": 30
+    }
+  ],
+  "local_implementation": {
+    "playwright_version": "1.60.0",
+    "bundle_sha256": "f74353fcb8e406756a70a6af0dfc4a5069acd577e35ec9d923ccf36ac009c2f5",
+    "headers": "provisional",
+    "allHeaders": "rawRequestHeaders via _actualHeaders",
+    "trace_har": "same server rawRequestHeaders promise",
+    "chromium": "requestWillBeSentExtraInfo patches response.request raw headers",
+    "strict_door_sha256": "c1445960c97162d087ab0fe0b38cdc2ea1c0e1c48447020d3302853d72a8074c"
+  },
+  "limits": "No new request or browser. The old assertion reached location first; old object provisional Origin was not asserted. No new four-case/decode/frame/media-error qualification."
+}

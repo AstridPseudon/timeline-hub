@@ -1,0 +1,28 @@
+{
+  "main_app_head": "580508eed1bf6ed95caaf476c9d69a4672472a2f",
+  "integration_base": "c8566f12d114c538db8136b8c580a1e663af1ad1",
+  "fixture_ref": "309cb7a463833126e3af730fb3c6ff536d9e457c",
+  "fixture_path": "src/tools/video-editor/commands/fixtures/recipe_m2_occurrence_media.json",
+  "fixture_sha256": "e30ed3303532e3d73adfd07670e04d1312003b7e10d2c5c008629b8b9bffad46",
+  "main_sources": {
+    "config/vite/vite.config.ts": "fe3e131757be00fcef313d0a28d3fdfb6662ff618df2491f8a60bb6d30292988",
+    "package.json": "6dc24806b32028ddae5ead3d0d6e3223fe58e0f8b184f8f64f2dcf59f6344f3d",
+    "package-lock.json": "cc166c9c3cbe6555ad2dc38813e266e508aa09b764bd9998bddc1da4d43891ff",
+    "src/integrations/runtime/dataProvider.ts": "1452a79f99dc5bc6b1031efe66de80eb5d39505a32099e923d2a73d1c48426ad",
+    "src/tools/video-editor/data/shotCompositionProjection.ts": "c446f8d7dc3ab92af7ef0d5734c6e143504dd0098c8e8c5a234e9a6615167a04",
+    "src/tools/video-editor/data/shotCompositionAdapter.ts": "e354b0802cd035c26257281af488df443dd05326e5fba47be2a631430cb5460d",
+    "src/tools/video-editor/data/shotCompositionTiming.ts": "f77dcb9bfd306feec674f5378598c63e9372ec9e71639e2e7a60366855d80a46",
+    "src/tools/video-editor/data/canonicalCompositionState.ts": "27e69ba609a14e79aec9393350a6b021b9c62e380063269fb4b51a39f85024a4",
+    "src/tools/video-editor/compositions/TimelineRenderer.tsx": "38c57951262939ebe67529b17e7d758b73bcc6d0d9cb84ebf4f2b64609150036",
+    "src/tools/video-editor/compositions/VisualClip.tsx": "39a51ed173ed3b81d91b2b4151892f03358f07a99fefb47f8d9755fb9b1f668f",
+    "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx": "2557c34f53a88f585da54a06eaeae41ad64752df9dae96c0e7a24e73148719d5",
+    "src/tools/video-editor/lib/canonicalRenderBounds.ts": "635790336bf9e67f7142e7f74c1529240be191476a8f0bbf6ad2436c5896dc31",
+    "src/tools/video-editor/lib/time-grid.ts": "8134f28468eb370958bf38bd7f9b0706c4ec97fa6f2410becd639dfbfec4bedc",
+    "src/tools/video-editor/lib/timeline-data.ts": "b4e9ea6fc72833105f9212713447e2d07cdfa6377e5d83422506cc16007eb532",
+    "src/tools/video-editor/lib/config-utils.ts": "7acc2321701cc4234d1b868e801f4caf242280f02a5012b3c93f3bd73d6930a9",
+    "vendor/timeline-composition/typescript/src/TimelineComposition.tsx": "bb6e65494913c070e1ff6f3a45ac9a91cd4a402635636eb5f6814eb476c1c475",
+    "vendor/timeline-composition/typescript/src/theme-api.ts": "e19c8f7a4667990f47eaccf582730e4c97874ee10a8f1a6abba827910fd7122d"
+  },
+  "peers_read_only": "/home/user/work/app/node_modules",
+  "qualification": "UNQUALIFIED_SOURCE_DIAGNOSTIC_NO_FRAMES_OR_PUBLIC_SCENE"
+}

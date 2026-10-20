@@ -1,0 +1,2187 @@
+{
+  "viewingRef": "1bfa51d5a",
+  "agentRef": "fd82c36c7cd66d1d58aa0250a008245a43e6fbaa",
+  "status": "comparison for Agent domain review; neither corpus supersedes the other",
+  "rows": [
+    {
+      "viewing": {
+        "vector": {
+          "name": "unity occurrence gain",
+          "lane": "control",
+          "occurrence": {
+            "gain": 1
+          },
+          "clip": {
+            "from": 0.125,
+            "to": 1.125,
+            "volume": 0.8
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 1
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-1.json"
+      },
+      "agent": [],
+      "sameAuthoredInput": false,
+      "reason": "Agent has no child-volume .8/unity occurrence row; absent-volume unity is distinct."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "missing child volume",
+          "lane": "control",
+          "occurrence": {
+            "gain": 0.5
+          },
+          "clip": {
+            "from": 0.125,
+            "to": 1.125
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 0.5
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 0.5,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          },
+          "volume": 0.5
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 0.5,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          },
+          "volume": 0.5
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-2.json"
+      },
+      "agent": [
+        {
+          "vector": {
+            "id": "gain-child-absent-is-unity",
+            "child": {},
+            "occurrence": {
+              "gain": 0.5
+            },
+            "expect": {
+              "volume": 0.5
+            }
+          },
+          "actualAuthoredChild": {
+            "id": "alpha-audio",
+            "clip_type": "media",
+            "track": "audio",
+            "at_ms": 0,
+            "asset_id": "alpha-audio",
+            "from": 0,
+            "to": 2
+          },
+          "actualAuthoredOccurrence": {
+            "occurrence_id": "occ-1",
+            "parent_document_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "revision_id": "rev-a",
+            "ordinal": 0,
+            "at_ms": 0,
+            "duration_ms": 2000,
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "gain": 0.5
+          },
+          "runtimeClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 0.5,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            },
+            "volume": 0.5
+          },
+          "graphClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 0.5,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            },
+            "volume": 0.5
+          },
+          "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-14.json"
+        }
+      ],
+      "sameAuthoredInput": false,
+      "reason": "Same scalar rule; Viewing trim .125..1.125 at .25s versus Agent 0..2 at 0."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "occurrence mute",
+          "lane": "control",
+          "occurrence": {
+            "gain": 0.5,
+            "muted": true
+          },
+          "clip": {
+            "from": 0.125,
+            "to": 1.125,
+            "volume": 0.8
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 0.5,
+          "muted": true
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 0.5,
+              "muted": true,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 0.5,
+              "muted": true,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-3.json"
+      },
+      "agent": [
+        {
+          "vector": {
+            "id": "muted-occurrence-silences-child-gain",
+            "child": {
+              "volume": 0.8
+            },
+            "occurrence": {
+              "gain": 0.5,
+              "muted": true
+            },
+            "expect": {
+              "volume": 0,
+              "metadata": {
+                "muted": true
+              }
+            }
+          },
+          "actualAuthoredChild": {
+            "id": "alpha-audio",
+            "clip_type": "media",
+            "track": "audio",
+            "at_ms": 0,
+            "asset_id": "alpha-audio",
+            "from": 0,
+            "to": 2,
+            "volume": 0.8
+          },
+          "actualAuthoredOccurrence": {
+            "occurrence_id": "occ-1",
+            "parent_document_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "revision_id": "rev-a",
+            "ordinal": 0,
+            "at_ms": 0,
+            "duration_ms": 2000,
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "gain": 0.5,
+            "muted": true
+          },
+          "runtimeClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "volume": 0,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 0.5,
+                "muted": true,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "graphClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "volume": 0,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 0.5,
+                "muted": true,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-17.json"
+        }
+      ],
+      "sameAuthoredInput": false,
+      "reason": "Same mute rule; different base trim/placement."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "child times occurrence gain",
+          "lane": "parity requirement",
+          "occurrence": {
+            "gain": 0.5
+          },
+          "clip": {
+            "from": 0.125,
+            "to": 1.125,
+            "volume": 0.8
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 0.5
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.4,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 0.5,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.4,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 0.5,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-4.json"
+      },
+      "agent": [
+        {
+          "vector": {
+            "id": "gain-child-x-occurrence",
+            "child": {
+              "volume": 0.8
+            },
+            "occurrence": {
+              "gain": 0.5
+            },
+            "expect": {
+              "volume": 0.4
+            }
+          },
+          "actualAuthoredChild": {
+            "id": "alpha-audio",
+            "clip_type": "media",
+            "track": "audio",
+            "at_ms": 0,
+            "asset_id": "alpha-audio",
+            "from": 0,
+            "to": 2,
+            "volume": 0.8
+          },
+          "actualAuthoredOccurrence": {
+            "occurrence_id": "occ-1",
+            "parent_document_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "revision_id": "rev-a",
+            "ordinal": 0,
+            "at_ms": 0,
+            "duration_ms": 2000,
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "gain": 0.5
+          },
+          "runtimeClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "volume": 0.4,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 0.5,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "graphClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "volume": 0.4,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 0.5,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-12.json"
+        }
+      ],
+      "sameAuthoredInput": false,
+      "reason": "Same .8 x .5; different base trim/placement."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "boost times occurrence gain",
+          "lane": "parity requirement",
+          "occurrence": {
+            "gain": 2
+          },
+          "clip": {
+            "from": 0.125,
+            "to": 1.125,
+            "volume": 1.5
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 1.5
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 2
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 3.0,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 2,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 3.0,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 2,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-5.json"
+      },
+      "agent": [
+        {
+          "vector": {
+            "id": "gain-boost-x-occurrence",
+            "child": {
+              "volume": 1.5
+            },
+            "occurrence": {
+              "gain": 2
+            },
+            "expect": {
+              "volume": 3
+            }
+          },
+          "actualAuthoredChild": {
+            "id": "alpha-audio",
+            "clip_type": "media",
+            "track": "audio",
+            "at_ms": 0,
+            "asset_id": "alpha-audio",
+            "from": 0,
+            "to": 2,
+            "volume": 1.5
+          },
+          "actualAuthoredOccurrence": {
+            "occurrence_id": "occ-1",
+            "parent_document_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "revision_id": "rev-a",
+            "ordinal": 0,
+            "at_ms": 0,
+            "duration_ms": 2000,
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "gain": 2
+          },
+          "runtimeClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "volume": 3.0,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 2,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "graphClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "volume": 3.0,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 2,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-13.json"
+        }
+      ],
+      "sameAuthoredInput": false,
+      "reason": "Same 1.5 x 2; different base trim/placement."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "occurrence source offset",
+          "lane": "parity requirement",
+          "occurrence": {
+            "gain": 1,
+            "source_offset": 350
+          },
+          "clip": {
+            "from": 0.125,
+            "to": 1.125,
+            "volume": 0.8
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 1,
+          "source_offset": 350
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 350,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 350,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-6.json"
+      },
+      "agent": [
+        {
+          "vector": {
+            "id": "source-offset-is-metadata-only",
+            "child": {
+              "from": 0.125,
+              "to": 1.125
+            },
+            "occurrence": {
+              "source_offset": 0.35
+            },
+            "expect": {
+              "from": 0.125,
+              "to": 1.125,
+              "metadata": {
+                "source_offset": 0.35
+              }
+            }
+          },
+          "actualAuthoredChild": {
+            "id": "alpha-audio",
+            "clip_type": "media",
+            "track": "audio",
+            "at_ms": 0,
+            "asset_id": "alpha-audio",
+            "from": 0.125,
+            "to": 1.125
+          },
+          "actualAuthoredOccurrence": {
+            "occurrence_id": "occ-1",
+            "parent_document_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "revision_id": "rev-a",
+            "ordinal": 0,
+            "at_ms": 0,
+            "duration_ms": 2000,
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "source_offset": 0.35
+          },
+          "runtimeClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0.125,
+            "to": 1.125,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0.35,
+                "speed": 1.0,
+                "gain": 1,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "graphClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0.125,
+            "to": 1.125,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0.35,
+                "speed": 1.0,
+                "gain": 1,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-18.json"
+        }
+      ],
+      "sameAuthoredInput": false,
+      "reason": "Viewing authored source_offset=350; Agent=.35, retained verbatim as metadata. Viewing volume=.8 and at=.25; Agent volume absent and at=0."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "occurrence speed without child speed",
+          "lane": "parity requirement",
+          "occurrence": {
+            "gain": 1,
+            "speed": 1.5
+          },
+          "clip": {
+            "from": 0.125,
+            "to": 1.125,
+            "volume": 0.8
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 1,
+          "speed": 1.5
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.5,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 1.125,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.5,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-7.json"
+      },
+      "agent": [
+        {
+          "vector": {
+            "id": "occurrence-speed-not-inherited",
+            "child": {},
+            "occurrence": {
+              "speed": 1.5
+            },
+            "expect": {
+              "from": 0,
+              "to": 2,
+              "speed": null,
+              "metadata": {
+                "speed": 1.5
+              }
+            }
+          },
+          "actualAuthoredChild": {
+            "id": "alpha-audio",
+            "clip_type": "media",
+            "track": "audio",
+            "at_ms": 0,
+            "asset_id": "alpha-audio",
+            "from": 0,
+            "to": 2
+          },
+          "actualAuthoredOccurrence": {
+            "occurrence_id": "occ-1",
+            "parent_document_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "revision_id": "rev-a",
+            "ordinal": 0,
+            "at_ms": 0,
+            "duration_ms": 2000,
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "speed": 1.5
+          },
+          "runtimeClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.5,
+                "gain": 1,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "graphClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.5,
+                "gain": 1,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-19.json"
+        }
+      ],
+      "sameAuthoredInput": false,
+      "reason": "Same placement speed=1.5; different child trim, volume and placement."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "source hold capped at next occurrence",
+          "lane": "control",
+          "occurrence": {
+            "gain": 1
+          },
+          "clip": {
+            "hold": 10,
+            "speed": 2,
+            "volume": 0.8
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "hold": 10,
+          "speed": 2,
+          "volume": 0.8
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 1
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "hold": 7.5,
+          "speed": 2,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "hold": 7.5,
+          "speed": 2,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-8.json"
+      },
+      "agent": [],
+      "sameAuthoredInput": false,
+      "reason": "Missing from Agent draft: hold=10, child speed=2, at=.25, occurrence duration=4s; output hold=7.5."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "source trim capped at next occurrence",
+          "lane": "control",
+          "occurrence": {
+            "gain": 1
+          },
+          "clip": {
+            "from": 0.125,
+            "to": 10.125,
+            "speed": 2,
+            "volume": 0.8
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 10.125,
+          "speed": 2,
+          "volume": 0.8
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 1
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 7.625,
+          "speed": 2,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.125,
+          "to": 7.625,
+          "speed": 2,
+          "volume": 0.8,
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-9.json"
+      },
+      "agent": [],
+      "sameAuthoredInput": false,
+      "reason": "Missing from Agent draft: .125..10.125, child speed=2, at=.25, occurrence duration=4s; output to=7.625."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "params fades",
+          "lane": "control",
+          "occurrence": {
+            "gain": 1
+          },
+          "clip": {
+            "from": 0.05,
+            "to": 0.55,
+            "volume": 0.8,
+            "params": {
+              "fadeIn": 0.1,
+              "fadeOut": 0.1
+            }
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.05,
+          "to": 0.55,
+          "volume": 0.8,
+          "params": {
+            "fadeIn": 0.1,
+            "fadeOut": 0.1
+          }
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 1
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.05,
+          "to": 0.55,
+          "volume": 0.8,
+          "params": {
+            "fadeIn": 0.1,
+            "fadeOut": 0.1
+          },
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.05,
+          "to": 0.55,
+          "volume": 0.8,
+          "params": {
+            "fadeIn": 0.1,
+            "fadeOut": 0.1
+          },
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-10.json"
+      },
+      "agent": [
+        {
+          "vector": {
+            "id": "fade-in-needs-prepared-envelope-source",
+            "child": {
+              "params": {
+                "fadeIn": 0.5
+              }
+            },
+            "occurrence": {},
+            "expect": {
+              "audio.render_source": true
+            },
+            "xfail": "Agent normal render route has no producer for a prepared envelope source; non-Player param fades refuse ENVELOPE_UNRENDERED (public10 applyAudioEnvelope join, 03:17 + 03:20 decisions). Restored by the trusted-host prepared-transform join."
+          },
+          "actualAuthoredChild": {
+            "id": "alpha-audio",
+            "clip_type": "media",
+            "track": "audio",
+            "at_ms": 0,
+            "asset_id": "alpha-audio",
+            "from": 0,
+            "to": 2,
+            "params": {
+              "fadeIn": 0.5
+            }
+          },
+          "actualAuthoredOccurrence": {
+            "occurrence_id": "occ-1",
+            "parent_document_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "revision_id": "rev-a",
+            "ordinal": 0,
+            "at_ms": 0,
+            "duration_ms": 2000,
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video"
+          },
+          "runtimeClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "params": {
+              "fadeIn": 0.5
+            },
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 1,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "graphClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "params": {
+              "fadeIn": 0.5
+            },
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 1,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-21.json"
+        },
+        {
+          "vector": {
+            "id": "fade-out-needs-prepared-envelope-source",
+            "child": {
+              "params": {
+                "fadeOut": 0.5
+              }
+            },
+            "occurrence": {},
+            "expect": {
+              "audio.render_source": true
+            },
+            "xfail": "Same join as fade-in-needs-prepared-envelope-source, for the exit fade."
+          },
+          "actualAuthoredChild": {
+            "id": "alpha-audio",
+            "clip_type": "media",
+            "track": "audio",
+            "at_ms": 0,
+            "asset_id": "alpha-audio",
+            "from": 0,
+            "to": 2,
+            "params": {
+              "fadeOut": 0.5
+            }
+          },
+          "actualAuthoredOccurrence": {
+            "occurrence_id": "occ-1",
+            "parent_document_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "revision_id": "rev-a",
+            "ordinal": 0,
+            "at_ms": 0,
+            "duration_ms": 2000,
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video"
+          },
+          "runtimeClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "params": {
+              "fadeOut": 0.5
+            },
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 1,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "graphClip": {
+            "id": "occ-1:alpha-audio",
+            "track": "audio",
+            "from": 0,
+            "to": 2.0,
+            "params": {
+              "fadeOut": 0.5
+            },
+            "clipType": "media",
+            "asset": "alpha-audio",
+            "at": 0.0,
+            "shot_id": "shot-alpha",
+            "shot_occurrence_id": "occ-1",
+            "app": {
+              "astrid_shot_composition": {
+                "project_id": "project-001",
+                "timeline_id": "document-primary",
+                "shot_id": "shot-alpha",
+                "shot_revision_id": "rev-a",
+                "internal_timeline_revision_id": "timeline-alpha-a",
+                "occurrence_id": "occ-1",
+                "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+                "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+                "source_offset": 0,
+                "speed": 1.0,
+                "gain": 1,
+                "muted": false,
+                "source_clip_id": "alpha-audio"
+              }
+            }
+          },
+          "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-22.json"
+        }
+      ],
+      "sameAuthoredInput": false,
+      "reason": "Viewing has combined .1s in/out on .05..55, volume=.8, at=.25; Agent separate .5s fades on 0..2, volume absent, at=0."
+    },
+    {
+      "viewing": {
+        "vector": {
+          "name": "fixture effects shape",
+          "lane": "control",
+          "occurrence": {
+            "gain": 1
+          },
+          "clip": {
+            "from": 0.05,
+            "to": 0.55,
+            "volume": 0.8,
+            "effects": [
+              {
+                "fade_in": 0.1,
+                "fade_out": 0.1
+              }
+            ]
+          }
+        },
+        "actualAuthoredChild": {
+          "id": "alpha-audio",
+          "clip_type": "media",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.05,
+          "to": 0.55,
+          "volume": 0.8,
+          "effects": [
+            {
+              "fade_in": 0.1,
+              "fade_out": 0.1
+            }
+          ]
+        },
+        "actualAuthoredOccurrence": {
+          "occurrence_id": "occ-1",
+          "parent_document_id": "document-primary",
+          "shot_id": "shot-alpha",
+          "revision_id": "rev-a",
+          "ordinal": 0,
+          "at_ms": 0,
+          "duration_ms": 4000,
+          "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+          "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+          "gain": 1
+        },
+        "runtimeClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.05,
+          "to": 0.55,
+          "volume": 0.8,
+          "effects": [
+            {
+              "fade_in": 0.1,
+              "fade_out": 0.1
+            }
+          ],
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "graphClip": {
+          "id": "occ-1:alpha-audio",
+          "track": "audio",
+          "at": 0.25,
+          "from": 0.05,
+          "to": 0.55,
+          "volume": 0.8,
+          "effects": [
+            {
+              "fade_in": 0.1,
+              "fade_out": 0.1
+            }
+          ],
+          "clipType": "media",
+          "shot_id": "shot-alpha",
+          "shot_occurrence_id": "occ-1",
+          "app": {
+            "astrid_shot_composition": {
+              "project_id": "project-001",
+              "timeline_id": "document-primary",
+              "shot_id": "shot-alpha",
+              "shot_revision_id": "rev-a",
+              "internal_timeline_revision_id": "timeline-alpha-a",
+              "occurrence_id": "occ-1",
+              "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+              "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+              "source_offset": 0,
+              "speed": 1.0,
+              "gain": 1,
+              "muted": false,
+              "source_clip_id": "alpha-audio"
+            }
+          }
+        },
+        "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/viewing-11.json"
+      },
+      "agent": [],
+      "sameAuthoredInput": false,
+      "reason": "Missing from Agent draft: effects=[{fade_in:.1,fade_out:.1}] is opaque/preserved and is not a public envelope."
+    }
+  ],
+  "agentOnly": [
+    {
+      "vector": {
+        "id": "gain-unity-keeps-volume-absent",
+        "child": {},
+        "occurrence": {
+          "gain": 1
+        },
+        "expect": {
+          "volume": null
+        }
+      },
+      "actualAuthoredChild": {
+        "id": "alpha-audio",
+        "clip_type": "media",
+        "track": "audio",
+        "at_ms": 0,
+        "asset_id": "alpha-audio",
+        "from": 0,
+        "to": 2
+      },
+      "actualAuthoredOccurrence": {
+        "occurrence_id": "occ-1",
+        "parent_document_id": "document-primary",
+        "shot_id": "shot-alpha",
+        "revision_id": "rev-a",
+        "ordinal": 0,
+        "at_ms": 0,
+        "duration_ms": 2000,
+        "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+        "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+        "gain": 1
+      },
+      "runtimeClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-15.json"
+    },
+    {
+      "vector": {
+        "id": "gain-zero-is-silent-not-absent",
+        "child": {},
+        "occurrence": {
+          "gain": 0
+        },
+        "expect": {
+          "volume": 0
+        }
+      },
+      "actualAuthoredChild": {
+        "id": "alpha-audio",
+        "clip_type": "media",
+        "track": "audio",
+        "at_ms": 0,
+        "asset_id": "alpha-audio",
+        "from": 0,
+        "to": 2
+      },
+      "actualAuthoredOccurrence": {
+        "occurrence_id": "occ-1",
+        "parent_document_id": "document-primary",
+        "shot_id": "shot-alpha",
+        "revision_id": "rev-a",
+        "ordinal": 0,
+        "at_ms": 0,
+        "duration_ms": 2000,
+        "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+        "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+        "gain": 0
+      },
+      "runtimeClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        },
+        "volume": 0.0
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        },
+        "volume": 0.0
+      },
+      "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-16.json"
+    },
+    {
+      "vector": {
+        "id": "child-speed-wins-over-occurrence-speed",
+        "child": {
+          "speed": 2
+        },
+        "occurrence": {
+          "speed": 1.5
+        },
+        "expect": {
+          "speed": 2,
+          "metadata": {
+            "speed": 1.5
+          }
+        }
+      },
+      "actualAuthoredChild": {
+        "id": "alpha-audio",
+        "clip_type": "media",
+        "track": "audio",
+        "at_ms": 0,
+        "asset_id": "alpha-audio",
+        "from": 0,
+        "to": 2,
+        "speed": 2
+      },
+      "actualAuthoredOccurrence": {
+        "occurrence_id": "occ-1",
+        "parent_document_id": "document-primary",
+        "shot_id": "shot-alpha",
+        "revision_id": "rev-a",
+        "ordinal": 0,
+        "at_ms": 0,
+        "duration_ms": 2000,
+        "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+        "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+        "speed": 1.5
+      },
+      "runtimeClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "speed": 2,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.5,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "speed": 2,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.5,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "fullClosureAndOutput": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-audio-compile-vector-reconcile/agent-20.json"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "base_sha": "382d54079741fc0318d5f0d702b0e4df36d5baee",
+  "base_tree": "a803e0f4184eaa0ced270db8e7a045dfae007088",
+  "predecessor_sha": "f536b4267d6d73feb674120954b7e21648b6d04d",
+  "predecessor_exit": "0",
+  "candidate_branch": "tl/vw-m3-render-fix-current-review",
+  "candidate_tree": "d38ff675e65b2c5101b5cf07c4d770c441d126b0",
+  "candidate_commit_sha": "pending harness commit after worker exit",
+  "candidate_patch_sha256": "63c9eaceef8cbc7ce3594dcdbadb8b78043466e7daa05b811aae97e66651c2be",
+  "current_integration_sha": "5912bfc3284da03112ef6c235447cfbeffb678bd",
+  "current_integration_tree": "1e21df7d1ebb18cda1c08d08f1e761337a581a3d",
+  "files": {
+    "src/tools/video-editor/components/TimelineRenderControls.test.tsx": "ea1e695e521fe7796dee43a45925e996d50e2744bc738ddd28415db8c62c5caa",
+    "src/tools/video-editor/components/TimelineRenderControls.tsx": "d763e1b6b38e4cb05873d2bbe698794f0ccfdff4b16c75496e1a593f5784a544",
+    "src/tools/video-editor/hooks/timelineStore.ts": "2b76bfe78771a79e1c0944bb0164e8389dee2398fdb66eb7e0ca314b461a34f1",
+    "src/tools/video-editor/hooks/useRenderState.test.tsx": "eae87269f692b7502a23f1d1037339eb95fc8deea5ae950faab2aedcd3eee4d2",
+    "src/tools/video-editor/hooks/useRenderState.ts": "80dfe2b912f8aca0c99687e15d2af5dccf222607e7a180927afd2d72d569522b",
+    "src/tools/video-editor/hooks/useTimelineState.ts": "38a68fab02b63aa386001980036cb989630b436e0951b0f2302ee08d1825f114",
+    "src/tools/video-editor/hooks/useTimelineState.types.ts": "86b8f178a4ed4763279a654430091c08e19726b848a07edf04d236c2182130cb"
+  },
+  "predecessor_assertion_lines_preserved": true
+}

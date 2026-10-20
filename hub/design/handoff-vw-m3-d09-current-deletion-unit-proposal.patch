@@ -1,0 +1,1922 @@
+diff --git a/astrid/core/timeline/onscreen.py b/astrid/core/timeline/onscreen.py
+deleted file mode 100644
+--- a/astrid/core/timeline/onscreen.py
++++ /dev/null
+@@ -1,452 +0,0 @@
+-"""The on-screen model (TRUTH.md §2.2): what is visible on a frame, and how every frame is covered.
+-
+-Pure: no I/O in ``visible_at`` / ``coverage`` (``element_coverage`` reads the element registry, and only that).
+-Opacity, fades and the transition windows follow timeline-composition ``lib/fade.ts``, ``lib/clip-look.ts``
+-and ``lib/transition-spans.ts``; the universal clip fields are read through ``clip_fields.read``.
+-
+-Frame arithmetic: a clip covers ``[start, end)`` with ``start = clip_start_frame`` and ``end = clip_end_frame``
+-(``duration.py``). Fade ramps and entrance/exit windows are in absolute frames, the same arithmetic as the
+-composition's per-Sequence (draw-local) frame.
+-"""
+-
+-from __future__ import annotations
+-
+-import math
+-from collections.abc import Iterable, Mapping
+-from dataclasses import dataclass, field
+-from pathlib import Path
+-from typing import Any
+-
+-from astrid.core.timeline import clip_fields
+-from astrid.core.timeline.astrid_ns import read_app
+-from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
+-
+-COVER_OPACITY = 0.999
+-CONTENT_OPACITY = 0.05
+-FULL_FRAME_TOLERANCE = 1.0
+-DEFAULT_ANIMATION_FRAMES = 8
+-DEFAULT_TRANSITION_FRAMES = 12
+-FADE_TRANSITION_IDS = frozenset({"fade", "dip", "cross-fade", "crossfade"})
+-LAYOUT_KEYS = ("x", "y", "width", "height", "scale")
+-CROP_FIELDS = ("crop_top", "crop_right", "crop_bottom", "crop_left")
+-_ELEMENT_KINDS = ("effects", "animations", "transitions")
+-
+-
+-@dataclass(frozen=True)
+-class Visible:
+-    clip_id: str
+-    address: str
+-    track: str
+-    z: int  # 0 = top
+-    role: str  # "picture" | "background" | "content"
+-    opacity: float
+-    bounds: tuple[float, float, float, float] | None  # x0, y0, x1, y1 canvas px
+-    bounds_source: str  # "declared" | "full" | "unknown"
+-    full_frame: bool
+-
+-
+-@dataclass(frozen=True)
+-class Span:
+-    start_frame: int
+-    end_frame: int  # exclusive
+-    cls: str  # "COVERED" | "DIP" | "GAP"
+-    content: str | None  # COVERED only: "CONTENT" | "EMPTY"
+-    clips: tuple[str, ...]
+-
+-
+-@dataclass
+-class _Layer:
+-    """One listed clip, precomputed: everything that is constant or piecewise-linear in the frame."""
+-
+-    clip_id: str
+-    address: str
+-    track: str
+-    z: int
+-    role: str
+-    start: int
+-    end: int
+-    base_opacity: float
+-    ramps: list[tuple[int, int, float, float]] = field(default_factory=list)  # lo, hi, y at lo, y at hi
+-    blocks: list[tuple[int, int]] = field(default_factory=list)  # full_frame off (scale/slide entrances)
+-    dips: list[tuple[int, int]] = field(default_factory=list)  # DIP-capable windows [lo, hi)
+-    bounds: tuple[float, float, float, float] | None = None
+-    bounds_source: str = "unknown"
+-    static_full: bool = False
+-
+-
+-# ---------------------------------------------------------------- element metadata
+-
+-
+-_PACKS_ROOT = Path(__file__).resolve().parents[2] / "packs"
+-_COVERAGE_CACHE: dict[str, dict] = {}
+-# Sealed S0's V3 rendering-element declarations omit these metadata values,
+-# though the frozen donor declarations used them to determine frame coverage.
+-# Keep this narrow semantic projection here until those unowned declarations
+-# are joined; a declaration present in the V3 manifest always takes priority.
+-_COVERAGE_COMPAT = {
+-    "am-snap-plate": {"coverage": "picture", "background_unless": ["asset", "params.src"]},
+-    "am-footage": {"coverage": "picture"},
+-    "am-presenter": {"coverage": "picture"},
+-}
+-
+-
+-def element_coverage(element_ids: Iterable[str]) -> dict[str, dict]:
+-    """``metadata.coverage`` (+ ``background_unless``) per element id; ``{}`` when an element declares none.
+-
+-    Reads each element's ``element.yaml`` directly (cached per process): loading the whole element
+-    registry cost 2-4 s per CLI process, and check() runs on every edit.
+-    """
+-    return {element_id: _coverage_of(element_id) for element_id in element_ids}
+-
+-
+-def _coverage_of(element_id: str) -> dict:
+-    if element_id in _COVERAGE_CACHE:
+-        return _COVERAGE_CACHE[element_id]
+-    import yaml
+-
+-    found: dict = {}
+-    # Receiving V3 packs put renderer-owned manifests under
+-    # ``<pack>/rendering/elements``; older packs use ``<pack>/elements``.
+-    paths = set(_PACKS_ROOT.glob(f"*/elements/**/{element_id}/element.yaml"))
+-    paths.update(_PACKS_ROOT.glob(f"*/rendering/elements/**/{element_id}/element.yaml"))
+-    for path in sorted(paths):
+-        try:
+-            doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+-        except Exception:  # noqa: BLE001 - an unreadable manifest just means "declares nothing"
+-            continue
+-        meta = doc.get("metadata") if isinstance(doc.get("metadata"), Mapping) else {}
+-        if meta.get("coverage") is not None:
+-            found = {"coverage": meta["coverage"]}
+-            if "background_unless" in meta:
+-                found["background_unless"] = list(meta["background_unless"] or [])
+-        break
+-    if not found and element_id in _COVERAGE_COMPAT:
+-        found = dict(_COVERAGE_COMPAT[element_id])
+-    _COVERAGE_CACHE[element_id] = found
+-    return found
+-
+-
+-def _has_value(clip: Mapping[str, Any], path: str) -> bool:
+-    node: Any = clip
+-    for part in path.split("."):
+-        if not isinstance(node, Mapping) or part not in node:
+-            return False
+-        node = node[part]
+-    return node is not None and node != ""
+-
+-
+-def role_of(clip: Mapping[str, Any], track: Any, elements: Mapping[str, Mapping[str, Any]]) -> str:
+-    """picture | background | content | none, from the element's declared coverage, else the track convention."""
+-    meta = elements.get(clip.get("clipType")) or {}
+-    coverage = meta.get("coverage")
+-    if coverage is not None:
+-        if coverage == "picture" and "background_unless" in meta:
+-            unless = meta.get("background_unless") or []
+-            if not any(_has_value(clip, path) for path in unless):
+-                return "background"
+-        return str(coverage)
+-    track_id = track if isinstance(track, str) else (track or {}).get("id")
+-    return "picture" if track_id == "plate" else "content"
+-
+-
+-# ---------------------------------------------------------------- building the layers
+-
+-
+-def _address(clip: Mapping[str, Any]) -> str:
+-    app = read_app(clip)  # dual read: app.astrid, else the flat legacy keys
+-    cut, layer = app.get("cut"), app.get("layer")
+-    if cut and layer:
+-        return f"{cut}.{layer}"
+-    return str(clip.get("id", "")).split(":")[-1]
+-
+-
+-def _frames(seconds: Any, fps: float) -> int:
+-    """Math.round(seconds * fps), the composition's secondsToFrames."""
+-    return math.floor(float(seconds) * fps + 0.5)
+-
+-
+-def _effect_seconds(clip: Mapping[str, Any], name: str) -> float | None:
+-    effects = clip.get("effects")
+-    raw: Any = None
+-    if isinstance(effects, Mapping):
+-        raw = effects.get(name)
+-    elif isinstance(effects, list):
+-        raw = next(
+-            (e[name] for e in effects if isinstance(e, Mapping) and _is_num(e.get(name))),
+-            None,
+-        )
+-    return float(raw) if _is_num(raw) and math.isfinite(float(raw)) and float(raw) > 0 else None
+-
+-
+-def _is_num(value: Any) -> bool:
+-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+-
+-
+-def _clamped(x: float, x0: float, x1: float, y0: float, y1: float) -> float:
+-    if x <= x0:
+-        return y0
+-    if x >= x1:
+-        return y1
+-    return y0 + (x - x0) / (x1 - x0) * (y1 - y0)
+-
+-
+-def layout_bounds(clip: Mapping[str, Any], canvas_w: float, canvas_h: float):
+-    """(bounds, source): no layout fields -> the canvas ("full"); else the declared rectangle."""
+-    params = clip.get("params") or {}
+-    src: dict[str, Any] = {}
+-    for key in LAYOUT_KEYS:
+-        if key in clip:
+-            src[key] = clip[key]
+-        elif isinstance(params, Mapping) and key in params:
+-            src[key] = params[key]
+-    if not src:
+-        return (0.0, 0.0, canvas_w, canvas_h), "full"
+-    try:
+-        x = float(src.get("x", 0))
+-        y = float(src.get("y", 0))
+-        scale = float(src.get("scale", 1))
+-        width = float(src.get("width", canvas_w)) * scale
+-        height = float(src.get("height", canvas_h)) * scale
+-    except (TypeError, ValueError):
+-        return None, "unknown"
+-    values = (x, y, width, height)
+-    if not all(math.isfinite(v) for v in values):
+-        return None, "unknown"
+-    return (x, y, x + width, y + height), "declared"
+-
+-
+-_layout_bounds = layout_bounds  # internal compatibility for existing callers
+-
+-
+-def _covers_canvas(bounds, canvas_w: float, canvas_h: float) -> bool:
+-    if bounds is None:
+-        return False
+-    x0, y0, x1, y1 = bounds
+-    tol = FULL_FRAME_TOLERANCE
+-    return x0 <= tol and y0 <= tol and x1 >= canvas_w - tol and y1 >= canvas_h - tol
+-
+-
+-def _is_cropped(clip: Mapping[str, Any]) -> bool:
+-    for name in CROP_FIELDS:
+-        value = clip_fields.read(clip, name)
+-        if _is_num(value) and float(value) > 0:
+-            return True
+-    return False
+-
+-
+-def _animation_frames(value: Mapping[str, Any], fps: float) -> int:
+-    duration = value.get("duration")
+-    if not _is_num(duration):
+-        return DEFAULT_ANIMATION_FRAMES
+-    return max(1, _frames(duration, fps))
+-
+-
+-def _build(config: Mapping[str, Any], fps: float, canvas: Mapping[str, Any], elements: Mapping[str, Any]) -> list[_Layer]:
+-    canvas_w = float(canvas["width"])
+-    canvas_h = float(canvas["height"])
+-    tracks = list(config.get("tracks") or [])
+-    track_index: dict[Any, int] = {}
+-    track_by_id: dict[Any, Mapping[str, Any]] = {}
+-    for index, track in enumerate(tracks):
+-        track_index.setdefault(track.get("id"), index)
+-        track_by_id.setdefault(track.get("id"), track)
+-
+-    clips = list(config.get("clips") or [])
+-    listed: list[tuple[int, int, Mapping[str, Any], Mapping[str, Any], str, int, int]] = []
+-    for position, clip in enumerate(clips):
+-        track = track_by_id.get(clip.get("track")) or {}
+-        if track.get("kind") == "audio":
+-            continue
+-        role = role_of(clip, track, elements)
+-        if role == "none":
+-            continue
+-        listed.append((
+-            track_index.get(clip.get("track"), len(tracks)), -position, clip, track, role,
+-            clip_start_frame(clip, fps), clip_end_frame(clip, fps),
+-        ))
+-    listed.sort(key=lambda item: (item[0], item[1]))
+-
+-    # Same-track adjacency, as the composition's transition planner: a transition needs a clip that starts
+-    # within a frame of its end (the last clip of a track has none, so no dip there).
+-    starts_by_track: dict[Any, list[int]] = {}
+-    for item in listed:
+-        starts_by_track.setdefault(item[2].get("track"), []).append(item[5])
+-
+-    layers: list[_Layer] = []
+-    for z, (_, _, clip, track, role, start, end) in enumerate(listed):
+-        opacity = clip_fields.read(clip, "opacity")
+-        track_opacity = track.get("opacity", 1)
+-        layer = _Layer(
+-            clip_id=str(clip.get("id", "")),
+-            address=_address(clip),
+-            track=str(clip.get("track", "")),
+-            z=z,
+-            role=role,
+-            start=start,
+-            end=end,
+-            base_opacity=float(opacity if _is_num(opacity) else 1) * float(track_opacity),
+-        )
+-        picture = role == "picture"
+-
+-        for name, edge in (("fade_in", "in"), ("fade_out", "out")):
+-            seconds = _effect_seconds(clip, name)
+-            frames = _frames(seconds, fps) if seconds is not None else 0
+-            if frames > 0:
+-                if edge == "in":
+-                    layer.ramps.append((start, start + frames, 0.0, 1.0))
+-                    if picture:
+-                        layer.dips.append((start, start + frames))
+-                else:
+-                    layer.ramps.append((end - frames, end, 1.0, 0.0))
+-                    if picture:
+-                        layer.dips.append((end - frames, end))
+-
+-        entrance = clip_fields.read(clip, "entrance")
+-        if isinstance(entrance, Mapping) and isinstance(entrance.get("type"), str):
+-            frames = _animation_frames(entrance, fps)
+-            if entrance["type"].startswith("fade"):
+-                layer.ramps.append((start, start + frames, 0.0, 1.0))
+-                if picture:
+-                    layer.dips.append((start, start + frames))
+-            else:
+-                layer.blocks.append((start, start + frames))
+-                if picture:  # a declared entrance (scale-in, slide): the uncovered frames are intended
+-                    layer.dips.append((start, start + frames))
+-
+-        exit_ = clip_fields.read(clip, "exit")
+-        if isinstance(exit_, Mapping) and isinstance(exit_.get("type"), str):
+-            frames = _animation_frames(exit_, fps)
+-            if exit_["type"].startswith("fade"):
+-                layer.ramps.append((end - frames, end, 1.0, 0.0))
+-                if picture:
+-                    layer.dips.append((end - frames, end))
+-            else:
+-                layer.blocks.append((end - frames, end))
+-                if picture:  # a declared exit animation: intended, not a tear
+-                    layer.dips.append((end - frames, end))
+-
+-        transition = clip_fields.read(clip, "transition")
+-        if isinstance(transition, Mapping) and transition.get("id") in FADE_TRANSITION_IDS:
+-            has_next = any(end - 1 <= s <= end for s in starts_by_track.get(clip.get("track"), []) if s != start)
+-            if has_next and clip.get("clipType") != "effect-layer":
+-                frames = transition.get("durationFrames")
+-                width = int(frames) if _is_num(frames) and int(frames) > 0 else DEFAULT_TRANSITION_FRAMES
+-                layer.dips.append((end - width, end))
+-
+-        layer.bounds, layer.bounds_source = layout_bounds(clip, canvas_w, canvas_h)
+-        layer.static_full = (
+-            role in ("picture", "background")
+-            and _covers_canvas(layer.bounds, canvas_w, canvas_h)
+-            and not _is_cropped(clip)
+-        )
+-        layers.append(layer)
+-    return layers
+-
+-
+-# ---------------------------------------------------------------- per-frame evaluation
+-
+-
+-def _opacity(layer: _Layer, frame: int) -> float:
+-    value = layer.base_opacity
+-    for lo, hi, y0, y1 in layer.ramps:
+-        value *= _clamped(frame, lo, hi, y0, y1)
+-    return value
+-
+-
+-def _in_any(windows: list[tuple[int, int]], frame: int) -> bool:
+-    return any(lo <= frame < hi for lo, hi in windows)
+-
+-
+-def _visible(layer: _Layer, frame: int) -> Visible:
+-    return Visible(
+-        clip_id=layer.clip_id,
+-        address=layer.address,
+-        track=layer.track,
+-        z=layer.z,
+-        role=layer.role,
+-        opacity=_opacity(layer, frame),
+-        bounds=layer.bounds,
+-        bounds_source=layer.bounds_source,
+-        full_frame=layer.static_full and not _in_any(layer.blocks, frame),
+-    )
+-
+-
+-def visible_at(config, frame, fps, canvas, elements) -> list[Visible]:
+-    """Every listed layer on screen at ``frame``, top first (z ascending)."""
+-    return [
+-        _visible(layer, frame)
+-        for layer in _build(config, fps, canvas, elements)
+-        if layer.start <= frame < layer.end
+-    ]
+-
+-
+-def _intersects_canvas(bounds, canvas_w: float, canvas_h: float) -> bool:
+-    if bounds is None:
+-        return True  # unknown: do not call it empty
+-    x0, y0, x1, y1 = bounds
+-    return x1 > 0 and y1 > 0 and x0 < canvas_w and y0 < canvas_h
+-
+-
+-def _classify(items: list[tuple[_Layer, Visible]], frame: int, canvas_w: float, canvas_h: float):
+-    """(cls, content, addresses) for one frame, given the visible layers (z order)."""
+-    visible = [v for _, v in items]
+-    full = sorted((v.opacity for v in visible if v.full_frame), reverse=True)
+-    covered = bool(full) and (
+-        full[0] >= COVER_OPACITY or (len(full) > 1 and full[0] + full[1] >= COVER_OPACITY)
+-    )
+-    addresses = tuple(v.address for v in visible)
+-    if covered:
+-        has_content = any(
+-            v.role in ("picture", "content")
+-            and v.opacity >= CONTENT_OPACITY
+-            and _intersects_canvas(v.bounds, canvas_w, canvas_h)
+-            for v in visible
+-        )
+-        return "COVERED", ("CONTENT" if has_content else "EMPTY"), addresses
+-    if any(_in_any(layer.dips, frame) for layer, _ in items):
+-        return "DIP", None, addresses
+-    return "GAP", None, addresses
+-
+-
+-def _change_points(layers: list[_Layer], lo: int, hi: int) -> set[int]:
+-    points = {lo, hi}
+-    for layer in layers:
+-        for p in (layer.start, layer.end):
+-            points.add(p)
+-        for a, b, _, _ in layer.ramps:
+-            points.update(range(a, b + 1))  # per-frame inside a ramp (the opacity moves every frame)
+-        for a, b in layer.blocks + layer.dips:
+-            points.add(a)
+-            points.add(b)
+-    return {p for p in points if lo <= p <= hi}
+-
+-
+-def coverage(config, fps, canvas, elements, *, start_frame=0, end_frame=None) -> list[Span]:
+-    """Run-length encoded per-frame coverage over ``[start_frame, end_frame)``."""
+-    layers = _build(config, fps, canvas, elements)
+-    if end_frame is None:  # the film's length: every clip counts, audio included (duration.py)
+-        end_frame = max((clip_end_frame(clip, fps) for clip in config.get("clips") or []), default=0)
+-    if end_frame <= start_frame:
+-        return []
+-    canvas_w = float(canvas["width"])
+-    canvas_h = float(canvas["height"])
+-    points = sorted(_change_points(layers, start_frame, end_frame))
+-    pending = sorted(layers, key=lambda layer: layer.start)
+-    nxt = 0
+-    active: list[_Layer] = []
+-    spans: list[Span] = []
+-    for index in range(len(points) - 1):
+-        frame = points[index]
+-        seg_end = points[index + 1]
+-        while nxt < len(pending) and pending[nxt].start <= frame:
+-            active.append(pending[nxt])
+-            nxt += 1
+-        active = [layer for layer in active if layer.end > frame]
+-        items = sorted(((layer, _visible(layer, frame)) for layer in active), key=lambda item: item[1].z)
+-        cls, content, addresses = _classify(items, frame, canvas_w, canvas_h)
+-        if spans and spans[-1].end_frame == frame and spans[-1].cls == cls and spans[-1].content == content:
+-            last = spans[-1]
+-            spans[-1] = Span(last.start_frame, seg_end, cls, content, last.clips)
+-        else:
+-            spans.append(Span(frame, seg_end, cls, content, addresses))
+-    return spans
+diff --git a/astrid/core/timeline/scene_answers.py b/astrid/core/timeline/scene_answers.py
+new file mode 100644
+--- /dev/null
++++ b/astrid/core/timeline/scene_answers.py
+@@ -0,0 +1,151 @@
++"""Read-only batches against the admitted Composition public scene evaluator."""
++
++from __future__ import annotations
++
++import json
++import os
++import subprocess
++import sys
++from collections.abc import Iterable, Mapping
++from dataclasses import dataclass
++from typing import Any
++
++
++def remotion_runtime_status(*args, **kwargs):
++    """Resolve renderer admission only when a native scene query is requested."""
++    from astrid.core.rendering.remotion_runtime import remotion_runtime_status as _status
++
++    return _status(*args, **kwargs)
++
++
++def probe_context(*args, **kwargs):
++    """Resolve renderer environment probing only when a native scene query is requested."""
++    from astrid.core.rendering.remotion_runtime import probe_context as _probe
++
++    return _probe(*args, **kwargs)
++
++
++class SceneQueryUnavailable(RuntimeError):
++    """No scene answer was obtained; this is different from an empty scene."""
++
++
++def frames_at(scene: Mapping[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
++    """Query resolved visual ``SceneTrackInput`` records, never authored timelines.
++
++    ``scene`` contains tracks, assets, fps, width and height, with optional roles
++    and element IDs. The host supplies bottom-to-top painter order, clips sorted
++    by at, and one resolved Composition TransitionSpec (or null) per adjacent
++    pair, as in prepareCompositionScene. Compiled clips/IDs pass through intact.
++    No component capabilities, modifier declarations or media alpha evidence are
++    synthesized here. Canonical UNKNOWN findings pass through unchanged.
++    """
++    return _query({"scene": dict(scene)}, frames)
++
++
++def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
++    requested = list(frames)
++    return _run_query({**payload, "frames": requested}, expected_count=len(requested),
++                      expected_frames=requested)
++
++
++def _run_query(payload: dict[str, Any], *, expected_count: int,
++               expected_frames: list[int] | None = None) -> list[dict[str, Any]]:
++    try:
++        from astrid.core.rendering.remotion_runtime import RemotionValidationError
++    except ImportError as exc:
++        raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
++
++    try:
++        runtime = remotion_runtime_status(require_explicit_project=True)
++        if not runtime.available or runtime.project_dir is None or runtime.node_executable is None:
++            raise SceneQueryUnavailable(runtime.reason or "scene runtime unavailable")
++        helper = (runtime.project_dir / "scene-query.mjs").resolve(strict=True)
++        helper.relative_to(runtime.project_dir.resolve())
++        if not helper.is_file():
++            raise SceneQueryUnavailable("scene query helper is not a file")
++        if "props" in payload:
++            for name in ("native-scene.mjs", "src/host-scene.ts"):
++                entry = (runtime.project_dir / name).resolve(strict=True)
++                entry.relative_to(runtime.project_dir.resolve())
++                if not entry.is_file():
++                    raise SceneQueryUnavailable(f"scene host entry is not a file: {name}")
++        environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
++        # Status validated this selector as part of the renderer's registry
++        # context. The alias resolver must see that same admitted pack set.
++        if "ASTRID_PACKS_PATH" in os.environ:
++            environment["ASTRID_PACKS_PATH"] = os.environ["ASTRID_PACKS_PATH"]
++        result = subprocess.run(
++            [str(runtime.node_executable), str(helper), str(runtime.project_dir)],
++            input=json.dumps(payload, allow_nan=False),
++            cwd=runtime.project_dir, env=environment, capture_output=True, text=True, timeout=30,
++        )
++        if result.returncode:
++            raise SceneQueryUnavailable(result.stderr.strip() or "scene query failed")
++        answers = json.loads(result.stdout)
++        if (not isinstance(answers, list) or len(answers) != expected_count
++                or any(not isinstance(answer, dict) for answer in answers)
++                or (expected_frames is not None
++                    and any(answer.get("frame") != frame
++                           for answer, frame in zip(answers, expected_frames)))):
++            raise SceneQueryUnavailable("invalid scene query response")
++        return answers
++    except (OSError, ValueError, TypeError, subprocess.SubprocessError, RemotionValidationError) as exc:
++        raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
++
++
++@dataclass(frozen=True)
++class Span:
++    start_frame: int
++    end_frame: int
++    cls: str
++    content: str | None
++    clips: tuple[str, ...]
++    findings: tuple[str, ...] = ()
++
++
++def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
++                   frames: Iterable[int]) -> list[dict[str, Any]]:
++    """Prepare exact Root props with the admitted host's complete element maps.
++
++    The caller retains the loaded revision, registry and runtime-resolved theme.
++    Missing inputs are unavailable, never an empty registry or a config theme slug.
++    """
++    from astrid.core.timeline.scene_roles import element_coverage, role_of
++
++    timeline = props.get("timeline")
++    if (not isinstance(timeline, Mapping) or not isinstance(timeline.get("tracks"), list)
++            or not isinstance(timeline.get("clips"), list)
++            or not isinstance(props.get("assets"), Mapping)
++            or not isinstance(props["assets"].get("assets"), Mapping)
++            or not isinstance(props.get("theme"), Mapping)
++            or not isinstance(props["theme"].get("visual"), Mapping)):
++        raise SceneQueryUnavailable("exact Root timeline, assets registry and resolved runtime theme required")
++    clips = timeline["clips"]
++    if any(not isinstance(c, Mapping) or not isinstance(c.get("id"), str) for c in clips):
++        raise SceneQueryUnavailable("scene requires compiled clips with their exact IDs")
++    declarations = element_coverage({c.get("clipType", "") for c in clips})
++    roles = {c["id"]: role_of(c, c.get("track"), declarations) for c in clips}
++    return _query({"props": dict(props), "basis": dict(basis), "roles": roles}, frames)
++
++
++def coverage(props: Mapping[str, Any], basis: Mapping[str, Any], *,
++             start_frame: int, end_frame: int) -> list[Span]:
++    """Run-length encode one batch of public frame answers, including UNKNOWN."""
++    return spans_from_frames(host_frames_at(props, basis, range(start_frame, end_frame)))
++
++
++def spans_from_frames(answers: Iterable[Mapping[str, Any]]) -> list[Span]:
++    spans: list[Span] = []
++    for answer in answers:
++        frame = answer["frame"]
++        cls, content = answer["coverage"], answer["content"]
++        clips = tuple(layer["clipId"] for layer in answer["layers"] if layer["visible"] is not False)
++        findings = tuple(dict.fromkeys(f["code"] for f in answer["findings"]))
++        if (spans and spans[-1].end_frame == frame
++                and (spans[-1].cls, spans[-1].content, spans[-1].clips, spans[-1].findings)
++                == (cls, content, clips, findings)):
++            previous = spans[-1]
++            spans[-1] = Span(previous.start_frame, frame + 1, cls, content, clips, findings)
++        else:
++            spans.append(Span(frame, frame + 1, cls, content, clips, findings))
++    return spans
+diff --git a/astrid/core/timeline/scene_roles.py b/astrid/core/timeline/scene_roles.py
+new file mode 100644
+--- /dev/null
++++ b/astrid/core/timeline/scene_roles.py
+@@ -0,0 +1,88 @@
++"""Read-only role and address declarations; no scene geometry or visibility."""
++
++from __future__ import annotations
++
++from collections.abc import Iterable, Mapping
++from pathlib import Path
++from typing import Any
++
++from astrid.core.timeline.astrid_ns import read_app
++
++_PACKS_ROOT = Path(__file__).resolve().parents[2] / "packs"
++_COVERAGE_CACHE: dict[str, dict] = {}
++# Sealed S0's V3 rendering-element declarations omit these metadata values,
++# though the frozen donor declarations used them to determine frame coverage.
++# Keep this narrow semantic projection here until those unowned declarations
++# are joined; a declaration present in the V3 manifest always takes priority.
++_COVERAGE_COMPAT = {
++    "am-snap-plate": {"coverage": "picture", "background_unless": ["asset", "params.src"]},
++    "am-footage": {"coverage": "picture"},
++    "am-presenter": {"coverage": "picture"},
++}
++
++
++def element_coverage(element_ids: Iterable[str]) -> dict[str, dict]:
++    """``metadata.coverage`` (+ ``background_unless``) per element id; ``{}`` when an element declares none.
++
++    Reads each element's ``element.yaml`` directly (cached per process): loading the whole element
++    registry cost 2-4 s per CLI process, and check() runs on every edit.
++    """
++    return {element_id: _coverage_of(element_id) for element_id in element_ids}
++
++
++def _coverage_of(element_id: str) -> dict:
++    if element_id in _COVERAGE_CACHE:
++        return _COVERAGE_CACHE[element_id]
++    import yaml
++
++    found: dict = {}
++    # Receiving V3 packs put renderer-owned manifests under
++    # ``<pack>/rendering/elements``; older packs use ``<pack>/elements``.
++    paths = set(_PACKS_ROOT.glob(f"*/elements/**/{element_id}/element.yaml"))
++    paths.update(_PACKS_ROOT.glob(f"*/rendering/elements/**/{element_id}/element.yaml"))
++    for path in sorted(paths):
++        try:
++            doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
++        except Exception:  # noqa: BLE001 - an unreadable manifest just means "declares nothing"
++            continue
++        meta = doc.get("metadata") if isinstance(doc.get("metadata"), Mapping) else {}
++        if meta.get("coverage") is not None:
++            found = {"coverage": meta["coverage"]}
++            if "background_unless" in meta:
++                found["background_unless"] = list(meta["background_unless"] or [])
++        break
++    if not found and element_id in _COVERAGE_COMPAT:
++        found = dict(_COVERAGE_COMPAT[element_id])
++    _COVERAGE_CACHE[element_id] = found
++    return found
++
++
++def _has_value(clip: Mapping[str, Any], path: str) -> bool:
++    node: Any = clip
++    for part in path.split("."):
++        if not isinstance(node, Mapping) or part not in node:
++            return False
++        node = node[part]
++    return node is not None and node != ""
++
++
++def role_of(clip: Mapping[str, Any], track: Any, elements: Mapping[str, Mapping[str, Any]]) -> str:
++    """picture | background | content | none, from the element's declared coverage, else the track convention."""
++    meta = elements.get(clip.get("clipType")) or {}
++    coverage = meta.get("coverage")
++    if coverage is not None:
++        if coverage == "picture" and "background_unless" in meta:
++            unless = meta.get("background_unless") or []
++            if not any(_has_value(clip, path) for path in unless):
++                return "background"
++        return str(coverage)
++    track_id = track if isinstance(track, str) else (track or {}).get("id")
++    return "picture" if track_id == "plate" else "content"
++
++
++def _address(clip: Mapping[str, Any]) -> str:
++    app = read_app(clip)  # dual read: app.astrid, else the flat legacy keys
++    cut, layer = app.get("cut"), app.get("layer")
++    if cut and layer:
++        return f"{cut}.{layer}"
++    return str(clip.get("id", "")).split(":")[-1]
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py b/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
+--- a/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
+@@ -3,6 +3,7 @@
+ 
+ import math
+ from collections.abc import Mapping, Sequence
++from dataclasses import dataclass
+ from typing import Any
+ 
+ MIN_OPACITY = 0.05
+@@ -12,9 +13,10 @@
+ DEFAULT_CANVAS = (1920, 1080)
+ 
+ 
+-def canvas_of(config: Mapping[str, Any]) -> dict[str, int]:
++def canvas_of(config: Mapping[str, Any], theme: Mapping[str, Any] | None = None) -> dict[str, int]:
+     """Return the declared visual canvas, defaulting to 1920 by 1080."""
+-    canvas = ((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {}
++    canvas = (((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas")
++              or ((theme or {}).get("visual") or {}).get("canvas") or {})
+     try:
+         width, height = int(canvas.get("width") or DEFAULT_CANVAS[0]), int(canvas.get("height") or DEFAULT_CANVAS[1])
+     except (TypeError, ValueError):
+@@ -22,20 +24,125 @@
+     return {"width": width, "height": height}
+ 
+ 
++@dataclass(frozen=True)
++class Visible:
++    clip_id: str
++    address: str
++    track: str
++    z: int
++    role: str
++    opacity: float | None
++    bounds: tuple[float, float, float, float] | None
++    bounds_source: str
++    full_frame: bool
++    status: str = "known"
++    message: str = ""
++
++
++def labels_batch(config: Mapping[str, Any], frames: Sequence[int], fps: float,
++                 canvas: Mapping[str, int] | None = None, *, assets=None, theme=None) -> dict[int, list[Visible]]:
++    """One native query for a set of frames; missing render inputs stay explicit."""
++    from astrid.core.timeline import scene_answers
++
++    requested = list(dict.fromkeys(frames))
++    if not requested:
++        return {}
++    declared_canvas = (((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {})
++    theme_canvas = ((theme or {}).get("visual") or {}).get("canvas") or {}
++    basis = {**dict(canvas or declared_canvas or theme_canvas), "fps": fps}
++    try:
++        answers = scene_answers.host_frames_at({"timeline": config, "assets": assets, "theme": theme}, basis, requested)
++    except scene_answers.SceneQueryUnavailable as exc:
++        return unavailable_labels(config, requested, fps, str(exc))
++    return labels_from_frames(config, answers)
++
++
++def unavailable_labels(config: Mapping[str, Any], frames: Sequence[int], fps: float,
++                       reason: str) -> dict[int, list[Visible]]:
++    """Structural address diagnostics, never confirmed visibility or a new query."""
++    if not frames:
++        return {}
++
++    from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
++    from astrid.core.timeline.scene_roles import _address, element_coverage, role_of
++
++    clips = {c["id"]: c for c in config.get("clips") or []}
++    declarations = element_coverage({c.get("clipType", "") for c in clips.values()})
++    result = {}
++    tracks = {t["id"]: (i, t) for i, t in enumerate(config.get("tracks") or [])}
++    ordered = sorted(reversed(list(clips.values())), key=lambda c: tracks.get(c.get("track"), (len(tracks), {}))[0])
++    ordered = [(i, c) for i, c in enumerate(ordered)
++               if tracks.get(c.get("track"), (0, {}))[1].get("kind") != "audio"
++               and role_of(c, c.get("track"), declarations) != "none"]
++    for frame in frames:
++        active = [(i, c) for i, c in ordered if clip_start_frame(c, fps) <= frame < clip_end_frame(c, fps)]
++        result[frame] = [Visible(c["id"], _address(c), str(c.get("track", "")), i,
++                                 role_of(c, c.get("track"), declarations), None, None, "unknown", False,
++                                 "unavailable", reason) for i, c in active]
++        if not active:
++            result[frame] = [Visible("", "Scene unavailable", "", 0, "content", None, None,
++                                     "unknown", False, "unavailable", reason)]
++    return result
++
++
++def labels_from_frames(config: Mapping[str, Any], answers: Sequence[Mapping[str, Any]]) -> dict[int, list[Visible]]:
++    """Project labels from the same public rows retained by a fresh capture."""
++    from astrid.core.timeline.scene_roles import _address
++
++    clips = {c["id"]: c for c in config.get("clips") or []}
++    result = {}
++    for answer in answers:
++        layers = []
++        for layer in reversed(answer["layers"]):
++            if layer["visible"] is False or layer["role"] == "none":
++                continue
++            rect = layer["bounds"].get("rect") if layer["bounds"]["status"] == "known" else None
++            bounds = None if rect is None else (rect["x"], rect["y"], rect["x"] + rect["width"], rect["y"] + rect["height"])
++            findings = tuple(finding.get("reason", "") for finding in layer.get("findings", ())
++                             if finding.get("reason"))
++            status = ("unknown" if layer["visible"] == "unknown" or layer.get("coverage") == "unknown"
++                      or layer["bounds"]["status"] != "known" else "known")
++            layers.append(Visible(layer["clipId"], _address(clips[layer["clipId"]]), layer["track"], layer["z"],
++                                  layer["role"], layer["opacity"], bounds,
++                                  "full" if layer["fullFrame"] else "declared" if bounds else "unknown",
++                                  layer["fullFrame"], status, "; ".join(dict.fromkeys(findings))))
++        result[answer["frame"]] = layers
++    return result
++
++
++def snapshot_labels(snapshot: Mapping[str, Any], frames: Sequence[int], *, captured=None) -> dict[int, list[Visible]]:
++    """Keep the caller's frozen config, registry and resolved theme together.
++
++    Older snapshots do not retain the runtime theme. Do not substitute their
++    historical config slug, the current project theme, or an empty registry.
++    """
++    from fractions import Fraction
++
++    captured = captured or {}
++    missing = [frame for frame in frames if frame not in captured]
++    result = labels_batch(snapshot.get("config") or {}, missing, float(Fraction(*snapshot["fps_rational"])),
++                          assets=snapshot.get("registry"), theme=snapshot.get("theme"))
++    result.update({frame: captured[frame] for frame in frames if frame in captured})
++    return result
++
++
+ def labels_for(config: Mapping[str, Any], frame: int, fps: float,
+-               canvas: Mapping[str, int] | None = None) -> list:
+-    """Visible timeline clips at a frame, top first, using the canonical on-screen model."""
+-    from astrid.core.timeline.onscreen import element_coverage, visible_at
+-
+-    types = {str(clip.get("clipType")) for clip in config.get("clips") or ()
+-             if isinstance(clip, Mapping) and clip.get("clipType")}
+-    return visible_at(config, frame, fps, dict(canvas or canvas_of(config)), element_coverage(types))
++               canvas: Mapping[str, int] | None = None, *, assets=None, theme=None) -> list[Visible]:
++    """Layer addresses and honest known/unknown visibility at one exact frame."""
++    return labels_batch(config, [frame], fps, canvas, assets=assets, theme=theme)[frame]
+ 
+ 
+ def addresses_at(config: Mapping[str, Any], frame: int, fps: float,
+-                 canvas: Mapping[str, int] | None = None) -> list[str]:
+-    """Visible addresses at or above the canonical 5 percent opacity threshold, top first."""
+-    return [item.address for item in labels_for(config, frame, fps, canvas) if item.opacity >= MIN_OPACITY]
++                 canvas: Mapping[str, int] | None = None, *, assets=None, theme=None) -> list[str]:
++    """Candidate addresses, top first; unknown visibility remains advisory."""
++    return [item.address for item in labels_for(config, frame, fps, canvas, assets=assets, theme=theme)
++            if item.clip_id and (item.opacity is None or item.opacity >= MIN_OPACITY)]
++
++
++def _caption(item: Visible) -> str:
++    return (item.address + (" · scene unavailable" if item.status == "unavailable" else
++                           " · visibility unknown" if item.status == "unknown" else "")
++            + (" · opacity unknown" if item.opacity is None else ""))
+ 
+ 
+ def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
+@@ -49,7 +156,7 @@
+     draw = ImageDraw.Draw(out)
+     sx = float(tile_size[0]) / float(canvas["width"])
+     sy = float(tile_size[1]) / float(canvas["height"])
+-    shown = sorted((item for item in layers if item.opacity >= MIN_OPACITY), key=lambda item: item.z)
++    shown = sorted((item for item in layers if item.opacity is None or item.opacity >= MIN_OPACITY), key=lambda item: item.z)
+     boxed_all = [item for item in shown if item.bounds_source != "full" and item.bounds is not None]
+     legend = [item for item in shown if item.bounds_source == "full" or item.bounds is None]
+     boxed = boxed_all[:max_labels]
+@@ -61,8 +168,8 @@
+         draw.rectangle(rect, outline=colour, width=2)
+         tx = max(0, min(rect[0], float(tile_size[0]) - 4))
+         ty = rect[1] - size - 6 if rect[1] - size - 6 >= 0 else rect[1] + 2
+-        _backed_text(draw, (tx, ty), item.address, size, colour, text_width, draw_text)
+-    lines = [(item.address + f" ({item.role})" + ("" if item.bounds is not None else " bounds unknown"),
++        _backed_text(draw, (tx, ty), _caption(item), size, colour, text_width, draw_text)
++    lines = [(_caption(item) + f" ({item.role})" + ("" if item.bounds is not None else " bounds unknown"),
+               ROLE_COLOURS.get(item.role, DEFAULT_COLOUR)) for item in legend]
+     hidden = len(boxed_all) - len(boxed)
+     if hidden > 0:
+@@ -72,16 +179,16 @@
+     return out
+ 
+ 
+-def overlay_labels_frame(image, config: Mapping[str, Any], frame: int, fps: float):
++def overlay_labels_frame(image, config: Mapping[str, Any], frame: int, fps: float, *, layers=None, canvas=None):
+     """Draw the visible addresses for one exact decoded frame on a display copy."""
+-    canvas = canvas_of(config)
+-    return draw_labels(image, labels_for(config, frame, fps, canvas), canvas=canvas, tile_size=image.size)
++    canvas = canvas if canvas is not None else canvas_of(config)
++    return draw_labels(image, layers if layers is not None else labels_for(config, frame, fps), canvas=canvas, tile_size=image.size)
+ 
+ 
+-def overlay_labels_at(image, config: Mapping[str, Any], seconds: float, fps: float):
++def overlay_labels_at(image, config: Mapping[str, Any], seconds: float, fps: float, *, layers=None, canvas=None):
+     """Draw the visible addresses for a contact tile using timeline frame rounding."""
+     frame = int(math.floor(float(seconds) * float(fps) + 0.5))
+-    return overlay_labels_frame(image, config, frame, fps)
++    return overlay_labels_frame(image, config, frame, fps, layers=layers, canvas=canvas)
+ 
+ 
+ def _backed_text(draw, xy, text: str, size: int, colour: str, text_width, draw_text) -> None:
+diff --git a/astrid/sdk/timeline/check.py b/astrid/sdk/timeline/check.py
+--- a/astrid/sdk/timeline/check.py
++++ b/astrid/sdk/timeline/check.py
+@@ -4,9 +4,9 @@
+ import copy
+ import dataclasses
+ import json
+-import math
+ import re
+ from dataclasses import dataclass
++from types import SimpleNamespace
+ from typing import Any, Iterable, Mapping
+ 
+ from astrid.core.timeline import moments as mo
+@@ -44,13 +44,13 @@
+ 
+ 
+ def element_coverage_cached(element_ids: Iterable[str]) -> dict[str, dict]:
+-    """``onscreen.element_coverage`` read once per process per element (the registry load is the cost)."""
+-    from astrid.core.timeline import onscreen
++    """``scene_roles.element_coverage`` read once per process per element (the registry load is the cost)."""
++    from astrid.core.timeline import scene_roles
+ 
+     ids = list(element_ids)
+     missing = sorted({i for i in ids if i not in _ELEMENT_COVERAGE})
+     if missing:
+-        _ELEMENT_COVERAGE.update(onscreen.element_coverage(missing))
++        _ELEMENT_COVERAGE.update(scene_roles.element_coverage(missing))
+     return {i: _ELEMENT_COVERAGE[i] for i in ids}
+ 
+ 
+@@ -78,33 +78,14 @@
+                            + (f"; {note}" if "outside" in note else "") + f" (size {fits:g} fits; or move x/width)")
+         return out
+ 
+-    def _on_screen(self) -> list:
+-        """Every frame of the film, covered or not: ``onscreen.coverage`` over the checkout's visual clips in
+-        timeline seconds (the render config's shape), tracks top first. Run per check, not per clip."""
+-        from astrid.core.timeline import onscreen
+-
+-        tracks: list[dict[str, Any]] = []
+-        seen: set[Any] = set()
+-        for sid in self._shot_ids():
+-            for track in self._internal(sid).get("tracks") or []:
+-                if track.get("id") not in seen:
+-                    seen.add(track.get("id"))
+-                    tracks.append(dict(track))
+-        clips = []
+-        for clip in self.clips():
+-            if clip.is_audio:
+-                continue
+-            data = dict(clip.data)
+-            data.update({"clipType": clip.element, "track": clip.track, "at": clip.start, "hold": clip.duration,
+-                         "app": {"cut": clip.cut_id, "layer": clip.layer_name}})
+-            clips.append(data)
+-        visual = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
+-                  .get("visual") or {}).get("canvas") or {}
+-        canvas = {"width": visual.get("width", 1920), "height": visual.get("height", 1080)}
+-        elements = element_coverage_cached({c["clipType"] for c in clips})
+-        end_frame = int(round(self.duration * self.fps))
+-        return onscreen.coverage({"tracks": tracks, "clips": clips}, self.fps, canvas, elements,
+-                                 start_frame=0, end_frame=end_frame)
++    def _on_screen(self, answers=None, *, unavailable="exact compiled Root props and resolved runtime theme unavailable") -> list:
++        """Scene findings are advisory; raw checkout clips are not render props."""
++        if answers is None:
++            return [SimpleNamespace(start_frame=0, end_frame=int(round(self.duration * self.fps)),
++                                    cls="UNAVAILABLE", content=None, clips=(), findings=(unavailable,))]
++        from astrid.core.timeline.scene_answers import spans_from_frames
++
++        return spans_from_frames(answers)
+ 
+     def _showing(self, a: float, b: float) -> list[str]:
+         """The addresses of the visual clips that overlap [a, b) in time (what the old picture gap listed)."""
+@@ -128,7 +109,7 @@
+     def picture_gaps(self, spans: list | None = None) -> list[str]:
+         """GAP spans (TRUTH.md §2.4): frames where no picture covers the canvas and no declared fade or dip is
+         under them. The on-screen model decides (element metadata, opacity, bounds), not a list of types.
+-        Black under whatever is left. Blocking: a re-flow must never tear the film. ``spans``: the film's
++        Advisory: scene findings never block a save. ``spans``: the film's
+         on-screen spans when the caller has them (check() computes them once)."""
+         out = []
+         table = self._cut_table()
+@@ -154,9 +135,12 @@
+         return {cid: w for cid, w in windows.items() if w[1] - w[0] > 0}
+ 
+     def empty_cuts(self, spans: list | None = None) -> tuple[list[str], list[str]]:
+-        """(blocking, info) for EMPTY spans: only a background on screen (TRUTH.md §2.4). An EMPTY span covering
+-        at least 90% of a cut's picture span blocks, unless that cut is a deliberate hold (then info). A shorter
+-        one of at least 1.0 s is info."""
++        """(sustained, incidental) advisory EMPTY findings: only a background on screen.
++
++        At least 90% of a cut's picture span is sustained unless deliberately held.
++        Shorter spans of at least 1.0 s and deliberate holds are incidental; neither
++        group blocks check() or saving.
++        """
+         held = {cid for cid, note in self.cut_notes_all().items() if note.get("hold") == "deliberate"}
+         windows = self._picture_windows()
+         fps = self.fps
+@@ -205,57 +189,27 @@
+                            "the render would cut it off; extend its shot's picture or shorten the clip")
+         return out
+ 
+-    def _sprite_problems(self) -> tuple[list[str], list[str]]:
++    def _sprite_problems(self, scene_frames=None, frame_basis=None) -> tuple[list[str], list[str]]:
+         """(blocking, notes) for pixel sprites: canvas bounds, simultaneous scale, and source integrity."""
+-        from astrid.core.timeline import onscreen
+-
+-        canvas = ((((self.bundle.get("parent") or {}).get("config") or {}).get("theme_overrides") or {})
+-                  .get("visual") or {}).get("canvas") or {}
+-        width, height = float(canvas.get("width", 1920)), float(canvas.get("height", 1080))
++        width = float((frame_basis or {}).get("width", 0))
++        height = float((frame_basis or {}).get("height", 0))
+         blocking: list[str] = []
+         notes: list[str] = []
+         sprites = [clip for clip in self.clips() if not clip.is_audio and clip.element == "am-sprite"]
++        # Only public known output bounds support this advisory diagnosis. No
++        # private sprite geometry or guessed dimensions when internals are unknown.
+         for clip in sprites:
+-            params = dict(clip.params)
+-            entry = self._sprite_asset_entry(clip)
+-            resolution = str(entry.get("resolution") or "")
+-            match = re.fullmatch(r"(\d+)x(\d+)", resolution)
+-            if match:
+-                params["width"], params["height"] = map(int, match.groups())
+-                params["scale"] = params.get("scale", 6)
+-            else:
+-                # Without native dimensions, scale cannot meaningfully enlarge the model's canvas fallback.
+-                params.pop("scale", None)
+-            # x/y and their stepped keyframes share the element's declared logical units.
+-            x, y = params.get("x", 0), params.get("y", 0)
+-            step_frames = int(params.get("stepFrames", 2) or 2)
+-            poses = [(0, x, y)]
+-            keyframes = params.get("keyframes") if isinstance(params.get("keyframes"), list) else []
+-            for key in sorted((item for item in keyframes if isinstance(item, Mapping)
+-                               and isinstance(item.get("frame"), (int, float))), key=lambda item: item["frame"]):
+-                x, y = key.get("x", x), key.get("y", y)
+-                effective_frame = math.floor(float(key["frame"]) / step_frames) * step_frames
+-                poses.append((effective_frame, x, y))
+-            # A sprite that runs in from off screen is on canvas for part of its clip: that is
+-            # deliberate. Only a sprite that is never on canvas (every pose outside) is an error.
+-            measured, visible = 0, False
+-            for frame, px_x, px_y in poses:
+-                layout = dict(params)
+-                if px_x is not None:
+-                    layout["x"] = to_canvas(clip.element, "x", px_x)
+-                if px_y is not None:
+-                    layout["y"] = to_canvas(clip.element, "y", px_y)
+-                bounds, _source = onscreen.layout_bounds({"params": layout}, width, height)
+-                if bounds is None:
+-                    continue
+-                measured += 1
+-                x0, y0, x1, y1 = bounds
+-                if not (x1 <= 0 or y1 <= 0 or x0 >= width or y0 >= height):
+-                    visible = True
+-                    break
+-            if measured and not visible:
+-                blocking.append(f"OFFCANVAS {clip.address}: sprite is never inside the {width:g}×{height:g} canvas "
+-                                f"({clip.start:.2f}–{clip.end:.2f} s); move it into frame")
++            layers = [layer for answer in scene_frames or [] for layer in answer["layers"]
++                      if layer["clipId"] == clip.id]
++            if not layers or any(layer["bounds"]["status"] != "known" for layer in layers):
++                continue
++            def outside(layer):
++                rect = layer["bounds"]["rect"]
++                return (rect["x"] + rect["width"] <= 0 or rect["y"] + rect["height"] <= 0
++                        or rect["x"] >= width or rect["y"] >= height)
++            if all(outside(layer) for layer in layers):
++                notes.append(f"OFFCANVAS {clip.address}: sprite is never inside the {width:g}×{height:g} canvas "
++                             f"({clip.start:.2f}–{clip.end:.2f} s); move it into frame")
+ 
+         # scale is the authored pixel-art size. Compare only time-overlapping sprites; equal values
+         # share one art-pixel size even when they come from different sources.
+@@ -518,7 +472,8 @@
+                         out.append(f"{clip.address}.{path.removeprefix('params.')} is {value!r} where a frame number belongs")
+         return out
+ 
+-    def check(self) -> "CheckReport":
++    def check(self, *, render_props: Mapping[str, Any] | None = None,
++              frame_basis: Mapping[str, Any] | None = None) -> "CheckReport":
+         from astrid.sdk.timeline.checkout import Checkout
+         """Validate, say what moved (timeline seconds, against the checked-out head) and lint the changed cuts."""
+         from astrid.sdk.authoring_bundle import validate_authoring_candidate
+@@ -553,17 +508,45 @@
+         blocking += [f"outside {line}" for line in self._outside]
+         blocking += [f"type    {line}" for line in self._type_mismatches()]
+         blocking += [f"beats   {line}" for line in self._stale_beats()]
+-        spans = self._on_screen()  # one pass over the film for the three readers below
+-        blocking += [f"picture {line}" for line in self.picture_gaps(spans)]
+-        empty_blocking, empty_info = self.empty_cuts(spans)
+-        blocking += empty_blocking
++        scene_frames = None
++        unavailable = "exact compiled Root props and resolved runtime theme unavailable"
++        if render_props is not None and frame_basis is not None:
++            from astrid.core.timeline.scene_answers import SceneQueryUnavailable, host_frames_at
++
++            try:
++                if frame_basis.get("fps") != self.fps:
++                    raise SceneQueryUnavailable("render/check frame rates differ")
++                from astrid.core.timeline.duration import timeline_render_duration_frames
++
++                scene_frames = host_frames_at(render_props, frame_basis, range(
++                    timeline_render_duration_frames(render_props["timeline"], self.fps)))
++            except (SceneQueryUnavailable, KeyError, TypeError, ValueError) as exc:
++                unavailable = str(exc)
++        spans = self._on_screen(scene_frames, unavailable=unavailable)
++        if scene_frames is not None:
++            source_metadata = render_props["timeline"].get("metadata") or {}
++            source_revision = source_metadata.get("parent_revision_id") or "unavailable"
++            problems.append(f"scene   supplied render props, revision {source_revision}; advisory, separate from candidate validity")
++        # References come from these exact render props, never the candidate's
++        # current cut table or a newly fetched head.
++        from astrid.core.timeline.scene_roles import _address
++
++        source_clips = {c["id"]: c for c in render_props["timeline"]["clips"]} if scene_frames is not None else {}
++        for span in spans:
++            if span.cls == "COVERED" and span.content == "CONTENT":
++                continue
++            kind = "EMPTY" if span.content == "EMPTY" else "CONTENT UNKNOWN" if span.content == "UNKNOWN" else span.cls
++            references = [_address(source_clips[cid]) for cid in span.clips if cid in source_clips]
++            problems.append(f"scene   {kind} {span.start_frame / self.fps:.3f}–{span.end_frame / self.fps:.3f} s"
++                            + (f" ({', '.join(references)})" if references else "")
++                            + (f": {', '.join(span.findings)}" if span.findings else ""))
+         blocking += [f"length  {line}" for line in self._length_problems()]
+-        sprite_blocking, sprite_notes = self._sprite_problems()
++        sprite_blocking, sprite_notes = self._sprite_problems(scene_frames, frame_basis)
+         blocking += sprite_blocking
+         if blocking:
+             valid = False
+         problems += [f"why     {line}" for line in self._stale_whys()]
+-        problems += empty_info + self.dips(spans) + sprite_notes
++        problems += sprite_notes
+         problems += [f"text    {line}" for line in self._text_overflow()]
+         from astrid.sdk.timeline.look import look_unrendered
+ 
+diff --git a/astrid/sdk/timeline/reflow.py b/astrid/sdk/timeline/reflow.py
+--- a/astrid/sdk/timeline/reflow.py
++++ b/astrid/sdk/timeline/reflow.py
+@@ -1012,7 +1012,7 @@
+     def _doomed_cuts(self, sid: str, ra: float, rb: float, skip_ids: set[int]) -> set[str]:
+         """Cuts whose every picture clip in this shot lies wholly inside the window [ra, rb] and would be removed
+         with it: an anchored clip on such a cut has nothing left to follow."""
+-        from astrid.core.timeline import onscreen
++        from astrid.core.timeline import scene_roles
+         from astrid.sdk.timeline.check import element_coverage_cached
+ 
+         tol = 0.5 / self.fps
+@@ -1024,7 +1024,7 @@
+             if not cid or self._is_audio(sid, clip):
+                 continue
+             # a picture (or a background plate, which still covers the canvas), decided by element data
+-            if onscreen.role_of(clip, clip.get("track"), elements) not in ("picture", "background"):
++            if scene_roles.role_of(clip, clip.get("track"), elements) not in ("picture", "background"):
+                 continue
+             cs = _num(clip.get("at"))
+             ce = cs + clip_duration(clip)
+diff --git a/remotion/native-scene.mjs b/remotion/native-scene.mjs
+new file mode 100644
+--- /dev/null
++++ b/remotion/native-scene.mjs
+@@ -0,0 +1,32 @@
++import path from 'node:path';
++import {pathToFileURL} from 'node:url';
++import {build} from 'esbuild';
++import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
++
++export const loadHostScene = async (project) => {
++  const aliases = remotionPrimitiveAliasesFor(project)({}).resolve.alias;
++  const result = await build({
++    absWorkingDir: project, entryPoints: [path.join(project, 'src/host-scene.ts')],
++    bundle: true, write: false, platform: 'node', format: 'esm',
++    nodePaths: [path.join(project, 'node_modules')], logLevel: 'silent',
++    plugins: [{name: 'renderer-aliases', setup(builder) {
++      builder.onResolve({filter: /^[^./]/}, async (args) => {
++        if (args.pluginData?.resolvingPackage) return;
++        const alias = Object.keys(aliases).find(key => args.path === key || args.path.startsWith(`${key}/`));
++        if (!alias) {
++          const resolved = await builder.resolve(args.path, {kind: args.kind,
++            resolveDir: args.resolveDir, pluginData: {resolvingPackage: true}});
++          if (resolved.errors.length) return {errors: resolved.errors};
++          return {path: path.isAbsolute(resolved.path) ? pathToFileURL(resolved.path).href : resolved.path,
++            external: true};
++        }
++        const target = path.join(aliases[alias], args.path.slice(alias.length).split('?')[0]);
++        return builder.resolve(target, {kind: args.kind, resolveDir: project});
++      });
++    }}],
++  });
++  // No executable output is written after launch binding. Sources, aliases,
++  // esbuild and installed dependencies are the selected runtime's bound inputs.
++  const entry = `data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`;
++  return (await import(entry)).prepareHostScene;
++};
+diff --git a/remotion/scene-query.mjs b/remotion/scene-query.mjs
+new file mode 100644
+--- /dev/null
++++ b/remotion/scene-query.mjs
+@@ -0,0 +1,40 @@
++import {readFileSync} from 'node:fs';
++import {createRequire} from 'node:module';
++import path from 'node:path';
++import {pathToFileURL} from 'node:url';
++
++try {
++  // Resolve the public export from the validated host install, never this checkout.
++  const require = createRequire(path.join(process.argv[2], 'package.json'));
++  const {prepareScene, querySceneFrame} = await import(pathToFileURL(
++    require.resolve('@banodoco/timeline-composition/evaluation')));
++  const input = JSON.parse(readFileSync(0, 'utf8'));
++  const {scene, props, basis, roles: hostRoles, frames} = input;
++  if (!Array.isArray(frames)) throw new Error('scene_frames_invalid');
++  let prepared;
++  if (props) {
++    const {loadHostScene} = await import('./native-scene.mjs');
++    const prepare = await loadHostScene(process.argv[2]);
++    prepared = prepare(props, basis, hostRoles ?? {});
++  } else {
++    const {tracks, assets, fps, width, height, roles, elements} = scene;
++    if (!Array.isArray(tracks) || !Array.isArray(frames) || !assets?.assets) {
++      throw new Error('scene_inputs_invalid');
++    }
++    for (const {track, clips, transitions} of tracks) {
++      if (track?.kind !== 'visual' || !Array.isArray(clips) || !Array.isArray(transitions)
++        || transitions.length !== Math.max(0, clips.length - 1)
++        || clips.some((clip, i) => i > 0 && clip.at < clips[i - 1].at)
++        || transitions.some(t => t !== null && (!Number.isFinite(t.T) || t.T <= 0
++          || !['dip', 'dissolve'].includes(t.kind) || !['start', 'center', 'end'].includes(t.align)))) {
++        throw new Error('scene_requires_renderer_order_and_resolved_transitions');
++      }
++    }
++    prepared = prepareScene(tracks, assets, fps, width, height,
++      {roles, elements: new Set(elements ?? [])});
++  }
++  process.stdout.write(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
++} catch (error) {
++  process.stderr.write(`scene evaluation unavailable: ${error.message}\n`);
++  process.exitCode = 1;
++}
+diff --git a/remotion/src/host-scene.ts b/remotion/src/host-scene.ts
+new file mode 100644
+--- /dev/null
++++ b/remotion/src/host-scene.ts
+@@ -0,0 +1,31 @@
++import {prepareCompositionScene, toRuntimeTheme} from '@banodoco/timeline-composition';
++import type {TimelineCompositionProps} from '@banodoco/timeline-composition';
++import * as timelineComposition from '@banodoco/timeline-composition';
++import {resolveHostRegistries} from './host-registries';
++
++// Root's props and the selected composition's frame basis, without a second
++// transition, capability or geometry implementation.
++export const prepareHostScene = (props: TimelineCompositionProps,
++  basis: {fps: number; width: number; height: number}, roles: Record<string, string>) => {
++  if (!props.theme || !props.assets?.assets || !Array.isArray(props.timeline?.clips)
++    || !Array.isArray(props.timeline.tracks)
++    || ![basis.fps, basis.width, basis.height].every(n => Number.isFinite(n) && n > 0)) {
++    throw new Error('scene requires exact Root props, explicit tracks and render frame basis');
++  }
++  const app = (props.timeline as typeof props.timeline & {app?: Record<string, unknown>}).app;
++  if (app?.astrid_render_clock) {
++    throw new Error('scene preparation does not evaluate Root RenderClockTail');
++  }
++  if (props.compiledTransitions !== undefined
++    && typeof timelineComposition.compileCanonicalTransitions !== 'function') {
++    throw new Error('scene compiled transition carrier unavailable in installed Composition API');
++  }
++  // TimelineComposition paints visual tracks in reverse authored order. Clip
++  // sorting and all transition/default resolution belong to the public prepare.
++  const tracks = [...props.timeline.tracks].reverse().filter(track => track.kind === 'visual')
++    .map(track => ({track, clips: props.timeline.clips.filter(clip => clip.track === track.id)}));
++  const theme = toRuntimeTheme(props.theme);
++  return prepareCompositionScene(tracks, props.assets, basis.fps, theme,
++    basis.width, basis.height, undefined, roles, {}, '', {}, resolveHostRegistries(theme),
++    props.compiledTransitions);
++};
+diff --git a/tests/core/timeline/scene_support.py b/tests/core/timeline/scene_support.py
+new file mode 100644
+--- /dev/null
++++ b/tests/core/timeline/scene_support.py
+@@ -0,0 +1,22 @@
++"""Legacy behavior assertions through real native host queries, never private math."""
++from unittest.mock import patch
++
++from astrid.core.theme import builtin_theme
++from astrid.core.timeline import scene_answers, scene_roles
++from astrid.core.timeline.duration import timeline_duration_frames
++from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import labels_for
++
++
++def visible_at(config, frame, fps, canvas, elements):
++    with patch.object(scene_roles, "element_coverage", return_value=elements):
++        return labels_for(config, frame, fps, canvas, assets={"assets": {}}, theme=builtin_theme())
++
++
++def coverage(config, fps, canvas, elements, *, start_frame=0, end_frame=None):
++    with patch.object(scene_roles, "element_coverage", return_value=elements):
++        return scene_answers.coverage({"timeline": config, "assets": {"assets": {}}, "theme": builtin_theme()},
++                                      {**canvas, "fps": fps}, start_frame=start_frame,
++                                      end_frame=end_frame if end_frame is not None else timeline_duration_frames(config, fps))
++
++# Retained instrumentation in the old complexity regression targets these names.
++from astrid.core.timeline.duration import clip_end_frame, clip_start_frame  # noqa: E402, F401
+diff --git a/tests/core/timeline/test_onscreen.py b/tests/core/timeline/test_onscreen.py
+--- a/tests/core/timeline/test_onscreen.py
++++ b/tests/core/timeline/test_onscreen.py
+@@ -35,7 +35,7 @@
+ # --- visible_at -------------------------------------------------------------------------------------------
+ 
+ def test_visible_at_lists_layers_top_first_with_role_and_opacity_product():
+-    from astrid.core.timeline.onscreen import visible_at
++    from tests.core.timeline.scene_support import visible_at
+ 
+     config = _config(
+         [
+@@ -57,7 +57,7 @@
+ # --- full_frame: crop and inset -----------------------------------------------------------------------------
+ 
+ def test_a_cropped_plate_and_an_inset_are_not_full_frame_but_a_default_plate_is():
+-    from astrid.core.timeline.onscreen import visible_at
++    from tests.core.timeline.scene_support import visible_at
+ 
+     default = visible_at(_config([_plate()]), 0, FPS, CANVAS, ELEMENTS)
+     cropped = visible_at(_config([_plate(cropLeft=0.2)]), 0, FPS, CANVAS, ELEMENTS)
+@@ -71,7 +71,7 @@
+ # --- coverage: per-frame classes, run-length encoded --------------------------------------------------------
+ 
+ def test_coverage_run_length_encodes_covered_gap_and_covered_but_empty():
+-    from astrid.core.timeline.onscreen import coverage
++    from tests.core.timeline.scene_support import coverage
+ 
+     config = _config([
+         # frames 0–30: a plate with an asset (a picture): COVERED, with CONTENT.
+diff --git a/tests/core/timeline/test_onscreen_more.py b/tests/core/timeline/test_onscreen_more.py
+--- a/tests/core/timeline/test_onscreen_more.py
++++ b/tests/core/timeline/test_onscreen_more.py
+@@ -1,7 +1,7 @@
+ """More on-screen model cases (TRUTH.md §2.2): cross-fades, fades at the film start, layout, audio, element data, speed."""
+ from __future__ import annotations
+ 
+-from astrid.core.timeline.onscreen import coverage, visible_at
++from tests.core.timeline.scene_support import coverage, visible_at
+ 
+ FPS = 30
+ CANVAS = {"width": 1920, "height": 1080}
+@@ -81,7 +81,7 @@
+ 
+ 
+ def test_element_coverage_reads_metadata_coverage_from_element_yaml(tmp_path, monkeypatch):
+-    from astrid.core.timeline import onscreen
++    from astrid.core.timeline import scene_roles as onscreen
+ 
+     packs = tmp_path / "packs"
+     declared = packs / "tmp" / "elements" / "effects" / "am-tmp-plate"
+@@ -104,7 +104,7 @@
+ 
+ 
+ def test_the_real_elements_declare_the_picture_roles_coverage_needs():
+-    from astrid.core.timeline.onscreen import element_coverage
++    from astrid.core.timeline.scene_roles import element_coverage
+ 
+     found = element_coverage(["am-snap-plate", "am-footage", "am-presenter"])
+     assert found["am-snap-plate"] == {"coverage": "picture", "background_unless": ["asset", "params.src"]}
+@@ -112,7 +112,7 @@
+ 
+ 
+ def test_large_coverage_processes_each_clip_boundary_once(monkeypatch):
+-    from astrid.core.timeline import onscreen
++    from tests.core.timeline import scene_support as onscreen
+ 
+     clips = []
+     for i in range(300):
+@@ -150,7 +150,7 @@
+ 
+ 
+ def test_a_declared_non_fade_entrance_on_the_picture_is_a_dip_not_a_gap():
+-    from astrid.core.timeline.onscreen import coverage
++    from tests.core.timeline.scene_support import coverage
+ 
+     config = {"tracks": [{"id": "plate"}],
+               "clips": [{"id": "p", "clipType": "am-snap-plate", "track": "plate", "asset": "P", "at": 0.0, "hold": 1.0,
+diff --git a/tests/packs/rendering/test_labels_overlay.py b/tests/packs/rendering/test_labels_overlay.py
+--- a/tests/packs/rendering/test_labels_overlay.py
++++ b/tests/packs/rendering/test_labels_overlay.py
+@@ -5,7 +5,7 @@
+ 
+ from PIL import Image
+ 
+-from astrid.core.timeline.onscreen import Visible
++from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import Visible
+ from astrid.packs.rendering.actions.timeline_visualize import fast_lane
+ from astrid.packs.rendering.actions.timeline_visualize.contact_sheet import cut_tile_label
+ from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
+diff --git a/tests/packs/rendering/test_scene_deletion_host.py b/tests/packs/rendering/test_scene_deletion_host.py
+new file mode 100644
+--- /dev/null
++++ b/tests/packs/rendering/test_scene_deletion_host.py
+@@ -0,0 +1,257 @@
++"""Native host preparation with the locked install, real maps and renderer aliases.
++
++Status is replaced here; this is not live launch-admission or pixel evidence.
++"""
++import copy
++import hashlib
++import json
++import os
++import shutil
++import subprocess
++from pathlib import Path
++
++import pytest
++
++from astrid.core.element.registry import ElementRegistry
++from astrid.core.element.schema import ElementDefinition
++from astrid.core.rendering.node_pin import resolve_pinned_node
++from astrid.core.rendering.remotion_runtime import RemotionRuntimeStatus
++from astrid.core.theme import builtin_theme
++from astrid.core.timeline import scene_answers
++from scripts import gen_effect_registry
++
++ROOT = Path(__file__).resolve().parents[3]
++REMOTION = ROOT / "remotion"
++
++# Test elements fill exactly the rectangle they declare. This is component
++# support, not evidence about media alpha or undeclared AM pack internals.
++LABEL_COMPONENT = """
++import {createElement} from 'react';
++import {useVideoConfig} from 'remotion';
++
++const layout = (clip, width, height) => clip.clipType === 'test-field'
++  ? {x: 0, y: 0, width, height}
++  : {x: clip.x, y: clip.y, width: clip.width, height: clip.height};
++const unknownBounds = 'Test component does not declare evaluated bounds';
++
++export default Object.assign(({clip}) => {
++  const {width, height} = useVideoConfig();
++  const rect = layout(clip, width, height);
++  return createElement('div', {style: {position: 'absolute', left: rect.x,
++    top: rect.y, width: rect.width, height: rect.height, background: '#123456'}});
++}, {
++  prepareSceneCapability: ({clip, width, height}) => {
++    const rect = layout(clip, width, height);
++    if (clip.clipType === 'test-unknown-bounds') {
++      return {identity: JSON.stringify(rect), frame: () => ({presence: 'present',
++        opaqueSupport: 'none', bounds: {status: 'unknown', reason: unknownBounds}})};
++    }
++    return {identity: JSON.stringify(rect), frame: () => ({presence: 'present',
++      opaqueSupport: 'rect', bounds: {status: 'known', rect}})};
++  },
++});
++"""
++
++
++BASIS = {"width": 1920, "height": 1080, "fps": 30}
++
++
++@pytest.fixture(scope="module")
++def host_project(tmp_path_factory):
++    project_root = tmp_path_factory.mktemp("native-host")
++    project = project_root / "remotion"
++    (project / "src").mkdir(parents=True)
++    (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
++    assert (REMOTION / "node_modules/esbuild").is_dir(), "requires this worktree's locked npm ci"
++    (project / "node_modules").symlink_to(REMOTION / "node_modules", target_is_directory=True)
++    for name in ("scene-query.mjs", "native-scene.mjs", "webpack-alias.mjs", "package.json"):
++        shutil.copyfile(REMOTION / name, project / name)
++    for name in ("host-scene.ts", "host-registries.ts"):
++        shutil.copyfile(REMOTION / "src" / name, project / "src" / name)
++    pack = project_root / "probe"
++    elements = list(gen_effect_registry._element_registry().list())
++    rendering = {}
++    for kind, element_id in (("effects", "custom"), ("effects", "test-card"), ("effects", "test-field"),
++                             ("effects", "test-unknown-bounds"),
++                             ("animations", "fade-up"), ("transitions", "fade")):
++        element = pack / kind / element_id
++        element.mkdir(parents=True)
++        source = LABEL_COMPONENT if element_id.startswith("test-") else (REMOTION / "tests" / f"custom-{kind}.tsx").read_text()
++        if element_id == "custom":
++            source = "import {probeWidth} from 'probe-dependency';\n" + source.replace("width: 1920", "width: probeWidth")
++        (element / "component.tsx").write_text(source)
++        (element / "element.yaml").write_text(f"id: {element_id}\nkind: {kind[:-1]}\n")
++        rendering[f"{kind}/{element_id}"] = {"type": "element", "path": f"{kind}/{element_id}/element.yaml"}
++        elements.append(ElementDefinition(
++            id=element_id, kind=kind, root=element, source="pack:probe", editable=True,
++            priority=100, component=element / "component.tsx", schema={}, defaults={"durationFrames": 8},
++            metadata={"pack_id": "probe", "kind": "wrapper", "phase": ["entrance", "exit"],
++                      **({"clipTypeAliases": ["custom-alias"]} if element_id == "custom" else {})}))
++    (pack / "pack.json").write_text(json.dumps({"id": "probe", "rendering": rendering}))
++    dependency = pack / "node_modules/probe-dependency"
++    dependency.mkdir(parents=True)
++    (dependency / "package.json").write_text('{"type":"module","exports":"./index.js"}')
++    (dependency / "index.js").write_text('export const probeWidth = 1920;')
++    registry = ElementRegistry(elements)
++    with pytest.MonkeyPatch.context() as patch:
++        patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
++        for kind in ("effects", "animations", "transitions"):
++            (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
++    package = REMOTION / "node_modules/@banodoco/timeline-composition"
++    assert json.loads((package / "package.json").read_text())["version"] == "0.0.8"
++    assert hashlib.sha256((REMOTION / "artifacts/banodoco-timeline-composition-0.0.8.tgz").read_bytes()).hexdigest() == (
++        "93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa")
++    def hashes():
++        return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
++                for p in package.rglob("*") if p.is_file()}
++    before = hashes()
++    assert len(before) == 77
++    yield project, pack
++    assert hashes() == before
++
++
++@pytest.fixture
++def native_host(host_project, monkeypatch):
++    project, pack = host_project
++    toolchain = resolve_pinned_node(REMOTION, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    assert toolchain.ok and toolchain.version == "v20.19.4"
++    for key in ("NODE_OPTIONS", "NODE_PATH", "PYTHONPYCACHEPREFIX"):
++        monkeypatch.delenv(key, raising=False)
++    monkeypatch.setenv("ASTRID_PACKS_PATH", str(pack))
++    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
++                        RemotionRuntimeStatus(True, project, node_executable=toolchain.path))
++    return project
++
++
++def props(clips=None, *, theme=None, assets=None):
++    return {"timeline": {"theme": "stale-config-slug", "tracks": [{"id": "plate", "kind": "visual"}],
++                         "clips": clips or []},
++            "assets": assets if assets is not None else {"assets": {}},
++            "theme": theme if theme is not None else builtin_theme()}
++
++
++def test_native_host_default_custom_alias_capability_and_immutable_props(native_host):
++    p = props([{"id": "first", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1,
++                "params": {"nested": [1, None, "preserve"]}}])
++    original = copy.deepcopy(p)
++    first, end = scene_answers.host_frames_at(p, BASIS, [0, 30])
++    assert first["coverage"] == "COVERED"
++    assert first["layers"][0]["bounds"] == {"status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080}}
++    assert first["layers"][0]["opacity"] == 1
++    assert end["coverage"] == "GAP" and end["layers"] == []
++    assert p == original
++    p["timeline"]["clips"][0]["elementRef"] = {"kind": "effect", "id": "custom", "packId": "probe"}
++    assert scene_answers.host_frames_at(p, BASIS, [0])[0]["coverage"] == "COVERED"
++    p["timeline"]["clips"][0]["elementRef"]["packId"] = "missing"
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="Unknown effect owner"):
++        scene_answers.host_frames_at(p, BASIS, [0])
++
++
++def test_native_host_uses_exact_assets_and_runtime_theme(native_host):
++    clip = {"id": "media", "track": "plate", "clipType": "image", "asset": "P", "at": 0, "hold": 1}
++    basis = {"width": 200, "height": 100, "fps": 30000 / 1001}
++    p = props([clip], assets={"assets": {"P": {"file": "p.png", "type": "image", "resolution": "100x200"}}})
++    answer = scene_answers.host_frames_at(p, basis, [0])[0]
++    assert answer["layers"][0]["bounds"]["rect"] == {"x": 75, "y": 0, "width": 50, "height": 100}
++    assert answer["coverage"] == "UNKNOWN" and answer["layers"][0]["opacity"] is None
++    p["assets"] = {"assets": {}}
++    assert scene_answers.host_frames_at(p, basis, [0])[0]["layers"][0]["bounds"]["status"] == "unknown"
++    p = props([{**clip, "clipType": "art-card"}])
++    answer = scene_answers.host_frames_at(p, basis, [0])[0]
++    assert answer["coverage"] == "UNKNOWN"
++    # Admission is distinct from alpha: art-card intentionally has no declared
++    # bounds capability. Inspect the prepared host set, never invent geometry.
++    script = """
++import {loadHostScene} from './native-scene.mjs';
++import {DEFAULT_THEME} from '@banodoco/timeline-composition';
++const prepare = await loadHostScene(process.cwd());
++console.log(JSON.stringify(['banodoco-default', '2rp'].map(id =>
++  prepare({timeline: {theme: 'stale', clips: [], tracks: []}, assets: {assets: {}},
++    theme: {...DEFAULT_THEME, id}}, {width: 200, height: 100, fps: 30}, {}).elements.has('art-card'))));
++"""
++    result = subprocess.run([str(scene_answers.remotion_runtime_status().node_executable), "--input-type=module", "-e", script],
++                            cwd=native_host, check=True, text=True, capture_output=True, timeout=30)
++    assert json.loads(result.stdout) == [False, True]
++
++
++@pytest.mark.parametrize("align", ["start", "center", "end"])
++def test_native_host_resolves_custom_transition_defaults_and_boundaries(native_host, align):
++    clips = [{"id": "first", "track": "plate", "clipType": "custom", "at": 0, "hold": 1,
++              "transition": {"id": "fade", "align": align}},
++             {"id": "next", "track": "plate", "clipType": "custom", "at": 1, "hold": 1}]
++    answers = scene_answers.host_frames_at(props(clips), BASIS, [21, 22, 26, 29, 30, 33, 34, 37, 38, 59, 60])
++    assert answers[-1]["layers"] == []
++    incoming_start = {"end": 22, "center": 26, "start": 30}[align]
++    active = [a["frame"] for a in answers if any(layer["clipId"] == "next" for layer in a["layers"])]
++    assert min(active) == incoming_start
++    if align == "end":
++        incoming = next(layer for layer in answers[1]["layers"] if layer["clipId"] == "next")
++        assert incoming["drawLocalFrame"] == incoming["ownFrame"] == 0
++    clips[0]["transition"] = "not-admitted"
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="Unknown transition"):
++        scene_answers.host_frames_at(props(clips), BASIS, [0])
++
++
++def test_large_native_batch_is_not_truncated(native_host):
++    p = props([{"id": "first", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 10}])
++    frames = list(range(300))
++    answers = scene_answers.host_frames_at(p, BASIS, frames)
++    assert [answer["frame"] for answer in answers] == frames
++    assert all(answer["coverage"] == "COVERED" for answer in answers)
++    spans = scene_answers.spans_from_frames(answers)
++    assert [(s.start_frame, s.end_frame, s.cls) for s in spans] == [(0, 300, "COVERED")]
++
++
++def test_spans_from_frames_does_not_fill_unqueried_frames():
++    answer = {"coverage": "COVERED", "content": "CONTENT",
++              "layers": [{"clipId": "clip", "visible": True}],
++              "findings": [{"code": "finding"}]}
++    spans = scene_answers.spans_from_frames([
++        {"frame": 0, **answer}, {"frame": 30, **answer},
++    ])
++
++    assert spans == [
++        scene_answers.Span(0, 1, "COVERED", "CONTENT", ("clip",), ("finding",)),
++        scene_answers.Span(30, 31, "COVERED", "CONTENT", ("clip",), ("finding",)),
++    ]
++
++
++def test_spans_from_frames_merges_only_matching_adjacent_answers():
++    spans = scene_answers.spans_from_frames([
++        {"frame": 0, "coverage": "COVERED", "content": "CONTENT",
++         "layers": [{"clipId": "clip-a", "visible": True},
++                    {"clipId": "hidden", "visible": False}],
++         "findings": [{"code": "first"}, {"code": "first"}]},
++        {"frame": 1, "coverage": "COVERED", "content": "CONTENT",
++         "layers": [{"clipId": "clip-a", "visible": True},
++                    {"clipId": "hidden", "visible": False}],
++         "findings": [{"code": "first"}]},
++        {"frame": 2, "coverage": "COVERED", "content": "EMPTY",
++         "layers": [{"clipId": "clip-a", "visible": True}],
++         "findings": [{"code": "first"}]},
++        {"frame": 3, "coverage": "COVERED", "content": "EMPTY",
++         "layers": [{"clipId": "clip-b", "visible": True}],
++         "findings": [{"code": "first"}]},
++        {"frame": 4, "coverage": "COVERED", "content": "EMPTY",
++         "layers": [{"clipId": "clip-b", "visible": True}],
++         "findings": [{"code": "second"}]},
++    ])
++
++    assert spans == [
++        scene_answers.Span(0, 2, "COVERED", "CONTENT", ("clip-a",), ("first",)),
++        scene_answers.Span(2, 3, "COVERED", "EMPTY", ("clip-a",), ("first",)),
++        scene_answers.Span(3, 4, "COVERED", "EMPTY", ("clip-b",), ("first",)),
++        scene_answers.Span(4, 5, "COVERED", "EMPTY", ("clip-b",), ("second",)),
++    ]
++
++
++def test_native_host_rational_frame_clock_is_half_open(native_host):
++    fps = 30000 / 1001
++    clip = {"id": "immutable:clip", "track": "plate", "clipType": "custom-alias", "at": 1001 / 30000,
++            "hold": 2002 / 30000, "opaqueExtension": {"preserved": [None, 2]}}
++    p = props([clip])
++    before = copy.deepcopy(p)
++    answers = scene_answers.host_frames_at(p, {**BASIS, "fps": fps}, [0, 1, 2, 3, 1])
++    assert [[layer["clipId"] for layer in answer["layers"]] for answer in answers] == [
++        [], ["immutable:clip"], ["immutable:clip"], [], ["immutable:clip"]]
++    assert p == before
+diff --git a/tests/packs/rendering/test_scene_deletion_query.py b/tests/packs/rendering/test_scene_deletion_query.py
+new file mode 100644
+--- /dev/null
++++ b/tests/packs/rendering/test_scene_deletion_query.py
+@@ -0,0 +1,160 @@
++"""The Python adapter queries the immutable release, without renderer peers."""
++
++import copy
++import hashlib
++import json
++import os
++import shutil
++import subprocess
++import tarfile
++from pathlib import Path
++
++import pytest
++
++from astrid.core.rendering import remotion_runtime
++from astrid.core.rendering.node_pin import resolve_pinned_node
++from astrid.core.timeline import scene_answers
++
++ROOT = Path(__file__).resolve().parents[3]
++ARTIFACT = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
++    ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.8.tgz")))
++ARTIFACTS = {
++    "0.0.8": "93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa",
++    "0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
++}
++
++
++@pytest.fixture
++def installed(tmp_path, monkeypatch):
++    # Harness loader overrides are inadmissible; use the clean host environment.
++    for key in ("PYTHONPYCACHEPREFIX", "NODE_OPTIONS", "NODE_PATH"):
++        monkeypatch.delenv(key, raising=False)
++    toolchain = resolve_pinned_node(
++        ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    assert toolchain.ok, toolchain.problem
++    node = str(toolchain.path)
++    assert toolchain.version == "v20.19.4"
++    digest = hashlib.sha256(ARTIFACT.read_bytes()).hexdigest()
++    assert digest in ARTIFACTS.values()
++    package = tmp_path / "node_modules/@banodoco/timeline-composition"
++    package.parent.mkdir(parents=True)
++    with tarfile.open(ARTIFACT) as archive:
++        archive.extractall(tmp_path, filter="data")
++    (tmp_path / "package").rename(package)
++    (tmp_path / "package.json").write_text('{"type":"module"}')
++    shutil.copyfile(ROOT / "remotion/scene-query.mjs", tmp_path / "scene-query.mjs")
++
++    def hashes():
++        return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
++                for p in package.rglob("*") if p.is_file()}
++
++    version = json.loads((package / "package.json").read_text())["version"]
++    assert digest == ARTIFACTS[version]
++    before = hashes()
++    # Admission is tested separately. Only the status seam is replaced here;
++    # subprocess/import/preparation/query all execute the real installed artifact.
++    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
++                        remotion_runtime.RemotionRuntimeStatus(
++                            True, tmp_path, node_executable=Path(node), node_version="v20.19.4"))
++    yield tmp_path, node, package
++    assert hashes() == before
++
++
++def scene(clips=None, transitions=None):
++    clips = clips if clips is not None else [
++        {"id": "exact:first", "at": 0, "hold": 1, "track": "plate", "clipType": "custom"},
++        {"id": "exact:second", "at": 1, "hold": 1, "track": "plate", "clipType": "custom"},
++    ]
++    return {"tracks": [{"track": {"id": "plate", "kind": "visual"}, "clips": clips,
++                        "transitions": transitions if transitions is not None else [None]}],
++            "assets": {"assets": {}}, "fps": 30, "width": 641, "height": 359}
++
++
++def canonical(project, node, payload, frames):
++    script = """
++import {prepareScene, querySceneFrame} from '@banodoco/timeline-composition/evaluation';
++import {readFileSync} from 'node:fs';
++const {scene: s, frames} = JSON.parse(readFileSync(0, 'utf8'));
++const prepared = prepareScene(s.tracks, s.assets, s.fps, s.width, s.height,
++  {roles: s.roles, elements: new Set(s.elements ?? [])});
++console.log(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
++"""
++    return json.loads(subprocess.check_output(
++        [node, "--input-type=module", "-e", script], cwd=project, text=True,
++        input=json.dumps({"scene": payload, "frames": frames})))
++
++
++@pytest.mark.parametrize("kind", ["dip", "dissolve"])
++@pytest.mark.parametrize("align", ["start", "center", "end"])
++def test_transition_frames_equal_canonical_public_query(installed, kind, align):
++    project, node, _ = installed
++    payload = scene(transitions=[{"T": 8, "kind": kind, "align": align}])
++    original = copy.deepcopy(payload)
++    frames = [0, 21, 22, 25, 26, 29, 30, 31, 33, 34, 37, 38, 59, 60, 30]
++    answers = scene_answers.frames_at(payload, iter(frames))
++    assert answers == canonical(project, node, payload, frames)
++    assert payload == original
++    assert answers[-2]["layers"] == []  # half-open final boundary
++    if align == "end":
++        incoming = answers[2]["layers"][1]
++        assert (incoming["clipId"], incoming["drawLocalFrame"], incoming["ownFrame"]) == (
++            "exact:second", 0, 0)
++        assert answers[5]["layers"][1]["ownFrame"] == 0
++    if align == "start":
++        outgoing = answers[6]["layers"][0]
++        assert (outgoing["drawLocalFrame"], outgoing["ownFrame"]) == (30, 29)
++
++
++def test_cut_fractional_fps_and_empty_scene_are_answers(installed):
++    project, node, _ = installed
++    payload = scene()
++    payload["fps"] = 30000 / 1001
++    frames = [29, 30, 59, 60]
++    answers = scene_answers.frames_at(payload, frames)
++    assert answers == canonical(project, node, payload, frames)
++    assert [[layer["clipId"] for layer in answer["layers"]] for answer in answers] == [
++        ["exact:first"], ["exact:second"], ["exact:second"], []]
++    payload["tracks"] = []
++    assert scene_answers.frames_at(payload, [0]) == [
++        {"frame": 0, "layers": [], "coverage": "GAP", "content": None, "findings": []}]
++
++
++def test_resolved_painter_order_and_compiled_payload_are_preserved(installed, monkeypatch):
++    project, node, _ = installed
++    payload = scene()
++    payload["tracks"][0]["clips"][0]["compiledExtension"] = {"opaque": [1, None, "keep"]}
++    payload["tracks"].append({"track": {"id": "front", "kind": "visual"}, "clips": [
++        {"id": "front:exact-id", "at": 0, "hold": 1, "clipType": "custom"}],
++        "transitions": []})
++    payload["roles"] = {"front:exact-id": "content"}
++    requests = []
++    run = subprocess.run
++
++    def capture(*args, **kwargs):
++        requests.append(json.loads(kwargs["input"]))
++        return run(*args, **kwargs)
++
++    monkeypatch.setattr(scene_answers.subprocess, "run", capture)
++    answers = scene_answers.frames_at(payload, [1, 0, 1])
++    assert requests == [{"scene": payload, "frames": [1, 0, 1]}]
++    monkeypatch.setattr(scene_answers.subprocess, "run", run)
++    assert answers == canonical(project, node, payload, [1, 0, 1])
++    assert [layer["clipId"] for layer in answers[0]["layers"]] == ["exact:first", "front:exact-id"]
++
++
++def test_unknown_custom_modifier_and_unresolved_media_stay_unknown(installed):
++    payload = scene(clips=[
++        {"id": "custom", "at": 0, "hold": 1, "clipType": "my-component",
++         "params": {"width": 641, "opaque": True}},
++        {"id": "missing", "at": 0, "hold": 1, "asset": "missing-media"},
++        {"id": "modifier", "at": 0, "hold": 1, "asset": "image",
++         "modifiers": [{"id": "m", "element": "custom-modifier", "params": {}}]},
++    ], transitions=[None, None])
++    payload["assets"]["assets"]["image"] = {
++        "file": "unverified.png", "type": "image", "resolution": "641x359", "opaque": True}
++    answer = scene_answers.frames_at(payload, [0])[0]
++    assert answer["coverage"] == "UNKNOWN"
++    assert all(layer["visible"] == "unknown" for layer in answer["layers"])
++    assert all(layer["opaqueSupport"] == "unknown" for layer in answer["layers"])
++    assert {finding["code"] for finding in answer["findings"]} >= {
++        "unknown-component-internals", "unknown-media-alpha", "modifier-admission-refused"}
+diff --git a/tests/packs/rendering/test_timeline_visualize_labels.py b/tests/packs/rendering/test_timeline_visualize_labels.py
+--- a/tests/packs/rendering/test_timeline_visualize_labels.py
++++ b/tests/packs/rendering/test_timeline_visualize_labels.py
+@@ -4,7 +4,7 @@
+ 
+ from PIL import Image
+ 
+-from astrid.core.timeline.onscreen import Visible
++from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import Visible
+ 
+ from astrid.packs.rendering.actions.timeline_visualize import fast_lane
+ from astrid.packs.rendering.actions.timeline_visualize.fast_lane import Moment
+diff --git a/tests/sdk/test_intent_app_astrid.py b/tests/sdk/test_intent_app_astrid.py
+--- a/tests/sdk/test_intent_app_astrid.py
++++ b/tests/sdk/test_intent_app_astrid.py
+@@ -151,7 +151,7 @@
+ 
+ 
+ def test_onscreen_address_reads_a_migrated_clip():
+-    from astrid.core.timeline.onscreen import _address
++    from astrid.core.timeline.scene_roles import _address
+ 
+     clip = {"id": "a:sparks-id", "app": {"cut": "c41", "layer": "sparks"}}
+     assert _address(clip) == "c41.sparks"
+diff --git a/tests/sdk/test_scene_deletion_check.py b/tests/sdk/test_scene_deletion_check.py
+new file mode 100644
+--- /dev/null
++++ b/tests/sdk/test_scene_deletion_check.py
+@@ -0,0 +1,68 @@
++"""Renderer independence and retained metadata diagnostics; not scene parity."""
++import os
++import subprocess
++import sys
++from pathlib import Path
++
++from astrid.sdk.timeline_checkout import Checkout
++from tests.sdk.test_timeline_checkout import bundle
++
++
++def test_sprite_scale_and_source_integrity_diagnostics_remain_renderer_free(monkeypatch):
++    from astrid.core.timeline import scene_answers
++
++    def no_scene(*args, **kwargs):
++        raise AssertionError("metadata diagnostics must not start Node")
++
++    monkeypatch.setattr(scene_answers, "host_frames_at", no_scene)
++    data = bundle()
++    internal = data["shots"]["A"]["internal_timeline"]
++    internal["clips"][1]["params"]["scale"] = 8
++    internal["registry"]["assets"]["R"]["pixel_provenance"] = {
++        "outline_integrity": {"fraction": 0.70}}
++    internal["clips"].append({"id": "a-hourglass", "clipType": "am-sprite", "track": "sprite", "asset": "H",
++                               "at": 1.25, "hold": 0.5, "params": {"x": 20, "scale": 6},
++                               "app": {"cut": "c01", "layer": "hourglass"}})
++    internal["registry"]["assets"]["H"] = {
++        "media_id": "m-h", "pixel_provenance": {"outline_integrity": {"fraction": 0.56}}}
++    lines = Checkout(data).check().problems
++    assert any("MIXED-SCALE" in line and "a-rocket" in line and "hourglass" in line for line in lines)
++    assert any("DAMAGED-ART" in line and "a-rocket" in line and "0.70" in line for line in lines)
++    assert any("DAMAGED-ART" in line and "hourglass" in line and "0.56" in line for line in lines)
++    internal["registry"]["assets"]["H"]["pixel_provenance"]["outline_integrity"]["fraction"] = 0.02
++    assert not any("DAMAGED-ART" in line and "hourglass" in line for line in Checkout(data).check().problems)
++
++
++def test_default_check_reports_scene_unavailable_without_renderer_imports():
++    script = r'''
++import builtins
++import json
++from pathlib import Path
++
++blocked = ("astrid.core.timeline.scene_answers", "astrid.core.rendering")
++real_import = builtins.__import__
++
++def guarded_import(name, *args, **kwargs):
++    if any(name == prefix or name.startswith(prefix + ".") for prefix in blocked):
++        raise AssertionError(f"renderer import during default check: {name}")
++    return real_import(name, *args, **kwargs)
++
++builtins.__import__ = guarded_import
++from astrid.sdk.timeline_checkout import Checkout
++
++candidate = json.loads(Path("tests/fixtures/timeline_editing/tiny_publishable.json").read_text())
++report = Checkout(candidate).check()
++assert report.valid
++assert any("UNAVAILABLE" in line for line in report.problems)
++invalid = json.loads(Path("tests/fixtures/timeline_editing/tiny_publishable.json").read_text())
++invalid["shots"]["B"]["internal_timeline"]["clips"][0]["hold"] = 0
++assert not Checkout(invalid).check().valid
++print("ok")
++'''
++    root = Path(__file__).resolve().parents[2]
++    environment = dict(os.environ)
++    environment["PYTHONPATH"] = str(root)
++    result = subprocess.run([sys.executable, "-c", script], cwd=root, env=environment,
++                            capture_output=True, text=True)
++    assert result.returncode == 0, result.stdout + result.stderr
++    assert result.stdout.strip() == "ok"

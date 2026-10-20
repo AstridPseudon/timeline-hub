@@ -1,0 +1,48 @@
+{
+  "extends": "/home/user/work/wt/vw-m3-audio-compile-vector-reconcile/tsconfig.app.json",
+  "compilerOptions": {
+    "baseUrl": "/home/user/work/wt/vw-m3-audio-compile-vector-reconcile",
+    "paths": {
+      "@/*": [
+        "/home/user/work/wt/vw-m3-audio-compile-vector-reconcile/src/*"
+      ],
+      "@astrid/editor-sdk": [
+        "/home/user/work/wt/vw-m3-audio-compile-vector-reconcile/src/sdk/index.ts"
+      ],
+      "@banodoco/timeline-composition": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-envelope-public-clock-join/artifact/package/dist/index.d.ts"
+      ],
+      "@banodoco/timeline-composition/evaluation": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-envelope-public-clock-join/artifact/package/dist/evaluation.d.ts"
+      ],
+      "@banodoco/timeline-composition/theme-api": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-envelope-public-clock-join/artifact/package/dist/theme-api.d.ts"
+      ],
+      "@banodoco/timeline-composition/registry.generated": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-envelope-public-clock-join/artifact/package/dist/registry.generated.d.ts"
+      ],
+      "@banodoco/timeline-composition/effects.generated": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-envelope-public-clock-join/artifact/package/dist/effects.generated.d.ts"
+      ],
+      "@banodoco/timeline-composition/animations.generated": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-envelope-public-clock-join/artifact/package/dist/animations.generated.d.ts"
+      ],
+      "@banodoco/timeline-composition/transitions.generated": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-envelope-public-clock-join/artifact/package/dist/transitions.generated.d.ts"
+      ],
+      "@banodoco/timeline-composition/registries": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-envelope-public-clock-join/artifact/package/dist/registries.d.ts"
+      ]
+    },
+    "typeRoots": [
+      "/home/user/work/app/node_modules/@types"
+    ]
+  },
+  "include": [
+    "/home/user/work/wt/vw-m3-audio-compile-vector-reconcile/src/**/*.d.ts",
+    "/home/user/work/app/node_modules/@testing-library/jest-dom/types/vitest.d.ts",
+    "/home/user/work/wt/vw-m3-audio-compile-vector-reconcile/src/tools/video-editor/data/shotCompositionProjection.audio.reconcile.test.ts",
+    "/home/user/work/wt/vw-m3-audio-compile-vector-reconcile/src/tools/video-editor/data/shotCompositionAudio.public-clock.test.tsx"
+  ],
+  "exclude": []
+}

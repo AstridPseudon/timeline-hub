@@ -1,0 +1,282 @@
+diff --git a/src/tools/video-editor/components/TimelineRenderControls.test.tsx b/src/tools/video-editor/components/TimelineRenderControls.test.tsx
+index 2bed229a8..5dd78caf4 100644
+--- a/src/tools/video-editor/components/TimelineRenderControls.test.tsx
++++ b/src/tools/video-editor/components/TimelineRenderControls.test.tsx
+@@ -111,6 +111,35 @@ describe('TimelineRenderControls', () => {
+     expect(screen.getByRole('link', { name: 'Download' })).toBeTruthy();
+   });
+ 
++  it('keeps the new result download available and ignores an older download failure', async () => {
++    let rejectOld!: (error: Error) => void;
++    let completeNew!: () => void;
++    const downloadRenderResult = vi.fn(() => new Promise<void>((_resolve, reject) => { rejectOld = reject; }));
++    const nextDownload = vi.fn(() => new Promise<void>((resolve) => { completeNew = resolve; }));
++    mocks.useTimelineChromeContext.mockReturnValue(chrome({
++      downloadRenderResult, renderResultInfo: { revision: 7, completedAt: 1000 },
++    }));
++    const { rerender } = render(<TimelineRenderControls previewActionButtonClass="" />);
++    fireEvent.click(screen.getByRole('button', { name: /Play last render/ }));
++    fireEvent.click(screen.getByRole('link', { name: 'Download' }));
++    expect(downloadRenderResult).toHaveBeenCalledOnce();
++
++    mocks.useTimelineChromeContext.mockReturnValue(chrome({
++      downloadRenderResult: nextDownload,
++      renderResultUrl: '/api/astrid/v1/objects/next.mp4',
++      renderResultInfo: { revision: 8, completedAt: 2000 },
++    }));
++    rerender(<TimelineRenderControls previewActionButtonClass="" />);
++    fireEvent.click(screen.getByRole('link', { name: 'Download' }));
++    expect(nextDownload).toHaveBeenCalledOnce();
++
++    await act(async () => { rejectOld(new Error('The old render result changed.')); });
++    expect(screen.queryByRole('alert')).toBeNull();
++    expect(screen.getByRole('link', { name: 'Downloading…' })).toHaveAttribute('aria-disabled', 'true');
++    await act(async () => { completeNew(); });
++    expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('aria-disabled', 'false');
++  });
++
+   it('keeps cancellation visible for an active render', () => {
+     mocks.useTimelineChromeContext.mockReturnValue(chrome({
+       renderStatus: 'rendering',
+diff --git a/src/tools/video-editor/components/TimelineRenderControls.tsx b/src/tools/video-editor/components/TimelineRenderControls.tsx
+index 49a5d538b..ef8ac4452 100644
+--- a/src/tools/video-editor/components/TimelineRenderControls.tsx
++++ b/src/tools/video-editor/components/TimelineRenderControls.tsx
+@@ -33,6 +33,7 @@ export function TimelineRenderControls({
+   const [playerOpen, setPlayerOpen] = useState(false);
+   const [downloading, setDownloading] = useState(false);
+   const [downloadError, setDownloadError] = useState<string | null>(null);
++  const downloadAttemptRef = useRef(0);
+   const { renderResultUrl, renderResultInfo } = chrome;
+   const completedAt = renderResultInfo?.completedAt ?? null;
+   const seenCompletion = useRef(completedAt);
+@@ -44,17 +45,24 @@ export function TimelineRenderControls({
+     }
+     seenCompletion.current = completedAt;
+   }, [completedAt, renderResultUrl]);
+-  useEffect(() => { setDownloadError(null); }, [completedAt, renderResultUrl]);
++  useEffect(() => {
++    setDownloading(false);
++    setDownloadError(null);
++    return () => { downloadAttemptRef.current += 1; };
++  }, [renderResultInfo, renderResultUrl]);
+ 
+   const download = async () => {
++    const attempt = ++downloadAttemptRef.current;
+     setDownloading(true);
+     setDownloadError(null);
+     try {
+       await chrome.downloadRenderResult();
+     } catch (error) {
+-      setDownloadError(error instanceof Error ? error.message : 'Could not download render. Please try again.');
++      if (attempt === downloadAttemptRef.current) {
++        setDownloadError(error instanceof Error ? error.message : 'Could not download render. Please try again.');
++      }
+     } finally {
+-      setDownloading(false);
++      if (attempt === downloadAttemptRef.current) setDownloading(false);
+     }
+   };
+ 
+diff --git a/src/tools/video-editor/hooks/useRenderState.test.tsx b/src/tools/video-editor/hooks/useRenderState.test.tsx
+index 9bdfecbe1..bf1d81cdd 100644
+--- a/src/tools/video-editor/hooks/useRenderState.test.tsx
++++ b/src/tools/video-editor/hooks/useRenderState.test.tsx
+@@ -1,4 +1,4 @@
+-import { act, renderHook } from '@testing-library/react';
++import { act, renderHook, waitFor } from '@testing-library/react';
+ import { Blob as NodeBlob } from 'node:buffer';
+ import { webcrypto } from 'node:crypto';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+@@ -858,6 +858,7 @@ describe('useRenderState render routing', () => {
+       size?: number;
+       taskId?: string;
+       projectId?: string;
++      start?: boolean;
+     } = {}) {
+       const task = {
+         ...renderTaskDetail('succeeded'),
+@@ -867,7 +868,7 @@ describe('useRenderState render routing', () => {
+       };
+       const fetchMock = vi.fn(async () => new Response(JSON.stringify(task), { status: 200 }));
+       vi.stubGlobal('fetch', fetchMock);
+-      const runtimeValue = {
++      let runtimeValue = {
+         project: { projectId: 'demo-project' },
+         timelineId: 'timeline-1',
+         provider: { projectObjects: options.read ? { read: options.read } : undefined },
+@@ -879,8 +880,17 @@ describe('useRenderState render routing', () => {
+         buildConfig({ id: 'native', clipType: 'media', track: 'V1', at: 0, hold: 1 }),
+         null, undefined, undefined, async () => 7,
+       ), { wrapper });
+-      await act(async () => { await hook.result.current.startRender(); });
+-      return { ...hook, fetchMock };
++      if (options.start !== false) await act(async () => { await hook.result.current.startRender(); });
++      const changeScope = (scope: 'project' | 'timeline' | 'provider') => {
++        runtimeValue = {
++          ...runtimeValue,
++          ...(scope === 'project' ? { project: { ...runtimeValue.project, projectId: 'another-project' } } : {}),
++          ...(scope === 'timeline' ? { timelineId: 'another-timeline' } : {}),
++          ...(scope === 'provider' ? { provider: { ...runtimeValue.provider } } : {}),
++        };
++        hook.rerender();
++      };
++      return { ...hook, fetchMock, changeScope };
+     }
+ 
+     it('downloads the exact completed output through project storage with its filename and full bytes', async () => {
+@@ -957,6 +967,43 @@ describe('useRenderState render routing', () => {
+       expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
+     });
+ 
++    it.each(['unmount', 'project', 'timeline', 'provider'] as const)('does not download a pending read after %s disposal', async (scope) => {
++      let finishRead!: (value: Uint8Array) => void;
++      const read = vi.fn(() => new Promise<Uint8Array>((resolve) => { finishRead = resolve; }));
++      const { result, unmount, changeScope } = await completedRender({ read });
++      const downloading = result.current.downloadRenderResult();
++      const refused = expect(downloading).rejects.toThrow('render result changed');
++      if (scope === 'unmount') unmount();
++      else {
++        changeScope(scope);
++        expect(result.current.renderResultUrl).toBeNull();
++        expect(result.current.renderResultInfo).toBeNull();
++      }
++      finishRead(bytes);
++      await refused;
++      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
++      expect(mocks.triggerBrowserDownload).not.toHaveBeenCalled();
++    });
++
++    it.each(['unmount', 'project', 'timeline', 'provider'] as const)('does not publish a pending admission after %s disposal', async (scope) => {
++      let finishAdmission!: (value: { status: string; task_id: string }) => void;
++      renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mockReturnValueOnce(new Promise((resolve) => { finishAdmission = resolve; }));
++      const { result, unmount, changeScope, fetchMock } = await completedRender({ start: false });
++      let rendering!: Promise<void>;
++      await act(async () => { rendering = result.current.startRender(); });
++      await waitFor(() => expect(renderRouterMocks.enqueueAstridRuntimeRenderTimeline).toHaveBeenCalledOnce());
++      if (scope === 'unmount') unmount();
++      else changeScope(scope);
++
++      await act(async () => {
++        finishAdmission({ status: 'queued', task_id: 'render-task-1' });
++        await rendering;
++      });
++      expect(fetchMock).not.toHaveBeenCalled();
++      expect(result.current.renderResultUrl).toBeNull();
++      expect(mocks.downloadBlobAsFile).not.toHaveBeenCalled();
++    });
++
+     it.each([{ projectId: 'another-project' }, { taskId: 'another-task' }])('refuses another task/project output %j', async (binding) => {
+       const read = vi.fn(async () => bytes);
+       const { result } = await completedRender({ ...binding, read });
+diff --git a/src/tools/video-editor/hooks/useRenderState.ts b/src/tools/video-editor/hooks/useRenderState.ts
+index 38a429a04..4053d5bf3 100644
+--- a/src/tools/video-editor/hooks/useRenderState.ts
++++ b/src/tools/video-editor/hooks/useRenderState.ts
+@@ -532,6 +532,7 @@ export function useRenderState(
+   const [renderResultInfo, setRenderResultInfo] = useState<RenderResultInfo | null>(null);
+   const [activeRenderTaskId, setActiveRenderTaskId] = useState<string | null>(null);
+   const [renderDestination, setRenderDestination] = useState<RenderExportDestination>('download');
++  const renderScopeGenerationRef = useRef(0);
+   const renderPollGenerationRef = useRef(0);
+   const renderPollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const renderRevisionRef = useRef<number | null>(null);
+@@ -571,6 +572,22 @@ export function useRenderState(
+   const processStatuses = runtimeContext?.processStatuses;
+   const processResultAttachRecords = runtimeContext?.processResultAttachRecords;
+ 
++  useEffect(() => {
++    setRenderResultUrl(null);
++    setRenderResultFilename(null);
++    setRenderResultInfo(null);
++    setRenderStatus('idle');
++    setRenderProgress(null);
++    setActiveRenderTaskId(null);
++    return () => {
++      renderScopeGenerationRef.current += 1;
++      managedRenderDownloadRef.current = null;
++      renderOperationIdRef.current = null;
++      renderPollGenerationRef.current += 1;
++      if (renderPollTimerRef.current) clearTimeout(renderPollTimerRef.current);
++    };
++  }, [runtimeContext?.project?.projectId, runtimeContext?.provider, runtimeContext?.timelineId]);
++
+   useEffect(() => {
+     return () => {
+       renderPollGenerationRef.current += 1;
+@@ -870,6 +887,7 @@ export function useRenderState(
+   }, [commitRenderResult, renderConfig?.output?.file, renderMetadata?.durationInFrames, runtimeContext?.project?.projectId, runtimeContext?.provider?.projectObjects, runtimeContext?.timelineId]);
+ 
+   const startAstridRender = useCallback(async (): Promise<boolean> => {
++    const scope = renderScopeGenerationRef.current;
+     const projectId = runtimeContext?.project?.projectId;
+     const timelineId = runtimeContext?.timelineId;
+     if (!projectId || !timelineId || !renderConfig) return false;
+@@ -891,11 +909,13 @@ export function useRenderState(
+     try {
+       expectedVersion = await flushPendingSave();
+     } catch (error) {
++      if (scope !== renderScopeGenerationRef.current) return true;
+       setRenderStatus('error');
+       setRenderProgress(null);
+       setRenderLog(`Could not save the exact timeline version for rendering: ${error instanceof Error ? error.message : String(error)}`);
+       return true;
+     }
++    if (scope !== renderScopeGenerationRef.current) return true;
+     if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1) {
+       setRenderStatus('error');
+       setRenderProgress(null);
+@@ -920,11 +940,13 @@ export function useRenderState(
+     setRenderLog('Admitting render to Astrid…');
+ 
+     const { AstridLocalClient: AstridLocalClientModule } = await import('@/integrations/astrid/client.ts');
++    if (scope !== renderScopeGenerationRef.current) return true;
+     // The product bridge owns the ready catalog; the timeline provider's
+     // Runtime alias deliberately does not expose that route.
+     const client = new AstridLocalClientModule({ projectSlug: projectId });
+     renderClientRef.current = client;
+     const renderRouter = await import('@/tools/video-editor/lib/renderRouter.ts');
++    if (scope !== renderScopeGenerationRef.current) return true;
+     const request = {
+       timelineId,
+       // R1 resolves the canonical timeline document + registry itself; these
+@@ -961,6 +983,7 @@ export function useRenderState(
+       expectedVersion,
+       operationId,
+     });
++    if (scope !== renderScopeGenerationRef.current) return true;
+     if (admission.status === 'error' || !admission.task_id) {
+       visualSeamReportConfigRef.current = renderConfigFingerprint(renderConfig);
+       setVisualSeamReport(admission.seamReport ?? null);
+@@ -1074,6 +1097,7 @@ export function useRenderState(
+   }, [activeRenderTaskId]);
+ 
+   const startRender = useCallback(async () => {
++    const scope = renderScopeGenerationRef.current;
+     if (runtimeContext?.renderExportEnabled === false) {
+       setRenderStatus('error');
+       setRenderProgress(null);
+@@ -1093,6 +1117,7 @@ export function useRenderState(
+           import('@/tools/video-editor/lib/renderRouter'),
+           import('@/tools/video-editor/runtime/renderPlanner.ts'),
+         ]);
++        if (scope !== renderScopeGenerationRef.current) return;
+         importedDecision = decideRenderRoute(
+           renderConfig,
+           undefined,
+@@ -1104,6 +1129,7 @@ export function useRenderState(
+           },
+         );
+       } catch (error) {
++        if (scope !== renderScopeGenerationRef.current) return;
+         setRenderStatus('error');
+         setRenderProgress(null);
+         setRenderDirty(false);
+@@ -1132,6 +1158,7 @@ export function useRenderState(
+     if (!await runExportGuard(managedRuntimeAdmission)) {
+       return; // blocked by export guard
+     }
++    if (scope !== renderScopeGenerationRef.current) return;
+ 
+     if (decision.route === 'preview-only') {
+       setRenderStatus('error');

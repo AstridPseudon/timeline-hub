@@ -1,0 +1,32 @@
+Viewing-only diff for fc6c1f2615b1b37ae6bc2121397e64ee9d8061f5
+Parent/base: 4a75f68f32049a69fd86135c645fa64c51175c14
+
+8 files in review scope (25 total in the imported commit):
+ M astrid/core/rendering/remotion_runtime.py
+ A remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz
+ M remotion/package.json
+ M remotion/package-lock.json
+ M tests/packs/rendering/test_composition_package.py
+ M tests/packs/rendering/test_render_export_task_adapter.py
+ M tests/journeys/test_journey_plumbing.py
+ M tests/core/timeline/test_clip_fields.py
+
+Product hunks:
+ remotion_runtime.py:48
+ - _COMPOSITION_PACKAGE_VERSION = "0.0.8"
+ + _COMPOSITION_PACKAGE_VERSION = "0.0.10"
+ package.json:18 and package-lock.json:10 (root dependency)
+ - file:artifacts/banodoco-timeline-composition-0.0.8.tgz
+ + file:artifacts/banodoco-timeline-composition-0.0.10.tgz
+ package-lock.json:424 (installed package)
+ - version 0.0.8 / resolved ...0.0.8.tgz / integrity dzRWuI...
+ + version 0.0.10 / resolved ...0.0.10.tgz / integrity SmJAoe...
+ + artifact: 58,008 B / 77 files / sha256 cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7
+ Tests: update version/path/digest/integrity fixtures and one version comment.
+
+Unchanged: peers/dependency graph, readiness implementation, Root, host registries,
+publicRoot containment/alias rules, generators, normal generated source, M1 files.
+Retained: unreferenced 0.0.8 tarball (cleanup remains with adopter).
+Not reviewed: remaining native commands/provider/generated Runtime/lock changes.
+Status: bounded consumer checks PASS; final source SHA/Runtime owner confirmation pending.
+Full literal hunks: consumer.diff (includes complete SHA512 strings).

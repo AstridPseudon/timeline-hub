@@ -1,0 +1,78 @@
+{
+  "base": "4a75f68f32049a69fd86135c645fa64c51175c14",
+  "source": "09cfd10a44b17a24d6f77ef6b8f41cce9cd0db1e",
+  "files": [
+    {
+      "path": "astrid/core/timeline/onscreen.py",
+      "action": "D"
+    },
+    {
+      "path": "astrid/core/timeline/scene_answers.py",
+      "action": "A"
+    },
+    {
+      "path": "astrid/core/timeline/scene_roles.py",
+      "action": "A"
+    },
+    {
+      "path": "astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py",
+      "action": "M"
+    },
+    {
+      "path": "astrid/sdk/timeline/check.py",
+      "action": "M"
+    },
+    {
+      "path": "astrid/sdk/timeline/reflow.py",
+      "action": "M"
+    },
+    {
+      "path": "remotion/native-scene.mjs",
+      "action": "A"
+    },
+    {
+      "path": "remotion/scene-query.mjs",
+      "action": "A"
+    },
+    {
+      "path": "remotion/src/host-scene.ts",
+      "action": "A"
+    },
+    {
+      "path": "tests/core/timeline/scene_support.py",
+      "action": "A"
+    },
+    {
+      "path": "tests/core/timeline/test_onscreen.py",
+      "action": "M"
+    },
+    {
+      "path": "tests/core/timeline/test_onscreen_more.py",
+      "action": "M"
+    },
+    {
+      "path": "tests/packs/rendering/test_labels_overlay.py",
+      "action": "M"
+    },
+    {
+      "path": "tests/packs/rendering/test_scene_deletion_host.py",
+      "action": "A"
+    },
+    {
+      "path": "tests/packs/rendering/test_scene_deletion_query.py",
+      "action": "A"
+    },
+    {
+      "path": "tests/packs/rendering/test_timeline_visualize_labels.py",
+      "action": "M"
+    },
+    {
+      "path": "tests/sdk/test_intent_app_astrid.py",
+      "action": "M"
+    },
+    {
+      "path": "tests/sdk/test_scene_deletion_check.py",
+      "action": "A"
+    }
+  ]
+}

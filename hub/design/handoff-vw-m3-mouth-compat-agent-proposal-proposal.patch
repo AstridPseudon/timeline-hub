@@ -1,0 +1,81 @@
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+@@ -30,8 +30,21 @@
+ 
+ export type PixelRect = {x: number; y: number; w: number; h: number};
+ 
+-// The erase rectangle is also the inspection footprint, even in closed pose.
++// The drawing erases this rectangle before the half/open mouth pixels.
+ export const mouthEraseRect = (m: Anchor): PixelRect => ({x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4});
++
++// Legacy inspection padding around the actual drawing rectangle, not occupied
++// pixels. Require explicit anchors unchanged by the drawing's normalization;
++// omitted, partial and raw-invalid anchors have different legacy defaults.
++export const mouthInspectionRect = (raw: unknown): PixelRect | null => {
++  const value = narrowParams<{mouth?: unknown}>(raw).mouth;
++  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
++  const m = value as Record<string, unknown>;
++  const anchor = mouthAnchor(raw);
++  if (m.x !== anchor.x || m.y !== anchor.y || m.w !== anchor.w) return null;
++  const r = mouthEraseRect(anchor);
++  return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
++};
+ 
+ export const pixelGeometry = (r: PixelRect, v: PresenterView): {left: number; top: number; width: number; height: number} => ({
+   left: v.originX + r.x * v.scale,
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+@@ -2,7 +2,7 @@
+ import type {ElementComponentProps} from '../../../../../rendering/shared/element_contracts';
+ import {clipFrames, narrowParams} from '../../_shared/am';
+ import {mosaicBlockAt, type MosaicRamp} from '../../_shared/mosaic';
+-import {motionAt, mouthAnchor, mouthEraseRect, pixelGeometry, presenterAt} from './motion';
++import {motionAt, mouthInspectionRect, pixelGeometry, presenterAt} from './motion';
+ 
+ export const presenterMosaicAt = (raw: unknown, clip: ElementComponentProps['clip'], frame: number, fps: number): boolean => {
+   const p = narrowParams<{mosaicIn?: MosaicRamp | null; mosaicOut?: MosaicRamp | null}>(raw);
+@@ -14,7 +14,8 @@
+   // The public scene supplies the same speed-remapped frame as the component.
+   frame: frame => {
+     const {view} = presenterAt(clip.params, frame, fps);
+-    const {left, top, width: w, height: h} = pixelGeometry(mouthEraseRect(mouthAnchor(clip.params)), view);
++    const inspection = mouthInspectionRect(clip.params);
++    const rect = inspection ? pixelGeometry(inspection, view) : null;
+     return {
+       presence: 'unknown',
+       opaqueSupport: 'none',
+@@ -22,10 +23,12 @@
+       bounds: {status: 'known', rect: {x: 0, y: 0, width, height}},
+       diagnostics: {
+         motion: motionAt(clip.params, frame, fps),
+-        // A closed mouth may draw nothing, and no underlying plate is assumed.
++        // Padded inspection ROI, including closed pose; no plate or alpha claim.
+         mouth: presenterMosaicAt(clip.params, clip, frame, fps)
+           ? {status: 'unknown', reason: 'Presenter mouth overlay is hidden by mosaic'}
+-          : {status: 'known', rect: {x: left, y: top, width: w, height: h}},
++          : rect
++            ? {status: 'known', rect: {x: rect.left, y: rect.top, width: rect.width, height: rect.height}}
++            : {status: 'unknown', reason: 'Legacy mouth crop requires explicit normalized x, y and w'},
+       },
+     };
+   },
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+@@ -9,8 +9,12 @@
+ # motion.ts exports MOUTH_LEVEL: closed=0, half=0.5, open=1. Human labels apply
+ # only to the resolved astrid_motion/effects/am-presenter source and revision;
+ # foreign motion.mouth scalars and other values have unknown labels.
+-# diagnostics.mouth uses the shared erase rectangle and presenterAt transform:
+-# an inspection footprint, including closed pose, not occupied pixels or alpha.
++# diagnostics.mouth pads the shared drawing erase rectangle by one logical px
++# horizontally and two vertically through the same pxStyle/presenterAt geometry.
++# It is a legacy-sized inspection ROI, including closed pose, not occupied pixels
++# or alpha. Only explicit x/y/w unchanged by drawing normalization are known;
++# absent, partial, fractional or clamped anchors are unknown (drawing unchanged).
++# Legacy pixel consumers select component frame zero once, then keep that ROI.
+ # Mosaic makes the region unknown; the public scene invalidates it for
+ # unsupported outer geometry. Presence is unknown; opaqueSupport is none.
+ # No underlying plate, asset alpha, face or text region is inferred.

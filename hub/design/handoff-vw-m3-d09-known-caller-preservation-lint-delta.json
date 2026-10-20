@@ -1,0 +1,242 @@
+{
+  "baseline": [
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 65,
+        "row": 23
+      },
+      "filename": "/home/user/work/wt/vw-m3-d09-known-caller-preservation/astrid/sdk/timeline/check.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "from __future__ import annotations\n\nimport copy\nimport dataclasses\nimport json\nimport math\nimport re\nfrom dataclasses import dataclass\nfrom typing import Any, Iterable, Mapping\n\nfrom astrid.core.timeline import moments as mo\nfrom astrid.core.timeline.cuts import (\n    occurrences_from_bundle,\n    picture_cuts,\n)\nfrom astrid.sdk import timeline_intent as intent\nfrom astrid.sdk.timeline import store as _store\nfrom astrid.sdk.timeline._common import TimelineEditError\nfrom astrid.sdk.timeline.doc import _get_path\nfrom astrid.sdk.timeline.model import Clip\nfrom astrid.sdk.timeline.units import formula_short, to_canvas\n\n\n",
+            "end_location": {
+              "column": 1,
+              "row": 26
+            },
+            "location": {
+              "column": 1,
+              "row": 2
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 1,
+        "row": 2
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "noqa_row": 2,
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "BLE001",
+      "end_location": {
+        "column": 21,
+        "row": 30
+      },
+      "filename": "/home/user/work/wt/vw-m3-d09-known-caller-preservation/astrid/sdk/timeline/check.py",
+      "fix": null,
+      "location": {
+        "column": 12,
+        "row": 30
+      },
+      "message": "Do not catch blind exception: `Exception`",
+      "noqa_row": 30,
+      "url": "https://docs.astral.sh/ruff/rules/blind-except"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 103,
+        "row": 475
+      },
+      "filename": "/home/user/work/wt/vw-m3-d09-known-caller-preservation/astrid/sdk/timeline/check.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "            from astrid.packs.rendering.actions.timeline_visualize.motion import model\n            from astrid.packs.rendering.actions.timeline_visualize.motion.conditions import (\n                run_checks,\n            )\n",
+            "end_location": {
+              "column": 1,
+              "row": 476
+            },
+            "location": {
+              "column": 1,
+              "row": 474
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 13,
+        "row": 474
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "noqa_row": 474,
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "BLE001",
+      "end_location": {
+        "column": 25,
+        "row": 476
+      },
+      "filename": "/home/user/work/wt/vw-m3-d09-known-caller-preservation/astrid/sdk/timeline/check.py",
+      "fix": null,
+      "location": {
+        "column": 16,
+        "row": 476
+      },
+      "message": "Do not catch blind exception: `Exception`",
+      "noqa_row": 476,
+      "url": "https://docs.astral.sh/ruff/rules/blind-except"
+    },
+    {
+      "cell": null,
+      "code": "BLE001",
+      "end_location": {
+        "column": 25,
+        "row": 533
+      },
+      "filename": "/home/user/work/wt/vw-m3-d09-known-caller-preservation/astrid/sdk/timeline/check.py",
+      "fix": null,
+      "location": {
+        "column": 16,
+        "row": 533
+      },
+      "message": "Do not catch blind exception: `Exception`",
+      "noqa_row": 533,
+      "url": "https://docs.astral.sh/ruff/rules/blind-except"
+    }
+  ],
+  "proposed": [
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 65,
+        "row": 23
+      },
+      "filename": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-known-caller-preservation/proposed/astrid/sdk/timeline/check.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "from __future__ import annotations\n\nimport copy\nimport dataclasses\nimport json\nimport math\nimport re\nfrom dataclasses import dataclass\nfrom typing import Any, Iterable, Mapping\n\nfrom astrid.core.timeline import moments as mo\nfrom astrid.core.timeline.cuts import (\n    occurrences_from_bundle,\n    picture_cuts,\n)\nfrom astrid.sdk import timeline_intent as intent\nfrom astrid.sdk.timeline import store as _store\nfrom astrid.sdk.timeline._common import TimelineEditError\nfrom astrid.sdk.timeline.doc import _get_path\nfrom astrid.sdk.timeline.model import Clip\nfrom astrid.sdk.timeline.units import formula_short, to_canvas\n\n\n",
+            "end_location": {
+              "column": 1,
+              "row": 26
+            },
+            "location": {
+              "column": 1,
+              "row": 2
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 1,
+        "row": 2
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "noqa_row": 2,
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "BLE001",
+      "end_location": {
+        "column": 21,
+        "row": 30
+      },
+      "filename": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-known-caller-preservation/proposed/astrid/sdk/timeline/check.py",
+      "fix": null,
+      "location": {
+        "column": 12,
+        "row": 30
+      },
+      "message": "Do not catch blind exception: `Exception`",
+      "noqa_row": 30,
+      "url": "https://docs.astral.sh/ruff/rules/blind-except"
+    },
+    {
+      "cell": null,
+      "code": "I001",
+      "end_location": {
+        "column": 103,
+        "row": 488
+      },
+      "filename": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-known-caller-preservation/proposed/astrid/sdk/timeline/check.py",
+      "fix": {
+        "applicability": "safe",
+        "edits": [
+          {
+            "content": "            from astrid.packs.rendering.actions.timeline_visualize.motion import model\n            from astrid.packs.rendering.actions.timeline_visualize.motion.conditions import (\n                run_checks,\n            )\n",
+            "end_location": {
+              "column": 1,
+              "row": 489
+            },
+            "location": {
+              "column": 1,
+              "row": 487
+            }
+          }
+        ],
+        "message": "Organize imports"
+      },
+      "location": {
+        "column": 13,
+        "row": 487
+      },
+      "message": "Import block is un-sorted or un-formatted",
+      "noqa_row": 487,
+      "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+    },
+    {
+      "cell": null,
+      "code": "BLE001",
+      "end_location": {
+        "column": 25,
+        "row": 489
+      },
+      "filename": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-known-caller-preservation/proposed/astrid/sdk/timeline/check.py",
+      "fix": null,
+      "location": {
+        "column": 16,
+        "row": 489
+      },
+      "message": "Do not catch blind exception: `Exception`",
+      "noqa_row": 489,
+      "url": "https://docs.astral.sh/ruff/rules/blind-except"
+    },
+    {
+      "cell": null,
+      "code": "BLE001",
+      "end_location": {
+        "column": 25,
+        "row": 546
+      },
+      "filename": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-known-caller-preservation/proposed/astrid/sdk/timeline/check.py",
+      "fix": null,
+      "location": {
+        "column": 16,
+        "row": 546
+      },
+      "message": "Do not catch blind exception: `Exception`",
+      "noqa_row": 546,
+      "url": "https://docs.astral.sh/ruff/rules/blind-except"
+    }
+  ],
+  "new_test_diagnostics": [],
+  "new_diagnostics": []
+}

@@ -1,0 +1,125 @@
+{
+  "status": "PREPARATION_ONLY_BLOCKED_NOT_RUN_NOT_REQUESTED",
+  "main_app_head": "580508eed1bf6ed95caaf476c9d69a4672472a2f",
+  "fixture_sha256": "e30ed3303532e3d73adfd07670e04d1312003b7e10d2c5c008629b8b9bffad46",
+  "entry_sources_sha256": {
+    "src/tools/video-editor/hooks/useRenderState.ts": "c8b3779c4b579d5e2f9941dd93e5abecbd1c4cf22e9a5f7d1a14a36cf913d1b1",
+    "src/tools/video-editor/hooks/useClientRender.ts": "7486e0c165cb789945ef0c0138ea6292f294b76b83961bba1cc2d2e0e8e1ab64",
+    "src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts": "e0d343c2ec8675a6e6cf5fe76322550e86f6f89ee4b425b0e0952ba42f04341d",
+    "src/tools/video-editor/runtime/astrid-element-host.ts": "78167c482e0a021d2a3f3dffac3880980e1dcbffa522ffe3915a2e943f8e83e6",
+    "tests/e2e/timeline/seeded-preview-samples.spec.ts": "ee42312671360fa31e21a3271fcaf4fd72f6814b0b302cc63e56980aeab7c138",
+    "src/sdk/video/timeline/clipTypes.ts": "545f305ea2fb1bcb4b3ab5a831e091ebbd693601888e2519f5ebefb411f5a6bd",
+    "vendor/timeline-composition/package.json": "6d5196a5ccda6d16a7983f69c479481fb9bf022c44e2a2fa61a83a822bd0044b"
+  },
+  "peer_path_read_only": "/home/user/work/app/node_modules",
+  "peer_versions": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.509",
+    "@remotion/player": "4.0.509"
+  },
+  "capture_route": "Existing MAIN RemotionPreview Player -> PreviewComposition -> TimelineRenderer, using seeded-preview-samples screenshot surface",
+  "capture_surface": "[data-testid=\"video-editor-preview-surface\"]",
+  "preconditions": [
+    "Exact input and actual add.output; raw rows/pins/manifests/AuthoringBundle remain untouched",
+    "Obtain valid MAIN Player fps/duration via its actual loader without a test-owned rational adapter or 30fps fallback; current source probe yields NaN",
+    "Actual managed bytes for original sha256:111...111 and sha256:222...222, with original digests verified; video/fixture descriptors are not playable media",
+    "Use real MAIN host/registries to establish clipType video dispatch; no invented component or video-to-media rewrite",
+    "MAIN lock/Vite vendor sources and deduplicated peers; no new package, generator, Root or current Composition substitution",
+    "Only central scheduling, existing qualified browser and QUIET/browser lock; no worker launch or service request"
+  ],
+  "sampling_note": "Proposed neighborhoods on authored 30000/1001 grid only; NOT evaluated MAIN frames and unusable until MAIN returns valid metadata",
+  "boundary_samples": [
+    {
+      "time_seconds": 8,
+      "frames": [
+        239,
+        240,
+        241
+      ],
+      "purpose": "occurrence A onset"
+    },
+    {
+      "time_seconds": 8.125,
+      "frames": [
+        243,
+        244,
+        245
+      ],
+      "purpose": "reserved child onset"
+    },
+    {
+      "time_seconds": 9,
+      "frames": [
+        269,
+        270,
+        271
+      ],
+      "purpose": "A clip-a onset"
+    },
+    {
+      "time_seconds": 10,
+      "frames": [
+        299,
+        300,
+        301
+      ],
+      "purpose": "A half-open end / B onset"
+    },
+    {
+      "time_seconds": 10.125,
+      "frames": [
+        303,
+        304,
+        305
+      ],
+      "purpose": "unclamped reserved child endpoint"
+    },
+    {
+      "time_seconds": 11,
+      "frames": [
+        329,
+        330,
+        331
+      ],
+      "purpose": "B clip-a onset / unclamped A clip-a endpoint"
+    },
+    {
+      "time_seconds": 13,
+      "frames": [
+        389,
+        390,
+        391
+      ],
+      "purpose": "A clip-b authored onset / B clip-a half-open end"
+    },
+    {
+      "time_seconds": 15,
+      "frames": [
+        449,
+        450,
+        451
+      ],
+      "purpose": "B clip-b onset"
+    },
+    {
+      "time_seconds": 17,
+      "frames": [
+        509,
+        510,
+        511
+      ],
+      "purpose": "B clip-b/content half-open end"
+    }
+  ],
+  "required_observations": [
+    "Actual PNGs plus observed seek frame/time, exact head, fps and selected managed identity",
+    "Readiness/unsupported-type/missing-media errors remain failures; no opaque replacement plates",
+    "Establish actual components/media visible across A end; source vectors alone do not prove visibility",
+    "Isolated component capture is diagnostic and cannot qualify Runtime render admission, export, audio or accepted closure"
+  ],
+  "browser": "Not inspected, launched or qualified for this closure by worker",
+  "service_request_submitted": false,
+  "runnable_capture_test_prepared": false,
+  "reason_no_runnable_capture": "MAIN has no valid frame grid for unchanged rational output and fixture has no verified playable bytes; a runnable fixture would need forbidden test-owned policy/input substitutions"
+}

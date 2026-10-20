@@ -1,0 +1,26 @@
+{
+  "central": "vw-m3-intended-dip-asset-route-fix-e2e-viewing-main6-intended-dip-assets-1020043344-8195",
+  "result": "1 PASS / 79.79s",
+  "test_source": "4a74fd774338d30e16729751e227b229287862b4",
+  "main_source": "a411628f8fd6129f9c58c332019b56769d997384",
+  "main_package": "0.0.6 locked archive rebuilt from tag",
+  "unified_package": "0.0.10 / cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+  "png_count": 90,
+  "original_file_count": 105,
+  "artifact": "viewing-main6-intended-dip-pixels-v1.tgz",
+  "bytes": 4037153,
+  "sha256": "70b87832ee1444492cfcacc8af7a77e56dfabc0477bb2b570bde4dd51a579f14",
+  "outer_prepost": true,
+  "staged_prepost": {
+    "main": true,
+    "unified": true
+  },
+  "contract": "MAIN opaque all45; exactRGB same outside16-29, exactpublicopacitysourceover inside; incoming-COVERED and one-sided controls PASS",
+  "not_claimed": [
+    "Player/export parity",
+    "audio parity",
+    "current adoption",
+    "owner films",
+    "macOS"
+  ]
+}

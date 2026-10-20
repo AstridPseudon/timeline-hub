@@ -1,0 +1,43 @@
+--- a/astrid/sdk/timeline/check.py
++++ b/astrid/sdk/timeline/check.py
+@@ -173,6 +173,19 @@
+         for _span, a, b in self._spans_of("DIP", spans=spans):
+             out.append(f"DIP     {_cut_in(table, a) or 'no cut'} {a:.2f}–{b:.2f} s ({b - a:.2f} s): "
+                        "a declared fade/dip (not a gap)")
++        return out
++
++    def _scene_problems(self, spans: list) -> list[str]:
++        """Advisory scene findings, retaining cut addresses and deliberate-hold classification."""
++        sustained, incidental = self.empty_cuts(spans)
++        out = [f"picture {line}" for line in self.picture_gaps(spans)]
++        out += sustained + incidental + self.dips(spans)
++        for span in spans:
++            if span.cls not in {"UNKNOWN", "UNAVAILABLE"} and span.content != "UNKNOWN":
++                continue
++            kind = span.cls if span.cls in {"UNKNOWN", "UNAVAILABLE"} else "CONTENT UNKNOWN"
++            out.append(f"scene   {kind} {span.start_frame / self.fps:.3f}–{span.end_frame / self.fps:.3f} s"
++                       + (f": {', '.join(span.findings)}" if span.findings else ""))
+         return out
+ 
+     def _length_problems(self) -> list[str]:
+@@ -527,19 +540,7 @@
+             source_metadata = render_props["timeline"].get("metadata") or {}
+             source_revision = source_metadata.get("parent_revision_id") or "unavailable"
+             problems.append(f"scene   supplied render props, revision {source_revision}; advisory, separate from candidate validity")
+-        # References come from these exact render props, never the candidate's
+-        # current cut table or a newly fetched head.
+-        from astrid.core.timeline.scene_roles import _address
+-
+-        source_clips = {c["id"]: c for c in render_props["timeline"]["clips"]} if scene_frames is not None else {}
+-        for span in spans:
+-            if span.cls == "COVERED" and span.content == "CONTENT":
+-                continue
+-            kind = "EMPTY" if span.content == "EMPTY" else "CONTENT UNKNOWN" if span.content == "UNKNOWN" else span.cls
+-            references = [_address(source_clips[cid]) for cid in span.clips if cid in source_clips]
+-            problems.append(f"scene   {kind} {span.start_frame / self.fps:.3f}–{span.end_frame / self.fps:.3f} s"
+-                            + (f" ({', '.join(references)})" if references else "")
+-                            + (f": {', '.join(span.findings)}" if span.findings else ""))
++        problems += self._scene_problems(spans)
+         blocking += [f"length  {line}" for line in self._length_problems()]
+         sprite_blocking, sprite_notes = self._sprite_problems(scene_frames, frame_basis)
+         blocking += sprite_blocking

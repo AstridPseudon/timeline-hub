@@ -1,0 +1,1371 @@
+{
+  "agentRef": "fd82c36c7cd66d1d58aa0250a008245a43e6fbaa",
+  "results": [
+    {
+      "corpus": "viewing",
+      "id": "unity occurrence gain",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "missing child volume",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        },
+        "volume": 0.5
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        },
+        "volume": 0.5
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "occurrence mute",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": true,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": true,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "child times occurrence gain",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0.4,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0.4,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "boost times occurrence gain",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 3.0,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 2,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 3.0,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 2,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "occurrence source offset",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 350,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 350,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "occurrence speed without child speed",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.5,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 1.125,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.5,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "source hold capped at next occurrence",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "hold": 7.5,
+        "speed": 2,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "hold": 7.5,
+        "speed": 2,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "source trim capped at next occurrence",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 7.625,
+        "speed": 2,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.125,
+        "to": 7.625,
+        "speed": 2,
+        "volume": 0.8,
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "params fades",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.05,
+        "to": 0.55,
+        "volume": 0.8,
+        "params": {
+          "fadeIn": 0.1,
+          "fadeOut": 0.1
+        },
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.05,
+        "to": 0.55,
+        "volume": 0.8,
+        "params": {
+          "fadeIn": 0.1,
+          "fadeOut": 0.1
+        },
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "viewing",
+      "id": "fixture effects shape",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.05,
+        "to": 0.55,
+        "volume": 0.8,
+        "effects": [
+          {
+            "fade_in": 0.1,
+            "fade_out": 0.1
+          }
+        ],
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "at": 0.25,
+        "from": 0.05,
+        "to": 0.55,
+        "volume": 0.8,
+        "effects": [
+          {
+            "fade_in": 0.1,
+            "fade_out": 0.1
+          }
+        ],
+        "clipType": "media",
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "gain-child-x-occurrence",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "volume": 0.4,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "volume": 0.4,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "gain-boost-x-occurrence",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "volume": 3.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 2,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "volume": 3.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 2,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "gain-child-absent-is-unity",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        },
+        "volume": 0.5
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        },
+        "volume": 0.5
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "gain-unity-keeps-volume-absent",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "gain-zero-is-silent-not-absent",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        },
+        "volume": 0.0
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        },
+        "volume": 0.0
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "muted-occurrence-silences-child-gain",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "volume": 0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": true,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "volume": 0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 0.5,
+            "muted": true,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "source-offset-is-metadata-only",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0.125,
+        "to": 1.125,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0.35,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0.125,
+        "to": 1.125,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0.35,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "occurrence-speed-not-inherited",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.5,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.5,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "child-speed-wins-over-occurrence-speed",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "speed": 2,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.5,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "speed": 2,
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.5,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "fade-in-needs-prepared-envelope-source",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "params": {
+          "fadeIn": 0.5
+        },
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "params": {
+          "fadeIn": 0.5
+        },
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    },
+    {
+      "corpus": "agent",
+      "id": "fade-out-needs-prepared-envelope-source",
+      "clip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "params": {
+          "fadeOut": 0.5
+        },
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      },
+      "graphClip": {
+        "id": "occ-1:alpha-audio",
+        "track": "audio",
+        "from": 0,
+        "to": 2.0,
+        "params": {
+          "fadeOut": 0.5
+        },
+        "clipType": "media",
+        "asset": "alpha-audio",
+        "at": 0.0,
+        "shot_id": "shot-alpha",
+        "shot_occurrence_id": "occ-1",
+        "app": {
+          "astrid_shot_composition": {
+            "project_id": "project-001",
+            "timeline_id": "document-primary",
+            "shot_id": "shot-alpha",
+            "shot_revision_id": "rev-a",
+            "internal_timeline_revision_id": "timeline-alpha-a",
+            "occurrence_id": "occ-1",
+            "output_identity": "project/project-001/document/document-primary/occurrence/occ-1/output/final-video",
+            "stable_deep_link": "project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1",
+            "source_offset": 0,
+            "speed": 1.0,
+            "gain": 1,
+            "muted": false,
+            "source_clip_id": "alpha-audio"
+          }
+        }
+      }
+    }
+  ]
+}

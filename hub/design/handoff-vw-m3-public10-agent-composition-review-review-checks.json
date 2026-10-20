@@ -1,0 +1,36 @@
+{
+  "runtime": {
+    "8": {
+      "complete": "PASS",
+      "wrong_version": "installed Remotion package manifest has unexpected version: '0.0.8'; expected 0.0.10; run `npm ci` in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-public10-agent-composition-review/readiness-8 with the pinned Node on PATH",
+      "missing_evaluation": "installed Remotion package export target is missing or outside dist: ./evaluation (import) -> './dist/evaluation.js'; run `npm ci` in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-public10-agent-composition-review/readiness-8 with the pinned Node on PATH"
+    },
+    "10": {
+      "complete": "PASS",
+      "wrong_version": "installed Remotion package manifest has unexpected version: '0.0.10'; expected 0.0.8; run `npm ci` in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-public10-agent-composition-review/readiness-10 with the pinned Node on PATH",
+      "missing_evaluation": "installed Remotion package export target is missing or outside dist: ./evaluation (import) -> './dist/evaluation.js'; run `npm ci` in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-public10-agent-composition-review/readiness-10 with the pinned Node on PATH"
+    }
+  },
+  "integrity": "sha512-SmJAoem9f+86D+eO+PvBAz3JydlefpUUwcOOkG7SU9k2ZPKpjXLWKHm/N4424TO5HNQtCHMt5T6Jy2Y5zA6Ycg==",
+  "peer_versions": {
+    "@remotion/layout-utils": "4.0.509",
+    "@remotion/media": "4.0.509",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.509"
+  },
+  "pure_evaluation_files": [
+    "chunk-BTW45DBV.js",
+    "chunk-SE4TPVLW.js",
+    "evaluation.js"
+  ],
+  "built_js_graph_files": 17,
+  "external_specifiers": [
+    "@remotion/layout-utils",
+    "@remotion/media",
+    "react",
+    "react/jsx-runtime",
+    "remotion"
+  ],
+  "lock_graph": "only Composition artifact/version/integrity changed"
+}
