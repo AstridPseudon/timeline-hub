@@ -120,3 +120,22 @@ legacy qualification. PLAN's M1 record and M2/M3 merge holds remain in force.
 
 ## 2026-10-20 05:15 — response to orchestrator04:57 (verification in flight)
 The existing document proves **production App function output**, with the native fixture unchanged, through the actual raw graph adapter and projector. It does **not** prove real mounted UI, Runtime acceptance or frame pixels. I cannot truthfully confirm the requested wording “real App UI produces” yet. Worker app-m2-popup-exact-vector-confirm-r1 is checking the exact unchanged add.output occurrence spans, rational frame units, current Agent 270/330/60 vectors and whether that exact child exercises clamp. It will distinguish raw source spans, local editor rows and render-facing rows; no guessed fixture correction or policy flip. The earlier7-vs6/config to6-vs5.75 report remains an App projector comparison, not public-scene evidence. The ONE compiler and actual reference qualification stay required before popup retirement.
+
+## 2026-10-20 05:20 — verified response: spans yes; reported real-UI vectors no
+Exact unchanged nativeADD fixtureSHA256 e30ed3303532e3d73adfd07670e04d1312003b7e10d2c5c008629b8b9bffad46. Actual add.output raw+normaladapter A=[8,18), B=[10,20), samepicturelane; sourcechildextent7s. App effective A=[8,10), B=[10,17). Therefore clamp IS exercised: nextsame-lane start10 boundsA. No corrected authoredfixture is justified.
+
+Agent270/330/60 and330/390/60 are EXISTINGclip-a rows atglobal9/11 on LOCAL/unboundedprojection with separately supplied numeric30000/1001 FPS. They are NOT the newly addedreserved-child, and A's triple is NOT defaultaccepted/boundedprojection. Numericdiagnostic stage table (start/exclusiveend/duration frames):
+
+| Row | local beforebound | defaultacceptedpath | eitherpath after realboundhelper |
+| --- | --- | --- | --- |
+| A existingclip-a |270/330/60|270/300/30|270/300/30|
+| A existingclip-b |390/450/60|omitted|omitted|
+| A NEWreserved-child |244/304/60|244/300/56|244/300/56|
+| B existingclip-a |330/390/60|330/390/60|330/390/60|
+| B existingclip-b |450/510/60|450/510/60|450/510/60|
+
+`boundCanonicalConfigClips` actually sends BOTHdisplaypaths to the same6geometryrows. Exactnative literalvideo lane has no compiledtransitionvector under olddispatch; normalboundary applies by sourceinspection. Thus config7vs6 remainsRED but ALONEdoesnotprovepixels/audio differ.
+
+CRITICALlimit: unchanged output.fps is {numerator:30000,denominator:1001}; buildTimelineData preservesit, oldRemotionPreview passesitdirectly to numericframehelpers, actual multiplication yieldsNaN. Finitetriples above are NUMERICdiagnostics ONLY, notnativeAppplayableoutput. No realmouse/mountedPlayer/Runtimeacceptance/pixels/audio/publicscene wasrun. RawADDsource[2,6),null/opaque/registry andwholeoutput/inputbytes unchanged. ONEcompiledoutput must settle properrender-facing vector andnumericFPS adaptation; do notflipclamp orreplacefixture toblessnumbers.
+
+Evidence handoff (flat, synced): design/handoff-app-popup-exact-vector-report.md, -vectors.json, -occurrenceMediaExactVectors.test.ts. RealRuntimeDataProvider rawgraphadapter+prepare+projector+build/bound/framefunctions; exactcapture/record/fullinternalpayload equalityPASS;228focusedPASS5files. Originalredparitytest rerun1FAIL(twounchangedsoftassertions), keptoutsidefullsuite/noexpectedmarker. No installeddependency qualification (basepin8/shared10), publicevaluatororPlayernotrun. This answers04:57 withstageandrowidentity distinctions; Agent/Viewing mustuseexactclosure beforeMAINplayableanalog capture.

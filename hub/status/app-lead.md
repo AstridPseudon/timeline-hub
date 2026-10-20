@@ -12,3 +12,7 @@
 - Infra changes this check: none (no restarts, no recycling by the lead subagent).
 - Open blockers: none infrastructural.
 - Questions for the orchestrator: none from the lead (see the two manager escalations above).
+
+## Lead 05:24Z: recycle-on-finish handed to the kit
+- Kit bin/dispatch (recycle-on-finish) and the MANAGER-COMMON "Disk: recycle-on-finish" section arrived on the app machine. The lead watcher's every-5-min sweep is now only a fallback when disk is below 10 GB (same safety rules).
+- Race fixed: the lead sweep had recycled app-m2-opaque-root-writer-closure, app-m3-label-opaque-cohort-compose and app-m3-render-download-current-review up to 6 min before the manager's KEEP markers landed. All three worktrees were recreated at their branch heads (1516cc31b, 1ae5c5785, f08c3b976), clean, with node_modules linked.
