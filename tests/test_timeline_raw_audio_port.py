@@ -139,6 +139,27 @@ def test_raw_media_info_refuses_pin_outside_base_closure(tmp_path):
         service.close()
 
 
+def test_raw_media_info_requires_declared_pin_from_authenticated_base(tmp_path):
+    service, project, objects, request = _seed(tmp_path)
+    try:
+        unlisted = service.ingest(project, b"same-project-but-not-base", media_type="audio/wav",
+                                  original_name="unlisted.wav", idempotency_key="unlisted")["data"]
+        unlisted_pin = {"media_id": unlisted["object_id"], "content_digest": unlisted["object_id"]}
+        request["commands"][0]["args"]["raw_pin"] = unlisted_pin
+        port = _port(service, request)
+        try:
+            with pytest.raises(CommitRejected) as error:
+                port.media_info(unlisted_pin)
+            assert error.value.failure["details"]["reason"] == "dependency_unavailable"
+
+            base_pin = {"media_id": objects[0]["object_id"], "content_digest": objects[0]["object_id"]}
+            assert port.media_info(base_pin)["duration_seconds"] == 1.0
+        finally:
+            port.close()
+    finally:
+        service.close()
+
+
 def test_raw_media_info_refuses_object_owned_by_another_project(tmp_path):
     service, project, _objects, _request = _seed(tmp_path)
     try:
