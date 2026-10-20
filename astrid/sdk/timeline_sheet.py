@@ -881,6 +881,33 @@ def find_version(tl: Any, version: str, *, client: Any = None) -> Any:
 
     if sheet_version(tl) == version:
         return tl
+    if client is not None:
+        try:
+            base = Checkout(base_bundle(tl.document()))
+            if sheet_version(base) == version:
+                return base
+        except Exception:  # noqa: BLE001
+            pass
+
+        # Runtime owns accepted ancestry. Do not consult local snapshots once
+        # an authenticated client is available: a retained revision may have
+        # a new publication identity after restore, so revision-only local
+        # state cannot prove that it is the requested accepted basis.
+        from astrid.sdk.timeline.revisions import RuntimeRevisions
+
+        try:
+            revisions = RuntimeRevisions(client.timelines)._list_all(
+                tl.bundle["project_id"], tl.bundle["timeline_id"]
+            )
+        except TimelineEditError as exc:
+            raise SheetError(f"could not read retained sheet basis: {exc}") from exc
+        for revision in revisions or []:
+            other = Checkout.open(tl.bundle["project_id"], tl.bundle["timeline_id"],
+                                  revision_id=revision.id, client=client)
+            if sheet_version(other) == version:
+                return other
+        return None
+
     kept = (getattr(tl, "_exported", None) or {}).get(version)
     if kept is not None and kept.get("base_parent") == tl.bundle.get("base_parent"):
         return Checkout(copy.deepcopy(kept))
@@ -909,21 +936,6 @@ def find_version(tl: Any, version: str, *, client: Any = None) -> Any:
             return base
     except Exception:  # noqa: BLE001
         pass
-    if client is not None:
-        cursor = None
-        while True:
-            result = client.timelines.history(tl.bundle["project_id"], tl.bundle["timeline_id"],
-                                              limit=100, cursor=cursor)
-            if not result.ok:
-                raise SheetError(f"could not read retained sheet basis: {result.error}")
-            for row in result.data["items"]:
-                other = Checkout.open(tl.bundle["project_id"], tl.bundle["timeline_id"],
-                                      revision_id=row["revision_id"], client=client)
-                if sheet_version(other) == version:
-                    return other
-            cursor = result.data.get("next_cursor")
-            if cursor is None:
-                break
     return None
 
 
