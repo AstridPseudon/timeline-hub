@@ -1,0 +1,4 @@
+tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+tests/e2e/timeline/viewing-parity/tab-audio.ts
+tests/e2e/timeline/viewing-parity/tab-audio.test.ts

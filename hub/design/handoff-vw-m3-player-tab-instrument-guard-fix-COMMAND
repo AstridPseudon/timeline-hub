@@ -1,0 +1,7 @@
+node --check tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+node --test tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+node --import tsx -e "import('./tests/e2e/timeline/viewing-parity/tab-audio.test.ts').catch(e=>{console.error(e);process.exit(1)})"
+npm exec -- tsc --noEmit --target ES2022 --lib ES2023,DOM --module ESNext --moduleResolution bundler --strict --skipLibCheck --types node tests/e2e/timeline/viewing-parity/tab-audio.ts tests/e2e/timeline/viewing-parity/tab-audio.test.ts
+npm exec -- eslint tests/e2e/timeline/viewing-parity/tab-audio.ts tests/e2e/timeline/viewing-parity/tab-audio.test.ts --max-warnings 0
+node node_modules/@playwright/test/cli.js test --config playwright.viewing-parity.native-codec.config.ts --list
+git diff --check

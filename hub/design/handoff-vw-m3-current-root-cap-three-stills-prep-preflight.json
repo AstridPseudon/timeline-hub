@@ -1,8 +1,8 @@
 {
-  "status": "OFFLINE_PASS_NOT_CAPTURE_GRANTED",
+  "status": "CAPTURE_COMPLETED",
   "revision": "4ef1391c2c104d5d11b3a27265035c51be296045",
   "tree": "afb2ed8506a99a088d7be3dbadaf593338d2fb5a",
-  "free_bytes_before_staging": 13349707776,
+  "free_bytes_before_staging": 13030129664,
   "reserve_bytes": 10737418240,
   "staging_headroom_bytes": 2248947427,
   "required_bytes": 12986365667,
@@ -26,6 +26,6 @@
       "fileCount": 255
     }
   },
-  "capture_run": false,
+  "capture_run": true,
   "scope": "UNCERTIFIED static compiled currentRoot reference; no Runtime/MP4/Player/export/audio/Gate6 claim"
 }

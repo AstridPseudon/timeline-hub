@@ -1,0 +1,7 @@
+Tests/controller/helper-only patch. Exact unified diff is the worktree diff for this worker; no product/source/pin/canonical-fixture changes were made.
+
+Changed:
+- tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+- tests/e2e/timeline/viewing-parity/tab-audio.controller.test.mjs
+- tests/e2e/timeline/viewing-parity/tab-audio.ts
+- tests/e2e/timeline/viewing-parity/tab-audio.test.ts

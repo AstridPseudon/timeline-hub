@@ -1,0 +1,76 @@
+{
+  "result_id": "vw-m3-current-root-cap-three-stills-prep-e2e-viewing-current-root-cap-three-stills-1020140356-7643",
+  "suite": "e2e-viewing-current-root-cap-three-stills",
+  "worker": "vw-m3-current-root-cap-three-stills-prep",
+  "central_status": "pass",
+  "central_exit": 0,
+  "central_duration_seconds": 25,
+  "snapshot_tree": "13e375534fffd704305eced5686699d2c8c9c948",
+  "controller_sha256": "079fa981108214b0dac2d7f1453ae95fc716e2444ae4d6457d3cec538178dc97",
+  "manifest_sha256": "4127d7e25aba66d57862af09a46368004fcda0a95c5c531ae80c0b0ae490dff9",
+  "source_revision": "4ef1391c2c104d5d11b3a27265035c51be296045",
+  "source_tree": "afb2ed8506a99a088d7be3dbadaf593338d2fb5a",
+  "metadata": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "durationInFrames": 120,
+    "claim": "UNCERTIFIED static compiled current Agent Root reference"
+  },
+  "frames": {
+    "90": {
+      "bytes": 34422,
+      "sha256": "7640face10c33eb4c8682b890ddcc6faacaf0e57c0810e9438e4b2df8a88444a",
+      "rgb_sha256": "2677c0b2f3a806ba31c0a11f8d966288a0456524bb58f00adb2e7a5570d09bd3",
+      "histogram": [[2073600, [240, 240, 240]]],
+      "samples_rgb": [[240, 240, 240], [240, 240, 240], [240, 240, 240]],
+      "max_channel_difference": 0,
+      "pixels_diff_gt_2": 0
+    },
+    "105": {
+      "bytes": 34427,
+      "sha256": "c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b",
+      "rgb_sha256": "9b6f504605f54a1e9693cfd9b39ff502ca41125dbfda821a9cb3e36da5e3d69f",
+      "histogram": [[2073600, [122, 124, 130]]],
+      "samples_rgb": [[122, 124, 130], [122, 124, 130], [122, 124, 130]],
+      "max_channel_difference": 0,
+      "pixels_diff_gt_2": 0
+    },
+    "119": {
+      "bytes": 34429,
+      "sha256": "128017371420be346796916879dc2e5faac0f2761d5025018e392913abea63be",
+      "rgb_sha256": "3aeb1695b5d290bb37120db1807efdc78de82fad5067835b9e0ed9f85704a1cb",
+      "histogram": [[2073600, [13, 16, 28]]],
+      "samples_rgb": [[13, 16, 28], [13, 16, 28], [13, 16, 28]],
+      "max_channel_difference": 0,
+      "pixels_diff_gt_2": 0
+    }
+  },
+  "comparison": {
+    "png_count": 3,
+    "frames": [90, 105, 119],
+    "native_rgb_threshold_255": 2,
+    "all_pixel_comparison": "PASS",
+    "approved_known_intended_pixel_differences": [],
+    "inferred_opacity105_from_rgb": 0.5,
+    "alpha_used_as_opacity": false,
+    "resize_or_realignment": false
+  },
+  "source_and_environment": {
+    "source_members": 1427,
+    "source_bytes": 76351190,
+    "public12_members": 77,
+    "public12_tar_sha256": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "dependency_resolution": {"status": "PASS", "source_files": 98, "edges": 367, "nonliteral": 0, "failures": 0},
+    "f816_graph_entries": 21488,
+    "f816_graph_sha256": "9e556a876a02ee4f4ed3e8215eaaf793ac0ba66a6d85e503747f635521acc425",
+    "node_sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "chrome_tree_sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+    "chrome_tree_file_count": 255,
+    "postflight_valid": true,
+    "postflight_errors": [],
+    "source_outputs_unchanged": true,
+    "owned_temp_removed": "/tmp/vw-cap-tyoz9eis"
+  },
+  "scope": "UNCERTIFIED static compiled currentRoot reference only; not normal Runtime MP4/capture authority/Player export/Gate 6/audio"
+}

@@ -1,0 +1,24 @@
+```sh
+git -C /home/user/banodoco/reigh-app diff --name-status b1ef4b9b9 tl/vw-m3-app-pcm13-actual-consumer-unit
+git -C /home/user/banodoco/reigh-app diff --check b1ef4b9b9 tl/vw-m3-app-pcm13-actual-consumer-unit
+
+# Reviewer-owned five-file extract + private public13 archive; no whole App copy.
+git -C /home/user/banodoco/reigh-app archive tl/vw-m3-app-pcm13-actual-consumer-unit \
+  src/tools/video-editor/compositions/AudioTrack.tsx \
+  src/tools/video-editor/compositions/AudioTrack.test.tsx \
+  src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.contract.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx | tar -x
+tar -xzf /tmp/vw-m3-release13-pack.YKPWCk/one/banodoco-timeline-composition-0.0.13.tgz
+
+/home/user/work/app/node_modules/vitest/vitest.mjs run --no-cache --configLoader=runner \
+  --config /tmp/vw-m3-app-pcm13-final-review-vitest.config.mjs \
+  src/tools/video-editor/compositions/AudioTrack.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.contract.test.tsx \
+  src/tools/video-editor/compositions/continuousPCM.lifetime.test.tsx
+# PASS: 3 files / 63 tests
+
+# A reviewer-owned node --input-type=module probe imported private public13
+# dist/evaluation.js and checked six exports, full-source WAV, matching source,
+# and four forged prepared-source negatives: PASS.
+```

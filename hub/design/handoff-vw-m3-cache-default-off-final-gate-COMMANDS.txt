@@ -1,0 +1,9 @@
+git -C /home/user/peteromallet/astrid-agent branch -a --contains 17a13fcfc
+git -C /home/user/peteromallet/astrid-agent show --stat --oneline 17a13fcfc
+git -C /home/user/peteromallet/astrid-agent diff --stat 17a13fcfc..c54433b28
+git -C /home/user/peteromallet/astrid-agent diff --name-status 17a13fcfc..c54433b28
+git -C /home/user/peteromallet/astrid-agent diff --check 17a13fcfc..c54433b28
+git -C /home/user/peteromallet/astrid-agent grep -n -E 'RemotionFrameProvider\(|cache=' c54433b28 -- astrid/packs/rendering/actions/timeline_visualize astrid/packs/rendering/actions/render tests/packs/rendering/test_scene_cache_payload.py tests/packs/rendering/test_scene_source_carry.py
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$O" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider "$O/tests/packs/rendering/test_scene_cache_payload.py" -k 'test_default_provider_keeps_png_only_cache_reusable_across_owners or test_new_provider_reuses_rows_without_query_or_private_visibility or test_planted_stale_or_forged_entry_renders_fresh'
+  => 11 passed, 27 deselected
+git status --short --branch  (Composition worktree; clean)

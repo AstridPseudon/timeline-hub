@@ -1,0 +1,42 @@
+{
+  "valid": true,
+  "error": null,
+  "post_errors": [],
+  "before": {
+    "entries": 21488,
+    "sha256": "9e556a876a02ee4f4ed3e8215eaaf793ac0ba66a6d85e503747f635521acc425",
+    "six_peers": {
+      "@remotion/player/dist/cjs/PlayerUI.js": "5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb",
+      "@remotion/player/dist/cjs/use-player-methods.js": "ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46",
+      "@remotion/player/dist/cjs/use-playback.js": "6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0",
+      "@remotion/player/dist/esm/index.mjs": "d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12",
+      "remotion/dist/esm/index.mjs": "9fdfe58f3f34e6a72564a811ac5d374d1c97a0f535e2a0e3aac198670d9b7ff8",
+      "remotion/dist/cjs/audio/shared-audio-tags.js": "471b33916a91f5b9529c477bdf0ec586cb700d5a7179ab910a82dd932e172f6c"
+    },
+    "node_sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "chrome": {
+      "sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+      "fileCount": 255
+    }
+  },
+  "after": {
+    "entries": 21488,
+    "sha256": "9e556a876a02ee4f4ed3e8215eaaf793ac0ba66a6d85e503747f635521acc425",
+    "six_peers": {
+      "@remotion/player/dist/cjs/PlayerUI.js": "5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb",
+      "@remotion/player/dist/cjs/use-player-methods.js": "ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46",
+      "@remotion/player/dist/cjs/use-playback.js": "6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0",
+      "@remotion/player/dist/esm/index.mjs": "d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12",
+      "remotion/dist/esm/index.mjs": "9fdfe58f3f34e6a72564a811ac5d374d1c97a0f535e2a0e3aac198670d9b7ff8",
+      "remotion/dist/cjs/audio/shared-audio-tags.js": "471b33916a91f5b9529c477bdf0ec586cb700d5a7179ab910a82dd932e172f6c"
+    },
+    "node_sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+    "chrome": {
+      "sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+      "fileCount": 255
+    }
+  },
+  "source_outputs_unchanged": true,
+  "capture_run": true,
+  "temp_removed_on_exit": "/tmp/vw-cap-tyoz9eis"
+}

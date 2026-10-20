@@ -1,0 +1,139 @@
+{
+  "files": {
+    "90": {
+      "sha256": "7640face10c33eb4c8682b890ddcc6faacaf0e57c0810e9438e4b2df8a88444a",
+      "bytes": 34422,
+      "reference_sha256": "7640face10c33eb4c8682b890ddcc6faacaf0e57c0810e9438e4b2df8a88444a",
+      "rgb_sha256": "2677c0b2f3a806ba31c0a11f8d966288a0456524bb58f00adb2e7a5570d09bd3",
+      "rgba_extrema": [
+        [
+          240,
+          240
+        ],
+        [
+          240,
+          240
+        ],
+        [
+          240,
+          240
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "rgb_histogram": [
+        [
+          2073600,
+          [
+            240,
+            240,
+            240
+          ]
+        ]
+      ],
+      "center_rgb": [
+        240,
+        240,
+        240
+      ],
+      "all_pixels": 2073600,
+      "max_rgb_channel_difference_255": 0,
+      "pixels_exceeding_2_255": 0,
+      "pass": true
+    },
+    "105": {
+      "sha256": "c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b",
+      "bytes": 34427,
+      "reference_sha256": "c0b0adc7856e2750137315451a9657661925436746d0da1e9cd6a2527d14431b",
+      "rgb_sha256": "9b6f504605f54a1e9693cfd9b39ff502ca41125dbfda821a9cb3e36da5e3d69f",
+      "rgba_extrema": [
+        [
+          122,
+          122
+        ],
+        [
+          124,
+          124
+        ],
+        [
+          130,
+          130
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "rgb_histogram": [
+        [
+          2073600,
+          [
+            122,
+            124,
+            130
+          ]
+        ]
+      ],
+      "center_rgb": [
+        122,
+        124,
+        130
+      ],
+      "all_pixels": 2073600,
+      "max_rgb_channel_difference_255": 0,
+      "pixels_exceeding_2_255": 0,
+      "pass": true
+    },
+    "119": {
+      "sha256": "128017371420be346796916879dc2e5faac0f2761d5025018e392913abea63be",
+      "bytes": 34429,
+      "reference_sha256": "128017371420be346796916879dc2e5faac0f2761d5025018e392913abea63be",
+      "rgb_sha256": "3aeb1695b5d290bb37120db1807efdc78de82fad5067835b9e0ed9f85704a1cb",
+      "rgba_extrema": [
+        [
+          13,
+          13
+        ],
+        [
+          16,
+          16
+        ],
+        [
+          28,
+          28
+        ],
+        [
+          255,
+          255
+        ]
+      ],
+      "rgb_histogram": [
+        [
+          2073600,
+          [
+            13,
+            16,
+            28
+          ]
+        ]
+      ],
+      "center_rgb": [
+        13,
+        16,
+        28
+      ],
+      "all_pixels": 2073600,
+      "max_rgb_channel_difference_255": 0,
+      "pixels_exceeding_2_255": 0,
+      "pass": true
+    }
+  },
+  "threshold_255": 2,
+  "pass": true,
+  "opacity105_inferred_from_actual_rgb": 0.5,
+  "opacity_method": "(frame105RGB - backgroundRGB) / (actual frame90RGB - backgroundRGB); median RGB, never alpha",
+  "approved_known_intended_pixel_differences": [],
+  "claim": "UNCERTIFIED static compiled currentRoot vs exact MAIN stills"
+}
