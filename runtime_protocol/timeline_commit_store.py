@@ -753,6 +753,61 @@ class TimelineCommitStore:
         identity.
         """
         project_id, timeline_id = document["project_id"], document["timeline_id"]
+        desired = self._reference_projection_desired(document)
+        existing = {row["id"]: dict(row) for row in self.conn.execute(
+            "SELECT reference.* FROM timeline_references reference "
+            "JOIN timelines timeline ON timeline.id=reference.timeline_id "
+            "WHERE reference.timeline_id=? AND timeline.project_id=?", (timeline_id, project_id)
+        )}
+        for reference_id, reference in desired.items():
+            occupied = self.conn.execute(
+                "SELECT reference.timeline_id, timeline.project_id, reference.object_id, reference.role "
+                "FROM timeline_references reference JOIN timelines timeline ON timeline.id=reference.timeline_id "
+                "WHERE reference.id=?", (reference_id,)
+            ).fetchone()
+            if occupied is not None and (occupied["timeline_id"] != timeline_id
+                                         or occupied["project_id"] != project_id
+                                         or occupied["object_id"] != reference["object_id"]
+                                         or occupied["role"] != reference["role"]):
+                reject("reference_projection_occupied", "timeline reference identity is already occupied")
+
+        head = self.conn.execute(
+            "SELECT revision_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
+            (project_id, timeline_id),
+        ).fetchone()
+        if head is None or not head["revision_id"]:
+            reject("history_unavailable")
+        prior = self._reference_projection_desired(
+            self.revision_closure(project_id, timeline_id, head["revision_id"])
+        )
+        for reference_id, reference in prior.items():
+            owned = self.conn.execute(
+                "SELECT reference.timeline_id, timeline.project_id, reference.object_id, reference.role "
+                "FROM timeline_references reference JOIN timelines timeline ON timeline.id=reference.timeline_id "
+                "WHERE reference.id=?", (reference_id,)
+            ).fetchone()
+            if owned is not None and (owned["timeline_id"] != timeline_id
+                                       or owned["project_id"] != project_id
+                                       or owned["object_id"] != reference["object_id"]
+                                       or owned["role"] != reference["role"]):
+                reject("reference_projection_occupied", "timeline reference identity is already occupied")
+
+        removed = sorted(set(prior) - set(desired))
+        retained = [row for reference_id, row in existing.items() if reference_id not in removed]
+        projected = {row["id"]: {"reference_id": row["id"], "object_id": row["object_id"],
+                                  **({"role": row["role"]} if row["role"] else {})}
+                     for row in retained}
+        projected.update(desired)
+        timeline = self.conn.execute("SELECT version FROM timelines WHERE id=? AND project_id=?",
+                                     (timeline_id, project_id)).fetchone()
+        if timeline is None:
+            reject("history_unavailable")
+        return {"project_id": project_id, "timeline_id": timeline_id, "version": int(timeline["version"]) + 1,
+                "desired": desired, "removed": removed,
+                "references": [projected[key] for key in sorted(projected)]}
+
+    def _reference_projection_desired(self, document):
+        """Derive only the accepted occurrence-owned reference projection."""
         internals = {image["revision_id"]: image for image in document["internal_timeline_revisions"]}
         shots = {(image["shot_id"], image["revision_id"]): image for image in document["shot_revisions"]}
         manifest = document["dependency_manifest"]["media"]
@@ -795,60 +850,32 @@ class TimelineCommitStore:
             if len(manifest_matches) != 1 or manifest_matches[0].get("content_digest") != media_id:
                 reject("reference_binding_out_of_manifest", "timeline reference asset is outside accepted media custody", status=422)
             reference = {"reference_id": binding["reference_id"], "object_id": media_id, "role": "source"}
-            prior = desired.get(binding["reference_id"])
-            if prior is not None and prior != reference:
-                reject("reference_binding_ambiguous", "timeline reference identity has conflicting bindings", status=422)
+            if binding["reference_id"] in desired:
+                reject("reference_binding_ambiguous", "timeline reference identity is duplicated", status=422)
             desired[binding["reference_id"]] = reference
-
-        existing = {row["id"]: dict(row) for row in self.conn.execute(
-            "SELECT * FROM timeline_references WHERE timeline_id=?", (timeline_id,)
-        )}
-        for reference_id, reference in desired.items():
-            occupied = self.conn.execute(
-                "SELECT timeline_id, object_id, role FROM timeline_references WHERE id=?", (reference_id,)
-            ).fetchone()
-            if occupied is not None and (occupied["timeline_id"] != timeline_id
-                                         or occupied["object_id"] != reference["object_id"]
-                                         or occupied["role"] != reference["role"]):
-                reject("reference_projection_occupied", "timeline reference identity is already occupied")
-
-        snapshot = self.conn.execute(
-            "SELECT references_json FROM timeline_revisions WHERE timeline_id=? ORDER BY version DESC LIMIT 1",
-            (timeline_id,),
-        ).fetchone()
-        try:
-            previous = json.loads(snapshot["references_json"]) if snapshot else []
-        except (TypeError, ValueError):
-            reject("history_unavailable")
-        if not isinstance(previous, list) or any(
-                not isinstance(item, dict) or not isinstance(item.get("reference_id"), str)
-                for item in previous):
-            reject("history_unavailable")
-        owned = {item["reference_id"] for item in previous}
-        removed = sorted(owned - desired.keys())
-        retained = [row for reference_id, row in existing.items() if reference_id not in removed]
-        projected = {row["id"]: {"reference_id": row["id"], "object_id": row["object_id"],
-                                  **({"role": row["role"]} if row["role"] else {})}
-                     for row in retained}
-        projected.update(desired)
-        timeline = self.conn.execute("SELECT version FROM timelines WHERE id=? AND project_id=?",
-                                     (timeline_id, project_id)).fetchone()
-        if timeline is None:
-            reject("history_unavailable")
-        return {"timeline_id": timeline_id, "version": int(timeline["version"]) + 1,
-                "desired": desired, "removed": removed,
-                "references": [projected[key] for key in sorted(projected)]}
+        return desired
 
     def _apply_reference_projection(self, projection):
         """Apply the preflighted reference rows and its legacy snapshot."""
+        project_id = projection["project_id"]
         timeline_id, version = projection["timeline_id"], projection["version"]
-        current = self.conn.execute("SELECT version FROM timelines WHERE id=?", (timeline_id,)).fetchone()
+        current = self.conn.execute("SELECT version FROM timelines WHERE id=? AND project_id=?",
+                                    (timeline_id, project_id)).fetchone()
         if current is None or int(current["version"]) != version:
             reject("history_unavailable")
         for reference_id in projection["removed"]:
-            self.conn.execute("DELETE FROM timeline_reference_state WHERE id=?", (reference_id,))
-            self.conn.execute("DELETE FROM timeline_references WHERE id=? AND timeline_id=?",
-                              (reference_id, timeline_id))
+            self.conn.execute(
+                "DELETE FROM timeline_reference_state WHERE id=? AND EXISTS ("
+                "SELECT 1 FROM timeline_references reference JOIN timelines timeline "
+                "ON timeline.id=reference.timeline_id WHERE reference.id=? "
+                "AND reference.timeline_id=? AND timeline.project_id=?)",
+                (reference_id, reference_id, timeline_id, project_id),
+            )
+            self.conn.execute(
+                "DELETE FROM timeline_references WHERE id=? AND timeline_id=? AND EXISTS ("
+                "SELECT 1 FROM timelines timeline WHERE timeline.id=timeline_references.timeline_id "
+                "AND timeline.project_id=?)", (reference_id, timeline_id, project_id)
+            )
         for reference in projection["desired"].values():
             self.conn.execute("INSERT OR IGNORE INTO timeline_references(id, timeline_id, object_id, role) VALUES (?, ?, ?, ?)",
                               (reference["reference_id"], timeline_id, reference["object_id"], reference["role"]))
