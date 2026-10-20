@@ -22,8 +22,8 @@ The gate covers:
 
 - Extension Manager inventory, activity, diagnostic and trust-state rendering
   through the real browser DOM, including keyboard disclosure.
-- The combined editor with all 11 marker-overlay contributions, Transcript and
-  Runaway data-kind lanes mounted together.
+- The combined editor with the fixture catalog's marker-overlay layers (more than
+  one page of them), Transcript and Runaway data-kind lanes mounted together.
 - Keyboard navigation and accessible roles/labels for marker pagination and
   host-owned lane actions.
 - Phone-width overflow, the three-layer marker budget, and the portaled lane

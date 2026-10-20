@@ -126,6 +126,17 @@ describe('extension ship verifier', () => {
       && gate.command === 'npm'
       && gate.args.join(' ') === 'run check:extension-ship-evidence:release'
     )));
+    // The H.264 proofs (two export renders, the preview-scrub pixel evidence) need installed Chrome, so
+    // test:e2e:timeline excludes them; the release must run them (and fail where Chrome is missing) or
+    // they are in no gate at all.
+    const timelineGateIndex = ASTRID_APP_GATE_PROFILE.findIndex((gate) => gate.id === 'timeline-e2e');
+    assert.ok(timelineGateIndex >= 0);
+    assert.deepEqual(ASTRID_APP_GATE_PROFILE[timelineGateIndex + 1], {
+      id: 'timeline-chrome-export',
+      label: 'timeline H.264 proofs in installed Chrome',
+      command: 'npm',
+      args: ['run', 'test:e2e:chrome-export'],
+    });
     const visualGateIndex = ASTRID_APP_GATE_PROFILE.findIndex((gate) => gate.id === 'visual-e2e');
     assert.ok(visualGateIndex >= 0);
     assert.deepEqual(ASTRID_APP_GATE_PROFILE[visualGateIndex].args, [

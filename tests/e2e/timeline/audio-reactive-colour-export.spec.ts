@@ -296,7 +296,7 @@ test.describe('audio-reactive-colour browser export proof', () => {
     expect(consoleErrors.filter((message) => !/Failed to load resource.*404/i.test(message))).toEqual([]);
   });
 
-  test('renders the pinned Astrid marker fixture with exact decoded frame boundaries', async ({ page }, testInfo) => {
+  test('renders the pinned Astrid marker fixture with exact decoded frame boundaries', { tag: '@chrome-h264' }, async ({ page }, testInfo) => {
     test.setTimeout(180_000);
     const pageErrors: string[] = [];
     const consoleErrors: string[] = [];
@@ -349,6 +349,12 @@ test.describe('audio-reactive-colour browser export proof', () => {
       return 'pending';
     }, { timeout: 120_000, message: 'browser render did not complete' }).toBe('done');
 
+    // A finished render opens the "Rendered film" player modally, with the explicit Download inside it.
+    const renderedFilm = page.getByRole('dialog', { name: 'Rendered film' });
+    await expect(renderedFilm).toBeVisible();
+    await expect(renderedFilm.getByTestId('timeline-render-player')).toBeVisible();
+    await expect(renderedFilm.getByRole('link', { name: 'Download', exact: true })).toBeVisible();
+
     const downloadPromise = page.waitForEvent('download', { timeout: 30_000 });
     await downloadLink.click();
     const download = await downloadPromise;
@@ -361,11 +367,15 @@ test.describe('audio-reactive-colour browser export proof', () => {
 
     // Rendering is client-only and must not write the timeline. Repeat it to
     // prove idempotency and to catch accidental Runtime persistence coupling.
-    await expect(renderButton).toBeEnabled();
+    // The player is modal: the Render button is reachable again only after the user closes it.
     const firstDownloadHref = await downloadLink.getAttribute('href');
+    await renderedFilm.getByRole('button', { name: 'Close' }).click();
+    await expect(renderedFilm).toBeHidden();
+    await expect(renderButton).toBeEnabled();
     await renderButton.click();
     await expect(renderButton).toBeDisabled({ timeout: 5_000 });
-    await expect(downloadLink).toBeVisible({ timeout: 120_000 });
+    await expect(renderedFilm).toBeVisible({ timeout: 120_000 });
+    await expect(downloadLink).toBeVisible();
     await expect.poll(() => downloadLink.getAttribute('href')).not.toBe(firstDownloadHref);
     const secondDownloadPromise = page.waitForEvent('download', { timeout: 30_000 });
     await downloadLink.click();
@@ -382,13 +392,13 @@ test.describe('audio-reactive-colour browser export proof', () => {
     expect(saveRequests).toEqual([]);
 
     expect(forbiddenRequests).toEqual([]);
-    expect(notFoundResponses.filter((url) => !url.includes('__astrid_capability_probe__'))).toEqual([]);
+    expect(notFoundResponses).toEqual([]);
     expect(pageErrors).toEqual([]);
     const unexpectedConsoleErrors = consoleErrors.filter((message) => !/Failed to load resource.*404/i.test(message));
     expect(unexpectedConsoleErrors).toEqual([]);
   });
 
-  test('keeps marker frames clip-relative when the colour clip starts after a global gap', async ({ page }, testInfo) => {
+  test('keeps marker frames clip-relative when the colour clip starts after a global gap', { tag: '@chrome-h264' }, async ({ page }, testInfo) => {
     test.setTimeout(180_000);
     const pageErrors: string[] = [];
     const consoleErrors: string[] = [];

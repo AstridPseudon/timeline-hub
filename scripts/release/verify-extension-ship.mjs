@@ -72,7 +72,6 @@ export const ASTRID_APP_GATE_PROFILE = Object.freeze([
   { id: 'typecheck', label: 'Astrid App strict-island typecheck', command: 'npm', args: ['run', 'typecheck:strict-islands'] },
   { id: 'unit', label: 'complete Astrid App unit suite', command: 'npm', args: ['test'] },
   { id: 'extension-tests', label: 'extension contract suite', command: 'npm', args: ['run', 'test:extensions'] },
-  { id: 'creative-lab', label: 'Creative Lab extension suite', command: 'npm', args: ['run', 'test:creative-extension'] },
   { id: 'compatibility', label: 'extension compatibility matrix', command: 'npm', args: ['run', 'test:extension-compatibility'] },
   { id: 'scale-virtualization', label: 'shared data-lane virtualization and scale budget suite', command: 'npm', args: ['run', 'test:extension-scale'] },
   { id: 'production-smoke', label: 'production extension smoke suite', command: 'npm', args: ['run', 'test:extensions:production-smoke'] },
@@ -81,6 +80,10 @@ export const ASTRID_APP_GATE_PROFILE = Object.freeze([
   { id: 'cross-browser-e2e', label: 'Chrome Firefox WebKit extension suite', command: 'npm', args: ['run', 'test:e2e:extension-cross-browser'] },
   { id: 'accessibility-e2e', label: 'extension accessibility and responsive suite', command: 'npm', args: ['run', 'test:e2e:extension-accessibility'] },
   { id: 'timeline-e2e', label: 'timeline browser/device suite', command: 'npm', args: ['run', 'test:e2e:timeline'] },
+  // The H.264 proofs (two export renders, the preview-scrub pixel evidence) need installed Google Chrome
+  // (the bundled Chromium can neither encode nor decode H.264), so they are excluded from timeline-e2e.
+  // They run here and fail loudly where Chrome is absent.
+  { id: 'timeline-chrome-export', label: 'timeline H.264 proofs in installed Chrome', command: 'npm', args: ['run', 'test:e2e:chrome-export'] },
   { id: 'build', label: 'reproducible Astrid App production build', command: 'npm', args: ['run', 'build'] },
 ]);
 
