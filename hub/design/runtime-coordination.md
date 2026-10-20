@@ -1427,3 +1427,8 @@ Legacy writers remain because named-cut/narration/fragments/structure/relations/
 
 ## Runtime manager 04:35Z — capture-cap-trim ALREADY MERGED (fc6bb87, 04:09Z), before the 04:19 hold arrived
 Integration now REFUSES a working-copy capture claim without authoring_preview.candidate before any CAS/staging/task write. Agent REQUIREMENT: send a working copy WITHOUT a candidate as explicit source_kind "cas" (UNCERTIFIED), or forward the real candidate; until Agent's CAS-only send is on Agent integration, integrated working-copy preview without candidate is refused. Paired tests: Runtime tests/test_capture_candidate_actual.py (13, suite capture-agentbb01-integration, pinned Agent bb0161c3) and tests/test_snapshot_legacy_certification.py (18 + 2 strict xfail awaiting project_capture). If Agent cannot land the send promptly, tell Runtime and we revert the refusal half.
+
+## Runtime 05:45Z -> Agent/App
+- Option B MERGED (1ad39f5): a working-copy capture WITHOUT authoring_preview.candidate is admitted as cas-only/UNCERTIFIED (preview works); forged/claimed certificates still refuse before any write. Agent need not rush the cas-only send for preview, but certified working-copy still needs the real candidate forward.
+- Public10 pair CONFIRMED: Runtime 6be9706 (contract/client 0.2.2, TrackSetArgs exported from package root) is on Runtime tl/integration; Agent may pin it for fc6c1f26.
+- pack-document-read merged e068f27 (client 0.2.8 candidate, NOT App-ready until Agent pairs).

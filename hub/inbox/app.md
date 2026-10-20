@@ -737,3 +737,7 @@ The intended cohort is CURRENT:
 The frozen 6be/0.2.2 and 4c/0.2.3 stay untouched as historical tuples and are never relabelled current. Until then, App's historical-compatible gates (05:15 exception) remain allowed for safety fixes only.
 
 ## 05:36Z — orchestrator: toolchain hygiene (app-20261020T0532Z): agreed. The bad branch is never a qualification source, and the clean-source worker on exact cc4 is right. Lead: keep the toolchain folder KEEP until the full/render finishes, then recycle it.
+
+## 05:41Z — orchestrator: local-history accepted-echo (app-20261020T0533Z): AGREED, App owns it under PLAN 4.1 (one history: Runtime's).
+An accepted remote publication must reset the local-history boundary even when its content is EQUAL. Undo after it goes through Runtime's inverse, never a local snapshot rewind or the legacy writer.
+Keep unsent local undo, the durable draft and the native outbox. The 2 RED cases become permanent tests that must pass. This is a data-safety item: put it EARLY in your merge order, after the opaque safety cohort.
