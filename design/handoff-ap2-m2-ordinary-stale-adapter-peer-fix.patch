@@ -1,0 +1,100 @@
+--- a/src/tools/video-editor/hooks/useTimelineOps.ts
++++ b/src/tools/video-editor/hooks/useTimelineOps.ts
+@@ -474,16 +474,17 @@
+     return Object.freeze({ version: await barrier() });
+   }, [dataRef]);
+ 
+-  return useMemo<TimelineOps>(
+-    () => ({
+-      validate,
+-      preview,
+-      apply,
+-      flush,
+-      checkpoint,
+-      rollback,
+-      setAllTracksMuted,
+-    }),
+-    [validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted],
+-  );
++  // Extensions retain this adapter for their activation lifetime. Dispatch
++  // through current callbacks as command ports and edit authority change.
++  const currentOps = useRef<TimelineOps>({ validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted });
++  currentOps.current = { validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted };
++  return useMemo<TimelineOps>(() => ({
++    validate: (patch) => currentOps.current.validate(patch),
++    preview: (patch) => currentOps.current.preview(patch),
++    apply: (patch) => currentOps.current.apply(patch),
++    flush: () => currentOps.current.flush(),
++    checkpoint: (label) => currentOps.current.checkpoint(label),
++    rollback: (id) => currentOps.current.rollback(id),
++    setAllTracksMuted: (muted) => currentOps.current.setAllTracksMuted(muted),
++  }), []);
+ }
+--- a/src/tools/video-editor/hooks/useTimelineOps.test.ts
++++ b/src/tools/video-editor/hooks/useTimelineOps.test.ts
+@@ -76,6 +76,65 @@
+ // ---------------------------------------------------------------------------
+ 
+ describe('useTimelineOps', () => {
++  it('keeps an extension-retained adapter on the current command port after startup', () => {
++    const dataRef = { current: makeBaseTimelineData() };
++    const commitData = vi.fn();
++    const patch: TimelinePatch = { version: 1, operations: [
++      { op: 'clip.move', target: 'clip-1', payload: { at: 1 } },
++      { op: 'clip.update', target: 'clip-1', payload: { hold: 5 } },
++    ] };
++    const preview: TimelinePatch = { ...patch, source: 'timeline.native-ordinary' };
++    const port = {
++      capture: vi.fn(() => ({})),
++      finish: vi.fn(() => ({ commands: [], preview })),
++      submit: vi.fn(),
++    } as unknown as GenericPatchCapturePort;
++    const checkpoint = vi.fn();
++    const rollback = vi.fn();
++    const { result, rerender } = renderHook(({ genericPatchPort }) => useTimelineOps({
++      dataRef, commitData, genericPatchPort,
++      createManualCheckpoint: checkpoint, jumpToCheckpoint: rollback, checkpoints: [],
++    }), { initialProps: { genericPatchPort: undefined as GenericPatchCapturePort | undefined } });
++    // Extension activation retains this object while command-session startup is asynchronous.
++    const retained = result.current;
++    rerender({ genericPatchPort: port });
++    act(() => { retained.apply(patch); });
++
++    expect(port.capture).toHaveBeenCalledWith({ patch, current: dataRef.current });
++    expect(port.finish).toHaveBeenCalledOnce();
++    expect(port.submit).toHaveBeenCalledWith({ commands: [], preview });
++    expect(commitData).not.toHaveBeenCalled();
++    expect(result.current).toBe(retained);
++  });
++
++  it('uses current authority and preserves capture refusal through a retained adapter', () => {
++    const dataRef = { current: makeBaseTimelineData() };
++    const commitData = vi.fn();
++    const patch: TimelinePatch = { version: 1, operations: [
++      { op: 'clip.move', target: 'clip-1', payload: { at: 1 } },
++    ] };
++    const port = {
++      capture: vi.fn(() => { throw new Error('Displayed timeline does not match the raw authoring basis'); }),
++      finish: vi.fn(), submit: vi.fn(),
++    } as unknown as GenericPatchCapturePort;
++    const { result, rerender } = renderHook(({ allowed }) => useTimelineOps({
++      dataRef, commitData, genericPatchPort: port,
++      editability: { checkTimeline: () => ({ allowed, reason: 'read_only' }) } as any,
++      createManualCheckpoint: vi.fn(), jumpToCheckpoint: vi.fn(), checkpoints: [],
++    }), { initialProps: { allowed: true } });
++    const retained = result.current;
++    expect(() => retained.apply(patch)).toThrow('Displayed timeline does not match the raw authoring basis');
++    expect(port.finish).not.toHaveBeenCalled();
++    expect(port.submit).not.toHaveBeenCalled();
++    expect(commitData).not.toHaveBeenCalled();
++
++    vi.mocked(port.capture).mockClear();
++    rerender({ allowed: false });
++    expect(() => retained.apply(patch)).toThrow('timeline edit denied');
++    expect(port.capture).not.toHaveBeenCalled();
++    expect(commitData).not.toHaveBeenCalled();
++  });
++
+   it('routes a complete native patch through one command-session port', () => {
+     const dataRef = { current: makeBaseTimelineData() };
+     const commitData = vi.fn();
