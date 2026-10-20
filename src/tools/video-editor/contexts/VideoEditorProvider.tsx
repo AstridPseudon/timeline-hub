@@ -745,6 +745,9 @@ export function VideoEditorRuntimeContent({
   const onClipEdgeResizeEnd: TimelineClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
 
   const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
+    element: editor.element,
+    occurrenceDuplicate: editor.occurrenceDuplicate,
+    parentClipAddMedia: editor.parentClipAddMedia,
     shotSet: editor.shotSet,
     trackLabel: editor.trackLabel,
     clipScalar: editor.clipScalar,

@@ -6,6 +6,14 @@ const mocks = vi.hoisted(() => ({
   createShot: vi.fn(),
   navigate: vi.fn(),
   duplicateShotGroup: vi.fn(async () => ({})),
+  occurrenceDuplicate: {
+    capture: vi.fn(({ ownerRef, args }: { ownerRef: string; args: Record<string, string> }) => ({ ownerRef, args })),
+    finish: vi.fn((basis: { ownerRef: string; args: Record<string, string> }) => ({ command: {
+      schema_version: 1, op: 'occurrence.duplicate', version: '1', select: basis.ownerRef,
+      args: basis.args, intent: { ownership: 'occurrence' },
+    } })),
+    submit: vi.fn(),
+  },
   promotePrimaryVariant: vi.fn(async () => []),
   reloadFromServer: vi.fn(async () => undefined),
   galleryGet: vi.fn(async () => ({
@@ -86,6 +94,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
     unpatchRegistry: vi.fn(),
     registerAsset: vi.fn(),
     registerGenerationAsset: vi.fn(),
+    occurrenceDuplicate: mocks.occurrenceDuplicate,
     reloadFromServer: mocks.reloadFromServer,
   }),
   useTimelineChromeSelector: (selector: (value: unknown) => unknown) => selector({
@@ -143,14 +152,16 @@ vi.mock('@/integrations/astrid/client.ts', () => ({
 vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx', () => ({
   resolveSelectedGenerationIdsForShotCreation: () => ({ canCreateShot: false, generationIds: [] }),
   TimelineEditorCore: (props: {
-    onShotGroupDuplicate?: (locator: { shotId: string; trackId: string }) => void;
+    onShotGroupDuplicate?: (locator: { shotId: string; trackId: string; canonicalIdentity?: typeof mocks.canonicalOccurrence }) => void;
     onShotGroupPromotePrimary?: (locator: { shotId: string; trackId: string }) => void;
     onShotGroupNavigate?: unknown;
     onShotGroupGenerateVideo?: unknown;
     onShotGroupOpen?: (occurrence: typeof mocks.canonicalOccurrence) => void;
   }) => (
     <div>
-      <button onClick={() => props.onShotGroupDuplicate?.({ shotId: 'shot-a', trackId: 'V1' })}>Duplicate document shot</button>
+      <button onClick={() => props.onShotGroupDuplicate?.({
+        shotId: 'shot-a', trackId: 'V1', ...(mocks.canonicalMode ? { canonicalIdentity: mocks.canonicalOccurrence } : {}),
+      })}>Duplicate document shot</button>
       <button onClick={() => props.onShotGroupPromotePrimary?.({ shotId: 'shot-a', trackId: 'V1' })}>Promote document variant</button>
       {props.onShotGroupOpen && (
         <button onClick={() => props.onShotGroupOpen?.(mocks.canonicalOccurrence)}>Open canonical document shot</button>
@@ -257,5 +268,40 @@ describe('AstridTimelineEditor document-derived shot consumer', () => {
     expect(dialog).toHaveClass('max-w-4xl');
     fireEvent.keyDown(dialog, { key: 'Escape' });
     expect(screen.queryByTestId('canonical-shot-editor')).not.toBeInTheDocument();
+  });
+
+  it('routes canonical duplication through the native session with one command intent', async () => {
+    mocks.canonicalMode = true;
+    render(<AstridTimelineEditor />);
+
+    fireEvent.click(screen.getByText('Duplicate document shot'));
+
+    await waitFor(() => expect(mocks.occurrenceDuplicate.submit).toHaveBeenCalledWith({ command: expect.objectContaining({
+      op: 'occurrence.duplicate', select: 'occurrence:occ-1',
+      args: { occurrence_id: expect.stringMatching(/^occ-1-copy-/), shot_id: expect.stringMatching(/^shot-1-copy-/) },
+    }) }));
+    expect(mocks.occurrenceDuplicate.submit).toHaveBeenCalledTimes(1);
+    expect(mocks.duplicateShotGroup).not.toHaveBeenCalled();
+    expect(mocks.reloadFromServer).not.toHaveBeenCalled();
+  });
+
+  it('refuses canonical duplication without falling back to graph or catalog traffic', async () => {
+    mocks.canonicalMode = true;
+    const presenter = vi.fn(() => true);
+    installRuntimeErrorPresenter(presenter);
+    mocks.occurrenceDuplicate.capture.mockImplementationOnce(() => {
+      throw new Error('Displayed timeline does not match the raw authoring basis');
+    });
+    render(<AstridTimelineEditor />);
+
+    fireEvent.click(screen.getByText('Duplicate document shot'));
+
+    await waitFor(() => expect(presenter).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('Displayed timeline') }),
+      'Failed to duplicate canonical shot',
+    ));
+    expect(mocks.occurrenceDuplicate.submit).not.toHaveBeenCalled();
+    expect(mocks.duplicateShotGroup).not.toHaveBeenCalled();
+    expect(mocks.reloadFromServer).not.toHaveBeenCalled();
   });
 });

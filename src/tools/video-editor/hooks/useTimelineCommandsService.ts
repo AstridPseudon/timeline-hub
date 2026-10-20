@@ -1,4 +1,5 @@
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
+import type { JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { getAssetImmediateSource } from '../lib/asset-registry.ts';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { useMemo } from 'react';
@@ -91,6 +92,11 @@ export interface AddClipCommandInput {
   pinnedShotGroupsOverride?: PinnedShotGroup[];
 }
 
+type QualifiedPreparedAsset = TimelineProvisionedAsset & { mediaSelection: MediaSelection };
+type QualifiedAddClipCommandInput = Omit<AddClipCommandInput, 'preparedAsset'> & {
+  preparedAsset: QualifiedPreparedAsset;
+};
+
 export interface UpdateClipCommandInput {
   clipId: string;
   patch: Partial<Omit<TimelineClip, 'id'>>;
@@ -160,7 +166,8 @@ export interface TimelineCommands {
    * Insert a registry-backed asset clip onto the timeline without exposing the
    * raw rows/meta/clipOrder mutation path.
    */
-  addClip: (input: AddClipCommandInput) => TimelineCommandResult<{ clipId: string; trackId: string }>;
+  addClip(input: QualifiedAddClipCommandInput): Promise<TimelineCommandResult<{ clipId: string; trackId: string }>>;
+  addClip(input: AddClipCommandInput): TimelineCommandResult<{ clipId: string; trackId: string }>;
   /**
    * Apply a shallow persisted-clip patch and route validation through the
    * canonical config mutation path.
@@ -353,6 +360,10 @@ export interface CreateTimelineCommandsOptions {
   managedObjectGuard?: ManagedObjectGuard | null;
   /** Optional host-owned policy that can deny all timeline mutations. */
   timelineEditability?: TimelineEditability;
+  parentMediaRuntime?: {
+    projectId: string;
+    getProjectVerifiedMedia: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
+  };
 }
 
 /**
@@ -450,6 +461,79 @@ export function createTimelineCommands(
       const current = getCurrentData(state);
       if (!current) {
         return failure('timeline_unavailable', 'Timeline data is not loaded.');
+      }
+
+      const suppliedSelection = input.preparedAsset?.mediaSelection;
+      if (suppliedSelection) {
+        return (async (): Promise<TimelineCommandResult<{ clipId: string; trackId: string }>> => {
+          const prepared = input.preparedAsset as QualifiedPreparedAsset;
+          if (prepared.mediaType !== 'video') {
+            return failure('unsupported_asset_type', 'Native prepared parent media currently accepts video assets only.');
+          }
+          if (input.afterClipId || input.removeClipId || input.removeClipIds?.length
+            || input.replaceClipId || input.pinnedShotGroupsOverride !== undefined) {
+            return failure('invalid_argument', 'Native prepared parent media only supports a new manual clip.');
+          }
+          if (typeof input.time !== 'number' || !Number.isFinite(input.time) || input.time < 0) {
+            return failure('invalid_argument', 'A native prepared asset requires a non-negative target time.');
+          }
+          const port = state.ops.parentClipAddMedia;
+          const runtime = options?.parentMediaRuntime;
+          if (!port || !runtime) {
+            return failure('mutation_failed', 'Native prepared media requires the durable command session and Runtime verification.');
+          }
+
+          const plannedDuration = readPositiveDurationSeconds(input.clipSpanSeconds)
+            ?? estimateAssetDuration(prepared.entry, 'visual');
+          const targetPlan = planAssetDropTarget({
+            current,
+            assetKind: 'visual',
+            trackId: input.trackId,
+            selectedTrackId: state.data.selectedTrackId,
+            forceNewTrack: input.forceNewTrack ?? false,
+            insertAtTop: input.insertAtTop ?? false,
+            time: input.time,
+            duration: plannedDuration,
+          });
+          if (!targetPlan.ok || targetPlan.preparedCurrent !== current) {
+            return failure('mutation_failed', 'Native prepared media requires an existing visual track.');
+          }
+          const command: PlacePreparedMediaCommand = {
+            type: 'place-prepared-media',
+            payload: {
+              asset: prepared,
+              ...(targetPlan.trackId !== undefined ? { trackId: targetPlan.trackId } : {}),
+              ...(state.data.selectedTrackId !== undefined ? { selectedTrackId: state.data.selectedTrackId } : {}),
+              at: input.time,
+              forceNewTrack: false,
+              insertAtTop: false,
+              ...(input.clipSpanSeconds !== undefined ? { clipSpanSeconds: input.clipSpanSeconds } : {}),
+            },
+          };
+          const preview = applyPreparedMediaCommand(current, command);
+          const detail = preview?.commandResult?.detail;
+          const clip = detail && typeof detail.clipId === 'string'
+            ? preview?.nextData.config.clips.find((candidate) => candidate.id === detail.clipId)
+            : undefined;
+          if (!detail || typeof detail.clipId !== 'string' || typeof detail.trackId !== 'string'
+            || !clip || clip.clipType !== 'media' || clip.asset !== prepared.assetKey) {
+            return failure('mutation_failed', 'Failed to build the native prepared media row.');
+          }
+
+          // Capture detached row, alias, selection, and session fences before
+          // the only await. Verification must never observe the caller's
+          // mutable selection object after this point.
+          const row = structuredClone(clip) as unknown as Record<string, JSON>;
+          try {
+            const basis = port.capture({ row, media: suppliedSelection, current });
+            const verifiedMedia = await runtime.getProjectVerifiedMedia(runtime.projectId, basis.media);
+            const captured = port.finish(basis, verifiedMedia);
+            port.submit(captured);
+            return success({ clipId: detail.clipId, trackId: detail.trackId });
+          } catch (cause) {
+            return failure('mutation_failed', cause instanceof Error ? cause.message : 'Native prepared media was refused.', { cause });
+          }
+        })();
       }
 
       if (input.preparedAsset) {
@@ -1059,8 +1143,19 @@ export function createTimelineCommands(
  */
 export function useTimelineCommandsService(): TimelineCommands {
   const store = useTimelineStoreApi();
-  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
-  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability}), [store, editability]);
+  const runtime = useOptionalVideoEditorRuntime();
+  const editability = runtime?.timelineEditability;
+  const parentMediaRuntime = runtime?.provider && typeof (runtime.provider as {
+    getProjectVerifiedMedia?: unknown;
+  }).getProjectVerifiedMedia === 'function'
+    ? {
+        projectId: runtime.project.projectId,
+        getProjectVerifiedMedia: (runtime.provider as {
+          getProjectVerifiedMedia: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
+        }).getProjectVerifiedMedia.bind(runtime.provider),
+      }
+    : undefined;
+  return useMemo(() => createTimelineCommands(store, { timelineEditability: editability, parentMediaRuntime }), [store, editability, parentMediaRuntime]);
 }
 
 /**
@@ -1070,7 +1165,18 @@ export function useTimelineCommandsService(): TimelineCommands {
  * preserve their existing fallback behavior.
  */
 export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
-  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
+  const runtime = useOptionalVideoEditorRuntime();
+  const editability = runtime?.timelineEditability;
+  const parentMediaRuntime = runtime?.provider && typeof (runtime.provider as {
+    getProjectVerifiedMedia?: unknown;
+  }).getProjectVerifiedMedia === 'function'
+    ? {
+        projectId: runtime.project.projectId,
+        getProjectVerifiedMedia: (runtime.provider as {
+          getProjectVerifiedMedia: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
+        }).getProjectVerifiedMedia.bind(runtime.provider),
+      }
+    : undefined;
   const store = useTimelineStoreApiSafe();
   const availability = useTimelineAvailabilityState();
 
@@ -1078,6 +1184,6 @@ export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
     if (!store || !hasMountedTimelineAvailability(availability)) {
       return null;
     }
-    return createTimelineCommands(store, {timelineEditability: editability});
-  }, [availability.hasProvider, availability.mounted, store, editability]);
+    return createTimelineCommands(store, { timelineEditability: editability, parentMediaRuntime });
+  }, [availability.hasProvider, availability.mounted, store, editability, parentMediaRuntime]);
 }

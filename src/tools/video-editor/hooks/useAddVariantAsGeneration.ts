@@ -91,7 +91,7 @@ export function useAddVariantAsGeneration(): UseAddVariantAsGenerationResult {
         entry: registrationPlan.assetEntry,
         source: 'registered' as const,
       };
-      const insertResult = commands.addClip({
+      const insertResult = await commands.addClip({
         preparedAsset,
         afterClipId: clipId,
       });
