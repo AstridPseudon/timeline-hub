@@ -3762,10 +3762,10 @@ def test_launch_worker_projection_matches_fixed_execution_context(tmp_path, monk
         assert context in [probe_context(environment=e, python_executable=sys.executable)
                            for e in candidates]
         assert context != probe_context(environment=candidates[0], python_executable=sys.executable)
-        from astrid.core.execution.generic_host import _admitted_python_roots, _dependency_pythonpath
+        from astrid.core.execution.generic_host import _admitted_python_roots, dependency_pythonpath
         assert candidates[1]['ASTRID_PACKS_PATH'] == str(tmp_path)
         expected_paths = tuple(dict.fromkeys((str(Path(__file__).resolve().parents[1]),
-            *_dependency_pythonpath(), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
+            *dependency_pythonpath(environment), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
         assert tuple(candidates[1]['PYTHONPATH'].split(os.pathsep)) == expected_paths
     finally:
         secrets.clear()

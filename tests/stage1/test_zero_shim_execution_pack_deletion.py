@@ -96,6 +96,19 @@ def test_external_executor_command_always_crosses_subprocess_boundary(
     )
     calls: list[tuple[object, dict[str, object]]] = []
 
+    # This boundary test supplies no VibeComfy dependency.  Clear the full
+    # profile inherited by qualification runs before installing the subprocess
+    # probe, so its fake sees only the executor command under test.
+    for name in (
+        "ASTRID_VIBECOMFY_CHECKOUT",
+        "ASTRID_VIBECOMFY_CANDIDATE_KIND",
+        "ASTRID_VIBECOMFY_CANDIDATE_REVISION",
+        "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST",
+        "ASTRID_VIBECOMFY_ATTESTED_REVISION",
+        "ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
     def fake_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[object]:
         calls.append((args, kwargs))
         return subprocess.CompletedProcess(args[0] if args else [], 0)
