@@ -217,8 +217,8 @@ def test_project_reference_crud_isolated_idempotent_and_restart_durable(daemon, 
         restarted.stop()
 
 
-# Shot CRUD and shot items need the retired direct shot writers (RT02); the reference half is the KEPT catalog (RK01, test above).
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02 held: direct shot/item writers are retired (410); restored by the recorded-command replacement")
+# This is the unplaced project-catalog path.  Accepted film placement remains
+# command-only; the direct-film refusal is covered by test_timeline_shot_authority.
 def test_project_shot_crud_isolated_idempotent_and_restart_durable(daemon, tmp_path):
     client = WorkspaceClient(daemon.endpoint, daemon.token)
     first = client.create_project("shots-a", idempotency_key="shots-project-a")
@@ -227,6 +227,7 @@ def test_project_shot_crud_isolated_idempotent_and_restart_durable(daemon, tmp_p
     shot_body = {"shot_id": "project-shot", "name": "Project Shot", "metadata": {"scene": 1}}
     shot = client.create_project_shot(first.project_id, shot_body, idempotency_key="project-shot-create")
     assert shot["project_id"] == first.project_id
+    assert shot["metadata"] == {"scene": 1}
     assert client.create_project_shot(first.project_id, shot_body, idempotency_key="project-shot-create") == shot
     with pytest.raises(ApiError) as mismatch:
         client.create_project_shot(first.project_id, {**shot_body, "name": "Changed"}, idempotency_key="project-shot-create")
@@ -249,6 +250,7 @@ def test_project_shot_crud_isolated_idempotent_and_restart_durable(daemon, tmp_p
     with_item = client.add_shot_item(first.project_id, "project-shot", {"item_id": "item-a", "media_id": media.object_id, "position": 0}, idempotency_key="shot-item-a")
     with_two = client.add_shot_item(first.project_id, "project-shot", {"item_id": "item-b", "media_id": second_media.object_id, "position": 1}, idempotency_key="shot-item-b")
     reordered = client.reorder_shot_items(first.project_id, "project-shot", ["item-b", "item-a"], expected_version=with_two["version"], idempotency_key="shot-reorder")
+    assert [item["item_id"] for item in reordered["items"]] == ["item-b", "item-a"]
     removed = client.remove_shot_item(first.project_id, "project-shot", "item-a", expected_version=reordered["version"], idempotency_key="shot-item-remove")
     assert [item["item_id"] for item in removed["items"]] == ["item-b"]
 
