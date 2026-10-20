@@ -17,6 +17,8 @@ def selection(state, key, owner, members=()):
     boundaries = None
     if key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+    elif key == 'element.targets':
+        result = order(state, owner, 'clip', check_mirrors=False)
     elif key in KINDS:
         result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
                   else order(state, owner, KINDS[key]))

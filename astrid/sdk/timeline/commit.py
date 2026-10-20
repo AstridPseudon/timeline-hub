@@ -392,7 +392,7 @@ def _hydrate(port, bundle, calls=()):
     return schema_inputs
 
 
-def _schema_resolver(port, inputs, inverse_records):
+def _schema_resolver(port, inputs, inverse_records, *, context, through):
     """Resolve bytes at the real command stage, never by simulating handlers."""
     from astrid.core.element.project_packs import admitted_element_snapshot_descriptor
 
@@ -401,6 +401,19 @@ def _schema_resolver(port, inputs, inverse_records):
     def resolve(ctx):
         command = ctx.record['command']
         required = []
+        authority = None
+        if command['op'] == 'clip.set-params':
+            row = ctx.state.entity(command['select'])
+            selected = row.get('elementRef') or row.get('element_ref')
+            if isinstance(selected, dict) and selected.get('packId'):
+                from ._selected_param_authority import resolve_selected_param_source
+
+                authority = resolve_selected_param_source(
+                    port, context=context, through=through, select=command['select'],
+                    staged=ctx.prior_records)
+                if 'schema_source' not in command['args']:
+                    raise CommandError('selected project pack requires exact schema_source',
+                                       ref=command['select'])
         if command['op'] in ('clip.set-params', 'clip.set-element') and 'schema_source' in command['args']:
             row = ctx.state.entity(command['select'])
             selected = (command['args']['elementRef'] if command['op'] == 'clip.set-element'
@@ -441,12 +454,20 @@ def _schema_resolver(port, inputs, inverse_records):
                 if object_id not in objects:
                     objects[object_id] = port.document_object(pin, object_id)
                 snapshot = objects[object_id]
-            if command['op'] == 'timeline.inverse':
+            if command['op'] == 'timeline.inverse' or authority is not None:
                 try:
                     admitted_element_snapshot_descriptor(
                         ctx.realm_id, ctx.state.bundle['project_id'], selected, verified, snapshot)
                 except ValueError as exc:
                     raise CommandError(str(exc)) from exc
+            if authority is not None:
+                if pin != authority['source'] or selected != authority['element']:
+                    raise CommandError('selected PARAM source changed', kind='selection_changed',
+                                       ref=command['select'])
+                if authority['object'] != descriptor:
+                    raise CommandError('selected PARAM snapshot association is unavailable',
+                                       kind='history_unavailable', ref=command['select'])
+            if command['op'] == 'timeline.inverse':
                 ctx.dependency('params.schema', 'source', pin)
                 ctx.dependency('params.snapshot', 'entity', {
                     'source': pin, 'element': selected, 'object': descriptor})
@@ -887,7 +908,8 @@ class RuntimeCommitService:
                 schema_inputs.extend(_hydrate(port, source))
             if not closures:
                 schema_inputs = _hydrate(port, bundle, calls)
-            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                              context=context, through=base)
             original = execute(bundle, calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
                                verified_media=verified_media, realm_id=context['realm_id'],
@@ -905,7 +927,8 @@ class RuntimeCommitService:
                     head_bundle = _load(port, context, current["revision_id"])
                     if not closures:
                         schema_inputs = _hydrate(port, head_bundle, calls)
-                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                                      context=context, through=current)
                     plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
                                       entries, CommitRejected, base, current)], closures=closures,

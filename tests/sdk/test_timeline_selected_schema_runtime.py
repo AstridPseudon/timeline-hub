@@ -8,6 +8,7 @@ import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
+from zipfile import ZipFile
 
 import pytest
 import yaml
@@ -16,25 +17,97 @@ from astrid.core.element import project_packs as packs
 from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.timeline import commands, commit
 from astrid.sdk.timeline._clip_commands import capture_clip_add
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set_element
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
 from astrid.sdk.timeline.capture import capture_track_create
 from tests.core import test_project_packs
 from tests.helpers.runtime import use_runtime
+from tests.helpers.selected_param_legacy import ARCHIVE, accepted_params
 
 pytestmark = pytest.mark.integration
 REF = 'parent/clip:effect'
 configured_project_pack = test_project_packs.configured
 
 
+def test_pre_enforcement_alias_history_reopens_with_current_authority(tmp_path, monkeypatch):
+    use_runtime()
+    from runtime_protocol.backup import restore_backup
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
+
+    historical = accepted_params()
+    extracted = tmp_path / 'historical'
+    with ZipFile(ARCHIVE) as archive:
+        archive.extractall(extracted)
+    root = tmp_path / 'realm'
+    restore_backup(extracted / 'backup', root, key=(extracted / 'backup-auth.key').read_bytes())
+    project, ref = historical['project'], 'parent/clip:legacy-alias'
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+
+    def head():
+        resource = service.get_project_timeline(project, 'film')
+        return {'revision_id': resource['head_revision_id'],
+                'publication_id': resource['head_publication_id']}
+
+    def submit(calls, key):
+        return service.commit_timeline(
+            project, 'film', {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+                             'base_revision_id': head()['revision_id'],
+                             'base_publication_id': head()['publication_id'], 'commands': calls},
+            idempotency_key=key, publisher='author', invocation_path=route_path(project, 'film'),
+            authorize=lambda: None)
+
+    reads = []
+    original = RequestCommitPort.document_object
+
+    def read(port, pin, object_id):
+        reads.append((pin, object_id))
+        return original(port, pin, object_id)
+
+    monkeypatch.setattr(RequestCommitPort, 'document_object', read)
+    try:
+        store = service._timeline_commits()[0]
+        assert head() == historical['head']
+        assert store.history(project, 'film', head())['items'] == historical['entries']
+        assert service.commit_timeline(
+            project, 'film', historical['request'], idempotency_key='legacy-params',
+            publisher='author', invocation_path=route_path(project, 'film'),
+            authorize=lambda: None) == historical['accepted']
+        pin = historical['options']['schema_source']
+        params = {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': ref,
+                  'args': {'values': {'seed': 16}, 'clear': [], 'schema_source': pin}}
+        # The ignored alias is max20; selected identity remains the retained max10.
+        with pytest.raises(RuntimeErrorBase, match='10|16'):
+            submit([params], 'legacy-invalid')
+        assert head() == historical['head']
+        undone = submit([inverse(historical['accepted']['receipt']['receipt_id'])], 'legacy-undo')
+        assert State(commit.bundle_from_document(undone['data']['canonical_document'])).entity(ref) == historical['row']
+        redone = submit([inverse(undone['receipt']['receipt_id'])], 'legacy-redo')
+        assert redone['data']['canonical_document'] == historical['accepted']['data']['canonical_document']
+        # A genuinely accepted old complete PARAM supplies authority for new edits.
+        changed = submit([{**params, 'args': {**params['args'], 'values': {'seed': 9}}}], 'legacy-new')
+        assert State(commit.bundle_from_document(changed['data']['canonical_document'])).entity(ref) == {
+            **historical['row'], 'params': {**historical['row']['params'], 'seed': 9}}
+        admissions = historical['options']['schema_inputs'][0][0]['document']['content']['admissions']
+        selected_object = next(item['snapshot_object']['object_id'] for item in admissions
+                               if item['revision'] == historical['selected']['revision'])
+        assert reads and all(item == (pin, selected_object) for item in reads)
+    finally:
+        service.close()
+
+
 @pytest.fixture
-def retained_pack(configured_project_pack, tmp_path, monkeypatch):
+def retained_pack(configured_project_pack, tmp_path, monkeypatch, request):
     use_runtime()
     from runtime_protocol.errors import NotFoundError
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
     from runtime_protocol.timeline_commit_port import route_path
 
+    select_element = getattr(request, 'param', True)
     root = tmp_path / 'realm'
     RealmStore.initialize(root, realm_id='realm').close()
     service = RuntimeService(root)
@@ -134,6 +207,9 @@ def retained_pack(configured_project_pack, tmp_path, monkeypatch):
                'at': 0, 'hold': 2, 'track': 'picture',
                'params': {'seed': 4, 'future': {'keep': [None, False, {}]}}}
         submit(request([capture_clip_add(bundle(), 'parent', row)]), 'effect')
+        if select_element:
+            submit(request([capture_clip_set_element(
+                bundle(), REF, element=selected, **case.options)]), 'select-effect')
         yield case
     finally:
         case.service.close()
@@ -148,11 +224,6 @@ def raw_params(case, values, clear=()):
     # Deliberately bypass the capture helper; only the provider can authorize values.
     return {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': REF,
             'args': {'values': values, 'clear': list(clear), 'schema_source': case.pin}}
-
-
-def select_source(case, pin):
-    return {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': REF,
-            'args': {'elementRef': case.selected, 'schema_source': pin}}
 
 
 @pytest.fixture
@@ -273,6 +344,9 @@ def test_mixed_pack_readmission_keeps_old_and_new_native_param_sources(retained_
             'at': 3 if element == 'reveal' else 6, 'hold': 2, 'track': 'picture',
             'params': {'seed': 4, 'opaque': [None, False, {}]}})
         case.submit(case.request([add]), 'mixed-add-' + identity)
+        case.submit(case.request([{'schema_version': 1, 'op': 'clip.set-element',
+            'version': '1', 'select': 'parent/clip:' + identity,
+            'args': {'elementRef': selected, 'schema_source': old_pin}}]), 'select-' + identity)
         params.append({**raw_params(case, {'seed': 8}), 'select': 'parent/clip:' + identity})
     original_body = case.request(params)
     original = case.submit(original_body, 'mixed-first')
@@ -310,11 +384,18 @@ def test_mixed_pack_readmission_keeps_old_and_new_native_param_sources(retained_
     add = capture_clip_add(case.bundle(), 'parent', {
         'id': 'new-b', 'clipType': 'fade', 'elementRef': selected,
         'at': 9, 'hold': 2, 'track': 'picture', 'params': {'seed': 4}})
+    case.submit(case.request([{'schema_version': 1, 'op': 'clip.set-element',
+        'version': '1', 'select': 'parent/clip:old-b',
+        'args': {'elementRef': State(case.bundle()).entity('parent/clip:old-b')['elementRef'],
+                 'schema_source': case.pin}}]), 'reselect-old-b')
     a = {**raw_params(case, {'seed': 9}), 'select': 'parent/clip:mixed-a'}
     a['args']['schema_source'] = old_pin
     b = {**raw_params(case, {'seed': 9}), 'select': 'parent/clip:old-b'}
     new_b = {**raw_params(case, {'seed': 16}), 'select': 'parent/clip:new-b'}
-    accepted = case.submit(case.request([a, b, add, new_b]), 'mixed-after-reopen')
+    selection = {'schema_version': 1, 'op': 'clip.set-element', 'version': '1',
+                 'select': new_b['select'],
+                 'args': {'elementRef': selected, 'schema_source': case.pin}}
+    accepted = case.submit(case.request([a, b, add, selection, new_b]), 'mixed-after-reopen')
     assert {'pin': old_pin, 'document': old_document} in captured
     assert {'pin': case.pin, 'document': document} in captured
     state = State(commit.bundle_from_document(accepted['data']['canonical_document']))
@@ -380,6 +461,9 @@ def multi_pack(retained_pack, monkeypatch):
     case.other_object_id = next(item['snapshot_object']['object_id'] for item in admissions
                                 if all(item[key] == case.other_selected[key]
                                        for key in ('id', 'kind', 'revision')))
+    case.submit(case.request([{'schema_version': 1, 'op': 'clip.set-element',
+        'version': '1', 'select': REF,
+        'args': {'elementRef': case.selected, 'schema_source': case.pin}}]), 'select-multi')
     case.document = copy.deepcopy(document)
     case.object_reads = []
     original = RequestCommitPort.document_object
@@ -418,6 +502,10 @@ def test_native_params_does_not_consume_unselected_bytes(multi_pack, damage):
 
 def test_native_staged_params_different_refs_and_pins_inverse_redo_restore(multi_pack):
     case = multi_pack
+    case.submit(case.request([{'schema_version': 1, 'op': 'clip.set-element',
+        'version': '1', 'select': REF,
+        'args': {'elementRef': case.selected, 'schema_source': case.initial_pin}}]), 'select-initial')
+    case.object_reads.clear()
     first = raw_params(case, {'seed': 8})
     first['args']['schema_source'] = case.initial_pin
     other_ref = 'parent/clip:other'
@@ -426,14 +514,18 @@ def test_native_staged_params_different_refs_and_pins_inverse_redo_restore(multi
     add = capture_clip_add(case.bundle(), 'parent', row)
     second = raw_params(case, {'seed': 25})
     second['select'] = other_ref
-    accepted = case.submit(case.request([add, first, second]), 'different-pins')
+    selection = {'schema_version': 1, 'op': 'clip.set-element', 'version': '1',
+                 'select': other_ref,
+                 'args': {'elementRef': case.other_selected, 'schema_source': case.pin}}
+    accepted = case.submit(case.request([add, first, selection, second]), 'different-pins')
     document = accepted['data']['canonical_document']
     assert State(commit.bundle_from_document(document)).entity(other_ref)['params'] == {'seed': 25}
     expected = [(case.initial_pin, case.object_id), (case.pin, case.other_object_id)]
     assert case.object_reads == expected
     entry = case.service._timeline_commits()[0].history_entry(
         case.project, 'film', accepted['receipt']['receipt_id'])
-    for record, (pin, object_id) in zip(entry['records']['commands'][1:], expected):
+    for record, (pin, object_id) in zip(
+            [entry['records']['commands'][i] for i in (1, 3)], expected):
         source = next(dep for dep in record['dependencies'] if dep['key'] == 'params.schema')
         snapshot = next(dep for dep in record['dependencies'] if dep['key'] == 'params.snapshot')
         assert source['pin'] == snapshot['pin']['source'] == pin
@@ -581,6 +673,12 @@ def test_native_provider_refuses_unavailable_or_wrong_retained_basis(retained_pa
         updated = case.service.update_document(
             case.project, row['document_id'], {'expected_version': row['version'], 'content': content},
             idempotency_key='changed-admission')['data']
+        if damage == 'stale':
+            case.submit(case.request([{'schema_version': 1, 'op': 'clip.set-element',
+                'version': '1', 'select': REF,
+                'args': {'elementRef': case.selected, 'schema_source': {
+                    'document_id': updated['document_id'], 'version': updated['version'],
+                    'content_digest': commit._digest(updated['content'])}}}]), 'select-new-head')
         if damage != 'stale':
             call['args']['schema_source'] = {
                 'document_id': updated['document_id'], 'version': updated['version'],
@@ -618,3 +716,127 @@ def test_paired_provider_requires_exact_installed_contract_digest():
     assert validate_timeline_commit_provider(commit.create_runtime_commit_service())
     with pytest.raises(ValidationError, match='interface/contract mismatch'):
         validate_timeline_commit_provider(commit.RuntimeCommitService('sha256:' + '0' * 64))
+
+
+def select_source(case, pin, *, ref=REF, element=None):
+    return {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': ref,
+            'args': {'elementRef': element or case.selected, 'schema_source': pin}}
+
+
+def test_native_equal_json_opposite_selection_order_and_inverse_restore(retained_pack):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    case = retained_pack
+    p1 = copy.deepcopy(case.pin)
+    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
+    test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
+    packs.admit_project_pack('realm', case.project)
+    document = case.service.get_document(case.project, p1['document_id'])
+    p2 = {'document_id': document['document_id'], 'version': document['version'],
+          'content_digest': commit._digest(document['content'])}
+    assert p1 != p2
+    # Both pins contain the exact SAME E/O; current admission is not selection.
+    case.pin = p1
+    case.submit(case.request([select_source(case, p1), raw_params(case, {'seed': 9}),
+                              select_source(case, p2)]), 'order-a')
+    a = case.service._timeline_commits()[0].revision_closure(case.project, 'film', case.head()['revision_id'])
+    case.pin = p2
+    selected = case.submit(case.request([select_source(case, p2), raw_params(case, {'seed': 9}),
+                                         select_source(case, p1)]), 'order-b')
+    case.pin = p1
+    assert selected['data']['canonical_document'] == a
+    # These publications have equal complete canonical JSON but different next P.
+    with pytest.raises(RuntimeErrorBase, match='source changed'):
+        case.submit(case.request([{**raw_params(case, {'seed': 8}),
+                                   'args': {**raw_params(case, {'seed': 8})['args'],
+                                            'schema_source': p2}}]), 'cannot-switch')
+    before = case.head()
+    with pytest.raises(RuntimeErrorBase, match='10|16'):
+        case.submit(case.request([raw_params(case, {'seed': 16})]), 'original-max10')
+    assert case.head() == before
+    undone = case.submit(case.request([inverse(selected['receipt']['receipt_id'])]), 'selection-undo')
+    case.pin = p2
+    # An inverse consumes P1 but restores the target's BEFORE selection P2.
+    same = case.submit(case.request([raw_params(case, {'seed': 9})]), 'after-selection-undo')
+    entry = case.service._timeline_commits()[0].history_entry(case.project, 'film', same['receipt']['receipt_id'])
+    assert next(d['pin'] for d in entry['records']['commands'][0]['dependencies']
+                if d['key'] == 'params.schema') == p2
+    # Undoing the no-op PARAM first leaves guarded redo unblocked.
+    case.submit(case.request([inverse(same['receipt']['receipt_id'])]), 'undo-noop')
+    with pytest.raises(RuntimeErrorBase):
+        case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'strict-redo-aba')
+    # A new explicit selection supplies a clean target after the ABA writes.
+    again = case.submit(case.request([select_source(case, p1)]), 'select-again')
+    rev = again['data']['canonical_document']['parent_revision']
+    restored = case.submit(case.request([{'schema_version': 1, 'op': 'timeline.restore',
+        'version': '1', 'select': None,
+        'args': {k: rev[k] for k in ('revision_id', 'content_digest')}}]), 'ambiguous-restore')
+    assert restored['data']['canonical_document'] == a
+    for pin in (p1, p2):
+        case.pin = pin
+        with pytest.raises(RuntimeErrorBase, match='authority is unavailable'):
+            case.submit(case.request([raw_params(case, {'seed': 8})]), 'restore-param-' + str(pin['version']))
+    assert undone['data']['canonical_document'] == a
+    # Inverse of restore uses its authenticated before publication, which is
+    # unambiguous even though revision-only restore was ambiguous.
+    case.submit(case.request([inverse(restored['receipt']['receipt_id'])]), 'undo-restore')
+    case.pin = p1
+    case.submit(case.request([raw_params(case, {'seed': 8})]), 'param-after-undo-restore')
+
+
+@pytest.mark.parametrize('peer', ['pin', 'element'])
+def test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive(retained_pack, peer):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+
+    case = retained_pack
+    base = case.head()
+    body = case.request([raw_params(case, {'seed': 8})], base)
+    case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+                                               values={'label': 'Peer'})]), 'authority-peer')
+    accepted = case.submit(body, 'authority-retry')
+    assert accepted['data']['status'] == 'rebased'
+    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
+    test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
+    packs.admit_project_pack('realm', case.project)
+    document = case.service.get_document(case.project, case.pin['document_id'])
+    p2 = {'document_id': document['document_id'], 'version': document['version'],
+          'content_digest': commit._digest(document['content'])}
+    stale = case.request([raw_params(case, {'seed': 9})])
+    element = case.selected
+    if peer == 'element':
+        case.definition['schema']['properties']['seed']['maximum'] = 20
+        case.path.write_text(yaml.safe_dump(case.definition))
+        admitted = packs.admit_project_pack('realm', case.project)
+        element = next({k: e['descriptor'][k] for k in ('packId', 'id', 'kind', 'revision')}
+                       for e in admitted['elements'] if e['descriptor']['id'] == case.selected['id'])
+        document = case.service.get_document(case.project, case.pin['document_id'])
+        p2 = {'document_id': document['document_id'], 'version': document['version'],
+              'content_digest': commit._digest(document['content'])}
+    case.submit(case.request([select_source(case, p2, element=element)]), 'authority-peer-selection')
+    before = case.head()
+    with pytest.raises(RuntimeErrorBase, match='source changed|guard changed'):
+        case.submit(stale, 'authority-conflict')
+    assert case.head() == before
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    # Runtime's first ledger check returns accepted history before any new
+    # provider selection interpretation, even after a new selection and restart.
+    assert case.submit(body, 'authority-retry') == accepted
+
+
+@pytest.mark.parametrize('values,clear', [({'seed': 4}, []), ({}, ['missing']), ({}, [])])
+def test_native_birth_without_selection_cannot_authorize_param(retained_pack, values, clear):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    case = retained_pack
+    row = copy.deepcopy(State(case.bundle()).entity(REF))
+    row['id'] = 'unselected'
+    case.submit(case.request([capture_clip_add(case.bundle(), 'parent', row)]), 'unselected-birth')
+    call = raw_params(case, values, clear)
+    call['select'] = 'parent/clip:unselected'
+    before = case.head()
+    with pytest.raises(RuntimeErrorBase):
+        case.submit(case.request([call]), 'unselected-param')
+    assert case.head() == before

@@ -238,6 +238,7 @@ class WorkspaceClient:
                 "create_timeline_document", "update_timeline_document", "list_timelines",
                 "get_timeline", "get_project_timeline", "list_timeline_history",
                 "commit_timeline", "list_timeline_commits", "replace_timeline_clip",
+                "get_project_verified_document", "get_project_verified_document_object",
                 "diff_timeline", "archive_timeline",
                 "recover_timeline", "list_project_shots", "create_project_shot",
                 "inspect_timeline", "create_timeline_view",
@@ -520,6 +521,12 @@ class WorkspaceClient:
             cursor=cursor,
             limit=limit,
         )
+
+    def get_project_verified_document(self, project_id: str, pin: Mapping[str, Any]) -> Any:
+        return self._call_generated("get_project_verified_document", project_id, pin)
+
+    def get_project_verified_document_object(self, project_id: str, pin: Mapping[str, Any], object_id: str) -> Any:
+        return self._call_generated("get_project_verified_document_object", project_id, pin, object_id)
 
     def get_timeline(self, timeline_id: str, *, project_id: str | None = None) -> Any:
         if hasattr(self._generated, "get_timeline"):
