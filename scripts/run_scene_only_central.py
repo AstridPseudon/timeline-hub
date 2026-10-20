@@ -25,7 +25,7 @@ PUBLIC13_SHA256 = "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54
 PUBLIC13_FILES = 77
 WORKER_ARTIFACT = Path(
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
-    "scratchpad/orch/workers/vw-m3-live-scene-only-public13-managed-proof/scene-only-public13-bundle.zip"
+    "scratchpad/orch/workers/vw-m3-scene-posthandoff-real-binding-cause/proof/scene-only-public13-bundle.zip"
 )
 
 
@@ -128,36 +128,30 @@ def _apply_private_executor_source_patch(payload: bytes) -> bytes:
     return source.replace(marker, replacement, 1).encode("utf-8")
 
 
+def _apply_private_registry_digest_patch(payload: bytes) -> bytes:
+    """Retain the verified CAS digest in the derived, attempt-local registry."""
+    source = payload.decode("utf-8")
+    old = '                entry = dict(raw)\n                entry["file"] = str(destination)\n'
+    new = '                entry = dict(raw)\n                entry.setdefault("digest", digest_hex)\n                entry["file"] = str(destination)\n'
+    if source.count(old) != 1:
+        raise RuntimeError("derived registry digest patch target is ambiguous")
+    return source.replace(old, new, 1).encode("utf-8")
+
+
 def _source_binding_regression(repo: Path) -> None:
-    """Exercise the strict missing-carrier case and the valid current helper."""
-    generic_host = repo / "astrid/core/execution/generic_host.py"
-    original = generic_host.read_bytes()
-    patched = _apply_private_executor_source_patch(original).decode("utf-8")
-    if "PreparedTimelineInputs.handoff_source(inputs, worker_env)" not in patched:
-        raise RuntimeError("private executor overlay did not carry the source")
-    source = (repo / "astrid/core/rendering/verified_source.py").read_text(encoding="utf-8")
-    if "def handoff_source" not in source:
-        raise RuntimeError("current source carrier helper is absent")
-    code = '''\n'''
-    code += "from astrid.core.rendering.verified_source import PreparedTimelineInputs, SOURCE_ENV\n"
-    code += "class Source:\n"
-    code += "    _anchor = 'retained-source-anchor'\n"
-    code += "    def validate(self, timeline, registry): pass\n"
-    code += "values = PreparedTimelineInputs({'timeline': 'timeline.json', 'assets_registry': 'assets.json'})\n"
-    code += "values.timeline_source = Source()\n"
-    code += "plain = dict(values)\n"
-    code += "env = {SOURCE_ENV: 'ambient-forgery', 'KEEP': 'yes'}\n"
-    code += "PreparedTimelineInputs.handoff_source(plain, env)\n"
-    code += "assert SOURCE_ENV not in env and env['KEEP'] == 'yes'\n"
-    code += "env = {SOURCE_ENV: 'ambient-forgery', 'KEEP': 'yes'}\n"
-    code += "PreparedTimelineInputs.handoff_source(values, env)\n"
-    code += "assert env[SOURCE_ENV] == 'retained-source-anchor' and env['KEEP'] == 'yes'\n"
-    subprocess.run([sys.executable, "-c", code], cwd=repo, check=True)
-    print(json.dumps({
-        "original_executor_child_handoff": "absent (strict failure reproduced)",
-        "private_overlay_executor_child_handoff": "present",
-        "prepared_source_helper": "valid binding preserved",
-    }, sort_keys=True))
+    """Reproduce the missing derived digest and retain the strict child checks."""
+    import yaml
+
+    declaration = yaml.safe_load((repo / "astrid/packs/rendering/pack.yaml").read_text())
+    action = declaration["actions"]["timeline_visualize"]
+    if action["invocation"]["kind"] != "command":
+        raise RuntimeError("visualization no longer uses the command dispatch branch")
+    WORKER_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run([
+        sys.executable, "-B", "-m", "pytest", "-q", "-o", "addopts=",
+        "-p", "no:cacheprovider", "--basetemp=" + str(WORKER_ARTIFACT.parent / "regression"),
+        "tests/packs/rendering/test_scene_private_registry_handoff.py",
+    ], cwd=repo, env={**os.environ, "ASTRID_RUNTIME_CHECKOUT": str(RUNTIME_PIN)}, check=True)
 
 
 def _overlay(repo: Path, stage: Path) -> Path:
@@ -176,20 +170,45 @@ def _overlay(repo: Path, stage: Path) -> Path:
             payload = _apply_private_sdk_scene_patch(payload)
         target = overlay / relative
         target.write_bytes(payload)
+    executor = overlay / "astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py"
+    executor_source = executor.read_text(encoding="utf-8")
+    old = "    except (SceneQueryUnavailable, OSError, TypeError, ValueError, KeyError):\n"
+    new = "    except (SceneQueryUnavailable, OSError, TypeError, ValueError, KeyError) as exc:\n"
+    new += f"        Path({str(WORKER_ARTIFACT.parent / 'executor-failure.json')!r}).write_text(json.dumps({{'type': type(exc).__name__, 'reason': str(exc)}}))\n"
+    if executor_source.count(old) != 1:
+        raise RuntimeError("private exception probe no longer matches executor23db")
+    executor_source = executor_source.replace(old, new, 1)
+    old = "        source.validate_snapshot(snapshot)\n        bound = source.read()\n"
+    new = "        source.validate_snapshot(snapshot)\n        bound = source.read()\n"
+    new += "        from astrid.core.rendering.verified_source import VerifiedTimelineSource, SOURCE_ENV\n"
+    new += f"        Path({str(WORKER_ARTIFACT.parent / 'child-source')!r} + '-' + bound['ref']['source_kind'] + '.json').write_text(json.dumps({{'type_exact': type(source) is VerifiedTimelineSource, 'source_module': __import__('inspect').getfile(type(source)), 'source_sha256': hashlib.sha256(Path(__import__('inspect').getfile(type(source))).read_bytes()).hexdigest(), 'executor_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), 'executor_file': __file__, 'source_env': os.environ.get(SOURCE_ENV), 'binding': bound, 'snapshot': snapshot}}, sort_keys=True))\n"
+    if executor_source.count(old) != 1:
+        raise RuntimeError("private source probe no longer matches executor23db")
+    executor_source = executor_source.replace(old, new, 1)
+    old = "        label = snapshot_label(bound_snapshot, source=source)\n"
+    new = old + "        source.validate(timeline_path, assets_path)\n"
+    new += f"        Path({str(WORKER_ARTIFACT.parent / 'child-postquery')!r} + '-' + bound['ref']['source_kind'] + '.json').write_text(json.dumps({{'source_still_valid': True, 'ref': bound['ref'], 'provenance': {{'video_digest': capture_identity, 'timeline_id': source_timeline_id}}, 'frames': len(answers)}}))\n"
+    if executor_source.count(old) != 1:
+        raise RuntimeError("private lifetime probe no longer matches executor23db")
+    executor.write_text(executor_source.replace(old, new, 1), encoding="utf-8")
     generic_host = overlay / "astrid/core/execution/generic_host.py"
-    generic_host.write_bytes(_apply_private_executor_source_patch(generic_host.read_bytes()))
+    generic_host.write_bytes(_apply_private_registry_digest_patch(
+        _apply_private_executor_source_patch(generic_host.read_bytes())))
     return overlay
 
 
 def _project(repo: Path, stage: Path) -> Path:
-    project = stage / "remotion"
-    shutil.copytree(repo / "remotion", project, ignore=shutil.ignore_patterns("node_modules"), symlinks=False)
+    # Keep the normal checkout layout: native aliases discover built-in pack
+    # resources beside remotion, just as the Python registry generator does.
+    project = repo / "remotion"
     modules = project / "node_modules"
+    _private(modules, PEERS)
     # The source graph is read-only. Materialize it inside the owned project so
     # the production Remotion validator never follows a directory link back to
     # the shared checkout (leaf links inside the copied graph remain inert).
     shutil.copytree(PEERS, modules, symlinks=False)
     scope = modules / "@banodoco"
+    _private(scope, PEERS)
     if scope.exists():
         shutil.rmtree(scope)
     scope.mkdir()
@@ -197,11 +216,13 @@ def _project(repo: Path, stage: Path) -> Path:
     if _sha256(artifact) != PUBLIC13_SHA256:
         raise RuntimeError("public13 archive hash mismatch")
     extracted = stage / "public13"
+    _private(extracted, PEERS)
     extracted.mkdir()
     with tarfile.open(artifact) as archive:
         archive.extractall(extracted, filter="data")
     package = extracted / "package"
     destination = scope / "timeline-composition"
+    _private(destination, PEERS)
     package.rename(destination)
     files = [path for path in destination.rglob("*") if path.is_file()]
     if len(files) != PUBLIC13_FILES:
@@ -242,7 +263,8 @@ def main() -> int:
     node = _require(NODE_PIN)
     if node.is_symlink() or _sha256(node) != NODE_SHA256 or subprocess.check_output([str(node), "--version"], text=True).strip() != "v20.19.4":
         raise RuntimeError("pinned Node43d6 is not the qualified executable")
-    stage = Path(tempfile.mkdtemp(prefix="scene-only-public13-", dir="/tmp"))
+    WORKER_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
+    stage = Path(tempfile.mkdtemp(prefix="scene-only-public13-", dir=WORKER_ARTIFACT.parent))
     _private(stage, RUNTIME_PIN, PEERS)
     try:
         overlay = _overlay(repo, stage)
@@ -250,6 +272,19 @@ def main() -> int:
         shutil.copytree(RUNTIME_PIN, runtime, ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache"), symlinks=False)
         project = _project(overlay, stage)
         env = _environment(overlay, runtime, project)
+        WORKER_ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
+        measured = ["astrid/sdk/timeline_filmstrip.py", "astrid/core/execution/generic_host.py",
+                    "astrid/core/rendering/verified_source.py",
+                    "astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py"]
+        for name in measured:
+            destination = WORKER_ARTIFACT.parent / "source" / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(overlay / name, destination)
+        (WORKER_ARTIFACT.parent / "overlay-source.json").write_text(json.dumps({
+            "files": {name: _sha256(overlay / name) for name in measured},
+            "pythonpath": env["PYTHONPATH"], "agent": str(overlay), "runtime": str(runtime),
+            "project": str(project), "node": str(node),
+        }, sort_keys=True))
         preflight = {
             "phase": "preflight", "runtime": RUNTIME_SHA, "node": str(node),
             "node_sha256": NODE_SHA256, "composition": PUBLIC13_NAME,

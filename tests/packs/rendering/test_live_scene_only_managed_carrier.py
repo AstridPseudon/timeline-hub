@@ -11,8 +11,8 @@ import pytest
 
 from astrid.sdk import invocation, timeline_filmstrip
 from astrid.sdk.remote import RemoteAstridClient
-from astrid.sdk.workspace_client import WorkspaceClient
 from astrid.sdk.timeline_filmstrip import _invoke_scene_only
+from astrid.sdk.workspace_client import WorkspaceClient
 from tests.packs.rendering.real_pack_host import start_real_pack_host
 from tests.sdk.test_capture_source_runtime import CaptureRuntime
 from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _replace_values
@@ -104,7 +104,10 @@ class _ManagedCarrier:
 
 
 def _candidate_preview(runtime):
-    from astrid.core.timeline.authoring_bundle import open_authoring_bundle, preview_authoring_candidate
+    from astrid.core.timeline.authoring_bundle import (
+        open_authoring_bundle,
+        preview_authoring_candidate,
+    )
 
     service = runtime.service
     parent = runtime.get_project_parent_composition_revision(runtime.project_id, "main", "scene-parent-1")
@@ -113,14 +116,27 @@ def _candidate_preview(runtime):
     internals = [service.get_project_timeline_revision(runtime.project_id, "main", row["revision_id"])
                  for row in runtime.document["internal_timeline_revisions"]]
     bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
-    bundle["parent"]["config"]["output"]["file"] = "scene-candidate.mp4"
+    for clips in (bundle["parent"]["clips"], bundle["parent"]["config"]["clips"]):
+        clips[0]["opacity"] = 0.5
     return preview_authoring_candidate(bundle)
 
 
 def _assert_result(carrier, inputs, *, label, monkeypatch):
     spans, prepared = _invoke_scene_only(inputs, project=carrier.project_id, client=carrier)
-    assert spans and spans[0].cls != "UNAVAILABLE", prepared
     result = carrier._last_result
+    artifact_path = __import__("os").environ.get("ASTRID_SCENE_PROOF_ARTIFACT")
+    destination = Path(artifact_path) if artifact_path else None
+    if destination is not None:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.with_name(label + "-receipt.json").write_text(json.dumps({
+            "ok": result.ok, "error": result.error, "outputs": result.outputs,
+            "raw_result": result.raw_result, "context": prepared,
+            "spans": [vars(span) for span in spans],
+        }, sort_keys=True, default=str))
+        for row in result.outputs.get("managed_outputs", []):
+            if row.get("output_port", row.get("name")) == "filmstrip_bundle":
+                destination.with_name(label + "-bundle.zip").write_bytes(carrier._read_bytes(row["object_id"]))
+    assert spans and spans[0].cls != "UNAVAILABLE", prepared
     assert result.ok, result.error
     rows = result.outputs["managed_outputs"]
     bundle = next(row for row in rows if row.get("output_port", row.get("name")) == "filmstrip_bundle")
@@ -132,8 +148,7 @@ def _assert_result(carrier, inputs, *, label, monkeypatch):
     assert answers["answers"]
     assert bundle["provenance"]["video_digest"] == prepared["capture_identity"]
     assert bundle["provenance"]["timeline_id"] == prepared["timeline_id"]
-    destination = Path(__import__("os").environ.get("ASTRID_SCENE_PROOF_ARTIFACT", ""))
-    if destination:
+    if destination is not None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(bundle_bytes)
         destination.with_suffix(".json").write_text(json.dumps({
@@ -173,6 +188,7 @@ def test_live_managed_scene_only_saved_candidate_and_stale(real_runtime, tmp_pat
 
         stale = deepcopy(prepared)
         stale["timeline_id"] = "stale-timeline"
+        stale["capture_snapshot"]["timeline_id"] = "stale-timeline"
         stale_spans = timeline_filmstrip._scene_only_spans(result, stale, client=carrier)
         assert stale_spans[0].cls == "UNAVAILABLE"
         assert "stale scene source" in stale_spans[0].findings
