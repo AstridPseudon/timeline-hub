@@ -9,6 +9,7 @@ import {
 } from './clipSplitCapture.ts';
 import { AuthoredState, ClipMoveError, freezeJson } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
+import { captureClipMove, finishClipMove } from './clipMoveCapture.ts';
 import fixture from './fixtures/recipe_m2_clip_split.json';
 
 type SplitFixture = {
@@ -168,6 +169,9 @@ describe('native parent clip.split capture parity', () => {
     row.params = null;
     row.from = 2;
     row.to = 10;
+    (row.app as Record<string, JsonValue>).astrid = {
+      ...((row.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>), for: 8,
+    };
     const mirror = (input.parent.config as Record<string, JsonValue>).clips as JsonValue[];
     mirror[0] = detached(row);
     const result = finishClipSplit(captureClipSplit(input, select, args));
@@ -179,9 +183,232 @@ describe('native parent clip.split capture parity', () => {
     expect(left.params).toBeNull();
     expect(right.params).toBeNull();
     expect(left.from).toBe(2);
-    expect(right.from).toBe(6);
-    expect(left.to).toBe(6);
+    expect(right.from).toBe(4);
+    expect(left.to).toBe(4);
     expect(right.to).toBe(10);
+  });
+
+  it('splits after a native move with the exact command, recorder, and authored state', async () => {
+    const input = await bundle();
+    (input.parent.config as Record<string, JsonValue>).output = { fps: 30 };
+    const moved = finishClipMove(captureClipMove(input, select), 2).bundle;
+    const before = detached(moved);
+    const basis = captureClipSplit(moved, select, { ...args, on: 4 });
+    const result = finishClipSplit(basis);
+    const left = { ...detached(clips(moved)[0]), hold: 4, to: 6 };
+    const right = { ...detached(clips(moved)[0]), id: 'right', at: 4, hold: 4, from: 6 };
+    for (const half of [left, right]) {
+      ((half.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>).for = 2;
+    }
+    const expected = detached(moved);
+    expected.parent.clips = [left, right, detached(clips(moved)[1])];
+    (expected.parent.config as Record<string, JsonValue>).clips = detached(expected.parent.clips);
+
+    const record = detached(golden.records[0]);
+    record.command.args.on = 4;
+    for (const reads of [record.command.reads!, record.reads]) {
+      reads.find((read) => read.ref === select && read.path.length === 0)!.state = {
+        state: 'present', value: detached(clips(moved)[0]),
+      };
+      reads.find((read) => read.ref === 'parent' && read.path.join('.') === 'config.output.fps')!.state = {
+        state: 'present', value: 30,
+      };
+    }
+    record.writes[0].after = { state: 'present', value: detached(right) };
+    record.derived_writes[0].before = { state: 'present', value: detached(clips(moved)) };
+    record.derived_writes[0].after = { state: 'present', value: detached(expected.parent.clips) };
+
+    expect(result.command).toEqual(record.command);
+    expect(result.record).toEqual(record);
+    expect(result.bundle).toEqual(expected);
+    expect(moved).toEqual(before);
+    expect(finishClipSplit(JSON.parse(JSON.stringify(basis)))).toEqual(result);
+  });
+
+  it.each([[[]], [['app']], [['app', 'astrid']]])('preserves exact true fixed_start at %j', async (prefix) => {
+    const input = await bundle();
+    let container = target(input);
+    for (const key of prefix) container = container[key] as Record<string, JsonValue>;
+    container.fixed_start = true;
+    (input.parent.config as Record<string, JsonValue>).clips = detached(clips(input));
+    const result = finishClipSplit(captureClipSplit(input, select, args));
+    for (const half of clips(result.bundle).slice(0, 2)) {
+      let authored = half;
+      for (const key of prefix) authored = authored[key] as Record<string, JsonValue>;
+      expect(authored.fixed_start).toBe(true);
+    }
+    expect(result.record.writes.some((write) => write.path.includes('fixed_start'))).toBe(false);
+  });
+
+  it.each([
+    ['fixed_start', false], ['fixed_start', 0], ['fixed_start', 1], ['fixed_start', 'true'],
+    ['fixed_start', {}], ['fixed_start', []], ['on', true], ['until', 4], ['words', []],
+  ] as const)('refuses unsupported %s=%j at every native intent site', async (key, value) => {
+    for (const prefix of [[], ['app'], ['app', 'astrid']]) {
+      const input = await bundle();
+      let container = target(input);
+      for (const part of prefix) container = container[part] as Record<string, JsonValue>;
+      container[key] = detached(value) as JsonValue;
+      (input.parent.config as Record<string, JsonValue>).clips = detached(clips(input));
+      const before = detached(input);
+      expect(() => captureClipSplit(input, select, args)).toThrow(`does not support ${key}`);
+      expect(input).toEqual(before);
+    }
+  });
+
+  it.each(['image', 'audio', ' VIDEO/MP4; codecs=avc1 ', 'Audio/MPEG', ' image/png ',
+    'IMAGE', 'image-legacy', 'video-legacy', 'audio-legacy'])('validates %j without rewriting authored media', async (type) => {
+    const input = await bundle();
+    const assets = (input.parent.registry as Record<string, JsonValue>).assets as Record<string, JsonValue>;
+    (assets.picture as Record<string, JsonValue>).type = type;
+    const before = detached(input);
+    const result = finishClipSplit(captureClipSplit(input, select, args));
+    const record = detached(golden.records[0]);
+    for (const reads of [record.command.reads!, record.reads]) {
+      reads.find((read) => read.ref === 'parent/registry')!.state = {
+        state: 'present', value: detached(assets.picture),
+      };
+    }
+    const parent = canonicalParent(golden.output);
+    parent.registry = detached(input.parent.registry);
+    expect(result.command).toEqual(record.command);
+    expect(result.record).toEqual(record);
+    expect(result.bundle.parent).toEqual(parent);
+    expect(input).toEqual(before);
+  });
+
+  it.each(['model', 'images', 'videoish', 'video ; codecs=avc1', ['image'], null, false].map((type) => ({ type })))(
+    'refuses an unsupported registry type $type', async ({ type }) => {
+      const input = await bundle();
+      const assets = (input.parent.registry as Record<string, JsonValue>).assets as Record<string, JsonValue>;
+      (assets.picture as Record<string, JsonValue>).type = type;
+      const before = detached(input);
+      expect(() => captureClipSplit(input, select, args)).toThrow('known media source');
+      expect(input).toEqual(before);
+    },
+  );
+
+  it.each(['image', 'image/png', 'IMAGE', 'image-legacy'])(
+    'keeps the native literal-image requirement without a source window: %s', async (type) => {
+      const input = await bundle();
+      const row = target(input);
+      delete row.from;
+      delete row.to;
+      (input.parent.config as Record<string, JsonValue>).clips = detached(clips(input));
+      const assets = (input.parent.registry as Record<string, JsonValue>).assets as Record<string, JsonValue>;
+      (assets.picture as Record<string, JsonValue>).type = type;
+      const before = detached(input);
+      if (type === 'image') {
+        const result = finishClipSplit(captureClipSplit(input, select, args));
+        for (const half of clips(result.bundle).slice(0, 2)) {
+          expect(half.hold).toBe(4);
+          expect(half).not.toHaveProperty('from');
+          expect(half).not.toHaveProperty('to');
+        }
+      } else {
+        expect(() => captureClipSplit(input, select, args)).toThrow('explicit source window');
+      }
+      expect(input).toEqual(before);
+    },
+  );
+
+  it.each([
+    ['absent', undefined, 4], ['null', null, 4], ['one', 1, 4], ['two', 2, 6],
+  ] as const)('uses the native speed default and source-cut formula: %s', async (_name, speed, cut) => {
+    const input = await bundle();
+    const row = target(input);
+    row.hold = null;
+    if (speed === undefined) delete row.speed;
+    else row.speed = speed;
+    ((row.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>).for = 8 / (speed ?? 1);
+    (input.parent.config as Record<string, JsonValue>).clips = detached(clips(input));
+    const before = detached(input);
+    const result = finishClipSplit(captureClipSplit(input, select, args));
+    const [left, right] = clips(result.bundle);
+    expect(left.from).toBe(2);
+    expect(left.to).toBe(cut);
+    expect(right.from).toBe(cut);
+    expect(right.to).toBe(10);
+    for (const half of [left, right]) {
+      expect(half.hold).toBeNull();
+      if (speed === undefined) expect(half).not.toHaveProperty('speed');
+      else expect(half.speed).toBe(speed);
+    }
+    expect(input).toEqual(before);
+  });
+
+  it('accepts native positive integer FPS ratios beyond the safe-integer range', async () => {
+    const input = await bundle();
+    const fps = { numerator: 300000000000000000, denominator: 10000000000000000 };
+    (input.parent.config as Record<string, JsonValue>).output = { fps };
+    const result = finishClipSplit(captureClipSplit(input, select, args));
+    expect(clips(result.bundle)[0].to).toBe(6);
+    expect(clips(result.bundle)[1].from).toBe(6);
+    expect(result.command.reads).toContainEqual({
+      ref: 'parent', path: ['config', 'output', 'fps'],
+      state: { state: 'present', value: fps },
+    });
+  });
+
+  it('refuses an explicit null collection owner atomically', async () => {
+    const input = await bundle();
+    input.parent.config = null;
+    const before = detached(input);
+    expect(() => captureClipSplit(input, select, args)).toThrow('collection owner must be an object');
+    expect(input).toEqual(before);
+  });
+
+  it('refuses non-finite half-open frame calculations atomically', async () => {
+    const input = await bundle();
+    const row = target(input);
+    row.at = 1e308;
+    row.from = 0;
+    row.to = 1e308;
+    row.hold = 1e308;
+    row.speed = 1;
+    ((row.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>).for = 1e308;
+    (input.parent.config as Record<string, JsonValue>).clips = detached(clips(input));
+    const before = detached(input);
+    expect(() => captureClipSplit(input, select, { ...args, on: 1.1e308 })).toThrow('frame value must be finite');
+    expect(input).toEqual(before);
+  });
+
+  it('preserves native integer frame sums beyond the safe-integer range', async () => {
+    const input = await bundle();
+    target(input).at = 10000000000000000;
+    (input.parent.config as Record<string, JsonValue>).clips = detached(clips(input));
+    (input.parent.config as Record<string, JsonValue>).output = { fps: 30 };
+    const before = detached(input);
+    // Native left end is 300000000000000060; rounded right start is 300000000000000064.
+    expect(() => captureClipSplit(input, select, { ...args, on: 10000000000000002 }))
+      .toThrow('half-open frame geometry');
+    expect(input).toEqual(before);
+  });
+
+  it('checks claimed created IDs before replaying changed timing', async () => {
+    const input = await bundle();
+    const result = finishClipSplit(captureClipSplit(input, select, args));
+    target(result.bundle).speed = 0;
+    (result.bundle.parent.config as Record<string, JsonValue>).clips = detached(clips(result.bundle));
+    const before = detached(result.bundle);
+    expect(() => executeClipSplit(result.bundle, result.command)).toThrow('created identity is occupied');
+    expect(result.bundle).toEqual(before);
+  });
+
+  it('preserves single colons in stable target and created clip identities', async () => {
+    const input = await bundle();
+    target(input).id = 'clip:a';
+    (input.parent.config as Record<string, JsonValue>).clips = detached(clips(input));
+    const before = detached(input);
+    const basis = captureClipSplit(input, 'parent/clip:clip:a', { ...args, right_id: 'right:part' });
+    const result = finishClipSplit(basis);
+    expect(clips(result.bundle).map((row) => row.id)).toEqual(['clip:a', 'right:part', 'clip-b']);
+    expect(result.command.resolved).toEqual(['parent/clip:clip:a']);
+    expect(result.command.created).toEqual(['parent/clip:right:part']);
+    expect(result.command.bindings).toEqual({ 'split.target': 'parent/clip:clip:a' });
+    expect(result.command.selections![1].boundaries).toEqual(['parent/clip:clip:a', 'parent/clip:clip-b']);
+    expect(finishClipSplit(JSON.parse(JSON.stringify(basis)))).toEqual(result);
+    expect(input).toEqual(before);
   });
 
   it('rejects an incomplete or forged persisted basis without recapturing', async () => {

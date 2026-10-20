@@ -55,7 +55,7 @@ function identity(value: unknown): value is string {
 
 function collectionRows(ctx: MoveRecording): Row[] {
   const parent = ctx.state.bundle.parent;
-  const config = ctx.state.config('parent');
+  const config = has(parent, 'config') ? parent.config : {};
   if (!object(config)) throw new ClipMoveError('collection owner must be an object', 'identity_conflict');
   const payload = parent.clips;
   const mirror = config.clips;
@@ -111,16 +111,23 @@ function rate(value: JSON | undefined): number {
   if (object(value) && equal(Object.keys(value).sort(), ['denominator', 'numerator'])) {
     const numerator = value.numerator;
     const denominator = value.denominator;
-    if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator) || numerator <= 0 || denominator <= 0) {
-      throw new ClipMoveError('fps rational requires positive safe integers', 'unsupported_timing');
+    if (typeof numerator !== 'number' || typeof denominator !== 'number' ||
+      !Number.isInteger(numerator) || !Number.isInteger(denominator) || numerator <= 0 || denominator <= 0) {
+      throw new ClipMoveError('fps rational requires positive integers', 'unsupported_timing');
     }
     return numerator / denominator;
   }
   return number(value, 'fps', true);
 }
 
-function rounded(value: number): number {
-  return Math.floor(value + 0.5);
+function rounded(value: number): bigint {
+  if (!Number.isFinite(value)) throw new ClipMoveError('frame value must be finite');
+  return BigInt(Math.floor(value + 0.5));
+}
+
+function mediaKind(source: Row): string | undefined {
+  if (typeof source.type !== 'string') return undefined;
+  return source.type.trim().toLowerCase().split(';', 1)[0].split('/', 1)[0].split('-', 1)[0];
 }
 
 function duration(row: Row): number {
@@ -184,6 +191,11 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
   validateCommand(supplied);
   const ref = supplied.select as string;
   const ctx = new MoveRecording(bundle, { ...supplied, intent: {} });
+  for (const created of supplied.created ?? []) {
+    if (ctx.state.entity(created, true) !== undefined) {
+      throw new ClipMoveError('created identity is occupied', 'identity_collision');
+    }
+  }
   const rows = collectionRows(ctx);
   const members = selectCollection(ctx, rows);
   if (!members.includes(ref)) throw new ClipMoveError('split target disappeared', 'identity_conflict');
@@ -195,7 +207,7 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
     throw new ClipMoveError('clip.split v1 requires registry-backed media');
   }
   const source = ctx.read('parent/registry', ['assets', target.asset]);
-  if (!object(source) || !['image', 'video', 'audio'].includes(String(source.type))) {
+  if (!object(source) || !['image', 'video', 'audio'].includes(mediaKind(source) ?? '')) {
     throw new ClipMoveError('clip.split v1 requires a known media source');
   }
   for (const key of ['clip_type', 'asset_id', 'media_id', 'object_id', 'at_ms', 'from_ms', 'to_ms',
@@ -205,9 +217,10 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
       throw new ClipMoveError(`clip.split v1 does not support ${key}`);
     }
   }
-  if (object(target.params) && ['keyframes', 'animation', 'animations', 'effects', 'fade_in', 'fade_out',
+  const params = target.params;
+  if (object(params) && ['keyframes', 'animation', 'animations', 'effects', 'fade_in', 'fade_out',
     'volume_curve', 'fadeIn', 'fadeOut', 'fadeInCurve', 'fadeOutCurve'].some((key) =>
-    target.params[key] !== undefined && target.params[key] !== null)) {
+    params[key] !== undefined && params[key] !== null)) {
     throw new ClipMoveError('clip.split v1 does not support animated media parameters');
   }
 
@@ -220,6 +233,7 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
     for (const key of [...RELATIONS, ...EXTRA_RELATIONS]) {
       const value = container[key];
       if (value !== undefined && value !== null) {
+        if (key === 'fixed_start' && value === true) continue;
         if (key !== 'for') throw new ClipMoveError(`clip.split v1 does not support ${key}`);
         literalFor.push({ path: [...prefix, key], value: number(value, 'for', true) });
       }
@@ -278,21 +292,27 @@ function apply(bundle: AuthoredBundle, supplied: EditCommand) {
       leftContainer = leftContainer[key] as Row;
       rightContainer = rightContainer[key] as Row;
     }
-    leftContainer[relation.path.at(-1)!] = on - start;
-    rightContainer[relation.path.at(-1)!] = start + clipDuration - on;
+    const key = relation.path[relation.path.length - 1];
+    leftContainer[key] = on - start;
+    rightContainer[key] = start + clipDuration - on;
   }
   const fps = rate(ctx.read('parent', ['config', 'output', 'fps']));
-  const leftEnd = rounded(start * fps) + Math.max(1, rounded(duration(left) * fps));
+  // Native frame sums are integers, including beyond JavaScript's safe-integer range.
+  const frameDuration = (row: Row): bigint => {
+    const frames = rounded(duration(row) * fps);
+    return frames < 1n ? 1n : frames;
+  };
+  const leftEnd = rounded(start * fps) + frameDuration(left);
   const rightStart = rounded(on * fps);
-  const rightEnd = rightStart + Math.max(1, rounded(duration(right) * fps));
-  const originalEnd = rounded(start * fps) + Math.max(1, rounded(clipDuration * fps));
+  const rightEnd = rightStart + frameDuration(right);
+  const originalEnd = rounded(start * fps) + frameDuration(target);
   if (leftEnd !== rightStart || rightEnd !== originalEnd) {
     throw new ClipMoveError('split must preserve half-open frame geometry');
   }
 
   ctx.bind('split.target', ref);
   selectAfter(ctx, members, ref);
-  rootCreate(ctx, rows, ref.slice(ref.lastIndexOf(':') + 1), right);
+  rootCreate(ctx, rows, ref.slice('parent/clip:'.length), right);
   for (const key of ['hold', 'to']) {
     if (has(left, key) && (!has(target, key) || !equal(target[key], left[key]))) ctx.write(ref, [key], left[key]);
   }
