@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from 'react';
-import { ChevronDown, Settings2 } from 'lucide-react';
+import { ChevronDown, PictureInPicture2, Settings2 } from 'lucide-react';
 import { PropertiesPanel } from './PropertiesPanel';
 import { VideoEditorAssetPanelSurface } from './VideoEditorAssetPanelSurface';
 import { useTimelineEditorData, useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore';
@@ -80,6 +80,8 @@ export function VideoEditorRightPanelDock({
   // keep the retained subtree.
   const [contentReady, setContentReady] = useState(Boolean(data.data));
   if (!contentReady && data.data) setContentReady(true);
+  // Transient: whether a panel is popped out is never remembered.
+  const [poppedPanelKey, setPoppedPanelKey] = useState<string | null>(null);
   const [settings, setSettings] = useState<Record<string, boolean>>({});
   const [localManagerOpen, setLocalManagerOpen] = useState(false);
   const [manageTooltipOpen, setManageTooltipOpen] = useState(false);
@@ -147,6 +149,7 @@ export function VideoEditorRightPanelDock({
     <DropdownMenu><DropdownMenuTrigger className={`${touch ? touchControl : control} flex-1 justify-between`} aria-label="Displayed extension"><span className="min-w-0 truncate">Display: {tool?.label ?? (panels.length ? 'Choose tool' : 'None')}</span><ChevronDown className="h-3 w-3 shrink-0" /></DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="max-w-[calc(100vw-24px)] min-w-48"><DropdownMenuRadioGroup value={toolKey ?? ''} onValueChange={(key) => { ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, layout); ops.setSelectedRightPanelId(key); }}>{panels.map((panel) => <DropdownMenuRadioItem key={getPanelKey(panel)} value={getPanelKey(panel)}>{panel.label || panel.id}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
     </DropdownMenu>
+    {tool && toolKey && <button type="button" className={touch ? cn(touchControl, 'w-9 shrink-0 justify-center px-0') : `${control} shrink-0 justify-center px-2`} aria-label={`Pop out ${tool.label || tool.id}`} aria-pressed={poppedPanelKey === toolKey} onClick={() => setPoppedPanelKey(toolKey)}><PictureInPicture2 className="h-4 w-4 shrink-0" /></button>}
     <div className={touch ? 'relative shrink-0' : 'relative flex-1'} onPointerEnter={() => setManageTooltipOpen(true)} onPointerLeave={() => setManageTooltipOpen(false)} onFocusCapture={() => setManageTooltipOpen(true)} onBlurCapture={() => setManageTooltipOpen(false)} onPointerDownCapture={() => setManageTooltipOpen(false)} onClickCapture={() => setManageTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setManageTooltipOpen(false); }}>
       <button type="button" className={touch ? cn(touchControl, 'w-9 justify-center px-0') : `${control} w-full justify-center`} aria-label="Manage extensions" aria-haspopup="dialog" aria-expanded={managerOpen} aria-describedby={manageTooltipOpen ? manageTooltipId : undefined} onClick={openManager}>
         {/* Touch: an icon, so the active panel's name keeps the row. */}
@@ -164,7 +167,7 @@ export function VideoEditorRightPanelDock({
     {enabled && <>
       {video && <div className="flex h-full min-h-0 flex-col" hidden={tab !== 'video'} style={{ display: tab === 'video' ? undefined : 'none' }}>{video.content}</div>}
       <div className={`h-full min-h-0 overflow-auto ${touch ? 'px-3' : 'p-3'}`} hidden={tab !== 'inspector'}><PropertiesPanel visible={open && tab === 'inspector'} /></div>
-      <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{panels.length === 0 && tab === 'extensions' && <p data-testid="extensions-empty-state" className="p-4 text-center text-sm text-muted-foreground">No extensions are active for this project yet.</p>}{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} />}</div>
+      <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{panels.length === 0 && tab === 'extensions' && <p data-testid="extensions-empty-state" className="p-4 text-center text-sm text-muted-foreground">No extensions are active for this project yet.</p>}{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} poppedPanelKey={poppedPanelKey} onPoppedPanelKeyChange={setPoppedPanelKey} touch={touch} />}</div>
     </>}
   </div>;
   // Touch: the Extensions picker sits inside the film-shaped box, so switching tabs never

@@ -25,6 +25,11 @@ export interface VideoEditorAssetPanelSurfaceProps {
   activePanelKey?: string | null;
   video?: PanelVideoAdapter;
   settingsByPanelKey?: Readonly<Record<string, PanelRenderProps['settings']>>;
+  /** Controlled pop-out seam: the one panel shown in the floating frame. */
+  poppedPanelKey?: string | null;
+  /** Supplying this offers `popout` to panels. */
+  onPoppedPanelKeyChange?: (key: string | null) => void;
+  touch?: boolean;
 }
 
 function VideoEditorAssetPanelSurfaceComponent({
@@ -32,6 +37,9 @@ function VideoEditorAssetPanelSurfaceComponent({
   activePanelKey,
   video,
   settingsByPanelKey,
+  poppedPanelKey,
+  onPoppedPanelKeyChange,
+  touch,
 }: VideoEditorAssetPanelSurfaceProps) {
   const runtime = useOptionalVideoEditorRuntime();
   const store = useTimelineStoreApiSafe();
@@ -102,7 +110,7 @@ function VideoEditorAssetPanelSurfaceComponent({
   return (
     <div ref={surfaceRef} className="flex h-full min-h-0 flex-col">
       {builtInPanel}
-      <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
+      <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} poppedPanelKey={poppedPanelKey} onPoppedPanelKeyChange={onPoppedPanelKeyChange} touch={touch} onError={handleContributionError} />
       <TimelineFramePreview config={previewComposition.config} request={framePreview.request} bounds={surfaceRef} />
     </div>
   );

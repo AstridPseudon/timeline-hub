@@ -10,9 +10,9 @@ import { VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl
 const state = vi.hoisted(() => ({ panels: [] as Array<{extensionId:string;id:string;label:string}>, timelineData: {} as object | null, preferences: {} as EditorPreferences, selection: {} as {selectedClipIds?:Set<string>;selectedTrackId?:string|null;inspectorTarget?:{kind:string}|null}, update: (_next: EditorPreferences | ((current: EditorPreferences) => EditorPreferences)) => {}, inventory: null as null | Array<{extensionId:string; packageSource:string; packageState:string; packageMetadata?:{label:string}}>, extensions: [] as Array<{manifest:{id:string;label?:string}}>, toggle: vi.fn(async () => {}), refresh: vi.fn() }));
 const panelKey = 'haus.astrid.transcript-lane:transcript-lane-panel';
 vi.mock('./PropertiesPanel', () => ({ PropertiesPanel: () => <div>Inspector content</div> }));
-vi.mock('./VideoEditorAssetPanelSurface', () => ({ VideoEditorAssetPanelSurface: (props: {activePanelKey: string | null; settingsByPanelKey: Record<string,{open:boolean;onOpenChange:(value:boolean)=>void}>}) => {
+vi.mock('./VideoEditorAssetPanelSurface', () => ({ VideoEditorAssetPanelSurface: (props: {activePanelKey: string | null; settingsByPanelKey: Record<string,{open:boolean;onOpenChange:(value:boolean)=>void}>; poppedPanelKey?: string | null; onPoppedPanelKeyChange?: (key: string | null) => void}) => {
   const [draft, setDraft] = useState('');
-  return <div hidden={!props.activePanelKey}><textarea aria-label="Retained draft" value={draft} onChange={(event) => setDraft(event.target.value)} /><button aria-label="Transcript settings" onClick={() => props.settingsByPanelKey[panelKey].onOpenChange(true)}>Settings</button><span>{props.settingsByPanelKey[panelKey]?.open ? 'Tool settings open' : 'Tool reading view'}</span></div>;
+  return <div hidden={!props.activePanelKey}><textarea aria-label="Retained draft" value={draft} onChange={(event) => setDraft(event.target.value)} /><button aria-label="Transcript settings" onClick={() => props.settingsByPanelKey[panelKey].onOpenChange(true)}>Settings</button><span>{props.settingsByPanelKey[panelKey]?.open ? 'Tool settings open' : 'Tool reading view'}</span><span data-testid="popped-key">{props.poppedPanelKey ?? 'none'}</span><button type="button" aria-label="Surface dock all" onClick={() => props.onPoppedPanelKeyChange?.(null)}>Dock all</button></div>;
 } }));
 vi.mock('../../components/ExtensionManager', () => ({ ExtensionManager: () => <div>Manager inventory</div> }));
 vi.mock('../../runtime/useVideoEditorRenderContext', () => ({ useVideoEditorAssetPanels: () => state.panels }));
@@ -293,4 +293,36 @@ it('on touch, the Extensions picker lists the Transcript panel', async () => {
   await user.click(screen.getByRole('tab', { name: 'Extensions' }));
   await user.click(screen.getByRole('button', { name: 'Displayed extension' }));
   expect(await screen.findByRole('menuitemradio', { name: 'Transcript' })).toBeInTheDocument();
+});
+
+it('pops the active extension out through the header control into the surface', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  expect(screen.getByTestId('popped-key')).toHaveTextContent('none');
+  const pop = screen.getByRole('button', { name: 'Pop out Transcript' });
+  expect(pop).toHaveAttribute('aria-pressed', 'false');
+  await user.click(pop);
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  expect(screen.getByRole('button', { name: 'Pop out Transcript' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+it('keeps the popped panel across the Inspector tab switch', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Pop out Transcript' }));
+  await user.click(screen.getByRole('tab', { name: 'Inspector' }));
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  await user.click(screen.getByRole('tab', { name: 'Extensions' }));
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+});
+
+it('replaces the popped panel when a different tool is popped out', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Pop out Transcript' }));
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  screen.getByRole('button', { name: 'Displayed extension' }).focus();
+  await user.keyboard('{ArrowDown}');
+  await user.click(screen.getByRole('menuitemradio', { name: 'Beat Cue' }));
+  expect(screen.getByRole('button', { name: 'Pop out Beat Cue' })).toHaveAttribute('aria-pressed', 'false');
+  await user.click(screen.getByRole('button', { name: 'Pop out Beat Cue' }));
+  expect(screen.getByTestId('popped-key')).toHaveTextContent('example:beat');
+  expect(screen.getByTestId('popped-key')).not.toHaveTextContent(panelKey);
 });

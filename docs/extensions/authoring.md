@@ -294,6 +294,34 @@ for structured reporting of the extension's own failures.
 Effects, transitions, shaders, and automation require trusted code and reject
 third-party declarations. Unknown kinds never validate.
 
+## Panels that can be popped out
+
+The host may move a panel's DOM node into a larger floating window. The panel
+keeps its React instance, its `instanceId`, and its state. Where
+`Element.moveBefore` exists, iframes inside the panel keep running. Elsewhere,
+an iframe reloads once after the move.
+
+`PanelRenderProps` carries an optional field:
+
+```ts
+popout?: { open: boolean; onOpenChange(open: boolean): void }
+```
+
+The field is present only where the host offers a floating window. Panels hide
+their own pop-out button when `popout` is absent. At most one panel is popped
+out at a time. The manifest does not change for pop-out.
+
+Rules for panel authors:
+
+1. Measure with a `ResizeObserver`, or with container queries against the panel
+   wrapper (`@container/panel`). Do not measure once at mount, because the panel
+   may be re-parented and resized. Lay out from measured size, never from
+   `popout.open`.
+2. Call `preventDefault` on keys the panel owns, such as Space or Escape, so
+   editor shortcuts and the frame's Esc-to-dock do not also act.
+3. Mark the panel's first focus target with the `data-autofocus` attribute. On
+   open, focus goes to that element, or else to the first tabbable element.
+
 ## Import-Boundary Rules
 
 Extension code uses:
