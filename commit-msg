@@ -1,0 +1,4 @@
+docs(viewing): prepare fail-closed Gate6 tuple packet
+
+Record the existing five-case controller invocation, frozen source guards, and
+retained export identity without changing product code or launching Gate6.
