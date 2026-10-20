@@ -32,7 +32,7 @@ import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, holdTimelineCreation, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI, waitForAudit } from './support/app.ts';
-import { timelineBase as runtimeTimelineBase, timelineFromList, type TimelineListPage, type TimelineScope } from './support/timeline-scope.ts';
+import { timelineBase as runtimeTimelineBase, timelineFromList, waitForCreatedProjectResponse, waitForCreatedProjectUrl, type TimelineListPage, type TimelineScope } from './support/timeline-scope.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
@@ -1370,7 +1370,7 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
   await sniff.expectClean(reopened, seed3.timelineId);
 });
 
-test('M2 real gate 5 bootstrap actual consumer: production initializer uses native create/init, exact retry, restart and guarded undo', async ({ page, context, harness, astrid, seed3 }) => {
+test('M2 real gate 5 bootstrap actual consumer: production initializer uses native create/init, exact retry, restart and guarded undo', async ({ page, context, harness, astrid, seed3 }, testInfo) => {
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
@@ -1383,7 +1383,27 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   await page.getByRole('button', { name: 'New project' }).click();
   const projectName = `Bootstrap actual ${Date.now()}`;
   await page.locator('#project-name').fill(projectName);
+  const projectsBefore = await harness.runtimeJson<{ items: Array<{ project_id: string; name: string; slug: string }> }>('GET', '/v1/projects?limit=200');
+  expect(projectsBefore.status).toBe(200);
+  const scopeEvidence: Record<string, unknown> = {
+    beforeCreate: { projectId: new URL(page.url()).searchParams.get('project'),
+      projects: projectsBefore.body.items.map(({ project_id, name, slug }) => ({ project_id, name, slug })) },
+  };
+  const retainScope = () => writeFileSync(testInfo.outputPath('bootstrap-scope.json'), JSON.stringify(scopeEvidence, null, 2));
+  retainScope();
+  // The bridge response may be service-worker-routed, so observe it at the
+  // browser context while retaining the exact route/name/status guards.
+  const projectCreated = waitForCreatedProjectResponse(context, projectName, CEILING);
   const creating = page.getByRole('button', { name: 'Create Project' }).click();
+  const projectResponse = await projectCreated;
+  expect(projectResponse.status()).toBe(201);
+  const projectResult = await projectResponse.json() as { data: { project_id: string; name: string } };
+  const createdProjectId = projectResult.data.project_id;
+  expect(createdProjectId, 'the normal project create response must identify the new project').toBeTruthy();
+  expect(projectResult.data.name, 'the response must preserve the exact submitted project name').toBe(projectName);
+  scopeEvidence.projectCreate = { status: projectResponse.status(), projectId: createdProjectId, name: projectResult.data.name,
+    urlProjectAtResponse: new URL(page.url()).searchParams.get('project') };
+  retainScope();
   await expect.poll(() => createHold.requests.length, CEILING).toBe(1);
   const bootstrapCreateRequest = createHold.requests[0];
   const createPathFromRequest = new URL(bootstrapCreateRequest.url()).pathname.replace(/^\/api\/runtime/, '');
@@ -1392,6 +1412,15 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   expect(createProjectMatch, 'bootstrap create must use the canonical project timeline route').toBeTruthy();
   expect(createBody.timeline_id, 'bootstrap create must reserve its timeline identity in the request').toBeTruthy();
   const createScope = { realmId: harness.realmId, projectId: decodeURIComponent(createProjectMatch![1]), timelineId: createBody.timeline_id! };
+  const createdProjectRead = await harness.runtimeJson<{ project_id: string; name: string }>('GET', `/v1/projects/${createdProjectId}`);
+  const timelinesBefore = await harness.runtimeJson<TimelineListPage>('GET', `/v1/projects/${createdProjectId}/timelines`);
+  scopeEvidence.reserved = { createScope, projectRead: { status: createdProjectRead.status,
+    projectId: createdProjectRead.body.project_id, name: createdProjectRead.body.name },
+    timelineList: { status: timelinesBefore.status, items: timelinesBefore.body.items?.map(({ timeline_id, is_shot }) => ({ timeline_id, is_shot })) } };
+  retainScope();
+  expect(createdProjectRead.status).toBe(200);
+  expect(createdProjectRead.body).toMatchObject({ project_id: createdProjectId, name: projectName });
+  expect(createScope.projectId, 'native timeline creation must belong to the normal project create result').toBe(createdProjectId);
   await expect.poll(async () => (await commandOutboxes(page, createScope.timelineId))
     .find((owner) => owner.scope.projectId === createScope.projectId && owner.scope.timelineId === createScope.timelineId
       && owner.pending?.request.path === createPathFromRequest)?.scope, CEILING)
@@ -1404,9 +1433,9 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   CEILING).toMatchObject({ scope: createScope, pending: { request: { method: 'POST' } }, intents: [{ payload: { kind: 'timeline-init' } }] });
   await initHold.release(true);
   await creating;
-  await expect(page).toHaveURL(/\/tools\/video-editor\?project=/, CEILING);
 
-  const createdProjectUrl = new URL(page.url());
+  // click() can finish while addNewProject is still awaiting bootstrap.
+  const createdProjectUrl = await waitForCreatedProjectUrl(page, createdProjectId, CEILING);
   const projectId = createdProjectUrl.searchParams.get('project');
   expect(projectId, 'the production project creator must return a Runtime project ID').toBeTruthy();
   await expect(page.getByRole('combobox', { name: 'Select project' })).toContainText(projectName);
@@ -1415,6 +1444,9 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   await expect(page).toHaveURL(/\/tools\/video-editor\?project=[^&]+&timeline=[^&]+/, CEILING);
   const selectedTimelineId = new URL(page.url()).searchParams.get('timeline');
   expect(selectedTimelineId, 'the production initializer must select the created canonical timeline').toBeTruthy();
+  scopeEvidence.selected = { projectId: new URL(page.url()).searchParams.get('project'), timelineId: selectedTimelineId };
+  retainScope();
+  expect(new URL(page.url()).searchParams.get('project')).toBe(createdProjectId);
   expect({ realmId: harness.realmId, projectId, timelineId: selectedTimelineId }).toEqual(createScope);
   await expect.poll(async () => {
     const owner = (await commandOutboxes(page, selectedTimelineId!))
@@ -1424,6 +1456,9 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   let list!: { status: number; body: TimelineListPage };
   await expect.poll(async () => {
     list = await harness.runtimeJson<TimelineListPage>('GET', `/v1/projects/${projectId}/timelines`);
+    scopeEvidence.timelineListAfter = { status: list.status,
+      items: list.body.items?.map(({ timeline_id, is_shot }) => ({ timeline_id, is_shot })) };
+    retainScope();
     return list.status === 200 && Boolean(timelineFromList(list.body, selectedTimelineId!));
   }, CEILING).toBe(true);
   expect(list.status, JSON.stringify(list.body)).toBe(200);
