@@ -6,6 +6,7 @@ import json
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -16,11 +17,68 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.timeline_commit_store import request_identity
 from runtime_protocol.util import canonical_json
 from baseline_fixture import load_baseline_fixture
 from restore_history_fixture import load_restore_history_fixture
+from test_timeline_projection_occupancy import proposal, refresh
+
+
+def _validation_baseline(service, project_id, timeline_id="main"):
+    commits, _ = service._timeline_commits()
+    head = commits.bootstrap(project_id, timeline_id, authorize=lambda: None)
+    source = commits.revision_closure(project_id, timeline_id, head["revision_id"])
+    assert source["parent_revision"]["payload"] == {
+        "config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": [],
+    }
+    assert source["shot_revisions"] == source["internal_timeline_revisions"] == []
+    assert source["dependency_manifest"] == {"shots": [], "internal_timelines": [], "media": [], "documents": []}
+    public = service.get_project_timeline(project_id, timeline_id)
+    assert (public["head_revision_id"], public["head_publication_id"]) == (head["revision_id"], head["publication_id"])
+    assert commits.history_entry(project_id, timeline_id, head["publication_id"])["revision_id"] == head["revision_id"]
+    return commits
+
+
+def _validation_candidate(service, commits, body, key):
+    # Trusted host preparation isolates validation; it is not Agent authoring.
+    shots, internals = copy.deepcopy(body["shot_revisions"]), copy.deepcopy(body["internal_timeline_revisions"])
+    for shot in shots:
+        shot["payload"]["internal_timeline_revision_id"] = shot["internal_timeline_revision_id"]
+        shot["content_digest"] = digest(shot["payload"])
+    for internal in internals:
+        internal["content_digest"] = digest(internal["payload"])
+    pair = proposal(service, commits, body["project_id"], body["timeline_id"], key,
+                    shots=[(shot, next(i for i in internals if i["revision_id"] == shot["internal_timeline_revision_id"]))
+                           for shot in shots])
+    context, prepared = pair
+    document = prepared["canonical_document"]
+    document["parent_revision"] = {"revision_id": body["parent_revision_id"], "payload": copy.deepcopy(body["parent_composition"])}
+    document["dependency_manifest"]["media"] = copy.deepcopy(body.get("dependency_manifest", {}).get("media", []))
+    context["invocation"]["path"] = route_path(body["project_id"], body["timeline_id"])
+    context["request_hash"] = request_identity(context)
+    refresh(prepared)
+    return pair
+
+
+@contextmanager
+def _validation_no_writes(service):
+    before = tuple(service.store.conn.iterdump())
+    changes = service.store.conn.total_changes
+    roots = (service.store.cas_root, service.store.staging_root)
+
+    def files():
+        return {str(path.relative_to(service.store.root)): path.read_bytes() if path.is_file() else None
+                for root in roots for path in root.rglob("*")}
+
+    stored = files()
+    try:
+        yield
+    finally:
+        assert tuple(service.store.conn.iterdump()) == before, "validation changed the accepted baseline/database"
+        assert service.store.conn.total_changes == changes, "validation attempted database writes"
+        assert files() == stored, "validation changed CAS/staging"
 
 
 def _service(tmp_path):
@@ -307,6 +365,9 @@ def test_parent_track_role_survives_immutable_publication_and_read(tmp_path):
 def test_invalid_track_role_is_rejected_when_publishing_timeline_payload(tmp_path, location):
     service, project_id = _service(tmp_path)
     try:
+        assert service.store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions").fetchone()[0] == 0
+        commits = _validation_baseline(service, project_id)
+        assert service.store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions").fetchone()[0] == 1
         body = _publication(project_id, parent_revision_id=f"invalid-role-{location}")
         tracks = [{"id": "bad-role", "kind": "visual", "label": "Bad", "role": "draft"}]
         if location == "parent":
@@ -314,13 +375,26 @@ def test_invalid_track_role_is_rejected_when_publishing_timeline_payload(tmp_pat
         else:
             body["internal_timeline_revisions"][0]["payload"]["tracks"] = tracks
 
-        with pytest.raises(ValidationError, match="track role"):
-            service.publish_parent_composition(
-                project_id, "main", body, idempotency_key=f"invalid-role-{location}"
-            )
+        context, prepared = _validation_candidate(service, commits, body, f"invalid-role-{location}")
+        with _validation_no_writes(service):
+            with pytest.raises(CommitRejected) as caught:
+                commits.accept(context, prepared, authorize=lambda: None)
+            assert caught.value.failure["http_status"] == 422
+            assert caught.value.failure["details"]["reason"] == "invalid_prepared"
+            # Acceptance masks schema details. Check the actual codec's cause
+            # names this role enum, rather than accepting an unrelated failure.
+            from runtime_protocol.timeline_commit_validation import validate_commit_value
+
+            with pytest.raises(ValidationError) as invalid_role:
+                validate_commit_value(prepared, "PreparedCommit")
+            cause = invalid_role.value.__cause__
+            assert cause.validator == "enum"
+            assert cause.instance == "draft"
+            assert list(cause.absolute_path) == (["canonical_document", "parent_revision", "payload", "config", "tracks", 0, "role"]
+                if location == "parent" else ["canonical_document", "internal_timeline_revisions", 0, "payload", "tracks", 0, "role"])
         assert service.store.conn.execute(
             "SELECT COUNT(*) FROM parent_composition_revisions"
-        ).fetchone()[0] == 0
+        ).fetchone()[0] == 1
     finally:
         service.close()
 
@@ -747,23 +821,44 @@ def test_dependency_scope_and_nesting_are_rejected(tmp_path):
     other_project = service.create_project({"slug": "other", "name": "Other"}, idempotency_key="other-project")["id"]
     service.create_timeline(other_project, "other", idempotency_key="other-timeline")
     try:
+        commits = _validation_baseline(service, project_id)
+        _validation_baseline(service, other_project, "other")
         missing = _publication(project_id)
         missing["parent_composition"]["occurrences"][0]["shot_revision_id"] = "does-not-exist"
-        with pytest.raises(NotFoundError, match="dependency"):
-            service.publish_parent_composition(project_id, "main", missing, idempotency_key="missing")
+        with _validation_no_writes(service):
+            with pytest.raises(CommitRejected, match="incomplete or extraneous shot closure") as caught:
+                commits.accept(*_validation_candidate(service, commits, missing, "missing"), authorize=lambda: None)
+            assert caught.value.failure["http_status"] == 422
+            assert caught.value.failure["details"]["reason"] == "invalid_closure"
 
-        nested = _publication(project_id, parent_revision_id="nested")
-        nested["internal_timeline_revisions"][0]["payload"]["occurrences"] = []
-        with pytest.raises(ValidationError, match="nested"):
-            service.publish_parent_composition(project_id, "main", nested, idempotency_key="nested")
-
-        service.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="base")
+        first = _accept_composition_source(service, project_id, _publication(project_id), idempotency_key="base")
+        assert first["accepted"]["data"]["status"] == "accepted"
+        assert service.get_project_shot(project_id, "shot-1")["project_id"] == project_id
         cross_project = _publication(other_project, parent_revision_id="cross", shot_revision_id="shot-rev-cross")
         cross_project["timeline_id"] = "other"
         cross_project["shot_revisions"][0]["shot_id"] = "shot-1"
         cross_project["parent_composition"]["occurrences"][0]["shot_id"] = "shot-1"
-        with pytest.raises(ConflictError, match="different project"):
-            service.publish_parent_composition(other_project, "other", cross_project, idempotency_key="cross")
+        with _validation_no_writes(service):
+            with pytest.raises(CommitRejected) as caught:
+                commits.accept(*_validation_candidate(service, commits, cross_project, "cross"), authorize=lambda: None)
+            assert caught.value.failure == {
+                "http_status": 409, "code": "conflict", "message": "destination_occupied",
+                "details": {"status": "refused", "reason": "destination_occupied",
+                            "base": None, "current": None, "conflicts": []},
+            }
+            assert project_id not in json.dumps(caught.value.failure)
+
+        # Fresh immutable child IDs ensure the nesting probe cannot fail merely
+        # because the accepted source already owns different revision bytes.
+        nested = _publication(project_id, parent_revision_id="nested", shot_revision_id="shot-rev-nested")
+        nested["internal_timeline_revisions"][0]["revision_id"] = "timeline-rev-nested"
+        nested["shot_revisions"][0]["internal_timeline_revision_id"] = "timeline-rev-nested"
+        nested["internal_timeline_revisions"][0]["payload"]["occurrences"] = []
+        with _validation_no_writes(service):
+            with pytest.raises(CommitRejected, match="nested") as caught:
+                commits.accept(*_validation_candidate(service, commits, nested, "nested"), authorize=lambda: None)
+            assert caught.value.failure["http_status"] == 422
+            assert caught.value.failure["details"]["reason"] == "invalid_closure"
     finally:
         service.close()
 
@@ -837,6 +932,11 @@ def test_publication_preserves_open_shot_payload_without_manufacturing_legacy_au
 def test_missing_selected_media_rejects_publication_without_identity_leak(tmp_path):
     service, project_id = _service(tmp_path)
     try:
+        commits = _validation_baseline(service, project_id)
+        foreign = service.create_project({"slug": "private-media", "name": "Private media"})["id"]
+        secret = b"private selected media bytes"
+        foreign_media = service.ingest(foreign, secret, media_type="video/mp4",
+                                       idempotency_key="foreign-media")["data"]["object_id"]
         body = _publication(project_id)
         missing = "sha256:" + "f" * 64
         body["shot_revisions"][0]["payload"]["items"] = [
@@ -847,10 +947,19 @@ def test_missing_selected_media_rejects_publication_without_identity_leak(tmp_pa
             for table in ("project_shots", "shot_items", "shot_revisions", "internal_timeline_revisions")
         }
 
-        with pytest.raises(NotFoundError, match="media dependency"):
-            service.publish_parent_composition(
-                project_id, "main", body, idempotency_key="missing-selected-media"
-            )
+        for source, selected in (("missing", missing), ("foreign", foreign_media)):
+            body["shot_revisions"][0]["payload"]["items"][0]["media_id"] = selected
+            body["dependency_manifest"] = {"media": [{"media_id": selected, "content_digest": selected}]}
+            with _validation_no_writes(service):
+                with pytest.raises(CommitRejected) as caught:
+                    commits.accept(*_validation_candidate(service, commits, body, f"{source}-selected-media"), authorize=lambda: None)
+                assert caught.value.failure == {
+                    "http_status": 409, "code": "conflict", "message": "dependency_unavailable",
+                    "details": {"status": "refused", "reason": "dependency_unavailable",
+                                "base": None, "current": None, "conflicts": []},
+                }
+                wire = json.dumps(caught.value.failure)
+                assert all(value not in wire for value in (project_id, foreign, selected, secret.decode()))
 
         after = {
             table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
