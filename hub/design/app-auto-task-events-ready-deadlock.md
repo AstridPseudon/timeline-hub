@@ -2,9 +2,11 @@
 
 ## Result
 
-Fixed the App-owned event-readiness lifetime/setup defect on the worker branch
-`tl/app-m2-auto-task-events-ready-deadlock`, based on App parent
-`29ca79958` (`test(timeline): qualify automatic placement real proxy gate`).
+Implemented and locally qualified an App-owned event-readiness lifetime/setup
+fix on the worker branch `tl/app-m2-auto-task-events-ready-deadlock`, based on
+App parent `29ca79958` (`test(timeline): qualify automatic placement real proxy
+gate`). The real browser gate still reproduces the no-admission failure, so this
+worker does not claim the end-to-end blocker is resolved.
 
 The fix keeps the automatic-placement readiness cursor on the already negotiated
 editor Runtime operation. It does not add a wire field, header, endpoint, or
@@ -39,11 +41,15 @@ operation-bound readiness fence had resolved.
 - `useRuntimeTaskEvents`/`readyRuntimeTaskEvents` accept an optional event
   client. The Provider passes `bound.operation` both when retaining the poller
   for the editor lifetime and when awaiting readiness.
-- If the task pane created an ambient poller before operation negotiation, the
-  existing `(QueryClient, projectId)` poller is replaced in place by the
-  operation-bound poller while retaining its consumer reference count. This
-  preserves one cursor/poller lifetime and prevents readiness from returning
-  from the wrong client.
+- The ambient task-pane poller remains intact because the existing real gate
+  requires its `/api/runtime/v1/events` responses. Operation-bound pollers are
+  held separately and keyed by the exact operation object identity, so a
+  replacement operation cannot reuse a stale cursor.
+- Operation readiness starts that operation poller and fences admission on a
+  direct operation-owned `listEvents(undefined, true)` response with a
+  non-empty cursor. This avoids waiting forever on the long-lived poller's
+  readiness promise while still failing closed if Runtime does not return the
+  required polling cursor.
 - A focused test proves the readiness cursor calls the supplied operation and
   does not call the ambient client.
 
@@ -53,7 +59,20 @@ timeout-to-success, bypass, or fallback was introduced.
 ## Frozen source tuple
 
 This worker is based on the older App/public12 source tuple required by the
-brief. The central gate remains the named current-root public12 gate with Agent
+brief. The central gate used Agent
 `8130a401bf44a518d5a40ae274d398b8c560be55` and Runtime
-`2c4ac180c2220bdad966bc01e95ad230e99ce26a2`; no current-root port or
-requalification is claimed until that gate reports.
+`2c4ac180c2220bdad966bc01e95ad230e99ce26a2`. No current-root port or
+requalification is claimed.
+
+## Evidence and unresolved blocker
+
+Targeted Vitest (3 files, 15 tests), ESLint on the four touched source files,
+and `git diff --check` pass.
+
+Central attempts `1020173545-9811`, `1020173907-19768`, and final
+`1020175019-31635` all timed out at the gate's `taskPost` wait. The final run
+still showed repeated 200 operation event responses and no capability/task
+admission POST. The final source included the direct operation readiness read;
+the frozen Runtime/App proxy therefore still does not provide evidence that
+this read resolves into admission. This needs peer review against the frozen
+Runtime event-cursor contract rather than an App fallback or timeout.
