@@ -1,0 +1,15 @@
+## Public13 protected environment READY
+
+- Owner: `app-m3-public13-full-environment-custody-repair`.
+- Private leaf: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-public13-full-environment-custody-repair/private13/node_modules`.
+- Stable protection: the leaf is in this worker's owned orchestration directory and is protected by the worker KEEP marker, not an unprotected TTL path. The marker is `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-public13-full-environment-custody-repair/KEEP`; the lease is `notes/public13-protected-env.lease`.
+- Authoritative archive: 58,477 bytes, SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`.
+- Composition payload: all 77 archive files present byte-for-byte; installed payload tree SHA-256 `9c00a851ba996b19a23911d92142ac98ff27b473c3d345a23678651a8bdd9a6f`; `dist/animations.generated.js` is present (245 bytes).
+- Peer versions: React/React DOM `18.3.1`; Remotion, `@remotion/player`, `@remotion/three`, `@remotion/layout-utils`, and `@remotion/media` `4.0.509`.
+- Runtime custody: Runtime source `2c4ac180c2220bdad966bc01e95ad230e99ce26a`; 75 producer artifacts and all 13 App lock files verified byte-for-byte.
+- Layout: `@banodoco`/`@remotion` scope directories, the Composition package, `.vite`, and `.vite-temp` are real directories. Peer package entries point to existing shared dependencies read-only; no install was run.
+- Resolution proof: an actual process launched from the leaf's `child-cwd` imported `@banodoco/timeline-composition` (`0.0.13`) and `@banodoco/timeline-composition/animations.generated` successfully. The relocated guard output before and after this import was identical (both SHA-256 `2199aa147eb19d5af5ac335003a1b6c0ad64dea2294ed5145ec680100ced39ca`).
+
+The full11674/Delete25246 invalidation was external environment cleanup: the 21:15 `bin/sweep-tmp` run removed the leased `/tmp/app-public13-pcm-complete-source-tsc-leaf13.01Xcjn` tree. The full log then showed seven missing generated-module imports and a before/after manifest where Composition and every peer became `missing`; Delete25246 failed first in its archive-byte verification at the same `animations.generated.js` path. The owned fake-tree reproduction showed real overlay-root cleanup preserves a symlink target, while deleting the shared target breaks its symlink consumer. No product or App test source change is needed.
+
+Do not authorize or submit a full from this worker. After manager review, recommend one corrected immutable full using this protected leaf (or an equivalent manager-owned non-TTL path); this READY note does not qualify the product or source.

@@ -1,0 +1,26 @@
+{
+  "archive": {
+    "bytes": 58477,
+    "sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"
+  },
+  "composition": {
+    "animations_generated_bytes": 245,
+    "files": 77,
+    "tree_sha256": "9c00a851ba996b19a23911d92142ac98ff27b473c3d345a23678651a8bdd9a6f"
+  },
+  "peers": {
+    "@remotion/layout-utils": "4.0.509",
+    "@remotion/media": "4.0.509",
+    "@remotion/player": "4.0.509",
+    "@remotion/three": "4.0.509",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.509"
+  },
+  "private_node_modules": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-public13-full-environment-custody-repair/private13/node_modules",
+  "runtime": {
+    "artifacts": 75,
+    "lock_files": 13,
+    "source_commit": "2c4ac180c2220bdad966bc01e95ad230e99ce26a"
+  }
+}

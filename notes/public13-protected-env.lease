@@ -1,0 +1,7 @@
+owner=app-m3-public13-full-environment-custody-repair
+path=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-public13-full-environment-custody-repair/private13/node_modules
+source_archive_sha256=9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+composition_tree_sha256=9c00a851ba996b19a23911d92142ac98ff27b473c3d345a23678651a8bdd9a6f
+protection=worker-worktree-owned;not-/tmp;KEEP-marker;do-not-delete-or-replace
+dependencies=peer-package-links-read-only;composition-package-real;scope-directories-real
+caches=private-real-.vite-and-.vite-temp

@@ -1,0 +1,6 @@
+Owned fake-tree cleanup reproduction:
+
+- Removing the real overlay root preserved the target Composition generated file.
+- Removing the fake shared target made the overlay's scope/package symlink consumer lose that file.
+
+This distinguishes overlay cleanup from the observed external shared-target deletion.
