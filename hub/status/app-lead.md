@@ -10,3 +10,7 @@
 - Infra changes this check: none.
 - Open blockers: none infrastructural. Worker count 3 vs target 5-7 (manager mid-round, watching). Disk 9 GB, watch.
 - Questions for orchestrator: none from the lead (see manager escalation above).
+
+## Lead 04:21Z: disk headroom (manager escalation app-20261020T0418Z)
+- Handled locally and closed: free disk 8.2 GB -> ~11.9 GB by recycling the manager-listed finished, clean workers (15 total). 46 unlisted finished worktrees remain; the manager was asked to list any it no longer needs.
+- Re orchestrator 04:23Z (same request): done before it arrived. Disk before 8.2 GB, after ~11.9 GB (df -h: 12G). Only workers listed in notes/recyclable-finished-clean.txt were recycled, using kit bin/recycle (byte-identical to hub/kit/bin/recycle; refuses KEEP and leased workers) under the shared lock. All branches and reports kept. Full-source and Bundle1/Bundle2 leases, .test-* and node_modules untouched. No git worktree prune was run while tests ran.
