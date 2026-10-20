@@ -36,7 +36,7 @@ const triggerClass = cn(
   COARSE_TOUCH_TARGET,
 );
 const rowClass = cn(
-  'group gap-2 py-1.5 pl-8 pr-1.5 [@media(pointer:coarse)]:min-h-11',
+  'group gap-2 py-1.5 pl-10 pr-1.5 [@media(pointer:coarse)]:min-h-11',
   'data-[current=true]:bg-muted data-[current=true]:font-medium',
   'data-[current=true]:data-[selected=true]:bg-accent',
 );
@@ -49,13 +49,26 @@ const rowActionClass = cn(
   '[@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9',
 );
 const newTimelineRowClass = cn(
-  'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm',
+  'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-10 pr-2 text-sm',
   'text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground',
   'focus-visible:bg-accent focus-visible:text-accent-foreground',
   'disabled:pointer-events-none disabled:opacity-50 [@media(pointer:coarse)]:min-h-11',
 );
 const renameInputClass =
   '[:root:not(.preserve-user-text)_&.preserve-case]:!normal-case';
+/** The primary timeline's mark: a filled accent star, labelled for assistive tech. */
+function PrimaryMark({ className }: { className?: string }) {
+  return (
+    <span
+      role="img"
+      aria-label="Primary timeline"
+      title="Primary timeline"
+      className={cn('inline-flex items-center justify-center text-primary', className)}
+    >
+      <Star aria-hidden="true" className="h-3 w-3 fill-current" />
+    </span>
+  );
+}
 
 /** Shared project and timeline picker used by the editor and app header. */
 export interface EditorProjectChoice {
@@ -156,7 +169,12 @@ export function ProjectTimelinePicker({
               <span className="sr-only">Loading {kind}</span>
             </>
           ) : (
-            <span className="truncate preserve-case">{label}</span>
+            <>
+              {kind === 'timeline' && rows.some((row) => row.id === selected && row.isPrimary) && (
+                <PrimaryMark className="shrink-0" />
+              )}
+              <span className="truncate preserve-case">{label}</span>
+            </>
           )}
           <ChevronsUpDown className="ml-auto h-3.5 w-3.5 shrink-0 opacity-50" />
         </button>
@@ -172,7 +190,7 @@ export function ProjectTimelinePicker({
             <CommandEmpty>No {kind}s found.</CommandEmpty>
             <CommandGroup
               heading={kind === 'project' ? 'Projects' : 'Timelines'}
-              className="[&_[cmdk-group-heading]]:pl-8"
+              className="[&_[cmdk-group-heading]]:pl-10"
             >
               {loading && (
                 <p
@@ -226,9 +244,15 @@ export function ProjectTimelinePicker({
                       setOpen(false);
                     }}
                   >
-                    {current && (
-                      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-                        <Check className="h-4 w-4" aria-hidden="true" />
+                    {(current || primary) && (
+                      // Left column: the selected tick, then the primary star just after it.
+                      <span className="absolute left-2 flex items-center gap-1">
+                        {current && (
+                          <span className="flex h-3.5 w-3.5 items-center justify-center">
+                            <Check className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                        )}
+                        {primary && <PrimaryMark />}
                       </span>
                     )}
                     <span className="flex min-w-0 flex-1 flex-col">
