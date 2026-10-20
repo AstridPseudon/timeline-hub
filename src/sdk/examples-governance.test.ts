@@ -40,6 +40,7 @@ import {
   createTranscriptPanelExampleAdapter,
   ingestTranscriptPackage,
   readTranscriptPanelExample,
+  previewTranscriptWordOnHover,
 } from '../examples/transcript-panel-example';
 import {
   createTimelineOverlayGeometry,
@@ -568,6 +569,56 @@ describe('Transcript panel SDK example contract', () => {
     expect(descriptor.revision).toBe('sha256:fixture');
     expect(descriptor.entry.object_id).toBe('transcript-object-1');
     expect(descriptor.assets).toEqual([]);
+  });
+
+  it('uses the optional hover preview with a DOM anchor and disposes it on leave', () => {
+    let received: unknown;
+    let disposed = 0;
+    const adapter = createTranscriptPanelExampleAdapter();
+    const word = adapter.getSnapshot().occurrences[0].words[0]!;
+    const stop = previewTranscriptWordOnHover(
+      {
+        instanceId: 'transcript-example',
+        visible: true,
+        video: {
+          view: {} as never,
+          seek: () => undefined,
+          transcript: adapter,
+          preview: {
+            showFrame(input) {
+              received = input;
+              return { dispose: () => { disposed += 1; } };
+            },
+          },
+        },
+      },
+      word,
+      {
+        getBoundingClientRect: () => ({
+          left: 10,
+          top: 20,
+          width: 30,
+          height: 12,
+        } as DOMRect),
+      },
+    );
+
+    expect(received).toEqual({
+      seconds: 2,
+      anchor: { left: 10, top: 20, width: 30, height: 12 },
+    });
+    stop?.();
+    expect(disposed).toBe(1);
+    expect(previewTranscriptWordOnHover({
+      instanceId: 'transcript-example',
+      visible: true,
+      video: {
+        view: {} as never,
+        seek: () => undefined,
+      },
+    }, word, {
+      getBoundingClientRect: () => ({} as DOMRect),
+    })).toBeUndefined();
   });
 });
 
