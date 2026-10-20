@@ -13,6 +13,7 @@ import { sanitizeTimelineClipSnapshot } from '@/tools/video-editor/lib/timeline-
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import type { ProjectObjectMetadata } from '@astrid/editor-sdk';
 import { MANAGED_OBJECT_DIGEST, MANAGED_OBJECT_ID, PROJECT_ID, TIMELINE_ID, json, runtimeFixture, sha256Digest } from '@/test/fakeWorkspaceRuntime.ts';
+import type { MediaSelection, VerifiedMedia } from './generated.ts';
 
 const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
 
@@ -32,6 +33,21 @@ function packageBodyBytes(
   assets: readonly unknown[] = [],
 ): Uint8Array {
   return json({ manifest, entry, assets });
+}
+
+function preparedMediaSelection(overrides: Partial<MediaSelection> = {}): MediaSelection {
+  return {
+    asset: 'prepared-video',
+    generation_id: 'generation-prepared',
+    variant_id: 'variant-prepared',
+    object_id: MANAGED_OBJECT_DIGEST,
+    catalog_digest: `sha256:${'c'.repeat(64)}`,
+    ...overrides,
+  };
+}
+
+function verifiedMediaPath(projectId: string, selection: MediaSelection): string {
+  return `/v1/projects/${encodeURIComponent(projectId)}/media-selection/verified?asset=${encodeURIComponent(selection.asset)}&generation_id=${encodeURIComponent(selection.generation_id)}&variant_id=${encodeURIComponent(selection.variant_id)}&object_id=${encodeURIComponent(selection.object_id)}&catalog_digest=${encodeURIComponent(selection.catalog_digest)}`;
 }
 
 // Saved R5 compact composition: 320x180/30 fps, three ordinary parent clips,
@@ -68,6 +84,104 @@ function compactParentComposition() {
 
 
 describe('RuntimeDataProvider', () => {
+  it('reads exact verified media through the project-scoped Runtime facade without writing canonical state', async () => {
+    const fixture = runtimeFixture();
+    const selection = preparedMediaSelection();
+    const verified: VerifiedMedia = {
+      selection: { ...selection },
+      media_type: 'video/mp4',
+      size: 123,
+      duration_seconds: 4,
+      width: 1920,
+      height: 1080,
+    };
+    const path = verifiedMediaPath(PROJECT_ID, selection);
+    const verifiedRequests: string[] = [];
+    const transport: typeof fixture.transport = async (method, requestPath, headers, body) => {
+      if (method === 'GET' && requestPath === path) {
+        verifiedRequests.push(requestPath);
+        return { status: 200, headers: {}, body: json(verified) };
+      }
+      return fixture.transport(method, requestPath, headers, body);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+
+    await expect(provider.getProjectVerifiedMedia(PROJECT_ID, selection)).resolves.toEqual(verified);
+    expect(verifiedRequests).toEqual([path]);
+    expect(fixture.requests.filter(({ method, path: requestPath }) => method !== 'GET'
+      && requestPath !== '/v1/handshake')).toEqual([]);
+  });
+
+  it('freezes the original five-field selection before an asynchronous read', async () => {
+    const fixture = runtimeFixture();
+    const selection = preparedMediaSelection();
+    const original = { ...selection };
+    const path = verifiedMediaPath(PROJECT_ID, selection);
+    let releaseRead!: () => void;
+    const readReleased = new Promise<void>((resolve) => { releaseRead = resolve; });
+    const transport: typeof fixture.transport = async (method, requestPath, headers, body) => {
+      if (method === 'GET' && requestPath === path) {
+        await readReleased;
+        return { status: 200, headers: {}, body: json({ selection: original, media_type: 'video/mp4', size: 123 }) };
+      }
+      return fixture.transport(method, requestPath, headers, body);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+    const pending = provider.getProjectVerifiedMedia(PROJECT_ID, selection);
+    selection.asset = 'mutated-after-read-start';
+    releaseRead();
+
+    await expect(pending).resolves.toMatchObject({ selection: original });
+    expect(selection).toEqual({ ...original, asset: 'mutated-after-read-start' });
+  });
+
+  it('rejects a verified response with a different selection', async () => {
+    const fixture = runtimeFixture();
+    const selection = preparedMediaSelection();
+    const path = verifiedMediaPath(PROJECT_ID, selection);
+    const transport: typeof fixture.transport = async (method, requestPath, headers, body) => {
+      if (method === 'GET' && requestPath === path) {
+        return { status: 200, headers: {}, body: json({
+          selection: { ...selection, variant_id: 'variant-other' }, media_type: 'video/mp4', size: 123,
+        }) };
+      }
+      return fixture.transport(method, requestPath, headers, body);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+
+    await expect(provider.getProjectVerifiedMedia(PROJECT_ID, selection)).rejects.toThrow(
+      'Workspace Runtime verified media read returned a mismatched selection',
+    );
+  });
+
+  it('propagates the existing Runtime read failure without a fallback', async () => {
+    const fixture = runtimeFixture();
+    const selection = preparedMediaSelection();
+    const path = verifiedMediaPath(PROJECT_ID, selection);
+    const transport: typeof fixture.transport = async (method, requestPath, headers, body) => {
+      if (method === 'GET' && requestPath === path) {
+        return { status: 409, headers: {}, body: json({ code: 'selection_mismatch', message: 'original selection is stale' }) };
+      }
+      return fixture.transport(method, requestPath, headers, body);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+
+    await expect(provider.getProjectVerifiedMedia(PROJECT_ID, selection)).rejects.toThrow(
+      'selection_mismatch: original selection is stale',
+    );
+  });
+
+  it('rejects another project before using the verified read transport', async () => {
+    const fixture = runtimeFixture();
+    const selection = preparedMediaSelection();
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixture.transport });
+
+    await expect(provider.getProjectVerifiedMedia('project-other', selection)).rejects.toThrow(
+      `Workspace Runtime verified media read requires project ${PROJECT_ID}, got project-other`,
+    );
+    expect(fixture.requests).toEqual([]);
+  });
+
   it('reads placements from the parent payload already used by timeline rows', async () => {
     const fixture = runtimeFixture({ parentComposition: {
       ...compactParentComposition(),

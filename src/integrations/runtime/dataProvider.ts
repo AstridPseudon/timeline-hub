@@ -6,6 +6,8 @@ import type {
   CommitRequest,
   EditCommand,
   HistoryPage,
+  MediaSelection,
+  VerifiedMedia,
 } from './generated.ts';
 import {
   AstridRuntimeClient,
@@ -772,6 +774,29 @@ export class RuntimeDataProvider implements DataProvider {
 
   async resolveTimelineCommandAsset(file: string, registry: AssetRegistry): Promise<string> {
     return this.resolveAssetUrlFromRegistry(file, registry);
+  }
+
+  async getProjectVerifiedMedia(
+    projectId: string,
+    selection: MediaSelection,
+  ): Promise<VerifiedMedia> {
+    const originalSelection = Object.freeze({
+      asset: selection.asset,
+      generation_id: selection.generation_id,
+      variant_id: selection.variant_id,
+      object_id: selection.object_id,
+      catalog_digest: selection.catalog_digest,
+    });
+    if (projectId !== this.projectId) {
+      throw new Error(
+        `Workspace Runtime verified media read requires project ${this.projectId}, got ${projectId}`,
+      );
+    }
+    const verified = await this.client.getProjectVerifiedMedia(projectId, originalSelection);
+    if (!sameMediaSelection(verified.selection, originalSelection)) {
+      throw new Error('Workspace Runtime verified media read returned a mismatched selection');
+    }
+    return verified;
   }
 
   /** Public verified history pins plus scoped immutable reads, never projected rows. */
@@ -1602,6 +1627,14 @@ function requiredString(value: unknown, label: string): string {
     throw new Error(`Workspace Runtime ${label} is missing`);
   }
   return value;
+}
+
+function sameMediaSelection(value: unknown, right: MediaSelection): boolean {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const left = value as Record<string, unknown>;
+  const keys = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
+  return Object.keys(left).length === keys.length
+    && keys.every((key) => left[key] === right[key]);
 }
 
 function nullableString(value: unknown, label: string): string | null {
