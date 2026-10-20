@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
+import trimFixture from './fixtures/recipe_m2_clip_trim.json';
 import {
   captureGenericPatch,
   classifyGenericPatch,
@@ -15,6 +16,10 @@ const nativePatch = (hold = 1.25): TimelinePatch => ({ version: 1, operations: [
   { op: 'track.update', target: 'V1', payload: { label: '', mode: 'merge' }, order: 2 },
   { op: 'clip.update', target: 'x', payload: { hold }, order: 1 },
 ] });
+
+const trimOperation = (target = 'clip-a', payload: Record<string, unknown> = { in_s: 1, out_s: 5 }, order?: number) => ({
+  op: 'clip.trim', target, payload, ...(order === undefined ? {} : { order }),
+} as unknown as TimelinePatch['operations'][number]);
 
 async function authoredBundle() {
   const env = await environment();
@@ -71,6 +76,51 @@ describe('bounded native generic patch capture', () => {
     expect(input).toEqual(originalPatch);
     expect(Object.isFrozen(result.patch.operations[0].payload)).toBe(true);
     expect(Object.isFrozen(result.commands[0].expect)).toBe(true);
+  });
+
+  it('composes trim, label, move, and scalar members against one sequential current state', async () => {
+    const input = structuredClone(trimFixture.input);
+    const bundle = await authoringBundleFromDocument(input);
+    const patch: TimelinePatch = { version: 1, operations: [
+      trimOperation('clip-a', { in_s: 1, out_s: 5 }, 0),
+      { op: 'track.update', target: 'picture', payload: { label: 'Picture' }, order: 1 },
+      { op: 'clip.move', target: 'clip-a', payload: { at: 4 }, order: 2 },
+      { op: 'clip.update', target: 'clip-a', payload: { values: { hold: 2 }, clear: [] }, order: 3 },
+    ] };
+    const result = captureGenericPatch(bundle, patch, (operation) => operation.op === 'track.update'
+      ? 'parent/track:picture' : 'parent/clip:clip-a');
+
+    expect(result.commands.map((command) => command.op)).toEqual(['clip.trim', 'track.set', 'clip.move', 'clip.set']);
+    expect(result.records.map((record) => record.ordinal)).toEqual([0, 1, 2, 3]);
+    expect(result.commands[0]?.select).toBe('parent/clip:clip-a');
+    expect(result.preview.operations[0]).toEqual({
+      op: 'clip.update', target: 'clip-a', payload: { from: 1, to: 5, hold: 4 },
+    });
+    expect(result.records[0]?.writes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ref: 'parent/clip:clip-a', path: ['from'] }),
+      expect.objectContaining({ ref: 'parent/clip:clip-a', path: ['to'] }),
+      expect.objectContaining({ ref: 'parent/clip:clip-a', path: ['hold'] }),
+    ]));
+    expect(executeGenericPatch(structuredClone(bundle), result.commands)).toEqual({
+      bundle: result.bundle,
+      records: result.records,
+    });
+  });
+
+  it('refuses an invalid native trim before resolving any owner, while legacy trim shapes stay unqualified', async () => {
+    const { bundle } = await authoredBundle();
+    let resolved = false;
+    expect(() => captureGenericPatch(bundle, {
+      version: 1,
+      operations: [trimOperation('x', { in_s: 'bad' })],
+    }, () => {
+      resolved = true;
+      return 'parent/clip:x';
+    })).toThrow(GenericPatchRefusal);
+    expect(resolved).toBe(false);
+    expect(classifyGenericPatch({ version: 1, operations: [
+      trimOperation('x', { start: 0, end: 5 }),
+    ] })).toBe('unsupported');
   });
 
   it('composes hold/clear, label, and absolute move into one replayable batch', async () => {
