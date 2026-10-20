@@ -7,42 +7,18 @@ RealmStore's mutex.
 from __future__ import annotations
 
 import base64
-import copy
 import hashlib
 import json
-import math
 import re
 
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
+from .timeline_commit_validation import detached, digest
 from .util import canonical_json, new_id, now
 
 _METADATA = ("source", "label", "rationale", "group_id")
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)(?::([a-z][a-z0-9-]{0,63}))?\Z")
-
-
-def detached(value):
-    def finite(item):
-        if item is None or type(item) in (str, int, bool):
-            return
-        if type(item) is float and math.isfinite(item):
-            return
-        if isinstance(item, list):
-            for child in item:
-                finite(child)
-            return
-        if isinstance(item, dict) and all(isinstance(k, str) for k in item):
-            for child in item.values():
-                finite(child)
-            return
-        raise ValidationError("commit values must be finite JSON")
-    finite(value)
-    return copy.deepcopy(value)
-
-
-def digest(value):
-    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
 
 
 def reject(reason, message=None, *, status=409):
@@ -515,10 +491,7 @@ class TimelineCommitStore:
             self._verify_parent_rows(document)
 
     def _validate(self, context, prepared, inputs):
-        try:
-            self.validate_prepared(prepared)
-        except Exception:
-            reject("invalid_prepared", "prepared commit does not satisfy the frozen schema", status=422)
+        # Callers run _check_shot_destinations first, which validates the schema.
         request = context["request"]
         document = prepared["canonical_document"]
         if (document["project_id"], document["timeline_id"]) != (request["project_id"], request["timeline_id"]):

@@ -14,6 +14,7 @@ import re
 from urllib.parse import quote
 
 from .errors import AuthorizationError, ConflictError, NotFoundError, RuntimeErrorBase, ValidationError
+from .timeline_commit_validation import detached, digest
 from .util import canonical_json
 
 
@@ -29,29 +30,6 @@ class CommitUnavailable(RuntimeErrorBase):
 TEXT_MEDIA_TYPE = "text/plain; charset=utf-8"
 TEXT_MAX_BYTES = 1_048_576
 _OBJECT_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")
-
-
-def digest(value):
-    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
-
-
-def detached(value):
-    def finite(item):
-        if item is None or type(item) in (str, bool, int):
-            return
-        if type(item) is float and math.isfinite(item):
-            return
-        if isinstance(item, list):
-            for child in item:
-                finite(child)
-            return
-        if isinstance(item, dict) and all(isinstance(key, str) for key in item):
-            for child in item.values():
-                finite(child)
-            return
-        raise ValidationError("commit requires finite JSON values")
-    finite(value)
-    return copy.deepcopy(value)
 
 
 def validate_provider(provider):

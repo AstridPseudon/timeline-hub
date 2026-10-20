@@ -76,9 +76,15 @@ def clip_seconds(clip, fallback=0, *, speed=None):
 
 
 def parent_clips(parent):
-    clips, configured = parent.get("clips", []), parent.get("config", {}).get("clips", [])
+    config = parent.get("config", {})
+    clips, configured = parent.get("clips", []), config.get("clips", []) if isinstance(config, dict) else None
     if not isinstance(clips, list) or not isinstance(configured, list):
         raise ValidationError("canonical parent clips must be lists")
+    return agreed_clips(clips, configured)
+
+
+def agreed_clips(clips, configured):
+    """Return the canonical clip list; the two authorities must agree when both are present."""
     if clips and configured and clips != configured:
         raise ConflictError("canonical parent clips and config.clips disagree", details={"reason": "canonical_payload_mismatch"})
     return clips or configured

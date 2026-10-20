@@ -14,6 +14,7 @@ from fractions import Fraction
 from .errors import ConflictError, NotFoundError, ValidationError
 from .util import canonical_json
 from .managed_render_snapshot import ShotExpansionError, expand_shot_clips
+from .visual_seam import agreed_clips
 
 SCHEMA = "runtime.timeline.declared_inputs/v1"
 MAX_OCCURRENCES = 500
@@ -399,9 +400,7 @@ def _canonical_parent_clips(payload):
     config_clips = config.get("clips", []) if isinstance(config, dict) else None
     if not isinstance(parent_clips, list) or not isinstance(config_clips, list):
         raise ConflictError("canonical parent composition clips are invalid")
-    if config_clips and parent_clips and config_clips != parent_clips:
-        raise ConflictError("canonical parent clips and config.clips disagree", details={"reason": "canonical_payload_mismatch"})
-    return parent_clips or config_clips
+    return agreed_clips(parent_clips, config_clips)
 
 
 def _parent_clip(raw, registries, track_scope, tracks):
