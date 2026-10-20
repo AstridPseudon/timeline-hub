@@ -8,23 +8,38 @@ import json
 import math
 import re
 from contextlib import contextmanager
-from dataclasses import dataclass, replace as _dc_replace
+from dataclasses import dataclass
+from dataclasses import replace as _dc_replace
 from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline import clip_fields as cf
 from astrid.core.timeline import moments as mo
-from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
     clip_duration,
 )
-
+from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline import look as _look
 from astrid.sdk.timeline import store as _store
-from astrid.sdk.timeline._common import (TIME_RE, TimelineEditError, _Suggest, _length_seconds, _norm, _num, _r)
+from astrid.sdk.timeline._common import (
+    TIME_RE,
+    TimelineEditError,
+    _length_seconds,
+    _norm,
+    _num,
+    _r,
+    _Suggest,
+)
+from astrid.sdk.timeline.doc import _get_path, _read_words, _set_length, _set_path
 from astrid.sdk.timeline.selection import ROLE_VOCABULARY, Selection
-from astrid.sdk.timeline.doc import (_get_path, _read_words, _set_length, _set_path)
-from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_canvas, param_unit, parse_formula_value, parse_moment_value, to_canvas)
-
+from astrid.sdk.timeline.units import (
+    element_units,
+    formula_from_spec,
+    from_canvas,
+    param_unit,
+    parse_formula_value,
+    parse_moment_value,
+    to_canvas,
+)
 
 # ----------------------------------------------------------------------- views
 
@@ -438,9 +453,8 @@ class Clip(_Suggest):
         source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
-        speed = _num(self.data.get("speed"), 1.0) or 1.0
         self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
-        self.data["hold"] = _r((source_out - source_in) / speed)
+        self.data["hold"] = _r(source_out - source_in)
         intent.set_until(self.data, None)
         intent.set_for(self.data, None)
         self._tl._mcache = None

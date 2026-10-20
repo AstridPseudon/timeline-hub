@@ -21,7 +21,12 @@ def clip_split(ctx, command):
     if row.get('clipType') != 'media' or not isinstance(row.get('asset'), str):
         raise CommandError('clip.split v1 requires registry-backed media', ref=ref)
     source = ctx.read('parent/registry', ['assets', row['asset']])
-    if not isinstance(source, dict) or source.get('type') not in ('image', 'video', 'audio'):
+    if not isinstance(source, dict):
+        raise CommandError('clip.split v1 requires a known media source', ref=ref)
+    # Import lazily: the checkout module owns the shared normalizer and imports
+    # the command package while the command registry is being initialized.
+    from .edits import _media_kind
+    if _media_kind(source) not in ('image', 'video', 'audio'):
         raise CommandError('clip.split v1 requires a known media source', ref=ref)
     for key in ('clip_type', 'asset_id', 'media_id', 'object_id', 'at_ms', 'from_ms', 'to_ms',
                 'duration', 'duration_ms', 'time_map', 'timeMap', 'clips', 'children',
@@ -46,6 +51,8 @@ def clip_split(ctx, command):
         for key in (*RELATIONS, 'anchor', 'standin', 'standin_intent', 'words', 'beats'):
             value = container.get(key)
             if value is not None:
+                if key == 'fixed_start' and value is True:
+                    continue
                 if key != 'for':
                     raise CommandError(f'clip.split v1 does not support {key}', ref=ref)
                 literal_for.append((prefix + [key], number(value, 'for', positive=True)))

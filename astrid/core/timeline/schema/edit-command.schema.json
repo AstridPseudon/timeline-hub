@@ -405,6 +405,21 @@
       ],
       "additionalProperties": false
     },
+    "ClipTrimArgs": {
+      "type": "object",
+      "properties": {
+        "in_s": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "out_s": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Source seconds on literal parent media. Omitted/null endpoints retain existing from/to, defaulting to zero/file duration. Keep at and asset; write from/to/hold using main trim precedence and clear for/until. Requires authored registry duration; no media fetch."
+    },
     "TrackSetArgs": {
       "type": "object",
       "properties": {
@@ -634,6 +649,36 @@
       "additionalProperties": false,
       "description": "Client recorder fields are claims only. Provider verifies/reconstructs all observations; authorship is write classification, never authenticated actor identity. Unknown operations pass the envelope only and require installed registered schemas/handlers.",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.trim"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)parent/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipTrimArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
