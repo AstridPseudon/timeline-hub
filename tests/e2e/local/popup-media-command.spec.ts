@@ -1,7 +1,6 @@
 import { expect, type Page, type Route } from '@playwright/test';
 import {
   commandOutboxes,
-  expectConnected,
   openApp,
   openEmbeddedCanonicalShot,
   openSeededTimeline,
@@ -79,8 +78,10 @@ async function waitForPost(posts: CommitPost[], index: number) {
 
 async function openParent(page: Page, harness: DirectHarness) {
   await openApp(page, harness);
-  await expectConnected(page);
   await openSeededTimeline(page, harness);
+  // The mounted project/timeline plus a new empty durable owner are the current
+  // command-session readiness observation used by this journey; the old
+  // connection-status probe is not needed to authorize the real gesture.
   await expect.poll(async () => (await commandOutboxes(page, harness.seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
 }
 
@@ -189,7 +190,6 @@ test('M2 real popup media ADD: raw preservation, occurrence ownership, reload re
   await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.ownerId === pendingOwner!.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
 
   await page.reload();
-  await expectConnected(page);
   await openSeededTimeline(page, harness);
   const recovered = page.getByRole('button', { name: /^Recover saved edits/ }).and(page.locator(`[data-owner-id="${pendingOwner!.ownerId}"]`));
   await expect(recovered).toBeVisible(CEILING);
