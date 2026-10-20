@@ -13,7 +13,15 @@ def _digest(data: bytes) -> str:
     return "sha256:" + hashlib.sha256(data).hexdigest()
 
 
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02 held: promote_project_shot_candidate is retired (410); restored by recorded-command candidate promotion")
+@pytest.mark.xfail(
+    strict=True,
+    raises=ApiError,
+    reason=(
+        "RT02BLOCKEDbyAgentsemantic: promote_project_shot_candidate is retired (410); "
+        "the current sole-commit vocabulary has no atomic shot-item promotion plus "
+        "transitive dependent invalidation command"
+    ),
+)
 def test_candidate_promotion_is_atomic_fixed_point_and_byte_stable_on_replay(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
@@ -56,7 +64,15 @@ def test_candidate_promotion_is_atomic_fixed_point_and_byte_stable_on_replay(tmp
         daemon.stop()
 
 
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02 held: promote_project_shot_candidate is retired (410); restored by recorded-command candidate promotion")
+@pytest.mark.xfail(
+    strict=True,
+    raises=ApiError,
+    reason=(
+        "RT02BLOCKEDbyAgentsemantic: promote_project_shot_candidate is retired (410); "
+        "the current sole-commit vocabulary has no scoped candidate provenance/digest "
+        "verification command"
+    ),
+)
 def test_candidate_provenance_is_verified_before_promotion(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
