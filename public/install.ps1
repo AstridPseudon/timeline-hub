@@ -270,7 +270,19 @@ public sealed class AstridInstallerProcessV3 {
         if ($InstallerArgs -contains '--uninstall') {
             # Run() has waited for uv and Python to exit. Their executables and
             # the core's lock are now closed, so the parent can remove them all.
-            Remove-Item -LiteralPath $InstallerRoot -Recurse -Force -ErrorAction Stop
+            $InstallerRootRemoved = $false
+            for ($CleanupAttempt = 0; $CleanupAttempt -lt 4; $CleanupAttempt++) {
+                try {
+                    Remove-Item -LiteralPath $InstallerRoot -Recurse -Force -ErrorAction Stop
+                    $InstallerRootRemoved = $true
+                    break
+                } catch {
+                    if ($CleanupAttempt -lt 3) { Start-Sleep -Milliseconds 500 }
+                }
+            }
+            if (-not $InstallerRootRemoved) {
+                [Console]::WriteLine("Astrid was uninstalled. Remove $InstallerRoot after closing this window.")
+            }
         }
     } catch {
         if ($NativeExitCode -eq 0) { $NativeExitCode = 1 }

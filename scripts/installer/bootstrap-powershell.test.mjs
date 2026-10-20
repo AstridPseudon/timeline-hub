@@ -305,22 +305,52 @@ test('PowerShell keeps the bootstrap when uninstall fails', () => scenario(async
   assert.ok((await readFile(path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe'))).length);
 }));
 
-test('PowerShell reports a parent cleanup failure with a nonzero status and one failure paragraph', () => scenario(async (context, run) => {
+test('PowerShell retries installer-root cleanup after transient sharing failures', () => scenario(async (context, run) => {
   const harness = await context.powershell();
   await writeFile(harness, `
 function Remove-Item {
     param([string]$LiteralPath, [switch]$Recurse, [switch]$Force, [Parameter(Position=0)][string]$Path)
-    if ($LiteralPath -eq (Join-Path $env:LOCALAPPDATA 'Astrid Installer')) { throw 'bootstrap remained locked after core exit' }
+    if ($LiteralPath -eq (Join-Path $env:LOCALAPPDATA 'Astrid Installer')) {
+        $Count = 0
+        if (Test-Path $env:MOCK_CLEANUP_ATTEMPTS) { $Count = [int](Get-Content $env:MOCK_CLEANUP_ATTEMPTS -Raw) }
+        $Count++
+        Set-Content -Path $env:MOCK_CLEANUP_ATTEMPTS -Value $Count -NoNewline
+        if ($Count -lt 3) { throw 'bootstrap remained temporarily locked after core exit' }
+    }
     Microsoft.PowerShell.Management\\Remove-Item -LiteralPath $(if ($LiteralPath) { $LiteralPath } else { $Path }) -Recurse -Force -ErrorAction SilentlyContinue
 }
 ` + await readFile(harness, 'utf8'));
+  context.env.MOCK_CLEANUP_ATTEMPTS = path.join(context.root, 'cleanup-attempts');
   const result = await run(['--uninstall']);
   alive(result);
-  assert.match(result.stdout, /NATIVE-STATUS: 1/);
-  assert.equal(result.stdout.split(failure).length - 1, 1);
-  assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
-  assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /bootstrap remained locked after core exit/);
-  assert.ok((await readFile(path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe'))).length);
+  assert.match(result.stdout, /NATIVE-STATUS: 0/);
+  assert.equal(await readFile(context.env.MOCK_CLEANUP_ATTEMPTS, 'utf8'), '3');
+  await assert.rejects(readFile(path.join(context.env.LOCALAPPDATA, 'Astrid Installer')), { code: 'ENOENT' });
+  assert.doesNotMatch(result.stdout, /CAUGHT:|Remove-Item/);
+}));
+
+test('PowerShell reports installer residue after cleanup retries without failing a successful uninstall', () => scenario(async (context, run) => {
+  const harness = await context.powershell();
+  await writeFile(harness, `
+function Remove-Item {
+    param([string]$LiteralPath, [switch]$Recurse, [switch]$Force, [Parameter(Position=0)][string]$Path)
+    if ($LiteralPath -eq (Join-Path $env:LOCALAPPDATA 'Astrid Installer')) {
+        $Count = 0
+        if (Test-Path $env:MOCK_CLEANUP_ATTEMPTS) { $Count = [int](Get-Content $env:MOCK_CLEANUP_ATTEMPTS -Raw) }
+        $Count++
+        Set-Content -Path $env:MOCK_CLEANUP_ATTEMPTS -Value $Count -NoNewline
+        throw 'bootstrap remained locked after core exit'
+    }
+    Microsoft.PowerShell.Management\\Remove-Item -LiteralPath $(if ($LiteralPath) { $LiteralPath } else { $Path }) -Recurse -Force -ErrorAction SilentlyContinue
+}
+` + await readFile(harness, 'utf8'));
+  context.env.MOCK_CLEANUP_ATTEMPTS = path.join(context.root, 'cleanup-attempts');
+  const result = await run(['--uninstall']);
+  alive(result);
+  assert.match(result.stdout, /NATIVE-STATUS: 0/);
+  assert.equal(await readFile(context.env.MOCK_CLEANUP_ATTEMPTS, 'utf8'), '4');
+  assert.ok(result.stdout.includes(`Astrid was uninstalled. Remove ${path.join(context.env.LOCALAPPDATA, 'Astrid Installer')} after closing this window.`));
+  assert.doesNotMatch(result.stdout, /CAUGHT:|Details:|couldn't finish/);
 }));
 
 test('PowerShell -File reports a nonzero process status on a pre-core failure', () => scenario(async (context) => {
