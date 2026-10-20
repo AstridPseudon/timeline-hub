@@ -5,6 +5,7 @@ import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join, relative } from 'node:path';
 import { test } from 'node:test';
+import { AstridLocalClient } from '../../../../src/integrations/astrid/client';
 
 const FROZEN_SOURCES = {
   runtime: {
@@ -73,7 +74,7 @@ function pythonSourceProof(python: string, runtime: string, agent: string) {
   return proof;
 }
 
-test('native retained frame fixture restores through /v1 with no legacy seed or forged task write', async () => {
+test('native retained frame fixture restores and admits one normal render task', async () => {
   const sourceTemp = await mkdtemp(join(tmpdir(), 'native-frame-frozen-pair-'));
   const previousEnv = { ...process.env };
   let harness: import('../../local/support/harness').DirectHarness | undefined;
@@ -89,8 +90,8 @@ test('native retained frame fixture restores through /v1 with no legacy seed or 
     process.env.ASTRID_PYTHON = agentPython;
     const moduleProof = pythonSourceProof(runtimePython, archived.runtime.root, archived.agent.root);
     const { DirectHarness } = await import('../../local/support/harness');
-    const { assertCanonicalNativeMedia, nativeFrameParitySetup, prepareFrameParityFixture,
-      prepareNativeFrameParityRealm, readRuntimeJson, timelineBase } = await import('./fixture');
+    const { assertCanonicalNativeMedia, assertPinnedFrameParityFixture, nativeFrameParitySetup,
+      prepareFrameParityFixture, prepareNativeFrameParityRealm, readRuntimeJson, timelineBase } = await import('./fixture');
     const { ORIGINAL_640 } = await import('./canvas');
     const before = {
       app: { source: 'App test source is the central snapshot; no App source archive is substituted' },
@@ -143,6 +144,145 @@ test('native retained frame fixture restores through /v1 with no legacy seed or 
       `/v1/projects/${fixture.projectId}/objects?limit=50`)).items;
     assert.deepEqual(objectsAfter, objectsBefore);
     assert.equal(harness.audit().filter(entry => entry.method === 'POST' && entry.path.endsWith('/composition-revisions')).length, 0);
+
+    const { createServer } = await import('vite');
+    const viteServer = await createServer({
+      configFile: join(process.cwd(), 'config/testing/vitest.config.ts'),
+      server: { middlewareMode: true },
+      resolve: { alias: { react: 'react', 'react-dom': 'react-dom' } },
+      plugins: [{
+        name: 'normal-admission-react-hook-stub',
+        enforce: 'pre',
+        resolveId(id: string) {
+          return id === 'react' ? '\0normal-admission-react' : undefined;
+        },
+        load(id: string) {
+          return id === '\0normal-admission-react'
+            ? 'export const useEffect = () => undefined; export default {};'
+            : undefined;
+        },
+      }],
+      logLevel: 'error',
+    });
+    try {
+      const { buildRenderTimelinePayload, enqueueAstridRuntimeRenderTimeline } = await viteServer.ssrLoadModule(
+        '/src/tools/video-editor/lib/renderRouter.ts',
+      );
+    const internal = fixture.internal.payload as {
+      tracks: unknown[];
+      clips: unknown[];
+      registry: { assets: Record<string, Record<string, unknown>> };
+    };
+    const built = buildRenderTimelinePayload({
+      request: {
+        timelineId: fixture.timelineId,
+        assetRegistry: internal.registry,
+        resolvedConfig: {
+          ...internal,
+          registry: internal.registry.assets,
+        } as never,
+        renderRuntime: { projectId: fixture.projectId },
+      },
+      correlationId: 'normal-three-media-admission',
+    });
+    assert.equal(built.error, undefined);
+    assert.ok(built.payload);
+    assert.deepEqual(built.payload.input_object_ids, fixture.media.map(pin => pin.objectId));
+    assert.deepEqual(
+      (built.payload.timeline as { clips: unknown[] }).clips,
+      internal.clips,
+      'App payload must retain the unchanged three-media fixture',
+    );
+
+    const originalFetch = globalThis.fetch;
+    const observed: Array<{ url: string; method: string; status: number; body: unknown }> = [];
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input), 'http://localhost');
+      const headers = new Headers(init?.headers);
+      if (url.pathname.startsWith('/api/astrid/')) {
+        assert.equal(headers.has('Authorization'), false, 'normal App admission must use the door credential, not a browser bearer');
+        headers.set('Origin', harness!.origin);
+      }
+      const response = await originalFetch(input, { ...init, headers });
+      if (url.pathname.startsWith('/api/astrid/')) {
+        observed.push({ url: url.toString(), method: init?.method ?? 'GET', status: response.status, body: await response.clone().json() });
+      }
+      return response;
+    }) as typeof fetch;
+    try {
+      const admitted = await enqueueAstridRuntimeRenderTimeline(built.payload, {
+        client: new AstridLocalClient({
+          projectSlug: fixture.projectId,
+          baseUrl: `http://127.0.0.1:${harness.doorPort}/api/astrid`,
+        }),
+        idempotencyKey: 'normal-three-media-admission',
+      });
+      assert.equal(admitted.status, 'queued', admitted.message);
+      assert.ok(admitted.task_id);
+
+      const catalog = observed.find(entry => entry.url.includes('/v1/capabilities'));
+      assert.ok(catalog);
+      assert.equal(catalog.status, 200);
+      const catalogItems = (catalog.body as { items: Array<Record<string, unknown>> }).items;
+      const renderCapability = catalogItems.find(item => item.capability_id === 'rendering.render');
+      assert.ok(renderCapability, 'normal Runtime catalog must register rendering.render');
+      assert.equal(renderCapability.status, 'ready');
+      assert.equal(typeof renderCapability.definition_digest, 'string');
+      assert.equal(catalogItems.some(item => String(item.capability_id).toLowerCase().includes('stitch')), false);
+
+      const admission = observed.find(entry => entry.method === 'POST' && entry.url.endsWith('/v1/tasks'));
+      assert.ok(admission);
+      assert.equal(admission.status, 201);
+      const receiptEnvelope = admission.body as {
+        data: { task_id: string; capability_id: string; capability_digest: string; input_object_ids: string[]; spec: Record<string, unknown> };
+        receipt: { command_kind: string; idempotency_key: string; result: { task_id: string } };
+      };
+      assert.equal(receiptEnvelope.data.task_id, admitted.task_id);
+      assert.equal(receiptEnvelope.data.capability_id, 'rendering.render');
+      assert.equal(receiptEnvelope.data.capability_digest, renderCapability.definition_digest);
+      assert.deepEqual(receiptEnvelope.data.input_object_ids, fixture.media.map(pin => pin.objectId));
+      assert.equal(receiptEnvelope.receipt.command_kind, 'task.create');
+      assert.equal(receiptEnvelope.receipt.idempotency_key, 'normal-three-media-admission');
+      assert.equal((receiptEnvelope.receipt.result as unknown as { task: { id: string } }).task.id, admitted.task_id);
+
+      const accepted = await readRuntimeJson<{
+        task_id: string;
+        capability_id: string;
+        input_object_ids: string[];
+        spec: { spec: { params: Record<string, unknown>; inputs: Record<string, unknown>; timeline_snapshot_ref: Record<string, unknown> } };
+      }>(harness, `/v1/tasks/${encodeURIComponent(admitted.task_id)}`);
+      assert.equal(accepted.task_id, admitted.task_id);
+      assert.equal(accepted.capability_id, 'rendering.render');
+      assert.deepEqual(accepted.input_object_ids.slice(0, fixture.media.length), fixture.media.map(pin => pin.objectId));
+      assert.equal(accepted.spec.spec.params.timeline_ref, fixture.timelineId);
+      assert.equal(accepted.spec.spec.params.selector, 'rendering.remotion');
+      assert.equal(accepted.spec.spec.inputs.timeline_ref, fixture.timelineId);
+      const authority = accepted.spec.spec.inputs.timeline_authority as Record<string, unknown>;
+      assert.equal(authority.authority, 'kernel');
+      assert.equal(authority.project_id, fixture.projectId);
+      assert.equal(authority.timeline_id, fixture.timelineId);
+      assert.deepEqual(authority.managed_media_admissions, Object.fromEntries(
+        fixture.media.map(pin => [pin.objectId, pin.digest]),
+      ));
+      assert.deepEqual(authority.input_object_ids, fixture.media.map(pin => pin.objectId));
+      const snapshot = accepted.spec.spec.timeline_snapshot_ref as { digest: string; project_id: string; timeline_id: string };
+      assert.match(snapshot.digest, /^sha256:[0-9a-f]{64}$/);
+      assert.equal(snapshot.project_id, fixture.projectId);
+      assert.equal(snapshot.timeline_id, fixture.timelineId);
+      assert.equal(accepted.input_object_ids.includes(snapshot.digest), true);
+      assert.equal(JSON.stringify(accepted).toLowerCase().includes('stitch'), false);
+      assert.equal(JSON.stringify(accepted).includes('fake'), false);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+    assert.deepEqual(harness.audit().filter(entry => entry.method === 'POST' && entry.path.endsWith('/tasks'))
+      .map(entry => ({ path: entry.path, status: entry.status, origin: entry.origin })),
+    [{ path: '/v1/tasks', status: 201, origin: harness.origin }]);
+    assert.equal(harness.audit().some(entry => entry.path.toLowerCase().includes('stitch')), false);
+    await assertPinnedFrameParityFixture(harness, fixture);
+    } finally {
+      await viteServer.close();
+    }
     await harness.stop();
     harness = undefined;
     const after = {
