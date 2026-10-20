@@ -20,6 +20,7 @@ PRIVATE_PROJECT_DATA_SHA256 = '39211e63a50b9fb495fdf3feb5beaf0e4d0b4eab9a7e13f4d
 PRIVATE_GROUP_SHA256 = '27f2e3edaffdfc49665a858c5c1d6989dd89ef200932679b77367bc459329cfb'
 PRIVATE_GROUP_TRANSITION_SHA256 = '3e21c26271c9478123e29ac0b7f363e161c59cb37197a98a7f6fb563d21d450a'
 PRIVATE_FULL_MUTE_SHA256 = '21f313a7005f94a2525013ab9fd628afa626a7886bc098840a73ac012c0fcac2'
+PRIVATE_FULL_REMOVE_SHA256 = '0357ef34fbac2416be59dc906fa5a9d9173e322ff1d1e53b758f5c890d543906'
 
 
 def without_groups(schema):
@@ -29,6 +30,24 @@ def without_groups(schema):
         clause for clause in schema['$defs']['EditCommand']['allOf']
         if clause['if']['properties']['op']['const'] not in
         ('timeline.migrate-groups', 'occurrence.move')]
+    return schema
+
+
+def without_remove(schema):
+    """Reconstruct the reviewed full group/transition/mute source."""
+    args = schema['$defs']['ProjectDataWriteArgs']
+    assert 'oneOf' in args
+    assert args['properties']['mode']['enum'] == ['replace', 'remove']
+    args['properties']['mode'] = {'const': 'replace'}
+    schema['$defs']['ProjectDataWriteArgs'] = {
+        'type': args['type'],
+        'required': ['target', 'key', 'value', 'mode'],
+        'additionalProperties': args['additionalProperties'],
+        'properties': args['properties'],
+        'description': (
+            'Replace one opaque extension-owned project-data value in the parent authored '
+            'timeline. The project catalog is a separate scoped operation.'),
+    }
     return schema
 
 
@@ -66,7 +85,7 @@ def without_transition(schema):
 
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
-    candidate = without_groups(copy.deepcopy(_SCHEMA))
+    candidate = without_groups(without_remove(copy.deepcopy(_SCHEMA)))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -108,11 +127,11 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
     assert len(_SCHEMA['$defs']) == 58
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
-    assert compatibility_errors(ordinary, without_mute(copy.deepcopy(_SCHEMA))) == []
+    assert compatibility_errors(ordinary, without_mute(without_remove(copy.deepcopy(_SCHEMA)))) == []
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
-    candidate = without_transition(without_groups(copy.deepcopy(_SCHEMA)))
+    candidate = without_transition(without_groups(without_remove(copy.deepcopy(_SCHEMA))))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
     assert len(candidate['$defs']) == 56
@@ -120,7 +139,7 @@ def test_removing_only_group_additions_reconstructs_project_data_bytes():
 
 
 def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
-    candidate = without_transition(without_groups(copy.deepcopy(_SCHEMA)))
+    candidate = without_transition(without_groups(without_remove(copy.deepcopy(_SCHEMA))))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -133,33 +152,38 @@ def test_removing_group_and_project_data_additions_reconstructs_private_carrier_
 
 
 def test_project_data_proposal_has_a_new_closed_schema_hash():
-    raw = (json.dumps(without_transition(without_groups(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
+    raw = (json.dumps(without_transition(without_groups(without_remove(copy.deepcopy(_SCHEMA)))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
 def test_private_group_proposal_is_exactly_two_additions_on_project_data_floor():
-    raw = (json.dumps(without_transition(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
+    raw = (json.dumps(without_transition(without_remove(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
     assert len(_SCHEMA['$defs']) == 58
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 32
 
 
 def test_stripping_only_mute_reconstructs_reviewed_group_transition_source():
-    candidate = without_mute(copy.deepcopy(_SCHEMA))
+    candidate = without_mute(without_remove(copy.deepcopy(_SCHEMA)))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_TRANSITION_SHA256
 
 
-def test_full_private_mute_schema_has_the_composed_source_hash():
-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+def test_stripping_only_remove_reconstructs_full_private_mute_schema():
+    raw = (json.dumps(without_remove(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_FULL_MUTE_SHA256
+
+
+def test_full_private_remove_schema_has_the_composed_source_hash():
+    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_FULL_REMOVE_SHA256
 
 
 def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schema():
     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
 
     previous = baseline('agent-frozen-s2-26ef2bbb')
-    schema = without_transition(copy.deepcopy(_SCHEMA))
+    schema = without_transition(without_remove(copy.deepcopy(_SCHEMA)))
     raw = (FIXTURES / 'agent-frozen-s2-26ef2bbb.json').read_bytes()
     for name in (*REFERENCES, 'AnchorIdentity'):
         addition = copy.deepcopy(

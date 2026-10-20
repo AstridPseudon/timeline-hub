@@ -2616,12 +2616,6 @@
     },
     "ProjectDataWriteArgs": {
       "type": "object",
-      "required": [
-        "target",
-        "key",
-        "value",
-        "mode"
-      ],
       "additionalProperties": false,
       "properties": {
         "target": {
@@ -2646,10 +2640,45 @@
           "$ref": "#/$defs/JSON"
         },
         "mode": {
-          "const": "replace"
+          "enum": [
+            "replace",
+            "remove"
+          ]
         }
       },
-      "description": "Replace one opaque extension-owned project-data value in the parent authored timeline. The project catalog is a separate scoped operation."
+      "oneOf": [
+        {
+          "required": [
+            "target",
+            "key",
+            "value",
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "const": "replace"
+            }
+          }
+        },
+        {
+          "required": [
+            "target",
+            "key",
+            "mode"
+          ],
+          "not": {
+            "required": [
+              "value"
+            ]
+          },
+          "properties": {
+            "mode": {
+              "const": "remove"
+            }
+          }
+        }
+      ],
+      "description": "Replace or remove one opaque extension-owned project-data value in the parent authored timeline. Remove deletes the declared key and prunes only empty target/app containers; the project catalog is a separate scoped operation."
     },
     "ClipTrimArgs": {
       "type": "object",
