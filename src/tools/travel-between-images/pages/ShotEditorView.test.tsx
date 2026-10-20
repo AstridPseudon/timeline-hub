@@ -234,6 +234,43 @@ describe('current App shot editing base', () => {
     assert.deepStrictEqual(state.read(), input);
   });
 
+  it('refuses a prompt edit without shot.set authority and keeps prompt and LoRA intent dirty', async () => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha').settings = {
+      prompt: 'Original prompt',
+      loras: [{ path: 'original.safetensors', strength: 0.5 }],
+      x_settings_opaque: { owner: 'prompt-refusal', nested: [null, false, 0] },
+    };
+    const state = await setup(input as typeof fixture);
+    expect(() => capture.settingsIntent({ prompt: 'Draft prompt' })).toThrow(
+      'Mounted shot.set settings authority is unavailable; draft kept.',
+    );
+    const loaded = await capture.persistence.load('shot-alpha');
+    const store = createEntityStore<Record<string, any>>({
+      toolId: 'shot-settings-prompt-native-authority',
+      defaults: {},
+      load: async () => ({ db: loaded, lastUsed: null }),
+      save: capture.persistence.save,
+    });
+    await store.getState().ensureEntity('shot-alpha');
+    const loras = [{ path: 'revised.safetensors', strength: 0.8 }];
+    store.getState().updateFields('shot-alpha', { prompt: 'Draft prompt', loras });
+    const draft = structuredClone(store.getState().entities['shot-alpha'].settings);
+
+    await expect(store.getState().saveImmediate('shot-alpha')).rejects.toThrow(
+      'Mounted shot.set settings authority is unavailable; draft kept.',
+    );
+    expect(capture.errors).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ toastTitle: 'Shot settings draft kept' }),
+    );
+    expect(store.getState().entities['shot-alpha'].status).toBe('error');
+    expect(store.getState().isDirty('shot-alpha')).toBe(true);
+    assert.deepStrictEqual(store.getState().entities['shot-alpha'].settings, draft);
+    expect(state.publish).not.toHaveBeenCalled();
+    assert.deepStrictEqual(state.read(), input);
+  });
+
   it.each(['name', 'settings'] as const)('rejects a competing %s edit instead of silently adopting its new head', async (field) => {
     const state = await setup();
     if (field === 'settings') await capture.persistence.load('shot-alpha');
