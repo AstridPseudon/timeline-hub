@@ -42,7 +42,7 @@ class MemorySocket:
 
 
 @pytest.fixture
-def runtime(tmp_path, monkeypatch):
+def runtime(tmp_path, monkeypatch, request):
     use_runtime(vendored_runtime_commit())
     from runtime_protocol.auth import CredentialStore
     from runtime_protocol.server import RuntimeHandler
@@ -55,12 +55,12 @@ def runtime(tmp_path, monkeypatch):
     from astrid_runtime_client.generated import WorkspaceClient
 
     root = tmp_path / 'realm'
-    RealmStore.initialize(root).close()
+    RealmStore.initialize(root, realm_id='realm').close()
     credentials = CredentialStore(tmp_path / 'credentials')
     token, _ = credentials.provision('owner', ['admin', 'handshake', 'projects:read',
                                              'projects:write', 'objects:read', 'objects:write',
                                              'tasks:read', 'tasks:write'])
-    world = SimpleNamespace(calls=[], lost=set(), reads=[])
+    world = SimpleNamespace(calls=[], lost=set(), reads=[], input_reads=[])
     server = SimpleNamespace(credentials=credentials,
                              daemon_runtime=SimpleNamespace(instance_id=uuid.uuid4().hex))
 
@@ -88,6 +88,8 @@ def runtime(tmp_path, monkeypatch):
                 raise URLError('lost ACK after Runtime acceptance')
         if '/composition-revisions/' in path and method == 'GET':
             world.reads.append(path)
+        if method == 'GET' and any(part in path for part in ('/verified?', '/documents/', '/objects/')):
+            world.input_reads.append(path)
         return response.status, dict(response.headers), data
 
     monkeypatch.setattr(workspace_client, 'GeneratedWorkspaceClient',
@@ -95,7 +97,9 @@ def runtime(tmp_path, monkeypatch):
     monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client'))
     restart()
     world.project = server.runtime.create_project({'slug': 'batch', 'name': 'Batch'})['id']
-    server.runtime.create_timeline(world.project, 'film', idempotency_key='bootstrap')
+    unpublished = getattr(request, 'param', None) == 'unpublished'
+    if not unpublished:
+        server.runtime.create_timeline(world.project, 'film', idempotency_key='bootstrap')
 
     def client():
         return AstridClient.open(endpoint='http://127.0.0.1:1', credential=token,
@@ -107,9 +111,10 @@ def runtime(tmp_path, monkeypatch):
                                     outbox_path=tmp_path / (name + '.json'), **(base or {}))
 
     world.client, world.session, world.restart = client, session, restart
+    world.service = lambda: server.runtime
     world.history = lambda: server.runtime.list_timeline_commits(world.project, 'film', authorize=lambda: None)
-    head = world.history()['head']
-    world.base = {'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id']}
+    head = world.history()['head'] if not unpublished else None
+    world.base = {'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id']} if head else None
     world.path = tmp_path / 'outbox.json'
     try:
         yield world

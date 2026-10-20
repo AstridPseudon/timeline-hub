@@ -175,12 +175,16 @@ class TimelineSession:
         return state
 
     def _bundle(self, state):
-        from astrid.sdk.timeline.commands import execute
         from astrid.sdk.timeline.store import fetch_bundle
 
         bundle = fetch_bundle(self.project_id, self.timeline_id,
                               revision_id=state["base"]["revision_id"], client=self.client)
-        return execute(bundle, state["pending"]).bundle if state["pending"] else bundle
+        return self._inputs().execute(bundle, state["pending"]).bundle if state["pending"] else bundle
+
+    def _inputs(self):
+        from astrid.sdk.timeline._client_inputs import CaptureInputs
+
+        return CaptureInputs(self.client, self.project_id, self.identity["realm_id"])
 
     def queue_move(self, select, on):
         """Capture once against the original state plus earlier local commands."""
@@ -201,10 +205,8 @@ class TimelineSession:
         Commands are registered EditCommands; supplied claims are never refreshed.
         Missing capture inputs fail before any command is added to the outbox.
         """
-        from astrid.sdk.timeline.commands import execute
-
         commands = [_native_command(command) for command in commands]
-        return self._stage(lambda state: execute(self._bundle(state), commands).commands)
+        return self._stage(lambda state: self._inputs().execute(self._bundle(state), commands).commands)
 
     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
         """Capture and flush one native command, or retry its original flight."""
@@ -213,10 +215,9 @@ class TimelineSession:
     def commit_many(self, commands, *, idempotency_key=None, dry_run=False, via="python"):
         """Capture and flush a batch, or retry its exact flight before a suffix."""
         from astrid.sdk.timeline._command_state import equal
-        from astrid.sdk.timeline.commands import execute
 
         commands = [_native_command(command) for command in commands]
-        self._stage(lambda state: execute(self._bundle(state), commands).commands,
+        self._stage(lambda state: self._inputs().execute(self._bundle(state), commands).commands,
                     lambda pending: len(pending) == len(commands) and all(
                         all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
                         and all(equal(saved["intent"].get(key), value)

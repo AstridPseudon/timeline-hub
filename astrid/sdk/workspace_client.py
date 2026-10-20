@@ -257,7 +257,7 @@ class WorkspaceClient:
                 "link_references", "create_document", "list_documents", "get_document",
                 "update_document", "ingest_object", "ingest_project_object",
                 "get_preferences", "update_preferences",
-                "import_project_media", "get_project_media_import",
+                "import_project_media", "get_project_media_import", "get_project_verified_media",
                 "list_project_objects", "get_project_object_location", "create_media_relation", "list_media_relations",
                 "get_object", "head_object", "admit_task", "get_task", "list_project_tasks",
                 "cancel_task", "retry_task", "cancel_run", "retry_run", "get_run",
@@ -744,6 +744,9 @@ class WorkspaceClient:
 
     def get_document(self, project_id: str, document_id: str) -> Any:
         return self._call_generated("get_document", project_id, document_id)
+
+    def get_project_verified_media(self, project_id: str, selection: Mapping[str, Any]) -> Any:
+        return self._call_generated("get_project_verified_media", project_id, selection)
 
     def update_document(
         self,
