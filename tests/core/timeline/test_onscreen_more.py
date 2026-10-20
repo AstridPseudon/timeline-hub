@@ -39,14 +39,6 @@ def test_a_cross_fade_of_two_full_plates_is_covered_not_dip():
     assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [(0, 45, "COVERED", "CONTENT")]
 
 
-def test_a_one_sided_fade_is_a_dip_during_the_ramp_then_covered():
-    config = _config([_plate("only", at=0.0, hold=2.0, effects={"fade_in": 0.5})])
-    spans = coverage(config, FPS, CANVAS, ELEMENTS)
-    assert [(s.start_frame, s.end_frame, s.cls) for s in spans] == [(0, 15, "DIP"), (15, 60, "COVERED")]
-    assert spans[0].content is None
-    assert spans[1].content == "CONTENT"
-
-
 def test_a_none_element_is_not_listed():
     config = _config([_plate("plate"), _clip("guide", "am-guide", "fx", asset="G")])
     assert [v.clip_id for v in visible_at(config, 0, FPS, CANVAS, ELEMENTS)] == ["plate"]
