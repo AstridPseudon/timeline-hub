@@ -144,7 +144,7 @@ test('Remotion 4.0.509 CJS and ESM native-fulfillment fence (original red, patch
 // Run both distributed hook implementations, with two callers sharing the
 // Player's actual imperative ref (transport and playback/media-session hooks).
 function playerHarness(source, form, {buffered = true, context = true, state = 'suspended', failure, hooks, mount = hook => [hook(), hook()]} = {}) {
-  const events = [], waits = [], cleanups = [], listeners = new Set(), nativeTimes = [], primers = [];
+  const events = [], waits = [], cleanups = [], listeners = new Set(), nativeTimes = [];
   const fail = operation => {
     if (failure !== operation) return;
     failure = null;
@@ -153,22 +153,9 @@ function playerHarness(source, form, {buffered = true, context = true, state = '
   const timeline = {frameRef: {current: {test: 0}}, imperativePlaying: {current: false},
     audioAndVideoTags: {current: [{play() {nativeTimes.push(performance.now()); events.push('native');}}]}};
   const audio = {
-    audioContext: {currentTime: 0.15, state, sampleRate: 48000, destination: {},
-      createBuffer(channels, length, rate) {
-        fail('createBuffer');
-        assert.equal(channels, 1); assert.equal(length, rate); assert.equal(rate, 48000);
-        return {channels: [new Float32Array(length)]};
-      },
-      createBufferSource() {
-        fail('createBufferSource');
-        const node = {buffer: null, connected: false, started: false, stopped: false,
-          connect() {fail('connect'); this.connected = true;},
-          start() {fail('start'); this.started = true; events.push('prime-start');},
-          stop() {events.push('stop-attempt'); fail('stop'); assert.equal(this.stopped, false); this.stopped = true; events.push('prime-stop');},
-          disconnect() {events.push('disconnect-attempt'); fail('disconnect'); this.connected = false; events.push('prime-disconnect');},
-        };
-        primers.push(node); return node;
-      }}, audioSyncAnchor: {value: 0},
+    audioContext: {currentTime: 0.15, state,
+      createBufferSource() {assert.fail('startup must not inject an audio source');}},
+    audioSyncAnchor: {value: 0},
     audioSyncAnchorEmitter: {dispatch() {events.push('anchor-changed');}},
     resume() {
       fail('resume'); events.push('resume'); waits.push(deferred());
@@ -219,7 +206,7 @@ function playerHarness(source, form, {buffered = true, context = true, state = '
       react.useContext, core, () => ({isPlayer: true}), emitter, react.useRef,
       react.useCallback, react.useMemo, () => timeline, react.useEffect, anchor, {setGlobalTimeAnchor: anchor});
   const [methods, other] = mount(hook);
-  return {methods, other, events, waits, timeline, listeners, nativeTimes, primers,
+  return {methods, other, events, waits, timeline, listeners, nativeTimes,
     unmount() {cleanups.forEach(fn => fn?.());},
     unblock() {buffering.buffering.current = false; [...listeners].forEach(fn => fn());}};
 }
@@ -232,10 +219,7 @@ async function startupInvariant(source, form) {
   assert.equal(h.events.some(event => Array.isArray(event) && event[0] === 'playing'), false);
   h.waits[0].resolve('resumed');
   await flush();
-  assert.deepEqual(h.events, ['prime-start', 'resume', 'stop-attempt', 'prime-stop', 'disconnect-attempt', 'prime-disconnect', 'anchor', 'anchor-changed', ['playing', true], 'warm-tags', 'native', 'play']);
-  assert.equal(h.primers.length, 1);
-  assert.equal(h.primers[0].buffer.channels[0].some(value => value !== 0), false, 'startup buffer is entirely silent');
-  assert.equal(h.primers[0].stopped, true); assert.equal(h.primers[0].connected, false);
+  assert.deepEqual(h.events, ['resume', 'anchor', 'anchor-changed', ['playing', true], 'warm-tags', 'native', 'play']);
   const origin = h.other.takePlaybackStartTime();
   assert.ok(origin <= h.nativeTimes[0], 'frame origin is established before the source starts');
   const playback = form === 'CJS'
@@ -274,7 +258,6 @@ test('pinned Player startup readiness, cancellation and replay in CJS and ESM', 
           if (operation === 'unmount') h.unmount();
           else h.other[operation](20);
           assert.equal(h.methods.isPlaying(), false);
-          assert.equal(h.primers[0].stopped, true); assert.equal(h.primers[0].connected, false);
           h.methods.play({});
           h.waits[0].resolve('resumed');
           await flush();
@@ -282,14 +265,12 @@ test('pinned Player startup readiness, cancellation and replay in CJS and ESM', 
           h.waits[1].resolve('resumed');
           await flush();
           assert.equal(h.events.filter(event => event === 'native').length, 1);
-          assert.ok(h.primers.every(node => node.stopped && !node.connected));
         });
       }
       await t.test(`${form}: buffering gates startup; pause removes its listener`, async () => {
         const h = playerHarness(source, form, {buffered: false});
         h.methods.play({}); h.waits[0].resolve('resumed'); await flush();
         assert.equal(h.listeners.size, 1);
-        assert.ok(h.primers.every(node => node.stopped && !node.connected));
         assert.equal(h.events.includes('native'), false);
         h.other.pause(); assert.equal(h.listeners.size, 0);
         h.unblock(); await flush(); assert.equal(h.events.includes('native'), false);
@@ -298,7 +279,7 @@ test('pinned Player startup readiness, cancellation and replay in CJS and ESM', 
       });
       await t.test(`${form}: duplicate play, warm replay and last-frame rewind`, async () => {
         const h = playerHarness(source, form);
-        h.methods.play({}); h.other.play({}); assert.equal(h.waits.length, 1); assert.equal(h.primers.length, 1);
+        h.methods.play({}); h.other.play({}); assert.equal(h.waits.length, 1);
         h.waits[0].resolve('resumed'); await flush(); h.other.pause();
         h.timeline.frameRef.current.test = 119;
         h.methods.play({}); assert.equal(h.methods.getCurrentFrame(), 0);
@@ -313,46 +294,39 @@ test('pinned Player startup readiness, cancellation and replay in CJS and ESM', 
         assert.ok(h.events.some(event => Array.isArray(event) && event[0] === 'muted' && event[1] === true));
         assert.equal(h.events.includes('native'), true);
         assert.equal(h.events.includes('warm-tags'), false);
-        assert.ok(h.primers.every(node => node.stopped && !node.connected));
       });
       await t.test(`${form}: closed context retains failed-context fallback without creating a source`, async () => {
         const h = playerHarness(source, form, {state: 'closed'});
-        h.methods.play({}); assert.equal(h.primers.length, 0);
+        h.methods.play({});
         h.waits[0].resolve('failed'); await flush();
         assert.equal(h.events.includes('native'), true);
         assert.ok(h.events.some(event => Array.isArray(event) && event[0] === 'muted' && event[1] === true));
       });
-      await t.test(`${form}: rejected readiness releases the silent node and cancels playback`, async () => {
+      await t.test(`${form}: rejected readiness cancels playback`, async () => {
         const h = playerHarness(source, form);
         h.methods.play({}); h.waits[0].reject(new Error('readiness rejected')); await flush();
         assert.equal(h.methods.isPlaying(), false); assert.equal(h.methods.isStarting(), false);
         assert.equal(h.events.includes('native'), false);
-        assert.ok(h.primers.every(node => node.stopped && !node.connected));
       });
-      for (const failure of ['createBufferSource', 'createBuffer', 'connect', 'start', 'resume', 'resume-rejection', 'getIsResumingAudioContext', 'stop', 'disconnect']) {
+      for (const failure of ['resume', 'resume-rejection', 'getIsResumingAudioContext']) {
         await t.test(`${form}: ${failure} failure clears pending startup and permits replay`, async () => {
           const h = playerHarness(source, form, {failure});
           assert.doesNotThrow(() => h.methods.play({}));
-          if (failure === 'stop' || failure === 'disconnect') h.waits[0].resolve('resumed');
           await flush();
           assert.equal(h.methods.isStarting(), false);
           assert.equal(h.methods.isPlaying(), false);
           assert.equal(h.events.includes('native'), false);
-          assert.ok(h.primers.every(node => node.stopped || !node.connected), 'release attempts both stop and disconnect even if one throws');
-          if (h.primers.length) assert.ok(h.events.includes('disconnect-attempt'));
           h.methods.play({}); h.waits.at(-1).resolve('resumed'); await flush();
           assert.equal(h.events.filter(event => event === 'native').length, 1);
           assert.equal(h.methods.isStarting(), false);
         });
       }
-      for (const failure of ['stop', 'disconnect', 'suspend', 'suspend-rejection']) {
+      for (const failure of ['suspend', 'suspend-rejection']) {
         await t.test(`${form}: cancellation survives ${failure} failure`, async () => {
           const h = playerHarness(source, form, {failure});
           h.methods.play({}); assert.doesNotThrow(() => h.other.toggle());
           h.waits[0].resolve('resumed'); await flush();
           assert.equal(h.methods.isStarting(), false); assert.equal(h.events.includes('native'), false);
-          assert.ok(h.primers.every(node => node.stopped || !node.connected));
-          assert.ok(h.events.includes('disconnect-attempt'));
         });
       }
       await t.test(`${form}: stale rejected readiness cannot cancel a newer play`, async () => {
@@ -363,7 +337,6 @@ test('pinned Player startup readiness, cancellation and replay in CJS and ESM', 
         assert.equal(h.events.includes('native'), false);
         h.waits[1].resolve('resumed'); await flush();
         assert.equal(h.events.filter(event => event === 'native').length, 1);
-        assert.ok(h.primers.every(node => node.stopped && !node.connected));
       });
       await t.test(`${form}: public PlayerUI toggle cancels pending startup`, async () => {
         const h = playerHarness(source, form);
@@ -441,7 +414,6 @@ test('real React 18 StrictMode rerenders preserve pending readiness; another hoo
     React.act(() => renderer.unmount());
     await React.act(async () => {h.waits[2].resolve('resumed'); await flush();});
     assert.equal(h.events.filter(event => event === 'native').length, 1);
-    assert.ok(h.primers.every(node => node.stopped && !node.connected));
   } finally {
     React.act(() => renderer.unmount());
     dom.window.close();

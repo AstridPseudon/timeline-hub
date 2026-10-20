@@ -27,13 +27,13 @@ const TARGETS = [
     packageName: '@remotion/player',
     relativePath: 'dist/cjs/use-player-methods.js',
     originalSha256: 'ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
-    patchedSha256: 'bda49a524d4fdb8bd6d76b7f798c975c43e3c392b12a3b89d32236fae30a8961',
+    patchedSha256: '6bb73dd46e710761ef8ad6d16be3cb103c7e5c2bcbf8342f39c28586717cf0c5',
   },
   {
     packageName: '@remotion/player',
     relativePath: 'dist/esm/index.mjs',
     originalSha256: 'd3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
-    patchedSha256: '22eaceaf16a082c35af60ab7966fc841f79d8c9d854f88d032c00c6889f366eb',
+    patchedSha256: '0b98ec41a8f69dfe75ca46ca4eb16794eef65848f282e9459705ca5dfc6d0581',
   },
   {
     packageName: '@remotion/player',

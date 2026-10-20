@@ -24,7 +24,7 @@ const TARGETS = [
     packageName: '@remotion/player',
     relativePath: 'dist/cjs/use-player-methods.js',
     originalSha256: 'ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
-    patchedSha256: 'bda49a524d4fdb8bd6d76b7f798c975c43e3c392b12a3b89d32236fae30a8961',
+    patchedSha256: '6bb73dd46e710761ef8ad6d16be3cb103c7e5c2bcbf8342f39c28586717cf0c5',
     patches: [
       [
         'const usePlayerMethods = () => {',
@@ -82,32 +82,11 @@ const usePlayerMethods = () => {`,
         pendingPlayerStarts.set(timelineImperativeContext.imperativePlaying, pending);
         playStart.current = getCurrentFrame();
         // Resume in the gesture, but keep media and the frame clock stopped until output is ready.
-        const primeContext = audioContext?.audioContext;
-        let startupSource = null;
-        const releaseStartupSource = () => {
-            if (!startupSource) return true;
-            const source = startupSource;
-            startupSource = null;
-            let released = true;
-            try { source.stop(); } catch { released = false; }
-            try { source.disconnect(); } catch { released = false; }
-            return released;
-        };
         const failStartup = () => {
-            pending.signal.removeEventListener('abort', releaseStartupSource);
-            releaseStartupSource();
             if (pendingPlayerStarts.get(timelineImperativeContext.imperativePlaying) === pending) cancelPendingStart();
         };
-        pending.signal.addEventListener('abort', releaseStartupSource, { once: true });
         let ready;
         try {
-            if (primeContext && primeContext.state !== 'closed') {
-                // One silent buffer gives an idle device work while real media is held.
-                startupSource = primeContext.createBufferSource();
-                startupSource.buffer = primeContext.createBuffer(1, primeContext.sampleRate, primeContext.sampleRate);
-                startupSource.connect(primeContext.destination);
-                startupSource.start();
-            }
             Promise.resolve(audioContext?.resume()).catch(failStartup);
             ready = audioContext?.getIsResumingAudioContext() ?? Promise.resolve('resumed');
         } catch {
@@ -115,11 +94,6 @@ const usePlayerMethods = () => {`,
             return;
         }
         Promise.resolve(ready).then((result) => {
-            pending.signal.removeEventListener('abort', releaseStartupSource);
-            if (!releaseStartupSource()) {
-                failStartup();
-                return;
-            }
             if (pending.signal.aborted) return;
             if (result === 'cancelled') {
                 cancelPendingStart();
@@ -276,7 +250,7 @@ const emitter_context_js_1 = require("./emitter-context.js");`,
     packageName: '@remotion/player',
     relativePath: 'dist/esm/index.mjs',
     originalSha256: 'd3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
-    patchedSha256: '22eaceaf16a082c35af60ab7966fc841f79d8c9d854f88d032c00c6889f366eb',
+    patchedSha256: '0b98ec41a8f69dfe75ca46ca4eb16794eef65848f282e9459705ca5dfc6d0581',
     patches: [
       [
         'var usePlayerMethods = () => {',
@@ -327,32 +301,11 @@ var usePlayerMethods = () => {`,
     pendingPlayerStarts.set(timelineImperativeContext.imperativePlaying, pending);
     playStart.current = getCurrentFrame();
     // Resume in the gesture, but keep media and the frame clock stopped until output is ready.
-    const primeContext = audioContext?.audioContext;
-    let startupSource = null;
-    const releaseStartupSource = () => {
-      if (!startupSource) return true;
-      const source = startupSource;
-      startupSource = null;
-      let released = true;
-      try { source.stop(); } catch { released = false; }
-      try { source.disconnect(); } catch { released = false; }
-      return released;
-    };
     const failStartup = () => {
-      pending.signal.removeEventListener('abort', releaseStartupSource);
-      releaseStartupSource();
       if (pendingPlayerStarts.get(timelineImperativeContext.imperativePlaying) === pending) cancelPendingStart();
     };
-    pending.signal.addEventListener('abort', releaseStartupSource, { once: true });
     let ready;
     try {
-      if (primeContext && primeContext.state !== 'closed') {
-        // One silent buffer gives an idle device work while real media is held.
-        startupSource = primeContext.createBufferSource();
-        startupSource.buffer = primeContext.createBuffer(1, primeContext.sampleRate, primeContext.sampleRate);
-        startupSource.connect(primeContext.destination);
-        startupSource.start();
-      }
       Promise.resolve(audioContext?.resume()).catch(failStartup);
       ready = audioContext?.getIsResumingAudioContext() ?? Promise.resolve('resumed');
     } catch {
@@ -360,11 +313,6 @@ var usePlayerMethods = () => {`,
       return;
     }
     Promise.resolve(ready).then((result) => {
-      pending.signal.removeEventListener('abort', releaseStartupSource);
-      if (!releaseStartupSource()) {
-        failStartup();
-        return;
-      }
       if (pending.signal.aborted) return;
       if (result === 'cancelled') {
         cancelPendingStart();

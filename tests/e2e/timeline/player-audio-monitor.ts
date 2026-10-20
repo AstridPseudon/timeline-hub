@@ -9,7 +9,7 @@ const exec = promisify(execFile);
 export const SAMPLE_RATE = 48_000;
 
 async function stop(child: ChildProcess) {
-  if (child.exitCode !== null || child.signalCode !== null) return;
+  if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
   const exited = new Promise<void>(resolve => child.once('exit', () => resolve()));
   child.kill('SIGTERM');
   const timer = setTimeout(() => child.kill('SIGKILL'), 3000);
@@ -46,6 +46,112 @@ export async function privateMonitor() {
     }, { timeout: 10_000 }).toContain('player');
     return {
       directory, env, inspect,
+      async drain(diagnosticsPath: string, browserCpu: () => Promise<unknown>) {
+        // Consume this invocation's monitor, never write audio
+        // to its sink. Leave the ordinary WAV recorder and Pulse defaults alone.
+        const structured = async () => {
+          const [sinks, sources, inputs, outputs] = await Promise.all(
+            ['sinks', 'sources', 'sink-inputs', 'source-outputs'].map(async kind =>
+              JSON.parse((await exec('pactl', ['--format=json', 'list', kind], { env })).stdout)),
+          );
+          return { epochMs: Date.now(), sinks, sources, inputs, outputs };
+        };
+        const beforeConsumer = await structured();
+        const ticksPerSecond = Number((await exec('getconf', ['CLK_TCK'])).stdout);
+        const processStart = (await exec('ps', ['-eo', 'pid,ppid,comm,pcpu,cputimes', '--sort=-pcpu'])).stdout;
+        const args = [
+          '-hide_banner', '-nostdin', '-stats_period', '0.1', '-progress', 'pipe:1',
+          '-f', 'pulse', '-sample_rate', String(SAMPLE_RATE), '-channels', '2',
+          '-i', 'player.monitor', '-f', 'null', '-',
+        ];
+        const spawnedAtMs = Date.now();
+        const consumer = spawn('ffmpeg', args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
+        let log = ''; let progress = ''; let spawnError: Error | undefined;
+        consumer.stderr.on('data', bytes => { log += bytes.toString(); });
+        consumer.stdout.on('data', bytes => { progress += bytes.toString(); });
+        consumer.on('error', error => { spawnError = error; });
+        const assertActive = () => {
+          if (spawnError || consumer.exitCode !== null || consumer.signalCode !== null) {
+            throw new Error(`Monitor consumer stopped: ${spawnError ?? consumer.exitCode ?? consumer.signalCode}\n${log}`);
+          }
+        };
+        const telemetryErrors: string[] = [];
+        const deadline = setTimeout(() => {
+          void close().catch(error => { telemetryErrors.push(`deadline cleanup: ${String(error)}`); });
+        }, 120_000);
+        const samples: unknown[] = [];
+        const snapshots: unknown[] = [];
+        const inspectSafely = async <T>(name: string, operation: Promise<T>): Promise<T | null> => {
+          try { return await operation; } catch (error) {
+            telemetryErrors.push(`${name}: ${String(error)}`);
+            return null;
+          }
+        };
+        const sample = async () => {
+          const [host, pulse, ffmpegConsumer, browser] = await Promise.all([
+            inspectSafely('host', readFile('/proc/stat', 'utf8')),
+            inspectSafely('pulse', readFile(`/proc/${daemon.pid}/stat`, 'utf8')),
+            readFile(`/proc/${consumer.pid}/stat`, 'utf8').catch(() => null),
+            inspectSafely('browser', browserCpu()),
+          ]);
+          samples.push({ epochMs: Date.now(), load: loadavg(), host: host?.split('\n')[0], pulse, ffmpegConsumer, browser });
+        };
+        let sampling = true;
+        const samplingDone = (async () => {
+          while (sampling) {
+            await sample();
+            if (sampling) await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        })();
+        void samplingDone.catch(() => {});
+        const snapshot = async (stage: string) => {
+          assertActive();
+          const state = await structured();
+          snapshots.push({ stage, ...state });
+          const source = state.sources.find((source: { name: string }) => source.name === 'player.monitor');
+          const output = state.outputs.find((output: { properties: Record<string, string> }) =>
+            output.properties['application.process.id'] === String(consumer.pid));
+          expect(source, 'same private player.monitor source').toBeDefined();
+          expect(output, 'consumer owns a Pulse source output').toBeDefined();
+          expect(output.source).toBe(source.index);
+          expect(output.corked).toBe(false);
+          expect(state.inputs.some((input: { properties: Record<string, string> }) =>
+            input.properties['application.process.id'] === String(consumer.pid)), 'consumer contributes no sink input').toBe(false);
+          assertActive();
+        };
+        let closing: Promise<unknown> | undefined;
+        const close = () => closing ??= (async () => {
+          clearTimeout(deadline);
+          sampling = false;
+          await inspectSafely('stop consumer', stop(consumer));
+          await inspectSafely('sampling', samplingDone);
+          await inspectSafely('final sample', sample());
+          const afterConsumer = await inspectSafely('after consumer', structured());
+          const diagnostics = {
+            pid: consumer.pid, args, spawnedAtMs, completedAtMs: Date.now(), ticksPerSecond,
+            beforeConsumer, snapshots, afterConsumer, samples, processStart,
+            processEnd: (await inspectSafely('process end', exec('ps', ['-eo', 'pid,ppid,comm,pcpu,cputimes', '--sort=-pcpu'])))?.stdout,
+            exitCode: consumer.exitCode, signalCode: consumer.signalCode, log, progress, daemonLog, telemetryErrors,
+          };
+          await writeFile(diagnosticsPath, JSON.stringify(diagnostics, null, 2));
+          expect(consumer.exitCode !== null || consumer.signalCode !== null || !consumer.pid, 'consumer process terminated').toBe(true);
+          expect(afterConsumer, 'consumer cleanup inspection available').not.toBeNull();
+          expect(afterConsumer?.outputs.some((output: { properties: Record<string, string> }) =>
+            output.properties['application.process.id'] === String(consumer.pid)), 'consumer source output cleaned up').toBe(false);
+          return diagnostics;
+        })();
+        try {
+          await expect.poll(() => {
+            assertActive();
+            return log.includes('Output #0') && [...progress.matchAll(/out_time_us=(\d+)/g)].some(match => Number(match[1]) > 0);
+          }, { timeout: 10_000 }).toBe(true);
+          await snapshot('ready-before-warm');
+          return { snapshot, close };
+        } catch (error) {
+          await close().catch(cleanupError => { console.error('MONITOR_CONSUMER_CLEANUP', cleanupError); });
+          throw error;
+        }
+      },
       async record(path: string, play: () => Promise<void>, gain = 1, browserCpu: () => Promise<unknown> = async () => null) {
         // This live monitor belongs to one browser only. Its recorder gain
         // plants a defect after Player mixing, without changing any inputs.

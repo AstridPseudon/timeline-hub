@@ -1,7 +1,7 @@
 import { expect, test as base, type Page } from '@playwright/test';
 import type { PlayerRef } from '@remotion/player';
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CAPTURE_TIMELINE, TONES, createManagedTones, publishCaptureFixture, type Backend } from './player-audio-fixture';
@@ -145,12 +145,28 @@ function requireUnchangedGain(actual: number, reference: number) {
   if (Math.abs(db) > 0.5) throw new Error(`captured output gain mismatch: ${db.toFixed(3)} dB`);
 }
 
+// The idle diagnostic stays available without this opt-in. Expected bytes come
+// from the reviewed installer and frozen package, before the browser is launched.
+async function observedGraph() {
+  if (process.env.PLAYER_AUDIO_OBSERVE !== '1') return null;
+  const expected = JSON.parse(await readFile(process.env.PLAYER_AUDIO_EXPECTED_GRAPH!, 'utf8'));
+  const hashes = Object.fromEntries(await Promise.all(Object.keys(expected.hashes).map(async path =>
+    [path, createHash('sha256').update(await readFile(path)).digest('hex')])));
+  const compositionFiles = Object.fromEntries(await Promise.all(Object.keys(expected.compositionFiles).map(async path =>
+    [path, createHash('sha256').update(await readFile(`node_modules/@banodoco/timeline-composition/${path}`)).digest('hex')])));
+  const versions = Object.fromEntries(await Promise.all(Object.keys(expected.versions).map(async name =>
+    [name, JSON.parse(await readFile(`node_modules/${name}/package.json`, 'utf8')).version])));
+  const graph = { hashes, compositionFiles, versions, nodeModulesResolvedPath: await realpath('node_modules') };
+  expect(graph).toEqual(expected);
+  return graph;
+}
+
 for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified fade timing first gesture without warm-up', 'startup cancellation and replay'] as const) {
   test(`captures real Player ${mode}`, async ({ browser, context, monitor }, testInfo) => {
     test.setTimeout(360_000);
     expect(await resetFakeRuntimeBaseline()).toBeNull();
     const directory = await mkdtemp(join(tmpdir(), 'player-audio-media-'));
-    const results: Record<string, unknown> = { environment: {
+    const results: Record<string, unknown> = { beforeGraph: await observedGraph(), environment: {
       repeatIndex: testInfo.repeatEachIndex, browser: browser.version(), node: process.version,
       launchOptions: testInfo.project.use.launchOptions,
       packageLockSha256: createHash('sha256').update(await readFile('package-lock.json')).digest('hex'),
@@ -184,6 +200,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             requests.push({ url: response.url(), status: response.status() });
           }
         });
+        let consumer: Awaited<ReturnType<Monitor['drain']>> | undefined;
         try {
           await page.addInitScript(({ fallback }) => {
             window.__captureBackends = { elements: [], buffers: 0, audibleBuffers: 0 };
@@ -293,8 +310,21 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           if (backends.includes('video') && !options.fallback) {
             await expect(page.locator('[data-preview-decoded-frame="true"]')).toHaveCount(1, { timeout: 20_000 });
           }
-          // Keep the existing warm-rewind measurement, and independently capture
-          // the first actual gesture without ever starting the device beforehand.
+          // Observe the private sink before any gesture and throughout the WAV
+          // measurement. This consumer adds no sink input or browser audio.
+          if (process.env.PLAYER_AUDIO_OBSERVE === '1') {
+            consumer = await monitor.drain(testInfo.outputPath(`${name}-consumer.json`), () => cdp.send('SystemInfo.getProcessInfo'));
+          }
+          results[`${name}-before-first-gesture`] = await evaluateWithoutGesture(page, () => ({
+            epochMs: performance.timeOrigin + performance.now(), frame: window.__capturePlayer.getCurrentFrame(),
+            muted: window.__capturePlayer.isMuted(), userActivation: navigator.userActivation.hasBeenActive,
+            media: [...document.querySelectorAll('audio,video')].map(element => {
+              const media = element as HTMLMediaElement;
+              return { src: media.currentSrc, readyState: media.readyState, currentTime: media.currentTime, paused: media.paused };
+            }),
+            contexts: window.__captureContexts.map(context => ({ state: context.state, currentTime: context.currentTime, output: (context as AudioContext).getOutputTimestamp() })),
+          }));
+          // Keep the original warm-rewind and first-gesture cases.
           if (mode !== 'amplified fade timing first gesture without warm-up') {
             results[`${name}-monitor-before-warmup`] = await monitor.inspect();
             await clickPlay(page);
@@ -394,9 +424,11 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             expect(readiness.userActivation, 'capture must precede the first user gesture').toBe(false);
           }
           expect(readiness.muted, 'no automatic mute hidden by a reset after warm-up').toBe(options.muted ?? false);
+          await consumer?.snapshot('before-measurement');
           const path = testInfo.outputPath(`${name}.wav`);
           try {
             await monitor.record(path, () => clickPlay(page), options.captureGain, () => cdp.send('SystemInfo.getProcessInfo'));
+            await consumer?.snapshot('after-measurement');
           } finally {
             const recording = JSON.parse(await readFile(`${path}.diagnostics.json`, 'utf8'));
             const events = await evaluateWithoutGesture(page, () => window.__captureEvents);
@@ -425,16 +457,6 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
             expect(firstStart.playerFrame).toBe(0);
             expect(firstStart.currentTime).toBeLessThan(1 / 30);
             expect(firstStart.contexts.length).toBeGreaterThan(0);
-            const bufferEvents = await evaluateWithoutGesture(page, () => window.__captureEvents.filter(event => ['buffer-start', 'buffer-stop', 'buffer-disconnect'].includes(event.type as string))) as Array<{
-              type: string; id: number; silent: boolean; epochMs: number;
-            }>;
-            const primers = bufferEvents.filter(event => event.type === 'buffer-start' && event.silent && event.epochMs >= readiness.epochMs && event.epochMs <= firstStart.epochMs);
-            expect(primers, 'one transient silent startup buffer').toHaveLength(1);
-            for (const primer of primers) {
-              for (const type of ['buffer-stop', 'buffer-disconnect']) {
-                expect(bufferEvents.some(event => event.type === type && event.id === primer.id && event.epochMs <= firstStart.epochMs), `${type} before real source starts`).toBe(true);
-              }
-            }
             for (const context of firstStart.contexts) {
               expect(context.state, 'context ready before native source starts').toBe('running');
               expect(context.output.contextTime, 'fresh output before native source starts').toBeGreaterThan(0);
@@ -459,7 +481,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           if (backends.includes('native')) expect(backendState.elements.some(url => decodeURIComponent(url).includes(objects.native))).toBe(false);
           if (backends.includes('video') && !options.fallback && !options.muted) {
             expect(backendState.buffers).toBeGreaterThan(0);
-            expect(backendState.audibleBuffers, 'video audio uses real non-silent buffers, excluding startup priming').toBeGreaterThan(0);
+            expect(backendState.audibleBuffers, 'video audio uses real non-silent buffers').toBeGreaterThan(0);
           }
           expect(errors).toEqual([]);
           expect(await page.getByTestId('preview-media-error').count()).toBe(0);
@@ -469,7 +491,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
           return { capture, metrics };
         } finally {
           results[name] = { ...results[name] as object, lifecycleEvents: await evaluateWithoutGesture(page, () => window.__captureEvents).catch(() => null) };
-          await page.close();
+          try { if (consumer) results[`${name}-consumer`] = await consumer.close(); } finally { await page.close(); }
         }
       };
 
@@ -501,6 +523,7 @@ for (const mode of ['mixed output controls', 'amplified fade timing', 'amplified
       const repeated = await run('mixed-repeat', backends);
       requireUnchangedGain(repeated.metrics.left, mixed.metrics.left);
     } finally {
+      results.afterGraph = await observedGraph();
       const metricsPath = testInfo.outputPath('player-capture-metrics.json');
       await writeFile(metricsPath, JSON.stringify(results, null, 2));
       await testInfo.attach('player-capture-metrics', { path: metricsPath, contentType: 'application/json' });
