@@ -70,8 +70,8 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
         Bounded literal clip verbs queue durably before updating the preview.
         Use ``flush()`` to accept them; ``publish(message)`` also accepts one
-        parent move, source-hold set, or source trim when the session explicitly
-        names its draft's outbox path.
+        parent move, source-hold set, source trim, or parent clip delete when
+        the session explicitly names its draft's outbox path.
         Unsupported verbs refuse explicitly.
         Detached ``open``/``load``/``draft`` retain their existing behavior.
         """

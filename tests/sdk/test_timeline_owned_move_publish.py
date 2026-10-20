@@ -117,6 +117,42 @@ def test_parent_publish_captures_source_trim_rebases_reloads_and_undoes(connecte
     assert client.reads
 
 
+def test_parent_publish_captures_delete_retries_reloads_and_undoes(connected, monkeypatch):
+    client, generated, _ = connected
+    tl = Checkout.attach(open_session(connected))
+    original = copy.deepcopy(tl.clip('parent/clip:a').data)
+    tl.clip('parent/clip:a').remove()
+    command = state(connected)['pending'][0]
+    assert command['op'] == 'clip.delete'
+    assert command['select'] == 'parent/clip:a'
+    assert command['args'] == {}
+    assert not State(tl.bundle).entity('parent/clip:a', optional=True)
+
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        tl.publish('Remove the opening', idempotency_key='owned-delete')
+    first = copy.deepcopy(generated.calls[-1])
+
+    def no_capture(*args):
+        pytest.fail('delete retry attempted to recapture intent')
+
+    loaded = Checkout.attach(open_session(connected))
+    monkeypatch.setattr(commands, 'execute', no_capture)
+    accepted = loaded.publish()
+    assert generated.calls[-1] == first
+    body = json.loads(first[0])
+    assert body['commands'] == [command]
+    assert body['rationale'] == accepted['message'] == 'Remove the opening'
+    assert accepted['receipt']['result']['status'] == 'accepted'
+    assert not State(loaded.bundle).entity('parent/clip:a', optional=True)
+    assert loaded.clip('b').data['params'] == {'text': 'café'}
+
+    undone = loaded.undo([accepted['receipt']['receipt_id']])
+    assert undone['data']['status'] == 'accepted'
+    assert loaded.clip('parent/clip:a').data == original
+    assert client.reads
+
+
 def test_parent_publish_restart_keeps_exact_request_key_and_rationale(connected, monkeypatch):
     _, generated, _ = connected
     tl = Checkout.attach(open_session(connected))
@@ -196,6 +232,17 @@ def test_mixed_and_unqueued_edits_are_held_without_consuming_draft(connected, mo
     with pytest.raises(TimelineEditError, match='basis changed'):
         tl.publish()
     assert state(connected)['flight'] is None and connected[1].calls == []
+
+
+def test_mixed_parent_delete_and_edit_are_held_without_writes(connected):
+    tl = Checkout.attach(open_session(connected))
+    tl.clip('parent/clip:a').remove()
+    tl.clip('parent/clip:b').set(text='Still local')
+    before, draft = connected[2].read_bytes(), copy.deepcopy(tl.bundle)
+    with pytest.raises(TimelineEditError, match='held'):
+        tl.publish('Mixed')
+    assert connected[2].read_bytes() == before and tl.bundle == draft
+    assert connected[1].calls == []
 
 
 def test_ambiguous_owner_and_occurrence_publish_refuse_with_draft_intact(connected):
