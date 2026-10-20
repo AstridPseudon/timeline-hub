@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T14:56:28Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 10m -->
+<!-- main | 2026-10-20T15:01:28Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 15m -->
 # runtime — 2026-10-20T14:45:50Z
 Milestone: M1 RECORDED. M2 native consumer migrations and bounded catalog restoration; M3/M4 not complete.
 Integrated: Runtime16acbb6/tree6a6ba82c. Public generated artifacts remain byte-identical to immutable producer2c4ac180. Latest merge is a test-only audit synchronization fix; prior strict empty-shell/fresh-bootstrap guards and CLI journey tests remain.

@@ -44,11 +44,11 @@ EditCommand operations.
 
 ## Change size and boundaries
 
-- Product delta: `runtime_protocol/service.py`, +272/-2 lines; the two retired
+- Product delta: `runtime_protocol/service.py`, +270/-2 lines; the two retired
   aliases were removed and only the existing two text-binding operations were
   restored.
 - Test delta: `tests/test_shot_text_bindings.py` +18/-8 and
-  `tests/test_timeline_shot_authority.py` +18/-8.
+  `tests/test_timeline_shot_authority.py` +28/-8.
 - No endpoint, DTO, table, public command, or new persistence journal was
   added. Existing CAS publication journaling is used for the existing managed
   object custody path.
@@ -72,12 +72,14 @@ EditCommand operations.
   `request-test rt-m2-catalog-text-binding-restore targeted --files "tests/test_shot_text_bindings.py tests/test_timeline_shot_authority.py"`
   -> **115 passed**, exit 0, 99.21s. This includes all four original positives,
   actual HTTP auth/scope checks, film-history refusal and shot-authority
-  neighbors.
+  neighbors. One intermediate rerun after moving the replay guard had two
+  stale test expectations; those were changed to assert the required exact
+  unchanged replay, and the final rerun passed **115/115**.
 - Central native MIME/auth neighbor:
   `request-test rt-m2-catalog-text-binding-restore targeted --files "tests/test_timeline_verified_media_http.py"`
-  -> **5 passed**, exit 0, 8.04s.
+  -> **5 passed**, exit 0, 8.97s.
 - `python -m compileall -q runtime_protocol packages/python/astrid_runtime_client`
-  -> passed; generated caches were removed afterward.
+  -> passed after the final change; generated caches were removed afterward.
 - `git diff --check` -> passed.
 
 No full suite, browser/live integration matrix, publication, merge, or pin was
