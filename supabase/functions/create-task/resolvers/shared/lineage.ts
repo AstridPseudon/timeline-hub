@@ -1,5 +1,3 @@
-import type { PlacementIntent } from "../../../ai-timeline-agent/types.ts";
-
 type PayloadRecord = Record<string, unknown>;
 
 export type TimelinePlacementIntent = "after_source" | "replace";
@@ -10,6 +8,17 @@ export type TimelinePlacement = {
   target_track: string;
   insertion_time: number;
   intent: TimelinePlacementIntent;
+};
+
+export type PlacementIntent = {
+  timeline_id: string;
+  anchor_clip_id: string;
+  anchor_generation_id?: string;
+  anchor_variant_id?: string;
+  relation: "after";
+  preferred_track_id: string;
+  fallback_at: number;
+  fallback_track_id: string;
 };
 
 interface TaskLineageFields {

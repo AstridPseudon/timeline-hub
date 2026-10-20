@@ -1,5 +1,12 @@
 # Extension Layer Foundation Assessment
 
+> **Historical status.** This assessment predates the M2 retirement of the
+> Supabase AI timeline endpoint and its numeric proposal/config writer. The
+> edge proposal route described below is not supported or available now.
+> Current timeline authoring uses App `EditCommand` capture and the Runtime
+> `/v1` commit door; retained task completion handles outputs, billing, media,
+> and relational metadata without publishing canonical timeline state.
+
 This document assesses the last three milestones of the **`astrid-extension-layer-foundation`** epic chain defined in `.megaplan/briefs/astrid-extension-layer-foundation/chain.yaml`:
 
 | Milestone | Idea brief | Merged PR |
@@ -28,7 +35,10 @@ The public data and persistence shape exists. `ExtensionProposalStatus` includes
 
 The runtime proposal state machine is meaningful. It records an unsupported-persistence diagnostic when no persistence provider is available (`src/tools/video-editor/lib/proposal-runtime.ts:281`), auto-expires TTL-elapsed proposals before reads and accept (`src/tools/video-editor/lib/proposal-runtime.ts:373`, `src/tools/video-editor/lib/proposal-runtime.ts:481`, `src/tools/video-editor/lib/proposal-runtime.ts:596`, `src/tools/video-editor/lib/proposal-runtime.ts:602`), rejects base-version mismatches before mutation (`src/tools/video-editor/lib/proposal-runtime.ts:499`), applies accepted proposals only through `timelineOps.apply` (`src/tools/video-editor/lib/proposal-runtime.ts:538`), and exposes `reject`, `expireStale`, `importProposal`, and `importEdgeProposals` (`src/tools/video-editor/lib/proposal-runtime.ts:549`, `src/tools/video-editor/lib/proposal-runtime.ts:567`, `src/tools/video-editor/lib/proposal-runtime.ts:678`, `src/tools/video-editor/lib/proposal-runtime.ts:769`).
 
-The edge agent has a real proposal mode. The frontend sends `proposal_policy: 'always'` on every invoke body (`src/tools/video-editor/hooks/useAgentSession.ts:292`, `src/tools/video-editor/hooks/useAgentSession.ts:296`, `src/tools/video-editor/hooks/useAgentSession.ts:299`). The edge function maps that to `timelineMutationMode: 'proposal'` (`supabase/functions/ai-timeline-agent/index.ts:39`, `supabase/functions/ai-timeline-agent/index.ts:46`) and returns `mutation_applied` plus `proposals` when present (`supabase/functions/ai-timeline-agent/index.ts:100`, `supabase/functions/ai-timeline-agent/index.ts:106`). The loop threads mutation mode into tool execution and aggregates proposals from tool results (`supabase/functions/ai-timeline-agent/loop.ts:179`, `supabase/functions/ai-timeline-agent/loop.ts:649`, `supabase/functions/ai-timeline-agent/loop.ts:663`, `supabase/functions/ai-timeline-agent/loop.ts:917`). The registry creates structured edge proposals with a five-minute TTL and avoids saving config in proposal mode (`supabase/functions/ai-timeline-agent/tools/registry.ts:408`, `supabase/functions/ai-timeline-agent/tools/registry.ts:513`, `supabase/functions/ai-timeline-agent/tools/registry.ts:533`, `supabase/functions/ai-timeline-agent/tools/registry.ts:987`).
+The former edge agent had a proposal mode, but that endpoint and its
+numeric config-writer implementation were retired in M2. The proposal-runtime
+observations in this historical assessment do not authorize an edge route or
+provide a current authoring contract.
 
 ### M4 diagnostics, SchemaForm, and lifecycle
 
@@ -50,7 +60,10 @@ The readiness artifact is valuable. It identifies the stale `contributionFamilie
 
 The proposal runtime itself is one of the stronger parts. Its state transitions respect the important safety rule: expired and stale proposals do not silently apply, and accepted proposals go through one apply path (`src/tools/video-editor/lib/proposal-runtime.ts:481`, `src/tools/video-editor/lib/proposal-runtime.ts:506`, `src/tools/video-editor/lib/proposal-runtime.ts:538`). The runtime also has persistence hooks and reload hydration when a persistence provider is supplied (`src/tools/video-editor/lib/proposal-runtime.ts:293`, `src/tools/video-editor/lib/proposal-runtime.ts:313`, `src/tools/video-editor/lib/proposal-runtime.ts:619`).
 
-The edge agent proposal mode is a real backend primitive. `proposal_policy: 'always'` reaches backend proposal mode, edge proposals are aggregated across loop iterations, and command execution routes proposal mode before the direct apply pipeline (`src/tools/video-editor/hooks/useAgentSession.ts:299`, `supabase/functions/ai-timeline-agent/index.ts:46`, `supabase/functions/ai-timeline-agent/loop.ts:917`, `supabase/functions/ai-timeline-agent/tools/registry.ts:996`). The registry also blocks unsupported proposal commands rather than pretending every command can be represented as a patch (`supabase/functions/ai-timeline-agent/tools/registry.ts:482`).
+The former edge proposal mode is historical only. New proposals or edits must
+be represented by the published `EditCommand` contract and submitted through
+the Runtime commit path; this document does not define an alternate edge
+writer.
 
 Diagnostics are a credible primitive. The collection enforces deterministic per-extension bounds and removal, and sync into the UI collection pins extension-authored diagnostics to the extension source (`src/sdk/index.ts:155`, `src/sdk/index.ts:199`, `src/sdk/index.ts:219`, `src/tools/video-editor/runtime/diagnosticCollectionSync.ts:57`). That is a good foundation for future manager and diagnostics surfaces.
 
@@ -62,19 +75,25 @@ The readiness artifact is honest rather than promotional. It says Phase 4 should
 
 ## 5. Where it falls short
 
-### 5.1 Agent-returned proposals are not user-facing or accept/rejectable end-to-end
+### 5.1 Retired edge proposal surface
 
-This is the biggest M3 gap. The edge function returns `proposals`, and `useAgentSession` preserves them (`supabase/functions/ai-timeline-agent/index.ts:100`, `supabase/functions/ai-timeline-agent/index.ts:106`, `src/tools/video-editor/hooks/useAgentSession.ts:101`, `src/tools/video-editor/hooks/useAgentSession.ts:110`). But `useAgentSession` never imports those proposals into the provider's `ProposalRuntime` in `onSuccess`; it only invalidates queries and skips timeline reload for `mutation_applied: false` (`src/tools/video-editor/hooks/useAgentSession.ts:381`, `src/tools/video-editor/hooks/useAgentSession.ts:388`). `importEdgeProposals` exists specifically for this bridge, but production search found no caller outside definitions/tests (`src/tools/video-editor/lib/proposal-runtime.ts:769`).
+The former edge proposal lifecycle is retired with its endpoint and numeric
+writer. The current safety boundary is simpler: App authoring captures a
+published `EditCommand`, stores it in the outbox until acknowledged, and sends
+it to Runtime for validation, rebase, acceptance, history, and undo. No edge
+proposal response is a supported input to the timeline.
 
-The result is a severed lifecycle: agent proposals can exist in the edge response object without appearing in `ProposalPanel`, without being persisted through the client proposal bridge, and without being acceptable/rejectable through the UI. M3's done criteria explicitly required the client to accept the returned proposal through the same proposal apply semantics (`m3-proposal-agent-policy-spine.md:63`, `m3-proposal-agent-policy-spine.md:65`). That is not currently satisfied.
+### 5.2 Retired edge session policy
 
-### 5.2 Proposal policy persistence is half-built
+The former edge session policy and its proposal response are not part of the
+current execution contract. Do not restore them as a second timeline writer;
+use the Runtime command contract for authoring decisions.
 
-The migration adds `timeline_agent_sessions.proposal_policy`, but the edge code reads policy only from the request body (`supabase/functions/ai-timeline-agent/index.ts:39`, `supabase/functions/ai-timeline-agent/index.ts:42`). The same invoke path persists session `status`, `turns`, and `summary`, but not proposal policy (`supabase/functions/ai-timeline-agent/index.ts:94`). Search across the edge function code finds no DB read/write of the migrated column other than the request-body type and the migration. This is mitigated by the frontend sending `proposal_policy: 'always'` every time (`src/tools/video-editor/hooks/useAgentSession.ts:299`), but the database column currently does not provide durable session policy.
+### 5.3 Current authoring boundary
 
-### 5.3 `mutation_applied` is too coarse
-
-The loop reports `mutation_applied: allProposals.length === 0` (`supabase/functions/ai-timeline-agent/loop.ts:948`). That is correct for "proposal mode produced proposals," but it is not a reliable statement that a timeline mutation occurred. Read-only proposal-mode commands, blocked tools, or non-timeline side effects can produce no proposals while still not mutating timeline config. This can cause unnecessary timeline invalidation because the client invalidates when `data.mutation_applied !== false` (`src/tools/video-editor/hooks/useAgentSession.ts:388`). It is not the highest-risk issue, but it weakens the agent policy contract.
+The authoritative edit result is the Runtime accepted revision and receipt.
+Completion-side generation, billing, media, and relational metadata remain
+separate from canonical timeline publication.
 
 ### 5.4 Extension Manager settings are not SchemaForm-backed
 
@@ -124,7 +143,7 @@ There are strong unit/component tests for ProposalRuntime, ProposalPanel, Schema
 
 ### High
 
-3. **Proposal policy persistence is dead storage.** The DB column exists but is not read or written by agent session persistence; policy is request-body only (`supabase/functions/ai-timeline-agent/index.ts:39`, `supabase/functions/ai-timeline-agent/index.ts:94`, `supabase/migrations/20260622235001_add_timeline_agent_sessions_proposal_policy.sql:1`).
+3. **Historical edge proposal policy is retired.** It is not a supported authoring or persistence path; Runtime command acceptance is authoritative.
 
 4. **Crash recovery boundary reset is not centrally lifecycle-wired.** The boundary supports `recoveryKey`, but lifecycle re-enable does not drive it (`src/tools/video-editor/runtime/ContributionErrorBoundary.tsx:187`, `src/tools/video-editor/runtime/ContributionErrorBoundary.tsx:193`). This fails part of M4's lifecycle cleanup contract.
 
@@ -132,7 +151,7 @@ There are strong unit/component tests for ProposalRuntime, ProposalPanel, Schema
 
 ### Medium
 
-6. **`mutation_applied` does not precisely mean "timeline mutated."** `allProposals.length === 0` is too broad for read-only or blocked tool paths (`supabase/functions/ai-timeline-agent/loop.ts:948`).
+6. **Runtime command acceptance is the current mutation signal.** Historical edge proposal response fields must not be used as a substitute.
 
 7. **Diagnostics service contract drift.** One service pins source and extension ID, another only pins extension ID, relying on downstream sync to normalize source (`src/sdk/index.ts:3613`, `src/tools/video-editor/runtime/extensionLifecycle.ts:130`, `src/tools/video-editor/runtime/diagnosticCollectionSync.ts:62`).
 

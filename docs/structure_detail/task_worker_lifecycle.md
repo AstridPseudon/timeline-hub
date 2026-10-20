@@ -1,179 +1,91 @@
 # Task & Worker Lifecycle
 
-> **Current post-cutover boundary (2026-09-10).** The diagrams and historical implementation notes below describe the retired Astrid/Supabase task lifecycle. New work must follow the canonical Astrid path: Astrid App producer → Astrid Runtime admission → Worker `GenericPackHost` execution → Runtime settlement → CAS/gallery/timeline readback. Runtime owns task, run, receipt, event-history, and publication authority; Astrid App does not insert or complete legacy task rows. See [`unified_task_creation.md`](unified_task_creation.md) for the current contract. The historical details are retained as migration context and are not an acceptance path.
+> **Current boundary (2026-10-19).** Runtime owns task admission, execution
+> receipts, settlement, event history, and canonical timeline publication.
+> App producers use the Runtime task and timeline contracts; they do not write
+> legacy task rows or publish whole timeline configurations.
 
-## Overview
+## Supported execution path
 
-Astrid App uses an async task queue pattern for all AI generation workloads. This decouples the UI from long-running operations and enables distributed processing.
+Generation work follows one supported path:
 
-## Flow Diagram
-
-### High-Level Overview
-```
-┌─────────┐     ┌──────────────┐     ┌─────────┐     ┌────────────┐
-│ Client  │────▶│ create_task  │────▶│   DB    │◀────│   Worker   │
-│   UI    │     │ Edge Function│     │ (tasks) │     │  (Express) │
-└─────────┘     └──────────────┘     └─────────┘     └────────────┘
-     ▲                                      │                 │
-     │                                      │                 │
-     │          ┌──────────────┐           │                 │
-     └──────────│   Realtime   │◀──────────┴─────────────────┘
-                │  Broadcast   │         (status updates)
-                └──────────────┘
+```text
+UI producer
+  -> App createTask
+  -> Runtime admission (project, inputs, idempotency)
+  -> Worker GenericPackHost execution
+  -> Runtime settlement and receipts
+  -> CAS/gallery/timeline readback
 ```
 
-## Detailed Steps
+Runtime carries input identity, ordered inputs, output validation,
+idempotency, and the publication fence. Workers execute the admitted work and
+return results to Runtime; they do not become a second task or timeline
+authority.
 
-### 1. Task Creation
-- Client calls `/supabase/functions/create_task` with:
-  - `tool_id` (e.g., 'image-generation')
-  - `input` (tool-specific parameters)
-  - `cost` (pre-calculated credits)
-- Edge Function validates user has sufficient credits
-- Inserts row into `tasks` table with `status = 'Queued'`
-- Returns task ID to client
+See [`unified_task_creation.md`](unified_task_creation.md) for the admission
+contract and [`realtime_system.md`](realtime_system.md) for client updates.
 
-### 2. Worker Polling & Task Processing
-- **External Workers** (Headless-Wan2GP) poll via `claim_next_task` Edge Function:
-  - Uses **model affinity**: prefers tasks matching worker's `current_model` to avoid model reloads
-  - Falls back to FIFO (oldest first) if no model match or worker hasn't reported a model
-  - Updates to `In Progress` with `worker_id`
-  - Returns task details
-- **Model Tracking**: Workers call `update-worker-model` after loading a model to enable affinity matching
-- **Task Processing** now uses **Database Triggers** (instant):
-  - When task status → `Complete`: SQL trigger `create_generation_on_task_complete` runs
-  - Creates generations and shot_generations automatically in the database
-  - Normalizes image paths and handles all edge cases
-  - Broadcasts real-time updates via Supabase Realtime
-- Worker processes based on `tool_id`:
-  - Image generation → FAL API
-  - Video processing → FFmpeg
-  - Prompt enhancement → OpenAI
+## Retained `complete_task` boundary
 
-## Worker Types
+`supabase/functions/complete_task` remains a narrowly retained completion
+adapter for supported worker outputs and existing settlement callers. It
+performs the following work after authentication and task-ownership checks:
 
-### Local Express Worker
-- Basic task processor (`/src/server/services/taskProcessingService.ts`)
-- Handles simple tasks like prompt enhancement and basic image generation
-- Runs alongside the main application in development
+1. Validates task and storage references, then stores the completed output and
+   thumbnail.
+2. Creates or updates the ordinary generation/variant result and its
+   relational shot metadata where the completion contract requires it.
+3. Marks the task complete, cleans materialized inputs, records orchestrator
+   follow-up state, and preserves service-role cost calculation and billing.
+4. Returns the output URLs plus any follow-up warnings.
 
-### Headless-Wan2GP Worker (Cloud/Local GPU)
-- Advanced video generation worker: [Headless-Wan2GP](https://github.com/peteromallet/Headless-Wan2GP)
-- Specialized for travel-between-images video generation tasks
-- Can run locally with GPU or deployed to cloud instances
-- Handles computationally intensive video generation workflows
+Completion does not publish a canonical timeline document, append a timeline
+configuration, update the canonical asset registry, or automatically place a
+completed asset on a timeline. A placement-shaped input is therefore not a
+second authoring route; the completion result remains available for a normal
+timeline command to reference.
 
-#### Task Types Handled
-- **`travel_orchestrator`** - Manages multi-segment travel workflows
-- **`travel_segment`** - Creates guide videos and runs WGP generation using VACE
-- **`travel_stitch`** - Stitches segment videos with crossfades and timing
-- **`individual_travel_segment`** - Standalone segment regeneration (visible in TasksPane, creates variant on parent generation)
-- **`image-generation`** - Fallback for basic image generation tasks
+## Timeline authoring
 
-#### Deployment Options
+Timeline edits use the normal Runtime command path:
 
-**Local Deployment (GPU Required)**
-```bash
-# Clone the worker repository where the Settings modal expects it
-git clone https://github.com/banodoco/astrid-app-Worker.git ~/Documents/Astrid-Worker
-cd ~/Documents/Astrid-Worker
-
-# Install uv once
-curl -LsSf https://astral.sh/uv/install.sh | sh
-export PATH="$HOME/.local/bin:$PATH"
-
-# Ubuntu 24.04+ note: install Python 3.10 packages from deadsnakes first
-# sudo add-apt-repository ppa:deadsnakes/ppa && sudo apt-get update
-
-# Sync and run
-uv sync --locked --python 3.10 --extra cuda124
-uv run --python 3.10 python run_worker.py --astrid-access-token <PAT_TOKEN>
+```text
+App gesture or authoring client
+  -> EditCommand capture with reads/selections/bindings
+  -> crash-safe App outbox
+  -> POST /v1/projects/{project}/timelines/{timeline}/commit
+  -> Agent command provider and Runtime acceptance
+  -> accepted revision and timeline readback
 ```
 
-The desktop Settings modal now stores a `Worker repo location` field. Both generated commands `cd` into that absolute path before any `uv` call, so users can paste them from a fresh shell in their home directory.
+Retired edge authoring handlers, append helpers, and whole-configuration
+publication paths are not authoring routes. Producers that need to affect a
+timeline must emit the published command contract and use
+the Runtime commit door; completion and media preparation alone do not grant a
+canonical write.
 
-**Cloud Deployment (RunPod)**
+## Worker responsibilities
 
-Workers run on RunPod GPU pods (RTX 4090). Code lives on a persistent network volume at `/workspace/`.
+Workers may process image, video, prompt, and related generation work through
+Runtime's admitted task. They may upload immutable output artifacts and report
+completion. They must not:
 
-| Path | Contents |
-|------|----------|
-| `/workspace/Astrid-Worker/` | Canonical worker checkout used by the startup template |
-| `/workspace/Headless-Wan2GP/` | Legacy fallback checkout still supported during rollout |
+- insert or complete legacy task rows outside the retained completion
+  contract;
+- replace a canonical timeline document or append a timeline configuration;
+- infer a timeline placement from a display ID or refresh authoring guards; or
+- bypass Runtime with a hosted append/publish relay.
 
-**Accessing pods:**
-- **SSH**: Pod IP + port from RunPod dashboard or API (`ssh root@<ip> -p <port>`)
-- **Jupyter**: `https://<pod_id>-8888.proxy.runpod.net/?token=<token>` (port 8888)
-- **RunPod API**: Query `myself { pods { ... } }` GraphQL endpoint with API key from Arnold `.env`
-
-**Worker process lifecycle:**
-```bash
-# Logs go to /tmp/worker_startup_<worker_id>.log
-# Guardian heartbeat log: /tmp/guardian_<worker_id>.log
-# Worker ID format: gpu-YYYYMMDD_HHMMSS-<hash>
-
-# Bootstrap / resync (also used for first install)
-cd /workspace/Astrid-Worker
-curl -LsSf https://astral.sh/uv/install.sh | sh
-export PATH="$HOME/.local/bin:$PATH"
-uv sync --locked --python 3.10 --extra cuda124
-
-# Start (nohup so it survives SSH disconnect)
-nohup uv run --python 3.10 python run_worker.py --astrid-access-token <PAT_TOKEN> > /tmp/worker.log 2>&1 &
-
-# Restart after code change
-pkill -f 'python.*run_worker' && cd /workspace/Astrid-Worker && git pull --ff-only && uv sync --locked --python 3.10 --extra cuda124 && nohup uv run --python 3.10 python run_worker.py --astrid-access-token <PAT_TOKEN> > /tmp/worker.log 2>&1 &
-
-# Check status
-ps aux | grep python
-tail -50 /tmp/worker_startup_*.log
-nvidia-smi
-```
-
-**Code change workflow:**
-1. Edit locally at `~/Documents/Astrid-Worker` (same repo: `banodoco/Astrid-Worker`)
-2. `git add . && git commit -m "fix: ..." && git push`
-3. SSH to pod: `cd /workspace/Astrid-Worker && git pull --ff-only`
-4. Kill + restart worker process (see above)
-
-**Multiple pods** share the same `/workspace/` volume, so `git pull` on one updates all. The startup template still accepts transient Wan2GP subtree drift during rollout, but the canonical runtime dependency set comes from the root `uv.lock`.
-Pods can be queried programmatically via RunPod GraphQL API (credentials in `~/Documents/Arnold/.env`).
-
-**Rollback story:**
-- There is no runtime pip fallback on the migrated branch.
-- If the first uv-based startup fails on a machine with an older virtualenv, restore the latest `venv.pre-uv-*` or `.venv.pre-uv-*` backup and remove `.uv-migrated`.
-- If the release must be rolled back, revert the uv rollout commits and return to the pre-uv revision that still bootstraps from `requirements.txt`.
-
-#### Worker Configuration
-The worker polls the same task queue but specializes in video generation:
-- Connects to Supabase using environment credentials
-- Claims tasks with `tool_id` matching its capabilities
-- Updates task status and uploads results to designated storage buckets
-- Uses PostgreSQL (Supabase) for both local development and production
-
-### 3. Task Completion
-- Worker calls `complete_task` Edge Function with:
-  - Task ID
-  - Output data (URLs, metadata)
-  - Error info (if failed)
-- Edge Function:
-  - Updates task status using `func_mark_task_complete` or `func_mark_task_failed`
-  - Deducts credits from user's balance
-  - **Variant vs Generation Logic**: If task has `based_on` parameter, creates a `generation_variant` on the source generation. If `create_as_generation=true` flag is set, overrides this and creates a new `generation` with `based_on` for lineage tracking instead.
-- **SQL Trigger** (`create_generation_on_task_complete`):
-  - Automatically creates `generations` records when status → `Complete`
-  - Normalizes image paths (removes local server IPs)
-  - Creates `shot_generations` links if applicable
-  - All processing happens instantly in the database
-
-### 4. Real-time Updates
-- **Database Triggers** automatically broadcast changes via Supabase Realtime
-- **Instant processing** when tasks complete (no 10-second delay)
-- Client subscribes via the realtime system (`RealtimeProvider`; see [`realtime_system.md`](realtime_system.md))
-- UI updates automatically as task progresses
+When a result should appear in a timeline, the client or another supported
+authoring producer reads the immutable result and submits a guarded command
+through Runtime.
 
 ## Debugging
 
-See [`debugging.md`](debugging.md) for full debugging tools (CLI, SQL views, frontend logging).
-
-For task-specific debugging: `cd scripts && python3 debug.py task <task_id>` shows the full timeline including trigger execution and generation creation.
+Trace a generation from App task admission through Runtime settlement and
+readback. For retained completion failures, inspect the `complete_task`
+response's typed error or follow-up warnings and the task's persisted result
+data. For timeline edits, inspect the command request, accepted revision, and
+Runtime history; do not diagnose a deleted append/import route as a supported
+path.
