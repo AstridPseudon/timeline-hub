@@ -223,8 +223,20 @@ def stage(root, destination):
 
 
 def environment(root, project, temp):
+    require('HOME' in os.environ, 'HOME must be inherited from the manager environment')
+    paths = {
+        'TMPDIR': temp / 'tmp',
+        'XDG_CACHE_HOME': temp / 'xdg-cache',
+        'XDG_CONFIG_HOME': temp / 'xdg-config',
+        'XDG_STATE_HOME': temp / 'xdg-state',
+        'XDG_RUNTIME_DIR': temp / 'xdg-runtime',
+    }
+    for path in paths.values():
+        path.mkdir(parents=True, exist_ok=True)
+    paths['XDG_RUNTIME_DIR'].chmod(0o700)
     return {
-        'HOME': str(temp), 'TMPDIR': str(temp), 'LANG': 'C.UTF-8',
+        'HOME': os.environ['HOME'], **{name: str(path) for name, path in paths.items()},
+        'LANG': 'C.UTF-8',
         'PATH': str(NODE.parent) + ':/home/user/work/venv-agent/bin:/usr/bin:/bin',
         'PYTHONPATH': str(root), 'PYTHONDONTWRITEBYTECODE': '1',
         'ASTRID_NODE_EXECUTABLE': str(NODE), 'ASTRID_REMOTION_PROJECT_DIR': str(project),

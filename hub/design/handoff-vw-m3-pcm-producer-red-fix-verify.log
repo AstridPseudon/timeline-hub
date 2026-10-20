@@ -1,0 +1,1 @@
+PASS: public12 archive SHA256 and 77 exact package members; Node20.19.4 and peers; native tested JS modules/tests byte-identical to this worktree; exactly three authorized changed paths; git diff --check.

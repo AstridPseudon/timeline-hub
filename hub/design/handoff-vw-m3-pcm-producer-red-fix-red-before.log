@@ -1,0 +1,80 @@
+.............FF...FFFF                                                   [100%]
+=================================== FAILURES ===================================
+_______ test_actual_slice_needs_original_compiled_clip_transport[window] _______
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = None
+
+    @pytest.mark.parametrize("tracks", [None, ("A1",)], ids=["window", "layer"])
+    def test_actual_slice_needs_original_compiled_clip_transport(stage, tracks):
+        """Ordinary RED: source owner must join the actual pre-slice compiled input."""
+        from astrid.core.rendering.contracts import FrameWindow
+        from astrid.core.rendering.service import RenderService
+    
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"][0].update(at=0, speed=1, **{"from": 0, "to": 2})
+        props["timeline"]["clips"][0]["params"] = {"fadeIn": 0.5, "fadeOut": 0.5}
+        props["timeline"] = RenderService._window_timeline(
+            props["timeline"], FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
+            tracks=tracks,
+        )
+        output = prepare(props)
+        url = output["timeline"]["clips"][0]["audio"]["render_source"]["file"]
+        wav = (attempt.parent / url.removeprefix("http://attempt.invalid/")).read_bytes()
+        # Host app metadata alone cannot prove which compiled original was sliced.
+        # Keep this positive requirement until the source owner carries the original
+        # through pair validation and serializer into the real producer invocation.
+>       assert struct.unpack_from("<ff", wav, 44 + 15000 * 8) == (0.25, -0.125)
+E       assert (0.0, -0.0) == (0.25, -0.125)
+E         
+E         At index 0 diff: 0.0 != 0.25
+E         Use -v to get more diff
+
+tests/packs/rendering/test_normal_audio_sources.py:252: AssertionError
+_______ test_actual_slice_needs_original_compiled_clip_transport[layer] ________
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = ('A1',)
+
+    @pytest.mark.parametrize("tracks", [None, ("A1",)], ids=["window", "layer"])
+    def test_actual_slice_needs_original_compiled_clip_transport(stage, tracks):
+        """Ordinary RED: source owner must join the actual pre-slice compiled input."""
+        from astrid.core.rendering.contracts import FrameWindow
+        from astrid.core.rendering.service import RenderService
+    
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"][0].update(at=0, speed=1, **{"from": 0, "to": 2})
+        props["timeline"]["clips"][0]["params"] = {"fadeIn": 0.5, "fadeOut": 0.5}
+        props["timeline"] = RenderService._window_timeline(
+            props["timeline"], FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
+            tracks=tracks,
+        )
+        output = prepare(props)
+        url = output["timeline"]["clips"][0]["audio"]["render_source"]["file"]
+        wav = (attempt.parent / url.removeprefix("http://attempt.invalid/")).read_bytes()
+        # Host app metadata alone cannot prove which compiled original was sliced.
+        # Keep this positive requirement until the source owner carries the original
+        # through pair validation and serializer into the real producer invocation.
+>       assert struct.unpack_from("<ff", wav, 44 + 15000 * 8) == (0.25, -0.125)
+E       assert (0.0, -0.0) == (0.25, -0.125)
+E         
+E         At index 0 diff: 0.0 != 0.25
+E         Use -v to get more diff
+
+tests/packs/rendering/test_normal_audio_sources.py:252: AssertionError
+_ test_half_second_slice_pcm_equals_original_on_host_served_wav[window-sound] __
+[XPASS(strict)] Agent source owner: trusted prepared-source producer (normal_audio) must translate the recorded origin so the 0..2s clip sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5
+_ test_half_second_slice_pcm_equals_original_on_host_served_wav[window-other] __
+[XPASS(strict)] Agent source owner: trusted prepared-source producer (normal_audio) must translate the recorded origin so the 0..2s clip sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5
+__ test_half_second_slice_pcm_equals_original_on_host_served_wav[layer-sound] __
+[XPASS(strict)] Agent source owner: trusted prepared-source producer (normal_audio) must translate the recorded origin so the 0..2s clip sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5
+__ test_half_second_slice_pcm_equals_original_on_host_served_wav[layer-other] __
+[XPASS(strict)] Agent source owner: trusted prepared-source producer (normal_audio) must translate the recorded origin so the 0..2s clip sliced at .5s with fadeIn .5 keeps (.25, -.125) at source .5
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[window]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[layer]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_host_served_wav[window-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_host_served_wav[window-other]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_host_served_wav[layer-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_host_served_wav[layer-other]
+6 failed, 16 passed in 2.69s

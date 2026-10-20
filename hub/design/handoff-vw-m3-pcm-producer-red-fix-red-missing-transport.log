@@ -1,0 +1,212 @@
+.............FF...FFFF                                                   [100%]
+=================================== FAILURES ===================================
+_______ test_actual_slice_needs_original_compiled_clip_transport[window] _______
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = None
+
+    @pytest.mark.parametrize("tracks", [None, ("A1",)], ids=["window", "layer"])
+    def test_actual_slice_needs_original_compiled_clip_transport(stage, tracks):
+        """The inactive adapter retains the compiled input across the host slice."""
+        from astrid.core.rendering.contracts import FrameWindow
+    
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"][0].update(at=0, speed=1, **{"from": 0, "to": 2})
+        props["timeline"]["clips"][0]["params"] = {"fadeIn": 0.5, "fadeOut": 0.5}
+        before = copy.deepcopy(props)
+        output = prepare(
+            props, window=FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
+            tracks=tracks,
+        )
+        url = output["timeline"]["clips"][0]["audio"]["render_source"]["file"]
+        wav = (attempt.parent / url.removeprefix("http://attempt.invalid/")).read_bytes()
+>       assert struct.unpack_from("<ff", wav, 44 + 15000 * 8) == (0.25, -0.125)
+E       assert (0.0, -0.0) == (0.25, -0.125)
+E         
+E         At index 0 diff: 0.0 != 0.25
+E         Use -v to get more diff
+
+tests/packs/rendering/test_normal_audio_sources.py:248: AssertionError
+_______ test_actual_slice_needs_original_compiled_clip_transport[layer] ________
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = ('A1',)
+
+    @pytest.mark.parametrize("tracks", [None, ("A1",)], ids=["window", "layer"])
+    def test_actual_slice_needs_original_compiled_clip_transport(stage, tracks):
+        """The inactive adapter retains the compiled input across the host slice."""
+        from astrid.core.rendering.contracts import FrameWindow
+    
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"][0].update(at=0, speed=1, **{"from": 0, "to": 2})
+        props["timeline"]["clips"][0]["params"] = {"fadeIn": 0.5, "fadeOut": 0.5}
+        before = copy.deepcopy(props)
+        output = prepare(
+            props, window=FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
+            tracks=tracks,
+        )
+        url = output["timeline"]["clips"][0]["audio"]["render_source"]["file"]
+        wav = (attempt.parent / url.removeprefix("http://attempt.invalid/")).read_bytes()
+>       assert struct.unpack_from("<ff", wav, 44 + 15000 * 8) == (0.25, -0.125)
+E       assert (0.0, -0.0) == (0.25, -0.125)
+E         
+E         At index 0 diff: 0.0 != 0.25
+E         Use -v to get more diff
+
+tests/packs/rendering/test_normal_audio_sources.py:248: AssertionError
+___ test_half_second_slice_pcm_equals_original_on_attempt_wav[window-sound] ____
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = None, asset = 'sound'
+
+    @pytest.mark.parametrize("asset", ["sound", "other"])
+    @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
+    def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"] = _timeline()["clips"]
+        clip = props["timeline"]["clips"][0]
+        clip["asset"] = asset
+        clip["volume"] = 3
+        clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+        before = copy.deepcopy(props)
+        whole = prepare(props)
+        sliced = prepare(props, window=WINDOW, tracks=tracks)
+    
+        def wav(value):
+            source = value["timeline"]["clips"][0]["audio"]["render_source"]
+            path = attempt.parent / source["file"].removeprefix("http://attempt.invalid/")
+            Path(path).relative_to(attempt)
+            assert source["playback_rate"] == 1
+            return path.read_bytes()
+    
+        whole_wav, slice_wav = wav(whole), wav(sliced)
+        assert len(slice_wav) == len(whole_wav) == 44 + 30000 * 2 * 4
+        for actual, expected in zip(struct.iter_unpack("<f", slice_wav[44:]),
+                                    struct.iter_unpack("<f", whole_wav[44:]), strict=True):
+>           assert actual[0] == pytest.approx(expected[0], abs=1e-7)
+E           assert 0.0 == 1.66666668519...e-05 ± 1.0e-07
+E             
+E             comparison failed
+E             Obtained: 0.0
+E             Expected: 1.6666666851961054e-05 ± 1.0e-07
+
+tests/packs/rendering/test_normal_audio_source_phase.py:79: AssertionError
+___ test_half_second_slice_pcm_equals_original_on_attempt_wav[window-other] ____
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = None, asset = 'other'
+
+    @pytest.mark.parametrize("asset", ["sound", "other"])
+    @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
+    def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"] = _timeline()["clips"]
+        clip = props["timeline"]["clips"][0]
+        clip["asset"] = asset
+        clip["volume"] = 3
+        clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+        before = copy.deepcopy(props)
+        whole = prepare(props)
+        sliced = prepare(props, window=WINDOW, tracks=tracks)
+    
+        def wav(value):
+            source = value["timeline"]["clips"][0]["audio"]["render_source"]
+            path = attempt.parent / source["file"].removeprefix("http://attempt.invalid/")
+            Path(path).relative_to(attempt)
+            assert source["playback_rate"] == 1
+            return path.read_bytes()
+    
+        whole_wav, slice_wav = wav(whole), wav(sliced)
+        assert len(slice_wav) == len(whole_wav) == 44 + 30000 * 2 * 4
+        for actual, expected in zip(struct.iter_unpack("<f", slice_wav[44:]),
+                                    struct.iter_unpack("<f", whole_wav[44:]), strict=True):
+>           assert actual[0] == pytest.approx(expected[0], abs=1e-7)
+E           assert -0.0 == -3.3333333703...e-05 ± 1.0e-07
+E             
+E             comparison failed
+E             Obtained: -0.0
+E             Expected: -3.333333370392211e-05 ± 1.0e-07
+
+tests/packs/rendering/test_normal_audio_source_phase.py:79: AssertionError
+____ test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-sound] ____
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = ('A1', 'A2'), asset = 'sound'
+
+    @pytest.mark.parametrize("asset", ["sound", "other"])
+    @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
+    def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"] = _timeline()["clips"]
+        clip = props["timeline"]["clips"][0]
+        clip["asset"] = asset
+        clip["volume"] = 3
+        clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+        before = copy.deepcopy(props)
+        whole = prepare(props)
+        sliced = prepare(props, window=WINDOW, tracks=tracks)
+    
+        def wav(value):
+            source = value["timeline"]["clips"][0]["audio"]["render_source"]
+            path = attempt.parent / source["file"].removeprefix("http://attempt.invalid/")
+            Path(path).relative_to(attempt)
+            assert source["playback_rate"] == 1
+            return path.read_bytes()
+    
+        whole_wav, slice_wav = wav(whole), wav(sliced)
+        assert len(slice_wav) == len(whole_wav) == 44 + 30000 * 2 * 4
+        for actual, expected in zip(struct.iter_unpack("<f", slice_wav[44:]),
+                                    struct.iter_unpack("<f", whole_wav[44:]), strict=True):
+>           assert actual[0] == pytest.approx(expected[0], abs=1e-7)
+E           assert 0.0 == 1.66666668519...e-05 ± 1.0e-07
+E             
+E             comparison failed
+E             Obtained: 0.0
+E             Expected: 1.6666666851961054e-05 ± 1.0e-07
+
+tests/packs/rendering/test_normal_audio_source_phase.py:79: AssertionError
+____ test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-other] ____
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = ('A1', 'A2'), asset = 'other'
+
+    @pytest.mark.parametrize("asset", ["sound", "other"])
+    @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
+    def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"] = _timeline()["clips"]
+        clip = props["timeline"]["clips"][0]
+        clip["asset"] = asset
+        clip["volume"] = 3
+        clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+        before = copy.deepcopy(props)
+        whole = prepare(props)
+        sliced = prepare(props, window=WINDOW, tracks=tracks)
+    
+        def wav(value):
+            source = value["timeline"]["clips"][0]["audio"]["render_source"]
+            path = attempt.parent / source["file"].removeprefix("http://attempt.invalid/")
+            Path(path).relative_to(attempt)
+            assert source["playback_rate"] == 1
+            return path.read_bytes()
+    
+        whole_wav, slice_wav = wav(whole), wav(sliced)
+        assert len(slice_wav) == len(whole_wav) == 44 + 30000 * 2 * 4
+        for actual, expected in zip(struct.iter_unpack("<f", slice_wav[44:]),
+                                    struct.iter_unpack("<f", whole_wav[44:]), strict=True):
+>           assert actual[0] == pytest.approx(expected[0], abs=1e-7)
+E           assert -0.0 == -3.3333333703...e-05 ± 1.0e-07
+E             
+E             comparison failed
+E             Obtained: -0.0
+E             Expected: -3.333333370392211e-05 ± 1.0e-07
+
+tests/packs/rendering/test_normal_audio_source_phase.py:79: AssertionError
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[window]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[layer]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[window-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[window-other]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-other]
+6 failed, 16 passed in 4.05s

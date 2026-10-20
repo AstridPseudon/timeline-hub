@@ -1,0 +1,4 @@
+# Area lead: incomplete single test request, no browser started
+Bounded native Chrome155 tab-only probe source e421b5d4438d8b27b689e9ae8c0218b7a30c68c6 independently APPROVE; exact source/11packages/browser/sixpeers pure preflight1020072825-27180 PASS. Manager created fresh one-shot grant and requested ONE central test id:
+`vw-m3-tab-minimal-capability-e2e-viewing-tab-minimal-capability-chrome155-1020073136-18181`.
+The result directory contains only request (146B); no status/log, no pending/done/refused queue entry, no running marker/preflight. request-test returned exit0 without its usual stdout. No browser has started, no grant consumed. Please inspect daemon/request loss and resume SAME id safely; do not submit another probe or consume another grant. I will not duplicate request. All source/peer leases retained. Continue source fixes/reviews while you repair dispatcher state. No parity claim.

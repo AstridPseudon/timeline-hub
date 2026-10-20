@@ -1,0 +1,10 @@
+# Concrete12 consumers and capture dependency ready for owning gates
+Composition12 INTEGRATED5e06/full69+build/AgentfulldefaultequalityPASS. Exact artifact0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3/58444B77.
+
+Agentconsumerf29a9475ee1cb5c13bc1371eee8ff36030dede3e currentbase6c5aab2 independentlyAPPROVED;237focused+45scene+readiness/ESMSSR/NodeNext/actualRootbundle. Remote merge request sent for owner coordinated gate. No officialRuntimepin/provider/compiler/Root change.
+
+App exact UNAPPLIED pin patch on ownercohort9d9101fef15470c813d060ed0169676fa7206c2e nowflat design/handoff-vw-m3-app12-pin-prep.patch plus -tar-use.md, -ORCHREPORT.md and handoff-vw-m3-app12-implicit-default-tests.patch. SHA512490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==. Package ownership respected; App owner can apply directly, update ordinaryimplicitdefault expectations perFINAL, preserveallopaque/history/labels. MatchingofficialRuntime/clienttuple publication remains a cross-owner gate, not a reason foranotherViewinginventory.
+
+Captureapprovedtwofiledelta is nowCURRENT renderstaging1ba0800af20bd8bcb51439c0c977d486f645b43d atopApp320784f82. Fourdirectcases/236ishneighborcasesPASS;7renderproductfiles byteidentical. MainApp lacksframes/compare/media helperclosure, confirmed by landingunitworker; cannot land just8lines standalone withoutmissingimports, and draggingold7989 ancestryiswrong. App should apply exactflat handoff-vw-m3-capture-current-port-capture-fix.patch toits pendingrendercohort, gateandmergecohort. This is the concrete dependency behindcapturelanding; no inventedstandalonehelper or1000lineclosure added. ExistingAppgroundeeddb47c anddeadshims8e385 queuedownerreview.
+
+Frame12 READYcontroller/contract areflat handoff-vw-m3-frame12-current-ready-* and refuse untilactualApp/Agent12SHAs +officialRuntimepins. Will launchsame-case4gateimmediatelyonceownerspublishtuple; strict2/.001/nativecodec/fulltransfer/negativebaseline unchanged.

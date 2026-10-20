@@ -1,0 +1,208 @@
+.............FF...FFFF                                                   [100%]
+=================================== FAILURES ===================================
+_______ test_actual_slice_needs_original_compiled_clip_transport[window] _______
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = None
+
+    @pytest.mark.parametrize("tracks", [None, ("A1",)], ids=["window", "layer"])
+    def test_actual_slice_needs_original_compiled_clip_transport(stage, tracks):
+        """The inactive adapter retains the compiled input across the host slice."""
+        from astrid.core.rendering.contracts import FrameWindow
+    
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"][0].update(at=0, speed=1, **{"from": 0, "to": 2})
+        props["timeline"]["clips"][0]["params"] = {"fadeIn": 0.5, "fadeOut": 0.5}
+        before = copy.deepcopy(props)
+>       output = prepare(
+            props, window=FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
+            tracks=tracks,
+        )
+
+tests/packs/rendering/test_normal_audio_sources.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file':..., 'speed': 2}}, 'asset': 'sound', 'at': 0, 'from': 0, ...}], 'tracks': [{'id': 'A1', 'kind': 'audio', 'volume': 0.5}]}}
+kwargs = {'tracks': None, 'window': FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1), source_range=None, speed=None)}
+
+    def prepare(value, **kwargs):
+>       return prepare_normal_audio_sources(
+            value, materializer=materializer, asset_server=urls, attempt_directory=attempt,
+            project_dir=project, runtime_tools=tools, **kwargs,
+        )
+E       TypeError: prepare_normal_audio_sources() got an unexpected keyword argument 'window'
+
+tests/packs/rendering/test_normal_audio_sources.py:77: TypeError
+_______ test_actual_slice_needs_original_compiled_clip_transport[layer] ________
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = ('A1',)
+
+    @pytest.mark.parametrize("tracks", [None, ("A1",)], ids=["window", "layer"])
+    def test_actual_slice_needs_original_compiled_clip_transport(stage, tracks):
+        """The inactive adapter retains the compiled input across the host slice."""
+        from astrid.core.rendering.contracts import FrameWindow
+    
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"][0].update(at=0, speed=1, **{"from": 0, "to": 2})
+        props["timeline"]["clips"][0]["params"] = {"fadeIn": 0.5, "fadeOut": 0.5}
+        before = copy.deepcopy(props)
+>       output = prepare(
+            props, window=FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1)),
+            tracks=tracks,
+        )
+
+tests/packs/rendering/test_normal_audio_sources.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file':..., 'speed': 2}}, 'asset': 'sound', 'at': 0, 'from': 0, ...}], 'tracks': [{'id': 'A1', 'kind': 'audio', 'volume': 0.5}]}}
+kwargs = {'tracks': ('A1',), 'window': FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1), source_range=None, speed=None)}
+
+    def prepare(value, **kwargs):
+>       return prepare_normal_audio_sources(
+            value, materializer=materializer, asset_server=urls, attempt_directory=attempt,
+            project_dir=project, runtime_tools=tools, **kwargs,
+        )
+E       TypeError: prepare_normal_audio_sources() got an unexpected keyword argument 'window'
+
+tests/packs/rendering/test_normal_audio_sources.py:77: TypeError
+___ test_half_second_slice_pcm_equals_original_on_attempt_wav[window-sound] ____
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = None, asset = 'sound'
+
+    @pytest.mark.parametrize("asset", ["sound", "other"])
+    @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
+    def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"] = _timeline()["clips"]
+        clip = props["timeline"]["clips"][0]
+        clip["asset"] = asset
+        clip["volume"] = 3
+        clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+        before = copy.deepcopy(props)
+        whole = prepare(props)
+>       sliced = prepare(props, window=WINDOW, tracks=tracks)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/rendering/test_normal_audio_source_phase.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file':...', 'to': 100}}, 'asset': 'sound', 'at': 0, 'from': 0, ...}], 'tracks': [{'id': 'A1', 'kind': 'audio', 'volume': 0.5}]}}
+kwargs = {'tracks': None, 'window': FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1), source_range=None, speed=None)}
+
+    def prepare(value, **kwargs):
+>       return prepare_normal_audio_sources(
+            value, materializer=materializer, asset_server=urls, attempt_directory=attempt,
+            project_dir=project, runtime_tools=tools, **kwargs,
+        )
+E       TypeError: prepare_normal_audio_sources() got an unexpected keyword argument 'window'
+
+tests/packs/rendering/test_normal_audio_sources.py:77: TypeError
+___ test_half_second_slice_pcm_equals_original_on_attempt_wav[window-other] ____
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = None, asset = 'other'
+
+    @pytest.mark.parametrize("asset", ["sound", "other"])
+    @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
+    def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"] = _timeline()["clips"]
+        clip = props["timeline"]["clips"][0]
+        clip["asset"] = asset
+        clip["volume"] = 3
+        clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+        before = copy.deepcopy(props)
+        whole = prepare(props)
+>       sliced = prepare(props, window=WINDOW, tracks=tracks)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/rendering/test_normal_audio_source_phase.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file':...', 'to': 100}}, 'asset': 'other', 'at': 0, 'from': 0, ...}], 'tracks': [{'id': 'A1', 'kind': 'audio', 'volume': 0.5}]}}
+kwargs = {'tracks': None, 'window': FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1), source_range=None, speed=None)}
+
+    def prepare(value, **kwargs):
+>       return prepare_normal_audio_sources(
+            value, materializer=materializer, asset_server=urls, attempt_directory=attempt,
+            project_dir=project, runtime_tools=tools, **kwargs,
+        )
+E       TypeError: prepare_normal_audio_sources() got an unexpected keyword argument 'window'
+
+tests/packs/rendering/test_normal_audio_sources.py:77: TypeError
+____ test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-sound] ____
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = ('A1', 'A2'), asset = 'sound'
+
+    @pytest.mark.parametrize("asset", ["sound", "other"])
+    @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
+    def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"] = _timeline()["clips"]
+        clip = props["timeline"]["clips"][0]
+        clip["asset"] = asset
+        clip["volume"] = 3
+        clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+        before = copy.deepcopy(props)
+        whole = prepare(props)
+>       sliced = prepare(props, window=WINDOW, tracks=tracks)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/rendering/test_normal_audio_source_phase.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file':...', 'to': 100}}, 'asset': 'sound', 'at': 0, 'from': 0, ...}], 'tracks': [{'id': 'A1', 'kind': 'audio', 'volume': 0.5}]}}
+kwargs = {'tracks': ('A1', 'A2'), 'window': FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1), source_range=None, speed=None)}
+
+    def prepare(value, **kwargs):
+>       return prepare_normal_audio_sources(
+            value, materializer=materializer, asset_server=urls, attempt_directory=attempt,
+            project_dir=project, runtime_tools=tools, **kwargs,
+        )
+E       TypeError: prepare_normal_audio_sources() got an unexpected keyword argument 'window'
+
+tests/packs/rendering/test_normal_audio_sources.py:77: TypeError
+____ test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-other] ____
+
+stage = ({'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file'...\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0\x00 \x00\xf0')
+tracks = ('A1', 'A2'), asset = 'other'
+
+    @pytest.mark.parametrize("asset", ["sound", "other"])
+    @pytest.mark.parametrize("tracks", [None, ("A1", "A2")], ids=["window", "layer"])
+    def test_half_second_slice_pcm_equals_original_on_attempt_wav(stage, tracks, asset):
+        props, prepare, attempt, _, _ = stage
+        props["timeline"]["clips"] = _timeline()["clips"]
+        clip = props["timeline"]["clips"][0]
+        clip["asset"] = asset
+        clip["volume"] = 3
+        clip["app"] = {"astrid_slice_origin": {"id": "forged", "from": 99, "to": 100}}
+        before = copy.deepcopy(props)
+        whole = prepare(props)
+>       sliced = prepare(props, window=WINDOW, tracks=tracks)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/rendering/test_normal_audio_source_phase.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'assets': {'assets': {'other': {'digest': '9564ebfd141b13b64e762ee5e2c355dca80c72c017a22fd1ca0658ae4dc265a1', 'file':...', 'to': 100}}, 'asset': 'other', 'at': 0, 'from': 0, ...}], 'tracks': [{'id': 'A1', 'kind': 'audio', 'volume': 0.5}]}}
+kwargs = {'tracks': ('A1', 'A2'), 'window': FrameWindow(start_frame=15, end_frame=45, fps_rational=(30, 1), source_range=None, speed=None)}
+
+    def prepare(value, **kwargs):
+>       return prepare_normal_audio_sources(
+            value, materializer=materializer, asset_server=urls, attempt_directory=attempt,
+            project_dir=project, runtime_tools=tools, **kwargs,
+        )
+E       TypeError: prepare_normal_audio_sources() got an unexpected keyword argument 'window'
+
+tests/packs/rendering/test_normal_audio_sources.py:77: TypeError
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[window]
+FAILED tests/packs/rendering/test_normal_audio_sources.py::test_actual_slice_needs_original_compiled_clip_transport[layer]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[window-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[window-other]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-sound]
+FAILED tests/packs/rendering/test_normal_audio_source_phase.py::test_half_second_slice_pcm_equals_original_on_attempt_wav[layer-other]
+6 failed, 16 passed in 3.22s

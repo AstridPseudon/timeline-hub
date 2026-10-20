@@ -1,0 +1,19 @@
+--- d2ad+long+gapless
++++ current
+@@ -6,14 +6,14 @@
+ } from '@banodoco/timeline-composition/evaluation';
+ 
+ // Inactive preparation kernel. The caller supplies the compiled clip's public
+-// source clock, using compiledAudioSourceClock from package 11's trim/rate helpers.
++// source clock, using compiledAudioSourceClock from the public trim/rate helpers.
+ // Never pass a previously prepared source or persist these results as authored data.
+ export const prepareAttemptEnvelopePcm = ({
+   clip, fps, source, attemptDirectory, sourceClock,
+ }) => {
++  if (clip.audio?.render_source !== undefined) throw new Error('source already prepared');
+   const envelope = compileAudioEnvelope(clip, fps);
+   if (!envelope) return undefined;
+-  if (clip.audio?.render_source !== undefined) throw new Error('source already prepared');
+   if (!sourceClock || !Number.isFinite(sourceClock.source_from)
+     || sourceClock.source_from < 0 || !Number.isFinite(sourceClock.playback_rate)
+     || sourceClock.playback_rate <= 0) throw new Error('public source clock required');
