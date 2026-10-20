@@ -81,3 +81,79 @@ def test_provider_unchanged_publication_and_aba_refuse_old_inverse(ref, field, a
         realm.call([inverse([first['receipt']['receipt_id']])])
     assert error.value.failure['details']['reason'] == 'intervening_write'
     assert snapshot == (realm.head, realm.entries, realm.documents)
+
+
+@pytest.mark.parametrize('ref,on', [(PARENT, 16), (CHILD, 4)])
+@pytest.mark.parametrize('separate', [False, True])
+def test_move_then_hold_accepts_original_capture_and_generic_inverse_stages(ref, on, separate):
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+    from astrid.sdk.timeline.capture import capture_move
+    from astrid.sdk.timeline.commands import execute
+
+    realm = DetachedRealm(app_document())
+    original = copy.deepcopy(realm.documents[realm.head['revision_id']])
+    move = capture_move(current(realm), ref, on)
+    local = execute(current(realm), [move]).bundle
+    edit = capture_clip_set(local, ref, values={'hold': 4})
+    sealed = copy.deepcopy(edit)
+    sibling = copy.deepcopy(clip(current(realm), 'occurrence:shared-sibling/clip:f2-agent-clip'))
+    if separate:
+        moved = realm.call([move])
+        baseline = copy.deepcopy(moved['data']['canonical_document'])
+        base = copy.deepcopy(realm.head)
+        realm.call([capture_clip_set_params(current(realm), ref, values={'opaqueSibling': [None, False]})])
+        before = copy.deepcopy(realm.documents[realm.head['revision_id']])
+        accepted = realm.call([edit], base=base)
+        assert accepted['data']['status'] == 'rebased'
+        assert accepted['data']['commands'] == [sealed]
+        snapshot = copy.deepcopy((realm.head, realm.entries, realm.documents))
+        with pytest.raises(CommitRejected):
+            realm.call([inverse([moved['receipt']['receipt_id']])])
+        assert snapshot == (realm.head, realm.entries, realm.documents)
+    else:
+        before = original
+        accepted = realm.call([move, edit])
+        assert accepted['data']['commands'] == [move, sealed]
+    assert clip(current(realm), ref)['hold'] == 4
+    assert clip(current(realm), ref)['at'] == on
+    assert clip(current(realm), ref)['app']['astrid'] == {'fixed_start': True, 'for': 4}
+    assert clip(current(realm), 'occurrence:shared-sibling/clip:f2-agent-clip') == sibling
+    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == before
+    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+    if separate:
+        assert before != baseline  # The disjoint parameter survives guarded undo/redo.
+
+
+@pytest.mark.parametrize('aba', [False, True])
+def test_hold_after_move_records_unchanged_for_and_refuses_publication_aba(aba):
+    from astrid.sdk.timeline.capture import capture_move
+
+    realm = DetachedRealm(app_document())
+    realm.call([capture_move(current(realm), CHILD, 4)])
+    first = realm.call([capture_clip_set(current(realm), CHILD, values={'hold': 3})])
+    assert any(w['path'] == ['app', 'astrid', 'for'] and w['before'] == w['after']
+               for w in realm.entries[-1]['records']['commands'][0]['writes'])
+    if aba:
+        realm.call([capture_clip_set(current(realm), CHILD, values={'hold': 4})])
+    realm.call([capture_clip_set(current(realm), CHILD, values={'hold': 3})])
+    snapshot = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([first['receipt']['receipt_id']])])
+    assert error.value.failure['details']['reason'] == 'intervening_write'
+    assert snapshot == (realm.head, realm.entries, realm.documents)
+
+
+@pytest.mark.parametrize('ref,on', [(PARENT, 16), (CHILD, 4)])
+def test_hold_captured_after_move_refuses_changed_basis_without_recapture(ref, on):
+    from astrid.sdk.timeline.capture import capture_move
+
+    realm = DetachedRealm(app_document())
+    realm.call([capture_move(current(realm), ref, on)])
+    sealed = capture_clip_set(current(realm), ref, values={'hold': 4})
+    realm.call([capture_clip_set(current(realm), ref, values={'hold': 5})])
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected):
+        realm.call([sealed])
+    assert before == (realm.head, realm.entries, realm.documents)

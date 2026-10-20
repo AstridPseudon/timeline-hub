@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import math
 
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
@@ -18,11 +19,20 @@ def _hold_extent(ctx, ref, values, clear):
     for key in ('time_map', 'timeMap', 'clips', 'children', 'from_ms', 'to_ms'):
         if row.get(key) is not None:
             raise CommandError(f'clip.set does not support {key}', kind='unsupported_timing', ref=ref)
+    duration_paths = []
     for prefix in ([], ['app'], ['app', 'astrid']):
         for key in RELATIONS:
             value = ctx.read(ref, prefix + [key])
-            if value is not None and key != 'fixed_start':
-                raise CommandError(f'clip.set hold does not support {key}', kind='unsupported_timing', ref=ref)
+            if value is None or (key == 'fixed_start' and isinstance(value, bool)):
+                continue
+            if key == 'for':
+                # Preserve independent intent; only an agreeing static extent
+                # follows this explicit source-hold edit.
+                if not math.isclose(number(value, 'for', positive=True), _duration(row), abs_tol=1e-9):
+                    raise CommandError('clip.set hold conflicts with static for', kind='unsupported_timing', ref=ref)
+                duration_paths.append(prefix + [key])
+                continue
+            raise CommandError(f'clip.set hold does not support {key}', kind='unsupported_timing', ref=ref)
     if 'hold' in values:
         number(values['hold'], 'hold', positive=True)
         row['hold'] = values['hold']
@@ -39,7 +49,7 @@ def _hold_extent(ctx, ref, values, clear):
         'numerator': fps.numerator, 'denominator': fps.denominator,
         'rounding': 'half-toward-positive-infinity'})
     if owner == 'parent':
-        return
+        return duration_paths, duration
     child_fps = ctx.read(owner + '/source', ['output', 'fps'])
     if child_fps is not None and rate(child_fps) != fps:
         raise CommandError('parent and child fps differ', kind='unsupported_timing')
@@ -68,6 +78,7 @@ def _hold_extent(ctx, ref, values, clear):
     boundary = clip_start_frame({'at': limit - origin, 'hold': 1}, float(fps))
     if row['at'] < 0 or row['at'] + duration > limit - origin + 1e-9 or end > boundary:
         raise CommandError('clip.set interval crosses occurrence boundary', kind='occurrence_boundary', ref=owner)
+    return duration_paths, duration
 
 
 def clip_set(ctx, command):
@@ -83,7 +94,9 @@ def clip_set(ctx, command):
     if isinstance(asset, str):
         ctx.read(ref.rsplit('/', 1)[0] + '/registry', ['assets', asset, 'content_sha256'])
     if 'hold' in values or 'hold' in clear:
-        _hold_extent(ctx, ref, values, clear)
+        duration_paths, duration = _hold_extent(ctx, ref, values, clear)
+        for path in duration_paths:
+            ctx.write(ref, path, duration)
     for key in sorted(values):
         ctx.write(ref, [key], values[key])
     for key in sorted(clear):
