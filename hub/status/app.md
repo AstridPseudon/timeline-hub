@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T10:00:20Z | dispatcher heartbeat 8s -->
+<!-- app | 2026-10-20T10:05:40Z | dispatcher heartbeat 6s -->
 # app — 2026-10-20 09:59 UTC
 Milestone: M0/M1 RECORDED (PLAN03:55). M2 IN PROGRESS; no M2/M3 exit. TOP NOW owner09:36 refresh-main44f0b9ca9 onto integration, then writer/automatic placement. Seven workers running/requested (three Luna/four Sol); check exact worker table. Manager no product code/git mutations.
 Integrated: App tl/integration18becfbede00038830b97e63345445eeef54fa42/tree44d514b44c864ff9dbb3b99aba2b0a41891af83f CLEAN; Composition8/client021. SDK example e5c, raw-shot/settings safety75df, ACP fixture763, automatic4legacy positives18bec newly merged. D03purge4e7c(-20191), unusedquery5912(-81), rootf845/popupcc4/historyb806/deadshims564a/canvasf345/assetDrop2d80/transition1be retained.
