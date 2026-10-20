@@ -7,4 +7,5 @@ WORK LIST NOW (report each as done / blocked):
 2. Answer App's note design/peer-app-to-viewing-20261020T2024Z-pending-merge-requests.md: for each of the 10 vw requests, either SUPERSEDED-by <sha>, or merge forward and re-request.
 3. Once the D09 seams are green (Agent SDK caller + your executor/query): dispatch the D09 private deletion the same round (deletion sweeper).
 4. Keep at least 2 workers on ledger rows. Tell me the row ids.
+7. (21:02Z) PARALLEL GATE TRACK: keep one Luna worker on Gate 6 (viewer half; this is your item 1) at all times, in parallel with deletions; it counts toward 5-7. Report its status in your lead line.
 DONE WHEN: gate 6 is green with the planted negative caught, D08/D09/D10/AUDIO are DELETED, and M3 exit evidence is in STATUS.

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T20:58:30Z | dispatcher heartbeat 11s | live 5 (sol 0, luna 5, other 0) | busy30 19 | status age 13m -->
+<!-- main | 2026-10-20T21:02:47Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 17m -->
 # agent — 2026-10-20 20:45:03 UTC
 Milestone: M1 recorded. M2 active; gates 1, 6 and 7 open. No foundation or delivery completion.
 Integrated: Agent4095a349. AG-RECOVER cut is merged after190 focused tests, original retry/refusal controls and1 real HTTP7.12s plus independent approval; original WorkspaceClientError/flight identity kept. D10 nine source wrappers/resources deleted f711cbd2 after corrected local-owner generator and24 tests/independent approval. Adapter fixture fix094e239a passed all51 previously failed nodes. Owned parent move53af5383 (199unit/3HTTP/review) and parent HOLD21413934 (26SDK/14HTTP) are merged partial WC7 migration. Earlier accounted short-temp d0a, canonical images f82, source restoration78ff, kernel/Main, cache490 defaultOFF and dead inspector a760 preserved. Public Runtime2c4/client0.2.13 and Composition0.0.13 unchanged.
