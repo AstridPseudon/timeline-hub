@@ -6,6 +6,7 @@ import {
   captureClipSplit,
   executeClipSplit,
   finishClipSplit,
+  parentClipSplitRows,
 } from './clipSplitCapture.ts';
 import { AuthoredState, ClipMoveError, freezeJson } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
@@ -43,6 +44,39 @@ function canonicalParent(value: CanonicalDocument): Record<string, JsonValue> {
 }
 
 describe('native parent clip.split capture parity', () => {
+  it.each<[string, (parent: AuthoredBundle['parent']) => void, boolean]>([
+    ['matching mirrors', () => {}, true],
+    ['divergent neighbor', (parent) => { ((parent.config as AuthoredBundle['parent']).clips as AuthoredBundle['parent'][])[1].at = 99; }, false],
+    ['empty payload mirror', (parent) => { parent.clips = []; }, false],
+    ['empty config mirror', (parent) => { (parent.config as AuthoredBundle['parent']).clips = []; }, false],
+    ['absent payload clips', (parent) => { delete parent.clips; }, true],
+    ['null payload clips', (parent) => { parent.clips = null; }, true],
+    ['scalar payload clips', (parent) => { parent.clips = 'opaque'; }, true],
+    ['absent config clips', (parent) => { delete (parent.config as AuthoredBundle['parent']).clips; }, true],
+    ['null config clips', (parent) => { (parent.config as AuthoredBundle['parent']).clips = null; }, true],
+    ['scalar config clips', (parent) => { (parent.config as AuthoredBundle['parent']).clips = 'opaque'; }, true],
+    ['absent config owner', (parent) => { delete parent.config; }, true],
+    ['null config owner', (parent) => { parent.config = null; }, false],
+    ['array config owner', (parent) => { parent.config = []; }, false],
+    ['scalar config owner', (parent) => { parent.config = 'opaque'; }, false],
+    ['absent collections', (parent) => { delete parent.clips; parent.config = {}; }, false],
+    ['invalid collection row', (parent) => { parent.clips = [null]; parent.config = {}; }, false],
+    ['ambiguous collection identity', (parent) => { parent.clips = [{ id: 'clip-a' }, { id: 'clip-a' }]; parent.config = {}; }, false],
+  ])('shares read-only collection validation with capture for %s', async (_name, change, eligible) => {
+    const input = await bundle();
+    change(input.parent);
+    const before = detached(input);
+    freezeJson(input);
+    if (eligible) {
+      expect(parentClipSplitRows(input.parent).map((row) => row.id)).toEqual(['clip-a', 'clip-b']);
+      expect(captureClipSplit(input, select, args).command.op).toBe('clip.split');
+    } else {
+      expect(() => parentClipSplitRows(input.parent)).toThrow(ClipMoveError);
+      expect(() => captureClipSplit(input, select, args)).toThrow(ClipMoveError);
+    }
+    expect(input).toEqual(before);
+  });
+
   it('matches the frozen source command, complete recorder, and authored output exactly', async () => {
     const input = await bundle();
     const result = executeClipSplit(input, detached(golden.commands[0]));

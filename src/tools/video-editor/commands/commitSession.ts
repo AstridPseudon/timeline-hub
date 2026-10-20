@@ -8,7 +8,7 @@ import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMove
 import type { JsonObject } from './types.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
 import { AuthoredState, assertFiniteJson, copy, equal, freezeJson } from './clipMovePrimitives.ts';
-import { captureClipSplit, executeClipSplit, finishClipSplit } from './clipSplitCapture.ts';
+import { captureClipSplit, executeClipSplit, finishClipSplit, parentClipSplitRows } from './clipSplitCapture.ts';
 import { supportsParentClipSplit, clipSplitPreview, type ClipSplitCapturePort } from './clipSplitGesture.ts';
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
@@ -325,10 +325,9 @@ export async function createTimelineCommandSession(options: Options) {
     supports({ clipId, current }) {
       // Use the session's raw closure, never opaque app metadata or display-ID parsing.
       const state = new AuthoredState(bundle);
-      const config = state.config('parent');
-      const rows = Array.isArray(bundle.parent.clips) && bundle.parent.clips.length
-        ? bundle.parent.clips : config.clips ?? bundle.parent.clips;
-      return Array.isArray(rows) && supportsParentClipSplit(rows as JsonObject[],
+      let rows: ReturnType<typeof parentClipSplitRows>;
+      try { rows = parentClipSplitRows(bundle.parent); } catch { return false; }
+      return supportsParentClipSplit(rows,
         state.entity('parent/registry') as JsonObject, clipId)
         && current.config.clips.filter((clip) => clip.id === clipId).length === 1
         && current.resolvedConfig.clips.filter((clip) => clip.id === clipId).length === 1

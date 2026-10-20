@@ -215,6 +215,36 @@ describe('production single-parent split ingress', () => {
     env.hook.unmount();
   });
 
+  it.each(['selected', 'context menu', 'keyboard', 'SDK'] as const)('keeps a positive %s split on the existing writer when a non-target mirror diverges', async (ingress) => {
+    const env = await mounted(undefined, (document) => {
+      const config = document.parent_revision.payload.config as Record<string, unknown>;
+      (config.clips as Array<Record<string, unknown>>)[1].at = 99;
+    });
+    const port = env.hook.result.current.commands.clipSplitPort!;
+    const capture = vi.spyOn(port, 'capture');
+    const current = env.hook.result.current.commit.data!;
+    expect(port.supports!({ clipId: 'clip-a', current })).toBe(false);
+    act(() => {
+      const editing = env.hook.result.current.editing;
+      if (ingress === 'selected') editing.handleSplitSelectedClip();
+      else if (ingress === 'context menu') editing.handleSplitClipAtTime('clip-a', 3);
+      else if (ingress === 'keyboard') editing.handleSplitClipsAtPlayhead(['clip-a']);
+      else {
+        const state = env.store.getState();
+        state.syncSlices({ data: { ...state.data, dataRef: env.hook.result.current.commit.dataRef },
+          ops: { ...state.ops, clipSplit: port, applyEdit: env.applyEdit, selectClip: env.selectClip } });
+        expect(createTimelineCommands(env.store).splitClip({ clipId: 'clip-a', time: 3 }).ok).toBe(true);
+      }
+    });
+    expect(env.applyEdit).toHaveBeenCalledOnce();
+    const clips = env.applyEdit.mock.calls[0][0].resolvedConfig.clips;
+    expect(clips).toHaveLength(3);
+    expect(clips[2]).toEqual(current.resolvedConfig.clips[1]);
+    expect(capture).not.toHaveBeenCalled();
+    expect(env.provider.commitTimeline).not.toHaveBeenCalled();
+    env.hook.unmount();
+  });
+
   it.each(['unsupported', 'multi', 'group'] as const)('preserves the existing %s path with the real native port available', async (kind) => {
     const env = await mounted();
     const current = env.hook.result.current.commit.data!;

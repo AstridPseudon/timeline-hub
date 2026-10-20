@@ -107,6 +107,32 @@ async function harness(options: { lost?: boolean; reject?: boolean } = {}) {
 }
 
 describe('native clip.split through the durable command session', () => {
+  it.each(['matching', 'divergent neighbor', 'empty payload', 'empty config', 'absent payload', 'absent config clips'] as const)(
+    'uses native collection validation before capture for %s', async (kind) => {
+      const env = await harness();
+      const document = structuredClone(env.initial.canonicalDocument);
+      const parent = document.parent_revision.payload;
+      const config = parent.config as AuthoredBundle['parent'];
+      if (kind === 'divergent neighbor') (config.clips as AuthoredBundle['parent'][])[1].at = 99;
+      if (kind === 'empty payload') parent.clips = [];
+      if (kind === 'empty config') config.clips = [];
+      if (kind === 'absent payload') delete parent.clips;
+      if (kind === 'absent config clips') delete config.clips;
+      const before = structuredClone(document);
+      const session = await env.mount({ ...env.initial, canonicalDocument: document });
+      const current = env.current();
+      const eligible = ['matching', 'absent payload', 'absent config clips'].includes(kind);
+      expect(session.clipSplitPort.supports!({ clipId: 'clip-a', current })).toBe(eligible);
+      const capture = () => session.clipSplitPort.capture({ clipId: 'clip-a', on: 3, rightId: 'right', current });
+      if (eligible) expect(capture().command).toMatchObject({ op: 'clip.split' });
+      else expect(capture).toThrow('divergent parent clip mirrors');
+      expect(document).toEqual(before);
+      expect(env.previews).toEqual([]);
+      expect(env.requests).toEqual([]);
+      expect((await env.outboxes.list(scope))[0].intents).toEqual([]);
+      await session.dispose();
+    });
+
   it('uses one prepared command, keeps the raw preview, and retries the exact lost request', async () => {
     const env = await harness({ lost: true });
     const session = await env.mount();
