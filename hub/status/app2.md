@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T20:37:35Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 22 | status age 2m -->
+<!-- app2 | 2026-10-20T20:43:16Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 20 | status age 7m -->
 # app2 — 2026-10-20 20:32 UTC
 Milestone: M2; no app2 row DELETED, no exit claim.
 Integrated: App HOME parent shared session epoch packet f7e4f762f MERGED971e62e1b (independent129+5). Original App20ea contains ordinary059, Provider forwards8cf, overlay plus retained donor assertions, recovery9b14 and mediafacade0096. Current pending inert project-data5cada9f0c is HOME owner review.
