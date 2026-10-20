@@ -14,6 +14,12 @@ import {
   type OrdinaryScalarValues,
 } from './ordinaryScalarMember.ts';
 import {
+  captureOrdinaryTrimMember,
+  executeOrdinaryTrimMember,
+  finishOrdinaryTrimMember,
+  type OrdinaryTrimOperation,
+} from './ordinaryTrimMember.ts';
+import {
   captureOrdinaryStructuralBatch,
   executeOrdinaryStructuralBatch,
 } from './ordinaryStructuralMember.ts';
@@ -80,11 +86,32 @@ function scalarPatchPayload(operation: TimelinePatchOperation): boolean {
   return scalarPatchArgs(operation) !== undefined;
 }
 
+function trimPayloadShape(operation: TimelinePatchOperation): boolean {
+  if ((operation.op as string) !== 'clip.trim' || !object(operation.payload)) return false;
+  return Object.keys(operation.payload).every((key) => key === 'in_s' || key === 'out_s');
+}
+
+function ordinaryTrimOperation(operation: TimelinePatchOperation): OrdinaryTrimOperation | undefined {
+  if (!trimPayloadShape(operation) || typeof operation.target !== 'string'
+    || !operation.target || operation.target.includes('/')) return undefined;
+  const payload = operation.payload!;
+  if (Object.keys(payload).some((key) => {
+    const value = payload[key];
+    return value !== null && (typeof value !== 'number' || !Number.isFinite(value));
+  })) return undefined;
+  return {
+    op: 'clip.trim',
+    target: operation.target,
+    payload: payload as OrdinaryTrimOperation['payload'],
+  };
+}
+
 function qualified(operation: TimelinePatchOperation): boolean {
   return (operation.op === 'clip.move' && object(operation.payload)
       && equal(Object.keys(operation.payload), ['at']))
     || (operation.op === 'clip.update' && object(operation.payload)
-      && (has(operation.payload, 'values') || has(operation.payload, 'clear')));
+      && (has(operation.payload, 'values') || has(operation.payload, 'clear')))
+    || trimPayloadShape(operation);
 }
 
 function structural(operation: TimelinePatchOperation): boolean {
@@ -117,6 +144,7 @@ function supported(operation: TimelinePatchOperation): boolean {
   if (operation.op === 'clip.update' && equal(Object.keys(payload), ['hold'])) {
     return typeof payload.hold === 'number' && Number.isFinite(payload.hold) && payload.hold > 0;
   }
+  if ((operation.op as string) === 'clip.trim') return ordinaryTrimOperation(operation) !== undefined;
   return operation.op === 'clip.update' && scalarPatchPayload(operation);
 }
 
@@ -131,6 +159,12 @@ export function classifyGenericPatch(patch: TimelinePatch): GenericPatchSupport 
     return supportedCount ? 'mixed' : 'unsupported';
   }
   return supportedCount === patch.operations.length ? 'supported' : 'mixed';
+}
+
+function ordinaryTrimPreview(operation: TimelinePatchOperation): boolean {
+  return operation.op === 'clip.update' && object(operation.payload)
+    && equal(Object.keys(operation.payload).sort(), ['from', 'hold', 'to'])
+    && Object.values(operation.payload).every((value) => typeof value === 'number' && Number.isFinite(value));
 }
 
 function commandArgs(command: EditCommand): TrackLabelArgs {
@@ -458,6 +492,8 @@ export function executeGenericPatch(bundle: AuthoredBundle, commands: readonly E
       ? executeTrackSet(after, command, ordinal)
       : command.op === 'clip.move'
         ? executeOrdinaryMoveMember(after, command, ordinal)
+      : command.op === 'clip.trim'
+        ? executeOrdinaryTrimMember(after, command, ordinal)
       : command.op === 'clip.set'
         ? object(command.args) && Array.isArray(command.args.clear) && command.args.clear.length
           ? executeOrdinaryScalarMember(after, command, ordinal)
@@ -530,6 +566,24 @@ export function captureGenericPatch(
         const move = finishOrdinaryMoveMember(basis, commands.length);
         result = move;
         previewOperations.push({ op: operation.op, target: operation.target, payload: { at: move.previewAt } });
+      } else if ((operation.op as string) === 'clip.trim') {
+        const trim = ordinaryTrimOperation(operation);
+        if (!trim) throw new ClipMoveError('Requires a closed source-window payload', 'unsupported_timing');
+        if (owners[index] !== `parent/clip:${trim.target}`) {
+          throw new ClipMoveError('ordinary clip.trim target must retain its reserved parent clip identity', 'identity_conflict');
+        }
+        const prepared = finishOrdinaryTrimMember(
+          captureOrdinaryTrimMember(after, trim),
+          commands.length,
+        );
+        result = prepared;
+        const clip = new AuthoredState(prepared.bundle).entity(owners[index]);
+        if (!clip || typeof clip.from !== 'number' || typeof clip.to !== 'number' || typeof clip.hold !== 'number') {
+          throw new ClipMoveError('trim preview requires authored source-window leaves', 'unsupported_timing');
+        }
+        previewOperations.push({ op: 'clip.update', target: operation.target, payload: {
+          from: clip.from, to: clip.to, hold: clip.hold,
+        } });
       } else if (structural(operation)) {
         const structural = captureOrdinaryStructuralBatch(after, { version: original.version, operations: [operation] });
         const record = copy(structural.records[0]);
@@ -593,7 +647,8 @@ export function projectGenericPatchPreview(patch: TimelinePatch, current: Timeli
   if (patch.source !== 'timeline.native-label-hold' && patch.source !== 'timeline.native-ordinary'
     && patch.source !== 'timeline.native-structural') return undefined;
   assertFiniteJson(patch);
-  if (patch.version !== 1 || !patch.operations.length || patch.operations.some((operation) => !supported(operation))) {
+  if (patch.version !== 1 || !patch.operations.length || patch.operations.some((operation) =>
+    !supported(operation) && !ordinaryTrimPreview(operation))) {
     throw new Error('Invalid native patch preview');
   }
   const config = copy(current.config);
