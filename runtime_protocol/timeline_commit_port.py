@@ -415,6 +415,8 @@ class RequestCommitPort:
 
     def validate(self, prepared):
         from .timeline_commit_inputs import read_pack_snapshot_object, validate_captured_document_inputs
+        if self.__closed:
+            raise AuthorizationError("timeline commit port is closed")
         self.__authorize()
         self._validate_producer_consumption(prepared)
         for revision, captured in self.__closures.items():
@@ -462,6 +464,27 @@ class RequestCommitPort:
             if current != (data, identity):
                 raise refused("dependency_unavailable", "captured project pack object changed")
 
+        return self._materializations(prepared)
+
+    def _materializations(self, prepared):
+        from .timeline_materialization import materialization_join
+        def captured(revision):
+            if revision not in self.__closures:
+                raise refused("dependency_unavailable", "materialization requires a private parent capture")
+            return self.__closures[revision]
+        allocations = materialization_join(prepared, self.__project, self.__timeline, captured)
+        if allocations:
+            for record in prepared["records"]["commands"]:
+                if record["command"]["op"] == "timeline.inverse" or not any(
+                        d["key"].startswith("materialization.source:") for d in record["dependencies"]):
+                    continue
+                ordinal = record["ordinal"]
+                commands = self.__request["commands"]
+                if (type(ordinal) is not int or not 0 <= ordinal < len(commands)
+                        or canonical_json(commands[ordinal].get("bindings")) != canonical_json(record["command"].get("bindings"))):
+                    raise ValidationError("materialization bindings differ from sealed request")
+        return allocations
+
     def _validate_producer_consumption(self, prepared):
         from .timeline_commit_producer_checkpoint import check_producer_consumption
         for capture in self._producer_captures(prepared):
@@ -485,8 +508,7 @@ class RequestCommitPort:
         if self.__closed:
             raise AuthorizationError("timeline commit port is closed")
         prepared = detached(prepared)
-        if any(key != value for key, value in prepared["id_map"].items()):
-            raise ValidationError("commit id_map must contain only identity pairs")
+        self._materializations(prepared)
         if prepared["expected_head"] not in self.__observed.values():
             raise refused("history_unavailable", "candidate head was not observed through this port")
         restore = any(item.get("op") == "timeline.restore" for item in self.__request["commands"])
