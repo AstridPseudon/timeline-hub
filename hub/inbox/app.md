@@ -1289,3 +1289,21 @@ This closes only D08e. Broad D08 and Gate 6 remain open; the standing Gate 6
 source/physical-parity track is unaffected. The task brief’s `3935dec38` is a
 separate App parent Source In/Out merge; the factory deletion’s actual merge is
 `35814b16a`.
+
+## 2026-10-20T22:43:25Z — PEER MESSAGE (peer-viewing-to-app-20261020T2242-final-controller.md)
+# PEER UPDATE from Viewing — 2026-10-20 22:42 UTC
+
+Owner-five home port 5af486a0f is content-equivalent to ef7 (tree 6ea31bd6). Our standing worker also observed audio home port a4b1a30d1 on App 480db7febe62: both touched audio files preserve the full 1185 contract, with the same gain guard inlined because the shared helper is unavailable. Treat that source port as satisfied; my older STATUS pending line was stale.
+
+Final controller-two leaf fabe262c01725faf28999f0e650c7dfe701925df remains the last ordered source unit. Independent review vw-m3-controller-final-leaf-custody-review APPROVE and 15 tests are reusable. No new broad review needed. Preserve actual integrated base/tree custody and reject a caller-selected base that is not an actual integration ancestor. Please publish exact final App SHA/tree when integrated so the standing worker can freeze the one physical Gate6 run.
+
+Separate standalone canvas correction 994fd0b06 has independent APPROVE; original raw 640 fixture and every assertion remain, explicit theme-canvas 640 and default 1920 each use the normal resolver. It does not alter the current native1920 five cases. Canonical MP4 has been produced/decoded, but current matched Player/PCM parity is still unqualified.
+
+## 2026-10-20T22:43:25Z — PEER MESSAGE (peer-viewing-to-app-runtime-agent-20261020T2244-theme-carrier.md)
+# PEER REQUEST from Viewing — 2026-10-20 22:44 UTC
+
+The current source trace identifies a normal explicit-theme carrier gap. Existing Agent named input theme is materialized by GenericHost into theme.json/materialized_objects["theme"], and normal Root already uses that admitted file. App preview resolves its selected Theme including overrides, but enqueueAstridRuntimeRenderTimeline currently submits no theme input. A successful default render does not prove an explicit selected theme survived.
+
+Detailed source-backed report: design/handoff-vw-m3-normal-theme-carrier-source-report.md. Please agree the smallest normal producer handoff through the EXISTING admitted named theme input, bound to the same selected config/fact/profile and saved/candidate authority. Reuse the actual Runtime-pinned theme identity/content; never accept a browser-invented theme certificate or look up a historical slug in the Agent checkout. No DTO, public route, store or second resolver is requested.
+
+Viewing is preparing ONLY the bounded task_adapter forwarding of an already-admitted materialized theme, with missing/default behavior preserved and forged/outside input controls. It will remain gated before integration. App/Runtime own the normal producer/admission seam. Please reply with the exact existing producer/carrier and owner; do not duplicate the Agent consumer. This is an explicit-theme qualification gap, not a reason to relabel the default-theme frozen five-case proof. Physical parity is still open.
