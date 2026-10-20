@@ -7,7 +7,8 @@ import {
   type ValidatedScenePackage,
   type SceneFrame,
   type SceneStatus,
-  type SceneStop,
+  type SceneInfo,
+  type SceneView,
 } from './runtime';
 import { sceneTrace, traceId } from './diagnostics';
 
@@ -34,7 +35,7 @@ type SceneDocument = {
 // role must not navigate its iframe or restart initialization.
 function SceneInstance({ document, component, frame, visible, width, height, onStatus }: {
   document: SceneDocument; component: object; frame?: SceneFrame; visible: boolean;
-  width: number; height: number; onStatus: (document: SceneDocument, status: SceneStatus, stops: readonly SceneStop[]) => void;
+  width: number; height: number; onStatus: (document: SceneDocument, status: SceneStatus, info: SceneInfo) => void;
 }) {
   const iframe = useRef<HTMLIFrameElement>(null);
   const host = useRef<SceneFrameHost>();
@@ -64,7 +65,7 @@ function SceneInstance({ document, component, frame, visible, width, height, onS
       },
       value => {
         effectTrace('parent-status', value);
-        if (active && value.phase !== 'disposed') callback.current(document, value, host.current?.stops ?? []);
+        if (active && value.phase !== 'disposed') callback.current(document, value, host.current?.info ?? { events: [], cameras: [], explore: null });
       }, 30000, diagnostic ? effectTrace : undefined);
     host.current = instance;
     const receive = (event: MessageEvent) => {
@@ -102,7 +103,7 @@ function SceneInstance({ document, component, frame, visible, width, height, onS
   }, [document, component, diagnostic]);
   useLayoutEffect(() => {
     if (desiredFrame.current) host.current?.request(desiredFrame.current);
-  }, [frame?.sourceTime, frame?.width, frame?.height]);
+  }, [frame?.sourceTime, frame?.width, frame?.height, frame?.view, frame?.worldTime]);
   return createElement('iframe', {
     ref: iframe, title: `Live scene ${document.pkg.package.revision}`, sandbox: 'allow-scripts',
     'data-scene-instance': document.instance, 'data-scene-role': visible ? 'displayed' : 'candidate',
@@ -120,11 +121,15 @@ function SceneInstance({ document, component, frame, visible, width, height, onS
   });
 }
 
-export function SceneSurface({ source, sourceTime, width, height, onStatus, onReady, showStatus = true }: {
+export function SceneSurface({ source, sourceTime, width, height, view, worldTime, onStatus, onReady, showStatus = true }: {
   source: unknown; sourceTime: number; width: number; height: number;
+  /** The explorer's free view. Never set by the timeline preview or exports: the scene then draws its authored camera. */
+  view?: SceneView;
+  /** World time for the explorer (sourceTime equals it); never set by the timeline preview or exports. */
+  worldTime?: number;
   onStatus?: (status: SceneStatus) => void; showStatus?: boolean;
   /** Called once per loaded scene, when its document first becomes the displayed one. */
-  onReady?: (info: { stops: ReadonlyArray<{ time: number; name: string }> }) => void;
+  onReady?: (info: SceneInfo) => void;
 }) {
   const requested = useMemo<SceneRequest>(() => {
     try {
@@ -135,7 +140,7 @@ export function SceneSurface({ source, sourceTime, width, height, onStatus, onRe
   // Fence completion immediately when props change, including before effects
   // clean up an obsolete integrity check or host.
   const desired = useRef(requested); desired.current = requested;
-  const frame = useRef({ sourceTime, width, height }); frame.current = { sourceTime, width, height };
+  const frame = useRef<SceneFrame>({ sourceTime, width, height }); frame.current = { sourceTime, width, height, ...(view ? { view } : {}), ...(worldTime === undefined ? {} : { worldTime }) };
   const component = useRef({});
   const callback = useRef(onStatus); callback.current = onStatus;
   const readyCallback = useRef(onReady); readyCallback.current = onReady;
@@ -196,7 +201,7 @@ export function SceneSurface({ source, sourceTime, width, height, onStatus, onRe
     }
     return () => { active = false; };
   }, [requested, restoreGeneration]);
-  const receiveStatus = (document: SceneDocument, value: SceneStatus, stops: readonly SceneStop[]) => {
+  const receiveStatus = (document: SceneDocument, value: SceneStatus, info: SceneInfo) => {
     if (document.request !== desired.current || lifecycle.current.suspended
       || document.generation !== lifecycle.current.generation) return;
     if (value.phase === 'ready') {
@@ -206,7 +211,7 @@ export function SceneSurface({ source, sourceTime, width, height, onStatus, onRe
       const current = frame.current;
       if (ready.sourceTime !== current.sourceTime || ready.width !== current.width || ready.height !== current.height) return;
       setDisplayed(document); setDisplayedStatus(value);
-      if (!announced.current.has(document)) { announced.current.add(document); readyCallback.current?.({ stops }); }
+      if (!announced.current.has(document)) { announced.current.add(document); readyCallback.current?.(info); }
       setCandidate(previous => previous === document ? undefined : previous);
     } else if (value.phase === 'error') {
       setCandidate(previous => previous === document ? undefined : previous);

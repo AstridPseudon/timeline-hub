@@ -2,10 +2,13 @@
 import type { TimelineSnapshot, ExtensionSettingsService } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../identity';
 
-export type Stop = { readonly time: number; readonly name: string };
+/** Something that happens in the world, in world seconds; `end` is absent for a point event. */
+export type WorldEvent = { readonly name: string; readonly start: number; readonly end?: number };
+/** An authored camera: `start`/`end` in source seconds, `worldStart` the world time shown at `start` (default start). */
+export type CameraMove = { readonly name: string; readonly start: number; readonly end: number; readonly worldStart?: number };
 export type Stretch = { readonly from: number; readonly to: number; readonly speed: number };
 export type WorldUse = { clipId: string; track: string; at: number; from: number; to: number; speed: number };
-export type LibraryEntry = { objectId: string; revision: string; name: string; duration: number; authoredFps: number; stops: Stop[] };
+export type LibraryEntry = { objectId: string; revision: string; name: string; duration: number; authoredFps: number; events: WorldEvent[]; cameras: CameraMove[] };
 export type TimelineWorld = { objectId: string; revision: string; duration: number; authoredFps: number; uses: WorldUse[]; liveScene: Record<string, unknown> };
 
 export const worldKey = (w: { objectId: string; revision: string }) => `${w.objectId}@${w.revision}`;
@@ -49,26 +52,45 @@ export function worldsFromSnapshot(snapshot: TimelineSnapshot): TimelineWorld[] 
 
 export const libraryKey = (projectId: string | null | undefined) => `worldLibrary:${projectId ? projectId : 'none'}`;
 
-function validStop(v: unknown): v is Stop {
-  return isRecord(v) && typeof v.time === 'number' && Number.isFinite(v.time) && typeof v.name === 'string';
+function validEvent(v: unknown): v is WorldEvent {
+  return isRecord(v) && typeof v.name === 'string' && typeof v.start === 'number' && Number.isFinite(v.start)
+    && (v.end === undefined || (typeof v.end === 'number' && Number.isFinite(v.end)));
 }
 
-function validEntry(v: unknown): v is LibraryEntry {
+function validCamera(v: unknown): v is CameraMove {
+  return isRecord(v) && typeof v.name === 'string'
+    && typeof v.start === 'number' && Number.isFinite(v.start)
+    && typeof v.end === 'number' && Number.isFinite(v.end) && v.end > v.start
+    && (v.worldStart === undefined || (typeof v.worldStart === 'number' && Number.isFinite(v.worldStart)));
+}
+
+function validEntry(v: unknown): boolean {
   return isRecord(v)
     && typeof v.objectId === 'string'
     && typeof v.revision === 'string'
     && typeof v.name === 'string'
     && isPositive(v.duration)
-    && isPositive(v.authoredFps)
-    && Array.isArray(v.stops)
-    && v.stops.every(validStop);
+    && isPositive(v.authoredFps);
 }
 
-/** Library for one project; invalid stored entries are dropped. Never throws. */
+/** Library for one project; invalid stored entries are dropped, and so are invalid events and cameras
+ * (an entry saved with the old `stops` simply loses them). Never throws. */
 export function readLibrary(settings: ExtensionSettingsService, projectId: string | null | undefined): LibraryEntry[] {
   let raw: unknown;
   try { raw = settings.get(libraryKey(projectId)); } catch { return []; }
-  return Array.isArray(raw) ? raw.filter(validEntry) : [];
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(validEntry).map((entry): LibraryEntry => {
+    const e = entry as Record<string, unknown>;
+    return {
+      objectId: e.objectId as string,
+      revision: e.revision as string,
+      name: e.name as string,
+      duration: e.duration as number,
+      authoredFps: e.authoredFps as number,
+      events: Array.isArray(e.events) ? e.events.filter(validEvent) : [],
+      cameras: Array.isArray(e.cameras) ? e.cameras.filter(validCamera) : [],
+    };
+  });
 }
 
 function writeLibrary(settings: ExtensionSettingsService, projectId: string | null | undefined, list: LibraryEntry[]): LibraryEntry[] {
@@ -90,14 +112,18 @@ export function removeFromLibrary(settings: ExtensionSettingsService, projectId:
   return writeLibrary(settings, projectId, readLibrary(settings, projectId).filter((e) => worldKey(e) !== key));
 }
 
-const sameStops = (a: readonly Stop[], b: readonly Stop[]) =>
-  a.length === b.length && a.every((stop, i) => stop.time === b[i].time && stop.name === b[i].name);
+const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
-/** Keeps the stops a library world's scene reported. Writes only when the entry exists and the stops differ; returns whether it wrote. */
-export function saveStops(settings: ExtensionSettingsService, projectId: string | null | undefined, key: string, stops: readonly Stop[]): boolean {
+/** Keeps the events and cameras a library world's scene reported. Writes only when the entry exists and they differ; returns whether it wrote. */
+export function saveInfo(
+  settings: ExtensionSettingsService,
+  projectId: string | null | undefined,
+  key: string,
+  info: { events: readonly WorldEvent[]; cameras: readonly CameraMove[] },
+): boolean {
   const entry = readLibrary(settings, projectId).find((e) => worldKey(e) === key);
-  if (!entry || sameStops(entry.stops, stops)) return false;
-  addToLibrary(settings, projectId, { ...entry, stops: [...stops] });
+  if (!entry || (sameJson(entry.events, info.events) && sameJson(entry.cameras, info.cameras))) return false;
+  addToLibrary(settings, projectId, { ...entry, events: [...info.events], cameras: [...info.cameras] });
   return true;
 }
 
@@ -176,6 +202,8 @@ const MAX_TICK_GAP_MS = 250;
 /** Travel position for one world. next()/ack() give at most one render in flight. */
 export class TravelClock {
   private _duration: number;
+  private _start = 0;
+  private _end: number;
   private _loop: boolean;
   private _speed = 1;
   private _time = 0;
@@ -186,6 +214,7 @@ export class TravelClock {
 
   constructor(opts: { duration: number; loop?: boolean }) {
     this._duration = Math.max(0, opts.duration);
+    this._end = this._duration;
     this._loop = opts.loop ?? false;
   }
 
@@ -195,9 +224,21 @@ export class TravelClock {
   get inFlight() { return this._inFlight; }
   get shown() { return this._shown; }
 
+  get windowStart() { return this._start; }
+  get windowEnd() { return this._end; }
+
   setDuration(d: number) {
     this._duration = Math.max(0, d);
-    this._time = Math.min(this._time, this._duration);
+    this._start = Math.min(this._start, this._duration);
+    this._end = Math.min(this._end, this._duration);
+    this._time = Math.min(this._time, this._end);
+  }
+
+  /** Confines travel (seek, play, loop) to [start, end]; the time is pulled into it. */
+  setWindow(start: number, end: number) {
+    this._start = Math.min(Math.max(start, 0), this._duration);
+    this._end = Math.min(Math.max(end, this._start), this._duration);
+    this._time = Math.min(Math.max(this._time, this._start), this._end);
   }
 
   setLoop(b: boolean) { this._loop = b; }
@@ -205,7 +246,7 @@ export class TravelClock {
   setSpeed(s: number) { this._speed = Number.isFinite(s) && s >= 0 ? s : 1; }
 
   play() {
-    if (this._time >= this._duration && !this._loop) this._time = 0;
+    if (this._time >= this._end && !this._loop) this._time = this._start;
     this._playing = true;
     this._lastTickMs = undefined;
   }
@@ -216,7 +257,7 @@ export class TravelClock {
   }
 
   seek(t: number) {
-    this._time = Math.min(Math.max(t, 0), this._duration);
+    this._time = Math.min(Math.max(t, this._start), this._end);
   }
 
   tick(nowMs: number) {
@@ -225,9 +266,10 @@ export class TravelClock {
     const gap = Math.min(Math.max(nowMs - this._lastTickMs, 0), MAX_TICK_GAP_MS);
     this._lastTickMs = nowMs;
     this._time += (gap / 1000) * this._speed;
-    if (this._time >= this._duration) {
-      if (this._loop) this._time = this._duration > 0 ? this._time % this._duration : 0;
-      else { this._time = this._duration; this._playing = false; this._lastTickMs = undefined; }
+    if (this._time >= this._end) {
+      const length = this._end - this._start;
+      if (this._loop) this._time = length > 0 ? this._start + ((this._time - this._start) % length) : this._start;
+      else { this._time = this._end; this._playing = false; this._lastTickMs = undefined; }
     }
   }
 
@@ -251,9 +293,100 @@ export class TravelClock {
   }
 
   reset() {
-    this._time = 0;
+    this._time = this._start;
     this._shown = undefined;
     this._inFlight = undefined;
     this.pause();
   }
 }
+
+// ---- Cameras: authored moves through the world, in source time.
+
+export const WHOLE_WORLD_CAMERA = 'Whole world';
+
+/** The world's cameras; a world that declares none gets one implicit camera covering all of it. */
+export function camerasOrImplicit(cameras: readonly CameraMove[], duration: number): CameraMove[] {
+  return cameras.length ? [...cameras] : [{ name: WHOLE_WORLD_CAMERA, start: 0, end: Math.max(duration, 0) }];
+}
+
+/** World time shown at a source time inside a camera: worldStart + (sourceTime - start). */
+export const worldTimeIn = (camera: CameraMove, sourceTime: number) => (camera.worldStart ?? camera.start) + (sourceTime - camera.start);
+
+/** Index of the camera whose source range holds `time` (end exclusive, the last one inclusive); else the nearest earlier one; else 0. */
+export function cameraIndexAt(cameras: readonly CameraMove[], time: number): number {
+  let found = -1;
+  for (let i = 0; i < cameras.length; i++) {
+    if (time >= cameras[i].start && (time < cameras[i].end || (i === cameras.length - 1 && time <= cameras[i].end))) return i;
+    if (cameras[i].start <= time) found = i;
+  }
+  return Math.max(found, 0);
+}
+
+/** An event as seen from one camera: its overlap with the camera's world window, mapped to source time. */
+export type CameraEvent = { readonly event: WorldEvent; readonly from: number; readonly to: number };
+
+/** Events whose world time overlaps the camera's world-time window (touching counts for a point), clipped and mapped to source time. */
+export function eventsInCamera(events: readonly WorldEvent[], camera: CameraMove): CameraEvent[] {
+  const w0 = camera.worldStart ?? camera.start;
+  const w1 = w0 + (camera.end - camera.start);
+  const out: CameraEvent[] = [];
+  for (const event of events) {
+    const e0 = event.start;
+    const e1 = event.end ?? event.start;
+    if (e1 < w0 || e0 > w1) continue;
+    out.push({ event, from: camera.start + (Math.max(e0, w0) - w0), to: camera.start + (Math.min(e1, w1) - w0) });
+  }
+  return out;
+}
+
+// ---- Free roam keys, view fitting, default world.
+
+export type ExploreKey =
+  | { type: 'move'; axis: 'forward' | 'right' | 'up'; sign: 1 | -1 }
+  | { type: 'reset' }
+  | { type: 'pause' };
+
+/** The keys the free viewer handles. Modifier chords (Cmd/Ctrl/Alt) and Esc are never handled. */
+export function exploreKey(e: { key: string; ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean }): ExploreKey | undefined {
+  if (e.ctrlKey || e.metaKey || e.altKey) return undefined;
+  switch (e.key) {
+    case 'w': case 'W': case 'ArrowUp': return { type: 'move', axis: 'forward', sign: 1 };
+    case 's': case 'S': case 'ArrowDown': return { type: 'move', axis: 'forward', sign: -1 };
+    case 'd': case 'D': case 'ArrowRight': return { type: 'move', axis: 'right', sign: 1 };
+    case 'a': case 'A': case 'ArrowLeft': return { type: 'move', axis: 'right', sign: -1 };
+    case 'e': case 'E': return { type: 'move', axis: 'up', sign: 1 };
+    case 'q': case 'Q': return { type: 'move', axis: 'up', sign: -1 };
+    case 'r': case 'R': return { type: 'reset' };
+    case ' ': case 'Space': return { type: 'pause' };
+    default: return undefined;
+  }
+}
+
+export const SPEED_SCALE_MIN = 0.1;
+export const SPEED_SCALE_MAX = 10;
+export const SHIFT_BOOST = 3;
+
+/** One wheel notch is a 25% change; deltaY > 0 (scroll down) slows down. */
+export function wheelSpeedScale(scale: number, deltaY: number): number {
+  if (!Number.isFinite(deltaY) || deltaY === 0) return scale;
+  const next = scale * (deltaY < 0 ? 1.25 : 0.8);
+  return Math.min(SPEED_SCALE_MAX, Math.max(SPEED_SCALE_MIN, Math.round(next * 100) / 100));
+}
+
+/** "1×", "1.25×", "0.5×". */
+export const speedScaleLabel = (scale: number) => `${Number(scale.toFixed(2))}×`;
+
+/** Largest `aspect` box that fits inside boxWidth x boxHeight, whole pixels. */
+export function fitToBox(boxWidth: number, boxHeight: number, aspect: number): { width: number; height: number } {
+  if (!(boxWidth > 0) || !(boxHeight > 0) || !(aspect > 0)) return { width: 0, height: 0 };
+  const width = Math.floor(Math.min(boxWidth, boxHeight * aspect));
+  return { width, height: Math.floor(width / aspect) };
+}
+
+/** The last world viewed in this project if it is still listed; else the first world in the video; else the first library world. */
+export function chooseDefaultWorld<T extends { key: string }>(timeline: readonly T[], library: readonly T[], lastKey: string | undefined): T | undefined {
+  return [...timeline, ...library].find((row) => row.key === lastKey) ?? timeline[0] ?? library[0];
+}
+
+export const lastWorldKey = (projectId: string | null | undefined) => `lastWorld:${projectId ? projectId : 'none'}`;
+export const HINT_DISMISSED_KEY = 'exploreHintDismissed';

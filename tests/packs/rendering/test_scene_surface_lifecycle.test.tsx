@@ -4,6 +4,7 @@ import {render,cleanup,fireEvent,act,waitFor} from '@testing-library/react';
 import {afterEach,describe,expect,it,vi} from 'vitest';
 import {SceneSurface} from '../../../astrid/packs/rendering/ui/threejs-live-editor/SceneSurface';
 import * as sceneRuntime from '../../../astrid/packs/rendering/ui/threejs-live-editor/runtime';
+import type {SceneView} from '../../../astrid/packs/rendering/ui/threejs-live-editor/runtime';
 
 async function sha256(bytes: Uint8Array): Promise<string> {
   const hash = await globalThis.crypto.subtle.digest('SHA-256', new Uint8Array(bytes));
@@ -117,15 +118,15 @@ describe('BFCache transport recovery',()=>{
   });
 });
 describe('onReady',()=>{
-  it('reports stops once, for the scene that becomes displayed, not for discarded candidates',async()=>{
+  it('reports the declared info once, for the scene that becomes displayed, not for discarded candidates',async()=>{
     const first=await makeSource({duration:100}),second=await makeSource({duration:50}),t=ownedChildren(),onReady=vi.fn();
     const view=render(<SceneSurface source={first} sourceTime={1} width={10} height={10} onReady={onReady}/>);
     const a=await t.mounted(view.container);
-    t.ack(a,{kind:'initialized',stops:[{time:20,name:'B'},{time:5,name:'A'},{time:500,name:'past'}]});
+    t.ack(a,{kind:'initialized',events:[{name:'B',start:20},{name:'A',start:5},{name:'past',start:500}]});
     expect(onReady).not.toHaveBeenCalled();
     t.ready(a);
     expect(onReady).toHaveBeenCalledTimes(1);
-    expect(onReady).toHaveBeenLastCalledWith({stops:[{time:5,name:'A'},{time:20,name:'B'}]});
+    expect(onReady).toHaveBeenLastCalledWith({events:[{name:'A',start:5},{name:'B',start:20}],cameras:[],explore:null});
     view.rerender(<SceneSurface source={first} sourceTime={2} width={10} height={10} onReady={onReady}/>);
     t.ready(a);
     expect(onReady).toHaveBeenCalledTimes(1);
@@ -136,15 +137,38 @@ describe('onReady',()=>{
     expect(onReady).toHaveBeenCalledTimes(1);
     t.ready(b);
     expect(onReady).toHaveBeenCalledTimes(2);
-    expect(onReady).toHaveBeenLastCalledWith({stops:[]});
+    expect(onReady).toHaveBeenLastCalledWith({events:[],cameras:[],explore:null});
   });
   it('does not report a candidate that errors or is superseded',async()=>{
     const first=await makeSource(),second=await makeSource({duration:50}),t=ownedChildren(),onReady=vi.fn();
     const view=render(<SceneSurface source={first} sourceTime={1} width={10} height={10} onReady={onReady}/>);
     const a=await t.mounted(view.container);
-    t.ack(a,{kind:'initialized',stops:[{time:1,name:'x'}]});
+    t.ack(a,{kind:'initialized',events:[{name:'x',start:1}]});
     view.rerender(<SceneSurface source={second} sourceTime={1} width={10} height={10} onReady={onReady}/>);
     t.ready(a);
     expect(onReady).not.toHaveBeenCalled();
+  });
+});
+describe('protocol forwarding',()=>{
+  it('forwards view and worldTime to the frame and reports events, cameras and explore on ready',async()=>{
+    const source=await makeSource({duration:100}),t=ownedChildren(),onReady=vi.fn();
+    const view:SceneView={position:[1,2,3],quaternion:[0,0,0,2],fov:200};
+    const scene=render(<SceneSurface source={source} sourceTime={4} width={10} height={10} view={view} worldTime={4} onReady={onReady}/>);
+    const a=await t.mounted(scene.container);
+    t.ack(a,{kind:'initialized',
+      events:[{name:' Lift ',start:3,end:6},{name:'off-scene',start:200}],
+      cameras:[{name:'Wide',start:0,end:5}],
+      explore:{start:{position:[0,0,0],target:[0,0,-1]},speed:2}});
+    const frameMessage=t.messages(a).filter(message=>message.kind==='render').at(-1)!;
+    expect(frameMessage).toMatchObject({sourceTime:4,width:10,height:10,worldTime:4});
+    expect(frameMessage.view).toEqual({position:[1,2,3],quaternion:[0,0,0,1],fov:120});
+    expect(onReady).not.toHaveBeenCalled();
+    t.ready(a);
+    expect(onReady).toHaveBeenCalledTimes(1);
+    expect(onReady).toHaveBeenLastCalledWith({
+      events:[{name:'Lift',start:3,end:6}],
+      cameras:[{name:'Wide',start:0,end:5}],
+      explore:{start:{position:[0,0,0],target:[0,0,-1]},speed:2},
+    });
   });
 });

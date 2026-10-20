@@ -1,22 +1,25 @@
 // @vitest-environment jsdom
 import { createElement } from 'react';
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorldExplorerPanel } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel';
 import { ingestPreparedPackage, parsePreparedScenePackage } from '../../../astrid/packs/rendering/ui/threejs-live-editor/authoring';
 import { SAMPLE_WORLD } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../../../astrid/packs/rendering/ui/threejs-live-editor/identity';
 
-// Module-level handle on the scene surface: the mock records every render and keeps the latest callbacks.
+// Module-level handle on the scene surface: the mock records every render (all the props the panel passes) and keeps the latest callbacks.
 const scene = vi.hoisted(() => ({
-  renders: [] as Array<{ sourceTime: number }>,
+  renders: [] as Array<{ sourceTime: number; worldTime?: number; view?: { position: [number, number, number] }; width: number; height: number }>,
   onStatus: null as null | ((status: unknown) => void),
   onReady: null as null | ((info: unknown) => void),
 }));
 
 vi.mock('../../../astrid/packs/rendering/ui/threejs-live-editor/SceneSurface', () => ({
-  SceneSurface: (props: { sourceTime: number; onStatus: (status: unknown) => void; onReady: (info: unknown) => void }) => {
-    scene.renders.push({ sourceTime: props.sourceTime });
+  SceneSurface: (props: {
+    sourceTime: number; worldTime?: number; view?: { position: [number, number, number] }; width: number; height: number;
+    onStatus: (status: unknown) => void; onReady: (info: unknown) => void;
+  }) => {
+    scene.renders.push({ sourceTime: props.sourceTime, worldTime: props.worldTime, view: props.view, width: props.width, height: props.height });
     scene.onStatus = props.onStatus;
     scene.onReady = props.onReady;
     return null;
@@ -104,6 +107,9 @@ async function sampleLiveScene() {
   return { liveScene: ingested.liveScene, duration: parsed.manifest.duration };
 }
 const SAMPLE = await sampleLiveScene();
+
+/** What a scene declares when it supports free roam: a start view the viewer can move from. */
+const EXPLORE = { start: { position: [0, 1, 5] as [number, number, number], target: [0, 1, 0] as [number, number, number] } };
 
 function liveClip(id = 'c1') {
   return {
@@ -217,9 +223,34 @@ function mount(harness: ReturnType<typeof makeHarness>, visible = true) {
   return { ...view, setVisible: (value: boolean) => view.rerender(element(value)) };
 }
 
-function sceneStatus(status: { phase: string; revision?: string; sourceTime?: number; error?: string }) {
+function sceneStatus(status: { phase: string; revision?: string; sourceTime?: number; error?: string; view?: unknown }) {
   expect(scene.onStatus).toBeTruthy();
   act(() => scene.onStatus!({ revision: 'rev', ...status }));
+}
+
+/** Acknowledges the frame in flight with the time and view it showed, as the scene does. The panel then sends the newest one. */
+function ackLastFrame() {
+  const last = scene.renders.at(-1)!;
+  sceneStatus({ phase: 'ready', sourceTime: last.sourceTime, view: last.view });
+}
+
+/** The view the scene was last handed. */
+function lastView() {
+  const view = scene.renders.at(-1)?.view;
+  if (!view) throw new Error('the last frame carried no view');
+  return view;
+}
+
+/**
+ * Makes the open world ready the way the scene does: it declares what it can do (free roam or not), then reports its frames.
+ * Free roam reveals only on a frame that carries the view, so the first ready frame is followed by the panel's view frame.
+ */
+async function readyWorld(explore = true) {
+  await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
+  act(() => scene.onReady!({ events: [], cameras: [], explore: explore ? EXPLORE : null }));
+  const first = scene.renders.at(-1)!;
+  sceneStatus({ phase: 'ready', sourceTime: first.sourceTime });
+  ackLastFrame();
 }
 
 /** Adds the sample from the empty state and waits until the scene surface has been handed the world. */
@@ -228,9 +259,11 @@ async function addSampleWorld(view: ReturnType<typeof mount>) {
   await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
 }
 
-function pickOption(view: ReturnType<typeof mount>, name: string) {
-  const option = view.getByRole('option', { name }) as HTMLOptionElement;
-  fireEvent.change(view.getByRole('combobox', { name: 'World' }), { target: { value: option.value } });
+/** Opens the full world list from the docked header and picks one of its rows. */
+function pickWorld(view: ReturnType<typeof mount>, name: string) {
+  fireEvent.click(view.getByRole('button', { name: 'Choose world' }));
+  const worlds = view.getByRole('group', { name: 'Worlds' });
+  fireEvent.click(within(worlds).getByRole('button', { name }));
 }
 
 describe('World Explorer panel', () => {
@@ -239,33 +272,45 @@ describe('World Explorer panel', () => {
     const view = mount(harness);
     expect(view.getByText(/A world is a live 3D scene/)).toBeTruthy();
     expect(view.getByRole('button', { name: 'Import world…' })).toBeTruthy();
-    expect(view.queryByRole('combobox', { name: 'World' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Choose world' })).toBeNull();
 
     await addSampleWorld(view);
 
     await waitFor(() => expect(harness.settings.store.get('worldLibrary:p1')).toHaveLength(1));
     expect(harness.settings.store.has('worldLibrary:none')).toBe(false);
     expect(harness.settings.store.get('worldLibrary:p1')).toEqual([
-      expect.objectContaining({ name: 'Lantern Valley', duration: SAMPLE.duration, stops: [{ time: 0, name: 'Dawn' }, { time: 3, name: 'Lanterns' }] }),
+      expect.objectContaining({
+        name: 'Lantern Valley',
+        duration: SAMPLE.duration,
+        events: [{ name: 'Dawn', start: 0, end: 3 }, { name: 'Lanterns rise', start: 3, end: 5 }, { name: 'Lantern flare', start: 5.5 }],
+        cameras: [{ name: 'Valley walk', start: 0, end: 3 }, { name: 'Lantern close-up', start: 3, end: 6, worldStart: 3 }],
+      }),
     ]);
     expect(harness.toast).toHaveBeenCalledWith('Added Lantern Valley to the library', 'info');
-    const [entry] = harness.settings.store.get('worldLibrary:p1') as Array<{ objectId: string; revision: string }>;
-    expect(view.getByRole('combobox', { name: 'World' })).toHaveValue(`${entry.objectId}@${entry.revision}`);
+    // The sample is opened straight away: the header names it, the empty state is gone.
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
     expect(view.queryByRole('button', { name: 'Add Lantern Valley' })).toBeNull();
   });
 
   it('lists a world from the timeline under In this video, shows its whole stretch and a band for its use', async () => {
     const harness = makeHarness({ clips: [liveClip()] });
     const view = mount(harness);
-
-    const group = view.container.querySelector('optgroup[label="In this video"]');
-    expect(group).not.toBeNull();
-    expect(view.getByRole('option', { name: 'Scene 1 · 0:06 · 1 use' })).toBeTruthy();
-    expect(view.queryByRole('option', { name: /Lantern/ })).toBeNull();
-
-    pickOption(view, 'Scene 1 · 0:06 · 1 use');
-
+    // The first world in the video opens by itself.
     await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Scene 1');
+
+    fireEvent.click(view.getByRole('button', { name: 'Choose world' }));
+    const worlds = view.getByRole('group', { name: 'Worlds' });
+    const inVideo = within(worlds).getByRole('list', { name: 'In this video' });
+    // The accessible name drops the space before the separator, so the match allows any spacing there.
+    expect(within(inVideo).getByRole('button', { name: /^Scene 1 0:06\s*· 1 use$/ })).toBeTruthy();
+    expect(within(worlds).queryByRole('list', { name: 'Library' })).toBeNull();
+    expect(within(worlds).queryByRole('button', { name: /^Lantern/ })).toBeNull();
+
+    fireEvent.click(within(inVideo).getByRole('button', { name: /^Scene 1 0:06\s*· 1 use$/ }));
+    expect(view.queryByRole('group', { name: 'Worlds' })).toBeNull();
+
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
     expect(view.getByText(/Stretch 0:00\.0 – 0:06\.0 · 6\.0 s at 1×/)).toBeTruthy();
     expect(view.getByTitle('On V1 at 0:02')).toBeTruthy();
   });
@@ -273,9 +318,9 @@ describe('World Explorer panel', () => {
   it('never queues more than one frame ahead of the scene and sends exactly one newer time per ack', async () => {
     const harness = makeHarness({ clips: [liveClip()] });
     const view = mount(harness);
-    pickOption(view, 'Scene 1 · 0:06 · 1 use');
-    await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
-    sceneStatus({ phase: 'ready', sourceTime: 0 });
+    await readyWorld();
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
+    ackLastFrame();
 
     fireEvent.click(view.getByRole('button', { name: 'Play' }));
     const start = scene.renders.length;
@@ -293,32 +338,33 @@ describe('World Explorer panel', () => {
     expect(afterAck[0]).toBeGreaterThan(sent);
   });
 
-  it('handles keys on the World viewer group, and ignores keys from focused controls', async () => {
+  it('handles travel keys on the Camera travel group, and ignores keys from focused controls', async () => {
     const harness = makeHarness();
     const view = mount(harness);
     await addSampleWorld(view);
-    sceneStatus({ phase: 'ready', sourceTime: 0 });
-    const group = view.getByRole('group', { name: 'World viewer' });
+    await readyWorld();
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
+    const travel = view.getByRole('group', { name: 'Camera travel' });
 
     expect(view.getByText('0:00.0 / 0:06')).toBeTruthy();
-    fireEvent.keyDown(group, { key: 'ArrowRight' });
+    fireEvent.keyDown(travel, { key: 'ArrowRight' });
     expect(view.getByText('0:01.0 / 0:06')).toBeTruthy();
-    fireEvent.keyDown(group, { key: 'ArrowRight', shiftKey: true });
+    fireEvent.keyDown(travel, { key: 'ArrowRight', shiftKey: true });
     expect(view.getByText('0:06.0 / 0:06')).toBeTruthy();
-    fireEvent.keyDown(group, { key: 'ArrowLeft', shiftKey: true });
+    fireEvent.keyDown(travel, { key: 'ArrowLeft', shiftKey: true });
     expect(view.getByText('0:01.0 / 0:06')).toBeTruthy();
 
-    fireEvent.keyDown(group, { key: 'i' });
+    fireEvent.keyDown(travel, { key: 'i' });
     expect(view.getByText(/Stretch 0:01\.0 – 0:06\.0 · 5\.0 s at 1×/)).toBeTruthy();
-    fireEvent.keyDown(group, { key: 'ArrowRight' });
-    fireEvent.keyDown(group, { key: 'ArrowRight' });
-    fireEvent.keyDown(group, { key: 'o' });
+    fireEvent.keyDown(travel, { key: 'ArrowRight' });
+    fireEvent.keyDown(travel, { key: 'ArrowRight' });
+    fireEvent.keyDown(travel, { key: 'o' });
     expect(view.getByText(/Stretch 0:01\.0 – 0:03\.0 · 2\.0 s at 1×/)).toBeTruthy();
 
     // Space toggles play and pause.
-    fireEvent.keyDown(group, { key: ' ' });
+    fireEvent.keyDown(travel, { key: ' ' });
     expect(view.getByRole('button', { name: 'Pause' })).toBeTruthy();
-    fireEvent.keyDown(group, { key: ' ' });
+    fireEvent.keyDown(travel, { key: ' ' });
     expect(view.getByRole('button', { name: 'Play' })).toBeTruthy();
 
     // Keys from a focused button or select belong to that control.
@@ -329,11 +375,57 @@ describe('World Explorer panel', () => {
     expect(view.getByText('0:03.0 / 0:06')).toBeTruthy();
   });
 
+  it('moves the free camera with keys on the World viewer in Explore, and Space pauses the world', async () => {
+    const harness = makeHarness();
+    const view = mount(harness);
+    await addSampleWorld(view);
+    await readyWorld();
+    const viewer = view.getByRole('application', { name: 'World viewer' });
+    expect(view.getByRole('button', { name: 'Explore' })).toHaveAttribute('aria-pressed', 'true');
+
+    const before = [...lastView().position];
+    fireEvent.keyDown(viewer, { key: 'ArrowRight' });
+    frames(5);
+    fireEvent.keyUp(viewer, { key: 'ArrowRight' });
+    expect(lastView().position).not.toEqual(before);
+
+    // The world plays until Space pauses it.
+    expect(view.getByRole('button', { name: 'Pause' })).toBeTruthy();
+    fireEvent.keyDown(viewer, { key: ' ' });
+    expect(view.getByRole('button', { name: 'Play' })).toBeTruthy();
+  });
+
+  it('opens a world that declares no free roam in Cameras, with Explore disabled and a note', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await readyWorld(false);
+
+    expect(view.getByRole('button', { name: 'Cameras' })).toHaveAttribute('aria-pressed', 'true');
+    expect(view.getByRole('button', { name: 'Explore' })).toBeDisabled();
+    expect(view.getByText(/This world isn't explorable yet/)).toBeTruthy();
+    expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy();
+  });
+
+  it('opens the last world viewed in this project, else the first in the video', () => {
+    const lantern = { objectId: 'sha256:lantern', revision: 'sha256:lantern', name: 'Lantern Valley', duration: 6, authoredFps: 30, events: [], cameras: [] };
+    const spare = { ...lantern, objectId: 'sha256:spare', revision: 'sha256:spare', name: 'Spare' };
+    const settings = makeSettings(new Map<string, unknown>([
+      ['worldLibrary:p1', [spare, lantern]],
+      ['lastWorld:p1', `${lantern.objectId}@${lantern.revision}`],
+    ]));
+    const harness = makeHarness({ settings });
+    const view = mount(harness);
+    // Lantern Valley is the second library world, but it was the last one viewed, so it opens.
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('2 / 2');
+  });
+
   it('pauses playback when the panel is hidden', async () => {
     const harness = makeHarness();
     const view = mount(harness);
     await addSampleWorld(view);
-    sceneStatus({ phase: 'ready', sourceTime: 0 });
+    await readyWorld();
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
     fireEvent.click(view.getByRole('button', { name: 'Play' }));
     frames(2);
     expect(view.getByRole('button', { name: 'Pause' })).toBeTruthy();
@@ -350,6 +442,7 @@ describe('World Explorer panel', () => {
     const harness = makeHarness();
     const view = mount(harness);
     await addSampleWorld(view);
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
     await waitFor(() => expect(view.getByRole('button', { name: 'Add to video' })).toBeEnabled());
     harness.setPlayhead(4);
 
@@ -363,7 +456,8 @@ describe('World Explorer panel', () => {
       {
         op: 'clip.update',
         target: 'world-1',
-        payload: { mode: 'merge', from: 0, to: SAMPLE.duration, speed: 1, app: { liveScene: expect.any(Object) } },
+        // The stretch opens on the sample's first camera (Valley walk, 0-3), not the whole world.
+        payload: { mode: 'merge', from: 0, to: 3, speed: 1, app: { liveScene: expect.any(Object) } },
         order: 1,
       },
     ]);
@@ -375,6 +469,7 @@ describe('World Explorer panel', () => {
     const harness = makeHarness();
     const view = mount(harness);
     await addSampleWorld(view);
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
     await waitFor(() => expect(view.getByRole('button', { name: 'Add to video' })).toBeEnabled());
     harness.timeline.apply.mockImplementationOnce(() => {
       throw new Error('Track locked');
@@ -391,28 +486,30 @@ describe('World Explorer panel', () => {
   it('disables Add to video with the reason when the timeline has no project id', () => {
     const harness = makeHarness({ projectId: null, clips: [liveClip()] });
     const view = mount(harness);
-    pickOption(view, 'Scene 1 · 0:06 · 1 use');
+    fireEvent.click(view.getByRole('button', { name: 'Cameras' }));
     const add = view.getByRole('button', { name: 'Add to video' });
     expect(add).toBeDisabled();
     expect(add).toHaveAttribute('title', 'Open a timeline to add worlds to a video.');
     expect(view.getByText('Open a timeline to add worlds to a video.')).toBeTruthy();
   });
 
-  it('follows the single selected live-scene clip, and updates it with a single clip.update', async () => {
+  it('follows the single selected live-scene clip in Cameras, and updates it with a single clip.update', async () => {
     const harness = makeHarness({ clips: [liveClip()] });
     const view = mount(harness);
     harness.selectClip(['c1']);
 
     await waitFor(() => expect(view.getByText(/Stretch 0:01\.0 – 0:04\.0 · 3\.0 s at 1×/)).toBeTruthy());
+    expect(view.getByRole('button', { name: 'Cameras' })).toHaveAttribute('aria-pressed', 'true');
     expect(view.getByText(/Editing clip on V1 at 0:02/)).toBeTruthy();
     const update = view.getByRole('button', { name: 'Update clip' });
     expect(update).toBeDisabled();
 
     await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
     // The travel clock opens at the stretch start (1 s); two steps forward, then the end moves to 3.
-    fireEvent.keyDown(view.getByRole('group', { name: 'World viewer' }), { key: 'ArrowRight' });
-    fireEvent.keyDown(view.getByRole('group', { name: 'World viewer' }), { key: 'ArrowRight' });
-    fireEvent.keyDown(view.getByRole('group', { name: 'World viewer' }), { key: 'o' });
+    const travel = view.getByRole('group', { name: 'Camera travel' });
+    fireEvent.keyDown(travel, { key: 'ArrowRight' });
+    fireEvent.keyDown(travel, { key: 'ArrowRight' });
+    fireEvent.keyDown(travel, { key: 'o' });
     expect(view.getByText(/Stretch 0:01\.0 – 0:03\.0 · 2\.0 s at 1×/)).toBeTruthy();
     expect(view.getByRole('button', { name: 'Update clip' })).toBeEnabled();
 
@@ -437,7 +534,7 @@ describe('World Explorer panel', () => {
     const second = makeHarness({ projectId: 'p2', settings: shared });
     const viewB = mount(second);
     expect(viewB.getByText(/A world is a live 3D scene/)).toBeTruthy();
-    expect(viewB.queryByRole('combobox', { name: 'World' })).toBeNull();
+    expect(viewB.queryByRole('button', { name: 'Choose world' })).toBeNull();
     expect(shared.store.get('worldLibrary:p2')).toBeUndefined();
 
     fireEvent.click(viewB.getByRole('button', { name: 'Add Lantern Valley' }));
@@ -449,8 +546,8 @@ describe('World Explorer panel', () => {
     const harness = makeHarness();
     const view = mount(harness);
     await addSampleWorld(view);
-    sceneStatus({ phase: 'ready', sourceTime: 0 });
-    fireEvent.click(view.getByRole('button', { name: 'Play' }));
+    await readyWorld();
+    // Explore runs its world clock and free camera on every frame while the panel is visible.
     frames(2);
     expect(pending.size).toBe(1);
 
@@ -461,30 +558,30 @@ describe('World Explorer panel', () => {
     expect(scene.renders.length).toBe(renders);
   });
 
-  it('saves the stops a library scene reports, only when they differ, and shows them on the next visit', async () => {
+  it('saves the events and cameras a library scene reports, only when they differ, and shows them on the next visit', async () => {
     const harness = makeHarness();
     const view = mount(harness);
     await addSampleWorld(view);
     await waitFor(() => expect(harness.settings.store.get('worldLibrary:p1')).toHaveLength(1));
     const set = vi.spyOn(harness.settings, 'set');
 
-    act(() => scene.onReady!({ stops: [{ time: 0, name: 'Dawn' }, { time: 3, name: 'Lanterns' }] }));
+    act(() => scene.onReady!({ events: SAMPLE_WORLD.events, cameras: SAMPLE_WORLD.cameras, explore: EXPLORE }));
     expect(set).not.toHaveBeenCalled();
 
-    act(() => scene.onReady!({ stops: [{ time: 1, name: 'Bridge' }] }));
+    act(() => scene.onReady!({ events: [{ name: 'Bridge', start: 1 }], cameras: SAMPLE_WORLD.cameras, explore: EXPLORE }));
     expect(set).toHaveBeenCalledTimes(1);
     expect(harness.settings.store.get('worldLibrary:p1')).toEqual([
-      expect.objectContaining({ stops: [{ time: 1, name: 'Bridge' }] }),
+      expect.objectContaining({ events: [{ name: 'Bridge', start: 1 }], cameras: SAMPLE_WORLD.cameras }),
     ]);
     expect(view.getByRole('button', { name: 'Bridge 0:01' })).toBeTruthy();
     expect(view.queryByRole('button', { name: 'Dawn 0:00' })).toBeNull();
 
-    act(() => scene.onReady!({ stops: [{ time: 1, name: 'Bridge' }] }));
+    act(() => scene.onReady!({ events: [{ name: 'Bridge', start: 1 }], cameras: SAMPLE_WORLD.cameras, explore: EXPLORE }));
     expect(set).toHaveBeenCalledTimes(1);
 
     view.unmount();
+    // The library's last copy stands in until the scene reports again, and the default world is the one last viewed.
     const again = mount(harness);
-    fireEvent.click(again.getByRole('button', { name: /^Lantern Valley/ }));
     expect(again.getByRole('button', { name: 'Bridge 0:01' })).toBeTruthy();
     expect(again.queryByRole('button', { name: 'Dawn 0:00' })).toBeNull();
   });
@@ -500,25 +597,27 @@ describe('World Explorer panel', () => {
       name: 'Lantern Valley',
       duration: parsed.manifest.duration,
       authoredFps: parsed.manifest.authoredFps,
-      stops: [{ time: 0, name: 'Dawn' }],
+      events: [{ name: 'Dawn', start: 0 }],
+      cameras: [],
     };
     const spare = { ...lantern, objectId: 'sha256:spare', revision: 'sha256:spare', name: 'Spare' };
     const settings = makeSettings(new Map<string, unknown>([['worldLibrary:p1', [lantern, spare]]]));
     return { storage, settings, lantern, spare };
   }
 
-  it('removes a library world without changing a different selection', async () => {
+  it('removes a library world without changing the selected one', async () => {
     const { storage, settings, lantern } = await seededLibrary();
     const harness = makeHarness({ settings, storage });
     const view = mount(harness);
-    fireEvent.click(view.getByRole('button', { name: /^Lantern Valley/ }));
-    expect(view.getByRole('combobox', { name: 'World' })).toHaveValue(`${lantern.objectId}@${lantern.revision}`);
+    // The first library world opens by itself.
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
 
+    fireEvent.click(view.getByRole('button', { name: 'Choose world' }));
     fireEvent.click(view.getByRole('button', { name: 'Remove Spare from library' }));
 
     expect(settings.store.get('worldLibrary:p1')).toEqual([lantern]);
     expect(view.queryByRole('button', { name: 'Remove Spare from library' })).toBeNull();
-    expect(view.getByRole('combobox', { name: 'World' })).toHaveValue(`${lantern.objectId}@${lantern.revision}`);
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
     expect(view.queryByRole('button', { name: /^Spare/ })).toBeNull();
   });
 
@@ -526,18 +625,19 @@ describe('World Explorer panel', () => {
     const { storage, settings, lantern, spare } = await seededLibrary();
     const harness = makeHarness({ settings, storage });
     const view = mount(harness);
-    fireEvent.click(view.getByRole('button', { name: /^Lantern Valley/ }));
 
+    fireEvent.click(view.getByRole('button', { name: 'Choose world' }));
     fireEvent.click(view.getByRole('button', { name: 'Remove Lantern Valley from library' }));
 
     expect(settings.store.get('worldLibrary:p1')).toEqual([spare]);
-    expect(view.getByRole('combobox', { name: 'World' })).toHaveValue(`${spare.objectId}@${spare.revision}`);
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Spare');
 
+    fireEvent.click(view.getByRole('button', { name: 'Choose world' }));
     fireEvent.click(view.getByRole('button', { name: 'Remove Spare from library' }));
 
     expect(settings.store.get('worldLibrary:p1')).toEqual([]);
     expect(view.getByText(/A world is a live 3D scene/)).toBeTruthy();
-    expect(view.queryByRole('combobox', { name: 'World' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Choose world' })).toBeNull();
     expect(storage.objects.has(lantern.objectId)).toBe(true);
   });
 });

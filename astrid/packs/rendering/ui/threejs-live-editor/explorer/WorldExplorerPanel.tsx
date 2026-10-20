@@ -1,27 +1,43 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import type { ExtensionContext, PanelRenderProps, TimelineSnapshot } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../identity';
-import type { SceneStatus } from '../runtime';
+import type { SceneExplore, SceneInfo, SceneStatus } from '../runtime';
+import { defaultExploreSpeed, FreeCamera, type ViewPose } from './camera';
 import {
   addToLibrary,
+  camerasOrImplicit,
+  cameraIndexAt,
+  chooseDefaultWorld,
   clampStretch,
+  eventsInCamera,
+  exploreKey,
+  fitToBox,
   freeVisualTrack,
+  HINT_DISMISSED_KEY,
   keyAction,
+  lastWorldKey,
   newClipId,
   readLibrary,
   removeFromLibrary,
-  saveStops,
+  saveInfo,
   setStretchEnd,
   setStretchStart,
+  SHIFT_BOOST,
+  speedScaleLabel,
   stretchDuration,
   TravelClock,
+  wheelSpeedScale,
   worldKey,
   worldsFromSnapshot,
+  type CameraMove,
   type LibraryEntry,
-  type Stop,
   type Stretch,
-  type WorldUse,
+  type WorldEvent,
 } from './model';
+import { buildRows, rowFromEntry, type Row } from './rows';
+import { TimeBar, type BarMarker } from './TimeBar';
+import { button, chip, clockText, ERROR_STYLE, errorMessage, OVERLAY_STYLE, PILL_STYLE, select, speedLabel, VIEWER_STYLE } from './ui';
+import { WorldList } from './WorldList';
 
 type AuthoringModule = typeof import('../authoring');
 const loadAuthoring = (): Promise<AuthoringModule> => import('../authoring');
@@ -36,27 +52,21 @@ const SPEEDS = [0.5, 1, 2];
 const MIN_VIEW_WIDTH = 160;
 const FALLBACK_VIEW_WIDTH = 320;
 const FALLBACK_ASPECT = 16 / 9;
+/** At this container width the panel uses its side column (the popped-out layout). */
+const WIDE_REM = 44;
+const SIDE_COLUMN = '15rem';
+const VIEW_FOV = 60;
+/** Radians of turn per dragged pixel. */
+const LOOK_PER_PIXEL = 0.0035;
+/** Touch pans and pinches move this many seconds of travel per 120 px. */
+const TOUCH_PIXELS_PER_SECOND = 120;
+const HINT_TEXT = 'Drag to look · WASD to move · Scroll for speed';
 
-// Same control chrome as the Transcript panel; pack TSX sits outside the app's Tailwind scan.
-const button = 'min-h-10 sm:min-h-8 rounded-md px-2 text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
-const select = 'min-h-10 sm:min-h-8 min-w-0 max-w-full rounded-md border border-border/70 bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
-const VIEWER_STYLE = { background: '#05060f' } as const;
-const OVERLAY_STYLE = { background: 'rgba(5, 6, 15, 0.92)', color: 'rgba(255, 255, 255, 0.72)' } as const;
-const ERROR_STYLE = { color: 'hsl(var(--destructive))' } as const;
+type Mode = 'explore' | 'cameras';
+type Frame = { time: number; worldTime?: number; view?: ViewPose };
+type Declared = { key: string; events: WorldEvent[]; cameras: CameraMove[]; explore: SceneExplore | null };
 
-/** m:ss, or m:ss.s with one decimal. Rounds on the displayed unit so 59.96 never reads 0:60.0. */
-function clockText(seconds: number, decimals = 0): string {
-  const unit = decimals ? 10 : 1;
-  const ticks = Math.max(0, Math.round((Number.isFinite(seconds) ? seconds : 0) * unit));
-  const minutes = Math.floor(ticks / (60 * unit));
-  const rest = ticks - minutes * 60 * unit;
-  const whole = String(Math.floor(rest / unit)).padStart(2, '0');
-  return `${minutes}:${whole}${decimals ? `.${rest % unit}` : ''}`;
-}
-
-const speedLabel = (speed: number) => `${speed}×`;
 const percent = (time: number, duration: number) => `${duration > 0 ? Math.min(Math.max(time / duration, 0), 1) * 100 : 0}%`;
-const errorMessage = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause));
 
 function aspectOf(resolution: string | undefined): number {
   const match = /^(\d+)x(\d+)$/.exec(resolution ?? '');
@@ -82,94 +92,90 @@ function reportError(ctx: ExtensionContext, code: string, message: string) {
   }
 }
 
-/** One world the explorer can open: from the timeline, or from the project library. */
-type Row = {
-  readonly key: string;
-  readonly name: string;
-  readonly duration: number;
-  readonly objectId: string;
-  readonly revision: string;
-  readonly uses: readonly WorldUse[];
-  readonly stops: readonly Stop[];
-  /** Present for timeline worlds, whose package already rides on their clips. */
-  readonly liveScene?: Record<string, unknown>;
-};
-
-function rowFromEntry(entry: LibraryEntry): Row {
-  return {
-    key: worldKey(entry),
-    name: entry.name,
-    duration: entry.duration,
-    objectId: entry.objectId,
-    revision: entry.revision,
-    uses: [],
-    stops: entry.stops,
-  };
+function readSetting<T>(ctx: ExtensionContext, key: string): T | undefined {
+  try {
+    return ctx.services.settings.get(key) as T | undefined;
+  } catch {
+    return undefined;
+  }
 }
 
-/** Timeline worlds first (named from the library when saved, else "Scene N"), then library-only worlds. */
-function buildRows(snapshot: TimelineSnapshot | undefined, library: readonly LibraryEntry[]): { timeline: Row[]; library: Row[] } {
-  const worlds = snapshot ? worldsFromSnapshot(snapshot) : [];
-  const saved = new Map(library.map((entry) => [worldKey(entry), entry] as const));
-  const onTimeline = new Set(worlds.map(worldKey));
-  const timeline = worlds.map((world, index): Row => {
-    const entry = saved.get(worldKey(world));
-    return {
-      key: worldKey(world),
-      name: entry?.name ?? `Scene ${index + 1}`,
-      duration: world.duration,
-      objectId: world.objectId,
-      revision: world.revision,
-      uses: world.uses,
-      stops: entry?.stops ?? [],
-      liveScene: world.liveScene,
-    };
-  });
-  return { timeline, library: library.filter((entry) => !onTimeline.has(worldKey(entry))).map(rowFromEntry) };
+function writeSetting(ctx: ExtensionContext, key: string, value: unknown) {
+  try {
+    ctx.services.settings.set(key, value);
+  } catch {
+    // Remembering is a convenience; never fail the panel over it.
+  }
 }
 
 export function WorldExplorerPanel(props: PanelRenderProps & { context: ExtensionContext }) {
-  const { context: ctx, video, visible } = props;
+  const { context: ctx, video, visible, popout } = props;
   const storage = ctx.creative.projectObjects;
 
   const [snap, setSnap] = useState<TimelineSnapshot | undefined>(() => readSnapshot(ctx));
   const projectId = snap?.projectId ?? null;
-  const [library, setLibrary] = useState<LibraryEntry[]>([]);
+  const [library, setLibrary] = useState<LibraryEntry[]>(() => readLibrary(ctx.services.settings, snap?.projectId ?? null));
   const [selected, setSelected] = useState<Row | null>(null);
   const [loaded, setLoaded] = useState<{ key: string; liveScene: Record<string, unknown> } | null>(null);
   const [loadError, setLoadError] = useState<{ key: string; message: string } | null>(null);
-  const [sceneReady, setSceneReady] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const [sceneError, setSceneError] = useState<string | null>(null);
-  const [reported, setReported] = useState<{ key: string; stops: Stop[] } | null>(null);
+  const [declared, setDeclared] = useState<Declared | null>(null);
+  const [modeChoice, setModeChoice] = useState<Mode>('explore');
+  const [frame, setFrame] = useState<Frame>({ time: 0 });
+  const [worldTime, setWorldTime] = useState(0);
+  const [worldPaused, setWorldPaused] = useState(false);
+  const [speedScale, setSpeedScale] = useState(1);
+  const [hintDismissed, setHintDismissed] = useState(() => readSetting<boolean>(ctx, HINT_DISMISSED_KEY) === true);
+  const [cameraIndex, setCameraIndex] = useState(0);
   const [stretch, setStretch] = useState<Stretch>({ from: 0, to: 1, speed: 1 });
   const [loop, setLoop] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [shownTime, setShownTime] = useState(0);
-  const [renderTime, setRenderTime] = useState(0);
   const [followedClipId, setFollowedClipId] = useState<string | null>(null);
   const [liveClipId, setLiveClipId] = useState<string | null>(null);
-  const [viewWidth, setViewWidth] = useState(FALLBACK_VIEW_WIDTH);
+  const [stage, setStage] = useState({ width: 0, height: 0 });
+  const [rootWidth, setRootWidth] = useState(0);
+  const [listOpen, setListOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'error' | 'info'; text: string } | null>(null);
 
-  const clockRef = useRef<TravelClock | null>(null);
+  // World time (Explore) and travel time (Cameras) are separate clocks over the same world.
+  const worldClock = useRef<TravelClock | null>(null);
+  const travelClock = useRef<TravelClock | null>(null);
+  const roam = useRef<FreeCamera | null>(null);
+  const baseSpeed = useRef(1);
+  const scaleRef = useRef(1);
+  const shiftRef = useRef(false);
+  const heldKeys = useRef(new Set<string>());
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
   // Frames are back-pressured: at most one render in flight, and only after the scene reported ready.
   const readyRef = useRef(false);
-  const sentRef = useRef(0);
+  const inFlight = useRef(false);
+  const sentKey = useRef('');
+  const exploreRef = useRef<SceneExplore | null | undefined>(undefined);
+  const modeRef = useRef<Mode>('explore');
+  const revealedRef = useRef(false);
+  const camerasRef = useRef<CameraMove[]>([]);
+  const cameraIndexRef = useRef(0);
+  const focusTime = useRef<number | null>(null);
   const openRequest = useRef(0);
   const mounted = useRef(false);
+  const rootRef = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
   const importInput = useRef<HTMLInputElement>(null);
-  const scrubbing = useRef(false);
   const seenClipRef = useRef<string | null | undefined>(undefined);
   const liveClipRef = useRef<string | null>(null);
+  const projectRef = useRef<string | null | undefined>(undefined);
+  const hintRef = useRef(hintDismissed);
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
-      clockRef.current = null;
+      worldClock.current = null;
+      travelClock.current = null;
     };
   }, []);
 
@@ -222,24 +228,32 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     };
   }, [visible, ctx, video]);
 
-  // Stop travelling when the panel is hidden.
+  // Stop everything when the panel is hidden.
   useEffect(() => {
     if (visible) return;
-    clockRef.current?.pause();
+    heldKeys.current.clear();
+    pointers.current.clear();
+    travelClock.current?.pause();
     setPlaying(false);
   }, [visible]);
 
   const rows = useMemo(() => buildRows(snap, library), [snap, library]);
-  const allRows = [...rows.timeline, ...rows.library];
+  const allRows = useMemo(() => [...rows.timeline, ...rows.library], [rows]);
   const duration = selected?.duration ?? 0;
   const aspect = aspectOf(snap?.outputMetadata?.resolution);
-  const viewHeight = Math.round(viewWidth / aspect);
   const liveScene = loaded && selected && loaded.key === selected.key ? loaded.liveScene : undefined;
-  const ready = Boolean(liveScene) && sceneReady && !sceneError;
-  // A scene's reported stops win, even when empty: they are what the library keeps for it.
-  const stops = selected
-    ? (reported?.key === selected.key ? reported.stops : selected.stops)
-    : [];
+  const info = selected && declared?.key === selected.key ? declared : null;
+  // What the scene reported wins, even when empty; before it loads, the library's saved copy stands in.
+  const events = selected ? (info ? info.events : [...selected.events]) : [];
+  const cameras = useMemo(
+    () => camerasOrImplicit(selected ? (info ? info.cameras : selected.cameras) : [], duration),
+    [selected, info, duration],
+  );
+  const camera = cameras[Math.min(cameraIndex, cameras.length - 1)];
+  // undefined until the scene reports; null when it declared no (valid) explore.
+  const explore = info ? info.explore : undefined;
+  const mode: Mode = explore === null ? 'cameras' : modeChoice;
+  const ready = Boolean(liveScene) && revealed && !sceneError;
   const sampleSaved = library.some((entry) => entry.name === SAMPLE_LABEL);
   const projectReady = Boolean(snap?.projectId && snap?.timelineId);
   const followedUse = followedClipId ? rows.timeline.flatMap((row) => row.uses).find((use) => use.clipId === followedClipId) : undefined;
@@ -254,43 +268,117 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     : !stretchValid ? 'The stretch is empty.'
     : null;
   const speedOptions = [...new Set([...SPEEDS, stretch.speed])].sort((a, b) => a - b);
+  const cameraEvents = useMemo(() => (camera ? eventsInCamera(events, camera) : []), [events, camera]);
+  const eventMarkers: BarMarker[] = events.map((event, i) => ({
+    key: `${i}:${event.start}:${event.name}`, from: event.start, to: event.end ?? event.start, title: event.name,
+  }));
+  const cameraMarkers: BarMarker[] = cameraEvents.map(({ event, from, to }, i) => ({
+    key: `${i}:${event.start}:${event.name}`, from, to: event.end === undefined ? from : to, title: event.name,
+  }));
 
-  // Measure the viewer so the scene renders at panel width; jsdom and hidden hosts keep the fallback.
+  // The viewer is a free box in the side layout and a full-width strip when docked.
+  const wide = rootWidth >= WIDE_REM * 16;
+  const viewSize = useMemo(() => {
+    if (wide) {
+      const fitted = fitToBox(stage.width, stage.height, aspect);
+      if (fitted.width > 0) return fitted;
+    }
+    const width = stage.width > 0 ? Math.max(MIN_VIEW_WIDTH, stage.width) : FALLBACK_VIEW_WIDTH;
+    return { width, height: Math.round(width / aspect) };
+  }, [wide, stage.width, stage.height, aspect]);
+
+  // Measure the panel (layout switch) and the stage (viewer fit) in both dimensions; jsdom and hidden hosts keep the fallback.
   useEffect(() => {
-    const element = viewerRef.current;
-    if (!element) return;
+    const root = rootRef.current;
+    const element = stageRef.current;
+    if (!root || !element) return;
     const measure = () => {
+      setRootWidth(Math.floor(root.clientWidth));
       const width = Math.floor(element.clientWidth);
-      if (width > 0) setViewWidth(Math.max(MIN_VIEW_WIDTH, width));
+      const height = Math.floor(element.clientHeight);
+      setStage((current) => (current.width === width && current.height === height ? current : { width, height }));
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
+    observer.observe(root);
     observer.observe(element);
     return () => observer.disconnect();
+  }, [wide]);
+
+  // The wheel changes speed. React wheel listeners are passive, so attach one that may preventDefault.
+  useEffect(() => {
+    const element = viewerRef.current;
+    if (!element) return;
+    const onWheel = (event: WheelEvent) => {
+      if (effectiveMode() !== 'explore' || !roam.current) return;
+      event.preventDefault();
+      const next = wheelSpeedScale(scaleRef.current, event.deltaY);
+      if (next === scaleRef.current) return;
+      scaleRef.current = next;
+      setSpeedScale(next);
+      dismissHint();
+    };
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
   }, []);
 
-  // Playback loop: only while visible and playing. Each frame advances the clock and offers the next frame.
+  function effectiveMode(): Mode {
+    return exploreRef.current === null ? 'cameras' : modeRef.current;
+  }
+
+  // Frame loop: only while visible with a world loaded. Advances world time, moves the free camera, offers the next frame.
   useEffect(() => {
-    if (!visible || !playing) return;
-    let frame = 0;
+    if (!visible || !liveScene) return;
+    let handle = 0;
+    let last = performance.now();
     const step = () => {
-      const clock = clockRef.current;
-      if (!clock) return;
-      clock.tick(performance.now());
-      setShownTime(clock.time);
-      if (!clock.playing) {
-        setPlaying(false);
-        return;
+      const now = performance.now();
+      const dt = Math.max(0, (now - last) / 1000);
+      last = now;
+      if (effectiveMode() === 'explore') {
+        const world = worldClock.current;
+        if (world) {
+          world.tick(now);
+          setWorldTime(world.time);
+        }
+        const held = heldKeys.current;
+        const view = roam.current;
+        if (view && held.size) {
+          const axis = (plus: string, minus: string) => (held.has(plus) ? 1 : 0) - (held.has(minus) ? 1 : 0);
+          view.move(
+            { forward: axis('forward+', 'forward-'), right: axis('right+', 'right-'), up: axis('up+', 'up-') },
+            baseSpeed.current * scaleRef.current * (shiftRef.current ? SHIFT_BOOST : 1),
+            dt,
+          );
+        }
+      } else {
+        const travel = travelClock.current;
+        if (travel?.playing) {
+          travel.tick(now);
+          setShownTime(travel.time);
+          if (!travel.playing) setPlaying(false);
+        }
       }
       pump();
-      frame = requestAnimationFrame(step);
+      handle = requestAnimationFrame(step);
     };
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
-  }, [visible, playing]);
+    handle = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(handle);
+  }, [visible, liveScene]);
 
-  // Follow the single selected live-scene clip: open its world with its stretch.
+  // Open the default world: the last one viewed in this project, else the first in the video, else the first in the library.
+  useEffect(() => {
+    if (projectRef.current !== undefined && projectRef.current !== projectId) clearWorld();
+    projectRef.current = projectId;
+  }, [projectId]);
+  useEffect(() => {
+    if (!visible || selected || liveClipId || allRows.length === 0) return;
+    const row = chooseDefaultWorld(rows.timeline, rows.library, readSetting<string>(ctx, lastWorldKey(projectId)));
+    if (row) openWorld(row);
+  }, [visible, selected, liveClipId, allRows.length, projectId]);
+
+  // Follow the single selected live-scene clip: open its world in Cameras mode with its stretch.
   useEffect(() => {
     if (!liveClipId) return;
     const snapshot = readSnapshot(ctx);
@@ -299,33 +387,53 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     const use = world?.uses.find((candidate) => candidate.clipId === liveClipId);
     const row = world ? buildRows(snapshot, readLibrary(settings, snapshot.projectId)).timeline.find((candidate) => candidate.key === worldKey(world)) : undefined;
     if (!row || !use) return;
-    openWorld(row, { stretch: { from: use.from, to: use.to, speed: use.speed }, clipId: liveClipId });
+    openWorld(row, { stretch: { from: use.from, to: use.to, speed: use.speed }, clipId: liveClipId, mode: 'cameras' });
   }, [liveClipId]);
 
-  /** Sends the latest clock time to the scene, at most one frame in flight. Reads refs only. */
+  /** Sends the newest time and view to the scene, at most one frame in flight. Reads refs only. */
   function pump() {
-    const clock = clockRef.current;
-    if (!clock || !readyRef.current) return;
-    const time = clock.next();
-    if (time === undefined) return;
-    if (time === sentRef.current) {
-      clock.ack(time);
-      return;
-    }
-    sentRef.current = time;
-    setRenderTime(time);
+    if (!readyRef.current || inFlight.current) return;
+    const mode = effectiveMode();
+    const clock = mode === 'explore' ? worldClock.current : travelClock.current;
+    if (!clock) return;
+    const view = mode === 'explore' ? roam.current : null;
+    const key = `${mode}|${clock.time}|${view ? view.version : -1}`;
+    if (key === sentKey.current) return;
+    sentKey.current = key;
+    inFlight.current = true;
+    setFrame(view ? { time: clock.time, worldTime: clock.time, view: view.pose(VIEW_FOV) } : { time: clock.time });
   }
 
-  function seekTo(time: number) {
-    const clock = clockRef.current;
+  function seekWorld(time: number) {
+    const clock = worldClock.current;
+    if (!clock) return;
+    clock.seek(time);
+    setWorldTime(clock.time);
+    pump();
+  }
+
+  function seekTravel(time: number) {
+    const clock = travelClock.current;
     if (!clock) return;
     clock.seek(time);
     setShownTime(clock.time);
     pump();
   }
 
-  function togglePlay() {
-    const clock = clockRef.current;
+  function toggleWorldPause() {
+    const clock = worldClock.current;
+    if (!clock) return;
+    if (clock.playing) {
+      clock.pause();
+      setWorldPaused(true);
+    } else {
+      clock.play();
+      setWorldPaused(false);
+    }
+  }
+
+  function toggleTravel() {
+    const clock = travelClock.current;
     if (!clock || !readyRef.current) return;
     if (clock.playing) {
       clock.pause();
@@ -336,29 +444,96 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     }
   }
 
-  function openWorld(row: Row, options: { stretch?: Stretch; clipId?: string | null } = {}) {
+  function dismissHint() {
+    if (hintRef.current) return;
+    hintRef.current = true;
+    setHintDismissed(true);
+    writeSetting(ctx, HINT_DISMISSED_KEY, true);
+  }
+
+  /** Confines Cameras-mode travel to one camera and rests at its start (or the given time). */
+  function enterCamera(index: number, at?: number) {
+    const move = camerasRef.current[index];
+    const travel = travelClock.current;
+    if (!move || !travel) return;
+    cameraIndexRef.current = index;
+    setCameraIndex(index);
+    travel.setWindow(move.start, move.end);
+    travel.seek(at ?? move.start);
+    travel.pause();
+    setPlaying(false);
+    setShownTime(travel.time);
+  }
+
+  function selectCamera(index: number, at?: number) {
+    const move = cameras[index];
+    if (!move) return;
+    enterCamera(index, at);
+    setStretch((current) => ({ from: move.start, to: move.end, speed: current.speed }));
+    setFollowedClipId(null);
+    pump();
+  }
+
+  function switchMode(next: Mode) {
+    modeRef.current = next;
+    setModeChoice(next);
+    if (next === 'cameras') {
+      const move = camerasRef.current[cameraIndexRef.current];
+      const travel = travelClock.current;
+      if (move && travel) travel.setWindow(move.start, move.end);
+      travel?.pause();
+      setPlaying(false);
+      setShownTime(travel?.time ?? 0);
+    }
+    pump();
+  }
+
+  function openWorld(row: Row, options: { stretch?: Stretch; clipId?: string | null; mode?: Mode } = {}) {
     const token = ++openRequest.current;
-    const next = clampStretch(options.stretch ?? { from: 0, to: row.duration, speed: 1 }, row.duration);
-    const clock = new TravelClock({ duration: row.duration, loop });
-    clock.setSpeed(next.speed);
+    const known = camerasOrImplicit(row.cameras, row.duration);
+    const index = options.stretch ? cameraIndexAt(known, options.stretch.from) : 0;
+    const next = clampStretch(options.stretch ?? { from: known[index].start, to: known[index].end, speed: 1 }, row.duration);
+    const world = new TravelClock({ duration: row.duration, loop: true });
+    world.play();
+    const travel = new TravelClock({ duration: row.duration, loop });
+    travel.setWindow(known[index].start, known[index].end);
+    travel.setSpeed(next.speed);
     // A followed clip opens at the start of its stretch.
-    const start = options.stretch ? next.from : 0;
-    clock.seek(start);
-    clockRef.current = clock;
+    travel.seek(next.from);
+    const startMode = options.mode ?? 'explore';
+    worldClock.current = world;
+    travelClock.current = travel;
+    roam.current = null;
+    exploreRef.current = undefined;
+    modeRef.current = startMode;
+    camerasRef.current = known;
+    cameraIndexRef.current = index;
+    focusTime.current = options.stretch ? options.stretch.from : null;
+    heldKeys.current.clear();
+    pointers.current.clear();
     readyRef.current = false;
-    sentRef.current = start;
+    inFlight.current = false;
+    revealedRef.current = false;
+    const first = startMode === 'explore' ? world : travel;
+    sentKey.current = `${startMode}|${first.time}|-1`;
     setSelected(row);
     setFollowedClipId(options.clipId ?? null);
+    setModeChoice(startMode);
+    setCameraIndex(index);
     setStretch(next);
     setLoaded(null);
     setLoadError(null);
-    setSceneReady(false);
+    setRevealed(false);
     setSceneError(null);
-    setReported(null);
-    setRenderTime(start);
-    setShownTime(start);
+    setDeclared(null);
+    setFrame({ time: first.time });
+    setWorldTime(0);
+    setWorldPaused(false);
+    setShownTime(travel.time);
     setPlaying(false);
+    setListOpen(false);
     setNotice(null);
+    writeSetting(ctx, lastWorldKey(projectId), row.key);
     if (row.liveScene) {
       setLoaded({ key: row.key, liveScene: row.liveScene });
       return;
@@ -381,27 +556,58 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   }
 
   function handleStatus(status: SceneStatus) {
-    const clock = clockRef.current;
     if (status.phase === 'ready') {
       readyRef.current = true;
-      setSceneReady(true);
+      inFlight.current = false;
       setSceneError(null);
-      clock?.ack(status.sourceTime ?? clock.time);
+      // Reveal once the scene has drawn what the user will see first: the free view, or the camera.
+      const declaredExplore = exploreRef.current;
+      if (!revealedRef.current && declaredExplore !== undefined
+        && (declaredExplore === null || status.view !== undefined || modeRef.current === 'cameras')) {
+        revealedRef.current = true;
+        setRevealed(true);
+      }
       pump();
     } else if (status.phase === 'error') {
       readyRef.current = false;
+      inFlight.current = false;
       setSceneError(status.error ?? 'The scene could not start.');
-      clock?.fail();
+      travelClock.current?.fail();
       setPlaying(false);
     }
   }
 
-  function handleReady(info: { stops: ReadonlyArray<{ time: number; name: string }> }) {
+  function handleReady(reported: SceneInfo) {
     if (!selected) return;
-    const reportedStops = info.stops.map((stop) => ({ time: stop.time, name: stop.name }));
-    setReported({ key: selected.key, stops: reportedStops });
-    // A library world keeps its reported stops, so the next visit shows them before the scene loads.
-    if (saveStops(settings, projectId, selected.key, reportedStops)) setLibrary(readLibrary(settings, projectId));
+    const events = reported.events.map((event) => ({ ...event }));
+    const reportedCameras = reported.cameras.map((move) => ({ ...move }));
+    setDeclared({ key: selected.key, events, cameras: reportedCameras, explore: reported.explore });
+    // A library world keeps what its scene reported, so the next visit shows it before the scene loads.
+    if (saveInfo(settings, projectId, selected.key, { events, cameras: reportedCameras })) setLibrary(readLibrary(settings, projectId));
+    exploreRef.current = reported.explore;
+    if (reported.explore) {
+      roam.current = new FreeCamera(reported.explore.start, reported.explore.bounds);
+      baseSpeed.current = reported.explore.speed ?? defaultExploreSpeed(reported.explore.bounds);
+    } else {
+      roam.current = null;
+    }
+    // The scene's own cameras replace the library's copy; a followed clip picks the one holding its start.
+    const next = camerasOrImplicit(reportedCameras, selected.duration);
+    camerasRef.current = next;
+    const followed = focusTime.current !== null;
+    const index = followed ? cameraIndexAt(next, focusTime.current!) : 0;
+    cameraIndexRef.current = index;
+    setCameraIndex(index);
+    const travel = travelClock.current;
+    if (travel) {
+      travel.setWindow(next[index].start, next[index].end);
+      if (!followed) {
+        travel.seek(next[index].start);
+        setShownTime(travel.time);
+        setStretch((current) => ({ from: next[index].start, to: next[index].end, speed: current.speed }));
+      }
+    }
+    if (exploreRef.current === null && modeRef.current === 'explore') modeRef.current = 'cameras';
   }
 
   function pick(key: string) {
@@ -409,19 +615,30 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     if (row) openWorld(row);
   }
 
+  function stepWorld(direction: 1 | -1) {
+    if (allRows.length < 2) return;
+    const index = allRows.findIndex((candidate) => candidate.key === selected?.key);
+    openWorld(allRows[(index + direction + allRows.length) % allRows.length]);
+  }
+
   /** Clears the viewer when no world is left to show. */
   function clearWorld() {
     openRequest.current++;
-    clockRef.current = null;
+    worldClock.current = null;
+    travelClock.current = null;
+    roam.current = null;
+    exploreRef.current = undefined;
     readyRef.current = false;
+    inFlight.current = false;
     setSelected(null);
     setFollowedClipId(null);
     setLoaded(null);
     setLoadError(null);
-    setSceneReady(false);
+    setRevealed(false);
     setSceneError(null);
-    setReported(null);
-    setRenderTime(0);
+    setDeclared(null);
+    setFrame({ time: 0 });
+    setWorldTime(0);
     setShownTime(0);
     setPlaying(false);
     setNotice(null);
@@ -440,62 +657,107 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   }
 
   function changeSpeed(speed: number) {
-    clockRef.current?.setSpeed(speed);
+    travelClock.current?.setSpeed(speed);
     setStretch((current) => ({ ...current, speed }));
   }
 
   function toggleLoop(next: boolean) {
     setLoop(next);
-    clockRef.current?.setLoop(next);
+    travelClock.current?.setLoop(next);
   }
 
   function setStartHere() {
-    const clock = clockRef.current;
+    const clock = travelClock.current;
     if (!clock || !selected) return;
     setStretch((current) => setStretchStart(current, clock.time, selected.duration));
   }
 
   function setEndHere() {
-    const clock = clockRef.current;
+    const clock = travelClock.current;
     if (!clock || !selected) return;
     setStretch((current) => setStretchEnd(current, clock.time, selected.duration));
   }
 
-  function timeAt(clientX: number): number {
-    const bar = barRef.current;
-    if (!bar || !selected) return 0;
-    const rect = bar.getBoundingClientRect();
-    const fraction = rect.width > 0 ? Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1) : 0;
-    return fraction * selected.duration;
+  function resetView() {
+    roam.current?.reset();
+    pump();
   }
 
-  function onBarDown(event: PointerEvent<HTMLDivElement>) {
-    if (!selected) return;
+  // ---- Free roam input: keys act only while the viewer has focus; Esc is never consumed.
+
+  function onViewerKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    shiftRef.current = event.shiftKey;
+    if (event.target !== event.currentTarget || effectiveMode() !== 'explore' || !roam.current) return;
+    const action = exploreKey(event);
+    if (!action) return;
+    event.preventDefault();
+    dismissHint();
+    if (action.type === 'move') heldKeys.current.add(`${action.axis}${action.sign > 0 ? '+' : '-'}`);
+    else if (action.type === 'reset') resetView();
+    else toggleWorldPause();
+  }
+
+  function onViewerKeyUp(event: KeyboardEvent<HTMLDivElement>) {
+    shiftRef.current = event.shiftKey;
+    const action = exploreKey(event);
+    if (action?.type === 'move') heldKeys.current.delete(`${action.axis}${action.sign > 0 ? '+' : '-'}`);
+  }
+
+  function onViewerBlur() {
+    heldKeys.current.clear();
+    shiftRef.current = false;
+    pointers.current.clear();
+  }
+
+  function onViewerPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest?.('button')) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.currentTarget.focus();
+    if (effectiveMode() !== 'explore' || !roam.current) return;
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    scrubbing.current = true;
-    seekTo(timeAt(event.clientX));
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    dismissHint();
   }
 
-  function onBarMove(event: PointerEvent<HTMLDivElement>) {
-    if (scrubbing.current) seekTo(timeAt(event.clientX));
+  function onViewerPointerMove(event: PointerEvent<HTMLDivElement>) {
+    const previous = pointers.current.get(event.pointerId);
+    const view = roam.current;
+    if (!previous || !view) return;
+    const x = event.clientX;
+    const y = event.clientY;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (pointers.current.size === 1) {
+      // One pointer looks: dragging right turns the view right, dragging down looks down.
+      view.look(-(x - previous.x) * LOOK_PER_PIXEL, -(y - previous.y) * LOOK_PER_PIXEL);
+    } else if (pointers.current.size === 2) {
+      const other = [...pointers.current.entries()].find(([id]) => id !== event.pointerId)?.[1];
+      if (other) {
+        // Two fingers move: the pair's drag pans (the world follows the fingers), spreading them moves forward.
+        const unit = (baseSpeed.current * scaleRef.current) / TOUCH_PIXELS_PER_SECOND;
+        const before = { x: (previous.x + other.x) / 2, y: (previous.y + other.y) / 2, d: Math.hypot(previous.x - other.x, previous.y - other.y) };
+        const after = { x: (x + other.x) / 2, y: (y + other.y) / 2, d: Math.hypot(x - other.x, y - other.y) };
+        view.translate(-(after.x - before.x) * unit, (after.y - before.y) * unit, (after.d - before.d) * unit);
+      }
+    }
+    pointers.current.set(event.pointerId, { x, y });
   }
 
-  function onBarUp(event: PointerEvent<HTMLDivElement>) {
-    scrubbing.current = false;
+  function onViewerPointerUp(event: PointerEvent<HTMLDivElement>) {
+    pointers.current.delete(event.pointerId);
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   }
 
-  function onGroupKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+  function onTravelKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     // Controls keep their own keys (Space on a button clicks it; typing in a select stays put).
     const target = event.target as HTMLElement;
     if (target.closest?.('input, select, textarea, button')) return;
-    const clock = clockRef.current;
+    const clock = travelClock.current;
     if (!clock || !selected) return;
     const action = keyAction(event, { time: clock.time, duration: selected.duration });
     if (!action) return;
     event.preventDefault();
-    if (action.type === 'toggle') togglePlay();
-    else if (action.type === 'seek') seekTo(action.time);
+    if (action.type === 'toggle') toggleTravel();
+    else if (action.type === 'seek') seekTravel(Math.min(Math.max(action.time, clock.windowStart), clock.windowEnd));
     else if (action.type === 'setStart') setStartHere();
     else setEndHere();
   }
@@ -523,7 +785,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         name,
         duration: parsed.manifest.duration,
         authoredFps: parsed.manifest.authoredFps,
-        stops: [],
+        events: [],
+        cameras: [],
       };
       setLibrary(addToLibrary(settings, projectId, entry));
       openWorld(rowFromEntry(entry));
@@ -557,7 +820,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         name: sample.name,
         duration: parsed.manifest.duration,
         authoredFps: parsed.manifest.authoredFps,
-        stops: sample.stops.map((stop) => ({ time: stop.time, name: stop.name })),
+        events: sample.events.map((event) => ({ ...event })),
+        cameras: sample.cameras.map((move) => ({ ...move })),
       };
       // The same package already in the library is just selected, not saved twice.
       const existing = readLibrary(settings, projectId).find((candidate) => worldKey(candidate) === worldKey(entry));
@@ -631,264 +895,421 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     }
   }
 
-  const overlayText = sceneError ?? loadError?.message ?? (selected ? 'Opening world…' : 'Choose a world to travel through.');
+  const overlayText = sceneError ?? loadError?.message ?? (selected ? 'Opening world…' : 'Choose a world to explore.');
   const overlayIsError = Boolean(sceneError || (loadError && loadError.key === selected?.key));
   const showOverlay = !ready;
+  const selectedIndex = allRows.findIndex((candidate) => candidate.key === selected?.key);
+  const exploring = mode === 'explore' && ready && Boolean(explore);
+  const showHint = exploring && !hintDismissed;
+  const canExpand = Boolean(popout) && !popout!.open;
 
-  const optionLabel = (row: Row) => `${row.name} · ${clockText(row.duration)}${row.uses.length ? ` · ${row.uses.length} use${row.uses.length === 1 ? '' : 's'}` : ''}`;
+  const importControl = (
+    <input
+      ref={importInput}
+      className="sr-only"
+      tabIndex={-1}
+      type="file"
+      aria-label="Import world file"
+      accept=".json,application/json"
+      onChange={(event) => { void importFile(event); }}
+    />
+  );
+  const list = (
+    <WorldList
+      timeline={rows.timeline}
+      library={rows.library}
+      selectedKey={selected?.key}
+      sampleLabel={SAMPLE_LABEL}
+      offerSample={!sampleSaved}
+      busy={busy}
+      onPick={pick}
+      onRemove={removeWorld}
+      onAddSample={() => { void addSample(); }}
+      onImport={() => importInput.current?.click()}
+    />
+  );
+
+  const modeToggle = (
+    <div role="group" aria-label="Mode" className="inline-flex shrink-0 rounded-md border border-border/70 p-0.5">
+      {(['explore', 'cameras'] as const).map((value) => {
+        const active = mode === value;
+        const unavailable = value === 'explore' && explore === null;
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={active}
+            disabled={!selected || unavailable}
+            title={unavailable ? 'This world is not explorable yet' : undefined}
+            className="min-h-9 rounded px-3 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:min-h-7"
+            style={active ? { background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))' } : undefined}
+            onClick={() => switchMode(value)}
+          >
+            {value === 'explore' ? 'Explore' : 'Cameras'}
+          </button>
+        );
+      })}
+    </div>
+  );
+  const notExplorable = explore === null ? (
+    <p className="text-[11px] text-muted-foreground">This world isn&apos;t explorable yet: it was made before worlds were required to be.</p>
+  ) : null;
+
+  const eventButtons = (
+    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Events">
+      {events.map((event, i) => (
+        <button
+          key={`${i}:${event.start}:${event.name}`}
+          type="button"
+          className={chip}
+          disabled={!ready}
+          title={event.end === undefined ? `At ${clockText(event.start, 1)}` : `${clockText(event.start, 1)} – ${clockText(event.end, 1)}`}
+          onClick={() => seekWorld(event.start)}
+        >
+          {event.name} <span className="tabular-nums text-muted-foreground">{clockText(event.start)}</span>
+        </button>
+      ))}
+    </div>
+  );
+  const cameraEventButtons = (
+    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Camera events">
+      {cameraEvents.map(({ event, from }, i) => (
+        <button
+          key={`${i}:${event.start}:${event.name}`}
+          type="button"
+          className={chip}
+          disabled={!ready}
+          onClick={() => seekTravel(from)}
+        >
+          {event.name} <span className="tabular-nums text-muted-foreground">{clockText(from)}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  // Side column: what lives beside the viewer when there is room.
+  const sideColumn = (
+    <aside
+      aria-label="Worlds and cameras"
+      className="flex min-h-0 shrink-0 flex-col gap-3 overflow-y-auto border-r border-border/70 p-3"
+      style={{ width: SIDE_COLUMN }}
+    >
+      {list}
+      <div className="flex flex-col gap-2 border-t border-border/70 pt-3">
+        {modeToggle}
+        {notExplorable}
+        {mode === 'explore' ? (
+          events.length ? (
+            <>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Events</p>
+              {eventButtons}
+            </>
+          ) : null
+        ) : (
+          <ul aria-label="Cameras" className="flex flex-col gap-1">
+            {cameras.map((move, i) => {
+              const covered = eventsInCamera(events, move);
+              return (
+                <li key={`${i}:${move.start}:${move.name}`} className="flex flex-col gap-0.5">
+                  <button
+                    type="button"
+                    aria-current={i === cameraIndex ? 'true' : undefined}
+                    className="min-h-8 truncate rounded-md px-2 py-1 text-left text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    style={i === cameraIndex ? { background: 'hsl(var(--primary) / 0.12)' } : undefined}
+                    onClick={() => selectCamera(i)}
+                  >
+                    {move.name} <span className="tabular-nums text-muted-foreground">{clockText(move.start)} – {clockText(move.end)}</span>
+                  </button>
+                  {covered.map(({ event, from }, j) => (
+                    <button
+                      key={`${j}:${event.start}:${event.name}`}
+                      type="button"
+                      className="truncate rounded-md py-0.5 pl-5 pr-2 text-left text-[11px] text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => selectCamera(i, from)}
+                    >
+                      {event.name}
+                    </button>
+                  ))}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </aside>
+  );
+
+  // Docked header: ‹ World name  2 / 5 ›, and the name opens the full list.
+  const header = (
+    <div className="flex flex-col gap-2">
+      <div className="flex min-w-0 items-center gap-1">
+        <button type="button" aria-label="Previous world" className={`${button} shrink-0`} disabled={allRows.length < 2} onClick={() => stepWorld(-1)}>‹</button>
+        <button
+          type="button"
+          aria-label="Choose world"
+          aria-expanded={listOpen}
+          className={`${button} min-w-0 flex-1 truncate border border-border/70 text-left`}
+          onClick={() => setListOpen((open) => !open)}
+        >
+          <span className="truncate">{selected?.name ?? 'Choose a world'}</span>
+          {selectedIndex >= 0 ? <span className="ml-2 tabular-nums text-muted-foreground">{selectedIndex + 1} / {allRows.length}</span> : null}
+        </button>
+        <button type="button" aria-label="Next world" className={`${button} shrink-0`} disabled={allRows.length < 2} onClick={() => stepWorld(1)}>›</button>
+      </div>
+      {listOpen ? <div className="rounded-md border border-border/70 p-1">{list}</div> : null}
+    </div>
+  );
 
   return (
-    <section className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-3 text-sm" aria-label="World Explorer">
-      {/* The remove action stays quiet until its row is hovered or has focus inside it. */}
-      <style>{'.world-explorer-remove{opacity:0}.world-explorer-library-row:hover .world-explorer-remove,.world-explorer-library-row:focus-within .world-explorer-remove{opacity:1}'}</style>
-      {allRows.length > 0 ? (
-        <div className="flex min-w-0 items-center gap-2">
-          <select
-            aria-label="World"
-            className={`${select} min-w-0 flex-1`}
-            value={selected?.key ?? ''}
-            onChange={(event) => pick(event.target.value)}
-          >
-            {!selected ? <option value="">Choose a world</option> : null}
-            {rows.timeline.length ? (
-              <optgroup label="In this video">
-                {rows.timeline.map((row) => <option key={row.key} value={row.key}>{optionLabel(row)}</option>)}
-              </optgroup>
-            ) : null}
-            {rows.library.length ? (
-              <optgroup label="Library">
-                {rows.library.map((row) => <option key={row.key} value={row.key}>{optionLabel(row)}</option>)}
-              </optgroup>
-            ) : null}
-          </select>
-          <button type="button" className={`${button} shrink-0 border border-border`} disabled={busy} onClick={() => importInput.current?.click()}>
-            Import world…
-          </button>
-          <input
-            ref={importInput}
-            className="sr-only"
-            tabIndex={-1}
-            type="file"
-            aria-label="Import world file"
-            accept=".json,application/json"
-            onChange={(event) => { void importFile(event); }}
-          />
-        </div>
-      ) : null}
-
-      {rows.library.length ? (
-        <ul aria-label="Library" className="flex flex-col gap-0.5">
-          {rows.library.map((row) => (
-            <li key={row.key} className="world-explorer-library-row flex min-w-0 items-center gap-1 rounded-md hover:bg-muted">
-              <button
-                type="button"
-                className="min-h-8 min-w-0 flex-1 truncate rounded-md px-2 py-1 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-current={row.key === selected?.key ? 'true' : undefined}
-                onClick={() => pick(row.key)}
-              >
-                {row.name} <span className="tabular-nums text-muted-foreground">{clockText(row.duration)}</span>
-              </button>
-              <button
-                type="button"
-                aria-label={`Remove ${row.name} from library`}
-                title={`Remove ${row.name} from library`}
-                disabled={busy}
-                className="world-explorer-remove flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                onClick={() => removeWorld(row)}
-              >
-                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {allRows.length > 0 && !sampleSaved ? (
-        <p className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-          <span>Sample world: {SAMPLE_LABEL}</span>
-          <button type="button" className={`${button} border border-border`} disabled={busy} onClick={() => { void addSample(); }}>Add</button>
-        </p>
-      ) : null}
-
-      {allRows.length === 0 ? (
-        <div className="flex flex-col gap-3 rounded-md border border-border/70 p-3">
-          <p className="text-sm text-muted-foreground">A world is a live 3D scene you can travel through. Find a stretch you like, then add it to your video.</p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className={`${button} bg-primary/10 text-primary`} disabled={busy} onClick={() => { void addSample(); }}>Add {SAMPLE_LABEL}</button>
-            <button type="button" className={`${button} border border-border`} disabled={busy} onClick={() => importInput.current?.click()}>Import world…</button>
-            <input
-              ref={importInput}
-              className="sr-only"
-              tabIndex={-1}
-              type="file"
-              aria-label="Import world file"
-              accept=".json,application/json"
-              onChange={(event) => { void importFile(event); }}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {notice ? (
-        <p role="status" className="text-[11px] text-muted-foreground" style={notice.tone === 'error' ? ERROR_STYLE : undefined}>{notice.text}</p>
-      ) : null}
-
-      <div
-        ref={viewerRef}
-        className="relative w-full overflow-hidden rounded-md border border-border/70"
-        style={{ ...VIEWER_STYLE, height: viewHeight }}
-      >
-        {liveScene && selected ? (
-          <Suspense fallback={null}>
-            <LazySceneSurface
-              key={selected.key}
-              source={liveScene}
-              sourceTime={renderTime}
-              width={viewWidth}
-              height={viewHeight}
-              showStatus={false}
-              onStatus={handleStatus}
-              onReady={handleReady}
-            />
-          </Suspense>
-        ) : null}
-        {showOverlay ? (
-          <div
-            className="absolute inset-0 grid place-items-center p-4 text-center text-xs"
-            style={{ ...OVERLAY_STYLE, ...(overlayIsError ? ERROR_STYLE : null) }}
-          >
-            {overlayText}
+    <section
+      ref={rootRef}
+      className="flex h-full min-h-0 text-sm"
+      aria-label="World Explorer"
+      data-layout={wide ? 'side' : 'docked'}
+    >
+      {wide ? sideColumn : null}
+      <div className={`flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-3 ${wide ? '' : 'overflow-y-auto'}`}>
+        {!wide && allRows.length > 0 ? header : null}
+        {!wide && allRows.length === 0 ? (
+          <div className="flex flex-col gap-3 rounded-md border border-border/70 p-3">
+            <p className="text-sm text-muted-foreground">A world is a live 3D scene you can explore freely. Find a view or a camera you like, then add it to your video.</p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className={`${button} bg-primary/10 text-primary`} disabled={busy} onClick={() => { void addSample(); }}>Add {SAMPLE_LABEL}</button>
+              <button type="button" className={`${button} border border-border`} disabled={busy} onClick={() => importInput.current?.click()}>Import world…</button>
+            </div>
           </div>
         ) : null}
-      </div>
+        {!wide ? <div className="flex flex-wrap items-center gap-2">{modeToggle}{notExplorable}</div> : null}
+        {importControl}
 
-      <div
-        role="group"
-        aria-label="World viewer"
-        tabIndex={0}
-        className="flex flex-col gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        onKeyDown={onGroupKeyDown}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={togglePlay}>
-            {playing ? 'Pause' : 'Play'}
-          </button>
-          <select
-            aria-label="Speed"
-            className={select}
-            value={String(stretch.speed)}
-            disabled={!selected}
-            onChange={(event) => changeSpeed(Number(event.target.value))}
-          >
-            {speedOptions.map((speed) => <option key={speed} value={speed}>{speedLabel(speed)}</option>)}
-          </select>
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <input type="checkbox" checked={loop} disabled={!selected} onChange={(event) => toggleLoop(event.target.checked)} />
-            Loop
-          </label>
-          <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-            {clockText(shownTime, 1)} / {clockText(duration)}
-          </span>
-        </div>
+        {notice ? (
+          <p role="status" className="text-[11px] text-muted-foreground" style={notice.tone === 'error' ? ERROR_STYLE : undefined}>{notice.text}</p>
+        ) : null}
 
         <div
-          ref={barRef}
-          role="slider"
-          tabIndex={0}
-          aria-label="Travel position"
-          aria-valuemin={0}
-          aria-valuemax={duration}
-          aria-valuenow={Number(shownTime.toFixed(2))}
-          aria-valuetext={clockText(shownTime, 1)}
-          aria-disabled={!selected}
-          className="relative h-7 touch-none select-none rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onPointerDown={onBarDown}
-          onPointerMove={onBarMove}
-          onPointerUp={onBarUp}
-          onPointerCancel={onBarUp}
+          ref={stageRef}
+          className={wide ? 'flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden' : 'w-full'}
         >
-          <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full" style={{ background: 'hsl(var(--muted-foreground) / 0.25)' }} />
-          {selected ? (
-            <>
-              {selected.uses.map((use) => (
-                <div
-                  key={use.clipId}
-                  title={`On ${use.track} at ${clockText(use.at)}`}
-                  className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full"
-                  style={{ left: percent(use.from, duration), width: percent(use.to - use.from, duration), background: 'hsl(var(--muted-foreground) / 0.45)' }}
-                />
-              ))}
-              <div
-                className="absolute top-1/2 h-2.5 -translate-y-1/2 rounded-full"
-                style={{ left: percent(stretch.from, duration), width: percent(stretch.to - stretch.from, duration), background: 'hsl(var(--primary) / 0.45)' }}
-              />
-              {stops.map((stop) => (
-                <span
-                  key={`${stop.time}:${stop.name}`}
-                  title={stop.name}
-                  className="absolute top-1/2 h-3.5 w-px -translate-y-1/2"
-                  style={{ left: percent(stop.time, duration), background: 'hsl(var(--foreground) / 0.6)' }}
-                />
-              ))}
-              <div className="absolute inset-y-0 w-px" style={{ left: percent(shownTime, duration), background: 'hsl(var(--primary))' }} />
-            </>
-          ) : null}
-        </div>
-
-        {stops.length ? (
-          <div className="flex flex-wrap gap-1.5">
-            {stops.map((stop) => (
-              <button
-                key={`${stop.time}:${stop.name}`}
-                type="button"
-                className="h-7 rounded-full border border-border/70 px-2 text-[11px] hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                disabled={!ready}
-                onClick={() => seekTo(stop.time)}
-              >
-                {stop.name} <span className="tabular-nums text-muted-foreground">{clockText(stop.time)}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        {selected ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className={`${button} border border-border`} title="Set the stretch start to the travel position (I)" onClick={setStartHere}>Set start (I)</button>
-            <button type="button" className={`${button} border border-border`} title="Set the stretch end to the travel position (O)" onClick={setEndHere}>Set end (O)</button>
-            <p className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-              Stretch {clockText(stretch.from, 1)} – {clockText(stretch.to, 1)} · {stretchDuration(stretch).toFixed(1)} s at {speedLabel(stretch.speed)}
-            </p>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="flex flex-col gap-2 border-t border-border/70 pt-3">
-        {followedUse ? (
-          <p className="text-[11px] text-muted-foreground">Editing clip on {followedUse.track} at {clockText(followedUse.at)}</p>
-        ) : null}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className={`${button} bg-primary/10 text-primary`}
-            disabled={Boolean(addReason)}
-            title={addReason ?? 'Add the selected stretch to the video at the playhead'}
-            onClick={() => { void addToVideo(); }}
+          <div
+            ref={viewerRef}
+            role="application"
+            aria-label="World viewer"
+            tabIndex={0}
+            data-autofocus
+            data-mode={mode}
+            className="relative touch-none select-none overflow-hidden rounded-md border border-border/70 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
+            style={{ ...VIEWER_STYLE, width: viewSize.width, height: viewSize.height, cursor: exploring ? 'grab' : undefined }}
+            onKeyDown={onViewerKeyDown}
+            onKeyUp={onViewerKeyUp}
+            onBlur={onViewerBlur}
+            onPointerDown={onViewerPointerDown}
+            onPointerMove={onViewerPointerMove}
+            onPointerUp={onViewerPointerUp}
+            onPointerCancel={onViewerPointerUp}
           >
-            Add to video
-          </button>
-          {followedUse ? (
-            <button
-              type="button"
-              className={`${button} border border-border`}
-              disabled={!followedDiffers || busy}
-              title={followedDiffers ? 'Write this stretch back to the clip' : 'The stretch matches the clip'}
-              onClick={() => { void updateClip(); }}
-            >
-              Update clip
-            </button>
-          ) : null}
-          {addReason ? <p className="text-[11px] text-muted-foreground">{addReason}</p> : null}
+            {liveScene && selected ? (
+              <Suspense fallback={null}>
+                <LazySceneSurface
+                  key={selected.key}
+                  source={liveScene}
+                  sourceTime={frame.time}
+                  worldTime={frame.worldTime}
+                  view={frame.view}
+                  width={viewSize.width}
+                  height={viewSize.height}
+                  showStatus={false}
+                  onStatus={handleStatus}
+                  onReady={handleReady}
+                />
+              </Suspense>
+            ) : null}
+            {showOverlay ? (
+              <div
+                className="absolute inset-0 grid place-items-center p-4 text-center text-xs"
+                style={{ ...OVERLAY_STYLE, ...(overlayIsError ? ERROR_STYLE : null) }}
+              >
+                {overlayText}
+              </div>
+            ) : null}
+            {exploring ? (
+              <span
+                aria-label="Camera speed"
+                title="Scroll to change speed"
+                className="absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[11px] tabular-nums"
+                style={PILL_STYLE}
+              >
+                {speedScaleLabel(speedScale)}
+              </span>
+            ) : null}
+            {showHint ? (
+              <div
+                role="note"
+                className="absolute bottom-2 right-2 flex max-w-[calc(100%-5rem)] items-center gap-1 rounded-full py-0.5 pl-3 pr-1 text-[11px]"
+                style={PILL_STYLE}
+              >
+                <span className="truncate">{HINT_TEXT}</span>
+                <button
+                  type="button"
+                  aria-label="Dismiss hint"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={dismissHint}
+                >
+                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                </button>
+              </div>
+            ) : null}
+            {canExpand ? (
+              <button
+                type="button"
+                aria-label="Pop out World Explorer"
+                title="Pop out into a larger window"
+                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                style={PILL_STYLE}
+                onClick={() => popout!.onOpenChange(true)}
+              >
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+              </button>
+            ) : null}
+          </div>
         </div>
+
+        {mode === 'explore' ? (
+          <div className="flex shrink-0 flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={toggleWorldPause}>
+                {worldPaused ? 'Play' : 'Pause'}
+              </button>
+              <button type="button" className={`${button} border border-border`} disabled={!ready} title="Back to the start view (R)" onClick={resetView}>
+                Reset view
+              </button>
+              <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
+                World {clockText(worldTime, 1)} / {clockText(duration)}
+              </span>
+            </div>
+            <TimeBar
+              start={0}
+              end={duration}
+              time={worldTime}
+              label="World time"
+              valueText={clockText(worldTime, 1)}
+              disabled={!selected}
+              markers={eventMarkers}
+              onSeek={seekWorld}
+            />
+            {events.length ? eventButtons : null}
+          </div>
+        ) : (
+          <div
+            role="group"
+            aria-label="Camera travel"
+            tabIndex={0}
+            className="flex shrink-0 flex-col gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onKeyDown={onTravelKeyDown}
+          >
+            {!wide && selected && cameras.length > 1 ? (
+              <select
+                aria-label="Camera"
+                className={select}
+                value={String(cameraIndex)}
+                onChange={(event) => selectCamera(Number(event.target.value))}
+              >
+                {cameras.map((move, i) => (
+                  <option key={`${i}:${move.start}:${move.name}`} value={i}>{move.name} · {clockText(move.start)} – {clockText(move.end)}</option>
+                ))}
+              </select>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={toggleTravel}>
+                {playing ? 'Pause' : 'Play'}
+              </button>
+              <select
+                aria-label="Speed"
+                className={select}
+                value={String(stretch.speed)}
+                disabled={!selected}
+                onChange={(event) => changeSpeed(Number(event.target.value))}
+              >
+                {speedOptions.map((speed) => <option key={speed} value={speed}>{speedLabel(speed)}</option>)}
+              </select>
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <input type="checkbox" checked={loop} disabled={!selected} onChange={(event) => toggleLoop(event.target.checked)} />
+                Loop
+              </label>
+              <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
+                {clockText(shownTime, 1)} / {clockText(camera?.end ?? duration)}
+              </span>
+            </div>
+
+            <TimeBar
+              start={camera?.start ?? 0}
+              end={camera?.end ?? duration}
+              time={shownTime}
+              label="Travel position"
+              valueText={clockText(shownTime, 1)}
+              disabled={!selected}
+              markers={cameraMarkers}
+              onSeek={seekTravel}
+            >
+              {(pct) => (
+                <>
+                  {(selected?.uses ?? []).map((use) => (
+                    <div
+                      key={use.clipId}
+                      title={`On ${use.track} at ${clockText(use.at)}`}
+                      className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full"
+                      style={{ left: pct(use.from), width: `calc(${pct(use.to)} - ${pct(use.from)})`, background: 'hsl(var(--muted-foreground) / 0.45)' }}
+                    />
+                  ))}
+                  <div
+                    className="absolute top-1/2 h-2.5 -translate-y-1/2 rounded-full"
+                    style={{ left: pct(stretch.from), width: `calc(${pct(stretch.to)} - ${pct(stretch.from)})`, background: 'hsl(var(--primary) / 0.45)' }}
+                  />
+                </>
+              )}
+            </TimeBar>
+
+            {cameraEvents.length ? cameraEventButtons : null}
+
+            {selected ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" className={`${button} border border-border`} title="Set the stretch start to the travel position (I)" onClick={setStartHere}>Set start (I)</button>
+                <button type="button" className={`${button} border border-border`} title="Set the stretch end to the travel position (O)" onClick={setEndHere}>Set end (O)</button>
+                <p className="ml-auto text-[11px] tabular-nums text-muted-foreground">
+                  Stretch {clockText(stretch.from, 1)} – {clockText(stretch.to, 1)} · {stretchDuration(stretch).toFixed(1)} s at {speedLabel(stretch.speed)}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="flex flex-col gap-2 border-t border-border/70 pt-3">
+              {followedUse ? (
+                <p className="text-[11px] text-muted-foreground">Editing clip on {followedUse.track} at {clockText(followedUse.at)}</p>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className={`${button} bg-primary/10 text-primary`}
+                  disabled={Boolean(addReason)}
+                  title={addReason ?? 'Add the selected stretch to the video at the playhead'}
+                  onClick={() => { void addToVideo(); }}
+                >
+                  Add to video
+                </button>
+                {followedUse ? (
+                  <button
+                    type="button"
+                    className={`${button} border border-border`}
+                    disabled={!followedDiffers || busy}
+                    title={followedDiffers ? 'Write this stretch back to the clip' : 'The stretch matches the clip'}
+                    onClick={() => { void updateClip(); }}
+                  >
+                    Update clip
+                  </button>
+                ) : null}
+                {addReason ? <p className="text-[11px] text-muted-foreground">{addReason}</p> : null}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

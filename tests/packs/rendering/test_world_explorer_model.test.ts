@@ -4,20 +4,32 @@ import { LIVE_SCENE_CLIP_TYPE_ID } from '../../../astrid/packs/rendering/ui/thre
 import {
   TravelClock,
   addToLibrary,
+  cameraIndexAt,
+  camerasOrImplicit,
+  chooseDefaultWorld,
   clampStretch,
+  eventsInCamera,
+  exploreKey,
+  fitToBox,
   freeVisualTrack,
   keyAction,
+  lastWorldKey,
   libraryKey,
   newClipId,
   readLibrary,
   removeFromLibrary,
-  saveStops,
+  saveInfo,
   setStretchEnd,
   setStretchStart,
+  speedScaleLabel,
   stretchDuration,
+  wheelSpeedScale,
   worldKey,
   worldsFromSnapshot,
+  worldTimeIn,
+  type CameraMove,
   type LibraryEntry,
+  type WorldEvent,
 } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/model';
 
 function packageBody(duration: number, authoredFps = 24) {
@@ -52,7 +64,7 @@ function fakeSettings(): ExtensionSettingsService & { map: Map<string, unknown> 
 }
 
 function entry(objectId: string, revision = 'r1', name = objectId): LibraryEntry {
-  return { objectId, revision, name, duration: 4, authoredFps: 24, stops: [{ time: 1, name: 'hit' }] };
+  return { objectId, revision, name, duration: 4, authoredFps: 24, events: [{ name: 'hit', start: 1 }], cameras: [] };
 }
 
 describe('worldsFromSnapshot', () => {
@@ -131,30 +143,56 @@ describe('library persistence', () => {
     const settings = fakeSettings();
     settings.set(libraryKey('p1'), 'nope');
     expect(readLibrary(settings, 'p1')).toEqual([]);
-    settings.set(libraryKey('p1'), [entry('ok'), { objectId: 'bad' }, null, { ...entry('neg'), duration: -1 }, { ...entry('stop'), stops: [{ time: 'x' }] }]);
+    settings.set(libraryKey('p1'), [entry('ok'), { objectId: 'bad' }, null, { ...entry('neg'), duration: -1 }]);
     expect(readLibrary(settings, 'p1').map((e) => e.objectId)).toEqual(['ok']);
     expect(readLibrary(settings, undefined).map((e) => e.objectId)).toEqual([]);
   });
+
+  it('drops invalid events and cameras, keeping the valid ones', () => {
+    const settings = fakeSettings();
+    settings.set(libraryKey('p1'), [{
+      ...entry('A'),
+      events: [{ name: 'ok', start: 1 }, { name: 'span', start: 2, end: 3 }, { name: 'bad' }, { name: 'nan', start: 2, end: 'x' }],
+      cameras: [{ name: 'cam', start: 0, end: 4 }, { name: 'backwards', start: 5, end: 2 }, { name: 'nan', start: 0, end: 1, worldStart: NaN }],
+    }]);
+    const [read] = readLibrary(settings, 'p1');
+    expect(read.events).toEqual([{ name: 'ok', start: 1 }, { name: 'span', start: 2, end: 3 }]);
+    expect(read.cameras).toEqual([{ name: 'cam', start: 0, end: 4 }]);
+  });
+
+  it('reads an entry saved with only the old stops field as having no events or cameras', () => {
+    const settings = fakeSettings();
+    settings.set(libraryKey('p1'), [{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, stops: [{ time: 1, name: 'hit' }] }]);
+    expect(readLibrary(settings, 'p1')).toEqual([{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, events: [], cameras: [] }]);
+  });
 });
 
-describe('saveStops', () => {
-  it('writes reported stops only when they differ from the library entry', () => {
+describe('saveInfo', () => {
+  const hit: WorldEvent[] = [{ name: 'hit', start: 1 }];
+  const bridge: WorldEvent[] = [{ name: 'Bridge', start: 2 }];
+  const cam: CameraMove[] = [{ name: 'Wide', start: 0, end: 4 }];
+
+  it('writes reported events and cameras only when they differ from the library entry', () => {
     const settings = fakeSettings();
     addToLibrary(settings, 'p1', entry('A'));
     const set = vi.spyOn(settings, 'set');
 
-    expect(saveStops(settings, 'p1', 'A@r1', [{ time: 1, name: 'hit' }])).toBe(false);
+    expect(saveInfo(settings, 'p1', 'A@r1', { events: hit, cameras: [] })).toBe(false);
     expect(set).not.toHaveBeenCalled();
 
-    expect(saveStops(settings, 'p1', 'A@r1', [{ time: 2, name: 'Bridge' }])).toBe(true);
+    expect(saveInfo(settings, 'p1', 'A@r1', { events: bridge, cameras: [] })).toBe(true);
     expect(set).toHaveBeenCalledTimes(1);
-    expect(readLibrary(settings, 'p1')).toEqual([{ ...entry('A'), stops: [{ time: 2, name: 'Bridge' }] }]);
+    expect(readLibrary(settings, 'p1')).toEqual([{ ...entry('A'), events: bridge, cameras: [] }]);
 
-    expect(saveStops(settings, 'p1', 'A@r1', [{ time: 2, name: 'Bridge' }])).toBe(false);
+    expect(saveInfo(settings, 'p1', 'A@r1', { events: bridge, cameras: [] })).toBe(false);
     expect(set).toHaveBeenCalledTimes(1);
 
-    expect(saveStops(settings, 'p1', 'A@r1', [])).toBe(true);
-    expect(readLibrary(settings, 'p1')[0].stops).toEqual([]);
+    expect(saveInfo(settings, 'p1', 'A@r1', { events: bridge, cameras: cam })).toBe(true);
+    expect(set).toHaveBeenCalledTimes(2);
+    expect(readLibrary(settings, 'p1')[0].cameras).toEqual(cam);
+
+    expect(saveInfo(settings, 'p1', 'A@r1', { events: [], cameras: [] })).toBe(true);
+    expect(readLibrary(settings, 'p1')[0]).toMatchObject({ events: [], cameras: [] });
   });
 
   it('ignores worlds that are not in this project library', () => {
@@ -162,10 +200,10 @@ describe('saveStops', () => {
     addToLibrary(settings, 'p1', entry('A'));
     const set = vi.spyOn(settings, 'set');
 
-    expect(saveStops(settings, 'p1', 'B@r1', [{ time: 0, name: 'x' }])).toBe(false);
-    expect(saveStops(settings, 'p2', 'A@r1', [{ time: 0, name: 'x' }])).toBe(false);
+    expect(saveInfo(settings, 'p1', 'B@r1', { events: bridge, cameras: [] })).toBe(false);
+    expect(saveInfo(settings, 'p2', 'A@r1', { events: bridge, cameras: [] })).toBe(false);
     expect(set).not.toHaveBeenCalled();
-    expect(readLibrary(settings, 'p1')[0].stops).toEqual([{ time: 1, name: 'hit' }]);
+    expect(readLibrary(settings, 'p1')[0].events).toEqual(hit);
   });
 });
 
@@ -370,5 +408,313 @@ describe('TravelClock', () => {
     c.play();
     c.reset();
     expect([c.time, c.shown, c.inFlight, c.playing]).toEqual([0, undefined, undefined, false]);
+  });
+});
+
+describe('TravelClock window', () => {
+  it('starts as the whole world', () => {
+    const c = new TravelClock({ duration: 6 });
+    expect([c.windowStart, c.windowEnd]).toEqual([0, 6]);
+  });
+
+  it('pulls the time into the window and confines seek', () => {
+    const c = new TravelClock({ duration: 10 });
+    c.setWindow(2, 5);
+    expect([c.windowStart, c.windowEnd, c.time]).toEqual([2, 5, 2]);
+    c.seek(9);
+    expect(c.time).toBe(5);
+    c.seek(0);
+    expect(c.time).toBe(2);
+  });
+
+  it('clamps the window to the world', () => {
+    const c = new TravelClock({ duration: 4 });
+    c.setWindow(-1, 9);
+    expect([c.windowStart, c.windowEnd]).toEqual([0, 4]);
+    c.setWindow(3, 1);
+    expect([c.windowStart, c.windowEnd]).toEqual([3, 3]);
+  });
+
+  it('play from the window end restarts at the window start', () => {
+    const c = new TravelClock({ duration: 10 });
+    c.setWindow(2, 3);
+    c.seek(3);
+    c.play();
+    expect(c.time).toBe(2);
+    expect(c.playing).toBe(true);
+  });
+
+  it('stops at the window end without loop', () => {
+    const c = new TravelClock({ duration: 10 });
+    c.setWindow(2, 3);
+    c.seek(2);
+    c.play();
+    c.tick(0);
+    c.tick(250);
+    c.tick(500);
+    c.tick(750);
+    c.tick(1000);
+    expect(c.time).toBe(3);
+    expect(c.playing).toBe(false);
+  });
+
+  it('wraps inside the window when looping', () => {
+    const c = new TravelClock({ duration: 10, loop: true });
+    c.setWindow(2, 3);
+    c.seek(2.5);
+    c.play();
+    c.tick(0);
+    c.tick(250);
+    c.tick(500);
+    expect(c.time).toBeCloseTo(2);
+    c.tick(750);
+    expect(c.time).toBeCloseTo(2.25);
+    expect(c.playing).toBe(true);
+  });
+
+  it('reset returns to the window start', () => {
+    const c = new TravelClock({ duration: 10 });
+    c.setWindow(2, 5);
+    c.seek(4);
+    c.reset();
+    expect(c.time).toBe(2);
+  });
+
+  it('shrinking the duration shrinks the window', () => {
+    const c = new TravelClock({ duration: 10 });
+    c.setWindow(2, 8);
+    c.setDuration(5);
+    expect([c.windowStart, c.windowEnd]).toEqual([2, 5]);
+    c.setDuration(1);
+    expect([c.windowStart, c.windowEnd]).toEqual([1, 1]);
+  });
+});
+
+describe('camerasOrImplicit', () => {
+  it('gives an empty world one implicit whole-world camera', () => {
+    expect(camerasOrImplicit([], 4)).toEqual([{ name: 'Whole world', start: 0, end: 4 }]);
+    expect(camerasOrImplicit([], -1)).toEqual([{ name: 'Whole world', start: 0, end: 0 }]);
+  });
+
+  it('returns a copy of declared cameras', () => {
+    const cams: CameraMove[] = [{ name: 'A', start: 0, end: 2 }];
+    const out = camerasOrImplicit(cams, 4);
+    expect(out).toEqual(cams);
+    expect(out).not.toBe(cams);
+  });
+});
+
+describe('worldTimeIn', () => {
+  it('defaults worldStart to start, so world time equals source time', () => {
+    const cam: CameraMove = { name: 'a', start: 2, end: 6 };
+    expect(worldTimeIn(cam, 2)).toBe(2);
+    expect(worldTimeIn(cam, 5)).toBe(5);
+  });
+
+  it('offsets world time by worldStart', () => {
+    const cam: CameraMove = { name: 'b', start: 2, end: 6, worldStart: 10 };
+    expect(worldTimeIn(cam, 2)).toBe(10);
+    expect(worldTimeIn(cam, 5)).toBe(13);
+  });
+});
+
+describe('cameraIndexAt', () => {
+  const cams: CameraMove[] = [{ name: 'a', start: 0, end: 4 }, { name: 'b', start: 4, end: 8 }];
+
+  it('finds the camera holding a time', () => {
+    expect(cameraIndexAt(cams, 2)).toBe(0);
+    expect(cameraIndexAt(cams, 6)).toBe(1);
+    expect(cameraIndexAt(cams, 0)).toBe(0);
+  });
+
+  it('gives a shared boundary to the later camera', () => {
+    expect(cameraIndexAt(cams, 4)).toBe(1);
+  });
+
+  it('includes the end of the last camera', () => {
+    expect(cameraIndexAt(cams, 8)).toBe(1);
+  });
+
+  it('before the first camera is index 0', () => {
+    expect(cameraIndexAt([{ name: 'a', start: 2, end: 4 }], 1)).toBe(0);
+  });
+
+  it('in a gap, gives the earlier camera', () => {
+    const gapped: CameraMove[] = [{ name: 'a', start: 0, end: 2 }, { name: 'b', start: 5, end: 8 }];
+    expect(cameraIndexAt(gapped, 3.5)).toBe(0);
+  });
+
+  it('past the last camera, gives the last camera', () => {
+    expect(cameraIndexAt(cams, 9)).toBe(1);
+  });
+
+  it('is 0 with no cameras', () => {
+    expect(cameraIndexAt([], 3)).toBe(0);
+  });
+});
+
+describe('eventsInCamera', () => {
+  const span = (name: string, start: number, end: number): WorldEvent => ({ name, start, end });
+
+  it('maps events on an aligned camera to source time, clipping spans to the window', () => {
+    const cam: CameraMove = { name: 'c', start: 4, end: 8 };
+    const events: WorldEvent[] = [
+      span('inside', 5, 6),
+      { name: 'point-mid', start: 6 },
+      { name: 'point-start-edge', start: 4 },
+      { name: 'point-end-edge', start: 8 },
+      span('clip-left', 2, 6),
+      span('clip-right', 7, 12),
+      span('before', 0, 3),
+      span('after', 9, 10),
+    ];
+    expect(eventsInCamera(events, cam)).toEqual([
+      { event: events[0], from: 5, to: 6 },
+      { event: events[1], from: 6, to: 6 },
+      { event: events[2], from: 4, to: 4 },
+      { event: events[3], from: 8, to: 8 },
+      { event: events[4], from: 4, to: 6 },
+      { event: events[5], from: 7, to: 8 },
+    ]);
+  });
+
+  it('shows the same event from two cameras with different worldStart', () => {
+    const event = span('shared', 3, 5);
+    const a: CameraMove = { name: 'A', start: 0, end: 4 };
+    const b: CameraMove = { name: 'B', start: 10, end: 14, worldStart: 2 };
+    expect(eventsInCamera([event], a)).toEqual([{ event, from: 3, to: 4 }]);
+    expect(eventsInCamera([event], b)).toEqual([{ event, from: 11, to: 13 }]);
+  });
+
+  it('drops events outside the camera window', () => {
+    const cam: CameraMove = { name: 'B', start: 10, end: 14, worldStart: 2 };
+    expect(eventsInCamera([span('gone', 0, 1), span('late', 7, 9)], cam)).toEqual([]);
+  });
+
+  it('returns nothing for no events', () => {
+    expect(eventsInCamera([], { name: 'c', start: 0, end: 4 })).toEqual([]);
+  });
+});
+
+describe('exploreKey', () => {
+  const move = (axis: 'forward' | 'right' | 'up', sign: 1 | -1) => ({ type: 'move', axis, sign });
+
+  it('maps w/a/s/d and arrows to forward and right with the right sign', () => {
+    for (const key of ['w', 'W', 'ArrowUp']) expect(exploreKey({ key })).toEqual(move('forward', 1));
+    for (const key of ['s', 'S', 'ArrowDown']) expect(exploreKey({ key })).toEqual(move('forward', -1));
+    for (const key of ['d', 'D', 'ArrowRight']) expect(exploreKey({ key })).toEqual(move('right', 1));
+    for (const key of ['a', 'A', 'ArrowLeft']) expect(exploreKey({ key })).toEqual(move('right', -1));
+  });
+
+  it('maps e/q to up', () => {
+    expect(exploreKey({ key: 'e' })).toEqual(move('up', 1));
+    expect(exploreKey({ key: 'E' })).toEqual(move('up', 1));
+    expect(exploreKey({ key: 'q' })).toEqual(move('up', -1));
+    expect(exploreKey({ key: 'Q' })).toEqual(move('up', -1));
+  });
+
+  it('maps r to reset and space to pause', () => {
+    expect(exploreKey({ key: 'r' })).toEqual({ type: 'reset' });
+    expect(exploreKey({ key: 'R' })).toEqual({ type: 'reset' });
+    expect(exploreKey({ key: ' ' })).toEqual({ type: 'pause' });
+    expect(exploreKey({ key: 'Space' })).toEqual({ type: 'pause' });
+  });
+
+  it('ignores modifier chords', () => {
+    expect(exploreKey({ key: 'w', ctrlKey: true })).toBeUndefined();
+    expect(exploreKey({ key: 'w', metaKey: true })).toBeUndefined();
+    expect(exploreKey({ key: 'w', altKey: true })).toBeUndefined();
+  });
+
+  it('ignores Escape, Tab, Shift and unbound keys', () => {
+    expect(exploreKey({ key: 'Escape' })).toBeUndefined();
+    expect(exploreKey({ key: 'Tab' })).toBeUndefined();
+    expect(exploreKey({ key: 'Shift' })).toBeUndefined();
+    expect(exploreKey({ key: 'x' })).toBeUndefined();
+  });
+});
+
+describe('wheelSpeedScale', () => {
+  it('scrolling up speeds up by 25% a notch', () => {
+    expect(wheelSpeedScale(1, -1)).toBe(1.25);
+  });
+
+  it('scrolling down slows down by 20% a notch', () => {
+    expect(wheelSpeedScale(1, 1)).toBe(0.8);
+  });
+
+  it('clamps to [0.1, 10]', () => {
+    expect(wheelSpeedScale(10, -1)).toBe(10);
+    expect(wheelSpeedScale(0.1, 1)).toBe(0.1);
+  });
+
+  it('leaves the scale unchanged for zero or invalid deltas', () => {
+    expect(wheelSpeedScale(1, 0)).toBe(1);
+    expect(wheelSpeedScale(1, NaN)).toBe(1);
+  });
+});
+
+describe('speedScaleLabel', () => {
+  it('formats the scale with a multiplication sign', () => {
+    expect(speedScaleLabel(1)).toBe('1×');
+    expect(speedScaleLabel(1.25)).toBe('1.25×');
+    expect(speedScaleLabel(0.5)).toBe('0.5×');
+  });
+});
+
+describe('fitToBox', () => {
+  it('is bounded by width when the box is tall', () => {
+    expect(fitToBox(100, 300, 16 / 9)).toEqual({ width: 100, height: 56 });
+  });
+
+  it('is bounded by height when the box is wide', () => {
+    expect(fitToBox(300, 100, 16 / 9)).toEqual({ width: 177, height: 99 });
+  });
+
+  it('returns whole pixels', () => {
+    const { width, height } = fitToBox(333, 201, 4 / 3);
+    expect(Number.isInteger(width)).toBe(true);
+    expect(Number.isInteger(height)).toBe(true);
+  });
+
+  it('returns 0x0 for zero or invalid inputs', () => {
+    expect(fitToBox(0, 100, 2)).toEqual({ width: 0, height: 0 });
+    expect(fitToBox(100, -5, 2)).toEqual({ width: 0, height: 0 });
+    expect(fitToBox(100, 100, 0)).toEqual({ width: 0, height: 0 });
+    expect(fitToBox(NaN, 100, 1)).toEqual({ width: 0, height: 0 });
+    expect(fitToBox(100, 100, NaN)).toEqual({ width: 0, height: 0 });
+  });
+});
+
+describe('chooseDefaultWorld', () => {
+  const timeline = [{ key: 'a' }, { key: 'b' }];
+  const library = [{ key: 'c' }, { key: 'd' }];
+
+  it('prefers the last viewed world while it is still listed', () => {
+    expect(chooseDefaultWorld(timeline, library, 'b')?.key).toBe('b');
+    expect(chooseDefaultWorld(timeline, library, 'd')?.key).toBe('d');
+  });
+
+  it('falls back to the first timeline world', () => {
+    expect(chooseDefaultWorld(timeline, library, 'gone')?.key).toBe('a');
+    expect(chooseDefaultWorld(timeline, library, undefined)?.key).toBe('a');
+  });
+
+  it('falls back to the first library world when the timeline is empty', () => {
+    expect(chooseDefaultWorld([], library, undefined)?.key).toBe('c');
+    expect(chooseDefaultWorld([], library, 'gone')?.key).toBe('c');
+  });
+
+  it('is undefined when there are no worlds', () => {
+    expect(chooseDefaultWorld([], [], 'a')).toBeUndefined();
+  });
+});
+
+describe('lastWorldKey', () => {
+  it('is per project', () => {
+    expect(lastWorldKey('p1')).toBe('lastWorld:p1');
+    expect(lastWorldKey('p2')).not.toBe(lastWorldKey('p1'));
+    expect(lastWorldKey(null)).toBe('lastWorld:none');
+    expect(lastWorldKey(undefined)).toBe('lastWorld:none');
   });
 });
