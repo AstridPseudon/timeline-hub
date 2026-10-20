@@ -1,0 +1,60 @@
+# Exact independent review commands
+# No product edits or git/ref mutation. All source inputs are frozen git-archive/show copies.
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-render-cap-consumer-review
+D=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules
+cd "$W/app-source-e6c4aae"
+
+# Frozen source: e6c4aae50ef2db89e482d28f25e742918530ce39 from /home/user/work/app.
+# It is App's exact held regression handoff (parent927545cf52fdfbb273afbe7f190e00e11e5e2d70).
+# Read-only dependency link points at $D; cacheDir points at $W/vite-cache.
+# Agent inputs copied from d8749a9ce12a699672faf3ad96b4e4cbea9245c2:
+# astrid/packs/rendering/shared; astrid/packs/rendering/elements/catalog.ts;
+# astrid/packs/local/rendering/elements/effects/{end-spanning-layer,frame-overlay}.
+# Normal runner config/setup/aliases/admission plugin retained; source discovery
+# uses explicit frozen Agent paths to avoid Node runner's undefined __dirname.
+
+node "$D/vitest/vitest.mjs" run --config "$W/vitest.config.ts" --configLoader=runner --no-cache --maxWorkers=1 \
+  src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts \
+  "$W/carrier-proof.test.ts"
+# exit1: 1PASS / 1FAIL, 2files, final-run2.41s (initial2.88s). Regression has exactly3soft failures.
+# carrier-and-regression-final.log (final runner); initial carrier-and-regression.log retained.
+
+node "$D/vitest/vitest.mjs" run --config "$W/vitest.config.ts" --configLoader=runner --no-cache --maxWorkers=1 \
+  src/tools/video-editor/data/canonicalCompositionState.test.ts \
+  src/tools/video-editor/data/shotCompositionProjection.test.ts \
+  src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx \
+  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.commandProjection.test.tsx \
+  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.initialRead.test.tsx \
+  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx \
+  src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx \
+  src/tools/video-editor/lib/canonicalRenderBounds.test.ts
+# exit0: 117PASS, 8files,14.58s. neighbors.log
+
+# App's subsequently published STEP1 names finalRoot b1ef4b9b910ba72375c34cf319692f90d22edc25.
+# All eight audited source files are EXACTLY IDENTICAL to the independently tested handoff:
+git -C /home/user/work/app diff --exit-code e6c4aae50ef2db89e482d28f25e742918530ce39 b1ef4b9b910ba72375c34cf319692f90d22edc25 -- \
+  src/tools/video-editor/data/shotCompositionAdapter.ts \
+  src/tools/video-editor/data/shotCompositionProjection.ts \
+  src/tools/video-editor/lib/timeline-data.ts \
+  src/tools/video-editor/hooks/useTimelineCommandSession.ts \
+  src/tools/video-editor/lib/canonicalRenderBounds.ts \
+  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts \
+  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.tsx \
+  src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+# exit0, EMPTY diff.
+
+python "$W/verify-readonly.py"
+# exit0. Exact physical manifest35,641entries matches all files/executables/modes/
+# symlink targets; no missing or additional node_modules entries. Frozen audited
+# App source/test files unchanged, fixture ad3d0ad3..., original editor suite unchanged.
+# readonly-check.json. The first audit incorrectly treated manifest kind=executable
+# as a directory; corrected verifier recognizes executable regular files and
+# checks their hashes. No actual graph discrepancy was found or repaired.
+
+git -C /home/user/work/wt/vw-m3-render-cap-consumer-review diff --check
+# exit0. Worktree status clean; no product change/patch to commit.
+
+# No full/browser/render/socket/network/install/typecheck/build requested or run.
+# Setup attempts retained separately: two config startup failures (__dirname),
+# three neighbor setup failures (missing frozen Agent imports); no tests or
+# product files changed to resolve them, only the private runner/input copies.

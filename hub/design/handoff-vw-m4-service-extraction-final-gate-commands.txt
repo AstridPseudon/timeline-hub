@@ -1,0 +1,25 @@
+Review source/ref checks:
+git -C /home/user/peteromallet/astrid-agent show --stat --oneline 0611b0f9c34ad56d8e1faab08f10bbe665d4fdd6
+git -C /home/user/peteromallet/astrid-agent diff --name-status 4ef1391c2c104d5d11b3a27265035c51be296045 0611b0f9c34ad56d8e1faab08f10bbe665d4fdd6
+git -C /home/user/peteromallet/astrid-agent diff --no-ext-diff --unified=45 4ef1391c2c104d5d11b3a27265035c51be296045 0611b0f9c34ad56d8e1faab08f10bbe665d4fdd6 -- astrid/core/rendering/service.py astrid/core/rendering/window_inputs.py
+git -C /home/user/peteromallet/astrid-agent diff-tree --check 0611b0f9c34ad56d8e1faab08f10bbe665d4fdd6^ 0611b0f9c34ad56d8e1faab08f10bbe665d4fdd6
+Result: exactly two files; diff check passed.
+
+Independent AST comparison (inline Python):
+Compared base service._segment_request body with committed helper materialize_window_input body after normalizing the wrapper and injected hook.
+Result: AST_BODY_EQUAL True; service lines 2367 -> 2298; helper 106.
+
+Independent committed-source tiny extraction:
+PYTHONDONTWRITEBYTECODE=1 python -B /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-service-extraction-final-gate-tiny-extract.py
+Result: PASS native/no-layer, native/layer extent+alpha, legacy hook+clear, immutability/hash, structured error.
+
+Owner handoff commands/evidence reviewed:
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m pytest -p no:cacheprovider -q -o addopts= tests/core/rendering/test_service.py tests/packs/rendering/test_native_layer_extent.py tests/packs/rendering/test_live_scene_composition.py -k 'not real_ffmpeg and not real_render_scene'
+Result: 139 passed, 4 deselected.
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test vw-m4-service-window-source-extract targeted --files tests/packs/rendering/test_remotion_native_window.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test vw-m4-service-window-source-extract-targeted-1020133240-23843
+Result: 25 passed, exit 0.
+env ASTRID_INTERNAL_INVOCATION=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-service-window-source-extract-identity.py
+Result: 78 identical payload/error/immutability examples and identical moved AST.
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -B -m pytest -p no:cacheprovider -q -o addopts= tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+Result: service entry passed; suite failed at separate run.py (1929 vs recorded 1851).

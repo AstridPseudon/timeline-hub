@@ -1,0 +1,9 @@
+0611b0f9c34ad56d8e1faab08f10bbe665d4fdd6
+  astrid/core/rendering/service.py
+  astrid/core/rendering/window_inputs.py
+
+Review artifacts:
+  handoff-vw-m4-service-extraction-final-gate-REPORT.md
+  handoff-vw-m4-service-extraction-final-gate-commands.txt
+  handoff-vw-m4-service-extraction-final-gate-tiny-extract.py
+  handoff-vw-m4-service-extraction-final-gate-patch.txt

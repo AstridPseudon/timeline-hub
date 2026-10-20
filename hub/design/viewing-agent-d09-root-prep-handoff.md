@@ -14,7 +14,9 @@ Current normal Root source/client pin is official013; originalsource/extent/PCMc
 Implemented in `astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py`,
 private `_prepared_remotion_root`; re-exported privately on `remotion.run` for the
 existing backend seams. The 208 existing preparation/source/PCM/callback tests
-passed before and after extraction; additional direct lifetime tests are pending.
+passed before and after extraction. The expanded direct lane passed 225 tests;
+11 direct context/fingerprint cases passed again after the type-only cast. Central
+final-tree HTTP/phase/backend/lock lane passed 82 tests (1020133642-9871).
 
 ```python
 _prepared_remotion_root(

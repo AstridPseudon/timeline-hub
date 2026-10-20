@@ -1,0 +1,122 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-render-cap-consumer-review/app-source-e6c4aae
+
+ ❯ src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts (1 test | 1 failed) 24ms
+   × preserves MAIN image-cap opacity through the canonical projection and public compiler 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts > preserves MAIN image-cap opacity through the canonical projection and public compiler
+AssertionError: expected { id: 'image-occurrence:image', …(9) } to match object { id: 'image-occurrence:image', …(3) }
+(16 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "at": 0,
+    "effects": {
+      "fade_out": 1,
+    },
+-   "hold": 4,
++   "hold": 5,
+    "id": "image-occurrence:image",
+  }
+
+ ❯ src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts:48:21
+     46|   expect(config.clips).toHaveLength(1);
+     47|   const clip = config.clips[0];
+     48|   expect.soft(clip).toMatchObject({ id: 'image-occurrence:image', at: …
+       |                     ^
+     49|   const compiled = compilePlayerTransitions(config);
+     50|   expect(compiled?.tracks).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts > preserves MAIN image-cap opacity through the canonical projection and public compiler
+AssertionError: expected 1 to be 0.5 // Object.is equality
+
+- Expected
++ Received
+
+- 0.5
++ 1
+
+ ❯ src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts:57:75
+     55|       { clipId: clip.id, contentFrame: frame },
+     56|     ]);
+     57|     expect.soft(preparePlayerClipOpacity(clip, config.output.fps)(fram…
+       |                                                                           ^
+     58|   }
+     59|   expect.soft(querySceneFrame(evaluation.scene, 120).layers).toEqual([…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts > preserves MAIN image-cap opacity through the canonical projection and public compiler
+AssertionError: expected [ { …(18) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "bounds": {
++       "rect": {
++         "height": 1080,
++         "width": 1920,
++         "x": 0,
++         "y": 0,
++       },
++       "status": "known",
++     },
++     "clipId": "image-occurrence:image",
++     "clipIndex": 0,
++     "contentFrame": 120,
++     "coverage": "unknown",
++     "dip": false,
++     "drawLocalFrame": 120,
++     "findings": [
++       {
++         "clipId": "image-occurrence:image",
++         "code": "unknown-media-alpha",
++         "reason": "Media does not declare opaque alpha",
++       },
++     ],
++     "fullFrame": true,
++     "opacity": null,
++     "opaqueSupport": "unknown",
++     "ownFrame": 120,
++     "role": "content",
++     "targetBounds": {
++       "rect": {
++         "height": 1080,
++         "width": 1920,
++         "x": 0,
++         "y": 0,
++       },
++       "status": "known",
++     },
++     "track": "picture",
++     "transitionOpacity": 1,
++     "visible": "unknown",
++     "z": 0,
++   },
++ ]
+
+ ❯ src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts:59:62
+     57|     expect.soft(preparePlayerClipOpacity(clip, config.output.fps)(fram…
+     58|   }
+     59|   expect.soft(querySceneFrame(evaluation.scene, 120).layers).toEqual([…
+       |                                                              ^
+     60|   expect(closure).toStrictEqual(original);
+     61| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 1 passed (2)
+   Start at  13:33:12
+   Duration  2.88s (transform 841ms, setup 295ms, import 1.35s, tests 36ms, environment 931ms)
+

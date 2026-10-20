@@ -1,0 +1,68 @@
+# Independent review commands and results
+
+# Read-only exact-branch identity, scope, and parent checks.
+git -C /home/user/work/agent show -s --format='%H%n%P%n%s' 9d93e66e4e031b98fc042235334d1a4723006ebb
+# 9d93e66e4e031b98fc042235334d1a4723006ebb
+# bdd02bd3f753e24092b982772bd481afc84f49da
+# fix(rendering): refresh generated AM-sprite element catalog
+
+git -C /home/user/work/agent show -s --format='%H%n%P%n%s' 48f3eef4bfe876fe2481d950ae33fa370fd03c58
+# 48f3eef4bfe876fe2481d950ae33fa370fd03c58
+# c35b317c1104dda20f5ecfa59c00f7f9a9edbeae
+# test(rendering): migrate AM plate fill assertions
+
+git -C /home/user/work/agent diff --name-status cf7448ed6c1298b172d004914cfe2bb8c99048e7 9d93e66e4e031b98fc042235334d1a4723006ebb
+# M astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx
+# M astrid/packs/rendering/elements/catalog.ts
+# A tests/packs/rendering/test_sprite_scene_capability.py
+
+git -C /home/user/work/agent diff --name-status cf7448ed6c1298b172d004914cfe2bb8c99048e7 48f3eef4bfe876fe2481d950ae33fa370fd03c58
+# M astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx
+# A astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts
+# A astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts
+# M astrid/packs/rendering/elements/catalog.ts
+# A tests/packs/rendering/test_am_snap_plate_scene_capability.py
+# M tests/packs/test_am_snap_plate_fill.py
+
+# Product-byte preservation after the follow-up commits.
+git -C /home/user/work/agent diff --name-only bdd02bd3f753e24092b982772bd481afc84f49da 9d93e66e4e031b98fc042235334d1a4723006ebb
+# only astrid/packs/rendering/elements/catalog.ts
+git -C /home/user/work/agent diff --name-only c35b317c1104dda20f5ecfa59c00f7f9a9edbeae 48f3eef4bfe876fe2481d950ae33fa370fd03c58
+# only catalog.ts, test_am_snap_plate_scene_capability.py, test_am_snap_plate_fill.py
+
+# Current Agent base compatibility; candidate full patches checked without applying.
+for h in 9d93e66e4e031b98fc042235334d1a4723006ebb 48f3eef4bfe876fe2481d950ae33fa370fd03c58; do p=$(mktemp /tmp/vw-m3-am-two-full-$h.XXXXXX.patch); git -C /home/user/work/agent diff --binary cf7448ed6c1298b172d004914cfe2bb8c99048e7 $h > "$p"; git -C /home/user/work/agent apply --check --whitespace=error "$p"; done
+# exit 0 for each candidate
+git -C /home/user/work/agent diff --check tl/integration
+# exit 0
+
+# Independent read-only git-show invariant probe over both exact candidates.
+REPO=/home/user/work/agent BASE=cf7448ed6c1298b172d004914cfe2bb8c99048e7 /home/user/work/venv-agent/bin/python - <<'PY'
+# Checked exact scopes, product-byte preservation, public registration, shared
+# spriteAt/plateSurface helpers, conservative UNKNOWN paths, no clock/newtype/
+# private-math markers, actual fill precedence assertions, and catalog revisions.
+PY
+# PASS
+
+# Sprite corrected-unit evidence (run by its owning worker on exact branch).
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+# PASS, exit 0
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/vw-m3-am-sprite-current-catalog-unit-pytest-targeted tests/packs/rendering/test_sprite_scene_capability.py tests/packs/rendering/test_scene_host.py tests/sdk/test_timeline_checkout.py::test_check_flags_offcanvas_mixed_scale_and_damaged_sprite_by_address
+# 33 passed in 25.55s
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/rendering/test_sprite_scene_capability.py
+# All checks passed
+
+# Plate corrected-unit evidence (run by its owning worker on exact branch).
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/am-plate-fill-green tests/packs/test_am_snap_plate_fill.py
+# 2 passed in 0.16s
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/am-plate-108-rerun tests/packs/rendering/test_am_snap_plate_scene_capability.py tests/packs/rendering/test_scene_host.py tests/packs/rendering/test_scene_source_carry.py tests/core/timeline/test_onscreen.py tests/core/timeline/test_onscreen_more.py tests/sdk/test_coverage_empty_cut.py tests/sdk/test_timeline_commit_provider.py::test_move_reload_and_inverse_import_no_renderer
+# 108 passed in 31.60s
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+# PASS, exit 0
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/test_am_snap_plate_fill.py tests/packs/rendering/test_am_snap_plate_scene_capability.py
+# exit 0
+
+# Prior exact parent-vs-candidate SSR identities.
+# Sprite: 35/35 markup samples byte-equal; aggregate
+# 963140ecb235706a8f4c0ab57f5ba8f17984bad9ed58fa4f3647a128d888ca2b.
+# Plate: 10 variants x 9 frames = 90 samples byte-equal; default theme equal.

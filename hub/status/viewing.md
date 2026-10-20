@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T13:36:30Z | dispatcher heartbeat 14s -->
+<!-- viewing | 2026-10-20T13:41:51Z | dispatcher heartbeat 3s -->
 # viewing — 2026-10-20 13:36 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Gates6/7 OPEN; no current frame/audio parity.
 Integrated: Composition e80c46baf/public12, tree23a994 joined main67b8aa3 unchanged; build/package/default equality PASS; central1020091054-4980 npmtest69PASS. Immutable12 SHA0a7b6152../77files. Agent root12/presenter/sourcecarry/extent and normalPCMcaller a2ba1bca integrated; actualHTTP/WAV22PASS central1020105409-15680 (encoder/admission/profile doubles explicit). App test-only parity32files merged6ff21cac9; no MAINrender/pin change. Fourcase1020051823-16742 remains2PASS/2FAIL.

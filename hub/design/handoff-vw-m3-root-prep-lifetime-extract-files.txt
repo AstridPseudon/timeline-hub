@@ -1,0 +1,7 @@
+astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+astrid/packs/rendering/rendering/renderers/remotion/run.py
+docs/giant-file-rationale.md
+tests/packs/rendering/test_composed_frame_capture.py
+tests/packs/rendering/test_normal_audio_run.py
+tests/packs/rendering/test_remotion_capture_scene_props.py
+astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
