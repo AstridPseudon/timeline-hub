@@ -39,6 +39,8 @@ def operations():
     from .native_occurrence_delete import occurrence_delete
     from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
+    from .native_parent_media_commands import add_media as parent_add_media
+    from .native_parent_media_commands import assembled_target
     from .native_placement_commands import (
         PLACEMENT_INTENT,
         placement_create,
@@ -67,7 +69,9 @@ def operations():
             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
             'shot.set': Operation(_SCHEMA['$defs']['ShotSetArgs'], shot_set, SHOT_INTENT, True),
-            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
+            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
+            'timeline.assembled-target': Operation(_SCHEMA['$defs']['AssembledTargetArgs'], assembled_target, {}),
+            'clip.add-media': Operation(_SCHEMA['$defs']['ClipAddMediaArgs'], parent_add_media, {})}
 
 
 @dataclass

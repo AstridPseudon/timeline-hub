@@ -163,7 +163,7 @@ def bundle_from_document(document):
 
 def _inverse_media_removals(records, bundle):
     """Only accepted edges can prove that a retained pin was introduced by writes."""
-    from ._collections import AcceptedRecords
+    from ._collections import AcceptedRecords, arrange, restoration_orders
     from ._command_state import CommandError, State, equal
 
     if not records:
@@ -196,12 +196,15 @@ def _inverse_media_removals(records, bundle):
         removed.difference_update(prior_media - accepted_media)
         if not introduced:
             continue
+        accepted = AcceptedRecords([entry], commands, records.load_boundary)
         state = State(copy.deepcopy(before))
         for record in commands:
             for write in [*record['writes'], *record['derived_writes']]:
                 if not state.matches(write['ref'], write['path'], write['before']):
                     raise CommandError('media boundary differs from accepted writes', kind='history_unavailable')
                 state.set(write['ref'], write['path'], write['after'])
+            for (owner, kind), (_, expected) in restoration_orders(accepted, only=record).items():
+                arrange(state, owner, kind, expected)
         replayed = document_from_bundle(state.bundle, source_bundles=(after,))
         if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
                 or any(not equal(replayed[key], images[1][key]) for key in (
@@ -508,7 +511,7 @@ def _reservation_refs(state):
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle['placements'])]
     refs.update(owners[1:])
     for owner in owners:
-        assets = state.config(owner).get('registry', {}).get('assets', {})
+        assets = state.registry(owner).get('assets', {})
         _require(isinstance(assets, dict), 'invalid asset identity collection')
         refs.update(owner + '/asset:' + identity for identity in assets)
         for kind in ('clip', 'track'):
@@ -773,7 +776,7 @@ class RuntimeCommitService:
             verified_media = []
             for call in calls:
                 validate_command(call)
-                if call['op'] in ('occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                if call['op'] in ('clip.add-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
                                 'shot.pool'):
                     for key in ('old_media', 'media'):
                         if key in call['args']:

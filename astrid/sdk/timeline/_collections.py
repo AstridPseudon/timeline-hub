@@ -20,6 +20,8 @@ def member(ref):
 def container(owner, kind):
     if kind in ('occurrence', 'shot'):
         return 'parent', (kind + 's',)
+    if kind == 'asset':
+        return owner, ('config' if owner == 'parent' else 'source', 'registry', 'assets')
     return owner, (
         ('config' if owner == 'parent' else 'source', kind + 's'))
 
@@ -30,7 +32,7 @@ def _identity(value):
 
 def shape(state, owner, kind):
     def tagged(obj, key):
-        if key not in obj:
+        if not isinstance(obj, dict) or key not in obj:
             return ABSENT.copy()
         value = obj[key]
         return present([] if isinstance(value, list) else {} if isinstance(value, dict) else value)
@@ -38,6 +40,12 @@ def shape(state, owner, kind):
     if kind in ('occurrence', 'shot'):
         return {'container': 'array' if kind == 'occurrence' else 'object'}
     config = state.config(owner)
+    if kind == 'asset':
+        # Shape guards retain storage presence without guarding unrelated aliases.
+        containers = [config] if owner != 'parent' else [state.bundle['parent'], config]
+        return {str(i): {'registry': tagged(obj, 'registry'),
+                        'assets': tagged(obj.get('registry') if isinstance(obj, dict) else {}, 'assets')}
+                for i, obj in enumerate(containers)}
     result = {'members': tagged(config if isinstance(config, dict) else {}, kind + 's')}
     if owner == 'parent':
         parent = state.bundle['parent']
