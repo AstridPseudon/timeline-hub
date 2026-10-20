@@ -1,3 +1,4 @@
+import { createEditorImagePlacement, type EditorImagePlacementHost } from './editorImagePlacement.ts';
 import type { CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
@@ -22,6 +23,7 @@ export type CommandSessionState = {
   canReapplyLabel?: boolean;
 };
 type Options = {
+  imagePlacementHost?: EditorImagePlacementHost;
   scope: OutboxScope;
   initial: TimelineCommandBasis;
   outboxes?: ReturnType<typeof createCommitOutbox>;
@@ -414,12 +416,24 @@ export async function createTimelineCommandSession(options: Options) {
       throw error;
     }
   }
-  const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending);
+  const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending
+    || owner.placementContinuations?.some((item) => !item.placement?.accepted && !item.placement?.cancelled));
   if (owners.length) {
     state = { ...state, recoverableOwners: owners.map((owner) => owner.ownerId) };
     publish('recovery', 'Choose the persisted editor owner to recover its exact pending request');
   } else await claim();
+  const imageGeneration = createEditorImagePlacement({ scope: options.scope, host: options.imagePlacementHost,
+    current() {
+      assertReady();
+      if (state.status !== 'saved' || pendingAppends.length || prepared.size || record?.intents.length || record?.pending
+        || !sameHead(displayHead, acceptedBasis.head) || !sameHead(known.head, acceptedBasis.head)) {
+        throw new Error('Acknowledge earlier timeline work before preparing placement');
+      }
+      return { box: box!, basis: acceptedBasis, bundle };
+    },
+  });
   return {
+    imageGeneration,
     port,
     trackLabelPort,
     useLatest: () => resolveRejected(false),
