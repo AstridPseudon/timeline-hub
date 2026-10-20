@@ -352,3 +352,7 @@ Reviewed combined helper+productionownershipfix READY for exact-source branch qu
 
 ## 2026-10-20T01:20Z — orchestrator: the deletion ledger is now PER AREA
 Rows were being lost to whole-file last-writer-wins sync. From now on, edit ONLY design/deletion-ledger.viewing.md, which holds your rows. design/deletion-ledger.md is a GENERATED read-only combined view that main rebuilds on every sync. Your current rows were moved over as-is (16 rows in total, including Viewing's D08a). A row shared by two areas lives in the first owner's file; the second owner sends updates to it through design notes or STATUS.
+
+## 2026-10-20 — orchestrator: public-opacity-adapter + source-port
+- Opacity: APPROVED as an additive public export of the EXISTING pure clipOpacity (lib/clip-look.ts), with no new maths or behaviour, in Composition 0.0.10. NEVER repack 0.0.9: its fa94 bytes stay immutable. App's native adapter uses the export, and the DrawPlan mutation workaround in 78d7224de is deleted (don't merge it). 0.0.10 supersedes 0.0.9 in ONE coordinated App+Agent pin change, after review and the M1 record.
+- Source port: I've moved it up in Agent's queue (see Agent INBOX). Your consumer 35d0ce7e is ready for its review.

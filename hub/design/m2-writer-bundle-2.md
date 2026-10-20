@@ -1,157 +1,167 @@
-# M2 writer bundle 2 — INTERNAL PROVISIONAL source, no release
+# M2 writer bundle 2 — manager review candidate, release HELD
 
-M2 integration is HELD until PLAN records M1. Frozen Bundle1 remains Agent
-`3bf9e5368a956ef562c77e1beb0a745addf23daf` / Runtime
-`6be970633cc82ab412428151e6bf42f3e7fc3081`, client `0.2.2`.
-This candidate is not popup acceptance, a generated artifact release, or an App handoff.
+All M2 integration remains HELD until PLAN records M1. This is the complete
+required ordinary + popup + PARAM source composition for review before normal
+Runtime generation. Manager owns source freeze. PARAM release is independently
+HELD for `agt-m2-params-object-scope`; the reviewed `_hydrate` still fetches all
+admission snapshot objects. No App readiness or popup acceptance is claimed.
 
-## Exact source identity
+Frozen Bundle1 stays Agent `3bf9e5368a956ef562c77e1beb0a745addf23daf` /
+Runtime `6be970633cc82ab412428151e6bf42f3e7fc3081`, client `0.2.2`.
+No leased Bundle2/Bundle1 refs, vendor files or Runtime artifacts changed.
 
-| Field | Value |
+## Source identity
+
+| Field | Exact value |
 |---|---|
-| Branch | `tl/agt-m2-popup-foundation-compose` |
-| Source worktree | `/home/user/work/wt/agt-m2-popup-foundation-compose` |
-| Base commit | `84db8bde88f695fede81f32a2fddb30622c6781f` |
-| Final tested source tree | `c401f7720a092d1c1305ed37dea55c7754b8eacf` |
-| Composed commit | **PENDING HARNESS COMMIT AFTER WORKER EXIT**; do not use the base SHA as the composed commit |
-| Canonical schema | `/home/user/work/wt/agt-m2-popup-foundation-compose/astrid/core/timeline/schema/edit-command.schema.json` |
-| Canonical schema file SHA256 | `5e622fb61142501f2c028f639da855ca318600be27a594253641bf9b755aa287` |
+| Branch | `tl/agt-m2-bundle2-complete-source` |
+| Worktree | `/home/user/work/wt/agt-m2-bundle2-complete-source` |
+| Base commit | `7b61efd5ea9fd9420b7fa577cfafa4487e3ca746` |
+| Final tested source tree | `fe87ed862652e309a2dc86fd4845e859d3da5a9a` |
+| Composed commit | **PENDING HARNESS COMMIT AFTER WORKER EXIT** |
+| Canonical schema | `/home/user/work/wt/agt-m2-bundle2-complete-source/astrid/core/timeline/schema/edit-command.schema.json` |
+| Schema file SHA256 | `472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9` |
 | Runtime lock SHA256 | `76509204d81fdeb25dcf3b621a52f0f3ac919c4e53bfe64f0e6c261dbf23ec08` (unchanged) |
-| Exact paired Runtime | `6be970633cc82ab412428151e6bf42f3e7fc3081` |
-| Paired client/schema/artifact | `0.2.2` / `sha256:89a396aaa10a5ab6c29fb5f053bf12dd031be4a259c33ebc6a53489fcd5878d3` / `sha256:3b805d6946fd73c44144009021f44153b78ceeb5e5b1298cd2397a1f2dc19730` |
+| Frozen Runtime for official HTTP proof | `6be970633cc82ab412428151e6bf42f3e7fc3081` |
+| PARAM Runtime for direct source proof only | `b3ce5aa65151a6174064d73838ad23da4a8a7141` |
 
-The sandbox forbids commits and the harness commits only after exit. Manager TODO:
-read `git rev-parse tl/agt-m2-popup-foundation-compose`, verify its tree equals the
-final tested tree above, and replace the pending commit cell before freezing source.
-The exact tree is already corroborated by the central service's `snap` file.
-No commit identity is fabricated in this handoff.
+The sandbox cannot commit; the harness commits only after worker exit. Manager
+must run `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes/finalize-handoff.py` afterward. It verifies the harness
+commit's exact tree, then publishes that exact commit in this absolute document.
+The pending cell is not a source-freeze identity; do not substitute the base SHA.
 
-## Reviewed composition and file manifests
+## Exact composition
 
-- Foundation `84db8bde` is retained, including generic clear batches, staged/own-write
-  capture, net-zero handling, semantic reservations, root patterns and original goldens.
-- Popup: exact `2f77310e..5528c45c`. Full file manifest: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/popup-manifest.txt`;
-  complete reviewed delta: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/popup.patch`. New helper/handler, golden and both
-  popup test files are byte-identical to `5528c45c`.
-- Media provenance: exact `c3da1535..2f77310e`. Manifest: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/media-provenance-manifest.txt`;
-  delta: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/media-provenance.patch`. Only boundary-proven manifest removal and
-  provider forwarding are added to the newer core. The one inverse condition already
-  exists equivalently in the foundation (`before.state == present`), so it is retained.
-  The missing precursor test module is copied exactly from reviewed `2f77310e`,
-  rather than importing the older product core.
-- Placement: exact `e4338c48^..e4338c48`; manifest `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/placement-manifest.txt`,
-  delta `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/placement.patch`. Handler, golden and tests are byte-identical.
-  Selection/query and registry changes are manually reconciled with foundation/popup.
-- Trim `8de94595` is **not composed**: the base lacks `_trim_commands.py` and its
-  fixture/tests. It depends on native trim `d82f6ef7`, outside the supplied exact
-  overlay. Manager must explicitly review/include that prerequisite, then apply
-  `8de94595`; do not copy its whole older `commands.py` or schema.
-- Split `3b03358` is **not composed**: that revision does not resolve in this object
-  store. `3b03eee9` exists but is not silently substituted; manager must confirm the
-  exact reviewed split SHA and its generic create-after/order changes.
-- Scalar worker `agt-m2-clip-scalar-fields` was still uncommitted when final source
-  was frozen for paired tests. Its WIP is excluded; manager adds only its committed,
-  passing source in a later composition. This is why this source remains INTERNAL PROVISIONAL.
-- Params/word/root-stage/materialization WIP is excluded. Params' three strict xfails
-  and the foundation's two new root inverse strict xfails remain byte-identical.
+Base `7b61efd5` / tree `c401f772` already contains foundation `84db8bde`, popup
+`5528c45c`, provenance `2f77310e`, placement `e4338c48`, frozen client `0.2.2`.
+This candidate adds only the following approved deltas:
 
-The only additional Python glue beyond reviewed overlays is replacing the existing
-seven-line `TRACK_CREATE_PARAMETERS` literal with its one-line canonical-schema lookup.
-Its exact existing closed args become `TrackCreateArgs` plus one normal operation
-condition in the canonical schema. This closes a generator gap without adding a
-handler or behavior. All registered args now have normal closed definitions.
-Exact semantic-union and 22 byte checks: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/audit.py`, `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-popup-foundation-compose/notes/final-manifest.json`.
+- Scalar: `84db8bde..7b54ca92` (`clip.set`, App golden).
+- Root staging: `84db8bde..1b52391e`, including source-aware inverse context and
+  provider/rebase state. Both root strict xfails now pass with their assertions.
+- Pure pack `8b0946e6^..8b0946e6`, portable `8b0946e6..b2b51c4a`, PARAM
+  `b2b51c4a..3565462c`. The three selected-schema strict xfails now pass with
+  their assertions. Independent object-scope WIP is excluded.
+- Trim prerequisite `51948d40..d82f6ef7` and source units `d82f6ef7..8de94595`.
+- Split `51948d40..3b03eee9006990739fae19884389149c76d8fbd0`, including its
+  reviewed stable create-after/order primitives. Foundation's staged-create
+  selection validation is retained while recognizing the new stable boundary.
+- Only the new shared-image inverse test file from `2ad74839`; no product fix.
+
+The shared recorder/execute/rebase/provider accepts and forwards the union
+`verified_media`, `schema_inputs`, `realm_id`. Clear-only scalar handling,
+source mappings, retained pins, source-aware inverse state and the media
+provenance removal/dependent guards survive the reconciliation. Canonical
+`schema_source` references the closed named `DocumentPin` definition, with exactly
+the reviewed document_id/version/content_digest fields. Existing root and scoped
+asset patterns remain one union. No older whole commands/schema/core copy was used.
+Reconciliation adds only argument forwarding, the named schema relocation, and
+selection-condition reconciliation beyond the exact overlays (well below 40
+product glue lines); no new behavior or compiler expansion.
+
+Optional free moves are excluded. No word/default-compiler/physical-map WIP,
+Runtime generated DTO/Protocol edits, release-version choice or pin change.
+Per-overlay patches and a 47-check exact-byte/delta + canonical semantic-union
+audit live under `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes`. `final-manifest.json` records the complete source tree,
+changed files and goldens; `audit.py` is reproducible.
 
 ## Operations and capture exports
 
-Every registered operation is version `1`, schema_version `1`. Engine/provider
-operations `timeline.inverse` and `timeline.restore` remain available separately.
+All registered operations are schema_version `1`, version `1`; engine/provider
+`timeline.inverse` and `timeline.restore` remain separate. Every registered args
+schema is closed and is the same object used by the native registry.
 
-| Operation | Capture export | Args definition |
+| Operation | Capture export (`astrid.sdk.timeline.` prefix) | Args |
 |---|---|---|
-| `clip.move` | `astrid.sdk.timeline.capture.capture_move` | `ClipMoveArgs` |
-| `clip.delete` | `astrid.sdk.timeline.capture.capture_clip_delete` | `ClipDeleteArgs` |
-| `clip.add` | `astrid.sdk.timeline._clip_commands.capture_clip_add` | `ClipAddArgs` |
-| `clip.set-params` | `astrid.sdk.timeline._scalar_commands.capture_clip_set_params` | `ClipSetParamsArgs` |
-| `track.create` | `astrid.sdk.timeline.capture.capture_track_create` | `TrackCreateArgs` |
-| `track.set` | `astrid.sdk.timeline._track_commands.capture_track_set` | `TrackSetArgs` |
-| `placement.move` | `astrid.sdk.timeline.native_placement_commands.capture_placement` | `ClipMoveArgs` |
-| `occurrence.add-media` | `astrid.sdk.timeline.native_occurrence_media_commands.capture_occurrence_add_media` | `OccurrenceAddMediaArgs` |
-| `occurrence.swap-media` | `astrid.sdk.timeline.native_occurrence_media_commands.capture_occurrence_swap_media` | `OccurrenceSwapMediaArgs` |
+| `clip.move` | `capture.capture_move` | `ClipMoveArgs` |
+| `placement.move` | `native_placement_commands.capture_placement` | `ClipMoveArgs` |
+| `clip.delete` | `capture.capture_clip_delete` | `ClipDeleteArgs` |
+| `clip.add` | `_clip_commands.capture_clip_add` | `ClipAddArgs` |
+| `clip.set` | `_clip_scalar_commands.capture_clip_set` | `ClipSetArgs` |
+| `clip.trim` | `_trim_commands.capture_clip_trim` | `ClipTrimArgs` |
+| `clip.split` | `_split_commands.capture_clip_split` | `ClipSplitArgs` |
+| `clip.set-params` | `_scalar_commands.capture_clip_set_params` | `ClipSetParamsArgs` |
+| `track.create` | `capture.capture_track_create` | `TrackCreateArgs` |
+| `track.set` | `_track_commands.capture_track_set` | `TrackSetArgs` |
+| `occurrence.add-media` | `native_occurrence_media_commands.capture_occurrence_add_media` | `OccurrenceAddMediaArgs` |
+| `occurrence.swap-media` | `native_occurrence_media_commands.capture_occurrence_swap_media` | `OccurrenceSwapMediaArgs` |
 
-Published `_track_commands` remains a thin re-export of the sole scalar handler.
-Native session ingress stays `astrid.sdk.timeline.sync.TimelineSession.queue/commit`.
-Popup signatures/ownership/refusals are detailed in `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/m2-popup-native-contract.md`.
-The immutable five-field `MediaSelection` and ABI1 `selected_media` seam are unchanged.
+Selected PARAM capture additionally accepts `schema_source`, `schema_inputs`,
+`realm_id`; detached capture inputs never authorize server execution. The provider
+loads exact scoped immutable inputs. `sync.TimelineSession.queue/commit` stays the
+native ingress. MediaSelection's five fields and ABI1 selected_media are unchanged.
 
-Portable goldens are absolute under `/home/user/work/wt/agt-m2-popup-foundation-compose/tests/editing_conformance/fixtures/`.
-Popup golden contains add/swap input, verified_media, exact commands/records/output;
-placement golden contains parent/occurrence cases. M1 and parent-label capture +
-records + output serialization remains exactly **87776 bytes**, SHA256
-`b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8`.
-Frozen-base/composed parity outputs compare equal.
+## Portable goldens
+
+All paths below are under `/home/user/work/wt/agt-m2-bundle2-complete-source/tests/editing_conformance/fixtures/`.
+M1/parent-label capture + records + output remain exactly **87776 bytes**,
+SHA256 `b7f84a929716c9fc479fff1ea99e26daeeeb49b72ddc7594562b929f0feb3ff8`.
+Original foundation/popup/placement/scalar/trim/split goldens are byte-preserved.
 
 | Golden filename | SHA256 |
 |---|---|
+| `recipe_clip_delete.json` | `091bc1c7fa9c57583dde8fcc6d6af9226513bf4f214369ef0892cc1db492f0aa` |
 | `recipe_m1_move.json` | `e1dc5fc72e42fa90aed3e46ccd3bb95e219004bddd2917dc99f0154cf768dba0` |
 | `recipe_m1_occurrence.json` | `dba00dff12f8322f8613869170abd15cd8c8e330bbbee8a6da675270fda3a7bc` |
 | `recipe_m1_shared.json` | `0828ae13255897d8bea25ba5fd28445835f374189e837b41b9f818bb017577d7` |
+| `recipe_m2_app_clip_scalar_fields.json` | `8bb75e23c10c9677635d85f33f219b7f1b2d89baf481e3b7ed21f425b76f0c06` |
 | `recipe_m2_app_track_label.json` | `5aa9aed23a9764e4a9fb0d56fd5efc47368711933adbfaa224f2f725a766ed00` |
 | `recipe_m2_clip_add.json` | `5e9a54e75a0901724dedd3e62c0f37f78840a8edee001f30b92306383800479b` |
-| `recipe_clip_delete.json` | `091bc1c7fa9c57583dde8fcc6d6af9226513bf4f214369ef0892cc1db492f0aa` |
-| `recipe_m2_scalar_track.json` | `f982beb0493fbda9196d99c2dfb5200c26cb82d58cd23535b87eb7295747c75d` |
+| `recipe_m2_clip_split.json` | `a0e24c1f78d8580f908973745950ed0196c17257831197ec2f75a55abc638f63` |
+| `recipe_m2_clip_trim.json` | `4d71a9d184db1b85c220de10842b2dc68e5eb9b48afee180b6c29cf0d5b06152` |
+| `recipe_m2_occurrence_media.json` | `e30ed3303532e3d73adfd07670e04d1312003b7e10d2c5c008629b8b9bffad46` |
+| `recipe_m2_placement.json` | `7404b665b2918ebf095abc68bd3a20176afb0589b79cf785887c1da50b68d271` |
+| `recipe_m2_scalar_disjoint.json` | `0aab88bff6040ad741771fe8ed2198c141347970420ede78a981ba1416f6e866` |
 | `recipe_m2_scalar_params_absent.json` | `9687956ee3850c5d873580a28cd6e8354f0b76dcb9a17bf56eb6ae0213f24b36` |
 | `recipe_m2_scalar_params_null.json` | `15e945496b805af2554d78777be4585aa684615de575960352376f1dd4eaba74` |
 | `recipe_m2_scalar_params_object.json` | `ae9f96e55432d0cf892f6045285e56265c6adc66058caf146bf4a7d7b1869638` |
-| `recipe_m2_scalar_disjoint.json` | `0aab88bff6040ad741771fe8ed2198c141347970420ede78a981ba1416f6e866` |
-| `recipe_m2_placement.json` | `7404b665b2918ebf095abc68bd3a20176afb0589b79cf785887c1da50b68d271` |
-| `recipe_m2_occurrence_media.json` | `e30ed3303532e3d73adfd07670e04d1312003b7e10d2c5c008629b8b9bffad46` |
+| `recipe_m2_scalar_track.json` | `f982beb0493fbda9196d99c2dfb5200c26cb82d58cd23535b87eb7295747c75d` |
 
-## Qualification and explicit limits
+## Qualification
 
-Final bounded nonnetwork lane: **1196 passed, 4 existing platform skips,
-64 integration deselections, 5 strict xfails** in 84.56s.
-Actual direct Runtime `9f9b25c000485e919f30f1411831fe2d5a3c1316` service/SQLite/CAS lane:
-**42 passed, 12 strict xfailed** in 21.47s. No socket listeners or schema overrides.
-All twelve popup positive/race expectations remain unchanged; only the specific
-old scoped-asset schema error can trigger their strict xfail. Params' invalid
-selected-schema cases and two root inverse gaps remain visible too.
-Ruff passes; mypy passes for all ten touched product modules. Vendor lock verifies
-against exact `6be9706`; canonical schema semantic union and capture byte parity pass.
+- Local bounded conformance/provider/sync/native CLI + pack/schema lane:
+  **1496 passed, 4 existing platform skips, 65 integration deselected** (126.43s).
+- Supplemental provider/reservation lane: **52 passed, 2 integration deselected**
+  (3.84s). Canonical registry/closed args/reference union: **5 passed** (0.56s).
+- Direct normal PARAM source pair, Runtime `b3ce5aa6`: **15 passed** (10.38s).
+  No HTTP, mixed vendor-health claim, validator replacement or schema override.
+- Direct frozen Runtime `6be9706` ordinary/popup/provenance/shared-image pair:
+  **45 passed, 12 strict xfailed** (26.32s). The twelve popup positive/race
+  expectations are unchanged and remain held for normal asset-schema generation.
+- Final frozen Runtime HTTP proof: **95 passed, 13 strict xfailed** (106.65s),
+  central exit 0 / 109s. Twelve popup cases plus the inherited first-clip
+  nullable-speed case; no unexpected failures. One final-source request, exact
+  snapshot tree matches the identity above. Result: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-bundle2-complete-source-bundle1-runtime6be9706-integration-1020012332-852/`.
+- Focused timeline/new-test Ruff passes; mypy for 11 touched timeline modules
+  passes with Python 3.13 (the shared venv's actual version). Default project
+  Python 3.11 checking hits installed NumPy's Python 3.12+ type syntax before
+  checking source. Full changed-file Ruff reports 175 existing/reviewed compact
+  style/import findings; no claim of a clean full lint gate. Four compact-style
+  fixture findings originate in exact approved portable-pack `b2b51c4a` additions;
+  the affected files retain their reviewed source, including the
+  reviewed one-line model trim fix. No lint weakening or formatting churn.
+- Vendor lock against exact `6be9706`, unchanged frozen vendor, 47 byte/delta
+  checks, schema semantic union, M1 capture byte parity, and `git diff --check` pass.
 
-Exact-pair central run (one request, final tree only):
-`agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598`.
-Result path: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-m2-popup-foundation-compose-bundle1-runtime6be9706-integration-1020010632-18598/`.
-**PASS: 90 passed, 13 strict xfailed in 112.27s; service exit 0 / 117s.**
-Twelve are the preserved popup positives/races; one is the inherited first-clip
-nullable-speed case. The exact centrally snapshotted tree matches the source identity above.
-The suite asserts exact Runtime HEAD and uses the existing frozen client pin, including
-parent label/M1/identity/provider/client cutover plus scalar/first-clip/add-delete/popup/provenance files.
-No full suite, install, network fetch, App/browser journey, artifact generation/version
-selection, commit/merge/push or integration edits are performed here.
-Detached popup greens do **not** prove Runtime popup acceptance or App readiness.
+Exact commands and results are in `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-bundle2-complete-source/notes/report.md`.
+No full suite / make check, installs, App/browser runs, release/artifact generation,
+new Runtime contract qualification, merges, pushes or integration writes occurred.
 
-## Official Runtime generation request — source and definitive TODO
+## Blocking followups before release
 
-1. Manager reviews this source, resolves the missing trim/split identities and optional
-   scalar overlay, and records the harness commit + tested tree above. Any source
-   additions require a new reviewed schema SHA and bounded qualification; do not call
-   this incomplete source a final ordinary/popup bundle.
-2. After manager freeze, Runtime copies the exact canonical source path and SHA above
-   onto a NEW candidate and performs normal official root/export generation. Keep one
-   union of foundation shot/occurrence root patterns and scoped `asset` patterns in
-   `ScopedId`, `EntityRef`, `TargetKey`, `AnchorIdentity`. Include all nine registered
-   args schemas and `MediaSelection`, including the relocated `TrackCreateArgs`.
-   Cover PreparedCommit recorder/created/guard sites through normal generation.
-3. Runtime owns generated Python/TypeScript artifacts, normal package-root exports,
-   artifact manifest and version choice. Agent/App then consume that exact same
-   official tuple and refresh pins together. This worker generates no Runtime files,
-   chooses no release version, uses no raw-schema override and bypasses no pin.
-4. Rerun the unchanged 12 strict positive/race popup expectations through actual
-   managed media selection/production provider; remove markers only after acceptance,
-   reload, restart/exact retry, changed-key refusal, undo/redo and lifecycle races pass.
-5. Resolve selected-pack params' three strict failures and root inverse's two strict
-   failures under their assigned owners. Qualify App popup captures/browser use and
-   zero legacy writer traffic; never infer acceptance from unit counts.
-6. Keep Bundle1 frozen and all M2 integration held until PLAN records M1. This handoff
-   is an official generation **request source**, not authorization to release artifacts.
+1. Manager records the harness commit (helper above), reviews this exact tree and
+   freezes source. All M2 integration stays HELD until PLAN records M1.
+2. Resolve PARAM admission-object overfetch under the independent object-scope
+   review; do not pull its WIP into this candidate. Any accepted fix requires a
+   reviewed new source identity and bounded source-pair qualification.
+3. Runtime owner generates normal official Python/TypeScript artifacts and root
+   exports from this exact canonical schema/union, including all 12 operations’ closed args,
+   DocumentPin/schema_source, MediaSelection, PreparedCommit recorder sites,
+   MatchedSnapshot/VerifiedDocumentObject and Protocol declarations. Runtime owns
+   artifact manifest, provider compatibility tuple and version choice.
+4. Agent/App consume the same official artifacts and refresh pins together.
+   Re-run the unchanged twelve positive/race popup tests on the managed provider
+   through acceptance/reload, restart/exact retry, changed-key refusal, inverses,
+   and lifecycle races. Source-pair results do not qualify that release tuple.
+5. App owner qualifies captures/browser consumers and zero legacy writers. No
+   readiness inference from local passes or preserved popup xfails.
