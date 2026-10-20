@@ -407,6 +407,10 @@ class State:
                 rows.append(copy.deepcopy(state["value"]))
             return
         value = self.entity(ref)
+        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',) and len(path) > 1:
+            # Only the occurrence's own shot root; display IDs never select it.
+            shot = self.occurrence(ref.removesuffix('/shot'))['shot_id']
+            value, path = self.bundle['shots'][shot]['payload'], tuple(path[1:])
         for key in path[:-1]:
             if (state['state'] == 'absent' and isinstance(value, dict)
                     and (key not in value or value[key] is None)):
