@@ -45,7 +45,6 @@ afterEach(() => {
   captures.audio.length = 0;
   captures.report.mockClear();
 });
-
 describe('continuousPCM policy / both-consumer contract: prepared source admission', () => {
   it('keeps the public full-source PCM/WAV positive exact before consumer admission', () => {
     const rate = 48000;
@@ -81,4 +80,3 @@ describe('continuousPCM policy / both-consumer contract: prepared source admissi
     expect(captures.report).toHaveBeenCalledWith({ clipId: clip.id, source: clip.assetEntry.src });
   });
 });
-

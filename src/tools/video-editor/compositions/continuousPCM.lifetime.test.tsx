@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
+// This direct suite exceeds 500 lines because it owns the required PCM byte,
+// source-clock, lifecycle, retry, readiness, and occurrence matrix in one
+// consumer fixture; splitting it would hide the shared attempt state.
 import React from 'react';
 import { Blob } from 'node:buffer';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyAudioEnvelope, audioEnvelopeAt, audioEnvelopeWav, compileAudioEnvelope, computeMediaTrim } from '@banodoco/timeline-composition/evaluation';
+import {
+  applyAudioEnvelope,
+  audioEnvelopeAt,
+  audioEnvelopeWav,
+  compileAudioEnvelope,
+  computeMediaTrim,
+  getSanitizedPlaybackRate,
+  type AudioCurve,
+} from '@banodoco/timeline-composition/evaluation';
 import { AUDIO_HOLD_LIMIT_MS, AUDIO_RETRY_DELAYS_MS, AudioTrack } from '@/tools/video-editor/compositions/AudioTrack';
 import { playerEvaluationClip } from '@/tools/video-editor/compositions/playerEvaluation';
 
@@ -72,6 +83,34 @@ function decoded() {
 const flush = () => act(async () => { await Promise.resolve(); });
 const props = () => state.props.at(-1)!;
 const audio = () => screen.getByTestId('audio') as HTMLAudioElement;
+async function latestWav(): Promise<DataView> {
+  return new DataView(await blobs.at(-1)!.arrayBuffer());
+}
+function expectedPcm(clipToCompile: typeof clip, fps = 30) {
+  const authored = compileAudioEnvelope(playerEvaluationClip(clipToCompile), fps)!;
+  const expected = channels.map(channel => channel.slice());
+  applyAudioEnvelope(
+    expected,
+    sampleRate,
+    authored,
+    computeMediaTrim(clipToCompile, fps).trimBefore / fps,
+    getSanitizedPlaybackRate(clipToCompile.speed),
+  );
+  return { authored, expected };
+}
+async function expectLatestWavFor(clipToCompile: typeof clip, fps = 30) {
+  const { expected } = expectedPcm(clipToCompile, fps);
+  expect(new Uint8Array(await blobs.at(-1)!.arrayBuffer())).toEqual(
+    new Uint8Array(audioEnvelopeWav(expected, sampleRate)),
+  );
+}
+function sourceSampleForFrame(clipToSample: typeof clip, frame: number, fps = 30) {
+  const sourceFrom = computeMediaTrim(clipToSample, fps).trimBefore / fps;
+  return Math.round((sourceFrom + (frame / fps) * getSanitizedPlaybackRate(clipToSample.speed)) * sampleRate);
+}
+function sampleAt(wav: DataView, sample: number, channel = 0) {
+  return wav.getFloat32(44 + (sample * channels.length + channel) * 4, true);
+}
 function playable() {
   Object.defineProperty(audio(), 'readyState', { configurable: true, value: HTMLMediaElement.HAVE_ENOUGH_DATA });
   fireEvent.canPlay(audio());
@@ -149,6 +188,147 @@ describe('continuous PCM inside the App audio attempt', () => {
     expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:pcm-1');
   });
 
+  it.each([0, -1, Number.NaN])('sanitizes invalid authored speed %s before PCM application', async speed => {
+    const malformed = { ...clip, from: 0, to: 2, speed, volume: 1, params: { fadeIn: 0.5 } };
+    render(<AudioTrack track={{ ...track, volume: 0.5 }} clips={[malformed]} fps={30} />);
+    await flush();
+
+    expect(props()).toMatchObject({ src: 'blob:pcm-1', playbackRate: 1, volume: 0.5 });
+    await expectLatestWavFor(malformed);
+    const wav = await latestWav();
+    expect(sampleAt(wav, sourceSampleForFrame(malformed, 7))).toBeCloseTo(
+      channels[0][sourceSampleForFrame(malformed, 7)] * (7 / 15),
+      6,
+    );
+  });
+
+  it.each<AudioCurve>([
+    'linear', 'equal-power', 'exponential-fast', 'exponential-moderate', 'exponential-slow', 's-curve',
+  ])('applies the public continuous PCM envelope for %s interpolation', async curve => {
+    const envelope = {
+      keyframes: [{ at: 0, value: 0, curve }, { at: 1, value: 1 }],
+      multiply: [{ keyframes: [{ at: 0, value: 1 }], minimum: [{ keyframes: [{ at: 0, value: 1 }] }] }],
+    };
+    const curved = { ...clip, audio: { envelope } };
+    render(<AudioTrack track={track} clips={[curved]} fps={30} />);
+    await flush();
+
+    expect(props()).toMatchObject({ src: 'blob:pcm-1', volume: 0.4 });
+    expect(props().useWebAudioApi).toBeUndefined();
+    await expectLatestWavFor(curved);
+  });
+
+  it.each([
+    {
+      name: 'fade-out only',
+      clip: { ...clip, at: 0, from: 0, to: 31.5, volume: 1, speed: 1, params: { fadeOut: 3 } },
+      values: [[0, 1], [900, 0.5], [945, 0]],
+    },
+    {
+      name: 'fade-in and fade-out',
+      clip: { ...clip, at: 28.5, from: 28.5, to: 88.4, volume: 1, speed: 1, params: { fadeIn: 3, fadeOut: 4 } },
+      values: [[0, 0], [45, 0.5], [90, 1], [1677, 1], [1737, 0.5], [1797, 0]],
+    },
+    {
+      name: 'trimmed source',
+      clip: { ...clip, at: 84.4, from: 123.46, to: 199.393331, volume: 1, speed: 1, params: { fadeIn: 4, fadeOut: 3 } },
+      values: [[0, 0], [60, 0.5], [120, 1], [2232, 46 / 90], [2278, 0]],
+    },
+  ])('preserves exact authored fade boundaries in PCM: $name', async ({ clip: fadeClip, values }) => {
+    // Keep the old source-time boundaries (including the trimmed 123.46s
+    // source) without allocating a production-length 48kHz fixture.
+    sampleRate = 3_000;
+    channels = [new Float32Array(sampleRate * 200).fill(1), new Float32Array(sampleRate * 200).fill(1)];
+    render(<AudioTrack track={track} clips={[fadeClip]} fps={30} />);
+    await flush();
+    const wav = await latestWav();
+    for (const [frame, expected] of values) {
+      expect(sampleAt(wav, sourceSampleForFrame(fadeClip, frame)), `frame ${frame}`).toBeCloseTo(expected, 6);
+    }
+  });
+
+  it('multiplies overlapping fade ramps in the prepared PCM', async () => {
+    const overlapping = { ...clip, at: 0, from: 0, to: 1, volume: 1, speed: 1, params: { fadeIn: 1, fadeOut: 1 } };
+    channels = [new Float32Array(sampleRate * 2).fill(1), new Float32Array(sampleRate * 2).fill(1)];
+    render(<AudioTrack track={track} clips={[overlapping]} fps={30} />);
+    await flush();
+    await expectLatestWavFor(overlapping);
+    const wav = await latestWav();
+    expect(sampleAt(wav, sourceSampleForFrame(overlapping, 0))).toBe(0);
+    expect(sampleAt(wav, sourceSampleForFrame(overlapping, 15))).toBeCloseTo(0.25, 6);
+    expect(sampleAt(wav, sourceSampleForFrame(overlapping, 30))).toBe(0);
+  });
+
+  it.each([
+    {
+      name: 'overlapping ramps at 24 fps', fps: 24,
+      clip: { ...clip, params: { fadeIn: 2, fadeOut: 2.5 } }, track,
+    },
+    {
+      name: 'fractional fade lengths at 60 fps', fps: 60,
+      clip: { ...clip, speed: 1.5, params: { fadeIn: 0.41, fadeOut: 0.77 } }, track,
+    },
+    {
+      name: 'track gain under the ramp', fps: 30,
+      clip: { ...clip, params: { fadeIn: 1 } }, track: { ...track, volume: 0.5 },
+    },
+    {
+      name: 'muted track stays silent', fps: 30,
+      clip: { ...clip, params: { fadeOut: 1 } }, track: { ...track, muted: true },
+    },
+  ])('preserves continuous PCM for the retained fade matrix: $name', async ({ fps, clip: fadeClip, track: fadeTrack }) => {
+    channels = [Float32Array.from({ length: sampleRate * 3 }, (_, i) => i % 2 ? -3 : 2), new Float32Array(sampleRate * 3).fill(0.75)];
+    render(<AudioTrack track={fadeTrack} clips={[fadeClip]} fps={fps} />);
+    await flush();
+    await expectLatestWavFor(fadeClip, fps);
+    expect(props()).toMatchObject({ src: 'blob:pcm-1', volume: fadeTrack.muted ? 0 : (fadeTrack.volume ?? 1) * (fadeClip.volume ?? 1) });
+  });
+
+  it('uses an authored public envelope before legacy fades and re-bakes semantic changes', async () => {
+    channels = [new Float32Array(sampleRate).fill(1), new Float32Array(sampleRate).fill(1)];
+    const first = { ...clip, volume: 1, speed: 1, params: { fadeIn: 1 }, audio: { envelope: { keyframes: [{ at: 0, value: 0 }, { at: 2, value: 1 }] } } };
+    const view = render(<AudioTrack track={track} clips={[first]} fps={30} />);
+    await flush();
+    const firstWav = await latestWav();
+    expect(sampleAt(firstWav, sourceSampleForFrame(first, 15))).toBeCloseTo(0.25, 6);
+
+    const changed = { ...first, audio: { envelope: { keyframes: [{ at: 0, value: 0 }, { at: 1, value: 1 }] } } };
+    view.rerender(<AudioTrack track={track} clips={[changed]} fps={30} />);
+    await flush();
+    const changedWav = await latestWav();
+    expect(sampleAt(changedWav, sourceSampleForFrame(changed, 15))).toBeCloseTo(0.5, 6);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    const linear = { ...clip, volume: 1, speed: 1, params: { fadeIn: 1, fadeInCurve: 'linear' } };
+    view.rerender(<AudioTrack track={track} clips={[linear]} fps={30} />);
+    await flush();
+    const linearWav = await latestWav();
+    expect(sampleAt(linearWav, sourceSampleForFrame(linear, 15))).toBeCloseTo(0.5, 6);
+
+    const curved = { ...linear, params: { fadeIn: 1, fadeInCurve: 'equal-power' } };
+    view.rerender(<AudioTrack track={track} clips={[curved]} fps={30} />);
+    await flush();
+    const curvedWav = await latestWav();
+    expect(sampleAt(curvedWav, sourceSampleForFrame(curved, 15))).toBeCloseTo(Math.sin(Math.PI / 4), 6);
+  });
+
+  it('transitions between native and prepared envelope sources while retaining readiness state', async () => {
+    const view = render(<AudioTrack track={track} clips={[plain]} fps={30} />);
+    expect(props()).toMatchObject({ src: clip.assetEntry.src, volume: 0.4 });
+    expect(props().useWebAudioApi).toBeUndefined();
+
+    const boosted = { ...clip, audio: { envelope: { keyframes: [{ at: 0, value: 2 }] } } };
+    view.rerender(<AudioTrack track={track} clips={[boosted]} fps={30} />);
+    await flush();
+    expect(props()).toMatchObject({ src: 'blob:pcm-1', volume: 0.4, useWebAudioApi: true });
+    act(playable);
+    expect(state.holds).toBe(0);
+
+    view.rerender(<AudioTrack track={track} clips={[plain]} fps={30} />);
+    expect(props()).toMatchObject({ src: clip.assetEntry.src, volume: 0.4 });
+    expect(props().useWebAudioApi).toBeUndefined();
+  });
+
   it.each([
     { volume: 0.5, muted: false, gain: 0.4, amplify: undefined },
     { volume: 0.5, muted: true, gain: 0, amplify: undefined },
@@ -169,6 +349,48 @@ describe('continuous PCM inside the App audio attempt', () => {
     expect(wav.getFloat32(44, true)).toBe(6);
   });
 
+  it('keeps boosted fade frames below unity on the Web Audio route after baking', async () => {
+    const voiceOver = { ...clip, volume: 1.2589, params: { fadeIn: 1 } };
+    channels = [Float32Array.from({ length: sampleRate * 3 }, (_, i) => i % 2 ? -3 : 2), new Float32Array(sampleRate * 3).fill(0.75)];
+    render(<AudioTrack track={{ ...track, volume: 0.8 }} clips={[voiceOver]} fps={30} />);
+    await flush();
+
+    expect(props()).toMatchObject({ useWebAudioApi: true, crossOrigin: 'anonymous', volume: 1.00712 });
+    await expectLatestWavFor(voiceOver);
+    const wav = await latestWav();
+    expect(sampleAt(wav, sourceSampleForFrame(voiceOver, 0))).toBe(0);
+    expect(sampleAt(wav, sourceSampleForFrame(voiceOver, 30))).toBeCloseTo(channels[0][sourceSampleForFrame(voiceOver, 30)], 6);
+  });
+
+  const unityEnvelope = { keyframes: [{ at: 0, value: 1 }] };
+  const doubleEnvelope = { keyframes: [{ at: 0, value: 2 }] };
+
+  it.each([
+    { name: 'multiply', envelope: { ...unityEnvelope, multiply: [doubleEnvelope] } },
+    { name: 'minimum', envelope: { ...unityEnvelope, minimum: [doubleEnvelope, { keyframes: [{ at: 0, value: 3 }] }] } },
+    { name: 'minimum inside multiply', envelope: { ...unityEnvelope, multiply: [{ ...unityEnvelope, minimum: [doubleEnvelope] }] } },
+    { name: 'multiply inside minimum', envelope: { ...unityEnvelope, minimum: [{ ...unityEnvelope, multiply: [doubleEnvelope] }] } },
+  ])('applies nested $name boosts in PCM and admits Web Audio downstream', async ({ envelope }) => {
+    const boosted = { ...clip, audio: { envelope } };
+    render(<AudioTrack track={track} clips={[boosted]} fps={30} />);
+    await flush();
+
+    expect(props()).toMatchObject({ src: 'blob:pcm-1', volume: 0.4, useWebAudioApi: true, crossOrigin: 'anonymous' });
+    await expectLatestWavFor(boosted);
+    expect((await latestWav()).getFloat32(44, true)).toBe(4);
+  });
+
+  it('retains Web Audio admission for a nested boost silenced by minimum, with silent PCM', async () => {
+    const envelope = { ...unityEnvelope, multiply: [doubleEnvelope], minimum: [{ keyframes: [{ at: 0, value: 0 }] }] };
+    const silent = { ...clip, audio: { envelope } };
+    render(<AudioTrack track={track} clips={[silent]} fps={30} />);
+    await flush();
+
+    expect(props()).toMatchObject({ src: 'blob:pcm-1', volume: 0.4, useWebAudioApi: true });
+    await expectLatestWavFor(silent);
+    expect((await latestWav()).getFloat32(44, true)).toBe(0);
+  });
+
   it('keeps the original child source clock when an occurrence shortens the native window', async () => {
     const bounded = { ...clip, app: { canonicalTiming: { occurrenceStartMs: 7500, occurrenceDurationMs: 125 } } };
     render(<AudioTrack track={track} clips={[bounded]} fps={30} />);
@@ -177,6 +399,31 @@ describe('continuous PCM inside the App audio attempt', () => {
     const expected = channels.map(channel => channel.slice());
     applyAudioEnvelope(expected, sampleRate, envelope, 2 / 30, 2);
     expect(new Uint8Array(await blobs[0].arrayBuffer())).toEqual(new Uint8Array(audioEnvelopeWav(expected, sampleRate)));
+  });
+
+  it('keeps boosted PCM samples in authored time across occurrence bounds, trim and speed', async () => {
+    const boosted = { ...clip, at: 3, from: 3, to: 7, speed: 2,
+      audio: { envelope: { keyframes: [{ at: 0, value: 1 }, { at: 1, value: 2 }] } },
+      app: { canonicalTiming: { occurrenceStartMs: 3200, occurrenceDurationMs: 600 } } };
+    channels = [
+      Float32Array.from({ length: sampleRate * 6 }, (_, i) => i % 2 ? -3 : 2),
+      new Float32Array(sampleRate * 6).fill(0.75),
+    ];
+    render(<AudioTrack track={track} clips={[boosted]} fps={30} />);
+    await flush();
+
+    expect(props()).toMatchObject({ trimBefore: 90, trimAfter: 126, playbackRate: 2, volume: 0.4, useWebAudioApi: true });
+    await expectLatestWavFor(boosted);
+    const wav = await latestWav();
+    const { authored } = expectedPcm(boosted);
+    for (const frame of [0, 6, 12, 17]) {
+      const sourceSample = Math.round((computeMediaTrim(boosted, 30).trimBefore / 30 + ((frame + 6) / 30) * 2) * sampleRate);
+      expect(sampleAt(wav, sourceSample), `frame ${frame}`).toBeCloseTo(
+        channels[0][sourceSample] * audioEnvelopeAt(authored, (frame + 6) / 30),
+        6,
+      );
+    }
+    expect(sampleAt(wav, Math.round((90 / 30 + 1.5) * sampleRate))).toBeGreaterThan(1);
   });
 
   it('uses the same admitted PCM in an export, with constant gain and no browser decoding', () => {
@@ -348,5 +595,3 @@ describe('continuous PCM inside the App audio attempt', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
-
-

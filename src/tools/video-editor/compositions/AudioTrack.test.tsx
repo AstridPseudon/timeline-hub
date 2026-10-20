@@ -236,12 +236,15 @@ describe('AudioTrack', () => {
       expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
     });
 
-    it('keeps unsupported fade values on the ordinary native path', () => {
-      const malformed = { ...clip, volume: 0.4, params: { fadeIn: 0.001 } };
+    it.each([undefined, {}, { fadeIn: 0 }, { fadeIn: -1, fadeOut: Number.NaN },
+      { fadeIn: '2' }, { fadeOut: Infinity }, { fadeIn: 0.001 }, { fadeIn: 0, fadeOut: -1 }])(
+      'keeps unsupported fade values on the ordinary native path: %j', params => {
+      const malformed = { ...clip, volume: 0.4, params: params as ResolvedTimelineClip['params'] };
       render(<AudioTrack track={track} clips={[malformed]} fps={30} />);
       expect(html5AudioProps.at(-1)).toMatchObject({ src: clip.assetEntry?.src, volume: 0.4 });
       expect(typeof html5AudioProps.at(-1)?.volume).toBe('number');
-    });
+      },
+    );
 
     it('keeps authored timing and native playback gain when the track is muted', () => {
       const muted = { ...clip, params: undefined };
