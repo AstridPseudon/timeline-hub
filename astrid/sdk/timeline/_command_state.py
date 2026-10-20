@@ -357,6 +357,19 @@ class State:
         return False
 
     def set(self, ref, path, state):
+        if ref == 'parent' and tuple(path) in (('registry', 'assets'), ('config', 'registry', 'assets')):
+            parent = self.bundle['parent']
+            config = self.config('parent')
+            if 'registry' in parent and 'registry' in config:
+                self.registry('parent')
+                # These are aliases of one guarded container, just like asset
+                # leaves. One recorded creation/removal must reach both mirrors.
+                for registry in (parent['registry'], config['registry']):
+                    if state['state'] == 'absent':
+                        registry.pop('assets', None)
+                    else:
+                        registry['assets'] = copy.deepcopy(state['value'])
+                return
         if '/asset:' in ref:
             owner, identity = ref.rsplit('/asset:', 1)
             self.registry(owner)

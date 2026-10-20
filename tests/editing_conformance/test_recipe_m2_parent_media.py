@@ -161,6 +161,71 @@ def test_existing_binding_is_required_exactly_without_birth():
         execute(bundle, [plain(command)], verified_media=verified)
 
 
+@pytest.mark.parametrize('kind', ['image', 'video'])
+@pytest.mark.parametrize('storage', ['absent', 'direct', 'config', 'mirrored'])
+def test_missing_registry_containers_are_guarded_writes_with_exact_inverse_redo(kind, storage):
+    document, _, new, verified = parent_inputs(kind)
+    bundle = bundle_from_document(document)
+    parent = bundle['parent']
+    parent['clips'] = parent['config']['clips'] = []
+    parent.pop('registry')
+    paths = [] if storage == 'absent' else [['registry']] if storage == 'direct' else (
+        [['config', 'registry']] if storage == 'config' else [['registry'], ['config', 'registry']])
+    for path in paths:
+        target = parent if len(path) == 1 else parent['config']
+        target['registry'] = {'opaque': {'values': [None, False, {}, []]}}
+    immutable = copy.deepcopy(bundle)
+    command = capture(bundle, args(new, kind), verified)
+    plan = execute(bundle, [command], verified_media=verified)
+    writes = plan.records[0]['writes']
+    expected = ([{'ref': 'parent', 'path': ['registry'], 'before': {'state': 'absent'},
+                  'after': {'state': 'present', 'value': {}}}] if storage == 'absent' else [])
+    containers = ([('parent', ['registry', 'assets'])] if storage == 'mirrored' else
+                  [('parent', [*path, 'assets']) for path in paths or [['registry']]])
+    expected.extend({'ref': ref, 'path': path, 'before': {'state': 'absent'},
+                     'after': {'state': 'present', 'value': {}}} for ref, path in containers)
+    assert writes[:-2] == expected
+    assert [write['ref'] for write in writes[-2:]] == [ASSET, CHILD]
+    assert bundle == immutable
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    if storage == 'mirrored':
+        assert plan.bundle['parent']['registry'] == plan.bundle['parent']['config']['registry']
+    for path in paths:
+        target = plan.bundle['parent'] if len(path) == 1 else plan.bundle['parent']['config']
+        assert target['registry']['opaque'] == {'values': [None, False, {}, []]}
+    reloaded = bundle_from_document(document_from_bundle(plan.bundle))
+    undone = inverse(reloaded, plan.records)
+    assert undone.bundle['parent'] == parent
+    redone = inverse(undone.bundle, accepted_boundaries(undone.records, reloaded, undone.bundle))
+    assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
+    # Even an equal empty container authored since capture changes its presence.
+    head = copy.deepcopy(bundle)
+    target = head['parent'] if storage != 'config' else head['parent']['config']
+    if storage == 'absent':
+        target['registry'] = {}
+    else:
+        target['registry']['assets'] = {}
+    immutable = copy.deepcopy(head)
+    with pytest.raises(CommandError):
+        execute(head, [command], verified_media=verified)
+    assert head == immutable
+
+
+@pytest.mark.parametrize('path', [['registry'], ['config', 'registry']])
+@pytest.mark.parametrize('value', [None, False, [], 'opaque'])
+def test_explicit_malformed_asset_containers_refuse_untouched(path, value):
+    document, _, new, verified = parent_inputs()
+    bundle = bundle_from_document(document)
+    parent = bundle['parent']
+    registry = parent.pop('registry')
+    target = parent if len(path) == 1 else parent['config']
+    target['registry'] = {**registry, 'assets': value}
+    immutable = copy.deepcopy(bundle)
+    with pytest.raises(CommandError):
+        capture(bundle, args(new, 'image'), verified)
+    assert bundle == immutable
+
+
 @pytest.mark.parametrize('damage', ['missing-input', 'wrong-object', 'wrong-catalog', 'intent', 'occurrence',
     'no-track', 'occurrence-lane', 'hidden-track', 'audio-track', 'occupied-id', 'image-window', 'image-speed',
     'window', 'past-media', 'zero-hold', 'negative-at', 'boolean-speed', 'extra-arg', 'two-registries',

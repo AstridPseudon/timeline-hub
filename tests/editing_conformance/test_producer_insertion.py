@@ -337,7 +337,7 @@ def test_parent_media_registry_storage_shapes_exact_roundtrip(storage):
 
 
 @pytest.mark.parametrize('damage', ['conflicting', 'null-direct', 'null-config', 'opaque-direct',
-                                   'opaque-config', 'null-assets', 'absent-assets', 'absent-registry'])
+                                   'opaque-config', 'null-assets'])
 def test_parent_registry_unsupported_shapes_refuse_without_relocation(damage):
     before = target_bundle()
     parent = before['parent']
@@ -347,12 +347,8 @@ def test_parent_registry_unsupported_shapes_refuse_without_relocation(damage):
         parent['registry'] = None if damage == 'null-direct' else ['opaque']
     elif damage in ('null-config', 'opaque-config'):
         parent['config']['registry'] = None if damage == 'null-config' else False
-    elif damage == 'null-assets':
-        parent['registry']['assets'] = None
-    elif damage == 'absent-assets':
-        del parent['registry']['assets']
     else:
-        del parent['registry']
+        parent['registry']['assets'] = None
     immutable = copy.deepcopy(before)
     with pytest.raises(CommandError):
         lower(before)

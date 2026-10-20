@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import re
 
+from astrid.core.timeline.validators.timeline import _transition_reference
+
 from ._command_state import CommandError
 
 # Declared main intent only (astrid_ns / timeline_intent / reflow); never scan
@@ -19,6 +21,21 @@ def _unrelated(ctx, ref, prefixes, keys):
             if value is not None and value != '' and value != {} and value != []:
                 raise CommandError('clip.delete cannot prove declared semantic dependencies safe',
                                    kind='unsupported_dependency', ref=ref, path=[*prefix, key])
+
+
+def _transition(ctx, ref, owner):
+    if owner == 'parent':
+        _unrelated(ctx, ref, [[]], ('transition',))
+        return
+    value = ctx.read(ref, ['transition'])
+    if value is not None and value != '' and value != {} and value != []:
+        # The known transition schema binds adjacent clips within this child's
+        # timeline, never a parent clip. Unknown reference-bearing shapes refuse.
+        try:
+            _transition_reference(value, ref + '.transition')
+        except ValueError as exc:
+            raise CommandError('clip.delete cannot prove declared semantic dependencies safe',
+                               kind='unsupported_dependency', ref=ref, path=['transition']) from exc
 
 
 def delete(ctx, command):
@@ -42,6 +59,6 @@ def delete(ctx, command):
         _unrelated(ctx, config_ref, [prefix, [*prefix, 'app'], [*prefix, 'app', 'astrid']],
                    ('sequences', 'formulas', 'slots'))
         for member in ctx.select('collection.clips', owner):
-            _unrelated(ctx, member, [[]], ('transition',))
+            _transition(ctx, member, owner)
             _unrelated(ctx, member, [['app'], ['app', 'astrid']], RELATIONS)
     ctx.clear(ref, [])

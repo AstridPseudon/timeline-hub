@@ -24,10 +24,6 @@ from tests.helpers.runtime import use_runtime
 pytestmark = pytest.mark.integration
 
 
-class ParentMediaSeamBlocked(RuntimeError):
-    """Only the specifically observed seam failure may satisfy a strict xfail."""
-
-
 def call(op, args, select='parent'):
     return {'schema_version': 1, 'op': op, 'version': '1', 'select': select, 'args': args}
 
@@ -84,12 +80,6 @@ def clip_ids(document):
 
 
 def literal_replacement(editing):
-    # The captured film has a transition in occurrence-2. clip.delete currently
-    # rejects *any* transition anywhere. Prepare the supported literal case
-    # through a real accepted scalar edit; never change a stored input image.
-    clear = capture_clip_set(bundle_from_document(current(editing)),
-        'occurrence:occurrence-2/clip:clip-2', clear=['transition'])
-    commit(editing, body(editing, [clear]), 'clear-transition')
     for identity in ('A', 'target', 'C'):
         commit(editing, body(editing, [birth(editing, row(editing, identity, asset='old-' + identity),
                                             editing.pins['old'])]), 'old-' + identity)
@@ -194,27 +184,19 @@ def editing(request, tmp_path, monkeypatch):
     yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
 
 
-# Restore when the parent recipe can record creation of absent bootstrap assets
-# without replacing null/opaque containers, including exact inverse to registry:{}.
-@pytest.mark.xfail(strict=True, raises=ParentMediaSeamBlocked,
-                   reason='Empty Runtime bootstrap registry:{} has no authored assets container')
-def test_fresh_film_first_media_birth_and_exact_inverse(custody):
-    from runtime_protocol.errors import RuntimeErrorBase
-
+def test_fresh_film_first_media_birth_and_exact_inverse(custody, monkeypatch):
     baseline = current(custody)
-    before = rows(custody)
-    try:
-        created = commit(custody, body(custody, [birth(custody)]), 'first-media')
-    except RuntimeErrorBase as error:
-        assert error.message == 'media edit requires an authored asset registry'
-        assert rows(custody) == before and custody.candidates == []
-        raise ParentMediaSeamBlocked(error.message) from error
-    assert clip_ids(current(custody)) == ['reserved-row']
-    assert undo(custody, created, 'undo-first-media')['data']['canonical_document'] == baseline
+    assert baseline['parent_revision']['payload']['registry'] == {}
+    ordinary_roundtrip(custody, monkeypatch, replace=False, historical=False)
+    assert current(custody) == baseline
 
 
 @pytest.mark.parametrize('replace', [False, True])
 def test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry(editing, monkeypatch, replace):
+    ordinary_roundtrip(editing, monkeypatch, replace=replace)
+
+
+def ordinary_roundtrip(editing, monkeypatch, *, replace, historical=True):
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_producer import request_pin
@@ -244,23 +226,27 @@ def test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry(
     created = commit(editing, request, 'birth')
     document = created['data']['canonical_document']
     assert document == current(editing) == preview['data']['canonical_document']
-    assert clip_ids(document) == (['music-bed', 'A', 'reserved-row', 'C'] if replace
-                                 else ['music-bed', 'reserved-row'])
+    assert clip_ids(document) == (['music-bed', 'A', 'reserved-row', 'C'] if replace else
+                                 ['music-bed', 'reserved-row'] if historical else ['reserved-row'])
     parent = document['parent_revision']['payload']
     assert parent['clips'] == parent['config'].get('clips', parent['clips'])
     assert next(clip for clip in parent['clips'] if clip['id'] == value['id']) == value
     assert parent['registry']['assets'][value['asset']] == {
         'media_id': editing.pins['new']['object_id'], 'type': editing.kind,
         'generationId': editing.pins['new']['generation_id'], 'variantId': editing.pins['new']['variant_id']}
-    for alias, entry in baseline['parent_revision']['payload']['registry']['assets'].items():
+    for alias, entry in baseline['parent_revision']['payload']['registry'].get('assets', {}).items():
         assert parent['registry']['assets'][alias] == entry
-    assert parent['config']['playback'] == baseline['parent_revision']['payload']['config']['playback']
+    assert parent['config'].get('playback') == baseline['parent_revision']['payload']['config'].get('playback')
     assert document['shot_revisions'] == baseline['shot_revisions']
     assert document['internal_timeline_revisions'] == baseline['internal_timeline_revisions']
     assert all(pin in document['dependency_manifest']['media'] for pin in baseline['dependency_manifest']['media'])
     assert document['dependency_manifest']['documents'] == baseline['dependency_manifest']['documents']
     record = next(record for record in editing.candidates[-1]['records']['commands']
                   if record['command']['op'] == 'clip.add-media')
+    if not historical:
+        assert record['writes'][0] == {'ref': 'parent', 'path': ['registry', 'assets'],
+                                      'before': {'state': 'absent'},
+                                      'after': {'state': 'present', 'value': {}}}
     assert record['command']['created'] == ['parent/asset:' + value['asset'], 'parent/clip:reserved-row']
     assert record['dependencies'][-1]['pin'] == editing.pins['new']
     assert all(not dependency['key'].startswith('producer_attempt:')
@@ -326,6 +312,14 @@ def foreign_pin(editing):
 
 @pytest.mark.parametrize('damage', ['foreign', 'binding', 'fingerprint', 'stale', 'occupied-row', 'occupied-alias'])
 def test_invalid_media_or_reserved_identity_refuses_before_accept_and_writes(editing, damage):
+    invalid_media_refuses(editing, damage)
+
+
+def test_fresh_foreign_media_refuses_before_container_creation_and_accept(custody):
+    invalid_media_refuses(custody, 'foreign')
+
+
+def invalid_media_refuses(editing, damage):
     from runtime_protocol.errors import RuntimeErrorBase
 
     request = body(editing, [birth(editing)])
@@ -486,13 +480,7 @@ def test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inv
     assert undo(editing, undone, 'redo-after-primary-change')['data']['canonical_document'] == document
 
 
-# Restore when ordinary deletion resolves unrelated occurrence transitions rather
-# than refusing the entire film; no weakening/removal of the original expectation.
-@pytest.mark.xfail(strict=True, raises=ParentMediaSeamBlocked,
-                   reason='clip.delete globally rejects the captured film occurrence-2 transition')
 def test_ordered_replacement_preserves_unrelated_historical_transition(editing):
-    from runtime_protocol.errors import RuntimeErrorBase
-
     for identity in ('A', 'target', 'C'):
         commit(editing, body(editing, [birth(editing, row(editing, identity, asset='old-' + identity),
                                             editing.pins['old'])]), 'old-' + identity)
@@ -501,15 +489,11 @@ def test_ordered_replacement_preserves_unrelated_historical_transition(editing):
     calls = [call('timeline.assembled-target', {'replace_clips': refs}, 'parent/clip:target'),
              dict(birth(editing), select='parent/clip:target'), call('clip.delete', {}, 'parent/clip:target')]
     editing.candidates.clear()
-    before = rows(editing)
-    try:
-        created = commit(editing, body(editing, calls), 'replace-with-transition')
-    except RuntimeErrorBase as error:
-        assert error.details['reason'] == 'unsupported_dependency'
-        assert error.details['conflicts'] == []
-        assert error.message == 'clip.delete cannot prove declared semantic dependencies safe'
-        assert rows(editing) == before and editing.candidates == []
-        raise ParentMediaSeamBlocked(error.message) from error
+    transition = State(bundle_from_document(baseline)).entity('occurrence:occurrence-2/clip:clip-2')['transition']
+    assert transition
+    created = commit(editing, body(editing, calls), 'replace-with-transition')
     assert clip_ids(current(editing)) == ['music-bed', 'A', 'reserved-row', 'C']
     assert created['data']['canonical_document']['internal_timeline_revisions'] == baseline['internal_timeline_revisions']
-    assert undo(editing, created, 'undo-with-transition')['data']['canonical_document'] == baseline
+    undone = undo(editing, created, 'undo-with-transition')
+    assert undone['data']['canonical_document'] == baseline
+    assert undo(editing, undone, 'redo-with-transition')['data']['canonical_document'] == created['data']['canonical_document']
