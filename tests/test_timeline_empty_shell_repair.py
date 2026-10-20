@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 
 import pytest
 
@@ -66,6 +67,21 @@ def _shell(service, project, *, parent="empty-parent", payload=None, key="shell"
 
 def _dump(service):
     return tuple(service.store.conn.iterdump())
+
+
+def _cas_dump(service):
+    return {
+        str(path.relative_to(service.store.cas_root)): path.read_bytes()
+        for path in service.store.cas_root.rglob("*") if path.is_file()
+    }
+
+
+def _retain_document(service, project, content):
+    with service.store._mutex, service.store._transaction():
+        service.store.conn.execute(
+            "INSERT INTO project_documents VALUES (?, ?, ?, ?, 1, ?, ?)",
+            ("timeline:main", project, "timeline", canonical_json(content), "t", "t"),
+        )
 
 
 def _refused_untouched(service, call):
@@ -157,6 +173,30 @@ def test_non_empty_headless_shell_is_refused_untouched(service):
     _shell(runtime, project, parent="non-empty", payload=payload)
     _refused_untouched(runtime, lambda: runtime.create_timeline(project, "main", idempotency_key="adopt"))
     assert _head(runtime, project)["head_publication_id"] is None
+
+
+def test_non_empty_legacy_document_is_refused_before_empty_shell_adoption(service):
+    runtime, project = service
+    _shell(runtime, project)
+    content = {
+        "config": {"clips": [{"id": "unsaved", "at": 7, "hold": 3}]},
+        "registry": {"assets": {}},
+        "slug": "keep",
+    }
+    _retain_document(runtime, project, content)
+    before, cas_before = _dump(runtime), _cas_dump(runtime)
+
+    with pytest.raises(ConflictError) as error:
+        runtime.create_timeline(project, "main", idempotency_key="adopt")
+
+    assert error.value.details == {"timeline_id": "main"}
+    assert _dump(runtime) == before
+    assert _cas_dump(runtime) == cas_before
+    assert json.loads(runtime.store.conn.execute(
+        "SELECT content_json FROM project_documents WHERE id='timeline:main'"
+    ).fetchone()[0]) == content
+    assert _head(runtime, project)["head_publication_id"] is None
+    assert runtime.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 0
 
 
 @pytest.mark.parametrize("sql, args", [
