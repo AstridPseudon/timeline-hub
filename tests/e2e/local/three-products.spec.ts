@@ -40,6 +40,7 @@ const CEILING = { timeout: 90_000 };
 const SAVES = /\/timelines\/[^/]+\/composition-revisions$/;
 const CONFLICT_TITLE = 'This timeline changed somewhere else';
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
+const FULL_SHA = /^[0-9a-f]{40}$/;
 
 const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli }>({
   seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
@@ -59,7 +60,22 @@ test.describe.configure({ mode: 'serial' });
 test.beforeAll(() => {
   const reason = harnessUnavailableReason() ?? astridUnavailableReason();
   if (reason) throw new Error(`the three-products journey cannot run: ${reason}`);
-  journey.sources = revisionSet();
+  const expectedAgentHead = process.env.TIMELINE_BUNDLE_AGENT_HEAD;
+  const expectedRuntimeHead = process.env.TIMELINE_BUNDLE_RUNTIME_HEAD;
+  if (!expectedAgentHead || !FULL_SHA.test(expectedAgentHead)) {
+    throw new Error('the current three-products cohort requires TIMELINE_BUNDLE_AGENT_HEAD as a full 40-character SHA');
+  }
+  if (!expectedRuntimeHead || !FULL_SHA.test(expectedRuntimeHead)) {
+    throw new Error('the current three-products cohort requires TIMELINE_BUNDLE_RUNTIME_HEAD as a full 40-character SHA');
+  }
+  const sources = revisionSet();
+  if (sources.astridHead !== expectedAgentHead) {
+    throw new Error(`the current Agent source moved: expected ${expectedAgentHead}, got ${sources.astridHead}`);
+  }
+  if (sources.runtimeHead !== expectedRuntimeHead) {
+    throw new Error(`the current Runtime source moved: expected ${expectedRuntimeHead}, got ${sources.runtimeHead}`);
+  }
+  journey.sources = sources;
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -798,7 +814,11 @@ async function openCommandTimeline(page: Page, harness: DirectHarness, seed: Thr
   }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toMatchObject({ ready: true });
 }
 
-async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: ThreeProductsSeed, beforeBDrop?: (a: CommitAcceptedMutation) => Promise<void>) {
+type CommandWire = Awaited<ReturnType<typeof faultFirstCommit>>;
+
+async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: ThreeProductsSeed,
+  beforeBDrop?: (a: CommitAcceptedMutation) => Promise<void>,
+  ackLostFirst?: (a: CommitAcceptedMutation, wire: CommandWire) => Promise<void>) {
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const wire = await faultFirstCommit(page);
   await openCommandTimeline(page, harness, seed);
@@ -813,6 +833,7 @@ async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: T
     commands: [{ op: 'clip.move', select: `parent/clip:${seed.appClipId}`, args: { on: 5 } }] });
   expect(position(a.data.canonical_document, seed.appClipId)).toBe(5);
   expect((await history(harness, seed)).head.revision_id).toBe(pinOf(a).revision_id);
+  await ackLostFirst?.(a, wire);
   // The second pointerdown observes the actual optimistic authored bundle A.
   await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 5, 7, THREE_PRODUCTS_REFERENCE_AT, async () => {
     expect(wire.attempts, 'B stays unsent behind unacknowledged A').toBe(1);
@@ -964,6 +985,124 @@ test('M1 real gesture: lost durable ACK, dependent B, reopen, Runtime restart, e
     authoringLaunch: { profile: 'astrid', python: ASTRID_PYTHON },
     headA: pinOf(a), headB: pinOf(b), independentC: pinOf(c), originalB: commandsOf(owner.intents[1].payload),
     exactRetry: { method: wire.posts[1].method, path: wire.posts[1].path, key: wire.posts[1].key }, legacySaveCount: wire.legacy.length };
+  await sniff.expectClean(reopened, seed3.timelineId);
+});
+
+test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent', async ({ page, context, harness, astrid, seed3 }) => {
+  const sniff = new TokenSniff(secretsOf(harness, astrid));
+  sniff.attach(page);
+  let c!: CommitAcceptedMutation;
+  const { wire, before, a, owner } = await prepareDependentMoves(page, harness, seed3, undefined, async (acceptedA, commandWire) => {
+    c = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(acceptedA),
+      { kind: 'track', id: 'f2-independent-C' }, 'f2-gate5-independent-C');
+    expect(c.data.publisher).not.toBe(acceptedA.data.publisher);
+    expect(position(c.data.canonical_document, seed3.appClipId)).toBe(5);
+    await commandWire.loseAck();
+    const retryOwnerId = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.pending)?.ownerId;
+    expect(retryOwnerId).toBeTruthy();
+    await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId))
+      .find((candidate) => candidate.ownerId === retryOwnerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
+  });
+  const seedState = await revisionState(harness, seed3, seed3.headRevisionId);
+  const seededTransition = seedState.parentClips[seed3.transitionClipId].transition;
+  expect(c.data.canonical_document.parent_revision.payload.clips)
+    .toEqual(expect.arrayContaining([expect.objectContaining({ id: seed3.transitionClipId, transition: seededTransition })]));
+  expect(wire.posts, 'B was authored only after the durable ACK was lost').toHaveLength(1);
+  expect(owner.intents).toHaveLength(2);
+  expect(owner.intents[1].basis).toEqual({ after: owner.intents[0].id });
+  expect(owner.intents[1].readyBase).toBeUndefined();
+
+  const realmBefore = await expectSameRealm(page, harness, astrid);
+  const originalARequest = { body: wire.posts[0].body, key: wire.posts[0].key };
+  await page.reload();
+  await expectConnected(page);
+  const afterReload = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
+  expect(afterReload.pending?.request).toEqual(owner.pending!.request);
+  expect(afterReload.intents).toEqual(owner.intents);
+  expect(wire.posts, 'reload does not send queued B or retry A').toHaveLength(1);
+  await page.close();
+
+  const restarted = await harness.restartRuntime();
+  expect(restarted.oldInstanceId).toBe(realmBefore.runtimeInstanceId);
+  expect(harness.runtimeInstanceId).not.toBe(restarted.oldInstanceId);
+  expect(harness.realmId).toBe(realmBefore.realmId);
+  const reopened = await context.newPage();
+  sniff.attach(reopened);
+  await wire.attach(reopened);
+  await openApp(reopened, harness);
+  await expectConnected(reopened);
+  await openSeededTimeline(reopened, harness);
+  const realmAfter = await expectSameRealm(reopened, harness, astrid);
+  expect(realmAfter.realmId).toBe(realmBefore.realmId);
+  expect(realmAfter.runtimeInstanceId).toBe(harness.runtimeInstanceId);
+  expect(realmAfter.runtimeInstanceId).not.toBe(realmBefore.runtimeInstanceId);
+  const persisted = (await commandOutboxes(reopened, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
+  expect(persisted.pending?.request).toEqual(owner.pending!.request);
+  expect(persisted.intents).toEqual(owner.intents);
+  expect(wire.posts).toHaveLength(1);
+
+  await reopened.getByRole('button', { name: /^Recover saved edits/ })
+    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+  expect(wire.posts[1].body).toBe(originalARequest.body);
+  expect(wire.posts[1].key).toBe(originalARequest.key);
+  expect(wire.posts[1].response).toEqual(wire.posts[0].response);
+  const b = accepted(wire.posts[2]);
+  const requestB = JSON.parse(wire.posts[2].body) as CommitRequest;
+  expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
+  expect(requestB).toMatchObject({ base_revision_id: pinOf(a).revision_id, base_publication_id: pinOf(a).publication_id });
+  expect(requestB.commands).toEqual(commandsOf(owner.intents[1].payload));
+  expect(b.data.publisher).toBe(a.data.publisher);
+  expect(b.data.status).toBe('rebased');
+  expect(b.data.previous_publication_id).toBe(pinOf(c).publication_id);
+  expect(position(b.data.canonical_document, seed3.appClipId)).toBe(7);
+  expect(b.data.canonical_document.parent_revision.payload.config).toMatchObject({
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'f2-independent-C', kind: 'audio', label: 'f2-independent-C' })]),
+  });
+  expect(b.data.canonical_document.parent_revision.payload.clips)
+    .toEqual(expect.arrayContaining([expect.objectContaining({ id: seed3.transitionClipId, transition: seededTransition })]));
+  await expect.poll(async () => (await commandOutboxes(reopened, seed3.timelineId))
+    .find((candidate) => candidate.ownerId === owner.ownerId)?.intents.length, CEILING).toBe(0);
+  expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 3);
+  const recordedB = (await history(harness, seed3)).items.find((entry) => entry.publication_id === pinOf(b).publication_id)?.records;
+  expect(recordedB?.commands[0].command).toEqual(requestB.commands[0]);
+  expect(recordedB?.commands[0].reads.length).toBeGreaterThan(0);
+  expect(recordedB?.commands[0].bindings.length).toBeGreaterThan(0);
+  await expectImmutableClosure(harness, seed3, a);
+  await expectImmutableClosure(harness, seed3, c);
+  await expectImmutableClosure(harness, seed3, b);
+  await expectPreviewRevision(reopened, pinOf(b).revision_id);
+  await expectAgentRevision(astrid, harness, seed3, pinOf(b).revision_id);
+
+  const publication = pinOf(b).publication_id;
+  const count = wire.posts.length;
+  await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => wire.posts.length, CEILING).toBe(count + 1);
+  const inversePost = wire.posts[count];
+  expect((JSON.parse(inversePost.body) as CommitRequest).commands).toEqual([
+    { schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [publication] } },
+  ]);
+  const inverse = accepted(inversePost);
+  expect(position(inverse.data.canonical_document, seed3.appClipId)).toBe(5);
+  expect(inverse.data.canonical_document.parent_revision.payload).toEqual(c.data.canonical_document.parent_revision.payload);
+  expect(inverse.data.canonical_document.parent_revision.payload.clips)
+    .toEqual(expect.arrayContaining([expect.objectContaining({ id: seed3.transitionClipId, transition: seededTransition })]));
+  expect(inverse.data.canonical_document.shot_revisions).toEqual(c.data.canonical_document.shot_revisions);
+  expect(inverse.data.canonical_document.internal_timeline_revisions).toEqual(c.data.canonical_document.internal_timeline_revisions);
+  expect(inverse.data.canonical_document.dependency_manifest).toEqual(c.data.canonical_document.dependency_manifest);
+  const finalHistory = await history(harness, seed3);
+  expect(finalHistory.items).toHaveLength(before.items.length + 4);
+  expect(finalHistory.items.find((entry) => entry.publication_id === pinOf(inverse).publication_id)?.records?.undo_of)
+    .toEqual([publication]);
+  await expectImmutableClosure(harness, seed3, inverse);
+  await expectPreviewRevision(reopened, pinOf(inverse).revision_id);
+  await expectAgentRevision(astrid, harness, seed3, pinOf(inverse).revision_id);
+  await expectOpaqueDataKept(harness, seed3);
+  expect(wire.legacy, 'the post-loss B gesture and inverse never use legacy snapshot traffic').toEqual([]);
+  journey.facts = { ...journey.facts, sourceTuple: revisionSet(journey.identity), renderer: 'not started',
+    authoringLaunch: { profile: 'astrid', python: ASTRID_PYTHON }, headA: pinOf(a), headB: pinOf(b), independentC: pinOf(c),
+    originalB: commandsOf(owner.intents[1].payload), exactRetry: { body: originalARequest.body, key: originalARequest.key },
+    legacySaveCount: wire.legacy.length };
   await sniff.expectClean(reopened, seed3.timelineId);
 });
 
