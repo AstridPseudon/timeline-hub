@@ -6,24 +6,27 @@ The reviewed generated-client producer is **2c4ac180c2220bdad966bc01e95ad230e99c
 
 ## Current full test evidence — 2026-10-20
 
-The completed default full `runtime-full-restore-integration-1020160931-14898`
+The completed default full `runtime-full-restore-integration-1020181908-30033`
 ran against target `integration:runtime`, Runtime commit
-`6ab3243972f8dc49105819e6d7ba7aef1a2888b8`, exact tree
-`c225a680c645c67c3fe1f43b5e564b2a77a05d80`, and test-service snapshot key
-`234cd8b43da0e24a87be6e48dacae3d5`. External source identities were Agent
-`f133a87986d839d7716d3efac2c2ba25fe036098`, App
-`a04f90cf60eac69a5079f0ab03188abcbd1571fc`, and Composition
+`7e160c5d254a9b3d42a28672a2d7e2ac1acd5ca8`, exact tree
+`a0f8c953d9cc046c2ab5a9f9926bc0dd6e547e5d`, and test-service snapshot key
+`66daf8e4585d4b75ac69f91f84abbdb5`. External source identities were Agent
+`6f0cdc7df95fe3c9b2d491d6fcb39b754fa212bd`, App
+`ed48d92d2a8bb8d9f013060e420eba646d88ace4`, and Composition
 `5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8`.
 
-The snapshot includes catalog promotion `81f8c7e0`, selected-media CAS
-`a51af88`, catalog text `9f211fc`, and native clip `6ab3243`; unmerged audio,
-ordinary014, carrier, and strict-marker patches are excluded. Raw result:
-**5515 passed, 7 failed, 18 skipped, 18 xfailed, 12 warnings** in **684.66s**
-(service elapsed **687s**), exit 1. The seven failures are exactly the known
-baseline cohort (six Runtime boundary nodes plus one zero-shim node); there
-are **0 new failures**. The real default full remains RED and is not an
-all-green gate result. No private-floor result is gate proof, and no
-storage-floor exception/resource evidence appears in this artifact.
+The snapshot includes the current merged batch `WAV4ec`, `script285`,
+`markeracd`, `generatorcc`, `PCMfixture2ef`, and `observer7e`; private `952`,
+carrier, `RT07cut`, and visibility branches are excluded. Raw result:
+**5524 passed, 7 failed, 18 skipped, 18 xfailed, 12 warnings** in **573.93s**
+(service elapsed **576s**), exit 1. Compared with previous manager full
+`14898` (`5515 / 7 / 18 / 18`), this is **+9 passed with 0 new failure
+nodes**. The seven failures are exactly the known baseline cohort (six
+Runtime boundary nodes plus one zero-shim node). The real default full remains
+RED and is not an all-green gate result. No private-floor result is gate
+proof, and no storage-floor exception/resource evidence appears in this
+artifact. This evidence is bounded to the service snapshot; later source
+changes are not relabeled as snapshot evidence.
 
 This is test evidence only. The public generated-client producer remains the
 immutable `2c4ac180c2220bdad966bc01e95ad230e99ce26a` / `0.2.13`; no producer

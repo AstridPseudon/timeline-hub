@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T18:27:02Z | dispatcher heartbeat 10s | live 5 (sol 1, luna 4, other 0) | busy30 23 | status age 9m -->
+<!-- main | 2026-10-20T18:33:10Z | dispatcher heartbeat 11s | live 6 (sol 1, luna 5, other 0) | busy30 28 | status age 15m -->
 # agent — 2026-10-20T18:17:45Z
 Milestone: M1 recorded. M2 active; Gates 1, 6 and 7 remain open.
 Integrated: Agent e2c7bdcb, public Runtime client 0.2.13, Composition 0.0.12. Sprite fixture fix merged 3f770a45 (32 tests, global collection clean). Numeric parent CLI --on consumer now uses clip.move instead of Checkout.save (29 tests + 3 real HTTP lost-ACK/restart/retry/undo cases). The whole AG02 row remains open because other consumers remain.
