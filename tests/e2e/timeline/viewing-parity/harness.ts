@@ -1,7 +1,7 @@
 import { chromium, test as base, type Browser } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
-import { readFile, realpath } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { lstat, readFile, readdir, realpath } from 'node:fs/promises';
+import { join, relative, resolve } from 'node:path';
 import { DirectHarness, harnessUnavailableReason, REPO_ROOT } from '../../local/support/harness';
 import { startRealPackHost } from './bootstrap';
 import { prepareFrameParityFixture, type FrameParityFixture, readRuntimeJson } from './fixture';
@@ -10,6 +10,118 @@ import type { Capability } from '../../../../src/integrations/runtime/generated'
 
 export const INSTALLED_BROWSER = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell';
 const COMPOSITION_HASH = 'sha256:93bc66b5c63d2d20597c66a2458dcab1c9cd65838b2ff493486c1e84dbec6caa';
+const COMPOSITION_FILE_COUNT = 77;
+const EXPECTED_PACKAGE_VERSIONS = {
+  react: '18.3.1',
+  'react-dom': '18.3.1',
+  remotion: '4.0.509',
+  '@remotion/player': '4.0.509',
+  '@banodoco/timeline-composition': '0.0.8',
+} as const;
+
+type FileManifest = Readonly<Record<string, string>>;
+
+/**
+ * These are release-owned bytes, not a baseline learned from this machine.
+ * App carries only the approved audio-resume patch; Agent consumes upstream
+ * Remotion. The two consumer graphs are intentionally checked independently.
+ */
+export const EXPECTED_RENDER_GRAPHS = {
+  app: {
+    provenance: 'App 2bfde69e (tl/integration), package-lock sha256:5b45cde0fb848455cecbd0480de827f1abb82052367f0add680e364347ce90ce; audio patch ea4f3a9eb',
+    files: {
+      'node_modules/remotion/dist/cjs/audio/shared-audio-tags.js': 'sha256:949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8',
+      'node_modules/remotion/dist/esm/index.mjs': 'sha256:5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28',
+      'node_modules/@remotion/player/dist/cjs/use-player-methods.js': 'sha256:ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
+      'node_modules/@remotion/player/dist/esm/index.mjs': 'sha256:d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
+      'node_modules/@remotion/player/dist/cjs/use-playback.js': 'sha256:6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0',
+      'node_modules/@remotion/player/dist/cjs/PlayerUI.js': 'sha256:5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb',
+    },
+  },
+  agent: {
+    provenance: 'Agent fc324e8 (tl/integration), remotion/package-lock sha256:35cea68df7ee4cc009438e7a079e6b871e4721f1856e14352ba38e48e74224df; upstream Remotion 4.0.509',
+    files: {
+      'node_modules/remotion/dist/cjs/audio/shared-audio-tags.js': 'sha256:471b33916a91f5b9529c477bdf0ec586cb700d5a7179ab910a82dd932e172f6c',
+      'node_modules/remotion/dist/esm/index.mjs': 'sha256:9fdfe58f3f34e6a72564a811ac5d374d1c97a0f535e2a0e3aac198670d9b7ff8',
+      'node_modules/@remotion/player/dist/cjs/use-player-methods.js': 'sha256:ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46',
+      'node_modules/@remotion/player/dist/esm/index.mjs': 'sha256:d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12',
+      'node_modules/@remotion/player/dist/cjs/use-playback.js': 'sha256:6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0',
+      'node_modules/@remotion/player/dist/cjs/PlayerUI.js': 'sha256:5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb',
+    },
+  },
+} as const;
+
+function assertSafeRelativePath(path: string): void {
+  if (!path || path.startsWith('/') || path.split('/').includes('..')) {
+    throw new Error(`unsafe expected package member: ${path}`);
+  }
+}
+
+async function listFiles(root: string): Promise<string[]> {
+  const files: string[] = [];
+  async function visit(directory: string): Promise<void> {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const absolute = join(directory, entry.name);
+      if (entry.isDirectory()) await visit(absolute);
+      else if (entry.isFile()) files.push(relative(root, absolute));
+      else throw new Error(`expected regular package file: ${absolute}`);
+    }
+  }
+  await visit(root);
+  return files.sort();
+}
+
+/** Verify an explicit byte manifest; expected hashes must come from a release source. */
+export async function verifyFileGraph(root: string, expected: FileManifest, label: string,
+  options: { exact?: boolean } = {}): Promise<FileManifest> {
+  const expectedPaths = Object.keys(expected).sort();
+  if (!expectedPaths.length) throw new Error(`${label}: empty expected file manifest`);
+  expectedPaths.forEach(assertSafeRelativePath);
+  if (options.exact) {
+    const actualPaths = await listFiles(root);
+    if (actualPaths.length !== expectedPaths.length || actualPaths.some((path, index) => path !== expectedPaths[index])) {
+      throw new Error(`${label}: installed file set differs (expected ${expectedPaths.length} files, found ${actualPaths.length})`);
+    }
+  }
+  const verified: Record<string, string> = {};
+  await Promise.all(expectedPaths.map(async path => {
+    const absolute = resolve(root, path);
+    const file = await lstat(absolute).catch(() => null);
+    if (!file?.isFile() || file.isSymbolicLink()) throw new Error(`${label}: missing or non-regular target ${path}`);
+    const digest = mediaHash(await readFile(absolute));
+    if (digest !== expected[path]) throw new Error(`${label}: ${path} has ${digest}, expected ${expected[path]}`);
+    verified[path] = digest;
+  }));
+  return verified;
+}
+
+function archiveMembers(archive: string): string[] {
+  return execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' }).trim().split('\n')
+    .filter(name => name && !name.endsWith('/')).map(name => {
+      if (!name.startsWith('package/')) throw new Error(`unexpected public package member ${name}`);
+      const path = name.slice('package/'.length);
+      assertSafeRelativePath(path);
+      return path;
+    });
+}
+
+async function compositionManifest(archive: string): Promise<FileManifest> {
+  const archiveBytes = await readFile(archive);
+  if (mediaHash(archiveBytes) !== COMPOSITION_HASH) {
+    throw new Error(`Composition artifact is not the approved 0.0.8 source: ${archive}`);
+  }
+  const members = archiveMembers(archive);
+  if (members.length !== COMPOSITION_FILE_COUNT || new Set(members).size !== members.length) {
+    throw new Error(`Composition artifact must contain exactly ${COMPOSITION_FILE_COUNT} files, found ${members.length}`);
+  }
+  return Object.fromEntries(members.map(path => [path,
+    mediaHash(execFileSync('tar', ['-xOf', archive, `package/${path}`]))]));
+}
+
+async function verifyCompositionPackage(artifact: string, packageRoot: string, consumer: string) {
+  const manifest = await compositionManifest(artifact);
+  return verifyFileGraph(packageRoot, manifest, `${consumer} Composition`, { exact: true });
+}
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -29,17 +141,18 @@ export async function sourceVersions() {
   const remotionProject = await realpath(requiredEnv('ASTRID_REMOTION_PROJECT_DIR'));
   const packages: Record<string, string> = {};
   const installedCompositionHashes: Record<string, string> = {};
+  const compositionFiles: Record<string, FileManifest> = {};
+  const renderGraphHashes: Record<string, FileManifest> = {};
   for (const [index, [consumer, root]] of [['app', roots.app], ['agent', remotionProject]].entries()) {
     const artifact = artifacts[index];
-    const entries = execFileSync('tar', ['-tzf', artifact], { encoding: 'utf8' }).trim().split('\n').filter(name => !name.endsWith('/'));
-    const installed = Buffer.concat(await Promise.all(entries.map(name => {
-      if (!name.startsWith('package/') || name.split('/').includes('..')) throw new Error('unexpected public package member');
-      return readFile(resolve(root, 'node_modules/@banodoco/timeline-composition', name.slice('package/'.length)));
-    })));
-    const published = execFileSync('tar', ['-xOf', artifact], { maxBuffer: 8 * 1024 * 1024 });
-    if (!installed.equals(published)) throw new Error(`${consumer} installed Composition bytes differ from exact public artifact`);
-    installedCompositionHashes[consumer] = mediaHash(installed);
-    for (const [name, expected] of [['react', '18.3.1'], ['react-dom', '18.3.1'], ['remotion', '4.0.509'], ['@banodoco/timeline-composition', '0.0.8']]) {
+    const compositionRoot = resolve(root, 'node_modules/@banodoco/timeline-composition');
+    const installed = await verifyCompositionPackage(artifact, compositionRoot, consumer);
+    compositionFiles[consumer] = installed;
+    installedCompositionHashes[consumer] = mediaHash(Buffer.concat(await Promise.all(Object.keys(installed).sort()
+      .map(path => readFile(resolve(compositionRoot, path))))));
+    const expectedGraph = EXPECTED_RENDER_GRAPHS[consumer as 'app' | 'agent'];
+    renderGraphHashes[consumer] = await verifyFileGraph(root, expectedGraph.files, `${consumer} Remotion/Player graph`);
+    for (const [name, expected] of Object.entries(EXPECTED_PACKAGE_VERSIONS)) {
       const pkg = JSON.parse(await readFile(resolve(root, 'node_modules', name, 'package.json'), 'utf8'));
       if (pkg.version !== expected) throw new Error(`${consumer} ${name}: ${pkg.version} != ${expected}`);
       packages[`${consumer}:${name}`] = pkg.version;
@@ -51,7 +164,14 @@ export async function sourceVersions() {
   return {
     revisions: Object.fromEntries(Object.entries(roots).map(([name, root]) => [name,
       execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()])),
-    roots, remotionProject, artifacts, hashes, installedCompositionHashes, packages, browserExecutable: INSTALLED_BROWSER, node: process.version,
+    roots, remotionProject, artifacts, hashes, installedCompositionHashes, compositionFiles, renderGraphHashes,
+    selectedInstalls: {
+      app: resolve(roots.app, 'node_modules'),
+      agent: resolve(remotionProject, 'node_modules'),
+    },
+    renderGraphProvenance: Object.fromEntries(Object.entries(EXPECTED_RENDER_GRAPHS)
+      .map(([consumer, graph]) => [consumer, graph.provenance])),
+    packages, browserExecutable: INSTALLED_BROWSER, node: process.version,
   };
 }
 
