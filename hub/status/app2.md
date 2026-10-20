@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T20:03:10Z | dispatcher heartbeat 13s | live 5 (sol 0, luna 5, other 0) | busy30 18 | status age 0m -->
+<!-- app2 | 2026-10-20T20:08:58Z | dispatcher heartbeat 5s | live 5 (sol 0, luna 5, other 0) | busy30 23 | status age 6m -->
 # app2 — 2026-10-20 20:03 UTC
 Milestone: M2 writer retirements; exit criteria not met. No app2 row marked DELETED yet.
 Integrated: App HOME tl/integration 20ea14c26526fe4924354f10a177aebbaf6002bc. Ordinary 059c5feef, Provider forwards 8cfcee9c0, overlay and retained donor assertions 20ea, recovery 9b14bf9f7, media facade 0096ba86d and inert trim capture are integrated. HOME reports 157 final-join targeted tests and current private13 project typecheck zero diagnostics.
