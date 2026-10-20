@@ -1,3 +1,4 @@
+import { boundCanonicalRenderConfig } from '../../lib/canonicalRenderBounds.ts';
 // @vitest-environment jsdom
 import React from 'react';
 import { act, cleanup, render, screen } from '@testing-library/react';
@@ -172,7 +173,7 @@ describe('mounted command projection delivery', () => {
     expect(player.config).toBe(edit);
     label('Unsaved local · based on R');
     advance();
-    expect(player.config).toBe(closure);
+    expect(player.config).toEqual(boundCanonicalRenderConfig(closure));
     expect(player.config!.clips.find((clip) => clip.asset)!.assetEntry).toBe(pinnedMedia);
     expect(player.config!.registry).toBe(closure.registry);
     label('Committed A');

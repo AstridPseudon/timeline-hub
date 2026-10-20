@@ -1,3 +1,4 @@
+import { projectedClipCounterparts, serializeProjectedTimelineConfig } from '@/tools/video-editor/lib/serialize.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { LoadedTimeline } from '@/tools/video-editor/data/DataProvider.ts';
 import {
@@ -132,16 +133,26 @@ export function createShotTimelineInitialData(
   });
 }
 
-function createCanonicalTimeline(config: TimelineConfig, occurrenceId: string): Record<string, unknown> {
-  const clipPrefix = `${occurrenceId}:`;
+function createCanonicalTimeline(config: TimelineConfig, composition: PreparedShotComposition): Record<string, unknown> {
+  const counterparts = projectedClipCounterparts(composition, config.clips);
   const clips = (config.clips ?? []).map((clip) => {
+    const raw = counterparts.get(clip.id);
+    if (!raw) throw new Error('The shot draft has no unambiguous raw clip counterpart');
+    const rawApp = raw.app as Record<string, unknown> | undefined;
     const app = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)
-      ? Object.fromEntries(Object.entries(clip.app).filter(([key]) => !['canonical', 'canonicalTiming'].includes(key)))
-      : clip.app;
+      ? { ...clip.app } : clip.app;
+    if (app) {
+      for (const key of ['canonical', 'canonicalTiming']) {
+        if (rawApp && Object.hasOwn(rawApp, key)) {
+          Object.defineProperty(app, key, { value: structuredClone(rawApp[key]),
+            enumerable: true, configurable: true, writable: true });
+        } else Reflect.deleteProperty(app, key);
+      }
+    }
     const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
     return {
       ...persistedClip,
-      id: persistedClip.id.startsWith(clipPrefix) ? persistedClip.id.slice(clipPrefix.length) : persistedClip.id,
+      id: String(raw.id),
       ...(app && typeof app === 'object' ? { app } : {}),
     };
   });
@@ -209,7 +220,7 @@ type ShotTimelineDataProvider = DataProvider & {
     expectedHeadRevisionId: string | null,
   ) => void) => void;
   setDraftState: (dirty: boolean) => void;
-  setDraftGeneration: (generation: number) => void;
+  setDraftGeneration: (generation: number) => PreparedShotComposition;
   adoptCleanBaseline: (config: ResolvedTimelineConfig, composition: PreparedShotComposition) => boolean;
 };
 
@@ -218,10 +229,11 @@ export function projectShotTimelineDraftComposition(
   composition: PreparedShotComposition,
   occurrenceId: string,
   config: ResolvedTimelineConfig,
+  rawComposition = composition,
 ): PreparedShotComposition {
   const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
   if (!occurrence) return composition;
-  const timeline = createCanonicalTimeline(createShotTimelineConfig(config), occurrenceId);
+  const timeline = createCanonicalTimeline(createShotTimelineConfig(config), rawComposition);
   const extentMs = timelineContentExtentMs(timeline);
   const hardLimitMs = hardDurationMs(composition.contract, occurrenceId, occurrence.atMs);
   const revision = occurrence.revision;
@@ -324,12 +336,15 @@ export function createShotTimelineDataProvider(
     },
     persistenceEnabled: Boolean(shotCompositionAdapter?.publish),
     setShotTimelineTraceId: (traceId) => { activeTimingTraceId = traceId; },
-    getTimelineDraftRecoveryMetadata: (): TimelineDraftRecoveryMetadata => ({
-      recoveryKey,
-      baseHeadRevisionId: canonicalBase.headRevisionId,
-      baseCanonicalGraph: canonicalBase.contract as unknown as Record<string, unknown>,
-      draftIdentity: globalThis.crypto?.randomUUID?.() ?? `edit-${Date.now()}-${Math.random()}`,
-    }),
+    getTimelineDraftRecoveryMetadata: (rememberRaw): TimelineDraftRecoveryMetadata => {
+      rememberRaw?.(composition);
+      return {
+        recoveryKey,
+        baseHeadRevisionId: canonicalBase.headRevisionId,
+        baseCanonicalGraph: canonicalBase.contract as unknown as Record<string, unknown>,
+        draftIdentity: globalThis.crypto?.randomUUID?.() ?? `edit-${Date.now()}-${Math.random()}`,
+      };
+    },
     resolveAssetUrl: resolve,
     onResolve: async ({ file }) => resolve(file),
     loadTimeline: async (_timelineId) => {
@@ -345,6 +360,7 @@ export function createShotTimelineDataProvider(
             // current canonical head. Only adopt its displayed marker when it
             // matches the provider's latest known base; never rewrite a stale
             // draft's original CAS revision here.
+            composition = recoveredBase;
             adoptCanonicalBase(recoveredBase, recoveryBaseIsCurrent);
             if (recoveryBaseIsCurrent) {
               recoveryBaseHeadRevisionId = recoveredBase.headRevisionId;
@@ -370,6 +386,16 @@ export function createShotTimelineDataProvider(
           ? reconcileConfigHeadRevision(recoveredConfig as TimelineConfig, recoveryBaseHeadRevisionId)
           : recoveredConfig as TimelineConfig;
       }
+      if (recoveredConfig) {
+        const identities = projectCanonicalComposition(composition, undefined, { clampToOccurrenceDuration: false }).clipIdentities;
+        timelineConfig = { ...timelineConfig, clips: timelineConfig.clips.map((clip) => {
+          const identity = identities.get(clip.id);
+          const original = composition.occurrences.find((item) => item.occurrenceId === identity?.occurrenceId);
+          return original ? { ...clip, app: { ...clip.app, canonicalTiming: {
+            ...(clip.app?.canonicalTiming as object), storedOccurrenceDurationMs: original.durationMs,
+          } } } : clip;
+        }) };
+      }
       const savedPublication = recovery?.draft.canonicalPublication;
       if (savedPublication && typeof savedPublication === 'object' && !Array.isArray(savedPublication)) {
         const candidate = savedPublication as Record<string, unknown>;
@@ -394,6 +420,7 @@ export function createShotTimelineDataProvider(
           parentDocumentId: composition.parentDocumentId,
         });
         if (!latest) throw new Error('The canonical shot composition is unavailable');
+        composition = latest;
         adoptCanonicalBase(latest);
         timelineQueryIdentity = latest.headRevisionId;
         const occurrence = latest.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
@@ -434,6 +461,7 @@ export function createShotTimelineDataProvider(
     loadAssetRegistry: async () => registry,
     saveTimeline: async (timelineId, nextConfig, expectedVersion) => {
       const publicationGeneration = draftGeneration;
+      const rawComposition = composition;
       assertEditorHeadIsCurrent();
       if (!shotCompositionAdapter?.publish) {
         throw new Error('The canonical shot-composition provider is read-only');
@@ -444,7 +472,7 @@ export function createShotTimelineDataProvider(
       let publicationExpectedHeadRevisionId: string | null = null;
       if (timingTraceId) recordShotTimelinePhase(timingTraceId, 'request-start', { expectedVersion });
       try {
-        const timeline = createCanonicalTimeline(nextConfig, occurrenceId);
+        const timeline = createCanonicalTimeline(nextConfig, rawComposition);
         // Reserve the project queue synchronously in caller order before any
         // async recovery read or hashing. Otherwise a later edit can finish
         // preparation first and publish ahead of the save that was requested
@@ -495,7 +523,7 @@ export function createShotTimelineDataProvider(
               && typeof recoveryDraftConfig === 'object'
               && !Array.isArray(recoveryDraftConfig)
               && await digest(normalizeHeadForSignature(
-                createCanonicalTimeline(recoveryDraftConfig as TimelineConfig, occurrenceId),
+                createCanonicalTimeline(recoveryDraftConfig as TimelineConfig, rawComposition),
                 canonicalBase.headRevisionId,
               )) === configSignature,
             );
@@ -509,7 +537,9 @@ export function createShotTimelineDataProvider(
                 : `superseded:${candidate.idempotencyKey}`;
             const publicationDraft = {
               ...(recoveryAtStart?.draft ?? {}),
-              config: nextConfig,
+              // Existing recovery bytes keep their owner and retry meaning.
+              config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config
+                : serializeProjectedTimelineConfig(nextConfig, rawComposition),
               registry,
               canonicalPublication: candidate,
             };
@@ -593,7 +623,7 @@ export function createShotTimelineDataProvider(
     },
     setPublishCallback: (callback) => { publishCallback = callback; },
     setDraftState: (dirty) => { draftDirty = dirty; },
-    setDraftGeneration: (generation) => { draftGeneration = Math.max(draftGeneration, generation); },
+    setDraftGeneration: (generation) => { draftGeneration = Math.max(draftGeneration, generation); return composition; },
     adoptCleanBaseline: (nextConfig, nextComposition) => {
       if (draftDirty || pendingPublishes > 0) {
         return false;
@@ -606,6 +636,7 @@ export function createShotTimelineDataProvider(
           file: entry.file ?? entry.media_id ?? entry.url,
         }]))),
       };
+      composition = nextComposition;
       adoptCanonicalBase(nextComposition);
       timelineQueryIdentity = nextComposition.headRevisionId;
       return true;
