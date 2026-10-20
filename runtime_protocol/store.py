@@ -273,6 +273,7 @@ def public_task_spec(spec):
     # public spec field.
     public.pop("execution_request", None)
     public.pop("_runtime_reuse_toolchain", None)
+    public.pop("_runtime_render_admission", None)
     intent = public.pop(GENERATION_INTENT_STORAGE_KEY, None)
     if intent is None and LEGACY_GENERATION_INTENT_STORAGE_KEY in public:
         intent = public.pop(LEGACY_GENERATION_INTENT_STORAGE_KEY)
@@ -1701,7 +1702,7 @@ class RealmStore:
             }
         return projected_config, projected_registry
 
-    def _freeze_managed_render_inputs(self, project_id, spec, supplied_input_object_ids):
+    def _freeze_managed_render_inputs(self, project_id, spec, supplied_input_object_ids, replay_authority=None):
         """Freeze a managed ``rendering.render`` timeline at admission.
 
         Some consumers submit the reference shape directly instead of going
@@ -1758,37 +1759,45 @@ class RealmStore:
         if output_policy is not None and not isinstance(output_policy, dict):
             raise ValidationError("render output_policy must be an object")
 
-        rows = self.conn.execute(
-            "SELECT id, archived_at, version FROM timelines WHERE project_id=? ORDER BY created_at, id",
-            (project_id,),
-        ).fetchall()
-        matches = []
-        for row in rows:
-            document = self.conn.execute(
-                "SELECT content_json, version FROM project_documents WHERE id=? AND project_id=?",
-                (f"timeline:{row['id']}", project_id),
+        if replay_authority is not None:
+            row = {"id": replay_authority["timeline_id"]}
+            document = {"version": replay_authority["config_version"]}
+            content = {"slug": replay_authority["timeline_slug"]}
+            head = {"revision_id": replay_authority.get("parent_revision_id")}
+            if head["revision_id"] is None:
+                raise ConflictError("persisted render revision identity is unavailable")
+        else:
+            rows = self.conn.execute(
+                "SELECT id, archived_at, version FROM timelines WHERE project_id=? ORDER BY created_at, id",
+                (project_id,),
+            ).fetchall()
+            matches = []
+            for row in rows:
+                document = self.conn.execute(
+                    "SELECT content_json, version FROM project_documents WHERE id=? AND project_id=?",
+                    (f"timeline:{row['id']}", project_id),
+                ).fetchone()
+                content = json.loads(document["content_json"]) if document else {}
+                slug = content.get("slug") if isinstance(content, dict) else None
+                if timeline_ref in {str(row["id"]), str(slug or "")}:
+                    matches.append((row, document, content))
+            if not matches:
+                raise NotFoundError(
+                    "timeline_ref is not in the selected project",
+                    details={"project_id": project_id, "timeline_ref": timeline_ref},
+                )
+            if len(matches) != 1:
+                raise ConflictError("timeline_ref is ambiguous within the selected project")
+            row, document, content = matches[0]
+            if row["archived_at"]:
+                raise ConflictError(
+                    "timeline_ref identifies an archived timeline",
+                    details={"timeline_id": row["id"], "timeline_ref": timeline_ref},
+                )
+            head = self.conn.execute(
+                "SELECT revision_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
+                (project_id, row["id"]),
             ).fetchone()
-            content = json.loads(document["content_json"]) if document else {}
-            slug = content.get("slug") if isinstance(content, dict) else None
-            if timeline_ref in {str(row["id"]), str(slug or "")}:
-                matches.append((row, document, content))
-        if not matches:
-            raise NotFoundError(
-                "timeline_ref is not in the selected project",
-                details={"project_id": project_id, "timeline_ref": timeline_ref},
-            )
-        if len(matches) != 1:
-            raise ConflictError("timeline_ref is ambiguous within the selected project")
-        row, document, content = matches[0]
-        if row["archived_at"]:
-            raise ConflictError(
-                "timeline_ref identifies an archived timeline",
-                details={"timeline_id": row["id"], "timeline_ref": timeline_ref},
-            )
-        head = self.conn.execute(
-            "SELECT revision_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
-            (project_id, row["id"]),
-        ).fetchone()
         parent = None
         seam_report = None
         seam_metadata = None
@@ -1981,6 +1990,9 @@ class RealmStore:
                 "scene_objects": scene_objects,
                 "visual_seam_report": seam_report,
             })
+        if replay_authority is not None:
+            authority = copy.deepcopy(replay_authority)
+            authority.pop("storage_estimate", None)
         inputs["timeline_ref"] = timeline_ref
         inputs["timeline_authority"] = authority
         for field in ("selector", "profile", "output_name"):
@@ -2211,6 +2223,8 @@ class RealmStore:
             raise ValidationError("capability is required")
         if not isinstance(spec, dict):
             raise ValidationError("task spec must be an object")
+        if "_runtime_render_admission" in spec:
+            raise ValidationError("render admission identity is Runtime-owned")
         if "execution_binding" in spec or (
             isinstance(spec.get("spec"), dict)
             and "execution_binding" in spec["spec"]
@@ -2256,10 +2270,28 @@ class RealmStore:
                 snapshots.append((snapshot, provenance))
                 return ref
 
+            replay_spec = None
+            if capability == "rendering.render" and idempotency_key:
+                prior = self.conn.execute(
+                    "SELECT r.* FROM runs r WHERE r.project_id IS ? AND r.idempotency_key=? "
+                    "UNION ALL SELECT r.* FROM command_idempotency c JOIN runs r ON r.id=c.primary_stream_id "
+                    "WHERE c.command_kind='task.create' AND c.aggregate_id=? AND c.idempotency_key=? "
+                    "AND r.project_id IS ? LIMIT 1",
+                    (project_id, idempotency_key, project_id or "unscoped", idempotency_key, project_id),
+                ).fetchone()
+                if prior is not None and prior["spec_digest"] is not None:
+                    saved = self._spec(prior)
+                    if saved.get("_runtime_render_admission") is not None:
+                        replay_spec = saved
+                    # Older admissions must still prove full normalized equality
+                    # through ordinary freezing; never infer a missing derived floor.
+
+            render_admission = None
             if capability == "rendering.render":
                 admitted_spec = spec.get("spec") if isinstance(spec, dict) else None
                 admitted_spec, frozen_inputs, frozen_snapshot = self._freeze_managed_render_inputs(
                     project_id, admitted_spec, spec.get("input_object_ids", []) if isinstance(spec, dict) else [],
+                    replay_spec["spec"]["inputs"]["timeline_authority"] if replay_spec is not None else None,
                 )
                 spec = dict(spec)
                 spec["spec"] = admitted_spec
@@ -2273,6 +2305,9 @@ class RealmStore:
                         frozen_inputs,
                         profile=profile,
                     )
+                    if replay_spec is not None:
+                        derived_storage = replay_spec["_runtime_render_admission"]["storage_estimate"]
+                    render_admission = {"storage_estimate": dict(derived_storage)}
                     supplied_storage = spec.get("storage_estimate")
                     if supplied_storage is not None:
                         supplied_storage = self._validate_storage_estimate(supplied_storage)
@@ -2385,12 +2420,18 @@ class RealmStore:
                 if idempotency_key:
                     if receipt and receipt["txn_id"] is not None:
                         if receipt["request_hash"] == request_hash:
-                            if old_task is not None and old_task["status"] in {"queued", "running", "cancel_requested"}:
+                            if old_task is not None and (
+                                old_task["status"] in {"queued", "running", "cancel_requested"}
+                                or (replay_spec is not None and old_task["status"] == "cancelled")
+                            ):
                                 return self._task_result(old, old_task)
                             if old is None and receipt["primary_stream_id"]:
                                 attached_run = self.conn.execute("SELECT * FROM runs WHERE id=?", (receipt["primary_stream_id"],)).fetchone()
                                 attached_task = self.conn.execute("SELECT * FROM tasks WHERE run_id=?", (receipt["primary_stream_id"],)).fetchone()
-                                if attached_run is not None and attached_task is not None and attached_task["status"] in {"queued", "running", "cancel_requested"}:
+                                if attached_run is not None and attached_task is not None and (
+                                    attached_task["status"] in {"queued", "running", "cancel_requested"}
+                                    or (replay_spec is not None and attached_task["status"] == "cancelled")
+                                ):
                                     return self._task_result(attached_run, attached_task)
                             return command_result(receipt["result_json"], kind="task.create", created_at=receipt["created_at"], connection=self.conn)
                         if old is None:
@@ -2544,6 +2585,11 @@ class RealmStore:
                 if capability == "rendering.render":
                     spec = dict(spec)
                     spec["_runtime_reuse_toolchain"] = toolchain
+                    if render_admission is not None and authority.get("parent_revision_id") is not None:
+                        # The spec already pins the immutable revision and normalized
+                        # request. Retain the derived floor before a caller override,
+                        # so replay can distinguish zero/default from an oversized budget.
+                        spec["_runtime_render_admission"] = render_admission
                 timestamp, run_id, task_id = now(), new_id(), new_id()
                 digest = self._store_spec(spec)
                 self.conn.execute("INSERT INTO runs(id, project_id, capability, spec_digest, status, idempotency_key, created_at, updated_at) VALUES (?, ?, ?, ?, 'queued', ?, ?, ?)", (run_id, project_id, capability, digest, idempotency_key, timestamp, timestamp))
