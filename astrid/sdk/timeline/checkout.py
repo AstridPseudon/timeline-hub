@@ -105,6 +105,12 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
     def load(cls, path: str | Path) -> "Checkout":
         """Open a checkout file (``timelines checkout`` or ``save`` wrote it). Applies `_timeline` edits."""
         path = Path(path)
+        with _store._file_lock(path):
+            _store._reconcile_restore(path)
+            return cls._load_locked(path)
+
+    @classmethod
+    def _load_locked(cls, path: Path) -> "Checkout":
         text = path.read_text(encoding="utf-8")
         raw = json.loads(text)
         tl = cls({}, path=path)
@@ -138,6 +144,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         return saved
 
     def _save_locked(self, target: Path, *, force: bool, record: bool = True) -> Path:
+        _store._reconcile_restore(target)
         self.merged = []
         if self._disk is not None and self.path and Path(self.path) == target and target.is_file():
             now = target.read_text(encoding="utf-8")
@@ -221,52 +228,114 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         ``dry_run=True`` reports and restores (nothing saved). ``tx.plan`` is filled for every transaction."""
         return edit_transaction(self, label, dry_run=dry_run, check=check, quiet=quiet, reason=reason)
 
-    def undo(self, steps: int = 1) -> list[str]:
-        """Go back ``steps`` edits of this working copy (``redo`` goes forward). Returns what was undone."""
-        if not self.path:
-            raise TimelineEditError("only a saved working copy can undo")
-        target = Path(self.path)
-        history = sorted(_store._history_dir(target).glob("*.json"))
-        if not history:
-            raise TimelineEditError("nothing to undo: this working copy has no earlier edit")
-        undone = []
-        start = current = target.read_text(encoding="utf-8")
-        for step in reversed(history[-max(1, min(int(steps), len(history))):]):
-            label, state = _store._read_step(step)
-            _store._write_step(_store._redo_dir(target), label, current)
-            current = state
-            step.unlink()
-            undone.append(label)
-        target.write_text(current, encoding="utf-8")
-        self._reload()
-        _journal.record_or_note(self, target, kind="undo", outcome="changed", label="; ".join(undone)[:160],
-                                     before=_journal.digest(start), after=_journal.digest(current))
-        return undone
+    def undo(self, steps: int = 1, *, publications: list[str] | None = None,
+             client: Any = None, **options: Any) -> list[str] | dict[str, Any]:
+        """Undo unsent draft edits, or reverse accepted ``publications`` through Runtime.
 
-    def redo(self, steps: int = 1) -> list[str]:
-        """Re-apply edits that ``undo`` took back. Returns what was redone."""
+        Accepted undo returns the command result and leaves this detached working copy
+        untouched. Reopen the timeline to read its new head. Runtime guards the inverse
+        against intervening writes; the local snapshots never restore accepted history.
+        """
+        if publications is not None:
+            if steps != 1:
+                raise TimelineEditError("publication undo cannot be combined with draft steps")
+            return self._inverse_publications(publications, client=client, **options)
+        if options:
+            raise TimelineEditError("commit options require publications")
+        return self._restore_draft(steps, redo=False)
+
+    def redo(self, steps: int = 1, *, publications: list[str] | None = None,
+             client: Any = None, **options: Any) -> list[str] | dict[str, Any]:
+        """Redo draft edits, or reverse the accepted undo publication(s) through Runtime."""
+        if publications is not None:
+            if steps != 1:
+                raise TimelineEditError("publication redo cannot be combined with draft steps")
+            return self._inverse_publications(publications, client=client, **options)
+        if options:
+            raise TimelineEditError("commit options require publications")
+        return self._restore_draft(steps, redo=True)
+
+    def _inverse_publications(self, publications, *, client, **options):
+        from astrid.sdk.timeline.sync import TimelineSession
+
+        if client is None:
+            from astrid.sdk import AstridClient
+
+            with AstridClient.open_from_launcher(start_pack_host=False) as connected:
+                return self._inverse_publications(publications, client=connected, **options)
+        session = TimelineSession.open(self.bundle["project_id"], self.bundle["timeline_id"], client=client)
+        return session.undo(publications, **options)
+
+    def _retire_draft_history(self) -> None:
+        """Acknowledged intent cannot become unsent again, even at a retained revision."""
+        if self.path:
+            import shutil
+
+            target = Path(self.path)
+            with _store._file_lock(target):
+                _store._restore_marker(target).unlink(missing_ok=True)
+                for folder in (_store._history_dir(target), _store._redo_dir(target)):
+                    if folder.exists():
+                        shutil.rmtree(folder)
+        self._journal = []
+        self.__dict__.pop("_exported", None)
+
+    def _restore_draft(self, steps: int, *, redo: bool) -> list[str]:
         if not self.path:
-            raise TimelineEditError("only a saved working copy can redo")
+            raise TimelineEditError("only a saved working copy can undo or redo draft edits; "
+                                    "use publications for accepted edits")
         target = Path(self.path)
-        stack = sorted(_store._redo_dir(target).glob("*.json"))
-        if not stack:
-            raise TimelineEditError("nothing to redo")
-        redone = []
-        start = current = target.read_text(encoding="utf-8")
-        for step in reversed(stack[-max(1, min(int(steps), len(stack))):]):
-            label, state = _store._read_step(step)
-            _store._write_step(_store._history_dir(target), label, current)
-            current = state
-            step.unlink()
-            redone.append(label)
-        target.write_text(current, encoding="utf-8")
-        self._reload()
-        _journal.record_or_note(self, target, kind="redo", outcome="changed", label="; ".join(redone)[:160],
-                                     before=_journal.digest(start), after=_journal.digest(current))
-        return redone
+        source, destination = ((_store._redo_dir, _store._history_dir) if redo else
+                               (_store._history_dir, _store._redo_dir))
+        kind = "redo" if redo else "undo"
+        with _store._file_lock(target):
+            _store._reconcile_restore(target)
+            start = current = target.read_text(encoding="utf-8")
+            base = json.loads(start).get("base_parent")
+            selected = []
+            for step in reversed(sorted(source(target).glob("*.json"))):
+                label, state = _store._read_step(step)
+                # A publish/reset changes the base. Older snapshots are no longer
+                # unsent intent and must never rewind that accepted boundary.
+                if json.loads(state).get("base_parent") != base:
+                    break
+                selected.append((step, label, state))
+                if len(selected) >= max(1, int(steps)):
+                    break
+            if not selected:
+                raise TimelineEditError(f"nothing to {kind}: no unsent draft edit at this base; "
+                                        "use publications for accepted edits")
+            labels = []
+            staged = []
+            temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+            try:
+                for step, label, state in selected:
+                    staged.append(_store._stage_step(destination(target), label, current))
+                    current = state
+                    labels.append(label)
+                temporary.write_text(current, encoding="utf-8")
+                _store._stage_restore(target, temporary, redo=redo,
+                                      sources=[step for step, _label, _state in selected], staged=staged)
+                os.replace(temporary, target)
+            except BaseException:
+                # A replace may have succeeded before the interruption was raised.
+                # Leave that move recoverable, including equal-value/ABA drafts.
+                if temporary.exists() or not _store._restore_marker(target).exists():
+                    _store._restore_marker(target).unlink(missing_ok=True)
+                    temporary.unlink(missing_ok=True)
+                    for step_tmp, _step in staged:
+                        step_tmp.unlink(missing_ok=True)
+                raise
+            # Keep every source until the draft and all reverse states are in
+            # place. Failed writes/replaces leave the original undo chain intact.
+            _store._reconcile_restore(target)
+            self._reload()
+        _journal.record_or_note(self, target, kind=kind, outcome="changed", label="; ".join(labels)[:160],
+                                before=_journal.digest(start), after=_journal.digest(current))
+        return labels
 
     def _reload(self) -> None:
-        fresh = Checkout.load(self.path)
+        fresh = Checkout._load_locked(Path(self.path))
         self.bundle, self._mcache, self._journal, self._disk = fresh.bundle, None, [], fresh._disk
 
     @contextlib.contextmanager

@@ -82,3 +82,18 @@ def test_preview_json_preserves_actual_bridge_request_key(command, capsys):
     output = json.loads(capsys.readouterr().out)
     assert output["idempotency_key"] == generated.calls[0][1]
     assert output["idempotency_key"] and output["receipt"] is None
+
+
+def test_cli_accepted_redo_inverts_undo_publication_and_preserves_disjoint_edit(command, capsys):
+    run, generated = command
+    for clip, on in [('a', '5'), ('b', '7')]:
+        assert run('edit', 'move', 't', '--clip', 'parent/clip:' + clip, '--on', on, '--json') == 0
+        capsys.readouterr()
+    assert run('undo', 't', '--publication', 'pub1', '--json') == 0
+    capsys.readouterr()
+    assert run('redo', 't', '--publication', 'pub3', '--json') == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output['data']['accepted_publication_id'] == 'pub4'
+    assert generated.bundles['r4']['parent'] == generated.bundles['r2']['parent']
+    inverse = json.loads(generated.calls[-1][0])['commands'][0]
+    assert inverse['op'] == 'timeline.inverse' and inverse['args']['publications'] == ['pub3']
