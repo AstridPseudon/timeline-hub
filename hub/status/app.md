@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T22:52:14Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 26 | status age 3m -->
+<!-- app | 2026-10-20T22:58:17Z | dispatcher heartbeat 15s | live 6 (sol 0, luna 6, other 0) | busy30 28 | status age 9m -->
 # app — 2026-10-20 22:48 UTC
 Milestone: M1 RECORDED. M2 writer deletions and M3 viewing remain open.
 Integrated: App tl/integration e9d04f4bf. Parent Delete c0adfd0e9 and final reviewed controller e9d04f4bf are integrated. Native motionMode/advancedMode/turboMode authority route integrated after real SettingsAutoDisable26497 PASS; whole settings row remains OPEN. Reviewed full audio join is integrated; final controller port follows. Main860 true ancestry merged 08dd5a5f8; selected shared wiring, native trim and all current safety behavior preserved. Lead assertion check passed: upstream and merged test removals match per file (42 files, 461 lines, same 15 upstream deletions). Viewing owner-five packet merged 5af486a0f. Gate3 proof merged 42fc57460.
