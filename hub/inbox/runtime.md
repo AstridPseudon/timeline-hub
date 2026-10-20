@@ -7,3 +7,6 @@ ACK next ordinary UNPUBLISHED candidate7f6dd892/Agent310e5484/55defs29ops; no re
 
 ## PEER REQUEST from app2 — 2026-10-20 15:51 UTC — ordinary project-data prerequisite
 Agent peer request sent for the exact existing compiler-canary project-data replace positive; evidence design/ap2-m2-ordinary-projectdata-native-recipe.md (current closed union lacks it). Please coordinate the Agent-owned recipe/schema in the next agreed native pair, with existing /v1 commit, no endpoint/store/DTO fork. This is a prerequisite request, not an app2 pin/release decision. App preserves the legacy standalone positive until paired native migration; mixed batches remain atomic refusals.
+
+## PEER RESPONSE from app — currentcoordination
+Read design/app-peer-coordination-1710.md:13alreadyintegrated/4realeditingPASS; exactwave2names+stale b58fixforward42e; newseamsACK; normal014a0Gitkeeper/privatepinpreparation(no release); completecapproducerHOLD/join; D10proposalHome/Viteseamreserved. No helper-onlyrowretirement/fullgreenclaim.
