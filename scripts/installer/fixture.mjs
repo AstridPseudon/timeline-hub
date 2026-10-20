@@ -7,7 +7,8 @@ import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
 export const repo = fileURLToPath(new URL('../../', import.meta.url));
-export const failure = 'Astrid could not finish; your workspace and any update backup have been kept.';
+export const failure = "Astrid couldn't finish. Nothing in your workspace was changed or removed.";
+export const preparation = 'Getting Astrid ready. The first time takes a few minutes.';
 const mockUv = `#!/usr/bin/env python3
 import json, os, pathlib, shutil, subprocess, sys, time
 args = sys.argv[1:]
@@ -22,6 +23,7 @@ if args == ['--version']:
     print(os.environ.get('MOCK_UV_VERSION', 'uv 0.11.32 (x86_64-unknown-linux-gnu)'))
     sys.exit(0)
 if args[:2] == ['python', 'install']:
+    while os.environ.get('MOCK_PYTHON_RELEASE') and not pathlib.Path(os.environ['MOCK_PYTHON_RELEASE']).exists(): time.sleep(0.01)
     size = int(os.environ.get('MOCK_VOLUME_BYTES', '0'))
     if size:
         print('o' * size)
@@ -52,7 +54,7 @@ if os.environ.get('MOCK_STAGE_RELEASE'):
     # Emulate Python's stdout buffering according to the forwarded -u flag.
     sys.stdout.reconfigure(line_buffering='-u' in args)
     try:
-        print('Installing the pinned Astrid version.')
+        print('Installing Astrid.')
         while not pathlib.Path(os.environ['MOCK_STAGE_RELEASE']).exists(): time.sleep(0.01)
     except KeyboardInterrupt:
         pathlib.Path(os.environ['MOCK_INTERRUPTED']).write_text('KeyboardInterrupt reached installer')
@@ -64,7 +66,8 @@ if os.environ.get('MOCK_CORE_RAW_EXIT'):
     print('raw core diagnostic', file=sys.stderr)
     sys.exit(int(os.environ['MOCK_CORE_RAW_EXIT']))
 if os.environ.get('MOCK_CORE_DISK_FAILURE'):
-    print('There is not enough free disk space to back up your workspace.')
+    print('There is not enough free disk space to back up your workspace.', file=sys.stderr)
+    print(${JSON.stringify(failure)})
     print('Details: ' + os.environ['MOCK_LOG'])
     sys.exit(1)
 if os.environ.get('MOCK_REMOVE_BOOTSTRAP'):
@@ -98,7 +101,7 @@ export async function fixture() {
     MOCK_CALLS: path.join(root, 'calls.jsonl'),
     MOCK_LOG: path.join(root, 'state/astrid-runtime/logs/install.log'),
   };
-  for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION', 'MOCK_STAGE_RELEASE', 'MOCK_INTERRUPTED', 'MOCK_CORE_RAW_EXIT', 'MOCK_CORE_APPEND_LOG', 'MOCK_REQUIRE_TTY', 'MOCK_EXPECTED_LOCK_CONTENT', 'MOCK_CORE_DISK_FAILURE', 'MOCK_UNICODE_OUTPUT', 'MOCK_ACL_FAILURE']) delete env[key];
+  for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION', 'MOCK_STAGE_RELEASE', 'MOCK_INTERRUPTED', 'MOCK_CORE_RAW_EXIT', 'MOCK_CORE_APPEND_LOG', 'MOCK_REQUIRE_TTY', 'MOCK_EXPECTED_LOCK_CONTENT', 'MOCK_CORE_DISK_FAILURE', 'MOCK_UNICODE_OUTPUT', 'MOCK_ACL_FAILURE', 'MOCK_PYTHON_RELEASE']) delete env[key];
   await writeFile(path.join(bootstrap, 'uv'), mockUv, { mode: 0o755 });
   await writeFile(path.join(bin, 'curl'), `#!/usr/bin/env python3
 import os, pathlib, shutil, sys
@@ -131,7 +134,7 @@ shutil.copyfile(os.environ['MOCK_MANIFEST'], sys.argv[sys.argv.index('--output')
     async powershell() {
       env.LOCALAPPDATA = path.join(root, 'Windows Local Data');
       env.MOCK_LOG = path.join(env.LOCALAPPDATA, 'Astrid Runtime/logs/install.log');
-      const windowsBootstrap = path.join(env.LOCALAPPDATA, 'Astrid/bootstrap');
+      const windowsBootstrap = path.join(env.LOCALAPPDATA, 'Astrid Installer/bootstrap');
       await mkdir(windowsBootstrap, { recursive: true });
       await cp(path.join(bootstrap, 'uv'), path.join(windowsBootstrap, 'uv.exe'));
       await chmod(path.join(windowsBootstrap, 'uv.exe'), 0o755);
@@ -227,7 +230,7 @@ try:
                 break
             if not chunk: break
             output.extend(chunk)
-            if not interrupted and b'Installing the pinned Astrid version.' in output:
+            if not interrupted and b'Installing Astrid.' in output:
                 os.write(terminal, b'\\x03')
                 interrupted = True
                 recovery_deadline = time.monotonic() + 20

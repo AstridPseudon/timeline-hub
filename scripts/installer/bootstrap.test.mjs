@@ -3,13 +3,24 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { createPinnedRepo, failure, fixture, observe, repo, terminalInterrupt } from './fixture.mjs';
+import { createPinnedRepo, failure, fixture, observe, preparation, repo, terminalInterrupt } from './fixture.mjs';
 
 async function scenario(fn) {
   const context = await fixture();
   try { await fn(context); } finally { await context.cleanup(); }
 }
 const run = (context, args = [], env = {}) => context.run('/bin/sh', [path.join(repo, 'public/install'), ...args], env);
+
+test('POSIX explains first-run preparation before Python setup completes', () => scenario(async (context) => {
+  const release = path.join(context.root, 'release-python');
+  const child = await context.start('/bin/sh', [path.join(repo, 'public/install')], { MOCK_PYTHON_RELEASE: release });
+  const output = observe(child);
+  try {
+    await output.until(preparation);
+    assert.equal(child.exitCode, null);
+  } finally { await writeFile(release, 'continue'); }
+  assert.equal((await output.result).code, 0);
+}));
 
 test('POSIX uses developer manifest, XDG bootstrap, exact local commits and Python without external shims', () => scenario(async (context) => {
   context.manifest.agent.repo = path.join(context.root, 'source with spaces');
@@ -20,7 +31,7 @@ test('POSIX uses developer manifest, XDG bootstrap, exact local commits and Pyth
   context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
   const result = await run(context, ['--update', '--data-root', '/a path/with spaces']);
   assert.equal(result.code, 0, result.stderr);
-  assert.equal(result.stdout.trim(), 'Astrid is ready.');
+  assert.equal(result.stdout.trim(), `${preparation}\nAstrid is ready.`);
   assert.equal(await readFile(context.env.MOCK_FETCHED, 'utf8'), context.env.ASTRID_INSTALL_MANIFEST_URL);
   const calls = await context.calls();
   assert.deepEqual(calls.find((args) => args[0] === 'python'), ['python', 'install', '3.11.13', '--no-bin']);
@@ -50,7 +61,7 @@ for (const repoValue of ['relative/path', '', null, 'https://example.com/source'
     context.manifest.agent.repo = repoValue;
     const result = await run(context);
     assert.equal(result.code, 1);
-    assert.equal((result.stderr.match(/Astrid could not get ready\./g) || []).length, 1);
+    assert.equal((result.stderr.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
     assert.equal((await context.calls()).filter((args) => args.includes('--with')).length, 0);
   }));
 }
@@ -71,7 +82,7 @@ for (const env of [{ MOCK_FETCH_EXIT: '7' }, { MOCK_PYTHON_EXIT: '17' }]) {
   test(`POSIX reports one pre-core failure for ${JSON.stringify(env)}`, () => scenario(async (context) => {
     const result = await run(context, [], env);
     assert.equal(result.code, 1);
-    assert.equal((result.stderr.match(/Astrid could not get ready\./g) || []).length, 1);
+    assert.equal((result.stderr.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
     assert.equal((result.stderr.match(/Details:/g) || []).length, 1);
   }));
 }
@@ -87,7 +98,7 @@ test('POSIX preserves the core failure paragraph and nonzero status once', () =>
 test('POSIX preserves the installer low-space failure without adding a second error', () => scenario(async (context) => {
   const result = await run(context, [], { MOCK_CORE_DISK_FAILURE: '1' });
   assert.equal(result.code, 1);
-  assert.equal((result.stdout.match(/There is not enough free disk space to back up your workspace\./g) || []).length, 1);
+  assert.equal((result.stdout.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
   assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
   assert.doesNotMatch(result.stderr, /Astrid could not get ready/);
 }));
@@ -95,13 +106,13 @@ test('POSIX preserves the installer low-space failure without adding a second er
 test('POSIX preserves success output when uninstall removes bootstrap', () => scenario(async (context) => {
   const result = await run(context, ['--uninstall'], { MOCK_REMOVE_BOOTSTRAP: '1' });
   assert.equal(result.code, 0, result.stderr);
-  assert.equal(result.stdout.trim(), 'Astrid was uninstalled.');
+  assert.equal(result.stdout.trim(), `${preparation}\nAstrid was uninstalled.`);
 }));
 
 test('POSIX also accepts uv version output without build metadata', () => scenario(async (context) => {
   const result = await run(context, [], { MOCK_UV_VERSION: 'uv 0.11.32' });
   assert.equal(result.code, 0, result.stderr);
-  assert.equal(result.stdout.trim(), 'Astrid is ready.');
+  assert.equal(result.stdout.trim(), `${preparation}\nAstrid is ready.`);
 }));
 
 test('POSIX accepts localhost file URLs as local pinned repositories', () => scenario(async (context) => {
@@ -113,7 +124,7 @@ test('POSIX accepts localhost file URLs as local pinned repositories', () => sce
   context.env.MOCK_EXPECTED_LOCK_CONTENT = committedLock;
   const result = await run(context);
   assert.equal(result.code, 0, result.stderr);
-  assert.equal(result.stdout.trim(), 'Astrid is ready.');
+  assert.equal(result.stdout.trim(), `${preparation}\nAstrid is ready.`);
   const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
   assert.ok(localInstall.includes(`git+${local}@${context.manifest.agent.sha}`));
 }));
@@ -123,7 +134,7 @@ test('POSIX streams an unbuffered installer stage before the transaction can fin
   const child = await context.start('/bin/sh', [path.join(repo, 'public/install')], { MOCK_STAGE_RELEASE: release });
   const output = observe(child);
   try {
-    await output.until('Installing the pinned Astrid version.');
+    await output.until('Installing Astrid.');
     assert.equal(child.exitCode, null);
   } finally { await writeFile(release, 'continue'); }
   const result = await output.result;
@@ -135,7 +146,7 @@ test('POSIX streams an unbuffered installer stage before the transaction can fin
 test('POSIX preserves a native core exit code without the core failure paragraph', () => scenario(async (context) => {
   const result = await run(context, [], { MOCK_CORE_RAW_EXIT: '27' });
   assert.equal(result.code, 27);
-  assert.equal((result.stderr.match(/Astrid could not get ready\./g) || []).length, 1);
+  assert.equal((result.stderr.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
   assert.equal((result.stderr.match(/Details:/g) || []).length, 1);
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /raw core diagnostic/);
 }));

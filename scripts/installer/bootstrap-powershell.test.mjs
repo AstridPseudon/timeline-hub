@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { createPinnedRepo, failure, fixture, observe, repo, terminalInterrupt } from './fixture.mjs';
+import { createPinnedRepo, failure, fixture, observe, preparation, repo, terminalInterrupt } from './fixture.mjs';
 
 // Run explicitly with a PowerShell 7 executable on POSIX. Native Windows
 // PowerShell 5.1 also needs qualification on Windows before release.
@@ -15,6 +15,18 @@ test('PowerShell opens install log appends with sharing compatible with the runn
   assert.match(script, /new FileStream\(log, FileMode\.Append, FileAccess\.Write, FileShare\.ReadWrite \| FileShare\.Delete\)/);
   assert.doesNotMatch(script, /File\.AppendAllText\(log/);
 });
+
+test('PowerShell explains first-run preparation before Python setup completes', () => scenario(async (context) => {
+  const harness = await context.powershell();
+  const release = path.join(context.root, 'release-python');
+  const child = await context.start(powershell, ['-NoProfile', '-NonInteractive', '-File', harness], { MOCK_PYTHON_RELEASE: release });
+  const output = observe(child);
+  try {
+    await output.until(preparation);
+    assert.equal(child.exitCode, null);
+  } finally { await writeFile(release, 'continue'); }
+  alive(await output.result);
+}));
 
 for (const architecture of ['PROCESSOR_ARCHITECTURE', 'PROCESSOR_ARCHITEW6432']) {
   test(`PowerShell refuses ARM64 via ${architecture} before downloads`, () => scenario(async (context, run) => {
@@ -33,7 +45,7 @@ test('PowerShell -File reports ARM64 refusal as one sentence with a failure stat
   });
   assert.equal(result.code, 1);
   assert.equal(result.stderr.trim(), 'Astrid does not support Windows ARM64 yet.');
-  assert.equal(result.stdout, '');
+  assert.equal(result.stdout.trim(), preparation);
   assert.deepEqual(await context.calls(), []);
 }));
 
@@ -47,7 +59,7 @@ function Get-ExecutionPolicy {
 ` + await readFile(harness, 'utf8'));
   const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', harness]);
   alive(result);
-  assert.match(result.stdout, /CAUGHT: Astrid could not get ready\./);
+  assert.match(result.stdout, /CAUGHT: Astrid couldn't finish\. Nothing in your workspace was changed or removed\./);
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /Process-level Bypass cannot override Group Policy/);
   assert.deepEqual(await context.calls(), []);
   await assert.rejects(readFile(context.env.MOCK_FETCHED), { code: 'ENOENT' });
@@ -121,7 +133,7 @@ test('PowerShell creates only Astrid roots with protected owner/SYSTEM ACLs befo
   assert.match(result.stdout, /Astrid is ready\./);
   const records = (await readFile(context.env.MOCK_PRIVATE_DIRS, 'utf8')).trim().split('\n').map((line) => line.split('\t'));
   assert.deepEqual(records.slice(0, 4).map(([directory]) => directory), [
-    path.join(context.env.LOCALAPPDATA, 'Astrid'), path.join(context.env.LOCALAPPDATA, 'Astrid/bootstrap'),
+    path.join(context.env.LOCALAPPDATA, 'Astrid Installer'), path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap'),
     path.join(context.env.LOCALAPPDATA, 'Astrid Runtime'), path.join(context.env.LOCALAPPDATA, 'Astrid Runtime/logs'),
   ]);
   assert.equal(records.length, 5);
@@ -149,7 +161,7 @@ test('PowerShell uses a fresh process helper after an older bootstrap ran in the
   script = script.replace("$ErrorActionPreference = 'Continue'", `$ErrorActionPreference = 'Continue'
 Add-Type -TypeDefinition @'
 using System.Diagnostics;
-public sealed class AstridInstallerProcess {
+public sealed class AstridInstallerProcessV2 {
     public static int OldVersion = 1;
 }
 '@`);
@@ -216,7 +228,7 @@ for (const repoValue of ['relative/path', '', null, 'https://example.com/source'
     context.manifest.agent.repo = repoValue;
     const result = await run();
     alive(result);
-    assert.equal((result.stdout.match(/Astrid could not get ready\./g) || []).length, 1);
+    assert.equal((result.stdout.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
     assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
     assert.equal((await context.calls()).filter((args) => args.includes('--with')).length, 0);
   }));
@@ -226,7 +238,7 @@ test('PowerShell rejects invalid commit pins before core', () => scenario(async 
   context.manifest.agent.sha = 'ABCDEF'.repeat(6) + 'ABCD';
   const result = await run();
   alive(result);
-  assert.match(result.stdout, /CAUGHT: Astrid could not get ready\./);
+  assert.match(result.stdout, /CAUGHT: Astrid couldn't finish\. Nothing in your workspace was changed or removed\./);
   assert.equal((await context.calls()).filter((args) => args.includes('--with')).length, 0);
 }));
 
@@ -234,7 +246,7 @@ test('PowerShell rejects mismatching bootstrap pins without preparing Python', (
   context.manifest.tools.uv.version = '0.8.22';
   const result = await run();
   alive(result);
-  assert.match(result.stdout, /CAUGHT: Astrid could not get ready\./);
+  assert.match(result.stdout, /CAUGHT: Astrid couldn't finish\. Nothing in your workspace was changed or removed\./);
   assert.deepEqual(await context.calls(), []);
 }));
 
@@ -242,7 +254,7 @@ for (const env of [{ MOCK_FETCH_EXIT: '7' }, { MOCK_PYTHON_EXIT: '17' }]) {
   test(`PowerShell reports one pre-core failure for ${JSON.stringify(env)} and keeps iex shell`, () => scenario(async (context, run) => {
     const result = await run([], env);
     alive(result);
-    assert.equal((result.stdout.match(/Astrid could not get ready\./g) || []).length, 1);
+    assert.equal((result.stdout.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
     assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
   }));
 }
@@ -260,7 +272,7 @@ test('PowerShell preserves one core failure paragraph and keeps iex shell', () =
 test('PowerShell preserves the installer low-space failure without adding a second error', () => scenario(async (context, run) => {
   const result = await run([], { MOCK_CORE_DISK_FAILURE: '1' });
   alive(result);
-  assert.equal((result.stdout.match(/There is not enough free disk space to back up your workspace\./g) || []).length, 1);
+  assert.equal((result.stdout.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
   assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
   assert.doesNotMatch(result.stdout, /Astrid could not get ready/);
 }));
@@ -272,10 +284,50 @@ test('PowerShell preserves output after uninstall removes bootstrap', () => scen
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
 }));
 
+test('PowerShell removes its external bootstrap and lock after successful uninstall, repeatedly', () => scenario(async (context, run) => {
+  const installerRoot = path.join(context.env.LOCALAPPDATA, 'Astrid Installer');
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt) await context.powershell();
+    await writeFile(path.join(installerRoot, 'astrid-install.lock'), 'held by core until it exits');
+    const result = await run(['--uninstall']);
+    alive(result);
+    assert.match(result.stdout, /Astrid was uninstalled\./);
+    assert.doesNotMatch(result.stdout, /CAUGHT:|Remove-Item/);
+    await assert.rejects(readFile(path.join(installerRoot, 'bootstrap/uv.exe')), { code: 'ENOENT' });
+    await assert.rejects(readFile(path.join(installerRoot, 'astrid-install.lock')), { code: 'ENOENT' });
+    await assert.rejects(readFile(installerRoot), { code: 'ENOENT' });
+  }
+}));
+
+test('PowerShell keeps the bootstrap when uninstall fails', () => scenario(async (context, run) => {
+  const result = await run(['--uninstall'], { MOCK_CORE_EXIT: '23' });
+  alive(result);
+  assert.match(result.stdout, /NATIVE-STATUS: 23/);
+  assert.ok((await readFile(path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe'))).length);
+}));
+
+test('PowerShell reports a parent cleanup failure with a nonzero status and one failure paragraph', () => scenario(async (context, run) => {
+  const harness = await context.powershell();
+  await writeFile(harness, `
+function Remove-Item {
+    param([string]$LiteralPath, [switch]$Recurse, [switch]$Force, [Parameter(Position=0)][string]$Path)
+    if ($LiteralPath -eq (Join-Path $env:LOCALAPPDATA 'Astrid Installer')) { throw 'bootstrap remained locked after core exit' }
+    Microsoft.PowerShell.Management\\Remove-Item -LiteralPath $(if ($LiteralPath) { $LiteralPath } else { $Path }) -Recurse -Force -ErrorAction SilentlyContinue
+}
+` + await readFile(harness, 'utf8'));
+  const result = await run(['--uninstall']);
+  alive(result);
+  assert.match(result.stdout, /NATIVE-STATUS: 1/);
+  assert.equal(result.stdout.split(failure).length - 1, 1);
+  assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
+  assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /bootstrap remained locked after core exit/);
+  assert.ok((await readFile(path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe'))).length);
+}));
+
 test('PowerShell -File reports a nonzero process status on a pre-core failure', () => scenario(async (context) => {
   const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', path.join(repo, 'public/install.ps1')]);
   assert.notEqual(result.code, 0);
-  assert.match(result.stderr, /Astrid could not get ready/);
+  assert.match(result.stderr, /Astrid couldn't finish\. Nothing in your workspace was changed or removed\./);
 }));
 
 test('PowerShell drains simultaneous multi-megabyte native output without deadlock', () => scenario(async (context, run) => {
@@ -289,7 +341,7 @@ test('PowerShell drains simultaneous multi-megabyte native output without deadlo
 }));
 
 test('PowerShell handles stderr progress from native uv bootstrap setup', () => scenario(async (context, run) => {
-  await rm(path.join(context.env.LOCALAPPDATA, 'Astrid/bootstrap/uv.exe'));
+  await rm(path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe'));
   context.env.SystemRoot = path.join(context.root, 'system root');
   context.env.MOCK_SOURCE_UV = path.join(context.bootstrap, 'uv');
   context.env.MOCK_BOOTSTRAP_ARGS = path.join(context.root, 'bootstrap-args.json');
@@ -337,7 +389,7 @@ for (const coreExit of ['0', '23']) {
         assert.match(result.stdout, /Astrid is ready\./);
       } else {
         assert.equal(result.code, 23);
-        assert.match(result.stderr, /Astrid could not finish/);
+        assert.match(result.stderr, /Astrid couldn't finish\. Nothing in your workspace was changed or removed\./);
         assert.doesNotMatch(result.stderr, /Astrid could not get ready/);
       }
       assert.deepEqual((await context.calls()).at(-1).slice(-flags.length), flags);
@@ -376,7 +428,7 @@ test('PowerShell streams an unbuffered installer stage before the transaction ca
   const child = await context.start(powershell, ['-NoProfile', '-NonInteractive', '-File', harness], { MOCK_STAGE_RELEASE: release });
   const output = observe(child);
   try {
-    await output.until('Installing the pinned Astrid version.');
+    await output.until('Installing Astrid.');
     assert.equal(child.exitCode, null);
   } finally { await writeFile(release, 'continue'); }
   const result = await output.result;
@@ -398,7 +450,7 @@ test('PowerShell preserves a native core failure status and logs diagnostics bef
   const result = await run([], { MOCK_CORE_RAW_EXIT: '27' });
   alive(result);
   assert.match(result.stdout, /NATIVE-STATUS: 27/);
-  assert.equal((result.stdout.match(/Astrid could not get ready\./g) || []).length, 1);
+  assert.equal((result.stdout.match(/Astrid couldn't finish\. Nothing in your workspace was changed or removed\./g) || []).length, 1);
   assert.equal((result.stdout.match(/Details:/g) || []).length, 1);
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /raw core diagnostic/);
 }));
@@ -435,7 +487,7 @@ test('PowerShell command configuration inherits the console used to deliver Ctrl
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @'
 using System.Diagnostics;
-public class AstridInstallerProcessV2 {
+public class AstridInstallerProcessV3 {
     public static ProcessStartInfo Run(ProcessStartInfo info, string log, bool logOutput, bool streamOutput) { return info; }
 }
 '@

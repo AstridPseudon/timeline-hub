@@ -6,7 +6,8 @@
     $ErrorActionPreference = 'Stop'
     $UvVersion = '0.11.32'
     $PythonVersion = '3.11.13'
-    $Bootstrap = Join-Path $env:LOCALAPPDATA 'Astrid\bootstrap'
+    $InstallerRoot = Join-Path $env:LOCALAPPDATA 'Astrid Installer'
+    $Bootstrap = Join-Path $InstallerRoot 'bootstrap'
     $LogDir = Join-Path $env:LOCALAPPDATA 'Astrid Runtime\logs'
     $Log = Join-Path $LogDir 'install.log'
     $Temp = Join-Path ([IO.Path]::GetTempPath()) ('astrid-install-' + [Guid]::NewGuid().ToString('N'))
@@ -14,6 +15,7 @@
     $PreparationFailure = $null
     $LogReady = $false
     $NativeExitCode = 1
+    [Console]::WriteLine('Getting Astrid ready. The first time takes a few minutes.')
 
     # The readers run in .NET so stderr never becomes a PS 5.1 terminating
     # error, and progress bypasses the function's captured success output.
@@ -31,7 +33,7 @@
         $Info.RedirectStandardError = $true
         $Info.StandardOutputEncoding = [Text.UTF8Encoding]::new($false)
         $Info.StandardErrorEncoding = [Text.UTF8Encoding]::new($false)
-        return [AstridInstallerProcessV2]::Run($Info, $Log, $LogOutput.IsPresent, $StreamOutput.IsPresent)
+        return [AstridInstallerProcessV3]::Run($Info, $Log, $LogOutput.IsPresent, $StreamOutput.IsPresent)
     }
 
     function Initialize-PrivateDirectory([string]$Path) {
@@ -106,16 +108,15 @@ public static class AstridInstallerDirectoryV1 {
         if ($Enforced) {
             throw 'An organization execution policy may block setup. Process-level Bypass cannot override Group Policy; ask your administrator to allow the Astrid installer.'
         }
-        if (-not ('AstridInstallerProcessV2' -as [type])) {
+        if (-not ('AstridInstallerProcessV3' -as [type])) {
             Add-Type -TypeDefinition @'
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-public sealed class AstridInstallerProcessV2 {
+public sealed class AstridInstallerProcessV3 {
     private static readonly string[] FailureMarkers = new string[] {
-        "Astrid could not finish; your workspace and any update backup have been kept.",
-        "There is not enough free disk space to back up your workspace."
+        "Astrid couldn't finish. Nothing in your workspace was changed or removed."
     };
     public int ExitCode;
     public string Output;
@@ -134,7 +135,7 @@ public sealed class AstridInstallerProcessV2 {
             writer.Write(text);
         }
     }
-    public static AstridInstallerProcessV2 Run(ProcessStartInfo info, string log, bool logOutput, bool streamOutput) {
+    public static AstridInstallerProcessV3 Run(ProcessStartInfo info, string log, bool logOutput, bool streamOutput) {
         var output = new StringBuilder();
         var errors = new StringBuilder();
         var gate = new object();
@@ -175,7 +176,7 @@ public sealed class AstridInstallerProcessV2 {
                         failureDisplayed = true;
                     }
                 }
-                return new AstridInstallerProcessV2 { ExitCode = process.ExitCode, Output = output.ToString(), FailureDisplayed = failureDisplayed };
+                return new AstridInstallerProcessV3 { ExitCode = process.ExitCode, Output = output.ToString(), FailureDisplayed = failureDisplayed };
             } finally {
                 Console.CancelKeyPress -= onCancel;
             }
@@ -280,7 +281,7 @@ public sealed class AstridInstallerProcessV2 {
         $NativeExitCode = $Result.ExitCode
         $global:LASTEXITCODE = $NativeExitCode
         if ($Result.ExitCode -ne 0) {
-            $FailureStart = [AstridInstallerProcessV2]::FindFailureStart($Result.Output)
+            $FailureStart = [AstridInstallerProcessV3]::FindFailureStart($Result.Output)
             if ($FailureStart -ge 0) {
                 $CoreFailure = $Result.Output.Substring($FailureStart).TrimEnd()
             }
@@ -290,7 +291,13 @@ public sealed class AstridInstallerProcessV2 {
             }
             throw 'The Astrid installer did not finish; see the log.'
         }
+        if ($InstallerArgs -contains '--uninstall') {
+            # Run() has waited for uv and Python to exit. Their executables and
+            # the core's lock are now closed, so the parent can remove them all.
+            Remove-Item -LiteralPath $InstallerRoot -Recurse -Force -ErrorAction Stop
+        }
     } catch {
+        if ($NativeExitCode -eq 0) { $NativeExitCode = 1 }
         $FailureMessage = $_.Exception.Message
         try {
             if (-not $LogReady) { throw 'The installer log directory was not admitted.' }
@@ -299,7 +306,7 @@ public sealed class AstridInstallerProcessV2 {
             $ErrorStream = [IO.FileStream]::new($Log, [IO.FileMode]::Append, [IO.FileAccess]::Write, [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
             try { $ErrorStream.Write($ErrorBytes, 0, $ErrorBytes.Length) } finally { $ErrorStream.Dispose() }
         } catch { }
-        $Message = if ($CoreFailure) { $CoreFailure } elseif ($PreparationFailure) { $PreparationFailure } elseif (-not $LogReady) { $FailureMessage } else { "Astrid could not get ready.`nDetails: $Log" }
+        $Message = if ($CoreFailure) { $CoreFailure } elseif ($PreparationFailure) { $PreparationFailure } elseif (-not $LogReady) { $FailureMessage } else { "Astrid couldn't finish. Nothing in your workspace was changed or removed.`nDetails: $Log" }
         $global:LASTEXITCODE = $NativeExitCode
         if ($FileInvocation) {
             [Console]::Error.WriteLine($Message)
