@@ -1,0 +1,28 @@
+# Corrected 697px partial-mouth controller
+
+The harness must first commit this worker worktree. The selected Agent root
+must then be clean, with HEAD set to that exact commit and descending from
+ee71010a0947edcbbacbf8178e5fee11ab6bab3d. A manager must independently place
+that exact SHA in READY_GRANTED and provide REVIEW.md; this worker did not
+create either grant input.
+
+ASTRID_CHECKOUT=/home/user/work/wt/vw-m3-mouth697-clean-source-descendant \
+VIEWING_CROP_REVISION=<exact-40-character-harness-commit> \
+VIEWING_CROP_ARTIFACT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.12.tgz \
+env -u PYTHONOPTIMIZE PYTHONDONTWRITEBYTECODE=1 VIEWING_CROP_CENTRAL=1 \
+VIEWING_BROWSER_FLOCK_HELD=1 \
+ASTRID_REMOTION_BROWSER_EXECUTABLE=/opt/google/chrome/chrome \
+flock -x /tmp/timeline-viewing-browser.lock \
+python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth697-clean-source-descendant-controller.py
+
+The controller runs only:
+
+`tests/packs/rendering/test_presenter_crop_partial_physical.py`
+
+It requires the retained Node20.19.4 binary at
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node`,
+whose SHA256 is
+`43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490`.
+No old grant or controller is reusable. If normal admission requires stale
+root artifact regeneration, refuse and wait for the owner; this component
+controller is not an admission bypass.

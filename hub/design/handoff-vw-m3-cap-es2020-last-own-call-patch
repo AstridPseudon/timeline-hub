@@ -1,0 +1,13 @@
+diff --git a/src/tools/travel-between-images/components/shotTimelineDataProvider.ts b/src/tools/travel-between-images/components/shotTimelineDataProvider.ts
+index 73845c70b..d18493915 100644
+--- a/src/tools/travel-between-images/components/shotTimelineDataProvider.ts
++++ b/src/tools/travel-between-images/components/shotTimelineDataProvider.ts
+@@ -143,7 +143,7 @@ function createCanonicalTimeline(config: TimelineConfig, composition: PreparedSh
+       ? { ...clip.app } : clip.app;
+     if (app) {
+       for (const key of ['canonical', 'canonicalTiming']) {
+-        if (rawApp && Object.hasOwn(rawApp, key)) {
++        if (rawApp && Object.prototype.hasOwnProperty.call(rawApp, key)) {
+           Object.defineProperty(app, key, { value: structuredClone(rawApp[key]),
+             enumerable: true, configurable: true, writable: true });
+         } else Reflect.deleteProperty(app, key);

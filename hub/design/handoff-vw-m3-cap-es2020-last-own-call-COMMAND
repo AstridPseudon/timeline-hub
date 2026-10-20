@@ -1,0 +1,23 @@
+# App ES2020 own-property correction verification
+
+Run from the clean harness-committed App descendant:
+
+```sh
+node /home/user/work/app/node_modules/typescript/bin/tsc \
+  -p tsconfig.app.json --noEmit --pretty false
+```
+
+If the shared read-only graph resolves an older Composition package, use an
+owned private overlay of the App-pinned
+`vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz` and an overlay
+tsconfig that maps `@banodoco/timeline-composition` and its subpaths to that
+extracted package. Do not alter shared `node_modules`.
+
+Optional narrow regression:
+
+```sh
+node /home/user/work/app/node_modules/vitest/vitest.mjs run \
+  --config <owned-vitest-overlay-config> --no-cache --maxWorkers=1 \
+  --no-file-parallelism \
+  src/tools/travel-between-images/components/ShotTimelinePreview.test.ts
+```

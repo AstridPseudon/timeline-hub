@@ -1,0 +1,22 @@
+# Agent public13 normal-pin source — D10 review file inventory
+
+Review target product files:
+
+- `astrid/core/rendering/remotion_runtime.py`
+- `remotion/package.json`
+- `remotion/package-lock.json`
+- `remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz`
+- `remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256`
+- `tests/core/timeline/test_clip_fields.py`
+- `tests/journeys/test_journey_plumbing.py`
+- `tests/packs/rendering/test_capture_scene_labels.py`
+- `tests/packs/rendering/test_composition_package.py`
+
+Compatibility retained and not changed:
+
+- `remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz`
+- `remotion/artifacts/banodoco-timeline-composition-0.0.11.tgz`
+- explicitly consumed public12 scene/presenter/render fixtures.
+
+Out of scope: Agent activation/merge, App adoption/publication, npm install,
+capture/render, full suites, M4 cleanup, and any shared graph mutation.

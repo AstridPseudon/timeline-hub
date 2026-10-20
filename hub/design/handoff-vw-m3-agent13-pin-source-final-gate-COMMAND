@@ -1,0 +1,33 @@
+# Agent public13 normal-pin source — D10 review commands
+
+All checks used a private temporary extraction or read-only artifact paths;
+shared dependencies and worktrees were not modified.
+
+```sh
+git -C /home/user/work/agent archive tl/integration | tar -xf - -C <private-temp>
+git -C <private-temp> apply handoff-vw-m3-agent13-normal-pin-prep-patch
+cp <ORCH>/artifacts/banodoco-timeline-composition-0.0.13.tgz <private-temp>/remotion/artifacts/
+cp <ORCH>/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256 <private-temp>/remotion/artifacts/
+
+sha256sum <private-temp>/remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+wc -c <private-temp>/remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz
+cmp <private-temp>/remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256 <ORCH>/artifacts/banodoco-timeline-composition-0.0.13.tgz.sha256
+# PASS: 9412ae25..., 58477 bytes, sidecar identical
+
+(cd <private-temp> && PYTHONPATH=<private-temp> /home/user/work/venv-agent/bin/python3 -B -m pytest -q tests/packs/rendering/test_composition_package.py -m 'not integration')
+# PASS: 6 passed, 1 deselected
+
+(cd <private-temp> && PYTHONPATH=<private-temp> /home/user/work/venv-agent/bin/python3 -B -m pytest -q tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix)
+# PASS: 2 passed
+
+git -C /home/user/work/agent apply --check --whitespace=error <ORCH>/design/handoff-vw-m3-agent13-normal-pin-prep-patch
+# PASS
+
+sha256sum <ORCH>/artifacts/banodoco-timeline-composition-0.0.13.tgz <ORCH>/artifacts/banodoco-timeline-composition-0.0.12.tgz <ORCH>/artifacts/banodoco-timeline-composition-0.0.11.tgz
+tar -tzf <ORCH>/artifacts/banodoco-timeline-composition-0.0.13.tgz | wc -l
+# PASS: 0.0.13 identity, old 0.0.12/0.0.11 identities, 77 members
+```
+
+The temporary archive had no `.git` directory, so a final `git diff --check`
+inside it was not applicable; the clean integration `git apply --check
+--whitespace=error` result above is the applicable patch whitespace check.
