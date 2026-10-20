@@ -37,6 +37,10 @@ class _PublishMixin:
         report = self._check_core()
         if not report.valid:
             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
+        native = self._publish_native_move(message, idempotency_key, client=client,
+                                           force=force, restructure=restructure)
+        if native is not None:
+            return native
         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
         stored = self.stored_document(restructure=restructure)  # chapters as shots only for a film that opted in
         chapter_film = len(stored.get("placements") or []) > 1
@@ -85,6 +89,58 @@ class _PublishMixin:
                                     evidence=({"kind": "revision", "id": receipt.get("new_head")},))
         receipt["message"] = message
         return receipt
+
+    def _publish_native_move(self, message: str, idempotency_key: str | None, *, client: Any = None,
+                             force: bool = False, restructure: bool = False) -> dict[str, Any] | None:
+        """Flush the existing captured move carrier; never reconstruct a command from the draft."""
+        from astrid.sdk.timeline.sync import TimelineSession
+
+        client = client or getattr(self, "_client", None)
+        if client is None:
+            return None
+        session = TimelineSession.open(self.bundle["project_id"], self.bundle["timeline_id"], client=client)
+        with session.outbox.locked():
+            state = session._state()
+            if not state["pending"] and state["flight"] is None:
+                return None
+            if force or restructure:
+                raise TimelineEditError("captured numeric clip move cannot use force or restructure")
+            if self.narration_changes():
+                raise TimelineEditError("captured numeric clip move cannot be mixed with narration changes")
+            commands = state["pending"]
+            if any(command.get("op") != "clip.move" for command in commands) or len(commands) != 1:
+                raise TimelineEditError("captured numeric clip move cannot be mixed with other timeline edits")
+            preview = getattr(self, "_native_move_preview", None)
+            if preview is not None:
+                before = _store._units(preview)
+                after = _store._units(self.bundle)
+                if before.get(("parent-config", "slots")) in (None, {}) \
+                        and after.get(("parent-config", "slots")) in (None, {}):
+                    before.pop(("parent-config", "slots"), None)
+                    after.pop(("parent-config", "slots"), None)
+                if before != after:
+                    raise TimelineEditError("captured numeric clip move cannot be mixed with other draft edits")
+            flight = state["flight"]
+            if flight is None:
+                if message:
+                    state["rationale"] = message
+                    session.outbox.write(state)
+                key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
+            else:
+                key = idempotency_key
+        result = session.flush(idempotency_key=key, via="python")
+        data, receipt = result["data"], result["receipt"]
+        before = _journal.document_digest(self.document())
+        self._retire_draft_history()
+        self._reset_base(client=client)
+        if self.path:
+            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
+                                    reason=message or None, before=before,
+                                    after=_journal.document_digest(self.document()),
+                                    evidence=({"kind": "revision", "id": data["accepted_revision_id"]},))
+        return {"old_head": data["previous_revision_id"], "new_head": data["accepted_revision_id"],
+                "structure": "changed", "receipt": receipt, "idempotency_key": result["idempotency_key"],
+                "narration_pinned": [], "transcripts": [], "message": message}
 
     def _reset_base(self, *, client: Any = None) -> None:
         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""

@@ -41,6 +41,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         bundle = flatten(bundle)  # a chapter film (shot per chapter + film-level clips) is edited as ONE flat shot; publish splits it again
         self.bundle = bundle
         self.path = path
+        self._client = None
         self.fps = bundle_fps(bundle) or 30.0
         self.notes: list[str] = []
         self.report: list[str] = []  # what the last re-flow did, in plain words
@@ -63,6 +64,59 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         self.fps = bundle_fps(self.bundle) or 30.0
         self._mcache = None
 
+    def _native_clip_ref(self, clip: Clip) -> str:
+        """Return the command owner's scoped identity for this live clip handle."""
+        clip_id = clip.id
+        parent_rows = self.bundle.get("parent", {}).get("clips") or ()
+        if any(row is clip.data for row in parent_rows):
+            return f"parent/clip:{clip_id}"
+        owners = []
+        shot = (self.bundle.get("shots") or {}).get(str(clip.shot_id))
+        if isinstance(shot, Mapping):
+            rows = (shot.get("internal_timeline") or {}).get("clips") or ()
+            if any(row is clip.data for row in rows):
+                placement = next((row for row in self.bundle.get("placements") or ()
+                                  if str(row.get("shot_id")) == str(clip.shot_id)), None)
+                occurrence = placement.get("occurrence_id") if isinstance(placement, Mapping) else None
+                if isinstance(occurrence, str) and occurrence:
+                    owners.append(f"occurrence:{occurrence}")
+        if len(owners) != 1:
+            raise TimelineEditError(
+                f"numeric clip move requires one explicit owner for {clip_id!r}; found {len(owners)}")
+        return f"{owners[0]}/clip:{clip_id}"
+
+    def _capture_numeric_move(self, clip: Clip, moment: Any) -> bool:
+        """Capture a supported numeric move before the ordinary checkout mutates it."""
+        if self._client is None or isinstance(moment, bool) or not isinstance(moment, (int, float)):
+            return False
+        if self._journal:
+            raise TimelineEditError("numeric clip move cannot be mixed with other draft edits")
+        if intent.cut_of(clip.data):
+            raise TimelineEditError("numeric clip move is held for clips with a cut")
+
+        from astrid.sdk.timeline.capture import capture_move, number
+        from astrid.sdk.timeline.sync import TimelineSession
+
+        on = number(moment, "on")
+        original = copy.deepcopy(self.bundle)
+        ref = self._native_clip_ref(clip)
+        try:
+            command = capture_move(original, ref, on)
+            session = TimelineSession.open(self.bundle["project_id"], self.bundle["timeline_id"],
+                                           client=self._client)
+            with session.outbox.locked():
+                state = session._state()
+                if state["base"]["revision_id"] != self.base_revision:
+                    raise TimelineEditError("numeric clip move draft base is no longer the published head")
+                if state["pending"] or state["flight"] is not None:
+                    raise TimelineEditError("numeric clip move cannot be mixed with pending timeline intent")
+            session.queue(command)
+        except TimelineEditError:
+            raise
+        except (KeyError, TypeError, ValueError) as exc:
+            raise TimelineEditError(f"numeric clip move is unsupported for {ref}: {exc}") from exc
+        return True
+
     # ---- open / save ------------------------------------------------------
     @classmethod
     def attach(cls, session):
@@ -81,7 +135,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         """Check out the current head (read-only until ``publish``)."""
         bundle = _store.fetch_bundle(project, timeline, revision_id=revision_id, client=client)
         intent.migrate(bundle)  # the fetched copy is ours; the published revision is never rewritten
-        return cls(bundle)
+        checkout = cls(bundle)
+        checkout._client = client
+        return checkout
 
     @staticmethod
     def _pin_initial_base(bundle: dict[str, Any]) -> None:
@@ -378,6 +434,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         path = _store.draft_path(project_id, timeline_id, name)
         if path.is_file() and not fresh:
             tl = cls.load(path)
+            tl._client = client
         else:
             fetched = _store.fetch_bundle(project, timeline, client=client)
             intent.migrate(fetched)  # checkout: legacy intent -> app.astrid in the working copy (its pinned base copies are migrated too, so the move is not an edit; the published revision is untouched)

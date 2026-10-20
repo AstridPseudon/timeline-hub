@@ -261,6 +261,11 @@ class Clip(_Suggest):
 
         Stored as written (seconds are only the cache), then resolved now. A plain number
         is a time: it becomes an offset from the clip's cut (or a fixed time without a cut)."""
+        if self._tl._capture_numeric_move(self, moment):
+            self._tl._place_on(self, moment)
+            self._tl.retime()
+            self._tl._native_move_preview = copy.deepcopy(self._tl.bundle)
+            return self
         self._tl._note_bare_word(moment, self)
         orphan_cut = intent.cut_of(self.data) if intent.orphan(self.data) and self.track == "plate" else None
         old_start = self.start
