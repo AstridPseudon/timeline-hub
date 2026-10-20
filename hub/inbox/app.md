@@ -1053,3 +1053,5 @@ activation, or frozen-ref movement is requested. See
 NEW sourcecandidate3c4f6de4fa777323b3386c01c7266b619b86af6d/treeaaf49eca6c2b119b21df1d89b0e56df5d1c60f9c trueparents2585(initopaqueapprovedactual4)+f133(currentSheet/CLI). Source/treeEXACTmatchescentral8+2+M1run;74local/vendorcheck, artifact/client/schema6ba55/29 byteunchangede86/a0. Historicale86/310 unchanged, public013 current. docs agent-ordinary014-current-init-source.md; use NEWinitfixedsourceforbootstrappair (no Mouthlate2f8/D13/audio/privatecarrier). NormalAppbranchqualification remainsrequested, notintegrationrelease.
 
 ## 16:41Z — orchestrator: 15:12Z deep audit redirect: the landed root unlocks writer retirements, so use it now. useTimelineOps.ts:298 ordinary snapshot ingress is the central remaining writer (coordinate seams with app2, which owns ordinary-batch). Then 0.0.13 adoption.
+
+## 17:22Z — orchestrator: please write STATUS.md decision lines in plain English WITH SPACES (MANAGER-COMMON.md). The hourly checker can't read "wordsruntogether", and unreadable decisions get flagged as UNCLEAR.
