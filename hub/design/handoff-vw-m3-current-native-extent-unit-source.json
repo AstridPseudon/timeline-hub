@@ -1,0 +1,59 @@
+{
+  "base_current_sha": "c456b3281497653cecf44f61acd6fa30565d83c8",
+  "approved_extent_sha": "61f1a420f1f355ee0d16ffb0dbeb617b83b1b044",
+  "root_test_sha": "20d4ab1aa9a1fb436634163e4606fc05b6e2318f",
+  "files": {
+    "astrid/core/rendering/service.py": {
+      "sha256": "930cb134e96d005816e8c2c3f690574c3c9f3097d5da216be43a8037b6c73dff",
+      "bytes": 97111
+    },
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": {
+      "sha256": "26e24b2cfc1bebc4da99fab0d813e4a09724c9fe530f8b38b40bc6c174e17ae7",
+      "bytes": 84529
+    },
+    "remotion/src/Root.tsx": {
+      "sha256": "321736875ffe7aec5b85a32f60be27af7663fd7a56544765584962e82e9f0407",
+      "bytes": 6832
+    },
+    "tests/packs/rendering/test_native_layer_extent.py": {
+      "sha256": "1498d7008bcc6534eeda639b5580c737c51853d1507aebb76dc54afcf4ae8ce2",
+      "bytes": 16940
+    },
+    "remotion/tests/root-metadata.test.cjs": {
+      "sha256": "181950efa7e91f646d57496b33897e4e40ec6723c695f6bb6d8ffe940443b6cc",
+      "bytes": 7532
+    }
+  },
+  "unchanged": {
+    "astrid/core/timeline/banodoco_composer.py": "c18ae06fc3ae7bd660dd3001a388b89a886e1680f6f6c14fa6182c2dd74c4461",
+    "astrid/core/timeline/duration.py": "cbdb18bffebc6c9d5a07a3d144fcbfa558ba6249fda5c2a8dd8016b87a3fd3db",
+    "astrid/packs/rendering/shared/rendering_backend.py": "absent in CURRENT and worktree",
+    "astrid/packs/rendering/rendering/renderers/remotion/normal_audio.py": "absent in CURRENT and worktree",
+    "astrid/packs/rendering/rendering/renderers/threejs/run.py": "99331d5fd0044a49f0bd285bbe807ae19fc33ede68c3baf32c83ff9f4ddddd01",
+    "tests/packs/rendering/test_live_scene_composition.py": "c7faa408865db4da111ec05b3c67cb3372bfcd2eadb53ec599f0715396c36210",
+    "tests/packs/rendering/test_remotion_capture_scene_props.py": "683d7e26aad313b5712ae26966f30f220c46d5122c2e33cf3d54dddd3a024f9d",
+    "remotion/package.json": "386eb4123f8f926c6f3a1c6ea9357fd2f3e4991291718e09771bab64d2f76510",
+    "remotion/package-lock.json": "390a29eed8c4c95e448807c522622fc7bc174e1daedd92d93d811ff7372708d7",
+    "remotion/normal-audio-sources.mjs": "absent in CURRENT and worktree",
+    "remotion/attempt-envelope-pcm.mjs": "absent in CURRENT and worktree"
+  },
+  "ast_changed_methods": {
+    "astrid/core/rendering/service.py": [
+      "_segment_request"
+    ],
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": [
+      "_composition_duration_from_request",
+      "_execute_remotion",
+      "_execute_remotion_locked",
+      "_native_window_argument",
+      "_protocol_render",
+      "support"
+    ]
+  },
+  "held_tail_test": {
+    "source_sha": "e2d926319718c396fe579236eb9c8de5fb00f19f",
+    "sha256": "f4bdead08a44791188e66b3e479941513689703da9480a20c6c8dc1815c9b792",
+    "not_ported": true,
+    "not_run_on_current": true
+  }
+}

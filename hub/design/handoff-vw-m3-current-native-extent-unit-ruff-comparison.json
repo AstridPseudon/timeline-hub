@@ -1,0 +1,13 @@
+{
+  "astrid/core/rendering/service.py": {
+    "baseline": 6,
+    "current": 6,
+    "same_codes_and_messages": true
+  },
+  "astrid/packs/rendering/rendering/renderers/remotion/run.py": {
+    "baseline": 7,
+    "current": 7,
+    "same_codes_and_messages": true
+  },
+  "new_test": "All checks passed!"
+}

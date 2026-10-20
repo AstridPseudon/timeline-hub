@@ -1,0 +1,52 @@
+diff --git a/astrid/core/rendering/remotion_runtime.py b/astrid/core/rendering/remotion_runtime.py
+index 15692aa57..7dc959ee4 100644
+--- a/astrid/core/rendering/remotion_runtime.py
++++ b/astrid/core/rendering/remotion_runtime.py
+@@ -45,7 +45,7 @@ _REQUIRED_PACKAGES = (
+     "timeline-composition",
+ )
+ _COMPOSITION_PACKAGE_NAME = "@banodoco/timeline-composition"
+-_COMPOSITION_PACKAGE_VERSION = "0.0.10"
++_COMPOSITION_PACKAGE_VERSION = "0.0.12"
+ _REQUIRED_COMPOSITION_EXPORTS = (
+     ".",
+     "./evaluation",
+diff --git a/remotion/package-lock.json b/remotion/package-lock.json
+index 862b83215..5d3c765da 100644
+--- a/remotion/package-lock.json
++++ b/remotion/package-lock.json
+@@ -7,7 +7,7 @@
+       "name": "tools-remotion",
+       "hasInstallScript": true,
+       "dependencies": {
+-        "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.10.tgz",
++        "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz",
+         "@react-three/fiber": "8.18.0",
+         "@remotion/cli": "4.0.509",
+         "@remotion/google-fonts": "4.0.509",
+@@ -421,9 +421,9 @@
+       }
+     },
+     "node_modules/@banodoco/timeline-composition": {
+-      "version": "0.0.10",
+-      "resolved": "file:artifacts/banodoco-timeline-composition-0.0.10.tgz",
+-      "integrity": "sha512-SmJAoem9f+86D+eO+PvBAz3JydlefpUUwcOOkG7SU9k2ZPKpjXLWKHm/N4424TO5HNQtCHMt5T6Jy2Y5zA6Ycg==",
++      "version": "0.0.12",
++      "resolved": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz",
++      "integrity": "sha512-490yQtC4k3cuBQJ4Aee5qEqOPNrlQrXPQkE0p6R8UDACAcT8amHe8EjCRI4vE+HtvXwUiy8zBjm7RcW7aTv9eA==",
+       "peerDependencies": {
+         "@remotion/layout-utils": "4.0.509",
+         "@remotion/media": "4.0.509",
+diff --git a/remotion/package.json b/remotion/package.json
+index d2fbca463..ce124300f 100644
+--- a/remotion/package.json
++++ b/remotion/package.json
+@@ -15,7 +15,7 @@
+     "postinstall": "node scripts/apply-renderer-darwin-cpu-patch.mjs"
+   },
+   "dependencies": {
+-    "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.10.tgz",
++    "@banodoco/timeline-composition": "file:artifacts/banodoco-timeline-composition-0.0.12.tgz",
+     "@react-three/fiber": "8.18.0",
+     "@remotion/cli": "4.0.509",
+     "@remotion/google-fonts": "4.0.509",
