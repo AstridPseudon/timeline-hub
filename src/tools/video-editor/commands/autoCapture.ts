@@ -88,7 +88,7 @@ function addMedia(ctx: MoveRecording, owner: string, row: Row, pin: MediaSelecti
   for (const id of consumed) {
     const ref = `${owner}/clip:${id}`;
     if (!members.includes(ref)) throw new ClipMoveError('consumed clip is absent', 'identity_conflict');
-    ctx.read(ref, []);
+    for (const field of ['at', 'at_ms', 'track', 'hold', 'from', 'to', 'speed']) ctx.read(ref, [field]);
   }
   const kind = verifiedInput(pin, verified);
   // This executor accepts exactly the rows emitted by the two native builders.

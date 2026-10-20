@@ -6,7 +6,7 @@
 import { expect, type Page } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, unlinkSync } from 'node:fs';
 import path from 'node:path';
 import { APP_ENTRY_ROUTE, commandOutboxes, openSeededTimeline, test as appTest, UI } from './support/app.ts';
 import { ASTRID_CHECKOUT, ASTRID_PYTHON } from './support/astrid.ts';
@@ -23,7 +23,9 @@ const test = appTest.extend<{ workspace: Workspace }>({
   workspace: [async ({ harness }, use) => {
     const seed = await harness.seedThreeProducts();
     await harness.enableTimelineAuthoring(ASTRID_PYTHON);
-    const vite = await startViteWorkspace(harness);
+    const composerCheckout = prepareComposerCheckout(harness);
+    await runImageHost(harness, 'register', composerCheckout);
+    const vite = await startViteWorkspace(harness, composerCheckout);
     try { await use({ harness, seed, vite }); } finally { await vite.stop(); }
   }, { scope: 'worker', timeout: 240_000 }],
 });
@@ -54,6 +56,25 @@ async function waitFor(url: string, ready: (response: Response) => boolean = (re
   }
 }
 
+async function reloadEditor(page: Page, url: string): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof Error) || !/ERR_ABORTED|frame was detached/.test(error.message)) throw error;
+      await waitFor(url);
+    }
+  }
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
+  } catch (error) {
+    throw new Error(`${lastError instanceof Error ? lastError.message : String(lastError)}; fallback navigation failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 function processEnv(harness: DirectHarness): NodeJS.ProcessEnv {
   return {
     ...process.env,
@@ -65,7 +86,15 @@ function processEnv(harness: DirectHarness): NodeJS.ProcessEnv {
   };
 }
 
-async function startViteWorkspace(harness: DirectHarness): Promise<ViteWorkspace> {
+function prepareComposerCheckout(harness: DirectHarness): string {
+  const checkout = path.join(harness.tmp, 'agent-compose-checkout');
+  execFileSync('cp', ['-al', ASTRID_CHECKOUT, checkout], { stdio: 'ignore' });
+  unlinkSync(path.join(checkout, 'astrid', 'packs', 'generation', 'pack.yaml'));
+  unlinkSync(path.join(checkout, 'config', 'astrid-beta-capabilities.json'));
+  return checkout;
+}
+
+async function startViteWorkspace(harness: DirectHarness, composerCheckout: string): Promise<ViteWorkspace> {
   const proxyPort = await freePort();
   const vitePort = await freePort();
   const origin = `http://127.0.0.1:${vitePort}`;
@@ -81,8 +110,9 @@ async function startViteWorkspace(harness: DirectHarness): Promise<ViteWorkspace
     cwd: process.cwd(), env: {
       ...baseEnv,
       PORT: String(vitePort),
-      ASTRID_CHECKOUT,
+      ASTRID_CHECKOUT: composerCheckout,
       ASTRID_PYTHON,
+      PYTHONPATH: [composerCheckout, RUNTIME_CHECKOUT].join(path.delimiter),
       VITE_ASTRID_BRIDGE_PORT: String(proxyPort),
       ASTRID_BRIDGE_TOKEN: harness.productToken,
       ASTRID_RUNTIME_OPERATION_ORIGIN: origin,
@@ -121,21 +151,26 @@ const IMAGE_HOST_PROGRAM = String.raw`
 import base64, hashlib, json, os, sys
 from pathlib import Path
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
+from astrid.core.pack.loader import _load_manifest_payload
 from astrid.sdk.workspace_client import resolve_runtime_connection
+import yaml
 pack_root = Path(sys.argv[1]).resolve()
-pack = pack_root / 'auto-real-image'
+pack = pack_root / 'generation'
 pack.mkdir(parents=True, exist_ok=True)
 program = "import base64,hashlib,json; from pathlib import Path; out=Path('{out}'); data=base64.b64decode('${PNG}'); image=out/'generated.png'; image.write_bytes(data); (out/'manifest.json').write_text(json.dumps({'outputs':[{'name':'generated_images','path':'generated.png','artifact_type':'image/png','ordinal':0,'role':'result','is_primary':True,'bytes':len(data),'content_hash':'sha256:'+hashlib.sha256(data).hexdigest()}]}))"
-(pack / 'executor.yaml').write_text(json.dumps({
-    'schema_version': 1, 'id': 'generation.generate_image', 'name': 'M2 real image', 'kind': 'external', 'version': '1.0',
-    'command': {'argv': ['{python_exec}', '-c', program]},
-    'outputs': [
-        {'name': 'generated_images', 'type': 'file', 'path_template': '{out}/generated.png', 'artifact_type': 'image/png'},
-    ],
-    'metadata': {'adapter_family': 'cpu', 'resource_keys': ['cpu'], 'estimated_scratch_bytes': 1048576,
-                 'estimated_output_bytes': 1048576, 'output_result_manifest': True,
-                 'generation_publication': {'version': 1, 'modality': 'image', 'output_port': 'generated_images'}},
-}))
+source_manifest = Path(os.environ['ASTRID_SOURCE_CHECKOUT']) / 'astrid' / 'packs' / 'generation' / 'pack.yaml'
+source_pack = _load_manifest_payload(source_manifest)
+action = json.loads(json.dumps(source_pack['actions']['generate_image']))
+action.pop('resources', None)
+action['metadata'].update({'adapter_family': 'cpu', 'resource_keys': ['cpu']})
+for key in ('api_provider', 'env', 'secrets_required', 'network_policy'):
+    action['metadata'].pop(key, None)
+action['isolation']['network'] = False
+action['invocation'] = {'kind': 'command', 'command': {'argv': ['{python_exec}', '-c', program]}}
+(pack / 'pack.yaml').write_text(yaml.safe_dump({
+    'schema_version': 3, 'id': 'generation', 'name': 'Astrid Generation Test',
+    'version': source_pack['version'], 'actions': {'generate_image': action},
+}, sort_keys=False))
 endpoint, token = resolve_runtime_connection(os.environ['ASTRID_TIMELINE_EVAL_ENDPOINT'], Path(sys.argv[2]))
 runner = GenericPackHost(pack_roots=[pack_root], client=RuntimeProtocolClient(endpoint, token), executor_id=sys.argv[3], attempt_root=pack_root.with_name(pack_root.name + '-attempts'))
 runner.discover(); runner.register(deliberate=True)
@@ -146,10 +181,16 @@ else:
     print(json.dumps({'state': 'registered', 'capability_id': 'generation.generate_image'}))
 `;
 
-async function runImageHost(harness: DirectHarness, mode: 'register' | 'run'): Promise<{ state: string; outputs?: Array<{ object_id: string; name: string }> }> {
+async function runImageHost(harness: DirectHarness, mode: 'register' | 'run', composerCheckout: string): Promise<{ state: string; outputs?: Array<{ object_id: string; name: string }> }> {
   const discovery = harness.discovery();
-  const packRoot = path.join(harness.tmp, 'auto-real-image-packs');
-  const env = { ...processEnv(harness), ASTRID_TIMELINE_EVAL_ENDPOINT: discovery.endpoint };
+  const packRoot = path.join(composerCheckout, 'astrid', 'packs');
+  const env = {
+    ...processEnv(harness),
+    ASTRID_CHECKOUT: composerCheckout,
+    ASTRID_SOURCE_CHECKOUT: ASTRID_CHECKOUT,
+    PYTHONPATH: [composerCheckout, RUNTIME_CHECKOUT].join(path.delimiter),
+    ASTRID_TIMELINE_EVAL_ENDPOINT: discovery.endpoint,
+  };
   const child = spawnGroup(ASTRID_PYTHON, ['-c', IMAGE_HOST_PROGRAM, packRoot, discovery.worker_credential_file, discovery.worker_actor, mode], { cwd: harness.tmp, env });
   const code = await child.exited; await child.closed;
   if (code !== 0) throw new Error(`image host failed (${code}): ${child.stderr.slice(-3000)}`);
@@ -157,14 +198,17 @@ async function runImageHost(harness: DirectHarness, mode: 'register' | 'run'): P
 }
 
 async function canonicalImage(harness: DirectHarness, seed: ThreeProductsSeed, objectId: string): Promise<void> {
-  const list = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions?limit=1`);
-  const revision = list.body.items.find((item: any) => item.is_current_head)?.revision_id;
-  const parent = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${revision}`)).body.payload;
-  const occurrence = parent.occurrences.find((item: any) => item.occurrence_id === seed.occurrenceId);
-  const shot = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/shots/${seed.shotId}/revisions/${occurrence.shot_revision_id}`)).body;
-  const inner = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/revisions/${shot.internal_timeline_revision_id}`)).body.payload;
-  const clip = inner.clips.find((item: any) => inner.registry.assets[item.asset]?.media_id === objectId && item.clipType === 'image');
-  expect(clip, 'accepted canonical occurrence image').toMatchObject({ track: PLACEMENT_LANE, hold: 5, clipType: 'image' });
+  await expect.poll(async () => {
+    const list = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions?limit=1`);
+    const revision = list.body.items.find((item: any) => item.is_current_head)?.revision_id;
+    if (!revision) return undefined;
+    const parent = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${revision}`)).body.payload;
+    const occurrence = parent.occurrences.find((item: any) => item.occurrence_id === seed.occurrenceId);
+    if (!occurrence) return undefined;
+    const shot = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/shots/${seed.shotId}/revisions/${occurrence.shot_revision_id}`)).body;
+    const inner = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/revisions/${shot.internal_timeline_revision_id}`)).body.payload;
+    return inner.clips.find((item: any) => inner.registry.assets[item.asset]?.media_id === objectId && item.clipType === 'image');
+  }, CEILING).toMatchObject({ track: PLACEMENT_LANE, hold: 5, clipType: 'image' });
 }
 
 async function clickRecovery(page: Page, ownerId: string): Promise<void> {
@@ -204,6 +248,7 @@ async function expectConnectedWithDiagnostics(page: Page, diagnostics: string[])
 
 test('real operation proxy automatic image placement survives reconnect, lost ACK retry, reload and guarded undo', async ({ page, workspace }) => {
   const { harness, seed, vite } = workspace;
+  const composerCheckout = path.join(harness.tmp, 'agent-compose-checkout');
   const legacy: string[] = [];
   const operation: string[] = [];
   const requests: string[] = [];
@@ -225,7 +270,6 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
     if (request.method() === 'POST' && LEGACY_POST.test(url.pathname)) legacy.push(url.pathname);
   });
 
-  await runImageHost(harness, 'register');
   await page.goto(`${vite.origin}${APP_ENTRY_ROUTE}`);
   await expectConnectedWithDiagnostics(page, diagnostics);
   await openSeededTimeline(page, harness);
@@ -242,7 +286,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await chooseTextGeneration(page);
   await page.locator('label').filter({ hasText: 'Raw occurrence reference' }).locator('input').fill(`occurrence:${seed.occurrenceId}`);
   await page.locator('label').filter({ hasText: 'Raw lane ID' }).locator('input').fill(PLACEMENT_LANE);
-  await page.locator('label').filter({ hasText: 'Raw anchor clip ID' }).locator('input').fill('');
+  await page.locator('label').filter({ hasText: 'Raw anchor clip ID' }).locator('input').fill(seed.agentClipId);
   await page.getByRole('radio', { name: /Managed/ }).click();
   const promptSummary = page.getByText(/Click to add prompts|currently active/).first();
   await expect(promptSummary).toBeVisible(CEILING);
@@ -256,6 +300,14 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await page.route(`**${TASK_PATH}`, async (route) => {
     taskPost = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '' };
     reserved = await commandOutboxes(page, seed.timelineId);
+    if (!reserved.some((item) => item.placementContinuations?.length)) {
+      // Keep the admission request paused: the continuation must become
+      // observable before Runtime receives the task body.
+      await expect.poll(async () => {
+        reserved = await commandOutboxes(page, seed.timelineId);
+        return reserved.some((item) => item.placementContinuations?.length);
+      }, CEILING).toBe(true);
+    }
     await route.continue();
   });
   await page.getByRole('button', { name: 'Generate 1 New Image', exact: true }).click();
@@ -271,11 +323,12 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
     ].join('\n'));
   }
   const owner = (reserved ?? []).find((item) => item.placementContinuations?.length);
-  expect(owner?.placementContinuations?.[0].input).toMatchObject({ ownerRef: `occurrence:${seed.occurrenceId}`, lane: PLACEMENT_LANE, anchor: null });
+  if (!owner) throw new Error(`placement reservation missing before task admission: ${JSON.stringify(reserved)}`);
+  expect(owner?.placementContinuations?.[0].input).toMatchObject({ ownerRef: `occurrence:${seed.occurrenceId}`, lane: PLACEMENT_LANE, anchor: seed.agentClipId });
   expect(owner?.placementContinuations?.[0].input.request).toEqual({ method: 'POST', path: '/v1/tasks', body: taskPost!.body, key: taskPost!.key });
   expect(owner?.placementContinuations?.[0].input.readClosure).toEqual(expect.objectContaining({ head: expect.anything(), savedCanonicalDocument: expect.anything() }));
 
-  const admitted = await runImageHost(harness, 'run');
+  const admitted = await runImageHost(harness, 'run', composerCheckout);
   expect(admitted.state).toBe('succeeded');
   const objectId = admitted.outputs?.find((item) => item.name === 'generated_images')?.object_id;
   expect(objectId).toMatch(/^sha256:/);
@@ -283,12 +336,23 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   // The operation handle is pinned to the old Runtime. Restart both Runtime and Vite, keeping the browser origin and IndexedDB.
   await harness.restartRuntime();
   await vite.restart();
-  await page.reload();
+  await waitFor(`${vite.origin}${APP_ENTRY_ROUTE}`);
+  await reloadEditor(page, `${vite.origin}${APP_ENTRY_ROUTE}`);
   await expectConnectedWithDiagnostics(page, diagnostics);
   await openSeededTimeline(page, harness);
   const retained = (await commandOutboxes(page, seed.timelineId)).find((item) => item.placementContinuations?.length);
   expect(retained).toBeTruthy();
-  await runImageHost(harness, 'run');
+  await runImageHost(harness, 'run', composerCheckout);
+  const taskId = retained!.placementContinuations?.[0].taskLocator?.taskId;
+  expect(taskId).toBeTruthy();
+  await expect.poll(
+    async () => (await harness.runtimeJson<any>('GET', `/v1/tasks/${taskId}`)).body.state,
+    CEILING,
+  ).toBe('succeeded');
+  await expect.poll(
+    async () => (await harness.runtimeJson<any>('GET', `/v1/tasks/${taskId}/managed-outputs?limit=50`)).body.items?.length ?? 0,
+    CEILING,
+  ).toBeGreaterThan(0);
 
   let lost: Wire | undefined;
   await page.route(COMMIT_PATH, async (route) => {
@@ -303,9 +367,15 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
 
   await harness.restartRuntime();
   await vite.restart();
-  await page.reload();
+  await waitFor(`${vite.origin}${APP_ENTRY_ROUTE}`);
+  const operationAfterRestart = operation.length;
+  await reloadEditor(page, `${vite.origin}${APP_ENTRY_ROUTE}`);
   await expectConnectedWithDiagnostics(page, diagnostics);
   await openSeededTimeline(page, harness);
+  await expect.poll(() => operation.slice(operationAfterRestart).some((entry) => entry.endsWith('/realm')), CEILING).toBe(true);
+  const responsesAfterOpen = responses.length;
+  await expect.poll(() => responses.length, CEILING).toBeGreaterThan(responsesAfterOpen);
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   const recovered = (await commandOutboxes(page, seed.timelineId)).find((item) => item.ownerId === retained!.ownerId)!;
   let retry: Wire | undefined;
   await page.unroute(COMMIT_PATH);
@@ -321,7 +391,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await canonicalImage(harness, seed, objectId!);
 
   await page.unroute(COMMIT_PATH);
-  await page.reload();
+  await reloadEditor(page, `${vite.origin}${APP_ENTRY_ROUTE}`);
   await expectConnectedWithDiagnostics(page, diagnostics);
   await openSeededTimeline(page, harness);
   await canonicalImage(harness, seed, objectId!);
