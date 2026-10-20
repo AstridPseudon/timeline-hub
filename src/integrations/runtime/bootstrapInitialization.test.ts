@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import type { MutationReceipt, MutationResult } from './generated.ts';
-import type { CanonicalDocument, CommitRequest, JSON } from './timeline-commit-types.ts';
+import type { CanonicalDocument, CommandRecord, CommitRequest, HistoryPage, JSON } from './timeline-commit-types.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '@/tools/video-editor/data/DataProvider.ts';
 import { createCommitOutbox, type ClaimedOutbox } from '@/tools/video-editor/commands/commitOutbox.ts';
 import fixture from '@/tools/video-editor/commands/fixtures/recipe_m2_app_bootstrap.json';
@@ -35,6 +35,8 @@ function environment() {
   const factory = createFakeIndexedDB();
   const open = () => createCommitOutbox({ indexedDB: factory, exclusiveLock: async (_name, work) => work() });
   let basis = initialBasis();
+  let history = basis.history!;
+  const revisions = new Map([[h0.revisionId, document()]]);
   const created = { project_id: scope.projectId, timeline_id: scope.timelineId, archived: false,
     head_revision_id: h0.revisionId, head_publication_id: h0.publicationId };
   const createResult = () => Object.defineProperty({ ...created }, 'receipt', {
@@ -50,13 +52,217 @@ function environment() {
     response.data.document_digest = fixtureDigest(canonicalDocument);
     response.receipt.idempotency_key = commitKey;
     basis = { head: { revisionId: 'initialized', publicationId: 'init-p1' }, canonicalDocument };
+    history = { head: { revision_id: basis.head.revisionId, publication_id: basis.head.publicationId }, next_cursor: null,
+      items: [{ publication_id: basis.head.publicationId, revision_id: basis.head.revisionId,
+        previous: { revision_id: h0.revisionId, publication_id: h0.publicationId }, receipt: structuredClone(response.receipt), intent: 'recorded',
+        records: { schema_version: 1, commands: structuredClone(fixture.records) as CommandRecord[], undo_of: [], restored_from: null },
+        provider_version: response.data.provider_version, compiler_version: response.data.compiler_version, publisher: response.data.publisher },
+      initialBasis().history!.items[0]] };
+    revisions.set(canonicalDocument.parent_revision.revision_id, structuredClone(canonicalDocument));
     return { response, accepted: basis.head, canonicalDocument, graph: {}, receipt: response.receipt };
   });
-  return { open, ports: { createTimeline, loadLatest, commitTimeline }, createResult,
+  const listTimelineCommits = vi.fn(async (_project: string, _timeline: string, _cursor?: string): Promise<HistoryPage> => structuredClone(history));
+  const getProjectParentCompositionRevision = vi.fn(async (_project: string, _timeline: string, revision: string) => {
+    const saved = revisions.get(revision)!;
+    return { project_id: saved.project_id, timeline_id: saved.timeline_id, ...structuredClone(saved.parent_revision),
+      dependency_manifest: structuredClone(saved.dependency_manifest) };
+  });
+  return { open, ports: { createTimeline, loadLatest, commitTimeline, listTimelineCommits, getProjectParentCompositionRevision }, createResult,
     setBasis: (next: TimelineCommandBasis) => { basis = next; } };
 }
 
+// Synthetic local adapter/storage inputs and mocked authority reads, not Runtime admission.
+async function localInitAcceptance(env: ReturnType<typeof environment>,
+  value: (result: TimelineCommitResult) => unknown = (result) => ({ kind: 'timeline-initialized', result }),
+  changeRequest: (body: CommitRequest) => void = () => {}) {
+  let owner = '';
+  await env.open().create(scope, async (box, id) => {
+    owner = id;
+    await box.append({ kind: 'timeline-init', commands: fixture.commands as JSON }, { head: h0 });
+    await box.dispatch(() => {
+      const body: CommitRequest = { api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+        base_revision_id: h0.revisionId, base_publication_id: h0.publicationId,
+        commands: structuredClone(fixture.commands) as CommitRequest['commands'], source: { via: 'app' } };
+      changeRequest(body);
+      return { method: 'POST', path: '/v1/projects/project-1/timelines/main/commit', body: body as unknown as JSON };
+    }, async (request) => {
+      const result = await env.ports.commitTimeline(JSON.parse(request.body) as CommitRequest, request.key);
+      return { kind: 'accepted', head: structuredClone(result.accepted), value: JSON.parse(JSON.stringify(value(result))) as JSON };
+    });
+  });
+  env.ports.loadLatest.mockClear();
+  return owner;
+}
+
 describe('source-only create then native initialization', () => {
+  it('refuses marker-only completion after reopening, keeping the owner at pristine H0', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      await box.append({ unrelated: true }, { head: h0 });
+      await box.dispatch(() => ({ method: 'POST', path: '/v1/projects/project-1/timelines/main/commit', body: {} }),
+        async () => ({ kind: 'accepted', head: h0, value: { kind: 'timeline-initialized' } }));
+    });
+    const before = (await env.open().list(scope))[0];
+    await env.open().recover(scope, owner, async (box) => {
+      await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow();
+      expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
+    });
+    expect(await env.open().list(scope)).toHaveLength(1);
+    expect(env.ports.createTimeline).not.toHaveBeenCalled();
+    expect(env.ports.commitTimeline).not.toHaveBeenCalled();
+  });
+
+  it.each(['missing-result', 'project', 'timeline', 'base-revision', 'base-publication', 'commands', 'head', 'publication',
+    'receipt-key', 'receipt-kind', 'receipt-result', 'detached-document', 'detached-receipt', 'preview'])(
+    'refuses a reopened local init with %s and retains the complete owner', async (fault) => {
+      const env = environment();
+      const owner = await localInitAcceptance(env, (result) => {
+        if (fault === 'missing-result') return { kind: 'timeline-initialized' };
+        if (fault === 'project') result.canonicalDocument.project_id = 'other-project';
+        if (fault === 'timeline') result.canonicalDocument.timeline_id = 'other-timeline';
+        if (fault === 'base-revision') result.response.data.base_revision_id = 'other-revision';
+        if (fault === 'base-publication') result.response.data.base_publication_id = 'other-publication';
+        if (fault === 'commands') result.response.data.commands[0].args.name = 'changed';
+        if (fault === 'head') result.accepted.revisionId = 'other-revision';
+        if (fault === 'publication') result.accepted.publicationId = 'other-publication';
+        if (fault === 'receipt-key') result.receipt.idempotency_key = 'other-key';
+        if (fault === 'receipt-kind') result.receipt.command_kind = 'timeline.create';
+        if (fault === 'receipt-result') result.receipt.result = {};
+        if (fault === 'detached-document') result.canonicalDocument = document();
+        if (fault === 'detached-receipt') result.receipt = { ...result.receipt, receipt_id: 'other-receipt' };
+        if (fault === 'preview') Object.assign(result.response.data, { status: 'preview' });
+        return { kind: 'timeline-initialized', result };
+      });
+      const before = (await env.open().list(scope))[0];
+      await env.open().recover(scope, owner, async (box) => {
+        await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('receipt does not match');
+        expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
+      });
+      expect(env.ports.listTimelineCommits).not.toHaveBeenCalled();
+      expect(env.ports.loadLatest).not.toHaveBeenCalled();
+      expect(env.ports.commitTimeline).toHaveBeenCalledTimes(1);
+    });
+
+  it.each(['commands', 'project', 'timeline', 'base', 'preview'])(
+    'refuses saved original request %s mismatch independently of its matching saved result', async (fault) => {
+      const env = environment();
+      const owner = await localInitAcceptance(env, undefined, (body) => {
+        if (fault === 'commands') body.commands[0].args.name = 'other-name';
+        if (fault === 'project') body.project_id = 'other-project';
+        if (fault === 'timeline') body.timeline_id = 'other-timeline';
+        if (fault === 'base') body.base_publication_id = 'other-base';
+        if (fault === 'preview') body.dry_run = true;
+      });
+      const before = (await env.open().list(scope))[0];
+      await env.open().recover(scope, owner, async (box) => {
+        await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('original request/commands');
+        expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
+      });
+      expect(env.ports.loadLatest).not.toHaveBeenCalled();
+    });
+
+  it.each(['missing', 'publication', 'revision', 'previous', 'receipt', 'scope', 'commands', 'provider', 'compiler', 'publisher', 'intent'])(
+    'requires the exact historical init publication: %s mismatch keeps the owner', async (fault) => {
+      const env = environment();
+      const owner = await localInitAcceptance(env);
+      const page = await env.ports.listTimelineCommits(scope.projectId, scope.timelineId);
+      const entry = page.items[0];
+      if (fault === 'missing') page.items.shift();
+      if (fault === 'publication') entry.publication_id = 'same-revision-other-publication';
+      if (fault === 'revision') entry.revision_id = 'other-revision';
+      if (fault === 'previous') entry.previous!.publication_id = 'other-previous';
+      if (fault === 'receipt') entry.receipt.idempotency_key = 'other-key';
+      if (fault === 'scope') entry.receipt.project_id = 'other-project';
+      if (fault === 'commands') entry.records!.commands[0].command.args.name = 'other-name';
+      if (fault === 'provider') entry.provider_version = 'other-provider';
+      if (fault === 'compiler') entry.compiler_version = 'other-compiler';
+      if (fault === 'publisher') entry.publisher = 'other-publisher';
+      if (fault === 'intent') entry.intent = 'bootstrap';
+      env.ports.listTimelineCommits.mockResolvedValue(page);
+      const before = (await env.open().list(scope))[0];
+      await env.open().recover(scope, owner, async (box) => {
+        await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('historical publication');
+        expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
+      });
+      expect(env.ports.getProjectParentCompositionRevision).not.toHaveBeenCalled();
+      expect(env.ports.loadLatest).not.toHaveBeenCalled();
+    });
+
+  it.each(['project', 'timeline', 'revision', 'digest', 'payload', 'manifest'])(
+    'requires the historical immutable closure: %s mismatch keeps the owner', async (fault) => {
+      const env = environment();
+      const owner = await localInitAcceptance(env);
+      const parent = await env.ports.getProjectParentCompositionRevision(scope.projectId, scope.timelineId, 'initialized');
+      if (fault === 'project') parent.project_id = 'other-project';
+      if (fault === 'timeline') parent.timeline_id = 'other-timeline';
+      if (fault === 'revision') parent.revision_id = 'other-revision';
+      if (fault === 'digest') parent.content_digest = fixtureDigest('other');
+      if (fault === 'payload') parent.payload.name = 'other-name';
+      if (fault === 'manifest') parent.dependency_manifest.media.push({ media_id: 'media', content_digest: 'digest' });
+      env.ports.getProjectParentCompositionRevision.mockResolvedValue(parent);
+      const before = (await env.open().list(scope))[0];
+      await env.open().recover(scope, owner, async (box) => {
+        await expect(resumeBootstrapInitialization(box, env.ports)).rejects.toThrow('immutable closure');
+        expect(await box.read()).toEqual({ ...before, generation: before.generation + 1 });
+      });
+      expect(env.ports.loadLatest).not.toHaveBeenCalled();
+    });
+
+  it.each(['edit', 'undo', 'equal-byte-restore'])(
+    'proves historical init through pagination after %s, then displays today after later owner ACKs', async (laterKind) => {
+      const env = environment();
+      // The tag is a dispatch hint; authoritative matching data also works without it.
+      const owner = await localInitAcceptance(env, (result) => ({ result }));
+      const init = (await env.open().list(scope))[0].initialization!;
+      const head = { revisionId: laterKind === 'equal-byte-restore' ? 'initialized' : `${laterKind}-r3`, publicationId: `${laterKind}-p3` };
+      const parent = laterKind === 'undo' ? fixture.bundle.parent : fixture.after_bundle.parent;
+      const later = { head, canonicalDocument: document(parent as typeof fixture.bundle.parent, head.revisionId) };
+      if (laterKind === 'edit') {
+        const config = later.canonicalDocument.parent_revision.payload.config as { tracks: Array<{ label: string }> };
+        config.tracks[0].label = 'Later label';
+        later.canonicalDocument.parent_revision.content_digest = fixtureDigest(later.canonicalDocument.parent_revision.payload);
+      }
+      env.setBasis(later);
+      const history = await env.ports.listTimelineCommits(scope.projectId, scope.timelineId);
+      history.head = { revision_id: head.revisionId, publication_id: head.publicationId };
+      const command: CommitRequest['commands'][number] = laterKind === 'undo'
+        ? { schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: ['init-p1'] } }
+        : laterKind === 'equal-byte-restore'
+          ? { schema_version: 1, op: 'timeline.restore', version: '1', select: null,
+            args: { revision_id: 'initialized', content_digest: later.canonicalDocument.parent_revision.content_digest } }
+          : { schema_version: 1, op: 'track.set', version: '1', select: 'parent/track:V1', args: { values: { label: 'Later label' }, clear: [] } };
+      const laterResponse = acceptedCommit(history.head, { revision_id: init.head.revisionId, publication_id: init.head.publicationId },
+        { projectId: scope.projectId, timelineId: scope.timelineId, commands: [command] });
+      laterResponse.data.canonical_document = later.canonicalDocument;
+      laterResponse.data.document_digest = fixtureDigest(later.canonicalDocument);
+      const laterEntry = { ...history.items[0], publication_id: head.publicationId, revision_id: head.revisionId,
+        previous: { revision_id: init.head.revisionId, publication_id: init.head.publicationId }, receipt: laterResponse.receipt,
+        records: { schema_version: 1 as const, commands: [{ ordinal: 0, command, writes: [], reads: [], selections: [], bindings: [],
+          created: [], dependencies: [], derived_writes: [] }], undo_of: laterKind === 'undo' ? ['init-p1'] : [], restored_from: null } };
+      env.ports.listTimelineCommits.mockImplementation(async (_project, _timeline, cursor) => cursor
+        ? history : { head: history.head, items: [laterEntry], next_cursor: 'older-page' });
+      await env.open().recover(scope, owner, async (box) => {
+        await box.append({ kind: 'later-edit' }, { after: init.intent.id });
+        await box.dispatch(() => ({ method: 'POST', path: '/v1/projects/project-1/timelines/main/commit', body: {} }),
+          async () => ({ kind: 'accepted', head, value: { later: laterKind } }));
+        expect((await box.read()).accepted?.value).toEqual({ later: laterKind });
+        expect((await box.read()).initialization).toEqual(init);
+      });
+      env.ports.listTimelineCommits.mockClear();
+      await env.open().recover(scope, owner, async (box) => {
+        expect(await resumeBootstrapInitialization(box, env.ports)).toEqual(later);
+        expect((await box.read()).initialization).toEqual(init);
+      });
+      expect(env.ports.listTimelineCommits.mock.calls).toEqual([
+        [scope.projectId, scope.timelineId, undefined], [scope.projectId, scope.timelineId, 'older-page'],
+      ]);
+      expect(env.ports.getProjectParentCompositionRevision).toHaveBeenCalledWith(scope.projectId, scope.timelineId, 'initialized');
+      expect(env.ports.commitTimeline).toHaveBeenCalledTimes(1);
+      expect(env.ports.createTimeline).not.toHaveBeenCalled();
+    });
+
   it('reserves identity/defaults before POST, captures sequentially at H0, then reloads the initialized basis', async () => {
     const env = environment();
     await env.open().create(scope, async (box) => {

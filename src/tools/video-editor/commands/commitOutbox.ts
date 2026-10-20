@@ -45,6 +45,8 @@ export interface OutboxRecord {
   // Only the last acknowledged prefix, also usable by a late dependent append.
   accepted?: { intentId: string; head: OutboxHead; value: OutboxJson;
     creation?: { payload: OutboxJson; request: OutboxRequest } };
+  // Keep the original init link when later acknowledgements replace accepted.
+  initialization?: { intent: OutboxIntent; request: OutboxRequest; head: OutboxHead; value: OutboxJson };
 }
 
 export type OutboxExclusiveLock = <T>(name: string, work: () => Promise<T>) => Promise<T>;
@@ -307,6 +309,10 @@ export function createCommitOutbox(options: {
                 const intent = record.intents[0];
                 record.accepted = { intentId: pending.intentId, head: outcome.head, value: outcome.value,
                   ...('create' in intent.basis ? { creation: { payload: intent.payload, request: pending.request } } : {}) };
+                if (intent.payload !== null && typeof intent.payload === 'object' && !Array.isArray(intent.payload)
+                  && intent.payload.kind === 'timeline-init' && !record.initialization) {
+                  record.initialization = { intent, request: pending.request, head: outcome.head, value: outcome.value };
+                }
                 record.intents.shift();
                 delete record.pending;
                 const next = record.intents[0];

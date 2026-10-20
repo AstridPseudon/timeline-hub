@@ -89,6 +89,78 @@ function environment() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('durable command outbox', () => {
+  it('checkpoints the original init atomically and keeps it after later edits, inverse ACKs and reopen', async () => {
+    const env = environment();
+    let owner = '';
+    let initialization: Awaited<ReturnType<ClaimedOutbox['read']>>['initialization'];
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      const init = await box.append({ kind: 'timeline-init', commands: ['original-guards'] }, { head: h0 });
+      const dependent = await box.append(move(7), { after: init });
+      let original!: OutboxRequest;
+      await expect(box.dispatch(build, async (request) => {
+        original = request;
+        env.fault.abortNextWrite = true;
+        return accepted();
+      })).rejects.toThrow('aborted');
+      const before = await box.read();
+      expect(before.initialization).toBeUndefined();
+      expect(before.pending!.request).toEqual(original);
+      expect(before.intents.map((intent) => intent.id)).toEqual([init, dependent]);
+      const after = await box.dispatch(() => { throw new Error('Must retry exact init'); }, async (request) => {
+        expect(request).toEqual(original);
+        return accepted();
+      });
+      initialization = structuredClone(after.initialization);
+      expect(initialization).toEqual({ intent: before.intents[0], request: original, head: ha, value: accepted().value });
+      expect(after.intents[0].readyBase).toEqual(ha);
+      after.initialization!.request.key = 'detached-mutation';
+      await box.dispatch(build, async () => accepted({ revisionId: 'RB', publicationId: 'PB' }));
+      expect((await box.read()).initialization).toEqual(initialization);
+      await box.append({ commands: ['timeline.inverse'] }, { after: dependent });
+      await box.dispatch(build, async () => accepted({ revisionId: h0.revisionId, publicationId: 'inverse-p3' }));
+      expect((await box.read()).accepted?.head).toEqual({ revisionId: h0.revisionId, publicationId: 'inverse-p3' });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      expect((await box.read()).initialization).toEqual(initialization);
+      expect((await box.read()).intents).toEqual([]);
+    });
+  });
+
+  it('preserves existing render and placement continuation JSON during init and later ACKs', async () => {
+    const env = environment();
+    let owner = '';
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      await box.append({ kind: 'timeline-init' }, { head: h0 });
+    });
+    const continuations = {
+      renderContinuations: [{ intent: { opaque: [null, 'render'] }, accepted: { intentId: 'older', head: h0, value: {} } }],
+      placementContinuations: [{ id: 'placement', input: { opaque: [null, 'placement'] },
+        placement: { intentId: 'cancelled-placement', cancelled: true } }],
+    };
+    // Older/future owner fields are opaque to this bounded storage branch.
+    await new Promise<void>((resolve) => {
+      const request = env.factory.open('astrid.command-outbox', 1);
+      request.addEventListener('success', () => {
+        const db = request.result;
+        const records = db.recordsByStore.get('owners');
+        for (const [key, record] of records) records.set(key, { ...record, ...structuredClone(continuations) });
+        db.close();
+        resolve();
+      });
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      const init = await box.dispatch(build, async () => accepted());
+      expect(init).toMatchObject(continuations);
+      const link = init.initialization;
+      await box.append(move(9), { after: init.accepted!.intentId });
+      const later = await box.dispatch(build, async () => accepted({ revisionId: 'later', publicationId: 'later-p' }));
+      expect(later).toMatchObject(continuations);
+      expect(later.initialization).toEqual(link);
+    });
+  });
+
   const createRequest: OutboxRequest = { method: 'POST', path: '/v1/projects/project/timelines',
     body: '{"timeline_id":"timeline","name":"Main"}', key: 'astrid-first-timeline-project' };
 
