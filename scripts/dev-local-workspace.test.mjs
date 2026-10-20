@@ -14,6 +14,7 @@ import {
   validatePreviewOutputDirectory,
   viteChildArgs,
   resolveWorkspaceDiscoveryPath,
+  resolveRuntimeDataRoot,
   resolveRuntimeCommand,
   loadLocalRuntimeEnvironment,
   LOCAL_RUNTIME_ENV_KEYS,
@@ -44,8 +45,30 @@ test('local launcher settings persist without importing app secrets or overridin
 });
 
 test('launcher shell snippets quote command paths containing spaces', () => {
-  assert.equal(shellQuote('/installed/Astrid App/start'), "'/installed/Astrid App/start'");
-  assert.equal(shellQuote('npm-run_dev:local'), 'npm-run_dev:local');
+  assert.equal(shellQuote('/installed/Astrid App/start', 'linux'), "'/installed/Astrid App/start'");
+  assert.equal(shellQuote('npm-run_dev:local', 'linux'), 'npm-run_dev:local');
+  assert.equal(shellQuote("C:\\Users\\Ada's App\\start.cmd", 'win32'), "'C:\\Users\\Ada''s App\\start.cmd'");
+});
+
+test('Runtime Python and data roots follow the selected platform', () => {
+  const windowsPython = 'C:\\Users\\Ada Lovelace\\Astrid Runtime';
+  assert.deepEqual(resolveRuntimeCommand({
+    runtimeCheckout: windowsPython,
+    platform: 'win32',
+    exists: (path) => path === 'C:\\Users\\Ada Lovelace\\Astrid Runtime\\.venv\\Scripts\\python.exe',
+  }), {
+    command: 'C:\\Users\\Ada Lovelace\\Astrid Runtime\\.venv\\Scripts\\python.exe',
+    args: ['-m', 'astrid_runtime.cli'],
+    cwd: windowsPython,
+  });
+  assert.throws(() => resolveRuntimeCommand({
+    runtimeCheckout: windowsPython, platform: 'win32', exists: () => false,
+  }), /\.venv\/Scripts\/python\.exe/);
+  assert.equal(resolveRuntimeDataRoot({ platform: 'win32', env: { LOCALAPPDATA: 'C:\\Users\\Ada\\AppData\\Local' }, home: 'C:\\Users\\Ada' }),
+    'C:\\Users\\Ada\\AppData\\Local\\Astrid Runtime');
+  assert.equal(resolveWorkspaceDiscoveryPath({ platform: 'win32', env: { LOCALAPPDATA: 'C:\\Users\\Ada\\AppData\\Local' }, home: 'C:\\Users\\Ada' }),
+    'C:\\Users\\Ada\\AppData\\Local\\Astrid Runtime\\runtime\\discovery.json');
+  assert.equal(resolveRuntimeDataRoot({ platform: 'linux', env: { XDG_DATA_HOME: '/home/ada/data' }, home: '/home/ada' }), '/home/ada/data/astrid-runtime');
 });
 
 afterEach(async () => {
@@ -302,7 +325,9 @@ async function launchFixture(overrides = {}) {
     FAKE_RUNTIME_CATALOG_JSON: readFileSync(catalog, 'utf8'),
     FAKE_RUNTIME_DISCOVERY_PATH: discovery,
     FAKE_RUNTIME_APP_ENV: join(fixture, 'app-env.json'),
+    npm_execpath: join(noSpawnBin, 'npm-cli.js'),
   };
+  writeFileSync(env.npm_execpath, `require('node:fs').writeFileSync(${JSON.stringify(spawnMarker)}, 'spawned');\n`);
   writeFileSync(env.FAKE_RUNTIME_LIFECYCLE_LOG, '');
   const fakeRuntimeCli = `#!${process.execPath}
 const fs = require('node:fs');
@@ -440,7 +465,7 @@ test('local launcher rejects credential, profile, and Runtime identity substitut
 
 test('Runtime discovery selection ignores source checkout and rejects ambiguous roots', () => {
   const home = '/home/fixture';
-  assert.equal(resolveWorkspaceDiscoveryPath({ home }), '/home/fixture/Library/Application Support/Astrid Runtime/runtime/discovery.json');
+  assert.equal(resolveWorkspaceDiscoveryPath({ home, env: {}, platform: 'linux' }), '/home/fixture/.local/share/astrid-runtime/runtime/discovery.json');
   assert.equal(resolveWorkspaceDiscoveryPath({ home, supportRoot: '/selected/root', dataRoot: '/selected/root' }), '/selected/root/runtime/discovery.json');
   assert.equal(resolveWorkspaceDiscoveryPath({ home, discovery: '/selected/discovery.json', supportRoot: '/unused/root' }), '/selected/discovery.json');
   assert.throws(() => resolveWorkspaceDiscoveryPath({ home, supportRoot: '/one', dataRoot: '/two' }), /different roots/);
@@ -451,9 +476,15 @@ test('build handoff carries verified identity into the emitted browser build wit
   const fixture = await launchFixture();
   const captured = join(fixture.fixture, 'build-environment.json');
   const fakeNpm = join(fixture.fixture, 'bin', 'npm');
+  const fakeNpmJs = join(fixture.fixture, 'bin', 'npm-cli.js');
+  const fakeNpmScript = `const fs = require('node:fs');
+fs.writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID}));
+`;
   writeFileSync(fakeNpm, `#!${process.execPath}
 require('node:fs').writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID}));
 `, { mode: 0o700 });
+  writeFileSync(fakeNpmJs, fakeNpmScript);
+  fixture.env.npm_execpath = fakeNpmJs;
   try {
     const result = await run(['--build'], fixture.env);
     assert.equal(result.code, 0, result.stderr);
@@ -471,7 +502,7 @@ test('build handoff rejects a Runtime instance change during compilation', async
   });
   try {
     const result = await run(['--build'], fixture.env);
-    assert.equal(result.code, 1);
+    assert.equal(result.code, 1, result.stderr);
     assert.match(result.stderr, /instance does not match/);
     assert.equal(healthReads, 2);
     assert.equal(existsSync(fixture.spawnMarker), true, 'fixture compiler must run between identity checks');
@@ -529,11 +560,15 @@ async function startLauncher({ args = [], env: overrides = {}, shippedConfig = f
   const fixture = given ?? await launchFixture(fixtureOverrides);
   const spawnLog = join(fixture.fixture, 'spawn.log');
   writeFileSync(spawnLog, '');
-  writeFileSync(join(fixture.fixture, 'bin', 'npm'), FAKE_NPM(spawnLog), { mode: 0o700 });
+  const fakeNpm = FAKE_NPM(spawnLog);
+  writeFileSync(join(fixture.fixture, 'bin', 'npm'), fakeNpm, { mode: 0o700 });
+  const fakeNpmJs = join(fixture.fixture, 'bin', 'npm-cli.js');
+  writeFileSync(fakeNpmJs, fakeNpm.slice(fakeNpm.indexOf('\n') + 1));
   const { ASTRID_VERBOSE: _verbose, ...inherited } = cleanInheritedEnvironment();
   const env = {
     ...inherited,
     ...fixture.env,
+    npm_execpath: fakeNpmJs,
     PORT: String(await freePort()),
     VITE_ASTRID_DYNAMIC_PROXY_PORT: String(await freePort()),
     VITE_ASTRID_ACP_BRIDGE_PORT: String(await freePort()),
@@ -604,7 +639,7 @@ test('the Open block is bold on a terminal only', async () => {
   try { assert(!started.stdout.includes('\x1b['), JSON.stringify(started.stdout)); } finally { await started.stop(); }
 });
 
-test('--verbose prints the technical lines after the Open block, and ASTRID_VERBOSE=1 does the same', async () => {
+test('--verbose prints the technical lines after the Open block, and ASTRID_VERBOSE=1 remains supported', async () => {
   for (const options of [{ args: ['--verbose'], env: {} }, { args: [], env: { ASTRID_VERBOSE: '1' } }]) {
     const fixture = await launchFixture({ configuredOrigin: 'https://hosted.test' });
     const doorEndpoint = JSON.parse(fixture.discoveryDocument).door_endpoint;
@@ -728,22 +763,22 @@ test('agent chat is supervised independently of the app launcher', async () => {
   finally { await started.stop(); }
 });
 
-test('a failed app start uses ASTRID_VERBOSE with the installed start command', async () => {
+test('a failed app start recommends --verbose with the installed start command', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
     env: { ASTRID_START_COMMAND: '/installed/Astrid/start', FAKE_NPM_VITE_EXIT: '7' },
   });
   assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run ASTRID_VERBOSE=1 /installed/Astrid/start to see why.");
+  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run /installed/Astrid/start --verbose to see why.");
 });
 
-test('a failed app start uses the default npm command with ASTRID_VERBOSE', async () => {
+test('a failed app start recommends a portable verbose npm command', async () => {
   const result = await launcherEnds({
     configuredOrigin: 'https://hosted.test',
     env: { FAKE_NPM_VITE_EXIT: '7' },
   });
   assert.equal(result.code, 1);
-  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run ASTRID_VERBOSE=1 npm run dev:local to see why.");
+  assert.equal(result.stderr.split('\n')[0], "Astrid couldn't start. Run npm run dev:local -- --verbose to see why.");
 });
 
 test('a machine without Astrid set up points to the install guide, and every error line names Astrid once', async () => {

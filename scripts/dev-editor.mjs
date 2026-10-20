@@ -11,6 +11,7 @@
  * getters are lazy, so local mode only needs them to exist.
  */
 import { spawn } from 'node:child_process';
+import { packageManagerInvocation } from './node-package-manager.mjs';
 
 import { fakeRuntimeEnv } from '../tests/e2e/fake-runtime/launch.mjs';
 
@@ -43,8 +44,11 @@ const env = {
 };
 
 const children = [
-  spawn('node', ['tests/e2e/fake-runtime/launch.mjs', '--serve'], { stdio: 'inherit', env }),
-  spawn('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', PORT], { stdio: 'inherit', env }),
+  spawn(process.execPath, ['tests/e2e/fake-runtime/launch.mjs', '--serve'], { stdio: 'inherit', env }),
+  (() => {
+    const invocation = packageManagerInvocation('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', PORT], { env });
+    return spawn(invocation.command, invocation.args, { stdio: 'inherit', env });
+  })(),
 ];
 
 console.log([

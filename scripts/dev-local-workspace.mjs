@@ -9,6 +9,7 @@
  */
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { spawn } from 'node:child_process';
+import { packageManagerInvocation } from './node-package-manager.mjs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,11 +37,11 @@ const NOT_SET_UP = `Astrid isn't set up on this computer yet. Install guide: ${I
 const PROGRAM_IN_THE_WAY = "Another program is in the way, so Astrid can't start. Close it and try again.";
 const OTHER_ASTRID_RUNNING = 'Another Astrid is already running in another window. Stop it there with Ctrl+C first.';
 const startCommand = process.env.ASTRID_START_COMMAND
-  ? shellQuote(process.env.ASTRID_START_COMMAND)
+  ? `${process.platform === 'win32' ? '& ' : ''}${shellQuote(process.env.ASTRID_START_COMMAND)}`
   : 'npm run dev:local';
 // An install keeps its Runtime behind `<install>/with-env` (next to `<install>/start`), off the person's PATH.
 const runtimeCli = (action) => (process.env.ASTRID_START_COMMAND
-  ? `${shellQuote(resolve(dirname(process.env.ASTRID_START_COMMAND), 'with-env'))} astrid-runtime ${action} --profile astrid`
+  ? `${process.platform === 'win32' ? '& ' : ''}${shellQuote(resolve(dirname(process.env.ASTRID_START_COMMAND), 'with-env'))} astrid-runtime ${action} --profile astrid`
   : `astrid-runtime ${action} --profile astrid`);
 const runtimeUpCommand = runtimeCli('up');
 const ENGINE_STOPPED = `Astrid's engine isn't running. Start it first: ${runtimeUpCommand}`;
@@ -590,14 +591,16 @@ if (checkOnly) {
 // serves a fresh discovery-backed binding on each page load.
 if (buildOnly) {
   if (verbose) console.log(healthyLine);
-  const build = spawnService('npm', ['run', 'build'], { kind: 'vite', stdio: 'inherit', env });
+  const buildInvocation = packageManagerInvocation('npm', ['run', 'build'], { env });
+  const build = spawnService(buildInvocation.command, buildInvocation.args, { kind: 'vite', stdio: 'inherit', env });
   build.on('error', (error) => { fail(CANT_START, `could not build Astrid App: ${error.message}`); process.exitCode = 1; });
   const [code, signal] = await new Promise((resolveExit) => build.once('close', (...result) => resolveExit(result)));
   if (code === 0 && !signal && !(await verifyRuntime(endpoint, credential.token, expectedIdentity))) process.exitCode = 1;
   else process.exitCode = process.exitCode || (code ?? 1);
 } else {
 
-const COULDNT_START = `Astrid couldn't start. Run ASTRID_VERBOSE=1 ${startCommand} to see why.`;
+const verboseCommand = `${startCommand}${startCommand === 'npm run dev:local' ? ' --' : ''} --verbose`;
+const COULDNT_START = `Astrid couldn't start. Run ${verboseCommand} to see why.`;
 /** How long Vite may take to listen. */
 const VITE_START_TIMEOUT_MS = 60_000;
 
@@ -680,17 +683,19 @@ if (!proxyReady) {
 }
 if (hostedOrigin) technical(`browser door ${discovery.door_endpoint} for ${hostedOrigin}`);
 if (paired) {
-  connector = spawnService('npx', ['tsx', 'scripts/astrid-local-connector.ts', '--discovery', discoveryPath, '--relay-origin', pairedRelayOrigin, ...(resetPairing ? ['--reset-pairing'] : [])], {
+  const invocation = packageManagerInvocation('npx', ['tsx', 'scripts/astrid-local-connector.ts', '--discovery', discoveryPath, '--relay-origin', pairedRelayOrigin, ...(resetPairing ? ['--reset-pairing'] : [])], { env });
+  connector = spawnService(invocation.command, invocation.args, {
     stdio: 'inherit',
     env,
   });
 }
 
-const child = spawnService('npm', [...npmQuiet, ...viteChildArgs({
+const viteInvocation = packageManagerInvocation('npm', [...npmQuiet, ...viteChildArgs({
   preview: launcherOptions.preview,
   previewDir: previewDirectory,
   quiet: !showTechnical,
-})], {
+})], { env });
+const child = spawnService(viteInvocation.command, viteInvocation.args, {
   kind: 'vite', stdio: piped,
   // The local Vite process is the connector's fixed compose/ACP destination;
   // it must not install another relay and accidentally loop back to itself.

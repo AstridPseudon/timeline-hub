@@ -30,9 +30,10 @@ import {
   LEDGER_PATH,
   RELEASE_MANIFEST_PATH,
 } from './check-extension-ship-evidence.mjs';
-import { assertPinnedPlatform, attestNativeTools, resolvePinnedExecutable } from '../release/native-tool-attestation.mjs';
+import { assertPinnedPlatform, attestNativeTools } from '../release/native-tool-attestation.mjs';
 import { resolvePinnedPythonExecutable } from '../release/pinned-python-runtime.mjs';
 import { availableBytesAt } from '../release/verify-extension-ship.mjs';
+import { packageManagerInvocation } from '../node-package-manager.mjs';
 
 const LABEL = '[extension-local-rc-preflight]';
 const moduleDir = dirname(fileURLToPath(import.meta.url));
@@ -216,10 +217,10 @@ export function checkTagState(manifest, ledger, repoRoot) {
   return `frozen phase: annotated tag ${tag} resolves to ${taggedCommit}`;
 }
 
-function checkNodeNpm(manifest, { nodeVersion = process.version.replace(/^v/, ''), pathValue = process.env.PATH } = {}) {
+function checkNodeNpm(manifest, { nodeVersion = process.version.replace(/^v/, '') } = {}) {
   if (nodeVersion !== manifest?.verification?.node) throw new Error(`Node ${nodeVersion} does not match pinned ${manifest?.verification?.node}`);
-  const npm = resolvePinnedExecutable('npm', { pathValue });
-  const result = spawnSync(npm, ['--version'], { encoding: 'utf8', timeout: COMMAND_TIMEOUT_MS, maxBuffer: 1024 * 1024, env: GIT_ENV });
+  const invocation = packageManagerInvocation('npm', ['--version'], { env: GIT_ENV });
+  const result = spawnSync(invocation.command, invocation.args, { encoding: 'utf8', timeout: COMMAND_TIMEOUT_MS, maxBuffer: 1024 * 1024, env: GIT_ENV });
   if (result.error || result.status !== 0) throw new Error(`npm probe failed: ${resultDetail(result)}`);
   const version = result.stdout.trim();
   if (version !== manifest?.verification?.npm) throw new Error(`npm ${version} does not match pinned ${manifest?.verification?.npm}`);

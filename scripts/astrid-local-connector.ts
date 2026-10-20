@@ -8,6 +8,7 @@ import { readFileSync, mkdirSync, chmodSync, writeFileSync, existsSync } from 'n
 import { homedir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { resolveWorkspaceDiscoveryPath } from './dev-local-workspace-options.mjs';
 import { currentChat } from './runtime-discovery-proxy.mjs';
 import { WebSocket } from 'ws';
 import { classifyPairedRoute, upstreamRequestHeaders, PAIRED_MAX_FRAME_BYTES, PAIRED_MAX_JSON_BYTES, PAIRED_MAX_UPLOAD_BYTES } from '../config/vite/pairedRoutePolicy';
@@ -21,7 +22,14 @@ for (let index = 2; index < process.argv.length; index += 1) {
   const value = process.argv[index];
   if (value?.startsWith('--')) args.set(value.slice(2), process.argv[index + 1] ?? '');
 }
-const discoveryPath = resolve(args.get('discovery') || process.env.ASTRID_WORKSPACE_DISCOVERY || `${homedir()}/Library/Application Support/Astrid Runtime/runtime/discovery.json`);
+const explicitDiscovery = args.get('discovery') || process.env.ASTRID_WORKSPACE_DISCOVERY;
+const discoveryPath = explicitDiscovery
+  ? resolve(explicitDiscovery)
+  : resolveWorkspaceDiscoveryPath({
+    supportRoot: process.env.ASTRID_SUPPORT_ROOT,
+    dataRoot: process.env.ASTRID_RUNTIME_DATA_ROOT,
+    home: homedir(),
+  });
 const relayOrigin = args.get('relay-origin') || process.env.ASTRID_APP_PAIRED_RELAY_ORIGIN;
 const expectedRealm = args.get('realm') || process.env.ASTRID_APP_PAIRED_REALM_ID;
 const expectedActor = process.env.ASTRID_APP_PAIRED_PRODUCT_ACTOR?.trim();

@@ -4,6 +4,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveHostedRuntimeOrigin } from '../../../scripts/hosted-build-origin.mjs';
+import { packageManagerInvocation } from '../../../scripts/node-package-manager.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const INPUTS = ['src', 'config', 'public', 'vendor', 'scripts/build-hosted.mjs', 'scripts/hosted-build-origin.mjs', 'index.html', 'package.json', 'package-lock.json', 'tsconfig.json'];
@@ -44,6 +45,8 @@ export default function globalSetup() {
     return;
   }
   console.log(`[direct] building the hosted production bundle for ${HOSTED_ORIGIN} (npm run build:hosted)`);
-  execFileSync('npm', ['run', 'build:hosted'], { cwd: root, stdio: 'inherit', env: { ...process.env, NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096' } });
+  const env = { ...process.env, NODE_OPTIONS: process.env.NODE_OPTIONS ?? '--max-old-space-size=4096' };
+  const invocation = packageManagerInvocation('npm', ['run', 'build:hosted'], { env });
+  execFileSync(invocation.command, invocation.args, { cwd: root, stdio: 'inherit', env });
   if (!distIsHosted()) throw new Error(`npm run build:hosted did not compile ${HOSTED_ORIGIN} into dist/assets`);
 }
