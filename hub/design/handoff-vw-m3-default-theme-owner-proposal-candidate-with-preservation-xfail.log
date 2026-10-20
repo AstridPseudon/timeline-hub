@@ -1,0 +1,9 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-default-theme-owner-proposal/offline-app
+
+
+ Test Files  2 passed (2)
+      Tests  53 passed | 1 expected fail (54)
+   Start at  05:57:18
+   Duration  3.48s (transform 1.09s, setup 264ms, import 1.32s, tests 748ms, environment 805ms)
+

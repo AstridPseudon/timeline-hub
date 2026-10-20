@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T05:57:40Z | dispatcher heartbeat 9s -->
+<!-- viewing | 2026-10-20T06:02:52Z | dispatcher heartbeat 5s -->
 # viewing — 2026-10-20 05:56 UTC
 Milestone: M0 COMPLETE; M1 RECORDED in PLAN. M3 active, frame/audio parity OPEN. M4 qualified deletions first; no foundation/owner-film/macOS claim.
 Integrated: Composition ff0536bb (immutable0.0.11) build/pack/ESM+SSR/strictNodeNext PASS; central composition-full-1020040915-15314 npm test65PASS. Artifact58344B SHA dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601. Public10 c04ada57 artifact58008B cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7 remains immutable; 10 pair precedes separate11 pair. Agent has now merged public10, D09check slice and capture-chain subset; App current cc4dff86 has opaque fixes +popup remapper deletion. Exact current official-runtime/client pair remains owner dependency, not resolved by ancestry.

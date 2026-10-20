@@ -1,0 +1,31 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-default-theme-owner-proposal/offline-app
+
+ ❯ src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx (47 tests | 1 failed) 524ms
+     × uses the DEFAULT_THEME fallback when the timeline has no theme 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx > TimelineRenderer registered sequences > uses the DEFAULT_THEME fallback when the timeline has no theme
+Error: expect(element).toHaveAttribute("data-accent", "#ffffff") // element.getAttribute("data-accent") === "#ffffff"
+
+Expected the element to have attribute:
+  data-accent="#ffffff"
+Received:
+  data-accent="#67E8F9"
+ ❯ src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx:665:22
+    663|
+    664|     const sequence = screen.getByTestId('registered-sequence');
+    665|     expect(sequence).toHaveAttribute('data-accent', '#ffffff');
+       |                      ^
+    666|     expect(sequence).toHaveAttribute('data-bg', '#000000');
+    667|     expect(sequence).toHaveAttribute('data-heading', 'Georgia, serif');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 53 passed (54)
+   Start at  05:56:12
+   Duration  3.48s (transform 1.12s, setup 240ms, import 1.38s, tests 531ms, environment 907ms)
+

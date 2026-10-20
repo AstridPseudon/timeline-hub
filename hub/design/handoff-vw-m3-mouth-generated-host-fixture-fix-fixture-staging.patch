@@ -1,0 +1,83 @@
+diff --git a/tests/packs/rendering/presenter_crop_entry.mjs b/tests/packs/rendering/presenter_crop_entry.mjs
+index 237ab02bf..bb1037ba7 100644
+--- a/tests/packs/rendering/presenter_crop_entry.mjs
++++ b/tests/packs/rendering/presenter_crop_entry.mjs
+@@ -2,7 +2,7 @@
+ import {createElement as h} from 'react';
+ import {Composition, registerRoot} from 'remotion';
+ import {TimelineComposition, toRuntimeTheme} from '@banodoco/timeline-composition';
+-import {resolveHostRegistries} from './src/host-registries';
++import {resolveHostRegistries} from './src/host-registries.ts';
+ 
+ const HostTimeline = props => h(TimelineComposition, {...props,
+   registries: resolveHostRegistries(toRuntimeTheme(props.theme))});
+diff --git a/tests/packs/rendering/test_presenter_capture_staging.py b/tests/packs/rendering/test_presenter_capture_staging.py
+new file mode 100644
+index 000000000..135004c28
+--- /dev/null
++++ b/tests/packs/rendering/test_presenter_capture_staging.py
+@@ -0,0 +1,64 @@
++"""Compile the actual four-still entry and discovered loaders without a browser."""
++
++import json
++import shutil
++import subprocess
++from pathlib import Path
++
++import pytest
++
++from tests.packs.rendering.test_presenter_scene_capability import (
++    presenter_query as _presenter_query,
++)
++
++presenter_query = _presenter_query
++pytestmark = pytest.mark.integration
++
++
++def test_capture_entry_compiles_actual_host_dependencies(presenter_query, tmp_path):
++    project = presenter_query.project
++    shutil.copyfile(Path(__file__).with_name("presenter_crop_entry.mjs"),
++                    project / "presenter_crop_entry.mjs")
++    script = project / "compile-capture.mjs"
++    script.write_text("""
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import path from 'node:path';
++import {BundlerInternals, webpack} from '@remotion/bundler';
++import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
++
++const root = process.cwd();
++const outDir = process.argv[2];
++const [, config] = await BundlerInternals.getConfig({
++  entryPoint: path.join(root, 'presenter_crop_entry.mjs'), outDir,
++  resolvedRemotionRoot: root, options: {enableCaching: false,
++    webpackOverride: remotionPrimitiveAliasesFor(root)},
++});
++assert.equal(config.cache, false);
++const compiler = webpack(config);
++try {
++  // compile() checks all chunks without emitting files or starting a server.
++  const compilation = await new Promise((resolve, reject) =>
++    compiler.compile((error, result) => error ? reject(error) : resolve(result)));
++  const stats = compilation.getStats().toJson({all: false, errors: true, errorDetails: true});
++  assert.equal(stats.errors.length, 0, JSON.stringify(stats.errors));
++  const dependencies = [...compilation.fileDependencies];
++  for (const file of ['src/host-registries.ts', 'src/effects.generated.ts',
++    'src/animations.generated.ts', 'src/transitions.generated.ts',
++    '../astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx',
++    '../probe/effects/am-presenter/component.tsx', '../probe/effects/presenter-probe/component.tsx']) {
++    assert.ok(dependencies.includes(fs.realpathSync(path.resolve(root, file))), `Missing actual loader: ${file}`);
++  }
++  assert.ok(dependencies.some(file => file.startsWith(path.join(root,
++    'node_modules/@banodoco/timeline-composition/'))));
++  assert.ok(!fs.existsSync(outDir));
++  console.log(JSON.stringify({ok: true}));
++} finally {
++  await new Promise((resolve, reject) => compiler.close(error => error ? reject(error) : resolve()));
++}
++""")
++    result = subprocess.run([str(presenter_query.node), str(script), str(tmp_path / "never-emitted")],
++                            cwd=project, env=presenter_query.env,
++                            capture_output=True, text=True, timeout=110)
++    assert result.returncode == 0, result.stdout + result.stderr
++    assert json.loads(result.stdout)["ok"] is True

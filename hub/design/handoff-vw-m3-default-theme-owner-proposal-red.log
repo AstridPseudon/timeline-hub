@@ -1,0 +1,171 @@
+
+ RUN  v4.1.5 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-default-theme-owner-proposal/offline-app
+
+ ❯ src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx (47 tests | 2 failed) 549ms
+     × paints the resolved composition ground for {"theme":"banodoco-default"} 122ms
+     × paints the resolved composition ground for {"theme":"banodoco-default","theme_overrides":{"visual":{"color":{"bg":"#123456"}}}} 20ms
+ ❯ src/tools/video-editor/compositions/installed-themes.test.ts (7 tests | 4 failed) 15ms
+     × matches the entire export default for undefined 8ms
+     × matches the entire export default for banodoco-default 2ms
+     × matches the entire export default for uninstalled-theme 1ms
+     × does not mutate defaults when applying partial authored overrides 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx > TimelineRenderer registered sequences > paints the resolved composition ground for {"theme":"banodoco-default"}
+Error: expect(element).toHaveStyle()
+
+- Expected
+
+- backgroundColor: rgb(5, 8, 20);
+ ❯ src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx:402:20
+    400|     render(<TimelineRenderer config={buildConfig(extras)} />);
+    401|     const ground = screen.getAllByTestId('absolute-fill').find((node) …
+    402|     expect(ground).toHaveStyle({ backgroundColor });
+       |                    ^
+    403|   });
+    404|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx > TimelineRenderer registered sequences > paints the resolved composition ground for {"theme":"banodoco-default","theme_overrides":{"visual":{"color":{"bg":"#123456"}}}}
+Error: expect(element).toHaveStyle()
+
+- Expected
+
+- backgroundColor: rgb(18, 52, 86);
+ ❯ src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx:402:20
+    400|     render(<TimelineRenderer config={buildConfig(extras)} />);
+    401|     const ground = screen.getAllByTestId('absolute-fill').find((node) …
+    402|     expect(ground).toHaveStyle({ backgroundColor });
+       |                    ^
+    403|   });
+    404|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/tools/video-editor/compositions/installed-themes.test.ts > Astrid default theme adapter > matches the entire export default for undefined
+ FAIL  src/tools/video-editor/compositions/installed-themes.test.ts > Astrid default theme adapter > matches the entire export default for banodoco-default
+ FAIL  src/tools/video-editor/compositions/installed-themes.test.ts > Astrid default theme adapter > matches the entire export default for uninstalled-theme
+AssertionError: expected { id: 'banodoco-default', …(1) } to deeply equal { id: 'banodoco-default', …(1) }
+
+- Expected
++ Received
+
+@@ -5,31 +5,30 @@
+        "fps": 30,
+        "height": 1080,
+        "width": 1920,
+      },
+      "color": {
+-       "accent": "#67E8F9",
+-       "bg": "#050814",
+-       "fg": "#FAFAFA",
++       "accent": "#ffffff",
++       "bg": "#000000",
++       "fg": "#ffffff",
+      },
+      "motion": {
+-       "fadeMs": 450,
++       "fadeMs": 250,
+      },
+      "type": {
+        "families": {
+-         "body": "Arial",
+-         "heading": "Arial",
+-         "mono": "monospace",
++         "body": "Georgia, serif",
++         "heading": "Georgia, serif",
+        },
+-       "lineHeight": 1.2,
++       "lineHeight": 1.1,
+        "size": {
+-         "base": 32,
+-         "large": 84,
+-         "small": 22,
++         "base": 64,
++         "large": 96,
++         "small": 36,
+        },
+        "weight": {
+-         "bold": 600,
++         "bold": 700,
+          "normal": 400,
+        },
+      },
+    },
+  }
+
+ ❯ src/tools/video-editor/compositions/installed-themes.test.ts:44:51
+     42| describe('Astrid default theme adapter', () => {
+     43|   it.each([undefined, 'banodoco-default', 'uninstalled-theme'])('match…
+     44|     expect(resolveTimelineRenderTheme({ theme })).toEqual(exportDefaul…
+       |                                                   ^
+     45|   });
+     46|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/tools/video-editor/compositions/installed-themes.test.ts > Astrid default theme adapter > does not mutate defaults when applying partial authored overrides
+AssertionError: expected { Object (color, type, ...) } to deeply equal { Object (color, type, ...) }
+
+- Expected
++ Received
+
+@@ -4,29 +4,28 @@
+      "height": 1080,
+      "width": 1920,
+    },
+    "color": {
+      "accent": "#abcdef",
+-     "bg": "#050814",
+-     "fg": "#FAFAFA",
++     "bg": "#000000",
++     "fg": "#ffffff",
+    },
+    "motion": {
+-     "fadeMs": 450,
++     "fadeMs": 250,
+    },
+    "type": {
+      "families": {
+-       "body": "Arial",
+-       "heading": "Arial",
+-       "mono": "monospace",
++       "body": "Georgia, serif",
++       "heading": "Georgia, serif",
+      },
+-     "lineHeight": 1.2,
++     "lineHeight": 1.1,
+      "size": {
+-       "base": 32,
+-       "large": 84,
+-       "small": 22,
++       "base": 64,
++       "large": 96,
++       "small": 36,
+      },
+      "weight": {
+-       "bold": 600,
++       "bold": 700,
+        "normal": 400,
+      },
+    },
+  }
+
+ ❯ src/tools/video-editor/compositions/installed-themes.test.ts:73:26
+     71|       theme: 'banodoco-default', theme_overrides: { visual: { color: {…
+     72|     });
+     73|     expect(theme.visual).toEqual({ ...exportDefault.visual, color: { .…
+       |                          ^
+     74|     expect(resolveTimelineRenderTheme({ theme: 'banodoco-default' })).…
+     75|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 48 passed (54)
+   Start at  05:55:40
+   Duration  3.25s (transform 1.04s, setup 241ms, import 1.26s, tests 564ms, environment 832ms)
+

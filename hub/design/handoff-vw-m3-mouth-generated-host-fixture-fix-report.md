@@ -1,0 +1,1 @@
+READY: fixture import repaired; browser-free actual webpack staging regression + neighbors: 21 PASS / 18.65s. No product changes or capture run. New controller awaits manager approval of the harness-committed full SHA. See ORCHREPORT.md.

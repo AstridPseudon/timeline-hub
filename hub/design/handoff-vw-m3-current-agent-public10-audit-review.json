@@ -1,0 +1,72 @@
+{
+  "review": "vw-m3-current-agent-public10-audit",
+  "status": "pass_with_limits",
+  "qualified": false,
+  "tested_sha": "384918908aa8c75229c2b6ccdd8fda03b7ce24a1",
+  "integration_sha": "384918908aa8c75229c2b6ccdd8fda03b7ce24a1",
+  "comparison_base": "b46140036e21948f1f807d8366b2e5d03e720697",
+  "public10": {
+    "artifact_sha256": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
+    "archive_members": 77,
+    "size_bytes": 58008,
+    "version": "0.0.10",
+    "react": "18.3.1",
+    "remotion": "4.0.509",
+    "node": "20.19.4",
+    "npm": "10.8.2",
+    "adoption_since_base": "unchanged; public10 adoption is already in b461 ancestor"
+  },
+  "capture_chain": {
+    "saved_source": "canonical immutable parent revision and content digest preserved",
+    "candidate_source": "working-copy identity preserved; committed base used for provenance",
+    "unverified_source": "CAS-only source_kind=cas; no revision or working-copy claim",
+    "literal_uncertified_label": false,
+    "verified_pixel_lane": "not qualified; no live capture/browser/pixel/audio run"
+  },
+  "native_m1_revision": {
+    "preserved": true,
+    "basis": "snapshot_label uses canonical inspection/capture authority revision and ignores requested/current-head hints",
+    "candidate_actual_revision_id": null
+  },
+  "d09": {
+    "status": "not_deleted",
+    "private_evaluator_present": "astrid/core/timeline/onscreen.py",
+    "private_callers": [
+      "astrid/sdk/timeline/check.py",
+      "astrid/sdk/timeline/reflow.py",
+      "astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py"
+    ],
+    "public_replacement_source_join": false,
+    "deletion_decision": "hold pending public evaluator source join, capability proof, and pixel qualification"
+  },
+  "tests": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD\" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --basetemp=/tmp/vw-m3-public10-audit-pytest tests/sdk/test_capture_closure_source.py tests/sdk/test_timeline_capture_projection.py tests/sdk/test_visualize_authority_objects.py tests/sdk/test_scene_caller_preservation.py tests/sdk/test_coverage_empty_cut.py tests/sdk/test_timeline_reflow_golden.py tests/packs/rendering/test_fast_lane.py tests/packs/rendering/test_timeline_filmstrip_execution.py",
+      "result": "117 passed, 9 skipped, 9 xfailed, 1 warning in 171.53s"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD\" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= -m 'not integration' --basetemp=/tmp/vw-m3-public10-audit-public-pure tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_remotion_v3_aliases.py",
+      "result": "9 passed, 2 deselected in 0.52s"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD\" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --basetemp=/tmp/vw-m3-public10-audit-generator tests/packs/rendering/test_remotion_element_generation.py tests/packs/rendering/test_effect_registry_target.py tests/core/test_pack_coherence_elements.py",
+      "result": "7 passed in 9.26s"
+    },
+    {
+      "command": "git diff --check b46140036e21948f1f807d8366b2e5d03e720697..HEAD",
+      "result": "passed"
+    }
+  ],
+  "owner_dependencies": [
+    "exact current Runtime/client pair",
+    "Node 20.19.4 / npm 10.8.2 provisioned Remotion install",
+    "verified source admission and live Runtime equivalence",
+    "native capture frame/audio and pixel parity",
+    "public evaluator/source join and capability proof before D09 deletion"
+  ],
+  "unverified": [
+    "Agent STATUS.md named by handoff was unavailable",
+    "actual public package import/bundle/SSR",
+    "browser, renderer, socket, full suite, live capture, audio, and pixel lanes"
+  ]
+}
