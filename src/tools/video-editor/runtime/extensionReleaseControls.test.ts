@@ -4,13 +4,9 @@ import {
   buildExtensionLifecycleOperationalEvents,
   createHostOwnedExtensionOperationalEmitter,
   createPrivacySafeExtensionTelemetryHost,
-  EXTENSION_RELEASE_RUNTIME_CONFIG_TIMEOUT_MS,
   getExtensionReleaseFlags,
   isExtensionReleaseEnabled,
-  initializeExtensionReleaseFlags,
-  loadExtensionReleaseFlags,
   operationalCountBucket,
-  parseExtensionReleaseRuntimeConfig,
   REVIEWED_PRODUCTION_EXTENSION_IDS,
   RUNAWAY_RELEASE_EXTENSION_ID,
   TRANSCRIPT_RELEASE_EXTENSION_ID,
@@ -46,157 +42,17 @@ describe('extension release controls', () => {
     )).toBe(true);
   });
 
-  it('keeps DEV fast/default-open without issuing a runtime fetch', async () => {
-    const fetchImpl = vi.fn();
-    await expect(loadExtensionReleaseFlags({
-      development: true,
-      fetchImpl,
-      origin: 'https://astrid-app.example',
-    })).resolves.toMatchObject({
+  it('ships the extension host and Transcript on in every build, with no config fetch or wait', () => {
+    expect(getExtensionReleaseFlags()).toMatchObject({
       extensionHostEnabled: true,
       transcriptCaptionFoundryEnabled: true,
-      runawayTypedTimelineEnabled: true,
     });
-    expect(fetchImpl).not.toHaveBeenCalled();
-  });
-
-  it('parses the exact versioned shape and enforces the host parent', () => {
-    expect(parseExtensionReleaseRuntimeConfig({
-      schemaVersion: 1,
-      revision: 'rc1-canary.3',
-      extensions: {
-        hostEnabled: true,
-        transcriptCaptionFoundryEnabled: false,
-        runawayTypedTimelineEnabled: true,
-      },
-    })).toEqual({
-      extensionHostEnabled: true,
-      transcriptCaptionFoundryEnabled: false,
-      runawayTypedTimelineEnabled: true,
-      configurationRevision: 'rc1-canary.3',
-    });
-    expect(parseExtensionReleaseRuntimeConfig({
-      schemaVersion: 1,
-      revision: 'rc1-off',
-      extensions: {
-        hostEnabled: false,
-        transcriptCaptionFoundryEnabled: true,
-        runawayTypedTimelineEnabled: true,
-      },
-    })).toEqual({
-      extensionHostEnabled: false,
-      transcriptCaptionFoundryEnabled: false,
-      runawayTypedTimelineEnabled: false,
-      configurationRevision: 'rc1-off',
-    });
-  });
-
-  it('rejects invalid revisions, schema drift, and non-boolean switches', () => {
-    const valid = {
-      schemaVersion: 1,
-      revision: 'rc1',
-      extensions: {
-        hostEnabled: true,
-        transcriptCaptionFoundryEnabled: true,
-        runawayTypedTimelineEnabled: true,
-      },
-    };
-    expect(parseExtensionReleaseRuntimeConfig({ ...valid, revision: '../bad' })).toBeNull();
-    expect(parseExtensionReleaseRuntimeConfig({ ...valid, schemaVersion: 2 })).toBeNull();
-    expect(parseExtensionReleaseRuntimeConfig({ ...valid, queryOverride: true })).toBeNull();
-    expect(parseExtensionReleaseRuntimeConfig({
-      ...valid,
-      extensions: { ...valid.extensions, hostEnabled: 'true' },
-    })).toBeNull();
-  });
-
-  it('loads only the fixed same-origin path and fails closed on errors or redirects', async () => {
-    const validDocument = {
-      schemaVersion: 1,
-      revision: 'runtime-7',
-      extensions: {
-        hostEnabled: true,
-        transcriptCaptionFoundryEnabled: true,
-        runawayTypedTimelineEnabled: false,
-      },
-    };
-    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(validDocument), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }));
-    await expect(loadExtensionReleaseFlags({
-      development: false,
-      origin: 'https://astrid-app.example/editor?extensionSmoke=1',
-      fetchImpl,
-    })).resolves.toMatchObject({
-      extensionHostEnabled: true,
-      transcriptCaptionFoundryEnabled: true,
-      runawayTypedTimelineEnabled: false,
-    });
-    expect(fetchImpl).toHaveBeenCalledWith(
-      'https://astrid-app.example/runtime-config/v1/extensions.json',
-      expect.objectContaining({
-        cache: 'no-store',
-        credentials: 'same-origin',
-        redirect: 'error',
-      }),
-    );
-
-    await expect(loadExtensionReleaseFlags({
-      development: false,
-      origin: 'https://astrid-app.example',
-      fetchImpl: vi.fn(async () => { throw new Error('offline'); }),
-    })).resolves.toMatchObject({ extensionHostEnabled: false });
-    await expect(loadExtensionReleaseFlags({
-      development: false,
-      origin: 'https://astrid-app.example',
-      fetchImpl: vi.fn(async () => ({
-        ok: true,
-        url: 'https://attacker.example/extensions.json',
-        json: async () => validDocument,
-      } as Response)),
-    })).resolves.toMatchObject({ extensionHostEnabled: false });
-  });
-
-  it('aborts a hung production fetch and initializes the render snapshot closed', async () => {
-    vi.useFakeTimers();
-    try {
-      const fetchImpl = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
-        expect(init?.signal).toBeInstanceOf(AbortSignal);
-        return new Promise<Response>(() => {});
-      });
-      const initialization = initializeExtensionReleaseFlags({
-        development: false,
-        origin: 'https://astrid-app.example',
-        fetchImpl,
-      });
-      await vi.advanceTimersByTimeAsync(EXTENSION_RELEASE_RUNTIME_CONFIG_TIMEOUT_MS);
-      await expect(initialization).resolves.toMatchObject({
-        extensionHostEnabled: false,
-        transcriptCaptionFoundryEnabled: false,
-        runawayTypedTimelineEnabled: false,
-      });
-      expect(getExtensionReleaseFlags({ development: false })).toMatchObject({
-        extensionHostEnabled: false,
-      });
-      expect((fetchImpl.mock.calls[0][1]?.signal as AbortSignal).aborted).toBe(true);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('composes a caller abort signal and cleans up without waiting for timeout', async () => {
-    const caller = new AbortController();
-    const fetchImpl = vi.fn(() => new Promise<Response>(() => {}));
-    const loading = loadExtensionReleaseFlags({
-      development: false,
-      origin: 'https://astrid-app.example',
-      fetchImpl,
-      signal: caller.signal,
-    });
-    caller.abort(new DOMException('navigation stopped', 'AbortError'));
-    await expect(loading).resolves.toMatchObject({ extensionHostEnabled: false });
-    expect((fetchImpl.mock.calls[0][1]?.signal as AbortSignal).aborted).toBe(true);
+    const all = [
+      extension('haus.astrid.scene-phase-markers'),
+      extension(TRANSCRIPT_LANE_EXTENSION_ID),
+    ];
+    expect(selectReleaseEnabledExtensions(all, getExtensionReleaseFlags()).map((item) => item.manifest.id))
+      .toEqual(['haus.astrid.scene-phase-markers', TRANSCRIPT_LANE_EXTENSION_ID]);
   });
 
   it('selects independent Transcript and Runaway children from reviewed bundled extensions', () => {

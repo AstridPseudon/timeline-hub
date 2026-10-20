@@ -7,6 +7,8 @@ import { useVideoEditorAssetPanels } from '@/tools/video-editor/runtime/useVideo
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/shared/components/ui/dropdown-menu';
 
 export const HOST_PROPERTIES_PANEL_KEY = 'host:properties';
+/** The Extensions tab when no extension panel exists to select: the dock stays open. */
+export const HOST_EXTENSIONS_PANEL_KEY = 'host:extensions';
 
 /** One display menu for the open dock and its closed toolbar affordance. */
 export function VideoEditorPanelDisplayControl({ className = '', visible = true }: { className?: string; visible?: boolean }) {
@@ -23,7 +25,7 @@ export function VideoEditorPanelDisplayControl({ className = '', visible = true 
   const layout = preferences.rightPanelLayoutSlotsByPanelId[HOST_PROPERTIES_PANEL_KEY]
     ?? preferences.rightPanelLayoutSlotsByPanelId[currentKey]
     ?? 'dock';
-  const open = selected !== null && (tab === 'inspector' || panels.some((panel) => getPanelKey(panel) === selected));
+  const open = selected !== null && (tab === 'inspector' || selected === HOST_EXTENSIONS_PANEL_KEY || panels.some((panel) => getPanelKey(panel) === selected));
   const [menuOpen, setMenuOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const returnFocusScope = useRef<HTMLElement | null>(null);

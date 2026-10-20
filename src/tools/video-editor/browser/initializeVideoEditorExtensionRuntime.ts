@@ -1,7 +1,4 @@
 import {
-  initializeExtensionReleaseFlags,
-} from '../runtime/extensionReleaseControls.ts';
-import {
   installExtensionOperationalAnalyticsSink,
 } from '../runtime/extensionOperationalAnalytics.ts';
 
@@ -12,14 +9,12 @@ export interface InitializeVideoEditorExtensionRuntimeOptions {
 /**
  * Initialize the browser-owned extension runtime before the host renders.
  *
- * Release controls must settle before React reads them. Operational analytics
- * remains best-effort and is installed only after that release snapshot is
- * available. Keeping this composition behind the browser contract prevents
+ * Operational analytics remains best-effort. There is no release config to wait
+ * for: the extension host ships on. Keeping this composition behind the browser contract prevents
  * app shells from depending on video-editor runtime internals.
  */
-export async function initializeVideoEditorExtensionRuntime(
-  options: InitializeVideoEditorExtensionRuntimeOptions,
-): Promise<void> {
-  await initializeExtensionReleaseFlags(options);
+export function initializeVideoEditorExtensionRuntime(
+  _options?: InitializeVideoEditorExtensionRuntimeOptions,
+): void {
   installExtensionOperationalAnalyticsSink();
 }

@@ -15,8 +15,8 @@ import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManag
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 
-import { HOST_PROPERTIES_PANEL_KEY, VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl';
-export { HOST_PROPERTIES_PANEL_KEY } from './VideoEditorPanelDisplayControl';
+import { HOST_EXTENSIONS_PANEL_KEY, HOST_PROPERTIES_PANEL_KEY, VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl';
+export { HOST_EXTENSIONS_PANEL_KEY, HOST_PROPERTIES_PANEL_KEY } from './VideoEditorPanelDisplayControl';
 export type VideoEditorRightPanelTab = 'video' | 'inspector' | 'extensions';
 export interface VideoEditorRightPanelDockProps {
   readonly leftPanelPresent: boolean;
@@ -95,7 +95,7 @@ export function VideoEditorRightPanelDock({
   const layout = preferences.rightPanelLayoutSlotsByPanelId[HOST_PROPERTIES_PANEL_KEY]
     ?? preferences.rightPanelLayoutSlotsByPanelId[currentKey]
     ?? 'dock';
-  const open = Boolean(video) || (selected !== null && (tab === 'inspector' || panels.some((panel) => getPanelKey(panel) === selected)));
+  const open = Boolean(video) || (selected !== null && (tab === 'inspector' || selected === HOST_EXTENSIONS_PANEL_KEY || panels.some((panel) => getPanelKey(panel) === selected)));
   const dock = Boolean(video) || layout === 'dock';
   const compactInGrid = !video && open && layout === 'compact' && compactDock && !responsive;
   const inGrid = !responsive;
@@ -113,7 +113,8 @@ export function VideoEditorRightPanelDock({
     // Capture the visible mode before changing the selected panel. This
     // promotes legacy per-panel state to the shared placement slot.
     ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, displayMode);
-    ops.setSelectedRightPanelId(next === 'inspector' ? HOST_PROPERTIES_PANEL_KEY : toolKey);
+    // Extensions never closes the dock: with no panel to select it parks on the host key.
+    ops.setSelectedRightPanelId(next === 'inspector' ? HOST_PROPERTIES_PANEL_KEY : toolKey ?? HOST_EXTENSIONS_PANEL_KEY);
   };
   const inventory = runtime?.extensionRuntime?.packageStateInventory ?? [];
   const enabledExtensionLabelsById = new Map(inventory
@@ -142,7 +143,7 @@ export function VideoEditorRightPanelDock({
     else setLocalManagerOpen(true);
   };
   const extensionsHeader = tab === 'extensions' && <div className={`flex shrink-0 items-center border-b border-border/60 p-2 ${touch ? 'gap-2' : 'gap-1.5'}`} style={{ minWidth: contentWidth, visibility: open ? undefined : 'hidden' }}>
-    <DropdownMenu><DropdownMenuTrigger className={`${touch ? touchControl : control} flex-1 justify-between`} aria-label="Active extension"><span className="min-w-0 truncate">Active · {tool?.label ?? 'Choose tool'}</span><ChevronDown className="h-3 w-3 shrink-0" /></DropdownMenuTrigger>
+    <DropdownMenu><DropdownMenuTrigger className={`${touch ? touchControl : control} flex-1 justify-between`} aria-label="Active extension"><span className="min-w-0 truncate">Active · {tool?.label ?? (panels.length ? 'Choose tool' : 'None')}</span><ChevronDown className="h-3 w-3 shrink-0" /></DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="max-w-[calc(100vw-24px)] min-w-48"><DropdownMenuRadioGroup value={toolKey ?? ''} onValueChange={(key) => { ops.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, layout); ops.setSelectedRightPanelId(key); }}>{panels.map((panel) => <DropdownMenuRadioItem key={getPanelKey(panel)} value={getPanelKey(panel)}>{panel.label || panel.id}</DropdownMenuRadioItem>)}</DropdownMenuRadioGroup></DropdownMenuContent>
     </DropdownMenu>
     <div className={touch ? 'relative shrink-0' : 'relative flex-1'} onPointerEnter={() => setManageTooltipOpen(true)} onPointerLeave={() => setManageTooltipOpen(false)} onFocusCapture={() => setManageTooltipOpen(true)} onBlurCapture={() => setManageTooltipOpen(false)} onPointerDownCapture={() => setManageTooltipOpen(false)} onClickCapture={() => setManageTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setManageTooltipOpen(false); }}>
@@ -162,7 +163,7 @@ export function VideoEditorRightPanelDock({
     {enabled && <>
       {video && <div className="flex h-full min-h-0 flex-col" hidden={tab !== 'video'} style={{ display: tab === 'video' ? undefined : 'none' }}>{video.content}</div>}
       <div className={`h-full min-h-0 overflow-auto ${touch ? 'px-3' : 'p-3'}`} hidden={tab !== 'inspector'}><PropertiesPanel visible={open && tab === 'inspector'} /></div>
-      <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} />}</div>
+      <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{panels.length === 0 && tab === 'extensions' && <p data-testid="extensions-empty-state" className="p-4 text-center text-sm text-muted-foreground">No extensions are active for this project yet.</p>}{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' ? toolKey : null} settingsByPanelKey={settingsByPanelKey} />}</div>
     </>}
   </div>;
   // Touch: the Extensions picker sits inside the film-shaped box, so switching tabs never

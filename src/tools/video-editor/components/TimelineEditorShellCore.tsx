@@ -21,6 +21,7 @@ import { useVideoEditorPreviewSurface } from '@/tools/video-editor/components/Pr
 import { PropertiesPanel } from '@/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx';
 import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManager';
 import {
+  HOST_EXTENSIONS_PANEL_KEY,
   HOST_PROPERTIES_PANEL_KEY,
   VideoEditorRightPanelDock,
   type VideoEditorRightPanelTab,
@@ -509,6 +510,7 @@ function TimelineEditorShellCoreComponent({
     : editorData.preferences.selectedRightPanelId;
   const availableRightPanelIds = new Set(availableRightPanels.map(getPanelKey));
   const selectedRightPanelExists = savedPanelId === HOST_PROPERTIES_PANEL_KEY
+    || savedPanelId === HOST_EXTENSIONS_PANEL_KEY
     || (savedPanelId !== null && availableRightPanelIds.has(savedPanelId));
   const rightPanelLayoutSlots = editorData.preferences?.rightPanelLayoutSlotsByPanelId ?? {};
   // The host slot is the shared placement for the whole right-panel surface.
