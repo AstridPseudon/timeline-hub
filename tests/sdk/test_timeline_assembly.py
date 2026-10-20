@@ -182,3 +182,55 @@ def test_owned_host_materializes_detached_capture_beside_runtime_children(tmp_pa
             host._materialize_inputs(spec, tmp_path / 'other-attempt', continuation_id='assembler')
     finally:
         host.shutdown()
+
+
+def test_native_protocol_requires_immutable_declaration_and_keeps_stitch_aliases(tmp_path):
+    from astrid.core.contracts.runtime_orchestration import (
+        STITCH_CAPABILITIES,
+        OrchestrationContractError,
+        is_native_assembler_spec,
+    )
+
+    session, _, outputs, _, calls = requester(tmp_path)
+    session.admit_assembly(outputs, replace_clips=['parent/clip:a', 'parent/clip:b'],
+                           assembler_digest=DIGEST, idempotency_key='assembly', rationale='Café 1.0')
+    spec = calls[0]['spec']
+    assert spec['inputs']['resolved_children']['rationale'] == 'Café 1.0'
+    assert is_native_assembler_spec(spec)
+    assert STITCH_CAPABILITIES == {'travel_stitch': 'rendering.render', 'join_final_stitch': 'rendering.render'}
+    assert not is_native_assembler_spec({'capability_id': 'rendering.render'})
+    assert not is_native_assembler_spec({'capability_id': 'rendering.assemble_timeline'})
+    del spec['outputs']['authoring_proposal']
+    with pytest.raises(OrchestrationContractError, match='proposal declaration'):
+        is_native_assembler_spec(spec)
+
+
+def test_native_host_owns_attempt_identity_and_reads_exact_associations(tmp_path):
+    from dataclasses import make_dataclass
+
+    session, _, outputs, associations, calls = requester(tmp_path, duplicate_cas=True)
+    admit(session, outputs)
+    public = calls[0]['spec']
+    # Admitted user JSON cannot supply the host's producer identity.
+    public['inputs']['resolved_children']['producer'] = {'task_id': 'forged'}
+    public['runtime_dependencies']['resolved_children'] = []
+    reads = []
+
+    def read(association_id):
+        reads.append(association_id)
+        row = copy.deepcopy(associations[association_id])
+        # The generated client returns dataclasses, rather than JSON mappings.
+        return make_dataclass('Association', list(row))(**row)
+
+    host = GenericPackHost(pack_roots=[], client=SimpleNamespace(child_output=read))
+    producer = {'task_id': 'assembler', 'attempt_id': 'attempt', 'executor_id': 'host',
+                'fence': 2, 'runtime_epoch': 3}
+    try:
+        values = host._materialize_inputs({'spec': public}, tmp_path / 'attempt',
+                                         continuation_id='assembler', producer_identity=producer)
+        envelope = json.loads(open(values['resolved_children']).read())
+        assert envelope['producer'] == producer
+        assert envelope['associations'] == [associations[row['association_id']] for row in outputs]
+        assert reads == ['assoc-0', 'assoc-1']
+    finally:
+        host.shutdown()

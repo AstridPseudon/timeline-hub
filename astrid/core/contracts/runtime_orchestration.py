@@ -70,6 +70,21 @@ class RuntimeAdmission:
         return json.dumps(self.body, sort_keys=True, separators=(",", ":")).encode()
 
 
+def is_native_assembler_spec(spec: Mapping[str, Any]) -> bool:
+    """Select the captured protocol from immutable admission, never a caller flag."""
+    if spec.get("capability_id") != "rendering.assemble_timeline":
+        return False
+    capture = spec.get("inputs", {}).get("resolved_children")
+    if not isinstance(capture, Mapping) or "admitted_target" not in capture:
+        return False
+    declaration = spec.get("outputs", {}).get("authoring_proposal")
+    target = spec.get("runtime_dependencies", {}).get("publication", {}).get("admitted_target")
+    if (declaration != {"type": "file", "artifact_type": "timeline/authoring-proposal"}
+            or target != capture["admitted_target"]):
+        raise OrchestrationContractError("native assembler requires its admitted target and proposal declaration")
+    return True
+
+
 def build_assembler_admission(
     *,
     capture: Mapping[str, Any],
@@ -106,6 +121,9 @@ def build_assembler_admission(
             raise OrchestrationContractError("assembler media differs from the exact child association")
         order.append(selection["object_id"])
     identity = CapabilityIdentity("rendering.assemble_timeline", assembler_digest)
+    # Captured read/selection records expand the original JSON. Reserve space
+    # for the staged input and native proposal before the normal host runs.
+    json_bytes = 1024 * 1024 + 32 * len(json.dumps(capture, ensure_ascii=False, allow_nan=False).encode("utf-8"))
     return RuntimeAdmission(body={
         "project": target["project_id"],
         **identity.to_dict(),
@@ -125,5 +143,5 @@ def build_assembler_admission(
                 "publication": {"admitted_target": copy.deepcopy(target)},
             },
         },
-        "storage_estimate": {"scratch_bytes": 0, "output_bytes": 0},
+        "storage_estimate": {"scratch_bytes": 2 * json_bytes, "output_bytes": json_bytes},
     }, idempotency_key=idempotency_key)

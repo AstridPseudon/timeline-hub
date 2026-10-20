@@ -9,8 +9,10 @@ from ._common import TimelineEditError
 from .capture import number
 
 
-def capture_assembly(session, state, child_outputs, *, replace_clips):
+def capture_assembly(session, state, child_outputs, *, replace_clips, rationale='Assemble ordered child visuals'):
     """Read exact original inputs once; never select a mutable primary or head."""
+    if not isinstance(rationale, str):
+        raise TimelineEditError('assembly rationale must be a string')
     bundle = session._bundle(state)
     authored = State(bundle)
     replace_clips = list(replace_clips)
@@ -50,4 +52,5 @@ def capture_assembly(session, state, child_outputs, *, replace_clips):
               'base_publication_id': state['base']['publication_id']}
     # Plain task data carries neither the client nor credentials to the worker.
     return json.loads(json.dumps({'admitted_target': target, 'bundle': bundle,
-                                 'replace_clips': replace_clips, 'children': children}, allow_nan=False))
+                                 'replace_clips': replace_clips, 'children': children,
+                                 'rationale': rationale}, allow_nan=False))

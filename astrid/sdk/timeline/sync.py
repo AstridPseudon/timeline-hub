@@ -188,7 +188,8 @@ class TimelineSession:
 
         return self._queue(lambda state: capture_move(self._bundle(state), select, on))
 
-    def admit_assembly(self, child_outputs, *, replace_clips, assembler_digest, idempotency_key):
+    def admit_assembly(self, child_outputs, *, replace_clips, assembler_digest, idempotency_key,
+                       rationale='Assemble ordered child visuals'):
         """Freeze original closure/selected children before registered assembler work.
 
         Child outputs are ordered exact association/object/version selectors.
@@ -201,7 +202,7 @@ class TimelineSession:
             state = self._state()
             if state['pending'] or state['flight'] is not None:
                 raise TimelineEditError('flush pending intent before admitting assembly')
-        capture = capture_assembly(self, state, child_outputs, replace_clips=replace_clips)
+        capture = capture_assembly(self, state, child_outputs, replace_clips=replace_clips, rationale=rationale)
         admission = build_assembler_admission(capture=capture, assembler_digest=assembler_digest,
                                              idempotency_key=idempotency_key)
         with self.outbox.locked():

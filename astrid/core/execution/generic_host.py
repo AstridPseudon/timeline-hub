@@ -6462,6 +6462,7 @@ class GenericPackHost:
         input_size_limits: Mapping[str, int] | None = None,
         storage_policy_version: str | None = None,
         continuation_id: str | None = None,
+        producer_identity: Mapping[str, Any] | None = None,
         file_input_names: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         """Materialize digest inputs and managed registry objects in *attempt*.
@@ -6634,6 +6635,16 @@ class GenericPackHost:
                         or capture.get("admitted_target") != publication.get("admitted_target")):
                     raise HostError("assembler capture differs from immutable admitted target")
                 resolved_envelope["capture"] = _json_safe(capture)
+            from astrid.core.contracts.runtime_orchestration import is_native_assembler_spec
+
+            if is_native_assembler_spec(input_spec) and producer_identity is not None:
+                from astrid.core.execution._child_bridge import resource
+
+                resolved_envelope["producer"] = _json_safe(producer_identity)
+                resolved_envelope["associations"] = [
+                    _json_safe(resource(self._client_operation("child_output")(child["association"]["association_id"])))
+                    for child in capture["children"]
+                ]
             if continuation_id is None:
                 resolved_envelope.pop("continuation_id", None)
             resolved_path = Path(attempt).resolve() / "inputs" / "resolved-children.json"
@@ -9233,6 +9244,9 @@ class GenericPackHost:
                     else None
                 ),
                 continuation_id=task_id,
+                producer_identity={"task_id": task_id, "attempt_id": attempt_id,
+                                   "executor_id": self.executor_id, "fence": fence,
+                                   "runtime_epoch": claim_epoch},
                 file_input_names=frozenset(
                     port.name
                     for port in record.definition.inputs
@@ -9698,14 +9712,19 @@ class GenericPackHost:
             typed_outputs.extend(thumbnail_outputs)
             publication_result: Mapping[str, Any] | None = None
             if capability_id == "rendering.assemble_timeline":
-                publication_result = self._publish_assembled_timeline(
-                    task_data=task_data,
-                    attempt_id=attempt_id,
-                    fence=fence,
-                    lease_token=lease_token,
-                    outputs=typed_outputs,
-                    attempt_root=root,
-                )
+                from astrid.core.contracts.runtime_orchestration import is_native_assembler_spec
+
+                # Captured native proposals settle as files. Only the original
+                # requester can commit them through its ordinary outbox.
+                if not is_native_assembler_spec(_admitted_spec_envelope(spec)):
+                    publication_result = self._publish_assembled_timeline(
+                        task_data=task_data,
+                        attempt_id=attempt_id,
+                        fence=fence,
+                        lease_token=lease_token,
+                        outputs=typed_outputs,
+                        attempt_root=root,
+                    )
             result_names = {
                 descriptor["name"]
                 for descriptor in harvested
