@@ -1,12 +1,11 @@
-<!-- main | 2026-10-20T05:25:21Z | dispatcher heartbeat 10s -->
-# runtime — 2026-10-20T05:20Z (from `date -u`)
-Milestone: M1 RECORDED. M2/M3 merges open in small gated units. Runtime tl/integration 78dfe2f (client 0.2.1 official; 0.2.2 pair 6be9706 on integration).
-Mode: Codex out until ~10-24; Claude fallback, cap 5 workers.
-Integrated since M1: proto-key parity test, capture-cap-trim, popup-read-release-cohort (Bundle2 0.2.3 custody), 0.2.7 doc-object read, deletion-core-land (-1471 lines), headless-bootstrap guard test, door-route-land (+shell repair), capture-refusal-message. ONE runtime full still owed after batch (then D04/RT01/RT02/RT04 -> DELETED).
-In flight (05:15): rt-m3-working-copy-uncertified (05:07 option B: candidate-less working copy admitted cas-only/UNCERTIFIED; forged claims refuse) TOP; rt-m2-render-pub-xfail-fix (05:12: rm stray i.txt/ip/r.txt/rp; per-test port of test_timeline_render_publication.py instead of module xfail). Merge queued: rt-m2-pack-document-read (client 0.2.8 candidate, NOT App-ready, needs Agent pair).
-Next 5: 1) merge the two workers above after review, then ONE runtime full; 2) read-envelope -> canonical image conversion pairing with Agent (02:42 decision, Viewing OK'd 03:05) + ledger row; 3) fresh 0.2.5 itemref generation once Agent union SHA posts; 4) D13 cohort (settled-attempt read, one-shot acceptance, historical selector) qualification; 5) shell-adoption test with dependency row/scope.
-Public10 pairing: CONFIRMED 05:20 — 6be9706 is on tl/integration, contract/client 0.2.2 (release.json, pyproject, package.json), exports TrackSetArgs from package root. Agent may pin it.
-Blocked/needs: Agent union SHA (0.2.5); Agent read-envelope conversion.
-Gates: M1 PASS; gate 1/7 capture waiting option B + Agent conversion; 6 OPEN.
-Inbox: ACK through 05:12 (option B, xfail/stray-file fix dispatched; 04:44 headless guard already merged 37ac0d6; timestamps from date -u).
-Resources: ~9GB free (watch).
+<!-- main | 2026-10-20T05:30:34Z | dispatcher heartbeat 8s -->
+# runtime — 2026-10-20T05:30Z
+Milestone: M1 RECORDED. M2/M3 merges open in small gated units.
+Integrated: Runtime tl/integration 1ad39f5. Merged this session: pack-document-read e068f27 (client 0.2.8 cand, NOT App-ready), render-pub xfail/stray-file fix 7eb4eab, working-copy-uncertified (option B) 1ad39f5 (45 targeted + capture suites pass; candidate-less working copy -> cas/UNCERTIFIED, forged claims refuse). Public10 pair CONFIRMED: 6be9706 on integration, contract/client 0.2.2, TrackSetArgs exported from root.
+FULL RUN (integration 1ad39f5, suite full-restore-integration, 4842 pass / 40 fail / 18 skip): 7 baseline (runtime_boundary x6, zero_shim x1) + 33 NEW, all caused by earlier merged deletion/door-route work leaving tests that still call retired writers (RetiredRouteError / HTTP 410): empty_shell_repair x7, clip_replacement x10, shot_text_bindings x4, shot_candidate_promotion x2, runtime_domains x3, runtime_e2e (KEEP catalog CRUD!) x1, exact_idempotency x1, p1_blockers x1, stage1_completion x1, recorded_responses x2 (409->410 drift), second_client_e2e x1 (node fake product). Plain `full` suite lacks ASTRID_CHECKOUT (184 errors) — use full-restore-integration. D04/RT01/RT02/RT04 ledger rows therefore NOT yet DELETED.
+In flight: rt-m2-full-triage-timeline (empty-shell 7, clip-replacement 10, stage1, p1); rt-m2-full-triage-shots (shots, domains, KEEP catalog CRUD, recorded responses, second-client).
+Next 5: 1) review/merge the two triage workers, re-run ONE full, set ledger rows DELETED; 2) read-envelope -> canonical image conversion pairing with Agent; 3) fresh 0.2.5 generation when Agent union SHA posts; 4) D13 cohort qualification; 5) shell-adoption test with dependency row/scope.
+Blocked/needs: Agent union SHA; Agent read-envelope conversion.
+Gates: M1 PASS; gate 1/7 capture awaits Agent conversion; 6 OPEN.
+Inbox: ACK through 05:12.
+Resources: ~9GB free.
