@@ -1,5 +1,7 @@
 import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import { captureClipTrim, executeClipTrim } from './clipTrimCapture.ts';
+import { captureParentClipAdd, executeParentClipAdd, finishParentClipAdd } from './parentClipAddCapture.ts';
+import { parentClipAddPreview, type ParentClipAddCapturePort } from './parentClipAddGesture.ts';
 import { clipScalarPreview, type ClipScalarCapturePort } from './clipScalarGesture.ts';
 import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
 import { stableOutputIdentity } from '../data/shotComposition.ts';
@@ -320,6 +322,46 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const parentClipAddPort: ParentClipAddCapturePort = {
+    capture({ row, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      if (current.config.clips.some((clip) => clip.id === row.id)
+        || current.resolvedConfig.clips.some((clip) => clip.id === row.id)) {
+        throw new Error('Parent clip.add identity is already displayed');
+      }
+      return freezeJson(json({ ...captureParentClipAdd(bundle, 'parent', row), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as ReturnType<ParentClipAddCapturePort['capture']>;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during parent clip.add');
+      const original = finishParentClipAdd(basis);
+      // Re-execute original collection/read/created claims on current raw bytes, never recapture after an ACK.
+      const result = executeParentClipAdd(bundle, original.command);
+      const preview = parentClipAddPreview(result.command.args.row as Record<string, JSON>);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: result.bundle, preview,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      assertFiniteJson(command);
+      assertFiniteJson(preview);
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.add' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Parent clip.add was not captured by this session or the timeline changed');
+      }
+      if (!equal(preview, entry.payload.preview)) throw new Error('Parent clip.add requires its exact whole-row preview');
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
   const clipParamsPort: ClipParamsCapturePort = {
     capture({ clipId, current }) {
       assertReady();
@@ -626,6 +668,7 @@ export async function createTimelineCommandSession(options: Options) {
     clipTrimPort,
     clipScalarPort,
     clipParamsPort,
+    parentClipAddPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
