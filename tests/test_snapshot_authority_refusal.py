@@ -52,6 +52,27 @@ def capture(tmp_path):
                                idempotency_key="media")["data"]["object_id"]
         publication = fixture["publication"]
         assert publication["shot_revisions"][0]["payload"]["items"][0]["media_id"] == media
+        # Runtime-only seam tests use the frozen real Agent projection as the
+        # trusted provider output. The live Agent golden/pair is a separate gate.
+        from runtime_protocol.contract_metadata import SCHEMA_DIGEST
+        from runtime_protocol.timeline_commit_provider import PROVIDER_ID
+
+        class FrozenProjectionProvider:
+            provider_id = PROVIDER_ID
+            interface_version = 1
+            contract_digest = SCHEMA_DIGEST
+
+            def commit(self, request, port):
+                raise AssertionError("capture admission must not invoke commit")
+
+            def project_capture(self, document, *, authoring_preview=None):
+                assert document["project_id"] == project
+                assert document["timeline_id"] == "main"
+                assert document["parent_revision"]["revision_id"] == "parent-1"
+                assert authoring_preview is None
+                return deepcopy(projection)
+
+        service.register_timeline_commit_provider(FrozenProjectionProvider())
         service.publish_parent_composition(project, "main", publication, idempotency_key="source")
         parent = service.get_project_parent_composition_revision(project, "main", "parent-1")
         shot = service.get_project_shot_revision(project, "shot-shared", "shot-rev-1")
@@ -68,6 +89,8 @@ def capture(tmp_path):
         }
         snapshot["metadata"]["canonical_timeline"] = deepcopy(authority)
         _refresh_identity(snapshot)
+        projection = {"config": deepcopy(snapshot["config"]), "registry": deepcopy(snapshot["registry"]),
+                      "expansion": deepcopy(authority["expansion"])}
         yield service, project, publication, snapshot, media
     finally:
         service.close()

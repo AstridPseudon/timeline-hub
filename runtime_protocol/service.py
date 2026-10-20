@@ -5861,7 +5861,10 @@ class RuntimeService:
             task_spec["required_facts"] = normalize_execution_facts(body["required_facts"], field="required_facts")
         if "storage_estimate" in body:
             task_spec["storage_estimate"] = self.store._validate_storage_estimate(body["storage_estimate"])
-        value = self.store.create_task(capability, task_spec, body.get("project"), body.get("idempotency_key"), body.get("settlement_effect"), digest, enforce_readiness=enforce_readiness, execution_request=execution_request)
+        from .capture_validation import validate_capture
+        inputs = task_spec_value.get("inputs") if isinstance(task_spec_value.get("inputs"), dict) else {}
+        value = self.store.create_task(capability, task_spec, body.get("project"), body.get("idempotency_key"), body.get("settlement_effect"), digest, enforce_readiness=enforce_readiness, execution_request=execution_request,
+                                       capture_validator=lambda snapshot, ref: validate_capture(self, snapshot, ref, inputs))
         return value
 
     def _live_delegating_parent(self, attempt_id, lease, *, identity):
