@@ -6,6 +6,7 @@ import subprocess
 import tarfile
 import xml.etree.ElementTree as ET
 import zipfile
+from datetime import datetime, timedelta
 from pathlib import Path, PureWindowsPath
 from unittest.mock import Mock
 from urllib.error import HTTPError
@@ -64,6 +65,11 @@ def test_bun_build_environment_scrubs_ambient_policy_but_keeps_explicit_cache_an
 def test_service_definitions_match_reviewed_snapshots(system, fixture):
     version, data, log = sample(system)
     rendered = service.render(system, version, data, log, user='S-1-5-21-1234')
+    if system == 'win32':
+        root = ET.fromstring(rendered)
+        ns = {'t': 'http://schemas.microsoft.com/windows/2004/02/mit/task'}
+        boundary = root.find('t:Triggers/t:TimeTrigger/t:StartBoundary', ns)
+        rendered = rendered.replace(boundary.text, '2000-01-01T00:00:00+00:00')
     assert rendered == (FIXTURES / fixture).read_text(encoding='utf-8')
     assert 'npm' not in rendered and 'pack_host' not in rendered and 'chat' not in rendered
     assert 'runtime-service.log' in rendered and 'install.log' not in rendered
@@ -98,8 +104,10 @@ def test_launchd_operations_use_runtime_posix_user_identity(tmp_path, monkeypatc
 
 
 def test_windows_task_settings_and_no_console_executable():
+    before = datetime.now().astimezone() - timedelta(seconds=1)
     version, data, log = sample('win32')
     root = ET.fromstring(service.render('win32', version, data, log, user='S-1-5-21-1234'))
+    after = datetime.now().astimezone() + timedelta(seconds=1)
     ns = {'t': 'http://schemas.microsoft.com/windows/2004/02/mit/task'}
     def field(path):
         return root.find(path, ns).text
@@ -112,7 +120,16 @@ def test_windows_task_settings_and_no_console_executable():
     assert field('t:Triggers/t:LogonTrigger/t:UserId') == 'S-1-5-21-1234'
     assert field('t:Triggers/t:LogonTrigger/t:Repetition/t:Interval') == 'PT1M'
     assert field('t:Triggers/t:LogonTrigger/t:Repetition/t:StopAtDurationEnd') == 'false'
+    logon = root.find('t:Triggers/t:LogonTrigger', ns)
+    assert [child.tag.rsplit('}', 1)[-1] for child in logon] == ['Enabled', 'Repetition', 'UserId']
     assert root.find('t:Triggers/t:LogonTrigger/t:Repetition/t:Duration', ns) is None
+    time_trigger = root.find('t:Triggers/t:TimeTrigger', ns)
+    assert time_trigger is not None
+    assert [child.tag.rsplit('}', 1)[-1] for child in time_trigger] == ['Enabled', 'StartBoundary', 'Repetition']
+    boundary = datetime.fromisoformat(time_trigger.find('t:StartBoundary', ns).text)
+    assert boundary.tzinfo is not None and before <= boundary <= after
+    assert time_trigger.find('t:Repetition/t:Interval', ns).text == 'PT1M'
+    assert time_trigger.find('t:Enabled', ns).text == 'true'
     assert field('t:Actions/t:Exec/t:Command').endswith('pythonw.exe')
     arguments = field('t:Actions/t:Exec/t:Arguments')
     assert 'os.environ.update' in arguments and 'astrid_runtime.cli' in arguments

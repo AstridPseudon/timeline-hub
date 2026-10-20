@@ -8,6 +8,7 @@ import plistlib
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -104,10 +105,11 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str = 
     if system != "win32":
         raise ValueError(f"Unsupported operating system: {system}")
     arguments = subprocess.list2cmdline(argv[1:])
+    start_boundary = datetime.now().astimezone().isoformat(timespec="seconds")
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo><Description>Astrid Runtime</Description></RegistrationInfo>
-  <Triggers><LogonTrigger><Repetition><Interval>PT1M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition><Enabled>true</Enabled><UserId>{escape(user)}</UserId></LogonTrigger></Triggers>
+  <Triggers><LogonTrigger><Enabled>true</Enabled><Repetition><Interval>PT1M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition><UserId>{escape(user)}</UserId></LogonTrigger><TimeTrigger><Enabled>true</Enabled><StartBoundary>{escape(start_boundary)}</StartBoundary><Repetition><Interval>PT1M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition></TimeTrigger></Triggers>
   <Principals><Principal id="Owner"><UserId>{escape(user)}</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
