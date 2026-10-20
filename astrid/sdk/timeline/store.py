@@ -50,7 +50,11 @@ def _stage_step(folder: Path, label: str, state: str) -> tuple[Path, Path]:
     folder.mkdir(parents=True, exist_ok=True)
     name = f"{time.time_ns():020d}-{uuid.uuid4().hex[:4]}.json"
     temporary = folder / f".{name}.tmp"
-    temporary.write_text(json.dumps({"label": str(label), "state": state}), encoding="utf-8")
+    try:
+        temporary.write_text(json.dumps({"label": str(label), "state": state}), encoding="utf-8")
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
     return temporary, folder / name
 
 
@@ -73,6 +77,54 @@ def _read_step(path: Path) -> tuple[str, str]:
 def _discard_half_written(folder: Path) -> None:
     for temporary in Path(folder).glob(".*.tmp"):
         temporary.unlink(missing_ok=True)
+
+
+def _restore_marker(target: Path) -> Path:
+    return target.with_name(f".{target.name}.restore.json")
+
+
+def _stage_restore(target: Path, temporary: Path, *, redo: bool,
+                   sources: list[Path], staged: list[tuple[Path, Path]]) -> None:
+    """Describe only this local stack move, before atomically replacing its draft."""
+    stat = temporary.stat()
+    marker = _restore_marker(target)
+    pending = marker.with_suffix(".tmp")
+    try:
+        pending.write_text(json.dumps({
+            "redo": redo, "target_identity": [stat.st_dev, stat.st_ino],
+            "temporary": temporary.name, "sources": [step.name for step in sources],
+            "reverse": [step.name for _tmp, step in staged],
+        }), encoding="utf-8")
+        os.replace(pending, marker)
+    finally:
+        pending.unlink(missing_ok=True)
+
+
+def _reconcile_restore(target: Path) -> None:
+    """Finish an interrupted local restore under the checkout lock; never use JSON equality."""
+    marker = _restore_marker(target)
+    if not marker.is_file():
+        return
+    move = json.loads(marker.read_text(encoding="utf-8"))
+    source, destination = ((_redo_dir, _history_dir) if move["redo"] else
+                           (_history_dir, _redo_dir))
+    stat = target.stat()
+    replaced = [stat.st_dev, stat.st_ino] == move["target_identity"]
+    for name in move["reverse"]:
+        step = destination(target) / name
+        temporary = step.with_name(f".{name}.tmp")
+        if replaced:
+            if temporary.is_file():
+                os.replace(temporary, step)
+            elif not step.is_file():
+                raise TimelineEditError("interrupted draft restore is missing a reverse step")
+        else:
+            temporary.unlink(missing_ok=True)
+    if replaced:
+        for name in move["sources"]:
+            (source(target) / name).unlink(missing_ok=True)
+    (target.parent / move["temporary"]).unlink(missing_ok=True)
+    marker.unlink()
 
 
 @contextlib.contextmanager

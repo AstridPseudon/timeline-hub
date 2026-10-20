@@ -105,6 +105,12 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
     def load(cls, path: str | Path) -> "Checkout":
         """Open a checkout file (``timelines checkout`` or ``save`` wrote it). Applies `_timeline` edits."""
         path = Path(path)
+        with _store._file_lock(path):
+            _store._reconcile_restore(path)
+            return cls._load_locked(path)
+
+    @classmethod
+    def _load_locked(cls, path: Path) -> "Checkout":
         text = path.read_text(encoding="utf-8")
         raw = json.loads(text)
         tl = cls({}, path=path)
@@ -138,6 +144,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         return saved
 
     def _save_locked(self, target: Path, *, force: bool, record: bool = True) -> Path:
+        _store._reconcile_restore(target)
         self.merged = []
         if self._disk is not None and self.path and Path(self.path) == target and target.is_file():
             now = target.read_text(encoding="utf-8")
@@ -266,6 +273,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
             target = Path(self.path)
             with _store._file_lock(target):
+                _store._restore_marker(target).unlink(missing_ok=True)
                 for folder in (_store._history_dir(target), _store._redo_dir(target)):
                     if folder.exists():
                         shutil.rmtree(folder)
@@ -281,6 +289,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                                (_store._history_dir, _store._redo_dir))
         kind = "redo" if redo else "undo"
         with _store._file_lock(target):
+            _store._reconcile_restore(target)
             start = current = target.read_text(encoding="utf-8")
             base = json.loads(start).get("base_parent")
             selected = []
@@ -305,25 +314,28 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                     current = state
                     labels.append(label)
                 temporary.write_text(current, encoding="utf-8")
+                _store._stage_restore(target, temporary, redo=redo,
+                                      sources=[step for step, _label, _state in selected], staged=staged)
                 os.replace(temporary, target)
             except BaseException:
-                temporary.unlink(missing_ok=True)
-                for step_tmp, _step in staged:
-                    step_tmp.unlink(missing_ok=True)
+                # A replace may have succeeded before the interruption was raised.
+                # Leave that move recoverable, including equal-value/ABA drafts.
+                if temporary.exists() or not _store._restore_marker(target).exists():
+                    _store._restore_marker(target).unlink(missing_ok=True)
+                    temporary.unlink(missing_ok=True)
+                    for step_tmp, _step in staged:
+                        step_tmp.unlink(missing_ok=True)
                 raise
             # Keep every source until the draft and all reverse states are in
             # place. Failed writes/replaces leave the original undo chain intact.
-            for step_tmp, step in staged:
-                os.replace(step_tmp, step)
-            for step, _label, _state in selected:
-                step.unlink()
+            _store._reconcile_restore(target)
             self._reload()
         _journal.record_or_note(self, target, kind=kind, outcome="changed", label="; ".join(labels)[:160],
                                 before=_journal.digest(start), after=_journal.digest(current))
         return labels
 
     def _reload(self) -> None:
-        fresh = Checkout.load(self.path)
+        fresh = Checkout._load_locked(Path(self.path))
         self.bundle, self._mcache, self._journal, self._disk = fresh.bundle, None, [], fresh._disk
 
     @contextlib.contextmanager
