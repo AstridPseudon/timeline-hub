@@ -64,6 +64,12 @@ export function projectTrackCreatePreview(patch: TimelinePatch, current: Timelin
     structuredClone(row) as unknown as TrackDefinition] };
   const resolvedConfig = { ...current.resolvedConfig,
     tracks: [...current.resolvedConfig.tracks, structuredClone(row) as unknown as TrackDefinition] };
-  return assembleTimelineData({ ...current, config, resolvedConfig, output: current.output,
+  const assembled = assembleTimelineData({ ...current, config, resolvedConfig, output: current.output,
     registry: current.registry, assetMap: current.assetMap });
+  const base = current.editProjection?.kind === 'accepted' ? current.editProjection.head
+    : current.head?.headRevisionId && current.head.headPublicationId
+      ? { revisionId: current.head.headRevisionId, publicationId: current.head.headPublicationId } : undefined;
+  return { ...current, ...assembled, dataLanes: current.dataLanes,
+    editProjection: current.editProjection?.kind === 'local' ? current.editProjection
+      : base ? { kind: 'local', base, generation: 0 } : undefined };
 }

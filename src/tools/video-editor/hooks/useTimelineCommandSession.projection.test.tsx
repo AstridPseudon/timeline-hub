@@ -12,6 +12,7 @@ import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
+import { captureTrackCreateEdit, submitTrackCreateEdit } from '../commands/trackCreateGesture.ts';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
@@ -109,6 +110,28 @@ describe('atomic command projection facts', () => {
     expect(snapshots).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
     expect(saveAtHead).not.toHaveBeenCalled();
+  });
+
+  it('lets the mounted hook replace a native birth local fact with its same-session generation', async () => {
+    const { env, mount } = await setup();
+    const mounted = mount();
+    await waitFor(() => expect(mounted.hook.result.current.commands.trackCreatePort).toBeDefined());
+    env.setFault('conflict');
+    const row = { id: 'new-audio', kind: 'audio' as const, label: 'New audio', muted: null,
+      opaque: { keep: [null, false] } };
+
+    act(() => submitTrackCreateEdit(captureTrackCreateEdit(
+      mounted.hook.result.current.commands.trackCreatePort, mounted.hook.result.current.commit.data!, row)));
+    await waitFor(() => expect(mounted.hook.result.current.commands.state.status).toBe('conflict'));
+
+    expect(mounted.hook.result.current.commit.data!.config.tracks.at(-1)).toEqual(row);
+    expect(mounted.hook.result.current.commit.data!.editProjection).toEqual({
+      kind: 'local', base: originalBase, generation: 1,
+    });
+    expect(mounted.hook.result.current.commit.data!.editProjection).not.toEqual({
+      kind: 'local', base: originalBase, generation: 0,
+    });
+    mounted.hook.unmount();
   });
 
   it.each(['manifest', 'revision', 'publication', 'project', 'timeline', 'bundle'] as const)(
