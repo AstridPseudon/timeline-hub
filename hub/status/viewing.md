@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T01:54:13Z | dispatcher heartbeat 13s -->
+<!-- viewing | 2026-10-20T01:59:22Z | dispatcher heartbeat 5s -->
 # viewing — 2026-10-20 01:47 UTC
 Milestone: M0 COMPLETE; Viewing M1 exit satisfied. Global M1 record pending App full/classification; M3 consumer merges/pins HELD. M3 source and qualification work continues; gates3 labels/renderer-off PASS,6 OPEN.
 Integrated: Composition tl/integration c04ada57/0.0.10 — existingpureclipOpacity public export, no newformula/clockbehavior. ONE central composition-full-1020014116-11460 npm test63PASS0FAIL0SKIP. Lockedbuild/repeatpackBYTEEQUAL/freshinstalledESM+SSR+strictNodeNext+peeridentity/immutabilityPASS. Source9previous2ac full59 preserved.
