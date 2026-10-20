@@ -45,6 +45,12 @@ function assertParentBundle(bundle: AuthoredBundle): void {
   }
 }
 
+function parentConfig(bundle: AuthoredBundle): JsonObject {
+  const config = bundle.parent.config;
+  if (!object(config)) throw new ClipMoveError('element overlay requires an authored parent source pin');
+  return config;
+}
+
 function assertParentSelect(select: unknown, kind: 'clip' | 'track'): asserts select is string {
   if (typeof select !== 'string' || select.includes('::') ||
     !new RegExp(`^parent/${kind}:[^/]+$`).test(select)) {
@@ -63,7 +69,7 @@ function collectionPresence(value: unknown): { state: 'absent' } | { state: 'pre
 
 function collectionRows(bundle: AuthoredBundle, kind: 'clip' | 'track'): JSON[] {
   const parent = bundle.parent;
-  const config = parent.config;
+  const config = parentConfig(bundle);
   const key = `${kind}s`;
   const direct = parent[key];
   const configured = config[key];
@@ -81,10 +87,10 @@ function collectionRows(bundle: AuthoredBundle, kind: 'clip' | 'track'): JSON[] 
 function collectionShape(bundle: AuthoredBundle, kind: 'clip' | 'occurrence'): JsonObject {
   if (kind === 'occurrence') return { container: 'array' };
   const parent = bundle.parent;
-  const config = parent.config;
+  const config = parentConfig(bundle);
   return {
     members: collectionPresence(config.clips),
-    config: collectionPresence(parent.config),
+    config: collectionPresence(config),
     payload_members: collectionPresence(parent.clips),
   };
 }
@@ -133,7 +139,7 @@ function appendCreated(ctx: MoveRecording, ref: string, kind: 'clip' | 'track', 
 
 function appendRow(bundle: AuthoredBundle, kind: 'clip' | 'track', row: JsonObject): void {
   const parent = bundle.parent;
-  const config = parent.config;
+  const config = parentConfig(bundle);
   const key = `${kind}s`;
   const direct = parent[key];
   const configured = config[key];
@@ -145,7 +151,8 @@ function appendRow(bundle: AuthoredBundle, kind: 'clip' | 'track', row: JsonObje
 
 function mirrorParentClips(ctx: MoveRecording, before: JSON[], after: JSON[], ordinal: number): void {
   const parent = ctx.state.bundle.parent;
-  if (!Array.isArray(parent.clips) || !Array.isArray(parent.config.clips)) return;
+  const config = parentConfig(ctx.state.bundle);
+  if (!Array.isArray(parent.clips) || !Array.isArray(config.clips)) return;
   const current = ctx.state.get('parent', ['config', 'clips']);
   const next = { state: 'present', value: copy(after) } as const;
   if (equal(current, next)) return;
