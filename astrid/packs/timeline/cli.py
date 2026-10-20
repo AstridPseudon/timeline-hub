@@ -3253,6 +3253,16 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if parsed.extend is not None and parsed.for_seconds is not None:
         raise _VerbError("--for/--duration and --extend both set a length; pick one", 2)
 
+    from astrid.packs.timeline.cli_native import commit_trim, ordinary_trim_requested
+
+    if ordinary_trim_requested(parsed):
+        result = _cmd_commit_edit(parsed, edit=commit_trim)
+        if result is not NotImplemented:
+            return result
+    if parsed.dry_run or parsed.idempotency_key or parsed.json:
+        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native trim; "
+                         "other edit families still use the detached working copy", 2)
+
     if parsed.file:
         tl, target = Checkout.load(parsed.file), parsed.file
     else:
@@ -3657,7 +3667,8 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
                              "--track parent/track:ID --set LABEL (or --clear) for native commits. "
                              "Use edit commands-file TL FILE --base-revision-id REV "
                              "--base-publication-id PUB for a native batch. "
-                             "The detached working-copy flags below are legacy.")
+                             "Ordinary --trim-in/--trim-out on literal parent media also commit directly "
+                             "when no detached working copy exists. Other flags edit a legacy detached working copy.")
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", nargs="?", default=None,
                            help="Timeline id or slug with a saved working copy (or use --file).")
@@ -3765,6 +3776,10 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--remove", action="store_true")
     from astrid.packs.timeline.cli_sweep import add_edit_sweep_flags
     add_edit_sweep_flags(subparser)
+    subparser.add_argument("--dry-run", action="store_true", help="Preview a native trim without accepting a publication.")
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(native_trim_defaults={action.dest: action.default for action in subparser._actions})
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_edit))
 
 
@@ -3861,7 +3876,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
-def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=None) -> int:
+def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=None, edit=None):
     from astrid.core.receipts.contract import CommandReceipt
     from astrid.sdk.contracts import ErrorObject
     from astrid.sdk.timeline._common import TimelineEditError
@@ -3879,7 +3894,11 @@ def _cmd_commit_edit(parsed: argparse.Namespace, *, undo: bool = False, command=
             base = {"base_revision_id": parsed.base_revision_id, "base_publication_id": parsed.base_publication_id}
         session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client, **base)
         options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
-        if batch is not None:
+        if edit is not None:
+            result = edit(session, parsed, options)
+            if result is NotImplemented:
+                return NotImplemented
+        elif batch is not None:
             result = session.commit_many(batch, **options)
         elif command is not None:
             result = session.commit(command, **options)
@@ -3914,7 +3933,7 @@ def _configure_commit_move(subparser: argparse.ArgumentParser) -> None:
 
 COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
-    CommandSpec("edit", help="Commit a native move/track label, or edit a legacy detached working copy.", configure=_configure_edit),
+    CommandSpec("edit", help="Commit a native move, trim or track label, or edit a detached working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),

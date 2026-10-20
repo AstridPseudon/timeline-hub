@@ -258,6 +258,16 @@ class TimelineSession:
                     and pending[0]["select"] == select and pending[0]["args"] == {"on": on})
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
+    def trim(self, select, *, in_s=None, out_s=None, idempotency_key=None, dry_run=False, via="python"):
+        """Capture a literal source trim once, retrying its original flight."""
+        from astrid.sdk.timeline._trim_commands import capture_clip_trim
+
+        self._queue(lambda state: capture_clip_trim(self._bundle(state), select, in_s=in_s, out_s=out_s),
+                    lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.trim"
+                    and pending[0]["select"] == select
+                    and pending[0]["args"] == {"in_s": in_s, "out_s": out_s})
+        return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+
     def undo(self, publications, *, idempotency_key=None, dry_run=False, via="python"):
         publications = list(publications)
         if not publications or len(set(publications)) != len(publications) or not all(isinstance(p, str) and p for p in publications):
