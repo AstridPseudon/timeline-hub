@@ -12,8 +12,9 @@ Date: 2026-10-20
 | item | identity |
 | --- | --- |
 | Agent source root | `tl/agt-m2-transition-current-native-contract`, HEAD `490c10ac12d55f75d698213487353a7912d33067` |
-| Agent source tree | obtained with `git rev-parse HEAD^{tree}` before the candidate edit |
+| Agent source tree | `bf423cf5aeee9ca9081d22c4727e8f34a905ee45` (`git rev-parse HEAD^{tree}` before the candidate edit) |
 | current ordinary schema | `astrid/core/timeline/schema/edit-command.schema.json`, SHA-256 `a6f1aaa9dfcc31828bd04c908158fd7fd9a825df6c9f88f79b81779273a190ef` |
+| proposed private schema | same path, SHA-256 `ca4c59d47127e4846a7a7ae4cce2c02b097a73a051391677f5df40d468664f22` |
 | App prerequisite | public Composition 0.0.13, SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738` |
 | App observed source | `ElementsLibraryPanel.tsx` -> `runtime/element-adapter.ts`, as named by `ap2-m2-element-remaining-literal-ingresses-REPORT.md` |
 | Runtime prerequisite | Agent `8130a401bf44a518d5a40ae274d398b8c560be55`, Runtime `2c4ac180c2220bdad966bc01e95ad230e99ce26a` are the current App report tuple; neither is changed by this proposal |
