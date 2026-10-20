@@ -28,8 +28,6 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
-import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
-import type { TimelineDataRef } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 
 type LocalTimelineShotBrowserProps = {
   projectSlug: string;
@@ -47,9 +45,6 @@ type LocalTimelineShotBrowserProps = {
   shotSetPort?: ShotSetCapturePort;
   /** Qualified parent editor session for canonical occurrence media edits. */
   occurrenceMediaPort?: OccurrenceMediaCapturePort;
-  mediaSelectionReader?: Pick<DataProvider, 'getProjectMediaSelection' | 'getProjectVerifiedMedia'>;
-  mediaImportProvider?: Pick<DataProvider, 'prepareMediaImport'>;
-  hostTimelineDataRef?: TimelineDataRef;
   /** Receives the latest graph after an embedded shot edit is published. */
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
@@ -167,7 +162,7 @@ function isCompositionForDocument(
     && composition.occurrences.length > 0;
 }
 
-export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, shotSetPort, occurrenceMediaPort, mediaSelectionReader, mediaImportProvider, hostTimelineDataRef, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
+export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, shotSetPort, occurrenceMediaPort, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -312,9 +307,6 @@ export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, 
           onClose={onClose}
           shotSetPort={shotSetPort}
           occurrenceMediaPort={occurrenceMediaPort}
-          mediaSelectionReader={mediaSelectionReader}
-          mediaImportProvider={mediaImportProvider}
-          hostTimelineDataRef={hostTimelineDataRef}
           onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
           onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
           onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}

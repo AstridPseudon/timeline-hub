@@ -639,7 +639,11 @@ function useTimelinePlaybackContextValue({
   ]);
 }
 
-export function useTimelineState(services: TimelineHostServiceHooks, initialTimelineData?: TimelineData): UseTimelineStateResult {
+export function useTimelineState(
+  services: TimelineHostServiceHooks,
+  initialTimelineData?: TimelineData,
+  occurrenceMediaContext?: { occurrenceId: string; port: OccurrenceMediaCapturePort },
+): UseTimelineStateResult {
   const runtime = useVideoEditorRuntime();
   const runtimeRef = useRef(runtime);
   runtimeRef.current = runtime;
@@ -949,6 +953,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry,
     invalidateAssetRegistry,
     resolveAssetUrl,
+    occurrenceMediaPort: occurrenceMediaContext?.port,
+    occurrenceId: occurrenceMediaContext?.occurrenceId,
   });
 
   const clipResize = useClipResize({
