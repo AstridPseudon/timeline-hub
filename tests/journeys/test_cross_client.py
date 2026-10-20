@@ -12,6 +12,7 @@ import os
 import struct
 import subprocess
 import sys
+import urllib.request
 import zlib
 from pathlib import Path
 
@@ -42,10 +43,11 @@ def daemon(real_runtime, tmp_path):
 @pytest.fixture
 def env(daemon, tmp_path) -> dict[str, str]:
     """Built from nothing, like the App harness does: no ambient Astrid state and no ambient Runtime."""
-    (tmp_path / "home").mkdir()
+    home = Path(os.environ["HOME"])  # the sandboxed HOME every test gets (tests/conftest.py)
+    assert home.is_dir() and home.is_relative_to(tmp_path), home
     return {
         "PATH": os.environ["PATH"],
-        "HOME": str(tmp_path / "home"),
+        "HOME": str(home),
         "XDG_STATE_HOME": str(tmp_path / "state"),
         "ASTRID_RUNTIME_DATA_ROOT": str(tmp_path / "astrid-data"),
         "PYTHONPATH": str(ASTRID),
@@ -93,6 +95,13 @@ def test_identity_names_the_daemon_and_this_astrid_without_a_launcher(daemon, en
     assert not (tmp_path / "astrid-data").exists()
 
 
+def worker_actor() -> str:
+    """The actor the daemon's worker credential is bound to: a host may register only as the executor it names (the App reads it from discovery)."""
+    from runtime_protocol.daemon import WORKER_ACTOR
+
+    return WORKER_ACTOR
+
+
 def test_the_explicit_context_is_all_or_nothing_and_checked_against_the_daemon(daemon, env):
     for name in CONTEXT.values():
         partial = {key: value for key, value in env.items() if key != name}
@@ -107,7 +116,7 @@ def test_marker_executor_registers_runs_once_and_settles_a_png(daemon, env, tmp_
     credential = tmp_path / "worker.token"
     credential.write_text(daemon.worker_token, encoding="utf-8")
     credential.chmod(0o600)
-    host = ["host", "--pack-root", str(tmp_path / "packs"), "--worker-credential", str(credential), "--color", "336699"]
+    host = ["host", "--pack-root", str(tmp_path / "packs"), "--worker-credential", str(credential), "--executor-id", worker_actor(), "--color", "336699"]
 
     assert cross_client(env, *host, "--register")["capability_id"] == "f2.marker"
 
@@ -126,11 +135,44 @@ def test_marker_executor_registers_runs_once_and_settles_a_png(daemon, env, tmp_
 
         settled = cross_client(env, *host, "--run-once")
         assert (settled["task_id"], settled["state"]) == (task_id, "succeeded")
-        [output] = settled["outputs"]
-        assert (output["name"], output["media_type"]) == ("marker", "image/png")
+        outputs = {item["name"]: item for item in settled["outputs"]}
+        assert {name: item["media_type"] for name, item in outputs.items()} == {"marker": "image/png", "marker_clip": "video/webm"}
+        # A `task:T/name#n` handle counts all of a task's outputs, so the clip is #1 and the PNG stays #0 (case 1 names it).
+        assert {name: item["ordinal"] for name, item in outputs.items()} == {"marker": 0, "marker_clip": 1}
         assert client.tasks.show(task_id).data["state"] == "succeeded"
-        width, height, pixel = png_pixels(client.media.read_bytes(output["object_id"]))
+        width, height, pixel = png_pixels(client.media.read_bytes(outputs["marker"]["object_id"]))
         assert (width, height, pixel.hex()) == (64, 48, "336699")
+        # The frame marker of a render has to be a video: a 2 s VP8 clip of the same colour.
+        clip = tmp_path / "marker_clip.webm"
+        clip.write_bytes(client.media.read_bytes(outputs["marker_clip"]["object_id"]))
+        probed = json.loads(subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "stream=codec_name,width,height,color_space,color_primaries,color_transfer,color_range:format=duration", "-of", "json", str(clip)],
+            capture_output=True, check=True, text=True).stdout)
+        assert [(item["codec_name"], item["width"], item["height"]) for item in probed["streams"]] == [("vp8", 320, 180)]
+        # Its colour is said, not guessed: an untagged clip is decoded differently by a browser's <video> and its WebCodecs path.
+        assert {key: probed["streams"][0][key] for key in ("color_space", "color_primaries", "color_transfer", "color_range")} == {
+            "color_space": "smpte170m", "color_primaries": "smpte170m", "color_transfer": "smpte170m", "color_range": "tv"}
+        assert float(probed["format"]["duration"]) == pytest.approx(2, abs=0.1)
+        frame = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(clip), "-frames:v", "1", "-vf", "scale=1:1,format=rgb24", "-f", "rawvideo", "-"],
+                               capture_output=True, check=True).stdout
+        assert all(abs(got - want) <= 4 for got, want in zip(frame, bytes.fromhex("336699"))), list(frame)
 
         idle = cross_client(env, *host, "--run-once")
         assert (idle["task_id"], idle["state"], idle["outputs"]) == (None, "idle", [])
+
+
+def test_render_flag_hosts_the_rendering_pack_beside_the_marker(daemon, env, tmp_path):
+    credential = tmp_path / "worker.token"
+    credential.write_text(daemon.worker_token, encoding="utf-8")
+    credential.chmod(0o600)
+    host = ["host", "--pack-root", str(tmp_path / "packs"), "--worker-credential", str(credential), "--executor-id", worker_actor(), "--register"]
+
+    def registered() -> set[str]:
+        call = urllib.request.Request(f"{daemon.endpoint}/v1/capabilities?limit=200", headers={"Authorization": f"Bearer {daemon.token}"})
+        with urllib.request.urlopen(call, timeout=60) as answer:
+            return {item["capability_id"] for item in json.load(answer)["items"]}
+
+    cross_client(env, *host)
+    assert "f2.marker" in registered() and "rendering.render" not in registered()
+    cross_client(env, *host, "--render")
+    assert {"f2.marker", "rendering.render"} <= registered()

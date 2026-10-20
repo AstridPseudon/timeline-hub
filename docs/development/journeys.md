@@ -14,7 +14,7 @@ Options beyond `--tier`, `--reference`, `--timeline` and `--summary`:
 | Option | Meaning |
 | --- | --- |
 | `--reference generated` | Build a small stopped reference instead of using a film: one project (`journey`), three 4 s ffmpeg test clips and one media-only timeline (`main`), made by `astrid/core/dev/reference_realm.py` (`astrid_runtime workspace create` plus an in-process `RuntimeService`, no launcher). `--timeline` defaults to `journey/main` and `--range` to `2 6`. Needs `ffmpeg`. |
-| `--backend rendering.remotion\|rendering.ffmpeg` | Renderer for every render (default Remotion). With ffmpeg the Node-pin preflight is skipped and `--review` is never passed (the ffmpeg backend takes `--range` but not review); the film must be media-only. |
+| `--backend rendering.remotion\|rendering.ffmpeg` | Renderer for every render, including the App-shaped one (default: Remotion for the CLI renders, and no `selector` in the App-shaped request, so the host chooses: Remotion when it can run it, else ffmpeg). With ffmpeg the Node-pin preflight is skipped and `--review` is never passed (the ffmpeg backend takes `--range` but not review); the film must be media-only. |
 | `--app-checkout PATH` | A astrid-app checkout whose HEAD is recorded in the summary. |
 | `--skip-app-render` | `runtime_restart` restarts the Runtime but does not admit the App-shaped render (on a real film that render is the whole film). |
 
@@ -49,7 +49,7 @@ usable renderer Node, render the excerpt (`--range 144 152` by default), append 
 6. `runtime_restart`: `astrid_runtime restart`, then, with no Astrid client open, the App's own render request is
    admitted (`build_app_render_admission`: `POST /v1/tasks` with the `Idempotency-Key`
    `astrid.render:v1:<timeline>:head:download:<file>`, the bearer token from `credentials/astrid.json`, the digest and storage
-   estimate of `rendering.render` from `GET /v1/capabilities`, the selected backend as `selector`) and must complete.
+   estimate of `rendering.render` from `GET /v1/capabilities`; the `selector` only when `--backend` is given, as the App names no renderer for an ordinary timeline) and must complete.
    The output file is not inspected: the destination is `download`. Then a render succeeds on the restarted Runtime.
 
 SIGTERM and SIGINT record an interrupted failure and run teardown: restore the source probe, stop the private Runtime,
@@ -78,11 +78,12 @@ opens in-process listing its project, 3 objects and timeline.
 The full smoke runs on macOS only, for now. The Runtime launcher (`python -m astrid_runtime up|restart|down`) takes
 Darwin audit-token custody of the Runtime process, and there is no Linux custody provider yet, so on Linux
 `adopt` is refused with "Darwin audit-token custody is unavailable" (the generated reference is built and cloned up to that
-point). The journey deliberately has no shim for this: it would test a launcher the product does not ship. Separately,
-`rendering.render` readiness requires Remotion even for a media-only timeline, so `--backend rendering.ffmpeg` shortens
-the render but does not remove the Remotion requirement from the Runtime (the `doctor` phase still wants a usable renderer Node). Until the launcher has a Linux custody provider,
+point). The journey deliberately has no shim for this: it would test a launcher the product does not ship. Remotion
+is no longer part of `rendering.render` readiness: it is checked per task (a task that selects `rendering.remotion` on a
+host that cannot run it fails at its lease; a task that names no renderer renders with ffmpeg there). With
+`--backend rendering.ffmpeg` the Node-pin preflight is skipped, though the `doctor` phase still reports the Remotion fault. Until the launcher has a Linux custody provider,
 the end-to-end run stays on the reference Mac; Linux CI can run the plumbing tests only.
 
-The three-product thin slice (F2) is not a phase here. It is an App Playwright spec, `astrid-app/tests/e2e/local/three-products.spec.ts`, run by `npm run test:e2e:three-products` and by the nightly `three-products` job in `astrid-app/.github/workflows/direct-journey.yml`; it runs on Linux and drives this package's `astrid` CLI and `astrid.core.dev.cross_client` against a throwaway Runtime. `astrid dev journey --tier full` folds it in with card F2-L2.
+The three-product thin slice (F2) is not a phase here. It is an App Playwright spec, `astrid-app/tests/e2e/local/three-products.spec.ts`, run by `npm run test:e2e:three-products` and by the nightly `three-products` job in `astrid-app/.github/workflows/direct-journey.yml`; it runs on Linux in installed Chrome (the render case plays H.264 and AAC) and drives this package's `astrid` CLI and `astrid.core.dev.cross_client` against a throwaway Runtime; `cross_client host --render` makes the same worker host `rendering.render`, which a host without Remotion advertises ready and renders with ffmpeg for a task that names no renderer. `astrid dev journey --tier full` folds it in with card F2-L2.
 
 The wider cross-repo testing plan (what the journeys gate, and the other layers) is in `testing-plan.md`.

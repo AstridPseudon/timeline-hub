@@ -272,10 +272,17 @@ def test_app_render_admission_has_the_apps_exact_shape() -> None:
         "body": {"project": "film", "capability_id": "rendering.render", "capability_digest": "sha256:" + "ab" * 32,
                  "schema_version": "1", "input_object_ids": [],
                  "spec": {"family": "rendering.render",
-                          "params": {"timeline_ref": "main", "selector": "rendering.remotion", "output_name": "out.mp4"},
+                          "params": {"timeline_ref": "main", "output_name": "out.mp4"},
                           "output_policy": {"format": "mp4", "destination": "download", "filename": "out.mp4"}},
                  "storage_estimate": {"scratch_bytes": 123, "output_bytes": 456}, "settlement_effect": {}},
     }
+
+
+def test_app_render_admission_names_a_renderer_only_when_one_is_chosen() -> None:
+    admit = lambda **extra: journey.build_app_render_admission(project="p", timeline_id="t", output_name="o.mp4",
+                                                               capability=CAPABILITY, token="x", **extra)
+    assert "selector" not in admit()["body"]["spec"]["params"]
+    assert admit(backend="rendering.remotion")["body"]["spec"]["params"]["selector"] == "rendering.remotion"
 
 
 def test_app_render_admission_with_a_version_and_the_ffmpeg_selector() -> None:
@@ -453,9 +460,19 @@ def test_runtime_restart_restarts_then_admits_the_apps_request_and_waits(tmp_pat
     j.runtime_restart()
     assert runner.calls == [["restart"]]
     post = next(r for r in server.requests if r["method"] == "POST")
-    assert post["path"] == "/v1/tasks" and post["body"]["spec"]["params"]["selector"] == "rendering.remotion"
+    # The App names no renderer for an ordinary timeline: the host chooses.
+    assert post["path"] == "/v1/tasks" and "selector" not in post["body"]["spec"]["params"]
     assert post["headers"]["Idempotency-Key"].startswith("astrid.render:v1:main:head:download:v6-app-")
     assert runner.details["runtime_restart"]["app_render_state"] == "succeeded"
+
+
+def test_runtime_restart_sends_the_selector_when_a_backend_was_chosen(tmp_path: Path, runtime_server) -> None:
+    server = runtime_server(_runtime_routes("succeeded"))
+    j, _ = _restart_journey(tmp_path, server)
+    j.app_selector = "rendering.ffmpeg"
+    j.runtime_restart()
+    post = next(r for r in server.requests if r["method"] == "POST")
+    assert post["body"]["spec"]["params"]["selector"] == "rendering.ffmpeg"
 
 
 def test_runtime_restart_fails_when_the_app_render_does_not_complete(tmp_path: Path, runtime_server) -> None:
@@ -525,7 +542,8 @@ def _captured_main(monkeypatch, tmp_path: Path, argv: list[str]) -> dict:
 def test_generated_reference_needs_no_timeline_and_gets_the_short_excerpt(monkeypatch, tmp_path: Path) -> None:
     seen = _captured_main(monkeypatch, tmp_path, ["--tier", "smoke", "--reference", "generated"])
     assert seen["reference"] is None and seen["timeline"] == "journey/main"
-    assert (seen["start"], seen["end"]) == journey.GENERATED_RANGE and seen["backend"] == "rendering.remotion"
+    # No --backend: the CLI renders default to Remotion inside run(), and the App-shaped render names no renderer.
+    assert (seen["start"], seen["end"]) == journey.GENERATED_RANGE and seen["backend"] is None
     assert seen["app_checkout"] is None and seen["app_render"] is True
 
 
