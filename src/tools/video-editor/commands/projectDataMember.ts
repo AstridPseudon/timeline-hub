@@ -27,7 +27,7 @@ type ProjectDataArgs = {
   mode: 'replace';
 };
 
-type ProjectDataPatchArgs = {
+export type ProjectDataPatchArgs = {
   key: string;
   value: JSON;
   mode?: 'merge' | 'replace';
@@ -209,12 +209,21 @@ function deepMergeObject(target: Record<string, JSON>, source: Record<string, JS
   return target;
 }
 
-function lowerProjectDataValue(original: JSON | undefined, args: ProjectDataPatchArgs): JSON {
+export function projectDataValue(original: JSON | undefined, args: ProjectDataPatchArgs): JSON {
   if (args.mode !== 'merge' || original === undefined || original === null || typeof original !== 'object' ||
     Array.isArray(original) || args.value === null || typeof args.value !== 'object' || Array.isArray(args.value)) {
     return copy(args.value);
   }
   return deepMergeObject(copy(original) as Record<string, JSON>, args.value as Record<string, JSON>);
+}
+
+export function projectDataOperationReason(operation: TimelinePatchOperation): string | undefined {
+  try {
+    validateOperation(operation);
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
 }
 
 function orderedOperations(patch: TimelinePatch): Array<{ operation: ProjectDataOperation; index: number }> {
@@ -261,7 +270,7 @@ function applyProjectDataMember(
   ctx.object('parent', ['config', 'app']);
   ctx.object('parent', ['config', 'app', args.target]);
   const original = ctx.state.get('parent', ['config', 'app', args.target, args.key]);
-  const projectedValue = lowerProjectDataValue(
+  const projectedValue = projectDataValue(
     original.state === 'present' ? original.value : undefined,
     { value: args.value, mode: sourceMode },
   );

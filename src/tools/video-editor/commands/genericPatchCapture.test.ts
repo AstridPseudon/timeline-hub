@@ -15,6 +15,11 @@ const nativePatch = (hold = 1.25): TimelinePatch => ({ version: 1, operations: [
   { op: 'track.update', target: 'V1', payload: { label: '', mode: 'merge' }, order: 2 },
   { op: 'clip.update', target: 'x', payload: { hold }, order: 1 },
 ] });
+const projectDataWrite = (key: string, value: unknown, mode?: 'merge' | 'replace') => ({
+  op: 'project-data.write' as const,
+  target: 'com.example.compiler-canary',
+  payload: { key, value, ...(mode === undefined ? {} : { mode }) },
+});
 
 async function authoredBundle() {
   const env = await environment();
@@ -47,6 +52,68 @@ describe('bounded native generic patch capture', () => {
       { op: 'clip.move', target: 'y', payload: { at: 6 } },
       { op: 'clip.update', target: 'y', payload: { values: { hold: 4 }, clear: [] } },
     ] })).toBe('supported');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      projectDataWrite('settings', { volume: 1 }),
+    ] })).toBe('supported');
+    expect(classifyGenericPatch({ version: 1, operations: [
+      projectDataWrite('settings', { volume: 1 }),
+      { op: 'project-data.delete', target: 'com.example.compiler-canary', payload: { key: 'old' } },
+    ] })).toBe('mixed');
+  });
+
+  it('dispatches project-data writes through the native command batch and preview seam', async () => {
+    const { env, bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    const initial = { settings: { keep: true, volume: 1 }, sibling: null };
+    bundle.parent.config = { app: { 'com.example.compiler-canary': copy(initial) } };
+    env.current().config.app = { 'com.example.compiler-canary': copy(initial) };
+    const patch: TimelinePatch = { version: 1, operations: [
+      projectDataWrite('settings', { volume: 3 }, 'merge'),
+    ] };
+
+    const result = captureGenericPatch(bundle, patch, () => { throw new Error('project-data must not resolve an owner'); });
+
+    expect(result.owners).toEqual(['parent']);
+    expect(result.commands.map((command) => command.op)).toEqual(['project-data.write']);
+    expect(result.bundle.parent.config.app).toEqual({ 'com.example.compiler-canary': {
+      settings: { keep: true, volume: 3 }, sibling: null,
+    } });
+    expect(result.preview.operations).toEqual(patch.operations);
+    expect(projectGenericPatchPreview(result.preview, env.current())?.config.app).toEqual({
+      'com.example.compiler-canary': { settings: { keep: true, volume: 3 }, sibling: null },
+    });
+    expect(executeGenericPatch(copy(bundle), result.commands).bundle).toEqual(result.bundle);
+  });
+
+  it('keeps the original project-data leaf guard on generic replay', async () => {
+    const { bundle: source } = await authoredBundle();
+    const bundle = copy(source);
+    bundle.parent.config = { app: { 'com.example.compiler-canary': { source: 'A', sibling: true } } };
+    const result = captureGenericPatch(bundle, {
+      version: 1,
+      operations: [projectDataWrite('source', 'B')],
+    }, () => 'unreachable');
+    const stale = copy(bundle);
+    (stale.parent.config.app!['com.example.compiler-canary'] as Record<string, unknown>).source = 'C';
+
+    expect(() => executeGenericPatch(stale, result.commands)).toThrow(/submitted expect/);
+  });
+
+  it('refuses a project-data write mixed with an unsupported delete before owner resolution', async () => {
+    const { bundle } = await authoredBundle();
+    const before = copy(bundle);
+    let resolved = false;
+    const patch: TimelinePatch = { version: 1, operations: [
+      projectDataWrite('source', 1),
+      { op: 'project-data.delete', target: 'com.example.compiler-canary', payload: { key: 'old' } },
+    ] };
+
+    expect(() => captureGenericPatch(bundle, patch, () => {
+      resolved = true;
+      return 'parent';
+    })).toThrow(GenericPatchRefusal);
+    expect(resolved).toBe(false);
+    expect(bundle).toEqual(before);
   });
 
   it('captures one ordered command list against one sequential authored bundle', async () => {
