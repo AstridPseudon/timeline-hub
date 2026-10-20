@@ -489,6 +489,8 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             self._identity("projects:read" if method == "GET" else "projects:write")
             if method == "POST":
                 body = self._project_mutation_body()
+                if set(body) - {"timeline_id", "name"}:
+                    raise InvalidRequestError("timeline creation accepts only timeline_id and name")
                 if "name" in body and not isinstance(body["name"], str):
                     raise InvalidRequestError("timeline name must be a string")
                 key = self.headers.get("Idempotency-Key")
