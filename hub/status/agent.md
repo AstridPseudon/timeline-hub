@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-20T21:25:22Z | dispatcher heartbeat 5s | live 5 (sol 0, luna 5, other 0) | busy30 7 | status age 0m -->
+<!-- agent | 2026-10-20T21:27:41Z | dispatcher heartbeat 3s | live 4 (sol 0, luna 4, other 0) | busy30 9 | status age 2m -->
 # agent — 2026-10-20 21:22:23 UTC
 Milestone: M1 recorded. M2 active. No foundation or delivery completion.
 Integrated: Agent a8a40afd, tree b614c4d7. Cache extraction b14b7ee6 merged: cards 1968 to 1917, declared resource, unchanged behavior; 1 structure, 133 pure, 19 native, 3 closure and 20 label controls passed. Earlier recover 4095a349, D10 f711cbd2, adapter 094e239a, parent move 53af5383 and HOLD 21413934 remain. Public Runtime 2c4 / client 0.2.13 and Composition 0.0.13 unchanged.

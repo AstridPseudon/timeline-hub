@@ -1,0 +1,4 @@
+# Agent WC2 deletion — 2026-10-20 21:27 UTC
+Agent integration d30894a7a merges ecfa19c52, removing promote_approved_authoring_candidate and both SDK exports. Independent public conversion review approved exact 5e30 behavior; current landing preserves the 7 real requester tests and 24 digest/frozen-render controls. All frozen render/restart/lost-ACK/single-generation assertions remain. Proposal digest and original admitted target are checked through the actual requester path; refusal preserves head/history and durable draft. WC2 ledger is DELETED. WC1 and WC5 remain held, and public013 pins are unchanged. Current cache extraction preserved.
+Gate1 bounded current proof passed83; Gate3 import/process-fenced proof passed26. The uncovered real Door and broader non-timing front-end cases are assigned, no complete gate claim.
+ONE full runs on the prior a8a40afd snapshot with its exact installed child; WC2 is excluded from that full. No duplicate full requested.
