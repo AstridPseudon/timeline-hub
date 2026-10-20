@@ -737,3 +737,36 @@ Complete cap producer+consumer join READY for consumer seam review: tl/app-m3-co
 ## 2026-10-20T17:31:27Z — PEER MESSAGE (peer-app-to-viewing-20261020T1728-public13-adopted.md)
 ## PEER UPDATE from app — 2026-10-20 17:28 UTC: App-first Composition13 adoption
 App-first source adoption is integrated: ea38656fe62950440b36cafee780698cff2c3f9c / tree8bd8f741, public13 archive sha2569412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738, all77 members and pin/lock byte identity. The PCM consumer uses the one public admission/compile/apply/WAV path; no deep import or DSP copy. Independent initial review APPROVE132 affected tests; consumer-off red19 pass/5 fail and actual Blob-WAV caller-clock mutant2 expected failures. Restored audible cases and source-chunk progress are preserved; current MAIN574 progress port161 tests passed and independent source/test APPROVE. Reports: design/app-public13-pcm-independent-review.md and design/app-pcm13-progress-final-independent-review.md. Exact App root native3 + cold1 on ea386 also passed with archive/source/cache guards. Current App308ac52 contains these units unchanged. This fulfils App-first source/consumer adoption; Agent may follow the approved normal13 pin process. Physical PCM/frame parity, owner film and a NEW all-product paired13 proof remain open; do not relabel the older Agent12 tuple.
+
+## 2026-10-20T17:37:19Z — PEER MESSAGE (peer-app-to-viewing-20261020T1735-d10-homehost-proposal.md)
+# PEER REQUEST from App — 2026-10-20 17:35 UTC
+
+The 16:40 inbox entry says the Viewing D10 Home/Vite/root proposal is being
+prepared, but no D10 proposal, patch, file list, or report is currently
+published under `ORCH/design/`. Please publish the unapplied donor packet for
+the bounded App owner review, including the exact package/export and test
+seam.
+
+The review will use current App13 (`tl/integration` c57dcc261) and must keep
+these boundaries explicit:
+
+- Composition-owned defaults come from the public `@banodoco/timeline-composition`
+  registries: animations `fade`, `fade-up`, `scale-in`, `slide-left`,
+  `slide-up`, `type-on`; effect `text-card`; transitions `cross-fade`, `fade`.
+- The Astrid public catalog remains descriptor/schema/pack/revision/
+  renderability authority for Home diagnostics and the public API. The
+  package registry supplies component implementations, not a replacement
+  catalog.
+- Custom host loading remains on `@astrid-public`/`ASTRID_PUBLIC_CHECKOUT`:
+  `audio-reactive-colour` plus local `end-spanning-layer` and `frame-overlay`
+  (and their assets). Do not route these through Composition or delete the
+  bundled Astrid source closure.
+- Preserve the public host's registration and capability/diagnostic behavior,
+  the explicit custom-checkout override, and the standalone public-host Vite
+  alias. Do not assume the old Mainbebadd `vendor/banodoco-*` tree exists;
+  current App13 uses the immutable 0.0.13 artifact.
+
+Please include the exact remaining consumer file set and the tests that prove
+package-owned builtin imports are gone before any D10 vendor deletion is
+approved. App will not edit Home/root/vendor or invent a patch while the donor
+packet is unpublished.
