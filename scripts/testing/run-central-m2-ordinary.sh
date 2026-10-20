@@ -20,6 +20,7 @@ TARGET_RUNTIME_SHA=2c4ac180c2220bdad966bc01e95ad230e99ce26a
 TARGET_RUNTIME_TREE=7ab412cc4bcbe517efcfa806e092336390312e18
 EXPECTED_GRAPH_ARCHIVE_SHA=895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30
 EXPECTED_COMPOSITION_TARBALL_SHA=9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+NATIVE_PYTHON=/home/user/work/venv-app2-native/bin/python
 
 test "$(printf %s "$TARGET_AGENT_SHA" | wc -c)" = 40
 test "$(printf %s "$TARGET_RUNTIME_SHA" | wc -c)" = 40
@@ -30,6 +31,7 @@ test "$(git -C "$RUNTIME_REPO" rev-parse "$TARGET_RUNTIME_SHA^{tree}")" = "$TARG
 
 test -d "$LOCKED_GRAPH/node_modules"
 test -f "$LOCKED_GRAPH_ARCHIVE"
+test -x "$NATIVE_PYTHON"
 test "$(sha256sum "$LOCKED_GRAPH_ARCHIVE" | cut -d' ' -f1)" = "$EXPECTED_GRAPH_ARCHIVE_SHA"
 test "$(node -p "require('$LOCKED_GRAPH/node_modules/@banodoco/timeline-composition/package.json').version")" = 0.0.13
 test "$(tar -xOf "$LOCKED_GRAPH_ARCHIVE" vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz | sha256sum | cut -d' ' -f1)" = "$EXPECTED_COMPOSITION_TARBALL_SHA"
@@ -48,6 +50,12 @@ ORIGINAL_NODE_MODULES_TARGET=$(readlink "$APP_ROOT/node_modules" 2>/dev/null || 
 test -n "$ORIGINAL_NODE_MODULES_TARGET"
 test "$(realpath "$APP_ROOT/node_modules")" = /home/user/work/app/node_modules
 
+# Chromium derives its profile and Unix-domain socket paths from TMPDIR. Keep
+# those paths short and private; the App/agent/runtime work roots intentionally
+# remain in the worktree so this does not create a second App checkout.
+BROWSER_ROOT=$(mktemp -d /tmp/tl-chromium-XXXXXX)
+mkdir -p "$BROWSER_ROOT/tmp" "$BROWSER_ROOT/xdg-cache" "$BROWSER_ROOT/xdg-config"
+
 cleanup() {
   if test -n "$ORIGINAL_NODE_MODULES_TARGET"; then
     rm -f "$APP_ROOT/node_modules"
@@ -55,6 +63,9 @@ cleanup() {
   fi
   if test -z "$(git -C "$APP_ROOT" ls-files -- 'dist/**')"; then
     rm -rf "$APP_ROOT/dist"
+  fi
+  if test -n "${BROWSER_ROOT:-}"; then
+    rm -rf "$BROWSER_ROOT"
   fi
   rm -rf "$RUN_ROOT"
 }
@@ -129,9 +140,9 @@ test -x "$RUN_ROOT/node-modules/.bin/playwright"
 rm -f "$APP_ROOT/node_modules"
 ln -s "$RUN_ROOT/node-modules" "$APP_ROOT/node_modules"
 export ASTRID_CHECKOUT="$RUN_ROOT/agent"
-export ASTRID_PYTHON=/home/user/work/venv-agent/bin/python
+export ASTRID_PYTHON="$NATIVE_PYTHON"
 export ASTRID_RUNTIME_CHECKOUT="$RUN_ROOT/runtime"
-export ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python
+export ASTRID_RUNTIME_PYTHON="$NATIVE_PYTHON"
 export TIMELINE_BUNDLE_AGENT_HEAD="$TARGET_AGENT_SHA"
 export TIMELINE_BUNDLE_RUNTIME_HEAD="$TARGET_RUNTIME_SHA"
 export PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
@@ -140,7 +151,10 @@ export PWTEST_CACHE_DIR="$RUN_ROOT/pw-cache"
 export PLAYWRIGHT_OUTPUT_DIR="$RUN_ROOT/browser-output"
 export npm_config_cache="$RUN_ROOT/npm-cache"
 export VITE_CACHE_DIR="$RUN_ROOT/vite-cache"
-export TMPDIR="$RUN_ROOT/tmp"
+export TMPDIR="$BROWSER_ROOT/tmp"
+export XDG_CACHE_HOME="$BROWSER_ROOT/xdg-cache"
+export XDG_CONFIG_HOME="$BROWSER_ROOT/xdg-config"
+export DEBUG=pw:browser
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONNOUSERSITE=1
 export NODE_OPTIONS=--max-old-space-size=4096
@@ -148,6 +162,7 @@ unset ASTRID_PUBLIC_CHECKOUT ASTRID_APP_DIRECT_DIST
 
 flock -w 600 /home/user/work/.app-m1-browser.lock sh -c '
   cd "$1"
+  node scripts/testing/chromium-launch-smoke.mjs
   npm run build:hosted
   test -f dist/index.html
   npm run test:e2e:three-products -- --grep "M2 ordinary extension batch"
