@@ -1209,10 +1209,19 @@ test('M2 native occurrence duplicate: lost ACK, Agent label, local label, restar
   await openCommandTimeline(page, harness, seed3);
   const realmBefore = await expectSameRealm(page, harness, astrid);
   const before = await history(harness, seed3);
-  const beforeDocument = (await revisionBody(harness, before.head.revision_id)).payload;
+  const beforeParent = await revisionBody(harness, before.head.revision_id);
+  const beforeDocument = beforeParent.payload;
   const sourceBefore = (beforeDocument.occurrences as Array<Record<string, any>>)
     .find((occurrence) => occurrence.occurrence_id === seed3.occurrenceId)!;
   expect(sourceBefore, 'the seeded canonical occurrence is present in the raw Runtime document').toBeTruthy();
+  const beforeShotResponse = await harness.runtimeJson('GET',
+    `/v1/projects/${harness.seed.projectId}/shots/${seed3.shotId}/revisions/${sourceBefore.shot_revision_id}`);
+  expect(beforeShotResponse.status, JSON.stringify(beforeShotResponse.body)).toBe(200);
+  const beforeShot = beforeShotResponse.body as Record<string, any>;
+  const beforeInternalResponse = await harness.runtimeJson('GET',
+    `${timelineBase(harness, seed3)}/revisions/${beforeShot.internal_timeline_revision_id}`);
+  expect(beforeInternalResponse.status, JSON.stringify(beforeInternalResponse.body)).toBe(200);
+  const beforeInternal = beforeInternalResponse.body as Record<string, any>;
 
   const gesturePosts: string[] = [];
   page.on('request', (request) => {
@@ -1339,10 +1348,32 @@ test('M2 native occurrence duplicate: lost ACK, Agent label, local label, restar
   expect(JSON.parse(wire.posts[4].body).commands).toEqual([{
     schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [duplicate.receipt.receipt_id] },
   }]);
-  expect(undoDuplicate.data.canonical_document).toEqual(agentEdit.data.canonical_document);
-  expect((undoDuplicate.data.canonical_document.parent_revision.payload.occurrences as Array<Record<string, any>>)
+  const expectedPostUndoParent = structuredClone(beforeDocument) as Record<string, any>;
+  const expectedIndependentTrack = (expectedPostUndoParent.config.tracks as Array<Record<string, any>>)
+    .find((track) => track.id === 'S1');
+  expect(expectedIndependentTrack, 'the pre-A fixture has the independent Agent track').toBeTruthy();
+  expectedIndependentTrack!.label = 'F2 Agent duplicate sibling';
+  const finalDocument = undoDuplicate.data.canonical_document;
+  expect(finalDocument.parent_revision.payload)
+    .toEqual(expectedPostUndoParent);
+  expect((finalDocument.parent_revision.payload.occurrences as Array<Record<string, any>>)
     .some((occurrence) => occurrence.occurrence_id === duplicateOccurrenceId)).toBe(false);
-  expect((undoDuplicate.data.canonical_document as any).parent_revision.payload.config.x_f2_opaque).toEqual(seed3.opaque.config);
+  expect((finalDocument.parent_revision.payload.occurrences as Array<Record<string, any>>)
+    .filter((occurrence) => occurrence.occurrence_id === seed3.occurrenceId)).toHaveLength(1);
+  expect(finalDocument.shot_revisions).toEqual([{
+    shot_id: seed3.shotId,
+    revision_id: beforeShot.revision_id,
+    internal_timeline_revision_id: beforeShot.internal_timeline_revision_id,
+    content_digest: beforeShot.content_digest,
+    payload: beforeShot.payload,
+  }]);
+  expect(finalDocument.internal_timeline_revisions).toEqual([{
+    timeline_id: seed3.timelineId,
+    revision_id: beforeInternal.revision_id,
+    content_digest: beforeInternal.content_digest,
+    payload: beforeInternal.payload,
+  }]);
+  expect(finalDocument.dependency_manifest).toEqual(beforeParent.dependency_manifest);
   expect(wire.legacy).toEqual([]);
   await expectImmutableClosure(harness, seed3, undoDuplicate);
   await expectOpaqueDataKept(harness, seed3);
