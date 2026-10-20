@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -591,3 +592,113 @@ def test_sdk_source_reaches_real_final_staging_callback(source_query, tmp_path, 
     assert not list(tmp_path.glob("astrid-frame-capture-*"))
     assert not list((tmp_path / "public/astrid-effects").glob("*/**/*"))
     p.close()
+
+
+def test_native_caller_binds_actual_frame_session_to_admitted_project(tmp_path, monkeypatch):
+    """The production caller reaches the host project binding, not a stub seam."""
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+
+    from astrid.core.execution import remotion_host_session
+    from astrid.core.execution.remotion_host_session import HostRemotionSession
+
+    snapshot, _ = saved(monkeypatch)
+    timeline, assets = paths(tmp_path, snapshot)
+    project = tmp_path / "admitted-remotion"
+    (project / "src").mkdir(parents=True)
+    (project / "src" / "astrid-frame-worker.mjs").write_text("// fixture")
+    cli = project / "node_modules/@remotion/cli/remotion-cli.js"
+    cli.parent.mkdir(parents=True)
+    cli.write_text("// fixture")
+
+    requests = []
+    manager = HostRemotionSession(
+        track=lambda _process: None,
+        untrack=lambda _process: None,
+        root_parent=str(tmp_path),
+    )
+    lease = manager.lease(
+        {
+            "ASTRID_REMOTION_PROJECT_DIR": str(project),
+            "ASTRID_NODE_EXECUTABLE": str(Path(sys.executable).resolve()),
+        },
+        attempt=tmp_path,
+    )
+
+    def exchange(request, **_kwargs):
+        requests.append(request)
+        output_dir = Path(request["outputDir"])
+        output_dir.mkdir(parents=True, exist_ok=True)
+        for frame in request["frames"]:
+            Image.new("RGB", (100, 50)).save(output_dir / f"frame-{frame}.png")
+        return {"ok": True, "findings": []}
+
+    # Keep the real host request projection and its project check; only the
+    # original Node/Chrome exchange is deterministic here.
+    monkeypatch.setattr(manager, "_start", lambda *_args: None)
+    monkeypatch.setattr(manager, "_exchange", exchange)
+
+    class Client:
+        def request(self, identity, request, _parser):
+            return manager.request(lease, {"identity": identity, "request": request})
+
+    monkeypatch.setattr(remotion_host_session, "host_remotion_client", lambda: Client())
+    monkeypatch.setattr(run, "InvocationAssetServer", lambda *args, **kwargs: nullcontext())
+    monkeypatch.setattr(run, "_available_remotion_port", lambda: 32101)
+    monkeypatch.setattr(run.remotion_lock, "remotion_render_lock", nullcontext)
+    monkeypatch.setattr(run, "_validate_project_dir", lambda _: SimpleNamespace(
+        node_executable=Path(sys.executable).resolve(), remotion_cli=cli, node_version="v20.19.4"))
+    monkeypatch.setattr(run, "_regenerate_element_registries", lambda *args: None)
+    monkeypatch.setattr(run, "_validate_renderer_effect_registry", lambda *args: None)
+    monkeypatch.setattr(run, "_effective_registry_state", lambda *args: {})
+    monkeypatch.setattr(composed_frame, "_SHARED_REMOTION_OWNER", None)
+    monkeypatch.setattr(
+        scene_answers,
+        "host_frames_at",
+        lambda props, basis, frames: [
+            {
+                "frame": frame,
+                "width": basis["width"],
+                "height": basis["height"],
+                "layers": [{"clipId": props["timeline"]["clips"][0]["id"]}],
+            }
+            for frame in frames
+        ],
+    )
+
+    provider = composed_frame.RemotionFrameProvider(
+        snapshot,
+        timeline_path=timeline,
+        assets_path=assets,
+        project_dir=project,
+        materialized_root=None,
+        materialized_objects={},
+        cache=composed_frame.FrameCaptureCache(tmp_path / "cache"),
+    )
+    try:
+        assert isinstance(provider.worker.renderer.owner.session, run.PersistentRemotionFrameSession)
+        info = provider.capture(cards(0), tmp_path / "output", (100, 50))
+        assert info["fresh_frames"] == 1
+        assert requests[0]["projectDir"] == str(project)
+        assert "ASTRID_REMOTION_PROJECT_DIR" not in requests[0]["environment"]
+
+        foreign = run.PersistentRemotionFrameSession()
+        with pytest.raises(ValueError, match="host-selected executable or project"):
+            foreign.render(
+                project_dir=tmp_path / "foreign-remotion",
+                composition_id="TimelineComposition",
+                node_executable=Path(sys.executable).resolve(),
+                remotion_cli=cli,
+                props_path=tmp_path / "foreign-props.json",
+                output_dir=tmp_path / "foreign-frames",
+                frames=[0],
+                resolution=(100, 50),
+                port=32101,
+                environment={},
+                identity="foreign-project",
+            )
+        foreign.close()
+    finally:
+        provider.close(force=True)
+        lease.close()
+        manager.close()
