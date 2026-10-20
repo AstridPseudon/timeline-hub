@@ -28,6 +28,7 @@ import {
   type VerifiedMedia,
   type Transport,
   type RequestBody,
+  type DocumentPin,
 } from './generated.ts';
 import {
   RUNTIME_ACCEPTED_SCHEMA_DIGESTS,
@@ -624,6 +625,36 @@ export class AstridRuntimeClient {
 
   async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string) { return this.withSession(() => this.client.listDocuments(projectId, cursor, limit, kind)); }
   async getDocument(projectId: string, documentId: string) { return this.withSession(() => this.client.getDocument(projectId, documentId)); }
+  async getProjectVerifiedDocument(projectId: string, pin: DocumentPin) {
+    const originalPin = { ...pin };
+    return this.withRetainedRead((client) => client.getProjectVerifiedDocument(projectId, originalPin));
+  }
+
+  async getProjectVerifiedDocumentObject(projectId: string, pin: DocumentPin, objectId: string) {
+    const originalPin = { ...pin };
+    return this.withRetainedRead((client) => client.getProjectVerifiedDocumentObject(projectId, originalPin, objectId));
+  }
+
+  private async withRetainedRead<T>(read: (client: WorkspaceClient) => Promise<T>): Promise<T> {
+    const base = this.baseUrl, client = this.client;
+    return this.withSession(async () => {
+      const slot = this.slot, opening = slot.current;
+      const assertCurrent = () => {
+        this.assertNotFenced();
+        if (this.baseUrl !== base || this.client !== client || this.slot !== slot || slot.current !== opening) {
+          throw new RuntimeCompatibilityError('Retained input session changed; draft preserved', base);
+        }
+      };
+      assertCurrent();
+      const session = await opening!;
+      this.checkObservedIdentity(session.health, session.handshake);
+      assertCurrent();
+      const result = await read(client);
+      assertCurrent();
+      this.checkObservedIdentity(session.health, session.handshake);
+      return result;
+    });
+  }
   async createDocument(projectId: string, documentId: string, kind: string, content: unknown, key: string) { return this.withMutation(() => this.client.createDocument(projectId, documentId, kind, content, key)); }
   async updateDocument(projectId: string, documentId: string, version: number, content: unknown, key: string) { return this.withMutation(() => this.client.updateDocument(projectId, documentId, version, key, content)); }
 

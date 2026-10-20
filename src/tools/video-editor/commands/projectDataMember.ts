@@ -105,7 +105,7 @@ function validateValue(value: unknown): asserts value is JSON {
   assertFiniteJson(value);
   const unsafePath = reservedKeyPath(value);
   if (unsafePath) throw new ClipMoveError(`project-data.write value contains reserved object key at ${unsafePath}`);
-  jsonBytes(value);
+  jsonBytes(value as JSON);
 }
 
 function validatePatchArgs(args: unknown): asserts args is ProjectDataPatchArgs {
@@ -186,7 +186,7 @@ function validateLimits(bundle: AuthoredBundle, args: ProjectDataArgs, projected
   if (!has(object(namespace) ? namespace : {}, args.key) && Object.keys(projected).length > MAX_ENTRIES_PER_EXTENSION) {
     throw new ClipMoveError('project-data.write exceeds the 128-entry extension limit');
   }
-  const total = Object.values(projected).reduce((sum, value) => sum + jsonBytes(value), 0);
+  const total = Object.values(projected).reduce<number>((sum, value) => sum + jsonBytes(value), 0);
   if (total > MAX_EXTENSION_TOTAL_BYTES) {
     throw new ClipMoveError('project-data.write exceeds the 1 MiB extension limit');
   }
@@ -209,7 +209,10 @@ function deepMergeObject(target: Record<string, JSON>, source: Record<string, JS
   return target;
 }
 
-function lowerProjectDataValue(original: JSON | undefined, args: ProjectDataPatchArgs): JSON {
+function lowerProjectDataValue(
+  original: JSON | undefined,
+  args: Pick<ProjectDataPatchArgs, 'value' | 'mode'>,
+): JSON {
   if (args.mode !== 'merge' || original === undefined || original === null || typeof original !== 'object' ||
     Array.isArray(original) || args.value === null || typeof args.value !== 'object' || Array.isArray(args.value)) {
     return copy(args.value);

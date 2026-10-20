@@ -331,6 +331,16 @@ export class RuntimeDataProvider implements DataProvider {
 
   private readonly projectId: string;
   private readonly client: AstridRuntimeClient;
+  readonly paramReadClient: NonNullable<DataProvider['paramReadClient']> = {
+    getProjectVerifiedDocument: (projectId, pin) => {
+      if (projectId !== this.projectId) throw new Error('Retained document read belongs to another project');
+      return this.client.getProjectVerifiedDocument(this.projectId, pin);
+    },
+    getProjectVerifiedDocumentObject: (projectId, pin, objectId) => {
+      if (projectId !== this.projectId) throw new Error('Retained document object read belongs to another project');
+      return this.client.getProjectVerifiedDocumentObject(this.projectId, pin, objectId);
+    },
+  };
   private readonly onRuntimeError?: (error: RuntimeConnectorError) => void;
   private activeRegistry: AssetRegistry | null = null;
   private readonly canonicalTimelineState = new Map<string, CanonicalTimelineState>();
@@ -801,7 +811,37 @@ export class RuntimeDataProvider implements DataProvider {
 
   /** Public verified history pins plus scoped immutable reads, never projected rows. */
   async loadTimelineCommandBasis(timelineId: string): Promise<TimelineCommandBasis> {
-    const history = await this.listTimelineCommits(timelineId);
+    const firstHistory = await this.listTimelineCommits(timelineId);
+    const pages = [firstHistory];
+    const seenCursors = new Set<string>();
+    const requireHead = (page: HistoryPage): HistoryPage['head'] => {
+      const head = page?.head;
+      if (!head || typeof head.revision_id !== 'string' || !head.revision_id
+        || typeof head.publication_id !== 'string' || !head.publication_id) {
+        throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a malformed timeline history head');
+      }
+      return head;
+    };
+    const firstHead = requireHead(firstHistory);
+    while (pages[pages.length - 1]!.next_cursor !== null) {
+      const cursor = pages[pages.length - 1]!.next_cursor!;
+      if (seenCursors.has(cursor)) {
+        throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a cyclic timeline history cursor');
+      }
+      seenCursors.add(cursor);
+      const nextPage = await this.listTimelineCommits(timelineId, cursor);
+      const nextHead = requireHead(nextPage);
+      if (nextHead.revision_id !== firstHead.revision_id
+        || nextHead.publication_id !== firstHead.publication_id) {
+        throw new TimelineSchemaIncompatibleError('Workspace Runtime changed the captured timeline history head');
+      }
+      pages.push(nextPage);
+    }
+    const history: HistoryPage = {
+      ...firstHistory,
+      items: pages.flatMap((page) => page.items),
+      next_cursor: null,
+    };
     const head = history.head;
     if (!head?.revision_id || !head.publication_id) {
       throw new TimelineSchemaIncompatibleError('Timeline has no verified authoring history head');

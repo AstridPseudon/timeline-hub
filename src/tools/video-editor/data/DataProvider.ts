@@ -25,8 +25,11 @@ import type {
   CanonicalDocument,
   CommitAcceptedMutation,
   CommitRequest,
+  DocumentPin,
   HistoryPage,
   MutationReceipt,
+  VerifiedDocument,
+  VerifiedDocumentObject,
 } from '@/integrations/runtime/generated.ts';
 export type {
   AssetProfile,
@@ -440,6 +443,11 @@ export interface DataProvider extends AssetResolver {
   commitTimeline?(request: CommitRequest, idempotencyKey: string): Promise<TimelineCommitResult>;
   undoTimeline?(base: TimelineHeadRevision, publications: readonly string[], idempotencyKey: string): Promise<TimelineCommitResult>;
   getRecoverableIdentity?(): Promise<TimelineRecoveryIdentity>;
+  /** Exact retained inputs through this provider's authenticated project session. */
+  readonly paramReadClient?: {
+    getProjectVerifiedDocument(projectId: string, pin: DocumentPin): Promise<VerifiedDocument>;
+    getProjectVerifiedDocumentObject(projectId: string, pin: DocumentPin, objectId: string): Promise<VerifiedDocumentObject>;
+  };
   documents?: import('@/sdk/context.ts').ProjectDocumentSurface;
   projectTranscripts?: import('./typed/projectTranscript.ts').ProjectTranscriptRepository;
   /** When present, writes MUST use this immutable-head CAS path, never numeric versions. */
