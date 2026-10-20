@@ -5,7 +5,7 @@ import copy
 
 import pytest
 
-from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import (
     _digest,
@@ -182,6 +182,32 @@ def test_prepared_ripple_timing_and_padding_survive_lowering_inverse_and_redo(so
             key: value for key, value in before["shots"][shot_id]["payload"]["metadata"].items()
             if key != vo.KEY}
         assert metadata["shot_id"] == before["source_mapping"]["shots"][shot_id]["shot_id"]
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda candidate: candidate["placements"][0].update(shot_revision_id="revision-foreign"),
+    lambda candidate: candidate["placements"][0].update(source_id="source-foreign"),
+    lambda candidate: candidate["source_mapping"]["shots"]["shot-shared"].update(
+        revision_id="revision-foreign"),
+])
+def test_prepared_source_identity_refuses_stale_values_before_capture(mutate):
+    authored, prepared = _voiceover_bundle_and_outcome()
+    mutate(prepared["candidate"])
+    before_authored = copy.deepcopy(authored)
+    before_prepared = copy.deepcopy(prepared)
+    old = {"asset": "voice", "generation_id": "generation-old", "variant_id": "variant-old",
+           "object_id": OLD, "catalog_digest": "sha256:" + "a" * 64}
+    new = {"asset": "draft-voiceover-vo", "generation_id": "generation-new", "variant_id": "variant-new",
+           "object_id": NEW, "catalog_digest": "sha256:" + "b" * 64}
+    verified = [{"selection": copy.deepcopy(media), "media_type": "audio/wav", "size": 4,
+                 "duration_seconds": 4} for media in (old, new)]
+
+    with pytest.raises(CommandError, match="prepared .*source"):
+        capture_draft_voiceover(
+            authored, prepared, media_by_occurrence={"occ-1": new},
+            old_media_by_occurrence={"occ-1": old}, verified_media=verified)
+    assert authored == before_authored
+    assert prepared == before_prepared
 
 
 @pytest.mark.parametrize("change", ["parent-duration", "visual-start", "source-window"])

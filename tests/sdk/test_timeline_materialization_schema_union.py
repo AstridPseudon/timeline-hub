@@ -49,6 +49,14 @@ def without_extent(schema):
     schema['$defs']['EditCommand']['allOf'] = [
         clause for clause in schema['$defs']['EditCommand']['allOf']
         if clause['if']['properties']['op']['const'] != 'occurrence.resize']
+    move = schema['$defs']['OccurrenceMoveArgs']
+    schema['$defs']['OccurrenceMoveArgs'] = {
+        'type': move['type'],
+        'required': ['on', 'track', 'child_track'],
+        'additionalProperties': move['additionalProperties'],
+        'properties': {key: value for key, value in move['properties'].items()
+                       if key != 'start_ms'},
+    }
     return schema
 
 

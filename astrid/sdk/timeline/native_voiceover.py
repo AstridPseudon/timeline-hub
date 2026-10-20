@@ -19,6 +19,54 @@ from .occurrence_commands import capture_occurrence_start
 
 _MEDIA_FIELDS = {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
 _TIMING_FIELDS = ("at", "at_ms", "hold", "from", "to", "speed", "duration", "duration_ms")
+_SOURCE_IDENTITY_FIELDS = (
+    "shot_id", "shot_revision_id", "revision_id", "source_id", "source_revision_id",
+    "source_content_digest", "content_digest", "owner", "owner_id", "pin", "source_pin",
+)
+
+
+def _validate_source_identity(bundle, candidate):
+    """Reject a prepared result whose captured source authority was replaced."""
+    for field in ("project_id", "timeline_id", "base_parent", "base_parent_payload", "base_placements"):
+        if not equal(bundle.get(field), candidate.get(field)):
+            raise CommandError(f"voiceover prepared {field} differs from captured source",
+                               kind="identity_conflict")
+
+    source = bundle.get("source_mapping")
+    prepared_source = candidate.get("source_mapping")
+    if not isinstance(source, Mapping) or not isinstance(prepared_source, Mapping) \
+            or not equal(source, prepared_source):
+        raise CommandError("voiceover prepared source mapping differs from captured source",
+                           kind="identity_conflict")
+
+    source_shots = source.get("shots")
+    if not isinstance(source_shots, Mapping):
+        raise CommandError("voiceover captured source shots are unavailable",
+                           kind="identity_conflict")
+    placements = candidate.get("placements")
+    original_placements = bundle.get("placements")
+    if not isinstance(placements, list) or not isinstance(original_placements, list) \
+            or len(placements) != len(original_placements):
+        raise CommandError("voiceover changed occurrence membership/order", kind="identity_conflict")
+    for before, after in zip(original_placements, placements):
+        if not isinstance(before, Mapping) or not isinstance(after, Mapping):
+            raise CommandError("voiceover placement source identity is invalid", kind="identity_conflict")
+        if before.get("occurrence_id") != after.get("occurrence_id") \
+                or before.get("shot_id") != after.get("shot_id"):
+            raise CommandError("voiceover changed placement source identity", kind="identity_conflict")
+        pinned = source_shots.get(before.get("shot_id"))
+        if not isinstance(pinned, Mapping):
+            raise CommandError("voiceover placement source pin is unavailable",
+                               kind="identity_conflict")
+        for field in _SOURCE_IDENTITY_FIELDS:
+            if field not in after:
+                continue
+            expected = before.get(field)
+            if field in {"shot_revision_id", "revision_id", "source_revision_id"}:
+                expected = pinned.get("revision_id", expected)
+            if not equal(after.get(field), expected):
+                raise CommandError(f"voiceover prepared {field} differs from captured source",
+                                   kind="identity_conflict")
 
 
 def _capture_timing(bundle, candidate, jobs):
@@ -146,6 +194,7 @@ def capture_draft_voiceover(bundle, prepared, *, media_by_occurrence,
         raise CommandError("voiceover synthesis outcome and plan disagree")
 
     candidate = prepared["candidate"]
+    _validate_source_identity(bundle, candidate)
     work, commands = _capture_timing(bundle, candidate, jobs)
     captures = []
     for result in generated:
