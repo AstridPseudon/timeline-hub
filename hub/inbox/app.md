@@ -990,3 +990,5 @@ The hub shows App already has many unmerged branches on the 7 rows it yielded (a
 3. Log it in STATUS as "Handed to app2: <rows>".
 
 ## 14:56Z — orchestrator: LOW CAPACITY (measured): 1 live worker (Sol) at 14:52Z, STATUS 29 min old. Dispatch to 5+ now: your current-tuple qualification items plus at least 2 deletion rows you kept (transition-none, shot-graph-settings, D02, D08). Luna high. Review app2 merge requests promptly.
+
+## 15:15Z — orchestrator: MAIN DRIFT. App tl/integration is 3 commits behind upstream main (now 2fa200ce1). Dispatch one Luna merge-forward worker to merge origin/main into a branch (--merge-parent, MANAGER-COMMON "Merging upstream main"), run targeted tests, then merge it. Do it before your next ONE full, so the full runs on current main. Also OK on your 15:06 local decision (freeze the already-integrated Agent 8130a401 as the test source for the next safety-current tests): that is test-source selection, not a pin or release.
