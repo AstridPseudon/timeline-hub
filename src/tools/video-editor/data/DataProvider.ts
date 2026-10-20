@@ -440,6 +440,9 @@ export interface DataProvider extends AssetResolver {
   commitTimeline?(request: CommitRequest, idempotencyKey: string): Promise<TimelineCommitResult>;
   undoTimeline?(base: TimelineHeadRevision, publications: readonly string[], idempotencyKey: string): Promise<TimelineCommitResult>;
   getRecoverableIdentity?(): Promise<TimelineRecoveryIdentity>;
+  /** Exact retained inputs through this provider's authenticated project session. */
+  readonly paramReadClient?: Pick<import('@/integrations/runtime/generated.ts').WorkspaceClient,
+    'getProjectVerifiedDocument' | 'getProjectVerifiedDocumentObject'>;
   documents?: import('@/sdk/context.ts').ProjectDocumentSurface;
   projectTranscripts?: import('./typed/projectTranscript.ts').ProjectTranscriptRepository;
   /** When present, writes MUST use this immutable-head CAS path, never numeric versions. */

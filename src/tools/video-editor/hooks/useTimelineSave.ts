@@ -97,6 +97,7 @@ export function useTimelineSave(
     onCanonicalReloadStart: invalidateRecoveryAction,
   });
   const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
+    paramReadClient: provider.paramReadClient,
     legacyClean: () => commit.editSeqRef.current <= savedSeqRef.current && !persistence.isSavingRef.current
       && !recoveryActiveRef.current,
     snapshotWriteBlockedRef, loaded: queries.timelineQuery.data, configVersionRef, headRevisionRef, lastSavedSignatureRef, store, shots, recoveryConfig });

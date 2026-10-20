@@ -329,6 +329,16 @@ export class RuntimeDataProvider implements DataProvider {
 
   private readonly projectId: string;
   private readonly client: AstridRuntimeClient;
+  readonly paramReadClient: NonNullable<DataProvider['paramReadClient']> = {
+    getProjectVerifiedDocument: (projectId, pin) => {
+      if (projectId !== this.projectId) throw new Error('Retained document read belongs to another project');
+      return this.client.getProjectVerifiedDocument(this.projectId, pin);
+    },
+    getProjectVerifiedDocumentObject: (projectId, pin, objectId) => {
+      if (projectId !== this.projectId) throw new Error('Retained document object read belongs to another project');
+      return this.client.getProjectVerifiedDocumentObject(this.projectId, pin, objectId);
+    },
+  };
   private readonly onRuntimeError?: (error: RuntimeConnectorError) => void;
   private activeRegistry: AssetRegistry | null = null;
   private readonly canonicalTimelineState = new Map<string, CanonicalTimelineState>();

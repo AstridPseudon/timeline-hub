@@ -1,5 +1,5 @@
 import { types } from 'node:util';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Transport } from './generated.ts';
 import { AstridRuntimeClient, RuntimeCompatibilityError, isRuntimeCanonicalPayloadConflict, isRuntimeConflict, type ObservedRuntimeIdentities } from './client.ts';
 import { ApiError } from './generated.ts';
@@ -274,6 +274,73 @@ function clientFor(fixture: ReturnType<typeof createTransport>, options: { token
     transport: fixture.transport,
   });
 }
+
+describe('AstridRuntimeClient exact retained reads', () => {
+  const pin = { document_id: 'pack/v1', version: 1, content_digest: `sha256:${'9'.repeat(64)}` };
+
+  it.each(['document', 'object'] as const)('captures the original %s pin before the authenticated session opens', async (kind) => {
+    const fixture = createTransport();
+    const calls: { path: string; headers: Record<string, string> }[] = [];
+    const client = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'existing-token', transport: async (method, path, headers, body) => {
+      if (path.includes('/verified?')) {
+        calls.push({ path, headers });
+        return { status: 200, headers: {}, body: json({ retained: true }) };
+      }
+      return fixture.transport(method, path, headers, body);
+    } });
+    const original = { ...pin };
+    const reading = kind === 'document' ? client.getProjectVerifiedDocument(PROJECT_ID, original)
+      : client.getProjectVerifiedDocumentObject(PROJECT_ID, original, INPUT_OBJECT_ID);
+    original.version = 2;
+    original.content_digest = `sha256:${'0'.repeat(64)}`;
+    await reading;
+    expect(calls).toHaveLength(1);
+    const url = new URL(calls[0].path, 'http://test');
+    expect(url.pathname).toContain(`/projects/${encodeURIComponent(PROJECT_ID)}/`);
+    expect(Object.fromEntries(url.searchParams)).toEqual({ ...pin, version: '1',
+      ...(kind === 'object' ? { object_id: INPUT_OBJECT_ID } : {}) });
+    expect(calls[0].headers.Authorization).toBe('Bearer existing-token');
+    expect(fixture.requests.map((request) => request.path)).toEqual(['/v1/health', '/v1/handshake', '/v1/realm']);
+  });
+
+  it.each(['realm', 'actor', 'instance', 'reconnect'] as const)('refuses a retained result after the %s changes during its await', async (change) => {
+    const fixture = createTransport(), identities: ObservedRuntimeIdentities = new Map();
+    let release!: () => void;
+    const client = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', identityStore: identities,
+      transport: async (method, path, headers, body) => {
+        if (path.includes('/verified?')) {
+          await new Promise<void>((resolve) => { release = resolve; });
+          return { status: 200, headers: {}, body: json({ retained: true }) };
+        }
+        return fixture.transport(method, path, headers, body);
+      } });
+    const reading = client.getProjectVerifiedDocumentObject(PROJECT_ID, pin, INPUT_OBJECT_ID);
+    const refusal = expect(reading).rejects.toBeInstanceOf(RuntimeCompatibilityError);
+    await vi.waitFor(() => expect(release).toBeDefined());
+    if (change === 'reconnect') await client.reconnect();
+    else {
+      const bound = identities.get(client.baseUrl)!;
+      if (change === 'realm') bound.realmId = 'other-realm';
+      if (change === 'actor') bound.actorId = 'other-actor';
+      if (change === 'instance') bound.runtimeInstanceId = 'other-instance';
+    }
+    release();
+    await refusal;
+  });
+
+  it('propagates denied exact reads without retrying another source', async () => {
+    const fixture = createTransport();
+    const calls: string[] = [];
+    const client = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', transport: async (method, path, headers, body) => {
+      calls.push(path);
+      if (path.includes('/verified?')) return { status: 401, headers: {}, body: json({ code: 'unauthorized', message: 'expired' }) };
+      return fixture.transport(method, path, headers, body);
+    } });
+    await expect(client.getProjectVerifiedDocument(PROJECT_ID, pin)).rejects.toMatchObject({ name: 'RuntimeAuthenticationError' });
+    expect(calls).toHaveLength(4);
+    expect(calls[3]).toContain('/document-inputs/verified?');
+  });
+});
 
 describe('AstridRuntimeClient paired restart detection without build-time ids', () => {
   // No expectedIdentity: the paired path has no VITE_WORKSPACE_RUNTIME_EXPECTED_* ids.
