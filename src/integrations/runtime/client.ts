@@ -25,6 +25,7 @@ import {
   type HistoryPage,
   type MediaSelection,
   type MediaSelectionQuery,
+  type VerifiedMedia,
   type Transport,
   type RequestBody,
 } from './generated.ts';
@@ -634,6 +635,10 @@ export class AstridRuntimeClient {
     selection: MediaSelectionQuery,
   ): Promise<MediaSelection> {
     return this.withSession(() => this.client.getProjectMediaSelection(projectId, selection));
+  }
+
+  async getProjectVerifiedMedia(projectId: string, selection: MediaSelection): Promise<VerifiedMedia> {
+    return this.withSession(() => this.client.getProjectVerifiedMedia(projectId, selection));
   }
 
   async publishParentComposition(

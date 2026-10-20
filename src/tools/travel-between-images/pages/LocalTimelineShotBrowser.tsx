@@ -26,6 +26,9 @@ import type {
   CanonicalShotTimelinePublication,
   CanonicalShotTimelineScope,
 } from '@/tools/video-editor/runtime/ports.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import type { TimelineDataRef } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 
 type LocalTimelineShotBrowserProps = {
   projectSlug: string;
@@ -34,6 +37,11 @@ type LocalTimelineShotBrowserProps = {
   shotCompositionPort?: ShotCompositionPort;
   /** Reuse an already prepared canonical adapter from the parent editor. */
   shotCompositionAdapter?: ShotCompositionAdapter;
+  /** Qualified parent editor session for canonical occurrence media edits. */
+  occurrenceMediaPort?: OccurrenceMediaCapturePort;
+  mediaSelectionReader?: Pick<DataProvider, 'getProjectMediaSelection' | 'getProjectVerifiedMedia'>;
+  mediaImportProvider?: Pick<DataProvider, 'prepareMediaImport'>;
+  hostTimelineDataRef?: TimelineDataRef;
   /** Opens one canonical shot without changing the parent route. */
   shotRef?: string | null;
   /** Optional parent-held graph that survives an embedded popup unmount. */
@@ -156,7 +164,7 @@ function isCompositionForDocument(
     && composition.occurrences.length > 0;
 }
 
-export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
+export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, occurrenceMediaPort, mediaSelectionReader, mediaImportProvider, hostTimelineDataRef, shotRef, initialComposition, onClose, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -291,6 +299,10 @@ export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, 
           shotToEdit={selectedShotModel}
           canonicalOccurrence={selectedShotModel}
           canonicalShotComposition={documentQuery.compositionAdapter ?? documentQuery.data?.compositionAdapter ?? shotCompositionAdapter}
+          occurrenceMediaPort={occurrenceMediaPort}
+          mediaSelectionReader={mediaSelectionReader}
+          mediaImportProvider={mediaImportProvider}
+          hostTimelineDataRef={hostTimelineDataRef}
           canonicalComposition={composition}
           selectedProjectId={projectSlug}
           isNewlyCreatedShot={false}
