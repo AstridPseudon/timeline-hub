@@ -4,6 +4,7 @@ from __future__ import annotations
 from ._command_state import ABSENT, CommandError, State, equal, logical_address, present
 
 KINDS = {'collection.tracks': 'track', 'collection.clips': 'clip',
+         'collection.tracks.after': 'track', 'collection.clips.after': 'clip',
          'collection.occurrences': 'occurrence', 'collection.shots': 'shot',
          'track.create': 'track'}
 
@@ -154,8 +155,8 @@ class AcceptedRecords(list):
         raise CommandError('inverse collection boundary is unavailable', kind='history_unavailable')
 
 
-def _ordinary_append(record, writes, owner, kind):
-    """Trusted scoped create primitives append; inverse insertions need a boundary."""
+def _ordinary_create(record, writes, owner, kind):
+    """Trusted scoped creates use append or a recorded stable boundary."""
     if record['command']['op'] in ('timeline.inverse', 'timeline.restore'):
         return False
     created = {item['ref'] for item in record['created']
@@ -164,6 +165,13 @@ def _ordinary_append(record, writes, owner, kind):
         w['before'] == ABSENT and w['after']['state'] == 'present'
         and isinstance(w['after']['value'], dict)
         and w['after']['value'].get('id') == member(w['ref'])[2] for w in writes)
+
+
+def insertion_boundary(ordered, members):
+    if len(members) != 1 or members[0] not in ordered:
+        raise CommandError('create-after requires one existing stable member', kind='selection_changed')
+    index = ordered.index(members[0])
+    return ordered[index:index + 2]
 
 
 def restoration_orders(records, *, only=None):
@@ -191,8 +199,10 @@ def restoration_orders(records, *, only=None):
                 original = order(boundary[0], owner, kind)
             else:
                 original = list(selected[0]['order'])
-                if any(s['members'] != s['order']
-                       or s['boundaries'] != s['order'] or s['query_version'] != 1
+                if any((s['boundaries'] != insertion_boundary(s['order'], s['members'])
+                        if s['key'].endswith('.after') else
+                        s['members'] != s['order'] or s['boundaries'] != s['order'])
+                       or s['query_version'] != 1
                        or s['policy'] != 'guard-membership' for s in selected):
                     raise CommandError('inconsistent structural order proof', kind='history_unavailable')
             if len(original) != len(set(original)) or any(
@@ -203,6 +213,11 @@ def restoration_orders(records, *, only=None):
                 raise CommandError('dependent structural stages require staged reversal', kind='history_unavailable')
             final = list(original)
             inserts = False
+            after = [s for s in selected if s['key'].endswith('.after')]
+            positioned = bool(after) and record['command']['op'] not in ('timeline.inverse', 'timeline.restore')
+            if positioned and (len(after) != 1 or len(writes) != 1
+                               or not _ordinary_create(record, writes, owner, kind)):
+                raise CommandError('ambiguous create-after proof', kind='history_unavailable')
             stages = [list(final)]
             for write in writes:
                 ref = write['ref']
@@ -210,7 +225,10 @@ def restoration_orders(records, *, only=None):
                     if ref in final:
                         raise CommandError('created identity is occupied', kind='identity_conflict', ref=ref)
                     if write['after'] != ABSENT:
-                        final.append(ref)
+                        if positioned:
+                            final.insert(final.index(after[0]['members'][0]) + 1, ref)
+                        else:
+                            final.append(ref)
                         inserts = True
                 elif ref not in final:
                     raise CommandError('historical member is missing', kind='history_unavailable', ref=ref)
@@ -218,15 +236,15 @@ def restoration_orders(records, *, only=None):
                     final.remove(ref)
                 stages.append(list(final))
             if not legacy_inverse and any(s['order'] != original for s in selected):
-                if not _ordinary_append(record, writes, owner, kind) or any(
+                if not _ordinary_create(record, writes, owner, kind) or any(
                         s['order'] not in stages for s in selected):
                     raise CommandError('unrecoverable creation selection stage', kind='history_unavailable')
             if legacy_inverse and any(s['members'] != s['order'] or s['boundaries'] != s['order']
                                       or s['order'] not in stages for s in selected):
                 raise CommandError('unrecoverable legacy selection stage', kind='history_unavailable')
-            # Ordinary recorded creates append through Recording.create. Inverse
-            # insertion is different: its exact position needs accepted order.
-            if inserts and not _ordinary_append(record, writes, owner, kind):
+            # Inverse insertion needs accepted order; native creates already
+            # prove append or create-after through their recorded selections.
+            if inserts and not _ordinary_create(record, writes, owner, kind):
                 if not isinstance(records, AcceptedRecords):
                     raise CommandError('inverse insertion order needs an accepted boundary', kind='history_unavailable')
                 boundary = boundary or records.boundary(record)

@@ -11,8 +11,12 @@ from astrid.sdk.timeline import commit
 from astrid.sdk.timeline._command_state import CommandError, State, present
 from astrid.sdk.timeline.commands import _SCHEMA, execute
 from tests.editing_conformance.test_recorded_graph_roots import (
+    child_command,
     create_command,
     root_values,
+)
+from tests.editing_conformance.test_recorded_graph_roots import (
+    child_ops as child_ops,
 )
 from tests.editing_conformance.test_recorded_graph_roots import (
     root_ops as root_ops,
@@ -157,6 +161,48 @@ def test_authenticated_root_creation_reload_inverse_redo_exact_closure():
     redone = realm.call([inverse([undone['receipt']['receipt_id']])])
     assert redone['data']['canonical_document'] == document
     assert redone['data']['commands'][0]['created'] == ['shot:new-shot', 'occurrence:new-occ']
+
+
+@pytest.mark.usefixtures('child_ops')
+def test_authenticated_created_child_stages_reload_inverse_redo_exact_closure():
+    from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse
+
+    realm = DetachedRealm(document_fixture())
+    original = copy.deepcopy(realm.documents[realm.head['revision_id']])
+    accepted = realm.call([create_command()])
+    document = accepted['data']['canonical_document']
+    assert State(commit.bundle_from_document(document)).get(
+        'occurrence:new-occ/clip:title', ['hold']) == present(3)
+    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == original
+    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == document
+    assert redone['data']['commands'][0]['created'] == ['shot:new-shot', 'occurrence:new-occ']
+
+
+@pytest.mark.usefixtures('child_ops')
+@pytest.mark.parametrize('first_scope', ['root', 'child'])
+@pytest.mark.parametrize('aba', [False, True])
+@pytest.mark.parametrize('noncontiguous', [False, True])
+def test_provider_root_child_aliases_guard_equal_state_publications(first_scope, aba, noncontiguous):
+    from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedRealm, inverse
+
+    realm = DetachedRealm(document_fixture())
+    command = child_command('occurrence:occ-a/clip:clip-a')
+    root = {**command, 'op': 'test.root-write'}
+    first = realm.call([root if first_scope == 'root' else command])
+    gap = command if first_scope == 'root' else root
+    realm.call([{**gap, 'args': {'values': [4, 3] if aba else [3]}}])
+    targets = [first['receipt']['receipt_id']]
+    if noncontiguous:
+        second = realm.call([{**command, 'args': {'values': [5]}}])
+        targets.append(second['receipt']['receipt_id'])
+    head, accepted = copy.deepcopy(realm.head), copy.deepcopy(realm.accepted)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse(targets)])
+    assert error.value.failure['details']['reason'] == 'intervening_write'
+    assert realm.head == head
+    assert realm.accepted == accepted
 
 
 @pytest.mark.parametrize('damage', ['opaque', 'internal', 'compiler-link'])

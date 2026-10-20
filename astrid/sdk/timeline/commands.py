@@ -29,8 +29,11 @@ class Operation:
 def operations():
     """Native recipe entries; the full extensible registry belongs to M2."""
     from ._clip_commands import clip_add
+    from ._clip_scalar_commands import clip_set
     from ._delete_commands import delete
     from ._scalar_commands import clip_set_params, track_set
+    from ._split_commands import clip_split
+    from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
     from .native_placement_commands import placement_move
@@ -40,7 +43,10 @@ def operations():
             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+            'clip.set': Operation(_SCHEMA['$defs']['ClipSetArgs'], clip_set, {}, True),
             'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
+            'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
+            'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
 
@@ -117,7 +123,7 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None, verified_media=()):
+            closures=None, verified_media=(), schema_inputs=(), realm_id=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -135,7 +141,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
-        ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media)
+        ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media,
+                        schema_inputs=schema_inputs, realm_id=realm_id)
         _verify_claims(ctx, command)
         operation = operations().get(command['op'])
         if operation is not None:

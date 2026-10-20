@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import copy
 
-from ._collections import KINDS, order, rows
+from ._collections import KINDS, arrange, insertion_boundary, order, rows
 from ._command_state import ABSENT, CommandError, State, equal, present, spelling
 from ._common import AUDIO_KINDS
 
@@ -20,6 +20,10 @@ def selection(state, key, owner, members=()):
     elif key in KINDS:
         result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
                   else order(state, owner, KINDS[key]))
+        if key.endswith('.after'):
+            return {"key": key, "query_version": 1, "owner": owner, "members": list(members),
+                    "order": result, "boundaries": insertion_boundary(result, members),
+                    "policy": "guard-membership"}
     elif key == 'placement.owners':
         shot = state.occurrence(owner)['shot_id']
         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
@@ -43,9 +47,11 @@ def selection(state, key, owner, members=()):
 
 
 class Recording:
-    def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=()):
+    def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=(),
+                 schema_inputs=(), realm_id=None):
         self.state = State(bundle, closures=closures)
         self.verified_media = copy.deepcopy(verified_media)
+        self.schema_inputs, self.realm_id = schema_inputs, realm_id
         self.input_state = None
         self.command_input = State(copy.deepcopy(bundle), closures=closures)
         parent = bundle['parent']
@@ -117,13 +123,23 @@ class Recording:
             raise CommandError("intent container must be object or null", ref=ref, path=path)
         self.write(ref, path, {})
 
-    def create(self, owner, kind, row, *, restoring=False):
+    def create(self, owner, kind, row, *, restoring=False, after=None):
         rows(self.state, owner, kind, check_mirrors=not restoring)
+        if not restoring and any(s['owner'] == owner and s['key'] == 'collection.' + kind + 's.after'
+               for s in self.record['selections']):
+            raise CommandError('create-after requires a single scoped creation')
+        ordered = None
+        if after is not None:
+            if restoring or kind not in ('clip', 'track') or any(
+                    item['owner'] == owner and item['kind'] == kind for item in self.record['created']):
+                raise CommandError('create-after requires a single scoped creation')
+            self.select('collection.' + kind + 's.after', owner, [after])
+            ordered = order(self.state, owner, kind)
         if owner != 'parent':
             self.read(owner, ['occurrence_id'])
             self.read(owner + '/shot', ['shot_id'])
             self.bind('create.owner', owner)
-        if not restoring:
+        if not restoring and after is None:
             self.select('track.create' if kind == 'track' else 'collection.' + kind + 's', owner)
         ref = owner + '/' + kind + ':' + row['id']
         if self.state.get(ref, []) != ABSENT:
@@ -131,6 +147,9 @@ class Recording:
         self.read(ref)
         self.write(ref, [], row)
         self.record['created'].append({"ref": ref, "kind": kind, "owner": owner})
+        if ordered is not None:
+            ordered.insert(ordered.index(after) + 1, ref)
+            arrange(self.state, owner, kind, ordered)
         return ref
 
     def create_entity(self, ref, *, kind, owner, value, restoring=False):

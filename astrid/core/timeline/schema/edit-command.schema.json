@@ -468,6 +468,9 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "schema_source": {
+          "$ref": "#/$defs/DocumentPin"
         }
       },
       "required": [
@@ -994,6 +997,96 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.set"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipSetArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.trim"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)parent/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipTrimArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.split"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)parent/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipSplitArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -1118,6 +1211,120 @@
           }
         }
       }
+    },
+    "ClipSetArgs": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object",
+          "properties": {
+            "hold": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Positive finite source seconds; timeline duration is hold/speed."
+            }
+          },
+          "additionalProperties": false
+        },
+        "clear": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "hold",
+              "asset",
+              "transition"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "values",
+        "clear"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "values": {
+              "minProperties": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "clear": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+    },
+    "ClipTrimArgs": {
+      "type": "object",
+      "properties": {
+        "in_s": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "out_s": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Source seconds on literal parent media. Omitted/null endpoints retain existing from/to, defaulting to zero/file duration. Keep at and asset; write from/to/hold using main trim precedence and clear for/until. Requires authored registry duration; no media fetch."
+    },
+    "ClipSplitArgs": {
+      "type": "object",
+      "required": [
+        "on",
+        "right_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "on": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute timeline seconds strictly inside the clip. Preserve half-open frame geometry and literal film end."
+        },
+        "right_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)[^/]+$",
+          "description": "Caller-allocated right clip ID, retained on replay and redo."
+        }
+      }
+    },
+    "DocumentPin": {
+      "type": "object",
+      "properties": {
+        "document_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "content_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "document_id",
+        "version",
+        "content_digest"
+      ],
+      "additionalProperties": false,
+      "description": "Exact original admitted project-pack Document pin for selected parameter validation."
     }
   }
 }

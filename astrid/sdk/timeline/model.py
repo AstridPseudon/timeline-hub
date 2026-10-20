@@ -438,9 +438,8 @@ class Clip(_Suggest):
         source_out = (_num(self.data.get("to"), limit) if out_s is None else float(out_s))
         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
-        speed = _num(self.data.get("speed"), 1.0) or 1.0
         self.data["from"], self.data["to"] = _r(source_in), _r(source_out)
-        self.data["hold"] = _r((source_out - source_in) / speed)
+        self.data["hold"] = _r(source_out - source_in)
         intent.set_until(self.data, None)
         intent.set_for(self.data, None)
         self._tl._mcache = None

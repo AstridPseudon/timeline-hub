@@ -76,6 +76,7 @@ class DetachedRealm:
                          "previous": None, "intent": "bootstrap", "records": None, "receipt": receipt,
                          "provider_version": None, "compiler_version": None, "publisher": "actor-1"}]
         self.live_sources, self.retained_sources = {}, {}
+        self.snapshot_objects = {}
         self.accepted, self.prepared, self.reads = [], [], []
         self.before_accept = None
         self.page_size = 100
@@ -158,6 +159,15 @@ class DetachedPort:
 
     def config_source(self, pin):
         return self._source(pin, "config")
+
+    def document_object(self, pin, object_id):
+        capture = self.captures.get(_digest(pin))
+        if (capture is None or capture['document']['kind'] != 'astrid.project-pack'
+                or not any(admission.get('snapshot_object', {}).get('object_id') == object_id
+                           for admission in capture['document']['content']['admissions'])
+                or object_id not in self.realm.snapshot_objects):
+            raise refusal('dependency_unavailable')
+        return detached(self.realm.snapshot_objects[object_id])
 
     def shot_closure(self, *args):
         raise AssertionError("M1 move cannot read mutable or unrelated source shots")

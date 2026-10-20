@@ -229,7 +229,11 @@ class State:
             if (row['shot_id'] not in self.bundle['source_mapping']['shots']
                     and self.bundle['shots'][row['shot_id']].get('_created') is True):
                 return {'shot_id': row['shot_id']}
-            source = self.bundle['source_mapping']['shots'][row['shot_id']]['shot_id']
+            source = self.bundle['source_mapping']['shots'].get(row['shot_id'])
+            if source is None:
+                raise CommandError('shot identity requires its source or recorded creation',
+                                   kind='history_unavailable', ref=ref)
+            source = source['shot_id']
             from astrid.core.timeline.authoring_bundle import _authoring_shot_id
             identity = _authoring_shot_id(
                 self.bundle['project_id'], self.bundle['timeline_id'], row['occurrence_id'],

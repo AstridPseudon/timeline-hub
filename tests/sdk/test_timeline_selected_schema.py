@@ -13,7 +13,12 @@ from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
+from astrid.sdk.timeline.commit import (
+    _digest,
+    bundle_from_document,
+    create_runtime_commit_service,
+    document_from_bundle,
+)
 from tests.editing_conformance import test_recipe_scalar_commands as scalar_recipes
 from tests.editing_conformance.test_recipe_m2_clip_add import empty_document
 from tests.sdk.test_timeline_commit_provider import (
@@ -39,7 +44,7 @@ def commit(realm, commands):
 
 
 @pytest.fixture
-def selected_effect(admitted_param_revisions):
+def selected_effect(admitted_param_revisions, configured_project_pack):
     _, selected = admitted_param_revisions
     record = project_packs.resolve_admitted_element('realm', 'project-1', selected)
     schema = record['descriptor']['schema']
@@ -50,12 +55,17 @@ def selected_effect(admitted_param_revisions):
     assert len(errors) == 1 and errors[0].validator == 'maximum'
 
     realm = DetachedRealm(empty_document())
+    realm.schema_options = scalar_recipes.schema_options(configured_project_pack, selected)
+    verified, realm.snapshot_objects = realm.schema_options['schema_inputs'][0]
+    realm.live_sources[_digest(verified['pin'])] = verified
     commit(realm, [track_create('picture')])
     row = {'id': 'effect', 'clipType': selected['id'], 'elementRef': selected,
            'at': 0, 'hold': 2, 'track': 'picture',
            'params': {'seed': 4, 'future': {'keep': [None, False, {}]}}}
     commit(realm, [capture_clip_add(current(realm), 'parent', row)])
     assert State(current(realm)).entity(REF) == row
+    commit(realm, [capture_clip_set_params(current(realm), REF, values={'seed': 4},
+                                           **realm.schema_options)])
     return realm, selected, schema
 
 
@@ -63,8 +73,10 @@ def test_new_valid_selected_param_compiles_commits_reloads_and_roundtrips(select
     realm, selected, schema = selected_effect
     original = copy.deepcopy(realm.documents[realm.head['revision_id']])
     opaque = {'literal': [None, False, {}, 'ƒ(keep literal)']}
-    command = capture_clip_set_params(current(realm), REF, values={'seed': 8, 'other': opaque})
-    plan = execute(current(realm), [command])
+    command = capture_clip_set_params(current(realm), REF, values={'seed': 8, 'other': opaque},
+                                      **realm.schema_options)
+    plan = execute(current(realm), [command], schema_inputs=realm.schema_options['schema_inputs'],
+                   realm_id='realm')
     compile_authoring_candidate(plan.bundle)
     accepted = commit(realm, [command])
     assert accepted['data']['commands'] == [command]
@@ -83,9 +95,8 @@ def test_new_valid_selected_param_compiles_commits_reloads_and_roundtrips(select
 
 
 @pytest.mark.parametrize('stage', ['capture', 'compile', 'provider'])
-# Requirement: validate newly authored declared values against the exact admitted
-# owner/revision, while retaining unknown opaque data. Type-only lookup misses it.
-@pytest.mark.xfail(strict=True, reason='selected admitted seed maximum is ignored by new parameter edits')
+# Retained-input qualification: test_timeline_selected_schema_runtime.py uses
+# actual admission + paired Runtime custody through restart/replay/inverse.
 def test_new_invalid_selected_param_refuses_without_acceptance(selected_effect, stage):
     realm, selected, schema = selected_effect
     original = current(realm)
@@ -93,11 +104,105 @@ def test_new_invalid_selected_param_refuses_without_acceptance(selected_effect, 
     assert State(original).entity(REF)['elementRef'] == selected
     assert list(Draft202012Validator(schema).iter_errors({'seed': 16}))
     with pytest.raises((CommandError, AuthoringBundleError, CommitRejected), match='seed|16|10'):
-        command = capture_clip_set_params(original, REF, values={'seed': 16})
+        command = capture_clip_set_params(original, REF, values={'seed': 16}, **realm.schema_options)
         if stage != 'capture':
-            plan = execute(original, [command])
+            plan = execute(original, [command], schema_inputs=realm.schema_options['schema_inputs'],
+                           realm_id='realm')
             compile_authoring_candidate(plan.bundle)
         if stage == 'provider':
             commit(realm, [command])
     assert (realm.head, realm.entries, realm.documents) == before
     assert current(realm) == original
+
+
+@pytest.mark.parametrize('damage', ['missing', 'pin', 'owner', 'id', 'kind', 'revision',
+                                   'revoked', 'corrupt', 'legacy', 'foreign_object', 'missing_object'])
+def test_selected_input_identity_and_portable_bytes_fail_closed(selected_effect, damage):
+    realm, selected, _ = selected_effect
+    original = current(realm)
+    options = copy.deepcopy(realm.schema_options)
+    verified, objects = options['schema_inputs'][0]
+    if damage == 'missing':
+        options['schema_inputs'] = []
+    elif damage == 'pin':
+        options['schema_source']['version'] += 1
+    elif damage in {'owner', 'id', 'kind', 'revision'}:
+        key = 'packId' if damage == 'owner' else damage
+        State(original).entity(REF)['elementRef'][key] = 'wrong'
+    elif damage == 'revoked':
+        verified['document']['content']['admissions'] = []
+    elif damage == 'legacy':
+        for admission in verified['document']['content']['admissions']:
+            del admission['snapshot_object']
+    elif damage == 'corrupt':
+        for snapshot in objects.values():
+            snapshot['bytes_base64'] = 'e30='
+    elif damage == 'missing_object':
+        objects.clear()
+    else:
+        admission = next(item for item in verified['document']['content']['admissions']
+                         if item['revision'] == selected['revision'])
+        object_id = admission['snapshot_object']['object_id']
+        other = next(snapshot for identity, snapshot in objects.items() if identity != object_id)
+        objects[object_id] = other
+    # The caller cannot turn even well-formed JSON into an admitted declaration.
+    with pytest.raises(CommandError):
+        capture_clip_set_params(original, REF, values={'seed': 8}, **options)
+
+
+def test_raw_provider_rechecks_admission_instead_of_caller_catalog(selected_effect, monkeypatch):
+    realm, _, _ = selected_effect
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    # Type-only/caller catalog information cannot authorize the value.
+    monkeypatch.setattr('astrid.sdk.timeline_address.element_schema', lambda _: {
+        'properties': {'seed': {'type': 'number', 'maximum': 100}}})
+    raw = {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': REF,
+           'args': {'values': {'seed': 16}, 'clear': [],
+                    'schema_source': realm.schema_options['schema_source']}}
+    with pytest.raises(CommitRejected, match='10'):
+        commit(realm, [raw])
+    assert (realm.head, realm.entries, realm.documents) == before
+
+
+def test_noop_declared_value_clear_and_opaque_values_preserve_literal_state(selected_effect):
+    realm, _, _ = selected_effect
+    original = current(realm)
+    State(original).entity(REF)['params']['seed'] = 16
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    # Existing legacy values are not retroactively validated by a no-op write.
+    command = capture_clip_set_params(original, REF, values={'seed': 16}, **realm.schema_options)
+    plan = execute(original, [command], schema_inputs=realm.schema_options['schema_inputs'], realm_id='realm')
+    assert document_from_bundle(plan.bundle) == document_from_bundle(original)
+    assert any(write['before'] == write['after'] and write['path'] == ['params', 'seed']
+               for write in plan.records[0]['writes'])
+    opaque = {'unknown': [None, False, {}, 'ƒ(literal)']}
+    command = capture_clip_set_params(original, REF, values={'opaque': opaque}, clear=['seed'],
+                                      **realm.schema_options)
+    plan = execute(original, [command], schema_inputs=realm.schema_options['schema_inputs'], realm_id='realm')
+    assert State(plan.bundle).entity(REF)['params'] == {
+        'opaque': opaque, 'future': {'keep': [None, False, {}]}}
+
+
+@pytest.mark.parametrize('pin', [None, {}, {'document_id': 'x', 'version': True,
+                                          'content_digest': 'sha256:' + '0' * 64},
+                                {'document_id': 'x', 'version': 0,
+                                 'content_digest': 'sha256:' + '0' * 64},
+                                {'document_id': 'x', 'version': 1, 'content_digest': 'bad'},
+                                {'document_id': 'x', 'version': 1,
+                                 'content_digest': 'sha256:' + '0' * 64, 'schema': {}}])
+def test_schema_source_is_only_a_closed_exact_document_pin(selected_effect, pin):
+    realm, _, _ = selected_effect
+    raw = {'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': REF,
+           'args': {'values': {'seed': 8}, 'clear': [], 'schema_source': pin}}
+    with pytest.raises(CommandError):
+        execute(current(realm), [raw])
+
+
+def test_selected_pack_refuses_a_port_without_document_object(selected_effect, monkeypatch):
+    realm, _, _ = selected_effect
+    command = capture_clip_set_params(current(realm), REF, values={'seed': 8}, **realm.schema_options)
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    monkeypatch.delattr(DetachedPort, 'document_object')
+    with pytest.raises(CommitRejected, match='document_object support is required'):
+        commit(realm, [command])
+    assert (realm.head, realm.entries, realm.documents) == before
