@@ -10,6 +10,7 @@ import {
   fakeRuntimeAuthHeaders,
   readFakeRuntimeComposition,
   resetFakeRuntimeBaseline,
+  forceBlobLinkDownload,
 } from './support';
 
 const execFileAsync = promisify(execFile);
@@ -221,6 +222,10 @@ async function assertDecodedFixture(
 test.describe('audio-reactive-colour browser export proof', () => {
   test.use({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
 
+  test.beforeEach(async ({ page }) => {
+    await forceBlobLinkDownload(page);
+  });
+
   test('loads and plays the managed source_audio asset after a user gesture', async ({ page }) => {
     test.setTimeout(120_000);
     const pageErrors: string[] = [];
@@ -341,7 +346,7 @@ test.describe('audio-reactive-colour browser export proof', () => {
     const renderButton = page.getByRole('button', { name: /^Render(?: \d+%)?$/ });
     await expect(renderButton).toBeEnabled();
     await renderButton.click();
-    const downloadLink = page.getByRole('link', { name: 'Download', exact: true });
+    const downloadLink = page.getByRole('button', { name: 'Download', exact: true });
     const renderBlocker = page.locator('[data-video-editor-render-blocker="true"]');
     await expect.poll(async () => {
       if (await downloadLink.isVisible()) return 'done';
@@ -353,7 +358,7 @@ test.describe('audio-reactive-colour browser export proof', () => {
     const renderedFilm = page.getByRole('dialog', { name: 'Rendered film' });
     await expect(renderedFilm).toBeVisible();
     await expect(renderedFilm.getByTestId('timeline-render-player')).toBeVisible();
-    await expect(renderedFilm.getByRole('link', { name: 'Download', exact: true })).toBeVisible();
+    await expect(renderedFilm.getByRole('button', { name: 'Download', exact: true })).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', { timeout: 30_000 });
     await downloadLink.click();
@@ -368,7 +373,9 @@ test.describe('audio-reactive-colour browser export proof', () => {
     // Rendering is client-only and must not write the timeline. Repeat it to
     // prove idempotency and to catch accidental Runtime persistence coupling.
     // The player is modal: the Render button is reachable again only after the user closes it.
-    const firstDownloadHref = await downloadLink.getAttribute('href');
+    // The Download button holds no URL; the player beside it plays the same render result, so its src tells one render from the next.
+    const firstFilmSource = await renderedFilm.getByTestId('timeline-render-player').getAttribute('src');
+    expect(firstFilmSource).toMatch(/^blob:/);
     await renderedFilm.getByRole('button', { name: 'Close' }).click();
     await expect(renderedFilm).toBeHidden();
     await expect(renderButton).toBeEnabled();
@@ -376,7 +383,7 @@ test.describe('audio-reactive-colour browser export proof', () => {
     await expect(renderButton).toBeDisabled({ timeout: 5_000 });
     await expect(renderedFilm).toBeVisible({ timeout: 120_000 });
     await expect(downloadLink).toBeVisible();
-    await expect.poll(() => downloadLink.getAttribute('href')).not.toBe(firstDownloadHref);
+    await expect(renderedFilm.getByTestId('timeline-render-player')).not.toHaveAttribute('src', firstFilmSource!);
     const secondDownloadPromise = page.waitForEvent('download', { timeout: 30_000 });
     await downloadLink.click();
     const secondDownload = await secondDownloadPromise;
@@ -442,7 +449,7 @@ test.describe('audio-reactive-colour browser export proof', () => {
     const renderButton = page.getByRole('button', { name: /^Render(?: \d+%)?$/ });
     await expect(renderButton).toBeEnabled();
     await renderButton.click();
-    const downloadLink = page.getByRole('link', { name: 'Download', exact: true });
+    const downloadLink = page.getByRole('button', { name: 'Download', exact: true });
     const renderBlocker = page.locator('[data-video-editor-render-blocker="true"]');
     await expect.poll(async () => {
       if (await downloadLink.isVisible()) return 'done';

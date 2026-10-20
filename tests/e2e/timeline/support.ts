@@ -96,6 +96,18 @@ export function editorPath({ route = '/tools/video-editor', timeline = TIMELINE_
   return `${route}?${query.toString()}`;
 }
 
+/**
+ * The rendered film's Download saves through `showSaveFilePicker` where the browser has one, and through a blob link
+ * with the film's filename elsewhere (TimelineRenderControls). Chrome has the picker, and its native dialog is invisible
+ * to Playwright, which sees a download only for the link. Removing the picker before the page loads runs the product's
+ * own link path, so the click yields a download event carrying the rendered bytes and the filename.
+ */
+export async function forceBlobLinkDownload(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    delete (window as Window & { showSaveFilePicker?: unknown }).showSaveFilePicker;
+  });
+}
+
 /** Absolute form of {@link editorPath}. */
 export function editorUrl(options: EditorRouteOptions = {}): string {
   return `${BASE_URL}${editorPath(options)}`;
