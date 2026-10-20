@@ -162,7 +162,7 @@ class Installer:
             retained = absolute(backup["root"])
             if retained.parent != absolute(self.root / "backups"):
                 raise ValueError("The interrupted update backup is outside this installation.")
-        self.say("Recovering the interrupted Astrid update from its retained backup.")
+        self.say("Recovering the interrupted Astrid update.")
         self._save_update(transaction, "recovering")
         # These actions can themselves be interrupted. Keep the transaction and
         # image until the old owner has passed verification; restore is replayable.

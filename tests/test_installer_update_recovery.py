@@ -205,16 +205,21 @@ def test_sigkill_each_installer_durable_step_then_three_successful_updates(tmp_p
     _assert_retry(tmp_path, restore_expected=step not in {"prepared", "stopped", "backup-return", "complete"})
 
 
-@pytest.mark.parametrize("state", ["planned", "stopping", "stopped", "activated", "restarted", "complete"])
+@pytest.mark.parametrize("state", [
+    "planned", "stopping", "stopped", "migration-committed", "activated", "restarted", "complete",
+])
 def test_sigkill_actual_runtime_upgrade_then_recover_before_new_backup(tmp_path, state):
     _setup(tmp_path)
     result = _run(tmp_path, "runtime:" + state)
     assert result.returncode == -signal.SIGKILL, result.stderr
     journal = read_json(tmp_path / "data/runtime/upgrade-journal.json")
-    assert journal["state"] == state
+    assert journal["state"] == ("stopped" if state == "migration-committed" else state)
     transaction = read_json(tmp_path / "program/update-transaction.json")
     assert transaction["backup"]["root"]
     assert transaction["realm"]["realm_id"] == journal["realm_id"]
+    if state == "migration-committed":
+        assert inspect_canonical_schema(transaction["realm"]["realm_root"])["version"] == SCHEMA_VERSION
+        assert inspect_canonical_schema(Path(transaction["backup"]["root"]) / "realm")["version"] == 29
     _assert_retry(tmp_path, restore_expected=True)
 
 
@@ -287,15 +292,22 @@ def _runtime(base, kill_at):
         return SimpleNamespace(endpoint=discovery["endpoint"], pid=os.getpid(), runtime_instance_id="test-instance")
 
     journal = operator_upgrade._journal
+    migrate = operator_upgrade.migrate_canonical_to_current
 
     def journal_and_kill(*args, **kwargs):
         result = journal(*args, **kwargs)
         _kill("runtime:" + kwargs["state"], kill_at)
         return result
 
+    def migrate_and_kill(*args, **kwargs):
+        result = migrate(*args, **kwargs)
+        _kill("runtime:migration-committed", kill_at)
+        return result
+
     publish()
     operator_upgrade._bootstrap_locked = start
     operator_upgrade._journal = journal_and_kill
+    operator_upgrade.migrate_canonical_to_current = migrate_and_kill
     operator_upgrade.upgrade_workspace(paths, Boundary(), BootstrapConfig())
 
 
