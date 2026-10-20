@@ -109,6 +109,8 @@ def plan_motion_frames(
 def build_context(
     snapshot: Mapping[str, Any], cut: Mapping[str, Any], frames: Mapping[int, Path], *, fps: float,
     frame_size: tuple[int, int], beats: Mapping[str, Any] | None = None, layer_names: Sequence[str] = (),
+    label_batches=None, label_canvas=None, scene_frames=None, scene_occlusions=None,
+    scene_clip_identities=None, scene_unavailable=None,
 ) -> LayerContext:
     occurrences, elements = snapshot_elements(snapshot)
     cuts = picture_cuts(occurrences, fps=fps)
@@ -150,6 +152,17 @@ def build_context(
     ctx.shared["layer_names"] = tuple(layer_names)
     config = snapshot.get("config")
     ctx.shared["config"] = config if isinstance(config, Mapping) else {}
+    ctx.shared["scene_frames"] = dict(scene_frames or {})
+    ctx.shared["scene_occlusions"] = dict(scene_occlusions or {})
+    ctx.shared["scene_clip_identities"] = dict(scene_clip_identities or {})
+    if scene_unavailable or not scene_frames:
+        ctx.shared["scene_unavailable"] = scene_unavailable or "exact captured scene facts unavailable"
+    if "labels" in layer_names:
+        from ..overlays.labels import canvas_of, snapshot_labels
+
+        ctx.shared["label_canvas"] = label_canvas or canvas_of(config or {}, snapshot.get("theme"))
+        ctx.shared["label_batches"] = snapshot_labels({**snapshot, "fps_rational": snapshot.get("fps_rational") or float(fps).as_integer_ratio()},
+                                                    list(frames), captured=label_batches)
     return ctx
 
 

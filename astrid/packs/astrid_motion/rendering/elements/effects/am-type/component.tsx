@@ -11,6 +11,8 @@ import {
   type ElementComponentProps,
 } from '../../_shared/am';
 
+import {absentSupport, unknownSupport, withSceneCapability} from '../am-snap-plate/scene';
+
 // am-type: editorial type. Type may ease (masked slide-up uses ease-out
 // cubic); the typewriter reveal and the underline step on frames.
 
@@ -66,10 +68,12 @@ const buildRuns = (text: string, italicWordRaw: string, underlineWordRaw: string
   });
 };
 
-export default function AmType(props: ElementComponentProps): ReactElement | null {
+const typeText = (params: Params): string => typeof params.text === 'string' ? params.text : '';
+
+function AmType(props: ElementComponentProps): ReactElement | null {
   const frame = useCurrentFrame();
   const params = narrowParams<Params>(props.params);
-  const text = typeof params.text === 'string' ? params.text : '';
+  const text = typeText(params);
   if (!text.trim()) {
     return null;
   }
@@ -192,3 +196,9 @@ export default function AmType(props: ElementComponentProps): ReactElement | nul
     </AbsoluteFill>
   );
 }
+
+export default withSceneCapability(AmType, ({clip, fontDigests}) => ({
+  identity: JSON.stringify([clip.params, fontDigests]),
+  frame: () => !typeText(narrowParams<Params>(clip.params)).trim() ? absentSupport()
+    : unknownSupport('am-type needs actual font layout, glyph presence/alpha and underline bounds'),
+}));

@@ -1672,22 +1672,25 @@ def _audio_envelope(snapshot: Mapping, asset_files: Mapping[str, str] | None, st
         return None
 
 
-def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list) -> dict:
+def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, label_batches=None) -> dict:
     """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
 
     ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
-    from .overlays.labels import addresses_at, canvas_of
+    from .overlays.labels import MIN_OPACITY, snapshot_labels
 
-    config = snapshot.get("config") or {}
-    fps = float(Fraction(*snapshot["fps_rational"]))
-    canvas = canvas_of(config)
+    batches = snapshot_labels(snapshot, [int(card["frame"]) for card in cards], captured=label_batches)
     for row, card in zip(receipt.get("cards") or [], cards):
-        row["addresses"] = addresses_at(config, int(card["frame"]), fps, canvas)
+        layers = batches[int(card["frame"])]
+        row["addresses"] = [item.address for item in layers if item.clip_id
+                            and (item.opacity is None or item.opacity >= MIN_OPACITY)]
+        row["scene_status"] = "unavailable" if any(item.status == "unavailable" for item in layers) else (
+            "unknown" if any(item.status == "unknown" for item in layers) else "known")
+        row["scene_findings"] = list(dict.fromkeys(item.message for item in layers if item.message))
     return receipt
 
 
 
-def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None):
+def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None, *, frames=(), label_batches=None, label_canvas=None):
     """Compose the selected bounds and address overlays for contact tiles."""
     selected = set(layer_names or ())
     if not selected.intersection({"bounds", "labels"}):
@@ -1700,6 +1703,10 @@ def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], f
         _occurrences, contact_elements = snapshot_elements(snapshot)
     config = snapshot.get("config") if isinstance(snapshot.get("config"), Mapping) else None
 
+    from .overlays.labels import canvas_of, snapshot_labels
+
+    batches = snapshot_labels(snapshot, list(frames), captured=label_batches) if "labels" in selected and frames else {}
+
     def overlay(image, seconds):
         result = image
         if contact_elements is not None:
@@ -1709,7 +1716,9 @@ def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], f
         if "labels" in selected and config is not None:
             from .overlays.labels import overlay_labels_at
 
-            result = overlay_labels_at(result, config, seconds, fps)
+            result = overlay_labels_at(result, config, seconds, fps,
+                                       layers=batches.get(int(math.floor(seconds * fps + 0.5))),
+                                       canvas=label_canvas or canvas_of(config, snapshot.get("theme")))
         return result
 
     return overlay
@@ -1777,6 +1786,16 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         capture_info = frame_provider.capture(cards, out_root, options.get('resolution'))
         index['frame_capture'] = capture_info
         index['provenance']['frame_capture'] = capture_info
+    label_batches = getattr(frame_provider, 'label_batches', None)
+    label_canvas = getattr(frame_provider, 'label_canvas', None)
+    if frame_provider is not None:
+        from .overlays.labels import unavailable_labels
+
+        label_batches = dict(label_batches or {})
+        missing = [int(card['frame']) for card in cards if int(card['frame']) not in label_batches]
+        label_batches.update(unavailable_labels(
+            snapshot.get('config') or {}, missing, float(Fraction(*snapshot['fps_rational'])),
+            (capture_info or {}).get('scene_unavailable') or 'capture did not supply exact Root scene facts'))
     capture_ended_at = time.time()
     if options.get('view') == 'contact' and video_path is not None:
         # Render review: sample the rendered file itself and measure its audio.
@@ -1839,7 +1858,12 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         window = resolve_window(snapshot, options, fps_value, int(snapshot['duration_frames']))
         cut = window['cut']
         context = build_context(snapshot, cut, frames, fps=fps_value, frame_size=size,
-                                beats=options.get('beats'), layer_names=options.get('layers') or ())
+                                beats=options.get('beats'), layer_names=options.get('layers') or (),
+                                label_batches=label_batches, label_canvas=label_canvas,
+                                scene_frames=getattr(frame_provider, 'scene_frames', None),
+                                scene_occlusions=getattr(frame_provider, 'scene_occlusions', None),
+                                scene_clip_identities=getattr(frame_provider, 'scene_clip_identities', None),
+                                scene_unavailable=(capture_info or {}).get('scene_unavailable'))
         context.shared['window'] = window
         context.shared['frame_labels'] = {int(k): v for k, v in (motion_meta.get('labels') or {}).items()}
         from .motion.window import preset_settings
@@ -1864,7 +1888,10 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         duration = float(Fraction(int(snapshot['duration_frames']), 1) / Fraction(*snapshot['fps_rational']))
         components = set(options.get('components') or ('output', 'text', 'audio'))
         contact_fps = float(Fraction(*snapshot['fps_rational']))
-        overlay = _contact_overlay_for_layers(snapshot, options.get('layers') or (), contact_fps, options.get('highlight'))
+        overlay = _contact_overlay_for_layers(snapshot, options.get('layers') or (), contact_fps, options.get('highlight'),
+                                              frames=[int(math.floor(float(card.get('time_seconds') or 0) * contact_fps + 0.5))
+                                                      for card in display_cards],
+                                              label_batches=label_batches, label_canvas=label_canvas)
         from .contact_sheet import contact_band_width, contact_silence_findings
         audio = _audio_envelope(snapshot, asset_files, 0.0, duration, contact_band_width(columns))
         paths = {'png': static_contact_png(
@@ -1936,7 +1963,7 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
     # Keep rich navigation in memory for the paired compositor, but persist a
     # bounded receipt so agents never need to ingest the full timeline graph.
     receipt = compact_render_receipt(index, snapshot, out_root)
-    attach_frame_addresses(receipt, snapshot, index['cards'])
+    attach_frame_addresses(receipt, snapshot, index['cards'], label_batches=label_batches)
     Path(paths['json']).write_text(
         json.dumps(receipt, ensure_ascii=True, separators=(',', ':')),
         encoding='utf-8')

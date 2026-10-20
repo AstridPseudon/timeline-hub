@@ -12,6 +12,7 @@ import {
   type ElementComponentProps,
 } from '../../_shared/am';
 import {footageVolume} from './volume';
+import {fieldSupport, withSceneCapability} from '../am-snap-plate/scene';
 import {MosaicImage, mosaicBlockAt, paintMosaic, type MosaicRamp, type Rect} from '../../_shared/mosaic';
 
 // am-footage: a REAL-FOOTAGE SLOT. It shows a filmed shot (video or still on
@@ -182,7 +183,13 @@ const labelStyle: CSSProperties = {
   opacity: 0.9,
 };
 
-export default function AmFootage(props: ElementComponentProps): ReactElement | null {
+const footageField = (params: Params) => {
+  const background = params.background ?? CARD_BG;
+  const style: CSSProperties = {background, overflow: 'hidden'};
+  return {background, style};
+};
+
+function AmFootage(props: ElementComponentProps): ReactElement | null {
   const frame = useCurrentFrame();
   const {width, height, fps: compositionFps} = useVideoConfig();
   const p = narrowParams<Params>(props.params);
@@ -194,7 +201,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
   const hand = p.handMark && typeof p.handMark === 'object' ? p.handMark : null;
   const placeholder = p.placeholder === true || !url;
   const label = typeof p.label === 'string' ? p.label : `PLACEHOLDER · REAL FOOTAGE${slot ? ` · ${slot}` : ''}`;
-  const background = p.background ?? CARD_BG;
+  const {style: field, background} = footageField(p);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const block = mosaicBlockAt(frame, total, p.mosaicIn, p.mosaicOut);
@@ -210,7 +217,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
       }
     }
     return (
-      <AbsoluteFill style={{background, overflow: 'hidden'}}>
+      <AbsoluteFill style={field}>
         {dots}
         <Guides face={face} hand={hand} />
         <div style={{position: 'absolute', left: 96, top: 84, fontFamily: MONO, fontSize: 30, lineHeight: '36px', letterSpacing: '0.12em', color: GUIDE}}>
@@ -282,7 +289,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
       : {...labelStyle, left: inset.x + 16, top: inset.y + inset.h - 46, bottom: undefined};
     const ring = inset.border ? `0 0 0 1px ${inset.border}` : null;
     return (
-      <AbsoluteFill style={{background, overflow: 'hidden'}}>
+      <AbsoluteFill style={field}>
         <div
           style={{
             position: 'absolute',
@@ -306,7 +313,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
   }
 
   return (
-    <AbsoluteFill style={{background, overflow: 'hidden'}}>
+    <AbsoluteFill style={field}>
       {picture}
       {tintLayer}
       {p.guides ? <Guides face={face} hand={hand} /> : null}
@@ -314,3 +321,21 @@ export default function AmFootage(props: ElementComponentProps): ReactElement | 
     </AbsoluteFill>
   );
 }
+
+export default withSceneCapability(AmFootage, (context) => {
+  const {clip, width, height, assetEntry} = context;
+  const params = narrowParams<Params>(clip.params);
+  const field = footageField(params);
+  const inset = insetOf(params.inset, width, height);
+  // With an explicitly clear outer field, a clipped inset is the only support
+  // in this branch. Labels, guides, borders and shadows can extend its bounds.
+  const sourceKnown = !clip.asset || Object.prototype.hasOwnProperty.call(context, 'assetEntry');
+  const isolatedInset = field.background === 'transparent' && sourceKnown
+    && elementSource(assetEntry, params.src) && inset && inset.shadow === 'none'
+    && !inset.border && !params.guides && params.placeholder !== true;
+  return {identity: JSON.stringify([clip.params, clip.asset, assetEntry, width, height]),
+    // Both the slot card and inset/media branches paint this same outer field.
+    frame: () => isolatedInset ? {presence: 'present', opaqueSupport: 'unknown',
+      bounds: {status: 'known', rect: {x: inset.x, y: inset.y, width: inset.w, height: inset.h}}}
+      : fieldSupport(field.style.background, width, height)};
+});
