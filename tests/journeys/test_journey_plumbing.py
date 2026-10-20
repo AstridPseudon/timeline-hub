@@ -125,7 +125,7 @@ def test_renderer_install_problem_names_the_missing_install_and_the_fix(tmp_path
         (package / "dist" / f"{filename}.js").write_text("export {};\n")
     (package / "package.json").write_text(json.dumps({
         "name": "@banodoco/timeline-composition",
-        "version": "0.0.10",
+        "version": "0.0.12",
         "exports": exports,
     }))
 

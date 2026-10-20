@@ -41,7 +41,7 @@ from astrid.sdk.workspace_client import WorkspaceClient
 FIXTURE_VIDEO = Path(__file__).resolve().parents[2] / "fixtures" / "reshape" / "hype_regression" / "broll.mp4"
 TS = "2026-08-25T00:00:00.000000+00:00"
 COMPOSITION_ARTIFACT = (Path(remotion_runtime.REPO_ROOT) /
-                        "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz")
+                        "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")
 
 
 def _install_composition_package(runtime: Path) -> Path:

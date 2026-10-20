@@ -33,7 +33,7 @@ def host_project(tmp_path_factory):
     project = project_root / "remotion"
     (project / "src").mkdir(parents=True)
     (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
-    # Reuse a coherent peer graph read-only, with the actual pinned public10
+    # Reuse a coherent peer graph read-only, with the actual pinned public12
     # extracted into this test's private project. No install or shared mutation.
     peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
     assert (peers / "esbuild").is_dir(), "requires provisioned renderer peers"
@@ -48,9 +48,9 @@ def host_project(tmp_path_factory):
         target = modules / peer
         target.parent.mkdir(parents=True, exist_ok=True)
         target.symlink_to(source.resolve(), target_is_directory=True)
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
+    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7")
+        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
     with tarfile.open(artifact) as archive:
         archive.extractall(project, filter="data")
     package = modules / "@banodoco/timeline-composition"
@@ -87,7 +87,7 @@ def host_project(tmp_path_factory):
         patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
         for kind in ("effects", "animations", "transitions"):
             (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.10"
+    assert json.loads((package / "package.json").read_text())["version"] == "0.0.12"
     def hashes():
         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in package.rglob("*") if p.is_file()}
@@ -215,7 +215,7 @@ def test_native_host_preserves_root_painter_order_and_current_roles(native_host)
     assert answer["coverage"] == "COVERED" and answer["content"] == "CONTENT"
 
 
-def test_native_host_passes_public10_compiled_transitions_unchanged(native_host):
+def test_native_host_passes_public12_compiled_transitions_unchanged(native_host):
     p = props([
         {"id": "occ:first", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1},
         {"id": "occ:next", "track": "plate", "clipType": "custom-alias", "at": 1, "hold": 1},

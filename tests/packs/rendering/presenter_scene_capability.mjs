@@ -2,6 +2,7 @@
 // These inspect markup and declared regions, never decoded pixels or lip-sync statistics.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
@@ -46,7 +47,19 @@ export const prepareHostScene = (props, b) => {
     undefined, undefined, {}, '', {}, source.resolveHostRegistries(theme), props.compiledTransitions);
 };
 const basis = {width: 1920, height: 1080, fps: 30};
-const theme = DEFAULT_THEME;
+// Composition 0.0.12's package default is Agent's navy theme. The historical
+// SSR hashes intentionally use this explicit pre-12 theme so the presenter
+// preservation check does not silently turn an old fixture into a new default.
+assert.deepEqual(DEFAULT_THEME, JSON.parse(readFileSync(path.join(project, 'builtin-default-theme.json'), 'utf8')));
+const theme = {
+  id: 'banodoco-default',
+  visual: {
+    color: {fg: '#ffffff', bg: '#000000', accent: '#ffffff'},
+    type: {families: {heading: 'Georgia, serif', body: 'Georgia, serif'},
+      size: {base: 64, small: 36, large: 96}, weight: {normal: 400, bold: 700}, lineHeight: 1.1},
+    motion: {fadeMs: 250}, canvas: {width: 1920, height: 1080, fps: 30},
+  },
+};
 const runtimeTheme = toRuntimeTheme(theme);
 const registries = source.resolveHostRegistries(runtimeTheme);
 const owner = {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'};

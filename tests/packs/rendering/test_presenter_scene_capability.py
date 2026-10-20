@@ -1,4 +1,4 @@
-"""Actual registered presenter draw and capability against immutable public10."""
+"""Actual registered presenter draw and capability against immutable public12."""
 import hashlib
 import json
 import os
@@ -10,8 +10,10 @@ from pathlib import Path
 import pytest
 
 from astrid.core.rendering.node_pin import resolve_pinned_node
+from astrid.core.theme._schema import BUILTIN_DEFAULT_THEME
 from scripts import gen_effect_registry
-from tests.packs.rendering.test_composition_package import SHA256
+
+SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
 
 ROOT = Path(__file__).resolve().parents[3]
 PRESENTER = Path("astrid/packs/astrid_motion/rendering/elements/effects/am-presenter")
@@ -20,7 +22,9 @@ pytestmark = pytest.mark.integration
 
 @pytest.fixture(scope="module")
 def presenter_query(tmp_path_factory):
-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
+    artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
+        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz")))
+    # Explicit immutable releases only; this override does not change the host pin.
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(
         ROOT / "remotion/node_modules"))).resolve()
@@ -53,6 +57,7 @@ def presenter_query(tmp_path_factory):
     for kind in ("effects", "animations", "transitions"):
         (source / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
     shutil.copyfile(Path(__file__).with_name("presenter_scene_capability.mjs"), project / "query.mjs")
+    (project / "builtin-default-theme.json").write_text(json.dumps(BUILTIN_DEFAULT_THEME))
     env = {k: v for k, v in os.environ.items() if k not in ("NODE_OPTIONS", "NODE_PATH")}
 
     def hashes():
@@ -104,7 +109,7 @@ def test_presenter_public_scene_contract(presenter_query, case):
     assert presenter_query(case)["ok"] is True
 
 
-def test_presenter_public10_declarations(presenter_query, tmp_path):
+def test_presenter_public12_declarations(presenter_query, tmp_path):
     # Check copied source against the archive's declarations through ordinary
     # node_modules lookup; no source alias or installed package is patched.
     project = tmp_path / "typecheck"
