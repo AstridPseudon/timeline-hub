@@ -5,6 +5,8 @@
  */
 import type {
   ImmutableProjectPackageDescriptor,
+  PanelFrameAnchor,
+  PanelPreviewService,
   PanelRenderProps,
   PanelVideoAdapter,
   ProjectObjectMetadata,
@@ -149,6 +151,34 @@ export function readTranscriptPanelExample(props: PanelRenderProps): TranscriptP
   return video?.transcript?.getSnapshot();
 }
 
+/** Start a word preview on hover; the caller invokes the returned cleanup on leave or teardown. */
+export function previewTranscriptWordOnHover(
+  props: PanelRenderProps,
+  word: TranscriptWordProjection,
+  target: Pick<HTMLElement, 'getBoundingClientRect'>,
+): (() => void) | undefined {
+  const preview: PanelPreviewService | undefined = props.video?.preview;
+  if (
+    !props.visible
+    || !preview
+    || word.timing !== 'word'
+    || word.timelineStart === null
+    || !Number.isFinite(word.timelineStart)
+    || word.timelineStart < 0
+  ) {
+    return undefined;
+  }
+
+  const rect = target.getBoundingClientRect();
+  const anchor: PanelFrameAnchor = {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+  const handle = preview.showFrame({ seconds: word.timelineStart, anchor });
+  return () => { handle.dispose(); };
+}
 /** Import a transcript package through immutable host storage and keep its digest as the revision. */
 export async function ingestTranscriptPackage(
   storage: ProjectObjectStorage,
