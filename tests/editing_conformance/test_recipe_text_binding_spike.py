@@ -167,9 +167,9 @@ def text_seam(monkeypatch):
         else:
             rows[index] = copy.deepcopy(state['value'])
 
-    def create(self, owner, kind, row):
+    def create(self, owner, kind, row, **options):
         if kind != 'text-binding':
-            return original_create(self, owner, kind, row)
+            return original_create(self, owner, kind, row, **options)
         ref = owner + '/text-binding:' + _key(row)
         self.assign(ref, [], present(row))
         return ref

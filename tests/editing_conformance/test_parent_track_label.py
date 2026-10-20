@@ -32,9 +32,13 @@ def call(*, select=REF, values=None, clear=()):
     }
 
 
-def test_track_set_is_the_only_registered_bounded_label_operation():
-    assert 'track.set' in operations()
-    assert 'clip.set-params' not in operations()
+def test_published_track_capture_uses_the_authoritative_scalar_handler():
+    from astrid.sdk.timeline import _scalar_commands, _track_commands
+
+    assert _track_commands.capture_track_set is _scalar_commands.capture_track_set
+    assert _track_commands.track_set is _scalar_commands.track_set
+    assert operations()['track.set'].handler is _scalar_commands.track_set
+    assert operations()['clip.set-params'].handler is _scalar_commands.clip_set_params
 
 
 @pytest.mark.parametrize('before', [ABSENT, present(''), present('Old')])
@@ -173,8 +177,19 @@ def test_parent_label_unchanged_write_is_recorded_and_aba_undo_is_guarded():
     call(values={'label': 'Picture'}, clear=['label']),
     call(values={'label': 'Picture'}, clear=['label', 'label']),
     call(values={'other': 'Picture'}),
-    call(select='occurrence:occ-1/track:picture', values={'label': 'Picture'}),
+    call(select='shot:chapter-shot/track:picture', values={'label': 'Picture'}),
 ])
 def test_parent_track_label_closed_args_and_select_refuse_invalid_commands(command):
     with pytest.raises(CommandError):
         execute(bundle(), [command])
+
+
+def test_published_capture_supports_reviewed_occurrence_labels_and_exact_inverse():
+    original = bundle()
+    ref = 'occurrence:occ-1/track:picture'
+    command = capture_track_set(original, ref, values={'label': 'Picture'})
+    plan = execute(original, [command])
+    assert State(plan.bundle).get(ref, ['label']) == present('Picture')
+    assert State(plan.bundle).get(REF, ['label']) == State(original).get(REF, ['label'])
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert replay(plan, original).records == plan.records

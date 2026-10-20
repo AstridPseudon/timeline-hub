@@ -228,6 +228,31 @@ def _authoring_shot_id(
     return _identity("shot-placement", project_id, timeline_id, occurrence_id, source_shot_id)
 
 
+def _rederive_root_identity(
+    placement: dict[str, Any], project_id: str, timeline_id: str, shot_revision_id: str
+) -> None:
+    """Re-derive a new occurrence's two derived root fields for its compiled destination.
+
+    Only fields the row already carries are rewritten. The parent document is the
+    row's own ``parent_document_id``, else the timeline id (migration's default).
+    """
+    from .shot_composition import stable_occurrence_deep_link, stable_output_identity
+
+    document_id = placement.get("parent_document_id") or timeline_id
+    if "stable_deep_link" in placement:
+        placement["stable_deep_link"] = stable_occurrence_deep_link(
+            project_id,
+            document_id,
+            placement["shot_id"],
+            shot_revision_id,
+            placement["occurrence_id"],
+        )
+    if "output_identity" in placement:
+        placement["output_identity"] = stable_output_identity(
+            project_id, document_id, placement["occurrence_id"]
+        )
+
+
 def _remap_known_item_references(
     payload: Mapping[str, Any], item_ids: Mapping[str, str]
 ) -> dict[str, Any]:
@@ -783,14 +808,18 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
     )
     base_placements = _mapping(root.get("base_placements"), "candidate.base_placements")
     source_shots = _mapping(source_mapping.get("shots"), "candidate.source_mapping.shots")
-    # A complete candidate may add/remove/reorder placements and independent
-    # authoring shots.  Every authored shot still needs an explicit source
-    # mapping so the compiler can distinguish a copied child from an existing
-    # immutable revision; helpers populate this mapping for new identities.
-    if not set(source_shots).issuperset(shots):
+    # Recorded root creates have no immutable source. Existing/copy materialization
+    # still requires its exact mapping; opening a virtual slot is not a creation.
+    created_shots = {
+        key for key, shot in shots.items()
+        if isinstance(shot, Mapping) and shot.get("_created") is True and key not in source_shots
+    }
+    if not set(source_shots).union(created_shots).issuperset(shots):
         raise AuthoringBundleError(
             "candidate.source_mapping.shots must include every candidate shot identity"
         )
+    if created_shots - {row.get("shot_id") for row in placements if isinstance(row, Mapping)}:
+        raise AuthoringBundleError("recorded new shots require an occurrence in the same candidate")
 
     # Exact closures occasionally store a clip's selected registry key in the
     # parent/shot authority while the child timeline payload omits its local
@@ -817,18 +846,20 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
                 f"candidate.shots[{authoring_shot_id!r}].shot_id must match its key"
             )
         source = _mapping(
-            source_shots[authoring_shot_id],
+            source_shots.get(authoring_shot_id, {}),
             f"candidate.source_mapping.shots[{authoring_shot_id!r}]",
         )
-        source_shot_id = _string(source.get("shot_id"), "source shot_id")
+        created = authoring_shot_id in created_shots
+        source_shot_id = None if created else _string(source.get("shot_id"), "source shot_id")
         base_shot = _mapping(
-            shot.get("base_payload"), f"candidate.shots[{authoring_shot_id!r}].base_payload"
+            {} if created else shot.get("base_payload"),
+            f"candidate.shots[{authoring_shot_id!r}].base_payload",
         )
         candidate_shot = _mapping(
             shot.get("payload"), f"candidate.shots[{authoring_shot_id!r}].payload"
         )
         base_internal = _mapping(
-            shot.get("base_internal_timeline"),
+            {} if created else shot.get("base_internal_timeline"),
             f"candidate.shots[{authoring_shot_id!r}].base_internal_timeline",
         )
         candidate_internal = _mapping(
@@ -1013,6 +1044,8 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
         placement["shot_id"] = authoring_shot_id
         placement["shot_revision_id"] = compiled["revision_id"]
         placement.pop("revision_id", None)
+        if base_placement is None:
+            _rederive_root_identity(placement, project_id, timeline_id, compiled["revision_id"])
         compiled_occurrences.append(placement)
         identity_mapping["placements"][occurrence_id] = {
             "occurrence_id": occurrence_id,

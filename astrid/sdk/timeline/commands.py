@@ -15,12 +15,7 @@ from ._recording import Recording, guard, selection
 
 _SCHEMA = json.loads((Path(__file__).parents[2] / 'core/timeline/schema/edit-command.schema.json').read_text())
 _VALIDATOR = Draft202012Validator(_SCHEMA)
-TRACK_CREATE_PARAMETERS = {
-    'type': 'object', 'required': ['row'], 'additionalProperties': False,
-    'properties': {'row': {'type': 'object', 'required': ['id', 'kind'],
-                           'properties': {'id': {'type': 'string', 'pattern': '^(?!.*::)[^/]+$'},
-                                          'kind': {'type': 'string', 'minLength': 1}}}},
-}
+TRACK_CREATE_PARAMETERS = _SCHEMA['$defs']['TrackCreateArgs']
 
 
 @dataclass(frozen=True)
@@ -32,12 +27,40 @@ class Operation:
 
 
 def operations():
-    """M1 native recipe entries; the full extensible registry belongs to M2."""
-    from ._track_commands import track_set
+    """Native recipe entries; the full extensible registry belongs to M2."""
+    from ._clip_commands import clip_add
+    from ._clip_scalar_commands import clip_set
+    from ._delete_commands import delete
+    from ._scalar_commands import clip_set_params, track_set
+    from ._split_commands import clip_split
+    from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
+    from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
+    from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
+    from .native_placement_commands import (
+        PLACEMENT_INTENT,
+        placement_create,
+        placement_move,
+        placement_unplace,
+    )
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
+            'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
+                                          PLACEMENT_INTENT, True),
+            'placement.unplace': Operation(_SCHEMA['$defs']['PlacementUnplaceArgs'], placement_unplace,
+                                           PLACEMENT_INTENT, True),
+            'occurrence.duplicate': Operation(_SCHEMA['$defs']['OccurrenceDuplicateArgs'], occurrence_duplicate,
+                                              OCCURRENCE_INTENT, True),
+            'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
+            'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
+            'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
             'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
-            'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True)}
+            'clip.set': Operation(_SCHEMA['$defs']['ClipSetArgs'], clip_set, {}, True),
+            'clip.add': Operation(_SCHEMA['$defs']['ClipAddArgs'], clip_add, {}),
+            'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
+            'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
+            'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+            'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True)}
 
 
 @dataclass
@@ -61,12 +84,11 @@ def validate_command(command):
         raise CommandError(errors[0].message)
     if command['version'] != '1':
         raise CommandError("unsupported operation version", kind='unsupported_version')
-    if command['op'] not in ('clip.move', 'track.create', 'track.set',
-                             'timeline.inverse', 'timeline.restore'):
+    if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
-        errors = list(Draft202012Validator(operation.parameters).iter_errors(command['args']))
+        errors = list(_VALIDATOR.evolve(schema=operation.parameters).iter_errors(command['args']))
         if errors:
             raise CommandError(errors[0].message)
     if command['op'] == 'track.create':
@@ -113,7 +135,7 @@ def _verify_claims(ctx, command):
 
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
-            closures=None):
+            closures=None, verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -131,12 +153,15 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
-        ctx = Recording(candidate, command, ordinal, closures=closures)
+        ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media,
+                        schema_inputs=schema_inputs, realm_id=realm_id)
         _verify_claims(ctx, command)
+        if resolve_inputs is not None:
+            ctx.schema_inputs = resolve_inputs(ctx)
         operation = operations().get(command['op'])
         if operation is not None:
             from .capture import move_intent
-            intent = move_intent(command['select']) if command['op'] == 'clip.move' else operation.intent
+            intent = move_intent(command['select']) if command['op'] in ('clip.move', 'placement.move') else operation.intent
             supplied_intent = {**intent, **command.get('intent', {})}
             if supplied_intent != intent:
                 raise CommandError("unsupported operation intention policy")
