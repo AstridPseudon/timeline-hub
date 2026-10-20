@@ -18,6 +18,7 @@ import { useClipScalarControl } from '../../hooks/useClipScalarControl.ts';
 import { useTimelineSave } from '../../hooks/useTimelineSave.ts';
 import { createTimelineCommands } from '../../hooks/useTimelineCommandsService.ts';
 import { TimelineCommandRecovery } from '../TimelineCommandRecovery.tsx';
+import { BulkClipPanelBody, type BulkClipPanelProps } from './BulkClipPanelBody.tsx';
 import { ClipPanelBody } from './ClipPanelBody.tsx';
 import { NO_TRANSITION } from './clip-panel-primitives.tsx';
 
@@ -33,14 +34,27 @@ vi.mock('@/shared/components/ui/number-input.tsx', () => ({
 }));
 
 // Registry/catalog behavior remains covered by the original transition suite.
-vi.mock('@/shared/components/ui/select.tsx', () => ({
-  Select: ({ value, onValueChange }: { value: string; onValueChange: (value: string) => void }) => (
-    <select value={value} onChange={(event) => onValueChange(event.currentTarget.value)}>
-      <option value="__none__">None</option><option value="crossfade">crossfade</option><option value="wipe">wipe</option>
-    </select>
-  ),
-  SelectTrigger: () => null, SelectContent: () => null, SelectItem: () => null, SelectValue: () => null,
-}));
+vi.mock('@/shared/components/ui/select.tsx', async () => {
+  const { createContext, useContext } = await vi.importActual<typeof import('react')>('react');
+  const SelectValueContext = createContext<string | null>(null);
+  return {
+    Select: ({ value, onValueChange, children }: { value: string; onValueChange: (value: string) => void; children?: ReactNode }) => (
+      <SelectValueContext.Provider value={value}>
+        <select value={value} onChange={(event) => onValueChange(event.currentTarget.value)}>
+          <option value="__none__">None</option><option value="crossfade">crossfade</option><option value="wipe">wipe</option>
+        </select>
+        {children}
+      </SelectValueContext.Provider>
+    ),
+    SelectTrigger: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    SelectContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    SelectItem: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    SelectValue: ({ children, placeholder }: { children?: ReactNode; placeholder?: string }) => {
+      const value = useContext(SelectValueContext);
+      return <span data-testid="select-value">{children ?? value ?? placeholder}</span>;
+    },
+  };
+});
 
 const opaque = { selected_item_id: 'keep', nested: [null, '', { owner: 'unchanged' }] };
 function parentDocument(): CanonicalDocument {
@@ -136,9 +150,33 @@ function transitionSection() {
 const rowFrom = (bundle: unknown, ref: string) => new AuthoredState(bundle as never).entity(ref)!;
 type Payload = { commands: EditCommand[]; before: unknown; after: unknown };
 
+function bulkProps(sharedTransitionType: string | null = NO_TRANSITION): BulkClipPanelProps & { effectResources: never } {
+  return {
+    clips: [{} as never], visibleTabs: ['effects'], compositionWidth: 1920, compositionHeight: 1080,
+    sharedEntrance: null, sharedExit: null, sharedContinuous: null, sharedText: null, sharedTransition: null,
+    sharedEntranceType: null, sharedExitType: null, sharedContinuousType: null, sharedTransitionType,
+    sharedSpeed: null, sharedFrom: null, sharedTo: null, sharedX: null, sharedY: null, sharedWidth: null,
+    sharedHeight: null, sharedOpacity: null, sharedVolume: null, sharedFontSize: null, sharedTextColor: null,
+    sharedTransitionDuration: null, onChange: vi.fn(), onChangeDeep: vi.fn(), onScalarEditsStart: vi.fn(() => []),
+    onResetPosition: vi.fn(), onToggleMute: vi.fn(), onClose: vi.fn(), activeTab: 'effects', setActiveTab: vi.fn(),
+    effectResources: {
+      data: { entrance: [], exit: [], continuous: [] }, effects: [], entrance: [], exit: [], continuous: [],
+      isLoading: false, isFetching: false, error: null, refetch: vi.fn(async () => undefined),
+      canCreateEffect: false, canUpdateEffect: false, canDeleteEffect: false,
+    } as never,
+  };
+}
+
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('mounted native transition clear controls (unit transport)', () => {
+  it('renders None for the bulk native transition sentinel', () => {
+    render(<BulkClipPanelBody {...bulkProps()} />);
+    const section = screen.getByText('Transition').parentElement!;
+    expect(within(section).getByTestId('select-value')).toHaveTextContent('None');
+    expect(within(section).getByTestId('select-value')).not.toHaveTextContent(NO_TRANSITION);
+  });
+
   it.each(['None', 'Remove'])('maps only explicit %s to transition ABSENT', async (action) => {
     const host = await mounted(parentDocument(), 'x', 'effects');
     const paused = host.env.pause();
