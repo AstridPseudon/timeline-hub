@@ -6,7 +6,7 @@ cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpa
 cat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-cap-controller-repair-capture.log
 
 # Artifact/source and graph diagnosis; read-only.
-tar -xOzf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-main-source.tar.gz remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts
+tar -xOzf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-large-handoff-archive-relocation/delivery/handoff-vw-m3-main-image-cap-source-vector-main-source.tar.gz remotion/node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts
 find /home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@banodoco -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
 test -e /home/user/work/wt/vw-m1-ssr-snapshot/remotion/node_modules/@banodoco/timeline-theme-2rp; echo "$?"
 
