@@ -1,6 +1,6 @@
 /**
  * useTimelineOps — host adapter that produces a stable TimelineOps instance
- * wired to the existing commitData/history path.
+ * wired to the command session and existing commitData/history path.
  *
  * Extensions and proposal machinery receive this adapter through
  * CreativeContext.timeline.  It wraps the pure compiler functions
@@ -31,6 +31,11 @@ import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-edit
 import type { CommitDataOptions } from '@/tools/video-editor/hooks/useTimelineCommit';
 import type { Checkpoint } from '@/tools/video-editor/types/history';
 import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors.ts';
+import {
+  captureTrackLabelEdit,
+  submitTrackLabelEdit,
+  type TrackLabelCapturePort,
+} from '../commands/trackLabelGesture.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -66,6 +71,9 @@ export interface UseTimelineOpsArgs {
 
   /** Normal host writer's edit-sequence acknowledgement barrier. */
   flushPendingSave?: () => Promise<number>;
+
+  /** Original authored track-label capture and the shared command outbox. */
+  trackLabelPort?: TrackLabelCapturePort;
 
   /** Host checkpoint creation (async fire-and-forget). */
   createManualCheckpoint: (label?: string) => Promise<void>;
@@ -114,6 +122,7 @@ export function useTimelineOps({
   dataRef,
   getConfigVersion,
   flushPendingSave,
+  trackLabelPort,
   createManualCheckpoint,
   jumpToCheckpoint,
   checkpoints,
@@ -271,7 +280,22 @@ export function useTimelineOps({
         );
       }
 
-      // 3. Commit once through commitData with semantic transaction metadata.
+      const labelUpdates = patch.operations.filter((operation) =>
+        operation.op === 'track.update' && operation.payload && 'label' in operation.payload);
+      if (labelUpdates.length > 0) {
+        const operation = labelUpdates[0];
+        const payload = operation.payload!;
+        if (patch.operations.length !== 1 || (payload.mode !== undefined && payload.mode !== 'merge')
+          || Object.keys(payload).some((key) => key !== 'label' && key !== 'mode')
+          || typeof payload.label !== 'string') {
+          throw new Error('TimelineOps.apply: only a single merge-mode label-only track.update is supported.');
+        }
+        const captured = captureTrackLabelEdit(trackLabelPort, current, operation.target);
+        submitTrackLabelEdit(captured, { values: { label: payload.label }, clear: [] });
+        return compiled.diff;
+      }
+
+      // 3. Unmigrated operations still use the existing snapshot path.
       //    History recording is enabled by default (skipHistory defaults to false).
       commitData(compiled.nextData, {
         save: true,
@@ -281,7 +305,7 @@ export function useTimelineOps({
       // 4. Return the semantic diff
       return compiled.diff;
     },
-    [assertTimelineEditable, commitData, dataRef, getCanonicalVersion],
+    [assertTimelineEditable, commitData, dataRef, getCanonicalVersion, trackLabelPort],
   );
 
   // ---- checkpoint ---------------------------------------------------------

@@ -350,6 +350,7 @@ function TimelineEditorCoreComponent({
     clearSelection,
     isClipSelected,
     setSelectedTrackId,
+    handleTrackLabelEditStart,
     handleTrackPopoverChange,
     handleMoveTrack,
     handleRemoveTrack,
@@ -376,6 +377,7 @@ function TimelineEditorCoreComponent({
     clearSelection: ops.clearSelection,
     isClipSelected: ops.isClipSelected,
     setSelectedTrackId: ops.setSelectedTrackId,
+    handleTrackLabelEditStart: ops.handleTrackLabelEditStart,
     handleTrackPopoverChange: ops.handleTrackPopoverChange,
     handleMoveTrack: ops.handleMoveTrack,
     handleRemoveTrack: ops.handleRemoveTrack,
@@ -928,6 +930,7 @@ function TimelineEditorCoreComponent({
           shouldStackOverlappingActions={shouldStackOverlappingActions}
           onOpenExtensionManager={onOpenExtensionManager}
           onSelectTrack={(trackId) => { clearSelection(); setSelectedTrackId(trackId); }}
+          onTrackLabelEditStart={handleTrackLabelEditStart}
           onTrackChange={readOnly ? () => {} : handleTrackPopoverChange}
           onRemoveTrack={readOnly ? () => {} : handleRemoveTrack}
           onTrackDragEnd={readOnly ? () => {} : handleTrackDragEnd}
