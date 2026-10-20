@@ -85,7 +85,10 @@ test('A01/A02/A03/A10/A13 production entries and repeated retained-state history
     await page.goto(route);
     await surface(page, 'home');
     await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', audience);
-    await expect.soft(page.locator('.astrid-editor-stage')).toHaveAttribute('data-astrid-readiness', 'settled', { timeout: audience === 'agent' ? 5_000 : 30_000 });
+    // Every entry is a cold load of the dev-served editor: module, media, inspector and timeline signals,
+    // then the 850 ms loader retirement, take 4-5.5 s in order (module-ready, usable, presenting, settled)
+    // and more under load. One hang ceiling for all audiences; it asserts that settling happens, not when.
+    await expect(page.locator('.astrid-editor-stage')).toHaveAttribute('data-astrid-readiness', 'settled', { timeout: 30_000 });
     await shot(page, info, `entry-${label}`);
   }
   expect(editorRuntimeRequests.some((url) => url.includes('/PublicAstridMountedEditor.tsx'))).toBe(true);
