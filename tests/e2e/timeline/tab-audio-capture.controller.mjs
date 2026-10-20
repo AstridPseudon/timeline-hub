@@ -56,6 +56,8 @@ export const SOURCE_FILES = [
   'tests/e2e/timeline/tab-audio-capture.environment.test.mjs',
   'tests/e2e/timeline/setup-tab-audio-capture.sh',
   'tests/e2e/timeline/private-pulse-stereo.probe.ts',
+  'tests/e2e/timeline/private-pulse-stereo.decode.mjs',
+  'tests/e2e/timeline/private-pulse-stereo.decode.test.mjs',
   'tests/e2e/timeline/private-pulse-stereo.config.ts',
   'tests/e2e/timeline/private-pulse-stereo.controller.mjs',
   'tests/e2e/timeline/setup-private-pulse-stereo.sh',

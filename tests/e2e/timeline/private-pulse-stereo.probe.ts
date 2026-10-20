@@ -4,6 +4,7 @@ import { execFile, spawn, type ChildProcess } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { statSync } from 'node:fs';
 import { promisify } from 'node:util';
+import { decodeFloat } from './private-pulse-stereo.decode.mjs';
 import {
   assertCaptureCapabilities,
   assertRawPts,
@@ -146,12 +147,6 @@ async function closeServer(server: Server) {
 async function ffprobe(path: string) {
   const { stdout } = await exec('ffprobe', ['-v', 'error', '-show_streams', '-show_packets', '-of', 'json', path]);
   return JSON.parse(stdout) as { streams: Array<Record<string, unknown>>; packets: Array<Record<string, unknown>> };
-}
-
-async function decodeFloat(path: string, streamIndex: number) {
-  const { stdout } = await exec('ffmpeg', ['-v', 'error', '-i', path, '-map', `0:${streamIndex}`, '-f', 'f32le', 'pipe:1'], { encoding: 'buffer' });
-  if (stdout.length % Float32Array.BYTES_PER_ELEMENT) throw new Error('PCM output is not float32-aligned');
-  return new Float32Array(stdout.buffer, stdout.byteOffset, stdout.length / Float32Array.BYTES_PER_ELEMENT);
 }
 
 async function recordChannels(path: string, frequency: { left: number; right: number }) {
