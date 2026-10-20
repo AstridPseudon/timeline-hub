@@ -452,3 +452,34 @@ branch:
 Live heads at this replay: Agent `340a2d487`, Runtime `9d1c43c`, App
 `812a609ee`, Composition `e7ef7a0`. No full/full* suite or unrelated node was
 run.
+
+## Incremental watch: detached sheet adapter frontier
+
+Date: 2026-10-20T23:18:01Z
+
+Agent integration advanced to `e55d0616b` (`1a7349eb9`), narrowing the
+detached `apply_sheet` adapter by removing an unused Runtime client/history
+lookup while preserving local three-way merge and connected NativeSheet
+behavior. The affected Gate1 sheet nodes were replayed on actual integration:
+
+- Suite: `targeted`, invoked as `integration:agent`
+- Run: `agent-targeted-1020231732-32658`
+- Agent source tree: `4955a447a5d02d75b758a44266e8c65bb4063651`
+- Result: **2 passed in 1.51s**, exit 0
+- Nodes: `test_native_rows_cannot_fall_into_the_legacy_sheet_writer` and
+  `test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases`
+  from `tests/sdk/test_timeline_sheet_native.py`.
+
+No full/full* suite or unrelated node was run. Live heads: Agent
+`e55d0616b`, Runtime `9d1c43c`, App `812a609ee`, Composition `e7ef7a0`.
+
+The pending `agt-m2-wc7-parent-transition-clear` candidate adds exact parent
+transition CLEAR capture via the existing `clip.set` carrier (145 local tests,
+1 central HTTP test), but it has not merged into integration. No replay or
+current Gate claim is made until its merge lands.
+
+At 2026-10-20T23:19:18Z Agent advanced to `0542b4291` with an
+`artifacts.json`-only manifest refresh. This is artifact metadata with no
+timeline semantic or adapter source change, so no Gate1/Gate3 replay was
+needed. Current heads: Agent `0542b4291`, Runtime `9d1c43c`, App `812a609ee`,
+Composition `e7ef7a0`.
