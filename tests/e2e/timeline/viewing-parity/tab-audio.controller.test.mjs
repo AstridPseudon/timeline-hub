@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  APP13, AGENT13, RUNTIME13, COMPOSITION13, CHROME155, CONTROL, NODE20,
+  APP13, AGENT13, RUNTIME13, RUNTIME13_ARTIFACT, COMPOSITION13, CHROME155, CONTROL, NODE20,
   VIEWING_QUALIFICATIONS,
   MISSING_OWNER_PORTS, OWNER_PORTS,
-  assertCandidateTuple, assertCompletedAppConsumer, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
+  assertCandidateTuple, assertRuntimeArtifact, assertCompletedAppConsumer, assertNode20, assertOwnedShortTemp, assertOwnerPorts,
 } from './tab-audio.controller.mjs';
 
 test('READY controller identifies the integrated App13 and verified normal13 tuple', () => {
@@ -13,6 +13,9 @@ test('READY controller identifies the integrated App13 and verified normal13 tup
   assert.equal(APP13.status, 'adopted');
   assert.equal(AGENT13.status, 'verified');
   assert.equal(RUNTIME13.status, 'qualified-viewing');
+  assert.equal(RUNTIME13.ownerAck, 'pending');
+  assertRuntimeArtifact();
+  assert.notEqual(RUNTIME13.source, RUNTIME13_ARTIFACT.source);
   assert.equal(CONTROL.physicalMixClaim, false);
   assert.equal(CONTROL.app13Consumer, 'adopted');
   assert.equal(CONTROL.ownLeafOnly, true);
@@ -20,6 +23,10 @@ test('READY controller identifies the integrated App13 and verified normal13 tup
 });
 test('controller rejects a changed source tuple before capture', () => {
   assert.throws(() => assertCandidateTuple({ app: { ...APP13, tree: 'changed' }, agent: AGENT13, runtime: RUNTIME13, composition: COMPOSITION13 }), /app13 candidate tuple changed/);
+  assert.throws(() => assertCandidateTuple({ app: APP13, agent: AGENT13,
+    runtime: { ...RUNTIME13, source: RUNTIME13_ARTIFACT.source, tree: RUNTIME13_ARTIFACT.tree }, composition: COMPOSITION13 }),
+  /runtime13 candidate tuple changed/);
+  assert.throws(() => assertRuntimeArtifact({ ...RUNTIME13_ARTIFACT, version: 'sha256:wrong' }), /artifact producer facts changed/);
 });
 
 test('readiness reports the current flat owner-port status', () => {

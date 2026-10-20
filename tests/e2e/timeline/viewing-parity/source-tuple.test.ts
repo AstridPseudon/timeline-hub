@@ -13,7 +13,8 @@ function tuple(): FrameSourceTuple {
     appSource: { files: 1, sha256: digest }, remotionProject: '/synthetic/remotion',
     peers: { app: Object.fromEntries(PEER_FILES.map(path => [path, digest])),
       agent: Object.fromEntries(PEER_FILES.map(path => [path, digest])) },
-    client: { official: true, runtimeCommit: source.commit, files: { 'src/integrations/runtime/generated.ts': digest } } };
+    client: { official: true, producerCommit: 'd'.repeat(40), producerTree: 'e'.repeat(40),
+      producerVersion: digest, artifactCount: 75, files: { 'src/integrations/runtime/generated.ts': digest } } };
 }
 
 test('accepts a complete source contract without discovering installed pins', () => {
@@ -31,7 +32,10 @@ test('refuses owner-pending sources, peers, official client, and content freeze'
     (p: FrameSourceTuple) => { p.peers.app['node_modules/other'] = p.peers.app[PEER_FILES[0]]; },
     (p: FrameSourceTuple) => { p.peers.app[PEER_FILES[0]] = 'learned-from-install'; },
     (p: FrameSourceTuple) => { p.client.official = false as true; },
-    (p: FrameSourceTuple) => { p.client.runtimeCommit = 'd'.repeat(40); },
+    (p: FrameSourceTuple) => { p.client.producerCommit = 'not-a-sha'; },
+    (p: FrameSourceTuple) => { p.client.producerTree = 'not-a-sha'; },
+    (p: FrameSourceTuple) => { p.client.producerVersion = 'not-a-digest'; },
+    (p: FrameSourceTuple) => { p.client.artifactCount = 0; },
     (p: FrameSourceTuple) => { p.client.files = {}; },
     (p: FrameSourceTuple) => { p.client.files['../outside'] = p.peers.app[PEER_FILES[0]]; },
   ]) {
