@@ -7,6 +7,7 @@ frames.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -18,11 +19,88 @@ import uuid
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 RENDERER_IDENTITY = "astrid.remotion.frame-capture.v1|backend=1.0.0|remotion=4.0.509|fonts=local-bundle-v1"
 DEFAULT_MAX_ENTRIES = 256
 DEFAULT_MAX_BYTES = 512 * 1024 * 1024
 _EPHEMERAL_ATTEMPT_PATH = re.compile(r"astrid-attempt-[^/]+(?=/)")
+
+
+class CaptureSceneLabels:
+    """One capture's observer, supplied with frozen inputs by the source owner.
+
+    This does not admit sources. The owner must bind final Root props, the
+    canonical render basis and exact projected IDs/addresses to its retained
+    revision/candidate before passing ``observe`` to ``on_scene_props``. Call
+    ``retain`` only with that successful batch's fresh output, never PNG-cache
+    entries. No production source owner currently supplies this contract.
+    """
+
+    def __init__(self, *, source_identity: str, props: Mapping[str, Any],
+                 basis: Mapping[str, Any], addresses: Mapping[str, str]) -> None:
+        if not source_identity:
+            raise ValueError("capture source identity required")
+        self._source_identity = source_identity
+        self._props = copy.deepcopy(dict(props))
+        self._basis = copy.deepcopy(dict(basis))
+        self._addresses = dict(addresses)
+        self._answers: dict[int, dict[str, Any]] = {}
+        self._frames: tuple[int, ...] | None = None
+        self._retained = False
+
+    def observe(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
+        """Query the public host once, inside the existing capture lifetime."""
+        from astrid.core.timeline.scene_answers import (
+            SceneQueryUnavailable,
+            host_frames_at,
+        )
+
+        if self._frames is not None:
+            self._retained = False
+            self._answers.clear()
+            raise SceneQueryUnavailable("scene observer already used for a capture")
+        self._frames = tuple(frames)
+        if (props != self._props or not frames
+                or any(type(frame) is not int or frame < 0 for frame in frames)
+                or tuple(sorted(set(frames))) != self._frames):
+            raise SceneQueryUnavailable("capture props or selected frames mismatch")
+        clips = props.get("timeline", {}).get("clips", [])
+        ids = [clip["id"] for clip in clips]
+        if len(set(ids)) != len(ids) or set(ids) != set(self._addresses):
+            raise SceneQueryUnavailable("exact projected clip address mapping required")
+        answers = host_frames_at(props, self._basis, frames)
+        if ([answer.get("frame") for answer in answers] != list(frames)
+                or any(answer.get("width") != self._basis["width"]
+                       or answer.get("height") != self._basis["height"] for answer in answers)
+                or any(layer["clipId"] not in self._addresses
+                       for answer in answers for layer in answer["layers"])):
+            raise SceneQueryUnavailable("capture scene response mismatch")
+        self._answers = copy.deepcopy(dict(zip(frames, answers)))
+
+    def retain(self, produced: Mapping[int, Path]) -> None:
+        """Publish answers only after the same entire fresh capture succeeds."""
+        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+
+        if (self._retained or not self._answers or set(produced) != set(self._answers)
+                or any(not Path(path).is_file() for path in produced.values())):
+            self._retained = False
+            self._answers.clear()
+            raise SceneQueryUnavailable("scene requires the complete successful fresh capture")
+        self._retained = True
+
+    def frame(self, frame: int, *, source_identity: str) -> dict[str, Any]:
+        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+
+        if not self._retained or source_identity != self._source_identity or frame not in self._answers:
+            raise SceneQueryUnavailable("scene unavailable for this capture source/frame")
+        return copy.deepcopy(self._answers[frame])
+
+    def labels(self, frame: int, *, source_identity: str):
+        from .overlays.labels import labels_for_scene
+
+        answer = self.frame(frame, source_identity=source_identity)
+        return labels_for_scene(answer, self._addresses), {key: answer[key] for key in ("width", "height")}
 
 
 def _close_renderer(renderer: object, *, force: bool = False) -> None:
@@ -327,6 +405,8 @@ class _PersistentRemotionRenderer:
         project_dir: Path,
         materialized_root: Path | None,
         materialized_objects: Mapping[str, str] | None,
+        theme_path: Path | None = None,
+        on_scene_props: Callable | None = None,
     ) -> None:
         from astrid.packs.rendering.rendering.renderers.remotion.run import (
             PersistentRemotionFrameSession,
@@ -337,6 +417,8 @@ class _PersistentRemotionRenderer:
         self.project_dir = project_dir
         self.materialized_root = materialized_root
         self.materialized_objects = materialized_objects
+        self.theme_path = theme_path
+        self.on_scene_props = on_scene_props
         self.session = PersistentRemotionFrameSession()
 
     def __call__(
@@ -357,6 +439,8 @@ class _PersistentRemotionRenderer:
             materialized_objects=self.materialized_objects,
             frame_resolution=tuple(resolution) if resolution is not None else None,
             frame_session=self.session,
+            theme_path=self.theme_path,
+            on_scene_props=self.on_scene_props,
             frame_session_identity=renderer_environment_identity(),
         )
 
@@ -404,6 +488,8 @@ class _SharedRemotionOwner:
                 materialized_objects=context.get("materialized_objects"),
                 frame_resolution=tuple(resolution) if resolution is not None else None,
                 frame_session=self.session,
+                theme_path=context.get("theme_path"),
+                on_scene_props=context.get("on_scene_props"),
                 frame_session_identity=renderer_environment_identity(),
             )
 
@@ -486,15 +572,77 @@ class RemotionFrameProvider:
         project_dir: Path,
         materialized_root: Path | None = None,
         materialized_objects: Mapping[str, str] | None = None,
+        theme_path: Path | None = None,
         cache: FrameCaptureCache | None = None,
         renderer: Callable[[Sequence[int], Path, Sequence[int] | None], Mapping[int, Path]] | None = None,
     ) -> None:
-        self.snapshot = snapshot
+        self.snapshot = copy.deepcopy(dict(snapshot))
         self.timeline_path = Path(timeline_path)
         self.assets_path = Path(assets_path)
         self.project_dir = Path(project_dir)
         self.materialized_root = Path(materialized_root) if materialized_root else None
         self.materialized_objects = materialized_objects
+        self.theme_path = Path(theme_path) if theme_path else None
+        self.scene_capture: CaptureSceneLabels | None = None
+        self.fresh_scene_frames: set[int] = set()
+        self._pending_scene: CaptureSceneLabels | None = None
+        self._fresh_requested: tuple[int, ...] = ()
+        self._scene_clips = self.snapshot.get("metadata", {}).get("scene_clips")
+        self.source_identity = self.snapshot.get("metadata", {}).get("capture_identity", "")
+        if self._scene_clips is not None:
+            from astrid.core.timeline import Timeline
+            from astrid.core.timeline.duration import timeline_duration_frames
+            from astrid.packs.rendering.shared.rendering_backend import (
+                _canonical_profile,
+                _load_registry_mapping,
+                _resolved_theme_for_render,
+                _serialize_timeline,
+                _timeline_alpha,
+            )
+
+            authority = self.snapshot["metadata"]["capture_authority"]
+            retained = {"authority": authority, "config": self.snapshot["config"], "registry": self.snapshot["registry"]}
+            identity = "sha256:" + hashlib.sha256(json.dumps(
+                retained, sort_keys=True, separators=(",", ":"), default=str,
+            ).encode()).hexdigest()
+            if identity != self.source_identity or not authority.get("parent_revision_id"):
+                raise ValueError("capture source identity mismatch")
+            if Timeline.load(self.timeline_path).to_config() != Timeline.from_config(self.snapshot["config"]).to_config():
+                raise ValueError("materialized timeline differs from retained capture source")
+            from astrid.core.timeline.astrid_ns import read_app
+
+            clips = self.snapshot["config"]["clips"]
+            if len({clip["id"] for clip in clips}) != len(clips) or set(self._scene_clips) != {clip["id"] for clip in clips}:
+                raise ValueError("capture projected clip mapping mismatch")
+            for clip in clips:
+                source = clip.get("app", {}).get("astrid_shot_composition", {})
+                app = read_app(clip)
+                cut, layer = app.get("cut"), app.get("layer")
+                source_id = source.get("source_clip_id", clip["id"])
+                if self._scene_clips[clip["id"]] != {
+                    "address": f"{cut}.{layer}" if cut and layer else source_id,
+                    "source_clip_id": source_id, "occurrence_id": source.get("occurrence_id"),
+                }:
+                    raise ValueError("capture projected source/occurrence mapping mismatch")
+            self._registry = _load_registry_mapping(self.assets_path)
+            if self._registry != self.snapshot["registry"]:
+                raise ValueError("materialized registry differs from retained capture source")
+            self.profile = _canonical_profile(self.timeline_path, self._registry, self.theme_path)
+            self._theme = _resolved_theme_for_render(self.timeline_path, self.theme_path)
+            self._timeline = _serialize_timeline(self.timeline_path, default_theme=self._theme["id"])
+            if _timeline_alpha(self._timeline):
+                self._theme.setdefault("visual", {}).setdefault("color", {})["bg"] = "transparent"
+            self._source_bytes = {path: path.read_bytes() for path in (
+                self.timeline_path, self.assets_path, *((self.theme_path,) if self.theme_path else ()),
+            )}
+            # Planning and the public query share Root's whole-canvas selection,
+            # including rational fps and partial-override field defaults.
+            fps = self.profile.fps_rational[0] / self.profile.fps_rational[1]
+            snapshot["fps_rational"] = list(self.profile.fps_rational)
+            snapshot["duration_frames"] = timeline_duration_frames(self.snapshot["config"], fps)
+            self.snapshot["fps_rational"] = snapshot["fps_rational"]
+            self.snapshot["duration_frames"] = snapshot["duration_frames"]
+            self.snapshot["resolved_theme"] = self._theme
         self.cache = cache or FrameCaptureCache()
         if renderer is None:
             renderer = _acquire_shared_remotion_handle(
@@ -504,13 +652,108 @@ class RemotionFrameProvider:
                     "project_dir": self.project_dir,
                     "materialized_root": self.materialized_root,
                     "materialized_objects": self.materialized_objects,
+                    "theme_path": self.theme_path,
+                    "on_scene_props": self._observe_scene if self._scene_clips is not None else None,
                 }
             )
 
         self.worker = FrameCaptureWorker(renderer)
         self.wants_bounds = snapshot_wants_bounds(snapshot)
 
+    def _observe_scene(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
+        from astrid.core.rendering.profile import resolve_render_profile
+        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+
+        if self._pending_scene is not None or tuple(frames) != self._fresh_requested:
+            raise SceneQueryUnavailable("capture callback frames mismatch or already observed")
+        if any(path.read_bytes() != data for path, data in self._source_bytes.items()):
+            raise SceneQueryUnavailable("frozen capture source changed during capture")
+        if props.get("theme") != self._theme:
+            raise SceneQueryUnavailable("capture resolved theme mismatch")
+        actual = copy.deepcopy(props.get("timeline"))
+        if not isinstance(actual, dict) or not isinstance(props.get("assets"), Mapping):
+            raise SceneQueryUnavailable("capture timeline or assets missing")
+        expected_timeline = copy.deepcopy(self._timeline)
+        # Staging adds only this reserved parameter. Check its bytes against the
+        # declared pack assets before comparing the entire serialized timeline.
+        for clip, expected_clip in zip(actual.get("clips", []), expected_timeline["clips"]):
+            params = clip.get("params", {})
+            self._validate_staged_assets(clip, props["assets"])
+            if "__astridAssets" in params:
+                expected_clip.setdefault("params", {})["__astridAssets"] = params["__astridAssets"]
+        if actual != expected_timeline:
+            raise SceneQueryUnavailable("capture serialized timeline mismatch")
+        registry = copy.deepcopy(props.get("assets"))
+        if not isinstance(registry, dict) or set(registry.get("assets", {})) != set(self._registry["assets"]):
+            raise SceneQueryUnavailable("capture materialized assets mismatch")
+        for key, entry in registry["assets"].items():
+            url = urlsplit(entry.pop("file", ""))
+            if (self.materialized_root is None or url.scheme != "http" or url.hostname != "127.0.0.1"
+                    or not url.port or url.query or url.fragment):
+                raise SceneQueryUnavailable("capture asset is not invocation materialized")
+            path = (self.materialized_root / unquote(url.path).lstrip("/")).resolve()
+            if not path.is_relative_to(self.materialized_root.resolve()) or not path.is_file():
+                raise SceneQueryUnavailable("capture asset outside materialized source")
+            expected = self._registry["assets"][key]
+            digest = expected.get("digest") or expected.get("content_sha256") or expected.get("sha256") or expected.get("hash")
+            if "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest() != "sha256:" + digest.removeprefix("sha256:"):
+                raise SceneQueryUnavailable("capture materialized asset digest mismatch")
+        if registry != self._registry:
+            raise SceneQueryUnavailable("capture asset metadata mismatch")
+        profile = resolve_render_profile(props["timeline"], props["assets"], theme=props["theme"])
+        if (profile.width, profile.height, profile.fps_rational) != (
+                self.profile.width, self.profile.height, self.profile.fps_rational):
+            raise SceneQueryUnavailable("capture canonical basis mismatch")
+        capture = CaptureSceneLabels(
+            source_identity=self.source_identity, props=props,
+            basis={"width": self.profile.width, "height": self.profile.height,
+                   "fps": self.profile.fps_rational[0] / self.profile.fps_rational[1]},
+            addresses={key: value["address"] for key, value in self._scene_clips.items()},
+        )
+        self._pending_scene = capture
+        capture.observe(props, frames)
+
+    def _validate_staged_assets(self, clip: Mapping[str, Any], registry: Mapping[str, Any]) -> None:
+        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+        from astrid.packs.rendering.rendering.renderers.remotion.run import (
+            REPO_ROOT,
+            _effect_id_for_clip,
+            _effect_registry_for_assets,
+            _resolve_end_spanning_card_assets,
+            _source_pack_id,
+            load_default_registry,
+        )
+
+        catalog = load_default_registry(project_root=REPO_ROOT)
+        effects, aliases = _effect_registry_for_assets(self.theme_path, registry=catalog)
+        ref = clip.get("elementRef")
+        effect_id = ref.get("id") if isinstance(ref, Mapping) and ref.get("kind") == "effect" else _effect_id_for_clip(clip, effects, aliases)
+        staged = clip.get("params", {}).get("__astridAssets", {})
+        if effect_id is None:
+            if staged:
+                raise SceneQueryUnavailable("capture staged assets on a non-effect clip")
+            return
+        element = catalog.get("effects", effect_id, pack_id=ref.get("packId")) if isinstance(ref, Mapping) and "packId" in ref else catalog.get("effects", effect_id)
+        cards = _resolve_end_spanning_card_assets(clip, registry) if (_source_pack_id(element), element.id) == ("local", "end-spanning-layer") else {}
+        if not isinstance(staged, Mapping) or set(staged) != {asset.name for asset in element.assets} | set(cards):
+            raise SceneQueryUnavailable("capture staged element assets mismatch")
+        for asset in element.assets:
+            if asset.name in cards:
+                continue
+            path = (self.project_dir / "public" / staged[asset.name]).resolve()
+            if (not path.is_relative_to((self.project_dir / "public" / "astrid-effects").resolve())
+                    or path.read_bytes() != (element.root / asset.path).read_bytes()):
+                raise SceneQueryUnavailable("capture staged element bytes mismatch")
+        if any(staged[key] != value for key, value in cards.items()):
+            raise SceneQueryUnavailable("capture staged card assets mismatch")
+
+    def scene_for_frame(self, frame: int) -> CaptureSceneLabels | None:
+        return self.scene_capture if frame in self.fresh_scene_frames else None
+
     def close(self, *, force: bool = False) -> None:
+        if force:
+            self.scene_capture = self._pending_scene = None
+            self.fresh_scene_frames.clear()
         self.worker.close(force=force)
 
     def capture(
@@ -519,6 +762,8 @@ class RemotionFrameProvider:
         out_root: Path,
         resolution: Sequence[int] | None = None,
     ) -> dict[str, Any]:
+        self.scene_capture = self._pending_scene = None
+        self.fresh_scene_frames.clear()
         out_root = Path(out_root)
         frames_dir = out_root / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
@@ -542,14 +787,16 @@ class RemotionFrameProvider:
         try:
             if misses:
                 temporary = Path(tempfile.mkdtemp(prefix="astrid-frame-capture-", dir=out_root.parent))
+                self._fresh_requested = tuple(sorted({frame for frame, _key, _destination in misses}))
                 produced = self.worker.capture(
                     [frame for frame, _key, _destination in misses], temporary, resolution
                 )
                 notes = _renderer_notes(self.worker.renderer)
-                for frame, key, destination in misses:
+                if self._scene_clips is not None and self._pending_scene is None:
+                    raise RuntimeError("capture did not observe final scene props")
+                for frame, _key, destination in misses:
                     source = Path(produced[frame])
                     data = source.read_bytes()
-                    self.cache.write(key, data)
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     destination.write_bytes(data)
                     if self.wants_bounds:
@@ -557,11 +804,22 @@ class RemotionFrameProvider:
                         if bounds_source.is_file():
                             shutil.copyfile(bounds_source, destination.with_name(destination.stem + ".bounds.json"))
                     fresh += 1
+                if self._pending_scene is not None:
+                    self._pending_scene.retain(produced)
+                    self.scene_capture = self._pending_scene
+                    self.fresh_scene_frames = set(produced)
+                for _frame, key, destination in misses:
+                    self.cache.write(key, destination.read_bytes())
         except BaseException as operation_error:
             # Cleanup is still mandatory, but its failure must not replace the
             # original native request error (including its structured reply).
             try:
-                self.close(force=True)
+                try:
+                    for _frame, _key, destination in misses:
+                        destination.unlink(missing_ok=True)
+                        destination.with_name(destination.stem + ".bounds.json").unlink(missing_ok=True)
+                finally:
+                    self.close(force=True)
             except BaseException as cleanup_error:
                 raise operation_error from cleanup_error
             raise
