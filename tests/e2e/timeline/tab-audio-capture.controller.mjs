@@ -47,9 +47,12 @@ const REQUIRED_PACKAGES = [
   'react-dom',
   'remotion',
   '@remotion/player',
+  '@remotion/media',
+  '@remotion/web-renderer',
+  '@remotion/layout-utils',
   '@banodoco/timeline-composition',
 ];
-const EXPECTED_PACKAGE_VERSIONS = {
+export const EXPECTED_PACKAGE_VERSIONS = {
   '@playwright/test': '1.60.0',
   playwright: '1.60.0',
   react: '18.3.1',
@@ -139,7 +142,7 @@ function packageFingerprint(name) {
   };
 }
 
-function packageGraphFingerprint() {
+export function packageGraphFingerprint() {
   const packages = Object.fromEntries(REQUIRED_PACKAGES.map((name) => [name, packageFingerprint(name)]));
   return {
     packages,

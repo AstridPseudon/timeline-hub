@@ -9,7 +9,9 @@ import {
   assertGrant,
   BROWSER_EXECUTABLE,
   BROWSER_VERSION,
+  EXPECTED_PACKAGE_VERSIONS,
   hashTree,
+  packageGraphFingerprint,
   PROFILE,
   renderGraphFingerprint,
 } from './tab-audio-capture.controller.mjs';
@@ -69,6 +71,14 @@ function grant() {
     environmentApprovalReference: 'manager-grant',
   };
 }
+
+test('package graph fingerprint collects every package with an expected version', () => {
+  const {packages} = packageGraphFingerprint();
+
+  for (const [name, version] of Object.entries(EXPECTED_PACKAGE_VERSIONS)) {
+    assert.equal(packages[name]?.version, version, `${name} must be collected at its expected version`);
+  }
+});
 
 test('grant requires final SHA to match the actual committed source, not only an environment value', () => {
   assert.doesNotThrow(() => assertGrant(grant(), fingerprint, fingerprint.sourceSha));
