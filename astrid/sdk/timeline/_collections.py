@@ -3,14 +3,15 @@ from __future__ import annotations
 
 from ._command_state import ABSENT, CommandError, State, equal, logical_address, present
 
-KINDS = {'collection.tracks': 'track', 'collection.clips': 'clip',
+KINDS = {'collection.text-bindings': 'text-binding',
+         'collection.text-bindings.append': 'text-binding', 'collection.tracks': 'track', 'collection.clips': 'clip',
          'collection.tracks.after': 'track', 'collection.clips.after': 'clip',
          'collection.occurrences': 'occurrence', 'collection.shots': 'shot',
          'track.create': 'track'}
 
 
 def member(ref):
-    if '/clip:' in ref or '/track:' in ref:
+    if '/clip:' in ref or '/track:' in ref or '/text-binding:' in ref:
         owner, entity = ref.rsplit('/', 1)
         kind, identity = entity.split(':', 1)
         return owner, kind, identity
@@ -18,8 +19,12 @@ def member(ref):
 
 
 def container(owner, kind):
+    if kind == 'text-binding':
+        return owner, ('payload', 'text_bindings')
     if kind in ('occurrence', 'shot'):
         return 'parent', (kind + 's',)
+    if kind == 'asset':
+        return owner, ('config' if owner == 'parent' else 'source', 'registry', 'assets')
     return owner, (
         ('config' if owner == 'parent' else 'source', kind + 's'))
 
@@ -30,14 +35,23 @@ def _identity(value):
 
 def shape(state, owner, kind):
     def tagged(obj, key):
-        if key not in obj:
+        if not isinstance(obj, dict) or key not in obj:
             return ABSENT.copy()
         value = obj[key]
         return present([] if isinstance(value, list) else {} if isinstance(value, dict) else value)
 
     if kind in ('occurrence', 'shot'):
         return {'container': 'array' if kind == 'occurrence' else 'object'}
+    if kind == 'text-binding':
+        shot = state.occurrence(owner)['shot_id']
+        return {'members': tagged(state.bundle['shots'][shot]['payload'], 'text_bindings')}
     config = state.config(owner)
+    if kind == 'asset':
+        # Shape guards retain storage presence without guarding unrelated aliases.
+        containers = [config] if owner != 'parent' else [state.bundle['parent'], config]
+        return {str(i): {'registry': tagged(obj, 'registry'),
+                        'assets': tagged(obj.get('registry') if isinstance(obj, dict) else {}, 'assets')}
+                for i, obj in enumerate(containers)}
     result = {'members': tagged(config if isinstance(config, dict) else {}, kind + 's')}
     if owner == 'parent':
         parent = state.bundle['parent']
@@ -55,6 +69,9 @@ def rows(state, owner, kind, *, check_mirrors=True):
         if not isinstance(result, list if kind == 'occurrence' else dict):
             raise CommandError('invalid aggregate collection', kind='identity_conflict', ref=owner)
         return result
+    if kind == 'text-binding':
+        from .native_text_binding import binding_rows
+        return binding_rows(state, owner)
     config = state.config(owner)
     if not isinstance(config, dict):
         raise CommandError('collection owner must be an object', kind='identity_conflict', ref=owner)
@@ -81,6 +98,9 @@ def order(state, owner, kind, *, check_mirrors=True):
         if any(not isinstance(row, dict) or row.get('shot_id') != identity
                for identity, row in collection.items()):
             raise CommandError('ambiguous shot ownership', kind='identity_conflict', ref=owner)
+    elif kind == 'text-binding':
+        from .native_text_binding import binding_key
+        identities = [binding_key(row) for row in collection]
     else:
         key = 'occurrence_id' if kind == 'occurrence' else 'id'
         identities = [row.get(key) if isinstance(row, dict) else None for row in collection]
@@ -105,7 +125,7 @@ def arrange(state, owner, kind, expected):
 
 
 def selection_overlap(selected, write):
-    if selected['key'] == 'placement.owners':
+    if selected['key'] in ('placement.owners', 'text-binding.owners'):
         if (write['ref'].startswith('occurrence:') and '/' not in write['ref']
                 and write['path'] in ([], ['shot_id'])):
             if any(key not in write for key in ('before', 'after')):
@@ -120,6 +140,12 @@ def selection_overlap(selected, write):
     kind = KINDS.get(selected['key'])
     if kind is None:
         return False
+    entity = member(write['ref'])
+    if kind == 'text-binding' and entity is not None and entity[:2] == (selected['owner'], kind):
+        if any(key not in write for key in ('before', 'after')):
+            raise CommandError('binding membership requires complete write history', kind='history_unavailable')
+        if all(write[key]['state'] == 'present' for key in ('before', 'after')):
+            return False
     if kind in ('occurrence', 'shot') and write['ref'].startswith(kind + ':'):
         return not write['path'] or write['path'] == [kind + '_id']
     ref, path = logical_address(write['ref'], write['path'])
@@ -157,6 +183,9 @@ class AcceptedRecords(list):
 
 def _ordinary_create(record, writes, owner, kind):
     """Trusted scoped creates use append or a recorded stable boundary."""
+    if kind == 'text-binding':
+        return (record['command']['op'] == 'text-binding.set'
+                and all(w['before'] == ABSENT and w['after'] != ABSENT for w in writes))
     if record['command']['op'] in ('timeline.inverse', 'timeline.restore'):
         return False
     created = {item['ref'] for item in record['created']
@@ -177,14 +206,16 @@ def insertion_boundary(ordered, members):
 def restoration_orders(records, *, only=None):
     """Project only structural membership; inverse insert positions need a boundary."""
     touched = {member(w['ref'])[:2] for record in records for w in record['writes']
-               if not w['path'] and member(w['ref']) is not None}
+               if not w['path'] and member(w['ref']) is not None
+               and (member(w['ref'])[1] != 'text-binding' or ABSENT in (w['before'], w['after']))}
     result = {}
     for record in records:
         if only is not None and record is not only:
             continue
         for owner, kind in sorted(touched):
             writes = [w for w in record['writes'] if not w['path'] and
-                      member(w['ref']) is not None and member(w['ref'])[:2] == (owner, kind)]
+                      member(w['ref']) is not None and member(w['ref'])[:2] == (owner, kind)
+                      and (kind != 'text-binding' or ABSENT in (w['before'], w['after']))]
             if not writes:
                 continue
             selected = [s for s in record['selections'] if s['owner'] == owner
@@ -203,7 +234,8 @@ def restoration_orders(records, *, only=None):
                         if s['key'].endswith('.after') else
                         s['members'] != s['order'] or s['boundaries'] != s['order'])
                        or s['query_version'] != 1
-                       or s['policy'] != 'guard-membership' for s in selected):
+                       or s['policy'] != ('include-concurrent' if s['key'] == 'collection.text-bindings.append'
+                                           else 'guard-membership') for s in selected):
                     raise CommandError('inconsistent structural order proof', kind='history_unavailable')
             if len(original) != len(set(original)) or any(
                     member(ref) is None or member(ref)[:2] != (owner, kind) for ref in original):

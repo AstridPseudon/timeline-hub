@@ -2,45 +2,82 @@
 
 The test-only recipe/provider adapter admits its declared selection using ABI 1.
 This qualifies manifest subset acceptance, not any production popup operation.
+The historical fixture keeps numeric 24 fps and its original window scope.
 """
 from __future__ import annotations
 
 import copy
+from types import SimpleNamespace
 
 import pytest
 
 from tests.helpers.runtime import use_runtime
+from tests.helpers.trusted_seed import seed_trusted_parent
 
 pytestmark = pytest.mark.integration
 
 
+@pytest.fixture
+def manifest_media(tmp_path, monkeypatch):
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+
+    from tests.editing_conformance.test_commit_runtime_parent_media_swap import (
+        editing as native_parent_media_fixture,
+    )
+
+    # This helper builds the film with historical public APIs in a separate
+    # interpreter, settles decodable PNGs, then opens it with current Runtime.
+    fixture = native_parent_media_fixture.__wrapped__(SimpleNamespace(param='image'), tmp_path, monkeypatch)
+    case = next(fixture)
+    try:
+        service, project = case.service, case.project
+        service.list_timeline_commits(project, 'film', authorize=case.authorize)
+        case.legacy = service.get_project_parent_composition_revision(project, 'film', 'popup-baseline')
+        commits, _ = service._timeline_commits()
+        document = commits.revision_closure(project, 'film', 'popup-baseline')
+        shot = copy.deepcopy(document['shot_revisions'][0])
+        binding = service.get_project_shot_text_binding(
+            project, shot['payload']['text_bindings'][0]['binding_id'])
+        descriptor = {key: binding[key] for key in (
+            'kind', 'slot', 'media_id', 'content_hash', 'byte_size', 'mime_type')}
+        assert service.cas.read(descriptor['media_id'].removeprefix('sha256:')) == b'A chapter'
+        assert descriptor['content_hash'] == descriptor['media_id']
+        assert descriptor['byte_size'] == len(b'A chapter')
+        case.binding = binding
+        shot.update(revision_id='manifest-shot')
+        shot['payload']['text_bindings'] = [descriptor]
+        parent = copy.deepcopy(document['parent_revision']['payload'])
+        for occurrence in parent['occurrences']:
+            occurrence['shot_revision_id'] = shot['revision_id']
+        # Approved TEST SETUP boundary: the current six-field descriptor refers
+        # to real retained legacy text, never inline text authority. No Agent
+        # command is credited with creating this authored baseline.
+        seed_trusted_parent(service, {
+            'project_id': project, 'timeline_id': 'film', 'expected_head': 'popup-baseline',
+            'parent_revision_id': 'media-baseline', 'parent_composition': parent,
+            'shot_revisions': [shot],
+        }, idempotency_key='media-baseline')
+        case.baseline = commits.revision_closure(project, 'film', 'media-baseline')
+        service.close()
+        case.service = RuntimeService(case.root)
+        yield case
+    finally:
+        fixture.close()
+
+
 @pytest.mark.parametrize('operation', ['add', 'swap'])
-def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeypatch, operation):
-    runtime = use_runtime()
-    monkeypatch.syspath_prepend(str(runtime / 'tests'))
-    from runtime_protocol.auth import CredentialStore
+def test_real_media_manifest_inverse_retry_restart_and_history(monkeypatch, operation, manifest_media):
+    use_runtime()
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_port import RequestCommitPort, route_path
-    from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
-    from timeline_commit_film_fixture import _binding_descriptor
 
     from astrid.sdk.timeline import commands
     from astrid.sdk.timeline.commit import RuntimeCommitService, create_runtime_commit_service
-    from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
 
-    def effect(project):
-        return _effect(project, groups=[{'group_key': 'main', 'selectors': [
-            {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': 'image'}
-            for index, name in enumerate(('old', 'new'))]}])
-
-    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
-    project = project['id']
-    credentials = CredentialStore(tmp_path / 'credentials')
-    token, _ = credentials.provision('media-editor', ['projects:read', 'projects:write'])
-
-    def authorize():
-        return credentials.require(token, 'projects:write')
+    service, project, authorize = manifest_media.service, manifest_media.project, manifest_media.authorize
+    old, new = manifest_media.old, manifest_media.new
 
     def introduce(ctx, command):
         pin = command['args']['media']
@@ -63,8 +100,7 @@ def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeyp
 
     class RecipeProvider(RuntimeCommitService):
         def commit(self, context, port):
-            # The base worker predates the held native-media admission seam.
-            # Use its exact ABI read; never replace captures or prepared output.
+            # Test-only recipe ABI adapter, not a production popup operation.
             for call in context['request']['commands']:
                 if call['op'] == 'test.media-provenance':
                     port.selected_media(call['args']['media'])
@@ -98,57 +134,17 @@ def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeyp
                 'args': {'publications': [result['receipt']['receipt_id']]}}
 
     try:
-        outputs = [_output(name.encode(), output_port='image', group_key='main', variant_key=name,
-                           ordinal=index, filename=name + '.png', media_type='image/png')
-                   for index, name in enumerate(('old', 'new'))]
-        _settle(service, attempt, outputs, effect=admitted)
-        selections = {row['variant_key']: service.get_project_media_selection(project, {
-            'association_id': row['association_id'], 'object_id': row['object_id'],
-            'version': row['lifecycle']['version']}, authorize=authorize)
-            for row in service.managed_outputs(task['task']['id'])}
-        old, new = selections['old'], selections['new']
-
-        def replace(value):
-            if value == MEDIA:
-                return old['object_id']
-            if isinstance(value, dict):
-                return {key: replace(child) for key, child in value.items()}
-            if isinstance(value, list):
-                return [replace(child) for child in value]
-            return value
-
-        document = replace(document_fixture())
-        internal = document['internal_timeline_revisions'][0]
-        internal['payload'].pop('source_window')
-        internal['timeline_id'] = 'film'
-        # Legacy seed publication's visual seam accepts numeric fps only.
-        # Rational fps/source preservation remains in the detached proof.
-        document['parent_revision']['payload']['config']['output']['fps'] = 24
-        internal['payload']['output']['fps'] = 24
-        for occurrence in document['parent_revision']['payload']['occurrences']:
-            occurrence.update(source_offset=0, speed=1)
-        document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
-        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
-                                    idempotency_key='chapter-shot')
-        binding = service.set_project_shot_text_binding(project, {
-            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
-        }, idempotency_key='chapter-text')['data']
-        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
-        service.publish_parent_composition(project, 'film', {
-            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
-            'parent_revision_id': 'media-baseline', 'parent_composition': document['parent_revision']['payload'],
-            'shot_revisions': [{key: value for key, value in row.items() if key != 'content_digest'}
-                               for row in document['shot_revisions']],
-            'internal_timeline_revisions': [{key: value for key, value in internal.items()
-                                             if key != 'content_digest'}],
-        }, idempotency_key='media-baseline')
         register()
         request = body([{'schema_version': 1, 'op': 'test.media-provenance', 'version': '1',
                          'select': 'occurrence:occ-a', 'args': {'media': new}}])
         created = submit(request, 'introduce')
         baseline = next(row for row in captured if row['parent_revision']['revision_id'] == 'media-baseline')
+        assert baseline == manifest_media.baseline
+        assert old['object_id'] in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
         assert new['object_id'] not in {pin['media_id'] for pin in baseline['dependency_manifest']['media']}
         assert new['object_id'] in {pin['media_id'] for pin in created['data']['canonical_document']['dependency_manifest']['media']}
+        assert ({pin['media_id'] for pin in created['data']['canonical_document']['dependency_manifest']['media']}
+                - {pin['media_id'] for pin in baseline['dependency_manifest']['media']}) == {new['object_id']}
         undo_request = body([inverse(created)])
         preview = submit(dict(undo_request, dry_run=True), 'undo-preview')
         assert preview['data']['canonical_document'] == baseline
@@ -159,7 +155,7 @@ def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeyp
         # closure, while its result manifest omits it. History remains immutable.
         assert created['data']['canonical_document'] in captured
         before_restart = service.list_timeline_commits(project, 'film', authorize=authorize)
-        root = tmp_path / 'publish'
+        root = manifest_media.root
         service.close()
         service = RuntimeService(root)
         register()
@@ -183,6 +179,8 @@ def test_real_media_manifest_inverse_retry_restart_and_history(tmp_path, monkeyp
         assert edge['records']['commands'][0]['dependencies'][0]['pin'] == new
         stored = service.get_project_parent_composition_revision(project, 'film', created['data']['accepted_revision_id'])
         assert stored['dependency_manifest'] == created['data']['canonical_document']['dependency_manifest']
+        assert service.get_project_shot_text_binding(project, manifest_media.binding['binding_id']) == manifest_media.binding
+        assert service.get_project_parent_composition_revision(project, 'film', 'popup-baseline') == manifest_media.legacy
         assert service.store.integrity_report()['ok']
     finally:
         service.close()

@@ -1218,9 +1218,18 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         source_object_id: str,
         expected_head: str,
         idempotency_key=None,
+        old_media: Mapping[str, Any] | None = None,
+        media: Mapping[str, Any] | None = None,
+        expected_publication: str | None = None,
     ):
         """Replace one selected clip in the canonical parent composition.
 
+        With exact old/new MediaSelections and the original publication ID,
+        submit a scoped native swap. ``occurrence_id=None`` selects a raw
+        parent clip; an occurrence ID selects its raw child. The digest must
+        agree with the new selection. Capture and validation happen at commit.
+
+        The digest-only adapter remains during paired consumer migration.
         A parent composition is an immutable parent -> shot revision ->
         internal-timeline closure.  This route opens that exact closure,
         edits the selected internal clip in a detached authoring bundle, and
@@ -1228,6 +1237,15 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         legacy timeline-document store used by ``replace_clip``.
         """
         key = idempotency_key or uuid.uuid4().hex
+        if old_media is not None or media is not None or expected_publication is not None:
+            from .timeline_media_replacement import replace_selected_media
+
+            return replace_selected_media(
+                self, project, ref, occurrence_id=occurrence_id, clip_id=clip_id,
+                source_object_id=source_object_id, expected_head=expected_head,
+                expected_publication=expected_publication, old_media=old_media,
+                media=media, idempotency_key=key,
+            )
         required = {
             "project": project,
             "occurrence_id": occurrence_id,
