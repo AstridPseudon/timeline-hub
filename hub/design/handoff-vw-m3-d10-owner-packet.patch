@@ -1,0 +1,388 @@
+diff --git a/src/pages/Home/astrid-public-host.tsx b/src/pages/Home/astrid-public-host.tsx
+index c95f0d371..a3c88e6c0 100644
+--- a/src/pages/Home/astrid-public-host.tsx
++++ b/src/pages/Home/astrid-public-host.tsx
+@@ -1,15 +1,6 @@
+ import type { ComponentType } from 'react';
+ import { ASTRID_RENDERING_ELEMENTS } from '@astrid-public/packs/rendering/elements/public-catalog.ts';
+-import FadeAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/fade/component.tsx';
+-import FadeUpAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/fade-up/component.tsx';
+-import ScaleInAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/scale-in/component.tsx';
+-import SlideLeftAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/slide-left/component.tsx';
+-import SlideUpAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/slide-up/component.tsx';
+-import TypeOnAnimation from '@astrid-public/packs/rendering/rendering/elements/animations/type-on/component.tsx';
+ import AudioReactiveColour from '@astrid-public/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx';
+-import TextCard from '@astrid-public/packs/rendering/rendering/elements/effects/text-card/component.tsx';
+-import CrossFadeTransition from '@astrid-public/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx';
+-import FadeTransition from '@astrid-public/packs/rendering/rendering/elements/transitions/fade/component.tsx';
+ import EndSpanningLayer from '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx';
+ import FrameOverlay from '@astrid-public/packs/local/rendering/elements/effects/frame-overlay/component.tsx';
+ import card0 from '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png?url';
+@@ -20,6 +11,7 @@ import card4 from '@astrid-public/packs/local/rendering/elements/effects/end-spa
+ import card5 from '@astrid-public/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png?url';
+ import frame from '@astrid-public/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png?url';
+ import { createAstridPreviewAssetWrapper } from '@/tools/video-editor/sequences/components/createAstridPreviewAssetWrapper.tsx';
++import { PUBLIC_COMPOSITION_ELEMENT_COMPONENTS } from '@/tools/video-editor/runtime/publicCompositionElementRegistry.ts';
+ import type {
+   AstridDynamicSequenceEntry,
+   AstridElementComponentProps,
+@@ -34,17 +26,13 @@ const EndSpanningLayerPreview = createAstridPreviewAssetWrapper(
+ const FrameOverlayPreview = createAstridPreviewAssetWrapper(FrameOverlay, {frame});
+ 
+ const asComponent = (value: unknown) => value as ComponentType<AstridElementComponentProps>;
++const compositionComponentEntries = Object.entries(PUBLIC_COMPOSITION_ELEMENT_COMPONENTS) as Array<[
++  string,
++  ComponentType<AstridElementComponentProps>,
++]>;
+ const componentEntries: Array<[string, ComponentType<AstridElementComponentProps>]> = [
+-  ['animation:fade', asComponent(FadeAnimation)],
+-  ['animation:fade-up', asComponent(FadeUpAnimation)],
+-  ['animation:scale-in', asComponent(ScaleInAnimation)],
+-  ['animation:slide-left', asComponent(SlideLeftAnimation)],
+-  ['animation:slide-up', asComponent(SlideUpAnimation)],
+-  ['animation:type-on', asComponent(TypeOnAnimation)],
++  ...compositionComponentEntries,
+   ['effect:audio-reactive-colour', asComponent(AudioReactiveColour)],
+-  ['effect:text-card', asComponent(TextCard)],
+-  ['transition:cross-fade', asComponent(CrossFadeTransition)],
+-  ['transition:fade', asComponent(FadeTransition)],
+   ['effect:end-spanning-layer', asComponent(EndSpanningLayerPreview)],
+   ['effect:frame-overlay', asComponent(FrameOverlayPreview)],
+ ];
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx
+deleted file mode 100644
+index 68a0ade02..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function Fade(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx
+deleted file mode 100644
+index 693a009db..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function FadeUp(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx
+deleted file mode 100644
+index 863e9de77..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function ScaleIn(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx
+deleted file mode 100644
+index 62f76f83a..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-left/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function SlideLeft(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx
+deleted file mode 100644
+index 30b5594b8..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-up/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function SlideUp(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx
+deleted file mode 100644
+index 16a74eaee..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/type-on/component.tsx
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import {isValidElement} from 'react';
+-import type {ReactElement} from 'react';
+-
+-import type {AnimationComponentProps} from '../../../../shared/element_contracts';
+-
+-// Builtin pass-through: themes override this with real animation behavior.
+-export default function TypeOn(props: AnimationComponentProps): ReactElement | null {
+-  return isValidElement(props.children) ? props.children : null;
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx
+deleted file mode 100644
+index c55157efe..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/text-card/component.tsx
++++ /dev/null
+@@ -1,217 +0,0 @@
+-import type {ReactElement} from 'react';
+-import {AbsoluteFill, interpolate, useCurrentFrame} from 'remotion';
+-import {narrowParams} from '../../../../shared/element_contracts';
+-import type {ElementComponentProps} from '../../../../shared/element_contracts';
+-
+-// Minimal default text card. Themes are expected to override this with richer
+-// typography, but the builtin renders visible markup so a stripped theme still
+-// produces a readable caption instead of an empty frame. The shape mirrors the
+-// element.yaml manifest: `content` (required) and `align` (left/center/right).
+-type TextCardParams = {
+-  content?: string;
+-  align?: 'left' | 'center' | 'right';
+-  bold?: boolean;
+-  color?: string;
+-  fontFamily?: string;
+-  fontSize?: number;
+-};
+-
+-const numberOrUndefined = (value: unknown): number | undefined => {
+-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+-};
+-
+-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+-
+-const clipDurationFrames = (
+-  clip: {hold?: unknown; from?: unknown; to?: unknown; speed?: unknown},
+-  fps: number,
+-): number => {
+-  if (typeof clip.hold === 'number' && Number.isFinite(clip.hold)) {
+-    return Math.max(1, Math.round(clip.hold * fps));
+-  }
+-  const from = numberOrUndefined(clip.from) ?? 0;
+-  const to = numberOrUndefined(clip.to) ?? from;
+-  const speed = numberOrUndefined(clip.speed) ?? 1;
+-  return Math.max(1, Math.round(((to - from) / speed) * fps));
+-};
+-
+-export default function TextCard(
+-  props: ElementComponentProps,
+-): ReactElement | null {
+-  const frame = useCurrentFrame();
+-  const params = narrowParams<TextCardParams>(props.params);
+-  const content = typeof params.content === 'string' ? params.content : '';
+-  if (!content) {
+-    return null;
+-  }
+-  const align: 'left' | 'center' | 'right' = params.align ?? 'center';
+-  const clip = props.clip as {
+-    x?: unknown;
+-    y?: unknown;
+-    width?: unknown;
+-    height?: unknown;
+-    hold?: unknown;
+-    from?: unknown;
+-    to?: unknown;
+-    speed?: unknown;
+-  };
+-  const x = numberOrUndefined(clip.x);
+-  const y = numberOrUndefined(clip.y);
+-  const width = numberOrUndefined(clip.width);
+-  const height = numberOrUndefined(clip.height);
+-  const hasBounds =
+-    x !== undefined || y !== undefined || width !== undefined || height !== undefined;
+-  const fontSize = numberOrUndefined(params.fontSize) ?? (hasBounds ? 32 : 64);
+-  const themeColor = props.theme?.visual?.color ?? {};
+-  const themeType = props.theme?.visual?.type ?? {};
+-  const themeMotion = props.theme?.visual?.motion ?? {};
+-  const fg = typeof themeColor.fg === 'string' ? themeColor.fg : '#ffffff';
+-  const bg = typeof themeColor.bg === 'string' ? themeColor.bg : '#232329';
+-  const accent =
+-    typeof themeColor.accent === 'string' ? themeColor.accent : '#B79CE4';
+-  const color = typeof params.color === 'string' ? params.color : fg;
+-  const fontFamily =
+-    typeof params.fontFamily === 'string'
+-      ? params.fontFamily
+-      : typeof themeType.families?.body === 'string'
+-        ? themeType.families.body
+-        : 'Chillax, Inter, Arial, sans-serif';
+-  const durationFrames = clipDurationFrames(clip, props.fps);
+-  const fadeFrames = Math.max(
+-    8,
+-    Math.round(((numberOrUndefined(themeMotion.fadeMs) ?? 450) / 1000) * props.fps),
+-  );
+-  const intro = clamp01(frame / fadeFrames);
+-  const outro = clamp01((durationFrames - frame - 1) / fadeFrames);
+-  const motion = Math.min(intro, outro);
+-  const eased = 1 - Math.pow(1 - motion, 3);
+-  const translateX = interpolate(eased, [0, 1], [-42, 0]);
+-  const translateY = interpolate(eased, [0, 1], [16, 0]);
+-  const scaleX = interpolate(eased, [0, 1], [0.08, 1]);
+-
+-  if (hasBounds) {
+-    const lines = content.split('\n').map((line) => line.trim()).filter(Boolean);
+-    const name = lines[0] ?? content;
+-    const title = lines[1] ?? '';
+-    const handle = lines[2] ?? '';
+-    return (
+-      <div
+-        style={{
+-          position: 'absolute',
+-          left: x ?? 0,
+-          top: y ?? 0,
+-          width: width ?? 'auto',
+-          height: height ?? 'auto',
+-          display: 'block',
+-          overflow: 'visible',
+-          color,
+-          fontFamily,
+-          opacity: eased,
+-          textAlign: align,
+-          transform: `translate(${translateX}px, ${translateY}px)`,
+-        }}
+-      >
+-        <div
+-          style={{
+-            display: 'inline-flex',
+-            alignItems: 'stretch',
+-            maxWidth: '100%',
+-            background: `linear-gradient(90deg, ${bg}F2 0%, ${bg}D8 70%, ${bg}00 100%)`,
+-            borderLeft: `6px solid ${accent}`,
+-            borderTop: `1px solid ${accent}66`,
+-            padding: '16px 26px 15px 20px',
+-            boxShadow: '0 18px 44px rgba(0, 0, 0, 0.42)',
+-            transformOrigin: 'left center',
+-          }}
+-        >
+-          <div style={{minWidth: 0}}>
+-            <div
+-              style={{
+-                color,
+-                fontFamily,
+-                fontSize,
+-                fontWeight: params.bold ? 700 : 600,
+-                lineHeight: 1.02,
+-                letterSpacing: 0,
+-                whiteSpace: 'nowrap',
+-              }}
+-            >
+-              {name}
+-            </div>
+-            {title ? (
+-              <div
+-                style={{
+-                  marginTop: 8,
+-                  color,
+-                  fontFamily,
+-                  fontSize: Math.max(14, fontSize * 0.43),
+-                  fontWeight: 500,
+-                  letterSpacing: '0.18em',
+-                  lineHeight: 1.15,
+-                  opacity: 0.9,
+-                  textTransform: 'uppercase',
+-                  whiteSpace: 'nowrap',
+-                }}
+-              >
+-                {title}
+-              </div>
+-            ) : null}
+-            {handle ? (
+-              <div
+-                style={{
+-                  marginTop: 7,
+-                  color: accent,
+-                  fontFamily,
+-                  fontSize: Math.max(13, fontSize * 0.4),
+-                  fontWeight: 600,
+-                  letterSpacing: '0.12em',
+-                  lineHeight: 1.05,
+-                  textTransform: 'uppercase',
+-                  whiteSpace: 'nowrap',
+-                }}
+-              >
+-                {handle}
+-              </div>
+-            ) : null}
+-          </div>
+-        </div>
+-        <div
+-          style={{
+-            marginTop: 8,
+-            width: 184,
+-            height: 3,
+-            backgroundColor: accent,
+-            transform: `scaleX(${scaleX})`,
+-            transformOrigin: 'left center',
+-            opacity: eased * 0.92,
+-          }}
+-        />
+-      </div>
+-    );
+-  }
+-
+-  return (
+-    <AbsoluteFill
+-      style={{
+-        left: x ?? 120,
+-        top: y ?? 120,
+-        width: width ?? 640,
+-        height: height ?? 180,
+-        position: 'absolute',
+-        justifyContent: 'center',
+-        color,
+-        fontFamily,
+-        fontSize,
+-        fontWeight: params.bold ? 700 : 400,
+-        fontStyle: 'normal',
+-        textAlign: align,
+-        whiteSpace: 'pre-wrap',
+-        lineHeight: 1.1,
+-        textShadow: '0 2px 4px rgba(0, 0, 0, 0.95), 0 2px 18px rgba(0, 0, 0, 0.8)',
+-        opacity: props.clip.opacity ?? 1,
+-      }}
+-    >
+-      {content}
+-    </AbsoluteFill>
+-  );
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx
+deleted file mode 100644
+index 1153bc7dd..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/cross-fade/component.tsx
++++ /dev/null
+@@ -1,6 +0,0 @@
+-import type {TransitionResult} from '../../../../shared/element_contracts';
+-
+-// Builtin null-pair: themes override this with real transition presentation/timing.
+-export default function CrossFade(): TransitionResult {
+-  return {presentation: null, timing: null};
+-}
+diff --git a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx b/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx
+deleted file mode 100644
+index 4ef384073..000000000
+--- a/vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/fade/component.tsx
++++ /dev/null
+@@ -1,6 +0,0 @@
+-import type {TransitionResult} from '../../../../shared/element_contracts';
+-
+-// Builtin null-pair: themes override this with real transition presentation/timing.
+-export default function FadeTransition(): TransitionResult {
+-  return {presentation: null, timing: null};
+-}

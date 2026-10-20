@@ -1,0 +1,883 @@
+diff --git a/astrid/core/timeline/scene_answers.py b/astrid/core/timeline/scene_answers.py
+index 1d3f0879f..86d6503e1 100644
+--- a/astrid/core/timeline/scene_answers.py
++++ b/astrid/core/timeline/scene_answers.py
+@@ -7,6 +7,7 @@ import os
+ import subprocess
+ import sys
+ from collections.abc import Iterable, Mapping
++from pathlib import Path
+ from typing import Any
+ 
+ from astrid.core.env_vars import ASTRID_PACKS_PATH
+@@ -114,3 +115,87 @@ def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
+     declarations = element_coverage({c.get("clipType", "") for c in clips})
+     roles = {c["id"]: role_of(c, c.get("track"), declarations) for c in clips}
+     return _query({"props": dict(props), "basis": dict(basis), "roles": roles}, frames)
++
++
++def _prepared_host_frames_at(
++    timeline_path: Path,
++    assets_path: Path,
++    frames: Iterable[int],
++    *,
++    staged_video: Path,
++    provenance_out_path: Path,
++    project_dir: Path,
++    composition_id: str,
++    theme_path: Path | None,
++    min_free_gb: float | None,
++    frame_output_dir: Path,
++    review: Mapping[str, Any] | None = None,
++    materialized_root: Path | None = None,
++    staging_parent: Path | None = None,
++    materialized_objects: Mapping[str, str] | None = None,
++    composition_clip_types: frozenset[str] = frozenset(),
++    encode_aac_at_stitch: bool = False,
++    composition_duration_frames: int | None = None,
++) -> list[dict[str, Any]]:
++    """Query public Scene from the existing prepared Root lifetime.
++
++    This is a read-only adapter for a host-retained source. It deliberately
++    does not admit inputs, construct a registry/theme, or launch a renderer.
++    ``host_frames_at`` runs while the normal preparation context still owns
++    materialized assets and staged element resources.
++    """
++    requested = tuple(frames)
++    try:
++        from astrid.core.rendering.profile import resolve_render_profile
++        from astrid.core.rendering.verified_source import inherited_source
++        from astrid.packs.rendering.rendering.renderers.remotion import lock
++        from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (
++            _prepared_remotion_root,
++        )
++
++        runtime = remotion_runtime_status(require_explicit_project=True)
++        if (not runtime.available or runtime.project_dir is None
++                or runtime.project_dir.resolve() != project_dir.resolve()):
++            raise SceneQueryUnavailable("prepared Root differs from admitted scene host")
++        source = inherited_source(timeline_path, assets_path)
++        if source is None:
++            raise SceneQueryUnavailable("exact retained Runtime source required")
++        with lock.remotion_render_lock(), _prepared_remotion_root(
++            timeline_path,
++            assets_path,
++            staged_video,
++            provenance_out_path=provenance_out_path,
++            project_dir=project_dir,
++            composition_id=composition_id,
++            theme_path=theme_path,
++            min_free_gb=min_free_gb,
++            review=review,
++            materialized_root=materialized_root,
++            staging_parent=staging_parent,
++            materialized_objects=materialized_objects,
++            composition_clip_types=composition_clip_types,
++            encode_aac_at_stitch=encode_aac_at_stitch,
++            frame_numbers=requested,
++            frame_output_dir=frame_output_dir,
++            composition_duration_frames=composition_duration_frames,
++        ) as prepared:
++            props = prepared[0]
++            profile = resolve_render_profile(
++                props["timeline"], props["assets"], theme=props["theme"],
++            )
++            basis = {
++                "width": profile.width,
++                "height": profile.height,
++                "fps": profile.fps_rational[0] / profile.fps_rational[1],
++            }
++            source.validate(timeline_path, assets_path)
++            answers = host_frames_at(props, basis, requested)
++            source.validate(timeline_path, assets_path)
++            if any(answer.get("width") != profile.width or answer.get("height") != profile.height
++                   for answer in answers):
++                raise SceneQueryUnavailable("prepared scene basis mismatch")
++            return answers
++    except SceneQueryUnavailable:
++        raise
++    except (OSError, RuntimeError, TypeError, ValueError, KeyError) as exc:
++        raise SceneQueryUnavailable(f"scene preparation unavailable: {exc}") from exc
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+index 94e1ccbdb..9c6888735 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+@@ -1681,6 +1681,215 @@ def _materialized_asset_files(registry_path) -> dict[str, str]:
+     }
+ 
+ 
++def _scene_only_label_unavailable() -> dict[str, object]:
++    """Use the existing revision-label shape when Scene is advisory unavailable."""
++    return {
++        "status": "unavailable",
++        "label": "revision unavailable",
++        "actual_revision_id": None,
++        "base_revision_id": None,
++    }
++
++
++def _execute_scene_only(args, authority: Mapping[str, Any]) -> dict[str, Any]:
++    """Return public Scene answers through the ordinary filmstrip artifact."""
++    from astrid.core.foundation.paths import REPO_ROOT
++    from astrid.core.timeline.scene_answers import (
++        SceneQueryUnavailable,
++        _prepared_host_frames_at,
++    )
++    from astrid.core.rendering.verified_source import inherited_source
++    from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
++
++    snapshot = authority.get("capture_snapshot") or authority.get("filmstrip_snapshot")
++    if not isinstance(snapshot, Mapping) or snapshot.get("project_slug") != args.project_slug:
++        raise ValueError("Scene-only authority does not match the project.")
++    timeline_path = getattr(args, "timeline", None)
++    assets_path = getattr(args, "assets_registry", None)
++    if timeline_path is None or assets_path is None:
++        raise ValueError("Scene-only authority did not receive the materialized timeline and registry.")
++    duration_frames = snapshot.get("duration_frames")
++    if type(duration_frames) is not int or duration_frames <= 0:
++        raise ValueError("Scene-only authority has no positive canonical frame extent.")
++    frames = range(duration_frames)
++    answers: list[dict[str, object]] = []
++    scene_clips_output: dict[str, object] = {}
++    label = _scene_only_label_unavailable()
++    out_root = args.out.expanduser().resolve()
++    try:
++        source = inherited_source(timeline_path, assets_path)
++        if source is None:
++            raise SceneQueryUnavailable("exact retained Runtime source required")
++        source.validate_snapshot(snapshot)
++        bound = source.read()
++        bound_snapshot = bound.get("snapshot") if isinstance(bound, Mapping) else None
++        if not isinstance(bound_snapshot, Mapping):
++            raise SceneQueryUnavailable("verified source has no capture snapshot")
++        if bound_snapshot.get("project_slug") != args.project_slug:
++            raise SceneQueryUnavailable("verified source does not match the project")
++        bound_duration_frames = bound_snapshot.get("duration_frames")
++        if (type(bound_duration_frames) is not int or bound_duration_frames <= 0
++                or bound_duration_frames != duration_frames):
++            raise SceneQueryUnavailable("verified source frame extent differs from authority")
++        config = bound_snapshot.get("config")
++        config_clips = config.get("clips") if isinstance(config, Mapping) else None
++        if (not isinstance(config_clips, list)
++                or any(not isinstance(clip, Mapping) or type(clip.get("id")) is not str
++                       or not clip["id"] for clip in config_clips)):
++            raise SceneQueryUnavailable("verified source has missing or malformed config.clips")
++        config_ids = [clip["id"] for clip in config_clips]
++        if len(set(config_ids)) != len(config_ids):
++            raise SceneQueryUnavailable("verified source has duplicate compiled clip IDs")
++        bound_metadata = bound_snapshot.get("metadata")
++        scene_clips = bound_metadata.get("scene_clips") if isinstance(bound_metadata, Mapping) else None
++        if (not isinstance(scene_clips, Mapping) or set(scene_clips) != set(config_ids)
++                or any(not isinstance(value, Mapping)
++                       or type(value.get("address")) is not str or not value["address"]
++                       for value in scene_clips.values())):
++            raise SceneQueryUnavailable("verified source has no exact compiled scene address map")
++        out_root.mkdir(parents=True, exist_ok=True)
++        project_dir = Path(
++            os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or (REPO_ROOT / "remotion")
++        ).resolve()
++        with tempfile.TemporaryDirectory(prefix=".scene-only-", dir=str(out_root)) as temporary:
++            answers = _prepared_host_frames_at(
++                Path(timeline_path),
++                Path(assets_path),
++                frames,
++                staged_video=out_root / ".scene-only-unused.mp4",
++                provenance_out_path=out_root / ".scene-only-provenance.json",
++                project_dir=project_dir,
++                composition_id=remotion.DEFAULT_COMPOSITION_ID,
++                theme_path=getattr(args, "theme_path", None),
++                min_free_gb=None,
++                frame_output_dir=Path(temporary),
++                materialized_root=getattr(args, "materialized_root", None),
++                materialized_objects=getattr(args, "materialized_objects", None),
++            )
++        expected_frames = range(duration_frames)
++        if (not isinstance(answers, list) or len(answers) != duration_frames
++                or any(not isinstance(answer, Mapping)
++                       or type(answer.get("frame")) is not int
++                       or answer["frame"] != frame
++                       for answer, frame in zip(answers, expected_frames))):
++            raise SceneQueryUnavailable("public Scene returned an incomplete or misordered frame extent")
++        if any(
++            not isinstance(answer.get("layers"), list)
++            or any(not isinstance(layer, Mapping) or layer.get("clipId") not in scene_clips
++                   for layer in answer["layers"])
++            for answer in answers
++        ):
++            raise SceneQueryUnavailable("public Scene returned an unaddressed compiled ID")
++        source.validate_snapshot(snapshot)
++        # Publish labels and maps only after Root succeeded against the
++        # unchanged host-owned binding; never copy them from outer metadata.
++        label = snapshot_label(bound_snapshot, source=source)
++        scene_clips_output = dict(scene_clips)
++    except (SceneQueryUnavailable, OSError, TypeError, ValueError, KeyError):
++        answers = []
++        scene_clips_output = {}
++        label = _scene_only_label_unavailable()
++
++    out_root.mkdir(parents=True, exist_ok=True)
++    pack_root = out_root / "filmstrip-view"
++    pack_root.mkdir(parents=True, exist_ok=True)
++    scene_path = pack_root / "scene-answers.json"
++    scene_path.write_text(
++        json.dumps(
++            {
++                "answers": answers,
++                "scene_clips": scene_clips_output,
++                "snapshot_label": label,
++            },
++            ensure_ascii=False,
++            separators=(",", ":"),
++        ),
++        encoding="utf-8",
++    )
++    nested_manifest = build_manifest(
++        kind="timeline_filmstrip",
++        created="1970-01-01T00:00:00Z",
++        inputs={
++            "timeline_id": snapshot.get("timeline_id"),
++            "render_run_id": snapshot.get("render_run_id"),
++            "scene_only": True,
++        },
++        outputs=[
++            {
++                "path": scene_path.name,
++                "type": "file",
++                "role": "result",
++                "is_primary": True,
++                "label": scene_path.name,
++            }
++        ],
++        entrypoints={"scene": scene_path.name},
++        timeline_ids=[snapshot.get("timeline_id")],
++    )
++    nested_manifest_path = pack_root / "manifest.json"
++    write_manifest(nested_manifest_path, nested_manifest)
++    bundle = out_root / "filmstrip-bundle.zip"
++    _write_zip_atomic(bundle, pack_root)
++
++    def receipt_entry(name: str, path: Path, *, primary: bool = False) -> dict[str, Any]:
++        return {
++            "name": name,
++            "path": path.relative_to(out_root).as_posix(),
++            "content_hash": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
++            "bytes": path.stat().st_size,
++            "role": "result" if primary else "auxiliary",
++            "is_primary": primary,
++            "durability": "durable" if primary else "temporary",
++        }
++
++    host_manifest_path = out_root / "manifest.json"
++    write_manifest(
++        host_manifest_path,
++        build_manifest(
++            kind="timeline_filmstrip_result",
++            created="1970-01-01T00:00:00Z",
++            inputs={
++                "timeline_id": snapshot.get("timeline_id"),
++                "render_run_id": snapshot.get("render_run_id"),
++                "scene_only": True,
++            },
++            outputs=[
++                receipt_entry("filmstrip_manifest", nested_manifest_path),
++                receipt_entry("filmstrip_bundle", bundle, primary=True),
++            ],
++            entrypoints={
++                "manifest": "filmstrip-view/manifest.json",
++                "scene": "filmstrip-view/scene-answers.json",
++                "bundle": "filmstrip-bundle.zip",
++            },
++        ),
++    )
++    manifest_digest = "sha256:" + hashlib.sha256(nested_manifest_path.read_bytes()).hexdigest()
++    bundle_digest = "sha256:" + hashlib.sha256(bundle.read_bytes()).hexdigest()
++    entrypoints = {
++        "manifest": "filmstrip-view/manifest.json",
++        "scene": "filmstrip-view/scene-answers.json",
++        "bundle": "filmstrip-bundle.zip",
++    }
++    return {
++        "returncode": 0,
++        "run_root": str(out_root),
++        "manifest_path": str(nested_manifest_path),
++        "timeline_ids": [snapshot.get("timeline_id")],
++        "snapshot_label": label,
++        "cas": {"filmstrip_manifest": manifest_digest, "filmstrip_bundle": bundle_digest},
++        "entrypoints": entrypoints,
++        "outputs": {
++            "pack_root": str(pack_root),
++            "manifest_path": str(nested_manifest_path),
++            "scene_answers": str(scene_path),
++            "filmstrip_bundle": str(bundle),
++            "entrypoints": entrypoints,
++            "snapshot_label": label,
++        },
++    }
++
++
+ def execute_filmstrip(args, *, authority=None):
+     started_at = time.time()
+     if getattr(args, "view", None) == "diff":
+@@ -1707,8 +1916,10 @@ def execute_filmstrip(args, *, authority=None):
+             except (OSError, json.JSONDecodeError) as exc:
+                 raise ValueError("filmstrip authority handoff is not valid JSON") from exc
+         authority = parsed_authority
+-    if not isinstance(authority, dict) or authority.get('mode') not in {'filmstrip', 'input_only', 'composed_capture'}:
++    if not isinstance(authority, dict) or authority.get('mode') not in {'filmstrip', 'input_only', 'composed_capture', 'scene_only'}:
+         raise ValueError('Rendered filmstrips require managed SDK admission.')
++    if authority.get("mode") == "scene_only":
++        return _execute_scene_only(args, authority)
+     if authority.get('mode') == 'input_only':
+         return execute_input_only(args, authority)
+     capture_mode = (
+diff --git a/tests/packs/rendering/test_scene_only_executor.py b/tests/packs/rendering/test_scene_only_executor.py
+new file mode 100644
+index 000000000..49c3cdda2
+--- /dev/null
++++ b/tests/packs/rendering/test_scene_only_executor.py
+@@ -0,0 +1,270 @@
++"""Private scene-only visualization reuses the managed filmstrip artifact."""
++
++import json
++import zipfile
++from argparse import Namespace
++from contextlib import contextmanager
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.core.timeline import scene_answers
++from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution
++
++
++def _args(tmp_path: Path) -> Namespace:
++    timeline = tmp_path / "timeline.json"
++    assets = tmp_path / "assets.json"
++    timeline.write_text("{}", encoding="utf-8")
++    assets.write_text('{"assets": {}}', encoding="utf-8")
++    return Namespace(
++        filmstrip_authority=None,
++        project_slug="demo",
++        out=tmp_path / "output",
++        timeline=timeline,
++        assets_registry=assets,
++        materialized_root=None,
++        materialized_objects=None,
++        theme_path=None,
++    )
++
++
++def _authority(*, scene_clips=None, clips=None) -> dict:
++    return {
++        "mode": "scene_only",
++        "capture_snapshot": {
++            "project_slug": "demo",
++            "timeline_id": "timeline",
++            "render_run_id": "capture:timeline:revision",
++            "duration_frames": 4,
++            "config": {"tracks": [], "clips": clips if clips is not None else [{"id": "compiled:clip"}]},
++            "registry": {"assets": {}},
++            "metadata": {
++                "capture_authority": {"parent_revision_id": "revision"},
++                "scene_clips": (scene_clips if scene_clips is not None else
++                                {"compiled:clip": {"address": "c01.layer"}}),
++            },
++        },
++    }
++
++
++class _Source:
++    def __init__(self, *, stale: bool = False, bound_snapshot=None):
++        self.stale = stale
++        self.bound_snapshot = bound_snapshot or _authority()["capture_snapshot"]
++        self.validations = []
++
++    def validate_snapshot(self, snapshot):
++        self.validations.append("snapshot")
++        if self.stale:
++            raise ValueError("capture source differs")
++
++    def read(self):
++        return {"snapshot": self.bound_snapshot}
++
++
++def test_scene_only_queries_full_extent_and_uses_existing_bundle(tmp_path, monkeypatch):
++    args = _args(tmp_path)
++    authority = _authority(scene_clips={"forged": {"address": "wrong.layer"}})
++    source = _Source(bound_snapshot=_authority()["capture_snapshot"])
++    calls = []
++    label_sources = []
++
++    def unexpected_render(*args, **kwargs):
++        pytest.fail("scene-only execution must not invoke filmstrip rendering")
++
++    monkeypatch.setattr(filmstrip_execution, "_render_input_projection_png", unexpected_render)
++    monkeypatch.setattr(filmstrip_execution, "_render_paired_rows", unexpected_render)
++    monkeypatch.setattr(filmstrip_execution, "_render_time_anchored_output", unexpected_render)
++    monkeypatch.setattr(
++        filmstrip_execution,
++        "snapshot_label",
++        lambda snapshot, *, source=None: label_sources.append(source) or {
++            "status": "uncertified",
++            "label": "uncertified",
++            "actual_revision_id": None,
++            "base_revision_id": None,
++        },
++    )
++
++    monkeypatch.setattr(
++        "astrid.core.rendering.verified_source.inherited_source",
++        lambda timeline, assets: source,
++    )
++
++    def query(timeline, assets, frames, **kwargs):
++        calls.append((timeline, assets, tuple(frames), kwargs))
++        assert kwargs["frame_output_dir"].is_dir()
++        return [{"frame": frame, "width": 1920, "height": 1080, "layers": []} for frame in frames]
++
++    monkeypatch.setattr(scene_answers, "_prepared_host_frames_at", query)
++    result = filmstrip_execution.execute_filmstrip(args, authority=authority)
++
++    assert result["returncode"] == 0
++    assert calls[0][2] == (0, 1, 2, 3)
++    scene_path = Path(result["outputs"]["scene_answers"])
++    payload = json.loads(scene_path.read_text(encoding="utf-8"))
++    assert [answer["frame"] for answer in payload["answers"]] == [0, 1, 2, 3]
++    assert payload["scene_clips"] == {"compiled:clip": {"address": "c01.layer"}}
++    assert payload["snapshot_label"]["status"] == "uncertified"
++    assert label_sources == [source]
++    assert not list(scene_path.parent.glob("*.png"))
++    assert not (args.out / ".scene-only-unused.mp4").exists()
++
++    with zipfile.ZipFile(result["outputs"]["filmstrip_bundle"]) as bundle:
++        assert "scene-answers.json" in bundle.namelist()
++        assert not any(name.endswith(".png") for name in bundle.namelist())
++    host_manifest = json.loads((args.out / "manifest.json").read_text(encoding="utf-8"))
++    assert {row["name"] for row in host_manifest["outputs"]} == {
++        "filmstrip_manifest", "filmstrip_bundle",
++    }
++
++
++@pytest.mark.parametrize("stale", [True, False])
++def test_scene_only_unavailable_is_advisory_and_has_no_partial_answers(tmp_path, monkeypatch, stale):
++    args = _args(tmp_path)
++    source = _Source(stale=stale)
++    monkeypatch.setattr(
++        "astrid.core.rendering.verified_source.inherited_source",
++        lambda timeline, assets: source,
++    )
++    if not stale:
++        def unavailable(*args, **kwargs):
++            raise scene_answers.SceneQueryUnavailable("public host unavailable")
++
++        monkeypatch.setattr(scene_answers, "_prepared_host_frames_at", unavailable)
++
++    result = filmstrip_execution.execute_filmstrip(args, authority=_authority())
++    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
++    assert result["returncode"] == 0
++    assert payload["answers"] == []
++    assert payload["snapshot_label"] == {
++        "status": "unavailable",
++        "label": "revision unavailable",
++        "actual_revision_id": None,
++        "base_revision_id": None,
++    }
++
++
++@pytest.mark.parametrize("clips", [None, [{"id": ""}], [{"id": "a"}, {"id": "a"}], ["not-a-clip"]])
++def test_scene_only_malformed_compiled_clips_are_unavailable(tmp_path, monkeypatch, clips):
++    args = _args(tmp_path)
++    authority = _authority(clips=clips) if clips is not None else _authority()
++    if clips is None:
++        del authority["capture_snapshot"]["config"]["clips"]
++    source = _Source(bound_snapshot=authority["capture_snapshot"])
++    monkeypatch.setattr(
++        "astrid.core.rendering.verified_source.inherited_source",
++        lambda timeline, assets: source,
++    )
++    monkeypatch.setattr(scene_answers, "_prepared_host_frames_at", lambda *args, **kwargs: pytest.fail("query"))
++
++    result = filmstrip_execution.execute_filmstrip(args, authority=authority)
++    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
++    assert result["returncode"] == 0
++    assert payload["snapshot_label"]["status"] == "unavailable"
++    assert payload["answers"] == [] and payload["scene_clips"] == {}
++
++
++def test_scene_only_query_must_cover_exact_extent_and_projected_ids(tmp_path, monkeypatch):
++    args = _args(tmp_path)
++    source = _Source()
++    monkeypatch.setattr(
++        "astrid.core.rendering.verified_source.inherited_source",
++        lambda timeline, assets: source,
++    )
++    monkeypatch.setattr(
++        filmstrip_execution,
++        "snapshot_label",
++        lambda snapshot, *, source: {"status": "committed", "label": "source", "actual_revision_id": "R1", "base_revision_id": None},
++    )
++    monkeypatch.setattr(
++        scene_answers,
++        "_prepared_host_frames_at",
++        lambda *args, **kwargs: [
++            {"frame": frame, "layers": [{"clipId": "not-in-source"}] if frame == 0 else []}
++            for frame in range(4)
++        ],
++    )
++
++    result = filmstrip_execution.execute_filmstrip(args, authority=_authority())
++    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
++    assert payload["snapshot_label"]["status"] == "unavailable"
++    assert payload["answers"] == [] and payload["scene_clips"] == {}
++
++
++def test_scene_only_missing_source_is_explicitly_unavailable(tmp_path, monkeypatch):
++    args = _args(tmp_path)
++    monkeypatch.setattr(
++        "astrid.core.rendering.verified_source.inherited_source",
++        lambda timeline, assets: None,
++    )
++    result = filmstrip_execution.execute_filmstrip(args, authority=_authority())
++    payload = json.loads(Path(result["outputs"]["scene_answers"]).read_text(encoding="utf-8"))
++    assert result["returncode"] == 0
++    assert payload["snapshot_label"]["status"] == "unavailable"
++    assert payload["answers"] == [] and payload["scene_clips"] == {}
++
++
++def test_prepared_scene_query_keeps_root_alive_and_validates_source(monkeypatch, tmp_path):
++    props = {
++        "timeline": {"tracks": [], "clips": []},
++        "assets": {"assets": {}},
++        "theme": {"visual": {}},
++    }
++    source = SimpleNamespace(validate=lambda *args: None)
++    events = []
++
++    @contextmanager
++    def lock():
++        events.append("lock-enter")
++        yield
++        events.append("lock-exit")
++
++    @contextmanager
++    def prepare(*args, **kwargs):
++        events.append("prepare-enter")
++        yield (props, tmp_path / ".props.json")
++        events.append("prepare-exit")
++
++    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs: SimpleNamespace(
++        available=True, project_dir=tmp_path / "remotion", node_executable=tmp_path / "node",
++    ))
++    monkeypatch.setattr(
++        "astrid.packs.rendering.rendering.renderers.remotion.lock.remotion_render_lock", lock,
++    )
++    monkeypatch.setattr(
++        "astrid.packs.rendering.rendering.renderers.remotion.root_preparation._prepared_remotion_root",
++        prepare,
++    )
++    monkeypatch.setattr(
++        "astrid.core.rendering.verified_source.inherited_source",
++        lambda timeline, assets: source,
++    )
++    monkeypatch.setattr(
++        "astrid.core.rendering.profile.resolve_render_profile",
++        lambda *args, **kwargs: SimpleNamespace(width=641, height=359, fps_rational=(30, 1)),
++    )
++
++    def query(received, basis, frames):
++        assert received is props
++        assert basis == {"width": 641, "height": 359, "fps": 30.0}
++        assert events == ["lock-enter", "prepare-enter"]
++        return [{"frame": frame, "width": 641, "height": 359} for frame in frames]
++
++    monkeypatch.setattr(scene_answers, "host_frames_at", query)
++    result = scene_answers._prepared_host_frames_at(
++        tmp_path / "timeline.json",
++        tmp_path / "assets.json",
++        (3, 0, 3),
++        staged_video=tmp_path / "unused.mp4",
++        provenance_out_path=tmp_path / "provenance.json",
++        project_dir=tmp_path / "remotion",
++        composition_id="TimelineComposition",
++        theme_path=None,
++        min_free_gb=None,
++        frame_output_dir=tmp_path / "frames",
++    )
++    assert [row["frame"] for row in result] == [3, 0, 3]
++    assert events == ["lock-enter", "prepare-enter", "prepare-exit", "lock-exit"]
+diff --git a/tests/packs/rendering/test_scene_artifact_contract.py b/tests/packs/rendering/test_scene_artifact_contract.py
+new file mode 100644
+index 000000000..cf5ecb585
+--- /dev/null
++++ b/tests/packs/rendering/test_scene_artifact_contract.py
+@@ -0,0 +1,269 @@
++"""The scene-only artifact is the managed filmstrip result, not a caller payload."""
++
++from __future__ import annotations
++
++import copy
++import json
++import os
++import shutil
++import zipfile
++from argparse import Namespace
++from pathlib import Path
++
++from astrid.core.rendering.node_pin import resolve_pinned_node
++from astrid.core.rendering.verified_source import mint_prepared_source
++from astrid.core.timeline import Timeline, scene_answers
++from astrid.core.timeline.authoring_bundle import (
++    _digest,
++    open_authoring_bundle,
++    preview_authoring_candidate,
++)
++from astrid.packs.rendering.actions.render import managed_timeline
++from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution
++from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
++from astrid.sdk.timeline_filmstrip import prepare_filmstrip
++from tests.packs.rendering.test_scene_answers import ROOT as AGENT_ROOT
++from tests.packs.rendering.test_scene_answers import _real_runtime_tools
++from tests.packs.rendering.test_scene_source_carry import Revisions
++
++pytest_plugins = ("tests.packs.rendering.test_scene_host",)
++
++
++class _TinyRevisions(Revisions):
++    """Use the real closure/projector with a six-frame source, not a large blob."""
++
++    def get_project_parent_composition_revision(self, project, timeline, revision):
++        value = super().get_project_parent_composition_revision(project, timeline, revision)
++        for index, occurrence in enumerate(value["payload"]["occurrences"]):
++            occurrence["at_ms"] = index * 125
++            occurrence["duration_ms"] = 125
++        value["content_digest"] = _digest(value["payload"])
++        return value
++
++
++def _candidate_preview(client: _TinyRevisions) -> dict:
++    parent = client.get_project_parent_composition_revision("p", "tl", "parent:old")
++    shot = client.get_project_shot_revision("p", "s", "shot:old")
++    shot["project_id"] = "p"
++    internal = copy.deepcopy(client.internal)
++    internal["payload"]["clips"] = internal["payload"]["clips"][:1]
++    for row in (parent, shot, internal):
++        row["content_digest"] = _digest(row["payload"])
++    bundle = open_authoring_bundle(
++        parent, shot_revisions=[shot], internal_timeline_revisions=[internal],
++    )
++    for value in bundle["shots"].values():
++        value["internal_timeline"]["clips"][0]["params"]["content"] = "Unpublished title"
++    return preview_authoring_candidate(bundle)
++
++
++def _source_for(snapshot, timeline: Path, assets: Path, attempt: Path):
++    # The fixture's admission seam supplies the project identity that the
++    # Runtime normally carries beside the existing capture authority.
++    authority = {"project_id": "p", **snapshot["metadata"]["capture_authority"]}
++    working = snapshot["metadata"].get("working_copy")
++    if isinstance(working, dict):
++        base = working["base_parent"]
++        ref = {
++            "source_kind": "working_copy",
++            "project_id": "p",
++            "timeline_id": "tl",
++            "revision_id": working["candidate_parent_revision_id"],
++            "revision_digest": working["candidate_digest"],
++            "working_copy": {
++                "candidate_digest": working["candidate_digest"],
++                "publication_digest": working["publication_digest"],
++                "base_revision_id": base["revision_id"],
++                "base_revision_digest": base["content_digest"],
++            },
++        }
++    else:
++        ref = {
++            "source_kind": "revision",
++            "project_id": "p",
++            "timeline_id": "tl",
++            "revision_id": authority["parent_revision_id"],
++            "revision_digest": authority["parent_content_digest"],
++        }
++    return mint_prepared_source(
++        ref=ref,
++        authority=authority,
++        snapshot=snapshot,
++        timeline_path=timeline,
++        assets_path=assets,
++        attempt=attempt,
++    )
++
++
++def _args(tmp_path, timeline: Path, assets: Path) -> Namespace:
++    return Namespace(
++        filmstrip_authority=None,
++        project_slug="demo",
++        out=tmp_path / "output",
++        timeline=timeline,
++        assets_registry=assets,
++        materialized_root=None,
++        materialized_objects=None,
++        theme_path=None,
++    )
++
++
++def _save_example(root: Path | None, name: str, result: dict, payload: dict) -> None:
++    """Optionally retain only the bounded artifact/result, never its snapshot inputs."""
++    if root is None:
++        return
++    root.mkdir(parents=True, exist_ok=True)
++    (root / f"{name}-scene-answers.json").write_text(
++        json.dumps(payload, sort_keys=True, separators=(",", ":")), encoding="utf-8",
++    )
++    shutil.copyfile(result["outputs"]["filmstrip_bundle"], root / f"{name}-filmstrip-bundle.zip")
++    output_root = Path(result["run_root"])
++    for suffix, path in (
++        ("managed-manifest.json", output_root / "manifest.json"),
++        ("nested-manifest.json", output_root / "filmstrip-view" / "manifest.json"),
++    ):
++        shutil.copyfile(path, root / f"{name}-{suffix}")
++
++
++def test_scene_only_bundle_is_real_node_artifact_for_saved_candidate_and_unavailable(
++    native_host, host_project, tmp_path, monkeypatch,
++):
++    """Exercise producer -> Root source -> public Node rows -> bundle entrypoint.
++
++    ``native_host`` supplies the pinned public12 evaluator and Node. Runtime
++    admission is the existing fixture seam, so this is UNIT-REAL-NODE evidence,
++    not live Runtime or ordinary SDK qualification.
++    """
++    monkeypatch.setattr(managed_timeline, "_runtime_snapshot_registry", lambda registry, **kwargs: registry)
++    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(native_host))
++    monkeypatch.setattr(remotion_run, "_available_remotion_port", lambda: 32101)
++    node = resolve_pinned_node(AGENT_ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    assert node.ok and node.version == "v20.19.4"
++    monkeypatch.setattr(remotion_run, "_validate_project_dir", lambda _: _real_runtime_tools(native_host, node))
++    examples = os.environ.get("ASTRID_SCENE_ARTIFACT_EXAMPLES")
++    example_root = Path(examples).resolve() if examples else None
++
++    client = _TinyRevisions()
++    candidate = _candidate_preview(client)
++    cases = [
++        (
++            "saved",
++            prepare_filmstrip(
++                {"composed_capture": True, "timeline_ref": "tl", "revision_id": "parent:old"},
++                project="demo", client=client,
++            )["capture_snapshot"],
++        ),
++        (
++            "candidate",
++            prepare_filmstrip(
++                {"composed_capture": True, "timeline_ref": "tl", "authoring_preview": candidate},
++                project="demo", client=client,
++            )["capture_snapshot"],
++        ),
++    ]
++
++    for label, snapshot in cases:
++        assert 3 <= snapshot["duration_frames"] <= 6
++        attempt = tmp_path / label / "attempt"
++        attempt.mkdir(parents=True)
++        (attempt / "inputs").mkdir()
++        timeline = attempt / "timeline.json"
++        assets = attempt / "assets.json"
++        Timeline.from_config(snapshot["config"]).dump(timeline)
++        assets.write_text(json.dumps(snapshot["registry"]), encoding="utf-8")
++        source = _source_for(snapshot, timeline, assets, attempt)
++        monkeypatch.setenv("ASTRID_VERIFIED_TIMELINE_SOURCE", source._anchor)
++
++        result = filmstrip_execution.execute_filmstrip(
++            _args(tmp_path / label, timeline, assets),
++            authority={"mode": "scene_only", "capture_snapshot": snapshot},
++        )
++        assert result["returncode"] == 0
++        scene_path = Path(result["outputs"]["scene_answers"])
++        payload = json.loads(scene_path.read_text(encoding="utf-8"))
++        assert payload["snapshot_label"]["status"] == ("candidate" if label == "candidate" else "committed")
++        assert [row["frame"] for row in payload["answers"]] == list(range(snapshot["duration_frames"]))
++        assert set(payload["scene_clips"]) == {clip["id"] for clip in snapshot["config"]["clips"]}
++        assert payload["snapshot_label"]["label"]
++        assert all(
++            layer["clipId"] in payload["scene_clips"]
++            for answer in payload["answers"]
++            for layer in answer["layers"]
++        )
++        assert not any("synthetic" in json.dumps(row).lower() for row in payload["answers"])
++
++        with zipfile.ZipFile(result["outputs"]["filmstrip_bundle"]) as bundle:
++            assert bundle.namelist() == ["manifest.json", "scene-answers.json"]
++            nested = json.loads(bundle.read("manifest.json"))
++            assert nested["entrypoints"]["scene"] == "scene-answers.json"
++            assert json.loads(bundle.read(nested["entrypoints"]["scene"])) == payload
++        host_manifest = json.loads((Path(result["run_root"]) / "manifest.json").read_text())
++        bundle_entry = next(row for row in host_manifest["outputs"] if row["name"] == "filmstrip_bundle")
++        assert bundle_entry["path"] == "filmstrip-bundle.zip"
++        assert host_manifest["entrypoints"]["bundle"] == bundle_entry["path"]
++        _save_example(example_root, label, result, payload)
++
++    stale_snapshot = copy.deepcopy(cases[0][1])
++    stale_snapshot["metadata"]["capture_authority"]["parent_revision_id"] = "stale"
++    stale_attempt = tmp_path / "stale" / "attempt"
++    stale_attempt.mkdir(parents=True)
++    (stale_attempt / "inputs").mkdir()
++    timeline = stale_attempt / "timeline.json"
++    assets = stale_attempt / "assets.json"
++    Timeline.from_config(stale_snapshot["config"]).dump(timeline)
++    assets.write_text(json.dumps(stale_snapshot["registry"]), encoding="utf-8")
++    stale_source = _source_for(cases[0][1], timeline, assets, stale_attempt)
++    monkeypatch.setenv("ASTRID_VERIFIED_TIMELINE_SOURCE", stale_source._anchor)
++    stale_result = filmstrip_execution.execute_filmstrip(
++        _args(tmp_path / "stale", timeline, assets),
++        authority={"mode": "scene_only", "capture_snapshot": stale_snapshot},
++    )
++    stale_payload = json.loads(Path(stale_result["outputs"]["scene_answers"]).read_text())
++    assert stale_payload == {
++        "answers": [],
++        "scene_clips": {},
++        "snapshot_label": {
++            "status": "unavailable", "label": "revision unavailable",
++            "actual_revision_id": None, "base_revision_id": None,
++        },
++    }
++    _save_example(example_root, "stale", stale_result, stale_payload)
++
++    monkeypatch.setattr(scene_answers, "_prepared_host_frames_at", lambda *args, **kwargs: (_ for _ in ()).throw(
++        scene_answers.SceneQueryUnavailable("Node unavailable"),
++    ))
++    unavailable_result = filmstrip_execution.execute_filmstrip(
++        _args(tmp_path / "unavailable", timeline, assets),
++        authority={"mode": "scene_only", "capture_snapshot": cases[0][1]},
++    )
++    unavailable_payload = json.loads(
++        Path(unavailable_result["outputs"]["scene_answers"]).read_text(),
++    )
++    assert unavailable_payload["snapshot_label"]["status"] == "unavailable"
++    assert unavailable_payload["answers"] == [] and unavailable_payload["scene_clips"] == {}
++    _save_example(example_root, "unavailable", unavailable_result, unavailable_payload)
++    if example_root is not None:
++        (example_root / "manifest.json").write_text(
++            json.dumps(
++                {
++                    "artifact": "filmstrip_bundle",
++                    "entrypoint": "filmstrip-view/scene-answers.json",
++                    "examples": {
++                        name: {
++                            "scene_answers": f"{name}-scene-answers.json",
++                            "bundle": f"{name}-filmstrip-bundle.zip",
++                            "status": status,
++                        }
++                        for name, status in (
++                            ("saved", "committed"),
++                            ("candidate", "candidate"),
++                            ("stale", "unavailable"),
++                            ("unavailable", "unavailable"),
++                        )
++                    },
++                },
++                sort_keys=True,
++                indent=2,
++            ),
++            encoding="utf-8",
++        )
