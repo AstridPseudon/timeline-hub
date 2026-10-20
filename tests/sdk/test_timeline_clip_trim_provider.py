@@ -30,7 +30,7 @@ def test_trim_committed_reload_exact_inverse_redo_keeps_registry_and_child_pins(
     assert accepted['data']['commands'] == [command]
     document = accepted['data']['canonical_document']
     reloaded = bundle_from_document(json.loads(json.dumps(document)))
-    assert (clip(reloaded)['from'], clip(reloaded)['to'], clip(reloaded)['hold']) == (1, 5, 2)
+    assert (clip(reloaded)['from'], clip(reloaded)['to'], clip(reloaded)['hold']) == (1, 5, 4)
     assert clip(reloaded)['at'] == 1 and clip(reloaded)['speed'] == 2
     for key in ('shot_revisions', 'internal_timeline_revisions', 'dependency_manifest'):
         assert document[key] == original[key]

@@ -70,6 +70,20 @@ def test_trim_matches_main_model_precedence_and_source_defaults(monkeypatch, cha
                    inverse(plan.bundle, plan.records).records).bundle == plan.bundle
 
 
+@pytest.mark.parametrize('speed', [2, 3 / 2])
+def test_trim_hold_is_source_time_and_playback_duration_applies_speed(monkeypatch, speed):
+    original = bundle(speed=speed, hold=17)
+    row = copy.deepcopy(clip(original))
+    monkeypatch.setattr(Clip, '_source_duration', lambda self: 10)
+    Clip(SimpleNamespace(_is_audio=lambda *args: False), None, row).trim(1, 5)
+    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
+    assert clip(plan.bundle)['hold'] == 4
+    assert clip(plan.bundle)['hold'] == row['hold']
+    assert clip_timeline_duration(clip(plan.bundle)) == pytest.approx(4 / speed)
+    assert clip(plan.bundle)['from'] == 1
+    assert clip(plan.bundle)['to'] == 5
+
+
 def test_windowless_trim_uses_file_not_hold_and_length_helper_stays_windowless():
     from astrid.sdk.timeline.doc import _set_length, _trim_front
 
@@ -116,6 +130,15 @@ def test_rational_fps_source_contact_and_half_open_intervals_are_not_requantized
     assert document_from_bundle(plan.bundle)['parent_revision']['payload']['config']['output'] == {
         'fps': {'numerator': 30000, 'denominator': 1001}}
     assert not any(read['path'] == ['config', 'output', 'fps'] for read in plan.commands[0]['reads'])
+
+
+def test_retrim_changes_a_stored_hold_but_reading_and_undo_do_not_normalize_it():
+    original = bundle(speed=2, hold=17)
+    assert clip_timeline_duration(clip(original)) == pytest.approx(8.5)
+    plan = execute(original, [capture_clip_trim(original, REF, in_s=1, out_s=5)])
+    assert clip(plan.bundle)['hold'] == 4
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert clip(inverse(plan.bundle, plan.records).bundle)['hold'] == 17
 
 
 @pytest.mark.parametrize('args', [{'in_s': -1}, {'out_s': 11}, {'in_s': 6, 'out_s': 6},

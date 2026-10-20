@@ -1105,7 +1105,7 @@
           },
           "after": {
             "state": "present",
-            "value": 2.0
+            "value": 4.0
           }
         },
         {
@@ -1929,7 +1929,7 @@
                 "asset": "picture",
                 "clipType": "media",
                 "at": 1,
-                "hold": 2.0,
+                "hold": 4.0,
                 "app": {
                   "astrid": {
                     "opaque": [
@@ -1972,8 +1972,8 @@
     "project_id": "project-1",
     "timeline_id": "film",
     "parent_revision": {
-      "revision_id": "authoring-parent-revision-658bd3ebea53507eea3797d5b49444a5f83c5e89be4dc8a407dfaa310e8365ba",
-      "content_digest": "sha256:fa8fb98eb78bd20c538355be37a71cc466fccc4736961f6698e2fdcda07a1c60",
+      "revision_id": "authoring-parent-revision-ffd648d8033a6d0a68ce64b1aff0e5d12dafb4373b6638fff21fa58f6bc1496a",
+      "content_digest": "sha256:a7f28f7cc2495a5db632063adb2801a743a755e5de9a661c3a1dc1008c07aed0",
       "payload": {
         "config": {
           "tracks": [
@@ -1989,7 +1989,7 @@
               "asset": "picture",
               "clipType": "media",
               "at": 1,
-              "hold": 2.0,
+              "hold": 4.0,
               "app": {
                 "astrid": {
                   "opaque": [
@@ -2043,7 +2043,7 @@
             "asset": "picture",
             "clipType": "media",
             "at": 1,
-            "hold": 2.0,
+            "hold": 4.0,
             "app": {
               "astrid": {
                 "opaque": [

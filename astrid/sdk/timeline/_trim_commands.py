@@ -4,7 +4,6 @@ from __future__ import annotations
 import copy
 import re
 
-from astrid.core.timeline.duration import clip_timeline_duration
 from astrid.sdk import timeline_intent as intent
 
 from ._command_state import CommandError
@@ -72,7 +71,8 @@ def clip_trim(ctx, command):
     source_in, source_out = endpoints
     if source_in < 0 or source_out > limit or source_out <= source_in:
         raise CommandError(f'source range must fit inside the file (0–{limit:g} s)', ref=ref)
-    hold = _r(clip_timeline_duration({'at': start, 'from': source_in, 'to': source_out, 'speed': speed}))
+    # ``hold`` is authored source time; playback duration applies ``speed``.
+    hold = _r(source_out - source_in)
     if _r(source_out) <= _r(source_in) or hold <= 0:
         raise CommandError('source range collapses at authored precision', ref=ref)
     ctx.dependency('trim.source', 'entity', {'asset': asset, 'source': source})
