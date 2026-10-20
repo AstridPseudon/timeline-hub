@@ -8,6 +8,7 @@ import math
 import re
 from typing import TypedDict
 
+from .cas import IO_CHUNK_BYTES
 from .errors import RuntimeErrorBase, ValidationError
 from .timeline_commit_port import command_leaves, refused
 
@@ -115,13 +116,21 @@ def _unavailable():
     return refused("producer_dependency_unavailable", "settled producer dependency is unavailable")
 
 
+def _current_attempt(task, attempt):
+    return (task["attempt_id"] == attempt["id"] and attempt["task_id"] == task["id"]
+            and task["executor_id"] == attempt["executor_id"]
+            and all(type(task[column]) is int and type(attempt[key]) is int
+                    and task[column] == attempt[key] and attempt[key] > 0
+                    for key, column in (("fence", "lease_fence"), ("runtime_epoch", "runtime_epoch"))))
+
+
 class ProducerReads:
     def __init__(self, service):
         self.service = service
         self.store = service.store
         self.conn = service.store.conn
 
-    def _output(self, task, attempt, project, output):
+    def _output(self, task, attempt, project, output, *, read_bytes=False):
         matches = [item for item in self.store.list_managed_outputs(task["id"])
                    if item["attempt_id"] == attempt["id"]
                    and self.store._generation_publish_output_key(output) == (
@@ -136,6 +145,8 @@ class ProducerReads:
                 or association["role"] != output.get("role", "output")
                 or association["durability"] != "durable"
                 or association["lifecycle"]["state"] not in {"available", "promoted"}
+                or any(type(association["provenance"].get(key)) is not int
+                       for key in ("fence", "runtime_epoch"))
                 or any(association["provenance"].get(key) != value for key, value in (
                     ("task_id", task["id"]), ("attempt_id", attempt["id"]),
                     ("executor_id", attempt["executor_id"]), ("fence", attempt["fence"]),
@@ -144,13 +155,24 @@ class ProducerReads:
         digest = association["object_id"][7:]
         obj = self.conn.execute("SELECT size, media_type FROM objects WHERE digest=?", (digest,)).fetchone()
         if (not obj or obj["size"] != output["size"] or obj["media_type"] != output["media_type"]
-                or not self.conn.execute("SELECT 1 FROM project_objects WHERE project_id=? AND digest=?",
+                or not self.conn.execute("SELECT 1 FROM project_objects WHERE project_id=? AND digest=? AND relation='managed'",
                                          (project, digest)).fetchone()):
             raise _unavailable()
-        raw = self.service.cas.read(digest)
-        if len(raw) != output["size"] or hashlib.sha256(raw).hexdigest() != digest:
+        if read_bytes and output["size"] > self.service.max_object_bytes:
+            raise _unavailable()
+        chunks = [] if read_bytes else None
+        size, hasher = 0, hashlib.sha256()
+        with self.service.cas.open(digest) as stream:
+            while chunk := stream.read(IO_CHUNK_BYTES):
+                size += len(chunk)
+                if size > output["size"]:
+                    raise _mismatch()
+                hasher.update(chunk)
+                if chunks is not None:
+                    chunks.append(chunk)
+        if size != output["size"] or hasher.hexdigest() != digest:
             raise _mismatch()
-        return raw, association
+        return b"".join(chunks) if chunks is not None else None, association
 
     def _continuation(self, task, spec, project):
         deps = spec.get("runtime_dependencies", {})
@@ -171,7 +193,7 @@ class ProducerReads:
                                       (row["task_id"],)).fetchone()
             attempt = self.conn.execute("SELECT * FROM attempts WHERE id=?", (child["attempt_id"],)).fetchone()
             if (child["project_id"] != project or child["status"] != "completed" or not attempt
-                    or attempt["task_id"] != child["id"] or attempt["settled"] != 1):
+                    or not _current_attempt(child, attempt) or attempt["settled"] != 1):
                 raise _unavailable()
             outputs = json.loads(child["result_json"])["outputs"]
             for output in outputs:
@@ -212,7 +234,7 @@ class ProducerReads:
             if (not task or task["project_id"] != request["project_id"] or not attempt
                     or attempt["task_id"] != task["id"]):
                 raise _unavailable()
-            if (task["status"] != "completed" or task["attempt_id"] != pin["attempt_id"] or attempt["settled"] != 1
+            if (task["status"] != "completed" or not _current_attempt(task, attempt) or attempt["settled"] != 1
                     or any(task[column] != pin[key] or attempt[key] != pin[key] for key, column in (
                         ("executor_id", "executor_id"), ("fence", "lease_fence"), ("runtime_epoch", "runtime_epoch")))):
                 raise _mismatch()
@@ -232,7 +254,7 @@ class ProducerReads:
                     or matches[0].get("output_port", matches[0].get("name")) != "authoring_proposal"):
                 raise _unavailable()
             output = matches[0]
-            raw, association = self._output(task, attempt, request["project_id"], output)
+            raw, association = self._output(task, attempt, request["project_id"], output, read_bytes=True)
             proposal = _strict_json(raw)
             if (not isinstance(proposal, dict) or set(proposal) != {
                     "schema_version", "producer", "admitted_target", "commands", "rationale", "proposal_digest"}
