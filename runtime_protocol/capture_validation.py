@@ -55,21 +55,38 @@ def _candidate_document(commits, base, preview, ref):
     commits._validate_closure(document)
 
 
+def _contradicts_own_authority(snapshot):
+    """Whether a candidate-less working-copy marker disagrees with the capture's own authority."""
+    metadata = snapshot["metadata"]
+    authority = metadata.get("capture_authority")
+    return isinstance(authority, dict) and metadata["working_copy"] != authority["expansion"].get("working_copy")
+
+
 def validate_capture(service, snapshot, ref, inputs):
+    """Refuse a forged capture; return whether it is certified.
+
+    A working copy sent without its candidate cannot be verified, so it is
+    admitted CAS-only (uncertified) and never certified.
+    """
     source_kind = ref.get("source_kind") or ("revision" if ref.get("revision_id") else "cas")
     if source_kind == "cas":
-        return
+        return False
+    preview = detached(inputs.get("authoring_preview")) if source_kind == "working_copy" else None
+    if source_kind == "working_copy" and not (isinstance(preview, dict) and isinstance(preview.get("candidate"), dict)):
+        try:
+            contradicts = _contradicts_own_authority(snapshot)
+        except (KeyError, TypeError) as exc:
+            raise ValidationError("capture source is invalid; " + RESEND_HINT) from exc
+        if contradicts:
+            raise ConflictError("capture candidate marker changed; " + RESEND_HINT)
+        return False
     method = getattr(service._timeline_commit_provider, "project_capture", None)
     if not callable(method):
         raise ValidationError("canonical capture projection provider is unavailable")
     try:
         commits, _ = service._timeline_commits()
-        preview = None
         revision = ref["revision_id"]
         if source_kind == "working_copy":
-            preview = detached(inputs.get("authoring_preview"))
-            if not isinstance(preview, dict):
-                raise ValidationError("working-copy capture requires its actual authoring_preview; " + RESEND_HINT)
             revision = ref["working_copy"]["base_revision_id"]
         document = commits.revision_closure(ref["project_id"], ref["timeline_id"], revision)
         if preview is not None:
@@ -90,6 +107,7 @@ def validate_capture(service, snapshot, ref, inputs):
             _equal(metadata["working_copy"], expansion["working_copy"], "capture candidate marker changed")
             _equal(working_copy_binding(snapshot, ref["revision_id"]), ref["working_copy"],
                    "capture candidate binding changed")
+        return True
     except CommitRejected as exc:
         raise ConflictError(exc.failure["message"], details=exc.failure["details"]) from exc
     except (KeyError, TypeError, ValueError) as exc:
@@ -110,8 +128,8 @@ def claim_capture_view(service, spec):
         return spec
     try:
         snapshot = json.loads(service.object(ref["digest"])[1])
-        validate_capture(service, snapshot, ref, inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {})
-        return spec
+        if validate_capture(service, snapshot, ref, inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {}):
+            return spec
     except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
         pass
     uncertified = {"digest": ref["digest"], "project_id": ref.get("project_id"),
