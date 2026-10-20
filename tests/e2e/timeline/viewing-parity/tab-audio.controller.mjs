@@ -33,7 +33,8 @@ export const CHROME155 = Object.freeze({
 });
 export const NODE20 = Object.freeze({
   version: 'v20.19.4',
-  executable: '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node',
+  executable: process.env.ASTRID_NODE_EXECUTABLE
+    ?? '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-root-cap-three-stills-prep/node',
   sha256: '43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490',
 });
 export const MIN_FREE_BYTES = 10 * 1024 ** 3;
