@@ -1425,6 +1425,41 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "occurrence.delete"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceDeleteArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -1506,6 +1541,11 @@
           "$ref": "#/$defs/MediaSelection"
         }
       },
+      "additionalProperties": false
+    },
+    "OccurrenceDeleteArgs": {
+      "type": "object",
+      "properties": {},
       "additionalProperties": false
     },
     "OccurrenceDuplicateArgs": {
@@ -1736,6 +1776,11 @@
       ],
       "additionalProperties": false,
       "description": "Exact original admitted project-pack Document pin for selected parameter validation."
+    },
+    "OccurrenceDeleteArgs": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
     }
   }
 }

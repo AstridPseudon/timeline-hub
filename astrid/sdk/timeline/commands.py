@@ -36,6 +36,7 @@ def operations():
     from ._split_commands import clip_split
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
+    from .native_occurrence_delete import occurrence_delete
     from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
     from .native_placement_commands import (
@@ -47,6 +48,7 @@ def operations():
     from .native_shot_pool_commands import POOL_INTENT, shot_pool
     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
+            'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),
             'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
                                           PLACEMENT_INTENT, True),
             'placement.unplace': Operation(_SCHEMA['$defs']['PlacementUnplaceArgs'], placement_unplace,
@@ -195,9 +197,11 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                 matches = len(command[field]) == len(actual) and all(
                     claimed['ref'] == read['ref'] and claimed['path'] == read['path']
                     and (equal(claimed['state'], read['state'])
-                         or (read['ref'].endswith('/shot')
-                             and ctx.state.matches(read['ref'], read['path'], claimed['state'])))
+                         or ctx.command_input.matches(read['ref'], read['path'], claimed['state']))
                     for claimed, read in zip(command[field], actual))
+            if field == 'expect' and command[field].keys() == record['command'][field].keys():
+                matches = all(ctx.command_input.matches(*address(key, command.get('resolved', [])), expected)
+                              for key, expected in command[field].items())
             if not matches:
                 raise CommandError(f"submitted {field} does not match authoritative capture", kind='capture_mismatch')
         # Keep original claims and metadata after they have been verified.
