@@ -27,6 +27,7 @@ from test_timeline_commit_integration import (
     rows,
 )
 from test_shot_composition_runtime import _publication
+from historical_audio_fixture import prepare_pcm_historical_audio_film
 
 pytestmark = pytest.mark.integration
 
@@ -38,7 +39,7 @@ class HistoricalAudioCaptureGap(AssertionError):
 @pytest.fixture
 def journey_film(request, film, astrid_importable, tmp_path):
     if request.param == "historical-audio":
-        return film
+        return prepare_pcm_historical_audio_film(film, tmp_path)
 
     # Reuse the approved first-import builder on a NEW film with its own
     # child identities. The historical audio film remains entirely untouched.
