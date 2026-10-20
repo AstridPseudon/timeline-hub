@@ -44,6 +44,9 @@ def inputs(kind='image'):
     payload['registry']['assets']['picture']['type'] = kind
     if kind == 'video':
         payload['clips'][0].update({'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
+    elif kind == 'audio':
+        payload['tracks'][0]['kind'] = 'audio'
+        payload['clips'][0].update({'clipType': 'audio', 'from': 0, 'to': 1, 'hold': 1})
     for row in document['parent_revision']['payload']['occurrences']:
         row.update(source_offset=0, speed=1)
     document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
@@ -56,7 +59,8 @@ def inputs(kind='image'):
     new = {'asset': 'reserved-new', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
            'object_id': NEW, 'catalog_digest': 'sha256:' + 'b' * 64}
     verified = [{'selection': copy.deepcopy(pin), 'media_type': kind + '/fixture', 'size': 123,
-                 **({'duration_seconds': 6} if kind == 'video' else {})} for pin in (old, new)]
+                 **({'duration_seconds': 6} if kind in ('video', 'audio') else {})}
+                for pin in (old, new)]
     return document, old, new, verified
 
 
@@ -64,10 +68,12 @@ def captured(operation, kind='image'):
     document, old, new, verified = inputs(kind)
     bundle = bundle_from_document(document)
     if operation == 'add':
-        row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
+        row = {'id': 'reserved-child', 'clipType': 'media' if kind == 'audio' else kind,
+               'asset': new['asset'], 'track': 'picture',
                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
                'params': None, 'opaque': [None, False, {}],
-               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else {})}
+               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else
+                  {'from': 0, 'to': 1.25} if kind == 'audio' else {})}
         command = capture_occurrence_add_media(bundle, OWNER, row, new, verified_media=verified)
     else:
         command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
@@ -75,7 +81,7 @@ def captured(operation, kind='image'):
 
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
-@pytest.mark.parametrize('kind', ['image', 'video'])
+@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
 def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
     document, bundle, command, verified = captured(operation, kind)
     before = copy.deepcopy(bundle)

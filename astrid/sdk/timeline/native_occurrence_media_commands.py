@@ -144,9 +144,10 @@ def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False):
     track = owner + '/track:' + str(row.get('track'))
     ctx.select('collection.tracks', owner)
     value = ctx.read(track)
-    if (not isinstance(value, dict) or value.get('kind') != 'visual'
+    track_kind = 'audio' if kind == 'audio' else 'visual'
+    if (not isinstance(value, dict) or value.get('kind') != track_kind
             or value.get('role', 'output') != 'output' or not active(value)):
-        raise CommandError('media edit requires an active raw visual child track')
+        raise CommandError(f'media edit requires an active raw {track_kind} child track')
     ctx.bind('media.track', track)
 
 

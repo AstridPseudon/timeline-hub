@@ -57,6 +57,44 @@ def clip(value):
     return State(value).entity(REF)
 
 
+def audio_bundle_without_registry_duration():
+    original = bundle()
+    parent = original['parent']
+    for rows in (parent['clips'], parent['config']['clips']):
+        rows[0].update({'asset': 'voice', 'clipType': 'audio', 'track': 'music',
+                        'from': 2, 'to': 6, 'hold': 4})
+    parent['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
+    parent['registry']['assets']['voice'] = {'media_id': 'voice-object', 'type': 'audio'}
+    return original
+
+
+def test_audio_trim_uses_exact_verified_duration_when_registry_duration_is_missing():
+    original = audio_bundle_without_registry_duration()
+    verified = [{'selection': {'asset': 'voice', 'generation_id': 'generation-voice',
+                               'variant_id': 'variant-voice', 'object_id': 'voice-object',
+                               'catalog_digest': 'catalog-voice'},
+                 'media_type': 'audio/wav', 'size': 123, 'duration_seconds': 6}]
+    command = capture_clip_trim(original, REF, in_s=1, out_s=5, verified_media=verified)
+    plan = execute(original, [command], verified_media=verified)
+    assert (clip(plan.bundle)['from'], clip(plan.bundle)['to'], clip(plan.bundle)['hold']) == (1, 5, 4)
+    assert plan.records[0]['dependencies'][0]['pin']['verified_media'] == verified[0]
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert replay(plan, original, verified_media=verified).records == plan.records
+
+
+def test_audio_trim_without_the_exact_verified_input_refuses_without_writes():
+    original = audio_bundle_without_registry_duration()
+    verified = [{'selection': {'asset': 'voice', 'generation_id': 'generation-voice',
+                               'variant_id': 'variant-voice', 'object_id': 'voice-object',
+                               'catalog_digest': 'catalog-voice'},
+                 'media_type': 'audio/wav', 'size': 123, 'duration_seconds': 6}]
+    command = capture_clip_trim(original, REF, in_s=1, out_s=5, verified_media=verified)
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError, match='exact Runtime-verified media metadata'):
+        execute(original, [command])
+    assert original == before
+
+
 @pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),
     ({'speed': None}, {'in_s': 0, 'out_s': 10}), ({'speed': .5}, {'out_s': 10}),
     ({}, {'in_s': .000001, 'out_s': 1.000002}),
