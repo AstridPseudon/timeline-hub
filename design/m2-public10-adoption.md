@@ -1,9 +1,9 @@
 # M2 public-10 adoption: Bundle 1 + Composition 0.0.10
 
-Status: **partially verified, blocked.** The exact-pair Runtime suite and the
-pin and conformance suites pass. The Node-env node suite runs 11 of 12 nodes
-green; the one remaining node (TextCard SSR) fails for an environment reason
-that is outside this branch (section 4).
+Status: **verified.** The exact-pair Runtime suite and the pin and conformance
+suites pass. The Node-env node suite now passes 12 of 12 nodes after the shared
+runtime lock was reinstalled from the committed lock (section 9). The earlier
+TextCard SSR failure was environment drift, not code (section 4).
 
 ## 1. Commits and trees
 
@@ -106,7 +106,42 @@ did run and pass, as part of the 11 passed nodes above.
 
 ## 8. Open items
 
-- Fix the runtime lockfile drift (section 4), then rerun `remotion-0010-nodes`.
+- Done: runtime lockfile drift fixed and `remotion-0010-nodes` rerun, 12 passed (section 9).
 - Confirm the vendor-lock script result in an unrestricted shell (section 5).
 - Confirm the `4e52f7df` source for the Agent-vs-Runtime schema digest comparison (section 6).
 - Decide when Agent's vendor lock moves to Runtime `tl/integration` `b2a1d9fd`.
+
+## 9. Rerun after the runtime lock fix
+
+Precondition: `/home/user/work/runtimes/agent-remotion-0010/package-lock.json` is
+byte-equal to the committed `remotion/package-lock.json` at `HEAD`
+(`cmp` of `git show HEAD:remotion/package-lock.json` against the runtime lock: equal).
+The worktree is clean at `ba633b20`, so the Runtime exact-pair suite was not rerun,
+since the tree did not change.
+
+Agent tree tested: `16d6528cb10310ac441bbf139c7aeb7f7ec51acf` (tree of committed `ba633b20`).
+Section 1's `a158800a` was the snapshot tree before the `git rm` was committed.
+
+Command (`request-test` / `wait-test`, `--no-cache`, no full suite):
+
+```
+request-test agt-public10-rerun remotion-0010-nodes --no-cache --files "tests/reshape/test_remotion_gate.py tests/core/test_editor_element_catalog.py tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup"
+```
+
+Service ID `agt-public10-rerun-remotion-0010-nodes-1020050742-21158`. Result: **pass**, exit 0,
+`12 passed in 6.77s`. No failures, no skips.
+
+| Node | Result |
+|---|---|
+| `tests/reshape/test_remotion_gate.py` (all nodes) | pass |
+| `tests/core/test_editor_element_catalog.py` (all nodes) | pass |
+| `tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition` | pass |
+| `tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix` | pass |
+| `tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup` (TextCard SSR) | pass |
+
+The per-node breakdown above is by target; the pytest `-q` output gives the total
+(12 passed) rather than a line per node. Section 4's blocker is resolved. No test
+was changed, skipped or xfailed.
+
+Remaining open items: section 5 (vendor lock script not run in an unrestricted shell),
+section 6 (`4e52f7df` source), section 7 (Remotion gate `install` not run).
