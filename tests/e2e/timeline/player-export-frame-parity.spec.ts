@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import type { ManagedOutput, Task } from '../../../src/integrations/runtime/generated';
 import type { DirectHarness } from '../local/support/harness';
 import { assertTaskAuthority, record } from './viewing-parity/authority';
+import { waitForRenderAdmission } from './viewing-parity/admission';
 import { test, readyRenderCapability, sourceVersions } from './viewing-parity/harness';
 import { mediaHash, readFrameMarker, VIDEO_START_FRAME } from './viewing-parity/media';
 import {
@@ -57,10 +58,9 @@ async function renderAndDownload(page: Page, harness: DirectHarness, fixture: Fr
   };
   page.on('request', onRequest);
   try {
-    const admittedResponse = page.waitForResponse(response => response.request().method() === 'POST'
-      && response.url() === `${harness.doorBase}/v1/tasks`);
-    await page.getByRole('button', { name: 'Render', exact: true }).click();
-    const response = await admittedResponse;
+    const admissionUrl = `${new URL(harness.doorBase).origin}/api/astrid/v1/tasks`;
+    const response = await waitForRenderAdmission(page, admissionUrl,
+      () => page.getByRole('button', { name: 'Render', exact: true }).click({ timeout: 30_000 }));
     expect([200, 201]).toContain(response.status());
     const request = response.request().postDataJSON();
     expect(request).toMatchObject({ project: fixture.projectId, capability_id: 'rendering.render',

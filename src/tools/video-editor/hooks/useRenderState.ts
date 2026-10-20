@@ -876,9 +876,10 @@ export function useRenderState(
     setRenderResultFilename(null);
     setRenderLog('Admitting render to Astrid…');
 
-    const bridgeBaseUrl = (runtimeContext.provider as { apiBaseUrl?: string }).apiBaseUrl;
     const { AstridLocalClient: AstridLocalClientModule } = await import('@/integrations/astrid/client.ts');
-    const client = new AstridLocalClientModule({ projectSlug: projectId, baseUrl: bridgeBaseUrl });
+    // The ready capability catalog is a product bridge route. The provider's
+    // Runtime base supports timeline reads but deliberately has no catalog alias.
+    const client = new AstridLocalClientModule({ projectSlug: projectId });
     renderClientRef.current = client;
     const renderRouter = await import('@/tools/video-editor/lib/renderRouter.ts');
     const request = {
@@ -890,7 +891,6 @@ export function useRenderState(
       resolvedConfig: renderConfig,
       renderRuntime: {
         projectId,
-        bridgeBaseUrl,
         destination: renderDestination,
       },
     };

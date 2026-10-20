@@ -764,11 +764,11 @@ describe('useRenderState render routing', () => {
     vi.useRealTimers();
   });
 
-  it('admits a scoped render, polls on the declared 2s cadence, and exposes the R9 media URL', async () => {
+  it.each(['/api/astrid', '/api/runtime'])('admits through the product bridge with provider %s, polls, and exposes the R9 media URL', async (apiBaseUrl) => {
     vi.useFakeTimers();
     const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     let reads = 0;
-    const fetchMock = vi.fn(async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) => {
       reads += 1;
       return new Response(JSON.stringify(renderTaskDetail(reads === 1 ? 'queued' : 'succeeded')), { status: 200 });
     });
@@ -776,7 +776,7 @@ describe('useRenderState render routing', () => {
     const runtimeValue = {
       project: { projectId: 'demo-project' },
       timelineId: 'timeline-1',
-      provider: { apiBaseUrl: '/api/astrid' },
+      provider: { apiBaseUrl },
       telemetry: { warn: vi.fn() },
     } as unknown as VideoEditorRuntimeContextValue;
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -800,6 +800,7 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderStatus).toBe('rendering');
     expect(result.current.activeRenderTaskId).toBe('render-task-1');
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/astrid/v1/tasks/render-task-1');
 
     await act(async () => { await vi.advanceTimersByTimeAsync(1_999); });
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -814,6 +815,14 @@ describe('useRenderState render routing', () => {
     expect(result.current.renderResultInfo).toMatchObject({ revision: 7 });
     expect(typeof result.current.renderResultInfo?.completedAt).toBe('number');
     expect(mocks.startClientRender).not.toHaveBeenCalled();
+    const capability = {
+      capability_id: 'rendering.render', definition_digest: `sha256:${'a'.repeat(64)}`,
+      status: 'ready', required_resource_keys: [], estimated_scratch_bytes: 0, estimated_output_bytes: 0,
+    };
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ items: [capability], next_cursor: null }), { status: 200 }));
+    const admittedClient = renderRouterMocks.enqueueAstridRuntimeRenderTimeline.mock.calls[0][1].client;
+    expect(await admittedClient.catalog.get('rendering.render')).toEqual(capability);
+    expect(fetchMock.mock.calls.at(-1)?.[0]).toBe('/api/astrid/v1/capabilities?limit=50');
 
     unmount();
     anchorClick.mockRestore();
