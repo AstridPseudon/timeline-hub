@@ -3148,13 +3148,185 @@ class RuntimeService:
         value["metadata"] = json.loads(value.pop("metadata_json"))
         return value
 
-    # Retired direct shot writers. Each keeps its mutation gate, so the refusal
-    # is still reached only after admission and writes nothing.
-    create_project_shot = _durable_mutation(_refuse_direct_shot_write)
-    update_project_shot = _durable_mutation(_refuse_direct_shot_write)
-    add_shot_item = _durable_mutation(_refuse_direct_shot_write)
-    remove_shot_item = _durable_mutation(_refuse_direct_shot_write)
-    reorder_shot_items = _durable_mutation(_refuse_direct_shot_write)
+    @_durable_mutation
+    def create_project_shot(self, project_id, body, *, idempotency_key=None):
+        """Create an unplaced shot in the project catalog."""
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        name = str(body.get("name") or "")
+        if not name.strip():
+            raise ValidationError("name is required")
+        metadata = body.get("metadata", {})
+        if not isinstance(metadata, dict):
+            raise ValidationError("metadata must be an object")
+        shot_id = str(body.get("shot_id") or new_id())
+        existing = self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone()
+        if existing is not None and existing["project_id"] == project["id"]:
+            self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        replay = self._command_replay("shot.create", project["id"], idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        if existing is not None:
+            raise ConflictError("shot already exists", details={"shot_id": shot_id})
+        timestamp = now()
+        self.store.conn.execute(
+            "INSERT INTO project_shots(id, project_id, name, metadata_json, version, created_at, updated_at, archived_at) "
+            "VALUES (?, ?, ?, ?, 1, ?, ?, NULL)",
+            (shot_id, project["id"], name, canonical_json(metadata), timestamp, timestamp),
+        )
+        result = self._project_shot_resource(self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone())
+        return self._command_record("shot.create", project["id"], idempotency_key, request_hash, result, project_id=project["id"])
+
+    @_durable_mutation
+    def update_project_shot(self, project_id, shot_id, body, *, idempotency_key=None, archived=None):
+        """Update catalog metadata, or archive/recover an unplaced shot."""
+        require_idempotency_key(idempotency_key)
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        expected = self._expected_version(body)
+        action = "update" if archived is None else "archive" if archived else "recover"
+        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        replay = self._command_replay(f"shot.{action}", str(shot_id), idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        row = self.store.conn.execute(
+            "SELECT * FROM project_shots WHERE id=? AND project_id=?", (shot_id, project["id"])
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("shot not found")
+        if int(row["version"]) != expected:
+            raise ConflictError("shot version conflict", details={"expected": expected, "actual": int(row["version"])})
+        timestamp = now()
+        name = str(body.get("name", row["name"]))
+        metadata = body.get("metadata", json.loads(row["metadata_json"]))
+        if not name.strip() or not isinstance(metadata, dict):
+            raise ValidationError("invalid shot name or metadata")
+        archived_at = timestamp if archived is True else None if archived is False else row["archived_at"]
+        self.store.conn.execute(
+            "UPDATE project_shots SET name=?, metadata_json=?, version=?, updated_at=?, archived_at=? "
+            "WHERE id=? AND project_id=? AND version=?",
+            (name, canonical_json(metadata), expected + 1, timestamp, archived_at, shot_id, project["id"], expected),
+        )
+        result = self._project_shot_resource(self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone())
+        return self._command_record(f"shot.{action}", str(shot_id), idempotency_key, request_hash, result, project_id=project["id"])
+
+    @_durable_mutation
+    def add_shot_item(self, project_id, shot_id, body, *, idempotency_key=None):
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        media_id = str(body.get("media_id") or "").removeprefix("sha256:")
+        if not media_id:
+            raise ValidationError("media_id is required")
+        metadata = body.get("metadata", {})
+        if not isinstance(metadata, dict):
+            raise ValidationError("metadata must be an object")
+        self.get_project_shot(project["id"], shot_id)
+        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        replay = self._command_replay("shot.item.add", str(shot_id), idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        if not self.store.conn.execute(
+            "SELECT 1 FROM project_objects WHERE project_id=? AND digest=?", (project["id"], media_id)
+        ).fetchone():
+            raise NotFoundError("media is not owned by project")
+        position = body.get("position")
+        rows = self.store.conn.execute(
+            "SELECT * FROM shot_items WHERE shot_id=? ORDER BY sort_key, id", (shot_id,)
+        ).fetchall()
+        if position is None:
+            position = len(rows)
+        if isinstance(position, bool) or not isinstance(position, int) or position < 0 or position > len(rows):
+            raise ValidationError("position is out of range")
+        item_id = str(body.get("item_id") or new_id())
+        stamp = now()
+        self.store.conn.execute(
+            "INSERT INTO shot_items(id, shot_id, media_id, sort_key, source_frame, metadata_json, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (item_id, shot_id, media_id, f"~{item_id}", body.get("source_frame"), canonical_json(metadata), stamp),
+        )
+        ordered_ids = [row["id"] for row in rows]
+        ordered_ids.insert(position, item_id)
+        for index, ordered_id in enumerate(ordered_ids):
+            self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"tmp-{index:08d}-{item_id}", ordered_id))
+        for index, ordered_id in enumerate(ordered_ids):
+            self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"{index:08d}", ordered_id))
+        self.store.conn.execute(
+            "UPDATE project_shots SET version=version+1, updated_at=? WHERE id=? AND project_id=?",
+            (stamp, shot_id, project["id"]),
+        )
+        result = self._project_shot_resource(self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone())
+        return self._command_record("shot.item.add", str(shot_id), idempotency_key, request_hash, result, project_id=project["id"])
+
+    def _renumber_shot_items(self, shot_id):
+        rows = self.store.conn.execute("SELECT id FROM shot_items WHERE shot_id=? ORDER BY sort_key, id", (shot_id,)).fetchall()
+        for index, row in enumerate(rows):
+            self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"{index:08d}", row["id"]))
+
+    @_durable_mutation
+    def remove_shot_item(self, project_id, shot_id, item_id, body, *, idempotency_key=None):
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        expected = self._expected_version(body)
+        request_hash = hashlib.sha256(canonical_json({"item_id": item_id, **body}).encode()).hexdigest()
+        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        replay = self._command_replay("shot.item.remove", str(shot_id), idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        row = self.store.conn.execute(
+            "SELECT * FROM project_shots WHERE id=? AND project_id=?", (shot_id, project["id"])
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("shot not found")
+        if int(row["version"]) != expected:
+            raise ConflictError("shot version conflict", details={"expected": expected, "actual": int(row["version"])})
+        if not self.store.conn.execute("SELECT 1 FROM shot_items WHERE id=? AND shot_id=?", (item_id, shot_id)).fetchone():
+            raise NotFoundError("shot item not found")
+        self.store.conn.execute("DELETE FROM shot_items WHERE id=?", (item_id,))
+        self._renumber_shot_items(shot_id)
+        self.store.conn.execute(
+            "UPDATE project_shots SET version=version+1, updated_at=? WHERE id=? AND project_id=?",
+            (now(), shot_id, project["id"]),
+        )
+        result = self._project_shot_resource(self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone())
+        return self._command_record("shot.item.remove", str(shot_id), idempotency_key, request_hash, result, project_id=project["id"])
+
+    @_durable_mutation
+    def reorder_shot_items(self, project_id, shot_id, body, *, idempotency_key=None):
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        expected = self._expected_version(body)
+        item_ids = body.get("item_ids") or body.get("items")
+        if not isinstance(item_ids, list) or any(not isinstance(item_id, str) for item_id in item_ids) or len(item_ids) != len(set(item_ids)):
+            raise ValidationError("items must be a unique complete permutation")
+        request_hash = hashlib.sha256(canonical_json(body).encode()).hexdigest()
+        self._require_unplaced_project_shot(project["id"], shot_id, operation="direct shot catalog mutation")
+        replay = self._command_replay("shot.item.reorder", str(shot_id), idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        row = self.store.conn.execute(
+            "SELECT * FROM project_shots WHERE id=? AND project_id=?", (shot_id, project["id"])
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("shot not found")
+        current = [x["id"] for x in self.store.conn.execute("SELECT id FROM shot_items WHERE shot_id=?", (shot_id,))]
+        if int(row["version"]) != expected:
+            raise ConflictError("shot version conflict", details={"expected": expected, "actual": int(row["version"])})
+        if set(map(str, item_ids)) != set(current):
+            raise ValidationError("items must name the complete shot permutation")
+        for index, item_id in enumerate(item_ids):
+            self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"tmp-{index:08d}-{shot_id}", item_id))
+        for index, item_id in enumerate(item_ids):
+            self.store.conn.execute("UPDATE shot_items SET sort_key=? WHERE id=?", (f"{index:08d}", item_id))
+        self.store.conn.execute(
+            "UPDATE project_shots SET version=version+1, updated_at=? WHERE id=? AND project_id=?",
+            (now(), shot_id, project["id"]),
+        )
+        result = self._project_shot_resource(self.store.conn.execute("SELECT * FROM project_shots WHERE id=?", (shot_id,)).fetchone())
+        return self._command_record("shot.item.reorder", str(shot_id), idempotency_key, request_hash, result, project_id=project["id"])
+
     create_shot = _durable_mutation(_refuse_direct_shot_write)
     _update_shot_state = _verified_mutation(_refuse_direct_shot_write)
 
@@ -3320,7 +3492,7 @@ class RuntimeService:
         identity = {"schema": TEXT_BINDING_IDENTITY_SCHEMA, "project_id": str(project_id), "shot_id": str(shot_id), "kind": kind, "slot": slot}
         return str(uuid.uuid5(uuid.NAMESPACE_URL, canonical_json(identity)))
 
-    def _require_unplaced_project_shot(self, project_id, shot_id):
+    def _require_unplaced_project_shot(self, project_id, shot_id, *, operation="direct text binding"):
         """Return a project-library shot that is absent from accepted film history."""
         shot = self.store.conn.execute(
             "SELECT id FROM project_shots WHERE id=? AND project_id=?", (shot_id, project_id)
@@ -3334,9 +3506,19 @@ class RuntimeService:
             (project_id, shot_id, project_id),
         ).fetchone()
         if placed is not None:
+            details = {
+                "reason": "shot_in_film_history",
+                "shot_id": str(shot_id),
+                "replacement": "timeline.commit",
+            }
+            if operation == "direct shot catalog mutation":
+                raise RetiredRouteError(
+                    "direct shot writes are retired for film-owned shots; use timeline commands",
+                    details=details,
+                )
             raise ConflictError(
-                "direct text binding is limited to unplaced project shots",
-                details={"reason": "shot_in_film_history", "shot_id": str(shot_id)},
+                f"{operation} is limited to unplaced project shots",
+                details=details,
             )
         return shot
 
