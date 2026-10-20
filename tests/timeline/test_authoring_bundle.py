@@ -11,7 +11,6 @@ import pytest
 from astrid.core.timeline.authoring_bundle import (
     AuthoringBundleError,
     UnsupportedAuthoringEditError,
-    approve_authoring_candidate,
     authoring_contract,
     authoring_media_inventory,
     compile_authoring_candidate,
@@ -20,7 +19,6 @@ from astrid.core.timeline.authoring_bundle import (
     inspect_authoring_candidate,
     open_authoring_bundle,
     preview_authoring_candidate,
-    promote_approved_authoring_candidate,
     publish_authoring_candidate,
     validate_authoring_candidate,
 )
@@ -455,33 +453,8 @@ def test_group_move_compiles_and_uses_existing_publication_boundary():
     assert result["publication"]["data"]["new_head"] == writer.calls[0][2]["parent_revision_id"]
 
 
-def test_approval_is_bound_to_candidate_and_base_revision():
-    parent, shots, timelines = _closure(shared=True)
-    candidate = open_authoring_bundle(
-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
-    )
-    approval = approve_authoring_candidate(
-        candidate, approver="editor-1", approval_id="approval-1"
-    )
-    writer = _Writer()
-
-    changed = copy.deepcopy(candidate)
-    changed["parent"]["config"]["approved-edit"] = True
-    with pytest.raises(AuthoringBundleError, match="stale or does not match"):
-        promote_approved_authoring_candidate(
-            changed, approval, writer, idempotency_key="promote-1"
-        )
-    assert writer.calls == []
-
-    promoted = promote_approved_authoring_candidate(
-        candidate, approval, writer, idempotency_key="promote-1"
-    )
-    assert promoted["approval"]["approval_id"] == "approval-1"
-    assert len(writer.calls) == 1
-
-
-def test_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_path):
-    """Exercise the contract, durable replay, and candidate promotion seam together."""
+def test_frozen_render_restart_is_single_generation(tmp_path):
+    """Exercise the live render contract and durable replay seam together."""
     from astrid.core.execution.reconciler import ExecutionReconciler
     from astrid.core.execution.target_adapter import LocalMachineTargetAdapter
 
@@ -613,19 +586,6 @@ def test_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_
     assert second.phase == "recovery"
     assert render_count == 1
     assert [name for name, _ in runtime.calls].count("claim") == 1
-
-    parent, shots, timelines = _closure(shared=True)
-    candidate = open_authoring_bundle(
-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
-    )
-    approval = approve_authoring_candidate(candidate, approver="editor-1", approval_id="approval-render-1")
-    writer = _Writer()
-    promoted = promote_approved_authoring_candidate(
-        candidate, approval, writer, idempotency_key="promote-render-1"
-    )
-    assert promoted["candidate_digest"] == approval["candidate_digest"]
-    assert len(writer.calls) == 1
-
 
 def test_full_authored_field_edits_compile_without_normalizing_opaque_fields():
     parent, shots, timelines = _closure(shared=False)
