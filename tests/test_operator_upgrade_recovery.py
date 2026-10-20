@@ -19,7 +19,9 @@ from lanes import requires_posix_process_groups
 from test_operator_upgrade import _Boundary, _fixture
 
 
-@pytest.mark.parametrize("state", ["planned", "stopping", "stopped", "activated", "restarted", "complete"])
+@pytest.mark.parametrize("state", [
+    "planned", "stopping", "stopped", "migration-committed", "activated", "restarted", "complete",
+])
 @requires_posix_process_groups
 def test_sigkill_keeps_upgrade_transaction_identity_at_every_journal_step(tmp_path, state):
     env = {**os.environ, "PYTHONPATH": os.pathsep.join([
@@ -30,7 +32,7 @@ def test_sigkill_keeps_upgrade_transaction_identity_at_every_journal_step(tmp_pa
     assert result.returncode == -signal.SIGKILL, result.stderr
     support = tmp_path / "support"
     journal = json.loads((support / "runtime" / "upgrade-journal.json").read_text())
-    assert journal["state"] == state
+    assert journal["state"] == ("stopped" if state == "migration-committed" else state)
     assert len(journal["operation_id"]) == 32
     assert journal["realm_id"] == "realm-1"
     assert journal["source_support_root"] == str(support)
@@ -65,6 +67,7 @@ if __name__ == "__main__":
         connection.execute("UPDATE runtime_schema SET version=29 WHERE id=1")
     boundary = _Boundary(paths)
     original_journal = operator_upgrade._journal
+    original_migrate = operator_upgrade.migrate_canonical_to_current
 
     def journal_and_kill(*args, **kwargs):
         result = original_journal(*args, **kwargs)
@@ -81,6 +84,13 @@ if __name__ == "__main__":
         target.instance_lock_path.write_text(json.dumps({**discovery, "realm_id": "realm-1"}))
         return SimpleNamespace(endpoint=discovery["endpoint"], pid=1235, runtime_instance_id="instance-2")
 
+    def migrate_and_kill(*args, **kwargs):
+        result = original_migrate(*args, **kwargs)
+        if kill_state == "migration-committed":
+            os.kill(os.getpid(), signal.SIGKILL)
+        return result
+
     operator_upgrade._journal = journal_and_kill
     operator_upgrade._bootstrap_locked = start
+    operator_upgrade.migrate_canonical_to_current = migrate_and_kill
     operator_upgrade.upgrade_workspace(paths, boundary, BootstrapConfig(source_profile=profile))
