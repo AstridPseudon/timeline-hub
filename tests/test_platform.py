@@ -84,8 +84,9 @@ def test_posix_durable_replace_fsyncs_both_parent_directories(monkeypatch, tmp_p
 
 def test_windows_directory_durability_helper_is_best_effort_noop(monkeypatch, tmp_path):
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
-    monkeypatch.setattr(platform.os, "open", lambda *_a, **_k: pytest.fail("Windows must not open directory for fsync"))
-    platform.fsync_directory(tmp_path)
+    with monkeypatch.context() as patch:
+        patch.setattr(platform.os, "open", lambda *_a, **_k: pytest.fail("Windows must not open directory for fsync"))
+        platform.fsync_directory(tmp_path)
 
 
 @pytest.mark.parametrize("os_name", ["darwin", "linux", "win32"])
