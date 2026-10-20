@@ -72,6 +72,13 @@ Intervals that collapse on quantization refuse. `TimingCompileError` refuses the
 entire result; `TimingCycleError` adds `code="CYCLE"` and a deterministic closed
 `path`. Input objects stay unchanged even on refusal.
 
+Source endpoints also accept main's `_timeline_clip` aliases `from_ms`/`to_ms`
+when the corresponding seconds field is absent. A private evaluation image
+converts these endpoints with exact rational arithmetic; authored fields and
+retained transcript pins remain unchanged. Duplicate endpoint codecs refuse pending
+an adapter. Raw `source_window` on clips, occurrences, placements, timelines or
+registry assets refuses; there is no recognized main authoring codec for that key.
+
 ## Remaining wiring and parity
 
 - Native recorded word-reference command/capture adapter, owning the authored stable
@@ -80,7 +87,7 @@ entire result; `TimingCycleError` adds `code="CYCLE"` and a deterministic closed
   the returned intervals. The existing provider still uses `authoring-bundle-1`.
 - Checkout retime/resolve/reflow, model setters, narration/music/sequence writers,
   CLI/sheet compatibility and parity before removing their existing writers.
-- Explicit maps, nontrivial placement source offsets/rates, millisecond clips,
+- Explicit maps, nontrivial placement source offsets/rates, millisecond clip placement/duration,
   shared-shot materialization and any additional source-window codecs need a
   dedicated adapter; this kernel refuses the unsupported shapes it recognizes.
 - Sequence/sequence-fit, formulas, orphan caches, until_film_end, gap/reflow

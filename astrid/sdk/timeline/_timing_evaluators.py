@@ -1,6 +1,7 @@
 """Main Moment/cut evaluators over captured inputs; no mutable Checkout execution."""
 from __future__ import annotations
 
+import copy
 from dataclasses import replace
 from fractions import Fraction
 from types import MappingProxyType, SimpleNamespace
@@ -45,7 +46,7 @@ def _fps(bundle):
 
 
 def _maps(value, label):
-    for key in ("time_map", "timeMap", "from_ms", "to_ms", "children", "clips"):
+    for key in ("source_window", "time_map", "timeMap", "from_ms", "to_ms", "children", "clips"):
         if value.get(key) is not None:
             raise TimingCompileError(f"{label}: unsupported explicit map {key}")
 
@@ -132,6 +133,23 @@ class _Context:
 
 
 def evaluate(bundle, sources, bindings, policy):
+    # Main's _timeline_clip source aliases, on a private evaluation image. Keep
+    # milliseconds exact instead of its renderer-facing float conversion.
+    bundle = copy.deepcopy(bundle)
+    containers = [bundle.get("parent") or {}, *(shot["internal_timeline"]
+                  for shot in bundle.get("shots", {}).values())]
+    for container in containers:
+        assets = (container.get("registry") or {}).get("assets", {})
+        for value in (container, *assets.values()):
+            if value.get("source_window") is not None:
+                raise TimingCompileError("unsupported explicit map source_window")
+        for clip in container.get("clips", []):
+            for alias, field in (("from_ms", "from"), ("to_ms", "to")):
+                if alias not in clip:
+                    continue
+                if field in clip:
+                    raise TimingCompileError(f"mixed source codecs {field}/{alias} need an authoring adapter")
+                clip[field] = _timing_number(clip.pop(alias)) / 1000
     fps = _fps(bundle)
     clips, offsets, internals = {}, {}, {}
     placement_ends, seen_shots, seen_occurrences = [], set(), set()

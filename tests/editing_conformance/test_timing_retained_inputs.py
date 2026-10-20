@@ -18,6 +18,7 @@ import pytest
 
 from astrid.core.timeline import moments
 from astrid.core.timeline.authoring_bundle import _digest
+from astrid.core.timeline.shot_composition_projection import _timeline_clip
 from astrid.sdk.media_transcript import build_transcript, transcript_document_id
 from astrid.sdk.timeline import commit as agent
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
@@ -54,6 +55,7 @@ def first_selection(bundle):
         assert row["source_offset"] == 0 and row["speed"] == 1
         internal = bundle["shots"][row["shot_id"]]["internal_timeline"]
         for clip in internal["clips"]:
+            clip = _timeline_clip(clip, path="retained source")
             asset = internal["registry"]["assets"][clip["asset"]]
             assert asset["media_id"] == document["content"]["media_id"]
             owner = (row["occurrence_id"], row["shot_id"], clip["id"])
@@ -109,8 +111,11 @@ def retained(tmp_path, monkeypatch, request):
     pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
     voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
                "at": 1, "from": 2, "to": 6, "speed": 2}]
-    if getattr(request, "param", False):
+    if getattr(request, "param", False) is True:
         voices.append(dict(voices[0], id="other", at=4))
+    if getattr(request, "param", False) == "source-ms":
+        voices[0]["from_ms"] = voices[0].pop("from") * 1000
+        voices[0]["to_ms"] = voices[0].pop("to") * 1000
     # Bounded fixture data only: current Runtime retires direct shot writes.
     # The prepared provider below seeds it through the real acceptance port.
     publication = {
@@ -217,10 +222,15 @@ def retained(tmp_path, monkeypatch, request):
         case.service.close()
 
 
-def test_exact_retained_v1_compiles_after_cas_v2_restart_and_cache_corruption(retained):
+@pytest.mark.parametrize("retained", [False, "source-ms"], indirect=True)
+def test_exact_retained_v1_compiles_after_cas_v2_restart_and_cache_corruption(retained, request):
     case = retained
     original = case.submit(case.create("first"), "first")
     bundle = case.hydrated[-1]
+    if request.node.callspec.params["retained"] == "source-ms":
+        voice = bundle["shots"]["shot"]["internal_timeline"]["clips"][0]
+        assert (voice["from_ms"], voice["to_ms"], voice["speed"]) == (2000, 6000, 2)
+        assert "from" not in voice and "to" not in voice
     binding = first_selection(bundle)
     assert binding.word_ids == (case.source["content"]["segments"][0]["words"][1]["id"],)
     inputs = TimingInputs(bundle, sources=bundle["source_mapping"]["pinned_documents"], bindings=[binding])

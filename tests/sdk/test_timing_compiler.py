@@ -123,6 +123,75 @@ def test_fixed_source_window_and_rational_half_frame_ties(fps):
     assert encoded(project(bundle).bundle) == encoded(bundle)
 
 
+def test_main_millisecond_source_aliases_match_seconds_without_authored_writes():
+    from astrid.core.timeline.shot_composition_projection import _timeline_clip
+
+    bundle, document, pin = captured(film({"numerator": 30000, "denominator": 1001}))
+    expected = project(bundle, document, [pin])
+    voice = bundle["shots"]["shot"]["internal_timeline"]["clips"][0]
+    voice["from_ms"], voice["to_ms"] = voice.pop("from") * 1000, voice.pop("to") * 1000
+    main = _timeline_clip(voice, path="voice")
+    assert (main["from"], main["to"], main["speed"]) == (2, 6, 2)
+    before = encoded([bundle, document])
+    actual = project(bundle, document, [pin])
+    assert actual.timings == expected.timings
+    assert encoded(actual.bundle) == encoded(bundle)
+    assert encoded([bundle, document]) == before
+    assert (actual.timings[CARD]["start_frame"], actual.timings[CARD]["end_frame"]) == (105, 120)
+
+
+def test_millisecond_source_window_uses_exact_half_frame_and_half_open_word_boundary():
+    bundle, document, pin = captured(film({"numerator": 30000, "denominator": 1001}))
+    voice = bundle["shots"]["shot"]["internal_timeline"]["clips"][0]
+    voice.pop("from")
+    voice.pop("to")
+    voice.update(from_ms=2000, to_ms=6000)
+    text = 'after "stop"'
+    card(bundle)["app"]["astrid"]["on"] = text
+    word = document["document"]["content"]["segments"][0]["words"][-1]
+    pin = replace(pin, declaration=text, word_ids=(word["id"],))
+    assert project(bundle, document, [pin]).timings[CARD]["start_frame"] == 149
+    voice["to_ms"] = 5999
+    with pytest.raises(TimingCompileError, match="half-open source window"):
+        project(bundle, document, [pin])
+    # 500.5 source milliseconds / speed 2 is exactly 7.5 frames.
+    card(bundle)["app"]["astrid"] = {}
+    voice.update(from_ms=2000, to_ms=2500.5, at=0)
+    bundle["placements"][0]["placement"]["start_ms"] = 0
+    interval = project(bundle).timings[VOICE]
+    assert interval["duration"] == Fraction(1001, 4000)
+    assert interval["end_frame"] == 8
+
+
+@pytest.mark.parametrize("site", ["voice", "occurrence", "placement", "internal", "asset", "parent"])
+def test_raw_source_window_is_refused_without_guessing_its_schema(site):
+    bundle, document, pin = captured()
+    internal = bundle["shots"]["shot"]["internal_timeline"]
+    targets = {"voice": internal["clips"][0], "internal": internal,
+               "occurrence": bundle["placements"][0], "placement": bundle["placements"][0]["placement"],
+               "asset": internal["registry"]["assets"]["take"], "parent": bundle["parent"]}
+    targets[site]["source_window"] = {"start": 3, "end": 3.25}
+    before = encoded([bundle, document])
+    with pytest.raises(TimingCompileError, match="source_window"):
+        project(bundle, document, [pin])
+    assert encoded([bundle, document]) == before
+
+
+@pytest.mark.parametrize("patch", [{"from": 2, "from_ms": 2000}, {"to": 6, "to_ms": 6000},
+                                   {"from_ms": True}, {"to_ms": None}])
+def test_millisecond_source_codec_refusals_preserve_input(patch):
+    bundle, document, pin = captured()
+    voice = bundle["shots"]["shot"]["internal_timeline"]["clips"][0]
+    voice.pop("from")
+    voice.pop("to")
+    voice.update(from_ms=2000, to_ms=6000)
+    voice.update(patch)
+    before = encoded([bundle, document])
+    with pytest.raises(TimingCompileError):
+        project(bundle, document, [pin])
+    assert encoded([bundle, document]) == before
+
+
 def test_after_word_end_at_source_out_is_included_and_onset_at_source_out_is_refused():
     bundle, document, pin = captured()
     text = 'after "stop"'
