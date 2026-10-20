@@ -8,8 +8,9 @@ import {
 } from '@astrid/packs/rendering/editor/catalog';
 import { devLocalExtensions } from './localExtensions';
 
-// Run against the selected Astrid checkout through ASTRID_CHECKOUT. The generated
-// pack catalog is the sole source for editor extensions activated by this app.
+// Run against the selected Astrid checkout through ASTRID_CHECKOUT. Generated
+// pack entries remain authoritative; reviewed App-owned extensions are admitted
+// alongside them by localExtensions.
 describe('Astrid editor catalog build/import boundary', () => {
   it('resolves the configured checkout through the supported build environment', () => {
     const source = resolveAstridSource();
@@ -33,7 +34,8 @@ describe('Astrid editor catalog build/import boundary', () => {
     expect(ASTRID_EDITOR_EXTENSIONS).toEqual(
       ASTRID_EDITOR_EXTENSION_CATALOG.map(({ extension }) => extension),
     );
-    expect(devLocalExtensions).toEqual(ASTRID_EDITOR_EXTENSIONS);
-    expect(devLocalExtensions).toHaveLength(ASTRID_EDITOR_EXTENSION_CATALOG.length);
+    expect(devLocalExtensions.slice(0, ASTRID_EDITOR_EXTENSIONS.length)).toEqual(ASTRID_EDITOR_EXTENSIONS);
+    expect(devLocalExtensions).toHaveLength(ASTRID_EDITOR_EXTENSION_CATALOG.length + 1);
+    expect(devLocalExtensions.at(-1)?.manifest.id).toBe('haus.astrid.scene-phase-markers');
   });
 });

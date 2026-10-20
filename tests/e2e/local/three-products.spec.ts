@@ -165,6 +165,32 @@ async function allRevisions(harness: DirectHarness, seed: ThreeProductsSeed): Pr
   return items;
 }
 
+/** Read the canonical authored closure from the normal Runtime reads, before a commit changes the head. */
+async function canonicalDocumentAt(harness: DirectHarness, seed: ThreeProductsSeed, revisionId: string): Promise<CanonicalDocument> {
+  const parent = await revisionBody(harness, revisionId) as Record<string, any>;
+  const manifest = parent.dependency_manifest as Record<string, any>;
+  expect(manifest, `revision ${revisionId} exposes its dependency manifest`).toBeTruthy();
+  const shotRevisions = await Promise.all((manifest.shots as Array<Record<string, any>>).map(async (pin) => {
+    const response = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/shots/${pin.shot_id}/revisions/${pin.revision_id}`);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    return { ...pin, payload: response.body.payload };
+  }));
+  const internalTimelineRevisions = await Promise.all((manifest.internal_timelines as Array<Record<string, any>>).map(async (pin) => {
+    const response = await harness.runtimeJson('GET', `${timelineBase(harness, seed)}/revisions/${pin.revision_id}`);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    return { ...pin, payload: response.body.payload };
+  }));
+  return {
+    schema_version: 1,
+    project_id: harness.seed.projectId,
+    timeline_id: seed.timelineId,
+    parent_revision: { revision_id: parent.revision_id, content_digest: parent.content_digest, payload: parent.payload },
+    shot_revisions: shotRevisions,
+    internal_timeline_revisions: internalTimelineRevisions,
+    dependency_manifest: manifest,
+  } as CanonicalDocument;
+}
+
 /** The parent composition of a revision and the agent's shot content beneath it, read straight from the Runtime. */
 async function revisionState(harness: DirectHarness, seed: ThreeProductsSeed, revisionId: string) {
   const parent = (await revisionBody(harness, revisionId)).payload;
@@ -802,6 +828,8 @@ async function ownerWithTwoMoves(page: Page, seed: ThreeProductsSeed) {
 }
 
 async function openCommandTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
+  // A case selected alone must establish its own verified authoring baseline.
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const previous = page.url().startsWith(harness.origin) ? await commandOutboxes(page, seed.timelineId) : [];
   await openApp(page, harness);
   await expectConnected(page);
@@ -1173,6 +1201,20 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
   await openCommandTimeline(page, harness, seed3);
   const realmBefore = await expectSameRealm(page, harness, astrid);
   const before = await history(harness, seed3);
+  const beforeDocument = await canonicalDocumentAt(harness, seed3, before.head.revision_id);
+  // Shape regression: the old parent-only projection had no closure arrays.
+  expect(beforeDocument).toMatchObject({
+    schema_version: 1,
+    project_id: harness.seed.projectId,
+    timeline_id: seed3.timelineId,
+    parent_revision: expect.objectContaining({ revision_id: before.head.revision_id }),
+    shot_revisions: [expect.objectContaining({ shot_id: seed3.shotId })],
+    internal_timeline_revisions: [expect.objectContaining({ timeline_id: seed3.timelineId })],
+    dependency_manifest: expect.objectContaining({
+      shots: [expect.objectContaining({ shot_id: seed3.shotId })],
+      internal_timelines: [expect.objectContaining({ timeline_id: seed3.timelineId })],
+    }),
+  });
   const original = await revisionState(harness, seed3, before.head.revision_id);
 
   // The production-mounted Scene Phase Markers extension emits one public patch.
@@ -1214,7 +1256,7 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
 
   // A disjoint Agent label lands after the ordinary batch, while its ACK is still held from the App.
   const agentEdit = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(ordinary),
-    { kind: 'label', trackId: 'V1', label: 'F2 Agent ordinary sibling' }, 'f2-ordinary-agent-label');
+    { kind: 'label', trackId: 'S1', label: 'F2 Agent ordinary sibling' }, 'f2-ordinary-agent-label');
   expect(agentEdit.data.publisher).not.toBe(ordinary.data.publisher);
   expect(position(agentEdit.data.canonical_document, seed3.appClipId)).toBe(1);
   expect((agentEdit.data.canonical_document.parent_revision.payload.clips as Array<Record<string, any>>)
@@ -1267,7 +1309,10 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
   expect(localLabel.data.status).toBe('rebased');
   expect(JSON.parse(wire.posts[2].body).commands).toEqual(commandsOf(owner.intents[1].payload));
   expect(localLabel.data.canonical_document.parent_revision.payload.config).toMatchObject({
-    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'F2 ordinary local label' })]),
+    tracks: expect.arrayContaining([
+      expect.objectContaining({ id: 'V1', label: 'F2 ordinary local label' }),
+      expect.objectContaining({ id: 'S1', label: 'F2 Agent ordinary sibling' }),
+    ]),
     x_f2_opaque: seed3.opaque.config,
   });
   expect(position(localLabel.data.canonical_document, seed3.appClipId)).toBe(1);
@@ -1283,7 +1328,7 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
     schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [localLabel.receipt.receipt_id] },
   }]);
   expect(undoLabel.data.canonical_document.parent_revision.payload.config).toMatchObject({
-    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'F2 Agent ordinary sibling' })]),
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'S1', label: 'F2 Agent ordinary sibling' })]),
   });
 
   await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
@@ -1292,7 +1337,20 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
   expect(JSON.parse(wire.posts[4].body).commands).toEqual([{
     schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [ordinary.receipt.receipt_id] },
   }]);
-  expect(undoOrdinary.data.canonical_document).toEqual(agentEdit.data.canonical_document);
+  // The inverse restores the independent pre-ordinary authored document, not
+  // the derived ordinary revision that Agent C was based on. Build the exact
+  // expected authored state from the pre-edit Runtime document and overlay
+  // only Agent C's disjoint S1 label; do not derive it from the inverse result.
+  const expectedAfterUndo = structuredClone(beforeDocument) as CanonicalDocument;
+  const expectedAfterUndoParent = expectedAfterUndo.parent_revision.payload as Record<string, any>;
+  const expectedAfterUndoAgentTrack = (expectedAfterUndoParent.config.tracks as Array<Record<string, any>>)
+    .find((track) => track.id === 'S1');
+  expect(expectedAfterUndoAgentTrack, 'the independent Agent track remains in the authored seed').toBeTruthy();
+  expectedAfterUndoAgentTrack!.label = 'F2 Agent ordinary sibling';
+  expect(undoOrdinary.data.canonical_document.parent_revision.payload).toEqual(expectedAfterUndoParent);
+  expect(undoOrdinary.data.canonical_document.shot_revisions).toEqual(expectedAfterUndo.shot_revisions);
+  expect(undoOrdinary.data.canonical_document.internal_timeline_revisions).toEqual(expectedAfterUndo.internal_timeline_revisions);
+  expect(undoOrdinary.data.canonical_document.dependency_manifest).toEqual(expectedAfterUndo.dependency_manifest);
   expect(position(undoOrdinary.data.canonical_document, seed3.appClipId)).toBe(original.parentClips[seed3.appClipId].at);
   expect(position(undoOrdinary.data.canonical_document, seed3.transitionClipId)).toBe(original.parentClips[seed3.transitionClipId].at);
   expect(undoOrdinary.data.canonical_document.parent_revision.payload.config.x_f2_opaque).toEqual(seed3.opaque.config);
