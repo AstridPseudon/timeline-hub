@@ -1026,7 +1026,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
   const { wire, before, a, owner } = await prepareAfterAckLossMoves(page, harness, seed3, async (acceptedA, commandWire) => {
     c = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(acceptedA),
-      { kind: 'track', id: 'f2-independent-C' }, 'f2-gate5-independent-C');
+      { kind: 'track', id: 'f2-gate5-independent-C' }, 'f2-gate5-independent-C');
     expect(c.data.publisher).not.toBe(acceptedA.data.publisher);
     expect(position(c.data.canonical_document, seed3.appClipId)).toBe(5);
     await commandWire.loseAck();
@@ -1089,7 +1089,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(b.data.previous_publication_id).toBe(pinOf(c).publication_id);
   expect(position(b.data.canonical_document, seed3.appClipId)).toBe(7);
   expect(b.data.canonical_document.parent_revision.payload.config).toMatchObject({
-    tracks: expect.arrayContaining([expect.objectContaining({ id: 'f2-independent-C', kind: 'audio', label: 'f2-independent-C' })]),
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'f2-gate5-independent-C', kind: 'audio', label: 'f2-gate5-independent-C' })]),
   });
   expect(b.data.canonical_document.parent_revision.payload.clips)
     .toEqual(expect.arrayContaining([expect.objectContaining({ id: seed3.transitionClipId, transition: seededTransition })]));
