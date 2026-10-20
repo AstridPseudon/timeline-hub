@@ -1,0 +1,44 @@
+// Central-only: two real stills for the raw partial-mouth compatibility input.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {bundle} from '@remotion/bundler';
+import {openBrowser, renderStill, selectComposition} from '@remotion/renderer';
+import {basis, eraseRegion, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
+import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
+
+assert.equal(process.env.VIEWING_CROP_CENTRAL, '1');
+const browserExecutable = process.env.ASTRID_CROP_BROWSER ?? '/opt/google/chrome/chrome';
+const output = process.argv[2];
+assert.ok(path.isAbsolute(output));
+const frames = [0, 3];
+const params = {mouth: {x: 151, y: 104}, words: [[.1, .4]],
+  chrome: 'none', blinkEvery: 0, seed: 7};
+const props = propsFor(params);
+const scene = prepareRoot(props, basis, {});
+const zero = seriesInspection(scene, props);
+assert.equal(zero.frame, 0);
+assert.deepEqual(props.timeline.clips[0].params, params);
+const rows = [{...zero, erase: eraseRegion(params, 0, basis.fps)}];
+assert.deepEqual(rows[0].mouth.rect, {x: 894, y: 606, width: 120, height: 48});
+const buildDir = path.join(output, 'bundle');
+const serveUrl = await bundle({entryPoint: path.join(process.cwd(), 'presenter_crop_entry.mjs'),
+  outDir: buildDir, webpackOverride: remotionPrimitiveAliasesFor(process.cwd()),
+  enableCaching: false});
+let browser;
+try {
+  browser = await openBrowser('chrome', {browserExecutable, logLevel: 'error'});
+  const composition = await selectComposition({serveUrl, id: 'presenter-crop', inputProps: props,
+    puppeteerInstance: browser, browserExecutable, logLevel: 'error'});
+  assert.deepEqual([composition.width, composition.height, composition.fps, composition.durationInFrames],
+    [1920, 1080, 30, 60]);
+  for (const frame of frames) await renderStill({serveUrl, composition, inputProps: props,
+    frame, imageFormat: 'png', output: path.join(output, `frame-${frame}.png`), scale: 1 / 3,
+    puppeteerInstance: browser, browserExecutable, logLevel: 'error'});
+  fs.writeFileSync(path.join(output, 'inspection.json'), JSON.stringify({
+    basis, frames, props, rows, size: [640, 360], scale: 1 / 3,
+  }));
+} finally {
+  if (browser) await browser.close({silent: true});
+  fs.rmSync(buildDir, {recursive: true, force: true});
+}
