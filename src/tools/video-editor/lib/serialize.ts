@@ -40,7 +40,7 @@ function restoreStoredCap<T extends TimelineClip>(serialized: T, rawClip: Record
   // their counterpart; leave pre-existing view metadata alone otherwise.
   const app = { ...serialized.app, canonicalTiming: restored };
   for (const key of ['canonical', 'canonicalTiming']) {
-    if (rawApp && Object.hasOwn(rawApp, key)) {
+    if (rawApp && Object.prototype.hasOwnProperty.call(rawApp, key)) {
       Object.defineProperty(app, key, { value: structuredClone(rawApp[key]),
         enumerable: true, configurable: true, writable: true });
     }
