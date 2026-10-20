@@ -38,3 +38,93 @@
 - A container restart killed all processes mid-run, including the quiet-window M1 retry app-full-m1-bounded-integration-1020003328-12729 (started 00:33Z). That run is marked status=error, summary INTERRUPTED (not a test result); its log is kept.
 - Recovered by 01:18Z: dispatcher, hub-syncd, App manager (Codex gpt-6.1-sol high, round 20261020T0118Z) and lead watcher restarted. Disk, repos, venvs and Codex login were all intact.
 - The ONE bounded retry was requeued on the same final tree dd1fe6a7 (integration 2bfde69ea): app-full-m1-bounded-integration-1020011705-2755 (running since 01:17Z, maxWorkers=2). The quiet window is enforced again (other heavy jobs paused or held, no installs). Peak load and memory will be written to STATUS and here when it ends.
+
+## Lead 01:26Z: evidence for full 12729 (orchestrator request 01:25Z)
+- Correction: 12729 COMPLETED at 00:56:23Z (log.txt last written 00:56:23). It was not interrupted. bin/test-run crashed in post-processing (runner.log: line 42 syntax error, because the script was replaced by a kit update mid-run), so status stayed 'running'. The lead's INTERRUPTED label at 01:16Z was wrong; status is now fail/exit 1 with the real counts.
+- (b) tuple: tree=dd1fe6a725cf20015f7b8cb4a966bdf507319653 (integration 2bfde69ea), key=1606063a60fd4233a2c32c7e0c684343, worktree=/home/user/work/app; external agent=f6fbe741a256e2756a1d686350f8a38e37c015ee runtime=9f9b25c000485e919f30f1411831fe2d5a3c1316 composition=2ac77f40d45d593e68ef281df50d2408d5a0f5a3. cmd: env ASTRID_CHECKOUT=/home/user/work/agent npm test -- --maxWorkers=2.
+- (c) grep -c ProjectTimelineSelectors log.txt = 0 (case-insensitive 'projecttimeline' also 0). This log prints only failures and the summary, with no per-file pass lines, so it cannot show that file ran. Indirect evidence: 1458 test files here vs 1457 in 24066 (+1), and the file exists at src/shared/components/ProjectTimelineSelectors.test.tsx in the tested tree. Not proven from this log.
+- Failed files (4) / tests (6), all baseline: examples-governance (PanelFrameAnchor, PanelPreviewService), HoverScrubVideo.gateway (2 CORS), AuthContext.gated (1), useAgentSession.proposal-vertical (1). Exact list in (a).
+- (a) last 80 lines of log.txt:
+```
+ ❯ src/shared/contexts/__tests__/AuthContext.gated.test.tsx:96:65
+     94|     await renderHosted();
+     95|
+     96|     await waitFor(() => expect(screen.getByTestId('isLoading')).toHave…
+       |                                                                 ^
+     97|     expect(screen.getByTestId('userId')).toHaveTextContent('null');
+     98|     expect(screen.getByTestId('isAuthenticated')).toHaveTextContent('f…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../app/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../app/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../app/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/shared/components/__tests__/HoverScrubVideo.gateway.test.tsx > HoverScrubVideo with gateway media > asks for CORS when only the poster is a gateway URL, even before the video has a src
+AssertionError: expected null to be 'anonymous' // Object.is equality
+
+- Expected:
+"anonymous"
+
++ Received:
+null
+
+ ❯ src/shared/components/__tests__/HoverScrubVideo.gateway.test.tsx:27:48
+     25|     const poster = `${GATEWAY}/api/runtime/v1/objects/p/content`;
+     26|     const video = render(<HoverScrubVideo src="" poster={poster} />).c…
+     27|     expect(video?.getAttribute('crossorigin')).toBe('anonymous');
+       |                                                ^
+     28|     expect(video?.getAttribute('poster')).toBe(poster);
+     29|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/shared/components/__tests__/HoverScrubVideo.gateway.test.tsx > HoverScrubVideo with gateway media > asks for CORS for a gateway video, and leaves other media without the attribute
+AssertionError: expected null to be 'anonymous' // Object.is equality
+
+- Expected:
+"anonymous"
+
++ Received:
+null
+
+ ❯ src/shared/components/__tests__/HoverScrubVideo.gateway.test.tsx:33:83
+     31|   it('asks for CORS for a gateway video, and leaves other media withou…
+     32|     const gateway = render(<HoverScrubVideo src={`${GATEWAY}/api/runti…
+     33|     expect(gateway.container.querySelector('video')?.getAttribute('cro…
+       |                                                                                   ^
+     34|     const other = render(<HoverScrubVideo src="https://example.com/vid…
+     35|     expect(other.container.querySelector('video')?.hasAttribute('cross…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/tools/video-editor/hooks/useAgentSession.proposal-vertical.test.tsx > cut timeline-agent proposal vertical > cannot import or apply an edge proposal when the bridge capability is absent
+AssertionError: expected BridgeContractError: Astrid bridge return… { code: '…' } to match object { code: 'session_not_owned' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "session_not_owned",
++ BridgeContractError {
++   "code": "bridge_contract_violation",
+  }
+
+ ❯ src/tools/video-editor/hooks/useAgentSession.proposal-vertical.test.tsx:45:27
+     43|       } catch (error) { mutationError = error; }
+     44|     });
+     45|     expect(mutationError).toMatchObject({ code: 'session_not_owned' });
+       |                           ^
+     46|     expect(request.mock.calls.some(([input]) => String(input).endsWith…
+     47|     expect(proposalApply).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  4 failed | 1454 passed (1458)
+      Tests  6 failed | 18301 passed | 3 expected fail (18310)
+   Start at  00:33:35
+   Duration  1367.83s (transform 96.28s, setup 332.63s, import 377.87s, tests 502.24s, environment 1195.02s)
+
+```
+- 2755 (same key) left running, as asked; the 3 held workers stay held until the orchestrator replies.

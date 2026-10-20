@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T01:22:49Z | dispatcher heartbeat 4s -->
+<!-- app | 2026-10-20T01:27:59Z | dispatcher heartbeat 14s -->
 # app — 2026-10-20 01:27 UTC
 Milestone: M1 — final quiet full retry/classification pending; all App preservation proofs accepted. M0 COMPLETE. M2 branch work authorized, ALL M2 merges HELD until PLAN records M1.
 Integrated: app tl/integration 2bfde69eac32335eae0bc5fa2820940c0b3c694b, CLEAN; tree dd1fe6a725cf20015f7b8cb4a966bdf507319653. Authoritative restore head pair + scope; native recovery draft retains opaque config roots. Runtime0.2.1/schema4e52/artifact9b18; Composition0.0.8/hash93bc/exact React18.3.1/Remotion4.0.509. Exactly3 original group/multi/retrack it.fails and3 authorized exceptions remain.
