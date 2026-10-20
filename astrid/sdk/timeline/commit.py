@@ -164,7 +164,8 @@ def bundle_from_document(document):
 def _inverse_media_removals(records, bundle):
     """Only accepted edges can prove that a retained pin was introduced by writes."""
     from ._collections import AcceptedRecords
-    from ._command_state import CommandError, State, equal
+    from ._command_state import ABSENT, CommandError, State, equal, root_identity
+    from ._recording import Recording
 
     if not records:
         return set()
@@ -201,7 +202,18 @@ def _inverse_media_removals(records, bundle):
             for write in [*record['writes'], *record['derived_writes']]:
                 if not state.matches(write['ref'], write['path'], write['before']):
                     raise CommandError('media boundary differs from accepted writes', kind='history_unavailable')
-                state.set(write['ref'], write['path'], write['after'])
+                root = root_identity(write['ref'])
+                created = ({'ref': write['ref'], 'kind': root[0],
+                            'owner': None if root[0] == 'shot' else 'parent'} if root else None)
+                if (root is not None and not write['path'] and write['before'] == ABSENT
+                        and write['after']['state'] == 'present' and created in record['created']):
+                    # Replaying authenticated semantic birth must retain the
+                    # recorder's source-free compiler marker, just like execution.
+                    Recording(state.bundle, record['command'], record['ordinal']).create_entity(
+                        write['ref'], kind=root[0], owner=created['owner'],
+                        value=write['after']['value'], restoring=True)
+                else:
+                    state.set(write['ref'], write['path'], write['after'])
         replayed = document_from_bundle(state.bundle, source_bundles=(after,))
         if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
                 or any(not equal(replayed[key], images[1][key]) for key in (

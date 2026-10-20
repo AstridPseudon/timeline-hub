@@ -18,7 +18,7 @@ from ._recording import Recording, guard, selection
 from ._root_inverse import arrange_restored, occurrence_orders, recover_source
 
 
-def _patch(state, path, replacement):
+def _patch(state, path, replacement, *, insertion_order=None):
     if not path:
         return copy.deepcopy(replacement)
     if state == ABSENT or state.get('value') is None:
@@ -57,6 +57,15 @@ def _patch(state, path, replacement):
                 node.pop(indices[0])
         elif indices:
             node[indices[0]] = copy.deepcopy(replacement['value'])
+        elif insertion_order is not None and identity in insertion_order:
+            identities = [row.get('id') for row in node]
+            if (len(identities) != len(set(identities))
+                    or any(item not in insertion_order for item in identities)
+                    or identities != [item for item in insertion_order if item in identities]):
+                raise CommandError('collection alias order differs from history', kind='history_unavailable')
+            following = set(insertion_order[insertion_order.index(identity) + 1:])
+            index = next((i for i, row in enumerate(node) if row.get('id') in following), len(node))
+            node.insert(index, copy.deepcopy(replacement['value']))
         else:
             raise CommandError('collection alias insertion needs historical order', kind='history_unavailable')
         return present(value)
@@ -135,8 +144,15 @@ def coalesce(records, state=None):
             ancestor = next((old for old in result if value_address(old)[0] == address[0]
                              and address[1][:len(value_address(old)[1])] == value_address(old)[1]), None)
             if ancestor is not None:
+                insertion_order = None
+                entity = member(write['ref'])
+                if entity is not None and not write['path'] and write['before'] == ABSENT:
+                    # A root born earlier in the batch can gain child rows. Use
+                    # the same recorded append/boundary proof as staged inverse.
+                    orders = restoration_orders(records, only=record)
+                    insertion_order = [member(ref)[2] for ref in orders[entity[:2]][1]]
                 ancestor['after'] = _patch(ancestor['after'], address[1][len(value_address(ancestor)[1]):],
-                                           write['after'])
+                                           write['after'], insertion_order=insertion_order)
                 continue
             descendants = [old for old in result
                            if value_address(old)[0] == address[0]
@@ -419,6 +435,10 @@ def apply_inverse(ctx, records, intervening_records):
         else:
             ctx.assign(write['ref'], write['path'], write['before'])
     for (owner, kind), (original, _) in orders.items():
+        if ctx.state.entity(owner, optional=True) is None and any(
+                write['ref'] == owner and not write['path'] and write['before'] == ABSENT
+                for write in changes):
+            continue  # Reversing the owner's birth also removes its collections.
         arrange(ctx.state, owner, kind, original)
 
     for record in reversed(records):

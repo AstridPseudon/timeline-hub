@@ -25,10 +25,11 @@ def selection(state, key, owner, members=()):
                     "order": result, "boundaries": insertion_boundary(result, members),
                     "policy": "guard-membership"}
     elif key == 'placement.owners':
-        shot = state.occurrence(owner)['shot_id']
+        origin = state.entity(owner, optional=True)
+        shot = origin['shot_id'] if origin is not None else None
         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
                   if row['shot_id'] == shot]
-        boundaries = ['shot:' + shot]
+        boundaries = ['shot:' + shot] if shot is not None else []
     elif key == "move.blockers":
         origin = state.occurrence(owner)
         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
