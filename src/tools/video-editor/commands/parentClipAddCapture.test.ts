@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { EditCommand, JSON, MediaSelection, MediaSelectionQuery, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import {
   captureParentClipAddMedia,
   executeParentClipAddMedia,
@@ -7,6 +7,10 @@ import {
 } from './parentClipAddCapture.ts';
 import { ClipMoveError, copy } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
+import {
+  captureParentClipAddMediaFromRuntime,
+  finishParentClipAddMediaFromBasis,
+} from './parentMediaProducer.ts';
 
 const media: MediaSelection = {
   asset: 'reserved-new',
@@ -54,6 +58,37 @@ function capture(input = bundle(), selectedMedia = media, inputVerified: readonl
 }
 
 describe('native parent clip.add-media capture', () => {
+  it('reads immutable selection and detached verification once, then retries from that basis', async () => {
+    const query: MediaSelectionQuery = {
+      asset: 'reserved-new', generation_id: 'generation-new', variant_id: 'variant-new',
+    };
+    const calls: string[] = [];
+    const capability = {
+      getProjectMediaSelection: async (projectId: string, received: MediaSelectionQuery) => {
+        calls.push(`selection:${projectId}`);
+        expect(received).toEqual(query);
+        return copy(media);
+      },
+      getProjectVerifiedMedia: async (projectId: string, received: MediaSelection) => {
+        calls.push(`verified:${projectId}`);
+        expect(received).toEqual(media);
+        return copy(verified);
+      },
+    };
+    const basis = await captureParentClipAddMediaFromRuntime(capability, {
+      projectId: 'project-1', bundle: bundle(), row, selectionQuery: query,
+    });
+    query.asset = 'changed-before-retry';
+    expect(calls).toEqual(['selection:project-1', 'verified:project-1']);
+    expect(finishParentClipAddMediaFromBasis(JSON.parse(JSON.stringify(basis)))).toEqual(
+      finishParentClipAddMediaFromBasis(basis),
+    );
+    expect(basis.selectionQuery).toEqual({
+      asset: 'reserved-new', generation_id: 'generation-new', variant_id: 'variant-new',
+    });
+    expect(calls).toHaveLength(2);
+  });
+
   it('matches the native birth claims and preserves raw opaque data and order', () => {
     const input = bundle(), before = copy(input);
     const result = finishParentClipAddMedia(capture(input));

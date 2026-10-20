@@ -1,5 +1,13 @@
 import { PROJECT_TRANSCRIPT_KIND, parseProjectTranscriptDocument, projectTranscriptSchema, transcriptDocumentId, type ProjectTranscriptRepository } from '@/tools/video-editor/data/typed/projectTranscript.ts';
-import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody } from './generated.ts';
+import {
+  ApiError,
+  type ByteResponse,
+  type MediaImportOperation as MediaImport,
+  type MediaSelection,
+  type MediaSelectionQuery,
+  type RequestBody,
+  type VerifiedMedia,
+} from './generated.ts';
 import type {
   CanonicalDocument,
   CommitAcceptedMutation,
@@ -729,6 +737,20 @@ export class RuntimeDataProvider implements DataProvider {
   async listTimelineCommits(timelineId: string, cursor?: string, limit = 50): Promise<HistoryPage> {
     if (!timelineId) throw new TimelineSchemaIncompatibleError('Timeline history requires a timeline identity');
     return this.client.listTimelineCommits(this.projectId, timelineId, cursor, limit);
+  }
+
+  async getProjectMediaSelection(
+    projectId: string,
+    selection: MediaSelectionQuery,
+  ): Promise<MediaSelection> {
+    return this.client.getProjectMediaSelection(projectId, selection);
+  }
+
+  async getProjectVerifiedMedia(
+    projectId: string,
+    selection: MediaSelection,
+  ): Promise<VerifiedMedia> {
+    return this.client.getProjectVerifiedMedia(projectId, selection);
   }
 
   private acceptedCommitResult(response: CommitAcceptedMutation, timelineId: string): TimelineCommitResult {
