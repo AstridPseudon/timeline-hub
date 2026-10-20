@@ -32,6 +32,7 @@ import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, currentHead, dragTimelineClip, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI, waitForAudit } from './support/app.ts';
+import { timelineBase as runtimeTimelineBase, type TimelineScope } from './support/timeline-scope.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 
@@ -150,7 +151,10 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 
-const timelineBase = (_harness: DirectHarness, seed: ThreeProductsSeed) => `/v1/projects/${seed.projectId}/timelines/${seed.timelineId}`;
+const timelineBase = (harness: DirectHarness, seed: ThreeProductsSeed, scope: TimelineScope = {
+  projectId: harness.seed.projectId, timelineId: seed.timelineId,
+}) =>
+  runtimeTimelineBase(scope);
 
 /** Every composition revision of the seeded timeline, newest first. */
 async function allRevisions(harness: DirectHarness, seed: ThreeProductsSeed): Promise<Array<{ revision_id: string; is_current_head: boolean }>> {
@@ -748,12 +752,14 @@ const commandsOf = (payload: unknown) => (payload as { commands: EditCommand[] }
 const position = (document: CanonicalDocument, clipId: string) =>
   (document.parent_revision.payload.clips as Array<{ id: string; at: number }>).find((clip) => clip.id === clipId)!.at;
 
-async function history(harness: DirectHarness, seed: ThreeProductsSeed): Promise<HistoryPage> {
+async function history(harness: DirectHarness, seed: ThreeProductsSeed, scope: TimelineScope = {
+  projectId: harness.seed.projectId, timelineId: seed.timelineId,
+}): Promise<HistoryPage> {
   const items: HistoryEntry[] = [];
   let cursor: string | null = null;
   let head!: HeadPin;
   do {
-    const response = await harness.runtimeJson<HistoryPage>('GET', `${timelineBase(harness, seed)}/commits?limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
+    const response = await harness.runtimeJson<HistoryPage>('GET', `${timelineBase(harness, seed, scope)}/commits?limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     items.push(...response.body.items);
     cursor = response.body.next_cursor;
@@ -1194,8 +1200,7 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   expect(createIndex, 'timeline creation must precede native initialization').toBeLessThan(initIndex);
   expect(runtimeRequests.filter((request) => request.method === 'POST' && SAVES.test(request.path)), 'bootstrap must emit zero legacy snapshot traffic').toEqual([]);
 
-  const bootstrapSeed = { ...seed3, projectId: expectedScope.projectId, timelineId: expectedScope.timelineId };
-  const bootstrapHistory = await history(harness, bootstrapSeed);
+  const bootstrapHistory = await history(harness, seed3, expectedScope);
   // The audit deliberately records only the door's method/path/status. The
   // accepted Runtime history is the authoritative record of the init body.
   expect(bootstrapHistory.items).toHaveLength(1);
