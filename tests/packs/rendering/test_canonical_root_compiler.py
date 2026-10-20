@@ -25,6 +25,7 @@ from astrid.packs.rendering.rendering.renderers.remotion.canonical_transitions i
     compile_canonical_root_props,
 )
 from tests.packs.rendering.test_host_scene import host_project as _host_project
+from tests.packs.rendering.test_scene_query_occlusion import admitted_public_artifact
 
 host_project = _host_project
 ROOT = Path(__file__).resolve().parents[3]
@@ -37,11 +38,7 @@ def compiler_host(host_project, tmp_path, monkeypatch):
     modules = project / "node_modules"
     modules.unlink()
     modules.symlink_to(ROOT / "remotion/node_modules", target_is_directory=True)
-    artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
-        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.9.tgz")))
-    assert artifact.is_file(), f"required public artifact is missing: {artifact}"
-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61")
+    artifact, _version = admitted_public_artifact("ASTRID_COMPOSITION_TEST_ARTIFACT")
     overlay = tmp_path / "node_modules"
     overlay.mkdir()
     for entry in modules.iterdir():

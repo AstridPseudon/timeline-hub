@@ -13,13 +13,12 @@ import pytest
 
 from astrid.core.rendering.node_pin import resolve_pinned_node
 from tests.packs.rendering.test_host_scene import host_project as _host_project
+from tests.packs.rendering.test_scene_query_occlusion import admitted_public_artifact
 
 host_project = _host_project
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
-ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.9.tgz"
-SHA256 = "fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61"
 
 
 @pytest.fixture
@@ -34,9 +33,7 @@ def exact_node(monkeypatch):
 @pytest.fixture
 def private_host(host_project, exact_node, tmp_path, monkeypatch):
     """Overlay only the package in a temporary copy of the locked host graph."""
-    artifact_path = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", ARTIFACT))
-    assert artifact_path.is_file(), f"required public artifact is missing: {artifact_path}"
-    assert hashlib.sha256(artifact_path.read_bytes()).hexdigest() == SHA256
+    artifact_path, version = admitted_public_artifact("ASTRID_COMPOSITION_TEST_ARTIFACT")
     project, pack = host_project
     _bind_host(project, pack, exact_node, monkeypatch)
     private_modules = tmp_path / "node_modules"
@@ -56,14 +53,14 @@ def private_host(host_project, exact_node, tmp_path, monkeypatch):
     project_node_modules = project / "node_modules"
     project_node_modules.unlink()
     project_node_modules.symlink_to(private_modules, target_is_directory=True)
-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.9"
+    assert json.loads((package / "package.json").read_text())["version"] == version
     before = {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
               for p in package.rglob("*") if p.is_file()}
     assert len(before) == 77
     yield project
     assert {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in package.rglob("*") if p.is_file()} == before
-    assert hashlib.sha256(artifact_path.read_bytes()).hexdigest() == SHA256
+    _artifact, _version = admitted_public_artifact("ASTRID_COMPOSITION_TEST_ARTIFACT")
 
 
 @pytest.fixture

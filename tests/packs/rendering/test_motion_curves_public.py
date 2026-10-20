@@ -85,6 +85,68 @@ def test_repeated_source_clips_join_by_explicit_occurrence(public_diagnostics, n
     assert builtin._scene_motion(ctx, second, 12) == ({"position": 24}, None)
 
 
+@pytest.mark.integration
+@pytest.mark.parametrize("problem", [None, "missing-row", "stale-row", "missing-motion", "missing-identity",
+                                    "wrong-occurrence", "duplicate-layer", "duplicate-mapping", "duplicate-element",
+                                    "invalid-layer", "known-absent"])
+def test_registered_curve_sheet_joins_preroll_from_complete_universe(
+    tmp_path, public_diagnostics, no_private, problem,
+):
+    outgoing, incoming, later = [clip(name) for name in ("a", "b", "later")]
+    incoming.update(at=1, track="a", transition={"type": "fade", "duration": .4})
+    later.update(at=5, track="a")
+    for c, occurrence in ((incoming, "incoming"), (later, "later")):
+        c["occurrence_id"] = occurrence
+        c["app"] = {"astrid_shot_composition": {"source_clip_id": "same", "occurrence_id": occurrence}}
+    config = timeline([outgoing, incoming, later])
+    config["tracks"] = [{"id": "a", "kind": "visual"}]
+    window = (.7, .9)
+    frames = sheet.curve_sample_frames(window, Fraction(30))
+    shared = public_diagnostics(config, frames + [150])
+    assert 'data-clip="b"' in shared["html"]["24"]
+    assert [row["clipId"] for row in shared["scene_frames"]["24"]["layers"]] == ["a", "b"]
+    snapshot = {"config": config, "clips": config["clips"], "fps_rational": [30, 1]}
+    ctx = sheet.build_context(snapshot, {"index": 1, "start": .7, "end": .9, "duration": .2}, {},
+                              fps=30, frame_size=(40, 24), layer_names=("curves",), **{
+                                  k: v for k, v in shared.items() if k.startswith("scene_")})
+    assert [e.id for e in ctx.elements] == ["a"]
+    assert {e.id for e in ctx.all_elements} == {"a", "b", "later"}
+    ctx.window = window
+    ctx.shared["curve_frames"] = frames
+    if problem == "missing-identity":
+        ctx.shared["scene_clip_identities"].pop("b")
+    elif problem == "wrong-occurrence":
+        ctx.shared["scene_clip_identities"]["b"]["occurrence_id"] = "missing"
+    elif problem == "duplicate-mapping":
+        ctx.shared["scene_clip_identities"]["alias"] = dict(ctx.shared["scene_clip_identities"]["b"])
+    elif problem == "duplicate-element":
+        ctx.all_elements.append(copy.deepcopy(next(e for e in ctx.all_elements if e.id == "b")))
+    for frame in frames:
+        row = ctx.shared["scene_frames"][str(frame)]
+        incoming_row = next(layer for layer in row["layers"] if layer["clipId"] == "b")
+        if problem == "missing-row":
+            ctx.shared["scene_frames"].pop(str(frame))
+        elif problem == "stale-row":
+            row["frame"] -= 1
+        elif problem == "missing-motion":
+            incoming_row["diagnostics"].pop("motion")
+        elif problem == "duplicate-layer":
+            row["layers"].append(copy.deepcopy(incoming_row))
+        elif problem == "invalid-layer":
+            incoming_row["clipId"] = []
+        elif problem == "known-absent":
+            row["layers"].remove(incoming_row)
+    before = copy.deepcopy(ctx.shared)
+    result = sheet.compose_motion_sheet(ctx, ("curves",), tmp_path, timeline_label="preroll")
+    findings = result["findings"]
+    assert any('"b" intrinsic position:' in f and "6 public samples" in f for f in findings) == (problem is None), findings
+    assert any("unavailable" in f for f in findings) == (problem not in (None, "known-absent")), findings
+    assert not any('"later"' in f or "ERROR" in f for f in findings)
+    assert ctx.shared["curve_frames"] == before["curve_frames"] == frames
+    assert ctx.shared["scene_frames"] == before["scene_frames"]
+    assert ctx.frames == {}
+
+
 def facts():
     element = model.Element("card", "am-type", "text", 0, 1, {}, {"id": "card"}, occurrence_id="o1")
     shared = {"scene_frames": {str(f): {"frame": f, "layers": [

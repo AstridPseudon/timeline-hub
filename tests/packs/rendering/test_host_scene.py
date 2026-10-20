@@ -385,6 +385,49 @@ def test_large_native_batch_is_not_truncated(native_host):
     assert [(s.start_frame, s.end_frame, s.cls) for s in spans] == [(0, 300, "COVERED")]
 
 
+def test_spans_from_frames_does_not_fill_unqueried_frames():
+    answer = {"coverage": "COVERED", "content": "CONTENT",
+              "layers": [{"clipId": "clip", "visible": True}],
+              "findings": [{"code": "finding"}]}
+    spans = scene_answers.spans_from_frames([
+        {"frame": 0, **answer}, {"frame": 30, **answer},
+    ])
+
+    assert spans == [
+        scene_answers.Span(0, 1, "COVERED", "CONTENT", ("clip",), ("finding",)),
+        scene_answers.Span(30, 31, "COVERED", "CONTENT", ("clip",), ("finding",)),
+    ]
+
+
+def test_spans_from_frames_merges_only_matching_adjacent_answers():
+    spans = scene_answers.spans_from_frames([
+        {"frame": 0, "coverage": "COVERED", "content": "CONTENT",
+         "layers": [{"clipId": "clip-a", "visible": True},
+                    {"clipId": "hidden", "visible": False}],
+         "findings": [{"code": "first"}, {"code": "first"}]},
+        {"frame": 1, "coverage": "COVERED", "content": "CONTENT",
+         "layers": [{"clipId": "clip-a", "visible": True},
+                    {"clipId": "hidden", "visible": False}],
+         "findings": [{"code": "first"}]},
+        {"frame": 2, "coverage": "COVERED", "content": "EMPTY",
+         "layers": [{"clipId": "clip-a", "visible": True}],
+         "findings": [{"code": "first"}]},
+        {"frame": 3, "coverage": "COVERED", "content": "EMPTY",
+         "layers": [{"clipId": "clip-b", "visible": True}],
+         "findings": [{"code": "first"}]},
+        {"frame": 4, "coverage": "COVERED", "content": "EMPTY",
+         "layers": [{"clipId": "clip-b", "visible": True}],
+         "findings": [{"code": "second"}]},
+    ])
+
+    assert spans == [
+        scene_answers.Span(0, 2, "COVERED", "CONTENT", ("clip-a",), ("first",)),
+        scene_answers.Span(2, 3, "COVERED", "EMPTY", ("clip-a",), ("first",)),
+        scene_answers.Span(3, 4, "COVERED", "EMPTY", ("clip-b",), ("first",)),
+        scene_answers.Span(4, 5, "COVERED", "EMPTY", ("clip-b",), ("second",)),
+    ]
+
+
 def test_label_canvas_comes_from_actual_runtime_theme(native_host):
     from PIL import Image
 

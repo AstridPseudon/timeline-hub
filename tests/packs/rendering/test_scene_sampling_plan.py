@@ -14,6 +14,7 @@ from astrid.core.timeline.shot_composition_projection import project_shot_compos
 from astrid.packs.rendering.actions.timeline_visualize import composed_frame, filmstrip_cards
 from astrid.packs.rendering.actions.timeline_visualize.layers.builtin import render_lint
 from astrid.packs.rendering.actions.timeline_visualize.motion import lint, model, sheet
+from tests.packs.rendering.test_scene_query_occlusion import admitted_public_evaluation
 from tests.packs.rendering.test_scene_query_occlusion import installed as _public_occlusion
 
 public_occlusion = _public_occlusion
@@ -205,9 +206,7 @@ def test_provider_without_reservation_method_still_reports_missing_facts(tmp_pat
 
 @pytest.fixture(scope="module")
 def public_scene_query():
-    evaluation = Path(os.environ.get("ASTRID_TEST_SCENE_EVALUATION", str(
-        ROOT / "remotion/node_modules/@banodoco/timeline-composition/dist/evaluation.js")))
-    assert json.loads((evaluation.parent.parent / "package.json").read_text())["version"] == "0.0.9"
+    evaluation = admitted_public_evaluation()
     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
     assert node.ok, node.problem
     script = """

@@ -14,6 +14,7 @@ from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.timeline.cuts import occurrences_from_snapshot
 from astrid.core.timeline.shot_composition_projection import project_shot_composition
 from astrid.packs.rendering.actions.timeline_visualize.motion import lint, model
+from tests.packs.rendering.test_scene_query_occlusion import admitted_public_artifact
 
 ROOT = Path(__file__).resolve().parents[3]
 CUT = {"index": 1, "start": 0, "end": 1}
@@ -62,11 +63,9 @@ def test_tracked_faces_stay_labelled_and_timing_stays_data_only():
 @pytest.fixture(scope="module")
 def public_query(tmp_path_factory):
     # The public-package integration lane requires an actual release artifact
-    # and locked peers. A private draft can be selected without changing pins.
-    artifact = Path(os.environ.get("ASTRID_COMPOSITION_TEST_ARTIFACT", str(
-        ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.9.tgz")))
-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61")
+    # and locked peers. The default is the admitted public10 release; the
+    # explicit artifact override remains available for validated public9 ABI.
+    artifact, _version = admitted_public_artifact("ASTRID_COMPOSITION_TEST_ARTIFACT")
     peers = Path(os.environ.get("ASTRID_COMPOSITION_TEST_NODE_MODULES", str(ROOT / "remotion/node_modules")))
     node = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
     assert node.ok, node.problem

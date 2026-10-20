@@ -200,7 +200,8 @@ def spans_from_frames(answers: Iterable[Mapping[str, Any]]) -> list[Span]:
         cls, content = answer["coverage"], answer["content"]
         clips = tuple(layer["clipId"] for layer in answer["layers"] if layer["visible"] is not False)
         findings = tuple(dict.fromkeys(f["code"] for f in answer["findings"]))
-        if (spans and (spans[-1].cls, spans[-1].content, spans[-1].clips, spans[-1].findings)
+        if (spans and spans[-1].end_frame == frame
+                and (spans[-1].cls, spans[-1].content, spans[-1].clips, spans[-1].findings)
                 == (cls, content, clips, findings)):
             previous = spans[-1]
             spans[-1] = Span(previous.start_frame, frame + 1, cls, content, clips, findings)

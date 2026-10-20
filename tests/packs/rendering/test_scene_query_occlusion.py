@@ -16,9 +16,49 @@ from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.timeline import scene_answers
 
 ROOT = Path(__file__).resolve().parents[3]
-PUBLIC_ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.9.tgz"
 PUBLIC_ARTIFACT_ENV = "ASTRID_TEST_PUBLIC_ARTIFACT"
-PUBLIC_SHA256 = "fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61"
+PUBLIC_ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
+PUBLIC_SHA256 = "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7"
+_ADMITTED_RELEASES = {
+    "0.0.9": "fa94f9c6438278764fad1285fa3d76063020ea7b20f4018de6bec4ffff0c9f61",
+    "0.0.10": PUBLIC_SHA256,
+}
+
+
+def admitted_public_artifact(env_name: str = PUBLIC_ARTIFACT_ENV) -> tuple[Path, str]:
+    """Return the default public10 artifact or an explicitly admitted public9 override."""
+    artifact = Path(os.environ.get(env_name, PUBLIC_ARTIFACT))
+    assert artifact.is_file(), f"required public artifact is missing: {artifact}"
+    digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
+    version = next((version for version, expected in _ADMITTED_RELEASES.items()
+                    if expected == digest), None)
+    assert version is not None, f"public artifact is not admitted: {artifact} ({digest})"
+    with tarfile.open(artifact) as archive:
+        manifest_file = archive.extractfile("package/package.json")
+        assert manifest_file is not None, f"public artifact has no package manifest: {artifact}"
+        manifest = json.load(manifest_file)
+    assert manifest.get("version") == version
+    return artifact, version
+
+
+def admitted_public_evaluation(env_name: str = "ASTRID_TEST_SCENE_EVALUATION") -> Path:
+    """Validate an installed public evaluation against the selected release tarball."""
+    artifact, version = admitted_public_artifact("ASTRID_COMPOSITION_TEST_ARTIFACT")
+    evaluation = Path(os.environ.get(env_name, str(
+        ROOT / "remotion/node_modules/@banodoco/timeline-composition/dist/evaluation.js")))
+    package = evaluation.parent.parent
+    assert json.loads((package / "package.json").read_text())["version"] == version
+    with tarfile.open(artifact) as archive:
+        expected = {
+            name.removeprefix("package/"): hashlib.sha256(archive.extractfile(name).read()).hexdigest()
+            for name in archive.getnames()
+            if name.startswith("package/") and not name.endswith("/")
+        }
+    actual = {str(path.relative_to(package)): hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in package.rglob("*") if path.is_file()}
+    assert len(expected) == len(actual) == 77
+    assert actual == expected
+    return evaluation
 
 
 def _stage_artifact(root: Path, artifact: Path) -> Path:
@@ -36,9 +76,7 @@ def _stage_artifact(root: Path, artifact: Path) -> Path:
 def installed(tmp_path, monkeypatch):
     for key in ("PYTHONPYCACHEPREFIX", "NODE_OPTIONS", "NODE_PATH"):
         monkeypatch.delenv(key, raising=False)
-    artifact = Path(os.environ.get(PUBLIC_ARTIFACT_ENV, PUBLIC_ARTIFACT))
-    assert artifact.is_file(), f"required public artifact is missing: {artifact}"
-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == PUBLIC_SHA256
+    artifact, _version = admitted_public_artifact()
     toolchain = resolve_pinned_node(ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
     assert toolchain.ok, toolchain.problem
     assert toolchain.version == "v20.19.4"
@@ -54,7 +92,7 @@ def installed(tmp_path, monkeypatch):
              for path in package.rglob("*") if path.is_file()}
     assert len(after) == 77
     assert after == before
-    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == PUBLIC_SHA256
+    _artifact, _version = admitted_public_artifact()
 
 
 def _public_scene_frames(project: Path, node: Path) -> list[dict]:

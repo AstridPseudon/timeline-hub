@@ -18,6 +18,7 @@ from astrid.packs.rendering.actions.timeline_visualize.layers.base import CheckC
 from astrid.packs.rendering.actions.timeline_visualize.layers.builtin import render_lint
 from astrid.packs.rendering.actions.timeline_visualize.motion import lint, model, sheet
 from astrid.packs.rendering.actions.timeline_visualize.overlays import labels
+from tests.packs.rendering.test_scene_query_occlusion import admitted_public_evaluation
 from tests.packs.rendering.test_scene_query_occlusion import installed as _public_occlusion
 
 public_occlusion = _public_occlusion
@@ -28,11 +29,9 @@ CANVAS = {"width": 200, "height": 100, "fps": 30}
 
 @pytest.fixture(scope="module")
 def public_rows():
-    # An explicit export alias lets the unreleased tarball be tested read-only,
+    # An explicit export alias lets an admitted release be tested read-only,
     # without changing installed packages or tracked consumer pins.
-    evaluation = Path(os.environ.get("ASTRID_TEST_SCENE_EVALUATION", str(
-        ROOT / "remotion/node_modules/@banodoco/timeline-composition/dist/evaluation.js")))
-    assert json.loads((evaluation.parent.parent / "package.json").read_text())["version"] == "0.0.9"
+    evaluation = admitted_public_evaluation()
     node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
     script = """
 import {prepareScene, querySceneFrame} from EVALUATION;
