@@ -367,10 +367,10 @@ it('delivers each canonical compiled vector atomically with its config while a l
   label('Unsaved local · based on R');
 });
 
-it('omits compilation for native input even with incoming-looking clips and an acceptance label', () => {
+it('omits compilation for native input without a command projection even with incoming-looking clips and a committed head', () => {
   const config = projectCanonicalComposition(canonical('R')).config;
   config.clips[0] = { ...config.clips[0], transition: { type: 'fade', duration: 0.4 } };
-  mount(accepted(config), null);
+  mount(dataFor(config), null);
   expect(player.config).toBe(config);
   expect(player.compiled).toBeUndefined();
 });

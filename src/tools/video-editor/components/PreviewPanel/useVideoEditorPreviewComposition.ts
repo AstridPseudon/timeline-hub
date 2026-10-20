@@ -34,7 +34,9 @@ export function useVideoEditorPreviewComposition(
     const output = projectOutputTimelineConfig(projectedConfig).config;
     const complete = output.clips.every((clip) => clip.clipType !== 'shot'
       && (!(clip.asset || clip.clipType === 'media') || Boolean(clip.assetEntry?.src)));
-    if (complete) return { ...canonical, status: 'ready' as const, config: projectedConfig, error: null };
+    // The command producer pairs this config with its canonical projection
+    // fact, independently of whether an older shot graph has loaded.
+    if (complete) return { source: 'canonical' as const, status: 'ready' as const, config: projectedConfig, error: null };
     const cached = canonical.source === 'canonical' ? canonical.config : null;
     return {
       ...canonical,
