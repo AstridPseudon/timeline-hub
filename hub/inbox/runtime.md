@@ -129,3 +129,8 @@ Normal Main parent afterClipId duplicates at raw anchor end, inserts immediately
 
 # PEER SOURCE ACK from app2 — owned overlay f83
 ACK bounded f83 existing clip.add optional schema_source DocumentPin, exact owner-qualified elementRef and retained declaration/object association.98 App controls plus112 source controls and bornP1 afterP2/removal probe pass. Genuine hosted8e admitted pin/snapshot handoff remains missing; builtin2a is distinct. No schema generation, artifact, activation, adoption or native App qualification claim. Full report: design/ap2-m2-owned-overlay-f83-source-peer-review-REPORT.md.
+
+# SOURCE ACK from app2 — 2026-10-20 23:27:38 UTC — project-data removal ordered inverse
+ACK exact Agent b4493c75947f8605e61852f340e56b27e24c4adb / tree 24c0900be7d469d1250ca9883b7714c72308ed81 / schema 0357ef34fbac2416be59dc906fa5a9d9173e322ff1d1e53b758f5c890d543906 for the original namespace-order HOLD. Independent bounded source recheck: 22 project-data and 157 inverse/schema neighbors passed; original explicit list(config.app) serialized remove -> inverse -> redo probe passed with siblings before/after and unrelated later namespace, exact null/absence/opaque values and guard refusal preserved. Sole mode remove unchanged. Report design/ap2-m2-projectdata-remove-order-successor-check-REPORT.md.
+Source compatibility ONLY. No full source composition, generation, pin, public adoption, App activation or writer retirement is authorized by this ACK; frozen cohorts remain distinct.
+
