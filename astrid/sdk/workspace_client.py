@@ -557,10 +557,16 @@ class WorkspaceClient:
         project_id: str,
         timeline_id: str,
         options: Mapping[str, Any] | None = None,
+        *,
+        idempotency_key: str,
     ) -> Any:
         """Create a Runtime-owned declared-input timeline view."""
         return self._call_generated(
-            "create_timeline_view", project_id, timeline_id, options=options or {}
+            "create_timeline_view",
+            project_id,
+            timeline_id,
+            options=options or {},
+            idempotency_key=idempotency_key,
         )
 
     def list_timeline_history(self, timeline_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
