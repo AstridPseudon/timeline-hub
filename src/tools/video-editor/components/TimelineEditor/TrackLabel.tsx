@@ -312,7 +312,7 @@ export function TrackLabelContent({
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const nameEditRef = useRef<{
-    original: string;
+    dirty: boolean;
     finish?: (label: string) => void;
     error?: string;
   } | null>(null);
@@ -329,13 +329,13 @@ export function TrackLabelContent({
     try {
       if (!onLabelEditStart && runtime) throw new Error('Track label command capture is unavailable.');
       nameEditRef.current = {
-        original: nameValueRef.current,
+        dirty: false,
         finish: onLabelEditStart?.(track.id),
       };
       setNameError(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Track rename is unavailable.';
-      nameEditRef.current = { original: nameValueRef.current, error: message };
+      nameEditRef.current = { dirty: false, error: message };
       setNameError(message);
     }
   };
@@ -344,8 +344,7 @@ export function TrackLabelContent({
     const edit = nameEditRef.current;
     if (!edit) return;
     if (edit.error) return;
-    const isDirty = nameValueRef.current !== edit.original;
-    if (isDirty) {
+    if (edit.dirty) {
       try {
         edit.finish?.(nameValueRef.current);
       } catch (error) {
@@ -367,6 +366,8 @@ export function TrackLabelContent({
     onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
       if (rowDragging) return;
       beginNameEdit();
+      // Typing away and back still expresses an explicit choice of name.
+      if (nameEditRef.current) nameEditRef.current.dirty = true;
       nameValueRef.current = event.target.value;
       setNameDraft(event.target.value);
       // Detached controlled presentations keep their existing callback contract.

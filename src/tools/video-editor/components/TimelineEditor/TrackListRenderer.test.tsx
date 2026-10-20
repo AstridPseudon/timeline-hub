@@ -706,7 +706,7 @@ describe('captured track names', () => {
       const finish = vi.fn();
       const begin = vi.fn(() => finish);
       const props = {
-        track: tracks[0], isSelected: false, hasClips: false, deviceClass,
+        track: { ...tracks[0], label: 'Original' }, isSelected: false, hasClips: false, deviceClass,
         onSelect: vi.fn(), onRemove: vi.fn(), onChange: vi.fn(), onLabelEditStart: begin,
       };
       const { rerender } = render(<TrackLabelContent {...props} />);
@@ -719,6 +719,66 @@ describe('captured track names', () => {
       expect(input).toHaveValue('Remote name');
       expect(finish).not.toHaveBeenCalled();
       expect(begin).toHaveBeenCalledExactlyOnceWith('V1');
+      expect(props.onChange).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])('submits an explicitly restored original name once (remote change: %s)', (remoteChange) => {
+      const originalFinish = vi.fn();
+      const laterFinish = vi.fn();
+      const begin = vi.fn(() => originalFinish);
+      const props = {
+        track: { ...tracks[0], label: 'Original' }, isSelected: false, hasClips: false, deviceClass,
+        onSelect: vi.fn(), onRemove: vi.fn(), onChange: vi.fn(), onLabelEditStart: begin,
+      };
+      const { rerender } = render(<TrackLabelContent {...props} />);
+      const input = screen.getByRole('textbox', { name: 'Track name' });
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: 'Temporary' } });
+      fireEvent.change(input, { target: { value: 'Original' } });
+      rerender(<TrackLabelContent {...props}
+        track={{ ...tracks[0], label: remoteChange ? 'Remote' : 'Original' }}
+        onLabelEditStart={() => laterFinish} />);
+      expect(input).toHaveValue('Original');
+      expect(originalFinish).not.toHaveBeenCalled();
+
+      if (remoteChange) fireEvent.keyDown(input, { key: 'Enter' });
+      fireEvent.blur(input);
+      fireEvent.keyDown(input, { key: 'Enter' });
+      expect(originalFinish).toHaveBeenCalledExactlyOnceWith('Original');
+      expect(laterFinish).not.toHaveBeenCalled();
+      expect(begin).toHaveBeenCalledExactlyOnceWith('V1');
+      expect(props.onChange).not.toHaveBeenCalled();
+      expect(input).toHaveValue('Original');
+    });
+
+    it('keeps an explicitly restored original draft and capture after remote refusal and refocus', () => {
+      const originalFinish = vi.fn(() => { throw new Error('The original track label changed.'); });
+      const laterFinish = vi.fn();
+      const begin = vi.fn(() => originalFinish);
+      const props = {
+        track: { ...tracks[0], label: 'Original' }, isSelected: false, hasClips: false, deviceClass,
+        onSelect: vi.fn(), onRemove: vi.fn(), onChange: vi.fn(), onLabelEditStart: begin,
+      };
+      const { rerender } = render(<TrackLabelContent {...props} />);
+      const input = screen.getByRole('textbox', { name: 'Track name' });
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: 'Temporary' } });
+      fireEvent.change(input, { target: { value: 'Original' } });
+      rerender(<TrackLabelContent {...props} track={{ ...tracks[0], label: 'Remote' }}
+        onLabelEditStart={() => laterFinish} />);
+      fireEvent.blur(input);
+      expect(originalFinish).toHaveBeenCalledExactlyOnceWith('Original');
+      expect(input).toHaveValue('Original');
+      expect(screen.getByRole('alert')).toHaveTextContent('The original track label changed.');
+
+      fireEvent.focus(input);
+      fireEvent.keyDown(input, { key: 'Enter' });
+      expect(originalFinish.mock.calls).toEqual([['Original'], ['Original']]);
+      expect(input).toHaveValue('Original');
+      expect(screen.getByRole('alert')).toHaveTextContent('The original track label changed.');
+      expect(begin).toHaveBeenCalledExactlyOnceWith('V1');
+      expect(laterFinish).not.toHaveBeenCalled();
+      expect(props.onChange).not.toHaveBeenCalled();
     });
 
     it(`captures the ${deviceClass} edit before typing and retains it across a remote label change`, async () => {
