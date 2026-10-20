@@ -11,6 +11,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from test_timeline_commit_acceptance import validate_prepared
+from test_timeline_native_inspection import _publish
 
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.snapshot_refs import snapshot_bytes, snapshot_digest
@@ -18,8 +20,6 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
 from runtime_protocol.timeline_commit_store import TimelineCommitStore
 from runtime_protocol.util import canonical_json
-from test_timeline_commit_acceptance import validate_prepared
-from test_timeline_native_inspection import _publish
 from tests.test_snapshot_authority_refusal import (
     CAPABILITY,
     CAPABILITY_DIGEST,
@@ -166,6 +166,53 @@ def _request(case, snapshot, preview, *, inline, native=False):
             "spec": {"authority_context": context, "inputs": inputs}}
 
 
+def _alias_request(case, snapshots, *, inline):
+    context = {"mode": "composed_capture", "project_id": case.project, "timeline_id": "main",
+               "revision_id": next(iter(snapshots.values()))["metadata"]["capture_authority"]["parent_revision_id"]}
+    if inline:
+        for key, snapshot in snapshots.items():
+            context[key] = deepcopy(snapshot)
+    else:
+        for key, snapshot in snapshots.items():
+            digest = snapshot_digest(snapshot)
+            result = case.service.ingest(
+                case.project, snapshot_bytes(snapshot), media_type="application/json",
+                idempotency_key="alias-capture-" + digest.removeprefix("sha256:"),
+            )
+            assert result["data"]["object_id"] == digest
+            authority = snapshot["metadata"]["capture_authority"]
+            marker = snapshot["metadata"]["working_copy"]
+            context[key + "_ref"] = {
+                "digest": digest, "project_id": case.project, "timeline_id": "main",
+                "revision_id": authority["parent_revision_id"],
+                "revision_digest": marker["candidate_digest"], "source_kind": "working_copy",
+                "working_copy": {
+                    "candidate_digest": marker["candidate_digest"],
+                    "publication_digest": marker["publication_digest"],
+                    "base_revision_id": marker["base_parent"]["revision_id"],
+                    "base_revision_digest": marker["base_parent"]["content_digest"],
+                },
+            }
+    return {"project": case.project, "capability_id": CAPABILITY,
+            "capability_digest": CAPABILITY_DIGEST, "input_object_ids": [case.media],
+            "idempotency_key": "capture-aliases", "spec": {
+                "authority_context": context,
+                "inputs": {"filmstrip_authority": canonical_json(context)},
+            }}
+
+
+def _outer_legacy_spec(case, snapshots, *, inline):
+    request = _alias_request(case, snapshots, inline=inline)
+    nested = request["spec"]
+    return {
+        "input_object_ids": request["input_object_ids"],
+        "schema_version": "1",
+        "capability_digest": CAPABILITY_DIGEST,
+        "authority_context": nested["authority_context"],
+        "spec": {"inputs": nested["inputs"]},
+    }
+
+
 def _claim_and_materialize(case, request, attempt):
     from astrid.core.execution.generic_host import GenericPackHost
 
@@ -254,6 +301,149 @@ def test_working_copy_without_candidate_is_admitted_uncertified(candidate, tmp_p
     assert ref == {"digest": snapshot_digest(snapshot), "project_id": candidate.project,
                    "timeline_id": "main", "source_kind": "cas"}
     assert "authoring_preview" not in claim["spec"]["spec"]["inputs"]
+
+
+@pytest.mark.parametrize("alias", ["capture_snapshot", "input_snapshot", "filmstrip_snapshot"])
+@pytest.mark.parametrize("inline", [True, False], ids=["inline", "ref"])
+@pytest.mark.parametrize("multicarrier", [False, True], ids=["single", "multi"])
+def test_all_capture_aliases_label_each_uncertified_carrier_without_rewriting(
+    candidate, alias, inline, multicarrier
+):
+    first, _ = _candidate_snapshot(candidate, "parent")
+    second = deepcopy(first)
+    second["config"]["alias_probe"] = "input"
+    snapshots = {alias: first}
+    if multicarrier:
+        snapshots = {
+            "capture_snapshot": first,
+            "input_snapshot": second,
+            "filmstrip_snapshot": first,
+        }
+    request = _alias_request(candidate, snapshots, inline=inline)
+    admitted = candidate.service.create_task(request)["task"]
+    stored_before_claim = deepcopy(admitted["spec"])
+    claim = candidate.service.claim_next({
+        "executor_id": "probe", "capability_ids": [CAPABILITY],
+        "runtime_epoch": candidate.service.health()["runtime_epoch"],
+    })
+    claimed = claim["spec"]["spec"]
+    for key, snapshot in snapshots.items():
+        ref = claimed["authority_context"][key + "_ref"]
+        assert ref == {
+            "digest": snapshot_digest(snapshot), "project_id": candidate.project,
+            "timeline_id": "main", "source_kind": "cas",
+        }
+        duplicate_ref = json.loads(claimed["inputs"]["filmstrip_authority"])[key + "_ref"]
+        assert duplicate_ref == ref
+
+    # Claim-time relabeling is a worker view only: reads and exact retries keep
+    # the admitted working-copy bytes and authority claims unchanged.
+    assert candidate.service.store.get_task(admitted["id"])["task"]["spec"] == stored_before_claim
+    retry = candidate.service.create_task(request)["task"]
+    assert retry["id"] == admitted["id"]
+    assert retry["spec"] == stored_before_claim
+
+
+@pytest.mark.parametrize("alias", ["capture_snapshot", "input_snapshot", "filmstrip_snapshot"])
+@pytest.mark.parametrize("inline", [True, False], ids=["inline", "ref"])
+def test_outer_legacy_aliases_are_labelled_without_rewriting_admission(
+    candidate, alias, inline
+):
+    snapshot, _ = _candidate_snapshot(candidate, "parent")
+    request = _outer_legacy_spec(candidate, {alias: snapshot}, inline=inline)
+    key = f"outer-legacy-{alias}-{inline}"
+    admitted = candidate.service.store.create_task(
+        CAPABILITY,
+        request,
+        candidate.project,
+        idempotency_key=key,
+        capability_digest=CAPABILITY_DIGEST,
+    )["task"]
+    stored_before_claim = deepcopy(admitted["spec"])
+    state_before_claim = _state(candidate.service)
+
+    claim = candidate.service.claim_next({
+        "executor_id": "probe", "capability_ids": [CAPABILITY],
+        "runtime_epoch": candidate.service.health()["runtime_epoch"],
+    })
+    assert claim["task_id"] == admitted["id"]
+    claimed = claim["spec"]
+    ref = claimed["authority_context"][alias + "_ref"]
+    expected = {
+        "digest": snapshot_digest(snapshot), "project_id": candidate.project,
+        "timeline_id": "main", "source_kind": "cas",
+    }
+    assert ref == expected
+    duplicate = json.loads(claimed["spec"]["inputs"]["filmstrip_authority"])
+    assert duplicate[alias + "_ref"] == expected
+
+    # Claim relabeling is only a public worker view. The admitted task
+    # history/spec and immutable snapshot objects remain byte-for-byte intact.
+    persisted = candidate.service.store.get_task(admitted["id"])["task"]
+    assert persisted["spec"] == stored_before_claim
+    spec_digest = candidate.service.store.conn.execute(
+        "SELECT spec_digest FROM tasks WHERE id=?", (admitted["id"],)
+    ).fetchone()["spec_digest"]
+    assert candidate.service.store._load_spec(spec_digest) == stored_before_claim
+    state_after_claim = _state(candidate.service)
+    assert state_after_claim["CAS"] == state_before_claim["CAS"]
+
+    retry = candidate.service.store.create_task(
+        CAPABILITY,
+        request,
+        candidate.project,
+        idempotency_key=key,
+        capability_digest=CAPABILITY_DIGEST,
+    )["task"]
+    assert retry["id"] == admitted["id"]
+    assert retry["spec"] == stored_before_claim
+
+
+def test_claim_checks_nested_and_outer_aliases_with_mixed_results(monkeypatch):
+    from runtime_protocol import capture_validation
+
+    refs = {
+        key: {
+            "digest": "sha256:" + str(index) * 64,
+            "project_id": "p",
+            "timeline_id": "main",
+            "revision_id": "r",
+            "revision_digest": "sha256:" + "a" * 64,
+            "source_kind": "revision",
+        }
+        for index, key in enumerate((
+            "filmstrip_snapshot_ref", "input_snapshot_ref", "capture_snapshot_ref",
+        ), 1)
+    }
+    duplicate = json.dumps(refs)
+    spec = {
+        "authority_context": deepcopy(refs),
+        "spec": {
+            "authority_context": deepcopy(refs),
+            "inputs": {"filmstrip_authority": duplicate,
+                        "argv": ["--authority", json.dumps({"nested": [refs]})]},
+        },
+    }
+    monkeypatch.setattr(
+        capture_validation,
+        "validate_capture",
+        lambda _service, _snapshot, ref, _inputs: ref["digest"] == refs["input_snapshot_ref"]["digest"],
+    )
+    service = SimpleNamespace(object=lambda _digest: ({}, b"{}"))
+    result = capture_validation.claim_capture_view(service, spec)
+
+    for context in (result["authority_context"], result["spec"]["authority_context"]):
+        assert context["input_snapshot_ref"] == refs["input_snapshot_ref"]
+        for key in ("filmstrip_snapshot_ref", "capture_snapshot_ref"):
+            assert context[key] == {
+                "digest": refs[key]["digest"], "project_id": "p", "timeline_id": "main",
+                "source_kind": "cas",
+            }
+    parsed = json.loads(result["spec"]["inputs"]["filmstrip_authority"])
+    assert parsed["input_snapshot_ref"] == refs["input_snapshot_ref"]
+    assert parsed["filmstrip_snapshot_ref"]["source_kind"] == "cas"
+    listed = json.loads(result["spec"]["inputs"]["argv"][1])["nested"][0]
+    assert listed["capture_snapshot_ref"]["source_kind"] == "cas"
 
 
 @pytest.mark.parametrize("candidate_given", [True, False], ids=["with-candidate", "without-candidate"])
