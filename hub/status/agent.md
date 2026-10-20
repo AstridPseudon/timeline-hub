@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T11:02:07Z | dispatcher heartbeat 6s -->
+<!-- main | 2026-10-20T11:07:43Z | dispatcher heartbeat 14s -->
 # agent — 2026-10-20 10:56:14 UTC
 Milestone: M1 RECORDED; M2 active. Gates 1/6/7 OPEN. No safe-current release, normal PCM, parity, or all-writers-complete claim.
 Integrated: Agent 73d8a237; capture current source integrated (34/9/33/26+2xfail/59 targeted), original verifier unchanged. Since5c3f0c99: auto guards efb96034, ordinary equal-state delete26c3b0a8, D07deletion76737ca2, pool guardsdf2739f9, inactivePCM e2ad5958(103central/2existingxfail), auto precise reads+fixturetrim ba5f2756(571/556pass,23cases,-5729lines,12exactApphandoffs), exact inventory c10a301d(80pass), pure timing kernel43d567f9(51currentcritical; defaultinactive), stray root report removal 73d8a237; capture current source integrated (34/9/33/26+2xfail/59 targeted), original verifier unchanged.
@@ -16,3 +16,5 @@ Current update: capture merged73d8a237 and Runtime handoff published; trim merge
 2026-10-20T10:59:31.132946+00:00 Full classification:66environment/setup (G diagnosis provisional),2fixedlater,3source fixes assigned agt-full12-three-source-fixes. Escalated isolated Astrid/VibeComfy provisioning. Added renderer-peers12-integration suite, actualread-only0012peers;43setuperrors rerunIDagent-renderer-peers12-integration-1020105910-4359. Trimmergeconflict in one golden-loader test; agt-m2-trim-current-gate narrowports ontoextentcurrent. Two completed reviewers replaced; target7.
 
 2026-10-20T11:01:17.320713+00:00 Rendererpeercohort94PASS (0012readonlymodules, no sourcefault). NativefrontendreviewREQUESTCHANGES P1clip_typeunits/P2scientificgutter; composedfixworkerassigned. LocalhistoryfinalreviewAPPROVE184+60source/portchecks, old2probesRED; boundedcurrentportworkerassigned. Reviewmodelsreplacedtoseven; no duplicatefull.
+
+2026-10-20T11:03:16.942563+00:00 Source3fixes MERGED25eb4e26 (catalog3/env4/text22+actualport1/scene30pass), trimcurrent4af33619 mergequeued(60+151pass, exactapprovedproductblobs). Newvideo-unplace-widen workerextends existing scopedunplace, noalias/opframework. Orchestrator11:00 owns isolatedchildprofile/VibeComfy provisioning and updatedfullenv peers.

@@ -43,8 +43,31 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-runtime/bin/pytho
 
 Result: **11 passed in 6.30s**.
 
-Central TestIDs/results will be recorded below once complete. Requested scope: ordinary render/seam, inspection, legacy authority, commit acceptance/closure/schema/port; marked legacy HTTP authority; real Agent commit integration. No full suite requested. Advisory custom-track/gap/overlap materialization and renderer-independent saves remain live expectations. No speculative stricter alias policy, schema or route change.
+Central TestIDs/results are recorded below. Requested scope: ordinary render/seam, inspection, legacy authority, commit acceptance/closure/schema/port; legacy HTTP authority with the real Agent environment; real Agent commit integration. No full suite requested. Advisory custom-track/gap/overlap materialization and renderer-independent saves remain live expectations. No speculative stricter alias policy, schema or route change.
 
 ## Limits and follow-up
 
 Evidence-only result: worktree product/test diff is empty. No new permanent test is necessary because the guard and permanent regressions already exist. Keep main's accepted advisory rendering behavior. This does not qualify the entire project, capture-host pair, real pixels/audio, owner films or macOS. Historical module probes are focused function probes, not historical full-suite replays. The prepared-provider boundary probes isolate Runtime validity; real Agent coverage is the separate central commit gate.
+
+### Central results (initial requests)
+
+All initial snapshots: Runtime tree `2ae8508a1d3dac62e99c27056585eedc62bf5ff6`, HEAD `8609333456b9537339ee1a5dfc7ffd9609242de8`.
+
+| TestID | Result |
+| --- | --- |
+| `rt-m2-parent-mirror-refresh-audit-targeted-1020105948-9565` | 397 passed, 2 deselected, 65 setup errors; exit 1, 122.65s. All errors require `ASTRID_CHECKOUT`, absent from plain targeted lane; no assertion failures. |
+| `rt-m2-parent-mirror-refresh-audit-occupancy-integration-1020105949-4913` | 58 deselected, exit 5, 0.50s; wrong marker lane, no tests executed. |
+| `rt-m2-parent-mirror-refresh-audit-commit-integration-1020105949-18146` | 9 passed, exit 0, 13.91s; real Agent semantics, including renderer-unavailable commit/retry/undo and real door lost-ack restart. |
+
+The 65 setup-error cases are 58 legacy-authority tests and 7 shot-composition restore/HTTP tests. They alone were re-requested with the documented `restore-integration` environment. The two dispatch mistakes are retained here explicitly; neither changes the source verdict. Exact request, executed pytest and wait commands are in the worker's `DetailedReport.md`; central results live under `tests/TEST_ID/{request,snap,summary,log.txt}`. No full suite requested.
+
+### Final corrected gates
+
+| TestID | Result |
+| --- | --- |
+| `rt-m2-parent-mirror-refresh-audit-restore-integration-1020110152-26597` | **58 passed in 22.51s**, exit 0; all legacy-authority service/HTTP cases. |
+| `rt-m2-parent-mirror-refresh-audit-restore-integration-1020110232-10583` | **7 passed in 3.07s**, exit 0; exact restore/HTTP cases requiring the Agent checkout. |
+
+All snapshots record the same Runtime tree above. Combined affected evidence: **397 + 58 + 7 = 462 distinct ordinary tests passed, plus 9 real-Agent commit integration tests**; 11 focused direct cases also passed. The original request's 65 setup errors were fully covered by the two corrected selections. The no-tests marker request provides no pass evidence. The two marked cases deselected by the ordinary selection were not silently counted as passes.
+
+**Final: close the 10:46 parent/config agreement finding as disproved.** Agreement validity survived main and refresh; main's advisory track/overlap/custom-picture render behavior remains. No product fix, new permanent regression, policy change or integration patch is needed. Detailed commands, honest failed-dispatch records and limits are in `workers/rt-m2-parent-mirror-refresh-audit/DetailedReport.md`. Worktree clean; no full suite requested.
