@@ -1,0 +1,35 @@
+# Run from /home/user/work/wt/vw-m3-am-sprite-current-catalog-unit
+
+# Normal generator, explicitly limited to the Agent-owned generated catalog.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py astrid/packs/rendering/elements/catalog.ts
+# PASS; changed only the AM-sprite revision line.
+
+# Freshness check.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python scripts/gen_element_catalog.py --check
+# PASS, exit 0.
+
+# 33-case targeted lane, with private Node/dependency stage and private pytest temp.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" ASTRID_NODE_EXECUTABLE=/tmp/vw-m3-agent-gate-node20.19.4/bin/node ASTRID_TEST_NODE_MODULES=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/node_modules /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= --tb=short --basetemp=/tmp/vw-m3-am-sprite-current-catalog-unit-pytest-targeted tests/packs/rendering/test_sprite_scene_capability.py tests/packs/rendering/test_scene_host.py tests/sdk/test_timeline_checkout.py::test_check_flags_offcanvas_mixed_scale_and_damaged_sprite_by_address
+# ................................. [100%]
+# 33 passed in 25.55s
+
+# Direct test lint and patch whitespace audit.
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/rendering/test_sprite_scene_capability.py
+# All checks passed!
+git diff --check
+# PASS, exit 0.
+
+# Product-source byte-preservation audit.
+git diff --quiet bdd02bd3 -- astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx
+git diff --quiet bdd02bd3 -- tests/packs/rendering/test_sprite_scene_capability.py
+# Both PASS; approved source and test are unchanged.
+
+# Scope audit.
+git diff --name-status bdd02bd3
+# M astrid/packs/rendering/elements/catalog.ts
+
+# Source SSR/audit evidence carried by the approved handoff and re-covered by
+# test_sprite_scene_capability.py in the 33-case lane:
+# Parent/candidate registered SSR: 35/35 byte-equal
+# Aggregate: 963140ecb235706a8f4c0ab57f5ba8f17984bad9ed58fa4f3647a128d888ca2b
+

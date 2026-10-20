@@ -1,0 +1,315 @@
+diff --git a/tests/e2e/timeline/setup-tab-audio-capture.sh b/tests/e2e/timeline/setup-tab-audio-capture.sh
+index d6e07c247..15fb463cc 100644
+--- a/tests/e2e/timeline/setup-tab-audio-capture.sh
++++ b/tests/e2e/timeline/setup-tab-audio-capture.sh
+@@ -10,19 +10,32 @@ NODE=${TAB_AUDIO_NODE_EXECUTABLE:-/tmp/vw-m3-agent-gate-node20.19.4/bin/node}
+ [[ -x "$NODE" ]] || { echo "Pinned Node executable is missing: $NODE" >&2; exit 2; }
+ [[ "$("$NODE" --version)" == v20.19.4 ]] || { echo "Pinned Node must be v20.19.4" >&2; exit 2; }
+ export PATH="$(dirname "$NODE"):$PATH"
+-STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose
+-export TMPDIR="$STATE/tmp" TMP="$STATE/tmp" TEMP="$STATE/tmp"
++STATE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix
+ export XDG_CACHE_HOME="$STATE/cache" XDG_CONFIG_HOME="$STATE/config"
+ export PWTEST_CACHE_DIR="$STATE/playwright-transform"
+ export NODE_PATH=''
+-mkdir -p "$TMPDIR" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$PWTEST_CACHE_DIR"
+-LOCK_PATH=${TAB_AUDIO_LOCK_PATH:-/tmp/timeline-viewing-browser.lock}
+-export TAB_AUDIO_LOCK_PATH="$LOCK_PATH"
+-export TAB_AUDIO_LOCK_FD=9
++mkdir -p "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$PWTEST_CACHE_DIR"
++TASK_TMPDIR=''
++TASK_TMPDIR_ID=''
+ 
+-exec 9>"$LOCK_PATH"
+-flock -n 9 || { echo 'central browser flock is already held' >&2; exit 75; }
+-export VIEWING_BROWSER_FLOCK_HELD=1
++cleanup_task_tmpdir() {
++  local path=$1
++  [[ -n "$path" ]] || return 0
++  [[ -e "$path" ]] || return 0
++  if [[ -L "$path" || ! -d "$path" || "$(dirname -- "$path")" != /tmp \
++    || "$(basename -- "$path")" != timeline-tab-audio-* \
++    || "$(realpath -- "$path")" != "$path" \
++    || "$(stat -c '%d:%i' -- "$path")" != "$TASK_TMPDIR_ID" ]]; then
++    echo "refusing to remove non-owned Chrome task temp: $path" >&2
++    return 1
++  fi
++  rm -rf -- "$path"
++}
++
++unset TAB_AUDIO_TASK_TMPDIR
++TASK_TMPDIR=$(mktemp -d /tmp/timeline-tab-audio-XXXXXX)
++TASK_TMPDIR_ID=$(stat -c '%d:%i' -- "$TASK_TMPDIR")
++export TAB_AUDIO_TASK_TMPDIR="$TASK_TMPDIR" TMPDIR="$TASK_TMPDIR" TMP="$TASK_TMPDIR" TEMP="$TASK_TMPDIR"
+ 
+ cleanup() {
+   status=$?
+@@ -33,10 +46,23 @@ cleanup() {
+       status=$postflight_status
+     fi
+   fi
++  task_temp_status=0
++  cleanup_task_tmpdir "$TASK_TMPDIR" || task_temp_status=$?
++  if [[ $status == 0 && $task_temp_status != 0 ]]; then
++    status=$task_temp_status
++  fi
+   exit "$status"
+ }
+ trap cleanup EXIT
+ 
++LOCK_PATH=${TAB_AUDIO_LOCK_PATH:-/tmp/timeline-viewing-browser.lock}
++export TAB_AUDIO_LOCK_PATH="$LOCK_PATH"
++export TAB_AUDIO_LOCK_FD=9
++
++exec 9>"$LOCK_PATH"
++flock -n 9 || { echo 'central browser flock is already held' >&2; exit 75; }
++export VIEWING_BROWSER_FLOCK_HELD=1
++
+ if [[ ${TAB_AUDIO_RUN:-0} != 1 ]]; then
+   "$NODE" "$CONTROLLER" --prepare
+   echo 'Offline preflight only. Manager must review this exact fingerprint before a fresh grant.'
+diff --git a/tests/e2e/timeline/tab-audio-capture.controller.mjs b/tests/e2e/timeline/tab-audio-capture.controller.mjs
+index 1849af259..26cefd2b2 100644
+--- a/tests/e2e/timeline/tab-audio-capture.controller.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.controller.mjs
+@@ -22,7 +22,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
+ 
+ export const PROFILE = 'native-codec-chrome155-clean-install-public12';
+ export const BASE_SOURCE_SHA = '0ea988bdd2907c876b82fd2620820e3fb6d6ea84';
+-export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-clean-install-source-compose';
++export const WORKER_STATE_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tab-short-owned-tmp-fix';
++export const TASK_TEMP_ROOT = '/tmp';
++export const TASK_TEMP_PREFIX = 'timeline-tab-audio-';
++export const UNIX_SOCKET_PATH_LIMIT = 108;
++const CHROME_SINGLETON_SOCKET_SUFFIX = 'com.google.Chrome.12345678901234567890/SingletonSocket';
+ export const MIN_FREE_BYTES = 10 * 1024 ** 3;
+ // Fresh npm-ci graph published READY by vw-m3-app-private12-clean-install.
+ // Consumers keep all state outside this shared read-only graph.
+@@ -104,24 +108,79 @@ const FROZEN_RENDER_GRAPH_HASHES = {
+ const ORCH_ROOT = process.env.ORCH_ROOT
+   ?? '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch';
+ const QUIET_FILES = [join(ORCH_ROOT, 'QUIET.md'), join(ORCH_ROOT, 'managers/viewing/QUIET.md')];
++const OWNED_TASK_TEMP_DIRS = new Set();
+ 
++function taskTempPath(path) {
++  const absolute = resolve(path);
++  if (dirname(absolute) !== TASK_TEMP_ROOT || !absolute.startsWith(`${TASK_TEMP_ROOT}/${TASK_TEMP_PREFIX}`)) {
++    throw new Error('Chrome task temp must be a direct, short-lived /tmp allocation');
++  }
++  if (!lstatSync(absolute).isDirectory() || realpathSync(absolute) !== absolute) {
++    throw new Error('Chrome task temp must be an owned real directory');
++  }
++  return absolute;
++}
++
++export function chromeSingletonSocketPath(tempDir) {
++  return join(tempDir, CHROME_SINGLETON_SOCKET_SUFFIX);
++}
++
++export function assertSocketPathBudget(oldTempDir, newTempDir) {
++  const oldPath = chromeSingletonSocketPath(oldTempDir);
++  const newPath = chromeSingletonSocketPath(newTempDir);
++  if (oldPath.length <= UNIX_SOCKET_PATH_LIMIT) {
++    throw new Error(`Expected the old Chrome singleton socket path to exceed ${UNIX_SOCKET_PATH_LIMIT} bytes`);
++  }
++  if (newPath.length >= UNIX_SOCKET_PATH_LIMIT) {
++    throw new Error(`Chrome task temp leaves the singleton socket path at ${newPath.length} bytes`);
++  }
++  return {oldPath, oldLength: oldPath.length, newPath, newLength: newPath.length};
++}
++
++export function allocateTaskTempDir() {
++  const tempDir = mkdtempSync(join(TASK_TEMP_ROOT, TASK_TEMP_PREFIX));
++  try {
++    taskTempPath(tempDir);
++    assertSocketPathBudget(WORKER_STATE_ROOT, tempDir);
++    OWNED_TASK_TEMP_DIRS.add(tempDir);
++    return tempDir;
++  } catch (error) {
++    rmSync(tempDir, {recursive: true, force: true});
++    throw error;
++  }
++}
++
++export function cleanupTaskTempDir(tempDir) {
++  const absolute = resolve(tempDir);
++  if (!OWNED_TASK_TEMP_DIRS.has(absolute)) throw new Error('Refusing to remove a task temp not allocated by this process');
++  if (!existsSync(absolute)) {
++    OWNED_TASK_TEMP_DIRS.delete(absolute);
++    return;
++  }
++  taskTempPath(absolute);
++  rmSync(tempDir, {recursive: true, force: true});
++  OWNED_TASK_TEMP_DIRS.delete(absolute);
++}
+ 
+-export function isolatedEnvironment() {
++export function isolatedEnvironment(taskTempDir = process.env.TAB_AUDIO_TASK_TMPDIR) {
++  if (!taskTempDir) throw new Error('Chrome task temp must be allocated explicitly for this attempt');
++  taskTempPath(taskTempDir);
++  assertSocketPathBudget(WORKER_STATE_ROOT, taskTempDir);
+   const paths = {
+-    TMPDIR: join(WORKER_STATE_ROOT, 'tmp'),
+-    TMP: join(WORKER_STATE_ROOT, 'tmp'),
+-    TEMP: join(WORKER_STATE_ROOT, 'tmp'),
++    TMPDIR: taskTempDir,
++    TMP: taskTempDir,
++    TEMP: taskTempDir,
+     XDG_CACHE_HOME: join(WORKER_STATE_ROOT, 'cache'),
+     XDG_CONFIG_HOME: join(WORKER_STATE_ROOT, 'config'),
+     PWTEST_CACHE_DIR: join(WORKER_STATE_ROOT, 'playwright-transform'),
+     PLAYWRIGHT_OUTPUT_DIR: process.env.PLAYWRIGHT_OUTPUT_DIR ?? join(WORKER_STATE_ROOT, 'playwright-output'),
+   };
+-  for (const path of Object.values(paths)) {
++  for (const path of [paths.XDG_CACHE_HOME, paths.XDG_CONFIG_HOME, paths.PWTEST_CACHE_DIR, paths.PLAYWRIGHT_OUTPUT_DIR]) {
+     if (!resolve(path).startsWith(`${WORKER_STATE_ROOT}/`)) throw new Error('Probe state must stay inside its own worker folder');
+     mkdirSync(path, {recursive: true});
+     if (!realpathSync(path).startsWith(`${WORKER_STATE_ROOT}/`)) throw new Error('Probe state symlink escapes its worker folder');
+   }
+-  return {...process.env, ...paths, NODE_PATH: ''};
++  return {...process.env, ...paths, TAB_AUDIO_TASK_TMPDIR: taskTempDir, NODE_PATH: ''};
+ }
+ 
+ function sha256(bytes) {
+@@ -393,14 +452,18 @@ function requiredEnv(name) {
+ export function discover() {
+   const fingerprint = sourceFingerprint();
+   const root = FROZEN_PRIVATE_GRAPH.root;
+-  const env = isolatedEnvironment();
+-  const directory = mkdtempSync(join(WORKER_STATE_ROOT, 'discovery-'));
+-  const outputPath = join(directory, 'stdout');
+-  const errorPath = join(directory, 'stderr');
+-  const stdoutFd = openSync(outputPath, 'wx');
+-  const stderrFd = openSync(errorPath, 'wx');
++  const ownedTaskTempDir = process.env.TAB_AUDIO_TASK_TMPDIR ? undefined : allocateTaskTempDir();
++  let directory;
++  let stdoutFd;
++  let stderrFd;
+   let output;
+   try {
++    const env = isolatedEnvironment(ownedTaskTempDir ?? process.env.TAB_AUDIO_TASK_TMPDIR);
++    directory = mkdtempSync(join(WORKER_STATE_ROOT, 'discovery-'));
++    const outputPath = join(directory, 'stdout');
++    const errorPath = join(directory, 'stderr');
++    stdoutFd = openSync(outputPath, 'wx');
++    stderrFd = openSync(errorPath, 'wx');
+     // Regular files preserve the actual CLI output in restricted worker processes.
+     const result = spawnSync(NODE_EXECUTABLE, [join(root, 'playwright/cli.js'), 'test',
+       '--config', join(REPO_ROOT, 'tests/e2e/timeline/tab-audio-capture.config.ts'),
+@@ -411,9 +474,10 @@ export function discover() {
+       throw new Error(`Playwright discovery failed: ${result.error?.message ?? result.status} ${readFileSync(errorPath, 'utf8')}`);
+     }
+   } finally {
+-    closeSync(stdoutFd);
+-    closeSync(stderrFd);
+-    rmSync(directory, {recursive: true, force: true});
++    if (stdoutFd !== undefined) closeSync(stdoutFd);
++    if (stderrFd !== undefined) closeSync(stderrFd);
++    if (directory) rmSync(directory, {recursive: true, force: true});
++    if (ownedTaskTempDir) cleanupTaskTempDir(ownedTaskTempDir);
+   }
+   if (!/Total: 1 test in 1 file/.test(output)
+     || !/\[native-codec-chrome155-tab-audio\].*tab-audio-capture\.probe\.ts:\d+:\d+ › captures whole-tab video and tab audio in one Chrome155 MediaRecorder clock/.test(output)) throw new Error('Expected exactly one discovered capability test');
+diff --git a/tests/e2e/timeline/tab-audio-capture.controller.test.mjs b/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+index 47c6b866e..80513cf69 100644
+--- a/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+@@ -1,16 +1,21 @@
+ import assert from 'node:assert/strict';
+ import {test} from 'node:test';
+-import {chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync, linkSync} from 'node:fs';
++import {chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync, linkSync} from 'node:fs';
+ import {dirname, join} from 'node:path';
+ import {tmpdir} from 'node:os';
+ import {
+   assertFingerprintUnchanged,
+   assertPhysicalGraph,
+   assertGrant,
++  assertSocketPathBudget,
++  allocateTaskTempDir,
+   BROWSER_EXECUTABLE,
+   BROWSER_VERSION,
++  cleanupTaskTempDir,
+   hashTree,
+   isolatedEnvironment,
++  TASK_TEMP_PREFIX,
++  TASK_TEMP_ROOT,
+   WORKER_STATE_ROOT,
+   PROFILE,
+ } from './tab-audio-capture.controller.mjs';
+@@ -165,20 +170,40 @@ test('postflight rejects whole private graph or discovery identity changes', ()
+   }
+ });
+ 
+-test('discovery state stays in this worker folder and rejects an external output', () => {
++test('Chrome gets one short owned temp while caches and output stay in this worker folder', () => {
+   const previous = process.env.PLAYWRIGHT_OUTPUT_DIR;
++  const previousTaskTemp = process.env.TAB_AUDIO_TASK_TMPDIR;
++  const taskTempDir = allocateTaskTempDir();
++  const preexistingTempDir = mkdtempSync(join(TASK_TEMP_ROOT, TASK_TEMP_PREFIX));
+   try {
+     delete process.env.PLAYWRIGHT_OUTPUT_DIR;
++    process.env.TAB_AUDIO_TASK_TMPDIR = taskTempDir;
+     const isolated = isolatedEnvironment();
+-    for (const key of ['TMPDIR', 'TMP', 'TEMP', 'XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'PWTEST_CACHE_DIR', 'PLAYWRIGHT_OUTPUT_DIR']) {
++    assert.equal(isolated.TMPDIR, taskTempDir);
++    assert.equal(isolated.TMP, taskTempDir);
++    assert.equal(isolated.TEMP, taskTempDir);
++    assert.ok(isolated.TMPDIR.startsWith(`${TASK_TEMP_ROOT}/${TASK_TEMP_PREFIX}`));
++    assert.deepEqual(assertSocketPathBudget(WORKER_STATE_ROOT, taskTempDir), {
++      oldPath: `${WORKER_STATE_ROOT}/com.google.Chrome.12345678901234567890/SingletonSocket`,
++      oldLength: 175,
++      newPath: `${taskTempDir}/com.google.Chrome.12345678901234567890/SingletonSocket`,
++      newLength: 85,
++    });
++    for (const key of ['XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'PWTEST_CACHE_DIR', 'PLAYWRIGHT_OUTPUT_DIR']) {
+       assert.ok(isolated[key].startsWith(`${WORKER_STATE_ROOT}/`));
+     }
+     assert.equal(isolated.NODE_PATH, '');
+     process.env.PLAYWRIGHT_OUTPUT_DIR = '/outside-worker/output';
+     assert.throws(() => isolatedEnvironment(), /own worker folder/);
++    assert.throws(() => cleanupTaskTempDir(preexistingTempDir), /not allocated by this process/);
++    assert.ok(existsSync(preexistingTempDir));
+   } finally {
+     if (previous === undefined) delete process.env.PLAYWRIGHT_OUTPUT_DIR;
+     else process.env.PLAYWRIGHT_OUTPUT_DIR = previous;
++    if (previousTaskTemp === undefined) delete process.env.TAB_AUDIO_TASK_TMPDIR;
++    else process.env.TAB_AUDIO_TASK_TMPDIR = previousTaskTemp;
++    cleanupTaskTempDir(taskTempDir);
++    rmSync(preexistingTempDir, {recursive: true, force: true});
+   }
+ });
+ 
+diff --git a/tests/e2e/timeline/tab-audio-capture.environment.test.mjs b/tests/e2e/timeline/tab-audio-capture.environment.test.mjs
+index c2057c0c4..692e014f6 100644
+--- a/tests/e2e/timeline/tab-audio-capture.environment.test.mjs
++++ b/tests/e2e/timeline/tab-audio-capture.environment.test.mjs
+@@ -1,8 +1,9 @@
+ import assert from 'node:assert/strict';
+ import {test} from 'node:test';
++import {readFileSync} from 'node:fs';
+ import {dirname, join} from 'node:path';
+ import {createRequire} from 'node:module';
+-import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
++import {BROWSER_EXECUTABLE, EXPECTED_PACKAGE_VERSIONS, FROZEN_PRIVATE_GRAPH, REPO_ROOT, TASK_TEMP_PREFIX, TASK_TEMP_ROOT, hashTree, packageGraphFingerprint, renderGraphFingerprint} from './tab-audio-capture.controller.mjs';
+ 
+ test('package graph fingerprint collects every package with an expected version', () => {
+   const {packages} = packageGraphFingerprint();
+@@ -36,3 +37,17 @@ test('browser and Playwright trees retain their exact frozen hashes', () => {
+     fileCount: 106,
+   });
+ });
++
++test('launcher binds one fresh short task temp and cleans it after every attempt', () => {
++  const setup = readFileSync(join(REPO_ROOT, 'tests/e2e/timeline/setup-tab-audio-capture.sh'), 'utf8');
++
++  assert.match(setup, new RegExp(`mktemp -d ${TASK_TEMP_ROOT}/${TASK_TEMP_PREFIX}XXXXXX`));
++  assert.match(setup, /unset TAB_AUDIO_TASK_TMPDIR/);
++  assert.match(setup, /TASK_TMPDIR_ID=''/);
++  assert.match(setup, /TASK_TMPDIR_ID=\$\(stat -c/);
++  assert.match(setup, /trap cleanup EXIT/);
++  assert.match(setup, /cleanup_task_tmpdir \"\$TASK_TMPDIR\"/);
++  assert.match(setup, /TAB_AUDIO_TASK_TMPDIR=\"\$TASK_TMPDIR\"/);
++  assert.match(setup, /TMPDIR=\"\$TASK_TMPDIR\" TMP=\"\$TASK_TMPDIR\" TEMP=\"\$TASK_TMPDIR\"/);
++  assert.doesNotMatch(setup, /export HOME=|PULSE_SERVER=|PULSE_RUNTIME_PATH=/);
++});

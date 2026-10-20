@@ -1,0 +1,50 @@
+{
+  "graph": {
+    "entries": 35545,
+    "changes": []
+  },
+  "archives": {
+    "/home/user/work/wt/vw-m3-am-plate-fill-fixture-fix/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/home/user/work/wt/vw-m3-tab-clean-install-source-compose/vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/home/user/work/wt/vw-m3-am-sprite-current-catalog-unit/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/home/user/work/wt/vw-m3-main-cap-controller-repair/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/home/user/work/wt/vw-m3-tab-short-owned-tmp-fix/vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/home/user/work/agent/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter-mouth12-test-batch-overlay/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/presenter12-fixture.51i7Ur/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-presenter12-pair-test-patch-overlay/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-release12/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-release12/artifacts/banodoco-timeline-composition-0.0.12.tgz.sha256": "e119270f56e9a44c6589bf90a66893bddc4d02e9afeaecfe8ff3f621a4499e9f",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-review/baseline/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-landable-review/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current12-pcm-caller-preserve-main/composed-prerequisites/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-window-final-review/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-current-extent-fixture-final-gate/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-public-audio-clock-eleven/artifacts/banodoco-timeline-composition-0.0.11.tgz": "dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-public-audio-clock-eleven/artifacts/pack2/banodoco-timeline-composition-0.0.11.tgz": "dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-public-audio-clock-eleven/artifacts/pack1/banodoco-timeline-composition-0.0.11.tgz": "dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-native-extent-final-review/baseline/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-native-extent-final-review/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-app-private12-clean-install/clean-project/vendor/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-tail-layer-legacy-proof/old-source/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/baseline/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-caller-current-final-gate/candidate/remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.12.tgz": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.11.tgz.sha256": "709815262a0959b2abd0094b7db4049539be55486debe66be60002d2bd43a5e1",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.12.tgz.sha256": "e119270f56e9a44c6589bf90a66893bddc4d02e9afeaecfe8ff3f621a4499e9f",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.11.tgz": "dfa824a475737598477d98a2be2c2ad6ab9c3e6c8b0f967fad22e154afd74601"
+  },
+  "pins": {
+    "/home/user/work/agent/package.json": "f7af6ee2e78619573485254528cf80148bd481e3f3b34041040650ae956295f7",
+    "/home/user/work/agent/remotion/package.json": "58460ce59e2473d74f44238a2e5e78e2d4bd8a79a0bd94e430f7ae5eb6c2778a",
+    "/home/user/work/agent/remotion/package-lock.json": "cca94d49f4bae0b3f16198d70ad08cd963f7d6061554d4276310deb6fe87f597",
+    "/home/user/work/agent/pyproject.toml": "3f3f79ae22fb2ce42ff6b2018a99e9290af2c74c50d89a8b51b6f322cd53baa9",
+    "/home/user/work/runtime/pyproject.toml": "981847cc27dbda029d69116914d8f5f89ed1faa7286e20ef10d86098ec59a2de",
+    "/home/user/work/app/package.json": "870a225ad95befc28904513c9513e397ceb9fdb15b30db34ee7e7fbcac904e81",
+    "/home/user/work/app/package-lock.json": "5b45cde0fb848455cecbd0480de827f1abb82052367f0add680e364347ce90ce",
+    "/home/user/work/composition/package.json": "16db2715ea7643aa02d7c47c7d76cc80eeaca6bf22475549e6fa70fa311e12bb",
+    "/home/user/work/composition/package-lock.json": "f27bd1df38a9dd29568fbdd229affa9ab63845c372bb785f6977a7a6f1d83024",
+    "/home/user/work/wt/vw-m3-pcm-public-export-final-review/package.json": "16db2715ea7643aa02d7c47c7d76cc80eeaca6bf22475549e6fa70fa311e12bb",
+    "/home/user/work/wt/vw-m3-pcm-public-export-final-review/package-lock.json": "f27bd1df38a9dd29568fbdd229affa9ab63845c372bb785f6977a7a6f1d83024"
+  }
+}

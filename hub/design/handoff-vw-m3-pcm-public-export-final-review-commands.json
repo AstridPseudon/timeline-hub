@@ -1,0 +1,54 @@
+[
+  {
+    "command": [
+      "node",
+      "node_modules/typescript/bin/tsc",
+      "-p",
+      "typescript/tsconfig.test.json"
+    ],
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-public-export-final-review-check1.log"
+  },
+  {
+    "command": [
+      "node",
+      "--experimental-test-isolation=none",
+      "--import",
+      "./typescript/tests/register-extensionless.mjs",
+      "--test",
+      "typescript/test-dist/tests/audio-envelope-admission.test.js",
+      "typescript/test-dist/tests/evaluation.test.js"
+    ],
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-public-export-final-review-check2.log"
+  },
+  {
+    "command": [
+      "node",
+      "--import",
+      "tsx",
+      "scripts/gen-registry.ts",
+      "--check"
+    ],
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-public-export-final-review-check3.log"
+  },
+  {
+    "command": [
+      "node",
+      "scripts/build.mjs"
+    ],
+    "exit": 0,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-public-export-final-review-check4.log"
+  },
+  {
+    "command": [
+      "node",
+      "node_modules/typescript/bin/tsc",
+      "-p",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-pcm-public-export-final-review/public-types.tsconfig.json"
+    ],
+    "exit": 2,
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-public-export-final-review-check5.log"
+  }
+]

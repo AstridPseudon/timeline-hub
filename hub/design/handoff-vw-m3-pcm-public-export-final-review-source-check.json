@@ -1,0 +1,23 @@
+{
+  "typescript/src/lib/audio-envelope.ts": {
+    "unchanged": true,
+    "sha256": "edbf7f270a6291459a7951f0ffafe38d2e2757197ba900edf3be42b3af51fddc"
+  },
+  "typescript/src/lib/use-audio-envelope.ts": {
+    "unchanged": true,
+    "sha256": "a5cdf397358c6f3141c913ee75f4f48c3b328cdf46e1d904c8da5c7d992e8e61"
+  },
+  "typescript/src/types.ts": {
+    "unchanged": true,
+    "sha256": "eb9d7e671085ad07a1b1f8e69314c57565fc687287183a599c7135871af13c19"
+  },
+  "package.json": {
+    "unchanged": true,
+    "sha256": "16db2715ea7643aa02d7c47c7d76cc80eeaca6bf22475549e6fa70fa311e12bb"
+  },
+  "package-lock.json": {
+    "unchanged": true,
+    "sha256": "f27bd1df38a9dd29568fbdd229affa9ab63845c372bb785f6977a7a6f1d83024"
+  },
+  "patchSha256": "758f9e8aa3a56f34f7d1e43e1252cefc68fcf889a2b3c4b789013a1bd109c217"
+}
