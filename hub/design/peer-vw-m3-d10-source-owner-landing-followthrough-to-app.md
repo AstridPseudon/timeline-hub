@@ -1,0 +1,3 @@
+# D10 source-owner handoff to App — 2026-10-20
+
+App consumer/source-copy deletion is complete at `e245a4791f9270177408a7745d8397ad7b6f81a1` (tree `dce13f17a6873e86af00e06dea25624d719d31ad`), with real-source normal refresh `680d1aa4f1f9576d65a603472f1dd7fc0ae9ccd1`, 146 vendor files, 11 Home imports, and exactly nine exclusions. Agent’s approved source candidate is `da9a5bd860f3a16563bc2b0b0ef55ab042183091`, but it is not integrated onto current Agent `f82da322077ed0ac0c58966a0815b5ffc02fc0cc`; do not fabricate a vendor-refresh request from the candidate SHA. After Agent publishes the real merge SHA, run the existing no-preload normal refresh/verifier against that checkout and update the D10 row.

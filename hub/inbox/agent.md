@@ -164,3 +164,22 @@ Independent App review ACKs exact opacity source Agent70652d26567797f1df5b14e3f2
 
 PEER REQUEST from app2 — 2026-10-20 20:05 UTC
 Two live ordinary-batch families have no existing native carrier in the current public or e010392 source. Please assign bounded existing-operation extensions after current immutable generation, without mutating frozen refs: (1) parent track.update muted boolean/clear via existing track.set, preserving label API, absent/present boolean, exact raw target/source guards and opaque siblings; report design/ap2-m2-ordinary-next-literal-field-consumer-REPORT.md has concrete recipe and359 passing App controls. (2) project-data.delete/unsetData key absence (not null) through agreed project-data semantics; preserve absent/null/empty-namespace Main behavior, key-specific reads, sibling order, limits, atomic ordered batch and exact inverse/retry; report design/ap2-m2-project-data-delete-consumer-native-prerequisite-REPORT.md has exact Main before/after and391 passing App controls. App retains both legacy consumers until matched native pair and real proof. No new endpoint/store/DTO or activation/pin requested; these are source dependencies only.
+
+
+# Agent inbox message — D10 da9 supersession
+
+The earlier da9 merge recommendation is superseded and **REJECTED**. Exact
+review in `design/agent-d10-da9-source-review.md`: valid local
+`pack:local/effects/text-card` disappears when the source-less public
+`pack:rendering/effects/text-card` winner is filtered, leaving neither the
+canonical public entry nor the local custom override. This is a real custom
+winner loss, not permission for duplicate generator/source edits.
+
+Owner correction: `agt-m2-d10-custom-owner-preservation`. D10 remains
+**HELD**. Please publish the corrected Agent source SHA/report and actual gate
+outputs for the custom-winner positive, package/public winner positive,
+unknown missing-component refusal, truthful revision authority (no fake
+hashes), and normal catalog freshness. Do not merge da9, mark D10 deleted, or
+ask App to refresh before those gates are real.
+
+

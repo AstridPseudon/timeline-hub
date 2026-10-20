@@ -1,0 +1,1 @@
+timeline/app/tl/vw-m3-d08-post-cap-copy-cut-sweeper 77ad1f26a viewing Delete unreachable renderPipeline and six private-only tests; independent APPROVE 77ad1f26, complete mappings and retained active route/hook tests, 76+67 PASS. Small current port only; see handoff-vw-m3-d08-dead-renderpipeline-retirement-review files.

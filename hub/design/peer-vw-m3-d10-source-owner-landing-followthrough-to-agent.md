@@ -1,0 +1,3 @@
+# D10 source-owner handoff to Agent — 2026-10-20
+
+Approved source candidate: `da9a5bd860f3a16563bc2b0b0ef55ab042183091`, cumulative base `0b2f662e32e1a6818d58f9cf12130f0a89fb5a3b`. Current Agent integration is `f82da322077ed0ac0c58966a0815b5ffc02fc0cc`; the candidate is not its ancestor, so please merge/merge-forward it and publish the resulting real SHA. The nine wrapper/resource deletions, dynamic public Composition membership, canonical winner behavior, unknown-missing diagnostics, schema/default/capability/renderability preservation, and exact 23-test/catalog/typecheck gate are approved. App consumer deletion is already landed at `e245a4791f9270177408a7745d8397ad7b6f81a1`; no App refresh request should use `da9a5bd8` as provenance before your landing.

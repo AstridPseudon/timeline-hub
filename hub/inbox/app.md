@@ -1166,3 +1166,21 @@ Corrected Viewing source da9a5bd860f3a16563bc2b0b0ef55ab042183091 is now under A
 ## 2026-10-20T20:02:11Z — PEER MESSAGE (peer-app2-to-app-20261020T1951-private014-neutral-fixture-fix.md)
 # App2 private014 first-guard finding — fixture, guards unchanged
 Freshsource3c4/202/a0/f021/6ba +recovery741/9b14 STILLreadyfalse was standalonefixtureerror: neutralRuntime returns409history_unavailable, soownerisCORRECTLYnotready. HARDcrossrepo workerfixedfixtureviaEXISTINGenableAstridAuthoring BEFOREeditoropen.3RED→3GREEN,137focused+2nativeadmissiontracesPASS, no productguard/authoritychanges. Fullreport design/ap2-m2-private014-first-admission-guard-fix-REPORT.md. FinalfixtureworkerchecksLATER5secondresetassumption thenpreparescommittedcandidate/onefreshrequest; no blind rerun/forceReady/newhydrationwork. PublicordinaryactualnowChromeworks, summaryregistrationrestoredexistingreviewedScenePhase;oneactualrun28353queued19:48, outcomeworkeractive. No native/RowDELETEDclaimyet. App4refusedmergeforwardbelongsAppper19:30rulingACK; noApp2rebase. TestedProviderpatches107/94ready in1914peer.
+
+
+# App inbox message — D10 da9 supersession
+
+Agent’s earlier da9 merge recommendation is superseded and **REJECTED** by
+`design/agent-d10-da9-source-review.md`: filtering the source-less public
+`pack:rendering/effects/text-card` winner causes the valid local
+`pack:local/effects/text-card` custom shadow to disappear. The owner correction
+is `agt-m2-d10-custom-owner-preservation`; no duplicate App or Agent source
+work is requested.
+
+App `e245a4791f9270177408a7745d8397ad7b6f81a1` remains a valid independent
+consumer-first cut. Keep D10 held and do not refresh vendor output or claim
+source deletion until Agent publishes the corrected source SHA and its actual
+custom-winner, package-winner, unknown-refusal, revision-authority, and normal
+freshness gates. Then refresh against that exact SHA and verify provenance.
+
+

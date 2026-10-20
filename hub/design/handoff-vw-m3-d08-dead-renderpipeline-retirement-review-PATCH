@@ -1,0 +1,504 @@
+diff --git a/src/tools/video-editor/lib/renderRouter.test.tsx b/src/tools/video-editor/lib/renderRouter.test.tsx
+index 67e7504fd..4d19cd1c8 100644
+--- a/src/tools/video-editor/lib/renderRouter.test.tsx
++++ b/src/tools/video-editor/lib/renderRouter.test.tsx
+@@ -9,7 +9,6 @@ import {
+   decideRenderRoute,
+   enqueueAstridRuntimeRenderTimeline,
+ } from '@/tools/video-editor/lib/renderRouter';
+-import { executeRenderPipeline } from '@/tools/video-editor/render/renderPipeline';
+ import { AstridLocalClient } from '@/integrations/astrid/client.ts';
+ import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
+ import { createFakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
+@@ -1706,276 +1705,3 @@ describe('Sprint 8 router → enqueue integration', () => {
+     // make the router contract explicit so future regressions are loud.
+   });
+ });
+-
+-describe('Sprint 8 render pipeline middleware', () => {
+-  const runtime = {
+-    projectId: 'project-1',
+-  };
+-
+-
+-  it('renders supported local fixture timelines in the browser path with the local runtime type', async () => {
+-    const events: Array<{ type: string; request?: unknown; assetCount?: number; providerId?: string }> = [];
+-    const request = {
+-      timelineId: 'fixture-browser',
+-      assetRegistry: {
+-        assets: {
+-          'asset-1': {
+-            src: 'file:///tmp/fixture-browser.mp4',
+-            file: 'fixture-browser.mp4',
+-            type: 'video/mp4',
+-          },
+-        },
+-      },
+-      resolvedConfig: {
+-        output: { resolution: '1920x1080', fps: 30, file: 'fixture-browser.mp4' },
+-        tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+-        clips: [{ id: 'clip-1', track: 'V1', at: 0, from: 0, to: 2, clipType: 'media', asset: 'asset-1' }],
+-        registry: {
+-          'asset-1': {
+-            src: 'file:///tmp/fixture-browser.mp4',
+-            file: 'fixture-browser.mp4',
+-            type: 'video/mp4',
+-          },
+-        },
+-      },
+-      renderMetadata: null,
+-      renderRuntime: {
+-        projectId: 'project-1',
+-      },
+-    };
+-    const startBrowserRender = vi.fn(async () => ({
+-      status: 'done' as const,
+-      message: 'Saved fixture-browser.mp4',
+-    }));
+-
+-    const result = await executeRenderPipeline({
+-      decision: decideRenderRoute(request.resolvedConfig),
+-      request,
+-      startBrowserRender,
+-      middlewares: [async (event) => {
+-        events.push(event);
+-      }],
+-    });
+-
+-    expect(result).toMatchObject({
+-      status: 'done',
+-      providerId: 'browser-remotion',
+-    });
+-    expect(startBrowserRender).toHaveBeenCalledTimes(1);
+-    expect(events).toMatchObject([
+-      { type: 'beforeRender', request },
+-      { type: 'assetMaterialized', request, assetCount: 1 },
+-      { type: 'afterRender', request, providerId: 'browser-remotion' },
+-    ]);
+-  });
+-
+-  it('does not block browser export on an enforced seam with an active opaque effect', async () => {
+-    const startBrowserRender = vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' }));
+-    const request = {
+-      timelineId: 'timeline-opaque-seam',
+-      assetRegistry: null,
+-      resolvedConfig: {
+-        output: { resolution: '1920x1080', fps: 30, file: 'seam.mp4' },
+-        tracks: [
+-          { id: 'video', kind: 'visual' as const, label: 'Picture' },
+-          { id: 'fx', kind: 'visual' as const, label: 'FX' },
+-        ],
+-        clips: [
+-          { id: 'a', track: 'video', at: 0, hold: 2, clipType: 'media', asset: 'a' },
+-          { id: 'b', track: 'video', at: 2, hold: 2, clipType: 'media', asset: 'b' },
+-          {
+-            id: 'fx-wipe', track: 'fx', at: 2, hold: 1,
+-            clipType: 'custom-effect',
+-            elementRef: { id: 'wipe', kind: 'effect' as const, revision: 'rev-1' },
+-          },
+-        ],
+-        registry: {},
+-        app: { visualSeamContract: { version: 1, mode: 'enforced' } },
+-      },
+-      renderMetadata: null,
+-      renderRuntime: runtime,
+-    };
+-
+-    const result = await executeRenderPipeline({
+-      decision: decideRenderRoute({ clips: [{ clipType: 'media' }] }),
+-      request,
+-      startBrowserRender,
+-    });
+-
+-    expect(result).toMatchObject({ status: 'done', providerId: 'browser-remotion' });
+-    expect(startBrowserRender).toHaveBeenCalledOnce();
+-  });
+-
+-  it('emits beforeRender, assetMaterialized, and afterRender through one shared middleware path', async () => {
+-    const events: string[] = [];
+-    const middleware = vi.fn(async (event: { type: string }) => {
+-      events.push(event.type);
+-    });
+-    const startBrowserRender = vi.fn(async () => ({
+-      status: 'done' as const,
+-      message: 'Saved output.mp4',
+-    }));
+-
+-    const result = await executeRenderPipeline({
+-      decision: decideRenderRoute({ clips: [{ clipType: 'media' }] }),
+-      request: {
+-        timelineId: 'timeline-1',
+-        assetRegistry: { assets: { 'asset-1': { src: 'https://cdn.example.com/asset-1.mp4', file: 'asset-1.mp4', type: 'video/mp4' } } },
+-        resolvedConfig: {
+-          output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+-          tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+-          clips: [{ id: 'clip-1', track: 'V1', at: 0, hold: 1, clipType: 'media' }],
+-          registry: { 'asset-1': { src: 'https://cdn.example.com/asset-1.mp4', file: 'asset-1.mp4', type: 'video/mp4' } },
+-        },
+-        renderMetadata: null,
+-        renderRuntime: runtime,
+-      },
+-      startBrowserRender,
+-      middlewares: [middleware],
+-    });
+-
+-    expect(result).toMatchObject({
+-      status: 'done',
+-      providerId: 'browser-remotion',
+-    });
+-    expect(startBrowserRender).toHaveBeenCalledTimes(1);
+-    expect(events).toEqual(['beforeRender', 'assetMaterialized', 'afterRender']);
+-  });
+-
+-  it('emits renderFailed for preview-only routes without falling back to the browser renderer', async () => {
+-    const previewEvents: string[] = [];
+-    const previewResult = await executeRenderPipeline({
+-      decision: decideRenderRoute({
+-        clips: [{ clipType: 'media', generation: { sequence_lane: 'remotion_module' } }],
+-      }),
+-      request: {
+-        timelineId: 'timeline-1',
+-        assetRegistry: null,
+-        resolvedConfig: null,
+-        renderMetadata: null,
+-        renderRuntime: runtime,
+-      },
+-      startBrowserRender: vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' })),
+-      middlewares: [async (event) => {
+-        previewEvents.push(event.type);
+-      }],
+-    });
+-
+-    expect(previewResult).toMatchObject({
+-      status: 'error',
+-      providerId: 'preview-only',
+-    });
+-    expect(previewEvents).toEqual(['beforeRender', 'assetMaterialized', 'renderFailed']);
+-  });
+-
+-  it('queues worker-capable routes through Astrid R1 without falling back to the browser renderer', async () => {
+-    const workerEvents: string[] = [];
+-    const startBrowserRender = vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' }));
+-    const fetchImpl = canonicalRenderFetch('task-1');
+-    const originalFetch = globalThis.fetch;
+-    vi.stubGlobal('fetch', fetchImpl);
+-    const workerRuntime = runtime;
+-    const request = {
+-      timelineId: 'timeline-fixture-worker',
+-      assetRegistry: {
+-        assets: {
+-          'asset-1': {
+-            file: 'asset-1.png',
+-            src: 'file:///tmp/asset-1.png',
+-            type: 'image/png',
+-            media_id: `sha256:${'1'.repeat(64)}`,
+-          },
+-        },
+-      },
+-      resolvedConfig: {
+-        theme: '2rp',
+-        output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+-        tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+-        clips: [{ id: 'clip-1', track: 'V1', at: 0, hold: 1, clipType: 'image-jump', asset: 'asset-1' }],
+-        registry: {
+-          'asset-1': {
+-            file: 'asset-1.png',
+-            src: 'file:///tmp/asset-1.png',
+-            type: 'image/png',
+-            media_id: `sha256:${'1'.repeat(64)}`,
+-          },
+-        },
+-      },
+-      renderMetadata: null,
+-      renderRuntime: workerRuntime,
+-    };
+-
+-    const workerResult = await executeRenderPipeline({
+-      decision: decideRenderRoute({ clips: [{ clipType: 'image-jump' }] }),
+-      request,
+-      startBrowserRender,
+-      middlewares: [async (event) => {
+-        workerEvents.push(event.type);
+-      }],
+-    });
+-
+-    expect(workerResult).toMatchObject({
+-      status: 'queued',
+-      providerId: 'worker-astrid-runtime',
+-      taskId: 'task-1',
+-      correlationId: expect.any(String),
+-    });
+-    expect(startBrowserRender).not.toHaveBeenCalled();
+-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+-    const body = JSON.parse(fetchImpl.mock.calls[1][1].body as string);
+-    expect(body).toMatchObject({
+-      capability_id: RENDER_CAPABILITY_ID,
+-      capability_digest: RENDER_CAPABILITY_DIGEST,
+-      input_object_ids: [],
+-      spec: {
+-        family: RENDER_CAPABILITY_ID,
+-        params: {
+-          timeline_ref: 'timeline-fixture-worker',
+-          output_name: 'timeline-timeline-fixture-worker.mp4',
+-          selector: 'rendering.remotion',
+-        },
+-      },
+-    });
+-    expect(workerEvents).toEqual(['beforeRender', 'assetMaterialized', 'afterRender']);
+-
+-    vi.stubGlobal('fetch', originalFetch);
+-  });
+-
+-  it('emits renderFailed when Astrid rejects render admission', async () => {
+-    const workerEvents: string[] = [];
+-    const startBrowserRender = vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' }));
+-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+-      error: 'capability_unavailable',
+-      detail: 'Remotion is not installed',
+-    }), { status: 422 })));
+-    const workerResult = await executeRenderPipeline({
+-      decision: decideRenderRoute({ clips: [{ clipType: 'image-jump' }] }),
+-      request: {
+-        timelineId: 'timeline-1',
+-        assetRegistry: null,
+-        resolvedConfig: {
+-          theme: '2rp',
+-          output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+-          tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+-          clips: [{ id: 'clip-1', track: 'V1', at: 0, hold: 1, clipType: 'image-jump' }],
+-          registry: {},
+-        },
+-        renderMetadata: null,
+-        renderRuntime: runtime,
+-      },
+-      startBrowserRender,
+-      middlewares: [async (event) => {
+-        workerEvents.push(event.type);
+-      }],
+-    });
+-
+-    expect(workerResult).toMatchObject({
+-      status: 'error',
+-      providerId: 'worker-astrid-runtime',
+-    });
+-    expect(workerResult.message).toContain('Remotion is not installed');
+-    expect(startBrowserRender).not.toHaveBeenCalled();
+-    expect(workerEvents).toEqual(['beforeRender', 'assetMaterialized', 'renderFailed']);
+-    vi.unstubAllGlobals();
+-  });
+-});
+diff --git a/src/tools/video-editor/lib/renderRouter.ts b/src/tools/video-editor/lib/renderRouter.ts
+index 5a24a3d5a..7aaa8e969 100644
+--- a/src/tools/video-editor/lib/renderRouter.ts
++++ b/src/tools/video-editor/lib/renderRouter.ts
+@@ -88,9 +88,9 @@ export interface ContributedClipRecord {
+ }
+ 
+ /**
+- * Sprint 8 (final): provider-id taxonomy used by the render pipeline +
+- * `renderPipeline.ts`. Each route maps 1:1 onto a provider id so middleware
+- * can dispatch on the route without a separate lookup table.
++ * Sprint 8 (final): provider-id taxonomy used by the render router. Each
++ * route maps 1:1 onto a provider id so callers can dispatch on the route
++ * without a separate lookup table.
+  *
+  *   * `browser-remotion`  — client-side WebCodecs / Remotion path
+  *                          (`useClientRender`, native + media clips).
+@@ -104,10 +104,10 @@ export interface ContributedClipRecord {
+  *                          planner selects `sidecar-export`, which requires
+  *                          the plan to actually demand that route (see
+  *                          `plannerRouteHasDemand`). No provider implements
+- *                          it yet, so `renderPipeline` reports "no external
+- *                          render provider is registered" — a route the plan
+- *                          asked for and the host cannot serve, never a
+- *                          silent fallback for a blocked browser/worker plan.
++ *                          it yet, so the router reports "no external render
++ *                          provider is registered" — a route the plan asked
++ *                          for and the host cannot serve, never a silent
++ *                          fallback for a blocked browser/worker plan.
+  */
+ export type RenderRoute =
+   | 'browser-remotion'
+diff --git a/src/tools/video-editor/render/renderPipeline.ts b/src/tools/video-editor/render/renderPipeline.ts
+deleted file mode 100644
+index f0573dd37..000000000
+--- a/src/tools/video-editor/render/renderPipeline.ts
++++ /dev/null
+@@ -1,177 +0,0 @@
+-import type { TimelineRenderRequest } from '@/tools/video-editor/hooks/timeline-state-types.ts';
+-import {
+-  buildRenderTimelinePayload,
+-  enqueueAstridRuntimeRenderTimeline,
+-  type RenderProviderId,
+-  type RenderRouteDecision,
+-} from '@/tools/video-editor/lib/renderRouter.ts';
+-
+-export type RenderPipelineEvent =
+-  | {
+-      type: 'beforeRender';
+-      decision: RenderRouteDecision;
+-      request: TimelineRenderRequest;
+-    }
+-  | {
+-      type: 'assetMaterialized';
+-      decision: RenderRouteDecision;
+-      request: TimelineRenderRequest;
+-      assetCount: number;
+-    }
+-  | {
+-      type: 'afterRender';
+-      decision: RenderRouteDecision;
+-      request: TimelineRenderRequest;
+-      providerId: RenderProviderId;
+-      message: string;
+-    }
+-  | {
+-      type: 'renderFailed';
+-      decision: RenderRouteDecision;
+-      request: TimelineRenderRequest;
+-      providerId: RenderProviderId;
+-      error: string;
+-    };
+-
+-export type RenderPipelineMiddleware = (event: RenderPipelineEvent) => void | Promise<void>;
+-
+-export interface BrowserRenderResult {
+-  status: 'done' | 'error';
+-  message: string;
+-}
+-
+-export interface ExecuteRenderPipelineOptions {
+-  decision: RenderRouteDecision;
+-  request: TimelineRenderRequest;
+-  startBrowserRender: () => Promise<BrowserRenderResult>;
+-  middlewares?: readonly RenderPipelineMiddleware[];
+-}
+-
+-export interface ExecuteRenderPipelineResult {
+-  status: 'done' | 'queued' | 'error';
+-  providerId: RenderProviderId;
+-  message: string;
+-  taskId?: string;
+-  correlationId?: string;
+-}
+-
+-async function emitRenderPipelineEvent(
+-  middlewares: readonly RenderPipelineMiddleware[],
+-  event: RenderPipelineEvent,
+-): Promise<void> {
+-  for (const middleware of middlewares) {
+-    await middleware(event);
+-  }
+-}
+-
+-async function executeProviderRoute({
+-  decision,
+-  request,
+-  startBrowserRender,
+-}: Pick<ExecuteRenderPipelineOptions, 'decision' | 'request' | 'startBrowserRender'>): Promise<ExecuteRenderPipelineResult> {
+-  switch (decision.route) {
+-    case 'browser-remotion': {
+-      const result = await startBrowserRender();
+-      return {
+-        status: result.status,
+-        providerId: 'browser-remotion',
+-        message: result.message,
+-      };
+-    }
+-    case 'worker-astrid-runtime': {
+-      const { payload, error } = buildRenderTimelinePayload({
+-        request,
+-      });
+-
+-      if (!payload) {
+-        return {
+-          status: 'error',
+-          providerId: 'worker-astrid-runtime',
+-          message: error ?? `Worker render dispatch failed for route "${decision.reason}".`,
+-        };
+-      }
+-
+-      const enqueueResult = await enqueueAstridRuntimeRenderTimeline(payload, {
+-        destination: request.renderRuntime.destination,
+-      });
+-
+-      if (enqueueResult.status === 'error') {
+-        return {
+-          status: 'error',
+-          providerId: 'worker-astrid-runtime',
+-          message: enqueueResult.message,
+-        };
+-      }
+-
+-      return {
+-        status: 'queued',
+-        providerId: 'worker-astrid-runtime',
+-        taskId: enqueueResult.task_id,
+-        correlationId: enqueueResult.correlation_id,
+-        message: enqueueResult.message,
+-      };
+-    }
+-    case 'external':
+-      return {
+-        status: 'error',
+-        providerId: 'external',
+-        message: `No external render provider is registered for route "${decision.reason}".`,
+-      };
+-    case 'preview-only':
+-      return {
+-        status: 'error',
+-        providerId: 'preview-only',
+-        message: `Render blocked: ${decision.reason}. Preview-only clips require a valid non-browser render provider.`,
+-      };
+-    default: {
+-      const unreachableRoute: never = decision.route;
+-      throw new Error(`Unknown render route: ${String(unreachableRoute)}`);
+-    }
+-  }
+-}
+-
+-export async function executeRenderPipeline({
+-  decision,
+-  request,
+-  startBrowserRender,
+-  middlewares = [],
+-}: ExecuteRenderPipelineOptions): Promise<ExecuteRenderPipelineResult> {
+-  const baseEvent = {
+-    decision,
+-    request,
+-  } as const;
+-
+-  await emitRenderPipelineEvent(middlewares, {
+-    type: 'beforeRender',
+-    ...baseEvent,
+-  });
+-  await emitRenderPipelineEvent(middlewares, {
+-    type: 'assetMaterialized',
+-    ...baseEvent,
+-    assetCount: Object.keys(request.assetRegistry?.assets ?? {}).length,
+-  });
+-
+-  const result = await executeProviderRoute({
+-    decision,
+-    request,
+-    startBrowserRender,
+-  });
+-
+-  if (result.status === 'done' || result.status === 'queued') {
+-    await emitRenderPipelineEvent(middlewares, {
+-      type: 'afterRender',
+-      ...baseEvent,
+-      providerId: result.providerId,
+-      message: result.message,
+-    });
+-  } else {
+-    await emitRenderPipelineEvent(middlewares, {
+-      type: 'renderFailed',
+-      ...baseEvent,
+-      providerId: result.providerId,
+-      error: result.message,
+-    });
+-  }
+-
+-  return result;
+-}
