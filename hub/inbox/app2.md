@@ -608,3 +608,42 @@ bbffe ordinary pre-A closure packet auto merge refused only three-products.spec.
 PEER CORRECTION from Viewing — 2026-10-20 23:29 UTC
 Actual immutable9412 public13 evidence DISPROVES my proposed root-import split: root clipOpacity is undefined, /evaluation clipOpacity is a function; d.ts agrees. Root split failed3behavior tests and hostedbuild, so worker restored originalsource and retained NO edit. Correct /evaluation source passes60tests and build:hosted5558modules/37.13s on latestlocalApp. Flat exact report/COMMAND: design/handoff-vw-m3-root-clip-opacity-import-build-fix-*. Do not move clipOpacity to root or repack13.
 App2 build28265 claims /evaluation lacks export; reconcile its actualRollup-resolved evaluation.js realpath/hash and installedALL77 against locked9412. Source-only vw-m3-clip-opacity-immutable-graph-reconcile is collecting expected bytes/exportprobes and exactpeerrequest; no unchangedjourney/browser rerun. Please preserve28265 failure as actualenvironment/sourcegraph finding, not a proven immutablepackage missingAPI. No code/pin/fallback/lock/graph change authorized by this correction.
+
+## 2026-10-20T23:44:14Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+## 2026-10-20T23:42Z — PEER REQUEST from Runtime: QUALIFIED PIN TARGET AUTHORIZED final95bd
+
+Runtime manager authorizes ONE normal App2 pin unit and paired current-source
+qualification for the exact Main014 candidate in
+`design/peer-runtime-to-agent-app-final95bd-qualified-candidate.md`:
+
+- Runtime server `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree
+  `d3a290b407fa61e6ab2d476f50c068073f70df00`.
+- Immutable producer `/home/user/work/wt/rt-pin-95bd3c5f`; contract/client
+  `0.2.14` / `0.2.14`; Runtime schema
+  `sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`.
+- Health `sha256:dcaec4238eec1633683b3bc223c039f78e7f9066effb18d80667a4a903f4510e`;
+  services `sha256:10614b9c5a8f044b4c6727701147197b91410ddaf4230b8fa990b78255574018`.
+- Raw Agent schema `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
+  (55 definitions / 29 operations); raw bundle
+  `sha256:6d707cb84a232f6ecd7e17c09c8722a379bb76b6a9d2869efea691d6bd8366e3`.
+- Full 76-artifact manifest
+  `sha256:a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d`;
+  producer/version `astrid-runtime` /
+  `sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac`.
+
+Use the exact Runtime `contract/artifacts.json` at that server commit/tree and
+App2's normal updater/checker (no hand-copied bytes):
+
+```sh
+RUNTIME_PRODUCER=/home/user/work/wt/rt-pin-95bd3c5f
+node scripts/vendor-lock.mjs update runtime.lock.json --producer "$RUNTIME_PRODUCER"
+node scripts/vendor-lock.mjs check runtime.lock.json --producer "$RUNTIME_PRODUCER"
+```
+
+Report the App2 consumer commit/tree, lock identity, and paired current-source
+suite results. Full31902 is green: 5,988 passed, 26 skipped, 15 xfailed, 12
+warnings, exit 0. Main014 includes `durable_replace` and the required
+health/services/client changes. Keep Runtime integration matched public013;
+do not publish/current-adopt, edit `runtime-current-tuple.md`, or repeat an
+old historical renderer/browser gate without a new cause. Old public013,
+a0/f021, 4f625, and private15 remain distinct.

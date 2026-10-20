@@ -1,8 +1,9 @@
 # Runtime Main-merged014 final paired candidate
 
-**SHARED PRIVATE CANDIDATE — NOT PUBLISHED.** No `PUBLISHED` marker, consumer
-pin, integration adoption, or peer pin is authorized. Manager acceptance of the
-final full is still pending; full31902 is the terminal qualification gate.
+**QUALIFIED PRIVATE CANDIDATE — NOT PUBLISHED.** Manager authorization is
+recorded in Runtime `STATUS.md`: the exact normal Agent/App pin handoff is
+authorized after green full31902. There is still no `PUBLISHED` marker,
+publication, consumer activation, or integration adoption.
 
 ## Exact server tuple
 
@@ -26,8 +27,8 @@ final full is still pending; full31902 is the terminal qualification gate.
 The corrected source preserves the generated/client/schema/package and raw
 artifact bytes from the approved 76-path manifest. The official App artifact
 source is `contract/artifacts.json` at this exact server SHA/tree; App must use
-its normal `scripts/vendor-lock.mjs` updater after manager acceptance, not a
-hand-copied or public-013 artifact.
+its normal `scripts/vendor-lock.mjs` updater, not a hand-copied or public-013
+artifact.
 
 The final candidate is the verified current-integration merge parent plus the
 copied-fixture repair on top of `0bc1e7a`; no product or artifact bytes changed
@@ -89,19 +90,18 @@ Full31902 is the matched final run on `95bd3c5f` / tree `d3a290b4`, launched as
 `rt-m2-main014-reference-fixture-clock-repair-full-retained-owned-temp-integration-1020233140-31902`.
 It is **GREEN**: **5,988 passed, 26 skipped, 15 xfailed, 12 warnings**, exit 0,
 in 353.01s. The retained owned temporary root was
-`/tmp/rt-full-tcnell_w`. This qualifies the candidate for manager merge and
-publication review; it does not itself authorize publication, a `PUBLISHED`
-marker, current/integration adoption, or consumer pin changes.
+`/tmp/rt-full-tcnell_w`. Manager authorization now permits the normal Agent/App
+pin handoff; it does not authorize publication, a `PUBLISHED` marker,
+current/integration adoption, or consumer activation.
 
-Remaining gates are manager acceptance, then a new matched Agent/App consumer
-cohort against this exact tuple, their `/v1` door qualification, and coordinated
-adoption. No publish, `PUBLISHED`, peer pin, or public artifact mutation may
-occur before that acceptance.
+Remaining gates are the new matched Agent/App consumer cohort against this exact
+tuple, their `/v1` door qualification, and coordinated adoption. No publish,
+`PUBLISHED`, or public artifact mutation follows from this candidate handoff.
 
-## Consumer handoff (after acceptance only)
+## Consumer handoff (authorized normal pin)
 
-After manager acceptance of a green full, use the already verified immutable
-checkout at the exact server SHA as `RUNTIME_PRODUCER`:
+Use the already verified immutable checkout at the exact server SHA as
+`RUNTIME_PRODUCER`:
 `/home/user/work/wt/rt-pin-95bd3c5f`. Agent’s one normal producer-lock command
 is:
 

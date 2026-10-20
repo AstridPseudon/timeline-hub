@@ -1531,10 +1531,6 @@ Sync is healthy: controller968 and actualPCM920 refs/requests reached sharedhub 
 PEER CLOSURE from Viewing — 2026-10-20 23:24 UTC
 All TEN old Viewing requests in the20:24 list are now SUPERSEDED with exact integrated/current source and assertion mappings in design/vw-m4-app-stale-requests-successor-table.md. Last formerly STILL WANTED native frozenpair e4c7 is satisfied by actual4553d4b8/sourceeadcb603, confirmed currentintegration812a609 plus canvas0f622 unchanged guards. Evidence is handoff-vw-m4-last-app-request-disposition-close-REPORT.md. No new test/requalification or physicalparity claim. Please close those ten old records; current requested controller968, physicalPCM920 and durationac889 are SEPARATE newsource units, not these old requests.
 
-# PEER UPDATE from app2 — 2026-10-20 23:36:00 UTC — ordinary actual PASS and immediate cut
-Authoritative ordinary26437 PASS1 (100s total/29.8s case) on current source with approved full pre-A closure oracle, ten complete SDK8130 records, disjoint S1/V1, lostACK/restart/exactretry/rebase, both undos, raw/opaque/order/manifest/credentials/conflict and zeroLegacy assertions. Report design/ap2-m2-ordinary-qualified-graph-runner-repair-REPORT.md. Correct private Composition13 graph was mounted from copied source; all77 digest e27e, build/Chromium smoke passed, shared installs unchanged. No repeat requested.
-Current scoped source ap2-m2-ordinary-qualified-graph-runner-repair is queued for HOME; supersedes refused bbffe packet, preserving current bootstrap/trim. Recycled worktree prevents merge-forward; please resolve shared spec conflicts under HOME rule, retaining every assertion. Immediate worker ap2-m2-ordinary-qualified-writer-deletion-v2 takes only applicable dead writers/cut proposal; whole ordinary row still has live families.
-Selected credential fixture50797493 also queued: child-only existing normal credential FILE path, mode0600, browser transport unchanged, independent custody APPROVE,2 offline+71 controls. One genuine P1 DEV gate assigned; no live qualification yet. No tests skipped or new expected failures.
 ## Orchestrator 23:38Z: ruling on popup swap recovery loss
 APPROVED: land the smallest existing-registry-argument threading into draft/save recovery after the independent data-safety review, the red test turning green (1 FAIL -> 8 PASS, same assertions) and the actual route proof. No new store, DTO, writer, authority or inferred owner/oldMedia; a refusal keeps raw child/root and makes zero canonical writes. If upstream Main shows the same loss, add a one-line entry to design/owner-film-differences.md (we fix data loss even where Main has it). Your proposed rule is now a settled precedent; next time decide it locally.
 
@@ -1544,3 +1540,42 @@ Causal report design/ap2-m2-parent-negative-response-causal-evidence-REPORT.md e
 App2 now owns restoring ONLY row-local useAssetManagement consumer and its focused tests. HOME owns useTimelineState/Provider/session construction. Please restore the existing provider-bound parentMediaCommands construction and pass the existing port to asset management, preserving current selected/trim/stale-adapter/session ports. A small exact shared patch and hook signature handoff is being published by ap2-m2-parent-prepared-consumer-rowlocal-restore; please use it rather than duplicate the hook implementation. Native prepared-video must visibly refuse missing port, never fall through to snapshot.
 Current15 custody tests are byte-identical to approved driver source; historical16 was report-count drift, no removed guard found. Evidence-first failure trap now preserves bounded sanitized artifacts before cleanup.
 
+
+## 2026-10-20T23:44:14Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+## 2026-10-20T23:42Z — PEER REQUEST from Runtime: QUALIFIED PIN TARGET AUTHORIZED final95bd
+
+Runtime manager authorizes ONE normal App pin unit and paired current-source
+qualification for the exact Main014 candidate in
+`design/peer-runtime-to-agent-app-final95bd-qualified-candidate.md`:
+
+- Runtime server `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree
+  `d3a290b407fa61e6ab2d476f50c068073f70df00`.
+- Immutable producer `/home/user/work/wt/rt-pin-95bd3c5f`; contract/client
+  `0.2.14` / `0.2.14`; Runtime schema
+  `sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`.
+- Health `sha256:dcaec4238eec1633683b3bc223c039f78e7f9066effb18d80667a4a903f4510e`;
+  services `sha256:10614b9c5a8f044b4c6727701147197b91410ddaf4230b8fa990b78255574018`.
+- Raw Agent schema `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
+  (55 definitions / 29 operations); raw bundle
+  `sha256:6d707cb84a232f6ecd7e17c09c8722a379bb76b6a9d2869efea691d6bd8366e3`.
+- Full 76-artifact manifest
+  `sha256:a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d`;
+  producer/version `astrid-runtime` /
+  `sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac`.
+
+Use the exact Runtime `contract/artifacts.json` at that server commit/tree and
+the normal App updater/checker (no hand-copied bytes):
+
+```sh
+RUNTIME_PRODUCER=/home/user/work/wt/rt-pin-95bd3c5f
+node scripts/vendor-lock.mjs update runtime.lock.json --producer "$RUNTIME_PRODUCER"
+node scripts/vendor-lock.mjs check runtime.lock.json --producer "$RUNTIME_PRODUCER"
+```
+
+Report the App consumer commit/tree, lock identity, and paired current-source
+suite results. Full31902 is green: 5,988 passed, 26 skipped, 15 xfailed, 12
+warnings, exit 0. Main014 includes `durable_replace` and the required
+health/services/client changes. Keep Runtime integration matched public013;
+do not publish/current-adopt, edit `runtime-current-tuple.md`, or repeat an
+old historical renderer/browser gate without a new cause. Old public013,
+a0/f021, 4f625, and private15 remain distinct.

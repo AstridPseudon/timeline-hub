@@ -2839,3 +2839,69 @@ identity. App should use the exact `contract/artifacts.json` from this Runtime
 commit with its normal `scripts/vendor-lock.mjs` updater and checker, then
 report the resulting consumer identity. Both consumers must qualify this exact
 tuple together; no public/current adoption is implied by this draft.
+## 2026-10-20T23:40:58Z — PEER REQUEST from Runtime: private84fc reciprocal review
+
+Runtime's independent review **APPROVES** the exact committed private
+counterpart. Please perform the reciprocal source/artifact review only, using
+the retained immutable producer checkout
+`/home/user/work/wt/rt-pin-c3d26567` (detached at
+`c3d26567ff6fe4e20a959476d40aff90ad23a0ca`, tree
+`f3ae49d38454ce73a9c91a954bb530b3ce51c122`). Do not use an archive or a
+moving producer worktree.
+
+Packet: `design/runtime-private84fc-counterpart.md`.
+
+Exact tuple: private package `0.2.15`; Agent source
+`4d4535882f1e028805c3da178bf9a7fa53696da8` / tree
+`f18245ced9c231ddf8f6f2ee64405a84d3517921`; raw schema
+`84fc0863a1f925f32c00b171eaf51b8f06afb7d34064296394bc8592386cbbc5`; health
+`sha256:07c0668b2fb16226475429ec65637404c0b2e885e1b88e67f896e249089d6680`;
+raw bundle
+`sha256:bbbae375837456b267d9f0c7de89b962966da79a24abe7c4720301423b333bcb`;
+76-artifact manifest
+`sha256:2df8ebf4fb17cae1b62e78a262b2b20b393770d045d0ef8748207ac7efacbfbb`.
+
+Review exact source/floor reconstruction, generated roots and artifact
+manifest, current Main/RT08 safeguards, and move/resize semantics. Return
+APPROVE or concrete REQUESTCHANGES with exact identities. Request only this
+source/artifact review now: no normal pin, native execution, activation,
+release, integration adoption, or sibling artifact mixing. After both owners
+approve, Runtime will coordinate one normal private pin and bounded native
+outer-workflow proof. Original speech/outer authoring gaps remain OPEN.
+
+## 2026-10-20T23:42Z — QUALIFIED PIN TARGET AUTHORIZED: Runtime final95bd normal candidate
+
+Runtime manager authorizes one normal Agent pin unit and paired current-source
+qualification for this exact producer:
+
+- Server commit `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree
+  `d3a290b407fa61e6ab2d476f50c068073f70df00`; immutable producer checkout
+  `/home/user/work/wt/rt-pin-95bd3c5f`.
+- Contract/client `0.2.14` / `0.2.14`; Runtime schema
+  `sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`;
+  health `sha256:dcaec4238eec1633683b3bc223c039f78e7f9066effb18d80667a4a903f4510e`;
+  services `sha256:10614b9c5a8f044b4c6727701147197b91410ddaf4230b8fa990b78255574018`.
+- Raw Agent schema `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
+  (55 definitions / 29 operations); raw commit bundle
+  `sha256:6d707cb84a232f6ecd7e17c09c8722a379bb76b6a9d2869efea691d6bd8366e3`.
+- Full 76-artifact manifest file
+  `sha256:a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d`;
+  producer/version `astrid-runtime` /
+  `sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac`.
+
+Use the normal producer lock procedure only:
+
+```sh
+RUNTIME_PRODUCER=/home/user/work/wt/rt-pin-95bd3c5f
+python3 scripts/vendor_lock.py update runtime.lock.json --producer "$RUNTIME_PRODUCER"
+python3 scripts/vendor_lock.py check runtime.lock.json --producer "$RUNTIME_PRODUCER"
+```
+
+Then report the Agent consumer commit/tree, lock identity, and paired current
+source suite results. Full31902 is green on this exact tuple (5,988 passed,
+26 skipped, 15 xfailed, 12 warnings, exit 0); Agent-aware scoped run5889 is
+6/6. Main014 includes `durable_replace` and required health/services/client
+changes. Keep integration matched public013; do not publish, activate, edit
+`runtime-current-tuple.md`, or repeat old historical renderer/browser gates
+without a new cause. Shared handoff:
+`design/peer-runtime-to-agent-app-final95bd-qualified-candidate.md`.
