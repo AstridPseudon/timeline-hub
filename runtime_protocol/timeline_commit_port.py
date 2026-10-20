@@ -582,12 +582,36 @@ def read_project_pack_object(service, project_id, pin, object_id):
 
 
 def verify_text_object(conn, cas, project_id, selection):
+    return _verify_text_object(conn, cas, project_id, selection, TEXT_MEDIA_TYPE)
+
+
+def verify_retained_text_object(conn, cas, binding, selection):
+    """Reuse main's exact text/plain descriptor from this binding's present history."""
+    from .service import RuntimeService
+
+    events = RuntimeService._text_binding_events(conn, binding)
+    expected = {"binding_id": binding["id"], "project_id": binding["project_id"],
+                "shot_id": binding["shot_id"], "kind": binding["kind"], "slot": binding["slot"],
+                "media_id": selection.get("object_id"), "content_hash": selection.get("digest"),
+                "byte_size": selection.get("size"), "mime_type": selection.get("media_type")}
+    for event in events:
+        payload = json.loads(event["payload_json"])
+        # Original main events omit scope/size/MIME; those remain in the binding
+        # identity and immutable object metadata, checked below.
+        if (payload.get("state", "present") == "present"
+                and all(payload.get(key) == expected[key] for key in ("binding_id", "media_id", "content_hash"))
+                and all(payload[key] == value for key, value in expected.items() if key in payload)):
+            return _verify_text_object(conn, cas, binding["project_id"], selection, "text/plain")
+    raise ConflictError("legacy text descriptor is outside this binding's retained present history")
+
+
+def _verify_text_object(conn, cas, project_id, selection, media_type):
     if (not isinstance(selection, dict) or set(selection) != {"object_id", "digest", "size", "media_type"}
             or not all(isinstance(selection[k], str) and _OBJECT_ID.match(selection[k]) for k in ("object_id", "digest"))
             or selection["object_id"] != selection["digest"]
             or type(selection["size"]) is not int or not 0 <= selection["size"] <= TEXT_MAX_BYTES
-            or selection["media_type"] != TEXT_MEDIA_TYPE):
-        raise ValidationError(f"text selection requires object_id == digest, size within 1 MiB and {TEXT_MEDIA_TYPE}")
+            or selection["media_type"] != media_type):
+        raise ValidationError(f"text selection requires object_id == digest, size within 1 MiB and {media_type}")
     bare = selection["digest"][7:]
     row = conn.execute("SELECT o.size, o.media_type FROM objects o JOIN project_objects p ON p.digest=o.digest "
                        "WHERE p.project_id=? AND p.relation='managed' AND o.digest=?", (project_id, bare)).fetchone()
