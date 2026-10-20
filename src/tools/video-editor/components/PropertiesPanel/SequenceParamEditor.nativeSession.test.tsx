@@ -6,7 +6,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AgentChatProvider } from '@/shared/contexts/AgentChatContext.tsx';
 import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import type { AgentState } from '@/integrations/runtime/timeline-commit-types.ts';
 import { document as commandDocument, environment, scope } from '@/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts';
+import { captureClipParamsEdit, submitClipParamsEdit } from '@/tools/video-editor/commands/clipParamsGesture.ts';
 import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider.tsx';
 import { useTimelineEditorData, useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore.ts';
 import * as commandSession from '@/tools/video-editor/hooks/useTimelineCommandSession.ts';
@@ -15,6 +17,7 @@ import { SequenceParamEditor } from './SequenceParamEditor.tsx';
 
 // External host services and the initial read are fixed; provider/state/save,
 // native capture, IndexedDB outbox and the Runtime client remain connected.
+// Acceptance is simulated offline; released Agent/Runtime acceptance is separate.
 vi.mock('@/tools/video-editor/runtime/installedTimelineHostServiceHooks.ts', async () => {
   const { PUBLIC_TIMELINE_SERVICE_HOOKS } = await import('@/tools/video-editor/runtime/timelineHostServiceHooks.ts');
   return { INSTALLED_TIMELINE_SERVICE_HOOKS: PUBLIC_TIMELINE_SERVICE_HOOKS };
@@ -49,10 +52,12 @@ const metadata: AvailableSequenceMetadata = {
 };
 const initialParams = { assets: ['asset-a'], keyframes: [{ at: 0 }], opaque: { keep: [null, false, 0, []] } };
 
-async function mounted(legacyGroup = false) {
+async function mounted(legacyGroup = false, params: AgentState = { state: 'present', value: initialParams }) {
   const raw = commandDocument();
   for (const clips of [raw.parent_revision.payload.clips, raw.parent_revision.payload.config.clips]) {
-    (clips as Array<Record<string, unknown>>)[0].params = structuredClone(initialParams);
+    const clip = (clips as Array<Record<string, unknown>>)[0];
+    if (params.state === 'absent') delete clip.params;
+    else clip.params = structuredClone(params.value);
   }
   raw.parent_revision.payload.config.x_opaque = { untouched: [null, false, []] };
   if (legacyGroup) raw.parent_revision.payload.config.pinnedShotGroups = [
@@ -98,6 +103,38 @@ async function mounted(legacyGroup = false) {
 }
 
 describe('mounted sequence params through the provider and native command outbox', () => {
+  it.each<AgentState>([{ state: 'absent' }, { state: 'present', value: null }, { state: 'present', value: {} }])(
+    'submits a mounted port clear from $state/$value without a local patch or snapshot save', async (params) => {
+      const { env, original, session, current, port, view, onChange, saveTimeline, saveTimelineAtHead } = await mounted(false, params);
+      const before = current();
+      const finish = vi.spyOn(port(), 'finish');
+      const submit = vi.spyOn(port(), 'submit');
+      const gate = env.pause();
+      // The inspector hides Clear for absent leaves; exercise its same mounted port directly.
+      act(() => submitClipParamsEdit(captureClipParamsEdit(port(), before, 'x'), { values: {}, clear: ['keyframes'] }));
+      await waitFor(() => expect(env.commits()).toHaveLength(1));
+      expect(finish).toHaveBeenCalledOnce();
+      expect(finish.mock.results[0].value.previewParams).toBeNull();
+      expect(submit).toHaveBeenCalledExactlyOnceWith({ command: env.commits()[0].body!.commands[0], preview: null });
+      expect(env.commits()[0].body!.commands[0]).toMatchObject({ op: 'clip.set-params', args: { values: {}, clear: ['keyframes'] },
+        expect: { 'parent/clip:x::params.keyframes': { state: 'absent' } },
+        authorship: { 'parent/clip:x::params.keyframes': 'direct' } });
+      expect(current()).toBe(before);
+      expect((await env.outboxes.list(scope))[0].intents[0].payload).toMatchObject({ preview: null });
+      await act(async () => { gate.resolve(); await session().flush(); });
+      expect(session().state.status).toBe('saved');
+      expect(current().editProjection).toMatchObject({ kind: 'accepted', head: { revisionId: 'r0', publicationId: 'p1' } });
+      const accepted = await env.provider.loadTimelineCommandBasis(scope.timelineId);
+      expect(accepted.canonicalDocument.parent_revision.payload).toEqual(original.parent_revision.payload);
+      expect(env.commits()).toHaveLength(1);
+      expect(onChange).not.toHaveBeenCalled();
+      expect(saveTimeline).not.toHaveBeenCalled();
+      expect(saveTimelineAtHead).not.toHaveBeenCalled();
+      expect(env.calls.filter((call) => call.method !== 'GET').map((call) => call.path))
+        .toEqual(['/v1/handshake', expect.stringMatching(/\/commit$/)]);
+      view.unmount();
+    },
+  );
   it.each(['assets', 'clear'] as const)('captures the original snapshot for %s and sends no snapshot traffic', async (gesture) => {
     const mountedEditor = await mounted();
     const { env, original, session, current, port, view, onChange, saveTimeline, saveTimelineAtHead } = mountedEditor;

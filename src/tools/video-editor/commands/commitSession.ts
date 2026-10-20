@@ -334,11 +334,15 @@ export async function createTimelineCommandSession(options: Options) {
         if (!next.state.matches(write.ref, write.path, write.before)) {
           throw new Error('Clip parameters changed during the parameters edit');
         }
-        next.state.set(write.ref, write.path, write.after);
+        // Unchanged writes still claim the field; absent clears retain native ancestors.
+        if (!equal(write.before, write.after)) next.state.set(write.ref, write.path, write.after);
       }
       next.compile();
-      const previewParams = next.state.entity(result.command.select!)!.params as Record<string, JSON>;
-      const preview: TimelinePatch = { version: 1, operations: [{ op: 'clip.update', target: basis.clipId as string,
+      const beforeParams = new AuthoredState(bundle).get(result.command.select!, ['params']);
+      const afterParams = next.state.get(result.command.select!, ['params']);
+      const previewParams = afterParams.state === 'present' && object(afterParams.value) && !equal(beforeParams, afterParams)
+        ? afterParams.value : null;
+      const preview: TimelinePatch | null = previewParams === null ? null : { version: 1, operations: [{ op: 'clip.update', target: basis.clipId as string,
         payload: { params: copy(previewParams) } }] };
       freezeJson(result.command);
       prepared.set(JSON.stringify(result.command), { payload: {

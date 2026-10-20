@@ -33,8 +33,18 @@ describe('discrete clip params gesture', () => {
     ] } });
     const submitted = vi.mocked(port.submit).mock.calls[0][0];
     expect(Object.isFrozen(submitted.command.args)).toBe(true);
-    expect(Object.isFrozen(submitted.preview.operations[0].payload!.params)).toBe(true);
+    expect(Object.isFrozen(submitted.preview!.operations[0].payload!.params)).toBe(true);
     expect(submitted.command.args).not.toHaveProperty('opaque');
+  });
+  it('submits an explicit clear command even when the host has no visible params preview', () => {
+    const { port, current } = setup();
+    const captured = captureClipParamsEdit(port, current, 'x');
+    const finish = port.finish;
+    port.finish = (basis, args) => ({ ...finish(basis, args), previewParams: null });
+    const args = { values: {}, clear: ['missing'] };
+    submitClipParamsEdit(captured, args);
+    expect(port.submit).toHaveBeenCalledExactlyOnceWith({ command: { schema_version: 1, op: 'clip.set-params', version: '1',
+      select: 'parent/clip:x', args }, preview: null });
   });
   it('refuses missing and duplicate identities before capture', () => {
     const { port, current } = setup();

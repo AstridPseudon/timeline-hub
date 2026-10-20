@@ -24,10 +24,248 @@ function changeClips(raw: ReturnType<typeof document>, change: (clip: Record<str
   raw.parent_revision.payload.config.clips = structuredClone(raw.parent_revision.payload.clips);
 }
 const args: ClipParamsArgs = { values: { x: 2 }, clear: [] };
+const clearOnly: ClipParamsArgs = { values: {}, clear: ['missing', 'literal.key', ''] };
+const clearContainers = [undefined, null, {}, { opaque: { keep: [null, false, {}, []] }, 'a::b': '' }];
 
-// Simulated acceptance exercises App's outbox; the current official label-only
-// Runtime bundle does not yet admit clip.set-params.
+// Offline simulated acceptance exercises App's outbox. Actual Runtime acceptance
+// follows the released Agent/Runtime pair and official client pin.
 describe('clip params on the existing durable command session', () => {
+  it.each(clearContainers)('durably records unchanged clears on %j with no preview or fabricated container', async (params) => {
+    const env = await environment(withParams(params));
+    const session = await env.mount();
+    const captured = captureClipParamsEdit(session.clipParamsPort, env.current(), 'x');
+    const original = structuredClone(captured.basis);
+    const native = finishClipParams(captureClipParams(captured.basis.bundle as AuthoredBundle, 'parent/clip:x', clearOnly), clearOnly);
+    const finished = session.clipParamsPort.finish(captured.basis, clearOnly);
+    expect(finished.command).toEqual(native.command);
+    expect(finished.previewParams).toBeNull();
+    expect(native.record.writes).toHaveLength(clearOnly.clear.length);
+    expect(native.record.writes.every((write) => write.before.state === 'absent' && write.after.state === 'absent')).toBe(true);
+    const fabricated = { version: 1 as const, operations: [{ op: 'clip.update' as const, target: 'x', payload: { params: {} } }] };
+    expect(() => session.clipParamsPort.submit({ command: finished.command, preview: fabricated })).toThrow('params-only preview');
+    submitClipParamsEdit(captured, clearOnly);
+    await session.dispose();
+    const [stored] = await env.outboxes.list(scope);
+    const payload = stored.intents[0].payload as unknown as { before: AuthoredBundle; after: AuthoredBundle; commands: JSON[]; preview: JSON };
+    expect(payload.commands).toEqual([native.command]);
+    expect(payload.before).toEqual(captured.basis.bundle);
+    expect(payload.after).toEqual(native.bundle);
+    expect(payload.after).toEqual(payload.before);
+    expect(payload.preview).toBeNull();
+    expect(captured.basis).toEqual(original);
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    const reopened = await env.mount();
+    await reopened.recover(stored.ownerId);
+    await reopened.flush();
+    expect(env.commits()).toHaveLength(1);
+    expect(env.commits()[0].body!.commands).toEqual([native.command]);
+    expect(rawClip(env.projected.at(-1)!.canonicalDocument)).toEqual(rawClip(env.initial.canonicalDocument));
+    const [accepted] = await env.outboxes.list(scope);
+    expect(accepted.intents).toHaveLength(0);
+    expect(accepted.accepted!.head).toEqual({ revisionId: 'r0', publicationId: 'p1' });
+    expect(reopened.getState()).toMatchObject({ status: 'saved', canUndo: true });
+    expect(env.calls.filter((call) => call.method !== 'GET' && call.path !== '/v1/handshake')).toEqual(env.commits());
+    await reopened.dispose();
+  });
+  it('clears literal object keys while retaining other params and native source claims', async () => {
+    const env = await environment(withParams({ 'literal.key': null, '': [], opaque: { keep: false }, 'a::b': {} }));
+    const session = await env.mount();
+    const captured = captureClipParamsEdit(session.clipParamsPort, env.current(), 'x');
+    const native = finishClipParams(captureClipParams(captured.basis.bundle as AuthoredBundle, 'parent/clip:x', clearOnly), clearOnly);
+    submitClipParamsEdit(captured, clearOnly);
+    await session.flush();
+    expect(env.commits()[0].body!.commands).toEqual([native.command]);
+    expect(rawClip(env.projected.at(-1)!.canonicalDocument).params).toEqual({ opaque: { keep: false }, 'a::b': {} });
+    expect(env.previews).toHaveBeenCalledExactlyOnceWith({ version: 1, operations: [{ op: 'clip.update', target: 'x',
+      payload: { params: { opaque: { keep: false }, 'a::b': {} } } }] });
+    await session.dispose();
+  });
+  it('previews an emptied object distinctly from an unchanged absent/null container', async () => {
+    const env = await environment(withParams({ missing: null }));
+    const session = await env.mount();
+    submitClipParamsEdit(captureClipParamsEdit(session.clipParamsPort, env.current(), 'x'), clearOnly);
+    await session.flush();
+    expect(rawClip(env.projected.at(-1)!.canonicalDocument).params).toEqual({});
+    expect(env.previews).toHaveBeenCalledExactlyOnceWith({ version: 1, operations: [
+      { op: 'clip.update', target: 'x', payload: { params: {} } },
+    ] });
+    await session.dispose();
+  });
+  it.each([undefined, null, {}])('guards clear-only %j captures against changed leaves, containers and identity', async (params) => {
+    // Native reads the whole container only when it is absent/null.
+    const changes = ['leaf', 'type', 'asset', 'deleted'];
+    if (params === undefined || params === null) changes.push('container');
+    for (const change of changes) {
+      const env = await environment(withParams(params));
+      const session = await env.mount();
+      const captured = captureClipParamsEdit(session.clipParamsPort, env.current(), 'x');
+      const original = structuredClone(captured.basis);
+      const remote = await env.external((raw) => {
+        if (change === 'deleted') {
+          raw.parent_revision.payload.clips = [];
+          raw.parent_revision.payload.config.clips = [];
+        } else changeClips(raw, (clip) => {
+          if (change === 'leaf') clip.params = { missing: null };
+          if (change === 'container') {
+            if (params === undefined) clip.params = null;
+            else if (params === null) delete clip.params;
+          }
+          if (change === 'type') clip.clipType = 'audio';
+          if (change === 'asset') clip.asset = 'other';
+        });
+      });
+      session.observe(remote);
+      await vi.waitFor(() => expect(env.current().head!.headRevisionId).toBe(remote.head.revisionId));
+      expect(() => submitClipParamsEdit(captured, clearOnly)).toThrow();
+      expect(captured.basis).toEqual(original);
+      expect(env.previews).not.toHaveBeenCalled();
+      expect(env.commits()).toHaveLength(0);
+      expect((await env.outboxes.list(scope))[0].intents).toHaveLength(0);
+      await session.dispose();
+    }
+  });
+  it.each([undefined, null, {}])('rebases a clear-only %j capture over disjoint changes using its original claims', async (params) => {
+    const env = await environment(withParams(params));
+    const session = await env.mount();
+    const captured = captureClipParamsEdit(session.clipParamsPort, env.current(), 'x');
+    const native = finishClipParams(captureClipParams(captured.basis.bundle as AuthoredBundle, 'parent/clip:x', clearOnly), clearOnly);
+    const remote = await env.external((raw) => {
+      changeClips(raw, (clip) => {
+        clip.at = 8;
+        clip.text = { content: 'remote' };
+        if (params !== undefined && params !== null) (clip.params as Record<string, JSON>).opaque = [null, false];
+      });
+      raw.parent_revision.payload.config.x_remote = { keep: false };
+      (raw.parent_revision.payload.clips as JSON[]).push({ id: 'other', at: 20, hold: 1, track: 'V1' });
+      raw.parent_revision.payload.config.clips = structuredClone(raw.parent_revision.payload.clips);
+    });
+    session.observe(remote);
+    await vi.waitFor(() => expect(env.current().head!.headRevisionId).toBe(remote.head.revisionId));
+    submitClipParamsEdit(captured, clearOnly);
+    await session.flush();
+    expect(env.commits()[0].body).toMatchObject({ base_revision_id: 'r0', base_publication_id: 'p0', commands: [native.command] });
+    expect(env.projected.at(-1)!.canonicalDocument.parent_revision.payload).toEqual(remote.canonicalDocument.parent_revision.payload);
+    expect(env.previews).not.toHaveBeenCalled();
+    await session.dispose();
+  });
+  it.each([undefined, null, {}])('keeps move → unchanged clear on %j through lost ACK and reload', async (params) => {
+    const env = await environment(withParams(params));
+    const session = await env.mount();
+    env.setFault('lost');
+    env.move(session, 5);
+    const captured = captureClipParamsEdit(session.clipParamsPort, env.current(), 'x');
+    const native = finishClipParams(captureClipParams(captured.basis.bundle as AuthoredBundle, 'parent/clip:x', clearOnly), clearOnly);
+    submitClipParamsEdit(captured, clearOnly);
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    const request = structuredClone(env.commits()[0]);
+    await session.dispose();
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents).toHaveLength(2);
+    expect(stored.intents[1].basis).toEqual({ after: stored.intents[0].id });
+    expect(stored.intents[1].payload).toMatchObject({ commands: [native.command], preview: null });
+    const reopened = await env.mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
+    await reopened.recover(stored.ownerId);
+    await reopened.flush();
+    expect(env.commits()).toHaveLength(3);
+    expect(env.commits()[1]).toEqual(request);
+    expect(env.commits()[2].key).not.toBe(request.key);
+    expect(env.commits()[2].body).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', commands: [native.command] });
+    expect(rawClip(env.projected.at(-1)!.canonicalDocument)).toEqual(new AuthoredState(native.bundle).entity('parent/clip:x'));
+    expect((await env.outboxes.list(scope))[0].accepted!.head).toEqual({ revisionId: 'r1', publicationId: 'p2' });
+    // Only the move needed an immediate local preview.
+    expect(env.previews).toHaveBeenCalledOnce();
+    await reopened.dispose();
+  });
+  it.each([undefined, null, {}])('retries the exact unchanged clear on %j before its queued move after reload', async (params) => {
+    const env = await environment(withParams(params));
+    const session = await env.mount();
+    env.setFault('lost');
+    submitClipParamsEdit(captureClipParamsEdit(session.clipParamsPort, env.current(), 'x'), clearOnly);
+    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
+    const request = structuredClone(env.commits()[0]);
+    expect(env.previews).not.toHaveBeenCalled();
+    env.move(session, 5);
+    await session.dispose();
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.pending!.request.key).toBe(request.key);
+    expect(JSON.parse(stored.pending!.request.body)).toEqual(request.body);
+    expect(stored.intents[0].payload).toMatchObject({ preview: null });
+    const reopened = await env.mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
+    await reopened.recover(stored.ownerId);
+    await reopened.flush();
+    expect(env.commits()).toHaveLength(3);
+    expect(env.commits()[1]).toEqual(request);
+    expect(env.commits()[2].body).toMatchObject({ base_revision_id: 'r0', base_publication_id: 'p1', commands: [{ op: 'clip.move' }] });
+    const after = (stored.intents[1].payload as unknown as { after: AuthoredBundle }).after;
+    expect(rawClip(env.projected.at(-1)!.canonicalDocument)).toEqual(new AuthoredState(after).entity('parent/clip:x'));
+    await reopened.dispose();
+  });
+  it.each([undefined, null, {}])('retains an unchanged clear draft on %j honestly when durable storage fails', async (params) => {
+    const env = await environment(withParams(params));
+    const session = await env.mount();
+    const captured = captureClipParamsEdit(session.clipParamsPort, env.current(), 'x');
+    const native = finishClipParams(captureClipParams(captured.basis.bundle as AuthoredBundle, 'parent/clip:x', clearOnly), clearOnly);
+    const open = env.factory.open.bind(env.factory);
+    env.factory.open = () => { throw new Error('disk full'); };
+    submitClipParamsEdit(captured, clearOnly);
+    await vi.waitFor(() => expect(session.getState().status).toBe('error'));
+    await expect(session.flush()).rejects.toThrow('disk full');
+    expect(session.getState().canUndo).toBe(false);
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    env.factory.open = open;
+    await session.retry();
+    expect(env.commits()).toHaveLength(1);
+    expect(env.commits()[0].body!.commands).toEqual([native.command]);
+    expect(rawClip(env.projected.at(-1)!.canonicalDocument)).toEqual(rawClip(env.initial.canonicalDocument));
+    expect(session.getState().status).toBe('saved');
+    await session.dispose();
+  });
+  it.each([undefined, null, {}])('retains the original clear-only %j draft on an unobserved relevant change', async (params) => {
+    const env = await environment(withParams(params));
+    const session = await env.mount();
+    const captured = captureClipParamsEdit(session.clipParamsPort, env.current(), 'x');
+    await env.external((raw) => { changeClips(raw, (clip) => { clip.params = { missing: null }; }); });
+    submitClipParamsEdit(captured, clearOnly);
+    await expect(session.flush()).rejects.toThrow('original capture');
+    expect(session.getState().status).toBe('conflict');
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents[0].payload).toMatchObject({ commands: [{ args: clearOnly,
+      expect: { 'parent/clip:x::params.missing': { state: 'absent' } } }], preview: null });
+    expect(stored.pending!.outcome!.kind).toBe('rejected');
+    expect(env.previews).not.toHaveBeenCalled();
+    await session.dispose();
+  });
+  it.each([undefined, null, {}])('stages exact native occurrence clears on %j without changing its sibling or source', async (params) => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    const internal = raw.internal_timeline_revisions[0];
+    if (params !== undefined) (internal.payload.clips as Array<Record<string, JSON>>)[0].params = structuredClone(params);
+    internal.content_digest = fixtureDigest(internal.payload);
+    raw.dependency_manifest.internal_timelines[0].content_digest = internal.content_digest;
+    const env = await environment(raw);
+    const session = await env.mount();
+    const authored = await authoringBundleFromDocument(raw);
+    const occurrence = authored.placements[0].occurrence_id;
+    const ownerRef = `occurrence:${occurrence}`;
+    const clipId = (new AuthoredState(authored).config(ownerRef).clips as Array<{ id: string }>)[0].id;
+    const displayId = `${occurrence}:${clipId}`;
+    const select = `${ownerRef}/clip:${clipId}`;
+    const current = { ...env.current(), resolvedConfig: { ...env.current().resolvedConfig, clips: [
+      { ...env.current().resolvedConfig.clips[0], id: displayId,
+        app: { canonical: { occurrenceId: occurrence, rawClipId: clipId, ownerRef, clipRef: select } } },
+    ] } } as TimelineData;
+    const captured = captureClipParamsEdit(session.clipParamsPort, current, displayId);
+    const native = finishClipParams(captureClipParams(captured.basis.bundle as AuthoredBundle, select, clearOnly), clearOnly);
+    submitClipParamsEdit(captured, clearOnly);
+    await session.dispose();
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents[0].payload).toMatchObject({ commands: [native.command], before: authored, after: native.bundle, preview: null });
+    expect(native.bundle).toEqual(authored);
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+  });
   it.each([undefined, null, {}])('preserves original container presence %j and native claims', async (params) => {
     const env = await environment(withParams(params));
     const session = await env.mount();
@@ -208,7 +446,7 @@ describe('clip params on the existing durable command session', () => {
     expect(Object.isFrozen(command.args)).toBe(true);
     const preview = { version: 1 as const, operations: [{ op: 'clip.update' as const, target: 'x', payload: { params: previewParams } }] };
     session.clipParamsPort.submit({ command, preview });
-    previewParams.x = 99;
+    previewParams!.x = 99;
     preview.operations[0].target = 'other';
     await session.dispose();
     const [stored] = await env.outboxes.list(scope);
@@ -238,6 +476,7 @@ describe('clip params on the existing durable command session', () => {
     const session = await env.mount();
     const captured = captureClipParamsEdit(session.clipParamsPort, env.current(), 'x');
     const { command, previewParams } = session.clipParamsPort.finish(captured.basis, args);
+    expect(() => session.clipParamsPort.submit({ command, preview: null })).toThrow('params-only preview');
     for (const payload of [{ params: previewParams, hold: 100 }, { params: { x: 99 } }]) {
       expect(() => session.clipParamsPort.submit({ command, preview: { version: 1, operations: [
         { op: 'clip.update', target: 'x', payload },

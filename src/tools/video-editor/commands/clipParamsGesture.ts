@@ -7,8 +7,9 @@ import type { JsonObject } from './types.ts';
 
 export interface ClipParamsCapturePort {
   capture(input: { clipId: string; current: TimelineData }): JsonObject;
-  finish(basis: JsonObject, args: ClipParamsArgs): { command: EditCommand; previewParams: Record<string, JSON> };
-  submit(input: { command: EditCommand; preview: TimelinePatch }): void;
+  // A null previewParams means no local preview, never a params container value.
+  finish(basis: JsonObject, args: ClipParamsArgs): { command: EditCommand; previewParams: Record<string, JSON> | null };
+  submit(input: { command: EditCommand; preview: TimelinePatch | null }): void;
 }
 
 export interface CapturedClipParamsEdit {
@@ -38,12 +39,13 @@ export function submitClipParamsEdit(captured: CapturedClipParamsEdit, args: Cli
   assertFiniteJson(command);
   assertFiniteJson(previewParams);
   if (command.schema_version !== 1 || command.op !== 'clip.set-params' || command.version !== '1'
-    || command.select !== captured.basis.select || !equal(command.args, args) || !object(previewParams)) {
+    || command.select !== captured.basis.select || !equal(command.args, args)
+    || (previewParams !== null && !object(previewParams))) {
     throw new Error('Unsupported clip.set-params capture result.');
   }
   captured.port.submit({
     command: freezeJson(structuredClone(command)),
-    preview: { version: 1, operations: [{ op: 'clip.update', target: captured.clipId,
+    preview: previewParams === null ? null : { version: 1, operations: [{ op: 'clip.update', target: captured.clipId,
       payload: { params: freezeJson(structuredClone(previewParams)) } }] },
   });
 }
