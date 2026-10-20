@@ -24,12 +24,12 @@ PICTURE = frozenset({"media", "hold", "video", "image", "animated-media-transfor
 
 
 def picture_clip(clip, track, *, declared=False):
-    """An authored picture lane may carry a custom renderer's opaque clips.
+    """A visual lane may carry a custom renderer's opaque picture clips.
 
-    Unknown types are not implicitly picture: a pictureTracks declaration
-    supplies that editorial meaning without executing an extension. Known
-    auxiliary types and source/audio lanes cannot supply picture coverage.
-    Timing disclosure remains independent, including for custom picture.
+    Unknown types count as picture on visual tracks without requiring a
+    pictureTracks declaration. Known auxiliary types and source/audio lanes
+    cannot supply picture coverage. Timing disclosure remains independent,
+    including for custom picture.
     """
     kind = clip.get("clipType", clip.get("clip_type", "media"))
     element = clip.get("elementRef")
@@ -37,7 +37,7 @@ def picture_clip(clip, track, *, declared=False):
             or isinstance(element, dict) and element.get("kind") in ("effect", "animation", "transition")
             or track.get("kind") == "audio" or track.get("role") == "source"):
         return False
-    return kind in PICTURE or declared and track.get("kind") == "visual"
+    return kind in PICTURE or track.get("kind") == "visual"
 
 
 def active(clip):
