@@ -12,6 +12,7 @@ import pytest
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
 from runtime_protocol.timeline_commit_validation import validate_commit_value
 from runtime_protocol.util import canonical_json
@@ -77,7 +78,7 @@ def _publish(fixture, **kwargs):
     return _accept_publication(fixture, publication, idempotency_key="publish-" + publication["parent_revision_id"])
 
 
-def _accept_publication(fixture, publication, *, idempotency_key):
+def _accept_publication(fixture, publication, *, idempotency_key, dry_run=False):
     """Install exact render inputs at the host acceptance boundary, not Agent semantics.
 
     Like PreparedProvider, this fixture supplies prepared data to real persistence.
@@ -105,6 +106,8 @@ def _accept_publication(fixture, publication, *, idempotency_key):
     request = {"api_version": 1, "project_id": fixture["project"], "timeline_id": "main",
                "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
                "commands": [command]}
+    if dry_run:
+        request["dry_run"] = True
     context = {"request": request, "invocation": {"operation": "commitTimeline",
                "path": f"/v1/projects/{fixture['project']}/timelines/main/commit", "body": copy.deepcopy(request)},
                "idempotency_key": idempotency_key, "realm_id": service.realm["id"], "publisher": "render-fixture"}
@@ -117,6 +120,8 @@ def _accept_publication(fixture, publication, *, idempotency_key):
     prepared = {"expected_head": head, "canonical_document": document, "document_digest": digest(document),
                 "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
                 "id_map": {}, "semantic_events": [], "provider_version": "prepared-fixture-1", "compiler_version": "fixture-1"}
+    if dry_run:
+        return commits.preview(context, prepared, authorize=service._assert_mutation_admitted)
     accepted = commits.accept(context, prepared, authorize=service._assert_mutation_admitted)
     return _fixture_image_view(accepted)
 
@@ -153,6 +158,12 @@ def _assert_rejected(fixture, body, errors=(ConflictError, ValidationError, NotF
     with pytest.raises(errors, match=match):
         service.create_task(body)
     assert {table: service.store.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in before} == before
+
+
+def _stored_state(service):
+    return (tuple(service.store.conn.iterdump()),
+            {str(path.relative_to(service.store.cas_root)): path.read_bytes()
+             for path in service.store.cas_root.rglob("*") if path.is_file()})
 
 
 def test_canonical_parent_freezes_both_placements_ordinary_audio_and_exact_objects(canonical_scene):
@@ -381,13 +392,22 @@ def test_nonempty_source_only_timeline_cannot_be_admitted_for_render(canonical_s
     _assert_rejected(f, _request(f), ValidationError, "source-only")
 
 
-def test_canonical_stale_head_rejected_when_legacy_version_is_unchanged(canonical_scene):
+def test_canonical_stale_head_rejected_with_current_metadata_version(canonical_scene):
     f = canonical_scene
+    service = f["service"]
+    initial_version = service.get_project_timeline(f["project"], "main")["version"]
     _publish(f)
-    version_before = f["service"].store.conn.execute("SELECT version FROM timelines WHERE id='main'").fetchone()[0]
+    version_before = service.get_project_timeline(f["project"], "main")["version"]
+    assert version_before == initial_version + 1
     _publish(f, revision="parent-2", expected_head="parent-1")
-    assert f["service"].store.conn.execute("SELECT version FROM timelines WHERE id='main'").fetchone()[0] == version_before == 1
-    _assert_rejected(f, _request(f), ConflictError, "head")
+    current = service.get_project_timeline(f["project"], "main")
+    assert current["version"] == version_before + 1
+    request = _request(f)
+    assert request["spec"]["params"]["expected_version"] == current["version"]
+    assert request["spec"]["params"]["canonical_head_revision_id"] == "parent-1" != current["head_revision_id"]
+    before = _stored_state(service)
+    _assert_rejected(f, request, ConflictError, "head")
+    assert _stored_state(service) == before
 
 
 @pytest.mark.parametrize("field,value", [
@@ -517,9 +537,17 @@ def test_canonical_conflicting_populated_clip_lists_fail_closed(canonical_scene)
     f = canonical_scene
     publication = _publication(f)
     publication["parent_composition"]["config"]["clips"] = [{"id": "different", "clipType": "text", "at": 0, "hold": 1}]
-    with pytest.raises(ConflictError, match="clips"):
-        _accept_publication(f, publication, idempotency_key="conflicting-clips")
-    assert f["service"].store.conn.execute("SELECT COUNT(*) FROM parent_composition_revisions").fetchone()[0] == 0
+    before = _stored_state(f["service"])
+    for dry_run in (False, True):
+        with pytest.raises(CommitRejected) as error:
+            _accept_publication(f, publication, idempotency_key="conflicting-clips", dry_run=dry_run)
+        assert error.value.failure == {
+            "http_status": 422, "code": "validation_error",
+            "message": "canonical parent clips and config.clips disagree",
+            "details": {"status": "refused", "reason": "invalid_closure",
+                        "base": None, "current": None, "conflicts": []},
+        }
+        assert _stored_state(f["service"]) == before
 
 
 def test_canonical_admission_holds_sqlite_write_fence_during_snapshot_freeze(canonical_scene, monkeypatch):
