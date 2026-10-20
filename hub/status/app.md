@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T10:48:18Z | dispatcher heartbeat 2s -->
+<!-- app | 2026-10-20T10:53:37Z | dispatcher heartbeat 3s -->
 # app — 2026-10-20 10:25 UTC
 Milestone: M1 RECORDED. M2 in progress; no M2/M3 exit. Upstream main refresh DONE. Priority: safe coordinated Runtime/Agent/App public12 tuple and representative native writer retirements; automatic placement remains top writer gap.
 Integrated: App tl/integration7bb885b638838588a0dff81b64b7c34960ac07f3, tree065b46ac13026d3e3a1d760b44bab1ab8e1e930e, CLEAN; Composition8/client021. True main merge86c2ecec8 (upstream44f ancestry) then one bounded CORS merge7bb/946d. Main render/download/admission/mobile/URL/auth retained. CORS original2 positives +protocol/default controls23 pass and independent APPROVE; only helper/directtest changed.
