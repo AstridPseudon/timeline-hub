@@ -18,6 +18,7 @@ from typing import Any
 
 from astrid.core.timeline.astrid_ns import migrate_bundle
 from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
+from astrid.sdk.timeline_restructure import STRUCTURE_KEY
 from astrid.sdk.timeline_editing import add_authoring_shot
 
 __all__ = ["duplicate_timeline", "id_map", "copy_content"]
@@ -169,7 +170,10 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         raise TimelineEditError("the runtime created a timeline but returned no id")
     try:
         dst = Checkout.open(project, new_id, client=client)
-        bundle, notes = copy_content(src.bundle, dst.bundle, new_slug=slug or new_id)
+        # A chapter film is read flat (ONE shot; its stored form is kept under structure_base). Copy the stored
+        # form: copying the flat shot would store the duplicate as a single shot whose chapters all share one id.
+        content = src.bundle.get(STRUCTURE_KEY) or src.bundle
+        bundle, notes = copy_content(content, dst.bundle, new_slug=slug or new_id)
         dst.bundle = bundle
         dst.notes.extend(notes)
         report = dst.check()

@@ -353,3 +353,35 @@ def test_flatten_merges_track_copies_that_differ_only_by_non_conflicting_app_key
                 t["app"] = {"scaleAppliesToPositionedClips": False}
     with pytest.raises(TimelineEditError, match="conflicting track"):
         flatten(stored)
+
+
+def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(monkeypatch):
+    """A chapter film is read flat; duplicating must copy its stored form (a shot per chapter), not the one flat
+    shot, or the copy is stored as a single shot and every chapter reads back with the same shot id."""
+    from types import SimpleNamespace
+
+    from astrid.sdk import timeline_duplicate as td
+
+    stored = published(split(flat_film()))
+    assert len(stored["placements"]) == 3
+    src = Checkout(flatten(copy.deepcopy(stored)))
+    assert len(src.bundle["shots"]) == 1 and STRUCTURE_KEY in src.bundle
+    empty = flat_film()
+    empty["timeline_id"] = "dup"
+    dst = Checkout(empty)
+    for tl in (src, dst):  # the toy film has no real media identities; validity is not what this test is about
+        tl.check = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
+    opened = {"t": src, "dup": dst}
+    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: opened[t]))
+    stored_docs = []
+    monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: stored_docs.append(self.stored_document()) or {})
+    client = SimpleNamespace(timelines=SimpleNamespace(
+        create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),
+        archive=lambda *a: SimpleNamespace(ok=True)))
+    out = td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
+    doc = stored_docs[0]
+    shot_ids = [r["shot_id"] for r in doc["placements"]]
+    assert out["shots"] == 3 and len(set(shot_ids)) == 3 and set(shot_ids) == set(doc["shots"])
+    assert all(s.startswith("dup-") for s in shot_ids)
+    assert [doc["shots"][s]["payload"]["name"] for s in shot_ids] == ["01 ONE", "02 TWO", "03 THREE"]
+    assert len({r["occurrence_id"] for r in doc["placements"]}) == 3
