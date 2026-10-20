@@ -1,0 +1,318 @@
+{
+  "qualification": "Retained DOM snapshot only, no browser launch or computed layout re-evaluation. Whitelisted attributes exclude task/auth inputs. Subtree references expanded using Playwright snapshotNodes postorder semantics.",
+  "trace": "/tmp/viewing-native-frame-parity-2EZi8v/player-export-normal-profi-1fbe1-al-CPU-Remotion-task-output-native-codec-chrome155/trace.zip",
+  "screenshotLocatorResolutionCall": {
+    "callId": "call@1058",
+    "method": "waitForSelector",
+    "params": {
+      "selector": "[data-testid=\"video-editor-preview-surface\"] .__remotion-player >> nth=0",
+      "strict": true,
+      "timeout": 0,
+      "state": "attached"
+    },
+    "beforeSnapshot": "before@call@1058"
+  },
+  "snapshot": {
+    "snapshotName": "before@call@1058",
+    "viewport": {
+      "width": 2000,
+      "height": 1200
+    },
+    "timestamp": 214131.673
+  },
+  "returnedPlayerValues": [
+    {
+      "callId": "call@1028",
+      "result": {
+        "value": {
+          "o": [
+            {
+              "k": "frame",
+              "v": {
+                "n": 0
+              }
+            },
+            {
+              "k": "playing",
+              "v": {
+                "b": false
+              }
+            }
+          ],
+          "id": 1
+        }
+      },
+      "afterSnapshot": "after@call@1028"
+    },
+    {
+      "callId": "call@1038",
+      "result": {
+        "value": {
+          "n": 1
+        }
+      },
+      "afterSnapshot": "after@call@1038"
+    },
+    {
+      "callId": "call@1052",
+      "result": {
+        "value": {
+          "n": 0
+        }
+      },
+      "afterSnapshot": "after@call@1052"
+    }
+  ],
+  "selectedDOM": [
+    {
+      "element": {
+        "tag": "IMG",
+        "class": "h-[30px] w-[30px] shrink-0",
+        "data-testid": "astrid-project-row-logo",
+        "src": "/astrid-favicon.svg"
+      },
+      "ancestors": [
+        {
+          "tag": "MAIN",
+          "class": "h-full w-full overflow-hidden"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex h-full w-full flex-col overflow-hidden bg-transparent"
+        },
+        {
+          "tag": "DIV",
+          "class": "min-h-0 flex-1 overflow-hidden"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground"
+        },
+        {
+          "tag": "HEADER",
+          "class": "flex w-full min-w-0 flex-wrap items-center gap-2 text-sm text-muted-foreground px-2 pt-2 pb-0 sm:px-4 sm:pt-3 sm:pb-0 lg:px-6 lg:pt-4 lg:pb-0",
+          "data-testid": "video-editor-header"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex min-w-0 max-w-full flex-1 flex-wrap items-center gap-2",
+          "data-testid": "video-editor-navigation-controls"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex min-w-0 max-w-full flex-wrap items-center gap-2"
+        }
+      ]
+    },
+    {
+      "element": {
+        "tag": "DIV",
+        "style": "position: relative; overflow: hidden; width: 100%; height: 100%; opacity: 1;",
+        "data-frame-parity-native-host": "true"
+      },
+      "ancestors": [
+        {
+          "tag": "DIV",
+          "class": "flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95",
+          "role": "region"
+        },
+        {
+          "tag": "DIV",
+          "class": "relative flex min-h-0 flex-1"
+        },
+        {
+          "tag": "DIV",
+          "class": "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-transparent",
+          "style": "touch-action: manipulation;"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex h-full w-full min-h-0 items-center justify-center",
+          "data-testid": "video-editor-preview-surface"
+        },
+        {
+          "tag": "DIV",
+          "style": "display: contents;"
+        },
+        {
+          "tag": "DIV",
+          "class": "relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-transparent",
+          "style": "--video-editor-accent-border: rgb(56 189 248 / 0.6); --video-editor-accent-border-strong: rgb(56 189 248); --video-editor-accent-bg: rgb(14 165 233 / 0.1); --video-editor-accent-bg-strong: rgb(14 165 233 / 0.15); --video-editor-accent-bg-hover: rgb(14 165 233 / 0.2); --video-editor-accent-ring: rgb(56 189 248 / 0.3); --video-editor-accent-shadow: rgb(56 189 248 / 0.5); --video-editor-accent-shadow-soft: rgb(56 189 248 / 0.28); --video-editor-accent-text: rgb(224 242 254); --video-editor-accent-text-soft: rgb(125 211 252 / 0.7); --video-editor-warning-border: rgb(245 158 11 / 0.4); --video-editor-warning-ring: rgb(251 191 36 / 0.8); --video-editor-warning-bg: rgb(245 158 11 / 0.1); --video-editor-warning-bg-hover: rgb(245 158 11 / 0.2); --video-editor-warning-text: rgb(253 230 138); --video-editor-warning-text-muted: rgb(253 230 138 / 0.6); --video-editor-effect-border: rgb(167 139 250 / 0.4); --video-editor-effect-bg: rgb(139 92 246 / 0.1); --video-editor-effect-bg-hover: rgb(139 92 246 / 0.25); --video-editor-effect-ring: rgb(167 139 250 / 0.3); --video-editor-effect-ring-strong: rgb(167 139 250 / 0.6); --video-editor-effect-shadow-soft: rgb(167 139 250 / 0.28); --video-editor-effect-text: rgb(221 214 254); --video-editor-success-bg: rgb(16 185 129 / 0.15); --video-editor-success-bg-hover: rgb(16 185 129 / 0.25); --video-editor-success-text: rgb(52 211 153); --video-editor-success-ring: rgb(52 211 153 / 0.3); --video-editor-success-ring-strong: rgb(52 211 153 / 0.6); --video-editor-success-focus-ring: rgb(110 231 183 / 0.7); --video-editor-success-shadow-soft: rgb(52 211 153 / 0.28); --video-editor-reject-border: rgb(250 137 137 / 0.3); --video-editor-reject-bg: rgb(250 137 137 / 0.12); --video-editor-stage-bg: rgb(0 0 0); --video-editor-stage-dim: rgb(0 0 0 / 0.5); --video-editor-stage-gradient-start: rgb(0 0 0 / 0.6); --video-editor-stage-control-bg: rgb(0 0 0 / 0.4); --video-editor-stage-control-bg-strong: rgb(0 0 0 / 0.7); --video-editor-stage-control-bg-hover: rgb(0 0 0 / 0.6); --video-editor-stage-control-bg-hover-strong: rgb(0 0 0 / 0.9); --video-editor-stage-control-border: rgb(255 255 255 / 0.2); --video-editor-stage-ghost-border: rgb(255 255 255 / 0.35); --video-editor-stage-ghost-bg: rgb(255 255 255 / 0.05); --video-editor-stage-hover-border: rgb(255 255 255 / 0.4); --video-editor-stage-handle-border: rgb(255 255 255 / 0.6); --video-editor-stage-guide-hover: rgb(255 255 255 / 0.5); --video-editor-stage-fg: rgb(255 255 255); --video-editor-stage-fg-muted: rgb(255 255 255 / 0.8); --video-editor-stage-fg-subtle: rgb(255 255 255 / 0.5); --video-editor-ghost-added-border: rgb(52 211 153 / 0.5); --video-editor-ghost-added-bg: rgb(52 211 153 / 0.1); --video-editor-ghost-removed-border: rgb(248 113 113 / 0.5); --video-editor-ghost-removed-bg: rgb(248 113 113 / 0.1); --video-editor-ghost-modified-border: rgb(56 189 248 / 0.5); --video-editor-ghost-modified-bg: rgb(56 189 248 / 0.1); --video-editor-ghost-reordered-border: rgb(251 191 36 / 0.5); --video-editor-ghost-reordered-bg: rgb(251 191 36 / 0.1);"
+        },
+        {
+          "tag": "DIV",
+          "class": "h-full w-full"
+        }
+      ]
+    },
+    {
+      "element": {
+        "tag": "DIV",
+        "class": "__remotion-player",
+        "style": "position: absolute; width: 1920px; height: 1080px; display: flex; transform: scale(1); overflow: hidden; margin-left: 0px; margin-top: 0px;"
+      },
+      "ancestors": [
+        {
+          "tag": "DIV",
+          "class": "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-transparent",
+          "style": "touch-action: manipulation;"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex h-full w-full min-h-0 items-center justify-center",
+          "data-testid": "video-editor-preview-surface"
+        },
+        {
+          "tag": "DIV",
+          "style": "display: contents;"
+        },
+        {
+          "tag": "DIV",
+          "class": "relative flex h-full min-h-[220px] w-full items-center justify-center overflow-hidden rounded-xl bg-transparent",
+          "style": "--video-editor-accent-border: rgb(56 189 248 / 0.6); --video-editor-accent-border-strong: rgb(56 189 248); --video-editor-accent-bg: rgb(14 165 233 / 0.1); --video-editor-accent-bg-strong: rgb(14 165 233 / 0.15); --video-editor-accent-bg-hover: rgb(14 165 233 / 0.2); --video-editor-accent-ring: rgb(56 189 248 / 0.3); --video-editor-accent-shadow: rgb(56 189 248 / 0.5); --video-editor-accent-shadow-soft: rgb(56 189 248 / 0.28); --video-editor-accent-text: rgb(224 242 254); --video-editor-accent-text-soft: rgb(125 211 252 / 0.7); --video-editor-warning-border: rgb(245 158 11 / 0.4); --video-editor-warning-ring: rgb(251 191 36 / 0.8); --video-editor-warning-bg: rgb(245 158 11 / 0.1); --video-editor-warning-bg-hover: rgb(245 158 11 / 0.2); --video-editor-warning-text: rgb(253 230 138); --video-editor-warning-text-muted: rgb(253 230 138 / 0.6); --video-editor-effect-border: rgb(167 139 250 / 0.4); --video-editor-effect-bg: rgb(139 92 246 / 0.1); --video-editor-effect-bg-hover: rgb(139 92 246 / 0.25); --video-editor-effect-ring: rgb(167 139 250 / 0.3); --video-editor-effect-ring-strong: rgb(167 139 250 / 0.6); --video-editor-effect-shadow-soft: rgb(167 139 250 / 0.28); --video-editor-effect-text: rgb(221 214 254); --video-editor-success-bg: rgb(16 185 129 / 0.15); --video-editor-success-bg-hover: rgb(16 185 129 / 0.25); --video-editor-success-text: rgb(52 211 153); --video-editor-success-ring: rgb(52 211 153 / 0.3); --video-editor-success-ring-strong: rgb(52 211 153 / 0.6); --video-editor-success-focus-ring: rgb(110 231 183 / 0.7); --video-editor-success-shadow-soft: rgb(52 211 153 / 0.28); --video-editor-reject-border: rgb(250 137 137 / 0.3); --video-editor-reject-bg: rgb(250 137 137 / 0.12); --video-editor-stage-bg: rgb(0 0 0); --video-editor-stage-dim: rgb(0 0 0 / 0.5); --video-editor-stage-gradient-start: rgb(0 0 0 / 0.6); --video-editor-stage-control-bg: rgb(0 0 0 / 0.4); --video-editor-stage-control-bg-strong: rgb(0 0 0 / 0.7); --video-editor-stage-control-bg-hover: rgb(0 0 0 / 0.6); --video-editor-stage-control-bg-hover-strong: rgb(0 0 0 / 0.9); --video-editor-stage-control-border: rgb(255 255 255 / 0.2); --video-editor-stage-ghost-border: rgb(255 255 255 / 0.35); --video-editor-stage-ghost-bg: rgb(255 255 255 / 0.05); --video-editor-stage-hover-border: rgb(255 255 255 / 0.4); --video-editor-stage-handle-border: rgb(255 255 255 / 0.6); --video-editor-stage-guide-hover: rgb(255 255 255 / 0.5); --video-editor-stage-fg: rgb(255 255 255); --video-editor-stage-fg-muted: rgb(255 255 255 / 0.8); --video-editor-stage-fg-subtle: rgb(255 255 255 / 0.5); --video-editor-ghost-added-border: rgb(52 211 153 / 0.5); --video-editor-ghost-added-bg: rgb(52 211 153 / 0.1); --video-editor-ghost-removed-border: rgb(248 113 113 / 0.5); --video-editor-ghost-removed-bg: rgb(248 113 113 / 0.1); --video-editor-ghost-modified-border: rgb(56 189 248 / 0.5); --video-editor-ghost-modified-bg: rgb(56 189 248 / 0.1); --video-editor-ghost-reordered-border: rgb(251 191 36 / 0.5); --video-editor-ghost-reordered-bg: rgb(251 191 36 / 0.1);"
+        },
+        {
+          "tag": "DIV",
+          "class": "h-full w-full"
+        },
+        {
+          "tag": "DIV",
+          "style": "position: relative; overflow: hidden; width: 100%; height: 100%; opacity: 1;",
+          "data-frame-parity-native-host": "true"
+        },
+        {
+          "tag": "DIV",
+          "style": "width: 1920px; height: 1080px; display: flex; flex-direction: column; position: absolute; overflow: hidden; left: 0px; top: 0px;"
+        }
+      ]
+    },
+    {
+      "element": {
+        "tag": "IMG",
+        "style": "width: 100%; height: 100%; object-fit: contain; opacity: 1;",
+        "src": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3A371fa835ba9c64b94118593bec78b7ae6295c44f578c1373f7efdbd06857f9c0"
+      },
+      "ancestors": [
+        {
+          "tag": "DIV",
+          "style": "position: absolute; inset: 0px;"
+        },
+        {
+          "tag": "DIV",
+          "style": "position: absolute; inset: 0px; width: 100%; height: 100%; display: flex; flex-direction: column; background-color: black; overflow: hidden;"
+        },
+        {
+          "tag": "DIV",
+          "style": "position: absolute; inset: 0px; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;"
+        },
+        {
+          "tag": "DIV",
+          "style": "position: relative; inset: 0px; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden;"
+        },
+        {
+          "tag": "DIV",
+          "style": "position: absolute; inset: 0px; width: 100%; height: 100%; display: flex; flex-direction: column; opacity: 1;"
+        },
+        {
+          "tag": "DIV",
+          "style": "position: absolute; inset: 0px; width: 100%; height: 100%; display: flex;"
+        },
+        {
+          "tag": "DIV",
+          "style": "position: absolute; inset: 0px; width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden;"
+        }
+      ]
+    },
+    {
+      "element": {
+        "tag": "IMG",
+        "class": "h-full w-full object-cover opacity-0 transition-opacity duration-150 ease-out motion-reduce:transition-none data-[loaded]:opacity-100",
+        "src": "http://127.0.0.1:17340/api/astrid/v1/objects/sha256%3A371fa835ba9c64b94118593bec78b7ae6295c44f578c1373f7efdbd06857f9c0"
+      },
+      "ancestors": [
+        {
+          "tag": "DIV",
+          "class": "video-editor-panel-work-area relative min-h-0 min-w-0 overflow-hidden",
+          "style": "grid-area: 3 / 1 / auto / span 2; margin-inline-end: calc(12px + min(420px, 32vw, -24px + 100vw));"
+        },
+        {
+          "tag": "DIV",
+          "class": "flex h-full overflow-hidden rounded-xl border border-border bg-card/95"
+        },
+        {
+          "tag": "DIV",
+          "class": "timeline-wrapper relative min-w-0 flex-1 overflow-hidden"
+        },
+        {
+          "tag": "DIV",
+          "class": "relative flex h-full min-h-0 flex-col bg-background/70",
+          "style": "--video-editor-accent-border: rgb(56 189 248 / 0.6); --video-editor-accent-border-strong: rgb(56 189 248); --video-editor-accent-bg: rgb(14 165 233 / 0.1); --video-editor-accent-bg-strong: rgb(14 165 233 / 0.15); --video-editor-accent-bg-hover: rgb(14 165 233 / 0.2); --video-editor-accent-ring: rgb(56 189 248 / 0.3); --video-editor-accent-shadow: rgb(56 189 248 / 0.5); --video-editor-accent-shadow-soft: rgb(56 189 248 / 0.28); --video-editor-accent-text: rgb(224 242 254); --video-editor-accent-text-soft: rgb(125 211 252 / 0.7); --video-editor-warning-border: rgb(245 158 11 / 0.4); --video-editor-warning-ring: rgb(251 191 36 / 0.8); --video-editor-warning-bg: rgb(245 158 11 / 0.1); --video-editor-warning-bg-hover: rgb(245 158 11 / 0.2); --video-editor-warning-text: rgb(253 230 138); --video-editor-warning-text-muted: rgb(253 230 138 / 0.6); --video-editor-effect-border: rgb(167 139 250 / 0.4); --video-editor-effect-bg: rgb(139 92 246 / 0.1); --video-editor-effect-bg-hover: rgb(139 92 246 / 0.25); --video-editor-effect-ring: rgb(167 139 250 / 0.3); --video-editor-effect-ring-strong: rgb(167 139 250 / 0.6); --video-editor-effect-shadow-soft: rgb(167 139 250 / 0.28); --video-editor-effect-text: rgb(221 214 254); --video-editor-success-bg: rgb(16 185 129 / 0.15); --video-editor-success-bg-hover: rgb(16 185 129 / 0.25); --video-editor-success-text: rgb(52 211 153); --video-editor-success-ring: rgb(52 211 153 / 0.3); --video-editor-success-ring-strong: rgb(52 211 153 / 0.6); --video-editor-success-focus-ring: rgb(110 231 183 / 0.7); --video-editor-success-shadow-soft: rgb(52 211 153 / 0.28); --video-editor-reject-border: rgb(250 137 137 / 0.3); --video-editor-reject-bg: rgb(250 137 137 / 0.12); --video-editor-stage-bg: rgb(0 0 0); --video-editor-stage-dim: rgb(0 0 0 / 0.5); --video-editor-stage-gradient-start: rgb(0 0 0 / 0.6); --video-editor-stage-control-bg: rgb(0 0 0 / 0.4); --video-editor-stage-control-bg-strong: rgb(0 0 0 / 0.7); --video-editor-stage-control-bg-hover: rgb(0 0 0 / 0.6); --video-editor-stage-control-bg-hover-strong: rgb(0 0 0 / 0.9); --video-editor-stage-control-border: rgb(255 255 255 / 0.2); --video-editor-stage-ghost-border: rgb(255 255 255 / 0.35); --video-editor-stage-ghost-bg: rgb(255 255 255 / 0.05); --video-editor-stage-hover-border: rgb(255 255 255 / 0.4); --video-editor-stage-handle-border: rgb(255 255 255 / 0.6); --video-editor-stage-guide-hover: rgb(255 255 255 / 0.5); --video-editor-stage-fg: rgb(255 255 255); --video-editor-stage-fg-muted: rgb(255 255 255 / 0.8); --video-editor-stage-fg-subtle: rgb(255 255 255 / 0.5); --video-editor-ghost-added-border: rgb(52 211 153 / 0.5); --video-editor-ghost-added-bg: rgb(52 211 153 / 0.1); --video-editor-ghost-removed-border: rgb(248 113 113 / 0.5); --video-editor-ghost-removed-bg: rgb(248 113 113 / 0.1); --video-editor-ghost-modified-border: rgb(56 189 248 / 0.5); --video-editor-ghost-modified-bg: rgb(56 189 248 / 0.1); --video-editor-ghost-reordered-border: rgb(251 191 36 / 0.5); --video-editor-ghost-reordered-bg: rgb(251 191 36 / 0.1);"
+        },
+        {
+          "tag": "DIV",
+          "class": "timeline-canvas-edit-area timeline-scroll relative min-h-0 flex-1 overflow-auto overscroll-contain bg-background/70",
+          "style": "--label-width: 144px;"
+        },
+        {
+          "tag": "DIV",
+          "class": "relative",
+          "style": "width: 1264px; min-width: 100%; background-image: repeating-linear-gradient(to right, hsl(var(--border)) 0, hsl(var(--border)) 1px, transparent 1px, transparent 160px),repeating-linear-gradient(to right, hsl(var(--border) / 0.55) 0, hsl(var(--border) / 0.55) 1px, transparent 1px, transparent 32px); background-position: 144px 0px, 144px 0px;"
+        },
+        {
+          "tag": "DIV",
+          "class": "pointer-events-none absolute overflow-hidden rounded-md",
+          "style": "left: 144px; top: 4px; width: 176px; height: 28px; z-index: 0; opacity: 0.58;"
+        }
+      ]
+    },
+    {
+      "element": {
+        "tag": "DIV",
+        "class": "fixed inset-0 bg-black/80 cursor-pointer data-[open]:animate-in data-[ending-style]:animate-out data-[ending-style]:fade-out-0 data-[open]:fade-in-0",
+        "style": "user-select: none; z-index: 110020;",
+        "role": "presentation",
+        "data-open": "",
+        "data-dialog-backdrop": "true"
+      },
+      "ancestors": [
+        {
+          "tag": "HTML",
+          "class": "dark",
+          "style": "--boot-background: hsl(30 11% 7%); --boot-ink: hsl(40 30% 93%); --background: 30.1 10.3% 7.5%; --foreground: 40 30% 93%; --card: 33.0 10.7% 17.5%; --card-foreground: 40 30% 93%; --popover: 33.0 10.7% 17.5%; --popover-foreground: 40 30% 93%; --primary: 22.0 83.7% 52.9%; --primary-foreground: 30 11% 7%; --secondary: 33.0 8.8% 19.5%; --secondary-foreground: 40.0 23.3% 90.3%; --muted: 33.0 8.8% 18.5%; --muted-foreground: 38.0 13.0% 78.3%; --accent: 22.0 39.1% 21.5%; --accent-foreground: 31.2 59.6% 88.2%; --border: 33.0 9.9% 27.4%; --input: 33.0 9.9% 27.4%; --ring: 22.0 83.7% 52.9%; --destructive: 0.0 59.9% 52.0%; --destructive-foreground: 0 0% 100%; --sidebar-background: 33.0 10.5% 10.5%; --sidebar-foreground: 40 30% 93%; --sidebar-primary: 22.0 83.7% 52.9%; --sidebar-primary-foreground: 30 11% 7%; --sidebar-accent: 22.0 39.1% 21.5%; --sidebar-accent-foreground: 30 70% 84%; --sidebar-border: 33.0 9.9% 27.4%; --sidebar-ring: 22.0 83.7% 52.9%; --icon-primary: 22 84% 60%; --icon-secondary: 39 60% 64%; --icon-muted: 37 8% 55%; --icon-interactive: 30 70% 80%; --icon-success: 96 33% 66%; --icon-warning: 39 60% 64%; --icon-danger: 0 60% 58%; --retro: 33.0 8.8% 19.5%; --retro-hover: 33.0 8.9% 23.4%; --retro-border: 37.0 8.0% 40.1%; --retro-foreground: 40 20% 88%; --retro-shadow: 30.6 10.9% 4.3%; --hero-retro-bg: 33.0 8.8% 19.5%; --hero-retro-border: 37.0 8.0% 40.1%; --hero-retro-text: 40 20% 88%; --hero-retro-light: 33.0 10.6% 14.5%; --wes-pink: 20.0 25.4% 18.5%; --wes-pink-dark: 20.0 25.7% 24.4%; --wes-soft-pink: 20.0 25.4% 18.5%; --wes-soft-pink-dark: 20.0 25.7% 24.4%; --wes-yellow: 39.0 21.5% 17.5%; --wes-yellow-dark: 39.0 21.8% 24.4%; --wes-pale-yellow: 39.0 21.5% 17.5%; --wes-pale-yellow-dark: 39.0 21.8% 24.4%; --wes-mint: 96.0 16.6% 17.5%; --wes-mint-dark: 96.0 16.8% 24.4%; --wes-mint-green: 96.0 16.6% 17.5%; --wes-mint-green-dark: 96.0 16.8% 24.4%; --wes-lavender: 210.0 16.6% 18.5%; --wes-lavender-dark: 210.0 16.7% 25.4%; --wes-dusty-lavender: 210.0 16.6% 18.5%; --wes-dusty-lavender-dark: 210.0 16.7% 25.4%; --wes-cream: 33.0 10.6% 12.5%; --wes-pastel-cream: 33.0 10.6% 12.5%; --wes-salmon: 20.0 29.7% 28.4%; --wes-coral-salmon: 20.0 29.7% 28.4%; --wes-coral: 20.0 60.0% 50.3%; --wes-warm-coral: 20.0 60.0% 50.3%; --wes-sage: 96.0 11.9% 30.3%; --wes-sage-green: 96.0 11.9% 30.3%; --wes-dusty-blue: 210.0 13.9% 32.3%; --wes-teal: 200.0 14.9% 40.2%; --wes-muted-teal: 200.0 14.9% 40.2%; --wes-mustard: 39.0 55.0% 55.1%; --wes-vintage-mustard: 39.0 55.0% 55.1%; --wes-vintage-gold: 38.0 54.9% 50.3%; --wes-burgundy: 22 80% 60%; --wes-dark-orange: 22 80% 60%; --wes-forest: 96 30% 62%; --wes-forest-green: 96 30% 62%;"
+        },
+        {
+          "tag": "BODY",
+          "style": "overflow: hidden;"
+        },
+        {
+          "tag": "DIV"
+        }
+      ]
+    },
+    {
+      "element": {
+        "tag": "DIV",
+        "class": "fixed left-[50%] top-[50%] grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[open]:animate-in data-[ending-style]:animate-out data-[ending-style]:fade-out-0 data-[open]:fade-in-0 data-[ending-style]:zoom-out-95 data-[open]:zoom-in-95 data-[ending-style]:slide-out-to-left-1/2 data-[ending-style]:slide-out-to-top-[48%] data-[open]:slide-in-from-left-1/2 data-[open]:slide-in-from-top-[48%] sm:rounded-lg max-w-3xl",
+        "style": "--nested-dialogs: 0; z-index: 110022;",
+        "role": "dialog",
+        "data-open": "",
+        "data-dialog-content": "true",
+        "data-video-editor-render-player": "true"
+      },
+      "ancestors": [
+        {
+          "tag": "HTML",
+          "class": "dark",
+          "style": "--boot-background: hsl(30 11% 7%); --boot-ink: hsl(40 30% 93%); --background: 30.1 10.3% 7.5%; --foreground: 40 30% 93%; --card: 33.0 10.7% 17.5%; --card-foreground: 40 30% 93%; --popover: 33.0 10.7% 17.5%; --popover-foreground: 40 30% 93%; --primary: 22.0 83.7% 52.9%; --primary-foreground: 30 11% 7%; --secondary: 33.0 8.8% 19.5%; --secondary-foreground: 40.0 23.3% 90.3%; --muted: 33.0 8.8% 18.5%; --muted-foreground: 38.0 13.0% 78.3%; --accent: 22.0 39.1% 21.5%; --accent-foreground: 31.2 59.6% 88.2%; --border: 33.0 9.9% 27.4%; --input: 33.0 9.9% 27.4%; --ring: 22.0 83.7% 52.9%; --destructive: 0.0 59.9% 52.0%; --destructive-foreground: 0 0% 100%; --sidebar-background: 33.0 10.5% 10.5%; --sidebar-foreground: 40 30% 93%; --sidebar-primary: 22.0 83.7% 52.9%; --sidebar-primary-foreground: 30 11% 7%; --sidebar-accent: 22.0 39.1% 21.5%; --sidebar-accent-foreground: 30 70% 84%; --sidebar-border: 33.0 9.9% 27.4%; --sidebar-ring: 22.0 83.7% 52.9%; --icon-primary: 22 84% 60%; --icon-secondary: 39 60% 64%; --icon-muted: 37 8% 55%; --icon-interactive: 30 70% 80%; --icon-success: 96 33% 66%; --icon-warning: 39 60% 64%; --icon-danger: 0 60% 58%; --retro: 33.0 8.8% 19.5%; --retro-hover: 33.0 8.9% 23.4%; --retro-border: 37.0 8.0% 40.1%; --retro-foreground: 40 20% 88%; --retro-shadow: 30.6 10.9% 4.3%; --hero-retro-bg: 33.0 8.8% 19.5%; --hero-retro-border: 37.0 8.0% 40.1%; --hero-retro-text: 40 20% 88%; --hero-retro-light: 33.0 10.6% 14.5%; --wes-pink: 20.0 25.4% 18.5%; --wes-pink-dark: 20.0 25.7% 24.4%; --wes-soft-pink: 20.0 25.4% 18.5%; --wes-soft-pink-dark: 20.0 25.7% 24.4%; --wes-yellow: 39.0 21.5% 17.5%; --wes-yellow-dark: 39.0 21.8% 24.4%; --wes-pale-yellow: 39.0 21.5% 17.5%; --wes-pale-yellow-dark: 39.0 21.8% 24.4%; --wes-mint: 96.0 16.6% 17.5%; --wes-mint-dark: 96.0 16.8% 24.4%; --wes-mint-green: 96.0 16.6% 17.5%; --wes-mint-green-dark: 96.0 16.8% 24.4%; --wes-lavender: 210.0 16.6% 18.5%; --wes-lavender-dark: 210.0 16.7% 25.4%; --wes-dusty-lavender: 210.0 16.6% 18.5%; --wes-dusty-lavender-dark: 210.0 16.7% 25.4%; --wes-cream: 33.0 10.6% 12.5%; --wes-pastel-cream: 33.0 10.6% 12.5%; --wes-salmon: 20.0 29.7% 28.4%; --wes-coral-salmon: 20.0 29.7% 28.4%; --wes-coral: 20.0 60.0% 50.3%; --wes-warm-coral: 20.0 60.0% 50.3%; --wes-sage: 96.0 11.9% 30.3%; --wes-sage-green: 96.0 11.9% 30.3%; --wes-dusty-blue: 210.0 13.9% 32.3%; --wes-teal: 200.0 14.9% 40.2%; --wes-muted-teal: 200.0 14.9% 40.2%; --wes-mustard: 39.0 55.0% 55.1%; --wes-vintage-mustard: 39.0 55.0% 55.1%; --wes-vintage-gold: 38.0 54.9% 50.3%; --wes-burgundy: 22 80% 60%; --wes-dark-orange: 22 80% 60%; --wes-forest: 96 30% 62%; --wes-forest-green: 96 30% 62%;"
+        },
+        {
+          "tag": "BODY",
+          "style": "overflow: hidden;"
+        },
+        {
+          "tag": "DIV"
+        }
+      ]
+    }
+  ]
+}

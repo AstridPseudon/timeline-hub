@@ -1,0 +1,533 @@
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+index 4d97e5b55..a40265f27 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml
+@@ -9,8 +9,11 @@ description: Draws the speaker's pixel mouth (closed, half, open on a 3-frame cy
+ # motion.ts exports MOUTH_LEVEL: closed=0, half=0.5, open=1. Human labels apply
+ # only to the resolved astrid_motion/effects/am-presenter source and revision;
+ # foreign motion.mouth scalars and other values have unknown labels.
+-# diagnostics.mouth uses the shared erase rectangle and presenterAt transform:
+-# an inspection footprint, including closed pose, not occupied pixels or alpha.
++# diagnostics.mouth pads the shared erase rectangle by 1 logical px horizontally
++# and 2 vertically, using the drawing transform. Normalized default, partial and
++# raw-invalid regions stay known. This inspection ROI makes no occupancy claim.
++# Legacy equivalence requires separate qualification of complete normalized
++# integer anchors; absent/partial/un-normalized anchors remain unqualified.
+ # Mosaic makes the region unknown; the public scene invalidates it for
+ # unsupported outer geometry. Presence is unknown; opaqueSupport is none.
+ # No underlying plate, asset alpha, face or text region is inferred.
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+index a412d1c94..dfe1e25b0 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+@@ -30,9 +30,18 @@ export const mouthAnchor = (raw: unknown): Anchor =>
+ 
+ export type PixelRect = {x: number; y: number; w: number; h: number};
+ 
+-// The erase rectangle is also the inspection footprint, even in closed pose.
++// The drawing erases this rectangle before the half/open mouth pixels.
+ export const mouthEraseRect = (m: Anchor): PixelRect => ({x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4});
+ 
++// Public inspection area around the actual drawing geometry, including closed
++// pose. It deliberately follows the same normalization as drawing, so default,
++// partial, fractional and raw-invalid anchors retain their known normalized
++// public region.
++export const mouthInspectionRect = (raw: unknown): PixelRect => {
++  const r = mouthEraseRect(mouthAnchor(raw));
++  return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
++};
++
+ export const pixelGeometry = (r: PixelRect, v: PresenterView): {left: number; top: number; width: number; height: number} => ({
+   left: v.originX + r.x * v.scale,
+   top: v.originY + r.y * v.scale,
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+index bc4002298..74512683e 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+@@ -2,7 +2,7 @@ import type {ComponentCapabilityContext, PreparedComponentCapability} from '@ban
+ import type {ElementComponentProps} from '../../../../../rendering/shared/element_contracts';
+ import {clipFrames, narrowParams} from '../../_shared/am';
+ import {mosaicBlockAt, type MosaicRamp} from '../../_shared/mosaic';
+-import {motionAt, mouthAnchor, mouthEraseRect, pixelGeometry, presenterAt} from './motion';
++import {motionAt, mouthInspectionRect, pixelGeometry, presenterAt} from './motion';
+ 
+ export const presenterMosaicAt = (raw: unknown, clip: ElementComponentProps['clip'], frame: number, fps: number): boolean => {
+   const p = narrowParams<{mosaicIn?: MosaicRamp | null; mosaicOut?: MosaicRamp | null}>(raw);
+@@ -14,7 +14,7 @@ export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapab
+   // The public scene supplies the same speed-remapped frame as the component.
+   frame: frame => {
+     const {view} = presenterAt(clip.params, frame, fps);
+-    const {left, top, width: w, height: h} = pixelGeometry(mouthEraseRect(mouthAnchor(clip.params)), view);
++    const {left, top, width: w, height: h} = pixelGeometry(mouthInspectionRect(clip.params), view);
+     return {
+       presence: 'unknown',
+       opaqueSupport: 'none',
+@@ -22,7 +22,7 @@ export const preparePresenterScene = ({clip, fps, width, height}: ComponentCapab
+       bounds: {status: 'known', rect: {x: 0, y: 0, width, height}},
+       diagnostics: {
+         motion: motionAt(clip.params, frame, fps),
+-        // A closed mouth may draw nothing, and no underlying plate is assumed.
++        // Padded inspection ROI, including closed pose; no plate or alpha claim.
+         mouth: presenterMosaicAt(clip.params, clip, frame, fps)
+           ? {status: 'unknown', reason: 'Presenter mouth overlay is hidden by mosaic'}
+           : {status: 'known', rect: {x: left, y: top, width: w, height: h}},
+diff --git a/tests/packs/rendering/presenter_crop_capture.mjs b/tests/packs/rendering/presenter_crop_capture.mjs
+index 03d060622..585e2ba7a 100644
+--- a/tests/packs/rendering/presenter_crop_capture.mjs
++++ b/tests/packs/rendering/presenter_crop_capture.mjs
+@@ -4,7 +4,7 @@ import fs from 'node:fs';
+ import path from 'node:path';
+ import {bundle} from '@remotion/bundler';
+ import {openBrowser, renderStill, selectComposition} from '@remotion/renderer';
+-import {basis, inspect, params, propsFor} from './presenter_crop_geometry.mjs';
++import {basis, eraseRegion, params, prepareRoot, propsFor, seriesInspection} from './presenter_crop_geometry.mjs';
+ import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
+ 
+ assert.equal(process.env.VIEWING_CROP_CENTRAL, '1');
+@@ -13,8 +13,13 @@ const output = process.argv[2];
+ assert.ok(path.isAbsolute(output));
+ const frames = [0, 3, 4, 5];
+ const props = propsFor(params);
+-const rows = inspect(props, basis, frames);
+-assert.deepEqual([...new Set(rows.map(r => r.motion.mouth))].sort(), [0, .5, 1]);
++// Fixed component-zero ROI, retained for every PNG. No per-PNG ROI query.
++const scene = prepareRoot(props, basis, {});
++const zero = seriesInspection(scene, props);
++assert.equal(zero.frame, 0);
++assert.deepEqual(props.timeline.clips[0].params, {mouth: {x: 151, y: 104, w: 19},
++  words: [[.1, .4]], chrome: 'none', blinkEvery: 0, seed: 7});
++const rows = [{...zero, erase: eraseRegion(params, 0, basis.fps)}];
+ const buildDir = path.join(output, 'bundle');
+ const serveUrl = await bundle({entryPoint: path.join(process.cwd(), 'presenter_crop_entry.mjs'),
+   outDir: buildDir, webpackOverride: remotionPrimitiveAliasesFor(process.cwd()),
+diff --git a/tests/packs/rendering/presenter_crop_capture.py b/tests/packs/rendering/presenter_crop_capture.py
+index 6d3f1cf34..2e62309d9 100644
+--- a/tests/packs/rendering/presenter_crop_capture.py
++++ b/tests/packs/rendering/presenter_crop_capture.py
+@@ -64,48 +64,63 @@ def test_actual_registered_presenter_crop_pixels(presenter_query, tmp_path):
+     paths = [output / f"frame-{f}.png" for f in case["frames"]]
+     before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
+     old = png_crop(model.mouth_box(legacy_element(case), 0), size)
+-    new = png_crop(public_box(case["rows"][0]), size)
+-    assert (area(old), area(new)) == (799, 387)
++    compat = png_crop(public_box(case["rows"][0]), size)
++    erase = png_crop(public_box(case["rows"][0], "erase"), size)
++    assert old == compat == (298, 202, 345, 219)
++    assert erase == (300, 206, 343, 215)
++    assert (area(old), area(compat), area(erase)) == (799, 799, 387)
++    assert len(case["rows"]) == 1  # one component-zero query for the series
++    assert case["rows"][0]["componentFrame"] == 0
++    assert case["rows"][0]["clipId"] == "presenter"
++    crops = {"old": old, "compat": compat, "erase": erase}
+     images = []
+     for path in paths:
+         with Image.open(path) as captured:
+             assert captured.format == "PNG" and captured.size == size
+             images.append(captured.convert("RGB"))
+-    # Positive: the same unaltered captured PNG through each crop/comparator.
+-    # Every captured pose retains a nonempty footprint; no placeholder image.
+-    for image, row in zip(images, case["rows"]):
+-        assert png_crop(public_box(row), size) == new
+-        for crop in (old, new):
++    # Same unaltered actual PNGs and the unchanged strict >2% comparator.
++    for image in images:
++        assert image.crop(old).tobytes() == image.crop(compat).tobytes()
++        for crop in crops.values():
+             region = image.crop(crop)
+             assert _diff_fraction(region, region.copy())[0] == 0
+-    fractions = {"old": [], "public": []}
+-    for a, b in zip(images, images[1:]):
+-        for label, crop in (("old", old), ("public", new)):
+-            fractions[label].append(_diff_fraction(a.crop(crop), b.crop(crop))[0])
+-    assert any(f > .02 for f in fractions["old"]), fractions
+-    assert any(f > .02 for f in fractions["public"]), fractions
+-    assert [f > .02 for f in fractions["old"]] == [f > .02 for f in fractions["public"]]
++    fractions = {label: [_diff_fraction(a.crop(crop), b.crop(crop))[0]
++                         for a, b in zip(images, images[1:])]
++                 for label, crop in crops.items()}
++    assert fractions["old"] == fractions["compat"]
++    for values in fractions.values():
++        assert any(f > .02 for f in values), fractions
++    assert [f > .02 for f in fractions["old"]] == [f > .02 for f in fractions["compat"]]
++    assert [f > .02 for f in fractions["old"]] == [f > .02 for f in fractions["erase"]]
+ 
+-    # Negative control uses a COPY of a real PNG. Exactly eight bright/dark
+-    # pixels in the overlap change above CHANGE_LEVEL: opposite 2% verdicts.
+-    planted = images[0].copy()
+-    for x in range(new[0] + 2, new[0] + 10):
+-        point = (x, new[1] + 2)
+-        original = planted.getpixel(point)
+-        planted.putpixel(point, (255, 255, 255) if sum(original) < 384 else (0, 0, 0))
+-    negative = {}
+-    for label, crop in (("old", old), ("public", new)):
+-        negative[label] = _diff_fraction(images[0].crop(crop), planted.crop(crop))[0]
+-        assert negative[label] == 8 / area(crop)
+-    assert negative["old"] <= .02 < negative["public"]
+-    # A larger planted defect is caught by BOTH unchanged comparators.
+-    for x in range(new[0] + 2, new[0] + 22):
+-        point = (x, new[1] + 2)
+-        original = images[0].getpixel(point)
+-        planted.putpixel(point, (255, 255, 255) if sum(original) < 384 else (0, 0, 0))
+-    for crop in (old, new):
+-        assert _diff_fraction(images[0].crop(crop), planted.crop(crop))[0] == 20 / area(crop)
+-        assert 20 / area(crop) > .02
++    def planted_fractions(points):
++        # Plant above CHANGE_LEVEL in a fresh copy; never edit a captured PNG.
++        planted = images[0].copy()
++        for point in points:
++            original = images[0].getpixel(point)
++            planted.putpixel(point, (255, 255, 255) if sum(original) < 384 else (0, 0, 0))
++        return {label: _diff_fraction(images[0].crop(crop), planted.crop(crop))[0]
++                for label, crop in crops.items()}
++
++    controls = {}
++    for count in (8, 15, 16, 20):
++        points = [(erase[0] + 2 + i, erase[1] + 2) for i in range(count)]
++        values = planted_fractions(points)
++        for label, crop in crops.items():
++            assert values[label] == count / area(crop)
++        assert (values["old"] > .02) == (count >= 16)
++        assert (values["compat"] > .02) == (count >= 16)
++        assert values["erase"] > .02
++        controls[str(count)] = values
++    assert controls["8"]["old"] <= .02 < controls["8"]["erase"]
++    assert controls["15"]["old"] <= .02 < controls["16"]["old"]
++    # Sixteen points wholly in padding: old/compat detect, erase misses.
++    points = [(compat[0] + i, compat[1]) for i in range(16)]
++    assert all(not (erase[0] <= x < erase[2] and erase[1] <= y < erase[3]) for x, y in points)
++    padding = planted_fractions(points)
++    assert padding == {"old": 16 / 799, "compat": 16 / 799, "erase": 0}
++    assert padding["old"] > .02 and padding["compat"] > .02
++    controls["padding16"] = padding
+     assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == before
+-    print(json.dumps({"png_sha256": before, "crop": {"old": old, "public": new},
+-                      "natural_pairs": fractions, "eight_pixel_negative": negative}, sort_keys=True))
++    print(json.dumps({"png_sha256": before, "crop": crops,
++                      "natural_pairs": fractions, "planted_controls": controls}, sort_keys=True))
+diff --git a/tests/packs/rendering/presenter_crop_geometry.mjs b/tests/packs/rendering/presenter_crop_geometry.mjs
+index 3716d6c15..deedfcdcc 100644
+--- a/tests/packs/rendering/presenter_crop_geometry.mjs
++++ b/tests/packs/rendering/presenter_crop_geometry.mjs
+@@ -1,10 +1,26 @@
+ // Public facts from the ordinary generated host; no renderer or clock mirror.
+ import assert from 'node:assert/strict';
+ import {DEFAULT_THEME} from '@banodoco/timeline-composition';
+-import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
++import {build} from 'esbuild';
++import {queryDrawFrame, querySceneFrame} from '@banodoco/timeline-composition/evaluation';
+ import {loadHostScene} from './native-scene.mjs';
+ 
+-const prepare = await loadHostScene(process.cwd());
++// Erase control comes from the same drawing helpers, never a copied crop formula.
++const drawing = await build({stdin: {contents: `export {mouthAnchor, mouthEraseRect,
++  pixelGeometry, presenterAt} from '../astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion';`,
++  resolveDir: process.cwd()}, bundle: true, write: false, platform: 'node',
++  format: 'esm', packages: 'external', logLevel: 'silent',
++  plugins: [{name: 'installed-remotion', setup(builder) {
++    builder.onResolve({filter: /^remotion$/}, () => ({path: import.meta.resolve('remotion'), external: true}));
++  }}]});
++const shared = await import(`data:text/javascript;base64,${Buffer.from(drawing.outputFiles[0].text).toString('base64')}`);
++export const eraseRegion = (raw, frame, fps) => {
++  const {left: x, top: y, width, height} = shared.pixelGeometry(
++    shared.mouthEraseRect(shared.mouthAnchor(raw)), shared.presenterAt(raw, frame, fps).view);
++  return {status: 'known', rect: {x, y, width, height}};
++};
++
++export const prepareRoot = await loadHostScene(process.cwd());
+ export const basis = {width: 1920, height: 1080, fps: 30};
+ export const frames = [0, 3, 4, 5, 15, 29];
+ export const params = {mouth: {x: 151, y: 104, w: 19}, words: [[.1, .4]],
+@@ -19,7 +35,7 @@ export const propsFor = (p = params, extra = {}) => ({
+ export const inspect = (props, b = basis, selected = frames) => {
+   assert.deepEqual(props.timeline.clips[0].elementRef,
+     {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});
+-  const scene = prepare(props, b, {});
++  const scene = prepareRoot(props, b, {});
+   return selected.map(frame => {
+     const answer = querySceneFrame(scene, frame);
+     assert.equal(answer.layers.length, 1);
+@@ -29,9 +45,35 @@ export const inspect = (props, b = basis, selected = frames) => {
+   });
+ };
+ 
++// The legacy series holds component-zero geometry. Resolve that frame through
++// the existing public DrawPlan clock, then query this same prepared Root once.
++export const seriesInspection = (scene, props, clipId = 'presenter') => {
++  const targets = props.timeline.clips.filter(clip => clip.id === clipId);
++  assert.equal(targets.length, 1);
++  const target = targets[0];
++  assert.deepEqual(target.elementRef, {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});
++  const matches = scene.tracks.flatMap(track => track.clips.flatMap((clip, clipIndex) =>
++    clip.id === target.id ? [{clip, clipIndex, plan: track.prepared.plans[clipIndex]}] : []));
++  assert.equal(matches.length, 1);
++  const {clip, clipIndex, plan} = matches[0];
++  assert.deepEqual(clip, target);
++  assert.ok(plan.drawDuration > 0);
++  assert.equal(queryDrawFrame(plan, 0).contentFrame, 0);
++  const answer = querySceneFrame(scene, plan.drawStart); // the only series ROI read
++  const layers = answer.layers.filter(layer => layer.clipId === target.id);
++  assert.equal(layers.length, 1);
++  const layer = layers[0];
++  assert.equal(layer.clipIndex, clipIndex);
++  assert.equal(layer.contentFrame, 0);
++  assert.equal(layer.diagnostics.mouth.status, 'known');
++  return {frame: plan.drawStart, componentFrame: 0, clipId: target.id,
++    mouth: layer.diagnostics.mouth, motion: layer.diagnostics.motion};
++};
++
+ if (process.argv[2] === 'geometry') {
+   const cases = {
+-    default: {mouth: undefined}, custom: {}, fractional: {mouth: {x: 152.5, y: 103.7, w: 20.6}},
++    default: {mouth: undefined}, partial: {mouth: {x: 151, y: 104}}, custom: {}, fractional: {mouth: {x: 152.5, y: 103.7, w: 20.6}},
++    rawInvalid: {mouth: {x: 'bad', y: null, w: 900}},
+     clamps: {mouth: {x: -20, y: 999, w: 0}},
+     zoom: {zoom: 2, focus: {x: 190.4, y: 120.7}},
+     focusClamp: {zoom: 99, focus: {x: -100, y: 999}},
+@@ -41,6 +83,28 @@ if (process.argv[2] === 'geometry') {
+   };
+   console.log(JSON.stringify([30, 24000 / 1001].flatMap(fps => Object.entries(cases).map(([name, p]) => {
+     const props = propsFor({...params, ...p}, name === 'outer' ? {cropLeft: .1} : {});
+-    return {name, basis: {...basis, fps}, props, rows: inspect(props, {...basis, fps})};
++    return {name, basis: {...basis, fps}, props,
++      normalizedMouth: shared.mouthAnchor(props.timeline.clips[0].params),
++      rows: inspect(props, {...basis, fps}).map(row =>
++        ({...row, erase: eraseRegion(props.timeline.clips[0].params, row.frame, fps)}))};
+   }))));
+ }
++
++if (process.argv[2] === 'series') {
++  const props = propsFor();
++  const original = JSON.stringify(props);
++  const scene = prepareRoot(props, basis, {});
++  const zero = seriesInspection(scene, props);
++  assert.equal(JSON.stringify(props), original);
++  assert.equal(zero.frame, 0);
++  assert.equal(zero.componentFrame, 0);
++  assert.deepEqual(zero.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
++  assert.throws(() => seriesInspection(scene, props, 'missing'));
++  assert.throws(() => seriesInspection(scene, {...props, timeline: {...props.timeline,
++    clips: [...props.timeline.clips, props.timeline.clips[0]]}}));
++  const foreign = propsFor(params, {elementRef: {kind: 'effect', id: 'am-presenter', packId: 'probe'}});
++  assert.throws(() => seriesInspection(scene, foreign));
++  const stale = propsFor({...params, seed: 9});
++  assert.throws(() => seriesInspection(scene, stale));
++  console.log(JSON.stringify({ok: true, zero}));
++}
+diff --git a/tests/packs/rendering/presenter_scene_capability.mjs b/tests/packs/rendering/presenter_scene_capability.mjs
+index 4f51d670e..6e8bb994b 100644
+--- a/tests/packs/rendering/presenter_scene_capability.mjs
++++ b/tests/packs/rendering/presenter_scene_capability.mjs
+@@ -101,6 +101,12 @@ if (mode === 'snapshots') {
+   const drawnOverlay = (c, frame, b = basis) => render({clip: c, params: c.params, fps: b.fps}, frame, b,
+     registries, source.Presenter);
+   const px = value => value === 0 ? '0' : `${value}px`;
++  const geometry = (c, frame, fps, rect) => {
++    const {left: x, top: y, width, height} = source.pixelGeometry(rect, presenterAt(c.params, frame, fps).view);
++    return {x, y, width, height};
++  };
++  const erase = (c, frame, fps) => geometry(c, frame, fps, source.mouthEraseRect(source.mouthAnchor(c.params)));
++  const inspection = (c, frame, fps) => geometry(c, frame, fps, source.mouthInspectionRect(c.params));
+   const eraseStyle = rect => `position:absolute;left:${px(rect.x)};top:${px(rect.y)};width:${px(rect.width)};height:${px(rect.height)};background:`;
+   const assertMotion = (c, frame, b = basis, layer = query(c, frame, b), supplied = frame) => {
+     assert.deepEqual(layer.diagnostics.motion, motionAt(c.params, supplied, b.fps));
+@@ -207,7 +213,8 @@ if (mode === 'snapshots') {
+           seen.add(state);
+           const html = render(props, frame, b);
+           assert.ok(html.includes(drawnOverlay(c, frame, b)), `registered drawing ${fps}:${frame}`);
+-          const mouth = layer.diagnostics.mouth.rect;
++          assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
++          const mouth = erase(c, frame, fps);
+           assert.equal(html.includes(eraseStyle(mouth) + '#EDB98E'), state !== 'closed');
+         }
+       }
+@@ -224,7 +231,7 @@ if (mode === 'snapshots') {
+   }
+ 
+   if (mode === 'geometry') {
+-    const inputs = [{}, {mouth: null}, {mouth: {x: -20, y: 999, w: 0}},
++    const inputs = [{}, {mouth: {x: 151}}, {mouth: {x: 151, y: 104}}, {mouth: null}, {mouth: {x: -20, y: 999, w: 0}},
+       {mouth: {x: 999, y: -1, w: 99}}, {mouth: {x: 152.5, y: 103.7, w: 20.6}},
+       {zoom: 2, focus: {x: 190.4, y: 120.7}},
+       {zoom: 99, focus: {x: -100, y: 999}},
+@@ -242,20 +249,21 @@ if (mode === 'snapshots') {
+         assert.equal(layer.diagnostics.mouth.status, 'known');
+         const state = mouthStateAt(presenterAt(c.params, frame, fps).timing, frame);
+         const html = render(props, frame, b);
+-        if (state !== 'closed') assert.ok(html.includes(eraseStyle(layer.diagnostics.mouth.rect) + '#EDB98E'));
++        assert.deepEqual(layer.diagnostics.mouth.rect, inspection(c, frame, fps));
++        if (state !== 'closed') assert.ok(html.includes(eraseStyle(erase(c, frame, fps)) + '#EDB98E'));
+         assert.equal(layer.visible, 'unknown');
+         assert.equal(layer.opaqueSupport, 'none');
+         assert.equal(layer.diagnostics.face, undefined);
+         assert.equal(layer.diagnostics.text, undefined);
+       }
+     }
+-    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect, {x: 900, y: 618, width: 126, height: 24});
++    assert.deepEqual(query(clip(), 0).diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
+     assert.deepEqual(query(clip({mouth: {x: -1, y: 999, w: 0}}), 0).diagnostics.mouth.rect,
+-      {x: -6, y: 1068, width: 18, height: 24});
++      {x: -12, y: 1056, width: 30, height: 48});
+     const small = {...basis, width: 960, height: 540};
+     const layer = query(clip(), 0, small);
+     // Logical overlay pixels are not rescaled to an invented 320x180 viewport.
+-    assert.deepEqual(layer.diagnostics.mouth.rect, {x: 900, y: 618, width: 126, height: 24});
++    assert.deepEqual(layer.diagnostics.mouth.rect, {x: 894, y: 606, width: 138, height: 48});
+     assert.deepEqual(layer.bounds.rect, {x: 0, y: 0, width: 960, height: 540});
+   }
+ 
+diff --git a/tests/packs/rendering/test_presenter_crop_equivalence.py b/tests/packs/rendering/test_presenter_crop_equivalence.py
+index 6fd118d1a..6a1ac64e5 100644
+--- a/tests/packs/rendering/test_presenter_crop_equivalence.py
++++ b/tests/packs/rendering/test_presenter_crop_equivalence.py
+@@ -1,4 +1,4 @@
+-"""Counterexamples to replacing the legacy inspection crop with an erase region.
++"""Padded inspection compatibility, retaining erase-region counterexamples.
+ 
+ Only geometry is exercised here. Decoded pixel checks require the separately
+ selected presenter_crop_capture.py central test; generated PNGs are not evidence.
+@@ -54,9 +54,9 @@ def png_crop(box, size):
+             int(box[2] * sx) + 1, int(box[3] * sy) + 1)
+ 
+ 
+-def public_box(row):
+-    assert row["mouth"]["status"] == "known"
+-    r = row["mouth"]["rect"]
++def public_box(row, key="mouth"):
++    assert row[key]["status"] == "known"
++    r = row[key]["rect"]
+     return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
+ 
+ 
+@@ -64,23 +64,36 @@ def area(crop):
+     return (crop[2] - crop[0]) * (crop[3] - crop[1])
+ 
+ 
++def legacy_qualified(case):
++    # Eligibility only: normalization belongs to the actual component helper.
++    raw = case["props"]["timeline"]["clips"][0]["params"].get("mouth")
++    return isinstance(raw, dict) and all(
++        type(raw.get(key)) is int and raw[key] == case["normalizedMouth"][key]
++        for key in ("x", "y", "w"))
++
++
+ def test_registered_default_and_clamped_anchors_are_not_legacy_defaults(crop_cases):
+     for case in crop_cases:
+         old = model.mouth_box(legacy_element(case), 0)
+         row = case["rows"][0]
+         if case["name"] == "default":
+             assert old is None
+-            assert public_box(row) == (900, 618, 1026, 642)
++            assert public_box(row) == (894, 606, 1032, 654)
++        elif case["name"] == "partial":
++            assert old == (894, 606, 1014, 654)  # legacy w=16, actual w=19
++            assert public_box(row) == (894, 606, 1032, 654)
++        elif case["name"] == "rawInvalid":
++            assert public_box(row) == (894, 606, 1158, 654)
+         elif case["name"] == "clamps":
+             assert old == (-132, 5976, -108, 6024)
+-            assert public_box(row) == (-6, 1068, 12, 1092)
++            assert public_box(row) == (-12, 1056, 18, 1104)
+         elif case["name"] == "fractional":
+             assert old == (903, 604.2, 1050.6, 652.2)
+-            assert public_box(row) == (912, 618, 1050, 642)
++            assert public_box(row) == (906, 606, 1056, 654)
+ 
+ 
+ @pytest.mark.parametrize("size", [(1920, 1080), (640, 360), (641, 361), (720, 405)])
+-def test_same_frame_scaled_crop_denominators_differ(crop_cases, size):
++def test_same_frame_compatibility_and_separate_erase_denominators(crop_cases, size):
+     seen = set()
+     for case in crop_cases:
+         if case["name"] not in ("custom", "fractional", "zoom", "focusClamp", "push", "punch", "bob"):
+@@ -90,23 +103,30 @@ def test_same_frame_scaled_crop_denominators_differ(crop_cases, size):
+             frame = row["frame"]
+             seen.add(row["motion"]["mouth"])
+             old = png_crop(model.mouth_box(element, frame), size)
+-            new = png_crop(public_box(row), size)
+-            assert all(math.isfinite(v) for v in old + new)
+-            if area(new) > 0 and area(old) > 0:
+-                assert area(old) != area(new), (case["name"], frame, size)
+-            # Using the private fallback view cannot fix the padding mismatch.
++            compat = png_crop(public_box(row), size)
++            erase = png_crop(public_box(row, "erase"), size)
++            assert all(math.isfinite(v) for v in old + compat + erase)
++            if area(erase) > 0 and area(old) > 0:
++                assert area(old) != area(erase), (case["name"], frame, size)
++            if legacy_qualified(case):
++                assert old == compat, (case["name"], frame, size)
++            else:
++                assert case["name"] == "fractional"
++                assert old != compat
++            # The retained private fallback cannot fix erase's padding mismatch.
+             fallback = png_crop(model.mouth_box(legacy_element(case, own_view=False), frame), size)
+-            assert fallback != new
++            assert fallback != erase
+     assert seen == {0, .5, 1}
+ 
+ 
+ def test_minimal_two_percent_counterexample_without_invented_pixels(crop_cases):
+     case = next(c for c in crop_cases if c["name"] == "custom" and c["basis"]["fps"] == 30)
+     old = png_crop(model.mouth_box(legacy_element(case), 0), (640, 360))
+-    new = png_crop(public_box(case["rows"][0]), (640, 360))
+-    assert old == (298, 202, 345, 219)
++    compat = png_crop(public_box(case["rows"][0]), (640, 360))
++    new = png_crop(public_box(case["rows"][0], "erase"), (640, 360))
++    assert old == compat == (298, 202, 345, 219)
+     assert new == (300, 206, 343, 215)
+-    assert (area(old), area(new)) == (799, 387)
++    assert (area(old), area(compat), area(new)) == (799, 799, 387)
+     # Eight pixels above CHANGE_LEVEL inside both crops produce opposite verdicts
+     # under the unchanged strict >2% rule. Actual comparator proof is central-only.
+     assert 8 / area(old) <= .02 < 8 / area(new)
+@@ -130,3 +150,20 @@ def test_source_bound_unknown_is_not_a_replacement_crop(crop_cases):
+             assert model.mouth_box(legacy_element(case), 0) is not None
+             with pytest.raises(AssertionError):
+                 public_box(row)
++
++
++def test_public_known_normalization_is_not_legacy_qualification(crop_cases):
++    for case in crop_cases:
++        if case["name"] in ("mosaic", "outer"):
++            continue
++        assert all(row["mouth"]["status"] == "known" for row in case["rows"])
++        assert legacy_qualified(case) == (case["name"] not in ("default", "partial", "clamps", "rawInvalid", "fractional"))
++
++
++def test_series_uses_one_component_zero_from_the_same_prepared_root(presenter_query):
++    stage_geometry(presenter_query)
++    result = subprocess.run([str(presenter_query.node), "presenter_crop_geometry.mjs", "series"],
++                            cwd=presenter_query.project, env=presenter_query.env,
++                            capture_output=True, text=True, timeout=60)
++    assert result.returncode == 0, result.stdout + result.stderr
++    assert json.loads(result.stdout)["ok"] is True
+diff --git a/tests/packs/rendering/test_presenter_scene_capability.py b/tests/packs/rendering/test_presenter_scene_capability.py
+index fa73a033a..15fb84cfa 100644
+--- a/tests/packs/rendering/test_presenter_scene_capability.py
++++ b/tests/packs/rendering/test_presenter_scene_capability.py
+@@ -89,12 +89,15 @@ export default Object.assign(({params}) => createElement('div', {'data-probe': p
+     peer_identity = {p.name: p.resolve() for p in modules.iterdir() if p.name != "@banodoco"}
+     preflight = """
+       import {createRequire} from 'node:module';
+-      import {realpathSync} from 'node:fs';
++      import {realpathSync, readFileSync} from 'node:fs';
++      import {createHash} from 'node:crypto';
+       import {fileURLToPath} from 'node:url';
+       const require = createRequire(import.meta.url);
+       console.log(JSON.stringify(Object.fromEntries(['react', 'react-dom', 'remotion',
+         '@remotion/media', '@remotion/renderer', '@remotion/layout-utils'].map(name =>
+-          [name, {path: realpathSync(fileURLToPath(import.meta.resolve(name))), version: require(`${name}/package.json`).version}]))));
++          [name, {path: realpathSync(fileURLToPath(import.meta.resolve(name))),
++            sha256: createHash('sha256').update(readFileSync(fileURLToPath(import.meta.resolve(name)))).digest('hex'),
++            version: require(`${name}/package.json`).version}]))));
+     """
+     resolved = json.loads(subprocess.check_output([str(node.path), "--input-type=module", "-e", preflight],
+                                                 cwd=project, env=env, text=True, timeout=30))
+@@ -114,6 +117,8 @@ export default Object.assign(({params}) => createElement('div', {'data-probe': p
+     try:
+         yield query
+         assert hashes() == expected
++        assert json.loads(subprocess.check_output([str(node.path), "--input-type=module", "-e", preflight],
++                                                  cwd=project, env=env, text=True, timeout=30)) == resolved
+         assert {p.name: p.resolve() for p in modules.iterdir() if p.name != "@banodoco"} == peer_identity
+     finally:
+         shutil.rmtree(project_root)

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.5 /home/user/work/wt/vw-m3-native-frame-zero-triage
+
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  05:32:55
+   Duration  1.93s (transform 190ms, setup 140ms, import 380ms, tests 740ms, environment 439ms)
+

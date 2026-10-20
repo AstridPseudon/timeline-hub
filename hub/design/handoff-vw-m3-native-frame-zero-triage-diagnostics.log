@@ -1,0 +1,715 @@
+TAP version 13
+# Subtest: classifies only correlated optional ACP unavailability: /api/astrid/acp/models
+ok 1 - classifies only correlated optional ACP unavailability: /api/astrid/acp/models
+  ---
+  duration_ms: 1.395702
+  ...
+# Subtest: classifies only correlated optional ACP unavailability: /api/astrid/acp/agents
+ok 2 - classifies only correlated optional ACP unavailability: /api/astrid/acp/agents
+  ---
+  duration_ms: 0.141172
+  ...
+# Subtest: classifies only correlated optional ACP unavailability: /api/astrid/acp/projects/current-project/chat
+ok 3 - classifies only correlated optional ACP unavailability: /api/astrid/acp/projects/current-project/chat
+  ---
+  duration_ms: 0.09318
+  ...
+# Subtest: retains wrong body and its console error as failures
+ok 4 - retains wrong body and its console error as failures
+  ---
+  duration_ms: 0.106089
+  ...
+# Subtest: retains extra body field and its console error as failures
+ok 5 - retains extra body field and its console error as failures
+  ---
+  duration_ms: 0.158464
+  ...
+# Subtest: retains array body and its console error as failures
+ok 6 - retains array body and its console error as failures
+  ---
+  duration_ms: 0.085004
+  ...
+# Subtest: retains invalid JSON and its console error as failures
+ok 7 - retains invalid JSON and its console error as failures
+  ---
+  duration_ms: 0.091612
+  ...
+# Subtest: retains unreadable body and its console error as failures
+ok 8 - retains unreadable body and its console error as failures
+  ---
+  duration_ms: 0.114161
+  ...
+# Subtest: retains wrong status and its console error as failures
+ok 9 - retains wrong status and its console error as failures
+  ---
+  duration_ms: 0.16241
+  ...
+# Subtest: retains auth status and its console error as failures
+ok 10 - retains auth status and its console error as failures
+  ---
+  duration_ms: 0.097683
+  ...
+# Subtest: retains wrong method and its console error as failures
+ok 11 - retains wrong method and its console error as failures
+  ---
+  duration_ms: 0.093772
+  ...
+# Subtest: retains HEAD method and its console error as failures
+ok 12 - retains HEAD method and its console error as failures
+  ---
+  duration_ms: 0.116412
+  ...
+# Subtest: retains matching wrong origin response and console error as failures
+ok 13 - retains matching wrong origin response and console error as failures
+  ---
+  duration_ms: 0.166706
+  ...
+# Subtest: retains matching wrong port response and console error as failures
+ok 14 - retains matching wrong port response and console error as failures
+  ---
+  duration_ms: 0.105604
+  ...
+# Subtest: retains matching wrong project response and console error as failures
+ok 15 - retains matching wrong project response and console error as failures
+  ---
+  duration_ms: 0.06092
+  ...
+# Subtest: retains matching query string response and console error as failures
+ok 16 - retains matching query string response and console error as failures
+  ---
+  duration_ms: 0.061059
+  ...
+# Subtest: retains matching catalog response and console error as failures
+ok 17 - retains matching catalog response and console error as failures
+  ---
+  duration_ms: 0.051618
+  ...
+# Subtest: retains matching media response and console error as failures
+ok 18 - retains matching media response and console error as failures
+  ---
+  duration_ms: 0.125512
+  ...
+# Subtest: retains matching admission response and console error as failures
+ok 19 - retains matching admission response and console error as failures
+  ---
+  duration_ms: 0.068851
+  ...
+# Subtest: retains matching auth response and console error as failures
+ok 20 - retains matching auth response and console error as failures
+  ---
+  duration_ms: 0.07335
+  ...
+# Subtest: retains matching unrelated ACP response and console error as failures
+ok 21 - retains matching unrelated ACP response and console error as failures
+  ---
+  duration_ms: 0.093143
+  ...
+# Subtest: requires an exact resource-load message and matching resource location
+ok 22 - requires an exact resource-load message and matching resource location
+  ---
+  duration_ms: 0.150062
+  ...
+# Subtest: retains all page, media, transport and other console errors beside optional chat diagnostics
+ok 23 - retains all page, media, transport and other console errors beside optional chat diagnostics
+  ---
+  duration_ms: 0.19051
+  ...
+# Subtest: does not let one valid response hide repeated or ambiguous errors on the same URL
+ok 24 - does not let one valid response hide repeated or ambiguous errors on the same URL
+  ---
+  duration_ms: 0.200746
+  ...
+# Subtest: collector retains raw errors, waits for the response body and removes listeners
+ok 25 - collector retains raw errors, waits for the response body and removes listeners
+  ---
+  duration_ms: 4.893641
+  ...
+# Subtest: collector fails closed when an optional response body cannot be read
+ok 26 - collector fails closed when an optional response body cannot be read
+  ---
+  duration_ms: 0.358279
+  ...
+# Subtest: keeps the exact qualified result abort raw and separate, alongside existing paired ACP diagnostics
+ok 27 - keeps the exact qualified result abort raw and separate, alongside existing paired ACP diagnostics
+  ---
+  duration_ms: 7.072699
+  ...
+# Subtest: empty scope (including Case 2) and unfinished case keep result/source aborts failing
+ok 28 - empty scope (including Case 2) and unfinished case keep result/source aborts failing
+  ---
+  duration_ms: 0.8201
+  ...
+# Subtest: missing concrete proof field initial fails closed
+ok 29 - missing concrete proof field initial fails closed
+  ---
+  duration_ms: 0.466652
+  ...
+# Subtest: missing concrete proof field completed fails closed
+ok 30 - missing concrete proof field completed fails closed
+  ---
+  duration_ms: 0.327835
+  ...
+# Subtest: missing concrete proof field fixture fails closed
+ok 31 - missing concrete proof field fixture fails closed
+  ---
+  duration_ms: 0.275193
+  ...
+# Subtest: missing concrete proof field capabilityDigest fails closed
+ok 32 - missing concrete proof field capabilityDigest fails closed
+  ---
+  duration_ms: 6.146129
+  ...
+# Subtest: missing concrete proof field video fails closed
+ok 33 - missing concrete proof field video fails closed
+  ---
+  duration_ms: 0.630107
+  ...
+# Subtest: missing concrete proof field provenanceOutput fails closed
+ok 34 - missing concrete proof field provenanceOutput fails closed
+  ---
+  duration_ms: 0.516197
+  ...
+# Subtest: missing concrete proof field downloadBytes fails closed
+ok 35 - missing concrete proof field downloadBytes fails closed
+  ---
+  duration_ms: 0.414373
+  ...
+# Subtest: missing concrete proof field provenanceBytes fails closed
+ok 36 - missing concrete proof field provenanceBytes fails closed
+  ---
+  duration_ms: 4.48749
+  ...
+# Subtest: missing concrete proof field downloadFailure fails closed
+ok 37 - missing concrete proof field downloadFailure fails closed
+  ---
+  duration_ms: 4.123159
+  ...
+# Subtest: missing concrete proof field downloadHref fails closed
+ok 38 - missing concrete proof field downloadHref fails closed
+  ---
+  duration_ms: 0.865601
+  ...
+# Subtest: missing concrete proof field downloadUrl fails closed
+ok 39 - missing concrete proof field downloadUrl fails closed
+  ---
+  duration_ms: 0.527189
+  ...
+# Subtest: missing concrete proof field downloadTransfer fails closed
+ok 40 - missing concrete proof field downloadTransfer fails closed
+  ---
+  duration_ms: 0.687115
+  ...
+# Subtest: missing concrete proof field probeStderr fails closed
+ok 41 - missing concrete proof field probeStderr fails closed
+  ---
+  duration_ms: 0.63288
+  ...
+# Subtest: missing concrete proof field remotionProject fails closed
+ok 42 - missing concrete proof field remotionProject fails closed
+  ---
+  duration_ms: 7.162003
+  ...
+# Subtest: missing concrete proof field metadata fails closed
+ok 43 - missing concrete proof field metadata fails closed
+  ---
+  duration_ms: 0.663403
+  ...
+# Subtest: missing concrete proof field decodedFrames fails closed
+ok 44 - missing concrete proof field decodedFrames fails closed
+  ---
+  duration_ms: 0.564109
+  ...
+# Subtest: missing concrete proof field media fails closed
+ok 45 - missing concrete proof field media fails closed
+  ---
+  duration_ms: 0.66734
+  ...
+# Subtest: result abort remains failing with failed full fetch
+ok 46 - result abort remains failing with failed full fetch
+  ---
+  duration_ms: 0.929631
+  ...
+# Subtest: result abort remains failing with range-only fetch
+ok 47 - result abort remains failing with range-only fetch
+  ---
+  duration_ms: 4.857264
+  ...
+# Subtest: result abort remains failing with wrong fetch project
+ok 48 - result abort remains failing with wrong fetch project
+  ---
+  duration_ms: 0.824845
+  ...
+# Subtest: result abort remains failing with different fetched bytes
+ok 49 - result abort remains failing with different fetched bytes
+  ---
+  duration_ms: 0.71542
+  ...
+# Subtest: result abort remains failing with native HTTP navigation
+ok 50 - result abort remains failing with native HTTP navigation
+  ---
+  duration_ms: 0.709928
+  ...
+# Subtest: result abort remains failing with unfinished download
+ok 51 - result abort remains failing with unfinished download
+  ---
+  duration_ms: 0.613113
+  ...
+# Subtest: result abort remains failing with truncated download
+ok 52 - result abort remains failing with truncated download
+  ---
+  duration_ms: 0.613085
+  ...
+# Subtest: result abort remains failing with wrong managed size
+ok 53 - result abort remains failing with wrong managed size
+  ---
+  duration_ms: 0.572287
+  ...
+# Subtest: result abort remains failing with wrong digest
+ok 54 - result abort remains failing with wrong digest
+  ---
+  duration_ms: 0.57811
+  ...
+# Subtest: result abort remains failing with corrupt full bytes
+ok 55 - result abort remains failing with corrupt full bytes
+  ---
+  duration_ms: 0.371277
+  ...
+# Subtest: result abort remains failing with wrong object
+ok 56 - result abort remains failing with wrong object
+  ---
+  duration_ms: 0.339756
+  ...
+# Subtest: result abort remains failing with wrong output project
+ok 57 - result abort remains failing with wrong output project
+  ---
+  duration_ms: 0.392883
+  ...
+# Subtest: result abort remains failing with wrong output task
+ok 58 - result abort remains failing with wrong output task
+  ---
+  duration_ms: 0.347352
+  ...
+# Subtest: result abort remains failing with wrong output run
+ok 59 - result abort remains failing with wrong output run
+  ---
+  duration_ms: 0.36546
+  ...
+# Subtest: result abort remains failing with wrong output attempt
+ok 60 - result abort remains failing with wrong output attempt
+  ---
+  duration_ms: 0.391164
+  ...
+# Subtest: result abort remains failing with missing attempt
+ok 61 - result abort remains failing with missing attempt
+  ---
+  duration_ms: 3549.15896
+  ...
+# Subtest: result abort remains failing with wrong completed task
+ok 62 - result abort remains failing with wrong completed task
+  ---
+  duration_ms: 0.830385
+  ...
+# Subtest: result abort remains failing with wrong completed project
+ok 63 - result abort remains failing with wrong completed project
+  ---
+  duration_ms: 0.693202
+  ...
+# Subtest: result abort remains failing with unfinished task
+ok 64 - result abort remains failing with unfinished task
+  ---
+  duration_ms: 0.541237
+  ...
+# Subtest: result abort remains failing with changed spec
+ok 65 - result abort remains failing with changed spec
+  ---
+  duration_ms: 1.566133
+  ...
+# Subtest: result abort remains failing with wrong fixture revision
+ok 66 - result abort remains failing with wrong fixture revision
+  ---
+  duration_ms: 0.720542
+  ...
+# Subtest: result abort remains failing with wrong capability
+ok 67 - result abort remains failing with wrong capability
+  ---
+  duration_ms: 0.494761
+  ...
+# Subtest: result abort remains failing with non-result role
+ok 68 - result abort remains failing with non-result role
+  ---
+  duration_ms: 0.375109
+  ...
+# Subtest: result abort remains failing with non-video port
+ok 69 - result abort remains failing with non-video port
+  ---
+  duration_ms: 0.500243
+  ...
+# Subtest: result abort remains failing with unavailable output
+ok 70 - result abort remains failing with unavailable output
+  ---
+  duration_ms: 0.374391
+  ...
+# Subtest: result abort remains failing with wrong output type
+ok 71 - result abort remains failing with wrong output type
+  ---
+  duration_ms: 0.448983
+  ...
+# Subtest: result abort remains failing with wrong sidecar digest
+ok 72 - result abort remains failing with wrong sidecar digest
+  ---
+  duration_ms: 0.376011
+  ...
+# Subtest: result abort remains failing with wrong sidecar size
+ok 73 - result abort remains failing with wrong sidecar size
+  ---
+  duration_ms: 0.379578
+  ...
+# Subtest: result abort remains failing with wrong sidecar project
+ok 74 - result abort remains failing with wrong sidecar project
+  ---
+  duration_ms: 0.339783
+  ...
+# Subtest: result abort remains failing with wrong sidecar attempt
+ok 75 - result abort remains failing with wrong sidecar attempt
+  ---
+  duration_ms: 0.367085
+  ...
+# Subtest: result abort remains failing with wrong sidecar task
+ok 76 - result abort remains failing with wrong sidecar task
+  ---
+  duration_ms: 0.463955
+  ...
+# Subtest: result abort remains failing with corrupt sidecar
+ok 77 - result abort remains failing with corrupt sidecar
+  ---
+  duration_ms: 0.545631
+  ...
+# Subtest: result abort remains failing with wrong provenance authority
+ok 78 - result abort remains failing with wrong provenance authority
+  ---
+  duration_ms: 0.796556
+  ...
+# Subtest: result abort remains failing with wrong provenance engine
+ok 79 - result abort remains failing with wrong provenance engine
+  ---
+  duration_ms: 0.655586
+  ...
+# Subtest: result abort remains failing with wrong provenance backend
+ok 80 - result abort remains failing with wrong provenance backend
+  ---
+  duration_ms: 0.400386
+  ...
+# Subtest: result abort remains failing with wrong provenance source
+ok 81 - result abort remains failing with wrong provenance source
+  ---
+  duration_ms: 0.385267
+  ...
+# Subtest: result abort remains failing with ffprobe decoding error
+ok 82 - result abort remains failing with ffprobe decoding error
+  ---
+  duration_ms: 0.364463
+  ...
+# Subtest: result abort remains failing with wrong codec
+ok 83 - result abort remains failing with wrong codec
+  ---
+  duration_ms: 0.433282
+  ...
+# Subtest: result abort remains failing with wrong width
+ok 84 - result abort remains failing with wrong width
+  ---
+  duration_ms: 0.402281
+  ...
+# Subtest: result abort remains failing with wrong height
+ok 85 - result abort remains failing with wrong height
+  ---
+  duration_ms: 0.44816
+  ...
+# Subtest: result abort remains failing with wrong FPS
+ok 86 - result abort remains failing with wrong FPS
+  ---
+  duration_ms: 1.816799
+  ...
+# Subtest: result abort remains failing with wrong frame count
+ok 87 - result abort remains failing with wrong frame count
+  ---
+  duration_ms: 0.674023
+  ...
+# Subtest: result abort remains failing with wrong audio codec
+ok 88 - result abort remains failing with wrong audio codec
+  ---
+  duration_ms: 3.255518
+  ...
+# Subtest: result abort remains failing with wrong audio rate
+ok 89 - result abort remains failing with wrong audio rate
+  ---
+  duration_ms: 0.530189
+  ...
+# Subtest: result abort remains failing with wrong audio channels
+ok 90 - result abort remains failing with wrong audio channels
+  ---
+  duration_ms: 0.549917
+  ...
+# Subtest: result abort remains failing with missing audio
+ok 91 - result abort remains failing with missing audio
+  ---
+  duration_ms: 0.403421
+  ...
+# Subtest: result abort remains failing with wrong probe size
+ok 92 - result abort remains failing with wrong probe size
+  ---
+  duration_ms: 0.364045
+  ...
+# Subtest: result abort remains failing with missing decoded frames
+ok 93 - result abort remains failing with missing decoded frames
+  ---
+  duration_ms: 0.476449
+  ...
+# Subtest: result abort remains failing with wrong decoded frame
+ok 94 - result abort remains failing with wrong decoded frame
+  ---
+  duration_ms: 0.416292
+  ...
+# Subtest: result abort remains failing with wrong decoded dimensions
+ok 95 - result abort remains failing with wrong decoded dimensions
+  ---
+  duration_ms: 0.399762
+  ...
+# Subtest: result abort remains failing with truncated decoded bytes
+ok 96 - result abort remains failing with truncated decoded bytes
+  ---
+  duration_ms: 0.386576
+  ...
+# Subtest: result abort remains failing with incomplete parity baseline
+ok 97 - result abort remains failing with incomplete parity baseline
+  ---
+  duration_ms: 0.424208
+  ...
+# Subtest: result abort remains failing with wrong Download URL
+ok 98 - result abort remains failing with wrong Download URL
+  ---
+  duration_ms: 0.368149
+  ...
+# Subtest: result abort remains failing with redirected download URL
+ok 99 - result abort remains failing with redirected download URL
+  ---
+  duration_ms: 0.494014
+  ...
+# Subtest: result abort remains failing with wrong live URL
+ok 100 - result abort remains failing with wrong live URL
+  ---
+  duration_ms: 0.484605
+  ...
+# Subtest: result abort remains failing with metadata not ready
+ok 101 - result abort remains failing with metadata not ready
+  ---
+  duration_ms: 14.298477
+  ...
+# Subtest: result abort remains failing with live native MediaError
+ok 102 - result abort remains failing with live native MediaError
+  ---
+  duration_ms: 0.830399
+  ...
+# Subtest: configured origin/project and source outputs cannot borrow a complete artifact proof
+ok 103 - configured origin/project and source outputs cannot borrow a complete artifact proof
+  ---
+  duration_ms: 1.075347
+  ...
+# Subtest: parity cases require every decoded baseline frame
+ok 104 - parity cases require every decoded baseline frame
+  ---
+  duration_ms: 30.539978
+  ...
+# Subtest: result abort remains failing for wrong URL
+ok 105 - result abort remains failing for wrong URL
+  ---
+  duration_ms: 0.752954
+  ...
+# Subtest: result abort remains failing for wrong origin
+ok 106 - result abort remains failing for wrong origin
+  ---
+  duration_ms: 0.490055
+  ...
+# Subtest: result abort remains failing for wrong port
+ok 107 - result abort remains failing for wrong port
+  ---
+  duration_ms: 0.468926
+  ...
+# Subtest: result abort remains failing for query URL
+ok 108 - result abort remains failing for query URL
+  ---
+  duration_ms: 0.538999
+  ...
+# Subtest: result abort remains failing for non-GET
+ok 109 - result abort remains failing for non-GET
+  ---
+  duration_ms: 0.694678
+  ...
+# Subtest: result abort remains failing for HEAD
+ok 110 - result abort remains failing for HEAD
+  ---
+  duration_ms: 0.514356
+  ...
+# Subtest: result abort remains failing for fetch resource
+ok 111 - result abort remains failing for fetch resource
+  ---
+  duration_ms: 0.446974
+  ...
+# Subtest: result abort remains failing for wrong Range
+ok 112 - result abort remains failing for wrong Range
+  ---
+  duration_ms: 0.269286
+  ...
+# Subtest: result abort remains failing for missing Range
+ok 113 - result abort remains failing for missing Range
+  ---
+  duration_ms: 0.268193
+  ...
+# Subtest: result abort remains failing for redirect
+ok 114 - result abort remains failing for redirect
+  ---
+  duration_ms: 0.30724
+  ...
+# Subtest: result abort remains failing for missing redirect knowledge
+ok 115 - result abort remains failing for missing redirect knowledge
+  ---
+  duration_ms: 0.267449
+  ...
+# Subtest: result abort remains failing for missing response
+ok 116 - result abort remains failing for missing response
+  ---
+  duration_ms: 0.255678
+  ...
+# Subtest: result abort remains failing for missing request identity
+ok 117 - result abort remains failing for missing request identity
+  ---
+  duration_ms: 0.248623
+  ...
+# Subtest: result abort remains failing for mismatched request identity
+ok 118 - result abort remains failing for mismatched request identity
+  ---
+  duration_ms: 0.353767
+  ...
+# Subtest: result abort remains failing for wrong response URL
+ok 119 - result abort remains failing for wrong response URL
+  ---
+  duration_ms: 0.272737
+  ...
+# Subtest: result abort remains failing for full status200
+ok 120 - result abort remains failing for full status200
+  ---
+  duration_ms: 0.248511
+  ...
+# Subtest: result abort remains failing for auth status403
+ok 121 - result abort remains failing for auth status403
+  ---
+  duration_ms: 0.238125
+  ...
+# Subtest: result abort remains failing for HTTP status500
+ok 122 - result abort remains failing for HTTP status500
+  ---
+  duration_ms: 0.23693
+  ...
+# Subtest: result abort remains failing for wrong MIME
+ok 123 - result abort remains failing for wrong MIME
+  ---
+  duration_ms: 0.621722
+  ...
+# Subtest: result abort remains failing for missing length
+ok 124 - result abort remains failing for missing length
+  ---
+  duration_ms: 0.523716
+  ...
+# Subtest: result abort remains failing for wrong length
+ok 125 - result abort remains failing for wrong length
+  ---
+  duration_ms: 0.453913
+  ...
+# Subtest: result abort remains failing for bounded range response
+ok 126 - result abort remains failing for bounded range response
+  ---
+  duration_ms: 0.705068
+  ...
+# Subtest: result abort remains failing for missing Content-Range
+ok 127 - result abort remains failing for missing Content-Range
+  ---
+  duration_ms: 0.512411
+  ...
+# Subtest: result abort remains failing for other error
+ok 128 - result abort remains failing for other error
+  ---
+  duration_ms: 0.560821
+  ...
+# Subtest: result abort remains failing for similar error
+ok 129 - result abort remains failing for similar error
+  ---
+  duration_ms: 0.526712
+  ...
+# Subtest: repeated or ambiguous result failures never qualify by URL
+ok 130 - repeated or ambiguous result failures never qualify by URL
+  ---
+  duration_ms: 0.62378
+  ...
+# Subtest: another pageerror failure prevents result qualification
+ok 131 - another pageerror failure prevents result qualification
+  ---
+  duration_ms: 0.505388
+  ...
+# Subtest: another console failure prevents result qualification
+ok 132 - another console failure prevents result qualification
+  ---
+  duration_ms: 0.539587
+  ...
+# Subtest: another mediaerror failure prevents result qualification
+ok 133 - another mediaerror failure prevents result qualification
+  ---
+  duration_ms: 0.428564
+  ...
+# Subtest: another response failure prevents result qualification
+ok 134 - another response failure prevents result qualification
+  ---
+  duration_ms: 0.422443
+  ...
+# Subtest: another response failure prevents result qualification
+ok 135 - another response failure prevents result qualification
+  ---
+  duration_ms: 0.309071
+  ...
+# Subtest: another requestfailed failure prevents result qualification
+ok 136 - another requestfailed failure prevents result qualification
+  ---
+  duration_ms: 0.23706
+  ...
+# Subtest: another requestfailed failure prevents result qualification
+ok 137 - another requestfailed failure prevents result qualification
+  ---
+  duration_ms: 0.208592
+  ...
+# Subtest: collector correlates the actual request object, never another request to the same URL
+ok 138 - collector correlates the actual request object, never another request to the same URL
+  ---
+  duration_ms: 1.111355
+  ...
+# Subtest: collector stays strict before completion, after an early failure, and for later native errors
+ok 139 - collector stays strict before completion, after an early failure, and for later native errors
+  ---
+  duration_ms: 1.215744
+  ...
+# Subtest: collector rechecks live currentSrc/metadata/MediaError at final diagnostic evaluation
+ok 140 - collector rechecks live currentSrc/metadata/MediaError at final diagnostic evaluation
+  ---
+  duration_ms: 2.268573
+  ...
+# Subtest: document media-error capture is passive and retains native errors even after the element clears its error
+ok 141 - document media-error capture is passive and retains native errors even after the element clears its error
+  ---
+  duration_ms: 35.293327
+  ...
+1..141
+# tests 141
+# suites 0
+# pass 141
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3773.168228

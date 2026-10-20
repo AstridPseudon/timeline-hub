@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: /home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/canvas.test.ts
+ok 1 - /home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/canvas.test.ts
+  ---
+  duration_ms: 2278.768721
+  ...
+# Subtest: /home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/compare.test.ts
+ok 2 - /home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/compare.test.ts
+  ---
+  duration_ms: 755.522164
+  ...
+# Subtest: /home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/diagnostics.test.ts
+ok 3 - /home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/diagnostics.test.ts
+  ---
+  duration_ms: 5943.675042
+  ...
+# Subtest: /home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts
+ok 4 - /home/user/work/wt/vw-m3-native-frame-zero-triage/tests/e2e/timeline/viewing-parity/frames.test.ts
+  ---
+  duration_ms: 1568.913697
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5957.954151

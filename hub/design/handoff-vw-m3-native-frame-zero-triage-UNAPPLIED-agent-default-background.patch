@@ -1,0 +1,11 @@
+--- a/astrid/core/theme/_schema.py
++++ b/astrid/core/theme/_schema.py
+@@ -174,7 +174,7 @@
+ BUILTIN_DEFAULT_THEME: dict[str, Any] = {
+     "id": "banodoco-default",
+     "visual": {
+-        "color": {"fg": "#FAFAFA", "bg": "#050814", "accent": "#67E8F9"},
++        "color": {"fg": "#FAFAFA", "bg": "#000000", "accent": "#67E8F9"},
+         "type": {
+             "families": {"heading": "Arial", "body": "Arial", "mono": "monospace"},
+             "size": {"base": 32, "small": 22, "large": 84},
