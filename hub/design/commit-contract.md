@@ -427,3 +427,144 @@ implementation and normal coordinated generation, including both ACK validators.
 
 ## Agent manager01:22Z — exact derived materialization join ACK
 ACK the exact preceding physical-materialization +source-boundjoin proposal, includingtypedallocation-ref→rawID pairs {shot:D:D,shot:D/item:J:J}, fixedsource/ownerbindings andoriginalsource dependencyK spellings, closurebefore/afterNOTSQLabsence, preservedS/I→D/J acrossstalesiblingreplay andlegacyidentitypairs/M1acceptedownslotproof. Noid_mapvaluetype/DTO/ABI2/table/seedchange. Fourcanonicalitemrefpatterns andRAWitem_id/idcodec support shipwithnormalpairedgeneration. Semanticcreatedfacts requireactualabsentauthoredroot andremainseparate. Noargs.materialization/syntheticauthorityref. ExactmanagerpairedACKnowrecorded (Runtime01:18 alreadyACK); boundedpairedproductimplementation mayproceedonheldbranches. Bindings tooriginalimmutableS/I mustresolvefromverifiedsourcecontexts withoutgrantingimplicitshared-write authority; doNOTintroduce writablefallbackfromauthoredState tomutatingimmutablecaptures.
+
+## As built (2026-10-20)
+
+Dated record of what Runtime `tl/integration` actually ships. It corrects nothing above; where the M0 text and the build differ, the difference is listed in §0.9 and the M0 text stays as written. Source: Runtime `tl/integration` at `6023cfb` (contract **0.2.10**, `SCHEMA_DIGEST sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c`, 74 artifacts). Facts were checked by reading `git show tl/integration:<path>` and by grep; test names are as found in the tree. Test results are not restated as my own: they are cited from the worker reports. "Unverified" marks anything I did not check against code or a run.
+
+### 0.1 Wire operation and envelope (as shipped)
+
+| Item | As built | Where |
+|---|---|---|
+| Commit | `POST /v1/projects/{project_id}/timelines/{timeline_id}/commit`, `commitTimeline`, `projects:write` (dry runs included) | `contract/openapi/workspace-v1.yaml` (commitTimeline); `runtime_protocol/door.py:159` |
+| Responses | 200 `oneOf(CommitAcceptedMutation, CommitPreviewResponse)`; 400/401/403/404/409/422/503 main `Error` | same |
+| Accepted body | `CommittedMutation<CommitAccepted>`; `receipt.command_kind = timeline.commit`; `receipt.result` equals `data`; `publication_id` = `receipt.receipt_id` | `runtime_protocol/timeline_commit_types.py`; `runtime_protocol/timeline_commit.py` |
+| Read companions | `listTimelineCommits` (`GET .../commits`, `projects:read`, head fixed by the first page); `getProjectMediaSelection`; restore `restoreProjectParentCompositionRevision` | openapi, roughly lines 260–370 |
+| Operation count | **133** `operationId`s at `6023cfb` (0.2.10) and at `94114269` (0.2.9). The 0.2.10 change did not alter the count. | `git grep -c operationId` on the workspace OpenAPI file |
+| Registry | **14** `EditCommand` ops in the pinned `contract/schemas/edit-command.json`: `clip.add`, `clip.delete`, `clip.move`, `clip.set`, `clip.set-params`, `clip.split`, `clip.trim`, `occurrence.add-media`, `occurrence.swap-media`, `placement.move`, `track.create`, `track.set`, `timeline.inverse` (version `"1"`), `timeline.restore` (version `"1"`). Semantics are Agent-owned. | `contract/schemas/edit-command.json` |
+| Restore adapter | Body `{expected_head, expected_publication_id}`, both non-null (else 422). The service builds one `timeline.restore` command with `args.revision_id`. The port fills `args.content_digest` from the verified historical closure on the adapter path. Direct callers must supply the matching digest. | `runtime_protocol/service.py` (restore path, about lines 2530–2550); `runtime_protocol/timeline_commit_port.py` (`prepare_restore`, about lines 105–125); `tests/test_timeline_commit_routes.py::test_restore_route_passes_original_body_identity_and_canonical_path` |
+
+**Deviation from M0 §5 (noted, not rewritten):** M0 says the adapter fills `{revision_id, content_digest}` itself. As built, the service fills `revision_id` and the port fills `content_digest`. The result is the same for the adapter. The pinned schema still requires both fields, so validation sees the filled value.
+
+### 0.2 Idempotency, ledger, exact retry and recorder integrity
+
+| Item | As built | Where / evidence |
+|---|---|---|
+| Ledger | Main `command_idempotency`, scope `(command_kind=timeline.commit, aggregate_id=[project,timeline], Idempotency-Key)`. A different hash returns `idempotency_mismatch` with no semantic work. | `runtime_protocol/timeline_commit_store.py` (about line 643 compares the request to the invocation body); M0 §3 |
+| Exact retry | Replays the stored body and receipt. The provider is not called. | `tests/test_timeline_commit_integration.py::test_real_door_lost_ack_restart_exact_retry_never_executes_provider` (line 359) |
+| Duplicate races | Loser paused after an optimistic miss; winner accepted; loser resumes through the in-lock lookup. | `tests/test_timeline_commit_execution.py::test_commit_duplicate_add_winner_between_lookup_and_execution`, `::test_commit_duplicate_move_winner_between_lookup_and_execution` (lines 46, 42) |
+| Recorder digest | Records are re-verified on every durable read (`records_digest` in `timeline_commit_store.py`). Corruption fails closed after restart, naming `timeline_commit_history`. | `tests/test_timeline_commit_acceptance.py::test_valid_json_recorder_corruption_fails_every_durable_read_after_restart` (12 cases, line 568); `::test_corrupt_acceptance_event_and_receipt_facts_fail_closed_after_restart` (11 cases, line 578); `tests/test_timeline_commit_integration.py::test_real_restart_undo_then_recorder_tamper_fails_closed` (line 417) |
+| Retention | `timeline.commit` results are kept indefinitely, with no 24-hour expiry. | M0 §3 (text). Not re-checked in code by me. |
+
+**Crash windows covered.** Source: `workers/rt-m2-crash-window-audit/Report.md`. That audit added three tests and one CAS-object check, and found no product bug.
+
+| Window | Covered by |
+|---|---|
+| Death before COMMIT: nothing persisted, retry commits once | `tests/test_timeline_commit_crash.py::test_real_process_death_at_acceptance_boundary[before-commit]` and `[before-restore]` (line 346). A CAS-object snapshot at the kill point was added. |
+| Death after COMMIT, or lost response: exact retry returns the original, one edge | `[after-commit]`, `[after-restore]`; the lost-ack and restart test above |
+| Between projection steps (closure, acceptance event, receipt) | `tests/test_timeline_commit_acceptance.py::test_failure_between_projection_steps_rolls_back_and_restart_retry_publishes_once[closure\|acceptance_event\|receipt]` (line 300). In-process exception injection. |
+| Changed payload, same key, after restart | Refused `idempotency_mismatch`, no writes (refused step in `test_timeline_commit_crash.py`) |
+| Restart, then undo, then recorder tamper | `test_real_restart_undo_then_recorder_tamper_fails_closed` |
+| **Not covered** | A real SIGKILL between two SQL statements inside the transaction. The barrier only wraps transaction edges. Rollback-on-death rests on SQLite's guarantee; no Runtime test proves it. |
+
+### 0.3 Conflicts, refusals and the legacy write surface
+
+| Item | As built | Where / evidence |
+|---|---|---|
+| `destination_occupied` (409, `details.status: refused`) | Atomic refusal before any write when a projection destination holds an unrelated shot or item row (same project, foreign project, archived owner, or item collision). Exact immutable reuse writes nothing. Preview runs the same read-only check. | `runtime_protocol/timeline_commit_store.py` (lines 571, 584, 621); `tests/test_timeline_projection_occupancy.py::test_occupied_destination_refuses_before_any_write` (parametrized over archived, foreign and preview). The PLAN M1 record cites Runtime `9f9b25c` for this proof. |
+| Null clip speed | A null authored `speed` reads as 1 in parent and internal projection. The authored value is preserved, and invalid timing is still rejected. Retained images are not rewritten. | Commits `d79758d` (fix) and `4bb1d0f` (merge of `tl/rt-m1-null-speed-retained`); `tests/test_timeline_null_speed_retained.py::test_trusted_null_speed_native_http_reads_preserve_images_and_receipt`, `::test_null_start_and_duration_remain_invalid` |
+| Headless publish refusal | `publish_parent_composition` with `expected_head: null` over a headless timeline whose hidden `timeline:<id>` document holds authored content, or whose timeline-scoped rows are non-empty, returns 409 `refused` with `reason: headless_content_not_empty` before any write. Fresh and genuinely empty timelines still accept. | `runtime_protocol/service.py` (about lines 2762–2775); commits `0ab8217`, `bdb305f`; `tests/test_timeline_headless_overwrite_refused.py::test_empty_parent_over_hidden_nonempty_content_of_a_headless_timeline_is_refused_untouched`, `::test_headless_timeline_with_scoped_rows_refuses_empty_publish_untouched` |
+| Shell adoption refusal | `adopt_empty_shell` refuses (409, untouched) when any timeline-keyed row exists: `timeline_shots`, `timeline_references`, non-empty `timeline_revisions`, `timeline_render_publications`, document input links, commit history, or composition occurrences. Replay never reapplies over later writes. | Commit `191392e`; `tests/test_timeline_empty_shell_repair.py::test_empty_shell_with_dependency_row_or_scope_is_refused_untouched`, `::test_replayed_adoption_never_reapplies_over_later_writes` |
+| Restored legacy route `POST .../composition-revisions` (publish) | Restored in commit `da5f44e`, so App `createDefaultTimeline`, the dataProvider whole-document consumers and render fixtures keep working until D01. Limits: a tracked timeline (head carries a non-null publication id) returns 409 `details.reason: timeline_commit_required`; an empty head over an existing head returns `stale_head`; headless shells are guarded as above. Other legacy writers still refuse with `timeline_commit_required` through `_require_timeline_command` (`service.py`, about lines 1609–1616). | `runtime_protocol/service.py` (about lines 1614, 2762); `tests/test_timeline_legacy_authority.py` (`timeline_commit_required` assertions, lines 117–192) |
+| Legacy restore route `.../composition-revisions/{rev}/restore` | Command adapter (§0.1). No separate legacy path survives. | `service.py` (about line 2542) |
+
+Per PLAN 2026-10-20 (route retirement follows consumer migration), the restored publish route retires only in the same gated step that lands App's qualified replacement (D01). I did not verify the neutral-daemon behaviour of the 409 refusal; the "provider-backed daemons" wording comes from the brief.
+
+### 0.4 Request-scoped reads and provider ports
+
+| Read or port | As built | Where |
+|---|---|---|
+| `GET .../media-selection` (`getProjectMediaSelection`) | Exactly one selector form: `(asset, generation_id, variant_id)` **or** `(association_id, object_id, version)`. Returns the five-field selection with `catalog_digest`. | openapi, about line 287; `tests/test_timeline_media_selection.py`; `tests/test_timeline_commit_contract.py::test_media_selection_requires_exactly_one_selector_form` |
+| `GET .../media-selection/verified` (`getProjectVerifiedMedia`) | Rechecks the exact five-field pin and returns `VerifiedMedia`. Nothing is refreshed. | openapi, about line 300; `tests/test_timeline_commit_contract.py::test_verified_media_public_contract_and_generated_python_adapter` |
+| `GET .../document-objects/verified` (`getProjectVerifiedDocumentObject`) | One managed snapshot object of an exact `DocumentPin` plus `object_id`. | openapi, about line 312; `tests/test_timeline_pack_param_retained_read.py` |
+| `GET .../document-inputs/verified` (`getProjectVerifiedDocument`) | `VerifiedDocument` for one `DocumentPin` (config or pack Document), from the accepted closure or the exact live version. Otherwise refused. | openapi, about line 323; `tests/test_timeline_pack_document_read.py`; `tests/test_timeline_commit_contract.py::test_verified_document_public_contract_and_generated_python_adapter` |
+| Shared route table | The four verified reads share one helper and route table (commit `b63153b`). | `runtime_protocol/server.py` (lines 53–61); `runtime_protocol/door.py` (lines 166–169) |
+| `RuntimeCommitPort.text_selection(TextSelection) -> VerifiedText` (internal, no route) | Managed project CAS object. `object_id == digest == sha256(bytes)`. Exact size. **Media type exactly `text/plain; charset=utf-8`** (`TEXT_MEDIA_TYPE`). Strict UTF-8, at most 1 MiB, empty allowed. Captured per request and re-verified at accept. | Commit `b981ce6`; `runtime_protocol/timeline_commit_port.py` (line 30 constant, line 260 method); `tests/test_timeline_text_selection.py` |
+| Text-binding projection | Acceptance derives live `shot_text_bindings` rows and events from recorder writes `occurrence:<id>/text-binding:<key>`, in the same transaction. The owner shot must match the accepted closure. Clearing a binding is refused, because the event table has no removal kind (strict xfail). | Commit `b981ce6` |
+
+### 0.5 D13 producer guard (0.2.10)
+
+Lands through `tl/rt-m2-d13-regen`: merge `6023cfb`, regeneration commit `ccca45a`. The worker report says the regenerated clients changed only in version fields, so no hand edits were needed (`workers/rt-m2-d13-regen/report.md`).
+
+| Element | As built | Where |
+|---|---|---|
+| Guard shape | First command only: `{schema_version:1, op:"producer.guard", version:"1", select:null, args:{pin}}`. Exactly one guard. No `timeline.restore` or `timeline.inverse` alongside it. | `runtime_protocol/timeline_commit_producer.py` (`request_pin`) |
+| Pin only | `ProducerAttemptPin = {task_id, attempt_id, executor_id, fence, runtime_epoch, admitted_target{project_id, timeline_id, base_revision_id, base_publication_id}, proposal_digest}`. No copy of the proposal is forwarded. | same file (`validate_pin`) |
+| Runtime authority | Runtime resolves the settled artifact itself and recomputes `proposal_digest` from it (`port.producer_attempt`, `timeline_commit_port.py` line 322). | `tests/test_timeline_commit_producer.py::test_guard_requires_first_pin_only_and_no_other_authority_commands`, `::test_strict_settled_json_rejects_invalid_original_bytes` |
+| Numeric forwarding | `value_equal`: numbers compare by value (`1.0 == 1`); booleans stay distinct from numbers; structure is exact. A changed number (`1.5`) is refused. A tampered digest is refused. Re-serialising the JSON (`1.0` → `1e0`) does not change the outcome. | `timeline_commit_producer.py` (`value_equal`); `tests/test_timeline_producer_guards.py` (line 66 ordinary 1.0 case; line 299 `changed-number` and `boolean-is-not-number`; line 450 digest tamper) |
+| One-shot | Consuming records the digest. A second commit refuses `producer_proposal_consumed`. An exact replay of the accepted commit still returns the original. | `runtime_protocol/timeline_commit_producer_checkpoint.py` (line 28); `tests/test_timeline_producer_checkpoint.py` (line 216) |
+| Settle, then commit | The producer settles (proposal = EditCommands, rationale, digest) as its task result. The requesting client commits under its own authority. No live delivery and no credential lending. | Orchestrator decision 2026-10-20 00:40Z (`managers/runtime/INBOX.md`, line 355) |
+| Fencing, checked inside accept | The attempt must be the task's current attempt, settled and not cancelled, and not superseded. The digest must match and be unconsumed. The target must sit inside the admitted project and timeline. These checks run **after** the exact ledger lookup and **before** any write. An exact accepted replay still succeeds after cancellation or lease expiry. | Decisions 00:35Z and 00:40Z; `tests/test_timeline_commit_producer.py::test_unconsumed_completed_proposal_survives_runtime_restart`, `::test_selected_child_lifecycle_change_after_capture_refuses` |
+| Completed-cancel | Cancelling a completed task stays a no-op. There is no revocation endpoint. | Decision "producer-completed-cancel" (`managers/runtime/INBOX.md`) |
+| Port added | `producer_attempt(pin)` on `RuntimeCommitPort`, additive | `runtime_protocol/timeline_commit.py` (line 44) |
+
+The verified scope is the Runtime side only. The Agent proposal shape and the App or CLI commit of a proposal are not covered by this record.
+
+### 0.6 Dropped against R4
+
+| Dropped | State in `tl/integration` | Evidence |
+|---|---|---|
+| Capture-storage preparation ops | Not in the OpenAPI file | grep of `workspace-v1.yaml` for capture, storage and prepare operation IDs |
+| Purge plan and execute | Not in the OpenAPI file. Main's existing `purgeRealm` (offline, tombstoned realm only) is kept. | `workspace-v1.yaml` (line 60); `runtime_protocol/cli.py` (line 131) |
+| Receiptless credential ops | R4's not ported. Main's `controlRemoteCredential` is kept. | operation ID grep |
+| Nine retired operations | Removed from the OpenAPI file and both generated clients in contract 0.2.9 (commit `53dae2f`): `updateTimeline`, timeline-scoped `createShot`, `updateShot`, `archiveShot`, `recoverShot`, timeline-scoped `updateReference`, `archiveReference`, `recoverReference`, plus the orphaned `UpdateTimeline`, `UpdateShot` and `UpdateReference` schemas. The `getShot` and `getReference` GETs are kept. The server **410 `retired_route` handlers stay**. Their refusal tests call the 410 routes through a raw `legacy_call` helper (`tests/http_helpers.py`). | `workers/rt-m2-contract-retired-ops-removal/Report.md`; `git show 53dae2f -- contract/openapi/workspace-v1.yaml` |
+| Scene evaluation in the save path | `requires_scene_evaluation` is absent from the `tl/integration` provider path. | M0 §4 (text). Not grepped exhaustively. |
+
+Still present and **not** part of the commit contract, kept on purpose: main's restored `publish_parent_composition` route (§0.3), `publishTimelineRender` (held, with no 410 yet, per D13), and main's pre-existing ops listed above.
+
+### 0.7 Client regeneration procedure (as built)
+
+Run from a Runtime worktree. `<venv>` is the shared `venv-runtime`: dependencies only, never reinstalled. `<scratch>` is a throwaway directory outside the repo.
+
+```bash
+<venv>/bin/python generators/generate.py          # Python client, TS product source, timeline commit DTOs, contract metadata
+node tools/generate_typescript_conformance.mjs \
+  --contract contract/openapi/workspace-v1.yaml \
+  --schema-manifest contract/manifest.json \
+  --component-manifest contract/component-manifest.json \
+  --output-root <scratch>                          # never the repo root: it drops fixture JSON there
+cp <scratch>/conformance/typescript/generated.ts conformance/typescript/generated.ts
+cp <scratch>/conformance/typescript/contract-metadata.ts conformance/typescript/contract-metadata.ts
+<venv>/bin/python scripts/artifact_manifest.py    # contract/artifacts.json: 74 artifacts
+# checks
+<venv>/bin/python generators/generate.py --check
+node tools/generate_typescript_conformance.mjs --contract ... --fixture-root conformance/fixtures --check
+<venv>/bin/python scripts/artifact_manifest.py --check
+```
+
+What the generator does, by file (`generators/generate.py`):
+
+- `generators/python_client_template.py` is the **source** of `packages/python/astrid_runtime_client/generated.py`. Methods are edited in the template, not in the output.
+- `packages/typescript/src/generated.ts` is a **typed source**, not a pure render. `render_typescript_client()` patches in export and type blocks. `validate_typescript_client()` fails closed if the set of `async` methods differs from the OpenAPI operation index plus `updateTimelineDocument`. Removing methods therefore means hand-editing this file, which is what the nine retired ops required (`53dae2f`).
+- `scripts/artifact_manifest.py` digests every file that consumers copy or rely on (list starts at line 31).
+- Compatibility guard: `generate.py` `validate_command_schema()` checks the candidate `contract/schemas/edit-command.json` against the **floor** `tests/fixtures/published-command-schemas/runtime-0.2.3.json`, whose digest is pinned in `sources.json`. It uses `generators/command_schema_compatibility.py`. That checker is conservative: any structural or regex rewrite it does not support is reported for review, not sampled.
+
+**Hand-edited generated spots.** Verified: the TypeScript product source `packages/typescript/src/generated.ts` (methods removed by hand, then validated, not rendered). The brief names two such spots. I could not identify the second beyond the `conformance/typescript/*.ts` copy step, which copies generator output rather than hand-editing it. Treat the second spot as **unverified**.
+
+### 0.8 Tuple policy
+
+- `generators/release.json` `contract_version` is the single tuple key. Each contract change bumps it: 0.2.8 → 0.2.9 (retired ops) → 0.2.10 (D13). The Python package, the TS package and the lockfile carry the same version.
+- Each published tuple is **frozen**: its schema digest, its `contract/artifacts.json` digest and its version stay as published. A later change makes a new tuple. It never relabels a historical one. The 0.2.0 and 0.2.1 tuples are historical evidence only (M0 correction 2026-10-19; "raw immutable container correction").
+- Tuples recorded here:
+  - 0.2.9 at `94114269`: `SCHEMA_DIGEST sha256:8d7f29873ff3417cda746e243ebc81cb9d54e41c972596d4d3ae591fc1de00cf`; artifacts `sha256:e02a71b5b77479bdc8035a8a8d75ec57e9f1962b7f9195126739ab0d1ed063ac` (74).
+  - 0.2.10 at `6023cfb`: `SCHEMA_DIGEST sha256:3e5e78d0a689b32c46738455b5f7875999eb7d3da4917a38bd6a9eaaf41d0f3c`; artifacts `sha256:4984423c6754a2caff6927b1f818a8a9f9c8d70d05dcb294365b503a0b8ddfa9` (74). The 0.2.10 schema digest matches `runtime_protocol/contract_metadata.py` at `6023cfb`.
+  - Both digests come from the worker reports. I checked the 0.2.10 schema digest in code; the artifact digests are **unverified** by me.
+- Consumers pin the Runtime source commit and the digest together. The Agent and App vendored copies (Agent `generated.py`, App `generated.ts`) were **not** revendored by these commits; the retired-ops report leaves that to their next revendor.
+
+### 0.9 Deviations and verification status
+
+- **Deviation:** restore args are filled by the port, not the service (§0.1).
+- **Verified by reading the Runtime tree** (`6023cfb`, or the pinned `94114269`): the operation count; the 14-op EditCommand registry; the read routes; the producer guard logic; the headless, restore and legacy-write refusals; the `timeline.restore` schema requirement; the nine-op removal diff.
+- **Taken from worker reports, not re-run by me:** every pass count and central-suite result. The crash-window audit reports 22 passing integration and crash cases and 15 restore-integration cases. The retired-ops removal reports `full-restore-integration` at 4927 passed, with the 7 known baseline failures. The D13 regen reports `full-restore-integration` at 5111 passed, with the same 7 baseline failures.
+- **Open items from the reports:** the `restore-integration` suite line lacks `-m integration`, which makes it a silent no-op (crash-window audit). The commit-path dedup report lists 17 render-admission failures that were not compared against base (`workers/rt-m2-commit-path-dedup/Report.md`, "Unverified"). Check their status before relying on those files.
+- **Not verified by me:** the neutral-daemon behaviour of the restored refusal; a true mid-transaction kill; the artifact digests in §0.8; the second hand-edited generated spot in §0.7.
