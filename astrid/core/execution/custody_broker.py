@@ -2816,6 +2816,8 @@ def _check_reconciliation_deadline(deadline: float) -> None:
 
 
 _PIDFD_RELEASED = object()
+_PIDFD_LINK = "anon_inode:[pidfd]"
+_PIDFD_EXIT_EVENTS = select.POLLIN | select.POLLHUP
 
 
 class ProcessCustody:
@@ -2836,6 +2838,8 @@ class ProcessCustody:
         self._command_observations: list[dict[str, Any]] = []
         self._actor_birth: str | None = None
         self._handles: dict[int, tuple[str, Any]] = {}
+        self._pidfd_fingerprints: dict[int, tuple[int, int, int, str]] = {}
+        self._pidfd_terminal_births: dict[int, str] = {}
         self._unadmitted_absent: dict[int, dict[str, Any]] = {}
         self._census_sequence = 0
         self._uncertain: BaseException | None = None
@@ -3100,7 +3104,19 @@ class ProcessCustody:
                             raise CustodyError("descendant changed during pidfd binding")
                         return
                     os.set_inheritable(descriptor, False)
+                    fingerprints = getattr(self, "_pidfd_fingerprints", None)
+                    if fingerprints is None:
+                        fingerprints = self._pidfd_fingerprints = {}
+                    terminal_births = getattr(self, "_pidfd_terminal_births", None)
+                    if terminal_births is None:
+                        terminal_births = self._pidfd_terminal_births = {}
+                    fingerprint = self._pidfd_fingerprint(descriptor)
                     self._handles[pid] = (birth, descriptor)
+                    if fingerprint is not None:
+                        fingerprints[pid] = fingerprint
+                    else:
+                        fingerprints.pop(pid, None)
+                    terminal_births.pop(pid, None)
             except Exception as exc:
                 if sys.platform != "darwin":
                     raise
@@ -3865,10 +3881,9 @@ class ProcessCustody:
                 if type(handle) is not int:
                     continue
                 if only_exited:
-                    poller = select.poll()
-                    poller.register(handle, select.POLLIN)
-                    if not poller.poll(0):
+                    if not self._retained_pidfd_exit_proven(pid, birth, handle):
                         continue
+                    self._pidfd_terminal_births[pid] = birth
                 self._handles[pid] = (birth, _PIDFD_RELEASED)
                 try:
                     os.close(handle)
@@ -3883,12 +3898,36 @@ class ProcessCustody:
                 return False
             handle = entry[1]
             if handle is _PIDFD_RELEASED:
-                return True
-            if type(handle) is not int:
-                return False
+                return getattr(self, "_pidfd_terminal_births", {}).get(pid) == birth
+            return self._retained_pidfd_exit_proven(pid, birth, handle)
+
+    @staticmethod
+    def _pidfd_fingerprint(handle: int) -> tuple[int, int, int, str] | None:
+        try:
+            stat = os.fstat(handle)
+            link = os.readlink(f"/proc/self/fd/{handle}")
+        except (OSError, ValueError):
+            return None
+        if link != _PIDFD_LINK:
+            return None
+        return stat.st_dev, stat.st_ino, stat.st_mode, link
+
+    def _retained_pidfd_exit_proven(self, pid: int, birth: str, handle: Any) -> bool:
+        if type(handle) is not int:
+            return False
+        fingerprint = getattr(self, "_pidfd_fingerprints", {}).get(pid)
+        if fingerprint is None or self._pidfd_fingerprint(handle) != fingerprint:
+            return False
+        try:
             poller = select.poll()
             poller.register(handle, select.POLLIN)
-            return bool(poller.poll(0))
+            events = poller.poll(0)
+        except (OSError, ValueError):
+            return False
+        if (len(events) != 1 or events[0][0] != handle
+                or events[0][1] not in (select.POLLIN, _PIDFD_EXIT_EVENTS)):
+            return False
+        return self._pidfd_fingerprint(handle) == fingerprint
 
     def observe(self, members: Mapping[int, str]) -> None:
         with self._lock:

@@ -1047,6 +1047,48 @@ def _exit_without_reaping(process):
 
 
 @linux_only
+def test_retained_pidfd_exit_proof_rejects_lost_or_substituted_descriptor():
+    owner, process = _bound_sleeper()
+    birth, descriptor = owner._handles[process.pid]
+    try:
+        os.close(descriptor)
+        assert process.poll() is None
+        assert not owner.retained_incarnation_exited(process.pid, birth)
+        owner.release_pidfds(only_exited=True)
+        assert owner._handles[process.pid][1] == descriptor
+
+        replacement = os.open(os.devnull, os.O_RDONLY)
+        if replacement != descriptor:
+            os.dup2(replacement, descriptor)
+            os.close(replacement)
+        assert process.poll() is None
+        assert not owner.retained_incarnation_exited(process.pid, birth)
+        owner.release_pidfds(only_exited=True)
+        assert owner._handles[process.pid][1] == descriptor
+    finally:
+        process.kill()
+        process.wait()
+
+
+@linux_only
+def test_retained_pidfd_exit_proof_accepts_genuine_exit_and_terminal_release():
+    owner, process = _bound_sleeper()
+    birth = owner._handles[process.pid][0]
+    try:
+        assert not owner.retained_incarnation_exited(process.pid, birth)
+        process.terminate()
+        process.wait()
+        assert owner.retained_incarnation_exited(process.pid, birth)
+        owner.release_pidfds(only_exited=True)
+        assert owner._handles[process.pid][1] is custody._PIDFD_RELEASED
+        assert owner.retained_incarnation_exited(process.pid, birth)
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait()
+
+
+@linux_only
 def test_census_witnesses_an_unreaped_zombie_without_listing_it_live():
     owner, process = _bound_sleeper()
     try:
