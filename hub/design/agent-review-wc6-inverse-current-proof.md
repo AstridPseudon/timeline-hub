@@ -1,0 +1,72 @@
+# WC6 inverse/current proof review
+
+## Disposition
+
+**APPROVE the reviewed WC6 same-alias/inverse/capture proof slice, conditionally on composing it onto current Agent source.** No concrete correctness hole was found in the reviewed candidate. This is not approval of whole WC6 completion or of a direct cherry-pick onto tl/integration.
+
+Candidate commit/tree:
+
+- Agent candidate: 2ec716cce8b14b926830aeafd04e027ef88c74a0 / tree f2a1a4bfad69332b059796c4a0260fb962c583ef
+- Candidate chain: 17f8434e -> 53742bca -> 841581fc -> 2ec716cc
+- Current Agent integration: 30fc8dd154015a7c58cf4ce7b065ccc46f470ee8 / tree 50925d6df67ce717653e3ce7ac12803f8865da93
+- Real-HTTP Runtime pair used by the existing proof: 7f6dd8920e1ceec41b137358df5e7fecc304888d (7f6dd89)
+
+## What was verified
+
+- inverse.py has no own_materialized_read or equivalent absent-ancestor exemption. _materialized_payload_read is gated by AcceptedRecords, exact accepted command membership/equality, the same occurrence/shot identity, and the authenticated source item map. It compares the full physical payload. Unknown and namespaced fields remain strict; only declared item identities are remapped, and only the exact compiler internal-revision link may change to the current verified link.
+- The inverse boundary path is authenticated: AcceptedRecords is constructed from Runtime history entries and load_boundary closures, and commit-side closure replacement accepts only exact history pins. No caller-supplied closure or arbitrary closure history is admitted.
+- Scalar media pin collection in commit.py retains the address leaf (media_id/object_id) before _collect_media; it does not infer a pin from an unaddressed tagged value.
+- The same-batch F1 guard remains: commands.execute passes earlier batch records as staged_records, and apply_inverse checks them as intervening writes. Same-value and ABA staged writes refuse; disjoint staged writes plus a later explicit write still succeed.
+- Same-alias occurrence.swap-media validates every clip consuming the alias through _clip, checks source-window/kind/timing/track constraints for each consumer, and writes only the managed registry fields and bounded raw mirrors. Alias order, opaque registry fields, clip asset identity, source-window fields, unrelated/sibling shots, and opaque payload namespaces remain unchanged. The add/create-or-require path is unchanged.
+- The original positive, exact known-reference, source-identity, internal-link, opaque-field, host-fault, and structural refusal expectations remain strict. No new xfails/skips or synthetic text-only acceptance were introduced.
+- The final HTTP fault seam drops the deferred response before sending any bytes, after durable Runtime acceptance. It asserts the real WorkspaceClientError with status == 0 and code == "transport_error", exact persisted flight key/body, exact retry key/body after restart, canonical baseline, receipt/head/history identity, disjoint rebase, and ABA refusal.
+
+## Evidence
+
+The existing central proof was not duplicated because it already passed on this exact candidate:
+
+    native-script-current-integration --files tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+    1 passed in 14.35s
+
+Central result: agt-m2-wc6-http-ack-proof-finish-native-script-current-integration-1020150046-28371.
+
+Local checks from this review:
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_inverse_clear_batches.py::test_matching_child_write_cannot_prove_absent_ancestor_read tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_materialized_payload_still_guards_all_other_input tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields tests/editing_conformance/test_recipe_occurrence_media.py::test_existing_binding_is_required_exactly_without_birth tests/editing_conformance/test_recipe_scalar_commands.py::test_inverse_refuses_same_batch_unchanged_or_aba_scalar_write tests/editing_conformance/test_recipe_scalar_commands.py::test_inverse_allows_later_explicit_write_and_disjoint_prior_stages
+    12 passed in 1.45s
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_recipe_scalar_commands.py tests/timeline/test_authoring_feedback.py tests/timeline/test_authoring_media.py -m 'not integration' -k 'not real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba and not real_runtime_import_and_parent_publication_roundtrip'
+    324 passed, 2 deselected in 29.81s
+
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m ruff check astrid/sdk/timeline/inverse.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/document_diff.py astrid/packs/rendering/docs/scripts/timeline_document.py tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_recipe_scalar_commands.py tests/editing_conformance/test_inverse_clear_batches.py tests/timeline/test_authoring_media.py
+    All checks passed!
+
+    git diff --check
+    passed
+
+No full suite was run. No product or test files were changed by this review.
+
+## Required current-source composition
+
+The WC6 candidate is not source-identical to 30fc8dd1. These touched source paths differ between current integration and the candidate; compose the narrow approved behavior into current files rather than taking old files wholesale:
+
+| Path | Candidate-vs-current difference | Composition note |
+|---|---:|---|
+| astrid/packs/rendering/docs/scripts/timeline_document.py | 168 added / 26 removed | Preserve current P1 authority/scene/extraction behavior; compose the native document adapter and exact media selection plumbing. |
+| astrid/sdk/authoring_media.py | 27 added / 7 removed | Preserve current media planner behavior while retaining same-alias authored-field preservation. |
+| astrid/sdk/timeline/_command_state.py | 18 added / 6 removed | Resolve against current state/authority helpers. |
+| astrid/sdk/timeline/commands.py | 0 added / 1 removed | Do not blindly apply the candidate deletion of current ctx.prior_records = records; current P1 authority uses it. Keep current behavior and the F1 staged_records call. |
+| astrid/sdk/timeline/commit.py | 10 added / 29 removed | Apply only the scalar address-aware media collection hunk; preserve current provider authority and scene/extraction code. |
+| astrid/sdk/timeline/document_diff.py | candidate-only, 448 lines | Add/compose only if current integration has no successor; retain current source contracts. |
+| astrid/sdk/timeline/inverse.py | 44 added / 1 removed | Add the accepted-boundary materialized-payload proof and strict checks; preserve current inverse/P1 changes. |
+| astrid/sdk/timeline/native_occurrence_media_commands.py | 65 added / 3 removed | Compose all-consumer validation and bounded mirror writes into current command implementation. |
+| astrid/sdk/timeline/sync.py | 10 added / 4 removed | Preserve current outbox/session changes while carrying verified-media capture through commit. |
+| astrid/sdk/workspace_client.py | 9 added / 7 removed | Preserve current generated-client surface; add exact media-selection/verified-media calls without resurrecting retired operations. |
+
+The candidate also overlaps current docs/tests in astrid/packs/rendering/docs/SKILL.md, astrid/packs/rendering/docs/references/document-checkout.md, docs/guides/cli-journeys.md, tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py, tests/editing_conformance/test_inverse_clear_batches.py, tests/editing_conformance/test_recipe_occurrence_media.py, tests/helpers/trusted_seed.py, tests/timeline/test_authoring_feedback.py, and tests/timeline/test_authoring_media.py. Compose the proof assertions onto current tests; do not delete or weaken current positives.
+
+## Remaining WC6 gaps
+
+- Narration/text binding remains explicitly held by tests/timeline/test_authoring_feedback.py::test_document_view_adapter_holds_narration_and_same_alias_media_changes; keep this guard until the native text-binding lifecycle is qualified.
+- Original whole-document/legacy-writer positives remain: test_real_runtime_import_and_parent_publication_roundtrip, test_catalog_import_remains_reusable_after_later_parent_cas_conflict, test_publish_uses_one_compilation_and_returns_complete_mapping, test_group_move_compiles_and_uses_existing_publication_boundary, and test_full_authored_field_edits_compile_without_normalizing_opaque_fields. They still require native selection/placement/structural mapping before any writer deletion.
+- This proof covers the bounded native same-alias media slice and its inverse/capture durability. It does not claim whole-document WC6 closure, narration support, arbitrary structural edits, or removal of the remaining fallback/whole-candidate writer paths.
