@@ -66,10 +66,7 @@ describe('ClipPanelBody Astrid form ownership', () => {
 });
 
 describe('ClipPanelBody timing value commits', () => {
-  it.each([
-    ['Speed', 2, { speed: 2 }],
-    ['Source In', 1, { from: 1 }],
-  ] as const)('reapplies %s if the controlled clip value resets before blur', (label, value, expectedPatch) => {
+  it('reapplies Speed if the controlled clip value resets before blur', () => {
     const onChange = vi.fn();
     const initialClip = { id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1 };
     const props = {
@@ -79,24 +76,95 @@ describe('ClipPanelBody timing value commits', () => {
       onChange,
     };
     const { rerender } = render(<ClipPanelBody {...props} />);
-    const input = screen.getByText(label).parentElement?.querySelector('input');
+    const input = screen.getByText('Speed').parentElement?.querySelector('input');
     expect(input).not.toBeNull();
 
     input!.focus();
     expect(document.activeElement).toBe(input);
-    fireEvent.change(input!, { target: { value: String(value) } });
-    expect(onChange).toHaveBeenLastCalledWith(expectedPatch);
+    fireEvent.change(input!, { target: { value: '2' } });
+    expect(onChange).toHaveBeenLastCalledWith({ speed: 2 });
 
     // The timeline first adopts the edit, then an external refresh restores the
     // old controlled clip while Base UI still preserves the typed text.
-    rerender(<ClipPanelBody {...props} clip={{ ...initialClip, ...expectedPatch }} />);
+    rerender(<ClipPanelBody {...props} clip={{ ...initialClip, speed: 2 }} />);
     expect(document.activeElement).toBe(input);
     rerender(<ClipPanelBody {...props} />);
     expect(document.activeElement).toBe(input);
     fireEvent.blur(input!);
 
-    expect(onChange).toHaveBeenLastCalledWith(expectedPatch);
+    expect(onChange).toHaveBeenLastCalledWith({ speed: 2 });
     expect(onChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('reapplies Source In through the native trim port if the controlled clip resets before blur', () => {
+    const onChange = vi.fn();
+    const initialClip = { id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1 } as const;
+    const basis = { original: { from: 0, to: 5, hold: 0 } };
+    const preview = { version: 1 as const, source: 'clip.trim' as const, operations: [
+      { op: 'clip.update' as const, target: 'clip-1', payload: { from: 1, to: 5, hold: 0 } },
+    ] };
+    const command = {
+      schema_version: 1 as const,
+      op: 'clip.trim',
+      version: '1',
+      select: 'parent/clip:clip-1',
+      args: { in_s: 1, out_s: null },
+    };
+    const clipTrimPort = {
+      capture: vi.fn(() => basis),
+      finish: vi.fn(() => ({ command, preview })),
+      submit: vi.fn(),
+    } as unknown as ClipTrimCapturePort;
+    const current = { config: {}, resolvedConfig: { clips: [initialClip] } } as unknown as TimelineData;
+    const props = {
+      ...bodyProps(),
+      clip: initialClip,
+      current,
+      clipTrimPort,
+      activeTab: 'timing' as const,
+      onChange,
+    };
+    const { rerender } = render(<ClipPanelBody {...props} />);
+    const input = screen.getByLabelText('Source In').querySelector('input:not([aria-hidden="true"])');
+    expect(input).not.toBeNull();
+
+    input!.focus();
+    expect(document.activeElement).toBe(input);
+    fireEvent.change(input!, { target: { value: '1' } });
+    expect(onChange).not.toHaveBeenCalled();
+
+    // The timeline first adopts the edit, then an external refresh restores the
+    // old controlled clip while the native trim field preserves the typed draft.
+    rerender(<ClipPanelBody {...props} clip={{ ...initialClip, from: 1 }} />);
+    expect(document.activeElement).toBe(input);
+    rerender(<ClipPanelBody {...props} />);
+    expect(document.activeElement).toBe(input);
+    expect(input).toHaveValue('1');
+    fireEvent.blur(input!);
+
+    expect(clipTrimPort.capture).toHaveBeenCalledOnce();
+    expect(clipTrimPort.capture).toHaveBeenCalledWith({ clipId: 'clip-1', current });
+    expect(clipTrimPort.finish).toHaveBeenCalledOnce();
+    expect(clipTrimPort.finish).toHaveBeenCalledWith(expect.objectContaining({ original: { from: 0, to: 5, hold: 0 } }), { in_s: 1 });
+    expect(clipTrimPort.submit).toHaveBeenCalledOnce();
+    expect(clipTrimPort.submit).toHaveBeenCalledWith({ command, preview });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('refuses a source edit without the displayed timeline and keeps the dirty draft', () => {
+    const onChange = vi.fn();
+    const clip = { id: 'clip-1', clipType: 'media', at: 0, track: 'V1', from: 0, to: 5, speed: 1 } as const;
+    render(<ClipPanelBody {...bodyProps()} clip={clip} activeTab="timing" onChange={onChange} />);
+    const input = screen.getByLabelText('Source In').querySelector('input:not([aria-hidden="true"])');
+    expect(input).not.toBeNull();
+
+    input!.focus();
+    fireEvent.change(input!, { target: { value: '1' } });
+    fireEvent.blur(input!);
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input).toHaveValue('1');
+    expect(screen.getByRole('alert')).toHaveTextContent('Source trim requires the displayed timeline.');
   });
 
   it('activates the labelled source ScrubField and edits its native input', async () => {

@@ -139,12 +139,11 @@ export function ClipPanelBody({
     : undefined;
   const holdTiming = clipDescriptor?.hold;
   const holdDefaultSeconds = holdTiming && holdTiming.kind !== 'unsupported' ? holdTiming.defaultSeconds : undefined;
-  type TimingField = 'at' | 'hold' | 'speed' | 'from' | 'to';
+  type TimingField = 'at' | 'hold' | 'speed' | 'to';
   const timingValuesRef = useRef<Record<TimingField, number>>({
     at: clip?.at ?? 0,
     hold: clip?.hold ?? holdDefaultSeconds ?? 0,
     speed: clip?.speed ?? 1,
-    from: clip?.from ?? 0,
     to: clip?.to ?? clip?.assetEntry?.duration ?? 5,
   });
   // Track the controlled values as well as live input changes. NumberField can
@@ -155,7 +154,6 @@ export function ClipPanelBody({
     at: clip?.at ?? 0,
     hold: clip?.hold ?? holdDefaultSeconds ?? 0,
     speed: clip?.speed ?? 1,
-    from: clip?.from ?? 0,
     to: clip?.to ?? clip?.assetEntry?.duration ?? 5,
   };
   const handleTimingValueChange = (field: TimingField, value: number | null) => {
@@ -383,32 +381,7 @@ export function ClipPanelBody({
                       onValueCommitted={(value) => handleTimingValueCommitted('to', mediaSourceOutFor(value))}
                     />
                   </div>
-                  {current || clipTrimPort ? (
-                    <ClipSourceWindowFields key={clip.id} clip={clip} current={current} port={clipTrimPort} readOnly={readOnly} />
-                  ) : (
-                    <>
-                      <div className="space-y-2">
-                        <FieldLabel>Source In</FieldLabel>
-                        <NumberInput
-                          value={clip.from ?? 0}
-                          min={0}
-                          step={0.1}
-                          onChange={(value) => handleTimingValueChange('from', value)}
-                          onValueCommitted={(value) => handleTimingValueCommitted('from', value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <FieldLabel>Source Out</FieldLabel>
-                        <NumberInput
-                          value={clip.to ?? clip.assetEntry?.duration ?? 5}
-                          min={0}
-                          step={0.1}
-                          onChange={(value) => handleTimingValueChange('to', value)}
-                          onValueCommitted={(value) => handleTimingValueCommitted('to', value)}
-                        />
-                      </div>
-                    </>
-                  )}
+                  <ClipSourceWindowFields key={clip.id} clip={clip} current={current} port={clipTrimPort} readOnly={readOnly} />
                   <div className="space-y-2">
                     <FieldLabel>Speed</FieldLabel>
                     <NumberInput
