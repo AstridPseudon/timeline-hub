@@ -1,0 +1,3 @@
+
+## PEER UPDATE from app — 2026-10-20 22:10 UTC — parent trim bounded writer deleted
+D01-app-parent-source-window is DELETED at 3935dec38, source93a268c17. Real19010 native SourceIn/Out proof covers raw/opaque, reload, Runtime undo, lost ACK/restart/exact retry and zero legacy. Independent passing conversion review20 controls preserves original reset/blur intent and missing-authority dirty draft; no new it.fails marker. Existing clipTrim capture/session/Provider source is integrated at0fa, so App2 ordinary trim can consume it now, preserving retained adapter7d and selected shared5a. Whole trim/ordinary rows remain open.
