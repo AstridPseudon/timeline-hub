@@ -13,7 +13,8 @@ import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/c
 export const UI = {
   status: '[data-testid="runtime-connection-status"]',
   panel: '[data-testid="runtime-not-connected"]',
-  copy: 'Copy',
+  copySetup: 'Copy setup steps for your agent',
+  copySteps: 'Copy steps for your agent',
   connect: 'Connect',
   reload: 'Reload',
 };
@@ -125,6 +126,28 @@ export async function holdCommandRequests(page: Page) {
     requests,
     async release(send = false) {
       await page.unroute(commits, intercept);
+      release(send);
+    },
+  };
+}
+
+/** Hold the native timeline create long enough to inspect its reserved bootstrap owner. */
+export async function holdTimelineCreation(page: Page) {
+  const creates = /\/v1\/projects\/[^/]+\/timelines$/;
+  const requests: Request[] = [];
+  let release!: (send: boolean) => void;
+  const gate = new Promise<boolean>((resolve) => { release = resolve; });
+  const intercept = async (route: import('@playwright/test').Route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    requests.push(route.request());
+    const send = await gate;
+    await (send ? route.continue() : route.abort('connectionreset')).catch(() => {});
+  };
+  await page.route(creates, intercept);
+  return {
+    requests,
+    async release(send = false) {
+      await page.unroute(creates, intercept);
       release(send);
     },
   };
