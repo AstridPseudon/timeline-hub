@@ -259,6 +259,7 @@ test('native retained frame fixture restores and admits one normal render task',
   let productionHostStopped = false;
   let productionHostCleanupError: unknown;
   let browserLock: ReturnType<typeof spawn> | undefined;
+  let privateRenderRoot: string | undefined;
   try {
     assertFreeDiskFloor(tmpdir());
     browserLock = acquireBrowserLock();
@@ -315,6 +316,26 @@ test('native retained frame fixture restores and admits one normal render task',
       fixture.media.map(pin => ({ media_id: pin.objectId, content_digest: pin.digest })).sort((a, b) => a.media_id.localeCompare(b.media_id)));
     assertCanonicalNativeMedia(fixture, ORIGINAL_640);
     assert.equal(harness.audit().filter(entry => entry.method === 'POST' && entry.path.endsWith('/composition-revisions')).length, 0);
+
+    privateRenderRoot = await mkdtemp('/tmp/vw-m3-normal-');
+    const privateHome = join(privateRenderRoot, 'home');
+    const privateTemp = join(privateRenderRoot, 'tmp');
+    const privateConfig = join(privateRenderRoot, 'config');
+    const privateCache = join(privateRenderRoot, 'cache');
+    await mkdir(privateHome);
+    await mkdir(privateTemp);
+    await mkdir(privateConfig);
+    await mkdir(privateCache);
+    assert.equal(realpathSync(privateRenderRoot), privateRenderRoot);
+    assert.equal(realpathSync(privateTemp), privateTemp);
+    Object.assign(process.env, {
+      HOME: privateHome,
+      TMPDIR: privateTemp,
+      TMP: privateTemp,
+      TEMP: privateTemp,
+      XDG_CONFIG_HOME: privateConfig,
+      XDG_CACHE_HOME: privateCache,
+    });
 
     const discovery = harness.discovery();
     productionHost = startProductionPackHost(agentPython, archived.runtime.root, archived.agent.root, {
@@ -667,13 +688,15 @@ test('native retained frame fixture restores and admits one normal render task',
         productionHostCleanupError = error;
       }
     }
-    await harness?.stop();
+    const harnessStopError = await harness?.stop().then(() => undefined, error => error);
     for (const name of Object.keys(process.env)) {
       if (!(name in previousEnv)) delete process.env[name];
     }
     Object.assign(process.env, previousEnv);
+    if (privateRenderRoot) await rm(privateRenderRoot, { recursive: true, force: true });
     await rm(sourceTemp, { recursive: true, force: true });
     browserLock?.kill('SIGTERM');
+    if (harnessStopError && !productionHostCleanupError) productionHostCleanupError = harnessStopError;
     if (productionHostCleanupError) throw productionHostCleanupError;
   }
 });
