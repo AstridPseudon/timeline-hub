@@ -30,7 +30,7 @@ if [ -z "$RUN" ]; then
   [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
   [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
   [ $HV = light ] && [ $(alive light) -ge 2 ] && { echo "2 targeted/named runs already running" | tee $D/why; exit 3; }
-  [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt 5 ] && { echo "low disk" | tee $D/why; exit 3; }
+  FLOOR=5; [ $HV = heavy ] && FLOOR=8; [ $(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9) -lt $FLOOR ] && { echo "low disk (<${FLOOR}G free; heavy runs need 8G so Runtime storage preflight does not cause false reds)" | tee $D/why; exit 3; }
   [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
   setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
 fi
