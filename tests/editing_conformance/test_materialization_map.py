@@ -9,7 +9,12 @@ import pytest
 from astrid.sdk.timeline import commands
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
 from astrid.sdk.timeline._materialization import source_entity
-from astrid.sdk.timeline.commit import _digest, _manifest, bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import (
+    _digest,
+    _manifest,
+    bundle_from_document,
+    document_from_bundle,
+)
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_materialization_identity import source
 from tests.editing_conformance.test_materialization_map_spike import allocation, moved, physical
@@ -205,3 +210,137 @@ def test_sdk_source_capture_matches_provider_carrier_without_changing_legacy_bun
     assert inverse(sdk.bundle, sdk.records).bundle == original
     assert original == before
     assert moved(legacy).id_map == {}
+
+
+@pytest.mark.parametrize('damage', ['duplicate-key', 'extra-binding', 'bad-item', 'duplicate-item', 'bool-pin'])
+def test_allocation_join_rejects_ambiguous_or_noncanonical_facts(damage):
+    from astrid.sdk.timeline._materialization import id_map
+
+    original = bundle_from_document(source())
+    records = moved(original).records
+    record = records[0]
+    dep = next(dep for dep in record['dependencies'] if dep['key'].startswith('materialization.source:'))
+    binding = next(binding for binding in record['bindings'] if binding['key'].startswith('shot:'))
+    if damage == 'duplicate-key':
+        record['bindings'].append({**binding, 'ref': 'shot:other'})
+    elif damage == 'extra-binding':
+        record['bindings'].append({**binding, 'key': binding['key'] + '/item:extra'})
+    elif damage in ('bad-item', 'duplicate-item'):
+        items = dep['pin']['source']['item_id_map']
+        raw, target = next(iter(items.items()))
+        items[raw + '-duplicate' if damage == 'duplicate-item' else raw] = (
+            target if damage == 'duplicate-item' else target + '/invalid')
+    else:
+        dep['pin']['source']['opaque'] = 1
+        other = copy.deepcopy(record)
+        next(dep for dep in other['dependencies'] if dep['key'].startswith(
+            'materialization.source:'))['pin']['source']['opaque'] = True
+        records.append(other)
+    with pytest.raises(CommandError):
+        id_map(records)
+
+
+@pytest.mark.parametrize('ref', ['shot:chapter-shot/item:', 'shot:chapter-shot/item:item-1/extra',
+                                'shot:chapter-shot/item:item-1::'])
+def test_source_entity_requires_a_canonical_reference(ref):
+    original = bundle_from_document(source())
+    pin = next(dep['pin'] for dep in moved(original).records[0]['dependencies']
+               if dep['key'].startswith('materialization.source:'))
+    with pytest.raises(CommandError):
+        source_entity(State(original), ref, pin)
+
+
+def test_boolean_item_edit_materializes_instead_of_reusing_numeric_source():
+    original = bundle_from_document(source())
+    destination = original['placements'][0]['shot_id']
+    shot = original['shots'][destination]
+    # JSON numbers compare by value, but true is a different authored value.
+    shot['base_payload']['items'][0]['opaque'] = 1
+    shot['payload']['items'][0]['opaque'] = True
+    output = document_from_bundle(original)
+    owner = output['parent_revision']['payload']['occurrences'][0]
+    assert owner['shot_id'] == destination
+    physical = next(row for row in output['shot_revisions'] if row['shot_id'] == destination)
+    assert physical['payload']['items'][0]['opaque'] is True
+
+
+@pytest.mark.parametrize('codec', ['item_id', 'id', 'both'])
+def test_sibling_first_replay_uses_the_same_codec_remapper_without_touching_opaque_values(codec):
+    from tests.editing_conformance.test_commit_runtime_opaque_items import opaque
+
+    document = source()
+    shot = document['shot_revisions'][0]
+    item = shot['payload']['items'][0]
+    item['metadata'].update(source_item_id='item-1', source_item='item-1', data=opaque())
+    item['data'] = opaque()
+    if codec in ('id', 'both'):
+        item['id'] = item['item_id']
+    if codec == 'id':
+        del item['item_id']
+    shot['content_digest'] = _digest(shot['payload'])
+    document['dependency_manifest'] = _manifest([shot], document['internal_timeline_revisions'],
+                                               document['dependency_manifest']['media'], [])
+    original = bundle_from_document(document)
+    before = copy.deepcopy(original)
+    plan = moved(original)
+    sibling = moved(original, 'occ-b', 12.012)
+    actual = replay(plan, bundle_from_document(document_from_bundle(sibling.bundle)))
+    assert actual.id_map == plan.id_map
+    assert actual.commands == plan.commands
+    assert physical(document_from_bundle(actual.bundle), 'occ-a') == physical(
+        document_from_bundle(plan.bundle), 'occ-a')
+    destination = actual.bundle['placements'][0]['shot_id']
+    row = actual.bundle['shots'][destination]['payload']['items'][0]
+    identity = row.get('item_id', row.get('id'))
+    assert row['metadata']['source_item_id'] == row['metadata']['source_item'] == identity
+    assert row['metadata']['data'] == row['data'] == opaque()
+    assert original == before
+
+
+def test_item_birth_without_an_existing_items_collection_is_typed(item_ops):
+    document = source()
+    shot = document['shot_revisions'][0]
+    del shot['payload']['items']
+    shot['content_digest'] = _digest(shot['payload'])
+    document['dependency_manifest'] = _manifest([shot], document['internal_timeline_revisions'],
+                                               document['dependency_manifest']['media'], [])
+    original = bundle_from_document(document)
+    owner = 'shot:' + original['placements'][0]['shot_id']
+    ref = owner + '/item:new-item'
+    call = {'schema_version': 1, 'op': 'test.item-create', 'version': '1', 'select': ref,
+            'args': {'row': {'id': 'new-item'}}}
+    plan = commands.execute(original, [call])
+    assert plan.records[0]['created'] == [{'ref': ref, 'kind': 'item', 'owner': owner}]
+    assert State(plan.bundle).entity(ref) == {'id': 'new-item'}
+    assert 'items' not in original['shots'][owner[5:]]['payload']
+
+
+def test_item_identity_cannot_be_allocated_twice_inside_one_recipe(monkeypatch):
+    def duplicate(ctx, command):
+        owner = command['select'].split('/')[0]
+        ctx.create_entity(command['select'], kind='item', owner=owner, value={'id': 'new-item'})
+        ctx.clear(command['select'], [])
+        ctx.create_entity(command['select'], kind='item', owner=owner, value={'id': 'new-item'})
+
+    registered = commands.operations()
+    monkeypatch.setattr(commands, 'operations', lambda: {
+        **registered, 'test.item-duplicate': commands.Operation({'type': 'object'}, duplicate, {})})
+    original = bundle_from_document(source())
+    ref = 'shot:' + original['placements'][0]['shot_id'] + '/item:new-item'
+    with pytest.raises(CommandError, match='occupied'):
+        commands.execute(original, [{'schema_version': 1, 'op': 'test.item-duplicate', 'version': '1',
+                                     'select': ref, 'args': {}}])
+
+
+@pytest.mark.parametrize('field', ['schema_version', 'ordinal'])
+def test_history_recorder_indices_require_integers(field):
+    from astrid.sdk.timeline.commit import _records
+
+    records = moved(bundle_from_document(source())).records
+    recorder = {'schema_version': 1, 'commands': records}
+    if field == 'ordinal':
+        records[0]['ordinal'] = False
+    else:
+        recorder['schema_version'] = True
+    with pytest.raises(ValueError):
+        _records([{'intent': 'recorded', 'records': recorder}], ValueError, {}, {})

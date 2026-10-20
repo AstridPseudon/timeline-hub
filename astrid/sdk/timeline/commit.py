@@ -189,8 +189,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=()):
         identity = occurrence["shot_id"]
         shot = bundle["shots"][identity]
         origin = bundle["source_mapping"]["shots"].get(identity)
-        if (origin is not None and shot["payload"] == shot["base_payload"]
-                and shot["internal_timeline"] == shot["base_internal_timeline"]
+        if (origin is not None and equal(shot["payload"], shot["base_payload"])
+                and equal(shot["internal_timeline"], shot["base_internal_timeline"])
                 and origin.get("revision_id") in shot_index):
             occurrence["shot_id"] = origin["shot_id"]
             occurrence["shot_revision_id"] = origin["revision_id"]
@@ -224,8 +224,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=()):
     media.update({row["media_id"]: row for row in publication["dependency_manifest"]["media"]})
     manifest = _manifest(shots, internals, list(media.values()), documents)
     digest = _digest(parent)
-    if (parent == source["parent_revision"]["payload"]
-            and manifest == source["dependency_manifest"]):
+    if (equal(parent, source["parent_revision"]["payload"])
+            and equal(manifest, source["dependency_manifest"])):
         revision = source["parent_revision"]["revision_id"]
     else:
         revision = "authoring-parent-revision-" + _digest({
@@ -336,9 +336,10 @@ def _records(entries, rejected, base, current):
     for entry in entries:
         recorder = entry.get("records")
         if (entry.get("intent") != "recorded" or not isinstance(recorder, Mapping)
-                or recorder.get("schema_version") != 1
+                or type(recorder.get("schema_version")) is not int or recorder["schema_version"] != 1
                 or not isinstance(recorder.get("commands"), list) or not recorder["commands"]
-                or any(not isinstance(record, Mapping) or record.get("ordinal") != ordinal
+                or any(not isinstance(record, Mapping) or type(record.get("ordinal")) is not int
+                       or record["ordinal"] != ordinal
                        or set(record) != {"ordinal", "command", "writes", "reads", "selections",
                                           "bindings", "created", "dependencies", "derived_writes"}
                        for ordinal, record in enumerate(recorder["commands"]))):

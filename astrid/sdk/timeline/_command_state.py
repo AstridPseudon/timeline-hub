@@ -375,7 +375,7 @@ class State:
             raise CommandError('invalid authored root reference', ref=ref)
         if not path and item_identity(ref) is not None:
             owner, identity = item_identity(ref)
-            rows = self.bundle['shots'][owner[5:]]['payload']['items']
+            rows = self.bundle['shots'][owner[5:]]['payload'].setdefault('items', [])
             existing = self.entity(ref, optional=True)
             if state['state'] == 'present' and (not isinstance(state['value'], dict)
                     or state['value'].get('item_id', state['value'].get('id')) != identity):

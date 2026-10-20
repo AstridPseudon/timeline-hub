@@ -228,33 +228,28 @@ def _authoring_shot_id(
     return _identity("shot-placement", project_id, timeline_id, occurrence_id, source_shot_id)
 
 
-def _remap_known_item_references(
-    value: Any, item_ids: Mapping[str, str], *, key: str | None = None
-) -> Any:
-    """Remap known item-reference fields without rewriting opaque string data."""
+def _remap_shot_items(
+    payload: Mapping[str, Any], item_ids: Mapping[str, str]
+) -> dict[str, Any]:
+    """Remap the shot item codec and its declared source dependency links."""
 
-    if isinstance(value, Mapping):
-        result: dict[str, Any] = {}
-        for child_key, child in value.items():
-            if not isinstance(child_key, str):
-                result[child_key] = _copy(child)
-                continue
-            if isinstance(child, str) and (
-                child_key in {"item_id", "source_item_id", "selected_item_id", "parent_item_id"}
-                or child_key.endswith("_item_id")
-            ):
-                result[child_key] = item_ids.get(child, child)
-            elif isinstance(child, list) and child_key.endswith("_item_ids"):
-                result[child_key] = [
-                    item_ids.get(item, item) if isinstance(item, str) else _copy(item)
-                    for item in child
-                ]
-            else:
-                result[child_key] = _remap_known_item_references(child, item_ids, key=child_key)
-        return result
-    if isinstance(value, list):
-        return [_remap_known_item_references(item, item_ids, key=key) for item in value]
-    return _copy(value)
+    result = _copy(dict(payload))
+    for item in result.get("items", []):
+        identity = item.get("item_id", item.get("id"))
+        for field in ("item_id", "id"):
+            if field in item and item[field] == identity:
+                item[field] = item_ids.get(identity, identity)
+        # Shot dependency descriptors use metadata, or the item itself when
+        # metadata is absent. Other fields and namespaces carry no reference
+        # authority merely because their keys end in _item_id.
+        descriptor = item.get("metadata")
+        if not isinstance(descriptor, Mapping):
+            descriptor = item
+        for field in ("source_item_id", "source_item"):
+            source = descriptor.get(field)
+            if isinstance(source, str):
+                descriptor[field] = item_ids.get(source, source)
+    return result
 
 
 def _copy_shot_for_placement(
@@ -290,15 +285,6 @@ def _copy_shot_for_placement(
             source_item_id,
         )
     return _remap_shot_items(result, remap), remap
-
-
-def _remap_shot_items(payload: Mapping[str, Any], item_ids: Mapping[str, str]) -> dict[str, Any]:
-    result = _remap_known_item_references(payload, item_ids)
-    for before, item in zip(payload.get("items", []), result.get("items", [])):
-        # Remap the raw codec (and an equal identity mirror), never opaque ids.
-        if "id" in before and before["id"] == before.get("item_id", before["id"]):
-            item["id"] = item_ids[before["id"]]
-    return result
 
 
 def open_authoring_bundle(

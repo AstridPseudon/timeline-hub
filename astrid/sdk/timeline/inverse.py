@@ -29,9 +29,9 @@ def _patch(state, path, replacement):
     node = value
     for token in path[:-1]:
         if isinstance(token, tuple):
-            matches = [row for row in node if row.get('item_id', row.get('id')) == token[1]]
-            if token[0] != 'item':
-                matches = [row for row in node if row.get('id') == token[1]]
+            matches = [row for row in node
+                       if (row.get('item_id', row.get('id')) if token[0] == 'item'
+                           else row.get('id')) == token[1]]
             if len(matches) != 1:
                 raise CommandError('ambiguous collection alias', kind='identity_conflict')
             node = matches[0]

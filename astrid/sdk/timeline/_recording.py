@@ -141,6 +141,8 @@ class Recording:
                               for row in shot['payload'].get('items', [])]
             if (any(row.get('item_id', row.get('id')) == item[1]
                     for row in [*authored_items, *([] if restoring else source_items)])
+                    or any(created['kind'] == 'item' and item_identity(created['ref'])[1] == item[1]
+                           for created in self.record['created'])
                     or self.state.get(ref, []) != ABSENT):
                 raise CommandError('created item identity is occupied', kind='identity_collision', ref=ref)
             self.read(ref)

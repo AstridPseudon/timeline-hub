@@ -47,7 +47,13 @@ class Generated:
         self.refusal = None
 
     def list_timeline_commits(self, project, timeline, *, cursor=None, limit):
-        assert (project, timeline, limit) == ("p", "t", 1)
+        assert (project, timeline) == ("p", "t")
+        if limit == 200:
+            return {"items": [{"publication_id": response["receipt"]["receipt_id"],
+                               "receipt": copy.deepcopy(response["receipt"]),
+                               "records": {"commands": copy.deepcopy(self.records[response["receipt"]["receipt_id"]])}}
+                              for _, response in self.accepted.values()], "next_cursor": None}
+        assert limit == 1
         return {"head": copy.deepcopy(self.head), "items": [], "next_cursor": None}
 
     def commit_timeline(self, project, timeline, body, *, idempotency_key):
@@ -283,6 +289,12 @@ def test_preview_remains_unsent_and_acceptance_and_inverse_get_fresh_keys(connec
         session.flush(idempotency_key="preview")
     accepted = session.flush()
     publication = accepted["receipt"]["receipt_id"]
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    # Inverse ACK verification reads the exact published boundary, not the
+    # fake transport's prepublication working copy with its older base pin.
+    generated.bundles[accepted["data"]["accepted_revision_id"]] = bundle_from_document(
+        accepted["data"]["canonical_document"])
     session.undo([publication])
     assert len({key for _, key in generated.calls}) == 3
     inverse = json.loads(generated.calls[-1][0])["commands"][0]
@@ -709,9 +721,8 @@ def test_unverified_paired_ack_refuses_even_when_receipt_echoes_the_forgery(dama
         _ack(result, body, flight, identity, source_bundle=original)
 
 
-def test_paired_inverse_ack_requires_the_known_accepted_source_allocation():
+def paired_inverse_ack():
     from astrid.sdk.timeline.commit import document_from_bundle
-    from astrid.sdk.timeline.sync import _ack
     from tests.editing_conformance.test_recipe_m1_commands import inverse
 
     result, body, flight, identity, original = paired_ack()
@@ -730,7 +741,65 @@ def test_paired_inverse_ack_requires_the_known_accepted_source_allocation():
         'operation': 'commitTimeline', 'path': flight['path'], 'publisher': 'actor',
         'request': body}).encode()).hexdigest()
     result['receipt']['result'] = copy.deepcopy(data)
+    return result, body, flight, identity, plan
+
+
+def test_paired_inverse_ack_requires_the_known_accepted_source_allocation():
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, plan = paired_inverse_ack()
     assert _ack(result, body, flight, identity, source_bundle=plan.bundle,
-                inverse_records=plan.records)[0] == data
+                inverse_records=plan.records)[0] == result['data']
     with pytest.raises(TimelineEditError, match='nonidentity'):
         _ack(result, body, flight, identity, source_bundle=plan.bundle)
+
+
+def test_paired_ack_distinguishes_boolean_from_numeric_read_claims():
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, original = paired_ack()
+    read = next(read for read in result['data']['commands'][0]['reads']
+                if read['state'] == {'state': 'present', 'value': 1})
+    read['state']['value'] = True
+    result['receipt']['result'] = copy.deepcopy(result['data'])
+    with pytest.raises(TimelineEditError):
+        _ack(result, body, flight, identity, source_bundle=original)
+
+
+def test_ack_receipt_echo_distinguishes_boolean_from_numeric_claims(connected, monkeypatch):
+    session = open_session(connected)
+    _, generated, path = connected
+    commit = generated.commit_timeline
+
+    def forged(*args, **kwargs):
+        result = commit(*args, **kwargs)
+        result['receipt']['result']['commands'][0]['args']['on'] = True
+        return result
+
+    monkeypatch.setattr(generated, 'commit_timeline', forged)
+    with pytest.raises(TimelineEditError):
+        session.move('parent/clip:a', 1)
+    assert json.loads(path.read_bytes())['flight']
+
+
+@pytest.mark.parametrize('damage', ['missing-map', 'read-bool', 'created', 'expect', 'bindings'])
+def test_inverse_ack_reconstructs_all_claims_from_accepted_records(damage):
+    from astrid.sdk.timeline.sync import _ack
+
+    result, body, flight, identity, plan = paired_inverse_ack()
+    data = result['data']
+    command = data['commands'][0]
+    if damage == 'missing-map':
+        data['id_map'] = {}
+    elif damage == 'read-bool':
+        read = next(read for read in command['reads'] if type(read['state'].get('value')) is int)
+        read['state']['value'] = bool(read['state']['value'])
+    elif damage == 'created':
+        command['created'] = ['shot:invented/item:invented']
+    elif damage == 'expect':
+        command['expect'] = {}
+    else:
+        command['bindings']['extra'] = 'shot:other'
+    result['receipt']['result'] = copy.deepcopy(data)
+    with pytest.raises(TimelineEditError):
+        _ack(result, body, flight, identity, source_bundle=plan.bundle, inverse_records=plan.records)
