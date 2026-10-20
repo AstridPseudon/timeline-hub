@@ -250,17 +250,22 @@ Use this loop for every inspection or edit:
 4. **Choose the smallest supported edit.** Use a public command for a direct,
    exact Runtime operation such as replacing admitted media or rendering. Use
    the [helper catalog](references/document-checkout.md#editing-helper-catalog)
-   for sequence, reorder, quantize, ripple, layout, or repeated transforms;
-   those helpers operate on the same detached authoring bundle. That code is a
-   candidate transform, not a new format or hidden command language. Do not
-   edit Runtime files directly, call undocumented endpoints, or silently rebase
-   a stale candidate.
-5. **Validate and save.** Validate the complete candidate, inspect its diff,
-   and save through the existing compare-and-swap/idempotent publication boundary.
-   Preview, rendering, and focused readback are optional unless the request
-   needs them. For an explicit preview-before-save request, inspect/deliver a
-   successful unpublished candidate render before saving that same candidate.
-   Keep the receipt; further corrective edits and saves are allowed.
+   only for read-only or migration preparation of sequence, reorder, quantize,
+   ripple, layout, or repeated transforms; those helpers operate on the same
+   detached authoring bundle. That code is a candidate transform, not a new
+   format or hidden command language. Do not edit Runtime files directly, call
+   undocumented endpoints, silently rebase a stale candidate, or publish it
+   through the held checkout writer.
+5. **Validate and save.** For supported edits, turn the intent into captured
+   commands and commit through the native CLI/session, whose existing durable
+   outbox persists the exact request and retry identity. A settled producer
+   proposal is queued and flushed by that requester through the same boundary.
+   Detached candidates may be validated, diffed, or previewed for migration;
+   they are not a fallback publication route. If the intent is unsupported,
+   refuse visibly, retain the draft, and report the missing command. For an
+   explicit preview-before-save request, inspect/deliver a successful
+   unpublished candidate render before the supported commit. Keep the receipt;
+   further corrective edits and saves are allowed.
 6. **Explain the evidence.** Report what was observed, what was changed, and
    what remains unavailable separately. A successful command, a semantic
    readback, a decoded media check, and a browser/render proof are different
@@ -270,10 +275,12 @@ The short agent preamble is:
 
 > Open one pinned composition. Find the target in the structural view, carry its
 > exact identity to the visual view, and expand only as needed. Use the smallest
-> supported command; otherwise edit a detached same-schema candidate with
-> ordinary code. Validate, diff, and save. Choose source inspection, rendered
-> preview, or readback when the request needs it. Keep current, candidate, and
-> historical evidence distinct.
+> supported command. If the intent is unsupported, refuse visibly, retain the
+> draft, and report the missing command; do not publish through the held
+> checkout writer. Detached same-schema candidates are for migration/read-only
+> preparation only. Choose source inspection, rendered preview, or readback
+> when the request needs it. Keep current, candidate, and historical evidence
+> distinct.
 
 For discovery, `timelines show` answers structural/text questions, and
 `timelines visualize --mode inputs` answers declared-placement questions. They
@@ -663,8 +670,12 @@ not infer it from the reusable-shot commands above.
 
 The supported commands above create, inspect, populate, remove, and reorder
 project-level shot records. They do not rewrite a timeline document or replace
-multiple authored clips with a shot. Use the detached checkout recipe for that
-complete composition edit, with Runtime head comparison at publication.
+multiple authored clips with a shot. A complete composition edit is currently
+migration-only/held: use the detached checkout recipe only to inspect, validate,
+or prepare a migration, never as a fallback publication route. For unsupported
+normal edits, refuse visibly, retain the draft, and report the missing command;
+supported publication is through captured commands and the existing durable
+outbox (or a settled proposal flushed by its requester).
 
 Keep narration in the shot's canonical `voiceover_script` text binding alongside
 its voiceover media. Do not leave the only copy in a generation script:
@@ -707,18 +718,24 @@ are explicit supported steps; registration alone does not change an existing
 composition's pinned narration. A stale head requires a fresh checkout and explicit
 reconciliation, never substitution of the latest text.
 
-The runnable checkout example includes this complete path for a registered shot:
+The following checkout example is migration-only/read-only preparation for a
+registered shot; it is not a current publication path:
 
 ```bash
 python3 scripts/timeline_document.py checkout --project <project> --timeline <timeline> --file /tmp/edit.json
 python3 scripts/timeline_document.py bind-script --file /tmp/edit.json --shot <registered-shot-id> \
   --text-file <script.txt> --expected-head 0 --idempotency-key narration-01
 python3 scripts/timeline_document.py check --file /tmp/edit.json
-python3 scripts/timeline_document.py publish --file /tmp/edit.json --idempotency-key pin-narration-01
+# Do not send this detached candidate to the held `publish` writer.
 python3 -m astrid timelines script <timeline> --project <project> --json
-# Historical read: use the publication receipt's exact parent revision.
+# Historical read: use an existing publication receipt's exact parent revision.
 python3 -m astrid timelines script <timeline> --project <project> --revision <parent-revision> --json
 ```
+
+For a supported edit, publish captured commands through the native session/CLI
+and its existing durable outbox, or flush a settled proposal through its
+requester. If this intent is not command-backed, refuse visibly and retain the
+draft rather than automatically falling back to checkout/CAS publication.
 
 `client.timelines.script(project, timeline, revision_id=None, occurrence=None)`
 is the same public reader. It returns names, occurrence identities, declared
