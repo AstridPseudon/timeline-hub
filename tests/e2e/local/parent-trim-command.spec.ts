@@ -109,6 +109,10 @@ async function openParent(page: Page, harness: DirectHarness) {
 
 async function sourceWindow(page: Page, seed: ThreeProductsSeed) {
   await page.locator(`.clip-action[data-clip-id="${seed.transitionClipId}"]`).first().click();
+  // Desktop selection opens the existing inspector on Effects; the same real
+  // selection opens Timing on touch. Source In/Out are the media clip's
+  // controls in that Timing tab.
+  await page.getByRole('tab', { name: 'Timing', exact: true }).click();
   const input = page.getByLabel('Source In');
   await expect(input).toBeVisible();
   return input;
