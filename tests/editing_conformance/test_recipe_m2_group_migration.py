@@ -26,7 +26,8 @@ FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_group_migration.json'
 GROUPS = [{'legacy_shot_id': 'legacy', 'shot_id': 'new-shot', 'occurrence_id': 'new-occ'}]
 
 
-def legacy_document(*, opaque_variant=False):
+def legacy_document(*, opaque_variant=False, project_id='project-1', media_id=MEDIA,
+                    transcript_pin=None):
     clips = [{'id': 'before', 'track': 'V1', 'at': 10, 'hold': 1, 'text': 'ungrouped'},
              {'id': 'c1', 'track': 'V1', 'at': 0, 'hold': 2, 'asset': 'image',
               'clipType': 'media', 'params': None, 'app': {'astrid': None},
@@ -51,14 +52,14 @@ def legacy_document(*, opaque_variant=False):
                'output': {'fps': {'numerator': 30000, 'denominator': 1001}, 'opaque': None},
                'pinnedShotGroups': [group], 'parent_only': {'audio': [None]}},
                'clips': clips, 'occurrences': [], 'opaque': {'keep': None},
-               'registry': {'assets': {'image': {'media_id': MEDIA, 'type': 'image', 'unknown': None}},
+               'registry': {'assets': {'image': {'media_id': media_id, 'type': 'image', 'unknown': None}},
                             'unknown': [False, None]}}
-    pin = source_fixture('transcript')['pin']
-    return {'schema_version': 1, 'project_id': 'project-1', 'timeline_id': 'film',
+    pin = source_fixture('transcript')['pin'] if transcript_pin is None else copy.deepcopy(transcript_pin)
+    return {'schema_version': 1, 'project_id': project_id, 'timeline_id': 'film',
             'parent_revision': {'revision_id': 'legacy-parent', 'payload': payload,
                                 'content_digest': _digest(payload)},
             'shot_revisions': [], 'internal_timeline_revisions': [],
-            'dependency_manifest': _manifest([], [], [{'media_id': MEDIA, 'content_digest': MEDIA}], [pin])}
+            'dependency_manifest': _manifest([], [], [{'media_id': media_id, 'content_digest': media_id}], [pin])}
 
 
 def plan_for(document=None):
