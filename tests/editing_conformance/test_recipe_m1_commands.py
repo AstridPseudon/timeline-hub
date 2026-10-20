@@ -552,3 +552,32 @@ def test_materialization_alias_is_exact_for_arbitrary_source_ids():
     head['source_mapping']['shots'][old]['shot_id'] = 'shot-placement-' + 'b' * 64
     with pytest.raises(CommandError):
         replay(plan, head)
+
+
+@pytest.mark.parametrize('source', ['source-shot', 'shot-placement-' + 'a' * 64])
+def test_reverse_materialization_alias_requires_exact_source_and_occurrence(source):
+    from astrid.core.timeline.authoring_bundle import _authoring_shot_id
+
+    parent, shots, internals = _closure()
+    shots[0]['shot_id'] = source
+    for row in parent['payload']['occurrences']:
+        row['shot_id'] = source
+    parent['content_digest'] = _digest(parent['payload'])
+    original = open_authoring_bundle(parent, shot_revisions=shots,
+                                     internal_timeline_revisions=internals)
+    state = State(original)
+    ref = 'occurrence:occ-1/shot'
+    expected = present(_authoring_shot_id(original['project_id'], original['timeline_id'],
+                                          'occ-1', source, shared=True))
+    assert state.matches(ref, ['shot_id'], expected)
+    assert not state.matches('occurrence:occ-2/shot', ['shot_id'], expected)
+    for project, timeline, identity in [(original['project_id'], original['timeline_id'], 'other-source'),
+                                       ('other-project', original['timeline_id'], source),
+                                       (original['project_id'], 'other-timeline', source)]:
+        unrelated = present(_authoring_shot_id(project, timeline, 'occ-1', identity, shared=True))
+        assert not state.matches(ref, ['shot_id'], unrelated)
+    owner = state.occurrence('occurrence:occ-1')['shot_id']
+    original['source_mapping']['shots'][owner]['shot_id'] = 'other-source'
+    with pytest.raises(CommandError) as error:
+        state.matches(ref, ['shot_id'], expected)
+    assert error.value.kind == 'identity_conflict'
