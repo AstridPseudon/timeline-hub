@@ -33,3 +33,41 @@ Exact commands, scope, intermediate fixture failures, limits and next step: `wor
 
 ## Agent owner gate 2026-10-20T14:15:41Z
 Scene/save-core candidate f5d0b4e0 independently APPROVED (83 + 5 selected passes), manager diff reviewed and MERGED dab91714. Private _check_core is available on integration; explicit diagnostics preserved. No Root/cache/private-evaluator activation or D09 deletion claim. Current integration smoke in progress, existing real renderer-off40native pass retained.
+
+## Agent private Scene-only managed caller — owner-approved 2026-10-20 16:40 UTC
+
+The SDK half is deliberately one private request/result adapter on the existing
+`rendering.timeline_visualize` managed invocation. `astrid/sdk/timeline_filmstrip.py`
+uses `prepare_filmstrip` for the exact saved or frozen candidate capture, including
+the existing admitted managed video digest/object/reference and the capture identity.
+The request adds only the private `mode: "scene_only"` selector, keeps
+`view: "filmstrip"`, and asks for `formats: ["md"]` with no PNG output. It carries
+no caller source reference, certification, authority DTO, provider/store/endpoint,
+or new source factory. Candidate input is the existing
+`preview_authoring_candidate` artifact, not a second projection.
+
+The existing invocation result carries one managed Scene result artifact with this
+private shape:
+
+```json
+{
+  "capture_identity": "<exact prepared capture identity>",
+  "source_label": "<executor-bound committed/candidate source label>",
+  "managed_object_reference": "<existing admitted managed output>",
+  "compiled_id_address_map": {"<compiled id>": "<existing address>"},
+  "scene_answers": [
+    {"frame": 0, "coverage": "COVERED", "content": "CONTENT",
+     "layers": [{"clipId": "<compiled id>", "bounds_source": "declared"}],
+     "findings": []}
+  ]
+}
+```
+
+The SDK accepts the result only when capture identity, source binding, and the
+compiled-ID/address map are exact; missing or stale answers become one advisory
+`UNAVAILABLE` span. Valid answers are joined into the existing span shape and
+formatted by `Checkout._scene_problems`. Viewing owns the executor/query inside
+`_prepared_remotion_root`; it must return the existing Scene answers and bound
+source label without PNG rendering. Ordinary `Checkout.check()` activation stays
+held until that executor is ready; `_check_core`, save, publish, and transaction
+paths remain pure core paths and do not use this adapter.

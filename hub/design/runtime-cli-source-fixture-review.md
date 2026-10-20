@@ -2,7 +2,21 @@
 
 Date: 2026-10-20 UTC
 
-## Decision
+## Supersession
+
+Superseded at `2026-10-20T16:53:37Z` by the fixed wrapper
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-current-http-cli.sh`,
+SHA-256 `c66acf7042677867788b2b0826f00f81cb084386dcce3649d18675ee8ab3ec07`.
+The current suite line has SHA-256
+`823ca7aec2d4b5ae4daae0e976a3a5a172fbd5b91169469b32ccbae3b8ed7833`.
+The fixed-wrapper result is recorded in
+`runtime-cli-failfast-final-review.md`; the historical raw logs and result
+directory below are unchanged.
+
+The historical decision below applies only to the pre-fix semicolon-separated
+command and is no longer the qualification decision for the current suite.
+
+## Historical decision (superseded)
 
 **REJECT as a qualification result for `current-http-cli-durability`.**
 
