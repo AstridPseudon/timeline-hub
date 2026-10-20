@@ -1519,7 +1519,9 @@ def _scene_only_bundle_payload(
             if actual_files != verified | {manifest_name}:
                 return None
             entrypoints = manifest.get("entrypoints")
-            scene_name = entrypoints.get("scene_answers") if isinstance(entrypoints, Mapping) else None
+            # The current managed executor names this existing entrypoint
+            # ``scene``; its stable file is still ``scene-answers.json``.
+            scene_name = entrypoints.get("scene") if isinstance(entrypoints, Mapping) else None
             if scene_name != "scene-answers.json" or scene_name not in names:
                 return None
             if scene_name not in verified:

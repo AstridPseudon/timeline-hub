@@ -134,7 +134,7 @@ def _scene_result(context, *, answers=None, scene_clips=None, label=None, proven
     scene_bytes = json.dumps(scene, sort_keys=True, separators=(',', ':')).encode()
     manifest = {
         'kind': 'timeline_filmstrip',
-        'entrypoints': {'scene_answers': 'scene-answers.json'},
+        'entrypoints': {'scene': 'scene-answers.json'},
         'outputs': [{
             'path': 'scene-answers.json',
             'content_hash': 'sha256:' + hashlib.sha256(scene_bytes).hexdigest(),
