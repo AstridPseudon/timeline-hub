@@ -1,0 +1,37 @@
+diff a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py	(rejected hunks)
+@@ -559,7 +559,7 @@ def _check_reservations(port, plan, current, rejected, base):
+     def boundary(revision):
+         return _load(port, context, revision)
+ 
+-    def scan(records, bundle, *, ordinary=False):
++    def scan(records, bundle, *, ordinary=False, output=None):
+         state = State(bundle)
+         reserved.update(_reservation_refs(state))
+         for record in records:
+@@ -585,6 +585,11 @@ def _check_reservations(port, plan, current, rejected, base):
+                         state.closures[pin['revision_id']] = source
+                 if not state.matches(write['ref'], write['path'], write['before']):
+                     raise CommandError('semantic identity boundary differs from writes', kind='history_unavailable')
++                if (record['command']['op'] == 'timeline.inverse' and root_identity(write['ref']) is not None
++                        and write['ref'].startswith('occurrence:') and not write['path']
++                        and write['after']['state'] == 'present'):
++                    from ._root_inverse import recover_source
++                    recover_source(state, write['after']['value'], output)
+                 before = _reservation_refs(state)
+                 state.set(write['ref'], write['path'], write['after'])
+                 if write['ref'] == 'timeline':
+@@ -609,12 +614,12 @@ def _check_reservations(port, plan, current, rejected, base):
+             recorded = True
+             records = _records([entry], rejected, base, current)
+             _require(entry.get('previous') is not None, 'missing original identity boundary')
+-            scan(records, boundary(entry['previous']['revision_id']))
++            scan(records, boundary(entry['previous']['revision_id']), output=boundary(entry['revision_id']))
+             reserved.update(_reservation_refs(State(boundary(entry['revision_id']))))
+     except (AuthoringBundleError, CommandError, KeyError, TypeError, ValueError) as exc:
+         raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
+                                 base, current)) from exc
+-    scan(plan.records, boundary(current['revision_id']), ordinary=True)
++    scan(plan.records, boundary(current['revision_id']), ordinary=True, output=plan.bundle)
+ 
+ 
+ class RuntimeCommitService:

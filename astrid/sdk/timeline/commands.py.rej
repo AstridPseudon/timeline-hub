@@ -1,0 +1,14 @@
+diff a/astrid/sdk/timeline/commands.py b/astrid/sdk/timeline/commands.py	(rejected hunks)
+@@ -35,10 +35,12 @@ def operations():
+     from ._split_commands import clip_split
+     from ._trim_commands import clip_trim
+     from .capture import MOVE_INTENT, move, track_create
++    from .native_occurrence_delete import OCCURRENCE_INTENT, occurrence_delete
+     from .native_occurrence_media_commands import MEDIA_INTENT, add_media, swap_media
+     from .native_placement_commands import placement_move
+     return {'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
++            'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),
+             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
+             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
+             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
