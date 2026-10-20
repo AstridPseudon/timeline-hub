@@ -1,7 +1,6 @@
 """Private generated qualification pair; public contracts and dependencies stay read only."""
 from __future__ import annotations
 
-import ast
 import hashlib
 import io
 import json
@@ -25,23 +24,17 @@ def prepare_pair(source, root):
         target.mkdir()
         with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
             archive.extractall(target, filter='data')
-    for name in ('astrid/core/contracts/runtime_orchestration.py',
+    overlays = ('astrid/core/contracts/runtime_orchestration.py',
                  'astrid/core/execution/generic_host.py', 'astrid/sdk/workspace_client.py',
-                 'astrid/sdk/timeline/assembly.py',
+                 'astrid/sdk/timeline/assembly.py', 'astrid/sdk/timeline/sync.py',
                  'astrid/packs/rendering/pack.yaml',
                  'astrid/packs/rendering/actions/assemble_timeline/run.py',
                  'tests/packs/rendering/test_registered_native_assembler.py',
+                 'tests/packs/rendering/test_registered_proposal_requester.py',
                  'tests/packs/rendering/test_registered_assembler_admission.py',
-                 'tests/packs/rendering/test_registered_assembler_producer.py'):
+                 'tests/packs/rendering/test_registered_assembler_producer.py')
+    for name in overlays:
         shutil.copyfile(source / name, agent / name)
-    # Keep the reviewed producer outbox source; insert only the new admission method.
-    current = (source / 'astrid/sdk/timeline/sync.py').read_text()
-    tree = ast.parse(current)
-    session = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == 'TimelineSession')
-    method = next(node for node in session.body if isinstance(node, ast.FunctionDef) and node.name == 'admit_assembly')
-    admission = '\n'.join(current.splitlines()[method.lineno - 1:method.end_lineno]) + '\n\n'
-    path = agent / 'astrid/sdk/timeline/sync.py'
-    path.write_text(path.read_text().replace('    def queue_proposal(', admission + '    def queue_proposal(', 1))
     schema = agent / 'astrid/core/timeline/schema/edit-command.schema.json'
     shutil.copyfile(schema, runtime / 'contract/schemas/edit-command.json')
     (runtime / 'generators/release.json').write_text('{"contract_version":"0.2.14"}\n')
@@ -74,5 +67,7 @@ def prepare_pair(source, root):
     print(json.dumps({'agent_source': AGENT, 'runtime_source': RUNTIME,
                       'private_contract_version': '0.2.14',
                       'schema_sha256': hashlib.sha256(schema.read_bytes()).hexdigest(),
-                      'artifact_manifest': manifest['version']}, sort_keys=True), flush=True)
+                      'artifact_manifest': manifest['version'],
+                      'overlay_sha256': {name: hashlib.sha256((source / name).read_bytes()).hexdigest()
+                                         for name in overlays}}, sort_keys=True), flush=True)
     return agent, runtime

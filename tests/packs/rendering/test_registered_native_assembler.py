@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -13,10 +15,9 @@ from tests.editing_conformance.test_commit_runtime_m1 import open_client
 from tests.helpers.runtime import use_runtime
 
 
-@pytest.mark.integration
-@pytest.mark.parametrize('duplicate_cas', [False, True])
-def test_registered_host_settles_native_original_proposal(
-    tmp_path, monkeypatch, real_runtime, duplicate_cas,
+@contextmanager
+def registered_assembly(
+    tmp_path, monkeypatch, real_runtime, duplicate_cas, *, peer_edit='disjoint', cancel=False,
 ):
     runtime = use_runtime()
     monkeypatch.syspath_prepend(str(runtime / 'tests'))
@@ -40,8 +41,8 @@ def test_registered_host_settles_native_original_proposal(
                                   'capabilities': [child_capability, record.id], 'max_concurrency': 3},
                                  idempotency_key='executor')
         project = service.create_project({'slug': 'assembly', 'name': 'Assembly'})['id']
-        service.create_timeline(project, 'main', idempotency_key='timeline')
         with open_client(daemon) as client:
+            client._remote._transport.create_timeline(project, 'main', idempotency_key='timeline')
             session = TimelineSession.open(project, 'main', client=client, outbox_path=tmp_path / 'requester.json')
             prior = {'id': 'prior', 'clipType': 'text', 'track': 'visual', 'at': 0.0, 'hold': 1.0,
                      'params': {'text': 'Original'}, 'opaque': [1.0, -0.0, False, None]}
@@ -53,6 +54,12 @@ def test_registered_host_settles_native_original_proposal(
                     {'schema_version': 1, 'op': 'clip.add', 'version': '1', 'select': 'parent',
                      'args': {'row': prior}},
                 ], idempotency_key='original-content')
+            original_tracks = [track] if duplicate_cas else []
+            if peer_edit == 'label':
+                peer_track = {'id': 'peer', 'kind': 'visual', 'label': 'Before peer edit'}
+                session.commit({'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
+                                'args': {'row': peer_track}}, idempotency_key='original-peer-track')
+                original_tracks.append(peer_track)
             replace_clips = ['parent/clip:prior'] if duplicate_cas else []
             original = session.outbox.read()['base']
             children, effects = [], []
@@ -77,9 +84,6 @@ def test_registered_host_settles_native_original_proposal(
             selectors = [{key: association[key] for key in ('association_id', 'object_id')} | {
                 'version': association['lifecycle']['version']}
                 for child in children for association in service.managed_outputs(child)]
-            peer = TimelineSession.open(project, 'main', client=client, outbox_path=tmp_path / 'peer.json')
-            peer.commit({'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
-                         'args': {'row': {'id': 'peer', 'kind': 'visual'}}}, idempotency_key='peer-track')
             result = session.admit_assembly(selectors, replace_clips=replace_clips, assembler_digest=record.capability_digest,
                                             idempotency_key='assembly', rationale='Ordered café visuals 1.0')
             author = result['data']['task_id']
@@ -90,12 +94,35 @@ def test_registered_host_settles_native_original_proposal(
                 'project_id': project, 'timeline_id': 'main',
                 'base_revision_id': original['revision_id'], 'base_publication_id': original['publication_id']}
             assert capture['bundle']['base_parent']['revision_id'] == original['revision_id']
-            assert capture['bundle']['parent']['config']['tracks'] == ([track] if duplicate_cas else [])
+            assert capture['bundle']['parent']['config']['tracks'] == original_tracks
             assert public['outputs']['authoring_proposal'] == {
                 'type': 'file', 'artifact_type': 'timeline/authoring-proposal'}
+            peer = TimelineSession.open(project, 'main', client=client, outbox_path=tmp_path / 'peer.json')
+            command = ({'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
+                        'args': {'row': {'id': 'peer', 'kind': 'visual'}}} if peer_edit == 'disjoint' else
+                       {'schema_version': 1, 'op': 'clip.add', 'version': '1', 'select': 'parent',
+                        'args': {'row': {'id': 'peer', 'clipType': 'text', 'track': 'peer',
+                                         'at': 0, 'hold': 1, 'params': {'text': 'Peer'}}}})
+            if peer_edit == 'label':
+                peer.commit({'schema_version': 1, 'op': 'track.set', 'version': '1',
+                             'select': 'parent/track:peer',
+                             'args': {'values': {'label': 'After peer edit'}, 'clear': []}},
+                            idempotency_key='peer-edit')
+            elif peer_edit == 'disjoint':
+                peer.commit(command, idempotency_key='peer-edit')
+            else:
+                peer.commit_many([
+                    {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
+                     'args': {'row': {'id': 'peer', 'kind': 'visual'}}}, command,
+                ], idempotency_key='peer-edit')
             claim = worker.claim_next(executor_id=worker.executor_id, capability_ids=[record.id],
                                       idempotency_key='claim-assembler')
             assert claim.task_id == author
+            if cancel:
+                assert client.tasks.cancel(author, idempotency_key='cancel').ok
+                yield SimpleNamespace(session=session, client=client, service=service,
+                                      author=author, claim=claim, project=project)
+                return
             task = service.task(author)['task']
             assert len(task['spec']['input_object_ids']) == (1 if duplicate_cas else 2)
             values = host._materialize_inputs(task['spec'], tmp_path / 'attempt', continuation_id=author)
@@ -162,7 +189,7 @@ def test_registered_host_settles_native_original_proposal(
                              verified_media=[row['verified_media'] for row in capture['children']])
             assert replay.commands == commands
             if duplicate_cas:
-                assert replay.bundle['parent']['config']['tracks'] == [track]
+                assert replay.bundle['parent']['config']['tracks'] == original_tracks
             # Captured inputs stay exact, including reversed completion and duplicate CAS.
             import copy
             for change in ('association', 'version', 'order', 'selection', 'duration'):
@@ -196,7 +223,20 @@ def test_registered_host_settles_native_original_proposal(
             assert managed['durability'] == 'durable' and managed['media_type'] == 'application/json'
             assert managed['lifecycle']['state'] == 'available'
             assert service.list_timeline_commits(project, 'main', authorize=lambda: None) == before
+            yield SimpleNamespace(session=session, client=client, service=service, daemon=daemon,
+                                  author=author, claim=claim, project=project, original=original,
+                                  capture=capture, proposal=proposal, managed=managed, raw=raw,
+                                  before=before, peer=peer)
 
     finally:
         host.shutdown()
         daemon.stop()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('duplicate_cas', [False, True])
+def test_registered_host_settles_native_original_proposal(
+    tmp_path, monkeypatch, real_runtime, duplicate_cas,
+):
+    with registered_assembly(tmp_path, monkeypatch, real_runtime, duplicate_cas):
+        pass

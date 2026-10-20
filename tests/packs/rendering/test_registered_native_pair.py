@@ -16,6 +16,7 @@ def test_registered_native_pair(tmp_path, capsys):
     agent, runtime = prepare_pair(Path(__file__).resolve().parents[3], tmp_path)
     result = subprocess.run([sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-m', 'integration',
                     'tests/packs/rendering/test_registered_native_assembler.py',
+                    'tests/packs/rendering/test_registered_proposal_requester.py',
                     'tests/packs/rendering/test_registered_assembler_admission.py',
                     'tests/packs/rendering/test_registered_assembler_producer.py'],
                    cwd=agent, env={**os.environ, 'PYTHONPATH': str(agent),

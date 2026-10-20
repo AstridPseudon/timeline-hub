@@ -234,3 +234,30 @@ def test_native_host_owns_attempt_identity_and_reads_exact_associations(tmp_path
         assert reads == ['assoc-0', 'assoc-1']
     finally:
         host.shutdown()
+
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
+    'registered assembler admission ACK recovery requires the original create body/key '
+    'durably retained in the existing outbox before send'))
+def test_registered_admission_lost_ack_restart_retries_original_body_without_recapture(tmp_path):
+    session, generated, outputs, _, calls = requester(tmp_path)
+    create = session.client.tasks.create
+
+    def lose_ack(**body):
+        result = create(**body)
+        if len(calls) == 1:
+            raise WorkspaceClientError(0, 'transport_error', 'lost admission acknowledgement')
+        return result
+
+    session.client.tasks.create = lose_ack
+    with pytest.raises(WorkspaceClientError, match='lost admission'):
+        admit(session, outputs)
+    original = copy.deepcopy(calls[0])
+    generated.bundles['peer'] = copy.deepcopy(generated.bundles['r0'])
+    generated.bundles['peer']['base_parent']['revision_id'] = 'peer'
+    generated.bundles['peer']['parent']['clips'][0]['params']['text'] = 'Peer edit'
+    generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
+    restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
+    assert admit(restarted, outputs)['data']['task_id'] == 'assembler'
+    assert calls == [original, original]
+    assert session.client.reads == ['r0']
