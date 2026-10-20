@@ -1,0 +1,1 @@
+- 0.0.13 — Expose the existing encoded envelope source admission helper through the public evaluation entry point.
