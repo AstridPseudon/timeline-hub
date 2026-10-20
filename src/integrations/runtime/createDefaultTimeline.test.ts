@@ -266,6 +266,11 @@ function installNativeHarness(transport: Transport) {
   });
 }
 
+function installNativeOutboxHarness() {
+  vi.stubGlobal('indexedDB', createFakeIndexedDB());
+  vi.stubGlobal('navigator', { locks: { request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}) } });
+}
+
 describe('ensureProjectHasTimeline', () => {
   it('never reapplies defaults over an already headed timeline with opaque authored edits', async () => {
     const authored = JSON.parse('{"opaque":[null,false,[]],"nullable":null,"ordered":[3,1,2],"__proto__":{"literal":true},"constructor":0,"prototype":false}');
@@ -293,7 +298,9 @@ describe('ensureProjectHasTimeline', () => {
     const { client, native } = nativeClient(projectId, [], {
       projectId, timelineId, createKey: `astrid-first-timeline-${projectId}`, initName: 'Main',
     });
-    installNativeHarness(native.transport);
+    // The configured client owns the transport; a global fetch fallback would
+    // allow a separately constructed provider to pass this test.
+    installNativeOutboxHarness();
 
     const createdId = await ensureProjectHasTimeline(projectId, client);
     expect(createdId).toBe(native.state().createRequest?.timeline_id);

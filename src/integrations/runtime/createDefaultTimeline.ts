@@ -2,7 +2,6 @@ import { AstridRuntimeClient } from './client.ts';
 import { ApiError } from './generated.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
 import { RuntimeDataProvider } from './dataProvider.ts';
-import { initializeBootstrapTimeline } from './bootstrapInitialization.ts';
 
 type RuntimeTimeline = Record<string, unknown> & {
   timeline_id?: unknown;
@@ -61,26 +60,8 @@ async function initializeTimeline(
   key: string,
   createName: string | null = supportedCreateName(name),
 ): Promise<void> {
-  const identity = await client.getRecoverableIdentity();
-  const provider = new RuntimeDataProvider({ projectId, baseUrl: client.baseUrl });
-  await initializeBootstrapTimeline(
-    { ...identity, projectId, timelineId: targetTimelineId },
-    {
-      name,
-      createName,
-      createKey: key,
-      ports: {
-        createTimeline: (project, timeline, idempotencyKey, createNameValue) =>
-          client.createTimeline(project, timeline, idempotencyKey, createNameValue),
-        listTimelineCommits: (project, timeline, cursor, limit) =>
-          client.listTimelineCommits(project, timeline, cursor, limit),
-        getProjectParentCompositionRevision: (project, timeline, revision) =>
-          client.getProjectParentCompositionRevision(project, timeline, revision),
-        loadLatest: (timeline) => provider.loadTimelineCommandBasis(timeline),
-        commitTimeline: (request, idempotencyKey) => provider.commitTimeline(request, idempotencyKey),
-      },
-    },
-  );
+  const provider = new RuntimeDataProvider({ projectId, runtimeClient: client });
+  await provider.initializeNativeBootstrapTimeline(targetTimelineId, { name, createName, createKey: key });
 }
 
 /** Create and natively initialize a canonical empty timeline through Runtime. */

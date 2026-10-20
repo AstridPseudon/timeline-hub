@@ -75,6 +75,8 @@ import {
 import { listAllRuntimeVariants } from './generationAccess.ts';
 import { recordShotTimelinePhase } from '@/tools/video-editor/lib/shot-timeline-timing.ts';
 import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
+import { initializeBootstrapTimeline as initializeNativeBootstrapTimeline } from './bootstrapInitialization.ts';
+import { createCommitOutbox } from '@/tools/video-editor/commands/commitOutbox.ts';
 
 type RuntimeRecord = Record<string, unknown>;
 
@@ -94,9 +96,18 @@ export interface RuntimeDataProviderOptions {
   /** Direct clients may pass a disposable test credential; browser callers use the connector. */
   token?: string;
   transport?: Transport;
+  /** @internal Reuse the configured client for the private native-bootstrap seam. */
+  runtimeClient?: AstridRuntimeClient;
   /** UI-only observation of connector failures; Runtime remains the IO authority. */
   onRuntimeError?: (error: RuntimeConnectorError) => void;
 }
+
+type NativeBootstrapOptions = {
+  name: string;
+  createName: string | null;
+  createKey: string;
+  outboxes?: ReturnType<typeof createCommitOutbox>;
+};
 
 /**
  * Astrid's neutral-runtime provider. It owns no storage: the generated
@@ -370,7 +381,11 @@ export class RuntimeDataProvider implements DataProvider {
 
   constructor(options: RuntimeDataProviderOptions) {
     this.projectId = options.projectId;
-    this.client = new AstridRuntimeClient({ baseUrl: options.baseUrl, token: options.token, transport: options.transport });
+    this.client = options.runtimeClient ?? new AstridRuntimeClient({
+      baseUrl: options.baseUrl,
+      token: options.token,
+      transport: options.transport,
+    });
     const documentListeners = new Set<() => void>();
     const notifyDocumentsChanged = () => {
       for (const listener of [...documentListeners]) listener();
@@ -462,6 +477,33 @@ export class RuntimeDataProvider implements DataProvider {
     };
     this.onRuntimeError = options.onRuntimeError;
     this.apiBaseUrl = this.client.baseUrl;
+  }
+
+  /**
+   * @internal Private create/init seam. It owns no new storage or wire shape:
+   * bootstrapInitialization uses the existing command outbox and this provider's
+   * guarded generated-client methods for create, history, immutable reads, and
+   * native commit.
+   */
+  async initializeNativeBootstrapTimeline(
+    timelineId: string,
+    options: NativeBootstrapOptions,
+  ): Promise<TimelineCommandBasis> {
+    const identity = await this.client.getRecoverableIdentity();
+    return initializeNativeBootstrapTimeline(
+      { ...identity, projectId: this.projectId, timelineId },
+      {
+        ...options,
+        ports: {
+          createTimeline: (project, timeline, key, name) => this.client.createTimeline(project, timeline, key, name),
+          listTimelineCommits: (project, timeline, cursor, limit) => this.client.listTimelineCommits(project, timeline, cursor, limit),
+          getProjectParentCompositionRevision: (project, timeline, revision) =>
+            this.client.getProjectParentCompositionRevision(project, timeline, revision),
+          loadLatest: (id) => this.loadTimelineCommandBasis(id),
+          commitTimeline: (request, key) => this.commitTimeline(request, key),
+        },
+      },
+    );
   }
 
   private async loadRuntimeShotComposition(projectId: string, timelineId: string, poll = false): Promise<unknown> {
