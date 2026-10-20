@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T22:13:23Z | dispatcher heartbeat 15s | live 3 (sol 0, luna 3, other 0) | busy30 19 | status age 2m -->
+<!-- app2 | 2026-10-20T22:19:23Z | dispatcher heartbeat 9s | live 5 (sol 0, luna 5, other 0) | busy30 19 | status age 8m -->
 # app2 — 2026-10-20 22:11:02 UTC
 Milestone: M2. One of seven assigned rows complete: D01-app-duplicate DELETED. Six rows and exit gates remain open.
 Integrated: HOME8c0e1f799b64e9b6f179018b7dff01479d43c85c includes duplicate cut and ordinary4694. Shared stale-adapter fix7d42 is included. Parent fences270d; inactive project-data helper32f1. Narrow public helper type fix2f9755b4e is remote-requested;25 controls and strict locked13 overlay pass.
