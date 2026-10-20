@@ -256,6 +256,7 @@ export function useTimelineCommandSession(options: {
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
     elementPort: sessionRef.current?.elementPort,
     trackLabelPort: sessionRef.current?.trackLabelPort,
+    parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>

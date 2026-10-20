@@ -1,4 +1,4 @@
-import type { CommitRequest, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CommitRequest, EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
@@ -17,9 +17,26 @@ import {
   type ElementCapturePort,
   type ElementEdit,
 } from './elementGesture.ts';
+import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
+import type { TimelineData } from '../lib/timeline-data.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+
+export type ParentClipAddMediaCaptureBasis = {
+  readonly bundle: AuthoredBundle;
+  readonly row: Record<string, JSON>;
+  readonly media: MediaSelection;
+  readonly localGeneration: number;
+  readonly localBasis: OutboxBasis;
+  readonly displayHead: OutboxHead;
+};
+
+export interface ParentClipAddMediaCapturePort {
+  capture(input: { row: Record<string, JSON>; media: MediaSelection; current: TimelineData }): ParentClipAddMediaCaptureBasis;
+  finish(basis: ParentClipAddMediaCaptureBasis, verifiedMedia: VerifiedMedia): { command: EditCommand; preview: TimelinePatch };
+  submit(input: { command: EditCommand; preview: TimelinePatch }): void;
+}
 export type CommandSessionState = {
   status: 'loading' | 'saved' | 'dirty' | 'saving' | 'retry' | 'conflict' | 'error' | 'recovery';
   error: string | null;
@@ -246,6 +263,65 @@ export async function createTimelineCommandSession(options: Options) {
     void chain.then(() => pump(false));
   }
   const intentIds = new Map<string, string>();
+  const parentClipAddMediaPort: ParentClipAddMediaCapturePort = {
+    capture({ row, media, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      if (current.resolvedConfig.clips.some((clip) => clip.id === row.id)
+        || current.config.clips.some((clip) => clip.id === row.id)) {
+        throw new Error('Parent clip.add-media identity is already displayed');
+      }
+      return Object.freeze({
+        bundle: copy(bundle),
+        row: copy(row),
+        media: copy(media),
+        localGeneration,
+        localBasis: copy(lastIntent ? { after: lastIntent } : { head: known.head }),
+        displayHead: copy(displayHead),
+      }) as ParentClipAddMediaCaptureBasis;
+    },
+    finish(basis, verifiedMedia) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration || !sameHead(basis.displayHead, displayHead)
+        || !equal(basis.bundle, bundle)) {
+        throw new Error('Timeline changed during parent clip.add-media');
+      }
+      const result = captureParentClipAddMedia(basis.bundle, basis.row, basis.media, [verifiedMedia]);
+      const preview: TimelinePatch = {
+        version: 1,
+        source: 'timeline.native-parent-media-add',
+        operations: [{
+          op: 'clip.add',
+          target: basis.row.id as string,
+          payload: {
+            track: basis.row.track,
+            at: basis.row.at,
+            clipType: basis.row.clipType,
+          },
+        }],
+      };
+      prepared.set(JSON.stringify(result.command), {
+        payload: { commands: [result.command], before: basis.bundle, after: result.bundle, preview },
+        generation: localGeneration,
+        basis: basis.localBasis,
+      });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'clip.add-media' || !entry || entry.generation !== localGeneration
+        || !equal(entry.payload.before, bundle) || !equal(entry.payload.preview, preview)) {
+        throw new Error('Parent clip.add-media was not captured by this session or the timeline changed');
+      }
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
   const port: ClipMoveCapturePort = {
     capture({ clipId, current }) {
       assertReady();
@@ -465,6 +541,7 @@ export async function createTimelineCommandSession(options: Options) {
     port,
     elementPort,
     trackLabelPort,
+    parentClipAddMediaPort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,

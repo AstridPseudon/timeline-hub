@@ -43,10 +43,13 @@ import {
   INTERNAL_GESTURE_TIMELINE_MUTATIONS,
   PUBLIC_TIMELINE_COMMAND_NAMES,
   PUBLIC_TIMELINE_COMMAND_SCOPE,
+  createTimelineCommands,
   isPublicTimelineCommandName,
   useTimelineCommandsService,
   useTimelineCommandsServiceSafe,
 } from '@/tools/video-editor/hooks/useTimelineCommandsService';
+import type { ParentClipAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession';
+import type { EditCommand, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types';
 import {
   createTimelineStore,
   TimelineStoreProvider,
@@ -626,6 +629,7 @@ function buildCommandTestStore(overrides?: {
   unpatchRegistry?: (...args: unknown[]) => void;
   data?: TimelineData;
   mounted?: boolean;
+  parentClipAddMedia?: ParentClipAddMediaCapturePort;
 }) {
   const baseStore = createTimelineStore();
   const current = overrides?.data ?? buildCommandTimelineData();
@@ -644,6 +648,7 @@ function buildCommandTestStore(overrides?: {
       registerAsset: overrides?.registerAsset ?? vi.fn(async () => undefined),
       patchRegistry: overrides?.patchRegistry ?? vi.fn(),
       unpatchRegistry: overrides?.unpatchRegistry ?? vi.fn(),
+      parentClipAddMedia: overrides?.parentClipAddMedia,
     },
   });
   if (overrides?.mounted === false) {
@@ -2323,6 +2328,113 @@ describe('VideoEditorProvider', () => {
     expect(edit.command.payload).not.toHaveProperty('trackId');
     expect(edit.command.payload).not.toHaveProperty('selectedTrackId');
     expect(edit.command.payload).not.toHaveProperty('clipSpanSeconds');
+  });
+
+  it('captures a supplied original selection before verification and submits one native parent intent', async () => {
+    const selection: MediaSelection = {
+      asset: 'asset-dup',
+      generation_id: 'generation-dup',
+      variant_id: 'variant-dup',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const verified: VerifiedMedia = {
+      selection: { ...selection },
+      media_type: 'video/mp4',
+      size: 123,
+      duration_seconds: 2,
+    };
+    const originalSelection = structuredClone(selection);
+    const preview = { version: 1, source: 'test.native-parent-media', operations: [] } as const;
+    let capturedSelection: MediaSelection | undefined;
+    const capture = vi.fn((input: { row: Record<string, unknown>; media: MediaSelection }) => {
+      capturedSelection = structuredClone(input.media);
+      return {
+        bundle: {}, row: structuredClone(input.row), media: structuredClone(input.media),
+        localGeneration: 0, localBasis: { head: { revisionId: 'r0', publicationId: 'p0' } },
+        displayHead: { revisionId: 'r0', publicationId: 'p0' },
+      } as never;
+    });
+    const finish = vi.fn((_basis: unknown, input: VerifiedMedia) => {
+      if (!input || JSON.stringify(input.selection) !== JSON.stringify(originalSelection)) throw new Error('wrong verified selection');
+      return {
+        command: {
+          schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
+          args: { row: { id: 'native-clip', track: 'V1', at: 5, clipType: 'media', asset: 'asset-dup' }, media: selection },
+          intent: {}, resolved: [], bindings: [], created: [],
+        } as unknown as EditCommand,
+        preview,
+      };
+    });
+    const submit = vi.fn();
+    const parentClipAddMedia = { capture, finish, submit } as unknown as ParentClipAddMediaCapturePort;
+    const applyEdit = vi.fn();
+    const store = buildCommandTestStore({ applyEdit, parentClipAddMedia });
+    let verify!: (value: VerifiedMedia) => void;
+    const getProjectVerifiedMedia = vi.fn(() => new Promise<VerifiedMedia>((resolve) => { verify = resolve; }));
+    const commands = createTimelineCommands(store, {
+      parentMediaRuntime: { projectId: 'project-1', getProjectVerifiedMedia },
+    });
+    const preparedAsset = {
+      assetKey: 'asset-dup', mediaType: 'video' as const, durationSeconds: 2,
+      source: 'registered' as const,
+      entry: { file: 'https://example.com/dup.mp4', type: 'video/mp4', duration: 2, generationId: 'generation-dup' },
+      mediaSelection: selection,
+    };
+
+    const pending = commands.addClip({ preparedAsset, time: 5 });
+    expect(capture).toHaveBeenCalledOnce();
+    selection.catalog_digest = 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc';
+    verify(verified);
+    await expect(pending).resolves.toEqual({ ok: true, data: { clipId: expect.any(String), trackId: 'V1' } });
+
+    expect(capturedSelection?.catalog_digest).toBe('sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+    expect(getProjectVerifiedMedia).toHaveBeenCalledOnce();
+    expect(finish).toHaveBeenCalledOnce();
+    expect(submit).toHaveBeenCalledOnce();
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
+  it.each(['wrong', 'missing'] as const)('refuses a %s verified selection without mutating the draft', async (kind) => {
+    const selection: MediaSelection = {
+      asset: 'asset-dup',
+      generation_id: 'generation-dup',
+      variant_id: 'variant-dup',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const response = kind === 'wrong' ? {
+      selection: { ...selection, variant_id: 'variant-other' }, media_type: 'video/mp4', size: 123, duration_seconds: 2,
+    } : undefined;
+    const finish = vi.fn((_basis: unknown, input: VerifiedMedia) => {
+      if (!input || JSON.stringify(input.selection) !== JSON.stringify(selection)) throw new Error('exact selection was not verified');
+      throw new Error('unexpected valid selection');
+    });
+    const submit = vi.fn();
+    const store = buildCommandTestStore({
+      applyEdit: vi.fn(),
+      parentClipAddMedia: {
+        capture: vi.fn(() => ({}) as never), finish, submit,
+      } as unknown as ParentClipAddMediaCapturePort,
+    });
+    const getProjectVerifiedMedia = vi.fn(async () => response as VerifiedMedia);
+    const commands = createTimelineCommands(store, {
+      parentMediaRuntime: { projectId: 'project-1', getProjectVerifiedMedia },
+    });
+    const before = structuredClone(store.getState().data.data?.config.clips);
+    const result = await commands.addClip({
+      preparedAsset: {
+        assetKey: 'asset-dup', mediaType: 'video', durationSeconds: 2, source: 'registered',
+        entry: { file: 'https://example.com/dup.mp4', type: 'video/mp4', duration: 2, generationId: 'generation-dup' },
+        mediaSelection: selection,
+      },
+      time: 5,
+    });
+
+    expect(result).toMatchObject({ ok: false, error: { code: 'mutation_failed' } });
+    expect(finish).toHaveBeenCalledOnce();
+    expect(submit).not.toHaveBeenCalled();
+    expect(store.getState().data.data?.config.clips).toEqual(before);
   });
 
   it.each([null, 2.5])('preserves supplied prepared-media fields including nullable span %s', (span) => {
