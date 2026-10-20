@@ -1222,6 +1222,38 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "description": "Positive finite source seconds; timeline duration is hold/speed."
+            },
+            "x": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "y": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "width": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "height": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "cropTop": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropBottom": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropLeft": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropRight": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
             }
           },
           "additionalProperties": false
@@ -1232,7 +1264,15 @@
             "enum": [
               "hold",
               "asset",
-              "transition"
+              "transition",
+              "x",
+              "y",
+              "width",
+              "height",
+              "cropTop",
+              "cropBottom",
+              "cropLeft",
+              "cropRight"
             ]
           },
           "uniqueItems": true
@@ -1259,7 +1299,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds or flat position leaves in canvas pixels/edge fractions. Clear removes declared field presence, never sets null/empty. Asset assignment requires occurrence.swap-media; transition authoring is outside v1."
     },
     "ClipTrimArgs": {
       "type": "object",
