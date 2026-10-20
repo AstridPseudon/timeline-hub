@@ -14,8 +14,12 @@ from types import SimpleNamespace
 
 import pytest
 
+from astrid.core.receipts.contract import CommandReceipt
+from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.timeline import build_producer_batch, commit
 from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.outbox import Outbox
+from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from tests.helpers.runtime import use_runtime
 
 pytestmark = pytest.mark.integration
@@ -106,6 +110,42 @@ def submit(case, request, key):
         invocation_path=route_path(case.target['project_id'], 'film'), authorize=lambda: None)
 
 
+def requester_session(case, path):
+    """Use the real Runtime service behind the existing requester queue boundary."""
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.timeline_commit_port import route_path
+
+    identity = {'realm_id': case.service.realm['id'], 'actor_id': 'requester'}
+
+    class Client:
+        def __init__(self):
+            self._remote = SimpleNamespace(
+                _transport=SimpleNamespace(_last_handshake=dict(identity)))
+            self.timelines = SimpleNamespace(commit=self.commit)
+
+        def commit(self, project, timeline, body, *, idempotency_key):
+            try:
+                result = case.service.commit_timeline(
+                    project, timeline, body, idempotency_key=idempotency_key,
+                    publisher='requester', invocation_path=route_path(project, timeline),
+                    authorize=lambda: None)
+            except RuntimeErrorBase as error:
+                return DomainResult.failure(
+                    ErrorObject('conflict', str(error), dict(error.details)),
+                    idempotency_key=idempotency_key)
+            return DomainResult.success(
+                result['data'], receipt=CommandReceipt.from_dict(result['receipt']),
+                idempotency_key=idempotency_key)
+
+    outbox = Outbox(path)
+    outbox.write({
+        'scope': {**identity, 'project_id': case.target['project_id'], 'timeline_id': 'film'},
+        'base': dict(case.target), 'pending': [], 'flight': None,
+    })
+    return TimelineSession(
+        Client(), outbox, identity, case.target['project_id'], 'film')
+
+
 def test_settled_numeric_proposal_accepts_retries_after_restart_and_undoes(settled):
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
@@ -158,3 +198,38 @@ def test_settled_artifact_mutation_refuses_without_history_or_head_changes(settl
     assert error.value.details['reason'] in {'producer_dependency_unavailable', 'producer_attempt_mismatch'}
     assert case.service.list_timeline_commits(
         case.target['project_id'], 'film', authorize=lambda: None) == before
+
+
+@pytest.mark.parametrize('mutation', ['digest', 'target'])
+def test_settled_proposal_queue_refuses_tampering_preserves_draft_then_accepts_fresh_request(
+        settled, tmp_path, mutation):
+    case = settled
+    tampered = copy.deepcopy(case.proposal)
+    if mutation == 'digest':
+        tampered['proposal_digest'] = 'sha256:' + 'f' * 64
+    else:
+        tampered['admitted_target']['base_revision_id'] = 'sha256:' + 'e' * 64
+
+    before = case.service.list_timeline_commits(
+        case.target['project_id'], 'film', authorize=lambda: None)
+    rejected = requester_session(case, tmp_path / 'rejected.json')
+    rejected.queue_proposal(tampered)
+    with pytest.raises(CommitConflict) as error:
+        rejected.flush(idempotency_key='refused-' + mutation)
+    assert error.value.failure['details']['reason'] in {
+        'producer_dependency_unavailable', 'producer_attempt_mismatch', 'stale_head'}
+    assert case.service.list_timeline_commits(
+        case.target['project_id'], 'film', authorize=lambda: None) == before
+    draft = rejected.outbox.read()
+    assert draft['pending'] == build_producer_batch(tampered)['commands']
+    assert draft['flight']['key'] == 'refused-' + mutation
+    assert draft['conflict']['details'] == error.value.failure['details']
+
+    fresh = requester_session(case, tmp_path / 'fresh.json')
+    fresh.queue_proposal(copy.deepcopy(case.proposal))
+    accepted = fresh.flush(idempotency_key='accepted-' + mutation)
+    assert accepted['data']['status'] == 'accepted'
+    assert accepted['data']['publisher'] == 'requester'
+    assert accepted['data']['canonical_document']['parent_revision']['payload']['config']['tracks'] == [
+        accepted['data']['commands'][1]['args']['row']]
+    assert accepted['data']['commands'][1]['args']['row']['opaque'] == [1.0, -0.0, False]
