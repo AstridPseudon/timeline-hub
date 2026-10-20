@@ -1257,9 +1257,9 @@ class RemoteTimelines(_RemoteFamily):
             "is_current_head": revision == head,
         })
 
-    def update_parent_element(self, project, ref, *, realm, clip_id, element, expected_head, duration=None, params=None, idempotency_key=None):
+    def update_parent_element(self, project, ref, *, realm, clip_id, element, expected_head, duration=None, params=None, idempotency_key=None, session=None, clear_params=()):
         from .timeline_elements import update_parent_element
-        return update_parent_element(self, project, ref, realm=realm, clip_id=clip_id, element=element, expected_head=expected_head, duration=duration, params=params, idempotency_key=idempotency_key)
+        return update_parent_element(self, project, ref, realm=realm, clip_id=clip_id, element=element, expected_head=expected_head, duration=duration, params=params, idempotency_key=idempotency_key, session=session, clear_params=clear_params)
 
     def save(self, project, ref, *, config: Mapping[str, Any], registry: Mapping[str, Any], expected_version=1, slug=None, name=None, idempotency_key=None):
         return self._retired_document_route("save", idempotency_key=idempotency_key)
