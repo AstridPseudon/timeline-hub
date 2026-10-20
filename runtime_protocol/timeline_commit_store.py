@@ -740,8 +740,7 @@ class TimelineCommitStore:
             shot = image["shot_id"]
             for item in image["payload"].get("items", []):
                 identity = item.get("item_id", item.get("id"))
-                if (not identity or identity in destinations
-                        or ("item_id" in item and "id" in item and item["item_id"] != item["id"])):
+                if not identity or identity in destinations:
                     reject("identity_collision")
                 destinations[identity] = shot
                 if identity not in old_items.get(shot, set()):

@@ -59,7 +59,7 @@ def test_foreign_global_shot_refuses_without_disclosing_owner(realm, monkeypatch
     refuses(service, commits, candidate, monkeypatch, reason="destination_occupied")
 
 
-@pytest.mark.parametrize("case", ["same-shot-duplicate", "two-shot-duplicate", "foreign-shot", "conflicting-alias", "empty"])
+@pytest.mark.parametrize("case", ["same-shot-duplicate", "two-shot-duplicate", "foreign-shot", "empty"])
 def test_complete_item_write_set_refuses_before_any_revision(realm, monkeypatch, case):
     service, commits, project, _, _ = realm
     item = media_item(service, project, "reserved-item")
@@ -72,11 +72,47 @@ def test_complete_item_write_set_refuses_before_any_revision(realm, monkeypatch,
         shots += [image("b-new", "new-shot", items=[item])]
     elif case == "foreign-shot":
         shots = [image("b-new", "new-shot", items=[item])]
-    elif case == "conflicting-alias":
-        shots = [image("a-owner", "updated-owner", items=[dict(item, id="different")])]
     elif case == "empty":
         shots = [image("a-owner", "updated-owner", items=[dict(item, item_id="")])]
     refuses(service, commits, with_media(proposal(service, commits, project, "main", "item-intruder", shots=shots), item), monkeypatch)
+
+
+@pytest.mark.parametrize("mirror", ["missing", "equal", "distinct"])
+def test_item_id_is_canonical_and_secondary_mirrors_are_preserved(realm, mirror):
+    service, commits, project, _, _ = realm
+    item = media_item(service, project, "canonical-" + mirror)
+    if mirror == "missing":
+        item.pop("id", None)
+    elif mirror == "equal":
+        item["id"] = item["item_id"]
+    else:
+        bystander = media_item(service, project, "opaque-secondary")
+        accept(commits, with_media(proposal(
+            service, commits, project, "main", "bystander",
+            shots=[image("bystander", "bystander-v1", items=[bystander])]), bystander))
+        item["id"] = bystander["item_id"]
+
+    accepted = accept(commits, with_media(proposal(
+        service, commits, project, "main", "mirror-" + mirror,
+        shots=[image("mirror-owner", "mirror-" + mirror, items=[item])]), item))
+    projected = accepted["data"]["canonical_document"]["shot_revisions"][0]["payload"]["items"][0]
+    assert projected == item
+    row = service.store.conn.execute("SELECT shot_id FROM shot_items WHERE id=?", (item["item_id"],)).fetchone()
+    assert row["shot_id"] == "mirror-owner"
+    if mirror == "distinct":
+        rows = service.store.conn.execute("SELECT shot_id FROM shot_items WHERE id=?", (item["id"],)).fetchall()
+        assert [row["shot_id"] for row in rows] == ["bystander"]
+
+
+def test_distinct_secondary_id_does_not_bypass_occupied_canonical_id(realm, monkeypatch):
+    service, commits, project, _, _ = realm
+    item = media_item(service, project, "occupied-canonical")
+    accept(commits, with_media(proposal(service, commits, project, "main", "canonical-owner",
+                                      shots=[image("canonical-owner", "canonical-owner-v1", items=[item])]), item))
+    candidate = dict(item, id="free-secondary")
+    refuses(service, commits, with_media(proposal(
+        service, commits, project, "main", "canonical-collision",
+        shots=[image("other-owner", "other-owner-v1", items=[candidate])]), candidate), monkeypatch)
 
 
 def test_retired_item_cannot_be_moved_to_another_owner(realm, monkeypatch):
