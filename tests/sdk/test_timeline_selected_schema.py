@@ -241,3 +241,68 @@ def test_inverse_of_older_param_record_uses_only_selected_identity(selected_effe
     selected_object = next(item['snapshot_object']['object_id'] for item in admissions
                            if item['revision'] == selected['revision'])
     assert reads == [(realm.schema_options['schema_source'], selected_object)]
+
+
+@pytest.mark.parametrize('params', [None, {}])
+def test_element_only_retains_target_declaration_for_rebase_reload_and_inverse(selected_effect, params):
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set_element
+    from astrid.sdk.timeline._scalar_commands import capture_track_set
+
+    realm, selected, _ = selected_effect
+    row = copy.deepcopy(State(current(realm)).entity(REF))
+    row['id'] = 'element-only'
+    row.pop('params')
+    if params is not None:
+        row['params'] = params
+    ref = 'parent/clip:element-only'
+    commit(realm, [capture_clip_add(current(realm), 'parent', row)])
+    original = copy.deepcopy(current(realm))
+    pin = realm.schema_options['schema_source']
+    admissions = realm.schema_options['schema_inputs'][0][0]['document']['content']['admissions']
+    target = next(item for item in admissions if item['revision'] != selected['revision'])
+    element = {key: target[key] for key in ('id', 'kind', 'revision')}
+    element['packId'] = selected['packId']
+    command = capture_clip_set_element(original, ref, element=element, **realm.schema_options)
+    base = copy.deepcopy(realm.head)
+    commit(realm, [capture_track_set(current(realm), 'parent/track:picture', values={'label': 'Newer'})])
+    context = realm.context([command], base=base)
+    context['realm_id'] = 'realm'
+    accepted = create_runtime_commit_service().commit(context, DetachedPort(realm, context))
+    assert accepted['data']['status'] == 'rebased'
+    reloaded = bundle_from_document(json.loads(json.dumps(accepted['data']['canonical_document'])))
+    assert State(reloaded).entity(ref) == {**row, 'elementRef': element}
+    record = realm.entries[-1]['records']['commands'][0]
+    assert [write['path'] for write in record['writes']] == [['elementRef']]
+    assert next(dep['pin'] for dep in record['dependencies'] if dep['key'] == 'params.snapshot') == {
+        'source': pin, 'element': element, 'object': target['snapshot_object']}
+    assert accepted['data']['canonical_document']['dependency_manifest']['documents'] == [pin]
+    # Only retained inputs remain available to a fresh provider instance.
+    realm.live_sources.clear()
+    realm.reads.clear()
+    undone = commit(realm, [inverse([accepted['receipt']['receipt_id']])])
+    assert State(current(realm)).entity(ref) == row
+    assert [read for read in realm.reads if read[0] == 'config'] == [('config', pin)]
+    redone = commit(realm, [inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+
+
+@pytest.mark.parametrize('damage', ['missing-pin', 'revision', 'owner', 'missing-object', 'corrupt-object'])
+def test_element_only_refuses_before_provider_acceptance(selected_effect, damage):
+    realm, selected, _ = selected_effect
+    pin = realm.schema_options['schema_source']
+    command = {'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': REF,
+               'args': {'elementRef': copy.deepcopy(selected), 'schema_source': copy.deepcopy(pin)}}
+    if damage == 'missing-pin':
+        del command['args']['schema_source']
+    elif damage in ('revision', 'owner'):
+        command['args']['elementRef']['packId' if damage == 'owner' else 'revision'] = (
+            'unadmitted' if damage == 'owner' else 'sha256:' + '0' * 64)
+    elif damage == 'missing-object':
+        realm.snapshot_objects.clear()
+    else:
+        for obj in realm.snapshot_objects.values():
+            obj['bytes_base64'] = 'e30='
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents, realm.prepared))
+    with pytest.raises(CommitRejected):
+        commit(realm, [command])
+    assert (realm.head, realm.entries, realm.documents, realm.prepared) == before
