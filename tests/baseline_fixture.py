@@ -28,10 +28,13 @@ from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit_baseline import verify_baseline
 
 ARCHIVE = Path(__file__).with_name("fixtures") / "precut-baseline-v31.tar.xz"
+ARCHIVE_VARIANTS = {
+    "repeat-media": Path(__file__).with_name("fixtures") / "precut-repeat-media-v31.tar.xz",
+}
 VARIANTS = (
     "single", "same-content", "explicit-media", "legacy-document", "film",
     "empty", "empty-config", "empty-config-app", "empty-registry", "empty-extension",
-    "opaque-config", "opaque-parent", "opaque-shot", "opaque-internal",
+    "opaque-config", "opaque-parent", "opaque-shot", "opaque-internal", "repeat-media",
 )
 
 
@@ -46,10 +49,13 @@ def load_baseline_fixture(tmp_path, variant="single"):
         ]
     if variant not in VARIANTS:
         raise ValueError(f"unknown baseline fixture variant: {variant}")
-    extracted = tmp_path / "baseline-archive"
+    archive_path = ARCHIVE_VARIANTS.get(variant, ARCHIVE)
+    extracted = tmp_path / (
+        "baseline-archive" if archive_path == ARCHIVE else f"{archive_path.stem}-archive"
+    )
     if not extracted.exists():
         extracted.mkdir()
-        with tarfile.open(ARCHIVE, "r:xz") as archive:
+        with tarfile.open(archive_path, "r:xz") as archive:
             members = archive.getmembers()
             if len(members) > 256 or sum(member.size for member in members) > 32_000_000 or any(
                 member.name != member.name.lstrip("/")

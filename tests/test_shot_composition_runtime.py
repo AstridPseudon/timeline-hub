@@ -629,14 +629,14 @@ def test_integrity_report_accepts_identical_parent_republished_with_new_key(tmp_
 
 
 def test_integrity_report_rejects_conflicting_repeat_publication_manifests(tmp_path):
-    service, project_id = _service(tmp_path)
+    service, project_id, publications = load_baseline_fixture(tmp_path, "repeat-media")
+    source = publications[0]["data"]
+    scene = source["payload"]["config"]["clips"][0]["app"]["liveScene"]["revision"]
+    audio, = (pin["media_id"] for pin in source["dependency_manifest"]["media"] if pin["media_id"] != scene)
+    assert [publication["receipt"]["idempotency_key"] for publication in publications] == [
+        "publish-parent-media", "publish-parent-media-again",
+    ]
     try:
-        _, scene, audio = _publish_with_explicit_media(service, project_id)
-        body = _explicit_media_publication(project_id, scene, audio)
-        body["expected_head"] = "parent-media"
-        service.publish_parent_composition(
-            project_id, "main", body, idempotency_key="publish-parent-media-conflict"
-        )
         event = service.store.conn.execute(
             "SELECT id, payload_json FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published' ORDER BY id DESC LIMIT 1",
             ("main",),
@@ -646,7 +646,7 @@ def test_integrity_report_rejects_conflicting_repeat_publication_manifests(tmp_p
         _rehash_timeline_events(service, "main", replacements={event["id"]: event_payload})
         receipt = service.store.conn.execute(
             "SELECT idempotency_key, result_json FROM command_idempotency WHERE command_kind=? AND idempotency_key=?",
-            ("parent_composition.publish", "publish-parent-media-conflict"),
+            ("parent_composition.publish", "publish-parent-media-again"),
         ).fetchone()
         result = json.loads(receipt["result_json"])
         result["dependency_manifest"] = event_payload["dependency_manifest"]
