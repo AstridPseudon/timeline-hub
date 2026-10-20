@@ -4,7 +4,7 @@ import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/ge
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { createCommitOutbox } from './commitOutbox.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
-import { captureShotNameEdit, submitShotNameEdit } from './shotSetGesture.ts';
+import { captureShotNameEdit, captureShotSettingsEdit, submitShotNameEdit, submitShotSettingsEdit } from './shotSetGesture.ts';
 
 const scope = { projectId: 'project-1', timelineId: 'timeline-1', realmId: 'realm-1', actorId: 'actor-1' };
 const digest = (letter: string) => `sha256:${letter.repeat(64)}`;
@@ -75,6 +75,22 @@ describe('native shot name session lifecycle', () => {
     await fixture.session.flush();
     expect(fixture.commits[1]?.command).toMatchObject({
       op: 'timeline.inverse', args: { publications: ['p1'] },
+    });
+    await fixture.session.dispose();
+  });
+
+  it('accepts captured scalar settings through the same durable shot.set completion path', async () => {
+    const fixture = await sessionFixture();
+    const captured = captureShotSettingsEdit(fixture.session.shotSetPort, {
+      projectId: scope.projectId, parentDocumentId: scope.timelineId, headRevisionId: 'r0',
+    }, 'occ-1', { advancedMode: false, motionMode: 'basic' });
+    const completion = submitShotSettingsEdit(captured, { advancedMode: false, motionMode: 'basic' });
+    expect(completion).toBeInstanceOf(Promise);
+    await completion;
+    expect(fixture.commits[0]?.command).toMatchObject({
+      op: 'shot.set', select: 'occurrence:occ-1/shot',
+      args: { values: { settings: { advancedMode: false, motionMode: 'basic' } }, clear: [] },
+      expect: { 'occurrence:occ-1/shot::payload.settings': { state: 'absent' } },
     });
     await fixture.session.dispose();
   });

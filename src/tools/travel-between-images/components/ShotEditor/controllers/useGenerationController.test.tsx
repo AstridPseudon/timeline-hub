@@ -121,6 +121,7 @@ describe('useGenerationController', () => {
         accelerated: false,
         isShotUISettingsLoading: false,
         settingsLoadingFromContext: false,
+        canonicalPersistence: false,
         updateShotUISettings: vi.fn(),
         setSteerableMotionSettings: vi.fn(),
         setSteps: vi.fn(),

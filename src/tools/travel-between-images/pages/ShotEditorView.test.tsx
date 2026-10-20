@@ -14,7 +14,14 @@ import { toRuntimePublication } from '@/integrations/runtime/dataProvider.ts';
 import { createEntityStore } from '@/shared/state/createEntityStore';
 import { normalizeVideoTravelSettings } from '../settings';
 
-const capture = vi.hoisted(() => ({ persistence: null as any, onName: null as any, beforeName: null as any, legacyName: null as any, errors: vi.fn() }));
+const capture = vi.hoisted(() => ({
+  persistence: null as any,
+  onName: null as any,
+  beforeName: null as any,
+  legacyName: null as any,
+  errors: vi.fn(),
+  settingsMutation: { settings: {}, status: 'loading', shotId: 'shot-alpha', updateField: vi.fn(), updateFields: vi.fn() },
+}));
 vi.mock('../components/ShotEditor', () => ({ ShotSettingsEditor: (props: any) => {
   capture.onName = props.onUpdateShotName;
   capture.beforeName = props.onBeforeNameEdit;
@@ -22,7 +29,7 @@ vi.mock('../components/ShotEditor', () => ({ ShotSettingsEditor: (props: any) =>
 } }));
 vi.mock('../providers', () => ({
   VideoTravelSettingsProvider: (props: any) => { capture.persistence = props.shotSettingsPersistence; return props.children; },
-  useVideoTravelSettingsMutations: () => ({ settings: {}, status: 'loading' }),
+  useVideoTravelSettingsMutations: () => capture.settingsMutation,
 }));
 vi.mock('../components/ShotTimelinePreview.tsx', () => ({ ShotTimelinePreview: () => null }));
 vi.mock('../components/VideoTravelFloatingOverlay', () => ({ VideoTravelFloatingOverlay: () => null }));
@@ -45,7 +52,15 @@ vi.mock('../hooks/useOperationTracking', () => ({ useOperationTracking: () => ({
 vi.mock('@/shared/state/panesStore', () => ({ usePanesStore: (select: any) => select({}) }));
 vi.mock('@/shared/lib/errorHandling/runtimeError.ts', () => ({ normalizeAndPresentError: capture.errors }));
 
-afterEach(() => { cleanup(); capture.errors.mockClear(); capture.persistence = null; capture.onName = null; capture.beforeName = null; capture.legacyName = null; });
+afterEach(() => {
+  cleanup();
+  capture.errors.mockClear();
+  capture.persistence = null;
+  capture.onName = null;
+  capture.beforeName = null;
+  capture.legacyName = null;
+  capture.settingsMutation = { settings: {}, status: 'loading', shotId: 'shot-alpha', updateField: vi.fn(), updateFields: vi.fn() };
+});
 
 function namePort() {
   const command = {
@@ -106,6 +121,81 @@ async function setup(input = fixture, shotSetPort?: any) {
 }
 
 describe('current App shot editing base', () => {
+  it('captures auto-disabled scalar settings before the canonical save and submits one native shot.set', async () => {
+    const port = namePort();
+    capture.settingsMutation = {
+      settings: { turboMode: true, advancedMode: true },
+      status: 'ready',
+      shotId: 'shot-alpha',
+      updateField: vi.fn(),
+      updateFields: vi.fn(),
+    };
+    const input = structuredClone(fixture) as Record<string, any>;
+    input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha').settings = {
+      turboMode: true,
+      advancedMode: true,
+      motionMode: 'advanced',
+      prompt: 'fixture prompt remains raw',
+      negativePrompt: null,
+      x_settings_opaque: { owner: 'settings-auto-disable', nested: [null, false, 0] },
+    };
+    await setup(input as typeof fixture, port);
+
+    expect(port.capture).toHaveBeenCalledWith(expect.objectContaining({
+      occurrenceId: 'occ-1',
+      args: { values: { settings: { advancedMode: false, motionMode: 'basic' } }, clear: [] },
+    }));
+    expect(capture.settingsMutation.updateFields).toHaveBeenCalledWith({ advancedMode: false, motionMode: 'basic' });
+
+    const loaded = await capture.persistence.load('shot-alpha');
+    await capture.persistence.save('shot-alpha', { ...loaded, advancedMode: false, motionMode: 'basic' });
+
+    expect(port.finish).toHaveBeenCalledWith(expect.anything(), {
+      values: { settings: { advancedMode: false, motionMode: 'basic' } }, clear: [],
+    });
+    expect(port.submit).toHaveBeenCalledWith({
+      command: expect.objectContaining({
+        op: 'shot.set',
+        args: { values: { settings: { advancedMode: false, motionMode: 'basic' } }, clear: [] },
+      }),
+    });
+  });
+
+  it('refuses canonical scalar settings without shot.set authority and keeps the draft dirty', async () => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha').settings = {
+      turboMode: true,
+      advancedMode: true,
+      motionMode: 'advanced',
+      prompt: 'fixture prompt remains raw',
+      x_settings_opaque: { owner: 'settings-auto-disable', nested: [null, false, 0] },
+    };
+    const state = await setup(input as typeof fixture);
+    const loaded = await capture.persistence.load('shot-alpha');
+    const store = createEntityStore<Record<string, any>>({
+      toolId: 'shot-settings-native-authority',
+      defaults: {},
+      load: async () => ({ db: loaded, lastUsed: null }),
+      save: capture.persistence.save,
+    });
+    await store.getState().ensureEntity('shot-alpha');
+    store.getState().updateFields('shot-alpha', { advancedMode: false, motionMode: 'basic' });
+    const draft = structuredClone(store.getState().entities['shot-alpha'].settings);
+
+    await expect(store.getState().saveImmediate('shot-alpha')).rejects.toThrow(
+      'Mounted shot.set settings authority is unavailable; draft kept.',
+    );
+    expect(capture.errors).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ toastTitle: 'Shot settings draft kept' }),
+    );
+    expect(store.getState().entities['shot-alpha'].status).toBe('error');
+    expect(store.getState().isDirty('shot-alpha')).toBe(true);
+    assert.deepStrictEqual(store.getState().entities['shot-alpha'].settings, draft);
+    expect(state.publish).not.toHaveBeenCalled();
+    assert.deepStrictEqual(state.read(), input);
+  });
+
   it.each(['name', 'settings'] as const)('rejects a competing %s edit instead of silently adopting its new head', async (field) => {
     const state = await setup();
     if (field === 'settings') await capture.persistence.load('shot-alpha');

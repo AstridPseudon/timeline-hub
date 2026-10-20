@@ -44,8 +44,17 @@ import type {
   CanonicalShotTimelinePublication,
   CanonicalShotTimelineScope,
 } from '@/tools/video-editor/runtime/ports.ts';
-import type { ShotSetCapturePort, CapturedShotSetEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
-import { captureShotNameEdit, submitShotNameEdit } from '@/tools/video-editor/commands/shotSetGesture.ts';
+import type {
+  ShotSetCapturePort,
+  CapturedShotSetEdit,
+  ShotSetSettingsValues,
+} from '@/tools/video-editor/commands/shotSetGesture.ts';
+import {
+  captureShotNameEdit,
+  captureShotSettingsEdit,
+  submitShotNameEdit,
+  submitShotSettingsEdit,
+} from '@/tools/video-editor/commands/shotSetGesture.ts';
 import {
   enqueueCanonicalShotPublish,
   updateCanonicalShotSettings,
@@ -53,6 +62,8 @@ import {
 import { ShotTimelinePreview } from '../components/ShotTimelinePreview.tsx';
 import { normalizeVideoTravelSettings } from '../settings';
 import { equal } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
+
+const NATIVE_SETTINGS_SCALARS = new Set(['motionMode', 'advancedMode', 'turboMode']);
 
 interface ShotEditorViewProps {
   /** The shot to edit */
@@ -124,6 +135,10 @@ export function ShotEditorView({
   const editorReadOnly = isLocalMode && !canEditCanonicalShot;
 
   const canonicalSettingsBase = useRef<{ scope: string; composition: PreparedShotComposition } | null>(null);
+  const capturedSettingsEditRef = useRef<{
+    edit: CapturedShotSetEdit;
+    settings: ShotSetSettingsValues;
+  } | null>(null);
   const canonicalSettingsScope = canonicalComposition && canonicalOccurrence
     ? JSON.stringify([canonicalComposition.projectId, canonicalComposition.parentDocumentId, canonicalOccurrence.occurrenceId])
     : null;
@@ -176,6 +191,28 @@ export function ShotEditorView({
             !equal(submitted[key], normalized[key])
           ));
           if (changes.length === 0) return;
+          const capturedSettingsEdit = capturedSettingsEditRef.current;
+          if (capturedSettingsEdit || changes.some(([key]) => NATIVE_SETTINGS_SCALARS.has(key))) {
+            if (!capturedSettingsEdit) {
+              const error = new Error('Mounted shot.set settings authority is unavailable; draft kept.');
+              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
+              throw error;
+            }
+            const changedSettings = Object.fromEntries(changes);
+            if (!equal(changedSettings, capturedSettingsEdit.settings)) {
+              const error = new Error('The captured native shot settings edit changed before save. Your draft is kept.');
+              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
+              throw error;
+            }
+            try {
+              await submitShotSettingsEdit(capturedSettingsEdit.edit, capturedSettingsEdit.settings);
+              capturedSettingsEditRef.current = null;
+              return;
+            } catch (error) {
+              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
+              throw error;
+            }
+          }
           if (raw !== undefined && raw !== null && (typeof raw !== 'object' || Array.isArray(raw))) {
             const error = new Error('Cannot safely replace shot settings: the form does not contain its complete authored root value. Your draft is kept.');
             normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
@@ -289,6 +326,9 @@ export function ShotEditorView({
   useEffect(() => {
     capturedNameEditRef.current = null;
     setPendingCanonicalName(null);
+    return () => {
+      capturedSettingsEditRef.current = null;
+    };
   }, [shotToEdit.id]);
   useEffect(() => () => { mountedRef.current = false; }, []);
 
@@ -312,6 +352,36 @@ export function ShotEditorView({
       normalizeAndPresentError(error, {
         context: 'canonical-shot:capture-name',
         toastTitle: 'Shot name draft kept',
+      });
+      throw error;
+    }
+  }, [canonicalComposition, canonicalOccurrence, shotSetPort]);
+
+  const handleSettingsIntent = useCallback((settings: ShotSetSettingsValues) => {
+    if (!canonicalComposition || !canonicalOccurrence) return;
+    if (!shotSetPort) {
+      const error = new Error('Mounted shot.set settings authority is unavailable; draft kept.');
+      normalizeAndPresentError(error, {
+        context: 'canonical-shot:capture-settings',
+        toastTitle: 'Shot settings draft kept',
+      });
+      throw error;
+    }
+    if (capturedSettingsEditRef.current) return;
+    try {
+      capturedSettingsEditRef.current = {
+        edit: captureShotSettingsEdit(
+          shotSetPort,
+          canonicalComposition,
+          canonicalOccurrence.occurrenceId,
+          settings,
+        ),
+        settings: structuredClone(settings),
+      };
+    } catch (error) {
+      normalizeAndPresentError(error, {
+        context: 'canonical-shot:capture-settings',
+        toastTitle: 'Shot settings draft kept',
       });
       throw error;
     }
@@ -469,7 +539,12 @@ export function ShotEditorView({
             updateShotMode={updateShotMode}
             shotSettingsPersistence={canonicalSettingsPersistence}
           >
-            <SettingsAutoDisable shotId={shotToEdit.id} isCloudGenerationEnabled={isCloudGenerationEnabled} readOnly={editorReadOnly} />
+            <SettingsAutoDisable
+              shotId={shotToEdit.id}
+              isCloudGenerationEnabled={isCloudGenerationEnabled}
+              readOnly={editorReadOnly}
+              onSettingsIntent={editorReadOnly ? undefined : handleSettingsIntent}
+            />
             <ShotSettingsEditor
               // Core identifiers
               selectedShotId={displayedShot.id}
@@ -535,10 +610,11 @@ export function ShotEditorView({
  * Renderless component that auto-disables conflicting settings.
  * Lives inside VideoTravelSettingsProvider to access settings context.
  */
-function SettingsAutoDisable({ shotId, isCloudGenerationEnabled, readOnly }: {
+function SettingsAutoDisable({ shotId, isCloudGenerationEnabled, readOnly, onSettingsIntent }: {
   shotId: string;
   isCloudGenerationEnabled: boolean;
   readOnly?: boolean;
+  onSettingsIntent?: (settings: ShotSetSettingsValues) => void;
 }) {
   const { settings, status, shotId: loadedShotId, updateField, updateFields } =
     useVideoTravelSettingsMutations();
@@ -547,14 +623,20 @@ function SettingsAutoDisable({ shotId, isCloudGenerationEnabled, readOnly }: {
   // Auto-disable turbo mode when cloud generation is disabled
   useEffect(() => {
     if (readOnly || status !== 'ready' || loadedShotId !== shotId) return;
-    if (!isCloudGenerationEnabled && turboMode) updateField('turboMode', false);
-  }, [isCloudGenerationEnabled, turboMode, status, loadedShotId, shotId, updateField, readOnly]);
+    if (!isCloudGenerationEnabled && turboMode) {
+      onSettingsIntent?.({ turboMode: false });
+      updateField('turboMode', false);
+    }
+  }, [isCloudGenerationEnabled, onSettingsIntent, turboMode, status, loadedShotId, shotId, updateField, readOnly]);
 
   // Auto-disable advanced mode when turbo mode is on
   useEffect(() => {
     if (readOnly || status !== 'ready' || loadedShotId !== shotId) return;
-    if (turboMode && advancedMode) updateFields({ advancedMode: false, motionMode: 'basic' });
-  }, [turboMode, advancedMode, status, loadedShotId, shotId, updateFields, readOnly]);
+    if (turboMode && advancedMode) {
+      onSettingsIntent?.({ advancedMode: false, motionMode: 'basic' });
+      updateFields({ advancedMode: false, motionMode: 'basic' });
+    }
+  }, [advancedMode, onSettingsIntent, turboMode, status, loadedShotId, shotId, updateFields, readOnly]);
 
   return null;
 }
