@@ -187,7 +187,7 @@ and occlusion. It does not establish rendered visibility. Component internals
 and coverage remain unknown here. Renderer-owner/Python caching and consumers,
 coverage findings, and App Player integration are separate work.
 
-## Scene occlusion and declared diagnostics (0.0.9 draft)
+## Scene occlusion and declared diagnostics
 
 `prepareCompositionScene` admits the selected component hooks; `querySceneFrame`
 evaluates each mounted component once at its speed-remapped content clock. The
@@ -320,27 +320,60 @@ the finite positive speed unchanged and otherwise returns `1`. These helpers
 are the same functions used by the media renderers; the public export does not
 change their math or behavior.
 
+## Viewing integration route
+
+Composition is the one evaluator for the supplied scene; it is not a source
+loader, Runtime admission service, save path, or authority store. The normal
+host route is source-bound:
+
+1. The Agent host obtains the accepted or candidate timeline and asset closure
+   through `inherited_source(timeline_path, assets_path)`, the existing
+   verified-source path. It does not mint source identity from package metadata
+   or a stale snapshot.
+2. The existing `_prepared_remotion_root` materializes that source and passes
+   its compiled tracks, assets, resolved theme/registries, canvas and rational
+   frame rate to `prepareCompositionScene`.
+3. Root rendering and `querySceneFrame` queries use that same prepared scene. A private
+   advisory `scene_only` request may write the existing `filmstrip_bundle`
+   entrypoint (`scene-answers.json`); it does not render PNGs or create a new
+   public route.
+
+The advisory Scene result is usable only when its source-bound label, complete
+frame extent, and compiled clip map validate before and after the query. A
+missing, stale, forged, or malformed source is `UNAVAILABLE`: its
+`snapshot_label.status` is `unavailable`, its label is `revision unavailable`,
+and both `answers` and `scene_clips` are empty. Empty answers are not a
+successful empty scene, and the advisory result must not block save or rewrite
+authored data.
+
+Saving is renderer-free. Commit, reload, retry, rebase, undo, and history
+acceptance must work with Node, Root, and the renderer stopped. Preview and
+Scene availability are separate reports.
+
 ## Build, package and verify
 
-Node.js 20 or newer is required (validated with Node.js 22.22.0). Install from
-the lockfile, then build and pack:
+Use the existing supported `agent-remotion-viewing13-d0a5072b` runtime request
+for the pinned Node.js 20.19.4/npm environment. Do not install into a shared
+`node_modules`, regenerate an installed package, or repack the immutable
+qualification artifact. From the real Composition root, the canonical checks
+are:
 
 ```sh
-npm ci
-npm run gen-registry:check
-npm run build
-npm pack
-npm run test:package -- "$PWD/banodoco-timeline-composition-0.0.9.tgz"
+cd /home/user/work/composition
+make build
+make test
+npm run test:package -- \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.13.tgz
 ```
 
-Use a writable `npm_config_cache` if the environment's default npm cache is
-read-only. `npm run build` cleans `dist`, checks all four generated registries,
-strictly checks the complete source/declarations with TypeScript 5.9.3, and
-builds shared ESM chunks with esbuild 0.27.7. Compiler and generator errors fail
-the build. `npm run build:ts` checks/emits declarations separately. `npm pack`
-runs the build again; the tarball contains only built runtime/declarations,
-package metadata and this README. Consumers install the tarball bytes and
-normal peers; they need no source aliases, source checkout or code generation.
+The current immutable Composition 0.0.13 artifact has 77 members and SHA-256
+`9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`.
+`make build` runs registry-drift checks, strict TypeScript/declaration checks,
+and the ESM build; `make test` runs the repository suite. The package smoke
+must receive the exact artifact path above and checks public Node imports,
+scoped registration/capabilities, peer identity, declarations and installed
+file immutability. It does not prove browser pixels, Player audio, or film
+parity.
 
 `npm run test:package -- /absolute/path/to/artifact.tgz` installs that actual
 artifact and exact peers in a fresh temporary consumer. It checks plain Node
@@ -376,10 +409,24 @@ node --import ./typescript/tests/register-extensionless.mjs --test \
   typescript/test-dist/tests/scene-evaluation.test.js scripts/gen-registry.test.mjs
 ```
 
-`npm test` runs the repository suite; orchestration workers request full suites
-through the central test service. Do not regenerate or edit an installed package.
-Consumer migrations, existing-film comparison and real Player/export frame/audio
-parity remain separate integration gates.
+`npm test` is equivalent to `make test`; orchestration workers request full
+suites through the central test service. Consumer migrations, existing-film
+comparison and real Player/export frame/audio parity remain separate integration
+gates. The historical 0.0.11/0.0.12 package records remain historical; they are
+not setup instructions for the current route.
+
+## Current qualification boundary
+
+The normal export fixture is pinned to the current Agent source `d0a5072b`
+(`21e84b7d` source handoff), Runtime producer `2c4ac180`, and Composition
+0.0.13. Its offline source staging, registry generation, typecheck, and bundle
+were recorded as passing. The central normal export has not produced an MP4:
+the latest attempt stopped before admission at the existing `/tmp` disk guard
+with `10,538,319,872` free bytes, below the required `10,737,418,240` (10 GiB).
+No MP4, frame/audio parity, or export certification follows from that attempt.
+
+Physical frame parity and physical audio parity, macOS playback, owner-film
+viewing, and whole-project ZIP delivery were not run here and are not claimed.
 
 ## Keyframe origin
 
