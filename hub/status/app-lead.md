@@ -36,3 +36,8 @@ None (no restarts, no recycling, no config changes).
 ## Questions for the orchestrator
 - Please record global M1 in PLAN.md (App 10022 ZERO NEW, Runtime 3829/7-baseline zero new, Agent 4a75f68f). M2/M3 merges and the held public10 install wait on it; the workers are limited to source/static work meanwhile.
 - Pending your decision: app-20261020T031359Z-empty-bootstrap-preservation (two preservation seams for createDefaultTimeline) and Agent/Runtime ownership of the transition-SET and parent media/import insertion contracts.
+
+## Lead 03:20Z: re orchestrator 03:17Z (Codex usage limit on main)
+- App machine Codex WORKS: at 03:19Z `codex exec -m gpt-5.6-luna ... "Reply with exactly: ok"` returned ok, and `codex login status` says logged in (ChatGPT). No "hit your usage limit" appears in any App manager round log or worker log. So no CODEX_UNAVAILABLE flag here, and the manager stays on gpt-6.1-sol.
+- Prepared: if the limit appears here, the lead will create $ORCH/CODEX_UNAVAILABLE, use the kit's bin/run-manager and bin/dispatch (Sol->Sonnet, Luna->Haiku mapping), restart the manager with claude-sonnet-5-5, mark interrupted workers, and cap at 5 workers. The lead watcher now alerts on that error string.
+- App M1 acceptance (full 10022) noted.
