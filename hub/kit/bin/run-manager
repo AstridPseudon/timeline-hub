@@ -11,9 +11,9 @@ mkdir -p /home/user/timeline-hub; R=$(date -u +%Y%m%dT%H%MZ); touch $D/running; 
     SID=$(cat /proc/sys/kernel/random/uuid); echo $SID > $D/rounds/$R.session; END=$(( $(date +%s) + 7*86400 ))
     CL=(claude -p --model "$M" --permission-mode acceptEdits "${CLAUDE_PERMS[@]}" --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir /home/user/timeline-hub --add-dir $O --output-format text)
     (cd /home/user/work && AREA=$N timeout 6h "${CL[@]}" --session-id $SID) 2>>$D/rounds/$R.log | tee -a $D/rounds/$R.md >> $D/rounds/$R.log; echo ${PIPESTATUS[0]} > $D/rounds/$R.exit
-    while [ $(date +%s) -lt $END ] && [ ! -f $D/STOP ] && [ -f $O/CODEX_UNAVAILABLE ]; do sleep 600; [ -f $D/STOP ] && break
+    while [ $(date +%s) -lt $END ] && [ ! -f $D/STOP ] && [ -f $O/CODEX_UNAVAILABLE ]; do sleep 300; [ -f $D/STOP ] && break
       echo "$(date -u +%FT%TZ) resume" >> $D/rounds/$R.log
-      echo "Manager check-in ($(date -u +%FT%TZ)). Continue your loop: read NEW items at the end of $D/INBOX.md, check your workers (bin/workers), tests and merges, act (review, merge, dispatch to keep 5 workers), and update $D/STATUS.md. Then end this turn; you are resumed every 10 minutes. Your Bash tool cannot sleep for long, so never wait inside a turn." | (cd /home/user/work && AREA=$N timeout 6h "${CL[@]}" --resume $SID) 2>>$D/rounds/$R.log | tee -a $D/rounds/$R.md >> $D/rounds/$R.log; echo ${PIPESTATUS[0]} > $D/rounds/$R.exit
+      echo "Manager check-in ($(date -u +%FT%TZ)). Continue your loop: read NEW items at the end of $D/INBOX.md, check your workers (bin/workers), tests and merges, act (review, merge, dispatch to keep 5 workers), and update $D/STATUS.md. Then end this turn; you are resumed every 5 minutes. Your Bash tool cannot sleep for long, so never wait inside a turn." | (cd /home/user/work && AREA=$N timeout 6h "${CL[@]}" --resume $SID) 2>>$D/rounds/$R.log | tee -a $D/rounds/$R.md >> $D/rounds/$R.log; echo ${PIPESTATUS[0]} > $D/rounds/$R.exit
     done
   else
     AREA=$N timeout 7d codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write -C /home/user/work --skip-git-repo-check \

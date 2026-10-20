@@ -66,9 +66,12 @@ cannot verify the image pin.
   shared authored placement, parent-owned placement, video/audio generations.
 * No registry upsert or root replace; no coordinator; relational
   `shot_generations.timeline_frame` / `metadata.end_frame` untouched.
-* Explicit App `placeGeneration` re-placement (remove-then-create of the same
-  pair) is a caller composition of `placement.unplace` then `placement.create`
-  in one batch with the same reserved ID; it is not a combined op.
+* No same-ID recreate (decision 2026-10-20; earlier guidance withdrawn).
+  Re-placing existing, unchanged media at an explicit time is `placement.move`.
+  A separately chosen replacement is `placement.create` with a NEW reserved
+  clip ID (optionally after `placement.unplace` of the old one). Callers pass an
+  explicit occurrence owner and a verified media pin; auto, pool, null, shift,
+  video and registry refresh stay on the legacy writer.
 
 ## Golden and evidence
 
@@ -100,12 +103,12 @@ Case inventory:
 
 ## Known semantics to review
 
-* **Undo across a removal then a create.** After create → unplace → undo(unplace),
-  undoing the create is refused: the removal and its undo both wrote the
-  created clip address (ABA guard, same rule as move). Single-step undo/redo is
-  exact. Multi-step LIFO undo over the same address is therefore refused by the
-  current engine; the Runtime history owner should decide whether that is
-  acceptable before App uses it as a stack.
+* **Undo is strict ABA, not a LIFO stack.** Undoing a create after ANY
+  intervening write to the created clip address (even an equal-value one, or
+  unplace followed by undo-of-unplace) is refused with `intervening_write`
+  (409). Only the immediate undo/redo of the latest write is exact. Tests:
+  `test_undo_of_create_refuses_after_any_intervening_write_to_the_created_clip`
+  and `test_create_cannot_reuse_a_removed_clip_identity_while_it_is_occupied`.
 * **Image only.** App placements may carry video generations; this unit refuses
   them. Video needs a source window the App placement does not carry.
 * **Hold is caller-supplied.** App uses 4 s (`DEFAULT_CLIP_HOLD`); the caller

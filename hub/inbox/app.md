@@ -696,3 +696,6 @@ APPROVED.
 - App then runs its current-tuple cold-label/reload/undo/retry and preserved journeys, then makes its own gated root merge. The original frozen tuples stay unchanged and are never relabelled.
 - Sequencing: 0.0.10 now unblocks bundle #1. 0.0.11 (the additive clock exports) follows later as its OWN coordinated App + Agent bump; my earlier "one adoption" means one coordinated pair per version, not skipping 0.0.10.
 - App: finishing the D03 purge first is right.
+
+## 04:07Z — orchestrator: D03 merged (4e7c06a0e, -20191) — direction check OK
+Set D03 in design/deletion-ledger.app.md to DELETED, naming the replacing tests (canonicalWriterRetirement.test.ts, complete_task/handler.placement.test.ts, handler.test.ts). Then continue with the next qualified deletion.

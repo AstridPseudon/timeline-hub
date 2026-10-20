@@ -42,9 +42,23 @@ Evidence from App HEAD (tl/integration):
 
 `State.get` now serves `occurrence:<id>/shot` with `["payload"]` as the source-published payload, through `_remap_known_item_references` with the inverse of `item_id_map`. This is the same hunk as `tl/agt-m2-occurrence-delete`. If both land, the hunk must be identical.
 
-## Known blocker for App adoption (decision needed)
+## Derived root identity (decision 2026-10-20, orchestrator)
 
-App writes `stable_deep_link` and `output_identity` on each canonical occurrence row (`shotCompositionEditor.ts` L106-107). Both embed the occurrence ID. The Agent op copies them verbatim, so the copy would carry the source's values. This is pinned as a strict xfail `test_copy_does_not_carry_source_derived_identity_fields`. The App must supply reserved replacements, or the Agent contract needs an explicit args extension. The op does not invent that authority.
+The caller reserves only `occurrence_id` and `shot_id`, once. The op RE-DERIVES exactly two root fields of the copied occurrence row, with the existing factories in `astrid/core/timeline/shot_composition.py` (`stable_occurrence_deep_link`, `stable_output_identity`), against the actual compiled destination:
+
+- `stable_deep_link = stable_occurrence_deep_link(project_id, parent_document_id, shot_id, destination_shot_revision_id, occurrence_id)`
+- `output_identity = stable_output_identity(project_id, parent_document_id, occurrence_id)`
+
+Everything else stays byte-for-byte: historical output/task/association records, nested/namespaced data and unknown fields. No suffix remapper. The strict xfail `test_copy_does_not_carry_source_derived_identity_fields` flips only when the RAW copied root row (not a recomputed-on-read value) carries the new values and the closure is right.
+
+### Status: NOT implemented — exact extension needed
+
+The factories need two inputs the authoring bundle and the closed call do not hold:
+
+1. `parent_document_id` (the App/Runtime parent composition document ID, `project.document_id`). The bundle has `project_id` and `timeline_id` only; the `document_id` fields in `commit.py` belong to media dependency pins, not the parent.
+2. `destination_shot_revision_id`. It is content-addressed at compile (`authoring-shot-revision` over the final shot payload in `authoring_bundle.py`), so it does not exist when the command is captured. The row's `shot_revision_id` is dropped at capture.
+
+Required extension (no authority invented): carry `parent_document_id` in the authoring bundle (open/read side, from the verified parent record) and re-derive the two fields in the compile step that sets `placement["shot_revision_id"]`, writing them to the raw compiled parent occurrence row only when the source row carried those fields. Until then the op copies them verbatim and the strict xfail stays. An App-supplied value would be the fallback only if the orchestrator decides the Agent must not own `parent_document_id`.
 
 ## Verified (targeted)
 
