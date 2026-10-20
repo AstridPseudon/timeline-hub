@@ -60,6 +60,40 @@ def test_builds_runtime_ordered_two_child_canonical_timeline_and_preserves_dupli
     assert proposal["publication"]["authority"] == "workspace_runtime"
 
 
+@pytest.mark.parametrize("inactive", [
+    {"is_primary": False},
+    {"metadata": {"status": "superseded"}},
+])
+def test_assembly_keeps_ordered_clip_and_asset_ids_when_inactive_outputs_precede_primary(inactive):
+    """Bundle 3 must preserve selection and aliases even for repeated media."""
+    payload = _payload()
+    for child in payload["resolved_children"]:
+        child["outputs"].insert(0, {
+            **child["outputs"][0], "object_id": "cas-inactive", **inactive,
+        })
+    proposal = build_authoring_proposal(payload)
+    clips = proposal["timeline"]["clips"]
+    clip_ids = [
+        "continuation-89ecb0c3b443a882abc3c72c-clip-0",
+        "continuation-8a4407f84b6809af497fd04e-clip-1",
+    ]
+    asset_ids = [
+        "continuation-89ecb0c3b443a882abc3c72c-asset-0",
+        "continuation-8a4407f84b6809af497fd04e-asset-1",
+    ]
+    assert [child["task_id"] for child in proposal["children"]] == ["child-1", "child-2"]
+    assert [child["clip_id"] for child in proposal["children"]] == clip_ids
+    assert [clip["id"] for clip in clips] == clip_ids
+    assert [clip["asset"] for clip in clips] == asset_ids
+    assert [(clip["at"], clip["from"], clip["to"]) for clip in clips] == [(0.0, 0, 1.5), (1.5, 0, 2.5)]
+    assert proposal["registry"]["assets"] == {
+        key: {"media_id": "media-shared", "content_sha256": "a" * 64,
+              "type": "video/mp4", "duration": duration, "origin": "immutable-public"}
+        for key, duration in zip(asset_ids, (1.5, 2.5))
+    }
+    assert build_authoring_proposal(payload) == proposal
+
+
 def test_accepts_live_runtime_claim_envelope_without_aggregation_order():
     """The Runtime claim nests resolved children and materializes CAS order."""
     def digest(value: str) -> str:

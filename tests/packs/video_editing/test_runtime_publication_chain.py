@@ -138,6 +138,12 @@ def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tm
         daemon.stop()
 
 
+def test_render_publication_worker_has_no_project_or_task_write_scope():
+    scopes = set(RuntimeProtocolClient.WORKER_SCOPES)
+    assert {"worker:execute", "objects:read", "objects:write"} <= scopes
+    assert not scopes.intersection({"projects:write", "tasks:write", "admin"})
+
+
 def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
     """The registered authoring host hook has one Runtime publication route."""
     proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
