@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
+import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import { compilePlayerTransitions } from '@/tools/video-editor/compositions/playerEvaluation.ts';
 import type { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { isLocalTestMode } from '@/app/localTestRuntime.ts';
@@ -35,7 +36,7 @@ import { resolveCanonicalComposition } from '@/tools/video-editor/data/canonical
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { useVideoEditorPreviewComposition } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+import { parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import type { BridgeTaskDetailPayload } from '@/tools/video-editor/data/bridgeContract.ts';
 import type {
   CapabilityFinding,
@@ -592,7 +593,10 @@ export function useRenderState(
     const { width, height } = parseResolution(renderConfig.output.resolution);
     return {
       fps,
-      durationInFrames: getTimelineDurationInFrames(projectOutputTimelineConfig(renderConfig).config, fps),
+      durationInFrames: getTimelineDurationInFrames(
+        projectOutputTimelineConfig(renderConfig).config as unknown as Parameters<typeof getTimelineDurationInFrames>[0],
+        fps,
+      ),
       compositionWidth: Math.max(1, width),
       compositionHeight: Math.max(1, height),
     };

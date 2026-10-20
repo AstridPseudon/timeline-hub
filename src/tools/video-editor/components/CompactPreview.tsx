@@ -1,11 +1,11 @@
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import { useMemo } from 'react';
 import { ExternalLink, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Slider } from '@/shared/components/ui/slider.tsx';
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
-import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import {
   useTimelineChromeContext,
@@ -43,7 +43,10 @@ export function CompactPreviewCore({ timelineId, onCreateTimeline, onOpenEditor 
       return 1;
     }
 
-    return getTimelineDurationInFrames(projectOutputTimelineConfig(previewConfig).config, previewConfig.output.fps) / previewConfig.output.fps;
+    return getTimelineDurationInFrames(
+      projectOutputTimelineConfig(previewConfig).config as unknown as Parameters<typeof getTimelineDurationInFrames>[0],
+      previewConfig.output.fps,
+    ) / previewConfig.output.fps;
   }, [previewConfig]);
 
   if (!previewConfig || !timelineId) {

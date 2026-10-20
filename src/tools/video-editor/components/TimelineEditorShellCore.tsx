@@ -2,6 +2,7 @@ import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
 import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
 import { Images, Loader2, Maximize2, Sparkles } from 'lucide-react';
 import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
@@ -39,7 +40,7 @@ import {
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { isEditorKeyboardEvent, useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 import { useTimelineRealtime } from '@/tools/video-editor/hooks/useTimelineRealtime.ts';
-import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+import { parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildKeyboardDeleteMutation } from '@/tools/video-editor/lib/keyboard-delete.ts';
 import { buildKeyboardTimeNudgeMutation } from '@/tools/video-editor/lib/keyboard-nudge.ts';
 import {
@@ -574,7 +575,10 @@ function TimelineEditorShellCoreComponent({
   const totalSeconds = useMemo(() => {
     if (!editorData.resolvedConfig) return 1;
     const outputConfig = projectOutputTimelineConfig(editorData.resolvedConfig).config;
-    return getTimelineDurationInFrames(outputConfig, outputConfig.output.fps) / outputConfig.output.fps;
+    return getTimelineDurationInFrames(
+      outputConfig as unknown as Parameters<typeof getTimelineDurationInFrames>[0],
+      outputConfig.output.fps,
+    ) / outputConfig.output.fps;
   }, [editorData.resolvedConfig]);
 
   // The condensed desktop/tablet layout hosts Video in the right dock, whose
