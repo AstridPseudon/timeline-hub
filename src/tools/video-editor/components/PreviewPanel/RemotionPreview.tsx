@@ -1,3 +1,4 @@
+import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { ComponentProps, ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
@@ -103,6 +104,7 @@ interface PendingSeek {
 }
 
 interface RemotionPreviewProps {
+  compiledTransitions?: CompiledCanonicalTransitions;
   config: ResolvedTimelineConfig;
   onTimeUpdate: (time: number) => void;
   playerContainerRef: RefObject<HTMLDivElement>;
@@ -119,13 +121,14 @@ interface RemotionPreviewProps {
 }
 
 interface PreviewDelivery {
+  compiledTransitions?: CompiledCanonicalTransitions;
   config: ResolvedTimelineConfig;
   revision: PreviewRevision;
   generation: number;
 }
 
 const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>(function RemotionPreview(
-  { config, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
+  { config, compiledTransitions, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
   ref,
 ) {
   const runtime = useOptionalVideoEditorRuntime();
@@ -136,17 +139,17 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const pendingSeekRef = useRef<PendingSeek | null>(null);
   const seekFlushRafRef = useRef<number | null>(null);
   const appliedConfigGenerationRef = useRef(0);
-  const configIdentityRef = useRef(config);
+  const configIdentityRef = useRef({ config, compiledTransitions });
   const configGenerationRef = useRef(0);
-  if (configIdentityRef.current !== config) {
-    configIdentityRef.current = config;
+  if (configIdentityRef.current.config !== config || configIdentityRef.current.compiledTransitions !== compiledTransitions) {
+    configIdentityRef.current = { config, compiledTransitions };
     configGenerationRef.current += 1;
   }
   useRenderDiagnostic('RemotionPreview');
   const markEventsEffect = useEffectDiagnostic('remotionPreview:events');
   // Throttle config updates to the Player to avoid stutter during drag operations.
   // The timeline canvas shows immediate visual feedback; the Player catches up after 150ms idle.
-  const [delivery, setDelivery] = useState<PreviewDelivery>({config, revision: previewRevision, generation: 0});
+  const [delivery, setDelivery] = useState<PreviewDelivery>({config, compiledTransitions, revision: previewRevision, generation: 0});
   const deferredConfig = delivery.config;
   const previewRevisionRef = useRef(previewRevision);
   previewRevisionRef.current = previewRevision;
@@ -198,6 +201,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     if (isPlaying) {
       latestDeliveryRef.current = {
         config,
+        compiledTransitions,
         revision: previewRevisionRef.current,
         generation: configGenerationRef.current,
       };
@@ -221,6 +225,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       const nextConfig = config;
       const nextDelivery = {
         config: nextConfig,
+        compiledTransitions,
         revision: previewRevisionRef.current,
         generation: configGenerationRef.current,
       } satisfies PreviewDelivery;
@@ -238,7 +243,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         deferTimerRef.current = null;
       }
     };
-  }, [config, isPlaying, flushDeferredConfig, setDeferredConfig]);
+  }, [config, compiledTransitions, isPlaying, flushDeferredConfig, setDeferredConfig]);
 
   const outputProjection = useMemo(() => projectOutputTimelineConfig(deferredConfig), [deferredConfig]);
   // Preserve the ordinary preview identity/mailbox when nothing is excluded.
@@ -257,11 +262,12 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const shotsSettling = areShotsSettling(runtime?.shots);
   const inputProps = useMemo(() => ({
     config: outputConfig,
+    compiledTransitions: delivery.compiledTransitions,
     preparing,
     settling: shotsSettling,
     previewRevision: delivery.revision,
     ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
-  }), [delivery.revision, outputConfig, preparing, shotsSettling, runtime?.astridElementHost]);
+  }), [delivery.revision, delivery.compiledTransitions, outputConfig, preparing, shotsSettling, runtime?.astridElementHost]);
   const displayedRevisionLabel = previewRevisionLabel(delivery.revision);
   // This is request status, not pixel provenance. It intentionally follows
   // the current host read so recovery clears the notice even when the Player
