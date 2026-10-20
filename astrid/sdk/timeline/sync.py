@@ -26,6 +26,19 @@ class CommitConflict(TimelineEditError):
         super().__init__(failure.get("message", "timeline commit refused"))
 
 
+def _flight_kind(flight):
+    """Return the processing kind without defaulting a present discriminator."""
+    if flight is None:
+        return None
+    if not isinstance(flight, dict):
+        raise TimelineEditError("invalid in-flight request kind; original intent retained")
+    if "kind" not in flight:
+        return "commit"
+    if flight["kind"] == "assembly-admission":
+        return "assembly-admission"
+    raise TimelineEditError("invalid in-flight request kind; original intent retained")
+
+
 def _connection(client):
     transport = client._remote._transport
     handshake = transport._last_handshake or {}
@@ -172,6 +185,7 @@ class TimelineSession:
     def _state(self):
         identity = _connection(self.client)
         state = self.outbox.read()
+        _flight_kind(state.get("flight"))
         if identity != self.identity or state["scope"] != {
             **identity, "project_id": self.project_id, "timeline_id": self.timeline_id,
         }:
@@ -206,7 +220,7 @@ class TimelineSession:
         with self.outbox.locked():
             state = self._state()
             flight = state['flight']
-            if flight is not None and flight.get('kind') == 'assembly-admission':
+            if _flight_kind(flight) == 'assembly-admission':
                 retry_assembly(self, state, flight, child_outputs, replace_clips,
                                assembler_digest, idempotency_key, rationale)
             elif state['pending'] or flight is not None:
@@ -317,7 +331,7 @@ class TimelineSession:
                 if matches is not None and state["pending"]:
                     flight = state["flight"]
                     prefix = (state["pending"][:flight["count"]]
-                              if flight and flight.get('kind') != 'assembly-admission' else state["pending"])
+                              if flight and _flight_kind(flight) != 'assembly-admission' else state["pending"])
                     if not matches(prefix):
                         raise TimelineEditError("pending intent differs; flush the original request before another edit")
                     return copy.deepcopy(prefix)
@@ -349,7 +363,7 @@ class TimelineSession:
                    "select": None, "args": {"publications": publications}}
         with self.outbox.locked():
             state = self._state()
-            if state['flight'] is not None and state['flight'].get('kind') == 'assembly-admission':
+            if _flight_kind(state['flight']) == 'assembly-admission':
                 raise TimelineEditError('retry the original assembly admission before undo')
             if state["pending"] and state["pending"] != [command]:
                 raise TimelineEditError("flush pending intent before undo")
@@ -362,7 +376,7 @@ class TimelineSession:
         with self.outbox.locked():
             state = self._state()
             flight = state["flight"]
-            if flight is not None and flight.get('kind') == 'assembly-admission':
+            if _flight_kind(flight) == 'assembly-admission':
                 raise TimelineEditError('retry the original assembly admission before flushing commands')
             if flight is None:
                 if not state["pending"]:

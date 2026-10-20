@@ -253,6 +253,26 @@ def test_changed_intent_key_and_dry_run_cannot_replace_an_ambiguous_request(conn
     assert len(generated.calls) == 1
 
 
+@pytest.mark.parametrize("kind", [None, False, 7, "assembly-admission-v2", "commit"])
+def test_present_unknown_flight_kind_refuses_reload_without_post_or_mutation(connected, kind):
+    session = open_session(connected)
+    _, generated, path = connected
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        session.move("parent/clip:a", 5, idempotency_key="original")
+    state = json.loads(path.read_bytes())
+    state["flight"]["kind"] = kind
+    path.write_bytes(request_bytes(state))
+    frozen = path.read_bytes()
+    calls = copy.deepcopy(generated.calls)
+
+    with pytest.raises(TimelineEditError, match="in-flight request kind"):
+        open_session(connected)
+
+    assert path.read_bytes() == frozen
+    assert generated.calls == calls
+
+
 def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(connected):
     session = open_session(connected)
     _, generated, path = connected
