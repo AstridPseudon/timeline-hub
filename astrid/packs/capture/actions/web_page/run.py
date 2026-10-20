@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import sys
+
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint("capture.web_page")
@@ -416,6 +418,8 @@ def capture(
     chrome: str | None = None,
 ) -> dict[str, Any]:
     """Capture one admitted page, writing managed outputs into ``out_dir``."""
+    if sys.platform == "win32":
+        raise AstridError("Browser capture is not available on Windows yet.")
     url = validate_url(url)
     admission = _require_host_admission(url)
     if not (1 <= int(device_scale) <= 3):

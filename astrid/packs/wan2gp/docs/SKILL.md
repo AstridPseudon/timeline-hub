@@ -80,7 +80,7 @@ python -m astrid.core.generation.gpu_environment wan2gp --checkout C:\Astrid\Wan
 
 This needs user-local uv 0.11.32 and a network connection on the tester's
 computer. It creates a uv-managed Python 3.12.10 environment under
-`%LOCALAPPDATA%\Astrid\gpu\wan2gp`, without administrator access or a system
+`%LOCALAPPDATA%\Astrid GPU\wan2gp\<identity>`, without administrator access or a system
 CUDA toolkit. It combines the CUDA wheel pins with the checkout's own
 `requirements.txt`, resolves with the recorded upload cutoff, writes a fully
 versioned, hash-bound `requirements.lock`, syncs that lock, checks dependencies

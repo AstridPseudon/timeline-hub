@@ -8,6 +8,7 @@ import { delimiter } from 'node:path';
 import { isAbsolutePath, isPathWithin } from './paths.ts';
 import { getAstridAgentModelCatalog } from './astrid-agent-models.ts';
 import { AgentModelState } from './agent-model-state.ts';
+import { acpClientCapabilities } from './acp-client-capabilities.ts';
 import { discoverLocalAgents } from './astrid-local-agents.ts';
 import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
 import { SharedAcpSessions, sharedSessionModels } from './astrid-shared-acp-sessions.ts';
@@ -707,7 +708,7 @@ export class AstridAcpBridge {
     try {
       const initialize = await host.initialize({
         protocolVersion: 1,
-        clientCapabilities: { terminal: true },
+        clientCapabilities: acpClientCapabilities(agent),
         clientInfo: { name: 'astrid-acp-bridge', version: CLIENT_VERSION },
       });
       if (this.closing) throw new ChatError(503, 'chat_stopping', 'The chat service is stopping.');

@@ -12306,6 +12306,8 @@ class LocalExecutionPreparation:
             raise HostError("local preparation profile must be an object")
         if request["profile"].get("execution_mode") == "host_only_cpu":
             return self._prepare_host_only(request)
+        if sys.platform == "win32":
+            raise HostError("Managed Comfy execution is not available on Windows yet.")
         profile = _validate_local_engine_profile(request["profile"])
         scope = Path(str(request["custody_scope"]))
         if not scope.is_absolute() or scope.is_symlink():

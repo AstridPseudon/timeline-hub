@@ -38,7 +38,7 @@ python -m astrid.core.generation.gpu_environment vibecomfy --checkout C:\Astrid\
 
 This uses user-local uv 0.11.32 and needs a network connection on the tester's
 computer. It creates the environment under
-`%LOCALAPPDATA%\Astrid\gpu\vibecomfy`, without administrator access or a
+`%LOCALAPPDATA%\Astrid GPU\vibecomfy\<identity>`, without administrator access or a
 system CUDA toolkit. The shared provisioner verifies source/node pins,
 combines the CUDA pins with ComfyUI's requirements, VibeComfy's declared
 dependencies/build tools and each selected node's requirements, then resolves
