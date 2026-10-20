@@ -1,0 +1,1170 @@
+{
+  "run": {
+    "id": "agent-full-remotion-integration-1020015823-24749",
+    "tree": "8f046de1844963feab3732cb4ffda7064c49f64e",
+    "base_commit": "4a75f68f32049a69fd86135c645fa64c51175c14",
+    "command": "env -i HOME=/root LANG=C.UTF-8 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -n 3",
+    "result": "11723 passed, 79 failed, 453 skipped, 30 errors, 563 subtests passed, 75 warnings, 2809.29s"
+  },
+  "counts": {
+    "old_baseline": 63,
+    "previous": 67,
+    "current": 109,
+    "current_failed": 79,
+    "current_error": 30,
+    "current_persisted_old": 62,
+    "current_additional": 47,
+    "old_gone": 1,
+    "previous_gone": 5,
+    "previous_to_current_resolved": 4
+  },
+  "set_diff": {
+    "old_baseline_missing_from_current": [
+      "tests/packs/runpod/test_worker_preparation.py::test_runtime_activation_checkpoints_restore_only_the_exact_process"
+    ],
+    "current_additional_47": [
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeBlinkTest::test_blink_hides_for_two_frames_at_each_listed_frame",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeBlinkTest::test_single_number_and_missing_blink_at",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeGeometryTest::test_arrow_points_right",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeGeometryTest::test_dot_three_by_three_is_a_full_square",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeGeometryTest::test_ring_is_hollow_and_inside_the_box",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeGeometryTest::test_underline_is_bottom_rows_only",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_corners_are_stepped",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_radius_is_clamped_and_stroke_thicker_than_half_is_safe",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_rounded_tile_has_expected_cell_counts",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_shape_rect_returns_the_silhouette",
+      "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_square_rect_is_the_full_box_and_outline_is_the_border",
+      "tests/packs/runpod/test_worker_process.py::test_linux_owned_host_survives_launcher_and_exact_stop",
+      "tests/sdk/test_admission_recovery.py",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_installed_profile_launch_preserves_identity_and_uses_isolated_interpreter",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+      "tests/sdk/test_host_recovery.py::test_busy_live_host_is_deferred_and_untouched",
+      "tests/sdk/test_host_recovery.py::test_dead_leader_with_surviving_member_is_killed_then_dropped",
+      "tests/sdk/test_host_recovery.py::test_gone_host_with_empty_group_is_dropped_and_relaunched",
+      "tests/sdk/test_host_recovery.py::test_host_helper_in_its_own_group_is_not_work",
+      "tests/sdk/test_host_recovery.py::test_host_whose_validation_does_not_cover_this_caller_is_replaced_not_refused",
+      "tests/sdk/test_host_recovery.py::test_launcher_attaches_to_healthy_host_from_another_checkout",
+      "tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[changed-registration-generation]",
+      "tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[changed-resident-source]",
+      "tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[unready-registration]",
+      "tests/sdk/test_host_recovery.py::test_live_host_with_stale_source_is_retired_by_registration_when_idle",
+      "tests/sdk/test_host_recovery.py::test_live_matching_host_is_reused",
+      "tests/sdk/test_host_recovery.py::test_pid_reused_by_unrelated_process_is_never_signalled",
+      "tests/sdk/test_host_recovery.py::test_published_busy_record_decides",
+      "tests/sdk/test_host_recovery.py::test_spawn_env_excludes_job_lease",
+      "tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[False-selected-False-False]",
+      "tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[False-selected-True-False]",
+      "tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[True-selected-False-False]",
+      "tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[True-selected-True-False]"
+    ],
+    "previous_missing_from_current": [
+      "tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix",
+      "tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup",
+      "tests/packs/runpod/test_worker_preparation.py::test_runtime_activation_checkpoints_restore_only_the_exact_process",
+      "tests/core/test_editor_element_catalog.py::test_checked_in_typescript_projection_is_current",
+      "tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition"
+    ],
+    "previous_four_consumer_fix_nodes": [
+      "tests/core/test_editor_element_catalog.py::test_checked_in_typescript_projection_is_current",
+      "tests/core/timeline/test_clip_fields.py::test_render_status_defaults_to_pinned_union_composition",
+      "tests/journeys/test_journey_plumbing.py::test_renderer_install_problem_names_the_missing_install_and_the_fix",
+      "tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup"
+    ]
+  },
+  "clusters": {
+    "pixel_node20_typescript_loader": {
+      "count": 11,
+      "classification": "valid-supported-env-fixture-problem",
+      "evidence": [
+        "Node v20.19.4 plain import of .ts exits 1 with ERR_UNKNOWN_FILE_EXTENSION",
+        "Node v22.22.0 imports the same source successfully",
+        "shape-cells.ts and its 11-test source blob are identical in 36d86ed3 and 8f046"
+      ]
+    },
+    "runpod_owned_host": {
+      "count": 1,
+      "classification": "unknown",
+      "evidence": [
+        "same pinned-env central targeted run reproduces WorkerOwnerConflict: host did not acquire physical pod ownership",
+        "worker_process.py and test_worker_process.py blobs are identical in e475f212, 36d86ed3, and 8f046",
+        "child stderr is discarded by launch_owned_process, so exact child exit cause is unproven"
+      ]
+    },
+    "host_bootstrap_source_identity": {
+      "count": 16,
+      "classification": "valid-supported-env-fixture-problem",
+      "evidence": [
+        "3 nodes fail on fake source inventory PosixPath.pack_root and 13 fail RemotionValidationError unsupported loader/interpreter overrides",
+        "host_bootstrap.py and test_host_bootstrap_source_identity.py blobs are identical in 36d86ed3 and 8f046",
+        "full env sets ASTRID_REMOTION_PROJECT_DIR and pinned Node/schema variables; prior full used normal env"
+      ]
+    },
+    "stage_interpreter_identity": {
+      "count": 4,
+      "classification": "valid-supported-env-fixture-problem",
+      "evidence": [
+        "all 4 fail prior Remotion host lacks launch validation under configured Remotion env",
+        "bootstrap and stage test blobs are identical in 36d86ed3 and 8f046"
+      ]
+    },
+    "host_recovery": {
+      "count": 14,
+      "classification": "valid-supported-env-fixture-problem",
+      "evidence": [
+        "all 14 collection/setup errors fail RemotionValidationError unsupported loader/interpreter overrides",
+        "host recovery test and relevant bootstrap/runtime source are unchanged from previous postrestore tree"
+      ]
+    },
+    "admission_recovery": {
+      "count": 1,
+      "classification": "valid-supported-env-fixture-problem",
+      "evidence": [
+        "dynamic loading of Runtime generated.py fails relative import timeline_commit_types under ASTRID_RUNTIME_CHECKOUT",
+        "test source is unchanged from previous tree; current Runtime generated client uses package-relative imports"
+      ]
+    },
+    "old_persisted": {
+      "count": 62,
+      "classification": "strict-preexisting",
+      "evidence": [
+        "62 of 63 old-baseline nodes remain; traces preserve baseline causes",
+        "relevant RunPod/H3/VibeComfy/generic-host test and source blobs match baseline or prior full"
+      ]
+    },
+    "old_worker_preparation": {
+      "count": 1,
+      "classification": "resolved-in-current-a610-full",
+      "evidence": [
+        "old baseline node is absent from current exact set; current log has no failure/error heading for it"
+      ]
+    }
+  },
+  "nodes": {
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeGeometryTest::test_arrow_points_right": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeGeometryTest::test_dot_three_by_three_is_a_full_square": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeGeometryTest::test_ring_is_hollow_and_inside_the_box": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeGeometryTest::test_underline_is_bottom_rows_only": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_corners_are_stepped": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_radius_is_clamped_and_stroke_thicker_than_half_is_safe": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_rounded_tile_has_expected_cell_counts": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_shape_rect_returns_the_silhouette": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeRectTest::test_square_rect_is_the_full_box_and_outline_is_the_border": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeBlinkTest::test_blink_hides_for_two_frames_at_each_listed_frame": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/astrid_motion/test_pixel_shape_geometry.py::AmPixelShapeBlinkTest::test_single_number_and_missing_blink_at": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "pixel-node20-typescript-loader",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/runpod/test_ensure_storage.py::test_provision_does_not_auto_create_storage": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_ensure_storage.py::test_storage_free_provision_and_session_do_not_probe_or_create_storage": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_outer_adapter_allocation_unknown_keeps_identity_and_blocks_another_launch[provision]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_outer_adapter_allocation_unknown_keeps_identity_and_blocks_another_launch[session]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_launcher_preserves_known_pod_from_nonretryable_launch_failure[provision]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_launcher_preserves_known_pod_from_nonretryable_launch_failure[session]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_attached_claim_without_exclusive_authority_refuses_teardown": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_datacenter_is_forwarded_only_when_lifecycle_config_supports_it": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_pod_handle_builder_keeps_durable_and_transient_shapes_compatible": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_provision_writes_pod_handle_and_cost": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_provision_persists_allocation_before_readiness_and_marks_cleanup_pending[readiness-failure0]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_provision_persists_allocation_before_readiness_and_marks_cleanup_pending[ssh-failure1]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_provisional_handle_retains_cleanup_pending_until_reconciliation": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_provision_forwards_and_persists_allowed_cuda_versions": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_empty_explicit_cuda_filter_fails_before_launch": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_provision_storage_required_fails_before_launch_with_ensure_storage_hint": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_provision_named_storage_missing_fails_before_launch_without_creation": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_provision_configured_storage_name_is_recorded_in_canonical_handle": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_session_storage_required_fails_before_launch_with_ensure_storage_hint": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_exec_reads_handle_and_writes_result": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_exec_nonzero_remote_exit_keeps_artifacts_diagnostics_result_and_cost": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_exec_success_copies_only_substrate_returned_artifact_root": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_teardown_terminates_and_writes_receipt": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_teardown_idempotent_pod_not_found": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_session_writes_breadcrumb_and_deletes_on_teardown": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_session_transient_handle_exists_during_detached_exec_and_is_removed_after": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_session_captures_pod_id_before_readiness_failure_and_terminates": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_session_mocked_artifact_smoke_uses_substrate_output_directory": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_session_breadcrumb_survives_on_crash": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_session_keeps_breadcrumb_when_teardown_fails": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_session_nonzero_remote_exit_writes_diagnostics_artifacts_result_and_cost": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_pack_executors.py::test_cost_summation_invariant": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_provision_ports.py::test_ports_flag_appears_in_snapshot": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_provision_ports.py::test_ports_default_unchanged_when_omitted": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-legacy-actions-path",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_worker_process.py::test_stop_pins_process_and_never_signals_after_identity_drift": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-worker-process-test-import",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_worker_process.py::test_linux_owned_host_survives_launcher_and_exact_stop": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "unknown",
+      "cluster": "runpod-owned-host",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/runpod/test_worker_process.py::test_stop_requires_pinned_exit_proof_before_stopped_receipt[True]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-worker-process-test-import",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/runpod/test_worker_process.py::test_stop_requires_pinned_exit_proof_before_stopped_receipt[False]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-worker-process-test-import",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "h3-installed-source-child-probe",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "h3-installed-source-child-probe",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "h3-installed-source-child-probe",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "h3-installed-source-child-probe",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "h3-installed-source-child-probe",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "h3-installed-source-child-probe",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "h3-installed-source-child-probe",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/packs/test_vibecomfy_metadata.py::VibeComfyStructuredMetadataTest::test_run_rejects_missing_or_empty_engine_inventory": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "xdist-vibecomfy-metadata-serialization",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_installed_profile_launch_preserves_identity_and_uses_isolated_interpreter": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-bootstrap-source-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[False-selected-False-False]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "stage-interpreter-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[False-selected-True-False]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "stage-interpreter-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[True-selected-False-False]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "stage-interpreter-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/stage1/test_pack_host_interpreter_identity.py::test_bootstrap_reuses_only_the_selected_interpreter[True-selected-True-False]": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "stage-interpreter-identity",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/test_generic_host.py::test_failed_worker_release_retains_original": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "generic-host-cleanup-contract",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale": {
+      "status": "FAILED",
+      "summary": null,
+      "classification": "strict-preexisting-with-m1-metadata-debt",
+      "cluster": "structure-giant-file-rationale",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "FAILED",
+      "old_baseline_status": "FAILED"
+    },
+    "tests/sdk/test_admission_recovery.py": {
+      "status": "ERROR",
+      "summary": "ImportError while importing test...",
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "admission-recovery-generated-client-loading",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_preparation_runs_real_child_probe_and_reuses_verified_content": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_materialized_h3_bundle_stages_as_an_owned_workflow_root": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_interrupted_upload_reconciles_remote_bytes_without_reupload": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_remote_drift_fails_closed_then_explicit_refresh_repairs_owned_source": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_workflow_pack_requires_its_unique_lock_pin_and_exact_checkout": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_manifest_pinned_workflow_pack_cannot_omit_its_checkout_root": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[lock_leaf]": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[lock_parent]": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[node_leaf]": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse[node_parent]": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_changed_config_corrupt_journal_and_account_or_volume_mismatch_refuse_reuse": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_empty_remote_observation_and_model_shadow_remain_unresolved": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_release_manifest_datacenter_and_account_reference_are_mandatory": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_manifest_volume_alias_is_optional_but_mismatch_and_effective_path_drift_fail_closed": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/packs/runpod/test_worker_staging.py::test_json_selection_uses_production_composition_and_real_cpu_staging": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "strict-preexisting",
+      "cluster": "runpod-external-vibecomfy-fixture",
+      "delta": "persisted-from-previous-67",
+      "previous_status": "ERROR",
+      "old_baseline_status": "ERROR"
+    },
+    "tests/sdk/test_host_recovery.py::test_launcher_attaches_to_healthy_host_from_another_checkout": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[unready-registration]": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[changed-registration-generation]": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_launcher_replaces_cross_checkout_host_when_resident_is_unhealthy[changed-resident-source]": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_gone_host_with_empty_group_is_dropped_and_relaunched": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_dead_leader_with_surviving_member_is_killed_then_dropped": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_live_host_with_stale_source_is_retired_by_registration_when_idle": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_busy_live_host_is_deferred_and_untouched": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_live_matching_host_is_reused": {
+      "status": "ERROR",
+      "summary": "as...",
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_spawn_env_excludes_job_lease": {
+      "status": "ERROR",
+      "summary": "as...",
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_pid_reused_by_unrelated_process_is_never_signalled": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_host_whose_validation_does_not_cover_this_caller_is_replaced_not_refused": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_host_helper_in_its_own_group_is_not_work": {
+      "status": "ERROR",
+      "summary": null,
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    },
+    "tests/sdk/test_host_recovery.py::test_published_busy_record_decides": {
+      "status": "ERROR",
+      "summary": "a...",
+      "classification": "valid-supported-env-fixture-problem",
+      "cluster": "host-recovery",
+      "delta": "additional-in-a610-47",
+      "previous_status": null,
+      "old_baseline_status": null
+    }
+  },
+  "evidence": {
+    "central_targeted_runs": [
+      {
+        "id": "agt-m1-full-a610-triage-remotion-env-nodes-1020025059-8756",
+        "suite": "remotion-env-nodes",
+        "files": [
+          "tests/packs/astrid_motion/test_pixel_shape_geometry.py",
+          "tests/sdk/test_host_recovery.py",
+          "tests/sdk/test_host_bootstrap_source_identity.py",
+          "tests/stage1/test_pack_host_interpreter_identity.py",
+          "tests/packs/runpod/test_worker_process.py"
+        ],
+        "tree": "d8ee74e07ad86e9f5ceb15546804c17be9aaaead",
+        "result": "35 failed, 112 passed, 2 skipped, 14 errors in 36.96s"
+      },
+      {
+        "id": "agt-m1-full-a610-triage-remotion-env-nodes-1020025443-14839",
+        "suite": "remotion-env-nodes",
+        "files": [
+          "tests/sdk/test_admission_recovery.py"
+        ],
+        "tree": "33ad03e08d4fcd585a1aaa719faaf492df0420c0",
+        "result": "1 error in 2.71s",
+        "trace": "ImportError attempted relative import with no known parent package"
+      }
+    ],
+    "same_environment_baseline": {
+      "status": "unknown",
+      "reason": "a610-env-triage-integration is not registered and central snapshots current worker tree"
+    }
+  }
+}
