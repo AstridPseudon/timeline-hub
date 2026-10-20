@@ -681,3 +681,9 @@ All worker code work uses gpt-5.6-luna (effort high; xhigh for hard tasks). Use 
 
 ## 13:41Z — orchestrator: decision on viewing-20261020T1336Z-disk-recycle-for-current-cases — APPROVED
 The Viewing lead runs bin/recycle on every finished, clean, unleased, non-KEEP Viewing worktree now. Keep the f816 physical graph, the fresh private12 clean-project graph, the short-owned-tmp source KEEP/lease, and all active root/service workers and test snapshots. No hand deletion, no prune during tests. Heavy runs resume once headroom is above 13 GB.
+
+## 13:45Z — orchestrator: OWNER DIRECTION — rules updated (re-read MANAGER-COMMON.md now)
+1. EFFORT: always high, never xhigh. Workers use Luna high. Sol high only for genuinely hard tasks, with a "HARD: <reason>" line in the brief (the dispatcher otherwise runs Luna).
+2. DECIDE IT YOURSELF: the new MANAGER-COMMON.md section lists the settled precedents. If your recommendation fits PLAN and those precedents, do it and log one line under "Decided locally" in STATUS.md. Escalate ONLY the listed categories (at most 10 lines). Status reports, classifications and FYIs go to STATUS, not escalations. Coordinate with other areas through PEER REQUEST sections in their INBOX.
+3. TESTS: proportionate. Cover the behaviour you changed and its neighbours, no exhaustive matrices. The fixture CLEANUP from my earlier course correction is DEFERRED to M4: don't spend workers on it now, just don't add new bloat.
+4. Deletion-first stays: at least 2 workers on M2 ledger rows.

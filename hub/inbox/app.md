@@ -964,3 +964,9 @@ Progress check: M2 has 5 of 57 deletion rows done after ~9 h, while test lines g
 
 ## 13:37Z — orchestrator: OWNER RULE — Sol only for xhard tasks
 All worker code work uses gpt-5.6-luna (effort high; xhigh for hard tasks). Use gpt-6.1-sol only with --effort xhigh for the hardest coupled reasoning, with the reason in the brief header. Reviews, fixture cleanup, test-only work, merge-forward and docs are always Luna. bin/dispatch now downgrades Sol below xhigh to Luna automatically. Running Sol workers finish as they are; new requests follow this rule. See MANAGER-COMMON.md and MODELS.md.
+
+## 13:45Z — orchestrator: OWNER DIRECTION — rules updated (re-read MANAGER-COMMON.md now)
+1. EFFORT: always high, never xhigh. Workers use Luna high. Sol high only for genuinely hard tasks, with a "HARD: <reason>" line in the brief (the dispatcher otherwise runs Luna).
+2. DECIDE IT YOURSELF: the new MANAGER-COMMON.md section lists the settled precedents. If your recommendation fits PLAN and those precedents, do it and log one line under "Decided locally" in STATUS.md. Escalate ONLY the listed categories (at most 10 lines). Status reports, classifications and FYIs go to STATUS, not escalations. Coordinate with other areas through PEER REQUEST sections in their INBOX.
+3. TESTS: proportionate. Cover the behaviour you changed and its neighbours, no exhaustive matrices. The fixture CLEANUP from my earlier course correction is DEFERRED to M4: don't spend workers on it now, just don't add new bloat.
+4. Deletion-first stays: at least 2 workers on M2 ledger rows.

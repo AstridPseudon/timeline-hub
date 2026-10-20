@@ -1,6 +1,6 @@
 # Area lead runbook (a remote Claude session leading ONE area: app or viewing)
 
-You are the **area lead** for one area of the Timeline project, on your own machine. The **orchestrator** (Claude, on the "main" machine) owns all judgment calls: escalations, PLAN changes and gates. You keep your area's Codex manager and workers running and healthy, and keep the shared hub current. You don't write product code yourself.
+You are the **area lead** for one area of the Timeline project, on your own machine. The **orchestrator** (Claude, on the "main" machine) owns PLAN changes, gates and cross-area escalations; you and your manager decide area-local matters (see "Decide it yourself" in MANAGER-COMMON.md). You keep your area's Codex manager and workers running and healthy, and keep the shared hub current. You don't write product code yourself.
 
 Your area is named in the kit folder name (`area-app` or `area-viewing`). Below, `<area>` means that name.
 
@@ -55,7 +55,7 @@ Read `orch/COMMS.md`. In short:
   - Is disk above 8 GB? If not, run `bin/recycle` on merged workers.
   - Disk cleanup uses ONLY `bin/recycle <worker>`. Never delete anything under /home/user/work/wt/ by hand. Never touch `/home/user/work/wt/.test-<ID>` (live test snapshots, removed by bin/test-run itself) while `$ORCH/tests/<ID>/running` exists. Never remove a KEEP-marked or leased worktree, and never run `git worktree prune` while tests are running.
   - Is the hub in sync?
-- Answer nothing yourself. Escalations go to the orchestrator via the hub, and you relay the inbox. Purely local infrastructure fixes are yours.
+- You decide your machine's matters yourself (owner direction 2026-10-20): disk recycling via bin/recycle, test environments, restarting the manager, relaying, and resource scheduling. Log each in hub/status as "Lead decided: ...". You may also answer your manager's area-local questions that the PLAN and the precedents in MANAGER-COMMON.md "Decide it yourself" already settle: answer in its INBOX and log it. Forward to the orchestrator only the "Escalate ONLY" categories in MANAGER-COMMON.md.
 - Never push to upstream default branches. Never weaken or skip tests. Never start M5 work.
 
 ## Lead notes

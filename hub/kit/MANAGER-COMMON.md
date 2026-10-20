@@ -14,7 +14,7 @@ ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchp
   `$ORCH/bin/request <worker> --repo agent|runtime|app|composition --model gpt-5.6-luna --effort high --brief <file> [--net] [--heavy] [--timeout MIN] [--base BRANCH]`
   - Name workers `<your-prefix>-<milestone>-<short-task>` (e.g. `agt-m1-clipmove`). Names are unique forever.
   - `--net` for tasks that must install packages OR whose tests need local sockets (localhost listeners, live transport, browser journeys; the sandbox blocks loopback without it). Prefer the test service (below) for suites that need localhost/browsers; then the worker needs no `--net`. Never use it to reach external services beyond package installs. `--heavy` for big test suites, browser journeys, renders, installs. Default timeout 180 min.
-  - **Owner rule 2026-10-20: Sol ONLY for xhard tasks.** Every worker uses `--model gpt-5.6-luna --effort high` by default, and Luna `xhigh` for hard tasks. `--model gpt-6.1-sol --effort xhigh` only for the hardest coupled reasoning (cross-repo contracts, undo/rebase semantics, or a failure Luna xhigh already missed); state the reason in the brief header. Reviews, fixture cleanup, test-only work, merge-forward and docs are always Luna. The dispatcher downgrades Sol below xhigh to Luna.
+  - **Owner rule 2026-10-20 (rev 2): effort is always `high`, never xhigh.** Workers use `--model gpt-5.6-luna --effort high`. Use `--model gpt-6.1-sol --effort high` only for genuinely hard tasks (cross-repo contracts, undo/rebase semantics, a failure Luna already missed), and put a `HARD: <reason>` line in the brief's first lines; without it the dispatcher runs Luna. Reviews, test-only work, merge-forward and docs are always Luna.
   - The dispatcher (outside your sandbox) launches it within ~15 s; it may wait if disk or heavy-job limits are hit (see $ORCH/queue/pending/.<worker>.why).
 - **A good worker brief** fits on one screen: the one result wanted; why (link the PLAN section); base branch; paths it may touch (respect PLAN ownership); exact acceptance tests/commands; what must be deleted; what NOT to do; where to write the commit message. Prefer small, PR-sized tasks that land in hours, not days. Run independent tasks in parallel — many workers at once is expected.
 - **Check workers:** `$ORCH/bin/workers <your-prefix>`; each worker's report is $ORCH/workers/<worker>/report.md, log in log.txt, commit result in commit.log. Their worktree is /home/user/work/wt/<worker> (branch tl/<worker>).
@@ -39,8 +39,26 @@ Inbox: <last item acknowledged>
 Resources: <disk free, heavy jobs>
 ```
 
-## Escalate only when needed
-Write $ORCH/escalations/<you>-<UTC-time>-<slug>.md for: a change to a cross-manager contract; a data-loss or security finding; resource exhaustion; a blocker that needs another manager or the owner; evidence that a PLAN decision is wrong. Include: the problem, evidence, your recommended decision, what you will do meanwhile. Then keep working on everything not blocked by it. The orchestrator answers in your INBOX.md.
+## Decide it yourself (owner direction 2026-10-20: you are trusted, act like it)
+You own your area. If your recommended decision fits PLAN.md and the precedents below, it IS the decision: do it, add one line to the "Decided locally" list in STATUS.md (decision + one-line reason), and move on. The orchestrator spot-checks those lines every hour and redirects if one is wrong; a wrong local call costs far less than a stalled hour. Never write an escalation that says "I am proceeding, no decision required"; that is a STATUS line.
+
+**Settled precedents (apply them, do not ask again):**
+- MAIN's visible behaviour is the reference. When main and a design disagree, match main unless PLAN says otherwise.
+- Prefer existing carriers: no new DTO, wire field, store, framework or public API when an existing one can carry it.
+- Old or unsafe input is refused visibly, with the draft preserved. Never silently upgrade, adopt, clamp or overwrite.
+- Advisory checks never block a save; core validity always does.
+- A test whose expected behaviour legitimately changes converts one-to-one (refusal on the old case plus an equivalent success on the new one), listed in the deletion ledger. This needs no approval; deleting assertions or skipping tests still does.
+- Giant-file drift: extract the Timeline-added code into a helper; a truthful entry update only when extraction would split one function. Never loosen thresholds.
+- Route retirement follows consumer migration. A legacy path dies once its last consumer has moved.
+- Disk: recycle finished, clean, unleased, non-KEEP worktrees with bin/recycle whenever you need headroom.
+- Failed or old full runs: classify them in STATUS, and rerun only on the current tree when a gate needs it.
+- Test environments (temp dirs, fixtures, env vars local to one run): fix them yourself, keeping every guard.
+
+**Tests are proportionate (owner direction).** Cover the behaviour you changed and its direct neighbours. Do not build exhaustive matrices, frozen copies of every schema version or multi-thousand-line golden files unless a gate needs them. Big test growth is a smell; prefer one clear test per behaviour.
+
+**Coordinate directly with peers.** For something you need from another area, append a short "PEER REQUEST from <you>" section to that manager's INBOX.md (main managers) or hub/inbox/<area>.md (remote areas), and check its STATUS. Escalate only if you disagree or it stays stuck for more than 2 hours.
+
+**Escalate ONLY:** a change to a cross-area contract or wire/DTO shape the peers have not agreed on; a release, version or pin decision; deleting or skipping tests or weakening an assertion; a security or data-loss finding on a NORMAL API path; evidence that a PLAN decision is wrong; something only the owner can do. Write $ORCH/escalations/<you>-<UTC-time>-<slug>.md with the problem, evidence and your recommended decision (at most 10 lines), then keep working on everything not blocked by it. Status reports, classifications and FYIs go in STATUS.md, never in escalations.
 
 ## Milestone discipline
 - Work only on backlog items your brief marks available. M1+ items are available only once PLAN.md "Gate record" shows **Checkpoint A: APPROVED**. Nothing past M4 exists for you.
