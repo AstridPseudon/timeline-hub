@@ -41,7 +41,8 @@ async function environment() {
     getProjectTimeline: vi.fn(async () => ({ project_id: scope.projectId, timeline_id: scope.timelineId,
       head_revision_id: basis.head.revisionId, head_publication_id: basis.head.publicationId })),
   };
-  const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_name, work) => work() });
+  const factory = createFakeIndexedDB();
+  const outboxes = createCommitOutbox({ indexedDB: factory, exclusiveLock: async (_name, work) => work() });
   const sent: { body: string; key: string }[] = [];
   let fault: 'lost' | 'refused' | null = null;
   const send = vi.fn(async (request: CommitRequest, key: string): Promise<TimelineCommitResult> => {
@@ -63,7 +64,7 @@ async function environment() {
   const boundClient = client as unknown as RuntimeRecoveryPlacementClient;
   let binding: RuntimeRecoveryCommandBinding | null = { client: boundClient, session };
   const request = createRuntimeRecoveryPlacement({ client: boundClient, getBinding: () => binding });
-  return { draft, client, request, session, outboxes, sent, send, projected, scope,
+  return { draft, client, request, session, outboxes, factory, sent, send, projected, scope,
     rebind: (next: RuntimeRecoveryCommandBinding | null) => { binding = next; }, setFault: (value: typeof fault) => { fault = value; } };
 }
 
@@ -180,6 +181,46 @@ describe('explicit manual recovery native ADD callback (source only)', () => {
     expect(env.session.getState().status).toBe('saved');
   });
 
+  it.each(['append', 'ack'] as const)('keeps the original capture with the owner after %s storage failure', async (stage) => {
+    const env = await environment(), original = structuredClone(env.draft);
+    const capture = vi.spyOn(env.session, 'addOccurrenceMedia');
+    const open = env.factory.open.bind(env.factory);
+    const failStorage = () => { env.factory.open = () => { throw new Error('disk full'); }; };
+    if (stage === 'append') failStorage();
+    else {
+      const send = env.send.getMockImplementation()!;
+      env.send.mockImplementationOnce(async (...args) => {
+        const result = await send(...args);
+        failStorage();
+        return result;
+      });
+    }
+    try {
+      await expect(env.request(env.draft)).rejects.toThrow('disk full');
+      expect(env.session.getState().status).toBe('error');
+      expect(env.draft).toEqual(original);
+      expect(env.projected).not.toHaveBeenCalled();
+      await expect(env.request(env.draft)).rejects.toThrow('already submitted');
+      env.draft.sourceWindow.to = 5;
+      await expect(env.request(env.draft)).rejects.toThrow('already submitted');
+      expect(capture).toHaveBeenCalledOnce();
+    } finally { env.factory.open = open; }
+    const [owner] = await env.outboxes.list(env.scope);
+    expect(owner.intents).toHaveLength(stage === 'append' ? 0 : 1);
+    if (stage === 'ack') {
+      expect(owner.pending?.request.body).toBe(env.sent[0].body);
+      expect(owner.pending?.request.key).toBe(env.sent[0].key);
+    } else expect(env.sent).toEqual([]);
+    await env.session.retry();
+    expect(env.session.getState().status).toBe('saved');
+    expect(env.sent).toHaveLength(stage === 'append' ? 1 : 2);
+    if (stage === 'ack') expect(env.sent[1]).toEqual(env.sent[0]);
+    const command = JSON.parse(env.sent[0].body).commands[0];
+    expect(command.args.row).toEqual(capture.mock.calls[0][0].row);
+    expect(command.args.row).toMatchObject({ id: capture.mock.calls[0][0].row.id, from: 2, to: 6, hold: 4 });
+    expect(capture).toHaveBeenCalledOnce();
+  });
+
   it('retains a definitive Runtime refusal without recapture or legacy placement', async () => {
     const env = await environment(), original = structuredClone(env.draft);
     env.setFault('refused');
@@ -201,5 +242,31 @@ describe('explicit manual recovery native ADD callback (source only)', () => {
     await expect(env.request(env.draft, controller.signal)).rejects.toThrow('cancelled');
     expect(env.sent).toEqual([]);
     expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
+  });
+});
+
+describe('independent retry controls', () => {
+  it('can retry a pre-capture cancellation with the same reserved identity', async () => {
+    const env = await environment(), controller = new AbortController();
+    const add = env.session.addOccurrenceMedia;
+    const capture = vi.spyOn(env.session, 'addOccurrenceMedia').mockImplementationOnce(async (input) => { controller.abort(); return add(input); });
+    const uuid = vi.spyOn(crypto, 'randomUUID');
+    await expect(env.request(env.draft, controller.signal)).rejects.toThrow('cancelled');
+    expect(env.sent).toEqual([]);
+    expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
+    const reserved = uuid.mock.results[0].value;
+    await expect(env.request(env.draft, new AbortController().signal)).resolves.toBeUndefined();
+    expect((capture.mock.calls[1][0].row).id).toBe(reserved);
+    uuid.mockRestore();
+  });
+  it('can correct an unsupported source window after an atomic capture refusal', async () => {
+    const env = await environment();
+    env.draft.sourceWindow.to = 7;
+    await expect(env.request(env.draft)).rejects.toThrow();
+    expect(env.sent).toEqual([]);
+    expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
+    env.draft.sourceWindow.to = 6;
+    await expect(env.request(env.draft)).resolves.toBeUndefined();
+    expect(env.sent).toHaveLength(1);
   });
 });

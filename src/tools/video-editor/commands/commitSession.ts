@@ -291,6 +291,7 @@ export async function createTimelineCommandSession(options: Options) {
       basis: TimelineCommandBasis; ownerRef: string; row: Record<string, JSON>;
       media: MediaSelection; verifiedMedia: VerifiedMedia;
       assertCurrent(): void;
+      onEnqueued(): void;
     }): Promise<TimelineCommandBasis> {
       const original = await authoringBundleFromDocument(input.basis.canonicalDocument);
       input.assertCurrent();
@@ -306,6 +307,8 @@ export async function createTimelineCommandSession(options: Options) {
       const captured = captureOccurrenceAddMedia(bundle, input.ownerRef, input.row, input.media, [input.verifiedMedia]);
       // No optimistic Placed state or compatibility writer. Publish only the normal accepted closure.
       enqueue({ commands: [captured.command], before: bundle, after: captured.bundle, preview: null }, null);
+      // The owner now retains this payload even if its durable append or ACK fails.
+      input.onEnqueued();
       await chain;
       await pump();
       if (state.status !== 'saved') throw new Error(state.error ?? 'Manual placement is not acknowledged; draft kept');

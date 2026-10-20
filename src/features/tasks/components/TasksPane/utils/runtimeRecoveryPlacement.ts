@@ -90,9 +90,9 @@ export function createRuntimeRecoveryPlacement(options: {
       ]);
       await identity();
       current();
-      reserved!.submitted = true;
       await session.addOccurrenceMedia({ basis: draft.basis, ownerRef: `occurrence:${destination.owner.occurrenceId}`,
-        row, media: pin, verifiedMedia: verified, assertCurrent: current });
+        row, media: pin, verifiedMedia: verified, assertCurrent: current,
+        onEnqueued: () => { reserved!.submitted = true; } });
       // No Placed notification. The session alone adopts the typed accepted closure.
     } finally { pending = false; }
   };
