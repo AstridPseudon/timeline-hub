@@ -55,8 +55,9 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste
   const directory = mkdtempSync(join(tmpdir(), 'astrid-chat-port-'));
   const path = join(directory, 'chat.json');
   const stdin = new PassThrough();
+  let running: Promise<void> | undefined;
   try {
-    const running = runChatService({
+    running = runChatService({
       ASTRID_WORKSPACE_DISCOVERY: join(directory, 'discovery.json'),
       ASTRID_ACP_CWD: directory,
       ASTRID_ACP_BRIDGE_TOKEN: 'ephemeral-token',
@@ -77,6 +78,8 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste
     await running;
     expect(existsSync(path)).toBe(false);
   } finally {
+    stdin.end();
+    await running?.catch(() => {});
     stdin.destroy();
     rmSync(directory, { recursive: true, force: true });
   }

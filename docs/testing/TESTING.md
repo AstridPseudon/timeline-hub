@@ -117,8 +117,8 @@ Good: `State` is `Running`.
 - The page says **Choose Allow in Chrome** (or Edge). After you allow, it opens the editor by itself. A new workspace
   shows **No projects yet**.
 - macOS may show a notice that a background item was added. That's the login service. Note the name it shows.
-- The second run prints `Restarting Astrid with the installed version.` and `Open https://astrid.haus`, and the page
-  connects again. It doesn't download everything again.
+- The second run keeps the healthy Runtime running and prints `Using your workspace at …` and
+  `Open https://astrid.haus`. The page connects again without reinstalling tools.
 - The two checks above both pass.
 - The install record and doctor bundle identify the FFmpeg source as `path` or `download`, along with its version.
 

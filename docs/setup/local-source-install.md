@@ -22,7 +22,8 @@ workspace and keep the previous program version until the new door is verified.
 
 The scripts get pinned uv and Python, then invoke the shared `astrid install`
 core. It installs user-local tools and registers a login service. No administrator
-access is needed. Without a systemd user service on Linux, run the line to restart.
+access is needed. Without a systemd user service on Linux, run the line to get
+Astrid running again or to apply changed service settings.
 Installation ends with `Open https://astrid.haus` and opens the connection page.
 On failure, report the sentence and the `Details:` path to `install.log`. The
 login service writes its output to the neighboring `runtime-service.log`; a
