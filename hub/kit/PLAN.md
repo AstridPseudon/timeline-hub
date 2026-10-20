@@ -69,7 +69,7 @@ The foundation comes first and leaves clean seams; the **five extension types** 
 - New authoring features: story, motion, ducking, music-bed authoring, copy-sync, lint expansion.
 - Hosted security (paired relay); retention/purge; generation duplication.
 
-**Size target:** ~20–26k authored product lines for the whole consolidated core (R4 added ~73k).
+**Size target:** ~20–26k authored product lines for the whole consolidated core (R4 added ~73k). **Owner ruling 2026-10-20: this is a ROUGH GUIDE, not a hard limit or gate.** Balance pragmatism with solid engineering: land every planned duplicate/legacy deletion; prefer the simpler design; avoid speculative machinery and test or fixture bloat. Do NOT rewrite working main features just to hit a number. Report honest size numbers (main baseline, current, delta per area) at the hard stop.
 
 ### Process cut
 95-card literal closure, IP0–IP8 gates, review budgets, receipts, ceremonial digests, handover manifests, advisory heartbeats, mandatory second opinions. R4's `docs/projects/timeline-r4/` is archived, not ported; replaced by one architecture page and runnable build/test instructions.

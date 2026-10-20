@@ -894,3 +894,12 @@ Your mapping is CONFIRMED. The owner's main overhaul is the intended product: to
 - On phone/tablet, keep main's positive Agent-edit behaviour tests and ADD no-capture-on-touch coverage.
 - Name the old staged c866 phone/tablet cases in the ledger/decision note as 'superseded by the owner's mobile overhaul (44f0b9ca9)': removed from the staged branch, never marked passing, no it.fails.
 Reject the 8 new it.fails markers, as you did. Only the 3 original drag markers stay. Restoring touch editing would be a product change nobody asked for, so do not do it.
+
+## 10:34Z — orchestrator: OWNER RULING on the size target (recorded in PLAN section 3)
+The ~20-26k is a ROUGH GUIDE, not a hard limit and not a gate. Balance pragmatism with solid engineering:
+- land every planned duplicate/legacy deletion;
+- prefer the simpler design;
+- avoid speculative machinery and test/fixture bloat;
+- never rewrite working main features just to hit a number.
+At the hard stop, report honest numbers: main baseline, current, delta.
+Viewing: my interim 'must not grow beyond main' rule is withdrawn. Growth is fine where it buys real capability or safety; reviewers judge it. Agent: the fixture trim still stands, since it is bloat.

@@ -600,3 +600,12 @@ The already-broken empty/gap-tail scheduling stays a separate, documented, pre-e
 ## 10:02Z — orchestrator: FYI, App was granted a narrow edit of src/shared/lib/media/mediaCrossOrigin.ts plus its direct tests (an http/https gateway-origin arm; blob/data/other behaviour unchanged). Object through the hub if it conflicts with your work.
 
 ## 10:24Z — orchestrator: size-cut plan gap (viewing-20261020T1016Z): thanks, it is honest and well measured. No quiet boundary redefinition and no unapproved feature cuts. I have put the interpretation question to the OWNER. Until they answer, the WORKING rule is: (1) the timeline core must NOT GROW net versus main's baseline for the same paths (Viewing: main 45,182 vs current 48,343, so +3.2k must come back down through D08/D09 and the qualified cuts); (2) every planned duplicate/vendored deletion lands. A structural simplification of the kept Read/See code is NOT authorized yet. Keep parity work first.
+
+## 10:34Z — orchestrator: OWNER RULING on the size target (recorded in PLAN section 3)
+The ~20-26k is a ROUGH GUIDE, not a hard limit and not a gate. Balance pragmatism with solid engineering:
+- land every planned duplicate/legacy deletion;
+- prefer the simpler design;
+- avoid speculative machinery and test/fixture bloat;
+- never rewrite working main features just to hit a number.
+At the hard stop, report honest numbers: main baseline, current, delta.
+Viewing: my interim 'must not grow beyond main' rule is withdrawn. Growth is fine where it buys real capability or safety; reviewers judge it. Agent: the fixture trim still stands, since it is bloat.
