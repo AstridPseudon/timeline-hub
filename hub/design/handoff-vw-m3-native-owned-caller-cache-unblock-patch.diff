@@ -1,0 +1,46 @@
+diff --git a/astrid/packs/rendering/rendering/renderers/remotion/run.py b/astrid/packs/rendering/rendering/renderers/remotion/run.py
+index 6ce24f9e5..e0023e0b2 100644
+--- a/astrid/packs/rendering/rendering/renderers/remotion/run.py
++++ b/astrid/packs/rendering/rendering/renderers/remotion/run.py
+@@ -1135,7 +1135,12 @@ def _execute_remotion_locked(
+             # root.  Ambient PYTHONPATH entries can point at editable
+             # worktrees and must never be inherited by the render child.
+             remotion_env_additions["PYTHONPATH"] = schema_pythonpath
+-        remotion_env_additions["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
++        # The ephemeral CLI receives the project through its environment. A
++        # native frame session already binds and checks the exact project in
++        # the host lease, so forwarding this redundant field would be refused
++        # by the host-owned request projection.
++        if not (frame_mode and frame_session is not None):
++            remotion_env_additions["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
+         remotion_args = [
+             str(runtime_tools.node_executable),
+             str(runtime_tools.remotion_cli),
+diff --git a/tests/core/execution/test_remotion_host_session.py b/tests/core/execution/test_remotion_host_session.py
+index 82b88e4c7..5bb5dbfe9 100644
+--- a/tests/core/execution/test_remotion_host_session.py
++++ b/tests/core/execution/test_remotion_host_session.py
+@@ -405,7 +405,7 @@ def test_retire_records_group_that_cannot_be_confirmed_gone(tmp_path, monkeypatc
+         fresh.close()
+ 
+ 
+-@pytest.mark.parametrize("change", ["cli", "environment", "props", "temp"])
++@pytest.mark.parametrize("change", ["cli", "environment", "project", "props", "temp"])
+ def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkeypatch, change):
+@@ -414,6 +414,9 @@ def test_task_cannot_modify_host_scope_inputs_or_escape_attempt(tmp_path, monkeypatch, change):
+     value = request(env)
+     if change == "cli": value['request']['remotionCli'] = '/unadmitted/cli.js'
+     if change == "environment": value['request']['environment'] = {'NODE_OPTIONS':'--require=/foreign.js'}
++    if change == "project":
++        value['request']['environment'] = {
++            'ASTRID_REMOTION_PROJECT_DIR': env['ASTRID_REMOTION_PROJECT_DIR']}
+     if change == "props": value['request']['propsPath'] = str(tmp_path.parent/'outside.json')
+diff --git a/tests/packs/rendering/test_scene_source_carry.py b/tests/packs/rendering/test_scene_source_carry.py
+index 42835928c..7c240c75e 100644
+--- a/tests/packs/rendering/test_scene_source_carry.py
++++ b/tests/packs/rendering/test_scene_source_carry.py
+@@ -552,6 +552,7 @@ def test_sdk_source_reaches_real_final_staging_callback(source_query, tmp_path,
+     class Session:
+         def render(self, **kwargs):
++            assert "ASTRID_REMOTION_PROJECT_DIR" not in kwargs["environment"]
+             props = json.loads(kwargs["props_path"].read_text())

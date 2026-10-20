@@ -1,0 +1,29 @@
+{
+  "kind": "owned-caller-source-review",
+  "declared_base": "bc888522caf1871b8df8fcfdaa6831fa8d28b33e",
+  "controller_sha256": "d4c6ebfbcfb2ac1adcbb1caa56c9a7e1cc55f9d39b5717c1afe925aafd523bd1",
+  "fingerprint_sha256": "191f60f79a03d7d8dd690c1d4084dd36011fe02066bd19d87110d856319f50d4",
+  "source": {
+    "astrid/packs/rendering/rendering/renderers/remotion/run.py": "7cb8e75bb8e084ecdef3f42ce74ab414518e3952dc5587062fb43147587b7af2",
+    "astrid/core/execution/remotion_host_session.py": "967898f70de1bb3ba4a3bc4f360c1027456ef29e23c7e735f6be8e096890fb0d",
+    "tests/core/execution/test_remotion_host_session.py": "37d000ca3c50ada19faae61d656e6c02f8f1da1e62041d7019c125f7d807afa3",
+    "tests/packs/rendering/test_scene_source_carry.py": "e3f4f066560727753c435c1e50ac9e5d9951fc1f756f1763759dbfec73b85aa7",
+    "remotion/shared-browser.mjs": "2d3f17b7a7fd0cf12ae1ab4a6a4d25d5536334e12c79643b07d37799fc10cfba",
+    "remotion/src/astrid-frame-worker.mjs": "3b31d86c630c9f765f48d1c7c4f7880ea9caf2e1567ea3ac81c00d2c53124b85"
+  },
+  "diff_sha256": "f83ef46d58a9f2d7bda24c31a854a6dc33ac0dd6036055f091d93afa7c445f9a",
+  "reviewed_properties": {
+    "native_caller_omits_project_env_only_with_frame_session": true,
+    "host_request_project_field_remains_exact": true,
+    "host_rejects_redundant_project_env": true,
+    "foreign_project_refusal_preserved": true,
+    "ephemeral_cli_project_env_source_unchanged": true,
+    "browser_cache_physical_test": "not_run_core_drops_explicit_browser_selector"
+  },
+  "physical": {
+    "status": "not_run",
+    "reason": "HostRemotionSession._start does not carry ASTRID_REMOTION_BROWSER_EXECUTABLE",
+    "approved_cache_seam": "remotion/shared-browser.mjs",
+    "new_cache_or_alias": false
+  }
+}

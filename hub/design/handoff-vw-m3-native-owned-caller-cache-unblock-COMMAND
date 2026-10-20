@@ -1,0 +1,18 @@
+Source-only handoff. No central test submitted; no browser, render, grant, local server, network, install, or shared dependency/cache mutation.
+
+Run from /home/user/work/wt/vw-m3-native-owned-caller-cache-unblock.
+
+Offline targeted command actually run:
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/core/execution/test_remotion_host_session.py::test_task_cannot_modify_host_scope_inputs_or_escape_attempt tests/core/execution/test_remotion_host_session.py::test_child_cannot_select_a_different_native_executable_or_project 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-text-card]' 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-image]' 'tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[transport-frame-overlay]'
+10 passed in 4.01s.
+
+The first broader targeted command also included pre-existing socket-dependent tests. It reached 26 passed and 3 environment-blocked failures: the inherited-channel host test, generic-host child bridge, and CLI env test's ephemeral port probe all failed with sandbox PermissionError [Errno 1] Operation not permitted. No product assertion failed. It was not repeated with socket cases.
+
+Existing CLI-preservation coverage remains:
+tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_remotion_render_env_is_explicit_not_host_inherited
+This was selected in the broader command but could not reach its assertion because the sandbox denies the port probe. It remains unverified in this sandbox; it is unchanged and the caller condition preserves its no-frame-session path.
+
+Future manager-reviewed physical command (NOT RUN):
+python3 -B handoff-vw-m3-native-owned-caller-cache-unblock-controller.py capture --source /home/user/work/wt/vw-m3-native-owned-caller-cache-unblock --reviewed-sha256 191f60f79a03d7d8dd690c1d4084dd36011fe02066bd19d87110d856319f50d4
+
+The controller refuses before any physical action until Agent core carries the explicit browser selector through HostRemotionSession._start. No alias, fallback, fake validation, new cache mechanism, or workaround is supplied.

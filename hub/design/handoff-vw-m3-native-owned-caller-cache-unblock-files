@@ -1,0 +1,6 @@
+astrid/packs/rendering/rendering/renderers/remotion/run.py
+astrid/core/execution/remotion_host_session.py (reviewed unchanged core seam)
+tests/core/execution/test_remotion_host_session.py
+tests/packs/rendering/test_scene_source_carry.py
+remotion/shared-browser.mjs (reviewed unchanged cache seam)
+remotion/src/astrid-frame-worker.mjs (reviewed unchanged browser selection seam)
