@@ -20,6 +20,7 @@ import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
+import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
@@ -223,6 +224,39 @@ describe('mounted timeline command session', () => {
       preview: { version: 1, operations: [{ op: 'track.update', target: 'V1', payload: args.values }] } })).toThrow('earlier timeline saves');
     expect(args.values.label).toBe('kept typing');
     expect(hook.result.current.commit.data).toBe(current);
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('fences parent media capture, completion and submission behind an intervening legacy save', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.parentClipAddMediaPort!;
+    const current = hook.result.current.commit.data!;
+    const media: MediaSelection = {
+      asset: 'reserved-media',
+      generation_id: 'generation-media',
+      variant_id: 'variant-media',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const row = { id: 'native-clip', track: 'V1', at: 2, clipType: 'video', asset: 'reserved-media',
+      from: 0, to: 1, hold: 1, speed: 1 };
+    const verified: VerifiedMedia = { selection: { ...media }, media_type: 'video/mp4', size: 1, duration_seconds: 1 };
+
+    setLegacyClean(false);
+    expect(() => port.capture({ row, media, current })).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const basis = port.capture({ row, media, current });
+    let releaseVerification!: (value: VerifiedMedia) => void;
+    const verification = new Promise<VerifiedMedia>((resolve) => { releaseVerification = resolve; });
+    const finishing = verification.then((value) => port.finish(basis, value));
+    setLegacyClean(false);
+    releaseVerification(verified);
+    await expect(finishing).rejects.toThrow('earlier timeline saves');
+    expect((await env.outboxes.list(scope))[0]?.intents).toEqual([]);
+    setLegacyClean(true);
+    const captured = port.finish(basis, verified);
+    setLegacyClean(false);
+    expect(() => port.submit(captured)).toThrow('earlier timeline saves');
     expect(env.commits()).toHaveLength(0);
     hook.unmount();
   });

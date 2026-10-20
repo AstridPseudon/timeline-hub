@@ -81,9 +81,9 @@ export function useSwitchToFinalVideo({
   finalVideoMap,
   commands,
 }: UseSwitchToFinalVideoArgs) {
-  const applyPreparedPlacement = useCallback((input: AddClipCommandInput, command: PlacePreparedMediaCommand) => {
+  const applyPreparedPlacement = useCallback(async (input: AddClipCommandInput, command: PlacePreparedMediaCommand) => {
     if (commands) {
-      const result = commands.addClip(input);
+      const result = await commands.addClip(input);
       if (!result.ok) {
         throw new Error(result.error.message);
       }
@@ -201,7 +201,7 @@ export function useSwitchToFinalVideo({
     };
     const placement = buildPreparedPlacement(mutation, preparedAsset);
     if (!placement) return;
-    applyPreparedPlacement(placement.input, placement.command);
+    await applyPreparedPlacement(placement.input, placement.command);
   }, [applyPreparedPlacement, buildPreparedPlacement, dataRef, finalVideoMap, getTargetFingerprint]);
 
   const updateToLatestVideo = useCallback(async ({ shotId, rowId }: { shotId: string; rowId: string }) => {
@@ -240,7 +240,7 @@ export function useSwitchToFinalVideo({
     };
     const placement = buildPreparedPlacement(mutation, preparedAsset, replacementClipId);
     if (!placement) return;
-    applyPreparedPlacement(placement.input, placement.command);
+    await applyPreparedPlacement(placement.input, placement.command);
   }, [applyPreparedPlacement, buildPreparedPlacement, dataRef, finalVideoMap, getTargetFingerprint]);
 
   const switchToImages = useCallback(({ shotId, rowId }: { shotId: string; rowId: string }) => {
