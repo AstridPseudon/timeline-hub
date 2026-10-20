@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T13:55:26Z | dispatcher heartbeat 7s -->
+<!-- main | 2026-10-20T13:58:29Z | dispatcher heartbeat 4s -->
 # runtime — 2026-10-20T13:51:00Z
 Milestone: M1 RECORDED. M2 deletion/replacement work; M3 gates and M4 delivery still OPEN.
 Integrated: Runtime388eff4 (fresh-bootstrap project-scoped corrupt/orphan denial, independent APPROVE; 2 product lines over b748 strict empty-shell repair). Real connector tests129493b, capture27ad, retained legacy texta512, old render safetyc1fb, marked-triage2cb remain. Public artifacts unchanged.
