@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T04:14:31Z | dispatcher heartbeat 9s -->
+<!-- app | 2026-10-20T04:19:42Z | dispatcher heartbeat 1s -->
 # app — 2026-10-20 04:08 UTC
 Milestone: M0/M1 COMPLETE; global M1 RECORDED in PLAN03:55. M2 OPEN one gated current-tuple branch per merge, qualified deletions first. M2 exit NOT met.
 Integrated: app tl/integration4e7c06a0e6e9920dbc2eceb20adc09ae2d70f053 CLEAN/tree36d3e637ef7b1981cbdd8e3acfdbc60dbe94123c. D03 OWNER edge-writer purge merged;85paths+485/-20191 (-19706net), productpartition~8139net. No Appcommand/root/pin/Composition source changes. M1opaque tests unchanged.
