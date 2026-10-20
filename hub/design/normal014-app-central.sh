@@ -6,10 +6,8 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 mode=${1:-preflight}
 app_root=${2:-$(pwd)}
-run_root=${NORMAL014_RUN_ROOT:-$(mktemp -d /tmp/timeline-normal014-app.XXXXXX)}
-cleanup=1
-if [ "${NORMAL014_KEEP_TEMP:-0}" = 1 ]; then cleanup=0; fi
-trap '[ "$cleanup" = 1 ] && rm -rf "$run_root"' EXIT HUP INT TERM
+normal014_start_run timeline-normal014-app
+normal014_use_private_tmp
 
 case "$mode" in
   preflight|run) ;;
@@ -58,7 +56,7 @@ test "$(sha256sum src/integrations/runtime/generated.ts | cut -d' ' -f1)" = c422
 test "$(sha256sum src/integrations/runtime/timeline-commit-types.ts | cut -d' ' -f1)" = f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
 test "$(sha256sum vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json | cut -d' ' -f1)" = f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1
 
-mkdir -p "$run_root/npm-cache" "$run_root/pw-cache" "$run_root/browser-output" "$run_root/tmp" "$run_root/vite-cache"
+mkdir -p "$run_root/npm-cache" "$run_root/pw-cache" "$run_root/browser-output" "$run_root/vite-cache"
 export ASTRID_CHECKOUT="$agent"
 export ASTRID_PYTHON="$NORMAL014_PYTHON"
 export ASTRID_RUNTIME_CHECKOUT="$runtime"
@@ -107,6 +105,11 @@ if [ "$mode" = preflight ]; then
   exit 0
 fi
 
-exec flock -w 600 /home/user/work/.app-m1-browser.lock \
+if flock -w 600 /home/user/work/.app-m1-browser.lock \
   node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \
-  --grep 'M2 real gate 5'
+  --grep 'M2 real gate 5'; then
+  normal014_exit_status=0
+else
+  normal014_exit_status=$?
+fi
+exit "$normal014_exit_status"

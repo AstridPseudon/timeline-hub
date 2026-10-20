@@ -5,10 +5,8 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$HERE/normal014-source-common.sh"
 
 mode=${1:-preflight}
-run_root=${NORMAL014_RUN_ROOT:-$(mktemp -d /tmp/timeline-normal014-parent.XXXXXX)}
-cleanup=1
-if [ "${NORMAL014_KEEP_TEMP:-0}" = 1 ]; then cleanup=0; fi
-trap '[ "$cleanup" = 1 ] && rm -rf "$run_root"' EXIT HUP INT TERM
+normal014_start_run timeline-normal014-parent
+normal014_use_private_tmp
 
 case "$mode" in
   preflight|run) ;;
@@ -47,5 +45,10 @@ export PYTHONDONTWRITEBYTECODE=1
 export PYTHONPATH="$agent:$runtime"
 export PYTHONNOUSERSITE=1
 export PIP_CACHE_DIR="$run_root/pip-cache"
-exec "$NORMAL014_PYTHON" -m pytest -q -c /dev/null -p no:cacheprovider --runxfail \
-  tests/test_timeline_clip_replacement.py::test_native_parent_clip_swap_route_replaces_parent_media
+if "$NORMAL014_PYTHON" -m pytest -q -c /dev/null -p no:cacheprovider --runxfail \
+  tests/test_timeline_clip_replacement.py::test_native_parent_clip_swap_route_replaces_parent_media; then
+  normal014_exit_status=0
+else
+  normal014_exit_status=$?
+fi
+exit "$normal014_exit_status"

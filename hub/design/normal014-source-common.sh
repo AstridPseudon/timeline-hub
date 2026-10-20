@@ -23,6 +23,45 @@ LOCKED_GRAPH_ARCHIVE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90
 LOCKED_GRAPH_ARCHIVE_SHA=895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30
 LOCKED_COMPOSITION_SHA=9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
 
+normal014_cleanup_run_root() {
+  normal014_status=$1
+  if [ "${cleanup:-1}" = 1 ] && [ "${normal014_run_root_owned:-0}" = 1 ]; then
+    rm -rf -- "$run_root" || :
+  fi
+  return "$normal014_status"
+}
+
+normal014_signal_trap() {
+  normal014_signal=$1
+  normal014_status=$2
+  trap - "$normal014_signal"
+  normal014_cleanup_run_root "$normal014_status" || :
+  kill -"$normal014_signal" "$$"
+}
+
+normal014_start_run() {
+  normal014_tmp_parent=${TMPDIR:-/tmp}
+  cleanup=1
+  if [ "${NORMAL014_KEEP_TEMP:-0}" = 1 ]; then cleanup=0; fi
+  normal014_run_root_owned=0
+  if [ -n "${NORMAL014_RUN_ROOT:-}" ]; then
+    run_root=$NORMAL014_RUN_ROOT
+  else
+    run_root=$(mktemp -d "$normal014_tmp_parent/$1.XXXXXX")
+    normal014_run_root_owned=1
+  fi
+  trap 'normal014_cleanup_run_root "$?"' EXIT
+  trap 'normal014_signal_trap HUP "$?"' HUP
+  trap 'normal014_signal_trap INT "$?"' INT
+  trap 'normal014_signal_trap TERM "$?"' TERM
+}
+
+normal014_use_private_tmp() {
+  mkdir -p "$run_root/tmp"
+  TMPDIR=$run_root/tmp
+  export TMPDIR
+}
+
 prepare_checkout() {
   source_repo=$1
   source_sha=$2
