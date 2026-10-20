@@ -161,6 +161,41 @@ describe('current App shot editing base', () => {
     });
   });
 
+  it('refuses canonical scalar settings without shot.set authority and keeps the draft dirty', async () => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha').settings = {
+      turboMode: true,
+      advancedMode: true,
+      motionMode: 'advanced',
+      prompt: 'fixture prompt remains raw',
+      x_settings_opaque: { owner: 'settings-auto-disable', nested: [null, false, 0] },
+    };
+    const state = await setup(input as typeof fixture);
+    const loaded = await capture.persistence.load('shot-alpha');
+    const store = createEntityStore<Record<string, any>>({
+      toolId: 'shot-settings-native-authority',
+      defaults: {},
+      load: async () => ({ db: loaded, lastUsed: null }),
+      save: capture.persistence.save,
+    });
+    await store.getState().ensureEntity('shot-alpha');
+    store.getState().updateFields('shot-alpha', { advancedMode: false, motionMode: 'basic' });
+    const draft = structuredClone(store.getState().entities['shot-alpha'].settings);
+
+    await expect(store.getState().saveImmediate('shot-alpha')).rejects.toThrow(
+      'Mounted shot.set settings authority is unavailable; draft kept.',
+    );
+    expect(capture.errors).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ toastTitle: 'Shot settings draft kept' }),
+    );
+    expect(store.getState().entities['shot-alpha'].status).toBe('error');
+    expect(store.getState().isDirty('shot-alpha')).toBe(true);
+    assert.deepStrictEqual(store.getState().entities['shot-alpha'].settings, draft);
+    expect(state.publish).not.toHaveBeenCalled();
+    assert.deepStrictEqual(state.read(), input);
+  });
+
   it.each(['name', 'settings'] as const)('rejects a competing %s edit instead of silently adopting its new head', async (field) => {
     const state = await setup();
     if (field === 'settings') await capture.persistence.load('shot-alpha');

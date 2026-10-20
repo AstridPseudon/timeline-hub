@@ -63,6 +63,8 @@ import { ShotTimelinePreview } from '../components/ShotTimelinePreview.tsx';
 import { normalizeVideoTravelSettings } from '../settings';
 import { equal } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
 
+const NATIVE_SETTINGS_SCALARS = new Set(['motionMode', 'advancedMode', 'turboMode']);
+
 interface ShotEditorViewProps {
   /** The shot to edit */
   shotToEdit: Shot;
@@ -190,7 +192,12 @@ export function ShotEditorView({
           ));
           if (changes.length === 0) return;
           const capturedSettingsEdit = capturedSettingsEditRef.current;
-          if (capturedSettingsEdit) {
+          if (capturedSettingsEdit || changes.some(([key]) => NATIVE_SETTINGS_SCALARS.has(key))) {
+            if (!capturedSettingsEdit) {
+              const error = new Error('Mounted shot.set settings authority is unavailable; draft kept.');
+              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
+              throw error;
+            }
             const changedSettings = Object.fromEntries(changes);
             if (!equal(changedSettings, capturedSettingsEdit.settings)) {
               const error = new Error('The captured native shot settings edit changed before save. Your draft is kept.');
