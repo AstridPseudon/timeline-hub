@@ -47,6 +47,7 @@ temp/
 
 # Ignore all markdown files except structure.md, structure_detail/, tasks/, and CLAUDE.md
 *.md
+!design/app-delete-browser-json-observation-gate.md
 !design/app-current013-parent-delete-browser-source.md
 !design/app-delete-corrected-two-case-browser-executor.md
 !structure.md
