@@ -23,3 +23,7 @@ Bounded next step for Runtime coordination: provide authorized exact DocumentPin
 M2 integration remains HELD. This adapter does not establish whole Gate 1: historical source capture and sheet grammar/surface coverage remain outstanding, as do reviewed-source release and paired successor proof.
 
 Tests/results and exact commands: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-client-inputs/notes/report.md`.
+
+## Validation handoff — agt-m2-native-client-inputs
+
+Central `agt-m2-native-client-inputs-commit-integration-1020024655-22646`: **253 PASS** (187.12s, exit0; original207 + new46), tree `c595384abc6b1c2b67e18a487c76ddead745beb2`, exact normal Runtime a9a81078 via lock. Local in-memory **86 PASS**, neighboring/native-golden **156 PASS**. Test-only final race strengthening additionally **8 PASS**; product/pin/vendor bytes exactly match central snapshot. One full default run `agt-m2-native-client-inputs-full-1020024655-7961` remains active/unverified; wait existing ID, do not resubmit. Source pin/check/new-file Ruff/whitespace PASS. Repo Ruff baseline needs shrink (2212 vs2220); mypy blocked by YAML/NumPy stub environment. No make-check/full/release/M2/Gate1 clearance claimed. Details and exact commands: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-native-client-inputs/notes/report.md`. Historical NEW schema capture still refuses; captured retained-source requests continue through server authority unchanged.
