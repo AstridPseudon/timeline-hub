@@ -15,9 +15,19 @@ export const AGENT13 = Object.freeze({
   status: 'verified',
 });
 export const RUNTIME13 = Object.freeze({
+  source: '8f105c26e3b62f9c2683f717a9773a12bc775a8e',
+  tree: 'b7f456d5135cba6049980ebc43a91c7a72ab8f7e',
+  status: 'qualified-viewing',
+  ownerAck: 'pending',
+});
+export const RUNTIME13_ARTIFACT = Object.freeze({
+  producer: 'astrid-runtime',
   source: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   tree: '7ab412cc4bcbe517efcfa806e092336390312e18',
-  status: 'qualified-viewing',
+  version: 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56',
+  schema: 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4',
+  componentManifest: 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5',
+  artifactCount: 75,
 });
 export const COMPOSITION13 = Object.freeze({
   source: '5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8',
@@ -158,6 +168,19 @@ export function assertCandidateTuple(tuple = { app: APP13, agent: AGENT13, runti
   return tuple;
 }
 
+export function assertRuntimeArtifact(facts = RUNTIME13_ARTIFACT) {
+  if (facts.producer !== RUNTIME13_ARTIFACT.producer
+    || facts.source !== RUNTIME13_ARTIFACT.source
+    || facts.tree !== RUNTIME13_ARTIFACT.tree
+    || facts.version !== RUNTIME13_ARTIFACT.version
+    || facts.schema !== RUNTIME13_ARTIFACT.schema
+    || facts.componentManifest !== RUNTIME13_ARTIFACT.componentManifest
+    || facts.artifactCount !== RUNTIME13_ARTIFACT.artifactCount) {
+    throw new Error('official Runtime artifact producer facts changed');
+  }
+  return facts;
+}
+
 export function assertAppOwnLeaf(appRoot, base = APP13.source) {
   const changed = git(appRoot, ['diff', '--name-only', `${base}...HEAD`]).split('\n').filter(Boolean);
   const forbidden = changed.filter(file => !OWN_LEAF.has(file));
@@ -169,9 +192,9 @@ export function assertExactGraph({ appRoot, agentRoot, runtimeRoot }) {
   const appBase = git(appRoot, ['merge-base', APP13.source, 'HEAD']);
   if (appBase !== APP13.source) throw new Error(`App is not based on pending App13 candidate ${APP13.source}`);
   if (git(agentRoot, ['rev-parse', 'HEAD']) !== AGENT13.source) throw new Error('Agent13 source is not the approved keeper');
-  if (git(runtimeRoot, ['rev-parse', 'HEAD']) !== RUNTIME13.source) throw new Error('Runtime13 source is not the approved producer');
+  if (git(runtimeRoot, ['rev-parse', 'HEAD']) !== RUNTIME13.source) throw new Error('Runtime13 server source is not the approved source');
   if (git(agentRoot, ['rev-parse', 'HEAD^{tree}']) !== AGENT13.tree) throw new Error('Agent13 tree is not the approved keeper');
-  if (git(runtimeRoot, ['rev-parse', 'HEAD^{tree}']) !== RUNTIME13.tree) throw new Error('Runtime13 tree is not the approved producer');
+  if (git(runtimeRoot, ['rev-parse', 'HEAD^{tree}']) !== RUNTIME13.tree) throw new Error('Runtime13 server tree is not the approved source');
   for (const [name, root] of Object.entries({ app: appRoot, agent: agentRoot, runtime: runtimeRoot })) {
     if (git(root, ['status', '--porcelain'])) throw new Error(`${name} source must be clean before capture`);
   }
@@ -335,6 +358,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   } else if (command === '--ready') {
     if (!agentRoot || !runtimeRoot) throw new Error('--ready requires app, agent, and runtime roots');
     assertCandidateTuple();
+    assertRuntimeArtifact();
     assertOwnerPorts();
     assertCompletedAppConsumer(appRoot);
     assertExactGraph({ appRoot, agentRoot, runtimeRoot });
