@@ -10,11 +10,13 @@ import copy
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 
+from jsonschema import Draft202012Validator
 import pytest
 
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, request_identity
+from test_command_schema_compatibility import baseline
 from test_timeline_commit_acceptance import (
     realm, validate_prepared,  # noqa: F401 (shared API-built fixture)
 )
@@ -22,6 +24,26 @@ from test_timeline_projection_occupancy import (
     accept, image, inverse_request, media_item, new_timeline, proposal,
     seed_slot, snapshot, with_media,
 )
+
+
+PUBLIC_COMMAND_VALIDATOR = Draft202012Validator(baseline("agent-26ef2bbb"))
+
+
+def validate_public_floor(prepared):
+    # Keep the public S2 floor as an independent negative oracle while the
+    # installed Runtime schema advances privately. The fixture is the tracked
+    # published artifact, not a new schema overlay or authority source.
+    for record in prepared["records"]["commands"]:
+        PUBLIC_COMMAND_VALIDATOR.validate(record["command"])
+    validate_prepared(prepared)
+
+
+def typed_item_claim(pair, *, item="new", owner="new"):
+    record = pair[1]["records"]["commands"][0]
+    ref = f"shot:{owner}/item:{item}"
+    record["created"] = [{"ref": ref, "kind": "item", "owner": f"shot:{owner}"}]
+    record["command"]["created"] = [ref]
+    return pair
 
 
 def refuses(service, commits, pair, monkeypatch, *, reason="identity_collision", preview=False):
@@ -315,12 +337,31 @@ def test_ordinary_shot_birth_reserves_detached_identity_across_timelines(realm, 
 def test_frozen_artifact_does_not_yet_carry_typed_item_creation_claims(realm, monkeypatch):
     service, commits, project, _, _ = realm
     pair = proposal(service, commits, project, "main", "typed-claim")
-    record = pair[1]["records"]["commands"][0]
-    record["created"] = [{"ref": "shot:new/item:new", "kind": "item", "owner": "shot:new"}]
-    record["command"]["created"] = ["shot:new/item:new"]
-    # This is the explicit Agent artifact dependency. Do not widen the frozen
-    # schema here or fake an accepted created-and-removed reservation by SQL.
-    refuses(service, commits, pair, monkeypatch, reason="invalid_prepared")
+    typed_item_claim(pair)
+    # The published Agent artifact still rejects this claim. Do not widen the
+    # frozen schema here or fake an accepted created-and-removed reservation by SQL.
+    public_commits = TimelineCommitStore(service.store, validate_prepared=validate_public_floor)
+    refuses(service, public_commits, pair, monkeypatch, reason="invalid_prepared")
+
+
+def test_current_typed_item_creation_claim_is_accepted_and_reserved(realm, monkeypatch):
+    service, commits, project, _, _ = realm
+    first = typed_item_claim(proposal(service, commits, project, "main", "typed-claim-current"))
+    accepted = accept(commits, first)
+    entry = commits.history_entry(project, "main", accepted["receipt"]["receipt_id"])
+    assert entry["records"]["commands"][0]["created"] == first[1]["records"]["commands"][0]["created"]
+    assert entry["records"]["commands"][0]["command"]["created"] == ["shot:new/item:new"]
+
+    accept(commits, proposal(service, commits, project, "main", "typed-claim-current-advance"))
+    # The accepted typed claim remains reserved even though it has no final
+    # projection; a later claim for the same identity refuses atomically.
+    refuses(
+        service,
+        commits,
+        typed_item_claim(proposal(service, commits, project, "main", "typed-claim-current-reuse")),
+        monkeypatch,
+    )
+    assert service.store.integrity_report()["ok"]
 
 
 def test_captured_external_source_does_not_authorize_mutable_overwrite(realm, monkeypatch):
