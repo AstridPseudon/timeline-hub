@@ -1628,27 +1628,12 @@ class RemoteTimelines(_RemoteFamily):
                 ErrorObject("protocol_error", "Runtime timeline listing has no valid version", {}),
                 idempotency_key=key,
             )
-        if target != current_version:
-            return DomainResult.failure(
-                ErrorObject(
-                    "retired_route",
-                    "legacy timeline version recovery is retired; restore an exact revision with timeline.restore",
-                    {
-                        "status": 410,
-                        "operation": "recover_timeline",
-                        "replacement": "timeline.restore",
-                        "next_action": "Use TimelineSession.restore(revision_id, content_digest) with the exact historical revision.",
-                        "version_is_not_revision": True,
-                    },
-                ),
-                idempotency_key=key,
-            )
         return self._typed(
             "recover_timeline",
             timeline_id,
             key=key,
             expected_version=expected,
-            version=current_version,
+            version=target,
             idempotency_key=key,
         )
 
