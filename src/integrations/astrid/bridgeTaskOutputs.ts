@@ -22,6 +22,15 @@ export interface BridgeTaskOutputRecord extends Record<string, unknown> {
  */
 export async function readBridgeTaskOutputs(task: Task): Promise<BridgeTaskOutputRecord[]> {
   const detail = await new AstridLocalClient({ projectSlug: task.projectId }).tasks.get(task.id);
+  if (detail.task_id !== task.id) {
+    throw new Error(`Runtime task detail identity mismatch for ${task.id}`);
+  }
+  if (detail.project_id !== task.projectId) {
+    throw new Error(`Runtime task detail project mismatch for ${task.id}`);
+  }
+  if (detail.status !== 'succeeded') {
+    return [];
+  }
   return (detail.outputs ?? []).map((output) => {
     const params = typeof output.params_json === 'string'
       ? parseParams(output.params_json)

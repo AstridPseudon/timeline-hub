@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { readBridgeTaskOutputs } from '@/integrations/astrid/bridgeTaskOutputs';
 import { Task } from '@/types/tasks';
 import { GenerationRow } from '@/domains/generation/types';
-import { extractSourceGenerationId } from '../utils/task-utils';
 import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
 import { expandShotData } from '@/shared/lib/shots/shotData';
 
@@ -19,17 +18,16 @@ interface UseImageGenerationOptions {
  */
 export function useImageGeneration({
   task,
-  taskParams,
   isImageTask,
 }: UseImageGenerationOptions) {
   // Check if this is a successful image task with output
   const hasGeneratedImage = useMemo(() => {
-    return isImageTask && task.status === 'Complete' && !!task.outputLocation;
-  }, [isImageTask, task.status, task.outputLocation]);
+    return isImageTask && task.status === 'Complete';
+  }, [isImageTask, task.status]);
 
-  // Fetch generation data - checks both generations and generation_variants tables
+  // Fetch the task's recorded managed outputs for the image lightbox.
   const { data: generationResult, isLoading: isLoadingGeneration, error: generationError } = useQuery({
-    queryKey: [...generationQueryKeys.forTask(task.id), task.outputLocation],
+    queryKey: generationQueryKeys.forTask(task.id),
     queryFn: async () => {
       const outputs = await readBridgeTaskOutputs(task);
       const generation = outputs.find((output) => output.type.includes('image')) ?? outputs[0] ?? null;
@@ -41,7 +39,7 @@ export function useImageGeneration({
           }
         : null;
     },
-    enabled: hasGeneratedImage && !!task.outputLocation,
+    enabled: hasGeneratedImage,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
@@ -49,25 +47,6 @@ export function useImageGeneration({
 
   // Create GenerationRow data for MediaLightbox
   const generationData: GenerationRow | null = useMemo(() => {
-    // Fallback: If no generation record exists, create a minimal GenerationRow from outputLocation
-    if (isImageTask && hasGeneratedImage && task.outputLocation && !actualGeneration) {
-      const sourceGenerationId = extractSourceGenerationId(taskParams.parsed);
-      
-      return {
-        id: task.id,
-        location: task.outputLocation,
-        imageUrl: task.outputLocation,
-        thumbUrl: task.outputLocation,
-        type: 'image',
-        createdAt: task.createdAt || new Date().toISOString(),
-        metadata: task.params || {},
-        taskId: task.id,
-        generation_id: sourceGenerationId || undefined,
-        parent_generation_id: sourceGenerationId || undefined,
-        based_on: sourceGenerationId || undefined,
-      } as GenerationRow;
-    }
-    
     if (!hasGeneratedImage || !actualGeneration) return null;
     
     const gen = actualGeneration as Record<string, unknown>;
@@ -117,7 +96,7 @@ export function useImageGeneration({
       _variant_id: generationResult?.variantId || undefined,
       _variant_is_primary: generationResult?.variantIsPrimary || undefined,
     } as GenerationRow;
-  }, [hasGeneratedImage, actualGeneration, task, taskParams.parsed, isImageTask, generationResult?.variantId, generationResult?.variantIsPrimary]);
+  }, [hasGeneratedImage, actualGeneration, generationResult?.variantId, generationResult?.variantIsPrimary]);
 
   return {
     generationData,

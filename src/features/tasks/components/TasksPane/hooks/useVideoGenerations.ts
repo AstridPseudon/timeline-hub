@@ -40,7 +40,7 @@ export function useVideoGenerations({
 
   // Fetch video generations
   const { data: videoGenerations, isLoading: isLoadingVideoGen } = useQuery({
-    queryKey: [...generationQueryKeys.videoForTask(task.id), task.outputLocation],
+    queryKey: generationQueryKeys.videoForTask(task.id),
     queryFn: async () => {
 
       if (!isVideoTask || task.status !== 'Complete') {
@@ -49,25 +49,7 @@ export function useVideoGenerations({
 
       const outputs = await readBridgeTaskOutputs(task);
       const videoOutputs = outputs.filter((output) => output.type.includes('video'));
-      if (videoOutputs.length > 0) return videoOutputs;
-
-      // FINAL FALLBACK: If no generation record exists but task has outputLocation,
-      // create a minimal pseudo-generation from the task data
-      // This handles cases where complete-task failed to create the generation record
-      if (task.outputLocation) {
-        return [{
-          id: task.id, // Use task ID as pseudo-generation ID
-          location: task.outputLocation,
-          thumbnail_url: null,
-          type: 'video',
-          created_at: task.createdAt,
-          project_id: task.projectId,
-          params: task.params,
-          _is_fallback: true, // Mark as fallback so we know it's not a real generation
-        }];
-      }
-
-      return outputs;
+      return videoOutputs;
     },
     enabled: shouldFetchVideo && isVideoTask && task.status === 'Complete',
   });
