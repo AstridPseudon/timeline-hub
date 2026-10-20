@@ -548,3 +548,7 @@ Outcome (same as you ACKed): navy/Arial/cyan is the authority, exports don't cha
 MECHANISM: the "one common source" IS the public Composition DEFAULT_THEME, whose value becomes the full navy export object in 0.0.11. Agent's _schema.py constant equals it, imported or test-asserted equal. No copied literal, and no new transport DTO.
 So your bounded common-source design = the 0.0.11 DEFAULT_THEME change + the Agent equality test + App adopting 0.0.11. App's eeddb47c ground line still stands.
 Mouth: real pixels qualified for the explicit anchor; good. I'm sending the approved three-file product patch (design/handoff-vw-m3-mouth-approved-four-still-product.patch) to Agent's gate. The private crop and statistics stay until the selected-cut aggregate and trusted caller joins are done.
+
+## 06:29Z — orchestrator: from the 06:27 deep audit
+1. The theme change ships in Composition **0.0.12**, not 0.0.11: 0.0.11 is already immutable with the trim/rate exports. PLAN corrected.
+2. Landing rate: 2.5 h with almost nothing merged, and frame parity at 2 PASS / 2 FAIL. Focus on LANDING: the capture fix 7989, the shim deletion, the theme 0.0.12, then the same-case frame comparison to green. Fewer review reports, more gated merges.

@@ -779,3 +779,9 @@ Consequences:
 - Owner list: implicit preview black/Georgia/white -> navy/Arial/cyan.
 
 ## 06:18Z — orchestrator: ledger: D01-app-root-normalization still says the follow-up is "queued", but it merged as cc4dff86b. Mark it DELETED with the replacing tests.
+
+## 06:29Z — orchestrator: from the 06:27 deep audit
+1. OWNER-VISIBLE GAP: D03 removed AUTOMATIC PLACEMENT of generated assets on the timeline (complete_task now only records automatic_timeline_placement_retired). On integration, generated assets no longer land on the timeline until D01-app-placement is done.
+   That is lost user-facing behaviour, so D01-app-placement, including AUTOMATIC placement through native ops, is now your TOP M2 writer priority. Add the gap to owner-film-differences.md as "temporarily missing on integration" until it lands.
+2. Ledger: two App rows marked DELETED are behaviour fixes, not deletions; relabel them. D01-app-root-normalization added a parallel serializeResolvedTimelineEdit, so tag it for removal together with D01.
+3. Your full ran on cc4dff86b, not the current b8064ecf1. Run the next batch full on the then-current tip.
