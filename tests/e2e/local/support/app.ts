@@ -94,11 +94,11 @@ export async function openEmbeddedCanonicalShot(page: Page, occurrenceId: string
 }
 
 /** The visible native header input inside an embedded ShotEditorView.
- * The mounted timeline also contains a track-label input, so selecting the
- * first input would exercise the unrelated track.set gesture instead.
+ * The mounted timeline also contains track labels and combobox inputs, so the
+ * production desktop header width identifies the shot-name field precisely.
  */
 export const embeddedShotNameInput = (dialog: import('@playwright/test').Locator) => (
-  dialog.locator('input:not([aria-label="Track name"]):visible').first()
+  dialog.locator('input[class*="w-[200px]"]:visible').first()
 );
 
 export async function editFirstTrackName(page: Page, name: string) {

@@ -167,7 +167,7 @@ test('M2 real embedded shot name: raw preservation, undo, lost ACK restart retry
     provenance: initial.shot.payload.provenance,
     x_f2_opaque: initial.shot.payload.x_f2_opaque,
   });
-  await expect(first.dialog.locator('input')).toHaveCount(0);
+  await expect(embeddedShotNameInput(first.dialog)).toHaveCount(0);
   await expect(first.dialog.getByText(ACCEPTED_NAME, { exact: true }).first()).toBeVisible();
   const acceptedPin = pinOf(acceptedResponse);
   const acceptedHistory = await harness.runtimeJson<HistoryPage>('GET',
