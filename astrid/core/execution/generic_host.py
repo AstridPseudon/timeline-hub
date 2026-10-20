@@ -6502,6 +6502,22 @@ class GenericPackHost:
 
         input_spec = _admitted_spec_envelope(spec)
         values = dict(input_spec.get("inputs", {})) if isinstance(input_spec.get("inputs", {}), Mapping) else {}
+        from astrid.core.rendering.verified_source import (
+            PreparedTimelineInputs,
+            mint_prepared_source,
+            reject_source_keys,
+        )
+
+        try:
+            reject_source_keys(input_spec)
+            if isinstance(input_spec.get("params"), Mapping):
+                reject_source_keys(input_spec["params"])
+            reject_source_keys(values)
+            for config in (values["backend_config"].values() if isinstance(values.get("backend_config"), Mapping) else ()):
+                if isinstance(config, Mapping):
+                    reject_source_keys(config)
+        except ValueError as exc:
+            raise HostError(str(exc)) from exc
         params = input_spec.get("params")
         bounded_policy = None
         if storage_policy_version in {
@@ -6703,6 +6719,34 @@ class GenericPackHost:
                             filmstrip_authority[key] = hydrate_snapshot(ref, key)
                             del filmstrip_authority[key + "_ref"]
                     values["filmstrip_authority"] = json.dumps(filmstrip_authority, sort_keys=True, separators=(",", ":"))
+        # Only Runtime-admitted immutable refs can mint the internal source.
+        # Inline snapshots and caller provenance remain ordinary native inputs.
+        source_ref = input_spec.get("timeline_snapshot_ref") or values.get("timeline_snapshot_ref")
+        source_authority = values.get("timeline_authority")
+        if (isinstance(input_spec.get("timeline_snapshot_ref"), Mapping)
+                and isinstance(values.get("timeline_snapshot_ref"), Mapping)
+                and input_spec["timeline_snapshot_ref"] != values["timeline_snapshot_ref"]):
+            raise HostError("timeline snapshot reference differs from admitted context")
+        source_snapshot = snapshot
+        context = spec.get("authority_context") or input_spec.get("authority_context")
+        if (isinstance(context, Mapping) and isinstance(context.get("capture_snapshot_ref"), Mapping)
+                and context["capture_snapshot_ref"].get("source_kind") in {"revision", "working_copy"}):
+            source_ref = context["capture_snapshot_ref"]
+            source_snapshot = hydrate_snapshot(source_ref, "capture_snapshot")
+            source_authority = source_snapshot.get("metadata", {}).get("capture_authority")
+            snapshot = source_snapshot
+            filmstrip = values.get("filmstrip_authority")
+            if isinstance(filmstrip, str):
+                if json.loads(filmstrip).get("capture_snapshot") != source_snapshot:
+                    raise HostError("capture snapshot differs from admitted context")
+        canonical_ref = isinstance(source_ref, Mapping) and source_ref.get("source_kind") in {"revision", "working_copy"}
+        if canonical_ref:
+            if not isinstance(source_authority, Mapping) or not isinstance(source_snapshot, Mapping):
+                raise HostError("verified source requires admitted authority and snapshot")
+            if any(name in values for name in ("timeline", "assets_registry")):
+                raise HostError("verified source prepared inputs cannot be caller replaced")
+            if "timeline_snapshot" in values or "timeline_snapshot" in input_spec:
+                raise HostError("verified source snapshot cannot be caller replaced")
         # The snapshot is an admission envelope, not a renderer input port.
         # Once its derived files are created, do not forward the authoring
         # document as an undeclared child argument.
@@ -6950,7 +6994,16 @@ class GenericPackHost:
         if materialized_objects:
             values["materialized_root"] = str(managed_root)
             values["materialized_objects"] = materialized_objects
-        return values
+        prepared = PreparedTimelineInputs(values)
+        if canonical_ref:
+            try:
+                prepared.timeline_source = mint_prepared_source(
+                    ref=source_ref, authority=source_authority, snapshot=source_snapshot,
+                    timeline_path=values["timeline"], assets_path=values["assets_registry"], attempt=attempt,
+                )
+            except (KeyError, ValueError) as exc:
+                raise HostError(str(exc)) from exc
+        return prepared
 
     def _start_network_broker(
         self,
@@ -7996,6 +8049,15 @@ class GenericPackHost:
         # unrelated same-named checkout in ambient site-packages. The parent
         # remains available for packs whose source package uses the checkout
         # directory name as its import root.
+        from astrid.core.rendering.verified_source import SOURCE_ENV
+
+        # This value is an attribute of host-owned prepared inputs, never a
+        # manifest input or binding.env override. Clear any ambient handoff.
+        env.pop(SOURCE_ENV, None)
+        source = getattr(inputs, "timeline_source", None)
+        if source is not None:
+            source.validate(inputs["timeline"], inputs["assets_registry"])
+            env[SOURCE_ENV] = source._anchor
         env['PYTHONPATH'] = _command_worker_pythonpath(record, env.get('PYTHONPATH', ''))
         cwd = _confined_cwd(
             binding.cwd,
