@@ -312,7 +312,6 @@ def test_sdk_capture_reserved_source_ports_are_refused(client, key):
         prepare(client, **{key: {'source_kind': 'revision', 'revision_id': 'forged'}})
 
 
-@pytest.mark.xfail(strict=True, reason="needs early SDK invocation source-key rejection and error mapping")
 @pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
 def test_sdk_capture_invocation_refuses_source_before_admission(key):
     from astrid.sdk.invocation import _invoke_internal_result
