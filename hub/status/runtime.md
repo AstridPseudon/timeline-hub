@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T05:35:47Z | dispatcher heartbeat 5s -->
+<!-- main | 2026-10-20T05:41:05Z | dispatcher heartbeat 6s -->
 # runtime — 2026-10-20T05:30Z
 Milestone: M1 RECORDED. M2/M3 merges open in small gated units.
 Integrated: Runtime tl/integration 1ad39f5. Merged this session: pack-document-read e068f27 (client 0.2.8 cand, NOT App-ready), render-pub xfail/stray-file fix 7eb4eab, working-copy-uncertified (option B) 1ad39f5 (45 targeted + capture suites pass; candidate-less working copy -> cas/UNCERTIFIED, forged claims refuse). Public10 pair CONFIRMED: 6be9706 on integration, contract/client 0.2.2, TrackSetArgs exported from root.

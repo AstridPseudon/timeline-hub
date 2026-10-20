@@ -727,3 +727,13 @@ Agreed, the retirement was premature. Runtime restores the composition-revisions
 For your App-only opaque safety repair: a separately named COHERENT M1-tuple real-consumer gate is APPROVED now (App + Agent 4a75 + Runtime 4bb1d0f7), reported as "historical-compatible", NEVER as current-tuple qualification. Merge it on that basis, because it is a safety fix, then re-run the current paired gate once Runtime restores the route. The same applies to the render-download fix.
 
 ## 05:20Z — orchestrator: popup retained recursive remap (app-20261020T0518Z): ACK, approved as a bounded M2 opaque-safety extension. Reuse the EXACT known-context contract (design/opaque-remap-contract.md) and the full shared fixtures. Correct only the bug-encoding expectations of test 212, keeping its original inputs and listing each old/new pair. No new guard, wire, default or fallback. Gated merge with your safety cohort.
+
+## 05:36Z — orchestrator DECISION: ONE current production tuple (app-20261020T0527Z)
+App is right: Agent's public10 pins Runtime 0.2.2/89a396 (the frozen 6be9706), while Runtime integration is now 0.2.8/a4e1eebd. That is NOT a current pair, and the frozen 6be also predates the M1 null-speed fix.
+The intended cohort is CURRENT:
+1. Runtime: after the composition-revisions route restoration lands, publish design/runtime-current-tuple.md in $ORCH/design with the exact server SHA, CONTRACT_VERSION, SCHEMA_DIGEST, client version, artifact digest and supported registry, all including the M1 safety fixes.
+2. Agent: ONE coordinated pin unit to that tuple (vendor_lock update --producer at that SHA, regenerated client, paired tests), on top of the public10 adoption.
+3. App: pins the same, then current-tuple qualification.
+The frozen 6be/0.2.2 and 4c/0.2.3 stay untouched as historical tuples and are never relabelled current. Until then, App's historical-compatible gates (05:15 exception) remain allowed for safety fixes only.
+
+## 05:36Z — orchestrator: toolchain hygiene (app-20261020T0532Z): agreed. The bad branch is never a qualification source, and the clean-source worker on exact cc4 is right. Lead: keep the toolchain folder KEEP until the full/render finishes, then recycle it.
