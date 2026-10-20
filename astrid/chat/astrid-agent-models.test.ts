@@ -10,6 +10,7 @@ import { discoverLocalAgents } from './astrid-local-agents.ts';
 import { AcpProcessHost } from './acpProcessHost.ts';
 import { bridgeTestClient } from './bridge-test-client.ts';
 import { localAgentCatalogSchema } from './localAgents.ts';
+import { processHasExited } from './testProcess.ts';
 
 const catalog = {
   schemaVersion: 1,
@@ -145,7 +146,7 @@ setInterval(() => {}, 1000);
     });
     assert.ok(Date.now() - started < 9_000, 'a hanging catalog must finish before the browser deadline');
     const pid = Number(readFileSync(pidFile, 'utf8'));
-    assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+    assert.equal(processHasExited(pid), true, `process ${pid} must have exited`);
   } finally {
     if (existsSync(pidFile)) {
       try { process.kill(Number(readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch { /* Already reaped. */ }
@@ -185,10 +186,10 @@ setInterval(() => {}, 1000);
     assert.deepEqual(children.map(child => child.role), ['wrapper', 'omp', 'nested-cli']);
     assert.deepEqual(children[1]!.args?.slice(0, 3), ['models', 'ls', '--json']);
     for (let attempt = 0; attempt < 100; attempt++) {
-      if (children.every(child => { try { process.kill(child.pid, 0); return false; } catch { return true; } })) break;
+      if (children.every(child => processHasExited(child.pid))) break;
       await new Promise(resolve => setTimeout(resolve, 10));
     }
-    for (const child of children) assert.throws(() => process.kill(child.pid, 0), { code: 'ESRCH' });
+    for (const child of children) assert.equal(processHasExited(child.pid), true, `process ${child.pid} must have exited`);
   } finally {
     for (const [name, value] of Object.entries(previous)) {
       if (value === undefined) delete process.env[name];
@@ -268,12 +269,12 @@ if (args[0] === '--agent-profile-file') {
       const children = readFileSync(calls, 'utf8').trim().split('\n').map(line => JSON.parse(line) as { pid: number; agent: string; args: string[] });
       assert.equal(children.filter(child => child.agent === 'astrid').length, 2, 'both the hanging catalog and bootstrap discovery ran');
       assert.equal(children.filter(child => child.agent === 'codex').length, 1);
-      // SIGKILL is synchronous; allow the child exit events to reap the PIDs.
+      // Allow child exit events to report termination after SIGKILL.
       for (let attempt = 0; attempt < 100; attempt++) {
-        if (children.every(child => { try { process.kill(child.pid, 0); return false; } catch { return true; } })) break;
+        if (children.every(child => processHasExited(child.pid))) break;
         await new Promise(resolve => setTimeout(resolve, 10));
       }
-      for (const child of children) assert.throws(() => process.kill(child.pid, 0), { code: 'ESRCH' });
+      for (const child of children) assert.equal(processHasExited(child.pid), true, `process ${child.pid} must have exited`);
     } finally {
       await close?.();
       if (existsSync(calls)) for (const line of readFileSync(calls, 'utf8').trim().split('\n')) {

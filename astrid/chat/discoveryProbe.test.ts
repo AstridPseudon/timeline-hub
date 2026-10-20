@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { discoveryProbe } from './discoveryProbe.ts';
+import { processHasExited } from './testProcess.ts';
 
 test('a discovery deadline kills a wrapper and its hanging CLI child', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'astrid-probe-tree-'));
@@ -25,10 +26,10 @@ setInterval(() => {}, 1000);
     const children = readFileSync(pids, 'utf8').trim().split('\n').map(Number);
     assert.equal(children.length, 2, 'the probe must actually start its nested CLI');
     for (let attempt = 0; attempt < 100; attempt++) {
-      if (children.every(pid => { try { process.kill(pid, 0); return false; } catch { return true; } })) break;
+      if (children.every(processHasExited)) break;
       await new Promise(resolve => setTimeout(resolve, 10));
     }
-    for (const pid of children) assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+    for (const pid of children) assert.equal(processHasExited(pid), true, `process ${pid} must have exited`);
   } finally {
     try { for (const pid of readFileSync(pids, 'utf8').trim().split('\n').map(Number)) process.kill(pid, 'SIGKILL'); } catch { /* Already reaped. */ }
     rmSync(directory, { recursive: true, force: true });
