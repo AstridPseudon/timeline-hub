@@ -12,6 +12,7 @@ import pytest
 from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.theme._schema import BUILTIN_DEFAULT_THEME
 from scripts import gen_effect_registry
+from tests.packs.rendering._helpers import _stage_private_node_modules
 
 SHA256 = "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3"
 
@@ -44,9 +45,7 @@ def presenter_query(tmp_path_factory):
                     for m in archive.getmembers() if m.isfile()}
         archive.extractall(project, filter="data")
     (project / "package").rename(package)
-    for peer in peers.iterdir():
-        if peer.name != "@banodoco":
-            (modules / peer.name).symlink_to(peer, target_is_directory=peer.is_dir())
+    _stage_private_node_modules(peers, modules, skip_scopes={"@banodoco"})
     for name in ("package.json", "webpack-alias.mjs"):
         shutil.copyfile(ROOT / "remotion" / name, project / name)
     shutil.copyfile(ROOT / "remotion/src/host-registries.ts", source / "host-registries.ts")

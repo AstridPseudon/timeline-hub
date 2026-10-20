@@ -17,6 +17,56 @@ from contextlib import contextmanager
 from pathlib import Path
 
 
+def _stage_private_node_modules(
+    peers: Path,
+    modules: Path,
+    *,
+    skip_scopes: frozenset[str] | set[str] = frozenset(),
+) -> None:
+    """Link a borrowed peer graph into a private node_modules root.
+
+    Scope directories are owned by the stage; only their package leaves link
+    to the read-only peer graph.  The realpath check must run before every
+    directory or leaf write so a linked parent cannot turn a link operation
+    into a write through the borrowed graph.
+    """
+    borrowed = peers.resolve(strict=True)
+
+    def assert_private_parent(parent: Path) -> None:
+        resolved = parent.resolve(strict=False)
+        if resolved == borrowed or resolved.is_relative_to(borrowed):
+            raise ValueError(f"staging destination resolves into borrowed graph: {parent}")
+        if parent.exists() and (parent.is_symlink() or not parent.is_dir()):
+            raise ValueError(f"staging destination parent is not a real directory: {parent}")
+
+    assert_private_parent(modules)
+    modules.mkdir(parents=True, exist_ok=True)
+    assert_private_parent(modules)
+    for peer in sorted(peers.iterdir(), key=lambda item: item.name):
+        if peer.name in skip_scopes:
+            continue
+        if peer.name.startswith("@"):
+            scope = modules / peer.name
+            assert_private_parent(scope)
+            scope.mkdir(parents=True, exist_ok=True)
+            if scope.is_symlink() or not scope.is_dir():
+                raise ValueError(f"staging scope is not a real directory: {scope}")
+            for leaf in sorted(peer.iterdir(), key=lambda item: item.name):
+                target = scope / leaf.name
+                assert_private_parent(target.parent)
+                subprocess.run(
+                    ["ln", "-sfnT", str(leaf.resolve(strict=True)), str(target)],
+                    check=True,
+                )
+        else:
+            target = modules / peer.name
+            assert_private_parent(target.parent)
+            subprocess.run(
+                ["ln", "-sfnT", str(peer.resolve(strict=True)), str(target)],
+                check=True,
+            )
+
+
 @contextmanager
 def _execution_env():
     """Prepend the active python bin and node bin to PATH so transport-spawned
