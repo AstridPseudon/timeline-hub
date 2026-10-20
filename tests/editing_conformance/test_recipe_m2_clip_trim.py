@@ -22,6 +22,7 @@ from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_f
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.rebase import replay
 from astrid.sdk.timeline_checkout import Clip
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import inverse, later
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
@@ -281,7 +282,7 @@ def test_unchanged_writes_and_original_capture_claims_are_authoritative():
 
 
 def test_portable_golden_and_closed_schema():
-    golden = json.loads(FIXTURE.read_text())
+    golden = load_fixture(FIXTURE)
     original = bundle_from_document(golden['input'])
     plan = execute(original, golden['commands'])
     assert plan.records == golden['records']

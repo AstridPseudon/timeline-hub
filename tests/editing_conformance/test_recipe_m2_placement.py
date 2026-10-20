@@ -14,6 +14,7 @@ from astrid.sdk.timeline.commands import execute, validate_command
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_placement_commands import capture_placement
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m1_commands import inverse, later
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
@@ -35,7 +36,7 @@ def capture(bundle, owner='parent', clip_id='clip-a', on=4.004):
 
 
 def test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo():
-    for case in json.loads(FIXTURE.read_text())['cases']:
+    for case in load_fixture(FIXTURE)['cases']:
         original = bundle_from_document(case['input'])
         before = copy.deepcopy(original)
         command = capture_placement(original, **case['request'])
