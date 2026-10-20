@@ -374,6 +374,23 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
             idempotency_key="host-chain-author",
         )
         author = admission["data"]["task_id"]
+        admitted_task = service.task(author)["task"]
+        admitted_spec = admitted_task["spec"]["spec"]
+        admitted_capture = admitted_spec["inputs"]["resolved_children"]
+        admitted_target = admitted_capture["admitted_target"]
+        assert admitted_task["capability"] == "rendering.assemble_timeline"
+        assert admitted_spec["runtime_dependencies"]["publication"]["admitted_target"] == admitted_target
+        assert admitted_capture["replace_clips"] == []
+        assert [child["association"] for child in admitted_capture["children"]] == selectors
+        assert [child["media"]["object_id"] for child in admitted_capture["children"]] == [
+            selector["object_id"] for selector in selectors
+        ]
+        assert admitted_spec["runtime_dependencies"]["aggregation"]["order"] == [
+            selector["object_id"] for selector in selectors
+        ]
+        assert admitted_spec["outputs"]["authoring_proposal"] == {
+            "type": "file", "artifact_type": "timeline/authoring-proposal",
+        }
         author_claim = host.client.claim_next(
             executor_id="astrid-pack-host",
             capability_ids=["rendering.assemble_timeline"],
@@ -407,6 +424,8 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         assert [command["args"]["media"]["object_id"] for command in settled["commands"] if command["op"] == "clip.add-media"] == [
             selector["object_id"] for selector in selectors
         ]
+        assert settled["admitted_target"] == admitted_target
+        assert settled["commands"][0]["args"]["replace_clips"] == admitted_capture["replace_clips"]
         session.queue_assembly(author, attempt_id=author_claim["attempt_id"])
         pending = json.loads((tmp_path / "host-chain-outbox.json").read_text())
         assert pending["pending"][0]["op"] == "producer.guard"
@@ -441,6 +460,9 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         assert render_admission.ok
         render_task_id = render_admission.kernel_task_id
         assert isinstance(render_task_id, str) and render_task_id
+        assert service.store.conn.execute(
+            "SELECT COUNT(*) FROM tasks WHERE capability=?", ("rendering.render",)
+        ).fetchone()[0] == 1
         render_claim = host.client.claim_next(
             executor_id="astrid-pack-host",
             capability_ids=["rendering.render"],
@@ -478,7 +500,9 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         assert probe.returncode == 0
         assert float(probe.stdout.strip()) > 0
         render_task = service.task(render_task_id)["task"]
-        assert render_task["spec"]["spec"]["inputs"]["timeline_authority"]["parent_revision_id"] == accepted_revision
+        render_inputs = render_task["spec"]["spec"]["inputs"]
+        assert render_inputs["timeline_authority"]["config_version"] == scope.data["version"]
+        assert render_inputs["timeline_authority"]["parent_revision_id"] == accepted_revision
         undone = restarted.undo([accepted_publication], idempotency_key="host-chain-undo")
         assert undone["data"]["accepted_revision_id"]
     finally:
