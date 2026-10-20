@@ -1,0 +1,4511 @@
+diff --git a/src/tools/video-editor/commands/fixtures/recipe_m2_app_occurrence_duplicate.json b/src/tools/video-editor/commands/fixtures/recipe_m2_app_occurrence_duplicate.json
+new file mode 100644
+index 000000000..f23ad04a9
+--- /dev/null
++++ b/src/tools/video-editor/commands/fixtures/recipe_m2_app_occurrence_duplicate.json
+@@ -0,0 +1,3832 @@
++{
++  "after_bundle": {
++    "base_parent": {
++      "content_digest": "sha256:59e16ad2e4d645f7cf4842d215b40c449eaf479aa73b6fe527f851674fdaf078",
++      "revision_id": "parent-1"
++    },
++    "base_parent_payload": {
++      "clips": [
++        {
++          "app": {
++            "org.example": {
++              "clear": null,
++              "literal": "clip-a"
++            }
++          },
++          "asset": "picture",
++          "at": 1,
++          "clipType": "media",
++          "hold": 2,
++          "id": "clip-a",
++          "track": "picture"
++        },
++        {
++          "app": {
++            "org.example": {
++              "clear": null,
++              "literal": "clip-a"
++            }
++          },
++          "asset": "picture",
++          "at": 5,
++          "clipType": "media",
++          "hold": 2,
++          "id": "clip-b",
++          "track": "picture"
++        }
++      ],
++      "config": {
++        "clips": [
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 1,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-a",
++            "track": "picture"
++          },
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 5,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-b",
++            "track": "picture"
++          }
++        ],
++        "opaque": {
++          "timestamp": "authored timestamp",
++          "v": [
++            null,
++            false,
++            0
++          ]
++        },
++        "output": {
++          "fps": {
++            "denominator": 1001,
++            "numerator": 30000
++          }
++        },
++        "tracks": [
++          {
++            "id": "picture",
++            "kind": "visual"
++          }
++        ]
++      },
++      "name": "Renamed Film",
++      "registry": {
++        "assets": {
++          "picture": {
++            "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++            "type": "image"
++          }
++        }
++      },
++      "unknown": {
++        "opaque": [
++          "parent-1",
++          null
++        ]
++      }
++    },
++    "base_placements": {
++      "occ-0": {
++        "association_id": "assoc-old",
++        "duration_ms": 10000,
++        "metadata": {
++          "org.example/v1": {
++            "keep": [
++              null,
++              false,
++              0
++            ],
++            "occurrence_id": "occ-0",
++            "output_identity": "out:occ-0",
++            "shot_id": "chapter-shot",
++            "stable_deep_link": "deep:occ-0"
++          }
++        },
++        "occurrence_id": "occ-0",
++        "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++        "output_records": [
++          {
++            "association_id": "assoc-old",
++            "output_identity": "out:occ-0",
++            "task_id": "task-old"
++          }
++        ],
++        "parent_document_id": "doc /é",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++        "source_offset": 0,
++        "speed": 1,
++        "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++        "task_id": "task-old",
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      },
++      "occ-1": {
++        "duration_ms": 10000,
++        "metadata": null,
++        "occurrence_id": "occ-1",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9",
++        "source_offset": 0,
++        "speed": 1,
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      }
++    },
++    "parent": {
++      "clips": [
++        {
++          "app": {
++            "org.example": {
++              "clear": null,
++              "literal": "clip-a"
++            }
++          },
++          "asset": "picture",
++          "at": 1,
++          "clipType": "media",
++          "hold": 2,
++          "id": "clip-a",
++          "track": "picture"
++        },
++        {
++          "app": {
++            "org.example": {
++              "clear": null,
++              "literal": "clip-a"
++            }
++          },
++          "asset": "picture",
++          "at": 5,
++          "clipType": "media",
++          "hold": 2,
++          "id": "clip-b",
++          "track": "picture"
++        }
++      ],
++      "config": {
++        "clips": [
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 1,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-a",
++            "track": "picture"
++          },
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 5,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-b",
++            "track": "picture"
++          }
++        ],
++        "opaque": {
++          "timestamp": "authored timestamp",
++          "v": [
++            null,
++            false,
++            0
++          ]
++        },
++        "output": {
++          "fps": {
++            "denominator": 1001,
++            "numerator": 30000
++          }
++        },
++        "tracks": [
++          {
++            "id": "picture",
++            "kind": "visual"
++          }
++        ]
++      },
++      "name": "Renamed Film",
++      "registry": {
++        "assets": {
++          "picture": {
++            "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++            "type": "image"
++          }
++        }
++      },
++      "unknown": {
++        "opaque": [
++          "parent-1",
++          null
++        ]
++      }
++    },
++    "placements": [
++      {
++        "association_id": "assoc-old",
++        "duration_ms": 10000,
++        "metadata": {
++          "org.example/v1": {
++            "keep": [
++              null,
++              false,
++              0
++            ],
++            "occurrence_id": "occ-0",
++            "output_identity": "out:occ-0",
++            "shot_id": "chapter-shot",
++            "stable_deep_link": "deep:occ-0"
++          }
++        },
++        "occurrence_id": "occ-0",
++        "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++        "output_records": [
++          {
++            "association_id": "assoc-old",
++            "output_identity": "out:occ-0",
++            "task_id": "task-old"
++          }
++        ],
++        "parent_document_id": "doc /é",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++        "source_offset": 0,
++        "speed": 1,
++        "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++        "task_id": "task-old",
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      },
++      {
++        "duration_ms": 10000,
++        "metadata": null,
++        "occurrence_id": "occ-1",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9",
++        "source_offset": 0,
++        "speed": 1,
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      },
++      {
++        "association_id": "assoc-old",
++        "duration_ms": 10000,
++        "metadata": {
++          "org.example/v1": {
++            "keep": [
++              null,
++              false,
++              0
++            ],
++            "occurrence_id": "occ-0",
++            "output_identity": "out:occ-0",
++            "shot_id": "chapter-shot",
++            "stable_deep_link": "deep:occ-0"
++          }
++        },
++        "occurrence_id": "occ-copy",
++        "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-copy/output/final-video",
++        "output_records": [
++          {
++            "association_id": "assoc-old",
++            "output_identity": "out:occ-0",
++            "task_id": "task-old"
++          }
++        ],
++        "parent_document_id": "doc /é",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-copy",
++        "source_offset": 0,
++        "speed": 1,
++        "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/shot-copy/revision/authoring-shot-revision-44fbac89c5e00d8c893cd59c66716b3d5ca1366e54bb1ed008c5118fe74f8dc5/occurrence/occ-copy",
++        "task_id": "task-old",
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      }
++    ],
++    "project_id": "project-1",
++    "schema_version": 1,
++    "shots": {
++      "shot-copy": {
++        "_created": true,
++        "internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-6b31174529ec92ede9c37ad5e078cfde47f010300e35ba5f9007e3ac63775a8b",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "shot_id": "shot-copy"
++      },
++      "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9": {
++        "base_internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "base_payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-93a7cecf22a8b01a75752b447540f456f133a4c236af593c35c34793b2592819",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-93a7cecf22a8b01a75752b447540f456f133a4c236af593c35c34793b2592819",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "shot_id": "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9"
++      },
++      "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846": {
++        "base_internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "base_payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-f9cfa6bcfe48dfb2f257da7e0bda3344e75aa99899006fe8c84532904dcf23a0",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-f9cfa6bcfe48dfb2f257da7e0bda3344e75aa99899006fe8c84532904dcf23a0",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846"
++      }
++    },
++    "source_mapping": {
++      "_runtime_document": {
++        "dependency_manifest": {
++          "documents": [],
++          "internal_timelines": [
++            {
++              "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++              "revision_id": "internal-1",
++              "timeline_id": "chapter-1"
++            }
++          ],
++          "media": [
++            {
++              "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
++            }
++          ],
++          "shots": [
++            {
++              "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++              "internal_timeline_revision_id": "internal-1",
++              "revision_id": "shot-1",
++              "shot_id": "chapter-shot"
++            }
++          ]
++        },
++        "internal_timeline_revisions": [
++          {
++            "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++            "payload": {
++              "clips": [
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 1,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-a",
++                  "track": "picture"
++                },
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 5,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-b",
++                  "track": "picture"
++                }
++              ],
++              "opaque": {
++                "timestamp": "authored timestamp",
++                "v": [
++                  null,
++                  false,
++                  0
++                ]
++              },
++              "output": {
++                "fps": {
++                  "denominator": 1001,
++                  "numerator": 30000
++                }
++              },
++              "registry": {
++                "assets": {
++                  "picture": {
++                    "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                    "type": "image"
++                  }
++                }
++              },
++              "source_window": {
++                "end": 9,
++                "start": 4
++              },
++              "tracks": [
++                {
++                  "id": "picture",
++                  "kind": "visual"
++                }
++              ],
++              "unknown": [
++                1,
++                2
++              ]
++            },
++            "revision_id": "internal-1",
++            "timeline_id": "chapter-1"
++          }
++        ],
++        "parent_revision": {
++          "content_digest": "sha256:59e16ad2e4d645f7cf4842d215b40c449eaf479aa73b6fe527f851674fdaf078",
++          "payload": {
++            "clips": [
++              {
++                "app": {
++                  "org.example": {
++                    "clear": null,
++                    "literal": "clip-a"
++                  }
++                },
++                "asset": "picture",
++                "at": 1,
++                "clipType": "media",
++                "hold": 2,
++                "id": "clip-a",
++                "track": "picture"
++              },
++              {
++                "app": {
++                  "org.example": {
++                    "clear": null,
++                    "literal": "clip-a"
++                  }
++                },
++                "asset": "picture",
++                "at": 5,
++                "clipType": "media",
++                "hold": 2,
++                "id": "clip-b",
++                "track": "picture"
++              }
++            ],
++            "config": {
++              "clips": [
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 1,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-a",
++                  "track": "picture"
++                },
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 5,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-b",
++                  "track": "picture"
++                }
++              ],
++              "opaque": {
++                "timestamp": "authored timestamp",
++                "v": [
++                  null,
++                  false,
++                  0
++                ]
++              },
++              "output": {
++                "fps": {
++                  "denominator": 1001,
++                  "numerator": 30000
++                }
++              },
++              "tracks": [
++                {
++                  "id": "picture",
++                  "kind": "visual"
++                }
++              ]
++            },
++            "name": "Renamed Film",
++            "occurrences": [
++              {
++                "association_id": "assoc-old",
++                "duration_ms": 10000,
++                "metadata": {
++                  "org.example/v1": {
++                    "keep": [
++                      null,
++                      false,
++                      0
++                    ],
++                    "occurrence_id": "occ-0",
++                    "output_identity": "out:occ-0",
++                    "shot_id": "chapter-shot",
++                    "stable_deep_link": "deep:occ-0"
++                  }
++                },
++                "occurrence_id": "occ-0",
++                "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++                "output_records": [
++                  {
++                    "association_id": "assoc-old",
++                    "output_identity": "out:occ-0",
++                    "task_id": "task-old"
++                  }
++                ],
++                "parent_document_id": "doc /é",
++                "placement": {
++                  "start_ms": 0,
++                  "track": "picture"
++                },
++                "shot_id": "chapter-shot",
++                "shot_revision_id": "shot-1",
++                "source_offset": 0,
++                "speed": 1,
++                "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++                "task_id": "task-old",
++                "track": "picture",
++                "unknown": {
++                  "literal": "chapter-shot"
++                }
++              },
++              {
++                "duration_ms": 10000,
++                "metadata": null,
++                "occurrence_id": "occ-1",
++                "placement": {
++                  "start_ms": 0,
++                  "track": "picture"
++                },
++                "shot_id": "chapter-shot",
++                "shot_revision_id": "shot-1",
++                "source_offset": 0,
++                "speed": 1,
++                "track": "picture",
++                "unknown": {
++                  "literal": "chapter-shot"
++                }
++              }
++            ],
++            "registry": {
++              "assets": {
++                "picture": {
++                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                  "type": "image"
++                }
++              }
++            },
++            "unknown": {
++              "opaque": [
++                "parent-1",
++                null
++              ]
++            }
++          },
++          "revision_id": "parent-1"
++        },
++        "project_id": "project-1",
++        "schema_version": 1,
++        "shot_revisions": [
++          {
++            "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++            "internal_timeline_revision_id": "internal-1",
++            "payload": {
++              "internal_timeline_revision_id": "internal-1",
++              "items": [
++                {
++                  "item_id": "item-1",
++                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                  "metadata": {
++                    "opaque_literal": "item-1"
++                  }
++                }
++              ],
++              "metadata": {
++                "chapter": true
++              },
++              "name": "Chapter One",
++              "text_bindings": [
++                {
++                  "slot": "narration",
++                  "text": "A chapter"
++                }
++              ],
++              "unknown": {
++                "keep": null
++              }
++            },
++            "revision_id": "shot-1",
++            "shot_id": "chapter-shot"
++          }
++        ],
++        "timeline_id": "film"
++      },
++      "placements": {
++        "occ-0": {
++          "association_id": "assoc-old",
++          "duration_ms": 10000,
++          "metadata": {
++            "org.example/v1": {
++              "keep": [
++                null,
++                false,
++                0
++              ],
++              "occurrence_id": "occ-0",
++              "output_identity": "out:occ-0",
++              "shot_id": "chapter-shot",
++              "stable_deep_link": "deep:occ-0"
++            }
++          },
++          "occurrence_id": "occ-0",
++          "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++          "output_records": [
++            {
++              "association_id": "assoc-old",
++              "output_identity": "out:occ-0",
++              "task_id": "task-old"
++            }
++          ],
++          "parent_document_id": "doc /é",
++          "placement": {
++            "start_ms": 0,
++            "track": "picture"
++          },
++          "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++          "source_offset": 0,
++          "speed": 1,
++          "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++          "task_id": "task-old",
++          "track": "picture",
++          "unknown": {
++            "literal": "chapter-shot"
++          }
++        },
++        "occ-1": {
++          "duration_ms": 10000,
++          "metadata": null,
++          "occurrence_id": "occ-1",
++          "placement": {
++            "start_ms": 0,
++            "track": "picture"
++          },
++          "shot_id": "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9",
++          "source_offset": 0,
++          "speed": 1,
++          "track": "picture",
++          "unknown": {
++            "literal": "chapter-shot"
++          }
++        }
++      },
++      "shots": {
++        "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9": {
++          "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++          "internal_timeline_content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++          "internal_timeline_id": "chapter-1",
++          "internal_timeline_revision_id": "internal-1",
++          "item_id_map": {
++            "item-1": "shot-item-placement-93a7cecf22a8b01a75752b447540f456f133a4c236af593c35c34793b2592819"
++          },
++          "revision_id": "shot-1",
++          "shot_id": "chapter-shot"
++        },
++        "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846": {
++          "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++          "internal_timeline_content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++          "internal_timeline_id": "chapter-1",
++          "internal_timeline_revision_id": "internal-1",
++          "item_id_map": {
++            "item-1": "shot-item-placement-f9cfa6bcfe48dfb2f257da7e0bda3344e75aa99899006fe8c84532904dcf23a0"
++          },
++          "revision_id": "shot-1",
++          "shot_id": "chapter-shot"
++        }
++      }
++    },
++    "timeline_id": "film"
++  },
++  "after_document": {
++    "dependency_manifest": {
++      "documents": [],
++      "internal_timelines": [
++        {
++          "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++          "revision_id": "internal-1",
++          "timeline_id": "chapter-1"
++        },
++        {
++          "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++          "revision_id": "authoring-timeline-revision-af120691f0fcb334f628a15724f5f74b539e43728bd67a22f6fcd0a2828dde16",
++          "timeline_id": "film"
++        }
++      ],
++      "media": [
++        {
++          "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++          "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
++        }
++      ],
++      "shots": [
++        {
++          "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++          "internal_timeline_revision_id": "internal-1",
++          "revision_id": "shot-1",
++          "shot_id": "chapter-shot"
++        },
++        {
++          "content_digest": "sha256:5ff5ac3522ffd61a5a2791d38313bd61491f8e3e5ab6f917217fcd76729739b2",
++          "internal_timeline_revision_id": "authoring-timeline-revision-af120691f0fcb334f628a15724f5f74b539e43728bd67a22f6fcd0a2828dde16",
++          "revision_id": "authoring-shot-revision-44fbac89c5e00d8c893cd59c66716b3d5ca1366e54bb1ed008c5118fe74f8dc5",
++          "shot_id": "shot-copy"
++        }
++      ]
++    },
++    "internal_timeline_revisions": [
++      {
++        "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++        "payload": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "revision_id": "internal-1",
++        "timeline_id": "chapter-1"
++      },
++      {
++        "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++        "payload": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "revision_id": "authoring-timeline-revision-af120691f0fcb334f628a15724f5f74b539e43728bd67a22f6fcd0a2828dde16",
++        "timeline_id": "film"
++      }
++    ],
++    "parent_revision": {
++      "content_digest": "sha256:0be0499b1387b5f5df4d65460570da7d6f1968b19591c569e5a8c8fa6b52a8ec",
++      "payload": {
++        "clips": [
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 1,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-a",
++            "track": "picture"
++          },
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 5,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-b",
++            "track": "picture"
++          }
++        ],
++        "config": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ]
++        },
++        "name": "Renamed Film",
++        "occurrences": [
++          {
++            "association_id": "assoc-old",
++            "duration_ms": 10000,
++            "metadata": {
++              "org.example/v1": {
++                "keep": [
++                  null,
++                  false,
++                  0
++                ],
++                "occurrence_id": "occ-0",
++                "output_identity": "out:occ-0",
++                "shot_id": "chapter-shot",
++                "stable_deep_link": "deep:occ-0"
++              }
++            },
++            "occurrence_id": "occ-0",
++            "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++            "output_records": [
++              {
++                "association_id": "assoc-old",
++                "output_identity": "out:occ-0",
++                "task_id": "task-old"
++              }
++            ],
++            "parent_document_id": "doc /é",
++            "placement": {
++              "start_ms": 0,
++              "track": "picture"
++            },
++            "shot_id": "chapter-shot",
++            "shot_revision_id": "shot-1",
++            "source_offset": 0,
++            "speed": 1,
++            "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++            "task_id": "task-old",
++            "track": "picture",
++            "unknown": {
++              "literal": "chapter-shot"
++            }
++          },
++          {
++            "duration_ms": 10000,
++            "metadata": null,
++            "occurrence_id": "occ-1",
++            "placement": {
++              "start_ms": 0,
++              "track": "picture"
++            },
++            "shot_id": "chapter-shot",
++            "shot_revision_id": "shot-1",
++            "source_offset": 0,
++            "speed": 1,
++            "track": "picture",
++            "unknown": {
++              "literal": "chapter-shot"
++            }
++          },
++          {
++            "association_id": "assoc-old",
++            "duration_ms": 10000,
++            "metadata": {
++              "org.example/v1": {
++                "keep": [
++                  null,
++                  false,
++                  0
++                ],
++                "occurrence_id": "occ-0",
++                "output_identity": "out:occ-0",
++                "shot_id": "chapter-shot",
++                "stable_deep_link": "deep:occ-0"
++              }
++            },
++            "occurrence_id": "occ-copy",
++            "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-copy/output/final-video",
++            "output_records": [
++              {
++                "association_id": "assoc-old",
++                "output_identity": "out:occ-0",
++                "task_id": "task-old"
++              }
++            ],
++            "parent_document_id": "doc /é",
++            "placement": {
++              "start_ms": 0,
++              "track": "picture"
++            },
++            "shot_id": "shot-copy",
++            "shot_revision_id": "authoring-shot-revision-44fbac89c5e00d8c893cd59c66716b3d5ca1366e54bb1ed008c5118fe74f8dc5",
++            "source_offset": 0,
++            "speed": 1,
++            "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/shot-copy/revision/authoring-shot-revision-44fbac89c5e00d8c893cd59c66716b3d5ca1366e54bb1ed008c5118fe74f8dc5/occurrence/occ-copy",
++            "task_id": "task-old",
++            "track": "picture",
++            "unknown": {
++              "literal": "chapter-shot"
++            }
++          }
++        ],
++        "registry": {
++          "assets": {
++            "picture": {
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "type": "image"
++            }
++          }
++        },
++        "unknown": {
++          "opaque": [
++            "parent-1",
++            null
++          ]
++        }
++      },
++      "revision_id": "authoring-parent-revision-df50dc2d6fcd3a2198274a505277f383f125af1e04e759a7b89e117dc970df65"
++    },
++    "project_id": "project-1",
++    "schema_version": 1,
++    "shot_revisions": [
++      {
++        "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++        "internal_timeline_revision_id": "internal-1",
++        "payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "item-1",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "revision_id": "shot-1",
++        "shot_id": "chapter-shot"
++      },
++      {
++        "content_digest": "sha256:5ff5ac3522ffd61a5a2791d38313bd61491f8e3e5ab6f917217fcd76729739b2",
++        "internal_timeline_revision_id": "authoring-timeline-revision-af120691f0fcb334f628a15724f5f74b539e43728bd67a22f6fcd0a2828dde16",
++        "payload": {
++          "internal_timeline_revision_id": "authoring-timeline-revision-af120691f0fcb334f628a15724f5f74b539e43728bd67a22f6fcd0a2828dde16",
++          "items": [
++            {
++              "item_id": "shot-item-placement-6b31174529ec92ede9c37ad5e078cfde47f010300e35ba5f9007e3ac63775a8b",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "revision_id": "authoring-shot-revision-44fbac89c5e00d8c893cd59c66716b3d5ca1366e54bb1ed008c5118fe74f8dc5",
++        "shot_id": "shot-copy"
++      }
++    ],
++    "timeline_id": "film"
++  },
++  "agent_source": "2431ae1fcdb6c9baf568043d3c0dad7c602b0e49",
++  "bundle": {
++    "base_parent": {
++      "content_digest": "sha256:59e16ad2e4d645f7cf4842d215b40c449eaf479aa73b6fe527f851674fdaf078",
++      "revision_id": "parent-1"
++    },
++    "base_parent_payload": {
++      "clips": [
++        {
++          "app": {
++            "org.example": {
++              "clear": null,
++              "literal": "clip-a"
++            }
++          },
++          "asset": "picture",
++          "at": 1,
++          "clipType": "media",
++          "hold": 2,
++          "id": "clip-a",
++          "track": "picture"
++        },
++        {
++          "app": {
++            "org.example": {
++              "clear": null,
++              "literal": "clip-a"
++            }
++          },
++          "asset": "picture",
++          "at": 5,
++          "clipType": "media",
++          "hold": 2,
++          "id": "clip-b",
++          "track": "picture"
++        }
++      ],
++      "config": {
++        "clips": [
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 1,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-a",
++            "track": "picture"
++          },
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 5,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-b",
++            "track": "picture"
++          }
++        ],
++        "opaque": {
++          "timestamp": "authored timestamp",
++          "v": [
++            null,
++            false,
++            0
++          ]
++        },
++        "output": {
++          "fps": {
++            "denominator": 1001,
++            "numerator": 30000
++          }
++        },
++        "tracks": [
++          {
++            "id": "picture",
++            "kind": "visual"
++          }
++        ]
++      },
++      "name": "Renamed Film",
++      "registry": {
++        "assets": {
++          "picture": {
++            "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++            "type": "image"
++          }
++        }
++      },
++      "unknown": {
++        "opaque": [
++          "parent-1",
++          null
++        ]
++      }
++    },
++    "base_placements": {
++      "occ-0": {
++        "association_id": "assoc-old",
++        "duration_ms": 10000,
++        "metadata": {
++          "org.example/v1": {
++            "keep": [
++              null,
++              false,
++              0
++            ],
++            "occurrence_id": "occ-0",
++            "output_identity": "out:occ-0",
++            "shot_id": "chapter-shot",
++            "stable_deep_link": "deep:occ-0"
++          }
++        },
++        "occurrence_id": "occ-0",
++        "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++        "output_records": [
++          {
++            "association_id": "assoc-old",
++            "output_identity": "out:occ-0",
++            "task_id": "task-old"
++          }
++        ],
++        "parent_document_id": "doc /é",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++        "source_offset": 0,
++        "speed": 1,
++        "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++        "task_id": "task-old",
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      },
++      "occ-1": {
++        "duration_ms": 10000,
++        "metadata": null,
++        "occurrence_id": "occ-1",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9",
++        "source_offset": 0,
++        "speed": 1,
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      }
++    },
++    "parent": {
++      "clips": [
++        {
++          "app": {
++            "org.example": {
++              "clear": null,
++              "literal": "clip-a"
++            }
++          },
++          "asset": "picture",
++          "at": 1,
++          "clipType": "media",
++          "hold": 2,
++          "id": "clip-a",
++          "track": "picture"
++        },
++        {
++          "app": {
++            "org.example": {
++              "clear": null,
++              "literal": "clip-a"
++            }
++          },
++          "asset": "picture",
++          "at": 5,
++          "clipType": "media",
++          "hold": 2,
++          "id": "clip-b",
++          "track": "picture"
++        }
++      ],
++      "config": {
++        "clips": [
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 1,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-a",
++            "track": "picture"
++          },
++          {
++            "app": {
++              "org.example": {
++                "clear": null,
++                "literal": "clip-a"
++              }
++            },
++            "asset": "picture",
++            "at": 5,
++            "clipType": "media",
++            "hold": 2,
++            "id": "clip-b",
++            "track": "picture"
++          }
++        ],
++        "opaque": {
++          "timestamp": "authored timestamp",
++          "v": [
++            null,
++            false,
++            0
++          ]
++        },
++        "output": {
++          "fps": {
++            "denominator": 1001,
++            "numerator": 30000
++          }
++        },
++        "tracks": [
++          {
++            "id": "picture",
++            "kind": "visual"
++          }
++        ]
++      },
++      "name": "Renamed Film",
++      "registry": {
++        "assets": {
++          "picture": {
++            "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++            "type": "image"
++          }
++        }
++      },
++      "unknown": {
++        "opaque": [
++          "parent-1",
++          null
++        ]
++      }
++    },
++    "placements": [
++      {
++        "association_id": "assoc-old",
++        "duration_ms": 10000,
++        "metadata": {
++          "org.example/v1": {
++            "keep": [
++              null,
++              false,
++              0
++            ],
++            "occurrence_id": "occ-0",
++            "output_identity": "out:occ-0",
++            "shot_id": "chapter-shot",
++            "stable_deep_link": "deep:occ-0"
++          }
++        },
++        "occurrence_id": "occ-0",
++        "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++        "output_records": [
++          {
++            "association_id": "assoc-old",
++            "output_identity": "out:occ-0",
++            "task_id": "task-old"
++          }
++        ],
++        "parent_document_id": "doc /é",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++        "source_offset": 0,
++        "speed": 1,
++        "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++        "task_id": "task-old",
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      },
++      {
++        "duration_ms": 10000,
++        "metadata": null,
++        "occurrence_id": "occ-1",
++        "placement": {
++          "start_ms": 0,
++          "track": "picture"
++        },
++        "shot_id": "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9",
++        "source_offset": 0,
++        "speed": 1,
++        "track": "picture",
++        "unknown": {
++          "literal": "chapter-shot"
++        }
++      }
++    ],
++    "project_id": "project-1",
++    "schema_version": 1,
++    "shots": {
++      "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9": {
++        "base_internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "base_payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-93a7cecf22a8b01a75752b447540f456f133a4c236af593c35c34793b2592819",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-93a7cecf22a8b01a75752b447540f456f133a4c236af593c35c34793b2592819",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "shot_id": "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9"
++      },
++      "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846": {
++        "base_internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "base_payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-f9cfa6bcfe48dfb2f257da7e0bda3344e75aa99899006fe8c84532904dcf23a0",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "internal_timeline": {
++          "clips": [
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 1,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-a",
++              "track": "picture"
++            },
++            {
++              "app": {
++                "org.example": {
++                  "clear": null,
++                  "literal": "clip-a"
++                }
++              },
++              "asset": "picture",
++              "at": 5,
++              "clipType": "media",
++              "hold": 2,
++              "id": "clip-b",
++              "track": "picture"
++            }
++          ],
++          "opaque": {
++            "timestamp": "authored timestamp",
++            "v": [
++              null,
++              false,
++              0
++            ]
++          },
++          "output": {
++            "fps": {
++              "denominator": 1001,
++              "numerator": 30000
++            }
++          },
++          "registry": {
++            "assets": {
++              "picture": {
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "type": "image"
++              }
++            }
++          },
++          "source_window": {
++            "end": 9,
++            "start": 4
++          },
++          "tracks": [
++            {
++              "id": "picture",
++              "kind": "visual"
++            }
++          ],
++          "unknown": [
++            1,
++            2
++          ]
++        },
++        "payload": {
++          "internal_timeline_revision_id": "internal-1",
++          "items": [
++            {
++              "item_id": "shot-item-placement-f9cfa6bcfe48dfb2f257da7e0bda3344e75aa99899006fe8c84532904dcf23a0",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "metadata": {
++                "opaque_literal": "item-1"
++              }
++            }
++          ],
++          "metadata": {
++            "chapter": true
++          },
++          "name": "Chapter One",
++          "text_bindings": [
++            {
++              "slot": "narration",
++              "text": "A chapter"
++            }
++          ],
++          "unknown": {
++            "keep": null
++          }
++        },
++        "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846"
++      }
++    },
++    "source_mapping": {
++      "_runtime_document": {
++        "dependency_manifest": {
++          "documents": [],
++          "internal_timelines": [
++            {
++              "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++              "revision_id": "internal-1",
++              "timeline_id": "chapter-1"
++            }
++          ],
++          "media": [
++            {
++              "content_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++              "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
++            }
++          ],
++          "shots": [
++            {
++              "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++              "internal_timeline_revision_id": "internal-1",
++              "revision_id": "shot-1",
++              "shot_id": "chapter-shot"
++            }
++          ]
++        },
++        "internal_timeline_revisions": [
++          {
++            "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++            "payload": {
++              "clips": [
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 1,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-a",
++                  "track": "picture"
++                },
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 5,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-b",
++                  "track": "picture"
++                }
++              ],
++              "opaque": {
++                "timestamp": "authored timestamp",
++                "v": [
++                  null,
++                  false,
++                  0
++                ]
++              },
++              "output": {
++                "fps": {
++                  "denominator": 1001,
++                  "numerator": 30000
++                }
++              },
++              "registry": {
++                "assets": {
++                  "picture": {
++                    "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                    "type": "image"
++                  }
++                }
++              },
++              "source_window": {
++                "end": 9,
++                "start": 4
++              },
++              "tracks": [
++                {
++                  "id": "picture",
++                  "kind": "visual"
++                }
++              ],
++              "unknown": [
++                1,
++                2
++              ]
++            },
++            "revision_id": "internal-1",
++            "timeline_id": "chapter-1"
++          }
++        ],
++        "parent_revision": {
++          "content_digest": "sha256:59e16ad2e4d645f7cf4842d215b40c449eaf479aa73b6fe527f851674fdaf078",
++          "payload": {
++            "clips": [
++              {
++                "app": {
++                  "org.example": {
++                    "clear": null,
++                    "literal": "clip-a"
++                  }
++                },
++                "asset": "picture",
++                "at": 1,
++                "clipType": "media",
++                "hold": 2,
++                "id": "clip-a",
++                "track": "picture"
++              },
++              {
++                "app": {
++                  "org.example": {
++                    "clear": null,
++                    "literal": "clip-a"
++                  }
++                },
++                "asset": "picture",
++                "at": 5,
++                "clipType": "media",
++                "hold": 2,
++                "id": "clip-b",
++                "track": "picture"
++              }
++            ],
++            "config": {
++              "clips": [
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 1,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-a",
++                  "track": "picture"
++                },
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 5,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-b",
++                  "track": "picture"
++                }
++              ],
++              "opaque": {
++                "timestamp": "authored timestamp",
++                "v": [
++                  null,
++                  false,
++                  0
++                ]
++              },
++              "output": {
++                "fps": {
++                  "denominator": 1001,
++                  "numerator": 30000
++                }
++              },
++              "tracks": [
++                {
++                  "id": "picture",
++                  "kind": "visual"
++                }
++              ]
++            },
++            "name": "Renamed Film",
++            "occurrences": [
++              {
++                "association_id": "assoc-old",
++                "duration_ms": 10000,
++                "metadata": {
++                  "org.example/v1": {
++                    "keep": [
++                      null,
++                      false,
++                      0
++                    ],
++                    "occurrence_id": "occ-0",
++                    "output_identity": "out:occ-0",
++                    "shot_id": "chapter-shot",
++                    "stable_deep_link": "deep:occ-0"
++                  }
++                },
++                "occurrence_id": "occ-0",
++                "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++                "output_records": [
++                  {
++                    "association_id": "assoc-old",
++                    "output_identity": "out:occ-0",
++                    "task_id": "task-old"
++                  }
++                ],
++                "parent_document_id": "doc /é",
++                "placement": {
++                  "start_ms": 0,
++                  "track": "picture"
++                },
++                "shot_id": "chapter-shot",
++                "shot_revision_id": "shot-1",
++                "source_offset": 0,
++                "speed": 1,
++                "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++                "task_id": "task-old",
++                "track": "picture",
++                "unknown": {
++                  "literal": "chapter-shot"
++                }
++              },
++              {
++                "duration_ms": 10000,
++                "metadata": null,
++                "occurrence_id": "occ-1",
++                "placement": {
++                  "start_ms": 0,
++                  "track": "picture"
++                },
++                "shot_id": "chapter-shot",
++                "shot_revision_id": "shot-1",
++                "source_offset": 0,
++                "speed": 1,
++                "track": "picture",
++                "unknown": {
++                  "literal": "chapter-shot"
++                }
++              }
++            ],
++            "registry": {
++              "assets": {
++                "picture": {
++                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                  "type": "image"
++                }
++              }
++            },
++            "unknown": {
++              "opaque": [
++                "parent-1",
++                null
++              ]
++            }
++          },
++          "revision_id": "parent-1"
++        },
++        "project_id": "project-1",
++        "schema_version": 1,
++        "shot_revisions": [
++          {
++            "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++            "internal_timeline_revision_id": "internal-1",
++            "payload": {
++              "internal_timeline_revision_id": "internal-1",
++              "items": [
++                {
++                  "item_id": "item-1",
++                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                  "metadata": {
++                    "opaque_literal": "item-1"
++                  }
++                }
++              ],
++              "metadata": {
++                "chapter": true
++              },
++              "name": "Chapter One",
++              "text_bindings": [
++                {
++                  "slot": "narration",
++                  "text": "A chapter"
++                }
++              ],
++              "unknown": {
++                "keep": null
++              }
++            },
++            "revision_id": "shot-1",
++            "shot_id": "chapter-shot"
++          }
++        ],
++        "timeline_id": "film"
++      },
++      "placements": {
++        "occ-0": {
++          "association_id": "assoc-old",
++          "duration_ms": 10000,
++          "metadata": {
++            "org.example/v1": {
++              "keep": [
++                null,
++                false,
++                0
++              ],
++              "occurrence_id": "occ-0",
++              "output_identity": "out:occ-0",
++              "shot_id": "chapter-shot",
++              "stable_deep_link": "deep:occ-0"
++            }
++          },
++          "occurrence_id": "occ-0",
++          "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++          "output_records": [
++            {
++              "association_id": "assoc-old",
++              "output_identity": "out:occ-0",
++              "task_id": "task-old"
++            }
++          ],
++          "parent_document_id": "doc /é",
++          "placement": {
++            "start_ms": 0,
++            "track": "picture"
++          },
++          "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++          "source_offset": 0,
++          "speed": 1,
++          "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++          "task_id": "task-old",
++          "track": "picture",
++          "unknown": {
++            "literal": "chapter-shot"
++          }
++        },
++        "occ-1": {
++          "duration_ms": 10000,
++          "metadata": null,
++          "occurrence_id": "occ-1",
++          "placement": {
++            "start_ms": 0,
++            "track": "picture"
++          },
++          "shot_id": "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9",
++          "source_offset": 0,
++          "speed": 1,
++          "track": "picture",
++          "unknown": {
++            "literal": "chapter-shot"
++          }
++        }
++      },
++      "shots": {
++        "shot-placement-8004a3cb6beac03533064ef00ae5e1155ed493fb08be839c3732c53c34aec0d9": {
++          "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++          "internal_timeline_content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++          "internal_timeline_id": "chapter-1",
++          "internal_timeline_revision_id": "internal-1",
++          "item_id_map": {
++            "item-1": "shot-item-placement-93a7cecf22a8b01a75752b447540f456f133a4c236af593c35c34793b2592819"
++          },
++          "revision_id": "shot-1",
++          "shot_id": "chapter-shot"
++        },
++        "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846": {
++          "content_digest": "sha256:f700f1f65d6111e008f10de355a74ab6b41b766f4ff4070bd62f97206a3f0775",
++          "internal_timeline_content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
++          "internal_timeline_id": "chapter-1",
++          "internal_timeline_revision_id": "internal-1",
++          "item_id_map": {
++            "item-1": "shot-item-placement-f9cfa6bcfe48dfb2f257da7e0bda3344e75aa99899006fe8c84532904dcf23a0"
++          },
++          "revision_id": "shot-1",
++          "shot_id": "chapter-shot"
++        }
++      }
++    },
++    "timeline_id": "film"
++  },
++  "command": {
++    "args": {
++      "occurrence_id": "occ-copy",
++      "shot_id": "shot-copy"
++    },
++    "authorship": {
++      "occurrence:occ-copy::": "direct",
++      "shot:shot-copy::": "direct"
++    },
++    "bindings": {
++      "collection.owner:collection.clips": "occurrence:occ-0",
++      "collection.owner:collection.tracks": "occurrence:occ-0",
++      "duplicate.owner": "occurrence:occ-0"
++    },
++    "created": [
++      "shot:shot-copy",
++      "occurrence:occ-copy"
++    ],
++    "expect": {
++      "occurrence:occ-copy::": {
++        "state": "absent"
++      },
++      "shot:shot-copy::": {
++        "state": "absent"
++      }
++    },
++    "intent": {
++      "ownership": "occurrence"
++    },
++    "op": "occurrence.duplicate",
++    "reads": [
++      {
++        "path": [
++          "config",
++          "pinnedShotGroups"
++        ],
++        "ref": "parent",
++        "state": {
++          "state": "absent"
++        }
++      },
++      {
++        "path": [],
++        "ref": "occurrence:occ-0",
++        "state": {
++          "state": "present",
++          "value": {
++            "association_id": "assoc-old",
++            "duration_ms": 10000,
++            "metadata": {
++              "org.example/v1": {
++                "keep": [
++                  null,
++                  false,
++                  0
++                ],
++                "occurrence_id": "occ-0",
++                "output_identity": "out:occ-0",
++                "shot_id": "chapter-shot",
++                "stable_deep_link": "deep:occ-0"
++              }
++            },
++            "occurrence_id": "occ-0",
++            "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++            "output_records": [
++              {
++                "association_id": "assoc-old",
++                "output_identity": "out:occ-0",
++                "task_id": "task-old"
++              }
++            ],
++            "parent_document_id": "doc /é",
++            "placement": {
++              "start_ms": 0,
++              "track": "picture"
++            },
++            "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++            "source_offset": 0,
++            "speed": 1,
++            "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++            "task_id": "task-old",
++            "track": "picture",
++            "unknown": {
++              "literal": "chapter-shot"
++            }
++          }
++        }
++      },
++      {
++        "path": [
++          "shot_id"
++        ],
++        "ref": "occurrence:occ-0/shot",
++        "state": {
++          "state": "present",
++          "value": "chapter-shot"
++        }
++      },
++      {
++        "path": [],
++        "ref": "occurrence:occ-0/collection:clip",
++        "state": {
++          "state": "present",
++          "value": {
++            "members": {
++              "state": "present",
++              "value": []
++            }
++          }
++        }
++      },
++      {
++        "path": [
++          "occurrence_id"
++        ],
++        "ref": "occurrence:occ-0",
++        "state": {
++          "state": "present",
++          "value": "occ-0"
++        }
++      },
++      {
++        "path": [],
++        "ref": "occurrence:occ-0/collection:track",
++        "state": {
++          "state": "present",
++          "value": {
++            "members": {
++              "state": "present",
++              "value": []
++            }
++          }
++        }
++      },
++      {
++        "path": [],
++        "ref": "occurrence:occ-0/source",
++        "state": {
++          "state": "present",
++          "value": {
++            "clips": [
++              {
++                "app": {
++                  "org.example": {
++                    "clear": null,
++                    "literal": "clip-a"
++                  }
++                },
++                "asset": "picture",
++                "at": 1,
++                "clipType": "media",
++                "hold": 2,
++                "id": "clip-a",
++                "track": "picture"
++              },
++              {
++                "app": {
++                  "org.example": {
++                    "clear": null,
++                    "literal": "clip-a"
++                  }
++                },
++                "asset": "picture",
++                "at": 5,
++                "clipType": "media",
++                "hold": 2,
++                "id": "clip-b",
++                "track": "picture"
++              }
++            ],
++            "opaque": {
++              "timestamp": "authored timestamp",
++              "v": [
++                null,
++                false,
++                0
++              ]
++            },
++            "output": {
++              "fps": {
++                "denominator": 1001,
++                "numerator": 30000
++              }
++            },
++            "registry": {
++              "assets": {
++                "picture": {
++                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                  "type": "image"
++                }
++              }
++            },
++            "source_window": {
++              "end": 9,
++              "start": 4
++            },
++            "tracks": [
++              {
++                "id": "picture",
++                "kind": "visual"
++              }
++            ],
++            "unknown": [
++              1,
++              2
++            ]
++          }
++        }
++      },
++      {
++        "path": [
++          "payload"
++        ],
++        "ref": "occurrence:occ-0/shot",
++        "state": {
++          "state": "present",
++          "value": {
++            "internal_timeline_revision_id": "internal-1",
++            "items": [
++              {
++                "item_id": "item-1",
++                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                "metadata": {
++                  "opaque_literal": "item-1"
++                }
++              }
++            ],
++            "metadata": {
++              "chapter": true
++            },
++            "name": "Chapter One",
++            "text_bindings": [
++              {
++                "slot": "narration",
++                "text": "A chapter"
++              }
++            ],
++            "unknown": {
++              "keep": null
++            }
++          }
++        }
++      },
++      {
++        "path": [],
++        "ref": "shot:shot-copy",
++        "state": {
++          "state": "absent"
++        }
++      },
++      {
++        "path": [],
++        "ref": "occurrence:occ-copy",
++        "state": {
++          "state": "absent"
++        }
++      }
++    ],
++    "resolved": [
++      "occurrence:occ-0"
++    ],
++    "schema_version": 1,
++    "select": "occurrence:occ-0",
++    "selections": [
++      {
++        "boundaries": [
++          "occurrence:occ-0/clip:clip-a",
++          "occurrence:occ-0/clip:clip-b"
++        ],
++        "key": "collection.clips",
++        "members": [
++          "occurrence:occ-0/clip:clip-a",
++          "occurrence:occ-0/clip:clip-b"
++        ],
++        "order": [
++          "occurrence:occ-0/clip:clip-a",
++          "occurrence:occ-0/clip:clip-b"
++        ],
++        "owner": "occurrence:occ-0",
++        "policy": "guard-membership",
++        "query_version": 1
++      },
++      {
++        "boundaries": [
++          "occurrence:occ-0/track:picture"
++        ],
++        "key": "collection.tracks",
++        "members": [
++          "occurrence:occ-0/track:picture"
++        ],
++        "order": [
++          "occurrence:occ-0/track:picture"
++        ],
++        "owner": "occurrence:occ-0",
++        "policy": "guard-membership",
++        "query_version": 1
++      }
++    ],
++    "version": "1"
++  },
++  "records": [
++    {
++      "bindings": [
++        {
++          "dependencies": [],
++          "key": "collection.owner:collection.clips",
++          "policy": "fixed",
++          "ref": "occurrence:occ-0"
++        },
++        {
++          "dependencies": [],
++          "key": "collection.owner:collection.tracks",
++          "policy": "fixed",
++          "ref": "occurrence:occ-0"
++        },
++        {
++          "dependencies": [],
++          "key": "duplicate.owner",
++          "policy": "fixed",
++          "ref": "occurrence:occ-0"
++        }
++      ],
++      "command": {
++        "args": {
++          "occurrence_id": "occ-copy",
++          "shot_id": "shot-copy"
++        },
++        "authorship": {
++          "occurrence:occ-copy::": "direct",
++          "shot:shot-copy::": "direct"
++        },
++        "bindings": {
++          "collection.owner:collection.clips": "occurrence:occ-0",
++          "collection.owner:collection.tracks": "occurrence:occ-0",
++          "duplicate.owner": "occurrence:occ-0"
++        },
++        "created": [
++          "shot:shot-copy",
++          "occurrence:occ-copy"
++        ],
++        "expect": {
++          "occurrence:occ-copy::": {
++            "state": "absent"
++          },
++          "shot:shot-copy::": {
++            "state": "absent"
++          }
++        },
++        "intent": {
++          "ownership": "occurrence"
++        },
++        "op": "occurrence.duplicate",
++        "reads": [
++          {
++            "path": [
++              "config",
++              "pinnedShotGroups"
++            ],
++            "ref": "parent",
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "path": [],
++            "ref": "occurrence:occ-0",
++            "state": {
++              "state": "present",
++              "value": {
++                "association_id": "assoc-old",
++                "duration_ms": 10000,
++                "metadata": {
++                  "org.example/v1": {
++                    "keep": [
++                      null,
++                      false,
++                      0
++                    ],
++                    "occurrence_id": "occ-0",
++                    "output_identity": "out:occ-0",
++                    "shot_id": "chapter-shot",
++                    "stable_deep_link": "deep:occ-0"
++                  }
++                },
++                "occurrence_id": "occ-0",
++                "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++                "output_records": [
++                  {
++                    "association_id": "assoc-old",
++                    "output_identity": "out:occ-0",
++                    "task_id": "task-old"
++                  }
++                ],
++                "parent_document_id": "doc /é",
++                "placement": {
++                  "start_ms": 0,
++                  "track": "picture"
++                },
++                "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++                "source_offset": 0,
++                "speed": 1,
++                "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++                "task_id": "task-old",
++                "track": "picture",
++                "unknown": {
++                  "literal": "chapter-shot"
++                }
++              }
++            }
++          },
++          {
++            "path": [
++              "shot_id"
++            ],
++            "ref": "occurrence:occ-0/shot",
++            "state": {
++              "state": "present",
++              "value": "chapter-shot"
++            }
++          },
++          {
++            "path": [],
++            "ref": "occurrence:occ-0/collection:clip",
++            "state": {
++              "state": "present",
++              "value": {
++                "members": {
++                  "state": "present",
++                  "value": []
++                }
++              }
++            }
++          },
++          {
++            "path": [
++              "occurrence_id"
++            ],
++            "ref": "occurrence:occ-0",
++            "state": {
++              "state": "present",
++              "value": "occ-0"
++            }
++          },
++          {
++            "path": [],
++            "ref": "occurrence:occ-0/collection:track",
++            "state": {
++              "state": "present",
++              "value": {
++                "members": {
++                  "state": "present",
++                  "value": []
++                }
++              }
++            }
++          },
++          {
++            "path": [],
++            "ref": "occurrence:occ-0/source",
++            "state": {
++              "state": "present",
++              "value": {
++                "clips": [
++                  {
++                    "app": {
++                      "org.example": {
++                        "clear": null,
++                        "literal": "clip-a"
++                      }
++                    },
++                    "asset": "picture",
++                    "at": 1,
++                    "clipType": "media",
++                    "hold": 2,
++                    "id": "clip-a",
++                    "track": "picture"
++                  },
++                  {
++                    "app": {
++                      "org.example": {
++                        "clear": null,
++                        "literal": "clip-a"
++                      }
++                    },
++                    "asset": "picture",
++                    "at": 5,
++                    "clipType": "media",
++                    "hold": 2,
++                    "id": "clip-b",
++                    "track": "picture"
++                  }
++                ],
++                "opaque": {
++                  "timestamp": "authored timestamp",
++                  "v": [
++                    null,
++                    false,
++                    0
++                  ]
++                },
++                "output": {
++                  "fps": {
++                    "denominator": 1001,
++                    "numerator": 30000
++                  }
++                },
++                "registry": {
++                  "assets": {
++                    "picture": {
++                      "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                      "type": "image"
++                    }
++                  }
++                },
++                "source_window": {
++                  "end": 9,
++                  "start": 4
++                },
++                "tracks": [
++                  {
++                    "id": "picture",
++                    "kind": "visual"
++                  }
++                ],
++                "unknown": [
++                  1,
++                  2
++                ]
++              }
++            }
++          },
++          {
++            "path": [
++              "payload"
++            ],
++            "ref": "occurrence:occ-0/shot",
++            "state": {
++              "state": "present",
++              "value": {
++                "internal_timeline_revision_id": "internal-1",
++                "items": [
++                  {
++                    "item_id": "item-1",
++                    "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                    "metadata": {
++                      "opaque_literal": "item-1"
++                    }
++                  }
++                ],
++                "metadata": {
++                  "chapter": true
++                },
++                "name": "Chapter One",
++                "text_bindings": [
++                  {
++                    "slot": "narration",
++                    "text": "A chapter"
++                  }
++                ],
++                "unknown": {
++                  "keep": null
++                }
++              }
++            }
++          },
++          {
++            "path": [],
++            "ref": "shot:shot-copy",
++            "state": {
++              "state": "absent"
++            }
++          },
++          {
++            "path": [],
++            "ref": "occurrence:occ-copy",
++            "state": {
++              "state": "absent"
++            }
++          }
++        ],
++        "resolved": [
++          "occurrence:occ-0"
++        ],
++        "schema_version": 1,
++        "select": "occurrence:occ-0",
++        "selections": [
++          {
++            "boundaries": [
++              "occurrence:occ-0/clip:clip-a",
++              "occurrence:occ-0/clip:clip-b"
++            ],
++            "key": "collection.clips",
++            "members": [
++              "occurrence:occ-0/clip:clip-a",
++              "occurrence:occ-0/clip:clip-b"
++            ],
++            "order": [
++              "occurrence:occ-0/clip:clip-a",
++              "occurrence:occ-0/clip:clip-b"
++            ],
++            "owner": "occurrence:occ-0",
++            "policy": "guard-membership",
++            "query_version": 1
++          },
++          {
++            "boundaries": [
++              "occurrence:occ-0/track:picture"
++            ],
++            "key": "collection.tracks",
++            "members": [
++              "occurrence:occ-0/track:picture"
++            ],
++            "order": [
++              "occurrence:occ-0/track:picture"
++            ],
++            "owner": "occurrence:occ-0",
++            "policy": "guard-membership",
++            "query_version": 1
++          }
++        ],
++        "version": "1"
++      },
++      "created": [
++        {
++          "kind": "shot",
++          "owner": null,
++          "ref": "shot:shot-copy"
++        },
++        {
++          "kind": "occurrence",
++          "owner": "parent",
++          "ref": "occurrence:occ-copy"
++        }
++      ],
++      "dependencies": [],
++      "derived_writes": [],
++      "ordinal": 0,
++      "reads": [
++        {
++          "path": [
++            "config",
++            "pinnedShotGroups"
++          ],
++          "ref": "parent",
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "path": [],
++          "ref": "occurrence:occ-0",
++          "state": {
++            "state": "present",
++            "value": {
++              "association_id": "assoc-old",
++              "duration_ms": 10000,
++              "metadata": {
++                "org.example/v1": {
++                  "keep": [
++                    null,
++                    false,
++                    0
++                  ],
++                  "occurrence_id": "occ-0",
++                  "output_identity": "out:occ-0",
++                  "shot_id": "chapter-shot",
++                  "stable_deep_link": "deep:occ-0"
++                }
++              },
++              "occurrence_id": "occ-0",
++              "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-0/output/final-video",
++              "output_records": [
++                {
++                  "association_id": "assoc-old",
++                  "output_identity": "out:occ-0",
++                  "task_id": "task-old"
++                }
++              ],
++              "parent_document_id": "doc /é",
++              "placement": {
++                "start_ms": 0,
++                "track": "picture"
++              },
++              "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
++              "source_offset": 0,
++              "speed": 1,
++              "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
++              "task_id": "task-old",
++              "track": "picture",
++              "unknown": {
++                "literal": "chapter-shot"
++              }
++            }
++          }
++        },
++        {
++          "path": [
++            "shot_id"
++          ],
++          "ref": "occurrence:occ-0/shot",
++          "state": {
++            "state": "present",
++            "value": "chapter-shot"
++          }
++        },
++        {
++          "path": [],
++          "ref": "occurrence:occ-0/collection:clip",
++          "state": {
++            "state": "present",
++            "value": {
++              "members": {
++                "state": "present",
++                "value": []
++              }
++            }
++          }
++        },
++        {
++          "path": [
++            "occurrence_id"
++          ],
++          "ref": "occurrence:occ-0",
++          "state": {
++            "state": "present",
++            "value": "occ-0"
++          }
++        },
++        {
++          "path": [],
++          "ref": "occurrence:occ-0/collection:track",
++          "state": {
++            "state": "present",
++            "value": {
++              "members": {
++                "state": "present",
++                "value": []
++              }
++            }
++          }
++        },
++        {
++          "path": [],
++          "ref": "occurrence:occ-0/source",
++          "state": {
++            "state": "present",
++            "value": {
++              "clips": [
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 1,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-a",
++                  "track": "picture"
++                },
++                {
++                  "app": {
++                    "org.example": {
++                      "clear": null,
++                      "literal": "clip-a"
++                    }
++                  },
++                  "asset": "picture",
++                  "at": 5,
++                  "clipType": "media",
++                  "hold": 2,
++                  "id": "clip-b",
++                  "track": "picture"
++                }
++              ],
++              "opaque": {
++                "timestamp": "authored timestamp",
++                "v": [
++                  null,
++                  false,
++                  0
++                ]
++              },
++              "output": {
++                "fps": {
++                  "denominator": 1001,
++                  "numerator": 30000
++                }
++              },
++              "registry": {
++                "assets": {
++                  "picture": {
++                    "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                    "type": "image"
++                  }
++                }
++              },
++              "source_window": {
++                "end": 9,
++                "start": 4
++              },
++              "tracks": [
++                {
++                  "id": "picture",
++                  "kind": "visual"
++                }
++              ],
++              "unknown": [
++                1,
++                2
++              ]
++            }
++          }
++        },
++        {
++          "path": [
++            "payload"
++          ],
++          "ref": "occurrence:occ-0/shot",
++          "state": {
++            "state": "present",
++            "value": {
++              "internal_timeline_revision_id": "internal-1",
++              "items": [
++                {
++                  "item_id": "item-1",
++                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                  "metadata": {
++                    "opaque_literal": "item-1"
++                  }
++                }
++              ],
++              "metadata": {
++                "chapter": true
++              },
++              "name": "Chapter One",
++              "text_bindings": [
++                {
++                  "slot": "narration",
++                  "text": "A chapter"
++                }
++              ],
++              "unknown": {
++                "keep": null
++              }
++            }
++          }
++        },
++        {
++          "path": [],
++          "ref": "shot:shot-copy",
++          "state": {
++            "state": "absent"
++          }
++        },
++        {
++          "path": [],
++          "ref": "occurrence:occ-copy",
++          "state": {
++            "state": "absent"
++          }
++        }
++      ],
++      "selections": [
++        {
++          "boundaries": [
++            "occurrence:occ-0/clip:clip-a",
++            "occurrence:occ-0/clip:clip-b"
++          ],
++          "key": "collection.clips",
++          "members": [
++            "occurrence:occ-0/clip:clip-a",
++            "occurrence:occ-0/clip:clip-b"
++          ],
++          "order": [
++            "occurrence:occ-0/clip:clip-a",
++            "occurrence:occ-0/clip:clip-b"
++          ],
++          "owner": "occurrence:occ-0",
++          "policy": "guard-membership",
++          "query_version": 1
++        },
++        {
++          "boundaries": [
++            "occurrence:occ-0/track:picture"
++          ],
++          "key": "collection.tracks",
++          "members": [
++            "occurrence:occ-0/track:picture"
++          ],
++          "order": [
++            "occurrence:occ-0/track:picture"
++          ],
++          "owner": "occurrence:occ-0",
++          "policy": "guard-membership",
++          "query_version": 1
++        }
++      ],
++      "writes": [
++        {
++          "after": {
++            "state": "present",
++            "value": {
++              "internal_timeline": {
++                "clips": [
++                  {
++                    "app": {
++                      "org.example": {
++                        "clear": null,
++                        "literal": "clip-a"
++                      }
++                    },
++                    "asset": "picture",
++                    "at": 1,
++                    "clipType": "media",
++                    "hold": 2,
++                    "id": "clip-a",
++                    "track": "picture"
++                  },
++                  {
++                    "app": {
++                      "org.example": {
++                        "clear": null,
++                        "literal": "clip-a"
++                      }
++                    },
++                    "asset": "picture",
++                    "at": 5,
++                    "clipType": "media",
++                    "hold": 2,
++                    "id": "clip-b",
++                    "track": "picture"
++                  }
++                ],
++                "opaque": {
++                  "timestamp": "authored timestamp",
++                  "v": [
++                    null,
++                    false,
++                    0
++                  ]
++                },
++                "output": {
++                  "fps": {
++                    "denominator": 1001,
++                    "numerator": 30000
++                  }
++                },
++                "registry": {
++                  "assets": {
++                    "picture": {
++                      "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                      "type": "image"
++                    }
++                  }
++                },
++                "source_window": {
++                  "end": 9,
++                  "start": 4
++                },
++                "tracks": [
++                  {
++                    "id": "picture",
++                    "kind": "visual"
++                  }
++                ],
++                "unknown": [
++                  1,
++                  2
++                ]
++              },
++              "payload": {
++                "internal_timeline_revision_id": "internal-1",
++                "items": [
++                  {
++                    "item_id": "shot-item-placement-6b31174529ec92ede9c37ad5e078cfde47f010300e35ba5f9007e3ac63775a8b",
++                    "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
++                    "metadata": {
++                      "opaque_literal": "item-1"
++                    }
++                  }
++                ],
++                "metadata": {
++                  "chapter": true
++                },
++                "name": "Chapter One",
++                "text_bindings": [
++                  {
++                    "slot": "narration",
++                    "text": "A chapter"
++                  }
++                ],
++                "unknown": {
++                  "keep": null
++                }
++              }
++            }
++          },
++          "before": {
++            "state": "absent"
++          },
++          "path": [],
++          "ref": "shot:shot-copy"
++        },
++        {
++          "after": {
++            "state": "present",
++            "value": {
++              "association_id": "assoc-old",
++              "duration_ms": 10000,
++              "metadata": {
++                "org.example/v1": {
++                  "keep": [
++                    null,
++                    false,
++                    0
++                  ],
++                  "occurrence_id": "occ-0",
++                  "output_identity": "out:occ-0",
++                  "shot_id": "chapter-shot",
++                  "stable_deep_link": "deep:occ-0"
++                }
++              },
++              "occurrence_id": "occ-copy",
++              "output_identity": "project/project-1/document/doc%20%2F%C3%A9/occurrence/occ-copy/output/final-video",
++              "output_records": [
++                {
++                  "association_id": "assoc-old",
++                  "output_identity": "out:occ-0",
++                  "task_id": "task-old"
++                }
++              ],
++              "parent_document_id": "doc /é",
++              "placement": {
++                "start_ms": 0,
++                "track": "picture"
++              },
++              "shot_id": "shot-copy",
++              "source_offset": 0,
++              "speed": 1,
++              "stable_deep_link": "project/project-1/document/doc%20%2F%C3%A9/shot/shot-copy/revision/authoring-shot-revision-44fbac89c5e00d8c893cd59c66716b3d5ca1366e54bb1ed008c5118fe74f8dc5/occurrence/occ-copy",
++              "task_id": "task-old",
++              "track": "picture",
++              "unknown": {
++                "literal": "chapter-shot"
++              }
++            }
++          },
++          "before": {
++            "state": "absent"
++          },
++          "path": [],
++          "ref": "occurrence:occ-copy"
++        }
++      ]
++    }
++  ],
++  "source_fixture": "tests/editing_conformance/fixtures/recipe_m2_occurrence_duplicate.json + root identity/history inputs"
++}
++
++
+diff --git a/src/tools/video-editor/commands/occurrenceDuplicateCapture.test.ts b/src/tools/video-editor/commands/occurrenceDuplicateCapture.test.ts
+new file mode 100644
+index 000000000..2fdd64537
+--- /dev/null
++++ b/src/tools/video-editor/commands/occurrenceDuplicateCapture.test.ts
+@@ -0,0 +1,146 @@
++import { describe, expect, it } from 'vitest';
++import type { CanonicalDocument, CommandRecord, EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
++import { stableOccurrenceDeepLink, stableOutputIdentity } from '../data/shotComposition.ts';
++import { authoringBundleFromDocument } from './authoringBundle.ts';
++import { AuthoredState, copy, freezeJson, type AuthoredBundle } from './clipMovePrimitives.ts';
++import { captureOccurrenceDuplicate, executeOccurrenceDuplicate, finishOccurrenceDuplicate } from './occurrenceDuplicateCapture.ts';
++import fixture from './fixtures/recipe_m2_app_occurrence_duplicate.json';
++
++const golden = fixture as unknown as {
++  bundle: AuthoredBundle; command: EditCommand; after_bundle: AuthoredBundle;
++  records: CommandRecord[]; after_document: CanonicalDocument;
++};
++type ObjectValue = { [key: string]: JSON };
++const clips = (bundle: AuthoredBundle, ref = owner) => new AuthoredState(bundle).config(ref).clips as ObjectValue[];
++const args = { occurrence_id: 'occ-copy', shot_id: 'shot-copy' };
++const owner = 'occurrence:occ-0';
++const capture = (input = golden.bundle) => captureOccurrenceDuplicate(input, owner, args);
++
++describe('staged native independent occurrence duplicate capture', () => {
++  it('matches the authoritative Agent capture, writes, and authoring state exactly', () => {
++    const input = freezeJson(copy(golden.bundle));
++    const basis = capture(input);
++    const result = finishOccurrenceDuplicate(basis);
++    expect(result.command).toEqual(golden.command);
++    expect(result.record).toEqual(golden.records[0]);
++    expect(result.bundle).toEqual(golden.after_bundle);
++    expect(input).toEqual(golden.bundle);
++    expect(Object.isFrozen(basis.command.args)).toBe(true);
++    expect(result.record.writes.map((write) => write.ref)).toEqual(['shot:shot-copy', 'occurrence:occ-copy']);
++  });
++
++  it('replays the serialized original basis and never changes reserved IDs', () => {
++    const basis = capture();
++    expect(finishOccurrenceDuplicate(JSON.parse(JSON.stringify(basis)))).toEqual(finishOccurrenceDuplicate(basis));
++    const forged = copy(basis);
++    forged.command.args.occurrence_id = 'replacement';
++    expect(() => finishOccurrenceDuplicate(forged)).toThrow('capture');
++  });
++
++  it('preserves shared source owners and isolates exactly one independent copy', () => {
++    const result = finishOccurrenceDuplicate(capture());
++    expect(result.bundle.placements.slice(0, -1)).toEqual(golden.bundle.placements);
++    for (const [id, shot] of Object.entries(golden.bundle.shots)) expect(result.bundle.shots[id]).toEqual(shot);
++    const state = new AuthoredState(result.bundle);
++    expect(state.config('occurrence:occ-copy')).toEqual(new AuthoredState(golden.bundle).config(owner));
++    clips(result.bundle, 'occurrence:occ-copy')[0].hold = 99;
++    expect(clips(result.bundle)[0].hold).toBe(2);
++    expect(clips(result.bundle, 'occurrence:occ-1')[0].hold).toBe(2);
++  });
++
++  it('records destination roots before compiled projection can normalize them', () => {
++    const result = finishOccurrenceDuplicate(capture());
++    const raw = result.record.writes.find((write) => write.ref === 'occurrence:occ-copy')!.after;
++    const expected = fixture.after_document.parent_revision.payload.occurrences
++      .find((row) => row.occurrence_id === 'occ-copy')!;
++    expect(raw).toEqual({ state: 'present', value: result.bundle.placements.at(-1) });
++    expect((raw.value as ObjectValue).stable_deep_link).toBe(expected.stable_deep_link);
++    expect((raw.value as ObjectValue).output_identity).toBe(expected.output_identity);
++  });
++
++  it('checks RAW compiled root identities and exact immutable shot/internal closure from Agent', async () => {
++    const document = fixture.after_document;
++    const rows = document.parent_revision.payload.occurrences;
++    const source = rows.find((row) => row.occurrence_id === 'occ-0')!;
++    const copied = rows.find((row) => row.occurrence_id === 'occ-copy')!;
++    expect(copied.stable_deep_link).toBe(stableOccurrenceDeepLink('project-1', 'doc /é', 'shot-copy', copied.shot_revision_id, 'occ-copy'));
++    expect(copied.output_identity).toBe(stableOutputIdentity('project-1', 'doc /é', 'occ-copy'));
++    expect(copied.stable_deep_link).not.toBe(source.stable_deep_link);
++    expect(copied.output_identity).not.toBe(source.output_identity);
++    const exceptRoots = (row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([key]) =>
++      !['occurrence_id', 'shot_id', 'shot_revision_id', 'stable_deep_link', 'output_identity'].includes(key)));
++    expect(exceptRoots(copied)).toEqual(exceptRoots(source));
++    expect(copied.output_records).toEqual(source.output_records);
++    expect(copied.metadata).toEqual(source.metadata);
++    const shot = document.shot_revisions.find((row) => row.shot_id === copied.shot_id && row.revision_id === copied.shot_revision_id)!;
++    expect(shot).toBeDefined();
++    expect(document.internal_timeline_revisions.some((row) => row.revision_id === shot.internal_timeline_revision_id)).toBe(true);
++    // Opening the accepted closure retains the raw values; the App does not repair them on read.
++    const opened = await authoringBundleFromDocument(copy(document) as unknown as CanonicalDocument);
++    expect(opened.placements.find((row) => row.occurrence_id === 'occ-copy')!.stable_deep_link).toBe(copied.stable_deep_link);
++    expect(opened.source_mapping._runtime_document).toEqual(document);
++    expect(golden.after_bundle.placements.at(-1)!.stable_deep_link).toBe(copied.stable_deep_link);
++  });
++
++  it.each(['parent', 'shot:chapter-shot', 'occ-0', 'occurrence:missing', 'occurrence:occ-0/clip:clip-a'])('refuses unknown or non-occurrence owner %s', (ref) => {
++    expect(() => captureOccurrenceDuplicate(golden.bundle, ref, args)).toThrow();
++  });
++
++  it.each([
++    { intent: { ownership: 'shared' } }, { version: '2' },
++    { args: { ...args, shared: true } }, { args: { ...args, shot_id: 'bad/id' } },
++    { args: { ...args, occurrence_id: 'bad::id' } },
++    { args: { ...args, shot_id: 'chapter-shot' } },
++    { args: { ...args, occurrence_id: 'occ-0' } },
++  ])('refuses unsupported scope or reservations %j atomically', (overrides) => {
++    const input = copy(golden.bundle);
++    expect(() => executeOccurrenceDuplicate(input, { ...golden.command, ...overrides } as EditCommand)).toThrow();
++    expect(input).toEqual(golden.bundle);
++  });
++
++  it.each(['shot', 'occurrence', 'derived-item', 'published-shot', 'legacy-group'])('refuses %s destination or ownership collision', (kind) => {
++    const input = copy(golden.bundle);
++    if (kind === 'shot') input.shots['shot-copy'] = copy(Object.values(input.shots)[0]);
++    if (kind === 'occurrence') input.placements.push({ ...copy(input.placements[0]), occurrence_id: 'occ-copy' });
++    if (kind === 'derived-item') {
++      const items = (Object.values(input.shots)[1].payload as ObjectValue).items as JSON[];
++      items.push(copy(((golden.after_bundle.shots['shot-copy'].payload as ObjectValue).items as JSON[])[0]));
++    }
++    if (kind === 'published-shot') {
++      const document = (input.source_mapping as ObjectValue)._runtime_document as unknown as CanonicalDocument;
++      document.shot_revisions[0].shot_id = 'shot-copy';
++    }
++    if (kind === 'legacy-group') (input.parent.config as ObjectValue).pinnedShotGroups = [{ opaque: 'group' }];
++    const before = copy(input);
++    expect(() => capture(input)).toThrow(/occupied|migration/);
++    expect(input).toEqual(before);
++  });
++
++  it.each(['row', 'payload', 'internal', 'selection'])('retains original %s guards on replay', (kind) => {
++    const input = copy(golden.bundle);
++    const shot = input.shots[String(input.placements[0].shot_id)];
++    if (kind === 'row') input.placements[0].task_id = 'different';
++    if (kind === 'payload') (shot.payload as ObjectValue).unknown = null;
++    if (kind === 'internal') clips(input)[0].hold = 4;
++    if (kind === 'selection') clips(input).reverse();
++    expect(() => executeOccurrenceDuplicate(input, golden.command)).toThrow('capture');
++  });
++
++  it('keeps absent root identities absent and preserves identity-like nested values', () => {
++    const input = copy(golden.bundle);
++    delete input.placements[0].stable_deep_link;
++    delete input.placements[0].output_identity;
++    const result = finishOccurrenceDuplicate(capture(input));
++    expect(result.bundle.placements.at(-1)).toEqual({ ...input.placements[0], ...args });
++    expect(result.bundle.placements.at(-1)).not.toHaveProperty('output_identity');
++  });
++
++  it.each(['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const)('refuses missing or forged %s', (key) => {
++    const incomplete = copy(capture());
++    delete incomplete.command[key];
++    expect(() => finishOccurrenceDuplicate(incomplete)).toThrow('incomplete');
++    const forged = copy(capture());
++    forged.command[key] = (Array.isArray(forged.command[key]) ? [] : {}) as never;
++    expect(() => finishOccurrenceDuplicate(forged)).toThrow('capture');
++  });
++});
+diff --git a/src/tools/video-editor/commands/occurrenceDuplicateCapture.ts b/src/tools/video-editor/commands/occurrenceDuplicateCapture.ts
+new file mode 100644
+index 000000000..f091cef35
+--- /dev/null
++++ b/src/tools/video-editor/commands/occurrenceDuplicateCapture.ts
+@@ -0,0 +1,258 @@
++import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
++import { stableOccurrenceDeepLink, stableOutputIdentity } from '../data/shotComposition.ts';
++import { remapItems } from './authoringBundle.ts';
++import {
++  assertFiniteJson, ClipMoveError, copy, equal, freezeJson, has, MoveRecording, object,
++  type AuthoredBundle,
++} from './clipMovePrimitives.ts';
++
++type ObjectValue = { [key: string]: JSON };
++export type OccurrenceDuplicateArgs = { occurrence_id: string; shot_id: string };
++export type OccurrenceDuplicateBasis = { readonly bundle: AuthoredBundle; readonly command: EditCommand };
++const CLAIMS = ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'] as const;
++const stableId = (value: unknown): value is string => typeof value === 'string' && value.length > 0
++  && !value.includes('/') && !value.includes('::');
++
++// Keep this capture unit compatible with the refreshed base, whose shared
++// primitive intentionally does not expose its synchronous authoring hash.
++const SHA256_K = [
++  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
++  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
++  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
++  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
++  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
++  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
++  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
++  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
++];
++const rotate = (value: number, bits: number): number => (value >>> bits) | (value << (32 - bits));
++
++function sha256(text: string): string {
++  const bytes = new TextEncoder().encode(text);
++  const padded = new Uint8Array(Math.ceil((bytes.length + 9) / 64) * 64);
++  padded.set(bytes);
++  padded[bytes.length] = 0x80;
++  const view = new DataView(padded.buffer);
++  view.setUint32(padded.length - 8, Math.floor(bytes.length / 0x20000000));
++  view.setUint32(padded.length - 4, bytes.length * 8);
++  const hash = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
++  const words = new Uint32Array(64);
++  for (let offset = 0; offset < padded.length; offset += 64) {
++    for (let i = 0; i < 16; i++) words[i] = view.getUint32(offset + i * 4);
++    for (let i = 16; i < 64; i++) {
++      const a = words[i - 15], b = words[i - 2];
++      words[i] = words[i - 16] + (rotate(a, 7) ^ rotate(a, 18) ^ (a >>> 3)) + words[i - 7] +
++        (rotate(b, 17) ^ rotate(b, 19) ^ (b >>> 10));
++    }
++    let [a, b, c, d, e, f, g, h] = hash;
++    for (let i = 0; i < 64; i++) {
++      const first = h + (rotate(e, 6) ^ rotate(e, 11) ^ rotate(e, 25)) + ((e & f) ^ (~e & g)) + SHA256_K[i] + words[i];
++      const second = (rotate(a, 2) ^ rotate(a, 13) ^ rotate(a, 22)) + ((a & b) ^ (a & c) ^ (b & c));
++      [a, b, c, d, e, f, g, h] = [(first + second) >>> 0, a, b, c, (d + first) >>> 0, e, f, g];
++    }
++    [a, b, c, d, e, f, g, h].forEach((value, i) => { hash[i] = (hash[i] + value) >>> 0; });
++  }
++  return hash.map((value) => value.toString(16).padStart(8, '0')).join('');
++}
++
++function canonicalJson(value: JSON): string {
++  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
++  if (object(value)) return `{${Object.keys(value).sort((left, right) => left < right ? -1 : left > right ? 1 : 0)
++    .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
++  return JSON.stringify(value);
++}
++
++function authoringIdentity(kind: string, ...parts: JSON[]): string {
++  return `${kind}-${sha256([kind, ...parts.map(canonicalJson)].join('\0'))}`;
++}
++
++function destinationShotRevisionId(bundle: AuthoredBundle, shotId: string, value: ObjectValue): string {
++  const internal = value.internal_timeline as JSON;
++  const internalRevisionId = authoringIdentity(
++    'authoring-timeline-revision', bundle.project_id, bundle.timeline_id, shotId, internal,
++  );
++  return authoringIdentity(
++    'authoring-shot-revision', bundle.project_id, shotId,
++    { ...(value.payload as ObjectValue), internal_timeline_revision_id: internalRevisionId },
++  );
++}
++
++function installStateCompatibility(ctx: MoveRecording): void {
++  const state = ctx.state;
++  const baseGet = state.get.bind(state);
++  state.get = (ref, path) => {
++    if (/^occurrence:(?!.*::)[^/]+\/collection:(clip|track)$/.test(ref)) {
++      if (path.length) throw new ClipMoveError('collection shape requires the whole guard');
++      const [owner, kind] = ref.split('/collection:');
++      if (!state.entity(owner, true)) return { state: 'absent' };
++      const config = state.config(owner);
++      const key = `${kind}s`;
++      const value = config[key];
++      return { state: 'present', value: { members: has(config, key)
++        ? { state: 'present', value: Array.isArray(value) ? [] : object(value) ? {} : value }
++        : { state: 'absent' } } };
++    }
++    if (/^shot:(?!.*::)[^/]+$/.test(ref)) {
++      const shot = state.bundle.shots[ref.slice(5)];
++      return shot ? { state: 'present', value: { payload: copy(shot.payload), internal_timeline: copy(shot.internal_timeline) } }
++        : { state: 'absent' };
++    }
++    if (/^occurrence:(?!.*::)[^/]+$/.test(ref)) {
++      const occurrence = state.bundle.placements.find((row) => row.occurrence_id === ref.slice('occurrence:'.length));
++      if (!occurrence) return { state: 'absent' };
++      let current: JSON = occurrence;
++      for (const key of path) {
++        if (object(current) && has(current, key)) current = current[key];
++        else return { state: 'absent' };
++      }
++      return { state: 'present', value: copy(current) };
++    }
++    if (ref.endsWith('/shot') && path[0] === 'payload') {
++      const shot = String(state.occurrence(ref.slice(0, -5)).shot_id);
++      const sources = (state.bundle.source_mapping as ObjectValue).shots as ObjectValue;
++      const mapping = (sources[shot] as ObjectValue)?.item_id_map as ObjectValue ?? {};
++      const value = { payload: remapItems(state.bundle.shots[shot].payload as ObjectValue,
++        new Map(Object.entries(mapping).map(([source, destination]) => [String(destination), source]))) };
++      let current: JSON = value;
++      for (const key of path) {
++        if (object(current) && has(current, key)) current = current[key];
++        else return { state: 'absent' };
++      }
++      return { state: 'present', value: copy(current) };
++    }
++    return baseGet(ref, path);
++  };
++}
++
++function apply(bundle: AuthoredBundle, supplied: EditCommand) {
++  const allowed = ['schema_version', 'op', 'version', 'select', 'args', 'intent', 'rationale', 'group_id', ...CLAIMS];
++  if (Object.keys(supplied).some((key) => !allowed.includes(key))
++    || supplied.schema_version !== 1 || supplied.op !== 'occurrence.duplicate' || supplied.version !== '1'
++    || typeof supplied.select !== 'string' || !/^occurrence:(?!.*::)[^/]+$/.test(supplied.select)
++    || !equal(supplied.intent, { ownership: 'occurrence' })
++    || !object(supplied.args) || !equal(Object.keys(supplied.args).sort(), ['occurrence_id', 'shot_id'])
++    || !stableId(supplied.args.occurrence_id) || !stableId(supplied.args.shot_id)
++    || (has(supplied, 'rationale') && typeof supplied.rationale !== 'string')
++    || (has(supplied, 'group_id') && (typeof supplied.group_id !== 'string' || !supplied.group_id))) {
++    throw new ClipMoveError('duplicate requires one explicit occurrence and two reserved identities');
++  }
++  const owner = supplied.select;
++  const { occurrence_id: occurrenceId, shot_id: shotId } = supplied.args as OccurrenceDuplicateArgs;
++  const ctx = new MoveRecording(bundle, supplied);
++  installStateCompatibility(ctx);
++  const groups = ctx.read('parent', ['config', 'pinnedShotGroups']);
++  if (groups !== undefined && groups !== null && !equal(groups, [])) {
++    throw new ClipMoveError('legacy groups require recorded migration', 'migration_needed');
++  }
++  const row = ctx.read(owner, []);
++  if (!object(row)) throw new ClipMoveError('duplicate source disappeared', 'identity_conflict');
++  const sourceShot = ctx.read(`${owner}/shot`, ['shot_id']);
++  for (const kind of ['clip', 'track']) {
++    const rows = ctx.state.config(owner)[`${kind}s`];
++    if (!Array.isArray(rows) || !rows.every((row) => object(row) && stableId(row.id))) {
++      throw new ClipMoveError('missing or ambiguous collection identity', 'identity_conflict');
++    }
++    const members = rows.map((row) => `${owner}/${kind}:${(row as ObjectValue).id}`);
++    if (new Set(members).size !== members.length) throw new ClipMoveError('ambiguous collection identity', 'identity_conflict');
++    ctx.read(`${owner}/collection:${kind}`, []);
++    ctx.read(owner, ['occurrence_id']);
++    ctx.read(`${owner}/shot`, ['shot_id']);
++    ctx.bind(`collection.owner:collection.${kind}s`, owner);
++    ctx.command.selections!.push({ key: `collection.${kind}s`, query_version: 1, owner,
++      members, order: [...members], boundaries: [...members], policy: 'guard-membership' });
++  }
++  const internal = ctx.read(`${owner}/source`, []);
++  const payload = ctx.read(`${owner}/shot`, ['payload']);
++  if (!object(internal) || !object(payload)) throw new ClipMoveError('missing authored source', 'identity_conflict');
++  if (occurrenceId === row.occurrence_id || shotId === sourceShot) {
++    throw new ClipMoveError('duplicate requires reserved identities distinct from the source', 'identity_collision');
++  }
++  const remap = new Map<string, string>();
++  const items = has(payload, 'items') ? payload.items : [];
++  if (!Array.isArray(items)) throw new ClipMoveError('shot payload.items must be a list');
++  for (const item of items) {
++    const id = object(item) ? has(item, 'item_id') ? item.item_id : item.id : undefined;
++    if (typeof id !== 'string' || !id || remap.has(id)) throw new ClipMoveError('missing or ambiguous shot item identity');
++    remap.set(id, 'shot-item-placement-' + sha256(['shot-item-placement',
++      ...[bundle.project_id, bundle.timeline_id, occurrenceId, shotId, id].map((part) => JSON.stringify(part))].join('\0')));
++  }
++  const occupied = new Set(Object.values(bundle.shots).flatMap((shot) =>
++    ((shot.payload as ObjectValue).items as ObjectValue[] ?? []).map((item) => item.item_id ?? item.id)));
++  if ([...remap.values()].some((id) => occupied.has(id))) throw new ClipMoveError('duplicate item identity is occupied', 'identity_collision');
++  ctx.bind('duplicate.owner', owner);
++  const created = copy(row);
++  delete created.shot_revision_id;
++  delete created.revision_id;
++  Object.assign(created, { occurrence_id: occurrenceId, shot_id: shotId });
++  const shotValue = {
++    payload: remapItems(payload, remap), internal_timeline: copy(internal),
++  };
++  const destinationRevisionId = destinationShotRevisionId(bundle, shotId, shotValue);
++  const documentId = typeof created.parent_document_id === 'string' && created.parent_document_id.length
++    ? created.parent_document_id : bundle.timeline_id;
++  if (has(created, 'stable_deep_link')) {
++    created.stable_deep_link = stableOccurrenceDeepLink(
++      bundle.project_id, documentId, shotId, destinationRevisionId, occurrenceId,
++    );
++  }
++  if (has(created, 'output_identity')) {
++    created.output_identity = stableOutputIdentity(bundle.project_id, documentId, occurrenceId);
++  }
++  const document = (bundle.source_mapping as ObjectValue)._runtime_document as ObjectValue | undefined;
++  const mapping = bundle.source_mapping as ObjectValue;
++  for (const [kind, id, value] of [
++    ['shot', shotId, shotValue],
++    ['occurrence', occurrenceId, created],
++  ] as const) {
++    const ref = `${kind}:${id}`;
++    const retained = document ? kind === 'shot'
++      ? (document.shot_revisions as ObjectValue[]).some((row) => row.shot_id === id)
++      : (((document.parent_revision as ObjectValue).payload as ObjectValue).occurrences as ObjectValue[])
++        .some((row) => row.occurrence_id === id)
++      : kind === 'shot' ? Object.values(mapping.shots as ObjectValue).some((row) => (row as ObjectValue).shot_id === id)
++        : has(mapping.placements as ObjectValue, id);
++    if (retained || ctx.state.get(ref, []).state !== 'absent') throw new ClipMoveError('created identity is occupied', 'identity_collision');
++    ctx.read(ref, []);
++    const before = { state: 'absent' as const };
++    const after = { state: 'present' as const, value: copy(value) };
++    ctx.command.expect![`${ref}::`] = before;
++    ctx.command.authorship![`${ref}::`] = 'direct';
++    ctx.command.created!.push(ref);
++    ctx.record.writes.push({ ref, path: [], before, after });
++    ctx.record.created.push({ ref, kind, owner: kind === 'shot' ? null : 'parent' });
++    if (kind === 'shot') Object.defineProperty(ctx.state.bundle.shots, id, { value: {
++      shot_id: id, ...copy(value), _created: true,
++    }, enumerable: true, writable: true, configurable: true });
++    else ctx.state.bundle.placements.push(copy(value));
++  }
++  ctx.compile();
++  for (const key of CLAIMS) {
++    if (has(supplied, key) && !equal(supplied[key], ctx.command[key])) {
++      throw new ClipMoveError(`submitted ${key} does not match original capture`, 'capture_mismatch');
++    }
++  }
++  // Compiled revision IDs and the two root identity fields belong to Agent's compiler.
++  return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
++}
++
++export function executeOccurrenceDuplicate(bundle: AuthoredBundle, command: EditCommand) {
++  assertFiniteJson(bundle);
++  assertFiniteJson(command);
++  return apply(bundle, command);
++}
++
++export function captureOccurrenceDuplicate(bundle: AuthoredBundle, ownerRef: string, args: OccurrenceDuplicateArgs): OccurrenceDuplicateBasis {
++  const snapshot = copy(bundle);
++  const result = executeOccurrenceDuplicate(snapshot, {
++    schema_version: 1, op: 'occurrence.duplicate', version: '1', select: ownerRef,
++    args: copy(args), intent: { ownership: 'occurrence' },
++  });
++  return freezeJson({ bundle: snapshot, command: result.command });
++}
++
++export function finishOccurrenceDuplicate(basis: unknown) {
++  assertFiniteJson(basis);
++  if (!object(basis) || !object(basis.bundle) || !object(basis.command)
++    || !CLAIMS.every((key) => has(basis.command as object, key))) throw new ClipMoveError('incomplete duplicate basis');
++  return executeOccurrenceDuplicate(basis.bundle as AuthoredBundle, basis.command as EditCommand);
++}
+diff --git a/src/tools/video-editor/commands/occurrenceDuplicateGesture.test.ts b/src/tools/video-editor/commands/occurrenceDuplicateGesture.test.ts
+new file mode 100644
+index 000000000..b5c7cbbf7
+--- /dev/null
++++ b/src/tools/video-editor/commands/occurrenceDuplicateGesture.test.ts
+@@ -0,0 +1,48 @@
++import { describe, expect, it, vi } from 'vitest';
++import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelineData } from '../lib/timeline-data.ts';
++import { copy } from './clipMovePrimitives.ts';
++import { captureOccurrenceDuplicateEdit, submitOccurrenceDuplicateEdit, type OccurrenceDuplicateCapturePort } from './occurrenceDuplicateGesture.ts';
++import fixture from './fixtures/recipe_m2_app_occurrence_duplicate.json';
++
++const owner = 'occurrence:occ-0';
++const args = { occurrence_id: 'occ-copy', shot_id: 'shot-copy' };
++const current = {} as TimelineData;
++function port() {
++  return {
++    capture: vi.fn<OccurrenceDuplicateCapturePort['capture']>(() => ({ original: { keep: [null, false] } })),
++    finish: vi.fn<OccurrenceDuplicateCapturePort['finish']>(() => ({ command: copy(fixture.command) as EditCommand })),
++    submit: vi.fn<OccurrenceDuplicateCapturePort['submit']>(),
++  } satisfies OccurrenceDuplicateCapturePort;
++}
++
++describe('independent duplicate gesture adapter', () => {
++  it('retains original raw owner, reservations, and immutable capture through submission', () => {
++    const native = port();
++    const reserved = copy(args);
++    const captured = captureOccurrenceDuplicateEdit(native, current, owner, reserved);
++    reserved.shot_id = 'changed-after-capture';
++    expect(native.capture).toHaveBeenCalledExactlyOnceWith({ current, ownerRef: owner, args });
++    expect(Object.isFrozen(captured.args)).toBe(true);
++    expect(Object.isFrozen(captured.basis.original)).toBe(true);
++    submitOccurrenceDuplicateEdit(captured);
++    expect(native.finish).toHaveBeenCalledExactlyOnceWith(captured.basis);
++    expect(native.submit).toHaveBeenCalledExactlyOnceWith({ command: fixture.command });
++    expect(Object.isFrozen(native.submit.mock.calls[0][0].command)).toBe(true);
++  });
++
++  it('refuses an unavailable port', () => {
++    expect(() => captureOccurrenceDuplicateEdit(undefined, current, owner, args)).toThrow('unavailable');
++  });
++
++  it.each([
++    { op: 'placement.move' }, { select: 'occurrence:other' }, { version: '2' },
++    { args: { ...args, shot_id: 'changed' } }, { intent: { ownership: 'shared' } },
++  ])('refuses a changed capture result %j before submission', (change) => {
++    const native = port();
++    const captured = captureOccurrenceDuplicateEdit(native, current, owner, args);
++    native.finish.mockReturnValue({ command: { ...copy(fixture.command), ...change } as EditCommand });
++    expect(() => submitOccurrenceDuplicateEdit(captured)).toThrow('Unsupported');
++    expect(native.submit).not.toHaveBeenCalled();
++  });
++});
+diff --git a/src/tools/video-editor/commands/occurrenceDuplicateGesture.ts b/src/tools/video-editor/commands/occurrenceDuplicateGesture.ts
+new file mode 100644
+index 000000000..3706fa243
+--- /dev/null
++++ b/src/tools/video-editor/commands/occurrenceDuplicateGesture.ts
+@@ -0,0 +1,43 @@
++import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelineData } from '../lib/timeline-data.ts';
++import { assertFiniteJson, equal, freezeJson } from './clipMovePrimitives.ts';
++import type { OccurrenceDuplicateArgs } from './occurrenceDuplicateCapture.ts';
++import type { JsonObject } from './types.ts';
++
++export interface OccurrenceDuplicateCapturePort {
++  capture(input: { ownerRef: string; args: OccurrenceDuplicateArgs; current: TimelineData }): JsonObject;
++  finish(basis: JsonObject): { command: EditCommand };
++  submit(input: { command: EditCommand }): void;
++}
++
++export interface CapturedOccurrenceDuplicate {
++  readonly ownerRef: string;
++  readonly args: OccurrenceDuplicateArgs;
++  readonly basis: JsonObject;
++  readonly port: OccurrenceDuplicateCapturePort;
++}
++
++/** Reserve only the occurrence and shot IDs, once, before calling this adapter. */
++export function captureOccurrenceDuplicateEdit(
++  port: OccurrenceDuplicateCapturePort | undefined,
++  current: TimelineData,
++  ownerRef: string,
++  args: OccurrenceDuplicateArgs,
++): CapturedOccurrenceDuplicate {
++  if (!port) throw new Error('occurrence.duplicate capture is unavailable.');
++  assertFiniteJson(args);
++  const original = freezeJson(structuredClone(args));
++  const basis = freezeJson(structuredClone(port.capture({ ownerRef, args: original, current })));
++  return Object.freeze({ ownerRef, args: original, basis, port });
++}
++
++export function submitOccurrenceDuplicateEdit(captured: CapturedOccurrenceDuplicate): void {
++  const { command } = captured.port.finish(captured.basis);
++  assertFiniteJson(command);
++  if (command.schema_version !== 1 || command.op !== 'occurrence.duplicate' || command.version !== '1'
++    || command.select !== captured.ownerRef || !equal(command.args, captured.args)
++    || !equal(command.intent, { ownership: 'occurrence' })) {
++    throw new Error('Unsupported occurrence.duplicate capture result.');
++  }
++  captured.port.submit({ command: freezeJson(structuredClone(command)) });
++}
+diff --git a/src/tools/video-editor/components/AstridTimelineEditor.document-shots.test.tsx b/src/tools/video-editor/components/AstridTimelineEditor.document-shots.test.tsx
+index d1c604b83..5b55d7a16 100644
+--- a/src/tools/video-editor/components/AstridTimelineEditor.document-shots.test.tsx
++++ b/src/tools/video-editor/components/AstridTimelineEditor.document-shots.test.tsx
+@@ -6,6 +6,14 @@ const mocks = vi.hoisted(() => ({
+   createShot: vi.fn(),
+   navigate: vi.fn(),
+   duplicateShotGroup: vi.fn(async () => ({})),
++  occurrenceDuplicate: {
++    capture: vi.fn(({ ownerRef, args }: { ownerRef: string; args: Record<string, string> }) => ({ ownerRef, args })),
++    finish: vi.fn((basis: { ownerRef: string; args: Record<string, string> }) => ({ command: {
++      schema_version: 1, op: 'occurrence.duplicate', version: '1', select: basis.ownerRef,
++      args: basis.args, intent: { ownership: 'occurrence' },
++    } })),
++    submit: vi.fn(),
++  },
+   promotePrimaryVariant: vi.fn(async () => []),
+   reloadFromServer: vi.fn(async () => undefined),
+   galleryGet: vi.fn(async () => ({
+@@ -86,6 +94,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
+     unpatchRegistry: vi.fn(),
+     registerAsset: vi.fn(),
+     registerGenerationAsset: vi.fn(),
++    occurrenceDuplicate: mocks.occurrenceDuplicate,
+     reloadFromServer: mocks.reloadFromServer,
+   }),
+   useTimelineChromeSelector: (selector: (value: unknown) => unknown) => selector({
+@@ -143,14 +152,16 @@ vi.mock('@/integrations/astrid/client.ts', () => ({
+ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx', () => ({
+   resolveSelectedGenerationIdsForShotCreation: () => ({ canCreateShot: false, generationIds: [] }),
+   TimelineEditorCore: (props: {
+-    onShotGroupDuplicate?: (locator: { shotId: string; trackId: string }) => void;
++    onShotGroupDuplicate?: (locator: { shotId: string; trackId: string; canonicalIdentity?: typeof mocks.canonicalOccurrence }) => void;
+     onShotGroupPromotePrimary?: (locator: { shotId: string; trackId: string }) => void;
+     onShotGroupNavigate?: unknown;
+     onShotGroupGenerateVideo?: unknown;
+     onShotGroupOpen?: (occurrence: typeof mocks.canonicalOccurrence) => void;
+   }) => (
+     <div>
+-      <button onClick={() => props.onShotGroupDuplicate?.({ shotId: 'shot-a', trackId: 'V1' })}>Duplicate document shot</button>
++      <button onClick={() => props.onShotGroupDuplicate?.({
++        shotId: 'shot-a', trackId: 'V1', ...(mocks.canonicalMode ? { canonicalIdentity: mocks.canonicalOccurrence } : {}),
++      })}>Duplicate document shot</button>
+       <button onClick={() => props.onShotGroupPromotePrimary?.({ shotId: 'shot-a', trackId: 'V1' })}>Promote document variant</button>
+       {props.onShotGroupOpen && (
+         <button onClick={() => props.onShotGroupOpen?.(mocks.canonicalOccurrence)}>Open canonical document shot</button>
+@@ -216,6 +227,20 @@ describe('AstridTimelineEditor document-derived shot consumer', () => {
+     expect(mocks.createShot).not.toHaveBeenCalled();
+   });
+ 
++  it('routes canonical duplication through the native session without graph publishing or catalog traffic', async () => {
++    mocks.canonicalMode = true;
++    render(<AstridTimelineEditor />);
++
++    fireEvent.click(screen.getByText('Duplicate document shot'));
++
++    await waitFor(() => expect(mocks.occurrenceDuplicate.submit).toHaveBeenCalledWith({ command: expect.objectContaining({
++      op: 'occurrence.duplicate', select: 'occurrence:occ-1',
++      args: { occurrence_id: expect.stringMatching(/^occ-1-copy-/), shot_id: expect.stringMatching(/^shot-1-copy-/) },
++    }) }));
++    expect(mocks.duplicateShotGroup).not.toHaveBeenCalled();
++    expect(mocks.reloadFromServer).not.toHaveBeenCalled();
++  });
++
+   it.each([
+     {
+       action: 'Promote document variant',
+diff --git a/src/tools/video-editor/components/AstridTimelineEditor.tsx b/src/tools/video-editor/components/AstridTimelineEditor.tsx
+index 215ea47bf..eba83404d 100644
+--- a/src/tools/video-editor/components/AstridTimelineEditor.tsx
++++ b/src/tools/video-editor/components/AstridTimelineEditor.tsx
+@@ -31,6 +31,7 @@ import { useShotGroups } from '@/tools/video-editor/hooks/useShotGroups.ts';
+ import { shotGroupVideoKey } from '@/tools/video-editor/hooks/useShotGroups.ts';
+ import { useSwitchToFinalVideo } from '@/tools/video-editor/hooks/useSwitchToFinalVideo.ts';
+ import { useTimelineCommandsService } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
++import { captureOccurrenceDuplicateEdit, submitOccurrenceDuplicateEdit } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
+ import {
+   useTimelineDataSelector,
+   useTimelineChromeSelector,
+@@ -43,9 +44,6 @@ import {
+   duplicateShotGroup,
+   promotePrimaryVariant,
+ } from '@/tools/video-editor/lib/shot-group-pack-commands.ts';
+-import {
+-  duplicateIndependentShot,
+-} from '@/tools/video-editor/data/shotCompositionEditor.ts';
+ import type {
+   CanonicalShotOccurrence,
+   PreparedShotComposition,
+@@ -183,10 +181,12 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
+     applyEdit,
+     prepareGenerationAsset,
+     registerGenerationAsset,
++    occurrenceDuplicate,
+   } = useTimelineOpsSelector((ops) => ({
+     applyEdit: ops.applyEdit,
+     prepareGenerationAsset: ops.prepareGenerationAsset,
+     registerGenerationAsset: ops.registerGenerationAsset,
++    occurrenceDuplicate: ops.occurrenceDuplicate,
+   }), shallow);
+ 
+   const assetGenerationMap = useMemo<Record<string, string>>(() => {
+@@ -388,33 +388,20 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
+   }, []);
+ 
+   const handleDuplicateDocumentShotGroup = useCallback(async (locator: { shotId: string; trackId: string; canonicalIdentity?: CanonicalShotOccurrence }) => {
+-    if (locator.canonicalIdentity && runtime.shots?.shotComposition && runtime.shots.canonicalComposition) {
++    if (locator.canonicalIdentity) {
+       const occurrence = locator.canonicalIdentity;
+       const suffix = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? String(Date.now());
+       try {
+-        const graph = duplicateIndependentShot(
+-          runtime.shots.canonicalComposition.contract,
+-          occurrence.occurrenceId,
+-          {
+-            shotId: `${occurrence.shotId}-copy-${suffix}`,
+-            revisionId: `${occurrence.revisionId}-copy-${suffix}`,
+-            internalTimelineRevisionId: `${occurrence.revisionId}-timeline-copy-${suffix}`,
+-            occurrenceId: `${occurrence.occurrenceId}-copy-${suffix}`,
+-          },
+-        );
+-        await runtime.shots.shotComposition.publish?.({
+-          projectId: occurrence.projectId,
+-          parentDocumentId: occurrence.parentDocumentId,
+-          expectedHeadRevisionId: runtime.shots.canonicalComposition.headRevisionId,
+-          graph,
+-        });
+-        runtime.shots.refetchShots();
++        if (!occurrenceDuplicate || !data) throw new Error('Native occurrence duplicate capture is unavailable');
++        const captured = captureOccurrenceDuplicateEdit(occurrenceDuplicate, data,
++          `occurrence:${occurrence.occurrenceId}`, {
++            occurrence_id: `${occurrence.occurrenceId}-copy-${suffix}`,
++            shot_id: `${occurrence.shotId}-copy-${suffix}`,
++          });
++        submitOccurrenceDuplicateEdit(captured);
+         toast.success('Independent shot duplicated');
+       } catch (error) {
+-        normalizeAndPresentError(error, {
+-          context: 'video-editor:duplicate-canonical-shot',
+-          toastTitle: 'Failed to duplicate canonical shot',
+-        });
++        normalizeAndPresentError(error, { context: 'video-editor:duplicate-canonical-shot', toastTitle: 'Failed to duplicate canonical shot' });
+       }
+       return;
+     }
+@@ -442,7 +429,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
+         toastTitle: 'Failed to duplicate shot',
+       });
+     }
+-  }, [configVersion, reloadFromServer, runtime.project.projectId, runtime.shots, runtime.timelineId]);
++  }, [configVersion, data, occurrenceDuplicate, reloadFromServer, runtime.project.projectId, runtime.timelineId]);
+ 
+   const handlePromoteDocumentShotGroupPrimary = useCallback(async (locator: { shotId: string; trackId: string }) => {
+     const projectSlug = runtime.project.projectId;
