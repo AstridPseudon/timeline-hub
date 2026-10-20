@@ -345,6 +345,20 @@ and viewing fixture changes, with no Agent timeline edit or renderer-independent
 save-path dependency, so no Agent Gate1/Gate3 replay was needed. Current heads:
 Agent `d97f57810`, Runtime `9d1c43c`, App `ce6deafa3`, Composition `ac918bb`.
 
+At 2026-10-20T23:11:21Z App advanced to `a12b19be5` with playback-rate
+sanitization delegated from App viewing code to Composition, and Composition
+advanced to `e7ef7a0` with a smoke-fixture input-authority tweak. These are
+viewing/render fixture changes; neither changes Agent save acceptance,
+workspace commit adapters, or the renderer-independent save nodes. No Agent
+Gate1/Gate3 replay was needed. Current heads: Agent `01ee5b958`, Runtime
+`9d1c43c`, App `a12b19be5`, Composition `e7ef7a0`.
+
+The independent review of upstream497 returned **APPROVE FOR STAGING — HOLD
+pending compatible Runtime**. It confirmed the candidate's 92-pass Gate1
+report but also the `platform.durable_replace` Runtime dependency and an
+unqualified Gate3; the candidate is not on current Agent integration, so no
+replay or Gate claim was added.
+
 The `agt-m2-upstream497-current-merge` worker reported a pending upstream
 merge candidate with 92 Gate1 tests passing and a broader conformance run
 blocked by an incompatible shared Runtime checkout. It has not changed Agent
@@ -385,3 +399,10 @@ review and is not merged; no Gate replay was requested. The managed-scene
 authority review separately returned REQUEST CHANGES (EOF hygiene and a real
 host negative-control gap); it is also unmerged and does not alter current
 Gate evidence.
+
+The pending `agt-m2-wc7-next-existing-command-consumer` candidate adds
+attached-parent `Clip.clear_asset()` through the existing `clip.set` carrier;
+its worker report has 47 local and 2 central HTTP passes, but it is not merged
+into Agent integration, so no replay is claimed yet. The concurrent root-build
+write-guard report is rendering-test-only and likewise has no Gate1/Gate3
+Agent replay impact.
