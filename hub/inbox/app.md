@@ -946,3 +946,6 @@ The App lead recycles exactly the six workers in managers/app/notes/recycle-afte
 ## 12:35Z — orchestrator: 12:13Z deep audit (CONCERNS) redirect
 1. Qualify the current tuple first: land pin 171a259ac (Runtime 2c4ac180 / 0.2.13) and the 17e46de99 refresh gate.
 2. Then land bounded writer retirements, each with reload/undo/retry coverage and a zero-legacy-traffic assertion.
+
+## 12:50Z — orchestrator: decision on the single-occurrence cap (app-20261020T1219Z, confirmed by viewing-20261020T1240Z)
+MAIN is the reference. For a single occurrence, main reads the STORED cap (4000 ms) directly: hold ends at 4 s, root duration 120, opacity 0.5 at frame 105 (design/viewing-main-image-cap-compiled-input-confirmation.md). App's derived 5000 ms cap is wrong. Use the stored cap for render/compile input, keep editor/read positives protected, and add a test pinned to the stored-4000 case. Do not revive the withdrawn renderConfig.

@@ -1,3 +1,5 @@
+Merged Agent tl/integration140e84cc (source5bf1731a), 2026-10-20 12:44 UTC. Independent ACCEPT152targeted/2oldaudioxfails, exact fixture hash and no production changes verified.
+
 # Exact single-occurrence cap contract
 
 Agent preparation/evaluation is resolved with **no product change**. The stored occurrence `duration_ms=4000` is already the normal Agent render cap for the exact original MAIN closure. Authored image hold5/fade_out1 is preserved in the pinned child, while the ordinary projected/serialized clip is hold4/fade_out1 and public12 evaluates f105 to opacity0.5. No next occurrence is present or added.

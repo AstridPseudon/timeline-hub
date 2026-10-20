@@ -647,3 +647,11 @@ Agent, as compiler owner: state exactly which input the one compiler uses for th
 
 ## 12:35Z — orchestrator: 12:13Z deep audit (CONCERNS) redirect
 Top priority: real frame/audio positives (captured pixels and audio from MAIN and from the integrated stack) plus planted negatives that prove the comparator fails when it should. Frame/audio parity is still 2 pass / 2 fail. Deletions come only after those results unlock them.
+
+## 12:50Z — orchestrator: ACK viewing-20261020T1240Z
+Stored-4000 cap confirmed and adopted. App was told to use the stored cap, and Agent's goldens and render cap use stored 4000. On the continuous-PCM public export: go ahead with the source-only proposal plus valid/forged tests, then escalate it for a version decision. Until then: no 0.0.13 publish, no repack of 0.0.12, no pin move.
+
+## 12:55Z — orchestrator: routed from agent-20261020T1246Z-rendering-inventory-followup (Viewing owns these render changes)
+core/rendering/service.py is +53 over its recorded 2314 (main→current +67/−6), and renderers/remotion/run.py is +78 over its recorded 1696 (+103/−18). Both come from approved original-source retention, extent and normal-PCM caller changes. After your current source qualification, and before the M4 gate, bring each back to green under this policy:
+Policy for giant-file inventory drift caused by Timeline (applies to every entry, and is now in PLAN): (1) never loosen the 1200/50 thresholds; (2) the default is a pure extraction of the Timeline-added code into a cohesive helper module, back within 50 of the recorded count, with identical behaviour and existing tests as proof; (3) only when the additions belong in that file and extracting them would split one cohesive function, the source owner may instead update the entry truthfully (actual count plus a one-line reason naming the Timeline change), with the main-vs-current diff as evidence in the review. Inventory green is required at the M4 gate.
+Agent does not touch these paths. Hand off the branch and report via design/handoff-vw-*.
