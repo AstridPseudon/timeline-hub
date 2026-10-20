@@ -15,13 +15,26 @@ from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.documents import Documents
 from astrid.sdk.exceptions import ServiceError
 from astrid.sdk.remote import RemoteMedia
+from astrid.sdk.timeline._command_state import equal
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession, _connection
 from astrid.sdk.workspace_client import WorkspaceClientError
 
 
-def _calls(clip_id, element, duration, params, clear_params, pin=None):
+def _calls(clip_id, element, duration, params, clear_params, pin=None, before=None):
     target = f'parent/clip:{clip_id}'
+    if (before is not None and equal(element, before.get('elementRef') or before.get('element_ref'))
+            and not clear_params and all(
+                name in before.get('params', {}) and equal(value, before['params'][name])
+                for name, value in (params or {}).items())):
+        calls = []
+        if duration is not None or not params:
+            calls.append({'schema_version': 1, 'op': 'clip.set', 'version': '1', 'select': target,
+                          'args': {'values': {'hold': duration if duration is not None else before['hold']}, 'clear': []}})
+        if params:
+            calls.append({'schema_version': 1, 'op': 'clip.set-params', 'version': '1', 'select': target,
+                          'args': {'values': copy.deepcopy(params), 'clear': []}})
+        return calls
     calls = [{'schema_version': 1, 'op': 'clip.set-element', 'version': '1', 'select': target,
               'args': {'elementRef': copy.deepcopy(element)}}]
     if duration is not None:
@@ -38,8 +51,6 @@ def _calls(clip_id, element, duration, params, clear_params, pin=None):
 
 
 def _matches(saved, calls):
-    from astrid.sdk.timeline._command_state import equal
-
     return len(saved) == len(calls) and all(
         prior['op'] == call['op'] and prior['select'] == call['select']
         and equal({k: v for k, v in prior['args'].items() if k != 'schema_source'}, call['args'])
@@ -61,7 +72,7 @@ def _result(session, data, receipt, before, clip_id, expected_head, key):
     return DomainResult.success({
         'project_id': session.project_id, 'timeline_id': session.timeline_id,
         'expected_head': expected_head, 'new_head': data['accepted_revision_id'],
-        'clip_id': clip_id, 'element': clip['elementRef'], 'duration': clip.get('hold'),
+        'clip_id': clip_id, 'element': clip.get('elementRef') or clip.get('element_ref'), 'duration': clip.get('hold'),
         'params': clip.get('params', {}), 'before': {
             'element': before.get('elementRef') or before.get('element_ref'),
             'duration': before.get('hold'), 'params': before.get('params', {})},
@@ -122,13 +133,16 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
                 if receipt['idempotency_key'] == key and entry['publisher'] == session.identity['actor_id']:
                     data = receipt['result']
                     if (receipt['command_kind'] != 'timeline.commit'
-                            or data['base_revision_id'] != expected_head
-                            or not _matches(data['commands'], calls)):
+                            or data['base_revision_id'] != expected_head):
                         raise ValueError('Acknowledged request identity has different original intent')
                     opened = owner.open_bundle(session.project_id, session.timeline_id, revision_id=expected_head)
                     if not opened.ok:
                         return opened
-                    return _result(session, data, receipt, _clip(opened.data['bundle'], clip_id),
+                    before = _clip(opened.data['bundle'], clip_id)
+                    if not (_matches(data['commands'], calls) or _matches(data['commands'], _calls(
+                            clip_id, element, duration, params, clear_params, before=before))):
+                        raise ValueError('Acknowledged request identity has different original intent')
+                    return _result(session, data, receipt, before,
                                    clip_id, expected_head, key)
             cursor = history.data['next_cursor']
             if cursor is None:
@@ -142,6 +156,7 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
         if not opened.ok:
             return opened
         before = _clip(opened.data['bundle'], clip_id)
+        fresh_calls = _calls(clip_id, element, duration, params, clear_params, before=before)
 
         def capture(state):
             if state['base']['revision_id'] != expected_head:
@@ -163,6 +178,10 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
                     or element.get('id') != old_ref.get('id')
                     or old_ref.get('packId') is not None and old_ref['packId'] != element.get('packId')):
                 raise ValueError('Update must preserve the existing effect identity and pack owner')
+            # Keeping a selected element and its literal params needs no new
+            # schema authority, including historic digest-only admissions.
+            if all(call['op'] != 'clip.set-element' for call in fresh_calls):
+                return execute(opened.data['bundle'], fresh_calls, realm_id=realm).commands
             document_id, document = _read_document(client, realm, session.project_id)
             if document is None or document['content']['pack_id'] != element.get('packId'):
                 document_id, document = _read_document(client, realm, session.project_id, element.get('packId'))
@@ -182,7 +201,8 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
                 clip_id, element, duration, params, clear_params, pin),
                 schema_inputs=inputs, realm_id=realm).commands
 
-        session._stage(capture, lambda pending: _matches(pending, calls))
+        # Also recognize the old batch shape without changing an existing flight.
+        session._stage(capture, lambda pending: _matches(pending, calls) or _matches(pending, fresh_calls))
         committed = session.flush(idempotency_key=key)
         return _result(session, committed['data'], committed['receipt'], before, clip_id, expected_head, key)
     except CommitConflict as exc:

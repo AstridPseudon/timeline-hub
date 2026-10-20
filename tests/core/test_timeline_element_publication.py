@@ -2,6 +2,7 @@ import base64
 import copy
 import hashlib
 import json
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
@@ -164,8 +165,8 @@ def test_element_only_and_same_revision_keep_unknown_props(monkeypatch, configur
     assert result.ok, result.error
     assert result.data['duration'] == 2 and result.data['params'] == clip['params']
     calls = owner.commit.call_args.args[2]['commands']
-    assert [c['op'] for c in calls] == ['clip.set-element']
-    assert calls[0]['args']['schema_source']
+    assert [c['op'] for c in calls] == ['clip.set']
+    assert calls[0]['args'] == {'values': {'hold': 2}, 'clear': []}
     plan = execute(bundle, calls, schema_inputs=owner.schema_inputs, realm_id='realm')
     assert all(write['path'][0] != 'params' for record in plan.records for write in record['writes'])
 
@@ -240,3 +241,47 @@ def test_snapshot_read_failure_preserves_public_error(monkeypatch, configured):
     assert not result.ok and result.error == error.to_error_object()
     assert result.idempotency_key == 'missing-snapshot'
     owner.commit.assert_not_called()
+
+
+@pytest.mark.parametrize('params', [None, {}, {'seed': 15.0}])
+def test_digest_only_admission_preserves_same_selected_hold(monkeypatch, configured, params):
+    owner, bundle, ref = setup_owner(monkeypatch, configured)
+    for row in configured.rows.values():
+        for admission in row['content']['admissions']:
+            admission.pop('snapshot_object', None)
+    # Keep the real local closure and build receipt from the original regression.
+    resolved = packs.resolve_admitted_element(
+        'realm', 'project', ref, client=SimpleNamespace(documents=configured))
+    assert resolved['descriptor']['revision'] == ref['revision']
+    bundle['parent']['clips'][0]['elementRef'] = ref
+    original = copy.deepcopy(bundle)
+    documents = copy.deepcopy(configured.rows)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('unchanged selected element requested snapshot or re-admission')
+
+    monkeypatch.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+    monkeypatch.setattr(configured.media, 'read_bytes', forbidden)
+    monkeypatch.setattr(packs, 'admit_project_pack', forbidden)
+    result = update(owner, ref, duration=6, params=params)
+    assert result.ok, result.error
+    calls = owner.commit.call_args.args[2]['commands']
+    assert [call['op'] for call in calls] == ['clip.set'] + (['clip.set-params'] if params else [])
+    assert calls[0]['args'] == {'values': {'hold': 6}, 'clear': []}
+    assert result.data['params'] == original['parent']['clips'][0]['params']
+    assert bundle == original and configured.rows == documents
+
+
+def test_digest_only_revision_reselection_refuses_without_writes(monkeypatch, configured):
+    owner, bundle, ref = setup_owner(monkeypatch, configured)
+    for row in configured.rows.values():
+        for admission in row['content']['admissions']:
+            admission.pop('snapshot_object', None)
+    assert packs.resolve_admitted_element(
+        'realm', 'project', ref, client=SimpleNamespace(documents=configured))['descriptor']['revision'] == ref['revision']
+    original, documents = copy.deepcopy(bundle), copy.deepcopy(configured.rows)
+    # The retained review's draft -> admitted revision is a real reselection.
+    result = update(owner, ref, duration=6)
+    assert not result.ok and result.error.message == 'pack snapshot unavailable; re-admit pack'
+    owner.commit.assert_not_called()
+    assert bundle == original and configured.rows == documents

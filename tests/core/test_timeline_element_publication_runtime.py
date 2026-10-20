@@ -6,8 +6,10 @@ Helper recovery uses the existing session/outbox and accepted Runtime history.
 from __future__ import annotations
 
 import copy
+import json
 import shutil
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -363,11 +365,12 @@ def helper_client(retained_pack, monkeypatch, tmp_path):
     import json
     from types import SimpleNamespace
 
+    from runtime_protocol.errors import RuntimeErrorBase
+
     from astrid.sdk.remote import RemoteTimelines
     from astrid.sdk.timeline.outbox import request_bytes
     from astrid.sdk.workspace_client import WorkspaceClient
     from astrid_runtime_client import ApiError
-    from runtime_protocol.errors import RuntimeErrorBase
 
     case = retained_pack
     monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'support'))
@@ -445,9 +448,10 @@ def test_public_helper_restart_exact_retry_later_head_inverse_redo(
         retained_pack, helper_client, monkeypatch, same_revision, key):
     import json
 
-    from astrid.sdk.timeline_elements import update_parent_element
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
+
+    from astrid.sdk.timeline_elements import update_parent_element
 
     case, client = retained_pack, helper_client
     original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
@@ -560,7 +564,7 @@ def test_public_helper_element_only_keeps_literal_params_and_exact_inverse(
     assert result.ok, result.error
     accepted = result.receipt.result
     commands_sent = accepted['commands']
-    assert [command['op'] for command in commands_sent] == ['clip.set-element']
+    assert [command['op'] for command in commands_sent] == ['clip.set']
     assert State(commit.bundle_from_document(accepted['canonical_document'])).entity(
         'parent/clip:empty-effect') == row
     undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-helper-empty')
@@ -637,3 +641,241 @@ def test_public_helper_native_refusal_preserves_error_and_flight(retained_pack, 
     assert result.idempotency_key == 'helper-denied'
     assert case.head() == head and case.bundle() == before
     assert json.loads(helper_client.outbox().read_bytes())['flight']['key'] == 'helper-denied'
+
+
+@pytest.mark.parametrize('existing', [None, {}, {'seed': 4, 'opaque': [None, False, {}]}])
+@pytest.mark.parametrize('params', [None, {}])
+def test_legacy_same_selected_hold_reload_inverse_retry(
+        retained_pack, helper_client, monkeypatch, existing, params):
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    from astrid.sdk.timeline_elements import update_parent_element
+
+    case, client = retained_pack, helper_client
+    row = copy.deepcopy(State(case.bundle()).entity(REF))
+    row['id'] = 'legacy-effect'
+    row.pop('params')
+    if existing is not None:
+        row['params'] = existing
+    case.submit(case.request([capture_clip_add(case.bundle(), 'parent', row)]), 'legacy-effect')
+    current = case.service.get_document(case.project, case.pin['document_id'])
+    content = copy.deepcopy(current['content'])
+    for admission in content['admissions']:
+        admission.pop('snapshot_object')
+    case.service.update_document(case.project, current['document_id'], {
+        'expected_version': current['version'], 'content': content}, idempotency_key='legacy-admission')
+    assert packs.resolve_admitted_element(
+        'realm', case.project, case.selected)['descriptor']['revision'] == case.selected['revision']
+    original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+    kwargs = dict(realm='realm', clip_id='legacy-effect', element=case.selected,
+                  expected_head=case.head()['revision_id'], duration=6, params=params,
+                  idempotency_key='legacy-hold')
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('legacy HOLD requested schema, snapshot, local disk, or re-admission')
+
+    monkeypatch.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+    monkeypatch.setattr(RequestCommitPort, 'config_source', forbidden)
+    monkeypatch.setattr(RequestCommitPort, 'document_object', forbidden)
+    monkeypatch.setattr(packs, 'resolve_admitted_element', forbidden)
+    monkeypatch.setattr(packs, 'admit_project_pack', forbidden)
+    client.lost_ack[0] = True
+    assert not update_parent_element(client.connect(), case.project, 'film', **kwargs).ok
+    flight = json.loads(client.outbox().read_bytes())['flight']
+    body = json.loads(flight['body'])
+    for changed in ({'duration': 7}, {'idempotency_key': 'another-key'},
+                    {'element': {**case.selected, 'revision': 'another-revision'}}):
+        refused = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, **changed})
+        assert not refused.ok and len(client.calls) == 1
+        assert json.loads(client.outbox().read_bytes())['flight'] == flight
+    assert [command['op'] for command in body['commands']] == ['clip.set']
+    assert body['commands'][0]['args'] == {'values': {'hold': 6}, 'clear': []}
+    assert body['commands'][0]['selections'][0]['key'] == 'element.targets'
+    accepted = case.submit(body, flight['key'])
+    document = accepted['data']['canonical_document']
+    assert State(commit.bundle_from_document(document)).entity('parent/clip:legacy-effect') == {**row, 'hold': 6}
+    assert document['dependency_manifest'] == original['dependency_manifest']
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    assert case.bundle()['source_mapping']['_runtime_document'] == document
+    with monkeypatch.context() as retry:
+        retry.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+        retry.setattr(commands, 'execute', forbidden)
+        result = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+        assert result.ok, result.error
+        assert result.receipt.as_dict() == accepted['receipt']
+        assert update_parent_element(client.connect(), case.project, 'film', **kwargs) == result
+        assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+    undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-legacy')
+    assert undone['data']['canonical_document']['parent_revision']['payload'] == original['parent_revision']['payload']
+    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-legacy')
+    assert redone['data']['canonical_document'] == document
+
+
+@pytest.mark.parametrize('params', [{'seed': 4.0}, {'future': {'keep': [None, False, {}]}}])
+def test_legacy_unchanged_params_noop_needs_no_snapshot(retained_pack, helper_client, monkeypatch, params):
+    case = retained_pack
+    current = case.service.get_document(case.project, case.pin['document_id'])
+    content = copy.deepcopy(current['content'])
+    for admission in content['admissions']:
+        admission.pop('snapshot_object')
+    case.service.update_document(case.project, current['document_id'], {
+        'expected_version': current['version'], 'content': content}, idempotency_key='legacy-admission')
+    assert packs.resolve_admitted_element(
+        'realm', case.project, case.selected)['descriptor']['revision'] == case.selected['revision']
+    original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('unchanged params requested a schema snapshot')
+
+    monkeypatch.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+    result = helper_client.connect().update_parent_element(
+        case.project, 'film', realm='realm', clip_id='effect', element=case.selected,
+        expected_head=case.head()['revision_id'], params=params)
+    assert result.ok, result.error
+    calls = result.receipt.result['commands']
+    assert [call['op'] for call in calls] == ['clip.set-params']
+    assert calls[0]['args'] == {'values': params, 'clear': []}
+    document = result.receipt.result['canonical_document']
+    assert document['parent_revision']['payload'] == original['parent_revision']['payload']
+    assert document['dependency_manifest'] == original['dependency_manifest']
+    entry = case.service._timeline_commits()[0].history_entry(case.project, 'film', result.receipt.receipt_id)
+    assert [write['path'] for write in entry['records']['commands'][0]['writes']] == [
+        ['params', key] for key in sorted(params)]
+
+
+@pytest.mark.parametrize('params', [None, {'future': {'keep': [None, 0, {}]}}])
+def test_legacy_reselection_or_changed_typed_params_refuses_without_writes(
+        retained_pack, helper_client, params):
+    case = retained_pack
+    selected = case.selected
+    if params is None:
+        case.definition['schema']['properties']['seed']['maximum'] = 20
+        case.path.write_text(yaml.safe_dump(case.definition))
+        admission = packs.admit_project_pack('realm', case.project)
+        selected = {key: admission['elements'][0]['descriptor'][key]
+                    for key in ('id', 'kind', 'packId', 'revision')}
+        assert selected['revision'] != case.selected['revision']
+    current = case.service.get_document(case.project, case.pin['document_id'])
+    content = copy.deepcopy(current['content'])
+    for admission in content['admissions']:
+        admission.pop('snapshot_object')
+    case.service.update_document(case.project, current['document_id'], {
+        'expected_version': current['version'], 'content': content}, idempotency_key='legacy-admission')
+    assert packs.resolve_admitted_element(
+        'realm', case.project, selected)['descriptor']['revision'] == selected['revision']
+    before, head = copy.deepcopy(case.bundle()), case.head()
+    history = case.service.list_timeline_commits(case.project, 'film', authorize=lambda: None)
+    result = helper_client.connect().update_parent_element(
+        case.project, 'film', realm='realm', clip_id='effect', element=selected,
+        expected_head=head['revision_id'], duration=6, params=params)
+    assert not result.ok and result.error.message == 'pack snapshot unavailable; re-admit pack'
+    assert helper_client.calls == [] and case.head() == head and case.bundle() == before
+    assert case.service.get_document(case.project, current['document_id'])['content'] == content
+    assert case.service.list_timeline_commits(case.project, 'film', authorize=lambda: None) == history
+
+
+def test_preexisting_element_hold_flight_retries_exact_body(retained_pack, helper_client, monkeypatch):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    from astrid.sdk.timeline.sync import TimelineSession
+    from astrid.sdk.timeline_elements import _calls
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    case, client = retained_pack, helper_client
+    owner = client.connect()
+    facade = SimpleNamespace(_remote=SimpleNamespace(_transport=owner._client), timelines=owner)
+    session = TimelineSession.open(case.project, 'film', client=facade)
+    expected = case.head()['revision_id']
+    # Freeze the helper's pre-fix batch; the new HOLD shortcut must not replace it.
+    calls = _calls('effect', case.selected, 3, None, (), case.pin)
+    session._stage(lambda state: commands.execute(case.bundle(), calls,
+                   schema_inputs=case.options['schema_inputs'], realm_id='realm').commands)
+    client.lost_ack[0] = True
+    with pytest.raises(WorkspaceClientError, match='lost acknowledgement'):
+        session.flush(idempotency_key='old-flight')
+    flight = json.loads(client.outbox().read_bytes())['flight']
+    changed = json.loads(flight['body'])['commands']
+    changed[0]['args']['schema_source']['version'] += 1
+    with pytest.raises(ValueError, match='pending intent differs'):
+        session.commit_many(changed, idempotency_key='old-flight')
+    assert json.loads(client.outbox().read_bytes())['flight'] == flight
+    assert len(client.calls) == 1
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('preexisting flight recaptured or reread snapshot')
+
+    monkeypatch.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+    monkeypatch.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+    result = owner.update_parent_element(
+        case.project, 'film', realm='realm', clip_id='effect', element=case.selected,
+        expected_head=expected, duration=3, idempotency_key='old-flight')
+    assert result.ok, result.error
+    assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+    changed_body = json.loads(flight['body'])
+    changed_body['commands'][0]['args']['schema_source']['version'] += 1
+    head = case.head()
+    with pytest.raises(RuntimeErrorBase):
+        case.submit(changed_body, 'old-flight')
+    assert case.head() == head
+
+
+def test_acknowledged_rebased_lost_ack_restart_pagination_and_typed_intent(
+        retained_pack, helper_client, monkeypatch):
+    from runtime_protocol.service import RuntimeService
+
+    from astrid.sdk.timeline_elements import update_parent_element
+
+    case, client = retained_pack, helper_client
+    expected = case.head()['revision_id']
+    kwargs = dict(realm='realm', clip_id='effect', element=case.selected,
+                  expected_head=expected, duration=3,
+                  params={'opaque': {'nested': [True, {'value': False}]}},
+                  idempotency_key='review-original')
+    client.before_submit[0] = lambda: case.submit(case.request([
+        capture_track_set(case.bundle(), 'parent/track:picture', values={'label': 'Before accept'})]),
+        'review-before-accept')
+    client.lost_ack[0] = True
+    failed = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+    assert not failed.ok
+    flight = json.loads(client.outbox().read_bytes())['flight']
+    accepted = case.submit(json.loads(flight['body']), flight['key'])
+    assert accepted['data']['status'] == 'rebased'
+    assert accepted['data']['base_revision_id'] == expected
+    assert accepted['data']['previous_revision_id'] != expected
+    case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+                        values={'label': 'After accept'})]), 'review-after-accept')
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    head = case.head()
+
+    def forbidden(*a, **kw):
+        pytest.fail('recovered helper recaptured or read current admission')
+
+    monkeypatch.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+    monkeypatch.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+    result = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+    assert result.ok, result.error
+    assert result.receipt.as_dict() == accepted['receipt']
+    assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+    owner = client.connect()
+    history = owner.history
+    cursors = []
+
+    def paginated(project, timeline, *, cursor=None, limit=50):
+        cursors.append(cursor)
+        return history(project, timeline, cursor=cursor, limit=1)
+
+    owner.history = paginated
+    again = update_parent_element(owner, case.project, 'film', **kwargs)
+    assert again == result
+    assert any(cursor is not None for cursor in cursors)
+    equivalent = update_parent_element(owner, case.project, 'film', **{**kwargs, 'duration': 3.0})
+    assert equivalent == result
+    changed = update_parent_element(owner, case.project, 'film', **{
+        **kwargs, 'params': {'opaque': {'nested': [1, {'value': 0}]}}})
+    assert not changed.ok and 'different original intent' in changed.error.message
+    assert len(client.calls) == 2 and case.head() == head
