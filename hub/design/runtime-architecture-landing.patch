@@ -2,7 +2,7 @@ diff --git a/docs/architecture/timeline.md b/docs/architecture/timeline.md
 new file mode 100644
 --- /dev/null
 +++ b/docs/architecture/timeline.md
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,55 @@
 +# Timeline architecture
 +
 +**Status:** This is the Agent-owned landing page for the approved canonical path
