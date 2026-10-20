@@ -140,6 +140,14 @@ def test_union_cannot_hide_sibling_constraints_and_unknown_changes_require_revie
     assert compatibility_errors(previous, baseline())
 
 
+def test_unknown_keyword_with_null_value_is_not_treated_as_absent():
+    previous = baseline('runtime-0.2.2')
+    current = copy.deepcopy(previous)
+    current['$defs']['ID']['unrecognizedValidationKeyword'] = None
+    assert compatibility_errors(previous, current)
+    assert legacy_022_compatibility_errors(previous, current)
+
+
 def test_equivalent_refs_pass_but_unproductive_ref_cycles_require_review():
     current = baseline()
     current['$defs']['Alias'] = copy.deepcopy(current['$defs']['ClipMoveArgs'])
