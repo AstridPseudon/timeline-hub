@@ -1189,7 +1189,7 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
 
   // A disjoint Agent label lands after the ordinary batch, while its ACK is still held from the App.
   const agentEdit = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(ordinary),
-    { kind: 'label', trackId: 'V1', label: 'F2 Agent ordinary sibling' }, 'f2-ordinary-agent-label');
+    { kind: 'label', trackId: 'S1', label: 'F2 Agent ordinary sibling' }, 'f2-ordinary-agent-label');
   expect(agentEdit.data.publisher).not.toBe(ordinary.data.publisher);
   expect(position(agentEdit.data.canonical_document, seed3.appClipId)).toBe(1);
   expect((agentEdit.data.canonical_document.parent_revision.payload.clips as Array<Record<string, any>>)
@@ -1242,7 +1242,10 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
   expect(localLabel.data.status).toBe('rebased');
   expect(JSON.parse(wire.posts[2].body).commands).toEqual(commandsOf(owner.intents[1].payload));
   expect(localLabel.data.canonical_document.parent_revision.payload.config).toMatchObject({
-    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'F2 ordinary local label' })]),
+    tracks: expect.arrayContaining([
+      expect.objectContaining({ id: 'V1', label: 'F2 ordinary local label' }),
+      expect.objectContaining({ id: 'S1', label: 'F2 Agent ordinary sibling' }),
+    ]),
     x_f2_opaque: seed3.opaque.config,
   });
   expect(position(localLabel.data.canonical_document, seed3.appClipId)).toBe(1);
@@ -1258,7 +1261,7 @@ test('M2 ordinary extension batch: move and hold, Agent label, lost ACK, restart
     schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [localLabel.receipt.receipt_id] },
   }]);
   expect(undoLabel.data.canonical_document.parent_revision.payload.config).toMatchObject({
-    tracks: expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'F2 Agent ordinary sibling' })]),
+    tracks: expect.arrayContaining([expect.objectContaining({ id: 'S1', label: 'F2 Agent ordinary sibling' })]),
   });
 
   await reopened.getByRole('button', { name: 'Undo', exact: true }).click();
