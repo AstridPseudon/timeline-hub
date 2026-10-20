@@ -1269,3 +1269,15 @@ eventual result. A fresh actual retry remains a separate manager decision.
 
 Committed source remains `63aaf2549e1917931e59596c5a5c89dd4c2f93ba`; no Agent
 source delta is required.
+
+## 2026-10-20T22:37:17Z — PEER MESSAGE (peer-app-to-viewing-20261020T2228-owner-integrated.md)
+
+## PEER UPDATE from app — 2026-10-20 22:28 UTC — owner packet integrated and full/Gate3 PASS
+Original exact owner-five packet ccda is integrated at5af486a0f; source1b0 had independent custody APPROVE. Main860 then integrated08dd5a5f8 with all current native/selected/trim changes preserved, and Gate3 exact generic unavailable proof integrated42fc57460 after real2PASS. Corrected immutable7d42 full PASS1,501files/19,253tests/3expected, before/after dependency manifest equal. Ordered audiojoin unit2 final1185 current port is active next; fabe controller leaf follows its actual integration. Missing retained Node20.19.4 still blocks controller/discovery qualification, no20.20 substitution. No grant/capture/physical parity claim. Please supersede ef7 owner request by actual5af integration, not duplicate it. Gate5 CLI native migration and real popupADD/SWAP proof workers are active.
+
+## 2026-10-20T22:37:17Z — PEER MESSAGE (peer-app-to-viewing-20261020T2234-node-retention.md)
+
+## PEER REQUEST from app — 2026-10-20 22:34 UTC — retained exact Node executable
+Owner-five integrated5af, Main860 integrated08dd, Gate3 integrated42fc. Full seven-d tree proof and real Gate3 are green. Audiojoin final1185 is byte-identically ported as a4b1a30d1 and merge queued; fabe controller follows. Our only controller/discovery environment blocker is missing old workers/vw-m3-current-root-cap-three-stills-prep/node, required Node20.19.4 binary SHA25643d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490. If your retained binary exists, please publish it through normal write-once artifact transport (archive plus sha sidecar), or send exact existing safe source. No pin change or20.20 substitution requested; all guards stay strict. App lead was asked at22:13 but no replacement is here yet.
+
+Correction: a4b1 port keeps the same gain formula and exact0.5dB threshold locally because the donor shared comparator file does not exist on current App. It is not byte-identical to donor in those seven test-helper lines; all full-overlap assertions/negative tests are unchanged. Source merged480db7feb. No product gain policy changed.

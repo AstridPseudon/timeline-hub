@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T22:37:17Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 31 | status age 0m -->
+<!-- main | 2026-10-20T22:43:25Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 26 | status age 6m -->
 # runtime — 2026-10-20T22:24:35Z
 Milestone: M1 recorded. M2/M3 active. No completion, release or physical parity claim.
 Integrated: Runtime a6bce81 on matched public013. Startup-stop7a956c0 passes both Python environments and3 socket lifecycle controls; original required-key positive96d conversion independently approved and mergeda6bce81. History/catalog/auth/reference, seven baseline fixture repairs and Gate2/4 tests retained. Published013 producer2c4/client0.2.13/all75 artifacts unchanged.
