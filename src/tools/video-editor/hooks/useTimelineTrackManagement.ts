@@ -252,6 +252,7 @@ export function useTimelineTrackManagement({
 }: UseTimelineTrackManagementArgs): UseTimelineTrackManagementResult {
   const editabilityRef = useRef(editability);
   editabilityRef.current = editability;
+  if (trackLabelPort) trackLabelPort.localEditability = editabilityRef;
   const applyResolvedClipMove = useCallback((
     clipId: string,
     targetRowId: string,
@@ -907,7 +908,7 @@ export function useTimelineTrackManagement({
     const current = dataRef.current;
     if (!current) throw new Error('Timeline data is not ready.');
     const checkEditable = () => {
-      const guard = editabilityRef.current;
+      const guard = trackLabelPort?.localEditability?.current ?? editabilityRef.current;
       const timelineDecision = guard.checkTimeline?.();
       if (timelineDecision?.allowed === false) {
         throw new Error(timelineDecision.reason ?? 'Timeline editing is unavailable.');

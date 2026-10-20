@@ -10,6 +10,7 @@ import type { JsonObject } from '@/tools/video-editor/commands/types.ts';
 import { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
+import { createTimelineEditability, type TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
 import { TrackLabelContent } from './TrackLabel.tsx';
 
 async function setup(deviceClass: TimelineDeviceClass) {
@@ -29,11 +30,11 @@ async function setup(deviceClass: TimelineDeviceClass) {
   // This is the session handoff, not a Runtime ACK or browser qualification.
   const submit = vi.fn<TrackLabelCapturePort['submit']>();
   const applyEdit = vi.fn();
-  const port = { capture, finish, submit };
-  function Track({ labelPort = port }: { labelPort?: TrackLabelCapturePort }) {
+  const port: TrackLabelCapturePort = { capture, finish, submit };
+  function Track({ labelPort = port, editability }: { labelPort?: TrackLabelCapturePort; editability?: TimelineEditability }) {
     const ops = useTimelineTrackManagement({
       dataRef, resolvedConfig: dataRef.current.resolvedConfig, selectedClipId: null,
-      setSelectedTrackId: vi.fn(), applyEdit, trackLabelPort: labelPort,
+      setSelectedTrackId: vi.fn(), applyEdit, trackLabelPort: labelPort, editability,
     });
     return <AIInputModeProvider><TrackLabelContent
       track={dataRef.current.resolvedConfig.tracks[0]} deviceClass={deviceClass}
@@ -315,4 +316,81 @@ it.each(['desktop', 'phone', 'tablet'] as const)('releases a clean %s capture on
     'parent/track:V1::label': { state: 'present', value: 'Remote' },
   });
   expect(env.applyEdit).not.toHaveBeenCalled();
+});
+
+// A retained authored capture uses the remounted owner's current local policy.
+describe.each(['desktop', 'phone', 'tablet'] as const)('%s live-policy retry', (deviceClass) => {
+  it('uses the unlocked remount policy after the original hook refused a new lock', async () => {
+    const env = await setup(deviceClass);
+    const input = env.input();
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Keep until unlocked' } });
+    env.rerender(<env.Track editability={createTimelineEditability({ lockedTrackIds: ['V1'] })} />);
+    fireEvent.blur(input);
+    expect(screen.getByRole('alert')).toHaveTextContent('track_locked');
+    env.unmount();
+    expect(env.finish).not.toHaveBeenCalled();
+    const remounted = render(<env.Track />);
+    const reopened = env.input();
+    expect(reopened).toHaveValue('Keep until unlocked');
+    fireEvent.focus(reopened);
+    fireEvent.blur(reopened);
+    expect(env.capture).toHaveBeenCalledTimes(1);
+    expect(env.submit).toHaveBeenCalledTimes(1);
+    expect(env.submit.mock.calls[0][0].command.expect).toEqual({
+      'parent/track:V1::label': { state: 'present', value: 'Original' },
+    });
+    expect(env.applyEdit).not.toHaveBeenCalled();
+    remounted.unmount();
+  });
+
+  it.each(['track_locked', 'timeline_read_only', 'canonical_shot_draft_active'] as const)(
+    'retains the original draft through %s refusal and retries after unlock', async (reason) => {
+      const env = await setup(deviceClass);
+      env.submit.mockImplementation(() => { throw new Error('Temporary synchronous refusal'); });
+      const input = env.input();
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: 'Keep guarded intent' } });
+      env.remote();
+      env.unmount();
+      expect(env.submit).toHaveBeenCalledTimes(1);
+      const basis = env.finish.mock.calls[0][0];
+      const original = env.submit.mock.calls[0][0];
+      const editability = reason === 'canonical_shot_draft_active'
+        ? { ...createTimelineEditability(), checkTimeline: () => ({ allowed: false, reason }) }
+        : createTimelineEditability({ lockedTrackIds: reason === 'track_locked' ? ['V1'] : [],
+          readOnly: reason === 'timeline_read_only' });
+      env.submit.mockImplementation(() => {});
+      const remounted = render(<env.Track editability={editability} />);
+      const reopened = env.input();
+      expect(reopened).toHaveValue('Keep guarded intent');
+      expect(screen.getByRole('alert')).toHaveTextContent('Temporary synchronous refusal');
+      expect(env.finish).toHaveBeenCalledTimes(1);
+      expect(env.submit).toHaveBeenCalledTimes(1);
+      fireEvent.focus(reopened);
+      fireEvent.blur(reopened);
+      expect(screen.getByRole('alert')).toHaveTextContent(reason);
+      expect(reopened).toHaveValue('Keep guarded intent');
+      expect(env.finish).toHaveBeenCalledTimes(1);
+      expect(env.submit).toHaveBeenCalledTimes(1);
+      remounted.unmount();
+      const unlocked = render(<env.Track />);
+      const retry = env.input();
+      expect(retry).toHaveValue('Keep guarded intent');
+      expect(screen.getByRole('alert')).toHaveTextContent(reason);
+      fireEvent.focus(retry);
+      fireEvent.keyDown(retry, { key: 'Enter' });
+      fireEvent.blur(retry);
+      unlocked.unmount();
+      expect(env.capture).toHaveBeenCalledTimes(1);
+      expect(env.finish).toHaveBeenCalledTimes(2);
+      expect(env.finish.mock.calls[1][0]).toBe(basis);
+      expect(env.submit).toHaveBeenCalledTimes(2);
+      expect(env.submit.mock.calls[1][0]).toEqual(original);
+      expect(original.command.expect).toEqual({
+        'parent/track:V1::label': { state: 'present', value: 'Original' },
+      });
+      expect(env.applyEdit).not.toHaveBeenCalled();
+    },
+  );
 });

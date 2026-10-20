@@ -1,6 +1,7 @@
 import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
+import type { TimelineEditability } from '../lib/timeline-editability.ts';
 import { equal, freezeJson } from './clipMovePrimitives.ts';
 import type { TrackLabelArgs } from './trackLabelCapture.ts';
 import type { JsonObject } from './types.ts';
@@ -20,6 +21,8 @@ export type TrackLabelEditStart = ((trackId: string) => (label: string) => void)
 export interface TrackLabelCapturePort {
   // Unsent input belongs to this command owner, including a refused row teardown.
   drafts?: Map<string, TrackLabelDraft>;
+  // The current host policy follows this owner across management-hook remounts.
+  localEditability?: { current: TimelineEditability };
   capture(input: { trackId: string; current: TimelineData }): JsonObject;
   finish(basis: JsonObject, args: TrackLabelArgs): { command: EditCommand };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
