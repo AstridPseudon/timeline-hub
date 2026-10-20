@@ -5,11 +5,10 @@ import copy
 import json
 
 from .errors import ConflictError, RuntimeErrorBase, ValidationError
-from .snapshot_refs import source_kind_of, working_copy_binding
+from .snapshot_refs import SNAPSHOT_KEYS, source_kind_of, working_copy_binding
 from .timeline_commit import CommitRejected
 from .timeline_commit_port import detached, digest
 from .util import canonical_json
-
 
 RESEND_HINT = 'send it as source_kind "cas" (explicit UNCERTIFIED) or forward the real authoring_preview.candidate'
 
@@ -19,7 +18,7 @@ def _equal(left, right, message):
         raise ConflictError(message)
 
 
-def _candidate_document(commits, base, preview, ref):
+def _candidate_document(commits, base, preview, ref, provider):
     candidate = preview["candidate"]
     publication = preview["publication"]
     binding = ref["working_copy"]
@@ -37,6 +36,46 @@ def _candidate_document(commits, base, preview, ref):
             publication["parent_revision_id"], publication["expected_head"]],
            [binding["candidate_digest"], binding["publication_digest"],
             ref["revision_id"], binding["base_revision_id"]], "candidate differs from capture binding")
+    method = getattr(provider, "capture_candidate_inputs", None)
+    if not callable(method):
+        raise ValidationError("canonical capture candidate provider is unavailable")
+    # Agent owns construction; Runtime compares against the retained saved base.
+    try:
+        inputs = detached(method(detached(base), candidate=detached(candidate)))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValidationError("capture candidate inputs are invalid") from exc
+    baseline = inputs["base"]
+    for key in ("project_id", "timeline_id", "base_parent", "base_parent_payload"):
+        _equal(candidate[key], baseline[key], "candidate " + key + " differs from saved base")
+    source = candidate["source_mapping"]
+    _equal(candidate["base_placements"], baseline["base_placements"],
+           "candidate placement base differs from saved base")
+    retained_placements = {canonical_json(row) for row in baseline["base_placements"].values()}
+    for row in source["placements"].values():
+        _equal(canonical_json(row) in retained_placements, True,
+               "candidate placement source differs from saved base")
+    for row in candidate["placements"]:
+        identity = row["occurrence_id"]
+        if identity in baseline["base_placements"]:
+            _equal(source["placements"].get(identity), baseline["base_placements"][identity],
+                   "candidate placement source differs from saved base")
+    if "_runtime_document" in source:
+        _equal(source["_runtime_document"], base, "candidate document base differs from saved base")
+    # Authoring keys can change on a clone/rename. Match the complete retained
+    # source, including its item mapping, even for sources no longer authored.
+    retained = {canonical_json(row): baseline["shots"][identity]
+                for identity, row in baseline["source_mapping"]["shots"].items()}
+    for row in source["shots"].values():
+        _equal(canonical_json(row) in retained, True,
+               "candidate child source differs from saved base")
+    for identity, shot in candidate["shots"].items():
+        origin = source["shots"].get(identity)
+        original = retained[canonical_json(origin)] if origin is not None else {}
+        for key in ("base_payload", "base_internal_timeline"):
+            _equal(shot.get(key, {}), original.get(key, {}),
+                   "candidate child base differs from saved base")
+    for key in ("kind", "head", "candidate_digest", "publication_digest", "publication"):
+        _equal(preview[key], inputs["preview"][key], "candidate " + key + " is not derived from candidate")
     document = copy.deepcopy(base)
     document["parent_revision"] = {
         "revision_id": publication["parent_revision_id"], "content_digest": publication["content_digest"],
@@ -90,7 +129,7 @@ def validate_capture(service, snapshot, ref, inputs):
             revision = ref["working_copy"]["base_revision_id"]
         document = commits.revision_closure(ref["project_id"], ref["timeline_id"], revision)
         if preview is not None:
-            _candidate_document(commits, document, preview, ref)
+            _candidate_document(commits, document, preview, ref, service._timeline_commit_provider)
         projection = detached(method(detached(document), authoring_preview=preview))
         for key in ("config", "registry"):
             _equal(snapshot[key], projection[key], "capture differs from authoritative " + key)
@@ -122,30 +161,65 @@ def claim_capture_view(service, spec):
     labelled CAS-only (uncertified legacy preview) instead.
     """
     inner = spec.get("spec") if isinstance(spec.get("spec"), dict) else {}
-    context = inner.get("authority_context") if isinstance(inner.get("authority_context"), dict) else {}
-    ref = context.get("capture_snapshot_ref")
-    if not isinstance(ref, dict) or ref.get("source_kind") not in {"revision", "working_copy"}:
+    context = inner.get("authority_context") if isinstance(inner.get("authority_context"), dict) else None
+    outer_context = spec.get("authority_context") if isinstance(spec.get("authority_context"), dict) else None
+    if context is None:
+        context = outer_context
+    contexts = [context] if context is not None else []
+    # Admission and host materialization prefer the nested context, but old
+    # task envelopes can retain an outer context as well.  Inspect both so an
+    # active alias in the non-preferred location cannot evade certification.
+    if outer_context is not None and outer_context is not context:
+        contexts.append(outer_context)
+    inputs = inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {}
+    labels = {}
+
+    def claim_identity(key, ref):
+        """Identify one authority claim, including its binding and scope."""
+        return key, canonical_json(ref)
+
+    for context in contexts:
+        for key in SNAPSHOT_KEYS:
+            ref = context.get(key + "_ref")
+            if not isinstance(ref, dict) or source_kind_of(ref) not in {"revision", "working_copy"}:
+                continue
+            try:
+                snapshot = json.loads(service.object(ref["digest"])[1])
+                certified = validate_capture(service, snapshot, ref, inputs)
+            except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
+                certified = False
+            if not certified:
+                # Match the complete authority claim so exact duplicates
+                # (including argv/filmstrip JSON) lose rejected claims while
+                # independently verified claims for the same bytes survive.
+                ref_key = key + "_ref"
+                labels[claim_identity(ref_key, ref)] = {
+                    "digest": ref["digest"], "project_id": ref.get("project_id"),
+                    "timeline_id": ref.get("timeline_id"), "source_kind": "cas",
+                }
+
+    if not labels:
         return spec
-    try:
-        snapshot = json.loads(service.object(ref["digest"])[1])
-        if validate_capture(service, snapshot, ref, inner.get("inputs") if isinstance(inner.get("inputs"), dict) else {}):
-            return spec
-    except (RuntimeErrorBase, OSError, KeyError, TypeError, ValueError):
-        pass
-    uncertified = {"digest": ref["digest"], "project_id": ref.get("project_id"),
-                   "timeline_id": ref.get("timeline_id"), "source_kind": "cas"}
 
     def relabel(value):
         if isinstance(value, dict):
-            return {key: uncertified if key == "capture_snapshot_ref" and item == ref else relabel(item)
-                    for key, item in value.items()}
+            result = {}
+            for key, item in value.items():
+                replacement = labels.get(claim_identity(key, item)) if (
+                    key.endswith("_snapshot_ref") and isinstance(item, dict)
+                ) else None
+                result[key] = replacement if replacement is not None else relabel(item)
+            return result
+        if isinstance(value, list):
+            return [relabel(item) for item in value]
         if isinstance(value, str):
             try:
                 decoded = json.loads(value)
             except ValueError:
                 return value
-            if isinstance(decoded, dict) and "capture_snapshot_ref" in decoded:
-                return canonical_json(relabel(decoded))
+            if isinstance(decoded, (dict, list)):
+                relabelled = relabel(decoded)
+                return canonical_json(relabelled) if relabelled != decoded else value
         return value
 
     return relabel(spec)
