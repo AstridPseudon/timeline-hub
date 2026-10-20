@@ -250,7 +250,8 @@ print(json.dumps({'install_problem': problem, 'bound': bound}, sort_keys=True))
 
 
 def snapshot(root):
-    return {'source': tracked(root), 'graph': inventory(GRAPH),
+    return {'head': git(root, 'rev-parse', 'HEAD'), 'tree': git(root, 'rev-parse', 'HEAD^{tree}'),
+            'source': tracked(root), 'graph': inventory(GRAPH),
             'browser': inventory(BROWSER.parent), 'node': digest(NODE)}
 
 
@@ -316,7 +317,8 @@ def run():
     baseline = json.loads(artifact('prepare-pre.json').read_text())
     require(digest(artifact('prepare-pre.json')) == ready['pre_manifest_sha256'], 'READY baseline changed')
     before = snapshot(root)
-    require(before == baseline, 'full tracked source or borrowed graph/browser/Node differs from READY')
+    # Central adds a synthetic snapshot commit; its parent was checked above.
+    require({**before, 'head': SHA} == baseline, 'full tracked source or borrowed graph/browser/Node differs from READY')
     require(not git(root, 'status', '--porcelain', '--untracked-files=all'), 'central snapshot is dirty')
     write(artifact('run-pre.json'), before)
     # O_EXCL consumes the single permitted attempt only after grant and preflight.

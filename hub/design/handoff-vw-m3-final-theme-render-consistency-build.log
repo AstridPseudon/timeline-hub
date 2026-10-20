@@ -1,0 +1,8 @@
+
+> @banodoco/timeline-composition@0.0.11 build
+> npm run gen-registry:check && node scripts/build.mjs
+
+
+> @banodoco/timeline-composition@0.0.11 gen-registry:check
+> node --import tsx scripts/gen-registry.ts --check
+

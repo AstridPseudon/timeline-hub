@@ -5,7 +5,7 @@
   "browser": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   "controller_hashes": {
     "handoff-vw-m3-root-smoke-central-ready-READY.sh": "1face7922354a08ef61621415412a9648a1e77870d7cc54ba9f9b23330ea15ba",
-    "handoff-vw-m3-root-smoke-central-ready-controller.py": "2b47ce77e2a61fd1e97743692a2187b9361b883493c427aa5afe99eee3ada19c"
+    "handoff-vw-m3-root-smoke-central-ready-controller.py": "5728411e9254119723ca5af2736f0671b8c9e97b3ffeaf0679195c0eaf947acf"
   },
   "graph_file_count": 21495,
   "graph_path": "/home/user/work/wt/vw-m3-scene-host-plumbing/remotion/node_modules",
@@ -89,7 +89,7 @@
     "dist/types.d.ts": "d1c8f4088362f2935c96bc0c442ebc640af8a8954c396b03faaa36b8be75a95c",
     "package.json": "ce3e224cd9549115f00ddcf0db9c22dd2a2b31cbdc90e0f17fadc8919b5f9fde"
   },
-  "pre_manifest_sha256": "41347f2299d5082ad86bbd54927c836d71a3b581e13978dc4fb5ecc58146279e",
+  "pre_manifest_sha256": "2387ebb5e0beaf9b5c0eea064edf0d9e1425059f05f39e9cb31fea064a5414ed",
   "source_file_count": 2900,
   "source_sha": "5acd7233df676bf42b2086d86cb0a6358398bf5f",
   "source_tree": "66898dd11df74e205af95903651782a29e9886b4",

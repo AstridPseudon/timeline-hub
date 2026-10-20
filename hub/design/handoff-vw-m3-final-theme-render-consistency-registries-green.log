@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: bundled core and selected theme effects use the same scoped dispatch and stay conservative
+ok 1 - bundled core and selected theme effects use the same scoped dispatch and stay conservative
+  ---
+  duration_ms: 3.939678
+  type: 'test'
+  ...
+# Subtest: host effects, aliases and capabilities are instance scoped, including default overrides
+ok 2 - host effects, aliases and capabilities are instance scoped, including default overrides
+  ---
+  duration_ms: 0.645774
+  type: 'test'
+  ...
+# Subtest: component capability receives the exact renderer-selected asset, including explicit absence
+ok 3 - component capability receives the exact renderer-selected asset, including explicit absence
+  ---
+  duration_ms: 6.969899
+  type: 'test'
+  ...
+# Subtest: host animation maps keep defaults, phase validation and unknown errors scoped
+ok 4 - host animation maps keep defaults, phase validation and unknown errors scoped
+  ---
+  duration_ms: 0.77947
+  type: 'test'
+  ...
+# Subtest: host transition resolution reaches preparation without changing another instance
+ok 5 - host transition resolution reaches preparation without changing another instance
+  ---
+  duration_ms: 0.418026
+  type: 'test'
+  ...
+# Subtest: default animations retain real motion and type-on output
+ok 6 - default animations retain real motion and type-on output
+  ---
+  duration_ms: 2.277948
+  type: 'test'
+  ...
+# Subtest: packaged effect internal animations and clip animations honor the rendering scope
+ok 7 - packaged effect internal animations and clip animations honor the rendering scope
+  ---
+  duration_ms: 4.360415
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 35.650882

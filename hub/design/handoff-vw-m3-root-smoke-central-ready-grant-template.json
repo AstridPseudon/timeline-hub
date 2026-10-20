@@ -1,0 +1,8 @@
+{
+  "controller_hashes": {
+    "handoff-vw-m3-root-smoke-central-ready-READY.sh": "1face7922354a08ef61621415412a9648a1e77870d7cc54ba9f9b23330ea15ba",
+    "handoff-vw-m3-root-smoke-central-ready-controller.py": "5728411e9254119723ca5af2736f0671b8c9e97b3ffeaf0679195c0eaf947acf"
+  },
+  "ready_sha256": "d9e286ce54397020c601e7f787745aeb1a6fefb48c7a01a240e2d70f51d753a8",
+  "source_sha": "5acd7233df676bf42b2086d86cb0a6358398bf5f"
+}

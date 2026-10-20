@@ -1,0 +1,68 @@
+TAP version 13
+# Subtest: proven opaque visual media reports visible covered content
+ok 1 - proven opaque visual media reports visible covered content
+  ---
+  duration_ms: 2.560704
+  type: 'test'
+  ...
+# Subtest: scene roles use own clip-ID entries and preserve the track fallback
+not ok 2 - scene roles use own clip-ID entries and preserve the track fallback
+  ---
+  duration_ms: 0.885155
+  type: 'test'
+  location: '/home/user/work/wt/vw-m3-final-theme-render-consistency/typescript/test-dist/tests/scene-evaluation.test.js:36:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + [Object: null prototype] {}
+    - 'content'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'content'
+  actual:
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/work/wt/vw-m3-final-theme-render-consistency/typescript/test-dist/tests/scene-evaluation.test.js:42:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: unresolved or unproven media remains unknown instead of being treated as absent
+ok 3 - unresolved or unproven media remains unknown instead of being treated as absent
+  ---
+  duration_ms: 0.50617
+  type: 'test'
+  ...
+# Subtest: assetless native holds are visibly absent, while declared component support stays explicit
+ok 4 - assetless native holds are visibly absent, while declared component support stays explicit
+  ---
+  duration_ms: 0.433748
+  type: 'test'
+  ...
+# Subtest: unknown modifier output bounds produce a finding and unknown coverage
+ok 5 - unknown modifier output bounds produce a finding and unknown coverage
+  ---
+  duration_ms: 0.414312
+  type: 'test'
+  ...
+# Subtest: scene incoming vector consumes occurrence caps with ceil quantization and keeps omitted policy unchanged
+ok 6 - scene incoming vector consumes occurrence caps with ceil quantization and keeps omitted policy unchanged
+  ---
+  duration_ms: 0.473657
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 5
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12.204796

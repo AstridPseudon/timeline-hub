@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: track queries use half-open draw bounds and retain mounted zero-opacity layers
+ok 1 - track queries use half-open draw bounds and retain mounted zero-opacity layers
+  ---
+  duration_ms: 1.741173
+  type: 'test'
+  ...
+# Subtest: audio envelope evaluation accepts representative fade input and applies gain in place
+ok 2 - audio envelope evaluation accepts representative fade input and applies gain in place
+  ---
+  duration_ms: 0.715362
+  type: 'test'
+  ...
+# Subtest: public media clock helpers preserve trim rounding and strict half-open source bounds
+ok 3 - public media clock helpers preserve trim rounding and strict half-open source bounds
+  ---
+  duration_ms: 0.211283
+  type: 'test'
+  ...
+# Subtest: public media clock helpers preserve defaults, invalid-rate fallback and fractional-fps rounding
+ok 4 - public media clock helpers preserve defaults, invalid-rate fallback and fractional-fps rounding
+  ---
+  duration_ms: 0.108298
+  type: 'test'
+  ...
+# Subtest: incoming preroll policy advances content without changing own frames or half-open mounts
+ok 5 - incoming preroll policy advances content without changing own frames or half-open mounts
+  ---
+  duration_ms: 0.617027
+  type: 'test'
+  ...
+# Subtest: policy is per boundary, preserves cut admission, and composes overlapping transition windows
+ok 6 - policy is per boundary, preserves cut admission, and composes overlapping transition windows
+  ---
+  duration_ms: 0.205381
+  type: 'test'
+  ...
+# Subtest: App admission carries only explicit policy and still refuses unsupported custom transitions and overlap
+ok 7 - App admission carries only explicit policy and still refuses unsupported custom transitions and overlap
+  ---
+  duration_ms: 0.754422
+  type: 'test'
+  ...
+# Subtest: public incoming vector represents first clips and leaves audio envelope gain unchanged
+ok 8 - public incoming vector represents first clips and leaves audio envelope gain unchanged
+  ---
+  duration_ms: 0.267808
+  type: 'test'
+  ...
+# Subtest: native outgoing pairs cannot encode canonical first, gap, overlap or oversized incoming declarations
+ok 9 - native outgoing pairs cannot encode canonical first, gap, overlap or oversized incoming declarations
+  ---
+  duration_ms: 0.314218
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 31.498668

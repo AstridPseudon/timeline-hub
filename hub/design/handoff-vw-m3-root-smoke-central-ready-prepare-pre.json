@@ -21964,6 +21964,7 @@
     "zustand/vanilla.d.ts": "903345b5fc1e6010f8c03e36619e33f9e0d3a6787779aeb7687454d2a6c3ef6d",
     "zustand/vanilla.js": "ac325b62d844de8b40b8c20ed39db1213a8ecbcdb495f27cd6b4845ee5d2dce3"
   },
+  "head": "5acd7233df676bf42b2086d86cb0a6358398bf5f",
   "node": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
   "source": {
     ".env.example": {
@@ -36466,5 +36467,6 @@
       "mode": 420,
       "sha256": "ba338cd1f6a574793e3740dc991921c2339ec6192655d0a3c62a158a3db4087a"
     }
-  }
+  },
+  "tree": "66898dd11df74e205af95903651782a29e9886b4"
 }

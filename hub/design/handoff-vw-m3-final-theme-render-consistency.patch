@@ -1,0 +1,71 @@
+diff --git a/typescript/src/TimelineComposition.tsx b/typescript/src/TimelineComposition.tsx
+index 079375e14..076163d3d 100644
+--- a/typescript/src/TimelineComposition.tsx
++++ b/typescript/src/TimelineComposition.tsx
+@@ -325,7 +325,7 @@ export const TimelineComposition = (props: TimelineCompositionProps): ReactEleme
+   return (
+     <AbsoluteFill
+       style={{
+-        backgroundColor: props.theme?.visual.color.bg ?? 'black',
++        backgroundColor: props.theme?.visual.color.bg ?? DEFAULT_THEME.visual.color.bg,
+         width,
+         height,
+         overflow: 'hidden',
+diff --git a/typescript/src/scene-evaluation.ts b/typescript/src/scene-evaluation.ts
+index 53e4aaeab..e2a0606d6 100644
+--- a/typescript/src/scene-evaluation.ts
++++ b/typescript/src/scene-evaluation.ts
+@@ -237,7 +237,9 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
+         geometryReason, reason => unknown('invalid-component-diagnostics', reason));
+       layers.push({clipId: clip.id, track: track.id, clipIndex: draw.clipIndex, z: 0,
+         drawLocalFrame: draw.drawLocalFrame, ownFrame: draw.ownFrame, contentFrame: draw.contentFrame, transitionOpacity: draw.opacity,
+-        opacity, visible, opaqueSupport, targetBounds, bounds, fullFrame, role: scene.roles[clip.id] ?? (track.id === 'plate' ? 'picture' : 'content'),
++        opacity, visible, opaqueSupport, targetBounds, bounds, fullFrame,
++        role: (Object.prototype.hasOwnProperty.call(scene.roles, clip.id) ? scene.roles[clip.id] : undefined)
++          ?? (track.id === 'plate' ? 'picture' : 'content'),
+         ...(diagnostics === undefined ? {} : {diagnostics}),
+         coverage: bounds.status === 'unknown' || uncertain ? 'unknown' : opaqueSupport === 'rect' && fullFrame && opacity! >= .999 ? 'covered' : 'partial', findings, dip});
+     }
+diff --git a/typescript/tests/scene-evaluation.test.ts b/typescript/tests/scene-evaluation.test.ts
+index 7853fb982..a3526e3b1 100644
+--- a/typescript/tests/scene-evaluation.test.ts
++++ b/typescript/tests/scene-evaluation.test.ts
+@@ -42,6 +42,17 @@ test('proven opaque visual media reports visible covered content', () => {
+   assert.deepEqual(frame.findings, []);
+ });
+ 
++test('scene roles use own clip-ID entries and preserve the track fallback', () => {
++  const ownRoles = JSON.parse('{"__proto__":"background"}') as Readonly<Record<string, string>>;
++  const overridden = querySceneFrame(prepare([clip({id: '__proto__'})], assets, {roles: ownRoles}), 0);
++  assert.equal(overridden.layers[0].role, 'background');
++
++  for (const id of ['__proto__', 'constructor', 'toString']) {
++    const fallback = querySceneFrame(prepare([clip({id})], assets, {roles: {}}), 0);
++    assert.equal(fallback.layers[0].role, 'content');
++  }
++});
++
+ test('unresolved or unproven media remains unknown instead of being treated as absent', () => {
+   const unresolved = querySceneFrame(prepare([clip({asset: 'missing'})]), 0);
+   assert.equal(unresolved.coverage, 'UNKNOWN');
+diff --git a/typescript/tests/theme.test.ts b/typescript/tests/theme.test.ts
+index 20ac1a197..1690e7470 100644
+--- a/typescript/tests/theme.test.ts
++++ b/typescript/tests/theme.test.ts
+@@ -51,6 +51,7 @@ test('public default preserves the complete existing export style', () => {
+   const markup = render(createElement(TimelineComposition, {
+     timeline: {theme: 'default', tracks: [track], clips: [clip]}, assets,
+   }));
++  assert.match(markup, /^<div style="[^"]*background-color:#050814(?:;|")/);
+   assert.match(markup, /color:#FAFAFA/);
+   assert.match(markup, /font-family:Arial/);
+   assert.match(markup, /font-size:32px/);
+@@ -112,7 +113,7 @@ for (const [name, selected] of [['full', explicit], ['partial nested override wi
+     }));
+     assert.deepEqual(rendered, [toRuntimeTheme(before)]);
+     assert.deepEqual(observed, [toRuntimeTheme(before)]);
+-    assert.match(markup, /background-color:#234567/);
++    assert.match(markup, /^<div style="[^"]*background-color:#234567(?:;|")/);
+     assert.match(markup, /color:#123456/);
+     assert.match(markup, /font-family:Film Heading/);
+     assert.match(markup, /font-size:51px/);

@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: proven opaque visual media reports visible covered content
+ok 1 - proven opaque visual media reports visible covered content
+  ---
+  duration_ms: 2.565952
+  type: 'test'
+  ...
+# Subtest: scene roles use own clip-ID entries and preserve the track fallback
+ok 2 - scene roles use own clip-ID entries and preserve the track fallback
+  ---
+  duration_ms: 0.483183
+  type: 'test'
+  ...
+# Subtest: unresolved or unproven media remains unknown instead of being treated as absent
+ok 3 - unresolved or unproven media remains unknown instead of being treated as absent
+  ---
+  duration_ms: 0.530699
+  type: 'test'
+  ...
+# Subtest: assetless native holds are visibly absent, while declared component support stays explicit
+ok 4 - assetless native holds are visibly absent, while declared component support stays explicit
+  ---
+  duration_ms: 0.435671
+  type: 'test'
+  ...
+# Subtest: unknown modifier output bounds produce a finding and unknown coverage
+ok 5 - unknown modifier output bounds produce a finding and unknown coverage
+  ---
+  duration_ms: 0.3254
+  type: 'test'
+  ...
+# Subtest: scene incoming vector consumes occurrence caps with ceil quantization and keeps omitted policy unchanged
+ok 6 - scene incoming vector consumes occurrence caps with ceil quantization and keeps omitted policy unchanged
+  ---
+  duration_ms: 0.970169
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11.649446

@@ -1,0 +1,4 @@
+/home/user/work/wt/vw-m3-final-theme-render-consistency/typescript/src/TimelineComposition.tsx
+/home/user/work/wt/vw-m3-final-theme-render-consistency/typescript/src/scene-evaluation.ts
+/home/user/work/wt/vw-m3-final-theme-render-consistency/typescript/tests/scene-evaluation.test.ts
+/home/user/work/wt/vw-m3-final-theme-render-consistency/typescript/tests/theme.test.ts
