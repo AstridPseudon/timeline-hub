@@ -1,0 +1,316 @@
+--- a/astrid/sdk/timeline/check.py
++++ b/astrid/sdk/timeline/check.py
+@@ -83,6 +83,10 @@
+         timeline seconds (the render config's shape), tracks top first. Run per check, not per clip."""
+         from astrid.core.timeline import onscreen
+ 
++        retained = getattr(self, "_scene_inputs", None)
++        if retained is not None:
++            return self._retained_on_screen(*retained)
++
+         tracks: list[dict[str, Any]] = []
+         seen: set[Any] = set()
+         for sid in self._shot_ids():
+@@ -105,6 +109,87 @@
+         end_frame = int(round(self.duration * self.fps))
+         return onscreen.coverage({"tracks": tracks, "clips": clips}, self.fps, canvas, elements,
+                                  start_frame=0, end_frame=end_frame)
++
++    def _retained_on_screen(self, request, workspace, client) -> list:
++        """Explicit advice from the original host-retained request, never a save preflight."""
++        from pathlib import Path
++        from tempfile import TemporaryDirectory
++        from types import SimpleNamespace
++
++        from astrid.core.rendering.verified_source import inherited_source
++        from astrid.core.timeline import scene_answers
++        from astrid.core.timeline.authoring_bundle import _digest, preview_authoring_candidate
++        from astrid.core.timeline.duration import timeline_render_duration_frames
++        from astrid.packs.rendering.rendering.renderers.remotion import run as backend
++        from astrid.sdk.timeline_filmstrip import prepare_filmstrip
++
++        end = int(round(self.duration * self.fps))
++        try:
++            # Keep the original service request: a segment/layer derivative is
++            # not the full revision that this Checkout diagnoses.
++            if request.window is not None or request.profile is not None:
++                raise ValueError("scene check requires the original full composition request")
++            timeline = backend._input_path(request.timeline_path, workspace)
++            assets = backend._input_path(request.assets_registry_path, workspace)
++            source = inherited_source(timeline, assets)
++            if source is None:
++                raise ValueError("exact retained Runtime source required")
++            ref = source.read()["ref"]
++            if (ref["project_id"], ref["timeline_id"]) != (self.bundle["project_id"], self.bundle["timeline_id"]):
++                raise ValueError("checkout scope differs from retained source")
++            inputs = {"composed_capture": True, "timeline_ref": ref["timeline_id"]}
++            if ref["source_kind"] == "working_copy":
++                preview = preview_authoring_candidate(self.stored_document())
++                if (preview["candidate_digest"] != ref["working_copy"]["candidate_digest"]
++                        or preview["publication_digest"] != ref["working_copy"]["publication_digest"]):
++                    raise ValueError("checkout candidate differs from retained source")
++                inputs["authoring_preview"] = preview
++            else:
++                saved = type(self).open(ref["project_id"], ref["timeline_id"],
++                                        revision_id=ref["revision_id"], client=client)
++                saved.resolve()
++                if _digest(self.stored_document()) != _digest(saved.stored_document()):
++                    raise ValueError("checkout differs from exact Runtime saved closure")
++                inputs["revision_id"] = ref["revision_id"]
++            snapshot = prepare_filmstrip(inputs, project=ref["project_id"], client=client)["capture_snapshot"]
++            source.validate_snapshot(snapshot)
++            settings = backend._settings_from_request(request, workspace)
++            if settings.composition_id != backend.DEFAULT_COMPOSITION_ID:
++                raise ValueError("scene check requires the normal Timeline Root")
++            profile = backend._canonical_profile(timeline, backend._load_registry_mapping(assets), settings.theme_path)
++            fps = profile.fps_rational[0] / profile.fps_rational[1]
++            if fps != self.fps:
++                raise ValueError("checkout clock differs from retained Root")
++            end = timeline_render_duration_frames(backend._serialize_timeline(timeline), fps)
++            if end == 0:
++                return []
++            with TemporaryDirectory(prefix="scene-check-", dir=workspace) as directory:
++                scratch = Path(directory)
++                answers = scene_answers._prepared_host_frames_at(
++                    timeline, assets, range(end), staged_video=scratch / "unused.mp4",
++                    provenance_out_path=scratch / "unused.json", project_dir=settings.project_dir,
++                    composition_id=settings.composition_id, theme_path=settings.theme_path,
++                    min_free_gb=settings.min_free_gb, frame_output_dir=scratch / "frames",
++                    materialized_root=Path(request.materialized_root) if request.materialized_root else None,
++                    materialized_objects=request.materialized_objects, staging_parent=scratch,
++                    review=json.loads(request.metadata["review"]) if "review" in request.metadata else None,
++                )
++            addresses = snapshot["metadata"]["scene_clips"]
++            spans = []
++            for answer in answers:
++                clips = tuple(addresses[layer["clipId"]]["address"] for layer in answer["layers"])
++                findings = tuple(f if isinstance(f, str) else json.dumps(f, sort_keys=True)
++                                 for f in answer["findings"])
++                value = (answer["coverage"], answer["content"], clips, findings)
++                if spans and (spans[-1].cls, spans[-1].content, spans[-1].clips, spans[-1].findings) == value:
++                    spans[-1].end_frame = answer["frame"] + 1
++                else:
++                    spans.append(SimpleNamespace(start_frame=answer["frame"], end_frame=answer["frame"] + 1,
++                                                 cls=value[0], content=value[1], clips=clips, findings=findings))
++            return spans
++        except Exception as exc:  # explicit checks advise; save uses _check_core
++            return [SimpleNamespace(start_frame=0, end_frame=max(1, end), cls="UNAVAILABLE",
++                                    content=None, clips=(), findings=(str(exc),))]
+ 
+     def _showing(self, a: float, b: float) -> list[str]:
+         """The addresses of the visual clips that overlap [a, b) in time (what the old picture gap listed)."""
+--- /dev/null
++++ b/tests/sdk/test_retained_scene_check.py
+@@ -0,0 +1,212 @@
++"""Unapplied owner proposal with real compiler, materializer, Root and public Node.
++
++Runtime admission/read transport and renderer admission/port selection are doubles;
++no pixels, sockets, publication or live Runtime qualification is claimed.
++"""
++import copy
++import hashlib
++import json
++from dataclasses import replace
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.core.execution.generic_host import GenericPackHost
++from astrid.core.rendering.contracts import RenderRequest
++from astrid.core.rendering.verified_source import SOURCE_ENV
++from astrid.core.timeline import scene_answers
++from astrid.core.timeline.authoring_bundle import (
++    _digest,
++    open_authoring_bundle,
++    preview_authoring_candidate,
++)
++from astrid.packs.rendering.rendering.renderers.remotion import run
++from astrid.sdk.timeline_checkout import Checkout
++from astrid.sdk.timeline_filmstrip import prepare_filmstrip
++from tests.packs.rendering import test_scene_host as host_fixture
++from tests.packs.rendering.test_scene_source_carry import Revisions
++
++host_project = host_fixture.host_project
++native_host = host_fixture.native_host
++
++
++def source(tmp_path, monkeypatch, project, *, working=False):
++    from astrid.packs.rendering.actions.render import managed_timeline
++    # Empty media registry: no media admission or loopback server is necessary.
++    monkeypatch.setattr(managed_timeline, '_runtime_snapshot_registry', lambda registry, **kwargs: registry)
++    client = Revisions('text-card')
++    client.list_timelines = lambda *a, **kw: [[{'project_id': 'p', 'timeline_id': 'tl', 'slug': 'cut', 'head_revision_id': 'late-head'}], None]
++    client.internal['payload']['clips'] = client.internal['payload']['clips'][:1]
++    client.internal['content_digest'] = _digest(client.internal['payload'])
++    original_parent = client.get_project_parent_composition_revision
++    original_shot = client.get_project_shot_revision
++
++    def parent(*args):
++        row = original_parent(*args)
++        row['payload']['occurrences'] = row['payload']['occurrences'][:1]
++        row['content_digest'] = _digest(row['payload'])
++        return row
++
++    def shot(*args):
++        row = original_shot(*args)
++        row['project_id'] = 'p'
++        row['content_digest'] = _digest(row['payload'])
++        return row
++
++    client.get_project_parent_composition_revision = parent
++    client.get_project_shot_revision = shot
++    bundle = open_authoring_bundle(parent('p', 'tl', 'parent:old'),
++        shot_revisions=[shot('p', 's', 'shot:old')], internal_timeline_revisions=[client.internal])
++    canonical = copy.deepcopy(bundle)
++    reads = []
++
++    def open_bundle(project, timeline, *, revision_id):
++        reads.append((project, timeline, revision_id))
++        assert (project, timeline, revision_id) == ('p', 'tl', 'parent:old')
++        return SimpleNamespace(ok=True, data={'bundle': copy.deepcopy(canonical)})
++
++    client.timelines = SimpleNamespace(open_bundle=open_bundle)
++    checkout = Checkout(bundle)
++    if working:
++        checkout.clips()[0].data['params']['content'] = 'Unpublished retained title'
++    checkout.resolve()
++    inputs = {'composed_capture': True, 'timeline_ref': 'tl'}
++    if working:
++        inputs['authoring_preview'] = preview_authoring_candidate(checkout.stored_document())
++    else:
++        inputs['revision_id'] = 'parent:old'
++    snapshot = prepare_filmstrip(inputs, project='p', client=client)['capture_snapshot']
++    authority = snapshot['metadata']['capture_authority']
++    ref = {'source_kind': 'working_copy' if working else 'revision', 'project_id': 'p', 'timeline_id': 'tl',
++           'revision_id': authority['parent_revision_id'], 'revision_digest': authority['parent_content_digest']}
++    if working:
++        marker = snapshot['metadata']['working_copy']
++        ref.update(revision_digest=marker['candidate_digest'], working_copy={
++            'candidate_digest': marker['candidate_digest'], 'publication_digest': marker['publication_digest'],
++            'base_revision_id': marker['base_parent']['revision_id'],
++            'base_revision_digest': marker['base_parent']['content_digest']})
++    payload = json.dumps(snapshot, sort_keys=True, separators=(',', ':')).encode()
++    digest = hashlib.sha256(payload).hexdigest()
++    ref['digest'] = 'sha256:' + digest
++    claim = {'input_object_ids': [digest], 'authority_context': {'capture_snapshot_ref': ref},
++             'spec': {'inputs': {'filmstrip_authority': json.dumps({'capture_snapshot_ref': ref})}}}
++    host = GenericPackHost(pack_roots=[tmp_path], client=SimpleNamespace(get_object=lambda key: payload if key == digest else None))
++    workspace = tmp_path / 'attempt'
++    retained = host._materialize_inputs(claim, workspace)
++    env = {}
++    retained.handoff_source(retained, env)
++    monkeypatch.setenv(SOURCE_ENV, env[SOURCE_ENV])
++    request = RenderRequest(schema_version=1, timeline_path=retained['timeline'],
++        assets_registry_path=retained['assets_registry'], output_name='unused.mp4',
++        backend_config={'rendering.remotion': {'project_dir': str(project)}})
++    checkout._scene_inputs = (request, workspace, client)
++    return checkout, request, workspace, snapshot, reads
++
++
++@pytest.fixture
++def root(native_host, monkeypatch):
++    # Only environment admission and port selection are replaced. Preparation,
++    # serializer/for_render, theme, stage, AssetMaterializer and Node are real.
++    monkeypatch.setattr(run, '_validate_project_dir', lambda project: SimpleNamespace())
++    monkeypatch.setattr(run, '_regenerate_element_registries', lambda *a: None)
++    monkeypatch.setattr(run, '_available_remotion_port', lambda: 32101)
++    def no_renderer(*a, **kw):
++        pytest.fail('scene check launched renderer or PCM work')
++    monkeypatch.setattr(run, 'prepare_normal_audio_sources', no_renderer)
++    monkeypatch.setattr(run, '_execute_remotion', no_renderer)
++    return native_host
++
++
++@pytest.mark.parametrize('working', [False, True])
++def test_public_check_queries_registered_node_inside_exact_root(tmp_path, monkeypatch, root, working):
++    checkout, request, workspace, snapshot, reads = source(tmp_path, monkeypatch, root, working=working)
++    adapted = segment_request(request, workspace)
++    assert adapted.timeline_path != request.timeline_path and adapted.window is None
++    from contextlib import contextmanager
++
++    from astrid.packs.rendering.rendering.renderers.remotion import root_preparation
++    prepare = root_preparation._prepared_remotion_root
++    query = scene_answers.host_frames_at
++    observed = []
++    active = []
++
++    @contextmanager
++    def retained_root(*args, **kwargs):
++        assert args[:2] == (Path(request.timeline_path), Path(request.assets_registry_path))
++        with prepare(*args, **kwargs) as prepared:
++            active.append(prepared)
++            yield prepared
++            active.pop()
++        assert not prepared[1].exists()
++        assert not prepared[9].exists()
++
++    def observe(props, basis, frames):
++        assert active and props is active[0][0]
++        assert active[0][1].is_file()
++        assert props['timeline']['clips'][0]['id'] == snapshot['config']['clips'][0]['id']
++        answers = query(props, basis, frames)
++        observed.append((copy.deepcopy(props), answers))
++        return answers
++
++    monkeypatch.setattr(root_preparation, '_prepared_remotion_root', retained_root)
++    monkeypatch.setattr(scene_answers, 'host_frames_at', observe)
++    report = checkout.check()
++    assert observed, report.problems
++    props, answers = observed[0]
++    assert props['theme']['visual']['canvas']['width'] == 200
++    assert [row['frame'] for row in answers] == list(range(24))
++    assert answers[0]['layers'][0]['clipId'] == 'opaque:occ:A:opaque:source:title'
++    assert answers[0]['layers'][0]['role'] == 'content'
++    assert not any('UNAVAILABLE' in line for line in report.problems)
++    assert any('UNKNOWN' in line for line in report.problems)
++    assert report.valid and not report.blocking
++    assert bool(reads) == (not working)
++    assert not list(workspace.glob('scene-check-*'))
++
++
++@pytest.mark.parametrize('damage', ['candidate', 'saved-edit', 'saved-base-forgery', 'timeline', 'registry',
++                                  'binding', 'equal-path', 'missing-source', 'foreign', 'window', 'segment'])
++def test_stale_or_forged_source_is_advisory_and_never_queries(tmp_path, monkeypatch, root, damage):
++    working = damage == 'candidate'
++    checkout, request, workspace, _, _ = source(tmp_path, monkeypatch, root, working=working)
++    if damage in {'candidate', 'saved-edit', 'saved-base-forgery'}:
++        checkout.clips()[0].data['params']['content'] = 'later title'
++        if damage == 'saved-base-forgery':
++            for shot in checkout.bundle['shots'].values():
++                shot['base_internal_timeline'] = copy.deepcopy(shot['internal_timeline'])
++    elif damage in {'timeline', 'registry'}:
++        Path(request.timeline_path if damage == 'timeline' else request.assets_registry_path).write_text('{}')
++    elif damage == 'binding':
++        import os
++        Path(json.loads(os.environ[SOURCE_ENV])[0]).write_text('{}')
++    elif damage == 'missing-source':
++        monkeypatch.delenv(SOURCE_ENV)
++    elif damage == 'equal-path':
++        other = workspace / 'same-bytes.json'
++        other.write_bytes(Path(request.timeline_path).read_bytes())
++        request = replace(request, timeline_path=str(other))
++    elif damage == 'foreign':
++        checkout.bundle['project_id'] = 'foreign'
++    elif damage == 'segment':
++        request = segment_request(request, workspace)
++    else:
++        from astrid.core.rendering.contracts import FrameWindow
++        request = replace(request, window=FrameWindow(start_frame=0, end_frame=12, fps_rational=(24, 1)))
++    checkout._scene_inputs = (request, workspace, checkout._scene_inputs[2])
++    monkeypatch.setattr(scene_answers, 'host_frames_at', lambda *a: pytest.fail('unbound query'))
++    report = checkout.check()
++    assert any('UNAVAILABLE' in line for line in report.problems), report.problems
++    assert not any('picture ' in line or 'EMPTY' in line for line in report.problems)
++    assert not report.blocking
++
++
++def segment_request(request, workspace):
++    from astrid.core.rendering.contracts import FrameWindow
++    from astrid.core.rendering.service import RenderService
++
++    adapted, _ = RenderService._segment_request(object.__new__(RenderService), request,
++        candidate=SimpleNamespace(id='fixture', manifest=SimpleNamespace(capabilities={'supports_windows': False})),
++        segment=SimpleNamespace(window=FrameWindow(start_frame=6, end_frame=18, fps_rational=(24, 1)), layer=None),
++        index=0, workspace=workspace)
++    return adapted
