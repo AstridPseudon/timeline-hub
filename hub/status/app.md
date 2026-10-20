@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T17:12:39Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 7m -->
+<!-- app | 2026-10-20T17:18:17Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 12m -->
 # app — 2026-10-20 17:05 UTC
 Milestone: M1 RECORDED; M2/M3 active, no exits. Automatic placement TOP writer; deletion work active. TrackInspector freeze fulfilled/lifted.
 Integrated: App0d5009e18bee8e29f894dabf5db501a0fcea750f/treeb3236676. TrueMAIN574 ancestry; TrackInspector preservationa04f NEXTmerge asrequired/181+120privatePASS/independentAPPROVE; PCM13progressea386/public9412/all77; app2wave1all4helpers +wave2elementd12d/ordinary3e24 BOTHports-projectors preserved191PASS/overlay48576/media-selectioncarrier0d5009. Own-data6line876226115PASS; syncbootstraptest2278805PASS. No nativeNone/delete/shot writer cut integratedyet.
