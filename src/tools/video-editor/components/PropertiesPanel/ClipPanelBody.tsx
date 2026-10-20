@@ -19,7 +19,8 @@ import {
 import { isSequenceParamsSchema } from '@/tools/video-editor/clip-types/defineClipType.ts';
 import type { EffectResource, VideoEditorEffectCatalog } from '@/tools/video-editor/lib/effect-catalog.ts';
 import type { ClipTab } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
-import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipMeta, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
 import { getVisibleClipTabs } from '@/tools/video-editor/lib/clip-inspector.ts';
 import type { TimelineDeviceClass, TimelineInteractionMode } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { resolveAvailableClipType } from '@/tools/video-editor/sequences/registry.ts';
@@ -48,6 +49,8 @@ export interface ClipPanelProps {
   precisionEnabled: boolean;
   hasPredecessor: boolean;
   onChange: (patch: Partial<ClipMeta> & { at?: number }) => void;
+  clipParamsPort?: ClipParamsCapturePort;
+  current?: TimelineData;
   onResetPosition: () => void;
   onClose: () => void;
   onDelete?: () => void;
@@ -96,6 +99,8 @@ export function ClipPanelBody({
   interactionMode,
   precisionEnabled,
   onChange,
+  clipParamsPort,
+  current,
   onResetPosition,
   onClose,
   onDelete,
@@ -301,6 +306,9 @@ export function ClipPanelBody({
               isEffectLayer={isEffectLayer}
               isSequenceClip={isSequenceClip}
               hasActiveAstridElementParams={hasActiveAstridElementParams}
+              clipParamsPort={clipParamsPort}
+              current={current}
+              clipId={current || clipParamsPort ? clip.id : undefined}
               registry={registry}
               elementRegistry={elementRegistry}
               timelineFps={timelineFps}
