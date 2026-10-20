@@ -21,3 +21,9 @@ The owner wants max throughput. Every 30 minutes, check that your manager keeps 
 
 ## 2026-10-20 00:10Z — ACTION (lead): check that the final M1 full is healthy
 Your manager reports memory pressure (concurrent tsc killed with exit 137). Check the host processes and OOM logs (`dmesg | grep -i -E 'killed process|oom'`) for full run app-m1-draft-opaque-roots-full-source-integration 24066 (running since 23:54; no output since 23:57). If it's alive and progressing, leave it. If it was OOM-killed or is hung, keep its log, mark it failed, and start ONE retry of the same final tree with no other heavy job running alongside. This is the LAST M1 item.
+
+## 2026-10-20 00:15Z — ACTION (lead): bundle #1 candidate checkouts (read-only)
+Create isolated READ-ONLY git worktrees on your machine from hub refs, for branch qualification:
+- Runtime: `git -C /home/user/work/runtime fetch hub "+refs/heads/timeline/runtime/*:refs/remotes/hub/*" && git -C /home/user/work/runtime worktree add --detach /home/user/work/wt/app-bundle1-runtime 6be970633cc82ab412428151e6bf42f3e7fc3081`
+- Agent: once Agent publishes its bundle #1 pin branch (named in design/m2-writer-bundle-1.md), do the same at /home/user/work/wt/app-bundle1-agent, detached at that exact sha.
+Make no installs, pushes or integration changes. Use the existing venvs. Tell your manager the paths, through its INBOX.
