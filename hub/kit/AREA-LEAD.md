@@ -53,6 +53,7 @@ Read `orch/COMMS.md`. In short:
   - Is the dispatcher heartbeat (`$ORCH/dispatcher.heartbeat`) under 2 minutes old?
   - Is the manager alive (`managers/<area>/running` plus a codex process)? If it stopped without "COMPLETE" or "blocked" in STATUS, restart it.
   - Is disk above 8 GB? If not, run `bin/recycle` on merged workers.
+  - Disk cleanup uses ONLY `bin/recycle <worker>`. Never delete anything under /home/user/work/wt/ by hand. Never touch `/home/user/work/wt/.test-<ID>` (live test snapshots, removed by bin/test-run itself) while `$ORCH/tests/<ID>/running` exists. Never remove a KEEP-marked or leased worktree, and never run `git worktree prune` while tests are running.
   - Is the hub in sync?
 - Answer nothing yourself. Escalations go to the orchestrator via the hub, and you relay the inbox. Purely local infrastructure fixes are yours.
 - Never push to upstream default branches. Never weaken or skip tests. Never start M5 work.

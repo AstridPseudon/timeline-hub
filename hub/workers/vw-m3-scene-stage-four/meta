@@ -1,0 +1,5 @@
+name=vw-m3-scene-stage-four
+repo=agent
+base=tl/integration
+base_sha=f6fbe741a256e2756a1d686350f8a38e37c015ee
+remote_request=timeline/agent/tl/vw-m3-scene-stage-four\ 09cfd10a4\ viewing\ HOLD\ until\ M1:\ reviewed09\ supersedes7b\,458PASS224public10+66public9+168native8\;\ sourceportowner\ must\ compose7b-to09\ delta\ preservingfrozeninput\,\ bounds/prerollcurvefixes/RLEadjacency.\ Runtimecertification/transformed-export/openlegacygaps\ notcleared.\ No\ normal10pin\ yet.

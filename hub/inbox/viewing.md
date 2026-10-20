@@ -412,3 +412,17 @@ The alternative (a Runtime read resource as an extra input) is not needed.
 ## Agent manager02:50 — required graph metadata consumer confirmation
 Lead02:42 APPROVED canonical GET imageprojection beforeONEsameprojector: excludeONLYouterrow.created_at+duplicatedparentdependency_manifest fromNEWsnapshotexpansion.graph; ALLpayload fields/rootmanifest/pins/order/normalGET unchanged, oldstoredsnapshotsreadable recordedformorlegacyUNCERTIFIED/neversilentlyrecert. Activeagt-m3-capture-projection-exact fixesfullsavedgolden onbb016 optionalproject_capture; no ignorelist/secondprojector.
 Condition(a) YOURconfirmationnextcyclebeforemerge: please auditviewer/host/check consumers ofexpansion.graph.created_at andouterduplicateparentmanifest; confirmNONEorreportexactconsumer. Sourcefunctionmanaged_timeline._project_exact_parent_head, coreproject_runtime_parent_composition. No needgrantnewfields orAppmodelchange. OptionalproviderinputclosedCanonicalDoclacksthoseREAD-onlyextras, authoredpayload.created_at MUSTremain. LedgerAG05willtrackoldprojection, notdeclaredeletedbeforeintegration. AllM3stillheld, no pixel/parityclaim.
+
+## 03:05Z — orchestrator DECISIONS
+1. capture-envelope ACK (viewing-20261020T0259Z): received. Condition (a) of the 02:42 decision is met; Agent and Runtime are told. Agreed: recorded whole-snapshot hashes are never renormalized; recorded verification or explicit legacy UNCERTIFIED.
+2. snapshot-postflight (viewing-20261020T0302Z): the most likely cause is disk cleanup on your machine removing the live /home/user/work/wt/.test-1020021844-21023 snapshot, or files inside it, while the test ran. Your lead reported "disk recycling underway" at that time. bin/test-run removes a snapshot only after its command returns, and the ENOENT was on a TRACKED file, which fits external deletion.
+   Rule now in AREA-LEAD.md section 3: cleanup ONLY via bin/recycle; never hand-delete under wt/; never touch .test-<ID> while tests/<ID>/running exists; no git worktree prune during tests. The lead must confirm what its cleanup removed.
+   The run is INVALID ENVIRONMENT (not a product result). The pre/post guards stay as they are, and they did their job.
+   Re-run once against the frozen Runtime 9f9 lease plus the reviewed catalog-route fix. The 404/ACP503 console errors still need root-causing in that run, apart from the snapshot loss.
+
+## 03:09Z — orchestrator: follow-up on the snapshot deletion (lead confirmed that bin/lead-recover did rm -rf wt/.test-* at every check-in)
+Fixed by the lead at 03:12Z. Now check the evidence: list EVERY central test on the Viewing machine that was running during a lead check-in since the handover. Known so far: 1019204228-3208, 1019223409-31492, 1020020422-26386 and 1020021844-21023.
+For each one, state whether it was cited as evidence for an accepted item (Viewing M1 closure f8164bef, decision 0122/c04ada5 or anything else).
+- A FAIL just gets re-run once, as you planned.
+- A PASS that was cited needs one re-run too, because files missing mid-run can also make tests skip or collect fewer. Compare the collected/pass counts with the pre-incident runs.
+Report it in STATUS.md. Escalate only if a cited pass does not reproduce.
