@@ -254,6 +254,39 @@ def test_hold_clear_does_not_substitute_a_legacy_duration_codec_for_source_windo
         capture_clip_set(original, REF, clear=['hold'])
 
 
+def test_literal_hold_clear_requires_main_source_extent_and_roundtrips_with_one():
+    row = {'id': 'title', 'clipType': 'text', 'track': 'picture', 'at': 0,
+           'hold': 4, 'params': {'text': 'Ordinary HTTP'},
+           'opaque': [None, False, 0, {}, []]}
+
+    def authored(*, source=False):
+        original = bundle()
+        value = copy.deepcopy(row)
+        if source:
+            value.update({'from': 0, 'to': 4})
+        for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+            rows[:] = [copy.deepcopy(value)]
+        return original
+
+    bare = authored()
+    before = copy.deepcopy(bare)
+    with pytest.raises(CommandError, match='surviving source window'):
+        capture_clip_set(bare, 'parent/clip:title', clear=['hold'])
+    assert bare == before
+
+    windowed = authored(source=True)
+    command = capture_clip_set(windowed, 'parent/clip:title', clear=['hold'])
+    cleared = execute(windowed, [command])
+    result = clip(cleared.bundle, 'parent/clip:title')
+    assert result == {key: value for key, value in {**row, 'from': 0, 'to': 4}.items()
+                      if key != 'hold'}
+    assert all(rows == [result] for rows in (
+        cleared.bundle['parent']['clips'], cleared.bundle['parent']['config']['clips']))
+    undone = inverse(cleared.bundle, cleared.records)
+    assert undone.bundle == windowed
+    assert inverse(undone.bundle, undone.records).bundle == cleared.bundle
+
+
 @pytest.mark.parametrize('ref,on', [('parent/clip:direct', 4.004), (REF, 12.012)])
 @pytest.mark.parametrize('fps', [30, {'numerator': 30000, 'denominator': 1001}])
 @pytest.mark.parametrize('clear', [False, True])
