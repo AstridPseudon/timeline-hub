@@ -2540,9 +2540,8 @@ def test_snapshot_fresh_authorized_resume_through_ordinary_managed_child(world, 
     claim = _claim_snapshot_task(world, PARENT, key="claim-resume-parent")
     task = _snapshot_task(world, claim)
     assert task["input_object_ids"] == task["spec"]["child_delegation"]["input_object_ids"] == [descriptor["digest"]]
+    child_host = GenericPackHost(pack_roots=[world.root, world.review_root], client=fresh, executor_id="worker", max_concurrency=4)
     def serve_review():
-        child_host = GenericPackHost(pack_roots=[world.root, world.review_root], client=fresh, executor_id="worker", max_concurrency=4)
-        child_host.discover()
         deadline = time.monotonic() + 6
         while time.monotonic() < deadline:
             with world.lock:
@@ -2561,6 +2560,8 @@ def test_snapshot_fresh_authorized_resume_through_ordinary_managed_child(world, 
         raise AssertionError("resumed child not admitted")
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=1) as pool:
+        # Finish worker discovery before starting the parent's bounded child wait.
+        pool.submit(child_host.discover).result()
         child_future = pool.submit(serve_review)
         try:
             result = host.run_task({"task": task}, lease_token=claim["lease_id"], attempt_id=claim["attempt_id"], fence=claim["fence"])
