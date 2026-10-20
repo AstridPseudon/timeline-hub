@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "agent": {
-    "sha": "d63dd4f0642e9dbcbd42fad650cffddb2e0dab6d"
+    "sha": "b6803fc12286e3471dd0b042749891e7bcdb9fb6"
   },
   "runtime": {
-    "sha": "3fab27040ee069d1c0c82621921c603d76203801"
+    "sha": "f027b571ade0570a434f4f33652479a6b8e3d82a"
   },
   "tools": {
     "uv": {
@@ -39,7 +39,8 @@
       }
     },
     "omp": {
-      "version": "12.0.0"
+      "source": "@oh-my-pi/pi-coding-agent@17.4.2",
+      "_comment": "See LANDING.md: select the fixed producer after owner landing."
     },
     "node": {
       "version": "20.19.4",
