@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import io
+import wave
 from types import SimpleNamespace
 
 import pytest
@@ -22,6 +24,18 @@ from astrid.sdk.timeline.native_parent_media_commands import (
 from tests.helpers.runtime import use_runtime
 
 pytestmark = pytest.mark.integration
+
+
+def tiny_wav(seed):
+    """Return a small, valid PCM WAV with a content-distinct first sample."""
+    samples = bytes((seed, 0)) + b'\x00\x00' * 1999
+    stream = io.BytesIO()
+    with wave.open(stream, 'wb') as output:
+        output.setnchannels(1)
+        output.setsampwidth(2)
+        output.setframerate(8000)
+        output.writeframes(samples)
+    return stream.getvalue()
 
 
 def call(op, args, select='parent'):
@@ -54,13 +68,18 @@ def rows(editing):
     return tuple(editing.service.store.conn.iterdump())
 
 
-def row(editing, identity='reserved-row', *, asset=None, track='visual'):
-    value = {'id': identity, 'clipType': editing.kind, 'track': track,
+def row(editing, identity='reserved-row', *, asset=None, track=None):
+    track = track or ('voiceover' if editing.kind == 'audio' else 'visual')
+    clip_type = 'media' if editing.kind == 'audio' else editing.kind
+    hold = .25 if editing.kind == 'audio' else 4 if editing.kind == 'video' else 1.25
+    value = {'id': identity, 'clipType': clip_type, 'track': track,
              'asset': asset or editing.pins['new']['asset'], 'at': .125,
-             'hold': 4 if editing.kind == 'video' else 1.25, 'params': None,
+             'hold': hold, 'params': None,
              'opaque': {'values': [None, False, {}, []], 'literal': 'target'}}
     if editing.kind == 'video':
         value.update({'from': 2, 'to': 6, 'speed': 2})
+    elif editing.kind == 'audio':
+        value.update({'from': 0, 'to': hold})
     else:
         value['speed'] = None
     return value
@@ -106,7 +125,8 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
             {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': kind}
             for index, name in enumerate(('old', 'new', 'unrelated'))]}])
         value['payload']['metadata'] = {'prompt': 'parent media source',
-                                       'params': {'duration_seconds': 6} if kind == 'video' else {}}
+                                       'params': {'duration_seconds': 6} if kind == 'video' else
+                                                 {'duration_seconds': .25} if kind == 'audio' else {}}
         return value
 
     if historical:
@@ -147,9 +167,13 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
     monkeypatch.setattr(RequestCommitPort, 'selected_media', selected)
     monkeypatch.setattr(RequestCommitPort, 'accept', accepted)
     try:
-        outputs = [_output(name.encode(), output_port=kind, group_key='main', variant_key=name,
-                           ordinal=index, filename=name + ('.mp4' if kind == 'video' else '.png'),
-                           media_type=kind + ('/mp4' if kind == 'video' else '/png'))
+        outputs = [_output(tiny_wav(index + 1) if kind == 'audio' else name.encode(),
+                           output_port=kind, group_key='main', variant_key=name,
+                           ordinal=index, filename=name + ('.wav' if kind == 'audio' else
+                                                           '.mp4' if kind == 'video' else '.png'),
+                           media_type='audio/wav' if kind == 'audio' else
+                                      kind + ('/mp4' if kind == 'video' else '/png'),
+                           **({'duration_seconds': .25} if kind == 'audio' else {}))
                    for index, name in enumerate(('old', 'new', 'unrelated'))]
         _settle(service, attempt, outputs, effect=admitted)
         editing.associations = service.managed_outputs(task['task']['id'])
@@ -165,8 +189,10 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
             # authenticated pre-cut backup, through the normal history read.
             service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
         if not pristine:
-            tracked = capture_track_create(bundle_from_document(current(editing)), 'parent', {
-                'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
+            tracked = capture_track_create(bundle_from_document(current(editing)), 'parent',
+                                           {'id': 'voiceover', 'kind': 'audio'} if kind == 'audio' else {
+                                               'id': 'visual', 'kind': 'visual', 'role': 'output',
+                                               'opaque': [None, False]})
             commit(editing, body(editing, [tracked]), 'visual-track')
         editing.selected.clear()
         editing.candidates.clear()
@@ -185,11 +211,56 @@ def editing(request, tmp_path, monkeypatch):
     yield from media_realm(tmp_path, monkeypatch, request.param, historical=True)
 
 
+@pytest.fixture
+def real_audio(tmp_path, monkeypatch):
+    yield from media_realm(tmp_path, monkeypatch, 'audio', historical=False)
+
+
 def test_fresh_film_first_media_birth_and_exact_inverse(custody, monkeypatch):
     baseline = current(custody)
     assert baseline['parent_revision']['payload']['registry'] == {}
     ordinary_roundtrip(custody, monkeypatch, replace=False, historical=False)
     assert current(custody) == baseline
+
+
+def test_real_managed_audio_birth_reload_guarded_undo_and_redo(real_audio, monkeypatch):
+    from runtime_protocol.timeline_commit_validation import validate_commit_value
+
+    from tests.editing_conformance.test_next_command_cohort_runtime import reopen
+
+    baseline = current(real_audio)
+    value = row(real_audio, 'voiceover-new')
+    request = body(real_audio, [birth(real_audio, value)], dry_run=True)
+    validate_commit_value(request, 'CommitRequest')
+    preview = commit(real_audio, request, 'real-audio-preview')
+    assert preview['receipt'] is None
+    assert real_audio.selected[-1]['selection'] == real_audio.pins['new']
+    assert real_audio.selected[-1]['media_type'] == 'audio/wav'
+    assert real_audio.selected[-1]['duration_seconds'] == pytest.approx(.25)
+
+    request['dry_run'] = False
+    created = commit(real_audio, request, 'real-audio-birth')
+    document = created['data']['canonical_document']
+    created_row = next(clip for clip in document['parent_revision']['payload']['clips']
+                       if clip['id'] == 'voiceover-new')
+    assert created_row == value
+    assert created_row['clipType'] == 'media' and created_row['track'] == 'voiceover'
+    assert document['parent_revision']['payload']['registry']['assets'][value['asset']]['type'] == 'audio'
+    raw = real_audio.service.cas.read(real_audio.pins['new']['object_id'].removeprefix('sha256:'))
+    with wave.open(io.BytesIO(raw), 'rb') as source:
+        assert (source.getnchannels(), source.getframerate(), source.getnframes()) == (1, 8000, 2000)
+
+    reopen(real_audio)
+    assert current(real_audio) == document
+    with monkeypatch.context() as retry:
+        from astrid.sdk.timeline import commands
+        retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('exact retry executed semantics'))
+        assert commit(real_audio, request, 'real-audio-birth') == created
+    undone = undo(real_audio, created, 'real-audio-undo')
+    assert current(real_audio) == undone['data']['canonical_document'] == baseline
+    redone = undo(real_audio, undone, 'real-audio-redo')
+    assert current(real_audio) == redone['data']['canonical_document'] == document
+    assert real_audio.service.store.integrity_report()['ok']
 
 
 @pytest.mark.parametrize('replace', [False, True])
