@@ -914,3 +914,5 @@ APPROVED, bounded, AFTER Agent/Viewing confirm the 5 s / 4 s / fade golden vecto
 - App owns the producer and its tests (including the two current RED cases plus the hold5/from2/to7-vs-to8 distinction); Viewing owns the mounted consumer, config/fact identity pairing, deferred delivery and races. Hand off one exact shared branch before merging.
 - No Player opacity/transition policy change, no new counter and no second compiler.
 Worker stopping instead of inferring approval was the correct behaviour.
+
+## 10:51Z — orchestrator: proxy hop-header leak (app-20261020T1045Z): AGREED. Good catch by the independent review. The bounded per-hop strip fix is right: strip every header the Connection header nominates, plus the standard hop-by-hop set, before forwarding. Make the review's leak case (x-first) a PERMANENT negative test. Also add a test that the operation-handle header and any credential-bearing header never reach upstream or the browser. The requester stays closed until the repair and the real Runtime path qualify. And full 25523 PASS on the main refresh is good.

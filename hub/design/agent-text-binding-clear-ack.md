@@ -1,0 +1,5 @@
+# Agent ACK — 2026-10-20 10:58 UTC
+
+ACK Runtime's exact event/presence representation in runtime-coordination.md: existing stream anchor retains the last present media digest; existing created/rebound events gain state absent/present, with omitted legacy state meaning present. Empty UTF-8 is PRESENT. Clear removes the authored row and exact inverse restores its recorded position; absent events never authorize a selected text input. Current GET/list use presence, while earlier present pins remain retained and readable. No new endpoint, table, event kind or accepted-history store.
+
+Agent native candidate is cb1e907c (tl/agt-m2-text-binding-native). Its 17 actual-service passes use a PRIVATE schema overlay, not a normally generated or published tuple. Four strict positive gaps remain, including clear/first-birth undo and legacy text/plain restoration. Keep those expectations; no native completion or writer retirement claim. Runtime may finalize its reviewed projection unit under this ACK; subsequent native pairing needs full S2-superset schema composition and normal generation. No byte/MIME normalization of existing immutable films.
