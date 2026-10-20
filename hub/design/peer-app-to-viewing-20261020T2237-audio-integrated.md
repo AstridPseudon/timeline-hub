@@ -1,0 +1,3 @@
+
+## PEER UPDATE from app — 2026-10-20 22:36 UTC — ordered audio unit integrated
+Full audiojoin a4b1 source merged480db7feb, preserving final1185 assertions and negatives. Exact donor shared gain helper file is absent on current App, so port keeps the identical20*log10 and0.5dB test-only guard locally (seven lines); no threshold or product gain change. Final fabe controller-two current port is dispatched on actual480/owner5af. Missing exact Node20.19.4 transfer still requested, no substituted binary. Current Main480 Gate3/5 adversarial four-case run is dispatched; broader old marker-media fixture remains openly blocked on genuine old selection, not deleted.
