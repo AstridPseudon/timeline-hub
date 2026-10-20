@@ -1,0 +1,201 @@
+diff --git a/src/tools/video-editor/commands/commitSession.ts b/src/tools/video-editor/commands/commitSession.ts
+--- a/src/tools/video-editor/commands/commitSession.ts
++++ b/src/tools/video-editor/commands/commitSession.ts
+@@ -23,6 +23,7 @@
+ import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
+ import { captureTrackCreate, executeTrackCreate, finishTrackCreate, type TrackCreateArgs } from './trackCreateCapture.ts';
+ import { trackCreatePreview, type TrackCreateCapturePort } from './trackCreateGesture.ts';
++import { captureGenericPatch, executeGenericPatch, type GenericPatchCapturePort } from './genericPatchCapture.ts';
+ import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
+ 
+ type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
+@@ -279,6 +280,54 @@
+       enqueue({ ...entry.payload, preview }, preview, entry.basis);
+     },
+   };
++  const genericPatchPort: GenericPatchCapturePort = {
++    capture({ patch, current }) {
++      assertReady();
++      if (patch.version !== 0 && patch.version !== current.configVersion) {
++        throw new Error('Native patch has a stale local version');
++      }
++      const snapshot = freezeJson(copy(current));
++      const capture = captureGenericPatch(bundle, patch, (operation) => {
++        if (operation.op === 'track.update') {
++          const basis = trackLabelPort.capture({ trackId: operation.target, current: snapshot }) as unknown as { command: EditCommand };
++          if (!basis.command.select) throw new Error('Native patch track owner is unavailable');
++          return basis.command.select;
++        }
++        return clipScalarPort.capture({ clipId: operation.target, current: snapshot }).select as string;
++      });
++      const localBasis: OutboxBasis = lastIntent ? { after: lastIntent } : { head: copy(known.head) };
++      prepared.set(JSON.stringify(capture.commands), { payload: {
++        commands: capture.commands, before: bundle, after: capture.bundle, preview: capture.preview,
++      }, generation: localGeneration, basis: localBasis });
++      return freezeJson({ current: snapshot, capture, localGeneration, localBasis });
++    },
++    finish(basis) {
++      assertReady();
++      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the native patch');
++      const key = JSON.stringify(basis.capture.commands);
++      const entry = prepared.get(key);
++      if (!entry || entry.generation !== localGeneration || !equal(basis.capture.preview, entry.payload.preview)) {
++        throw new Error('Native patch was not captured by this session');
++      }
++      const result = executeGenericPatch(bundle, entry.payload.commands);
++      const commands = entry.payload.commands;
++      const preview = entry.payload.preview!;
++      prepared.set(key, { payload: { commands, before: bundle, after: result.bundle, preview },
++        generation: localGeneration, basis: entry.basis });
++      return { commands, preview };
++    },
++    submit({ commands, preview }) {
++      assertReady();
++      const key = JSON.stringify(commands);
++      const entry = prepared.get(key);
++      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
++        throw new Error('Native patch was not captured by this session or the timeline changed');
++      }
++      if (!equal(preview, entry.payload.preview)) throw new Error('Native patch requires its exact combined preview');
++      enqueue(entry.payload, entry.payload.preview, entry.basis);
++      prepared.delete(key);
++    },
++  };
+   const trackLabelPort: TrackLabelCapturePort = {
+     capture({ trackId, current }) {
+       assertReady();
+@@ -749,6 +798,7 @@
+   } else await claim();
+   return {
+     port,
++    genericPatchPort,
+     trackLabelPort,
+     clipTrimPort,
+     clipScalarPort,
+diff --git a/src/tools/video-editor/hooks/useTimelineCommandSession.ts b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.ts
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+@@ -2,6 +2,7 @@
+ import { projectClipTrimPreview } from '../commands/clipTrimGesture.ts';
+ import { projectTrackCreatePreview } from '../commands/trackCreateGesture.ts';
+ import { projectParentClipAddPreview } from '../commands/parentClipAddGesture.ts';
++import { projectGenericPatchPreview } from '../commands/genericPatchCapture.ts';
+ import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
+ import type { DataProvider, TimelineCommandBasis, TimelineHeadRevision } from '../data/DataProvider.ts';
+ import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
+@@ -97,5 +98,6 @@
+           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
+         for (const preview of previews) {
+-          const nativePreview = projectClipDeletePreview(preview, data) ?? projectTrackCreatePreview(preview, data)
+-            ?? projectParentClipAddPreview(preview, data) ?? projectClipTrimPreview(preview, data);
++          const nativePreview = projectClipDeletePreview(preview, data) ?? projectTrackCreatePreview(preview, data)
++            ?? projectParentClipAddPreview(preview, data) ?? projectClipTrimPreview(preview, data)
++            ?? projectGenericPatchPreview(preview, data);
+           const compiled = nativePreview ? { valid: true, nextData: nativePreview } : compileTimelinePatch(preview, data);
+@@ -176,4 +178,13 @@
+           finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
+           submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
+         };
++        const genericPatchPort = session.genericPatchPort;
++        const requireCleanGenericPatch = () => {
++          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before applying a native patch');
++        };
++        session.genericPatchPort = {
++          capture(input) { requireCleanGenericPatch(); return genericPatchPort.capture(input); },
++          finish(basis) { requireCleanGenericPatch(); return genericPatchPort.finish(basis); },
++          submit(input) { requireCleanGenericPatch(); genericPatchPort.submit(input); },
++        };
+         const paramsPort = session.clipParamsPort;
+@@ -283,6 +294,7 @@
+   const useLatest = useCallback(() => resolve(false), [resolve]);
+   const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
+   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
++    genericPatchPort: sessionRef.current?.genericPatchPort,
+     clipDeletePort: enabled ? sessionRef.current?.clipDeletePort : undefined,
+     trackLabelPort: sessionRef.current?.trackLabelPort,
+     clipTrimPort: sessionRef.current?.clipTrimPort,
+diff --git a/src/tools/video-editor/hooks/useTimelineState.ts b/src/tools/video-editor/hooks/useTimelineState.ts
+--- a/src/tools/video-editor/hooks/useTimelineState.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.ts
+@@ -137,6 +137,7 @@
+   externalDrop,
+   trackManagement,
+   trackLabelPort,
++  genericPatchPort,
+   clipParamsPort,
+   clipScalarPort,
+   clipTrimPort,
+@@ -185,6 +186,7 @@
+   externalDrop: ExternalDropHook;
+   trackManagement: TimelineTrackManagementHook;
+   trackLabelPort?: TrackLabelCapturePort;
++  genericPatchPort?: import('@/tools/video-editor/commands/genericPatchCapture.ts').GenericPatchCapturePort;
+   clipParamsPort?: import('@/tools/video-editor/commands/clipParamsGesture.ts').ClipParamsCapturePort;
+   clipScalarPort?: ClipScalarCapturePort;
+   clipDeletePort?: ClipDeleteCapturePort;
+@@ -400,6 +402,7 @@
+     moveSelectedClipsToTrack,
+     trackScaleMap,
+     trackLabelPort,
++    genericPatchPort,
+     clipParamsPort,
+     clipScalarPort,
+     clipTrimPort,
+@@ -791,6 +794,7 @@
+     commitData: save.commitData,
+     dataRef: save.dataRef,
+     trackLabelPort: save.commands.trackLabelPort,
++    genericPatchPort: save.commands.genericPatchPort,
+     getConfigVersion,
+     flushPendingSave: save.flushPendingSave,
+     createManualCheckpoint,
+diff --git a/src/tools/video-editor/hooks/useTimelineOps.ts b/src/tools/video-editor/hooks/useTimelineOps.ts
+--- a/src/tools/video-editor/hooks/useTimelineOps.ts
++++ b/src/tools/video-editor/hooks/useTimelineOps.ts
+@@ -36,6 +36,7 @@
+   submitTrackLabelEdit,
+   type TrackLabelCapturePort,
+ } from '../commands/trackLabelGesture.ts';
++import type { GenericPatchCapturePort } from '../commands/genericPatchCapture.ts';
+ 
+ // ---------------------------------------------------------------------------
+ // Helpers
+@@ -75,5 +76,8 @@
+   /** Original authored track-label capture and the shared command outbox. */
+   trackLabelPort?: TrackLabelCapturePort;
+ 
++  /** One atomic native batch port; unsupported operation families refuse as one patch. */
++  genericPatchPort?: GenericPatchCapturePort;
++
+   /** Host checkpoint creation (async fire-and-forget). */
+   createManualCheckpoint: (label?: string) => Promise<void>;
+@@ -123,6 +127,7 @@
+   getConfigVersion,
+   flushPendingSave,
+   trackLabelPort,
++  genericPatchPort,
+   createManualCheckpoint,
+   jumpToCheckpoint,
+   checkpoints,
+@@ -268,5 +273,12 @@
+         );
+       }
+ 
++      if (genericPatchPort) {
++        const captured = genericPatchPort.capture({ patch, current });
++        const finished = genericPatchPort.finish(captured);
++        genericPatchPort.submit(finished);
++        return previewTimelinePatch(finished.preview, current).diff;
++      }
++
+       // 2. Compile against current canonical data
+       const compiled = compileTimelinePatch(patch, current);
+@@ -305,7 +317,7 @@
+       // 4. Return the semantic diff
+       return compiled.diff;
+     },
+-    [assertTimelineEditable, commitData, dataRef, getCanonicalVersion, trackLabelPort],
++    [assertTimelineEditable, commitData, dataRef, genericPatchPort, getCanonicalVersion, trackLabelPort],
+   );
+
+   // ---- checkpoint ---------------------------------------------------------

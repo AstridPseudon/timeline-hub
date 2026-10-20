@@ -1,0 +1,103 @@
+UNAPPLIED APP SHARED-SEAM PROPOSAL
+
+This is a flat, App-owned follow-up patch. It is intentionally not applied in
+the worker tree: commitSession, useTimelineCommandSession, useTimelineOps,
+the door/outbox, and the Elements panel/adapter are App-owned shared seams.
+The producer this patch consumes is:
+
+  src/tools/video-editor/commands/elementCapture.ts
+
+The only truthful command-backed operation currently available is an existing
+clip's `clip.set-element` revision replacement, plus `clip.set-params` literal
+top-level set/clear. The latter preserves unmentioned and unknown keys. The
+producer refuses a selected project-pack ref unless the exact retained
+`schema_source` DocumentPin is supplied from the authored bundle; a catalog
+descriptor is not a retained pin.
+
+--- a/src/tools/video-editor/commands/commitSession.ts
++++ b/src/tools/video-editor/commands/commitSession.ts
+@@
+ import { captureClipParams, finishClipParams } from './clipParamsCapture.ts';
++import { captureClipElement, finishClipElement, captureClipElementParams,
++  finishClipElementParams } from './elementCapture.ts';
+@@
+ // Add an App-owned port beside clipParamsPort. Its capture() must snapshot
+ // the raw authored bundle and the displayed scoped clip identity. Its
+ // finish() must use the original basis, re-check the current raw closure,
+ // and place { commands, before, after, preview } in the existing prepared
+ // map. submit() must accept only the exact prepared command and exact
+ // params-only/revision-only TimelinePatch, then call enqueue() with the
+ // existing outbox basis. Do not call saveTimeline/saveTimelineAtHead.
++const elementPort: ElementCapturePort = {
++  capture({ clipId, current }) { /* same head/owner checks as clipParamsPort */ },
++  finish(basis, args) { /* captureClipElement or captureClipElementParams;
++    preview only the existing clip's elementRef/params */ },
++  submit(input) { /* exact prepared command + enqueue() */ },
++};
+@@
+ return {
+   ...,
+   clipParamsPort,
++  elementPort,
+ };
+
+--- a/src/tools/video-editor/hooks/useTimelineCommandSession.ts
++++ b/src/tools/video-editor/hooks/useTimelineCommandSession.ts
+@@
+ // Import the ElementCapturePort and expose session.elementPort with the same
+ // legacy-clean barrier as clipParamsPort. The barrier must cover capture,
+ // finish, and submit. Recovery must replay the stored command and preview;
+ // it must never recapture from the ACK or resolved projection.
++const elementPort = session.elementPort;
++session.elementPort = {
++  capture(input) { requireCleanElementEdit(); return elementPort.capture(input); },
++  finish(basis, args) { requireCleanElementEdit(); return elementPort.finish(basis, args); },
++  submit(input) { requireCleanElementEdit(); elementPort.submit(input); },
++};
+
+--- a/src/tools/video-editor/hooks/useTimelineOps.ts
++++ b/src/tools/video-editor/hooks/useTimelineOps.ts
+@@
+ // Add one narrow element operation branch before the generic TimelinePatch
+ // fallback. Accept only an existing clip target and a same-id/kind/pack-owner
+ // revision change, or literal params set/clear. Preserve the existing
+ // transition-none and shot-settings branches.
++// Any overlay placement, remove, transition, fade, entrance/exit, or
++// placement change returns a visible unsupported-operation error and leaves
++// the draft untouched. It must not be translated into clip.set-element.
+
+--- a/src/tools/video-editor/components/ElementsLibraryPanel.tsx
++++ b/src/tools/video-editor/components/ElementsLibraryPanel.tsx
+@@
+ // Replace the current timeline.apply_element/apply_transition ingress only
+ // for the bounded existing-clip revision/params case. Capture the raw clip
+ // through elementPort, build the command, and submit through the session.
++// Keep transition-none and shot-settings in their existing App-owned paths.
++// For overlay creation, element removal, transitions, and panel operations
++// that alter entrance/exit/fade/placement, show the actual unsupported
++// boundary and do not call the old whole-document/CAS writer as a substitute.
+
+--- a/src/tools/video-editor/runtime/element-adapter.ts
++++ b/src/tools/video-editor/runtime/element-adapter.ts
+@@
+ // After the panel and AgentChat callers have migrated and the equivalent
+ // command tests exist, delete createElementTimelineRoutes,
+ // AstridElementOperationAdapter.executeTimelineMutation, and their
+ // saveTimelineAtHead/saveTimeline calls. Do not delete this route before
+ // all callers use the qualified command producer.
+
+Required tests before applying this shared patch:
+
+  - existing clip revision command reaches Runtime /v1 commit;
+  - literal params update preserves unknown/unmentioned fields;
+  - selected project-pack revision/params carries the exact retained pin;
+  - direct overlay, remove, transition, fade/entrance, and placement cases
+    refuse visibly without a whole-document fallback;
+  - acceptance -> reload -> guarded undo -> exact retry, then zero legacy
+    element save traffic.
+
+No browser or catalog-only validation is evidence for the retained pin or
+Gate 5/6. The missing Agent contract is an operation for overlay creation,
+element removal, transition assignment/removal, and full panel look semantics;
+this patch must remain unapplied until those operations are either qualified
+or explicitly surfaced as unsupported.
