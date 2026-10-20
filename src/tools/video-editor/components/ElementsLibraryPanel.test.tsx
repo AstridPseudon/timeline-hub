@@ -9,6 +9,8 @@ const harness = vi.hoisted(() => ({
   selectedClipIds: ['source-clip'],
   execute: vi.fn(),
   invalidateQueries: vi.fn(),
+  current: null as unknown,
+  elementOverlay: null as unknown,
 }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -21,6 +23,8 @@ vi.mock('@/shared/contexts/AgentChatContext', () => ({
 
 vi.mock('@/tools/video-editor/hooks/timelineStore', () => ({
   useTimelineEditorData: () => ({ selectedClipIds: harness.selectedClipIds }),
+  useTimelineEditorDataSafe: () => ({ data: harness.current }),
+  useTimelineChromeContextSafe: () => ({ commandSession: { elementOverlay: harness.elementOverlay } }),
 }));
 
 const elementEntry = {
@@ -69,6 +73,8 @@ describe('ElementsLibraryPanel owner-pinned operations', () => {
   beforeEach(() => {
     harness.execute.mockReset().mockResolvedValue({ config_version: 8 });
     harness.invalidateQueries.mockReset();
+    harness.current = null;
+    harness.elementOverlay = null;
   });
 
   it('persists the owning pack on an applied element reference', async () => {
@@ -101,5 +107,34 @@ describe('ElementsLibraryPanel owner-pinned operations', () => {
         packId: 'rendering',
       },
     })));
+  });
+
+  it('sends an admitted literal effect through the native overlay port without the legacy adapter', async () => {
+    const literal = { ...elementEntry, packId: undefined, admitted: true };
+    harness.current = {
+      configVersion: 7,
+      head: { projectId: 'project', timelineId: 'main', headRevisionId: 'r1', headPublicationId: 'p1' },
+      resolvedConfig: {
+        clips: [{ id: 'source-clip', at: 0, hold: 2, track: 'V1', clipType: 'hold' }],
+        tracks: [{ id: 'V1', kind: 'visual' }],
+      },
+    };
+    const captured = { operation: { kind: 'create' as const, row: {} }, bundle: {}, commands: [], head: {}, localGeneration: 0, localBasis: {}, previewVersion: 7 };
+    harness.elementOverlay = {
+      capture: vi.fn().mockReturnValue(captured),
+      finish: vi.fn().mockReturnValue({ commands: [], preview: { version: 7, operations: [] } }),
+      submit: vi.fn(),
+    };
+    renderPanel([literal]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => expect(harness.elementOverlay.capture).toHaveBeenCalledWith(expect.objectContaining({
+      operation: expect.objectContaining({
+        kind: 'create',
+        row: expect.objectContaining({ id: 'element-end-spanning-layer-0', clipType: 'end-spanning-layer', track: 'V1', hold: 2 }),
+      }),
+    })));
+    expect(harness.execute).not.toHaveBeenCalled();
   });
 });

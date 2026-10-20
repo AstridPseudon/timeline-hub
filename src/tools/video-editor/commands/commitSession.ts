@@ -22,7 +22,12 @@ import {
   type ElementCaptureBasis,
   type ElementCapturePort,
   type ElementEdit,
+  type ElementOverlayCaptureBasis,
+  type ElementOverlayCapturePort,
+  type ElementOverlayOperation,
+  type PreparedElementOverlay,
 } from './elementGesture.ts';
+import { captureElementOverlay, captureElementOverlayDelete, finishElementOverlay } from './elementOverlayCapture.ts';
 import {
   captureGenericPatch,
   type GenericPatchBasis,
@@ -515,6 +520,73 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  const elementOverlay: ElementOverlayCapturePort = {
+    capture({ current, operation }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const captured = operation.kind === 'create'
+        ? captureElementOverlay(bundle, operation.track === undefined
+          ? { row: operation.row } : { row: operation.row, track: operation.track })
+        : captureElementOverlayDelete(bundle, operation.select);
+      const localBasis: OutboxBasis = lastIntent ? { after: lastIntent } : { head: copy(known.head) };
+      // The helper's bundle is an internal snapshot. Retain the session-owned
+      // identity so a later draft change cannot submit this capture.
+      return Object.freeze({
+        operation: copy(operation) as ElementOverlayOperation,
+        bundle,
+        commands: captured.commands,
+        head: copy(displayHead),
+        localGeneration,
+        localBasis,
+        previewVersion: current.configVersion,
+      }) as ElementOverlayCaptureBasis;
+    },
+    finish(basis) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration || basis.bundle !== bundle
+        || !sameHead(basis.head, displayHead)) {
+        throw new Error('Timeline changed during the element overlay edit');
+      }
+      const result = finishElementOverlay({ bundle: basis.bundle, commands: basis.commands });
+      const preview: TimelinePatch = {
+        version: basis.previewVersion,
+        source: 'timeline.native-element-overlay',
+        operations: result.commands.map((command) => {
+          if (command.op === 'track.create') {
+            const args = command.args as { row: Record<string, JSON> };
+            return { op: 'track.add', target: String(args.row.id), payload: copy(args.row) as Record<string, unknown> };
+          }
+          if (command.op === 'clip.add') {
+            const args = command.args as { row: Record<string, JSON> };
+            return { op: 'clip.add', target: String(args.row.id), payload: copy(args.row) as Record<string, unknown> };
+          }
+          if (typeof command.select !== 'string') throw new Error('Element overlay delete has no stable target');
+          return { op: 'clip.remove', target: command.select.slice('parent/clip:'.length) };
+        }),
+      };
+      const preparedOverlay: PreparedElementOverlay = { commands: result.commands, preview };
+      prepared.set(JSON.stringify(result.commands), {
+        payload: { commands: result.commands, before: basis.bundle, after: result.bundle, preview },
+        generation: localGeneration,
+        basis: basis.localBasis,
+      });
+      return preparedOverlay;
+    },
+    submit(input) {
+      assertReady();
+      const key = JSON.stringify(input.commands);
+      const entry = prepared.get(key);
+      if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle
+        || !equal(input.preview, entry.payload.preview)) {
+        throw new Error('Element overlay was not captured by this session or the timeline changed');
+      }
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview: input.preview }, input.preview, entry.basis);
+    },
+  };
   function resolveOwnedClipRef(clipId: string, identity: Partial<CanonicalProjectedClipIdentity> | undefined,
     requestedOwner: string | undefined, refusal: string): string {
     const parentRef = `parent/clip:${clipId}`;
@@ -802,6 +874,7 @@ export async function createTimelineCommandSession(options: Options) {
     port,
     clipScalarPort,
     elementPort,
+    elementOverlay,
     genericPatchPort,
     trackLabelPort,
     shotSetPort,

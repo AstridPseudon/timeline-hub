@@ -31,6 +31,32 @@ async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (
 }
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
+  it('queues one literal overlay command through the native port and preserves its exact retry payload', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    const prepared = session.elementOverlay.finish(session.elementOverlay.capture({
+      current: env.current(),
+      operation: {
+        kind: 'create',
+        row: {
+          id: 'element-literal-1000', at: 0, track: 'V1', clipType: 'literal', hold: 1,
+          elementRef: { id: 'literal', kind: 'effect', revision: 'rev-1' },
+        },
+      },
+    }));
+    session.elementOverlay.submit(prepared);
+    await session.dispose();
+
+    expect(env.commits()).toHaveLength(0);
+    const [owner] = await env.outboxes.list(scope);
+    expect(owner.intents).toHaveLength(1);
+    expect(owner.intents[0].payload.commands).toHaveLength(1);
+    expect(owner.intents[0].payload.commands[0]).toMatchObject({
+      op: 'clip.add',
+      args: { row: { id: 'element-literal-1000', elementRef: { id: 'literal', kind: 'effect', revision: 'rev-1' } } },
+    });
+  });
+
   it('queues one native parent intent and retries its exact request after an unknown ACK', async () => {
     const env = await environment();
     const session = await env.mount();

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Search, Sparkles } from 'lucide-react';
+import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
@@ -7,13 +8,31 @@ import { Input } from '@/shared/components/ui/input.tsx';
 import { Badge } from '@/shared/components/ui/badge.tsx';
 import { useAgentChatBridge } from '@/shared/contexts/AgentChatContext.tsx';
 import { timelineQueryKey } from '@/tools/video-editor/hooks/useTimeline.ts';
-import { useTimelineEditorData } from '@/tools/video-editor/hooks/timelineStore.ts';
+import {
+  useTimelineChromeContextSafe,
+  useTimelineEditorData,
+  useTimelineEditorDataSafe,
+} from '@/tools/video-editor/hooks/timelineStore.ts';
+import { buildElementOverlayRow } from '@/tools/video-editor/runtime/element-adapter.ts';
 import type { AstridElementCatalogEntry } from '@/tools/video-editor/runtime/element-contract.ts';
 
 type ElementFilter = 'all' | 'effect' | 'animation' | 'transition';
 
 function publicationLabel(element: AstridElementCatalogEntry): string {
   return element.publication === 'draft' ? 'Draft / Preview only' : element.publication;
+}
+
+function parentClipSelect(clip: { id: string; app?: unknown }): string | null {
+  const canonical = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)
+    ? (clip.app as { canonical?: unknown }).canonical : undefined;
+  if (canonical !== undefined) {
+    if (!canonical || typeof canonical !== 'object' || Array.isArray(canonical)) return null;
+    const clipRef = (canonical as { clipRef?: unknown }).clipRef;
+    if (typeof clipRef !== 'string') return null;
+    return /^parent\/clip:[^/]+$/.test(clipRef) && !clipRef.includes('::') ? clipRef : null;
+  }
+  return typeof clip.id === 'string' && !clip.id.includes('/') && !clip.id.includes('::')
+    ? `parent/clip:${clip.id}` : null;
 }
 
 export function ElementsLibraryPanel({
@@ -27,6 +46,8 @@ export function ElementsLibraryPanel({
 }) {
   const { editorContext } = useAgentChatBridge();
   const { selectedClipIds } = useTimelineEditorData();
+  const current = useTimelineEditorDataSafe()?.data;
+  const elementOverlay = useTimelineChromeContextSafe()?.commandSession?.elementOverlay;
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<ElementFilter>('all');
   const [query, setQuery] = useState('');
@@ -48,10 +69,6 @@ export function ElementsLibraryPanel({
     const project = editorContext?.projectSlug;
     const timeline = editorContext?.timelineId;
     const expectedVersion = editorContext?.timelineSummary?.configVersion;
-    if (!adapter || !project || !timeline || !expectedVersion) {
-      setMessage('Elements are unavailable until the current timeline is loaded.');
-      return;
-    }
     if (element.publication !== 'published') {
       setMessage(`${element.label} is still a draft. Validate it before applying it to the timeline.`);
       return;
@@ -62,6 +79,47 @@ export function ElementsLibraryPanel({
     }
     if (element.kind !== 'transition' && selectedIds.length < 1) {
       setMessage('Select a clip to apply this element.');
+      return;
+    }
+    if (element.kind === 'effect' && !element.packId) {
+      if (!current || !elementOverlay) {
+        setMessage('Literal overlay editing is unavailable until the native timeline session is ready.');
+        return;
+      }
+      const selectedClip = current.resolvedConfig.clips.find((clip) => clip.id === selectedIds[0]);
+      const exactEntries = editorContext?.elementContext?.catalog.filter((candidate) =>
+        candidate.id === element.id && candidate.kind === 'effect' && candidate.revision === element.revision
+        && candidate.packId === undefined);
+      if (!selectedClip || exactEntries?.length !== 1 || exactEntries[0].publication !== 'published'
+        || exactEntries[0].admitted !== true || exactEntries[0].legacy) {
+        setMessage('This literal element is not admitted for the current timeline.');
+        return;
+      }
+      const selectedScope = parentClipSelect(selectedClip);
+      if (!selectedScope || selectedScope !== `parent/clip:${selectedClip.id}`) {
+        setMessage('Literal overlays are unavailable for occurrence-owned clips.');
+        return;
+      }
+      setBusyId(element.id);
+      setMessage(null);
+      try {
+        const row = buildElementOverlayRow(current.resolvedConfig,
+          { id: element.id, kind: 'effect', revision: element.revision }, selectedClip.id);
+        const captured = elementOverlay.capture({ current, operation: {
+          kind: 'create', row: row as unknown as Record<string, JSON>,
+        } });
+        const prepared = elementOverlay.finish(captured);
+        elementOverlay.submit(prepared);
+        setMessage(`${element.label} queued through the native timeline session.`);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : String(error));
+      } finally {
+        setBusyId(null);
+      }
+      return;
+    }
+    if (!adapter || !project || !timeline || !expectedVersion) {
+      setMessage('Elements are unavailable until the current timeline is loaded.');
       return;
     }
     setBusyId(element.id);

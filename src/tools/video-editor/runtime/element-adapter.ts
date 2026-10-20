@@ -204,6 +204,31 @@ function uniqueElementClipId(config: TimelineConfig, elementId: string, at: numb
   return `${base}-${suffix}`;
 }
 
+/** Existing placement/hold/track/id policy, shared by native consumers. */
+export function buildElementOverlayRow(
+  config: TimelineConfig,
+  element: AstridElementRef,
+  targetClipId?: string,
+  at?: number,
+  duration?: number,
+  params?: Record<string, unknown>,
+): TimelineClip {
+  const target = targetClipId ? requireClip(config, targetClipId) : undefined;
+  const start = at ?? target?.at ?? 0;
+  const hold = duration ?? (target ? clipDuration(target) : 1);
+  if (!Number.isFinite(start) || start < 0) throw new AstridElementOperationError('Overlay placement requires a non-negative at');
+  if (!Number.isFinite(hold) || hold <= 0) throw new AstridElementOperationError('Overlay placement requires a positive duration');
+  return {
+    id: uniqueElementClipId(config, element.id, start),
+    at: start,
+    track: visualTrackId(config, target?.track),
+    clipType: element.kind === 'effect' ? element.id : 'effect-layer',
+    hold,
+    elementRef: element,
+    ...(params ? { params } : {}),
+  };
+}
+
 function clipDuration(clip: TimelineClip): number {
   return getClipTimelineDuration(clip);
 }
@@ -281,23 +306,8 @@ function applyTimelineOperation(
         });
       }
 
-      const target = operation.clip_id ? requireClip(config, operation.clip_id) : undefined;
-      const at = operation.at ?? target?.at ?? 0;
-      const duration = operation.duration ?? (target ? clipDuration(target) : 1);
-      if (!Number.isFinite(at) || at < 0) throw new AstridElementOperationError('Overlay placement requires a non-negative at');
-      if (!Number.isFinite(duration) || duration <= 0) throw new AstridElementOperationError('Overlay placement requires a positive duration');
-      const overlay: TimelineClip = {
-        id: uniqueElementClipId(config, operation.element.id, at),
-        at,
-        track: visualTrackId(config, target?.track),
-        // Keep the Astrid element id in the ordinary visual dispatch path.
-        // `effect-layer` is the legacy Astrid App wrapper and cannot carry a
-        // revision-pinned Astrid component by itself.
-        clipType: entry.kind === 'effect' ? entry.id : 'effect-layer',
-        hold: duration,
-        elementRef: operation.element,
-        ...(operation.params ? { params: operation.params } : {}),
-      };
+      const overlay = buildElementOverlayRow(config, operation.element,
+        operation.clip_id, operation.at, operation.duration, operation.params);
       return { ...config, clips: [...config.clips, overlay] };
     }
     case 'timeline.update_element':
