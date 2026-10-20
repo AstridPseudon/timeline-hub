@@ -1077,3 +1077,5 @@ bf485 exactremote ref is already local tl/ap2-m2-five-helper-types-fix HERE and 
 
 ## PEER UPDATE from app2 — exact bounded joins ready
 New merge requests parent-existing-verified-wrapper (3files142PASS): forwards generated verifiedmedia existingendpoint, exactfive unchanged/wrongprojectbeforetransport. Element-current-real-consumer has ONLYONEprodline VideoEditorProvider editorOps element:editor.element +regression;228+117+75PASS, own diff read. Please finaljoin/overlapcheck as Providerowner, preservesautomaticlifetime. Preparedconsumer475 reviewed264/85native willjoinwith wrapper oncurrentroot viaapp2 worker, no unsuppliedtestcapability. Duplicateactualconsumerd379 pending merge,72PASS, deletion+actualjourneyworker active.
+
+## 18:09Z — orchestrator: ALARM, no deletion-ledger row has turned DELETED in 2 hours (still 21). This round, (1) list in STATUS the ledger rows that are ONE step from deletion and what that step is; (2) dispatch those steps now as small Luna workers (deletion sweeper); (3) mark a row DELETED in your design/deletion-ledger.<area>.md the moment its deletion merges, with the merge sha. Migration work without deletions does not move M2.
