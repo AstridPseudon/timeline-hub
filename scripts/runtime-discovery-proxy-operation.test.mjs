@@ -140,6 +140,29 @@ test('pure: Vite operation options have no rewrite/token/cache override and ordi
   assert.equal(ordinary.headers.Authorization, 'Bearer startup-token');
 });
 
+test('pure: operation admission strips normalized/raw headers before proxying and leaves ordinary traffic intact', () => {
+  let admit;
+  createRuntimeOperationAdmissionPlugin(ORIGIN).configureServer({ middlewares: { use: (handler) => { admit = handler; } } });
+  const request = { ...shaped('POST', { Host: '127.0.0.1:17777', Origin: ORIGIN, [H]: 'a'.repeat(64),
+    Connection: ['X-First, Authorization', 'x-SECOND, Cookie'], 'X-First': 'first-secret', 'X-Second': 'second-secret',
+    Authorization: 'Bearer browser-secret', Cookie: 'browser=secret', 'Idempotency-Key': 'exact-key' }),
+    url: `${O}/runtime/v1/tasks` };
+  request.headers = { connection: 'X-First, Authorization, x-SECOND, Cookie', 'x-first': 'first-secret',
+    'x-second': 'second-secret', authorization: 'Bearer browser-secret', cookie: 'browser=secret',
+    [H.toLowerCase()]: 'a'.repeat(64), 'idempotency-key': 'exact-key' };
+  let forwarded = 0;
+  admit(request, { setHeader() {}, writeHead() { assert.fail('valid request refused'); } }, () => forwarded++);
+  assert.equal(forwarded, 1);
+  assert.deepEqual(request.headers, { [H.toLowerCase()]: 'a'.repeat(64), 'idempotency-key': 'exact-key' });
+  assert.deepEqual(request.rawHeaders, ['Host', '127.0.0.1:17777', 'Origin', ORIGIN, H, 'a'.repeat(64), 'Idempotency-Key', 'exact-key']);
+  const ordinary = { url: '/api/runtime/v1/tasks', headers: { connection: 'X-First', 'x-first': 'kept' },
+    rawHeaders: ['Connection', 'X-First', 'X-First', 'kept'] };
+  const before = structuredClone(ordinary);
+  admit(ordinary, { setHeader() { assert.fail('ordinary request changed'); } }, () => forwarded++);
+  assert.equal(forwarded, 2);
+  assert.deepEqual(ordinary, before);
+});
+
 const listen = (server, port = 0) => new Promise((resolve, reject) => {
   server.once('error', reject);
   server.listen(port, '127.0.0.1', () => resolve(server.address().port));
@@ -478,4 +501,117 @@ socketTest('socket: real Vite prefix uses production options/admission, preserve
   assert.equal(unavailable.status, 503);
   assert.equal(unavailable.headers['cache-control'], 'no-store');
   assert.equal(JSON.parse(unavailable.body).code, 'operation_unavailable');
+});
+
+socketTest('socket: duplicate Connection nominations are stripped in both directions through actual Vite', async (t) => {
+  const { createServer: createViteServer } = await import('vite');
+  const appPort = await freePort();
+  const appOrigin = `http://127.0.0.1:${appPort}`;
+  let received;
+  const f = await venue(t, (req, res) => {
+    received = req.headers;
+    res.writeHead(200, { Connection: ['X-Reply-Leak', 'ETag'], 'X-Reply-Leak': 'private', ETag: 'private-tag',
+      'Set-Cookie': 'private-cookie=1', 'Content-Type': 'text/plain' });
+    res.end('kept');
+  }, { appOrigin });
+  f.rotate(`http://127.0.0.1:${f.runtimePort}`, 'pinned-token');
+  const vite = await createViteServer({ configFile: false, root: f.directory, cacheDir: join(f.directory, '.vite'),
+    logLevel: 'silent', appType: 'custom', optimizeDeps: { noDiscovery: true, include: [] },
+    plugins: [createRuntimeOperationAdmissionPlugin(appOrigin)],
+    server: { host: '127.0.0.1', port: appPort, strictPort: true, watch: null, hmr: false,
+      proxy: { [O]: createRuntimeOperationProxyOptions(`http://127.0.0.1:${f.port}`) } } });
+  await vite.listen();
+  t.after(() => vite.close());
+  const acquired = await call(appPort, O, { method: 'POST', headers: { Origin: appOrigin, 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(acquired.status, 201);
+  const handle = JSON.parse(acquired.body).handle;
+  const result = await call(appPort, `${O}/runtime/v1/tasks`, { headers: { Origin: appOrigin, [H]: handle,
+    Connection: ['X-First, Authorization', 'X-Second, Cookie'], 'X-First': 'first-secret', 'X-Second': 'second-secret',
+    Authorization: 'Bearer browser-secret', Cookie: 'browser=secret' } });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.toString(), 'kept');
+  assert.equal(received.authorization, 'Bearer pinned-token');
+  for (const name of ['x-first', 'x-second', 'cookie', 'proxy-authorization', H.toLowerCase()]) assert.equal(received[name], undefined, name);
+  for (const name of ['etag', 'x-reply-leak', 'set-cookie', 'access-control-allow-origin']) assert.equal(result.headers[name], undefined, name);
+  assert.equal(result.headers['cache-control'], 'no-store');
+});
+
+socketTest('socket: Vite strips raw mixed-case nominations before each hop, including Expect requests', async (t) => {
+  const { createServer: createViteServer } = await import('vite');
+  const appPort = await freePort();
+  const appOrigin = `http://127.0.0.1:${appPort}`;
+  const f = await venue(t, undefined, { appOrigin });
+  const incoming = [];
+  f.proxy.prependListener('request', (req) => incoming.push({ headers: { ...req.headers }, rawHeaders: [...req.rawHeaders] }));
+  const target = `http://127.0.0.1:${f.port}`;
+  const vite = await createViteServer({ configFile: false, root: f.directory, cacheDir: join(f.directory, '.vite'),
+    logLevel: 'silent', appType: 'custom', optimizeDeps: { noDiscovery: true, include: [] },
+    plugins: [createRuntimeOperationAdmissionPlugin(appOrigin)],
+    server: { host: '127.0.0.1', port: appPort, strictPort: true, watch: null, hmr: false,
+      proxy: { [O]: createRuntimeOperationProxyOptions(target), '/api/runtime': createWorkspaceRuntimeProxyOptions(target, 'startup-token') } } });
+  await vite.listen(); t.after(() => vite.close());
+  const acquired = await call(appPort, O, { method: 'POST', headers: { Origin: appOrigin, 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(acquired.status, 201);
+  const handle = JSON.parse(acquired.body).handle;
+  const hopHeaders = { 'Keep-Alive': 'timeout=10', 'Proxy-Connection': 'keep-alive',
+    'Proxy-Authenticate': 'Basic private', 'Proxy-Authorization': 'Basic private', TE: 'trailers',
+    Trailer: 'X-Trailer', Upgrade: 'private-protocol' };
+  for (const expect of [false, true]) {
+    for (const nominateKey of [false, true]) {
+      const headers = ['Host', `127.0.0.1:${appPort}`, 'Origin', appOrigin, H, handle,
+        'cOnNeCtIoN', '  x-FiRsT, AuThOrIzAtIoN  ', 'CONNECTION', `x-SeCoNd, cOoKiE${nominateKey ? ', IdEmPoTeNcY-KeY' : ''}`,
+        'X-First', 'first-secret', 'x-SECOND', 'second-secret', 'Authorization', 'Bearer browser-secret',
+        'Cookie', 'browser=secret', 'Idempotency-Key', 'exact-key', 'Content-Type', 'application/json',
+        'Range', 'bytes=2-4', ...Object.entries(hopHeaders).flat(), ...(expect ? ['Expect', '100-continue'] : [])];
+      const result = await call(appPort, `${O}/runtime/v1/tasks?cursor=a%2Fb`, { method: 'POST', headers, body: bytes });
+      assert.equal(result.status, 200, result.body.toString());
+      const firstHop = incoming.at(-1);
+      const received = f.requests.at(-1);
+      for (const name of ['x-first', 'x-second', 'cookie', 'authorization', ...Object.keys(hopHeaders).map((name) => name.toLowerCase())]) {
+        assert.equal(firstHop.headers[name], undefined, `first hop: ${name}`);
+        assert(!firstHop.rawHeaders.some((value, index) => index % 2 === 0 && value.toLowerCase() === name), `raw first hop: ${name}`);
+        if (name !== 'authorization') assert.equal(received.headers[name], undefined, `Runtime hop: ${name}`);
+      }
+      assert.equal(firstHop.headers[H.toLowerCase()], handle);
+      assert.equal(received.headers[H.toLowerCase()], undefined);
+      assert.equal(received.headers.authorization, 'Bearer first-token');
+      for (const record of [firstHop, received]) {
+        assert.equal(record.headers['idempotency-key'], nominateKey ? undefined : 'exact-key');
+        assert.equal(record.headers.range, 'bytes=2-4');
+      }
+      assert.equal(received.method, 'POST');
+      assert.equal(received.path, '/v1/tasks?cursor=a%2Fb');
+      assert.deepEqual(received.body, bytes);
+    }
+  }
+  const sent = incoming.length;
+  const accepted = f.requests.length;
+  for (const nomination of [H, `X-First, ${H.toUpperCase()}`]) {
+    for (const path of [O, `${O}/runtime/v1/tasks`, '/api/runtime/v1/tasks']) {
+      const result = await call(appPort, path, { method: 'POST', headers: { Origin: appOrigin, [H]: handle,
+        Connection: ['X-Second', nomination], 'Content-Type': 'application/json' }, body: '{}' });
+      assert.equal(result.status, 400);
+      assert.equal(JSON.parse(result.body).code, 'operation_invalid');
+      assert.equal(result.headers['cache-control'], 'no-store');
+    }
+  }
+  for (const headers of [
+    { Origin: 'http://foreign', Connection: 'Origin' }, { Origin: 'null', Connection: 'Origin' },
+    { Origin: [appOrigin, appOrigin], Connection: 'Origin' },
+    { Origin: appOrigin, 'Sec-Fetch-Site': 'cross-site', Connection: 'Sec-Fetch-Site' },
+  ]) {
+    const result = await call(appPort, `${O}/runtime/v1/tasks`, { headers: {
+      [H]: handle, 'Sec-Fetch-Site': 'same-origin', ...headers } });
+    assert.equal(result.status, 403);
+    assert.equal(JSON.parse(result.body).code, 'operation_origin_forbidden');
+  }
+  for (const nomination of ['Origin', 'Host', 'Origin, Sec-Fetch-Site']) {
+    const result = await call(appPort, `${O}/runtime/v1/tasks`, { headers: { Origin: appOrigin, [H]: handle,
+      'Sec-Fetch-Site': 'same-origin', Connection: nomination } });
+    // Origin-less safe reads remain allowed only when their Fetch Metadata survives stripping.
+    assert.equal(result.status, nomination === 'Origin' ? 200 : 403);
+  }
+  assert.equal(incoming.length, sent + 1);
+  assert.equal(f.requests.length, accepted + 1);
+  assert.equal((await call(appPort, `${O}/runtime/v1/tasks`, { headers: { Origin: appOrigin, [H]: handle } })).status, 200);
 });

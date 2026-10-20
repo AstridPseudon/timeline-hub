@@ -7,6 +7,21 @@ import { objectCacheControl } from './objectCachePolicy.mjs';
 const RUNTIME_REQUEST_TIMEOUT_MS = 60_000;
 export const RUNTIME_TOKEN_FILE_ENV = 'WORKSPACE_RUNTIME_TOKEN_FILE';
 
+function stripOperationRequestHeaders(request: IncomingMessage): boolean {
+  const removed = new Set(['connection', 'keep-alive', 'proxy-connection', 'proxy-authenticate',
+    'proxy-authorization', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'authorization', 'cookie']);
+  for (let i = 0; i < request.rawHeaders.length; i += 2) {
+    if (request.rawHeaders[i].toLowerCase() === 'connection') {
+      for (const name of request.rawHeaders[i + 1].split(',')) removed.add(name.trim().toLowerCase());
+    }
+  }
+  // Strip before http-proxy copies headers and replaces Connection; proxyReq is bypassed by Expect.
+  for (const name of removed) delete request.headers[name];
+  request.rawHeaders = request.rawHeaders.filter((_value, index, headers) =>
+    !removed.has(headers[index - index % 2].toLowerCase()));
+  return !removed.has('x-astrid-operation-handle');
+}
+
 export function createWorkspaceRuntimeProxyOptions(
   target: string,
   token: string | null,
@@ -40,13 +55,15 @@ export function createRuntimeOperationProxyOptions(target: string): ProxyOptions
         if (!('writeHead' in response) || response.destroyed || response.writableEnded) return;
         if (response.headersSent) { response.destroy(); return; }
         const failure = operationFailure(503, 'operation_unavailable');
+        response.removeHeader('Access-Control-Allow-Origin');
         response.writeHead(failure.status, { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' });
         response.end(failure.body);
       });
       proxy.on('proxyReq', (request) => {
         for (const name of ['authorization', 'cookie', 'proxy-authorization']) request.removeHeader(name);
       });
-      proxy.on('proxyRes', (response) => {
+      proxy.on('proxyRes', (response, _request, downstream) => {
+        downstream.removeHeader('Access-Control-Allow-Origin');
         response.headers['cache-control'] = 'no-store';
         delete response.headers['set-cookie'];
       });
@@ -63,8 +80,9 @@ export function createRuntimeOperationAdmissionPlugin(allowedOrigin: string | un
     try { host = new URL(allowedOrigin ?? '').host; } catch { /* Unconfigured means unavailable. */ }
     response.setHeader('Cache-Control', 'no-store');
     const allowed = operationRequestAllowed(request, allowedOrigin, host);
-    const failure = !allowed ? operationFailure(403, 'operation_origin_forbidden')
-      : !operationTarget(request.url) ? operationFailure(400, 'operation_invalid') : null;
+    const handleAllowed = stripOperationRequestHeaders(request);
+    const failure = !allowed || !operationRequestAllowed(request, allowedOrigin, host) ? operationFailure(403, 'operation_origin_forbidden')
+      : !handleAllowed || !operationTarget(request.url) ? operationFailure(400, 'operation_invalid') : null;
     if (!failure) { next(); return; }
     response.writeHead(failure.status, { 'Cache-Control': 'no-store', 'Content-Type': 'application/json' });
     response.end(failure.body);
