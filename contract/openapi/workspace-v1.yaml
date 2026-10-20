@@ -390,12 +390,6 @@ paths:
         - { $ref: '#/components/parameters/TimelineId' }
         - { name: revision, in: path, required: true, schema: { type: string, minLength: 1 } }
       responses: { '200': { description: Exact immutable internal timeline revision, content: { application/json: { schema: { $ref: '#/components/schemas/ImmutableRevision' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
-  /v1/timelines/{timeline_id}:
-    patch:
-      operationId: updateTimeline
-      parameters: [ { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateTimeline' } } } }
-      responses: { '200': { description: Updated timeline with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/timelines/{timeline_id}/history:
     get:
       operationId: listTimelineHistory
@@ -428,40 +422,11 @@ paths:
       parameters: [ { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RecoverTimeline' } } } }
       responses: { '200': { description: Recovered timeline with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
-  /v1/timelines/{timeline_id}/shots:
-    post:
-      operationId: createShot
-      parameters: [ { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Shot' } } } }
-      responses: { '201': { description: Shot, content: { application/json: { schema: { $ref: '#/components/schemas/Shot' } } } } }
   /v1/shots/{shot_id}:
     get:
       operationId: getShot
       parameters: [ { $ref: '#/components/parameters/ShotId' } ]
       responses: { '200': { description: Shot, content: { application/json: { schema: { $ref: '#/components/schemas/Shot' } } } } }
-    patch:
-      operationId: updateShot
-      parameters: [ { $ref: '#/components/parameters/ShotId' }, { name: Idempotency-Key, in: header, required: false, schema: { type: string } } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateShot' } } } }
-      responses: { '200': { description: Updated shot, content: { application/json: { schema: { $ref: '#/components/schemas/Shot' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
-  /v1/shots/{shot_id}/archive:
-    post:
-      operationId: archiveShot
-      parameters: [ { $ref: '#/components/parameters/ShotId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ExpectedVersion' } } } }
-      responses: { '200': { description: Archived shot, content: { application/json: { schema: { $ref: '#/components/schemas/Shot' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
-  /v1/shots/{shot_id}/recover:
-    post:
-      operationId: recoverShot
-      parameters: [ { $ref: '#/components/parameters/ShotId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ExpectedVersion' } } } }
-      responses: { '200': { description: Recovered shot, content: { application/json: { schema: { $ref: '#/components/schemas/Shot' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
-  /v1/timelines/{timeline_id}/references:
-    post:
-      operationId: createReference
-      parameters: [ { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Reference' } } } }
-      responses: { '201': { description: Reference, content: { application/json: { schema: { $ref: '#/components/schemas/Reference' } } } } }
   /v1/projects/{project_id}/shots:
     post:
       operationId: createProjectShot
@@ -599,23 +564,6 @@ paths:
       operationId: getReference
       parameters: [ { $ref: '#/components/parameters/ReferenceId' } ]
       responses: { '200': { description: Reference, content: { application/json: { schema: { $ref: '#/components/schemas/Reference' } } } } }
-    patch:
-      operationId: updateReference
-      parameters: [ { $ref: '#/components/parameters/ReferenceId' }, { name: Idempotency-Key, in: header, required: false, schema: { type: string } } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateReference' } } } }
-      responses: { '200': { description: Updated reference, content: { application/json: { schema: { $ref: '#/components/schemas/Reference' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
-  /v1/references/{reference_id}/archive:
-    post:
-      operationId: archiveReference
-      parameters: [ { $ref: '#/components/parameters/ReferenceId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ExpectedVersion' } } } }
-      responses: { '200': { description: Archived reference, content: { application/json: { schema: { $ref: '#/components/schemas/Reference' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
-  /v1/references/{reference_id}/recover:
-    post:
-      operationId: recoverReference
-      parameters: [ { $ref: '#/components/parameters/ReferenceId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ExpectedVersion' } } } }
-      responses: { '200': { description: Recovered reference, content: { application/json: { schema: { $ref: '#/components/schemas/Reference' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
   /v1/projects/{project_id}/media-relations:
     get:
       operationId: listMediaRelations
@@ -1189,10 +1137,6 @@ components:
       allOf:
         - if: { properties: { kind: { const: media.transcript } }, required: [kind] }
           then: { properties: { content: { $ref: 'https://astrid.haus/workspace/v1/schemas/document.json#/$defs/MediaTranscript' } } }
-    UpdateTimeline:
-      type: object
-      required: [expected_version]
-      properties: { expected_version: { type: integer, minimum: 1 }, shots: { type: array, items: { $ref: '#/components/schemas/Shot' } }, references: { type: array, items: { $ref: '#/components/schemas/Reference' } } }
     ManagedObjectPage:
       type: object
       additionalProperties: false
@@ -1308,16 +1252,6 @@ components:
       additionalProperties: false
       required: [items, next_cursor]
       properties: { items: { type: array, items: { $ref: '#/components/schemas/Shot' } }, next_cursor: { type: [string, 'null'] } }
-    UpdateShot:
-      type: object
-      additionalProperties: false
-      required: [expected_version]
-      properties: { expected_version: { type: integer, minimum: 1 }, start_ms: { type: integer, minimum: 0 }, duration_ms: { type: integer, minimum: 1 }, reference_ids: { type: array, items: { type: string }, uniqueItems: true } }
-    UpdateReference:
-      type: object
-      additionalProperties: false
-      required: [expected_version]
-      properties: { expected_version: { type: integer, minimum: 1 }, object_id: { type: string, minLength: 1 }, role: { type: string } }
     MediaRelationPage:
       type: object
       additionalProperties: false
