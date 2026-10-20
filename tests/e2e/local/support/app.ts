@@ -83,6 +83,19 @@ export async function openSeededTimeline(page: Page, harness: DirectHarness) {
   await expect(firstTrackName(page)).toBeVisible();
 }
 
+/** Opens the production embedded canonical ShotEditorView from the parent editor's shot-group label. */
+export async function openEmbeddedCanonicalShot(page: Page, occurrenceId: string, shotName: string) {
+  const label = page.locator('[data-shot-group-key]').filter({ hasText: shotName }).first();
+  await expect(label).toBeVisible();
+  await label.dblclick();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator(`[data-canonical-occurrence-id="${occurrenceId}"]`)).toBeVisible();
+  return dialog;
+}
+
+/** The native header input inside an embedded ShotEditorView; no display-id lookup is involved. */
+export const embeddedShotNameInput = (dialog: import('@playwright/test').Locator) => dialog.locator('input').first();
+
 export async function editFirstTrackName(page: Page, name: string) {
   const field = firstTrackName(page);
   await field.fill(name);

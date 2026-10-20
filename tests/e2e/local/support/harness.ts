@@ -334,13 +334,14 @@ export interface ThreeProductsSeed {
   occurrenceId: string;
   /** The key the agent names for a task output (`--swap-asset f2-marker=task:T/marker#0`). It is new: the CLI refuses a key that already names other media. */
   markerAssetKey: string;
-  /** Opaque data neither client models; every later revision must carry both unchanged. */
-  opaque: { config: Record<string, unknown>; clip: Record<string, unknown> };
+  /** Opaque data neither client models; every later revision must carry it unchanged. */
+  opaque: { config: Record<string, unknown>; clip: Record<string, unknown>; shot: Record<string, unknown> };
 }
 
 export const THREE_PRODUCTS_OPAQUE = {
   config: { owner: 'f2', nested: [1, { k: 'v' }], flag: true },
   clip: { owner: 'f2', nested: [1, { k: 'v' }] },
+  shot: { owner: 'f2-shot', nested: [1, { k: 'v' }], flag: true },
 } as const;
 
 /** Keep the App's reference sibling clear of the A5/B7 moves on the same track. */
@@ -727,7 +728,14 @@ export class DirectHarness {
         shot_id: shotId,
         revision_id: shotRevisionId,
         internal_timeline_revision_id: internalRevisionId,
-        payload: { metadata: { title: 'F2 agent shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [] },
+        payload: {
+          name: 'F2 canonical shot',
+          metadata: { title: 'F2 agent shot' },
+          items: [], pools: [], selected_variants: {},
+          provenance: { source: 'three-products-seed', revision: 1 },
+          x_f2_opaque: THREE_PRODUCTS_OPAQUE.shot,
+          generation_inputs: [], audio_bindings: [], text_bindings: [],
+        },
       }],
     });
     (publication.parent_composition as Record<string, unknown>).occurrences = [{
@@ -738,7 +746,9 @@ export class DirectHarness {
     if (published.status !== 200) throw new Error(`seed three products timeline: ${published.status} ${JSON.stringify(published.body)}`);
     this.threeProductsSeed = {
       projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId: published.body.data.new_head,
-      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip } },
+      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: {
+        config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip }, shot: { ...THREE_PRODUCTS_OPAQUE.shot },
+      },
     };
     return this.threeProductsSeed;
   }
