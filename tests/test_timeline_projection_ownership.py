@@ -561,6 +561,61 @@ def test_actual_provider_historical_slot_rematerializes_after_verified_restore(s
         s["shot_id"] for s in first["data"]["canonical_document"]["shot_revisions"]}
 
 
+@pytest.mark.integration
+def test_source_bound_owned_slot_cannot_overwrite_newer_catalog_head(shared_editing, monkeypatch):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from test_shot_candidate_promotion import catalog_shot
+    from test_timeline_commit_integration import rows
+
+    editing = shared_editing
+    original = editing.document()
+    owner = "occurrence:occurrence-3/clip:clip-3"
+    move = editing.agent.move(editing.agent.bundle(original), owner, 3.5)
+    assert move["version"] == "2"
+    body = editing.body([move])
+    accepted = editing.commit(body, "carrier-slot-move")
+    document = editing.document()
+    source = next(o["shot_id"] for o in original["parent_revision"]["payload"]["occurrences"]
+                  if o["occurrence_id"] == "occurrence-3")
+    slot = next(o["shot_id"] for o in document["parent_revision"]["payload"]["occurrences"]
+                if o["occurrence_id"] == "occurrence-3")
+    assert slot != source
+    candidate = catalog_shot(editing.service, editing.project, [{
+        "item_id": "carrier-slot-candidate", "media_id": editing.film.fixture.media_ids[0],
+        "metadata": {"role": "primary_visual", "status": "candidate"},
+    }], shot_id=slot)
+    promoted = editing.service.promote_project_shot_candidate(editing.project, slot, {
+        "candidate_item_id": "carrier-slot-candidate", "expected_head_seq": candidate.version,
+    }, idempotency_key="carrier-slot-promotion")
+    catalog = editing.service.get_project_shot(editing.project, slot)
+    assert editing.document() == document
+    before = rows(editing.service)
+    with monkeypatch.context() as retry:
+        retry.setattr(type(editing.service._timeline_commit_provider), "commit",
+                      lambda *_: pytest.fail("exact retry ran the provider"))
+        assert editing.commit(body, "carrier-slot-move") == accepted
+    assert rows(editing.service) == before
+
+    def refuses(key):
+        move = editing.agent.move(editing.agent.bundle(editing.document()), owner, 3.6)
+        before = rows(editing.service)
+        with pytest.raises(RuntimeErrorBase) as error:
+            editing.commit(editing.body([move]), key)
+        assert error.value.details["reason"] == "destination_occupied"
+        assert rows(editing.service) == before
+
+    refuses("carrier-slot-current-overwrite")
+    pin = {k: original["parent_revision"][k] for k in ("revision_id", "content_digest")}
+    editing.commit(editing.body([{
+        "schema_version": 1, "op": "timeline.restore", "version": "1", "select": None, "args": pin,
+    }]), "carrier-slot-historical-reuse")
+    assert editing.document()["shot_revisions"] == original["shot_revisions"]
+    assert editing.service.get_project_shot(editing.project, slot) == catalog
+    assert editing.service.store.conn.execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id=?",
+        (slot,)).fetchone()[0] == promoted["data"]["revision_id"]
+    refuses("carrier-slot-historical-overwrite")
+
+
 def test_missing_accepted_history_fails_closed_before_fresh_allocation(realm, monkeypatch):
     service, commits, project, _, _ = realm
     new_timeline(service, commits, project, "other")

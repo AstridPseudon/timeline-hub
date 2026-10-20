@@ -114,7 +114,7 @@ def snapshot(service):
 
 OPERATIONS = (
     "project-create", "project-update", "project-archive", "project-recover",
-    "item-add", "item-remove", "item-reorder", "item-promote",
+    "item-add", "item-remove", "item-reorder",
     "binding-set", "binding-set-by-id", "binding-rebind",
     "timeline-create", "timeline-update", "timeline-archive", "timeline-recover",
 )
@@ -176,25 +176,23 @@ def test_service_shot_writes_refuse_before_replay_or_writes(authority, monkeypat
 
 
 @pytest.mark.parametrize("shot", ["placed", "unused", "fresh"])
-def test_direct_store_promotion_is_closed_before_item_updates(authority, shot):
+def test_direct_store_promotion_stale_version_rolls_back_item_updates(authority, shot):
     service, _, _, _ = authority
     before = snapshot(service)
-    for expected in (1, 99):
-        with pytest.raises(RetiredRouteError):
-            service.store.promote_shot_items(shot, expected, [(f"{shot}-candidate", {"status": "primary"})], timestamp="changed")
-        assert snapshot(service) == before
+    from runtime_protocol.errors import ConflictError
+    with pytest.raises(ConflictError), service.store._transaction():
+        service.store.promote_shot_items(shot, 99, [(f"{shot}-candidate", {"status": "primary"})], timestamp="changed")
+    assert snapshot(service) == before
 
 
-@pytest.mark.parametrize("operation", ["project-update", "item-reorder", "item-promote"])
+@pytest.mark.parametrize("operation", ["project-update", "item-reorder"])
 def test_service_same_value_shot_writes_are_also_retired(authority, operation):
     service, project, media, _ = authority
     _, _, body, method, args, kwargs = invocation(operation, project, media, "placed")
     if operation == "project-update":
         body["name"] = "placed"
-    elif operation == "item-reorder":
-        body["item_ids"] = ["placed-primary", "placed-candidate"]
     else:
-        body["candidate_item_id"] = "placed-primary"
+        body["item_ids"] = ["placed-primary", "placed-candidate"]
     before = snapshot(service)
     with pytest.raises(RetiredRouteError):
         getattr(service, method)(*args, body, idempotency_key="same-value", **kwargs)
@@ -224,7 +222,7 @@ def test_authenticated_http_shot_writes_are_retired(http_authority, operation, s
     assert snapshot(daemon.service) == before
 
 
-@pytest.mark.parametrize("operation", OPERATIONS)
+@pytest.mark.parametrize("operation", (*OPERATIONS, "item-promote"))
 def test_http_auth_and_scope_checks_precede_retirement(http_authority, operation):
     daemon, project, media = http_authority
     token, _ = daemon.credentials.provision("reader", ["projects:read"])
@@ -237,14 +235,14 @@ def test_http_auth_and_scope_checks_precede_retirement(http_authority, operation
         assert snapshot(daemon.service) == before
 
 
-@pytest.mark.parametrize("operation", [op for op in OPERATIONS if not op.startswith("timeline-")])
+@pytest.mark.parametrize("operation", [op for op in (*OPERATIONS, "item-promote") if not op.startswith("timeline-")])
 def test_http_foreign_project_never_mutates_shot(http_authority, operation):
     daemon, _, media = http_authority
     project = daemon.service.create_project({"slug": "other", "name": "Other"})["id"]
     method, path, body, *_ = invocation(operation, project, media, "placed")
     before = snapshot(daemon.service)
     status, payload = http_request(daemon, method, path, body, daemon.token)
-    assert status == 410, payload
+    assert status == (404 if operation == "item-promote" else 410), payload
     assert snapshot(daemon.service) == before
 
 
