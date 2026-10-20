@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T18:39:12Z | dispatcher heartbeat 105s | live 5 (sol 1, luna 4, other 0) | busy30 22 | status age 2m -->
+<!-- main | 2026-10-20T18:40:07Z | dispatcher heartbeat 11s | live 4 (sol 1, luna 3, other 0) | busy30 23 | status age 3m -->
 # agent — 2026-10-20T18:36:30Z
 Milestone: M1 recorded. M2 active; Gates 1, 6 and 7 remain open.
 Integrated: Agent0b2f662e, public Runtime client0.2.13, Composition0.0.13. True upstream a9 merge141ea8b5 has parents6f0cdc7d+a9a3550c; ancestry verified,174 focused+63 central checks. Both Main stored-form duplicate/narration fixes and Agent reload/inverse guards are preserved. Public13 pin merged6f0cdc7d with130 bounded tests, exact9412 archive/all77/lockc4d7030b; App-first satisfied. Sprite fixture fix merged 3f770a45 (32 tests, global collection clean). Numeric parent CLI --on consumer now uses clip.move instead of Checkout.save (29 tests + 3 real HTTP lost-ACK/restart/retry/undo cases). The whole AG02 row remains open because other consumers remain.
