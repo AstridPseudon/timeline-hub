@@ -13,6 +13,13 @@ product decisions; you decide machine matters yourself.
   (machine specifics: how YOUR daemons are started, open items, what you were watching). Keep that note current every hour.
 - The orchestrator's latest decisions: the end of INBOX.md, and hub/lead/<area>.md.
 
+## Communication: when to message the orchestrator (owner direction 2026-10-20)
+Your hourly lead line (hub/status/<area>-lead.md, item by item against hub/lead/<area>.md) IS your report; the orchestrator reads it every hour.
+Send a message ONLY for: (1) a step blocked on the orchestrator or the owner (a safety check, a sign-in, a decision); (2) something in the
+"Escalate ONLY" categories; (3) a bug in the kit or tools; (4) a direct answer to a question the orchestrator asked you. Do NOT message to
+confirm that you relayed, restarted, cleaned up or finished something: put it in the lead line. Instructions reach you through
+hub/lead/<area>.md and the manager INBOX (inbox delivery is reliable now), so you no longer need to confirm relays.
+
 ## Self-service tools (yours and the manager's; no escalation needed)
 bin/recycle, bin/sweep-tmp, bin/compact-scratch (disk); bin/request-stop / bin/stop-worker (a stuck or orphaned worker; its WIP is kept);
 bin/request-stop-test (a wrong test run); bin/request-checkout (an exact-commit checkout); bin/request-runtime (a pinned Remotion runtime);

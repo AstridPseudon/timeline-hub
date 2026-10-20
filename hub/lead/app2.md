@@ -1,4 +1,5 @@
 # app2 lead: work list (orchestrator, updated 2026-10-20T20:43Z). Read this every hour.
+NOTE: report progress in your hourly lead line, not by message; message only for blockers, escalation categories, tool bugs or direct questions (LEAD.md "Communication").
 GOAL: your 7 App rows are DELETED: element-routes, ordinary-batch (the critical path), duplicate, parent-media, bootstrap, resolved-edit-serializer, selected-param (last).
 STANDING RESPONSIBILITIES: services alive with a Monitor ALWAYS armed; 5-7 live workers; disk >10 GB; merge-forward onto the latest hub integration right before each merge request; lead line hourly in hub/status/app2-lead.md.
 WORK LIST NOW:

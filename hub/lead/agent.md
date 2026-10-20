@@ -1,4 +1,5 @@
 # Agent lead: work list (orchestrator, updated 2026-10-20T21:20Z). Read this every hour. Agent is HOMED on your machine since 21:19Z.
+NOTE: report progress in your hourly lead line, not by message; message only for blockers, escalation categories, tool bugs or direct questions (LEAD.md "Communication").
 GOAL: Agent's M2 rows turn DELETED, and gates 1 and 3 (Agent half) have real proof suites.
 STANDING RESPONSIBILITIES: services alive with a Monitor ALWAYS armed; 5-7 live workers; disk >10 GB (sweep-tmp, compact-scratch, recycle); merges via bin/request-merge; integration pushed by hub-sync (fast-forward only); Viewing merge requests into agent reviewed promptly; manager acks its INBOX within 45 min; lead line hourly in hub/status/agent-lead.md.
 WORK LIST NOW (report each as done / blocked):

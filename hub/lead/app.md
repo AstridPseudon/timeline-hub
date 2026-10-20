@@ -1,4 +1,5 @@
 # App lead: work list (orchestrator, updated 2026-10-20T20:43Z). Read this every hour. It overrides older inbox wording.
+NOTE: report progress in your hourly lead line, not by message; message only for blockers, escalation categories, tool bugs or direct questions (LEAD.md "Communication").
 GOAL: App's M2 writer retirements land, and its deletion-ledger rows turn DELETED. You keep the machine and the manager delivering that.
 STANDING RESPONSIBILITIES: services alive (dispatcher, hub-syncd, 3 h manager rounds, your Monitor); 5-7 live workers; disk >10 GB (sweep-tmp, recycle, compact-scratch hourly); the manager acknowledges its INBOX within 45 min (restart it if not); lead line hourly in hub/status/app-lead.md.
 WORK LIST NOW (report each as done / blocked):

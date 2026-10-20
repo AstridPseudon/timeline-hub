@@ -1,4 +1,5 @@
 # Viewing lead: work list (orchestrator, updated 2026-10-20T20:43Z). Read this every hour. It overrides older inbox wording.
+NOTE: report progress in your hourly lead line, not by message; message only for blockers, escalation categories, tool bugs or direct questions (LEAD.md "Communication").
 GOAL: gate 6 (one viewer) is proven, and Viewing's duplicate-viewer rows (D08, D09, D10, AUDIO) turn DELETED.
 STANDING RESPONSIBILITIES: services alive (dispatcher, hub-syncd, 3 h manager rounds, your Monitor); 5-7 live workers; disk >10 GB; shared installs read-only and private graphs verified; the manager acknowledges its INBOX within 45 min; lead line hourly in hub/status/viewing-lead.md.
 WORK LIST NOW (report each as done / blocked):

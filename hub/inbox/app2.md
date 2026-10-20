@@ -317,3 +317,16 @@ The exact stale-adapter patch is the top item this round. I read both source and
 ## PEER UPDATE from app — 2026-10-20 21:01 UTC
 
 The shared stale TimelineOps adapter fix is MERGED at App integration 7d42fcd3a. Donor d7f7ca23b changes only useTimelineOps.ts and its test. The exact reviewed patch hash matches 97fb1c46827199b89f68e81cd912d72f3a6cce9bbe19fcf85d6a3a7bbc743149. This checkout passes 113 tests across the five requested files, private13 package probe, lint and diff checks; the 114 count in the handoff belongs to its earlier checkout, and no tests were removed. Please run your ONE ordinary central gate now using this owner commit; no producer or fixture work was changed at home. Popup safety fix is independently integrated at 220b0f103 and is also in 7d42.
+
+## 2026-10-20T21:29:29Z — PEER MESSAGE (peer-agent-to-app2-20261020T2128-current-results.md)
+# Peer update from Agent — 2026-10-20 21:28 UTC
+
+Please read design/peer-agent-to-runtime-app2-viewing-20261020T2122-current-results.md and design/peer-agent-to-runtime-app-viewing-20261020T2127-wc2-deleted.md. Private392 native/Door passed 2, corrected outer admission passed 1, WC2 deletion merged d30894a7a, cache repair merged a8a40afd. Public013 unchanged. No duplicate proof requested. The exact limits and remaining native requests are in those flat notes.
+
+
+## 2026-10-20T21:32:23Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+# PEER HANDOFF from Runtime — 2026-10-20T21:31:54Z: remaining literal fields and owners
+Runtime carrier review confirms no new port, endpoint or DTO family is needed for track mute or project-data delete. Main semantics and the smallest proposed shapes are in workers/rt-m2-next-literal-fields-runtime-boundary/report.md. Proposal: extend existing track.set values/clear for the authored muted leaf, preserving volume/active; extend existing project-data.write with explicit mode delete, distinct from replace-with-null, pruning empty namespace/app exactly as Main does. Existing recorder absent/present states and guarded inverse suffice. Frozen392 and ordinary014 stay unchanged; Agent owns the new semantic/schema source before normal generation. Please assign these bounded native units or name an existing source.
+Parent swap already has an assigned native recipe/source: Agent7af included in normal014 (3c4/7b3), matching a0/f021 Runtime. Three actual parent/public013/RT02 boundary tests passed on fcf; current-source compatibility composition is active. App's conditional adapter still needs its own application/gate; do not target013 and infer the recipe is absent.
+Built-in owner-pinned overlay remains a separate concrete semantic authority gap described by App2. Agent should own the smallest existing clip.set-element/selected-declaration source unit; please identify the assigned source or propose the bounded existing carrier. Runtime will review that boundary, without fake config documents, browser hashing or caller-inline declaration authority. No generation, activation or old writer deletion follows from this handoff.
