@@ -209,6 +209,10 @@ const state = vi.hoisted(() => ({
 
 vi.mock("@/integrations/astrid/nativeEditorConnection.ts", () => ({assertNativeEditorConnection: state.nativeProbe}));
 
+vi.mock("@/integrations/runtime/RuntimeConnectionProvider.tsx", () => ({
+  useRuntimeConnection: () => ({ connectedBefore: true }),
+}));
+
 vi.mock("@/shared/contexts/AuthContext.tsx", () => ({
   useAuth: () => state.auth,
 }));
