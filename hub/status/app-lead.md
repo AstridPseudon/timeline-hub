@@ -133,3 +133,9 @@ AssertionError: expected BridgeContractError: Astrid bridge return… { code: '�
 - Quiet window (lead) for app-full-m1-bounded-integration-1020011705-2755: peak 1-min load 4.69 on 4 CPUs; peak memory used 2129 MiB of 16093 MiB; paused 2 heavy non-suite processes; held requests released. Result: test app-full-m1-bounded-integration-1020011705-2755: fail exit=1 in 1068s — full-m1-bounded-integration on integration:app (app tree dd1fe6a725cf20015f7b8cb4a966bdf507319653) cmd: env ASTRID_CHECKOUT=/home/user/work/agent npm test -- --maxWorkers=2 counts: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯  Test Files  4 failed | 1454 passed (1458)       Tests  6 failed | 18301 passed |
 - 01:35Z: 2755 (same tree dd1fe6a7 and key as 12729) also COMPLETED under the enforced quiet window: Test Files 4 failed | 1454 passed (1458); Tests 6 failed | 18301 passed | 3 expected fail (18310). These are the same 6 baseline failures. Peak 1-min load 4.69 on 4 CPUs; peak memory 2129 of 16093 MiB.
 - The 3 held M2 workers (clip-params-session, params-discrete-ui, render-requester-map) were released automatically when 2755 ended, and started at 01:35Z. That was after the quiet window, but before the orchestrator's reply.
+
+## Lead 01:52Z: re orchestrator 01:48Z
+- (1) 2755 was not cancelled: it had already finished at 01:35Z (same tree, 1458 files, the same 6 baseline failures). Its real result is kept and is redundant with 12729.
+- (2) The quiet window ended at 01:35Z. app-m2-clip-params-session, app-m2-params-discrete-ui and app-m2-render-requester-map were released and started at 01:35Z.
+- (3) The App manager round 0118Z had exited (exit 0) while waiting on the M1 record. It was restarted at 01:49Z (round 0148Z) to run branch work at full speed. The lead watcher now caps a "waiting on orchestrator" hold at 20 min before restarting the manager.
+- Thanks for adopting the .gitattributes suggestion.
