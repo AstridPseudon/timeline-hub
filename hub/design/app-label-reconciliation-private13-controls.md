@@ -58,6 +58,18 @@ src/tools/video-editor/lib/timeline-save-utils.test.ts
 src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx
 ```
 
+Its complete command was:
+
+```sh
+TMPDIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-label-reconciliation-private13-controls/runs/private13-verify/tmp-exact \
+NODE_OPTIONS="--require=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/notes/snapshot-vitest-runner.cjs" \
+node /home/user/work/wt/app-m3-label-reconciliation-private13-controls/node_modules/vitest/vitest.mjs run \
+  --config config/testing/vitest.config.ts --configLoader=runner --no-cache \
+  --maxWorkers=1 --no-file-parallelism \
+  src/tools/video-editor/lib/timeline-save-utils.test.ts \
+  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.lifecycle.test.tsx
+```
+
 Former 31-failure and MAIN label/timeline/projection lane:
 
 ```text
@@ -69,6 +81,24 @@ src/tools/video-editor/data/shotCompositionProjection.test.ts
 src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx
 src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.commandProjection.test.tsx
 src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.initialRead.test.tsx
+```
+
+Its complete command was:
+
+```sh
+TMPDIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-label-reconciliation-private13-controls/runs/private13-verify/tmp-broad \
+NODE_OPTIONS="--require=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/notes/snapshot-vitest-runner.cjs" \
+node /home/user/work/wt/app-m3-label-reconciliation-private13-controls/node_modules/vitest/vitest.mjs run \
+  --config config/testing/vitest.config.ts --configLoader=runner --no-cache \
+  --maxWorkers=1 --no-file-parallelism \
+  src/tools/video-editor/lib/clipDisplayNames.test.ts \
+  src/tools/video-editor/lib/timeline-data.test.ts \
+  src/tools/video-editor/lib/config-utils.test.ts \
+  src/tools/video-editor/data/timelineOutputProjection.test.ts \
+  src/tools/video-editor/data/shotCompositionProjection.test.ts \
+  src/tools/video-editor/hooks/useTimelineCommandSession.projection.test.tsx \
+  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.commandProjection.test.tsx \
+  src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.initialRead.test.tsx
 ```
 
 The private13 graph probe, run after the overlay was active, was:
