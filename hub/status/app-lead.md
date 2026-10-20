@@ -15,3 +15,7 @@
 
 ## Lead 12:35Z: approved recycle-after-main17 done
 - Recycled six workers via bin/recycle (branches kept); disk 11 -> 13 GB. The 12:35Z orchestrator redirect (qualify tuple 171a259ac + 17e46de99 gate first, then bounded writer retirements) relayed to the manager INBOX, followed by direct relays of 12:50Z (stored 4000 ms cap), 13:15Z (render-cap-pairing-seam derived scalar) and 13:25Z (Composition 0.0.13 approved, App adopts first).
+
+## Lead 13:52Z
+- Lead decided: restarted the App manager (pid 23766 -> 18362, still gpt-6.1-sol high) so it rereads INBOX (12:50Z stored cap, 13:15Z derived scalar, 13:25Z Composition 0.0.13, course correction, Sol/Luna rule) and the 13:51Z kit owner direction. Its STATUS had been stale since 13:16Z with those items unacknowledged. 4 workers kept running.
+- 13:55Z: the restarted manager STATUS (13:56Z) ACKs the INBOX through 13:45 (12:50Z stored cap, 13:15Z scalar, 13:25Z Composition 0.0.13 App-first, course correction, owner Luna/Sol + decide-locally direction). 7 workers in flight (target 5-7), with at least 3 live D01 deletion consumers.
