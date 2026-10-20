@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T19:12:07Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 25m -->
+<!-- app2 | 2026-10-20T19:17:48Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 16 | status age 31m -->
 # app2 — 2026-10-20 18:46 UTC
 Milestone: M2; owner18:09deletionalarmACK. No app2rowDELETED/exit.
 One-step candidates: nonefullyunblocked. CLOSEST D01-app-duplicate writerremoved,90+73+conversion35PASS; finalactualbrowsergate+HOMEdeletionmergeSHA remain. ENV nowPASS23865; EXACTApp-owned Provider duplicateforwarding+targetedgate remain, tinyhunks requested18:36, App-ownedreadinessfix reviewedsource awaited. Other6rows have liveconsumers/nativeprerequisites. LedgerDELETED immediately after qualifieddeletionmerge, nevercandidateSHA.
