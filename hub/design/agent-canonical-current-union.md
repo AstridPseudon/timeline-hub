@@ -44,3 +44,13 @@ The review `design/agent-review-auto-guards-current.md` approves timing/lane/exc
 Targeted source evidence: 291 guard/numeric/settled/auto tests passed; 264 schema/outbox/provider/reservation neighbors passed. The Runtime run with `--runxfail` has 4 passed / 1 failed as explained above. Exact commands, final strict-xfail result and lint evidence are in `workers/agt-m2-producer-current-union/report.md`. Shared dependencies stayed read-only.
 
 Next: harness commit; manager verifies hash/ref and freezes this full source; Runtime owner resolves the guard-record/public-schema gaps, normally regenerates from the approved full schema, and re-runs the original positive producer qualification before any activation or consumer pin change.
+
+## Manager schema freeze — 2026-10-20 09:47 UTC
+
+APPROVED CANONICAL SCHEMA SOURCE FOR NORMAL GENERATION ONLY:
+- Agent source0a0ac7baaa74e15485b10bcbaa80eda1afe48c00 (tl/agt-m2-producer-current-union).
+- Raw schema SHA25630da4fde84c328e7cb44035b50eb53fd2cd9637a14a0c948f4412f6469ce34bd, 48definitions/22ops as inventoried above.
+- Independent manager check against currentefb96034: all prior definitions except EditCommand remain structurally equal; EditCommand only gains the producer.guard condition and keeps prior conditions. Five producer definitions are added beyond already-landed consumed additions.
+- Superset tests555targetedPASS and actual4refusalPASS/1strictpositivegap retained; no activation/product-merge/endpoint-retirement/paired-green claim.
+
+Runtime may normally generate this complete schema as a NEW release candidate with postF1/F2 fixes. Do not mutate historical94114269/0.2.9 or6023cfb/0.2.10 tuples. Actual producer positive remains blocked on Runtime guard-record matching (normalized recorded command versus original bare guard); fix that and re-run tests/sdk/test_timeline_producer_guard_runtime.py with this exact provider before Agent merge. Parent clip.add-media variants and pending retained element declaration args are excluded; later additions require explicit additive successor, never silent file replacement.
