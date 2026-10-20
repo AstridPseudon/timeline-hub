@@ -23,6 +23,11 @@ def _digest(data: bytes) -> str:
     return "sha256:" + hashlib.sha256(data).hexdigest()
 
 
+def _canonical(value: Any) -> str:
+    """Encoded form, so True/1 and 2/2.0 (equal in Python, different on the wire) differ."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
 def reject_source_keys(value: Mapping[str, Any]) -> None:
     if RESERVED_SOURCE_KEYS.intersection(value):
         raise ValueError("verified timeline source is host-owned")
@@ -59,9 +64,10 @@ class VerifiedTimelineSource:
         reject_source_keys(snapshot)
         original = self.read()["snapshot"]
         for key in ("config", "registry"):
-            if snapshot.get(key) != original.get(key):
+            if _canonical(snapshot.get(key)) != _canonical(original.get(key)):
                 raise ValueError(f"verified source capture {key} differs")
-        if snapshot.get("metadata", {}).get("capture_authority") != original.get("metadata", {}).get("capture_authority"):
+        if (_canonical(snapshot.get("metadata", {}).get("capture_authority"))
+                != _canonical(original.get("metadata", {}).get("capture_authority"))):
             raise ValueError("verified source capture authority differs")
 
 

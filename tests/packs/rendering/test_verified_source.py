@@ -224,6 +224,17 @@ def test_capture_replacement_uses_same_binding(tmp_path, monkeypatch):
             _validate_capture_files(forged, Path(values["timeline"]), Path(values["assets_registry"]))
 
 
+@pytest.mark.parametrize("key,value", [("hold", True), ("duration", 2.0)])
+def test_capture_replacement_is_exact_across_bool_and_numeric_encoding(tmp_path, monkeypatch, key, value):
+    config = {"tracks": [], "clips": [], "hold": 1, "duration": 2}
+    _, _, snapshot, _, values = materialize(tmp_path, monkeypatch, capture=True, config=config)
+    forged = deepcopy(snapshot)
+    forged["config"][key] = value
+    assert forged["config"] == snapshot["config"]  # equal to Python, different on the wire
+    with pytest.raises(ValueError, match="capture .*differs"):
+        _validate_capture_files(forged, Path(values["timeline"]), Path(values["assets_registry"]))
+
+
 def test_caller_labels_clip_shape_and_backend_toggles_never_select_canonical(tmp_path, monkeypatch):
     _, _, _, _, values = materialize(tmp_path, monkeypatch)
     monkeypatch.delenv(SOURCE_ENV)

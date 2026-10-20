@@ -3,9 +3,9 @@
 No SQL fixtures, admission doubles, renderer or sockets. The strict xfails keep
 the canonical-source requirement visible until Runtime verifies capture content.
 """
-from copy import deepcopy
 import hashlib
 import json
+from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -17,10 +17,12 @@ from astrid.core.rendering.verified_source import SOURCE_ENV
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle, preview_authoring_candidate
 from astrid.sdk.timeline_filmstrip import prepare_filmstrip
 from tests.helpers.runtime import use_runtime
-from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _digest, _replace_values
+from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _replace_values
 
 pytestmark = pytest.mark.integration
 CAPABILITY = "rendering.timeline_visualize"
+# Runtime's default task capability digest when the body names none.
+CAPABILITY_DIGEST = "sha256:" + hashlib.sha256(CAPABILITY.encode()).hexdigest()
 
 
 class CaptureRuntime:
@@ -71,7 +73,7 @@ class CaptureRuntime:
         encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
         digest = "sha256:" + hashlib.sha256(encoded).hexdigest()
         response = self.service.ingest(self.project_id, encoded, media_type="application/json",
-                                       idempotency_key=digest)
+                                       idempotency_key="capture-" + digest.split(":")[1])
         assert response["data"]["object_id"] == digest
         authority = snapshot["metadata"]["capture_authority"]
         ref = {"digest": digest, "project_id": self.project_id, "timeline_id": "main",
@@ -89,8 +91,10 @@ class CaptureRuntime:
         authority = snapshot["metadata"].get("capture_authority", {})
         context = {"mode": "composed_capture", "project_id": self.project_id, "timeline_id": "main",
                    "revision_id": authority.get("parent_revision_id")}
-        ref = self.ref(snapshot)
-        context["capture_snapshot" if inline else "capture_snapshot_ref"] = snapshot if inline else ref
+        if inline:
+            context["capture_snapshot"] = snapshot
+        else:
+            context["capture_snapshot_ref"] = self.ref(snapshot)
         filmstrip = deepcopy(context)
         if duplicate is not None:
             filmstrip["capture_snapshot_ref"] = duplicate
@@ -119,12 +123,12 @@ def runtime(tmp_path):
     try:
         project = service.create_project({"slug": "source-probe", "name": "Source probe"})["id"]
         service.create_timeline(project, "main", idempotency_key="timeline")
-        service.register_capability({"capability_id": CAPABILITY, "definition_digest": _digest(CAPABILITY)})
+        service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
         service.register_executor({"executor_id": "probe", "capabilities": [CAPABILITY]})
         replacements = {}
         for old, data in ((OLD, b"source picture"), (AUDIO, b"source audio")):
-            replacements[old] = service.ingest(project, data, idempotency_key=old)["data"]["object_id"]
-        parent, shots, internals = _replace_values(_closure(shared=False), replacements)
+            replacements[old] = service.ingest(project, data, idempotency_key="media-" + old.split(":")[1])["data"]["object_id"]
+        parent, shots, internals = (_replace_values(part, replacements) for part in _closure(shared=False))
         # This probe does not need a text-binding authority fixture.
         shots[0]["payload"]["text_bindings"] = []
         for row in [*shots, *internals]:
@@ -163,6 +167,10 @@ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtim
     assert parsed.verified_source.read() == binding
 
 
+# All 12 cases are proven admitted: Runtime's public capture admission checks the parent revision row and the
+# working-copy marker, not config/registry/shot digests against the saved or candidate closure. Restored by
+# Runtime verifying capture content (design/runtime-coordination.md "capture content certification").
+@pytest.mark.xfail(strict=True, reason="Runtime admits changed capture content/pins as canonical source")
 @pytest.mark.parametrize("field", ["config", "registry", "shot_digest"])
 @pytest.mark.parametrize("inline", [False, True])
 @pytest.mark.parametrize("working_copy", [False, True])
@@ -186,7 +194,6 @@ def test_arbitrary_capture_cannot_acquire_canonical_source(runtime, tmp_path, fi
         return
     # Runtime must verify the exact projection/candidate, or leave it native.
     assert snapshot != original
-    pytest.xfail("Runtime capture admission certifies changed content/pins (see notes/report.md)")
     assert values.timeline_source is None
 
 
@@ -201,7 +208,9 @@ def test_replaced_duplicate_capture_ref_is_refused_at_host(runtime, tmp_path):
 
 def test_native_compiled_capture_does_not_acquire_canonical_source(runtime, tmp_path):
     snapshot = runtime.snapshot()
+    # Neither selector remains; canonical_timeline alone would make Runtime publish a revision ref.
     snapshot["metadata"].pop("capture_authority")
+    snapshot["metadata"].pop("canonical_timeline", None)
     # Ordinary compiled capture remains accepted, without a canonical selector.
     task = runtime.admit(snapshot, inline=True)
     values = runtime.materialize(task, tmp_path / "attempt")
