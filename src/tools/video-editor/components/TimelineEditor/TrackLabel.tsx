@@ -344,13 +344,16 @@ export function TrackLabelContent({
     const edit = nameEditRef.current;
     if (!edit) return;
     if (edit.error) return;
-    if (nameValueRef.current !== edit.original) {
+    const isDirty = nameValueRef.current !== edit.original;
+    if (isDirty) {
       try {
         edit.finish?.(nameValueRef.current);
       } catch (error) {
         setNameError(error instanceof Error ? error.message : 'Track rename was refused.');
         return;
       }
+    } else {
+      setNameDraft(null);
     }
     nameEditRef.current = null;
     setNameError(null);

@@ -702,6 +702,25 @@ describe('track source/output settings', () => {
 
 describe('captured track names', () => {
   for (const deviceClass of ['desktop'] as const) {
+    it(`releases a clean ${deviceClass} draft after a remote label change`, () => {
+      const finish = vi.fn();
+      const begin = vi.fn(() => finish);
+      const props = {
+        track: tracks[0], isSelected: false, hasClips: false, deviceClass,
+        onSelect: vi.fn(), onRemove: vi.fn(), onChange: vi.fn(), onLabelEditStart: begin,
+      };
+      const { rerender } = render(<TrackLabelContent {...props} />);
+      const input = screen.getByRole('textbox', { name: 'Track name' });
+
+      fireEvent.focus(input);
+      rerender(<TrackLabelContent {...props} track={{ ...tracks[0], label: 'Remote name' }} />);
+      fireEvent.blur(input);
+
+      expect(input).toHaveValue('Remote name');
+      expect(finish).not.toHaveBeenCalled();
+      expect(begin).toHaveBeenCalledExactlyOnceWith('V1');
+    });
+
     it(`captures the ${deviceClass} edit before typing and retains it across a remote label change`, async () => {
       const originalFinish = vi.fn();
       const laterFinish = vi.fn();
