@@ -34,6 +34,7 @@ while true; do
   for m in app viewing app2; do f=/home/user/timeline-hub/hub/status/$m-lead.md; [ -f $f ] || continue
     la=$(( (now - $(git -C /home/user/timeline-hub log -1 --format=%ct -- hub/status/$m-lead.md 2>/dev/null || echo $now)) / 60 ))
     [ $la -gt 75 ] && emitk "LEAD_QUIET $m $(date -u +%Y%m%dT%H)" "LEAD_QUIET $m lead line ${la}m old"; done
+  la=$(ls -t $ORCH/audits/*.log 2>/dev/null | head -1); [ -n "$la" ] && [ $(( now - $(stat -c %Y $la) )) -ge 10800 ] && emitk "AUDIT_DUE $(date -u +%Y%m%dT%H)" "AUDIT_DUE: the last deep audit started over 3 h ago; run bin/audit"
   last=$(cat $ORCH/.last_tick 2>/dev/null || echo 0)
   if [ $((now-last)) -ge 3600 ]; then emit "TICK_DUE $last"; fi
   sleep 20
