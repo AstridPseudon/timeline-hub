@@ -751,6 +751,49 @@ def test_known_legacy_prefix_is_a_boundary_but_unknown_intent_after_recording_re
     assert realm.head == head and len(realm.accepted) == 2
 
 
+# Pre-upgrade event kinds that the legacy prefix stands for. The SDK never
+# reads them: a legacy row is opaque (intent legacy_unknown, no records).
+LEGACY_KINDS = ("clip.retimed", "clip.swapped", "clip.text_set", "clip.annotated",
+                "effect.tuned", "theme.overridden", "pool.asset_scored",
+                "arrangement.replaced", "timeline.config_replaced", "timeline.reverted")
+
+
+def test_legacy_history_undo_and_restore_use_revisions_or_refuse_visibly():
+    import importlib.util
+    from typing import get_args
+
+    from astrid.core.timeline.events.schema.types import TimelineEventKind
+
+    assert set(LEGACY_KINDS) <= set(get_args(TimelineEventKind))
+    assert importlib.util.find_spec("astrid.core.timeline.inverses") is None
+    realm = DetachedRealm()
+    original = detached(realm.documents["parent-1"])
+    for on, kind in zip([3.003, 4.004, 5.005, 6.006, 7.007, 8.008, 9.009, 10.01, 11.011, 12.012],
+                        LEGACY_KINDS):
+        realm.call([realm.move(on=on)])
+        realm.entries[-1].update(intent="legacy_unknown", records=None)
+        realm.entries[-1]["receipt"]["command_kind"] = kind
+    legacy = realm.head["publication_id"]
+    upgraded = detached(realm.head)
+    post = realm.call([realm.move("parent/clip:clip-b", 13.013)])
+    recorded = post["receipt"]["receipt_id"]
+    head, entries = detached(realm.head), detached(realm.entries)
+    with pytest.raises(CommitRejected) as error:
+        realm.call([inverse([legacy, recorded])])
+    assert error.value.failure["details"]["reason"] == "history_unavailable"
+    assert realm.head == head and realm.entries == entries and len(realm.accepted) == 11
+    undone = realm.call([inverse([recorded])])
+    assert undone["data"]["status"] == "accepted"
+    assert undone["data"]["canonical_document"]["parent_revision"]["payload"] == (
+        realm.documents[upgraded["revision_id"]]["parent_revision"]["payload"])
+    restored = realm.call([restore(original)])
+    assert restored["data"]["canonical_document"] == original
+    legacy_rows = realm.entries[1:11]
+    assert all(entry["records"] is None and entry["intent"] == "legacy_unknown" for entry in legacy_rows)
+    assert [entry["receipt"]["command_kind"] for entry in legacy_rows] == list(LEGACY_KINDS)
+    assert len(realm.entries) == 14 and len(realm.accepted) == 13
+
+
 def test_moves_do_not_scan_reservation_history():
     realm = DetachedRealm()
     realm.call([track_create()])
