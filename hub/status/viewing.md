@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T17:53:21Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 5m -->
+<!-- viewing | 2026-10-20T17:58:53Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 10m -->
 # viewing — 2026-10-20 17:11 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. Gates 6/7 OPEN.
 Integrated: Composition5a4e9b72f/tree13e37553 public0.0.13. Central1020134123-9841 npmtest76PASS/0FAIL/0SKIP/build+packageAPI. Immutable58477B/77files SHA9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738; old12/11unchanged. AppFIRST13 d12d09097 actuallylanded/ownerreprovisionall77 verified; Agentstillpublic12 pending04f59 currentpinownerrequest (static6+2+5PASS/realNode43d6/no5efancestry/normalRuntime013unchanged). No HostReadyclaim.
