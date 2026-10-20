@@ -33,12 +33,30 @@ export type PixelRect = {x: number; y: number; w: number; h: number};
 // The drawing erases this rectangle before the half/open mouth pixels.
 export const mouthEraseRect = (m: Anchor): PixelRect => ({x: m.x - 1, y: m.y - 1, w: m.w + 2, h: 4});
 
-// Public inspection area around the actual drawing geometry, including closed
-// pose. It deliberately follows the same normalization as drawing, so default,
-// partial, fractional and raw-invalid anchors retain their known normalized
-// public region.
-export const mouthInspectionRect = (raw: unknown): PixelRect => {
+// Public state area around the actual drawing geometry, including closed pose.
+// It deliberately follows the same normalization as drawing, so defaults,
+// partial anchors and raw-invalid anchors retain their known public region.
+export const mouthStateRect = (raw: unknown): PixelRect => {
   const r = mouthEraseRect(mouthAnchor(raw));
+  return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
+};
+
+// Legacy compatibility inspection area around the actual drawing geometry.
+// This seam keeps the old pixel consumer's input rules: an absent mouth skips
+// inspection, while an authored x/y without w retains the old width-16
+// footprint. Invalid or non-integral anchors do not invent a crop, even though
+// drawing normalization remains safe and deterministic.
+export const mouthInspectionRect = (raw: unknown): PixelRect | null => {
+  const value = narrowParams<{mouth?: unknown}>(raw).mouth;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const mouth = value as Record<string, unknown>;
+  const x = mouth.x;
+  const y = mouth.y;
+  const width = mouth.w === undefined ? 16 : mouth.w;
+  if (typeof x !== 'number' || !Number.isInteger(x) || x < 0 || x >= LOGICAL_W
+    || typeof y !== 'number' || !Number.isInteger(y) || y < 0 || y >= LOGICAL_H
+    || typeof width !== 'number' || !Number.isInteger(width) || width < 1 || width > 40) return null;
+  const r = mouthEraseRect({...mouthAnchor(raw), w: width});
   return {x: r.x - 1, y: r.y - 2, w: r.w + 2, h: r.h + 4};
 };
 

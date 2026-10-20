@@ -60,12 +60,18 @@ def public_box(row, key="mouth"):
     return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
 
 
+def legacy_box(row):
+    assert row["legacyInspection"]["status"] == "known"
+    r = row["legacyInspection"]["rect"]
+    return r["x"], r["y"], r["x"] + r["width"], r["y"] + r["height"]
+
+
 def area(crop):
     return (crop[2] - crop[0]) * (crop[3] - crop[1])
 
 
 def legacy_qualified(case):
-    # Eligibility only: normalization belongs to the actual component helper.
+    # Legacy equivalence is qualified only for complete normalized anchors.
     raw = case["props"]["timeline"]["clips"][0]["params"].get("mouth")
     return isinstance(raw, dict) and all(
         type(raw.get(key)) is int and raw[key] == case["normalizedMouth"][key]
@@ -80,7 +86,8 @@ def test_registered_default_and_clamped_anchors_are_not_legacy_defaults(crop_cas
             assert old is None
             assert public_box(row) == (894, 606, 1032, 654)
         elif case["name"] == "partial":
-            assert old == (894, 606, 1014, 654)  # legacy w=16, actual w=19
+            assert old == (894, 606, 1014, 654)  # legacy w=16, actual drawing w=19
+            assert legacy_box(row) == (894, 606, 1014, 654)
             assert public_box(row) == (894, 606, 1032, 654)
         elif case["name"] == "rawInvalid":
             assert public_box(row) == (894, 606, 1158, 654)
