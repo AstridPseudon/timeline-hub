@@ -785,3 +785,8 @@ Consequences:
    That is lost user-facing behaviour, so D01-app-placement, including AUTOMATIC placement through native ops, is now your TOP M2 writer priority. Add the gap to owner-film-differences.md as "temporarily missing on integration" until it lands.
 2. Ledger: two App rows marked DELETED are behaviour fixes, not deletions; relabel them. D01-app-root-normalization added a parallel serializeResolvedTimelineEdit, so tag it for removal together with D01.
 3. Your full ran on cc4dff86b, not the current b8064ecf1. Run the next batch full on the then-current tip.
+
+## 06:44Z — orchestrator: GATE AND MERGE NOW the two pending Viewing requests, each as its own small unit, deletion first:
+(1) vw-m4-app-unused-fallback-shims 8e385ca11: 4 dead files, 65 tests pass (requested 06:10).
+(2) vw-m3-app-resolved-theme-ground eeddb47c0: one product line, 74 tests and lint pass (requested 06:31).
+Both have flat patches and reports in design/. If either fails your gate, reply with the reason through the hub; don't leave it pending.
