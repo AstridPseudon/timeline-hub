@@ -1,0 +1,2 @@
+hub/inbox/*.md merge=union
+hub/lead/*.md merge=union
