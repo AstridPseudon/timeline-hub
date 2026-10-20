@@ -145,6 +145,8 @@ def test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse(
         assert_readback(edit, image)
         for sibling in ("occurrence-2", "occurrence-3"):
             assert occurrence_image(image, sibling) == occurrence_image(original, sibling)
+    assert undone["data"]["canonical_document"] == original
+    assert edit.document() == original
     assert_readback(edit, original)
     assert edit.history()[:-1] == history
 
@@ -171,7 +173,6 @@ def assert_preserved(document, *, materialized):
         assert_opaque(row)
 
 
-@pytest.mark.xfail(strict=True, reason="M1 historical-image reuse must restore the exact original closure")
 def test_occurrence_inverse_restores_exact_original_closure(opaque_film):
     edit, _ = opaque_film
     original = edit.document()
