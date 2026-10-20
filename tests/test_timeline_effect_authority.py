@@ -5,11 +5,12 @@ import copy
 import pytest
 
 from http_helpers import Api
+from precut_realm_fixture import load_precut_realm_fixture
 from runtime_protocol import service as service_module
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, ValidationError
 from runtime_protocol.service import RuntimeService
-from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_port import digest as commit_digest, route_path
 from runtime_protocol.util import canonical_json
 from tests.test_generation_publish_v1_settlement import _effect as publish_effect
 from tests.test_generation_publish_v1_settlement import _output as publish_output
@@ -23,7 +24,7 @@ from tests.test_generation_variant_append_settlement import _output
 from tests.test_runtime_child_delegation import (
     CHILD, IDENTITY, OTHER, PARENT, authority, digest, lease, load_task_spec, parent, store_task_spec,
 )
-from tests.test_timeline_commit_port import PreparedProvider
+from tests.test_timeline_commit_port import PreparedProvider, prepared
 
 
 FORBIDDEN = ("timeline.update", "shot.update", "reference.update", "shot.text_binding.set")
@@ -40,32 +41,59 @@ def _seed(service):
         {"executor_id": "worker", "capabilities": [PARENT, CHILD, OTHER, GENERATION], "max_concurrency": 64},
         idempotency_key="executor",
     )
-    project = service.create_project({"slug": "effect-authority", "name": "Effect authority"})
-    service.register_timeline_commit_provider(PreparedProvider())
+    # Genuine public-API resources and receipts from the restored pre-cut
+    # capture. They are unused by the separate task-authority timeline.
+    project = service.get_project("synthetic-film")
+    service.register_timeline_commit_provider(PreparedProvider(_render_source_candidate))
     service.create_timeline(project["id"], "main", idempotency_key="bootstrap")
-    # Real API-created unused resources, with their original receipts. No film
-    # history or accepted command records are synthesized for these fixtures.
-    service.create_project_shot(project["id"], {"shot_id": "shot", "name": "Unused shot"}, idempotency_key="shot")
-    media = service.ingest(project["id"], b"reference", idempotency_key="reference-media")["data"]["object_id"]
-    service.create_project_reference(project["id"], {
-        "reference_id": "reference", "kind": "other", "name": "Unused reference", "media_id": media,
-    }, idempotency_key="reference")
-    binding = service.set_project_shot_text_binding(project["id"], {
-        "shot_id": "shot", "kind": "transcript", "text": "Original text", "expected_head": 0,
-    }, idempotency_key="binding")["data"]
-    return project, binding["binding_id"]
+    binding = service.list_project_shot_text_bindings(project["id"])["items"][0]
+    shot = service.get_project_shot(project["id"], binding["shot_id"])
+    reference = service.list_project_references(project["id"])["items"][0]
+    return project, binding["binding_id"], shot["shot_id"], reference["reference_id"]
+
+
+def _render_source_candidate(context, port):
+    """Host persistence fixture, not Agent semantics or historical admission."""
+    value = prepared(context, port)
+    document = value["canonical_document"]
+    parent = document["parent_revision"]
+    writes = value["records"]["commands"][0]["writes"]
+    args = context["request"]["commands"][0]["args"]
+    for field in ("config", "registry"):
+        before = copy.deepcopy(parent["payload"][field])
+        parent["payload"][field] = copy.deepcopy(args[field])
+        writes.append({"ref": "parent", "path": [field],
+                       "before": {"state": "present", "value": before},
+                       "after": {"state": "present", "value": copy.deepcopy(args[field])}})
+    parent["content_digest"] = commit_digest(parent["payload"])
+    value["document_digest"] = commit_digest(document)
+    return port.accept(value)
+
+
+def _render_source(service, project_id, body, *, idempotency_key):
+    timeline_id = body["timeline_id"]
+    created = service.create_timeline(project_id, timeline_id, name=body["name"],
+                                      idempotency_key=idempotency_key)["data"]
+    service.commit_timeline(project_id, timeline_id, {
+        "api_version": 1, "project_id": project_id, "timeline_id": timeline_id,
+        "base_revision_id": created["head_revision_id"],
+        "base_publication_id": created["head_publication_id"],
+        "commands": [{"schema_version": 1, "op": "fixture.render-source", "version": "1",
+                      "select": "parent", "args": {key: body[key] for key in ("config", "registry")}}],
+    }, idempotency_key=idempotency_key + "-source", publisher="host-fixture",
+        invocation_path=route_path(project_id, timeline_id), authorize=lambda: None)
 
 
 @pytest.fixture(params=["service", "http"])
 def boundary(request, tmp_path, monkeypatch):
-    root = tmp_path / "realm"
-    RealmStore.initialize(root).close()
+    captured = load_precut_realm_fixture(tmp_path)
+    root = captured.copy_roots[1]
     daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start() if request.param == "http" else None
     service = daemon.service if daemon else RuntimeService(root)
     try:
         monkeypatch.setattr(service_module, "evaluate_closure", _no_scene)
-        project, binding = _seed(service)
-        value = {"service": service, "project": project, "binding": binding}
+        project, binding, shot, reference = _seed(service)
+        value = {"service": service, "project": project, "binding": binding, "shot": shot, "reference": reference}
         if daemon:
             token, _ = daemon.credentials.provision(
                 "worker", ["worker:execute"], metadata={"execution_binding": IDENTITY["execution_binding"]},
@@ -99,7 +127,7 @@ def _state(service, *, canonical_only=False):
 
 def _effect(boundary, kind, *, fresh=False):
     target = {
-        "timeline.update": "main", "shot.update": "shot", "reference.update": "reference",
+        "timeline.update": "main", "shot.update": boundary["shot"], "reference.update": boundary["reference"],
         "shot.text_binding.set": boundary["binding"],
     }[kind]
     return {"effect_type": kind, "target_id": "fresh-" + target if fresh else target,
@@ -238,7 +266,7 @@ def test_same_key_changed_admission_refuses_without_snapshot_writes(boundary, re
     service = boundary["service"]
     snapshot = {"config": {"clips": [], "metadata": {"candidate": "original"}}, "registry": {}}
     if seam == "managed-render":
-        service.create_timeline_document(boundary["project"]["id"], {
+        _render_source(service, boundary["project"]["id"], {
             "timeline_id": "render-source", "slug": "render-source", "name": "Render source",
             **snapshot,
         }, idempotency_key="render-source")
@@ -259,7 +287,7 @@ def test_same_key_changed_admission_refuses_without_snapshot_writes(boundary, re
         if seam == "managed-render":
             # A real second timeline is part of setup, before the refusal
             # baseline; admission must not publish its different snapshot.
-            service.create_timeline_document(boundary["project"]["id"], {
+            _render_source(service, boundary["project"]["id"], {
                 "timeline_id": "changed-source", "slug": "changed-source", "name": "Changed source",
                 "config": {"clips": [], "metadata": {"candidate": "changed"}}, "registry": {},
             }, idempotency_key="changed-render-source")
@@ -277,7 +305,7 @@ def test_same_key_changed_admission_refuses_without_snapshot_writes(boundary, re
 @pytest.mark.parametrize("legacy_forbidden", [False, True], ids=["allowed", "controlled-forbidden-fixture"])
 def test_exact_managed_snapshot_replay_keeps_identity(boundary, monkeypatch, receipt, legacy_forbidden):
     service = boundary["service"]
-    service.create_timeline_document(boundary["project"]["id"], {
+    _render_source(service, boundary["project"]["id"], {
         "timeline_id": "render-source", "slug": "render-source", "name": "Render source",
         "config": {"clips": []}, "registry": {},
     }, idempotency_key="render-source")

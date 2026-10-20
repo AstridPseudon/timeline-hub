@@ -16,8 +16,10 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, NotFoundError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-from runtime_protocol.timeline_commit_port import route_path
+from runtime_protocol.timeline_commit_port import digest, route_path
+from runtime_protocol.timeline_commit_store import request_identity
 from runtime_protocol.util import canonical_json
+from restore_history_fixture import load_restore_history_fixture
 
 
 def _service(tmp_path):
@@ -41,11 +43,59 @@ def restore_provider(astrid_importable):
 
 
 def _select_restore_provider(service, project_id, provider):
-    # Legacy publications are seeded through neutral main APIs before startup.
+    # Historical source capture or host acceptance is complete before Agent startup.
     service.register_timeline_commit_provider(provider)
     head = service.get_project_timeline(project_id, "main")
     return {"expected_head": head["head_revision_id"],
             "expected_publication_id": head["head_publication_id"]}
+
+
+def _restore_history_service(tmp_path):
+    fixture = load_restore_history_fixture(tmp_path)
+    return RuntimeService(fixture.root), fixture
+
+
+def _accept_restore_media_source(service, project_id, body, *, idempotency_key):
+    """Accept this media-only source image through the real host store boundary.
+
+    Adapted from rt-m2-restore-fixtures; this seeds raw payload and declared
+    media, while every measured restore still uses the real Agent provider.
+    """
+    commits, _ = service._timeline_commits()
+    base = commits.install_verified_baseline(project_id, "main", authorize=lambda: None)
+    previous = commits.revision_closure(project_id, "main", base["revision_id"])
+    payload = copy.deepcopy(body["parent_composition"])
+    document = {"schema_version": 1, "project_id": project_id, "timeline_id": "main",
+                "parent_revision": {"revision_id": body["parent_revision_id"],
+                                    "payload": payload, "content_digest": digest(payload)},
+                "shot_revisions": [], "internal_timeline_revisions": [],
+                "dependency_manifest": {"shots": [], "internal_timelines": [], "documents": [],
+                    "media": sorted(body.get("dependency_manifest", {}).get("media", []),
+                                    key=lambda pin: pin["media_id"])}}
+    command = {"schema_version": 1, "op": "fixture.restore-source", "version": "1",
+               "select": None, "args": {"document": copy.deepcopy(document)}}
+    request = {"api_version": 1, "project_id": project_id, "timeline_id": "main",
+               "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+               "commands": [command]}
+    context = {"request": request, "idempotency_key": idempotency_key,
+               "realm_id": service.realm["id"], "publisher": "restore-source-fixture",
+               "invocation": {"operation": "commitTimeline", "path": route_path(project_id, "main"),
+                              "body": copy.deepcopy(request)}}
+    context["request_hash"] = request_identity(context)
+    record = {"ordinal": 0, "command": command, "writes": [{
+        "ref": "parent", "path": [field],
+        "before": {"state": "present", "value": previous["parent_revision"]["payload"][field]},
+        "after": {"state": "present", "value": payload[field]},
+    } for field in ("config", "registry", "clips", "occurrences")],
+        "reads": [], "selections": [], "bindings": [], "created": [], "dependencies": [], "derived_writes": []}
+    prepared = {"expected_head": base, "canonical_document": document, "document_digest": digest(document),
+                "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None},
+                "id_map": {}, "semantic_events": [],
+                "provider_version": "restore-source-fixture", "compiler_version": "restore-source-fixture"}
+    accepted = commits.accept(context, prepared, authorize=lambda: None)
+    source = service.get_project_parent_composition_revision(
+        project_id, "main", accepted["data"]["accepted_revision_id"])
+    return {"data": source}
 
 
 def _restore(service, project_id, revision, guards, *, idempotency_key):
@@ -766,28 +816,13 @@ def test_missing_selected_media_rejects_publication_without_identity_leak(tmp_pa
 
 
 def test_parent_composition_history_paginates_and_restores_exact_closure_over_http(tmp_path, restore_provider):
-    root = tmp_path / "realm"
-    RealmStore.initialize(root).close()
-    daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
+    fixture = load_restore_history_fixture(tmp_path)
+    project_id = fixture.project_id
+    daemon = RuntimeDaemon(fixture.root, support_root=tmp_path / "support").start()
     try:
         service = daemon.service
-        project = service.create_project(
-            {"slug": "history-http", "name": "History HTTP"}, idempotency_key="history-project"
-        )
-        project_id = project["id"]
-        service.create_timeline(project_id, "main", idempotency_key="history-timeline")
         client = WorkspaceClient(daemon.endpoint, daemon.token)
-        first = client.publish_parent_composition(
-            project_id, "main", _publication(project_id), idempotency_key="history-publish-1"
-        )
-        second_body = _publication(
-            project_id, expected_head=first["new_head"], parent_revision_id="parent-2"
-        )
-        second_body["internal_timeline_revisions"] = []
-        second_body["shot_revisions"] = []
-        second = client.publish_parent_composition(
-            project_id, "main", second_body, idempotency_key="history-publish-2"
-        )
+        second = {"new_head": fixture.head["revision_id"]}
 
         page_one, cursor = client.list_project_parent_composition_revisions(
             project_id, "main", limit=1
@@ -849,19 +884,9 @@ def test_parent_composition_history_paginates_and_restores_exact_closure_over_ht
 
 
 def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tampered_dependencies(tmp_path, restore_provider):
-    service, project_id = _service(tmp_path)
+    service, fixture = _restore_history_service(tmp_path)
+    project_id = fixture.project_id
     try:
-        first = service.publish_parent_composition(
-            project_id, "main", _publication(project_id), idempotency_key="history-publish-1"
-        )
-        second_body = _publication(
-            project_id, expected_head=first["data"]["new_head"], parent_revision_id="parent-2"
-        )
-        second_body["internal_timeline_revisions"] = []
-        second_body["shot_revisions"] = []
-        service.publish_parent_composition(
-            project_id, "main", second_body, idempotency_key="history-publish-2"
-        )
         guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.conn.execute(
             "UPDATE shot_revisions SET content_digest=? WHERE id='shot-rev-1'",
@@ -899,7 +924,8 @@ def test_parent_composition_history_lists_broken_rows_but_restore_rejects_tamper
 
 
 def test_parent_composition_restore_preserves_payload_and_declared_media_dependency_closure(tmp_path, restore_provider):
-    service, project_id = _service(tmp_path)
+    service, fixture = _restore_history_service(tmp_path)
+    project_id = fixture.project_id
     try:
         payload_media = service.ingest(
             project_id, b"history-payload-media", media_type="audio/wav",
@@ -926,8 +952,8 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
             {"media_id": payload_media, "content_digest": payload_media},
             {"media_id": declared_extra, "content_digest": declared_extra},
         ]}
-        first = service.publish_parent_composition(
-            project_id, "main", first_body, idempotency_key="history-publish-media"
+        first = _accept_restore_media_source(
+            service, project_id, first_body, idempotency_key="history-publish-media"
         )
         later = _publication(
             project_id, expected_head="parent-with-media", parent_revision_id="parent-after-media"
@@ -935,8 +961,8 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
         later["internal_timeline_revisions"] = []
         later["shot_revisions"] = []
         later["parent_composition"] = {"config": {"clips": []}, "registry": {}, "clips": [], "occurrences": []}
-        service.publish_parent_composition(
-            project_id, "main", later, idempotency_key="history-publish-after-media"
+        _accept_restore_media_source(
+            service, project_id, later, idempotency_key="history-publish-after-media"
         )
 
         guards = _select_restore_provider(service, project_id, restore_provider)
@@ -964,15 +990,10 @@ def test_parent_composition_restore_preserves_payload_and_declared_media_depende
 
 @pytest.mark.parametrize("admission_seconds", [5.0, 120.0])
 def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp_path, monkeypatch, admission_seconds, restore_provider):
-    service, project_id = _service(tmp_path)
+    service, fixture = _restore_history_service(tmp_path)
+    project_id = fixture.project_id
     try:
-        first = service.publish_parent_composition(
-            project_id, "main", _publication(project_id), idempotency_key="restore-budget-first"
-        )
-        later = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2")
-        later["internal_timeline_revisions"] = []
-        later["shot_revisions"] = []
-        service.publish_parent_composition(project_id, "main", later, idempotency_key="restore-budget-later")
+        first = fixture.first
         guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.admission_timeout = admission_seconds
         original = service.store.integrity_report
@@ -996,15 +1017,9 @@ def test_parent_composition_restore_uses_selected_admission_integrity_budget(tmp
 
 
 def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_budget(tmp_path, monkeypatch, restore_provider):
-    service, project_id = _service(tmp_path)
+    service, fixture = _restore_history_service(tmp_path)
+    project_id = fixture.project_id
     try:
-        service.publish_parent_composition(
-            project_id, "main", _publication(project_id), idempotency_key="restore-incomplete-first"
-        )
-        later = _publication(project_id, expected_head="parent-1", parent_revision_id="parent-2")
-        later["internal_timeline_revisions"] = []
-        later["shot_revisions"] = []
-        service.publish_parent_composition(project_id, "main", later, idempotency_key="restore-incomplete-later")
         guards = _select_restore_provider(service, project_id, restore_provider)
         service.store.admission_timeout = 120.0
         observed = []
@@ -1035,45 +1050,53 @@ def test_parent_composition_restore_refuses_incomplete_integrity_at_selected_bud
 
 def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path, restore_provider):
     """Clients classify a lost head race by details.reason, never by message text."""
-    root = tmp_path / "realm"
-    RealmStore.initialize(root).close()
-    daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
+    fixture = load_restore_history_fixture(tmp_path)
+    project_id = fixture.project_id
+    daemon = RuntimeDaemon(fixture.root, support_root=tmp_path / "support").start()
     try:
         service = daemon.service
-        project_id = service.create_project({"slug": "stale-http", "name": "Stale HTTP"}, idempotency_key="stale-project")["id"]
-        service.create_timeline(project_id, "main", idempotency_key="stale-timeline")
         client = WorkspaceClient(daemon.endpoint, daemon.token)
-        first = client.publish_parent_composition(project_id, "main", _publication(project_id), idempotency_key="stale-publish-1")
+        guards = _select_restore_provider(service, project_id, restore_provider)
+        current = fixture.head
+        source_publication = fixture.first["receipt"]["receipt_id"]
+        # The retired publish CAS (expected_head/actual_head) is now the restore
+        # head-pair CAS (base/current). Check publication-only and revision races.
+        for base, key in [
+            ({"revision_id": current["revision_id"], "publication_id": source_publication},
+             "stale-publication"),
+            ({"revision_id": "parent-1", "publication_id": source_publication}, "stale-revision"),
+        ]:
+            before = tuple(service.store.conn.iterdump())
+            with pytest.raises(ApiError) as stale:
+                client.restore_project_parent_composition_revision(
+                    project_id, "main", "parent-1", expected_head=base["revision_id"],
+                    expected_publication_id=base["publication_id"], idempotency_key=key,
+                )
+            assert (stale.value.status, stale.value.code) == (409, "conflict")
+            assert stale.value.message == "restore requires the exact head pair"
+            assert stale.value.details == {
+                "status": "refused", "reason": "stale_head", "base": base,
+                "current": current, "conflicts": [],
+            }
+            assert tuple(service.store.conn.iterdump()) == before
 
-        with pytest.raises(ApiError) as stale:
-            client.publish_parent_composition(
-                project_id, "main", _publication(project_id, expected_head=None, parent_revision_id="parent-2"),
-                idempotency_key="stale-publish-2",
-            )
-        assert (stale.value.status, stale.value.code) == (409, "conflict")
-        assert stale.value.details == {"reason": "stale_head", "expected_head": None, "actual_head": first["new_head"]}
-
-        later = _publication(project_id, expected_head=first["new_head"], parent_revision_id="parent-later")
-        client.publish_parent_composition(project_id, "main", later, idempotency_key="stale-publish-later")
-        _select_restore_provider(service, project_id, restore_provider)
-        source_publication = service.list_timeline_commits(
-            project_id, "main", authorize=lambda: None,
-        )["items"][0]["publication_id"]
-        with pytest.raises(ApiError) as restore:
-            client.restore_project_parent_composition_revision(
-                project_id, "main", "parent-1", expected_head="parent-1",
-                expected_publication_id=source_publication, idempotency_key="stale-restore",
-            )
-        assert (restore.value.status, restore.value.code) == (409, "conflict")
-        assert restore.value.details["reason"] == "stale_head"
-
-        # Other 409s on the same route are not stale heads.
+        client.restore_project_parent_composition_revision(
+            project_id, "main", "parent-1", **guards, idempotency_key="restore-once",
+        )
+        before = tuple(service.store.conn.iterdump())
+        # Changed retry payload remains a distinct 409 on the current route.
         with pytest.raises(ApiError) as reuse:
-            client.publish_parent_composition(
-                project_id, "main", _publication(project_id, parent_revision_id="parent-1", config={"different": True}),
-                idempotency_key="stale-publish-1",
+            client.restore_project_parent_composition_revision(
+                project_id, "main", "parent-1", expected_head=guards["expected_head"],
+                expected_publication_id=source_publication, idempotency_key="restore-once",
             )
-        assert reuse.value.status == 409 and "reason" not in (reuse.value.details or {})
+        assert (reuse.value.status, reuse.value.code) == (409, "conflict")
+        assert reuse.value.message == "idempotency_mismatch"
+        assert reuse.value.details == {
+            "status": "refused", "reason": "idempotency_mismatch", "base": None,
+            "current": None, "conflicts": [],
+        }
+        assert tuple(service.store.conn.iterdump()) == before
     finally:
         daemon.stop()
 
