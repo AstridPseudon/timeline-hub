@@ -150,6 +150,100 @@ def raw_params(case, values, clear=()):
             'args': {'values': values, 'clear': list(clear), 'schema_source': case.pin}}
 
 
+def test_mixed_pack_readmission_keeps_old_and_new_native_param_sources(retained_pack, monkeypatch):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    case = retained_pack
+    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
+    other = test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
+    component = case.path.parent / 'component.tsx'
+    component.write_text(component.read_text() + '\n// Initial mixed A revision\n')
+    first = packs.admit_project_pack('realm', case.project)
+    records = {e['descriptor']['id']: e for e in first['elements']}
+    old_document = case.service.get_document(case.project, first['documentId'])
+    old_objects = {a['snapshot_object']['object_id']: case.service.cas.read(
+        a['snapshot_object']['object_id'].removeprefix('sha256:'))
+        for a in old_document['content']['admissions']}
+    old_pin = {'document_id': old_document['document_id'], 'version': old_document['version'],
+               'content_digest': commit._digest(old_document['content'])}
+    case.pin = old_pin
+    params = []
+    for element, identity in [('reveal', 'mixed-a'), ('fade', 'old-b')]:
+        selected = {key: records[element]['descriptor'][key]
+                    for key in ('id', 'kind', 'packId', 'revision')}
+        add = capture_clip_add(case.bundle(), 'parent', {
+            'id': identity, 'clipType': element, 'elementRef': selected,
+            'at': 3 if element == 'reveal' else 6, 'hold': 2, 'track': 'picture',
+            'params': {'seed': 4, 'opaque': [None, False, {}]}})
+        case.submit(case.request([add]), 'mixed-add-' + identity)
+        params.append({**raw_params(case, {'seed': 8}), 'select': 'parent/clip:' + identity})
+    original_body = case.request(params)
+    original = case.submit(original_body, 'mixed-first')
+
+    definition = yaml.safe_load((other / 'element.yaml').read_text())
+    definition['schema']['properties']['seed']['maximum'] = 20
+    (other / 'element.yaml').write_text(yaml.safe_dump(definition))
+    second = packs.admit_project_pack('realm', case.project)
+    current = {e['descriptor']['id']: e for e in second['elements']}
+    assert current['reveal'] == records['reveal']
+    assert current['fade']['descriptor']['revision'] != records['fade']['descriptor']['revision']
+    document = case.service.get_document(case.project, second['documentId'])
+    assert document['content']['admissions'][:-1] == old_document['content']['admissions']
+    assert all(case.service.cas.read(identity.removeprefix('sha256:')) == raw
+               for identity, raw in old_objects.items())
+    case.pin = {'document_id': document['document_id'], 'version': document['version'],
+                'content_digest': commit._digest(document['content'])}
+    assert packs.admit_project_pack('realm', case.project)['documentVersion'] == second['documentVersion']
+    shutil.rmtree(case.source_root)
+    shutil.rmtree(case.artifact_root)
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    captured = []
+    original_source = RequestCommitPort.config_source
+
+    def source(port, pin):
+        verified = original_source(port, pin)
+        captured.append(copy.deepcopy(verified))
+        return verified
+
+    monkeypatch.setattr(RequestCommitPort, 'config_source', source)
+    selected = {key: current['fade']['descriptor'][key]
+                for key in ('id', 'kind', 'packId', 'revision')}
+    add = capture_clip_add(case.bundle(), 'parent', {
+        'id': 'new-b', 'clipType': 'fade', 'elementRef': selected,
+        'at': 9, 'hold': 2, 'track': 'picture', 'params': {'seed': 4}})
+    a = {**raw_params(case, {'seed': 9}), 'select': 'parent/clip:mixed-a'}
+    a['args']['schema_source'] = old_pin
+    b = {**raw_params(case, {'seed': 9}), 'select': 'parent/clip:old-b'}
+    new_b = {**raw_params(case, {'seed': 16}), 'select': 'parent/clip:new-b'}
+    accepted = case.submit(case.request([a, b, add, new_b]), 'mixed-after-reopen')
+    assert {'pin': old_pin, 'document': old_document} in captured
+    assert {'pin': case.pin, 'document': document} in captured
+    state = State(commit.bundle_from_document(accepted['data']['canonical_document']))
+    assert state.entity('parent/clip:mixed-a')['params'] == {'seed': 9, 'opaque': [None, False, {}]}
+    assert state.entity('parent/clip:old-b')['params'] == {'seed': 9, 'opaque': [None, False, {}]}
+    assert state.entity('parent/clip:new-b')['params'] == {'seed': 16}
+    before = case.head()
+    with pytest.raises(RuntimeErrorBase, match='10|16'):
+        case.submit(case.request([{**raw_params(case, {'seed': 16}),
+                                   'select': 'parent/clip:old-b'}]), 'mixed-old-b-invalid')
+    assert case.head() == before
+    assert case.submit(original_body, 'mixed-first') == original
+    undone = case.submit(case.request([inverse(accepted['receipt']['receipt_id'])]), 'mixed-undo')
+    restored = State(commit.bundle_from_document(undone['data']['canonical_document']))
+    prior = State(commit.bundle_from_document(original['data']['canonical_document']))
+    for reference in (REF, 'parent/clip:mixed-a', 'parent/clip:old-b'):
+        assert restored.entity(reference) == prior.entity(reference)
+    assert restored.entity('parent/clip:new-b', optional=True) is None
+    # Undo retains both consumed source pins for the subsequent redo.
+    assert undone['data']['canonical_document']['dependency_manifest'] == accepted['data']['canonical_document']['dependency_manifest']
+    redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'mixed-redo')
+    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+
+
 @pytest.fixture
 def multi_pack(retained_pack, monkeypatch):
     """Real admissions with two elements and multiple historical revisions."""
