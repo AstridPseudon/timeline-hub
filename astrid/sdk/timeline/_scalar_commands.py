@@ -53,7 +53,17 @@ def clip_set_params(ctx, command):
     ref = _target(ctx, command, 'clip')
     values, clear = _changes(command)
     identity = {key: ctx.read(ref, [key]) for key in (
-        'clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id')}
+        'clipType', 'clip_type', 'asset', 'asset_id', 'media_id', 'object_id',
+        'elementRef', 'element_ref')}
+    # A type/asset label can stay fixed while its exact element or media changes.
+    # Match main's selector precedence; retain literal tagged reads, not a digest
+    # of the entire registry (unrelated assets can still change independently).
+    selector = next((key for key in ('asset', 'asset_id', 'media_id', 'object_id')
+                     if key in ctx.state.entity(ref)), None)
+    if selector in ('asset', 'asset_id') and isinstance(identity[selector], str):
+        registry_ref = ref.rsplit('/', 1)[0] + '/registry'
+        for key in ('media_id', 'object_id', 'digest', 'content_digest'):
+            ctx.read(registry_ref, ['assets', identity[selector], key])
     element = identity['clipType'] or identity['clip_type'] or 'media'
     if not isinstance(element, str):
         raise CommandError('clip type must be a string', ref=ref)

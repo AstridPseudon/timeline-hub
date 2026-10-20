@@ -6,22 +6,110 @@ import json
 
 import pytest
 
-from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._command_state import ABSENT, State, present
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+from tests.editing_conformance import test_recipe_scalar_commands as scalar_recipes
 from tests.sdk.test_timeline_commit_provider import (
     CommitRejected,
     DetachedRealm,
     inverse,
+    restore,
+    track_create,
 )
 from tests.sdk.test_timeline_commit_provider import (
     runtime_abi as runtime_abi,
 )
 
+admitted_param_revisions = scalar_recipes.admitted_param_revisions
+configured_project_pack = scalar_recipes.configured_project_pack
+
 
 def current(realm):
     return bundle_from_document(realm.documents[realm.head['revision_id']])
+
+
+def test_provider_refuses_old_param_basis_after_admitted_element_update(admitted_param_revisions):
+    from astrid.sdk.timeline._clip_commands import capture_clip_add
+    from tests.editing_conformance.test_recipe_m2_clip_add import empty_document
+
+    realm = DetachedRealm(empty_document())
+    realm.call([track_create('picture')])
+    old, new = admitted_param_revisions
+    row = {'id': 'effect', 'clipType': old['id'], 'elementRef': old,
+           'at': 0, 'hold': 2, 'track': 'picture'}
+    realm.call([capture_clip_add(current(realm), 'parent', row)])
+    original = current(realm)
+    command = capture_clip_set_params(original, 'parent/clip:effect', values={'seed': 16})
+    # Seed the supported replacement revision as an immutable accepted head.
+    # No new element-update command or renderer is needed for this provider probe.
+    replacement = copy.deepcopy(original)
+    State(replacement).entity('parent/clip:effect')['elementRef'] = new
+    replacement['parent']['config']['clips'] = copy.deepcopy(replacement['parent']['clips'])
+    document = document_from_bundle(replacement)
+    revision = document['parent_revision']['revision_id']
+    realm.documents[revision] = document
+    realm.call([restore(document)])
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure['details']['reason'] == 'dependency_changed'
+    assert (realm.head, realm.entries, realm.documents) == before
+
+
+@pytest.mark.parametrize('container', [ABSENT, present(None)])
+# Requirement: a clear of an absent param must preserve the literal container
+# and record only that leaf, including across provider reload and inverse.
+@pytest.mark.xfail(strict=True, reason='clear-only params silently creates an object container')
+def test_provider_clear_only_preserves_absent_or_null_container(container):
+    from tests.sdk.test_timeline_commit_provider_document import document_fixture
+
+    document = document_fixture()
+    for rows in (document['parent_revision']['payload']['clips'],
+                 document['parent_revision']['payload']['config']['clips']):
+        if container != ABSENT:
+            rows[0]['params'] = copy.deepcopy(container['value'])
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    realm = DetachedRealm(document)
+    ref = 'parent/clip:clip-a'
+    before = copy.deepcopy(State(current(realm)).entity(ref))
+    accepted = realm.call([capture_clip_set_params(current(realm), ref, clear=['missing'])])
+    assert State(current(realm)).entity(ref) == before
+    assert accepted['data']['commands'][0]['expect'] == {ref + '::params.missing': ABSENT}
+    realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert State(current(realm)).entity(ref) == before
+
+
+@pytest.mark.parametrize('registry_location', ['direct', 'config', 'both'])
+def test_parent_param_binding_uses_main_effective_registry(registry_location):
+    from tests.sdk.test_timeline_commit_provider_document import document_fixture
+    document = document_fixture()
+    payload = document['parent_revision']['payload']
+    for rows in (payload['clips'], payload['config']['clips']):
+        rows[0]['clipType'] = 'am-sprite'
+    if registry_location in ('config', 'both'):
+        payload['config']['registry'] = copy.deepcopy(payload['registry'])
+    if registry_location == 'config':
+        del payload['registry']
+    document['parent_revision']['content_digest'] = _digest(payload)
+    realm = DetachedRealm(document)
+    original = current(realm)
+    frames = {'frameWidth': 16, 'frameHeight': 16, 'count': 4, 'fps': 8}
+    command = capture_clip_set_params(original, 'parent/clip:clip-a', values={'frames': frames})
+    replacement = copy.deepcopy(original)
+    payload = replacement['parent']
+    for registry in (payload.get('registry'), payload['config'].get('registry')):
+        if registry is not None:
+            registry['assets']['picture']['media_id'] = 'sha256:' + 'f' * 64
+    document = document_from_bundle(replacement)
+    realm.documents[document['parent_revision']['revision_id']] = document
+    realm.call([restore(document)])
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure['details']['reason'] == 'dependency_changed'
+    assert (realm.head, realm.entries, realm.documents) == before
 
 
 def test_committed_move_then_parent_label_and_occurrence_params_reload_undo_redo():

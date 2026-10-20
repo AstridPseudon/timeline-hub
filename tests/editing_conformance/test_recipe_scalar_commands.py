@@ -9,22 +9,130 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 from jsonschema import Draft202012Validator
 
+from astrid.core.element import project_packs
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute, operations
 from astrid.sdk.timeline.rebase import replay
+from tests.core import test_project_packs
 from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse, later
 
 FIXTURES = Path(__file__).parent / 'fixtures'
 REF = 'occurrence:occ-1/clip:picture-1'
+configured_project_pack = pytest.fixture(test_project_packs.configured.__wrapped__)
 
 
 def call(op, ref, values=None, clear=()):
     return {'schema_version': 1, 'op': op, 'version': '1', 'select': ref,
             'args': {'values': {} if values is None else values, 'clear': list(clear)}}
+
+
+@pytest.fixture
+def admitted_param_revisions(configured_project_pack):
+    # Main's real admission/registry path, including its immutable source snapshots.
+    _, directory, _ = test_project_packs.seed('project-1')
+    old = project_packs.admit_project_pack('realm', 'project-1')['elements'][0]['descriptor']
+    path = directory / 'element.yaml'
+    definition = yaml.safe_load(path.read_text())
+    definition['schema']['properties']['seed']['maximum'] = 10
+    path.write_text(yaml.safe_dump(definition))
+    new = project_packs.admit_project_pack('realm', 'project-1')['elements'][0]['descriptor']
+    assert old['id'] == new['id'] and old['packId'] == new['packId']
+    assert old['revision'] != new['revision']
+    refs = [{k: descriptor[k] for k in ('packId', 'id', 'kind', 'revision')}
+            for descriptor in (old, new)]
+    for ref, descriptor in zip(refs, (old, new)):
+        assert project_packs.resolve_admitted_element('realm', 'project-1', ref)['descriptor'] == descriptor
+    assert not list(Draft202012Validator(old['schema']).iter_errors({'seed': 16}))
+    assert list(Draft202012Validator(new['schema']).iter_errors({'seed': 16}))
+    return refs
+
+
+@pytest.mark.parametrize('field', ['elementRef', 'element_ref'])
+@pytest.mark.parametrize('change', ['revision', 'attach', 'remove'])
+def test_original_param_basis_refuses_new_admitted_schema(admitted_param_revisions, field, change):
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+
+    original = bundle()
+    ref = 'parent/clip:direct'
+    old, new = admitted_param_revisions
+    target = clip(original, ref)
+    target.pop('asset')
+    target['clipType'] = 'reveal'
+    if change != 'attach':
+        target[field] = old
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    compile_authoring_candidate(original)
+    plan = execute(original, [capture_clip_set_params(original, ref, values={'seed': 16})])
+    head = copy.deepcopy(original)
+    if change == 'remove':
+        del clip(head, ref)[field]
+    else:
+        clip(head, ref)[field] = new
+    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
+    compile_authoring_candidate(head)
+    snapshot = copy.deepcopy(head)
+    with pytest.raises(CommandError):
+        replay(plan, head)
+    assert head == snapshot
+    if change == 'revision':
+        for history in ([later(ref, [field], old)],
+                        [later(ref, [field], new), later(ref, [field], old)]):
+            with pytest.raises(CommandError, match='intervening'):
+                replay(plan, original, intervening_records=history)
+
+
+@pytest.mark.parametrize('container', [ABSENT, present(None)])
+# Requirement: clear-only writes must preserve absent/null params without
+# widening to the container. The shared State.set clear primitive still needs it.
+@pytest.mark.xfail(strict=True, reason='clear-only params silently creates an object container')
+def test_clear_only_params_preserves_nonobject_presence_and_leaf_intent(container):
+    original = bundle()
+    if container != ABSENT:
+        clip(original, REF)['params'] = copy.deepcopy(container['value'])
+    command = capture_clip_set_params(original, REF, clear=['missing'])
+    plan = execute(original, [command])
+    assert plan.bundle == original
+    assert command['expect'] == {REF + '::params.missing': ABSENT}
+    assert plan.records[0]['writes'] == [
+        {'ref': REF, 'path': ['params', 'missing'], 'before': ABSENT, 'after': ABSENT}]
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert replay(plan, original).records == plan.records
+    with pytest.raises(CommandError, match='intervening'):
+        replay(plan, original, intervening_records=[later(REF, ['params', 'missing'], None)])
+
+
+def test_registered_sprite_strip_binding_refuses_selected_registry_retarget():
+    from astrid.core.element import load_default_registry
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+
+    definition = load_default_registry().get('effect', 'am-sprite', pack_id='astrid_motion')
+    frames = {'frameWidth': 16, 'frameHeight': 16, 'count': 4, 'fps': 8}
+    Draft202012Validator(definition.schema).validate({'frames': frames})
+    original = bundle()
+    clip(original, REF)['clipType'] = definition.id
+    plan = execute(original, [capture_clip_set_params(original, REF, values={'frames': frames})])
+    head = copy.deepcopy(original)
+    registry_ref = 'occurrence:occ-1/registry'
+    State(head).entity(registry_ref)['assets']['old-picture']['media_id'] = 'sha256:' + 'f' * 64
+    # Main accepts this closure; this is not an unsupported registry shape.
+    compiled = compile_authoring_candidate(head).publication
+    assert any(row['payload']['registry']['assets']['old-picture']['media_id'] == 'sha256:' + 'f' * 64
+               for row in compiled['internal_timeline_revisions'])
+    # The same clip.asset now selects different strip bytes; frame rectangles
+    # authored for the original strip must not silently target that replacement.
+    with pytest.raises(CommandError):
+        replay(plan, head)
+    unrelated = copy.deepcopy(original)
+    State(unrelated).entity(registry_ref)['assets']['voice']['media_id'] = 'sha256:' + 'e' * 64
+    assert replay(plan, unrelated).commands == plan.commands
+    path = ['assets', 'old-picture', 'media_id']
+    with pytest.raises(CommandError, match='intervening'):
+        replay(plan, original, intervening_records=[later(registry_ref, path, None)])
 
 
 def test_registry_and_label_after_move_preserves_move_inverse_redo():
