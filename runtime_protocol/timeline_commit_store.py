@@ -733,14 +733,26 @@ class TimelineCommitStore:
             reject("dependency_unavailable", "text binding shot is not in this project")
         binding_id = RuntimeService._text_binding_id(project_id, shot_id, kind, slot)
         row = self.conn.execute("SELECT * FROM shot_text_bindings WHERE id=? AND project_id=?", (binding_id, project_id)).fetchone()
-        live = None if row is None else "sha256:" + row["media_digest"]
-        recorded = None if before["state"] == "absent" else before["value"].get("media_id")
-        if live != recorded:
+        latest = None
+        if row is not None:
+            events = RuntimeService._text_binding_events(self.conn, row)
+            latest = json.loads(events[-1]["payload_json"])
+        live = latest is not None and latest.get("state", "present") == "present"
+        current = None
+        if live:
+            media = self.conn.execute("SELECT size, media_type FROM objects WHERE digest=?", (row["media_digest"],)).fetchone()
+            if media is None:
+                reject("dependency_unavailable", "bound text media is missing")
+            current = {"kind": row["kind"], "slot": row["slot"], "media_id": "sha256:" + row["media_digest"],
+                       "content_hash": "sha256:" + row["media_digest"], "byte_size": media["size"], "mime_type": media["media_type"]}
+        fields = ("kind", "slot", "media_id", "content_hash", "byte_size", "mime_type")
+        if (before["state"] == "present") != live or (live and any(
+                before["value"].get(field) != current[field] for field in fields)):
             reject("text_binding_mismatch", "recorded text binding state differs from the live binding")
-        if after["state"] != "present":
-            # The binding tables keep append-only events and have no removal event kind.
-            reject("text_binding_clear_unsupported", "clearing a text binding is not projected", status=422)
-        value = after["value"]
+        clearing = after["state"] == "absent"
+        if clearing and not live:
+            reject("text_binding_mismatch", "cannot clear an absent text binding")
+        value = current if clearing else after["value"]
         selection = {"object_id": value.get("media_id"), "digest": value.get("content_hash"),
                      "size": value.get("byte_size"), "media_type": value.get("mime_type")}
         if (value.get("kind"), value.get("slot")) != (kind, slot):
@@ -753,7 +765,7 @@ class TimelineCommitStore:
                               "VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)",
                               (binding_id, project_id, shot_id, kind, slot, object_digest, binding_id + ":shot.text_binding", timestamp, timestamp))
             head, previous_hash = 0, ""
-        elif row["media_digest"] == object_digest:
+        elif live and not clearing and row["media_digest"] == object_digest:
             return
         else:
             head = row["head_seq"]
@@ -763,7 +775,8 @@ class TimelineCommitStore:
         event_kind = "shot.text_binding.created" if seq == 1 else "shot.text_binding.rebound"
         payload = {"binding_id": binding_id, "project_id": project_id, "shot_id": shot_id, "kind": kind, "slot": slot,
                    "media_id": value["media_id"], "content_hash": value["content_hash"], "byte_size": value["byte_size"],
-                   "mime_type": value["mime_type"], "publication_id": publication_id}
+                   "mime_type": value["mime_type"], "publication_id": publication_id,
+                   "state": "absent" if clearing else "present"}
         event_hash = hashlib.sha256(canonical_json({"event_id": event_id, "binding_id": binding_id, "seq": seq,
                                                     "kind": event_kind, "payload": payload,
                                                     "previous_hash": previous_hash}).encode()).hexdigest()

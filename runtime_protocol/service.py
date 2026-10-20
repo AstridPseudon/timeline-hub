@@ -1463,7 +1463,7 @@ class RuntimeService:
                 )
             # Verify the complete registered event chain and current authority
             # object before accepting any historical pin from that stream.
-            resource = self._text_binding_resource(row)
+            resource = self._text_binding_resource(row, include_absent=True)
             for field in ("project_id", "shot_id", "kind", "slot", "event_stream_id"):
                 if field in descriptor and descriptor[field] != resource[field]:
                     raise ConflictError("shot text binding descriptor identity does not match its registered binding", details={"binding_id": binding_id, "field": field})
@@ -1478,6 +1478,8 @@ class RuntimeService:
             if event is None:
                 raise ConflictError("pinned shot text binding event is missing", details={"binding_id": binding_id, "head": head})
             event_payload = json.loads(event["payload_json"])
+            if event_payload.get("state", "present") != "present":
+                raise ConflictError("pinned shot text binding is absent", details={"binding_id": binding_id, "head": head})
             media_id = event_payload.get("media_id")
             content_hash = event_payload.get("content_hash")
             if not isinstance(media_id, str) or not media_id.startswith("sha256:") or content_hash != media_id:
@@ -3225,18 +3227,9 @@ class RuntimeService:
             raise ConflictError("bound text media failed integrity", details=details)
         return row
 
-    def _text_binding_resource(self, row, *, verify=True):
-        project_id = str(row["project_id"])
-        shot = self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (row["shot_id"],)).fetchone()
-        if shot is None or str(shot["project_id"]) != project_id:
-            raise ConflictError("text binding shot is outside its project", details={"reason": "binding_shot_project_mismatch"})
-        expected_id = self._text_binding_id(project_id, row["shot_id"], row["kind"], row["slot"])
-        if str(row["id"]) != expected_id:
-            raise ConflictError("text binding identity is corrupt", details={"reason": "binding_natural_tuple_mismatch"})
-        expected_stream = expected_id + ":shot.text_binding"
-        if str(row["event_stream_id"]) != expected_stream:
-            raise ConflictError("text binding stream identity is corrupt", details={"reason": "binding_stream_id_mismatch"})
-        events = self.store.conn.execute(
+    @staticmethod
+    def _text_binding_events(connection, row):
+        events = connection.execute(
             "SELECT event_id, project_id, seq, kind, payload_json, previous_hash, event_hash "
             "FROM shot_text_binding_events WHERE binding_id=? ORDER BY seq", (row["id"],)
         ).fetchall()
@@ -3248,7 +3241,9 @@ class RuntimeService:
                 payload = json.loads(event["payload_json"])
             except (TypeError, json.JSONDecodeError):
                 raise ConflictError("text binding event payload is corrupt", details={"reason": "binding_event_payload"})
-            if str(event["project_id"]) != project_id or str(event["previous_hash"]) != previous_hash:
+            if not isinstance(payload, dict) or payload.get("state", "present") not in ("present", "absent"):
+                raise ConflictError("text binding event state is corrupt", details={"reason": "binding_event_state"})
+            if str(event["project_id"]) != str(row["project_id"]) or str(event["previous_hash"]) != previous_hash:
                 raise ConflictError("text binding event chain is corrupt", details={"reason": "binding_event_chain"})
             expected_hash = hashlib.sha256(canonical_json({
                 "event_id": event["event_id"], "binding_id": row["id"], "seq": int(event["seq"]),
@@ -3257,12 +3252,31 @@ class RuntimeService:
             if str(event["event_hash"]) != expected_hash:
                 raise ConflictError("text binding event hash is corrupt", details={"reason": "binding_event_hash"})
             previous_hash = expected_hash
+        if not events or payload.get("media_id") != "sha256:" + row["media_digest"]:
+            raise ConflictError("text binding head differs from its anchor", details={"reason": "binding_head_mismatch"})
+        return events
+
+    def _text_binding_resource(self, row, *, verify=True, include_absent=False):
+        project_id = str(row["project_id"])
+        shot = self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (row["shot_id"],)).fetchone()
+        if shot is None or str(shot["project_id"]) != project_id:
+            raise ConflictError("text binding shot is outside its project", details={"reason": "binding_shot_project_mismatch"})
+        expected_id = self._text_binding_id(project_id, row["shot_id"], row["kind"], row["slot"])
+        if str(row["id"]) != expected_id:
+            raise ConflictError("text binding identity is corrupt", details={"reason": "binding_natural_tuple_mismatch"})
+        expected_stream = expected_id + ":shot.text_binding"
+        if str(row["event_stream_id"]) != expected_stream:
+            raise ConflictError("text binding stream identity is corrupt", details={"reason": "binding_stream_id_mismatch"})
+        events = self._text_binding_events(self.store.conn, row)
+        present = json.loads(events[-1]["payload_json"]).get("state", "present") == "present"
         if verify:
             media = self._verify_text_object(project_id, row["media_digest"])
         else:
             media = self.store.conn.execute("SELECT * FROM objects WHERE digest=?", (row["media_digest"],)).fetchone()
         if media is None:
             raise ConflictError("bound text media is missing", details={"reason": "bound_media_missing"})
+        if not present and not include_absent:
+            return None
         return {
             "binding_id": str(row["id"]), "project_id": project_id, "shot_id": str(row["shot_id"]),
             "kind": str(row["kind"]), "slot": row["slot"], "media_id": "sha256:" + str(media["digest"]),
@@ -3275,7 +3289,9 @@ class RuntimeService:
         project = self.store.get_project(project_id)
         row = self.store.conn.execute("SELECT * FROM shot_text_bindings WHERE id=? AND project_id=?", (binding_id, project["id"])).fetchone()
         if row is None: raise NotFoundError("text binding not found")
-        return self._text_binding_resource(row)
+        resource = self._text_binding_resource(row)
+        if resource is None: raise NotFoundError("text binding not found")
+        return resource
 
     def list_project_shot_text_bindings(self, project_id, *, shot_id=None, kind=None, slot=None):
         project = self.store.get_project(project_id); project_id = str(project["id"])
@@ -3286,7 +3302,7 @@ class RuntimeService:
             query += " AND kind=?"; params.append(kind)
         if slot is not None: query += " AND slot=?"; params.append(slot)
         rows = self.store.conn.execute(query + " ORDER BY id", tuple(params)).fetchall()
-        return {"items": [self._text_binding_resource(row) for row in rows], "next_cursor": None}
+        return {"items": [resource for row in rows if (resource := self._text_binding_resource(row)) is not None], "next_cursor": None}
 
     def _project_reference_resource(self, row):
         value = dict(row); value["reference_id"] = value.pop("id"); value["metadata"] = json.loads(value.pop("metadata_json")); value["archived"] = bool(value.pop("archived_at")); value["media_references"] = []

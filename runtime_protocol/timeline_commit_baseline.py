@@ -108,6 +108,7 @@ def _text_bindings(connection, project_id, shot, read_object):
         _require(len(events) == binding["head_seq"], "text_binding_ancestry_missing")
         for seq, event in enumerate(events, 1):
             payload = _json(event["payload_json"])
+            _require(payload.get("state", "present") in ("present", "absent"), "text_binding_state_mismatch")
             hashed = {"event_id": event["event_id"], "binding_id": binding["id"], "seq": seq,
                       "kind": event["kind"], "payload": payload, "previous_hash": previous}
             _require(event["project_id"] == project_id and event["seq"] == seq and
@@ -116,7 +117,7 @@ def _text_bindings(connection, project_id, shot, read_object):
             previous = event["event_hash"]
             if seq == head:
                 pinned = payload
-        _require(pinned is not None and pinned["binding_id"] == binding["id"] and
+        _require(pinned is not None and pinned.get("state", "present") == "present" and pinned["binding_id"] == binding["id"] and
                  pinned["media_id"] == pinned["content_hash"] == descriptor["media_id"] == descriptor["content_hash"],
                  "text_binding_pin_mismatch")
         data, media = _media(connection, project_id, pinned["media_id"], read_object)

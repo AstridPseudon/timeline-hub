@@ -344,9 +344,6 @@ def test_projection_commits_atomically_with_acceptance_and_rolls_back_with_it(re
     assert counts(service)["timeline_commit_history"] == 2
 
 
-# Requirement restoring this: a removal event kind (and tombstone) in the binding tables, which the
-# current schema lacks, so clear cannot be projected without rewriting append-only history.
-@pytest.mark.xfail(strict=True, raises=CommitRejected, reason="clear of a text binding is not projected: shot_text_binding_events has no removal kind")
 def test_clear_removes_the_live_binding(realm):
     service, commits, project, _, _ = realm
     object_id = put(realm, b"gone")
