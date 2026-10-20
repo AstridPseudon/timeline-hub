@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-20T16:13:12Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 27 | status age 22m -->
+<!-- app2 | 2026-10-20T16:14:33Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 26 | status age 24m -->
 # app2 — 2026-10-20 15:52 UTC
 Milestone: M2 — four native helper units independently approved and remote merges requested. All seven rows remain OPEN; no milestone exit.
 Integrated: App HOME tl/integration 9d518546d (root013/public12 landed; trim cut retained), per App15:37. Four app2 merges queued; HOME integration frozen per orchestrator15:46 for about1h pending test-port fix. No result yet; no repeated requests.

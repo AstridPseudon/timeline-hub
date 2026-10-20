@@ -1,3 +1,4 @@
+LEAD 16:17Z | workers 0 live (manager codex alive, round log active 16:12Z, no restart) | 4 merge requests sent (overlay-strict-types-repair, element-literal-routing-repair, ordinary-standalone-dispatch-repair, parent-preparation-selection-carrier) | STATUS 15:50Z stale, LEAD NOTE 16:13Z pending dispatch
 LEAD 16:13Z | workers 0 live (target 5-7) | cause: all workers finished exit=0, scope-repair died max_output_tokens (finalized, WIP 5acbe40f9) | no restart since 15:14Z | LEAD NOTE sent to dispatch 5-7 | STATUS 15:50Z stale
 LEAD 15:45Z | workers 6 live (target 5-7) | disk 21G free | no restart since 15:14Z (dispatcher 15:33 intended) | merges pending 0, none finished-with-commits requested | STATUS 15:41Z fresh, INBOX acked
 LEAD 15:33Z | lead decided: dispatcher upgraded to kit version, 4 orphans finalized | workers 4 live (target 5-7; resume workers requested via LEAD NOTE)
