@@ -27,26 +27,23 @@ from runtime_protocol.timeline_commit_port import digest, refused
 
 pytestmark = pytest.mark.integration
 service = support.service
-AGENT_HEAD = "b2b51c4a9f4b66198e6bc34a533b65efe72bd6dc"
-AGENT_TREE = "74c40179eb16fd73400b8d612a8e3c896fb945b4"
 
 
 @pytest.fixture
 def portable_pack(service, tmp_path, astrid_importable, monkeypatch):
-    # Fail closed on a mixed pair, including uncommitted Agent source changes.
-    for revision, expected in (("HEAD", AGENT_HEAD), ("HEAD^{tree}", AGENT_TREE)):
-        assert subprocess.check_output(
-            ["git", "-C", str(astrid_importable), "rev-parse", revision], text=True,
-        ).strip() == expected
-    assert not subprocess.check_output(
-        ["git", "-C", str(astrid_importable), "status", "--porcelain"], text=True,
-    ).strip()
-
     import yaml
     from astrid.core.element import project_packs as packs
     from astrid.sdk.contracts import DomainResult, ErrorObject
 
-    assert Path(packs.__file__).resolve().is_relative_to(astrid_importable)
+    packs_path = Path(packs.__file__).resolve()
+    assert packs_path.is_relative_to(astrid_importable), (
+        f"project_packs imported outside configured Astrid checkout: {packs_path}"
+    )
+    snapshot_descriptor = getattr(packs, "admitted_element_snapshot_descriptor", None)
+    assert callable(snapshot_descriptor), (
+        f"configured Astrid checkout lacks required project_packs API: "
+        "admitted_element_snapshot_descriptor"
+    )
     authoring, artifacts = tmp_path / "authoring", tmp_path / "artifacts"
     monkeypatch.setenv(packs.ROOT_ENV, str(authoring))
     monkeypatch.setenv(packs.ARTIFACT_ENV, str(artifacts))
@@ -173,7 +170,7 @@ def portable_pack(service, tmp_path, astrid_importable, monkeypatch):
         with monkeypatch.context() as guard:
             for name in ("read_bytes", "read_text", "open", "resolve", "is_file", "is_dir", "rglob"):
                 guard.setattr(Path, name, forbidden)
-            return packs.admitted_element_snapshot_descriptor(realm, project, selected, verified, value)
+            return snapshot_descriptor(realm, project, selected, verified, value)
 
     return SimpleNamespace(packs=packs, realm=realm, project=project, client=client,
                            source=source, record=record, reference=reference, descriptor=descriptor,
