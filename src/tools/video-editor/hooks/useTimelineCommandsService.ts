@@ -45,6 +45,7 @@ import {
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
+import { captureClipDeleteEdit, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 
 export type TimelineCommandErrorCode =
   | 'editor_not_mounted'
@@ -180,7 +181,7 @@ export interface TimelineCommands {
    */
   splitClip: (input: SplitClipCommandInput) => TimelineCommandResult<{ clipId: string; nextClipId: string }>;
   /**
-   * Delete a clip through the existing commit pipeline.
+   * Capture one parent clip.delete through the host command outbox.
    */
   deleteClip: (input: DeleteClipCommandInput) => TimelineCommandResult<{ clipId: string }>;
   /**
@@ -841,7 +842,7 @@ export function createTimelineCommands(
       if (!clip) {
         return failure('clip_not_found', `Clip '${input.clipId}' was not found.`);
       }
-      if (!input.allowPinnedGroupDelete && isPinnedGroupClip(current, input.clipId)) {
+      if (isPinnedGroupClip(current, input.clipId)) {
         return failure('pinned_group_edit_blocked', 'Use the shot-group delete flow for pinned shot clips.');
       }
 
@@ -849,22 +850,13 @@ export function createTimelineCommands(
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
-      const nextRows = current.rows.map((row) => ({
-        ...row,
-        actions: row.actions.filter((action) => action.id !== input.clipId),
-      }));
-
-      return applyValidatedMutation(
-        store,
-        current,
-        {
-          type: 'rows',
-          rows: nextRows,
-          metaDeletes: [input.clipId],
-        },
-        { clipId: input.clipId },
-        { semantic: true },
-      );
+      try {
+        const captured = captureClipDeleteEdit(state.ops.clipDelete, current, input.clipId);
+        submitClipDeleteEdit(captured);
+        return success({ clipId: input.clipId });
+      } catch (cause) {
+        return failure('mutation_failed', cause instanceof Error ? cause.message : 'Clip delete failed.', { cause });
+      }
     },
 
     addTrack(input) {

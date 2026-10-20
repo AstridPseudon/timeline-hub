@@ -19,6 +19,7 @@ import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
+import { captureClipDeleteEdit, submitClipDeleteEdit } from '../commands/clipDeleteGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
@@ -98,6 +99,46 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it('fences every delete phase against older snapshot work and clears the port on scope cleanup', async () => {
+    const { env, hook, neutral, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.clipDeletePort!;
+    const input = { current: env.current(), clipId: 'x' };
+    setLegacyClean(false);
+    expect(() => port.capture(input)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const basis = port.capture(input);
+    setLegacyClean(false);
+    expect(() => port.finish(basis)).toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const { command } = port.finish(basis);
+    setLegacyClean(false);
+    expect(() => port.submit({ command, preview: { version: 1, operations: [{ op: 'clip.remove', target: 'x' }] } }))
+      .toThrow('earlier timeline saves');
+    expect(env.commits()).toHaveLength(0);
+    hook.rerender({ provider: neutral, timelineId: 'other' });
+    expect(hook.result.current.commands.clipDeletePort).toBeUndefined();
+    setLegacyClean(true);
+    expect(() => port.capture(input)).toThrow('unavailable');
+    hook.unmount();
+  });
+
+  it('exposes native deletion on the same session, previews locally, and retains a refused draft without snapshot saves', async () => {
+    const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
+    env.setFault('conflict');
+    const original = structuredClone(hook.result.current.commit.data!.config.clips[0]);
+    act(() => { submitClipDeleteEdit(captureClipDeleteEdit(hook.result.current.commands.clipDeletePort,
+      hook.result.current.commit.data!, 'x')); });
+    expect(hook.result.current.commit.data!.config.clips).toEqual([]);
+    expect(hook.result.current.commands.ownsHistoryRef.current).toBe(true);
+    await waitFor(() => expect(hook.result.current.commands.state.status).toBe('conflict'));
+    expect(hook.result.current.commands.state.error).toBe('conflict: conflict');
+    expect(env.commits()[0].body?.commands[0]).toMatchObject({ op: 'clip.delete', select: 'parent/clip:x',
+      expect: { 'parent/clip:x::': { state: 'present', value: { id: original.id, at: original.at } } } });
+    expect(snapshotSaves).not.toHaveBeenCalled();
+    expect(saveTimeline).not.toHaveBeenCalled();
+    expect(saveTimelineAtHead).not.toHaveBeenCalled();
+    hook.unmount();
+  });
   it('fences track-label capture, completion and submission behind earlier legacy saves', async () => {
     const { env, hook, setLegacyClean } = await scoped();
     const port = hook.result.current.commands.trackLabelPort!;
