@@ -113,6 +113,8 @@ Plan (Agent side; Viewing wires its inactive helper to it afterwards, per the 03
 4. **Until then.** Vectors 10-11 stay xfail. Non-Player fades keep refusing `ENVELOPE_UNRENDERED`. Nothing falls back to the frame-step callback.
 5. **Ordering.** The 03:17 decision pairs this with the slice/layer P1 fix. Do not wire Viewing's helper before the Agent join is reviewed.
 
+**Join status (no producer landed).** Checked in this tree: the Composition package installed for hosts (`/home/user/work/app/node_modules/@banodoco/timeline-composition`) does not export `applyAudioEnvelope`, so there is no trusted public decode/apply to join to. The Remotion renderer (`remotion/run.py`) has no step that decodes a source, writes an `audioEnvelopeWav` file, or serves it at an `http(s)` URL, which `encodedEnvelopeSource` requires. The compiler cannot create `audio.render_source` either, because it has no file to name. A Python re-implementation of the envelope would duplicate the public policy, and a mock would be no authority, so nothing was added. Still strict xfail: audio vectors 10-11 and the four PCM tests in `test_normal_audio_source_phase.py`. Restored when a Composition build with the 0.0.10 audio-envelope exports is installed in the Remotion project and the render route gains the prepare step in the plan above.
+
 ## Ledger and owner items
 
 - VW-AUDIO-STEP: App `AudioTrack.tsx` per-frame callback and the old frame-table comparator are retired only after Agent's compiled clock is published, App's PCM adapter is live, both consumers use it, and Viewing's Player-vs-export PCM goldens pass with no threshold widening. The frame-step RED baseline stays as a record.
