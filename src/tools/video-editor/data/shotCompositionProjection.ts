@@ -373,7 +373,9 @@ function projectClip(
         : hasTrim
           ? Math.max(1, (rawTo - rawFrom) * 1000)
           : Math.max(1, occurrence.durationMs * speed);
-  const gain = finiteNumber(rawClip.gain ?? rawClip.volume, occurrence.gain ?? 1);
+  const childGain = finiteNumber(rawClip.gain ?? rawClip.volume, 1);
+  const occurrenceGain = finiteNumber(occurrence.gain, 1);
+  const gain = childGain * occurrenceGain;
   const muted = rawClip.muted === true || rawClip.mute === true || occurrence.muted === true;
   const track = text(rawClip.track) ?? occurrence.trackId ?? 'video';
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? 'media';

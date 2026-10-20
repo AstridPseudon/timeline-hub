@@ -89,6 +89,92 @@ function environment() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('durable command outbox', () => {
+  it('never disposes an unknown flight, including before transmission completes', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const a = await box.append(move(5), { head: h0 });
+      const started = deferred<void>();
+      const done = deferred<OutboxOutcome>();
+      const flight = box.dispatch(build, async () => { started.resolve(); return done.promise; });
+      await started.promise;
+      const original = await box.read();
+      await expect(box.resolveRejected([a])).rejects.toThrow('definitively rejected');
+      expect(await box.read()).toEqual(original);
+      done.resolve({ kind: 'retry', error: 'ACK unknown' });
+      await flight;
+      const unknown = await box.read();
+      await expect(box.resolveRejected([a], { payload: move(9), head: ha })).rejects.toThrow('definitively rejected');
+      expect(await box.read()).toEqual(unknown);
+    });
+  });
+
+  it('requires an explicit complete disposition of a rejected prefix and its retained dependents', async () => {
+    const env = environment();
+    await env.open().create(scope, async (box) => {
+      const a = await box.append(move(5), { head: h0 });
+      const b = await box.append(move(7), { after: a });
+      await box.dispatch(build, async () => ({ kind: 'rejected', error: 'conflict' }));
+      const original = await box.read();
+      await expect(box.resolveRejected([a])).rejects.toThrow('Retained work changed');
+      await expect(box.resolveRejected([a, b], { payload: move(9), head: ha })).rejects.toThrow('predecessor');
+      await expect(box.resolveRejected([a, b], undefined, () => false)).rejects.toThrow('closed');
+      env.fault.abortNextWrite = true;
+      await expect(box.resolveRejected([a, b])).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(original);
+      const cleared = await box.resolveRejected([a, b]);
+      expect(cleared.intents).toEqual([]);
+      expect(cleared.pending).toBeUndefined();
+      expect((await env.open().list(scope))[0]).toEqual(cleared);
+    });
+  });
+
+  it('atomically replaces only a single rejected intent and allocates a fresh exact retry identity', async () => {
+    const env = environment();
+    let owner = '';
+    let replacementRequest!: OutboxRequest;
+    await env.open().create(scope, async (box, id) => {
+      owner = id;
+      const a = await box.append(move(5), { head: h0 });
+      await box.dispatch(build, async () => ({ kind: 'rejected', error: 'changed' }));
+      const old = await box.read();
+      env.fault.abortNextWrite = true;
+      await expect(box.resolveRejected([a], { payload: move(9), head: ha })).rejects.toThrow('aborted');
+      expect(await box.read()).toEqual(old);
+      const next = await box.resolveRejected([a], { payload: move(9), head: ha });
+      expect(next.intents[0].id).not.toBe(a);
+      expect(next.intents[0]).toMatchObject({ payload: move(9), basis: { head: ha }, readyBase: ha });
+      expect(next.pending).toBeUndefined();
+      await box.dispatch(build, async (request) => {
+        replacementRequest = request;
+        expect(request.key).not.toBe(old.pending!.request.key);
+        return { kind: 'retry', error: 'lost' };
+      });
+      expect(old.intents[0].payload).toEqual(move(5));
+      expect(JSON.parse(old.pending!.request.body)).toEqual(build(old.intents[0], h0).body);
+    });
+    await env.open().recover(scope, owner, async (box) => {
+      await box.dispatch(() => { throw new Error('Must retry exact request'); }, async (request) => {
+        expect(request).toEqual(replacementRequest);
+        return accepted();
+      });
+    });
+  });
+
+  it('fences a stale resolver when a new owner generation has claimed the rejected work', async () => {
+    const env = environment();
+    const service = createCommitOutbox({ indexedDB: env.factory, exclusiveLock: async (_name, work) => work() });
+    await service.create(scope, async (old, owner) => {
+      const a = await old.append(move(5), { head: h0 });
+      await old.dispatch(build, async () => ({ kind: 'rejected', error: 'changed' }));
+      await service.recover(scope, owner, async (current) => {
+        const original = await current.read();
+        await expect(old.resolveRejected([a], { payload: move(9), head: ha })).rejects.toThrow('Stale');
+        expect(await current.read()).toEqual(original);
+        await current.resolveRejected([a]);
+      });
+    });
+  });
+
   it('reopens exact A before dependent B, then gives B a fresh key/base with original guards and IDs', async () => {
     const env = environment();
     const first = env.open();

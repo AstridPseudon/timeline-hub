@@ -126,8 +126,7 @@ export default defineConfig(({ command }) => {
       host: "::",
       port: port,
       proxy: { ...astridAcpBridgeProxy, ...astridBridgeProxy, ...runtimeProxy },
-      // Sprint 5: allow Vite to read from the sibling banodoco-workspace
-      // (timeline-theme-2rp file: link).
+      // Allow Vite to read linked Astrid sources.
       fs: {
         allow: [
           path.resolve(__dirname, "../../../.."),
@@ -159,9 +158,7 @@ export default defineConfig(({ command }) => {
         "@astrid/editor-sdk": path.resolve(__dirname, "../../src/sdk/index.ts"),
         ...(astridSource ? { "@astrid": astridSource.sourceRoot } : {}),
         ...(astridPublicSource ? { "@astrid-public": astridPublicSource.sourceRoot } : {}),
-        // Sprint 5: deduplicate React / Remotion / @banodoco/* across the
-        // linked timeline-composition + timeline-theme-* packages so a
-        // single React runtime drives the @remotion/player preview.
+        // Share one React/Remotion runtime with Composition and linked host elements.
         "react": path.resolve(__dirname, "../../node_modules/react"),
         "react-dom": path.resolve(__dirname, "../../node_modules/react-dom"),
         "remotion": path.resolve(__dirname, "../../node_modules/remotion"),
@@ -170,12 +167,8 @@ export default defineConfig(({ command }) => {
         "@banodoco/timeline-schema": fs.existsSync(timelineSchemaPath)
           ? timelineSchemaPath
           : timelineSchemaFallbackPath,
-        // Retained for direct vendored callers until their Viewing migration.
-        "@workspace-effects": path.resolve(__dirname, "../../vendor/banodoco-effects"),
-        "@workspace-animations": path.resolve(__dirname, "../../vendor/banodoco-animations"),
-        "@workspace-transitions": path.resolve(__dirname, "../../vendor/banodoco-transitions"),
       },
-      dedupe: ['three', '@remotion/three', 'react', 'react-dom', 'react-reconciler', 'remotion', '@banodoco/timeline-composition', '@banodoco/timeline-theme-2rp'],
+      dedupe: ['three', '@remotion/three', 'react', 'react-dom', 'react-reconciler', 'remotion', '@banodoco/timeline-composition'],
     },
     build: {
       outDir: "dist",

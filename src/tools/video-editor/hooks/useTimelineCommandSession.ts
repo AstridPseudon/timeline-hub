@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
-import type { DataProvider, TimelineHeadRevision } from '../data/DataProvider.ts';
+import type { DataProvider, TimelineCommandBasis, TimelineHeadRevision } from '../data/DataProvider.ts';
 import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
+import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
 import { createTimelineCommandSession, type CommandSessionState, type TimelineCommandSession } from '../commands/commitSession.ts';
@@ -13,6 +14,7 @@ import type { VideoEditorShotsHost } from '../runtime/ports.ts';
 
 export function useTimelineCommandSession(options: {
   legacyClean: () => boolean;
+  initialReadReady?: boolean;
   snapshotWriteBlockedRef: MutableRefObject<boolean>;
   provider: DataProvider;
   timelineId: string;
@@ -32,15 +34,20 @@ export function useTimelineCommandSession(options: {
   const sessionRef = useRef<TimelineCommandSession | null>(null);
   const activeRef = useRef(false);
   const ownsHistoryRef = useRef(false);
+  const readGenerationRef = useRef(0);
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<CommandSessionState>({ status: 'loading', error: null,
     ownerId: null, recoverableOwners: [], canUndo: false });
+  const initialReadReady = options.initialReadReady ?? true;
   const enabled = !!(provider.loadTimelineCommandBasis && provider.commitTimeline && provider.getRecoverableIdentity);
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !initialReadReady) return;
     let disposed = false;
     let session: TimelineCommandSession | undefined;
     let projectGeneration = 0;
+    const initialData = latest.current.commit.dataRef.current;
+    const initialHead = latest.current.headRevisionRef.current;
+    const invalidateReads = () => { readGenerationRef.current++; };
     const disposeSession = () => {
       void session?.dispose().catch((error) => console.error('[TimelineCommandSession] Unsaved moves on close', error));
     };
@@ -56,14 +63,68 @@ export function useTimelineCommandSession(options: {
         provider.getRecoverableIdentity!(), provider.loadTimelineCommandBasis!(timelineId),
       ]);
       if (disposed) return;
-      const head = latest.current.headRevisionRef.current;
-      if (head?.projectId === basis.canonicalDocument.project_id && head.timelineId === timelineId
-        && basis.canonicalDocument.timeline_id === timelineId
-        && head.headRevisionId === basis.head.revisionId && head.headPublicationId === basis.head.publicationId) {
-        latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config);
+      if (basis.canonicalDocument.timeline_id !== timelineId
+        || !basis.head.revisionId || !basis.head.publicationId
+        || basis.canonicalDocument.parent_revision.revision_id !== basis.head.revisionId
+        || (initialHead?.timelineId === timelineId && initialHead.projectId !== basis.canonicalDocument.project_id)) {
+        throw new Error('Initialization requires a verified closure in the current project and timeline');
       }
+      const project = async (accepted: TimelineCommandBasis, previews: TimelinePatch[], initial = false) => {
+        if (disposed) return;
+        const generation = initial ? projectGeneration : ++projectGeneration;
+        const context = latest.current;
+        const document = accepted.canonicalDocument;
+        const parent = document.parent_revision.payload;
+        let config = { ...(parent.config as TimelineConfig), clips: parent.clips as TimelineConfig['clips'] };
+        let registry = parent.registry as AssetRegistry;
+        let composition;
+        if (Array.isArray(parent.occurrences) && parent.occurrences.length) {
+          if (!accepted.graph || !provider.shotComposition) throw new Error('Accepted shot closure cannot be projected');
+          composition = createShotCompositionAdapter(provider.shotComposition).prepare(accepted.graph);
+          const projection = projectCanonicalComposition(composition);
+          config = projection.config;
+          registry = { assets: projection.config.registry };
+        }
+        const rawBundle = (parent.config as Record<string, unknown>).bundle;
+        const source = rawBundle == null ? undefined : parseTimelineBundle(rawBundle);
+        const head = { projectId: document.project_id, timelineId, headRevisionId: accepted.head.revisionId,
+          headPublicationId: accepted.head.publicationId };
+        const resolve = provider.resolveTimelineCommandAsset
+          ? (file: string) => provider.resolveTimelineCommandAsset!(file, registry) : context.resolveAssetUrl;
+        let data = await buildTimelineData(config, registry, resolve,
+          context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
+        for (const preview of previews) {
+          const compiled = compileTimelinePatch(preview, data);
+          if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
+          data = compiled.nextData;
+        }
+        if (disposed || generation !== projectGeneration) return;
+        // Bootstrap yields to any intervening display, head, local edit or recovery.
+        if (initial && (context.commit.dataRef.current !== initialData || initialData?.editProjection
+          || context.headRevisionRef.current !== initialHead || (initialHead && initialHead.timelineId !== timelineId)
+          || !latest.current.legacyClean())) return;
+        data.editProjection = accepted.head.revisionId && accepted.head.publicationId
+          ? previews.length ? { kind: 'local', base: { ...accepted.head }, generation }
+            : { kind: 'accepted', head: { ...accepted.head } } : undefined;
+        context.configVersionRef.current = data.configVersion;
+        context.headRevisionRef.current = head;
+        context.recoveryConfig?.remember(head, parent.config);
+        context.store.getState().setConfigVersion(data.configVersion);
+        context.commit.commitData(data, { save: false, skipHistory: true, updateLastSavedSignature: previews.length === 0 });
+        if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
+      };
       session = await createTimelineCommandSession({
         scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId }, initial: basis,
+        loadLatest: async () => {
+          if (disposed) throw new Error('Timeline command session is closed');
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before resolving commands');
+          projectGeneration++;
+          invalidateReads();
+          const fresh = await provider.loadTimelineCommandBasis!(timelineId);
+          invalidateReads();
+          if (disposed) throw new Error('Timeline command session is closed');
+          return fresh;
+        },
         send: (request, key) => provider.commitTimeline!(request, key),
         changed,
         preview: (patch) => {
@@ -81,61 +142,44 @@ export function useTimelineCommandSession(options: {
           compiled.nextData.editProjection = base ? { kind: 'local', base, generation: projectGeneration } : undefined;
           commit.commitData(compiled.nextData, { save: false, skipHistory: true });
         },
-        project: async (accepted, previews) => {
-          if (disposed) return;
-          const generation = ++projectGeneration;
-          const context = latest.current;
-          const document = accepted.canonicalDocument;
-          const parent = document.parent_revision.payload;
-          let config = { ...(parent.config as TimelineConfig), clips: parent.clips as TimelineConfig['clips'] };
-          let registry = parent.registry as AssetRegistry;
-          let composition;
-          if (Array.isArray(parent.occurrences) && parent.occurrences.length) {
-            if (!accepted.graph || !provider.shotComposition) throw new Error('Accepted shot closure cannot be projected');
-            composition = createShotCompositionAdapter(provider.shotComposition).prepare(accepted.graph);
-            const projection = projectCanonicalComposition(composition);
-            config = projection.config;
-            registry = { assets: projection.config.registry };
-          }
-          const rawBundle = (parent.config as Record<string, unknown>).bundle;
-          const source = rawBundle == null ? undefined : parseTimelineBundle(rawBundle);
-          const head = { projectId: document.project_id, timelineId, headRevisionId: accepted.head.revisionId,
-            headPublicationId: accepted.head.publicationId };
-          const resolve = provider.resolveTimelineCommandAsset
-            ? (file: string) => provider.resolveTimelineCommandAsset!(file, registry) : context.resolveAssetUrl;
-          let data = await buildTimelineData(config, registry, resolve,
-            context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
-          for (const preview of previews) {
-            const compiled = compileTimelinePatch(preview, data);
-            if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
-            data = compiled.nextData;
-          }
-          if (disposed || generation !== projectGeneration) return;
-          data.editProjection = accepted.head.revisionId && accepted.head.publicationId
-            ? previews.length ? { kind: 'local', base: { ...accepted.head }, generation }
-              : { kind: 'accepted', head: { ...accepted.head } } : undefined;
-          context.configVersionRef.current = data.configVersion;
-          context.headRevisionRef.current = head;
-          context.recoveryConfig?.remember(head, parent.config);
-          context.store.getState().setConfigVersion(data.configVersion);
-          context.commit.commitData(data, { save: false, skipHistory: true, updateLastSavedSignature: previews.length === 0 });
-          if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
-        },
+        project,
       });
       if (disposed) disposeSession();
       else {
+        const head = latest.current.headRevisionRef.current;
+        if (latest.current.commit.dataRef.current === initialData && head === initialHead
+          && head?.projectId === basis.canonicalDocument.project_id && head.timelineId === timelineId
+          && head.headRevisionId === basis.head.revisionId && head.headPublicationId === basis.head.publicationId) {
+          latest.current.recoveryConfig?.remember(head, basis.canonicalDocument.parent_revision.payload.config);
+        }
+        // A retained outbox owns its original display basis until explicit recovery.
+        if (session.getState().status === 'saved') await project(basis, [], true);
+        if (disposed) return;
         const realPort = session.port;
         session.port = { ...realPort, capture: (input) => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before moving');
           return realPort.capture(input);
         } };
+        const labelPort = session.trackLabelPort;
+        const requireCleanLabelEdit = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing a track label');
+        };
+        session.trackLabelPort = {
+          capture(input) { requireCleanLabelEdit(); return labelPort.capture(input); },
+          finish(basis, args) { requireCleanLabelEdit(); return labelPort.finish(basis, args); },
+          submit(input) { requireCleanLabelEdit(); labelPort.submit(input); },
+        };
         sessionRef.current = session;
         setState({ ...session.getState() });
       }
-    })().catch((error) => changed({ status: 'error', error: error instanceof Error ? error.message : String(error),
-      ownerId: null, recoverableOwners: [], canUndo: false }));
+    })().catch((error) => {
+      disposeSession();
+      changed({ status: 'error', error: error instanceof Error ? error.message : String(error),
+        ownerId: null, recoverableOwners: [], canUndo: false });
+    });
     return () => {
       disposed = true;
+      invalidateReads();
       ownsHistoryRef.current = false;
       projectGeneration++;
       sessionRef.current = null;
@@ -143,12 +187,15 @@ export function useTimelineCommandSession(options: {
       snapshotWriteBlockedRef.current = false;
       disposeSession();
     };
-  }, [provider, timelineId, enabled, attempt, snapshotWriteBlockedRef]);
+  }, [provider, timelineId, enabled, initialReadReady, attempt, snapshotWriteBlockedRef]);
   useEffect(() => {
     if (!enabled || !options.loaded?.head || !sessionRef.current) return;
     let cancelled = false;
+    const session = sessionRef.current;
+    const generation = readGenerationRef.current;
     const priorHead = latest.current.headRevisionRef.current;
     void provider.loadTimelineCommandBasis!(timelineId).then((basis) => {
+      if (cancelled || sessionRef.current !== session || generation !== readGenerationRef.current) return;
       const currentHead = latest.current.headRevisionRef.current;
       if (currentHead !== priorHead && (currentHead?.headRevisionId !== basis.head.revisionId
         || currentHead.headPublicationId !== basis.head.publicationId)) return;
@@ -158,11 +205,13 @@ export function useTimelineCommandSession(options: {
           && currentHead.headRevisionId === basis.head.revisionId && currentHead.headPublicationId === basis.head.publicationId) {
           latest.current.recoveryConfig?.remember(currentHead, basis.canonicalDocument.parent_revision.payload.config);
         }
-        sessionRef.current?.observe(basis);
+        session.observe(basis);
       }
     }).catch((error) => {
       // A failed poll does not alter the retained command or its retry identity.
-      if (!cancelled) setState((current) => ({ ...current, error: error instanceof Error ? error.message : String(error) }));
+      if (!cancelled && sessionRef.current === session && generation === readGenerationRef.current) {
+        setState((current) => ({ ...current, error: error instanceof Error ? error.message : String(error) }));
+      }
     });
     return () => { cancelled = true; };
   }, [enabled, options.loaded, provider, timelineId, state.ownerId]);
@@ -181,7 +230,17 @@ export function useTimelineCommandSession(options: {
   const undo = useCallback(async () => { await requireSession().undo(); }, [requireSession]);
   const flush = useCallback(async () => { await requireSession().flush(); }, [requireSession]);
   const recover = useCallback(async (ownerId: string) => { await requireSession().recover(ownerId); }, [requireSession]);
+  const resolve = useCallback(async (keep: boolean) => {
+    const session = requireSession();
+    readGenerationRef.current++;
+    try { await (keep ? session.keepLabelChanges() : session.useLatest()); }
+    finally { readGenerationRef.current++; }
+  }, [requireSession]);
+  const useLatest = useCallback(() => resolve(false), [resolve]);
+  const keepLabelChanges = useCallback(() => resolve(true), [resolve]);
   return { enabled, state, activeRef, ownsHistoryRef, port: sessionRef.current?.port,
-    retry, undo, flush, recover };
+    trackLabelPort: sessionRef.current?.trackLabelPort,
+    retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
-export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>;
+export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
+  & Partial<Pick<ReturnType<typeof useTimelineCommandSession>, 'useLatest' | 'keepLabelChanges'>>;

@@ -2,7 +2,7 @@
  * Shared support for the direct journey (Plan A): the Chromium resolution, the worker-scoped fixtures, and the App
  * helpers that drive the hosted page. Moved out of direct-journey.spec.ts without changes (card F2-A).
  */
-import { chromium, expect, test as base, type Browser, type Page } from '@playwright/test';
+import { chromium, expect, test as base, type Browser, type Page, type Request } from '@playwright/test';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
@@ -88,6 +88,29 @@ export async function editFirstTrackName(page: Page, name: string) {
   await field.fill(name);
   await field.press('Enter');
   await field.blur();
+}
+
+/** Hold command delivery before the Runtime sees it; persisted request identity remains product-owned. */
+export async function holdCommandRequests(page: Page) {
+  const commits = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
+  const requests: Request[] = [];
+  let release!: (send: boolean) => void;
+  const gate = new Promise<boolean>((resolve) => { release = resolve; });
+  const intercept = async (route: import('@playwright/test').Route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    requests.push(route.request());
+    const send = await gate;
+    // Reload may have already cancelled the held browser request.
+    await (send ? route.continue() : route.abort('connectionreset')).catch(() => {});
+  };
+  await page.route(commits, intercept);
+  return {
+    requests,
+    async release(send = false) {
+      await page.unroute(commits, intercept);
+      release(send);
+    },
+  };
 }
 
 /**

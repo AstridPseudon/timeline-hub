@@ -268,6 +268,7 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
   const handleToggleMuteClips: TimelineEditorOpsContextValue['handleToggleMuteClips'] = opsUnavailable('handleToggleMuteClips');
   const handleToggleMute: TimelineEditorOpsContextValue['handleToggleMute'] = opsUnavailable('handleToggleMute');
   const handleDetachAudioClip: TimelineEditorOpsContextValue['handleDetachAudioClip'] = opsUnavailable('handleDetachAudioClip');
+  const handleTrackLabelEditStart: TimelineEditorOpsContextValue['handleTrackLabelEditStart'] = opsUnavailable('handleTrackLabelEditStart');
   const handleTrackPopoverChange: TimelineEditorOpsContextValue['handleTrackPopoverChange'] = opsUnavailable('handleTrackPopoverChange');
   const handleMoveTrack: TimelineEditorOpsContextValue['handleMoveTrack'] = opsUnavailable('handleMoveTrack');
   const handleRemoveTrack: TimelineEditorOpsContextValue['handleRemoveTrack'] = opsUnavailable('handleRemoveTrack');
@@ -338,6 +339,7 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
     handleToggleMuteClips,
     handleToggleMute,
     handleDetachAudioClip,
+    handleTrackLabelEditStart,
     handleTrackPopoverChange,
     handleMoveTrack,
     handleRemoveTrack,
