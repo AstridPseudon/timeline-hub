@@ -171,6 +171,12 @@ export function ShotEditorView({
           const changes = Object.entries(settings as Record<string, unknown>).filter(([key]) => (
             !equal(submitted[key], normalized[key])
           ));
+          if (changes.length === 0) return;
+          if (raw !== undefined && raw !== null && (typeof raw !== 'object' || Array.isArray(raw))) {
+            const error = new Error('Cannot safely replace shot settings: the form does not contain its complete authored root value. Your draft is kept.');
+            normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
+            throw error;
+          }
           for (const [key] of changes) {
             const original = rawSettings[key];
             if (original !== null && typeof original === 'object'

@@ -12,6 +12,7 @@ import { updateCanonicalShotName, updateCanonicalShotSettings } from '@/tools/vi
 import type { Shot } from '@/domains/generation/types';
 import { toRuntimePublication } from '@/integrations/runtime/dataProvider.ts';
 import { createEntityStore } from '@/shared/state/createEntityStore';
+import { normalizeVideoTravelSettings } from '../settings';
 
 const capture = vi.hoisted(() => ({ persistence: null as any, onName: null as any, errors: vi.fn() }));
 vi.mock('../components/ShotEditor', () => ({ ShotSettingsEditor: (props: any) => { capture.onName = props.onUpdateShotName; return null; } }));
@@ -226,6 +227,75 @@ describe('direct shot writer raw payload preservation', () => {
     expect(state.publish).toHaveBeenCalledOnce();
   });
 
+  it.each(['absent', 'null', 'empty'] as const)('keeps an unchanged %s settings root without publishing display defaults', async (shape) => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    const source = input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha');
+    if (shape === 'absent') delete source.settings;
+    else source.settings = shape === 'null' ? null : {};
+    const before = structuredClone(input);
+    const state = await setup(input as typeof fixture);
+    const loaded = await capture.persistence.load('shot-alpha');
+    await capture.persistence.save('shot-alpha', loaded ?? normalizeVideoTravelSettings(null));
+    expect(state.publish).not.toHaveBeenCalled();
+    assert.deepStrictEqual(state.read(), before);
+    assert.deepStrictEqual(input, before);
+  });
+
+  it.each(['absent', 'null'] as const)('authors only the changed prompt when initializing an %s settings root', async (shape) => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    const source = input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha');
+    if (shape === 'absent') delete source.settings;
+    else source.settings = null;
+    const before = structuredClone(input);
+    const state = await setup(input as typeof fixture);
+    await capture.persistence.load('shot-alpha');
+    await capture.persistence.save('shot-alpha', { ...normalizeVideoTravelSettings(null), prompt: 'First authored prompt' });
+    assert.deepStrictEqual(state.publications[0].shot_revisions[0].payload.settings, { prompt: 'First authored prompt' });
+    assert.deepStrictEqual(state.read().shot_revisions.slice(0, -1), before.shot_revisions);
+    assert.deepStrictEqual(input, before);
+  });
+
+  it.each([['opaque-root', null], 'opaque-root', false, 0].map((raw) => ({ raw })))('keeps the draft before replacing an unrepresented raw settings root $raw', async ({ raw }) => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha').settings = raw;
+    const before = structuredClone(input);
+    const state = await setup(input as typeof fixture);
+    const persistence = capture.persistence;
+    await persistence.load('shot-alpha');
+    const loaded = normalizeVideoTravelSettings(raw);
+    const store = createEntityStore<Record<string, any>>({
+      toolId: 'shot-settings-root-preservation', defaults: {},
+      load: async () => ({ db: loaded, lastUsed: null }), save: persistence.save,
+    });
+    await store.getState().ensureEntity('shot-alpha');
+    store.getState().updateFields('shot-alpha', { prompt: 'Pending prompt' });
+    const draft = structuredClone(store.getState().entities['shot-alpha'].settings);
+    await expect(store.getState().saveImmediate('shot-alpha')).rejects.toThrow('Cannot safely replace shot settings');
+    expect(capture.errors).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ toastTitle: 'Shot settings draft kept' }));
+    expect(store.getState().entities['shot-alpha'].status).toBe('error');
+    expect(store.getState().isDirty('shot-alpha')).toBe(true);
+    assert.deepStrictEqual(store.getState().entities['shot-alpha'].settings, draft);
+    assert.deepStrictEqual(store.getState().entities['shot-alpha'].cleanSnapshot, loaded);
+    expect(state.publish).not.toHaveBeenCalled();
+    assert.deepStrictEqual(state.read(), before);
+    assert.deepStrictEqual(input, before);
+  });
+
+  it('ignores nested object key order while preserving the complete raw settings on a prompt edit', async () => {
+    const input = inputGraph();
+    const source = input.shot_revisions.find((row) => row.shot_id === 'shot-alpha')! as Record<string, any>;
+    const state = await setup(input);
+    const loaded = await capture.persistence.load('shot-alpha');
+    const reorder = (value: any): any => Array.isArray(value)
+      ? value.map(reorder)
+      : value && typeof value === 'object'
+        ? Object.fromEntries(Object.entries(value).reverse().map(([key, child]) => [key, reorder(child)]))
+        : value;
+    await capture.persistence.save('shot-alpha', { ...reorder(loaded), prompt: 'Reordered form' });
+    expect(capture.errors).not.toHaveBeenCalled();
+    assert.deepStrictEqual(state.publications[0].shot_revisions[0].payload.settings, { ...source.settings, prompt: 'Reordered form' });
+  });
+
   it('keeps ordinary compound edits, array order, and explicit root clears working', async () => {
     const input = structuredClone(fixture) as Record<string, any>;
     const source = input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha');
@@ -244,5 +314,17 @@ describe('direct shot writer raw payload preservation', () => {
     assert.deepStrictEqual(payload.settings, { ...source.settings, pairConfigs: pairs, selectedPhasePresetId: null });
     await capture.persistence.save('shot-alpha', { ...loaded, pairConfigs: pairs, selectedPhasePresetId: undefined });
     expect(Object.hasOwn(state.publications[1].shot_revisions[0].payload.settings, 'selectedPhasePresetId')).toBe(false);
+  });
+
+  it.each([null, undefined])('keeps an explicit compound root clear %j working when the form contains its complete authored value', async (clear) => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    const source = input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha');
+    source.settings = { prompt: 'Before', phaseConfig: { steps: [1, 2, 1], note: null } };
+    const state = await setup(input as typeof fixture);
+    const loaded = await capture.persistence.load('shot-alpha');
+    await capture.persistence.save('shot-alpha', { ...loaded, phaseConfig: clear });
+    assert.deepStrictEqual(state.publications[0].shot_revisions[0].payload.settings, {
+      prompt: 'Before', ...(clear === undefined ? {} : { phaseConfig: null }),
+    });
   });
 });
