@@ -1,0 +1,21 @@
+{
+  "version": "1.0.5",
+  "status": "REVIEW_CANDIDATE",
+  "members": [
+    "README.md",
+    "owner_film_cliplook_scan.py",
+    "tests/conftest.py",
+    "tests/test_owner_film_cliplook_scan.py"
+  ],
+  "change": "Only restore promised canonical tool/test filenames and bump version/README; scanner behavior identical to1.0.4.",
+  "zip": {
+    "filename": "owner-film-viewing-tools-v1.0.5.zip",
+    "bytes": 14758,
+    "sha256": "cb551e9daadfd82a39f458510204bbaeb7bbd4f448d60d55cc602fc57c7ecbce"
+  },
+  "tgz": {
+    "filename": "owner-film-viewing-tools-v1.0.5.tgz",
+    "bytes": 13281,
+    "sha256": "1d5b3df5d85d32319d806e7d4f213d362b2f635b576b222514b9988243c87b60"
+  }
+}
