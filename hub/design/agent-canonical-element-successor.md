@@ -63,3 +63,16 @@ The original real producer positive is retained as strict xfail. Against untouch
 Agent remains pinned to Runtime94114269 / 0.2.9; the real element cases use that immutable Runtime via the normal test locator. Runtime6023cfb's public schema still has no explicit typed producer guard. Generic-envelope transport is not publication qualification. New generated element/producer types, authentic assembler/App handoff, sockets/browser/render/pixel/macOS evidence and WC4 closure remain outside this source composition.
 
 Manager next: verify final harness commit and S2 raw schema hash, explicitly approve/freeze **S2**, then have Runtime publish a NEW normal generated pair from these exact complete bytes (`python generators/generate.py`, `python scripts/artifact_manifest.py` and normal release checks). Refresh Agent with `scripts/vendor_lock.py`, rerun retained-element and original producer positive qualification on that immutable pair, and only then consider activation/endpoint/WC4 gates. Never rewrite S1's freeze or historical releases. No full/full* suite was requested.
+
+## Matching-source evidence — 2026-10-20
+
+- Original selected schema/scalar/element neighbors: **287 passed**.
+- Producer/numeric/settled/current auto/media neighbors: **331 passed**.
+- Full-input schema compatibility and registry goldens: **23 passed**.
+- Ordinary outbox/provider/reservation neighbors: **250 passed**.
+- Direct immutable Runtime94114269 element module: **24 passed** (original nine plus 15 permanent negatives).
+- Central named `commit-integration`, request `agt-m2-element-current-union-commit-integration-1020100507-2360`: **49 passed**, exit 0, original 34 plus 15 new negatives. Snapshot tree `65fe2ed84a8cc09914f3dec0e4ddb854d9b30612`; every changed product/test file byte-matches the final worker source. External Runtime locator c0dcd387 does not override the test module's immutable 94114269 selection.
+- Actual Runtime6023cfb producer: **4 passed / 1 strict xfail**. The unchanged positive with `--runxfail` is **1 failed**, at the known normalized guard-record preview boundary. No green producer acceptance claim.
+- Targeted Ruff and `git diff --check`: pass. No full* request.
+
+Exact commands/results and qualification limits are permanently recorded in the candidate's `notes/report.md`; the harness-assigned commit is still required for manager freeze.
