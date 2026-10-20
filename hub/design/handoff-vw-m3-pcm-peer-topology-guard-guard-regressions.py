@@ -26,11 +26,11 @@ def _load(name, path):
 
 controller = _load(
     'served_pcm_guard_controller',
-    DESIGN / 'handoff-vw-m3-served-pcm-guard-fix-controller.py',
+    DESIGN / 'handoff-vw-m3-pcm-peer-topology-guard-controller.py',
 )
 fixture = _load(
     'served_pcm_guard_fixture',
-    DESIGN / 'handoff-vw-m3-served-pcm-guard-fix-test_normal_audio_served_sources.py',
+    DESIGN / 'handoff-vw-m3-pcm-peer-topology-guard-test_normal_audio_served_sources.py',
 )
 
 
@@ -110,3 +110,59 @@ def test_redbefore_greenafter_preserves_pytest_failure_code(monkeypatch, capsys)
         ['pytest'], {}, Path('.'), 'a' * 40, Path('.'), Path('/bin/node'),
     ) == 7
     assert 'preserving pytest return code: 7' in capsys.readouterr().err
+
+
+def _synthetic_graph(root):
+    (root / 'package').mkdir()
+    (root / 'package' / 'entry.js').write_text('approved\n')
+    (root / 'package' / 'alias.js').symlink_to('entry.js')
+
+
+def test_redbefore_greenafter_rejects_added_directory_cycle(tmp_path):
+    root = tmp_path / 'graph'
+    root.mkdir()
+    _synthetic_graph(root)
+    approved = controller.graph_inventory(root)
+
+    # RED before: comparing the live graph with itself cannot see new links.
+    assert controller.graph_inventory(root) == controller.graph_inventory(root)
+    (root / 'package' / 'self').symlink_to(root / 'package', target_is_directory=True)
+    # GREEN after: inventory terminates at the new cycle and refuses qualification.
+    with pytest.raises(RuntimeError, match='symlink cycle'):
+        controller.assert_approved_graph(root, expected=approved)
+
+
+def test_redbefore_greenafter_rejects_topology_drift_without_cycle(tmp_path):
+    root = tmp_path / 'graph'
+    root.mkdir()
+    _synthetic_graph(root)
+    approved = controller.graph_inventory(root)
+    (root / 'package' / 'new.js').write_text('unapproved\n')
+
+    # RED before: a current-vs-current comparison is tautologically green.
+    assert controller.graph_inventory(root) == controller.graph_inventory(root)
+    # GREEN after: exact equality to the retained manifest catches the addition.
+    with pytest.raises(RuntimeError, match='added='):
+        controller.assert_approved_graph(root, expected=approved)
+
+
+def test_redbefore_greenafter_rejects_changed_symlink_target(tmp_path):
+    root = tmp_path / 'graph'
+    root.mkdir()
+    _synthetic_graph(root)
+    (root / 'package' / 'other.js').write_text('other\n')
+    approved = controller.graph_inventory(root)
+    (root / 'package' / 'alias.js').unlink()
+    (root / 'package' / 'alias.js').symlink_to('other.js')
+
+    # RED before: file bytes alone do not describe the link topology.
+    assert controller.graph_inventory(root) != approved
+    # GREEN after: the retained link target is part of the exact approved graph.
+    with pytest.raises(RuntimeError, match='changed='):
+        controller.assert_approved_graph(root, expected=approved)
+
+
+def test_retained_manifest_is_the_graph_baseline():
+    expected = controller.approved_graph()
+    assert len(expected) == 21495
+    assert sum(key.endswith('@link') for key in expected) == 33

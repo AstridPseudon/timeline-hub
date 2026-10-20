@@ -16,7 +16,7 @@ import tempfile
 from pathlib import Path, PurePosixPath
 
 ORCH = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
-PREFIX = ORCH / 'design/handoff-vw-m3-served-pcm-guard-fix'
+PREFIX = ORCH / 'design/handoff-vw-m3-pcm-peer-topology-guard'
 ARCHIVE = ORCH / 'workers/vw-m3-release12/artifacts/banodoco-timeline-composition-0.0.12.tgz'
 ARCHIVE_SHA = '0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3'
 PYTHON = '/home/user/work/venv-agent/bin/python'
@@ -27,6 +27,19 @@ APPROVED_GRAPH_MANIFEST = Path(
     'scratchpad/orch/design/handoff-vw-m3-root-smoke-central-ready-prepare-pre.json'
 )
 APPROVED_GRAPH_MANIFEST_SHA256 = '2387ebb5e0beaf9b5c0eea064edf0d9e1425059f05f39e9cb31fea064a5414ed'
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def digest(path):
+    hasher = hashlib.sha256()
+    with Path(path).open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            hasher.update(chunk)
+    return hasher.hexdigest()
 
 
 def output(*args, cwd=None):
@@ -182,7 +195,7 @@ def main():
     # Service snapshots have .test-* names; direct worker execution stays closed.
     assert source.name.startswith('.test-'), 'run only from central test-service snapshot'
     test = Path(str(PREFIX) + '-test_normal_audio_served_sources.py')
-    own = ORCH / 'workers/vw-m3-served-pcm-guard-fix'
+    own = ORCH / 'workers/vw-m3-pcm-peer-topology-guard'
     with tempfile.TemporaryDirectory(prefix='central-pcm-', dir=own) as temporary:
         command = [PYTHON, '-B', '-m', 'pytest', '-c', str(source / 'pyproject.toml'),
                    '-p', 'no:cacheprovider', '--basetemp', temporary, '-q', str(test)]
