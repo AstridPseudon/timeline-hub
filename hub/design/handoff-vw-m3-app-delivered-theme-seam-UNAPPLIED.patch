@@ -1,0 +1,154 @@
+--- a/src/tools/video-editor/compositions/TimelineRenderer.tsx
++++ b/src/tools/video-editor/compositions/TimelineRenderer.tsx
+@@ -33,6 +33,7 @@
+   ThemeProvider,
+   useTheme,
+   type RuntimeTheme,
++  type Theme,
+ } from '@banodoco/timeline-composition/theme-api';
+ import { requireAstridElementHost, type AstridElementHost, type AstridDynamicSequenceEntry as DynamicSequenceComponentEntry } from '@/tools/video-editor/runtime/astrid-element-host.ts';
+ import { useSequenceComponentRegistrySnapshot } from '@/tools/video-editor/sequences/SequenceComponentRegistryContext.tsx';
+@@ -1585,9 +1586,9 @@
+   );
+ };
+ 
+-type TimelineRendererInput = { config: ResolvedTimelineConfig; compiledTransitions?: CompiledCanonicalTransitions };
+-
+-const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiledTransitions }) => {
++type TimelineRendererInput = { resolvedTheme?: Theme; config: ResolvedTimelineConfig; compiledTransitions?: CompiledCanonicalTransitions };
++
++const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiledTransitions, resolvedTheme }) => {
+   const host = useAstridElementHost();
+   const { entries: dynamicSequenceEntries } = useSequenceComponentRegistrySnapshot();
+   const clipTypeRegistry = useClipTypeRegistrySnapshot();
+@@ -1613,7 +1614,7 @@
+   }, [config, compiledTransitions]);
+   const shaderSnapshot = useShaderEffectRegistrySnapshot();
+   const fps = renderConfig.output.fps;
+-  const theme = useMemo(() => resolveTimelineRenderTheme(renderConfig), [renderConfig]);
++  const theme = useMemo(() => resolvedTheme ?? resolveTimelineRenderTheme(renderConfig), [resolvedTheme, renderConfig]);
+   const runtimeTheme = useMemo<RuntimeTheme>(() => ({
+     ...theme,
+     color: theme.visual.color,
+@@ -1790,9 +1791,9 @@
+   );
+ });
+ 
+-export const TimelineRenderer: FC<TimelineRendererInput & { astridElementHost?: AstridElementHost }> = memo(({ config, compiledTransitions, astridElementHost }) => {
++export const TimelineRenderer: FC<TimelineRendererInput & { astridElementHost?: AstridElementHost }> = memo(({ config, compiledTransitions, resolvedTheme, astridElementHost }) => {
+   const runtime = useContext(VideoEditorRuntimeContext);
+   const inheritedHost = useContext(AstridElementHostContext);
+   const host = requireAstridElementHost(astridElementHost ?? inheritedHost ?? runtime?.astridElementHost);
+-  return <AstridElementHostContext.Provider value={host}><TimelineRendererBody config={config} compiledTransitions={compiledTransitions} /></AstridElementHostContext.Provider>;
++  return <AstridElementHostContext.Provider value={host}><TimelineRendererBody config={config} compiledTransitions={compiledTransitions} resolvedTheme={resolvedTheme} /></AstridElementHostContext.Provider>;
+ });
+--- a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+@@ -1,3 +1,4 @@
++import type { Theme } from '@banodoco/timeline-composition/theme-api';
+ import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
+ import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+ import type { ComponentProps, ReactNode, RefObject } from 'react';
+@@ -104,6 +105,8 @@
+ }
+ 
+ interface RemotionPreviewProps {
++  /** Whole Agent result paired by the caller with this exact config. */
++  resolvedTheme?: Theme;
+   compiledTransitions?: CompiledCanonicalTransitions;
+   config: ResolvedTimelineConfig;
+   onTimeUpdate: (time: number) => void;
+@@ -121,6 +124,7 @@
+ }
+ 
+ interface PreviewDelivery {
++  resolvedTheme?: Theme;
+   compiledTransitions?: CompiledCanonicalTransitions;
+   config: ResolvedTimelineConfig;
+   revision: PreviewRevision;
+@@ -128,7 +132,7 @@
+ }
+ 
+ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>(function RemotionPreview(
+-  { config, compiledTransitions, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
++  { config, compiledTransitions, resolvedTheme, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
+   ref,
+ ) {
+   const runtime = useOptionalVideoEditorRuntime();
+@@ -139,17 +143,17 @@
+   const pendingSeekRef = useRef<PendingSeek | null>(null);
+   const seekFlushRafRef = useRef<number | null>(null);
+   const appliedConfigGenerationRef = useRef(0);
+-  const configIdentityRef = useRef({ config, compiledTransitions });
++  const configIdentityRef = useRef({ config, compiledTransitions, resolvedTheme });
+   const configGenerationRef = useRef(0);
+-  if (configIdentityRef.current.config !== config || configIdentityRef.current.compiledTransitions !== compiledTransitions) {
+-    configIdentityRef.current = { config, compiledTransitions };
++  if (configIdentityRef.current.config !== config || configIdentityRef.current.compiledTransitions !== compiledTransitions || configIdentityRef.current.resolvedTheme !== resolvedTheme) {
++    configIdentityRef.current = { config, compiledTransitions, resolvedTheme };
+     configGenerationRef.current += 1;
+   }
+   useRenderDiagnostic('RemotionPreview');
+   const markEventsEffect = useEffectDiagnostic('remotionPreview:events');
+   // Throttle config updates to the Player to avoid stutter during drag operations.
+   // The timeline canvas shows immediate visual feedback; the Player catches up after 150ms idle.
+-  const [delivery, setDelivery] = useState<PreviewDelivery>({config, compiledTransitions, revision: previewRevision, generation: 0});
++  const [delivery, setDelivery] = useState<PreviewDelivery>({config, compiledTransitions, resolvedTheme, revision: previewRevision, generation: 0});
+   const deferredConfig = delivery.config;
+   const previewRevisionRef = useRef(previewRevision);
+   previewRevisionRef.current = previewRevision;
+@@ -159,12 +163,14 @@
+   // update jump ahead of a deferred config update.
+   useEffect(() => {
+     setDelivery((current) => current.config === config
++      && current.compiledTransitions === compiledTransitions
++      && current.resolvedTheme === resolvedTheme
+       && current.revision.kind === previewRevision.kind
+       && current.revision.revisionId === previewRevision.revisionId
+       && current.revision.baseRevisionId === previewRevision.baseRevisionId
+       ? { ...current, revision: previewRevision }
+       : current);
+-  }, [config, previewRevision]);
++  }, [config, compiledTransitions, resolvedTheme, previewRevision]);
+ 
+   // Stable identity: reads only the state setter and refs, so effects can depend on it.
+   const setDeferredConfig = useCallback(
+@@ -202,6 +208,7 @@
+       latestDeliveryRef.current = {
+         config,
+         compiledTransitions,
++        resolvedTheme,
+         revision: previewRevisionRef.current,
+         generation: configGenerationRef.current,
+       };
+@@ -226,6 +233,7 @@
+       const nextDelivery = {
+         config: nextConfig,
+         compiledTransitions,
++        resolvedTheme,
+         revision: previewRevisionRef.current,
+         generation: configGenerationRef.current,
+       } satisfies PreviewDelivery;
+@@ -243,7 +251,7 @@
+         deferTimerRef.current = null;
+       }
+     };
+-  }, [config, compiledTransitions, isPlaying, flushDeferredConfig, setDeferredConfig]);
++  }, [config, compiledTransitions, resolvedTheme, isPlaying, flushDeferredConfig, setDeferredConfig]);
+ 
+   const outputProjection = useMemo(() => projectOutputTimelineConfig(deferredConfig), [deferredConfig]);
+   // Preserve the ordinary preview identity/mailbox when nothing is excluded.
+@@ -263,11 +271,12 @@
+   const inputProps = useMemo(() => ({
+     config: outputConfig,
+     compiledTransitions: delivery.compiledTransitions,
++    resolvedTheme: delivery.resolvedTheme,
+     preparing,
+     settling: shotsSettling,
+     previewRevision: delivery.revision,
+     ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
+-  }), [delivery.revision, delivery.compiledTransitions, outputConfig, preparing, shotsSettling, runtime?.astridElementHost]);
++  }), [delivery.revision, delivery.compiledTransitions, delivery.resolvedTheme, outputConfig, preparing, shotsSettling, runtime?.astridElementHost]);
+   const displayedRevisionLabel = previewRevisionLabel(delivery.revision);
+   // This is request status, not pixel provenance. It intentionally follows
+   // the current host read so recovery clears the notice even when the Player

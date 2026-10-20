@@ -1,0 +1,37 @@
+diff --git a/typescript/src/scene-evaluation.ts b/typescript/src/scene-evaluation.ts
+index 53e4aae..e2a0606 100644
+--- a/typescript/src/scene-evaluation.ts
++++ b/typescript/src/scene-evaluation.ts
+@@ -237,7 +237,9 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
+         geometryReason, reason => unknown('invalid-component-diagnostics', reason));
+       layers.push({clipId: clip.id, track: track.id, clipIndex: draw.clipIndex, z: 0,
+         drawLocalFrame: draw.drawLocalFrame, ownFrame: draw.ownFrame, contentFrame: draw.contentFrame, transitionOpacity: draw.opacity,
+-        opacity, visible, opaqueSupport, targetBounds, bounds, fullFrame, role: scene.roles[clip.id] ?? (track.id === 'plate' ? 'picture' : 'content'),
++        opacity, visible, opaqueSupport, targetBounds, bounds, fullFrame,
++        role: (Object.prototype.hasOwnProperty.call(scene.roles, clip.id) ? scene.roles[clip.id] : undefined)
++          ?? (track.id === 'plate' ? 'picture' : 'content'),
+         ...(diagnostics === undefined ? {} : {diagnostics}),
+         coverage: bounds.status === 'unknown' || uncertain ? 'unknown' : opaqueSupport === 'rect' && fullFrame && opacity! >= .999 ? 'covered' : 'partial', findings, dip});
+     }
+diff --git a/typescript/tests/scene-evaluation.test.ts b/typescript/tests/scene-evaluation.test.ts
+index 7853fb9..a3526e3 100644
+--- a/typescript/tests/scene-evaluation.test.ts
++++ b/typescript/tests/scene-evaluation.test.ts
+@@ -42,6 +42,17 @@ test('proven opaque visual media reports visible covered content', () => {
+   assert.deepEqual(frame.findings, []);
+ });
+ 
++test('scene roles use own clip-ID entries and preserve the track fallback', () => {
++  const ownRoles = JSON.parse('{"__proto__":"background"}') as Readonly<Record<string, string>>;
++  const overridden = querySceneFrame(prepare([clip({id: '__proto__'})], assets, {roles: ownRoles}), 0);
++  assert.equal(overridden.layers[0].role, 'background');
++
++  for (const id of ['__proto__', 'constructor', 'toString']) {
++    const fallback = querySceneFrame(prepare([clip({id})], assets, {roles: {}}), 0);
++    assert.equal(fallback.layers[0].role, 'content');
++  }
++});
++
+ test('unresolved or unproven media remains unknown instead of being treated as absent', () => {
+   const unresolved = querySceneFrame(prepare([clip({asset: 'missing'})]), 0);
+   assert.equal(unresolved.coverage, 'UNKNOWN');

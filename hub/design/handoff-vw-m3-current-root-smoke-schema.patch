@@ -1,0 +1,19 @@
+diff --git a/remotion/__smoke__/bundle.mjs b/remotion/__smoke__/bundle.mjs
+index 9a5c914e1..1a5588dc0 100644
+--- a/remotion/__smoke__/bundle.mjs
++++ b/remotion/__smoke__/bundle.mjs
+@@ -20,11 +20,14 @@ const compositionId = 'TimelineComposition';
+ const EXPECTED_ALLOWED = {
+   _ASSET_ENTRY_ALLOWED: [
+     'content_sha256',
++    'derivedFrom',
+     'duration',
+     'etag',
+     'file',
+     'fps',
+     'generationId',
++    'media_id',
++    'origin',
+     'resolution',
+     'thumbnailUrl',
+     'type',

@@ -1,0 +1,792 @@
+diff --git a/astrid/core/timeline/scene_answers.py b/astrid/core/timeline/scene_answers.py
+new file mode 100644
+index 000000000..9fe3a3690
+--- /dev/null
++++ b/astrid/core/timeline/scene_answers.py
+@@ -0,0 +1,114 @@
++"""Low-level public scene transport; input shape is not render-source authority."""
++
++from __future__ import annotations
++
++import json
++import os
++import subprocess
++import sys
++from collections.abc import Iterable, Mapping
++from typing import Any
++
++
++def remotion_runtime_status(*args, **kwargs):
++    """Resolve renderer admission only when a native scene query is requested."""
++    from astrid.core.rendering.remotion_runtime import remotion_runtime_status as _status
++
++    return _status(*args, **kwargs)
++
++
++def probe_context(*args, **kwargs):
++    """Resolve renderer environment probing only when a native scene query is requested."""
++    from astrid.core.rendering.remotion_runtime import probe_context as _probe
++
++    return _probe(*args, **kwargs)
++
++
++class SceneQueryUnavailable(RuntimeError):
++    """No scene answer was obtained; this is different from an empty scene."""
++
++
++def frames_at(scene: Mapping[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
++    """Query resolved visual ``SceneTrackInput`` records, never authored timelines.
++
++    ``scene`` contains tracks, assets, fps, width and height, with optional roles
++    and element IDs. The host supplies bottom-to-top painter order, clips sorted
++    by at, and one resolved Composition TransitionSpec (or null) per adjacent
++    pair, as in prepareCompositionScene. Compiled clips/IDs pass through intact.
++    No component capabilities, modifier declarations or media alpha evidence are
++    synthesized here. Canonical UNKNOWN findings pass through unchanged.
++    """
++    return _query({"scene": dict(scene)}, frames)
++
++
++def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
++    requested = list(frames)
++    payload = {**payload, "frames": requested}
++    try:
++        from astrid.core.rendering.remotion_runtime import RemotionValidationError
++    except ImportError as exc:
++        raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
++
++    try:
++        runtime = remotion_runtime_status(require_explicit_project=True)
++        if not runtime.available or runtime.project_dir is None or runtime.node_executable is None:
++            raise SceneQueryUnavailable(runtime.reason or "scene runtime unavailable")
++        helper = (runtime.project_dir / "scene-query.mjs").resolve(strict=True)
++        helper.relative_to(runtime.project_dir.resolve())
++        if not helper.is_file():
++            raise SceneQueryUnavailable("scene query helper is not a file")
++        if "props" in payload:
++            for name in ("native-scene.mjs", "src/host-scene.ts"):
++                entry = (runtime.project_dir / name).resolve(strict=True)
++                entry.relative_to(runtime.project_dir.resolve())
++                if not entry.is_file():
++                    raise SceneQueryUnavailable(f"scene host entry is not a file: {name}")
++        environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
++        # Status validated this selector as part of the renderer's registry
++        # context. The alias resolver must see that same admitted pack set.
++        if "ASTRID_PACKS_PATH" in os.environ:
++            environment["ASTRID_PACKS_PATH"] = os.environ["ASTRID_PACKS_PATH"]
++        result = subprocess.run(
++            [str(runtime.node_executable), str(helper), str(runtime.project_dir)],
++            input=json.dumps(payload, allow_nan=False),
++            cwd=runtime.project_dir, env=environment, capture_output=True, text=True, timeout=30,
++        )
++        if result.returncode:
++            raise SceneQueryUnavailable(result.stderr.strip() or "scene query failed")
++        answers = json.loads(result.stdout)
++        if (not isinstance(answers, list) or len(answers) != len(requested)
++                or any(not isinstance(answer, dict) for answer in answers)
++                or any(type(answer.get("frame")) is not int or answer["frame"] != frame
++                       for answer, frame in zip(answers, requested))):
++            raise SceneQueryUnavailable("invalid scene query response")
++        return answers
++    except (OSError, ValueError, TypeError, subprocess.SubprocessError, RemotionValidationError) as exc:
++        raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
++
++
++def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
++                   frames: Iterable[int]) -> list[dict[str, Any]]:
++    """Evaluate supplied Root props with the selected host's complete element maps.
++
++    Shape checks do not certify a revision, candidate, assets or theme. The source
++    owner must retain the exact prepared inputs and occurrence identity before
++    using these answers in a check or capture. No production caller is activated
++    here. Missing inputs are unavailable, never a guessed registry or theme.
++    """
++    from astrid.core.timeline.onscreen import element_coverage, role_of
++
++    timeline = props.get("timeline")
++    if (not isinstance(timeline, Mapping) or not isinstance(timeline.get("tracks"), list)
++            or not isinstance(timeline.get("clips"), list)
++            or not isinstance(props.get("assets"), Mapping)
++            or not isinstance(props["assets"].get("assets"), Mapping)
++            or not isinstance(props.get("theme"), Mapping)
++            or not isinstance(props["theme"].get("visual"), Mapping)):
++        raise SceneQueryUnavailable("exact Root timeline, assets registry and resolved runtime theme required")
++    clips = timeline["clips"]
++    if any(not isinstance(c, Mapping) or not isinstance(c.get("id"), str) for c in clips):
++        raise SceneQueryUnavailable("scene requires compiled clips with their exact IDs")
++    # Reuse current role declarations only; no private visibility math.
++    declarations = element_coverage({c.get("clipType", "") for c in clips})
++    roles = {c["id"]: role_of(c, c.get("track"), declarations) for c in clips}
++    return _query({"props": dict(props), "basis": dict(basis), "roles": roles}, frames)
+diff --git a/remotion/native-scene.mjs b/remotion/native-scene.mjs
+new file mode 100644
+index 000000000..8d783db85
+--- /dev/null
++++ b/remotion/native-scene.mjs
+@@ -0,0 +1,32 @@
++import path from 'node:path';
++import {pathToFileURL} from 'node:url';
++import {build} from 'esbuild';
++import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
++
++export const loadHostScene = async (project) => {
++  const aliases = remotionPrimitiveAliasesFor(project)({}).resolve.alias;
++  const result = await build({
++    absWorkingDir: project, entryPoints: [path.join(project, 'src/host-scene.ts')],
++    bundle: true, write: false, platform: 'node', format: 'esm',
++    nodePaths: [path.join(project, 'node_modules')], logLevel: 'silent',
++    plugins: [{name: 'renderer-aliases', setup(builder) {
++      builder.onResolve({filter: /^[^./]/}, async (args) => {
++        if (args.pluginData?.resolvingPackage) return;
++        const alias = Object.keys(aliases).find(key => args.path === key || args.path.startsWith(`${key}/`));
++        if (!alias) {
++          const resolved = await builder.resolve(args.path, {kind: args.kind,
++            resolveDir: args.resolveDir, pluginData: {resolvingPackage: true}});
++          if (resolved.errors.length) return {errors: resolved.errors};
++          return {path: path.isAbsolute(resolved.path) ? pathToFileURL(resolved.path).href : resolved.path,
++            external: true};
++        }
++        const target = path.join(aliases[alias], args.path.slice(alias.length).split('?')[0]);
++        return builder.resolve(target, {kind: args.kind, resolveDir: project});
++      });
++    }}],
++  });
++  // No executable output is written after launch binding. Sources, aliases,
++  // esbuild and installed dependencies are the selected runtime's bound inputs.
++  const entry = `data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`;
++  return (await import(entry)).prepareHostScene;
++};
+diff --git a/remotion/scene-query.mjs b/remotion/scene-query.mjs
+new file mode 100644
+index 000000000..7c0002a66
+--- /dev/null
++++ b/remotion/scene-query.mjs
+@@ -0,0 +1,40 @@
++import {readFileSync} from 'node:fs';
++import {createRequire} from 'node:module';
++import path from 'node:path';
++import {pathToFileURL} from 'node:url';
++
++try {
++  // Resolve the public export from the validated host install, never this checkout.
++  const require = createRequire(path.join(process.argv[2], 'package.json'));
++  const {prepareScene, querySceneFrame} = await import(pathToFileURL(
++    require.resolve('@banodoco/timeline-composition/evaluation')));
++  const input = JSON.parse(readFileSync(0, 'utf8'));
++  const {scene, props, basis, roles: hostRoles, frames} = input;
++  if (!Array.isArray(frames)) throw new Error('scene_frames_invalid');
++  let prepared;
++  if (props) {
++    const {loadHostScene} = await import('./native-scene.mjs');
++    const prepare = await loadHostScene(process.argv[2]);
++    prepared = prepare(props, basis, hostRoles ?? {});
++  } else {
++    const {tracks, assets, fps, width, height, roles, elements} = scene;
++    if (!Array.isArray(tracks) || !Array.isArray(frames) || !assets?.assets) {
++      throw new Error('scene_inputs_invalid');
++    }
++    for (const {track, clips, transitions} of tracks) {
++      if (track?.kind !== 'visual' || !Array.isArray(clips) || !Array.isArray(transitions)
++        || transitions.length !== Math.max(0, clips.length - 1)
++        || clips.some((clip, i) => i > 0 && clip.at < clips[i - 1].at)
++        || transitions.some(t => t !== null && (!Number.isFinite(t.T) || t.T <= 0
++          || !['dip', 'dissolve'].includes(t.kind) || !['start', 'center', 'end'].includes(t.align)))) {
++        throw new Error('scene_requires_renderer_order_and_resolved_transitions');
++      }
++    }
++    prepared = prepareScene(tracks, assets, fps, width, height,
++      {roles: Object.assign(Object.create(null), roles), elements: new Set(elements ?? [])});
++  }
++  process.stdout.write(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
++} catch (error) {
++  process.stderr.write(`scene evaluation unavailable: ${error.message}\n`);
++  process.exitCode = 1;
++}
+diff --git a/remotion/src/host-scene.ts b/remotion/src/host-scene.ts
+new file mode 100644
+index 000000000..88876f3c3
+--- /dev/null
++++ b/remotion/src/host-scene.ts
+@@ -0,0 +1,26 @@
++import {prepareCompositionScene, toRuntimeTheme} from '@banodoco/timeline-composition';
++import type {TimelineCompositionProps} from '@banodoco/timeline-composition';
++import {resolveHostRegistries} from './host-registries';
++
++// Evaluation only: supplied props/basis do not establish render-source authority.
++// Root's registries, painter order and public transition preparation are shared.
++export const prepareHostScene = (props: TimelineCompositionProps,
++  basis: {fps: number; width: number; height: number}, roles: Record<string, string>) => {
++  if (!props.theme || !props.assets?.assets || !Array.isArray(props.timeline?.clips)
++    || !Array.isArray(props.timeline.tracks)
++    || ![basis.fps, basis.width, basis.height].every(n => Number.isFinite(n) && n > 0)) {
++    throw new Error('scene requires exact Root props, explicit tracks and render frame basis');
++  }
++  const app = (props.timeline as typeof props.timeline & {app?: Record<string, unknown>}).app;
++  if (app?.astrid_render_clock) {
++    throw new Error('scene preparation does not evaluate Root RenderClockTail');
++  }
++  // TimelineComposition paints visual tracks in reverse authored order. Clip
++  // sorting and all transition/default resolution belong to the public prepare.
++  const tracks = [...props.timeline.tracks].reverse().filter(track => track.kind === 'visual')
++    .map(track => ({track, clips: props.timeline.clips.filter(clip => clip.track === track.id)}));
++  const theme = toRuntimeTheme(props.theme);
++  return prepareCompositionScene(tracks, props.assets, basis.fps, theme,
++    basis.width, basis.height, undefined, roles, {}, '', {}, resolveHostRegistries(theme),
++    props.compiledTransitions);
++};
+diff --git a/tests/packs/rendering/test_scene_answers.py b/tests/packs/rendering/test_scene_answers.py
+new file mode 100644
+index 000000000..2f43c0385
+--- /dev/null
++++ b/tests/packs/rendering/test_scene_answers.py
+@@ -0,0 +1,260 @@
++"""The Python adapter queries the immutable release, without renderer peers."""
++
++import copy
++import hashlib
++import json
++import os
++import shutil
++import subprocess
++import tarfile
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++from astrid.core.rendering import remotion_runtime
++from astrid.core.rendering.node_pin import resolve_pinned_node
++from astrid.core.timeline import scene_answers
++
++ROOT = Path(__file__).resolve().parents[3]
++ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.10.tgz"
++SHA256 = "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7"
++
++
++@pytest.fixture
++def installed(tmp_path, monkeypatch):
++    # Harness loader overrides are inadmissible; use the clean host environment.
++    for key in ("PYTHONPYCACHEPREFIX", "NODE_OPTIONS", "NODE_PATH"):
++        monkeypatch.delenv(key, raising=False)
++    toolchain = resolve_pinned_node(
++        ROOT / "remotion", override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    assert toolchain.ok, toolchain.problem
++    node = str(toolchain.path)
++    assert toolchain.version == "v20.19.4"
++    assert hashlib.sha256(ARTIFACT.read_bytes()).hexdigest() == SHA256
++    package = tmp_path / "node_modules/@banodoco/timeline-composition"
++    package.parent.mkdir(parents=True)
++    with tarfile.open(ARTIFACT) as archive:
++        archive.extractall(tmp_path, filter="data")
++    (tmp_path / "package").rename(package)
++    (tmp_path / "package.json").write_text('{"type":"module"}')
++    shutil.copyfile(ROOT / "remotion/scene-query.mjs", tmp_path / "scene-query.mjs")
++
++    def hashes():
++        return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
++                for p in package.rglob("*") if p.is_file()}
++
++    before = hashes()
++    assert len(before) == 77
++    # Admission is tested separately. Only the status seam is replaced here;
++    # subprocess/import/preparation/query all execute the real installed artifact.
++    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
++                        remotion_runtime.RemotionRuntimeStatus(
++                            True, tmp_path, node_executable=Path(node), node_version="v20.19.4"))
++    yield tmp_path, node, package
++    assert hashes() == before
++
++
++def scene(clips=None, transitions=None):
++    clips = clips if clips is not None else [
++        {"id": "exact:first", "at": 0, "hold": 1, "track": "plate", "clipType": "custom"},
++        {"id": "exact:second", "at": 1, "hold": 1, "track": "plate", "clipType": "custom"},
++    ]
++    return {"tracks": [{"track": {"id": "plate", "kind": "visual"}, "clips": clips,
++                        "transitions": transitions if transitions is not None else [None]}],
++            "assets": {"assets": {}}, "fps": 30, "width": 641, "height": 359}
++
++
++def canonical(project, node, payload, frames):
++    script = """
++import {prepareScene, querySceneFrame} from '@banodoco/timeline-composition/evaluation';
++import {readFileSync} from 'node:fs';
++const {scene: s, frames} = JSON.parse(readFileSync(0, 'utf8'));
++const prepared = prepareScene(s.tracks, s.assets, s.fps, s.width, s.height,
++  {roles: s.roles, elements: new Set(s.elements ?? [])});
++console.log(JSON.stringify(frames.map(frame => querySceneFrame(prepared, frame))));
++"""
++    return json.loads(subprocess.check_output(
++        [node, "--input-type=module", "-e", script], cwd=project, text=True,
++        input=json.dumps({"scene": payload, "frames": frames})))
++
++
++@pytest.mark.parametrize("kind", ["dip", "dissolve"])
++@pytest.mark.parametrize("align", ["start", "center", "end"])
++def test_transition_frames_equal_canonical_public_query(installed, kind, align):
++    project, node, _ = installed
++    payload = scene(transitions=[{"T": 8, "kind": kind, "align": align}])
++    original = copy.deepcopy(payload)
++    frames = [0, 21, 22, 25, 26, 29, 30, 31, 33, 34, 37, 38, 59, 60, 30]
++    answers = scene_answers.frames_at(payload, iter(frames))
++    assert answers == canonical(project, node, payload, frames)
++    assert payload == original
++    assert answers[-2]["layers"] == []  # half-open final boundary
++    if align == "end":
++        incoming = answers[2]["layers"][1]
++        assert (incoming["clipId"], incoming["drawLocalFrame"], incoming["ownFrame"]) == (
++            "exact:second", 0, 0)
++        assert answers[5]["layers"][1]["ownFrame"] == 0
++    if align == "start":
++        outgoing = answers[6]["layers"][0]
++        assert (outgoing["drawLocalFrame"], outgoing["ownFrame"]) == (30, 29)
++
++
++def test_cut_fractional_fps_and_empty_scene_are_answers(installed):
++    project, node, _ = installed
++    payload = scene()
++    payload["fps"] = 30000 / 1001
++    frames = [29, 30, 59, 60]
++    answers = scene_answers.frames_at(payload, frames)
++    assert answers == canonical(project, node, payload, frames)
++    assert [[layer["clipId"] for layer in answer["layers"]] for answer in answers] == [
++        ["exact:first"], ["exact:second"], ["exact:second"], []]
++    payload["tracks"] = []
++    assert scene_answers.frames_at(payload, [0]) == [
++        {"frame": 0, "width": 641, "height": 359, "layers": [],
++         "coverage": "GAP", "content": None, "findings": []}]
++
++
++def test_resolved_painter_order_and_compiled_payload_are_preserved(installed, monkeypatch):
++    project, node, _ = installed
++    payload = scene()
++    payload["tracks"][0]["clips"][0]["compiledExtension"] = {"opaque": [1, None, "keep"]}
++    payload["tracks"].append({"track": {"id": "front", "kind": "visual"}, "clips": [
++        {"id": "front:exact-id", "at": 0, "hold": 1, "clipType": "custom"}],
++        "transitions": []})
++    payload["roles"] = {"front:exact-id": "content"}
++    requests = []
++    run = subprocess.run
++
++    def capture(*args, **kwargs):
++        requests.append(json.loads(kwargs["input"]))
++        return run(*args, **kwargs)
++
++    monkeypatch.setattr(scene_answers.subprocess, "run", capture)
++    answers = scene_answers.frames_at(payload, [1, 0, 1])
++    assert requests == [{"scene": payload, "frames": [1, 0, 1]}]
++    monkeypatch.setattr(scene_answers.subprocess, "run", run)
++    assert answers == canonical(project, node, payload, [1, 0, 1])
++    assert [layer["clipId"] for layer in answers[0]["layers"]] == ["exact:first", "front:exact-id"]
++
++
++@pytest.mark.parametrize("clip_id", ["__proto__", "constructor", "toString"])
++@pytest.mark.parametrize("role", [None, "background"])
++def test_reserved_clip_ids_use_only_authored_role_overrides(installed, clip_id, role):
++    payload = scene(clips=[
++        {"id": clip_id, "track": "plate", "clipType": "custom", "at": 0, "hold": 1},
++    ], transitions=[])
++    if role is not None:
++        payload["roles"] = {clip_id: role}
++    answer = scene_answers.frames_at(payload, [0])[0]
++    assert answer["layers"][0]["clipId"] == clip_id
++    assert answer["layers"][0]["role"] == (role or "picture")
++    assert answer["coverage"] == "UNKNOWN"
++
++
++def test_unknown_custom_modifier_and_unresolved_media_stay_unknown(installed):
++    payload = scene(clips=[
++        {"id": "custom", "at": 0, "hold": 1, "clipType": "my-component",
++         "params": {"width": 641, "opaque": True}},
++        {"id": "missing", "at": 0, "hold": 1, "asset": "missing-media"},
++        {"id": "modifier", "at": 0, "hold": 1, "asset": "image",
++         "modifiers": [{"id": "m", "element": "custom-modifier", "params": {}}]},
++    ], transitions=[None, None])
++    payload["assets"]["assets"]["image"] = {
++        "file": "unverified.png", "type": "image", "resolution": "641x359", "opaque": True}
++    answer = scene_answers.frames_at(payload, [0])[0]
++    assert answer["coverage"] == "UNKNOWN"
++    assert all(layer["visible"] == "unknown" for layer in answer["layers"])
++    assert all(layer["opaqueSupport"] == "unknown" for layer in answer["layers"])
++    assert {finding["code"] for finding in answer["findings"]} >= {
++        "unknown-component-internals", "unknown-media-alpha", "modifier-admission-refused"}
++
++
++@pytest.mark.parametrize("broken", ["missing", "broken"])
++def test_public_package_failure_is_unavailable(installed, broken):
++    _, _, package = installed
++    # Use a separate copy so the immutable fixture itself remains unchanged.
++    project = package.parents[2] / broken
++    target = project / "node_modules/@banodoco/timeline-composition"
++    target.parent.mkdir(parents=True)
++    shutil.copytree(package, target)
++    shutil.copyfile(ROOT / "remotion/scene-query.mjs", project / "scene-query.mjs")
++    evaluation = target / "dist/evaluation.js"
++    if broken == "missing":
++        evaluation.unlink()
++    else:
++        evaluation.write_text("throw new Error('broken evaluation');")
++    status = scene_answers.remotion_runtime_status()
++    from unittest.mock import patch
++
++    with patch.object(scene_answers, "remotion_runtime_status", return_value=
++                      remotion_runtime.RemotionRuntimeStatus(
++                          True, project, node_executable=status.node_executable)):
++        with pytest.raises(scene_answers.SceneQueryUnavailable, match="unavailable"):
++            scene_answers.frames_at(scene(), [0])
++
++
++def test_invalid_runtime_context_never_becomes_empty_answer(tmp_path, monkeypatch):
++    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(tmp_path / "missing"))
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="project directory not found"):
++        scene_answers.frames_at({"tracks": []}, [0])
++
++
++def test_invalid_launch_validation_is_unavailable(installed, monkeypatch):
++    project, node, _ = installed
++    cli = project / remotion_runtime.REMOTION_CLI_RELATIVE_PATH
++    cli.parent.mkdir(parents=True)
++    cli.write_text("// not executed")
++    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", node)
++    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(project))
++    for key in list(os.environ):
++        if key.startswith("GIT_"):
++            monkeypatch.delenv(key)
++    for key in remotion_runtime._REF_ENV_KEYS:
++        monkeypatch.delenv(key, raising=False)
++    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
++                        remotion_runtime.RemotionRuntimeStatus(
++                            False, project, remotion_runtime.resolve_remotion_runtime_tools(project)[1]))
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="missing or invalid launch validation"):
++        scene_answers.frames_at(scene(), [0])
++
++
++def test_unsupported_loader_override_is_unavailable(installed, monkeypatch):
++    monkeypatch.setenv("NODE_OPTIONS", "--inspect")
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="unsupported loader"):
++        scene_answers.frames_at(scene(), [0])
++
++
++@pytest.mark.parametrize("escape", [False, True])
++def test_missing_or_escaped_admitted_helper_is_unavailable(installed, tmp_path_factory, escape):
++    project, _, _ = installed
++    helper = project / "scene-query.mjs"
++    helper.unlink()
++    if escape:
++        outside = tmp_path_factory.mktemp("scene-helper") / "scene-query.mjs"
++        outside.write_text("throw new Error('must not execute');")
++        helper.symlink_to(outside)
++    with pytest.raises(scene_answers.SceneQueryUnavailable):
++        scene_answers.frames_at(scene(), [0])
++
++
++@pytest.mark.parametrize("response", [[], [{"frame": 1}], [{"frame": False}], [None], {}])
++def test_invalid_response_cardinality_or_frame_is_unavailable(installed, monkeypatch, response):
++    monkeypatch.setattr(scene_answers.subprocess, "run", lambda *args, **kwargs:
++                        SimpleNamespace(returncode=0, stdout=json.dumps(response)))
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="invalid scene query response"):
++        scene_answers.frames_at(scene(), [0])
++
++
++@pytest.mark.parametrize("change", ["unsorted", "unresolved", "frame"])
++def test_invalid_resolved_inputs_are_unavailable(installed, change):
++    payload = scene()
++    frames = [0]
++    if change == "unsorted":
++        payload["tracks"][0]["clips"].reverse()
++    elif change == "unresolved":
++        payload["tracks"][0]["transitions"] = [{"id": "fade"}]
++    else:
++        frames = [-1]
++    with pytest.raises(scene_answers.SceneQueryUnavailable):
++        scene_answers.frames_at(payload, frames)
+diff --git a/tests/packs/rendering/test_scene_host.py b/tests/packs/rendering/test_scene_host.py
+new file mode 100644
+index 000000000..f1d4107d6
+--- /dev/null
++++ b/tests/packs/rendering/test_scene_host.py
+@@ -0,0 +1,284 @@
++"""Public10 host transport with current generated maps and renderer aliases.
++
++Status is replaced here; supplied props are not source-admission or pixel proof.
++"""
++import copy
++import hashlib
++import json
++import os
++import shutil
++import subprocess
++import tarfile
++from pathlib import Path
++
++import pytest
++
++from astrid.core.element.registry import ElementRegistry
++from astrid.core.element.schema import ElementDefinition
++from astrid.core.rendering.node_pin import resolve_pinned_node
++from astrid.core.rendering.remotion_runtime import RemotionRuntimeStatus
++from astrid.core.theme import builtin_theme
++from astrid.core.timeline import scene_answers
++from scripts import gen_effect_registry
++
++ROOT = Path(__file__).resolve().parents[3]
++REMOTION = ROOT / "remotion"
++
++BASIS = {"width": 1920, "height": 1080, "fps": 30}
++
++
++@pytest.fixture(scope="module")
++def host_project(tmp_path_factory):
++    project_root = tmp_path_factory.mktemp("native-host")
++    project = project_root / "remotion"
++    (project / "src").mkdir(parents=True)
++    (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
++    # Reuse a coherent peer graph read-only, with the actual pinned public10
++    # extracted into this test's private project. No install or shared mutation.
++    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
++    assert (peers / "esbuild").is_dir(), "requires provisioned renderer peers"
++    modules = project / "node_modules"
++    modules.mkdir()
++    for peer in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils", "esbuild"):
++        source = peers / peer
++        assert source.is_dir(), f"missing peer: {source}"
++        if peer != "esbuild":
++            expected = "18.3.1" if peer in ("react", "react-dom") else "4.0.509"
++            assert json.loads((source / "package.json").read_text())["version"] == expected
++        target = modules / peer
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.symlink_to(source.resolve(), target_is_directory=True)
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.10.tgz"
++    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
++        "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7")
++    with tarfile.open(artifact) as archive:
++        archive.extractall(project, filter="data")
++    package = modules / "@banodoco/timeline-composition"
++    package.parent.mkdir(parents=True)
++    (project / "package").rename(package)
++    for name in ("scene-query.mjs", "native-scene.mjs", "webpack-alias.mjs", "package.json"):
++        shutil.copyfile(REMOTION / name, project / name)
++    for name in ("host-scene.ts", "host-registries.ts"):
++        shutil.copyfile(REMOTION / "src" / name, project / "src" / name)
++    pack = project_root / "probe"
++    elements = list(gen_effect_registry._element_registry().list())
++    rendering = {}
++    for kind, element_id in (("effects", "custom"), ("animations", "fade-up"), ("transitions", "fade")):
++        element = pack / kind / element_id
++        element.mkdir(parents=True)
++        source = (REMOTION / "tests" / f"custom-{kind}.tsx").read_text()
++        if element_id == "custom":
++            source = "import {probeWidth} from 'probe-dependency';\n" + source.replace("width: 1920", "width: probeWidth")
++        (element / "component.tsx").write_text(source)
++        (element / "element.yaml").write_text(f"id: {element_id}\nkind: {kind[:-1]}\n")
++        rendering[f"{kind}/{element_id}"] = {"type": "element", "path": f"{kind}/{element_id}/element.yaml"}
++        elements.append(ElementDefinition(
++            id=element_id, kind=kind, root=element, source="pack:probe", editable=True,
++            priority=100, component=element / "component.tsx", schema={}, defaults={"durationFrames": 8},
++            metadata={"pack_id": "probe", "kind": "wrapper", "phase": ["entrance", "exit"],
++                      **({"clipTypeAliases": ["custom-alias"]} if element_id == "custom" else {})}))
++    (pack / "pack.json").write_text(json.dumps({"id": "probe", "rendering": rendering}))
++    dependency = pack / "node_modules/probe-dependency"
++    dependency.mkdir(parents=True)
++    (dependency / "package.json").write_text('{"type":"module","exports":"./index.js"}')
++    (dependency / "index.js").write_text('export const probeWidth = 1920;')
++    registry = ElementRegistry(elements)
++    with pytest.MonkeyPatch.context() as patch:
++        patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
++        for kind in ("effects", "animations", "transitions"):
++            (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
++    assert json.loads((package / "package.json").read_text())["version"] == "0.0.10"
++    def hashes():
++        return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
++                for p in package.rglob("*") if p.is_file()}
++    before = hashes()
++    assert len(before) == 77
++    yield project, pack
++    assert hashes() == before
++
++
++@pytest.fixture
++def native_host(host_project, monkeypatch):
++    project, pack = host_project
++    toolchain = resolve_pinned_node(REMOTION, override=os.environ.get("ASTRID_NODE_EXECUTABLE"))
++    assert toolchain.ok and toolchain.version == "v20.19.4"
++    for key in ("NODE_OPTIONS", "NODE_PATH", "PYTHONPYCACHEPREFIX"):
++        monkeypatch.delenv(key, raising=False)
++    monkeypatch.setenv("ASTRID_PACKS_PATH", str(pack))
++    monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs:
++                        RemotionRuntimeStatus(True, project, node_executable=toolchain.path))
++    return project
++
++
++def props(clips=None, *, theme=None, assets=None):
++    return {"timeline": {"theme": "stale-config-slug", "tracks": [{"id": "plate", "kind": "visual"}],
++                         "clips": clips or []},
++            "assets": assets if assets is not None else {"assets": {}},
++            "theme": theme if theme is not None else builtin_theme()}
++
++
++def test_native_host_default_custom_alias_capability_and_immutable_props(native_host):
++    p = props([{"id": "first", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1,
++                "params": {"nested": [1, None, "preserve"]}}])
++    original = copy.deepcopy(p)
++    first, end = scene_answers.host_frames_at(p, BASIS, [0, 30])
++    assert first["coverage"] == "COVERED"
++    assert first["layers"][0]["bounds"] == {"status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080}}
++    assert first["layers"][0]["opacity"] == 1
++    assert end["coverage"] == "GAP" and end["layers"] == []
++    assert p == original
++    p["timeline"]["clips"][0]["elementRef"] = {"kind": "effect", "id": "custom", "packId": "probe"}
++    assert scene_answers.host_frames_at(p, BASIS, [0])[0]["coverage"] == "COVERED"
++    p["timeline"]["clips"][0]["elementRef"]["packId"] = "missing"
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="Unknown effect owner"):
++        scene_answers.host_frames_at(p, BASIS, [0])
++
++
++def test_native_host_uses_exact_assets_and_runtime_theme(native_host):
++    clip = {"id": "media", "track": "plate", "clipType": "image", "asset": "P", "at": 0, "hold": 1}
++    basis = {"width": 200, "height": 100, "fps": 30000 / 1001}
++    p = props([clip], assets={"assets": {"P": {"file": "p.png", "type": "image", "resolution": "100x200"}}})
++    answer = scene_answers.host_frames_at(p, basis, [0])[0]
++    assert answer["layers"][0]["bounds"]["rect"] == {"x": 75, "y": 0, "width": 50, "height": 100}
++    assert answer["coverage"] == "UNKNOWN" and answer["layers"][0]["opacity"] is None
++    p["assets"] = {"assets": {}}
++    assert scene_answers.host_frames_at(p, basis, [0])[0]["layers"][0]["bounds"]["status"] == "unknown"
++    p = props([{**clip, "clipType": "art-card"}])
++    answer = scene_answers.host_frames_at(p, basis, [0])[0]
++    assert answer["coverage"] == "UNKNOWN"
++    # Admission is distinct from alpha: art-card intentionally has no declared
++    # bounds capability. Inspect the prepared host set, never invent geometry.
++    script = """
++import {loadHostScene} from './native-scene.mjs';
++import {DEFAULT_THEME} from '@banodoco/timeline-composition';
++const prepare = await loadHostScene(process.cwd());
++console.log(JSON.stringify(['banodoco-default', '2rp'].map(id =>
++  prepare({timeline: {theme: 'stale', clips: [], tracks: []}, assets: {assets: {}},
++    theme: {...DEFAULT_THEME, id}}, {width: 200, height: 100, fps: 30}, {}).elements.has('art-card'))));
++"""
++    result = subprocess.run([str(scene_answers.remotion_runtime_status().node_executable), "--input-type=module", "-e", script],
++                            cwd=native_host, check=True, text=True, capture_output=True, timeout=30)
++    assert json.loads(result.stdout) == [False, True]
++
++
++@pytest.mark.parametrize("align", ["start", "center", "end"])
++def test_native_host_resolves_custom_transition_defaults_and_boundaries(native_host, align):
++    clips = [{"id": "first", "track": "plate", "clipType": "custom", "at": 0, "hold": 1,
++              "transition": {"id": "fade", "align": align}},
++             {"id": "next", "track": "plate", "clipType": "custom", "at": 1, "hold": 1}]
++    answers = scene_answers.host_frames_at(props(clips), BASIS, [21, 22, 26, 29, 30, 33, 34, 37, 38, 59, 60])
++    assert answers[-1]["layers"] == []
++    incoming_start = {"end": 22, "center": 26, "start": 30}[align]
++    active = [a["frame"] for a in answers if any(layer["clipId"] == "next" for layer in a["layers"])]
++    assert min(active) == incoming_start
++    if align == "end":
++        incoming = next(layer for layer in answers[1]["layers"] if layer["clipId"] == "next")
++        assert incoming["drawLocalFrame"] == incoming["ownFrame"] == 0
++    clips[0]["transition"] = "not-admitted"
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="Unknown transition"):
++        scene_answers.host_frames_at(props(clips), BASIS, [0])
++
++
++def test_large_native_batch_is_not_truncated(native_host):
++    p = props([{"id": "first", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 10}])
++    frames = list(range(300))
++    answers = scene_answers.host_frames_at(p, BASIS, frames)
++    assert [answer["frame"] for answer in answers] == frames
++    assert all(answer["coverage"] == "COVERED" for answer in answers)
++
++
++def test_native_host_rational_frame_clock_is_half_open(native_host):
++    fps = 30000 / 1001
++    clip = {"id": "immutable:clip", "track": "plate", "clipType": "custom-alias", "at": 1001 / 30000,
++            "hold": 2002 / 30000, "opaqueExtension": {"preserved": [None, 2]}}
++    p = props([clip])
++    before = copy.deepcopy(p)
++    answers = scene_answers.host_frames_at(p, {**BASIS, "fps": fps}, [0, 1, 2, 3, 1])
++    assert [[layer["clipId"] for layer in answer["layers"]] for answer in answers] == [
++        [], ["immutable:clip"], ["immutable:clip"], [], ["immutable:clip"]]
++    assert p == before
++
++
++def test_native_host_preserves_root_painter_order_and_current_roles(native_host):
++    p = props([
++        {"id": "occ:front", "track": "front", "clipType": "custom-alias", "at": 0, "hold": 1,
++         "opacity": 0.5},
++        {"id": "occ:plate", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1},
++    ])
++    p["timeline"]["tracks"] = [
++        {"id": "front", "kind": "visual"}, {"id": "plate", "kind": "visual"},
++        {"id": "music", "kind": "audio"},
++    ]
++    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
++    assert [(layer["clipId"], layer["role"]) for layer in answer["layers"]] == [
++        ("occ:plate", "picture"), ("occ:front", "content")]
++    assert answer["coverage"] == "COVERED" and answer["content"] == "CONTENT"
++
++
++def test_native_host_passes_public10_compiled_transitions_unchanged(native_host):
++    p = props([
++        {"id": "occ:first", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1},
++        {"id": "occ:next", "track": "plate", "clipType": "custom-alias", "at": 1, "hold": 1},
++    ])
++    p["compiledTransitions"] = {"fps": 30, "tracks": [{
++        "trackId": "plate", "clipIds": ["occ:first", "occ:next"],
++        "incomingTransitions": [None, {"T": 8}],
++    }]}
++    original = copy.deepcopy(p)
++    answers = scene_answers.host_frames_at(p, BASIS, [21, 22, 25, 29, 30])
++    assert [len(answer["layers"]) for answer in answers] == [1, 2, 2, 2, 1]
++    incoming = answers[2]["layers"][1]
++    assert (incoming["clipId"], incoming["drawLocalFrame"], incoming["ownFrame"]) == (
++        "occ:next", 3, 0)
++    assert all(answer["coverage"] == "COVERED" for answer in answers)
++    assert p == original
++    p["compiledTransitions"]["fps"] = 24
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="transition/invalid-compilation"):
++        scene_answers.host_frames_at(p, BASIS, [0])
++
++
++@pytest.mark.parametrize("missing", ["theme", "assets", "tracks"])
++def test_missing_host_input_is_unavailable_not_an_empty_scene(native_host, missing):
++    p = props()
++    if missing == "tracks":
++        del p["timeline"]["tracks"]
++    else:
++        del p[missing]
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="Root"):
++        scene_answers.host_frames_at(p, BASIS, [0])
++
++
++def test_source_metadata_does_not_supply_missing_host_inputs(native_host):
++    p = props()
++    p["timeline"]["metadata"] = {"revision_id": "unverified", "certified": True}
++    p.pop("assets")
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="Root"):
++        scene_answers.host_frames_at(p, BASIS, [0])
++
++
++def test_declared_background_has_known_empty_content(native_host, tmp_path, monkeypatch):
++    from astrid.core.timeline import onscreen
++
++    # A role declaration for the rectangle probe, not a claim about AM media.
++    manifest = tmp_path / "probe/rendering/elements/effects/custom-alias/element.yaml"
++    manifest.parent.mkdir(parents=True)
++    manifest.write_text("metadata:\n  coverage: background\n")
++    monkeypatch.setattr(onscreen, "_PACKS_ROOT", tmp_path)
++    monkeypatch.setattr(onscreen, "_COVERAGE_CACHE", {})
++    p = props([{"id": "background", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1}])
++    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
++    assert answer["layers"][0]["role"] == "background"
++    assert answer["coverage"] == "COVERED" and answer["content"] == "EMPTY"
++
++
++def test_unknown_animation_diagnostics_and_root_tail_are_preserved(native_host):
++    p = props([{"id": "clip", "track": "plate", "clipType": "custom-alias",
++                "at": 0, "hold": 1, "entrance": "not-registered"}])
++    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
++    assert answer["coverage"] == "UNKNOWN"
++    assert answer["layers"][0]["visible"] == "unknown"
++    assert {finding["code"] for finding in answer["findings"]} == {"unknown-animation-geometry"}
++    p = props()
++    p["timeline"]["app"] = {"astrid_render_clock": {"render_duration_frames": 60}}
++    with pytest.raises(scene_answers.SceneQueryUnavailable, match="RenderClockTail"):
++        scene_answers.host_frames_at(p, BASIS, [0])

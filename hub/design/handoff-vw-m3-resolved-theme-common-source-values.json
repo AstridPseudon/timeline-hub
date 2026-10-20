@@ -1,0 +1,219 @@
+{
+  "qualification": "offline resolver outputs only; no host/browser delivery",
+  "source": {
+    "agent_commit": "384918908aa8c75229c2b6ccdd8fda03b7ce24a1",
+    "files": {
+      "astrid/packs/rendering/shared/rendering_backend/__init__.py": "671632535737ac1c6a22f869f20347de6c6005808a90243a4fea80ef6895a967",
+      "astrid/core/theme/_schema.py": "d15074cb725289d336d26cfd806c6056f4da00ee9e6680adc114d5aef68d6052"
+    },
+    "resolver": "astrid.packs.rendering.shared.rendering_backend._resolved_theme_for_render"
+  },
+  "cases": {
+    "implicit": {
+      "config": {
+        "tracks": [],
+        "clips": []
+      },
+      "theme": {
+        "id": "banodoco-default",
+        "visual": {
+          "color": {
+            "fg": "#FAFAFA",
+            "bg": "#050814",
+            "accent": "#67E8F9"
+          },
+          "type": {
+            "families": {
+              "heading": "Arial",
+              "body": "Arial",
+              "mono": "monospace"
+            },
+            "size": {
+              "base": 32,
+              "small": 22,
+              "large": 84
+            },
+            "weight": {
+              "normal": 400,
+              "bold": 600
+            },
+            "lineHeight": 1.2
+          },
+          "motion": {
+            "fadeMs": 450
+          },
+          "canvas": {
+            "width": 1920,
+            "height": 1080,
+            "fps": 30
+          }
+        }
+      }
+    },
+    "explicit_default": {
+      "config": {
+        "tracks": [],
+        "clips": [],
+        "theme": "banodoco-default"
+      },
+      "theme": {
+        "id": "banodoco-default",
+        "visual": {
+          "color": {
+            "fg": "#FAFAFA",
+            "bg": "#050814",
+            "accent": "#67E8F9"
+          },
+          "type": {
+            "families": {
+              "heading": "Arial",
+              "body": "Arial",
+              "mono": "monospace"
+            },
+            "size": {
+              "base": 32,
+              "small": 22,
+              "large": 84
+            },
+            "weight": {
+              "normal": 400,
+              "bold": 600
+            },
+            "lineHeight": 1.2
+          },
+          "motion": {
+            "fadeMs": 450
+          },
+          "canvas": {
+            "width": 1920,
+            "height": 1080,
+            "fps": 30
+          }
+        }
+      }
+    },
+    "color_override": {
+      "config": {
+        "tracks": [],
+        "clips": [],
+        "theme_overrides": {
+          "visual": {
+            "color": {
+              "bg": "#123456"
+            }
+          }
+        }
+      },
+      "theme": {
+        "id": "banodoco-default",
+        "visual": {
+          "color": {
+            "fg": "#FAFAFA",
+            "bg": "#123456",
+            "accent": "#67E8F9"
+          },
+          "type": {
+            "families": {
+              "heading": "Arial",
+              "body": "Arial",
+              "mono": "monospace"
+            },
+            "size": {
+              "base": 32,
+              "small": 22,
+              "large": 84
+            },
+            "weight": {
+              "normal": 400,
+              "bold": 600
+            },
+            "lineHeight": 1.2
+          },
+          "motion": {
+            "fadeMs": 450
+          },
+          "canvas": {
+            "width": 1920,
+            "height": 1080,
+            "fps": 30
+          }
+        }
+      }
+    },
+    "full_visual_override": {
+      "config": {
+        "tracks": [],
+        "clips": [],
+        "theme_overrides": {
+          "visual": {
+            "color": {
+              "fg": "#FAFAFA",
+              "bg": "#273849",
+              "accent": "#67E8F9"
+            },
+            "type": {
+              "families": {
+                "heading": "Example authored face",
+                "body": "Arial",
+                "mono": "monospace"
+              },
+              "size": {
+                "base": 32,
+                "small": 22,
+                "large": 84
+              },
+              "weight": {
+                "normal": 400,
+                "bold": 600
+              },
+              "lineHeight": 1.2
+            },
+            "motion": {
+              "fadeMs": 450
+            },
+            "canvas": {
+              "width": 1920,
+              "height": 1080,
+              "fps": 30
+            }
+          }
+        }
+      },
+      "theme": {
+        "id": "banodoco-default",
+        "visual": {
+          "color": {
+            "fg": "#FAFAFA",
+            "bg": "#273849",
+            "accent": "#67E8F9"
+          },
+          "type": {
+            "families": {
+              "heading": "Example authored face",
+              "body": "Arial",
+              "mono": "monospace"
+            },
+            "size": {
+              "base": 32,
+              "small": 22,
+              "large": 84
+            },
+            "weight": {
+              "normal": 400,
+              "bold": 600
+            },
+            "lineHeight": 1.2
+          },
+          "motion": {
+            "fadeMs": 450
+          },
+          "canvas": {
+            "width": 1920,
+            "height": 1080,
+            "fps": 30
+          }
+        }
+      }
+    }
+  }
+}
