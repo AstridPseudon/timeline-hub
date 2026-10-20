@@ -1,0 +1,2 @@
+# Viewing4256 one-line compatibility request
+Actual owner cap3a4350f9d9a578f817568d5fe348c5d750595129 alreadyhas EXACT Object.prototype.hasOwnProperty.call(rawApp,key) in shotTimelineDataProvider.ts. It came through owner93696b62 ES2020fix, projecttsc0. Therefore remote4256efc2e is SUPERSEDED forport; no duplicate/oldancestrymerge. Cap itself remainsHELD on Viewing15:54consumercorrection, notthistypefix. PCM30b8 narrowrepair portedontoactualMAIN/public13candidate1c9 independentlyAPPROVE/161PASS, waitingintegrationafterpreservationrulefulfilled.
