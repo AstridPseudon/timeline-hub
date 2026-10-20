@@ -113,8 +113,13 @@ async function sourceWindow(page: Page, seed: ThreeProductsSeed) {
   // selection opens Timing on touch. Source In/Out are the media clip's
   // controls in that Timing tab.
   await page.getByRole('tab', { name: 'Timing', exact: true }).click();
-  const input = page.getByLabel('Source In');
-  await expect(input).toBeVisible();
+  // Base UI labels the non-editable NumberField/ScrubField root. Its visible
+  // native input is the real user-editable control; the sibling aria-hidden
+  // input only participates in form validation.
+  const scrubField = page.getByLabel('Source In');
+  await expect(scrubField).toBeVisible();
+  const input = scrubField.locator('input:not([aria-hidden="true"])');
+  await expect(input).toBeEditable();
   return input;
 }
 
