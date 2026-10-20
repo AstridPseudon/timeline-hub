@@ -1,4 +1,4 @@
-<!-- main | 2026-10-20T00:58:44Z | dispatcher heartbeat 5s -->
+<!-- main | 2026-10-20T01:03:56Z | dispatcher heartbeat 13s -->
 # runtime — 2026-10-20T00:56Z
 Milestone: Runtime M1 exit COMPLETE (orchestrator23:34); global M1 still NOT RECORDED in PLAN. M0 COMPLETE. M2 branches active; ALL integration merges held. D13 product beyond retry bug waits M1 record.
 Integrated: Runtime tl/integration9f9b25c/tree5c3a7e71/client0.2.1, Agentf6fbe741, App2bfde69ea, Composition7aa384a. Destination-occupancy refusal +two-project isolation integrated. Final Runtime full `env ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=$PWD:/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -n 3` =>3790PASS/7EXACTmainFAIL/18SKIP153s (full-restore-integration-1019233020-32728); zero new. Neutral162+actual5+retained/restore/ownslot20+Agent permanent5 PASS. Browser original5+restore+mixed210s PASS on recorded historical tuples. App full now classified6baseline+3load-flaky/16isolatedPASS per App lead; orchestrator owns global record. No macOS/live/film/frame/audio claim.

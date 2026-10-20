@@ -588,3 +588,85 @@ this is the recovered occurrence addition, not the composed foundation hash.
 Manager owns normal root/artifact generation after composition; M2 merges still
 wait PLAN's M1 record. Portable pack custody stays on the already ACKed
 snapshot_object/portable bytes/document_object seam and its separate Runtime owner.
+
+Agent popup recovery final source: canonical schema raw SHA256
+`8b48748f9220e4b79dce4ad1ccb8b9e9f28b314fc96f71f34d6fec7de4ab480f`;
+ops occurrence.add-media@1 / occurrence.swap-media@1. Contract and exact golden
+published in design/m2-popup-native-contract.md. Final direct neighbors470PASS
+(16.40s); central agt-m2-popup-media-recover-commit-integration-1020005644-22288
+42PASS/12strictxfail (26.31s), Runtime9f9b25c, source tree2621b21c. Remaining
+xfails are ONLY frozen asset-address schema boundary; real credential revocation
+passes. No positive real popup acceptance claimed. Manager should compose exact
+foundation+popup source before requesting normal Runtime root generation and
+paired pin; no Runtime/schema override or Bundle1 move. New worker final report:
+workers/agt-m2-popup-media-recover/notes/report.md. M2 integration remains held.
+
+## Agent00:59 recovery handoff
+Foundation exact committed NEWcandidate tl/agt-m2-foundation-recover84db8bde /canonical schema SHA256394e195332ad47fc1a355237b1020634a2adc088f4bb309f7bcb53fc06719d4e =reviewed8fe7 schema+ONLY4rootpatternsdb5; no officialfreeze/releaseyet because popupscopedassetunioncandidate next. 1029nonnetworkPASS/4existingplatformSKIP/5strictxfail (3selected-schema+2newrootalias), directactual4PASS9f, exactfrozenRuntime6be pair central52PASS1strictxfail112.69s. Root alias/stage fix assignedagt-m2-root-stage-alias. ScopedmaterializationID/birthfact work assignedagt-m2-materialization-identity; avoidduplicatingRuntimeoccupancy registry. Please prepare normalofficialrootgeneration oncecomposedpopupsource published; old0.2.2frozenpair unchanged.
+Pack serializer tl/agt-m2-pack-custody-recoverb2b51c4a LEASEACK forRuntimehostpair, doNOTrecycle/mutate. Native PARAMprovider/capture owneragt-m2-params-retained-wire NEWbranchfromb2, usingRuntimeb3ce config_source theninternaldocument_object. Minimalop-specificDocumentPin neededforfirstuseisbeingdesigned (candidateclosed schema_source optionalarg, selectedpackrequired; noDTO/manifest/inlineSchema); workerwillfreeze necessity/spellingbeforewire. No duplicateRuntimehostpair request. Params0.2.2frozen refs unchanged; normalofficialfuturepairedartifacts awaitproof.
+WordrestoredecisionACK: canonicalstablewordrefauthoritative, humantextecho, no restoreargchange/historynamespace. Newagt-m2-word-authored-reference tests-onlydesign follows437a4b6a counterexample; no defaultcompileractivation.
+
+## Real portable Agent/Runtime host pairing — rt-m2-real-portable-pack-pair
+Exact pair: Runtime base `b3ce5aa65151a6174064d73838ad23da4a8a7141`, new-test source tree `8e1337824f40d104fd8733895af5cbf8a9146527`; Agent read-only `tl/agt-m2-pack-custody-recover` HEAD `b2b51c4a9f4b66198e6bc34a533b65efe72bd6dc`, tree `74c40179eb16fd73400b8d612a8e3c896fb945b4`. Each new test preflights exact Agent HEAD/tree/clean source/import location. Only new Runtime `tests/test_timeline_portable_pack_integration.py` changed; blob `608ec5884d400febfb5a688bf9847ef6ac1a61fb`. Runtime product review remains separate.
+
+Actual Agent admission serializes original resources/receipt, imports through real Runtime ingest into managed CAS, publishes through real Document CAS, then consumes exact config_source + scoped document_object with actual admitted_element_snapshot_descriptor. V1 exact declaration/resource/receipt bytes survive V2 admission, complete source/cache/current-Document removal, Runtime reopen, zero-provider exact accepted retry, and fresh retained-input host replay. Wrong revision/owner/objecthash, missing association, corrupt blob, uncaptured object and post-capture association race refuse without acceptance writes. Matching legacy backfill and descriptor-stable no-op after cache loss pass. Build receipt seam is fixture setup only; save/replay renderer/launcher/source/cache and pure-decoder external-read tripwires are active. PreparedProvider drives host acceptance only, with no fabricated history or native PARAM semantics.
+
+Direct new tests: **9 passed in 2.88s**. Direct Runtime neighbors: **119 passed, 7 integration tests deselected in 12.38s**. Central named `pack-portable-agentb2b51c4a-integration --files tests/test_timeline_portable_pack_integration.py`: **9 passed in 4.62s**, service exit0/5s, run `rt-m2-real-portable-pack-pair-pack-portable-agentb2b51c4a-integration-1020005928-11632`. Both diff/whitespace checks pass. Exact commands/results/limits: `workers/rt-m2-real-portable-pack-pair/{report.md,notes/report.md}`; both `commit-msg` and `commit-msg.txt` ready. Local temp output removed. No full/install/browser, product/schema/generated/pin changes, existing assertion changes, xfail flipping or git mutation/push.
+
+This qualifies the actual serializer/admission/retained-input HOST BOUNDARY only. Native PARAM success/replay/inverse/restore, real pack-host build and official paired artifact compatibility remain separate/unverified. No task blocker or decision deviation. Next: manager review, separate Agent native wiring and approved Runtime product/artifact qualification. All M2 merges HELD until PLAN M1 record. Bounded evidence complete; stopping.
+
+## Agent retained PARAM wire — agt-m2-params-retained-wire
+Before wiring: using paired Runtime `b3ce5aa` (`tl/rt-m2-pack-custody-resume`) unchanged. Agent will add ONLY optional closed `schema_source: DocumentPin` to canonical `ClipSetParamsArgs` (`document_id`, positive integer `version`, sha256 `content_digest`). Needed to declare the EXACT original first-use capture through existing config_source authority; selected project-pack value edits require it. No latest resolution on replay, new top-level DTO, manifest authority, inline schema or Port method. Provider independently config_source(pin), then document_object(pin, selected admission.snapshot_object.object_id), then pure admitted_element_snapshot_descriptor. Existing source dependency/binding + manifest documents carry capture provenance. Frozen bundles/pins remain untouched; official schema/artifact regeneration remains coordinated release work. Actual normal-service pair tests will report exact old schema/vendor seam if blocked; no bypass.
+
+## agt-m2-materialization-identity — pre-code trace and bounded plan
+
+Base84db8bde; PLAN/M1 probe+regression, retrack154a70a9 strict xfail,
+Runtimeb8913c6 guard and current9f9b25c read. Other worker
+agt-m2-root-stage-alias inspected read-only; its inverse work is separate.
+No Runtime/schema/artifact/pin/frozen Bundle1 edits planned.
+
+Trace: open_authoring_bundle computes virtual repeated-source shot IDs from
+(project,timeline,occurrence,source shot), and item IDs from the same scope plus
+source item. Single-source slots retain physical source IDs. These already
+scoped virtual IDs are NOT births: State.entity(shot:virtual) is present before
+any command. compile_authoring_candidate publishes changed virtual shots under
+those IDs; document_from_bundle preserves exact unedited pinned images instead.
+Recording.create_entity operates on authored roots, not physical projection
+slots. execute validates supplied created against actual recipe capture; replay
+runs those exact commands. commit._check_reservations currently accepts roots
+and clip/track facts, not shot-owned item facts. Runtimeb891 consumes typed
+shot/item facts and independently guards physical occupancy; preserve it.
+
+Exact small plan BEFORE coding:
+1. Add only a minimal executable conformance case: existing scoped mappings
+separate same raw IDs across project/timeline/occurrence/source; exact replay
+keeps mapping. Preserve missing genuine typed births and required item carrier
+as strict expected failures (positive expectations, no schema override).
+2. Run these and neighboring M1 capture/document/root tests. Run the existing
+actual Runtime identity regression directly (no sockets), with normal source
+artifacts only. Do not claim new M2 acceptance on old official artifacts.
+3. STOP product implementation under the task's explicit carrier stop condition:
+ScopedId/EntityRef/TargetKey/AnchorIdentity do not admit shot:S/item:I, command
+created is ScopedId[], State has no physical-slot absent/present view, and a
+virtual shot is already present. Appending facts after compile would fabricate
+births; fresh IDs at replay or rewriting id_map would violate the decision.
+
+Precise minimal carrier proposal for owner review (not implemented): retain
+existing DTO/ABI and typed {ref,kind,owner} records. For M2 recipes needing new
+physical mutable slots, capture ONCE a closed args.materialization value:
+{occurrence_id, source_shot_id, shot_id, item_ids:[{source_item_id,item_id}]}.
+Use actual request project/timeline plus occurrence/source identities for the
+one allocation primitive; exact source revision remains the normal dependency
+pin, not a fresh-allocation seed. The recipe records its source reads/bindings,
+performs the allocation effects through a distinct physical-slot state view,
+and emits shot owner=null and item owner=shot:S births from those effects.
+All supplied destination IDs must match those effects/args; replay consumes
+captured destinations, never allocates or resolves aliases from current head.
+Source-schema must admit shot:S/item:I consistently in the four reference
+patterns (or owner must select another explicit canonical item address), then
+normal Runtime regeneration/release must qualify that source. No new history
+table/DTO/ABI. Existing legacy M1 commands remain on their unchanged compiler
+path under Runtime guard; restore/inverse/redo use authenticated own-slot proof,
+not fresh claims. The physical-slot state view/compiler seam needs owner
+agreement before attempting <=150 product lines; this report is a blocker,
+not permission to invent authority from virtual occupancy or ID spelling.

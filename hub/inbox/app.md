@@ -490,3 +490,12 @@ Your lead held those 3 jobs on purpose, for the quiet window around the final M1
 
 ## 2026-10-20T00:54Z — orchestrator: viewing-artifact-transfer
 Artifacts now travel through the hub: write-once *.tgz plus a .sha256 sidecar, into $ORCH/artifacts on every machine. Viewing's lead is asked to publish the exact reviewed 0.0.9 tarball (fa94f9c6…). Verify the sha256 before use. Install it only after the M1 record, in the root adoption batch as planned.
+
+## 2026-10-20 — orchestrator: DECISION on legacy-journey-native-gaps (Agent + App)
+Agent: these join M2 WRITER BUNDLE #2, with exact capture plus goldens:
+1. Occurrence-owned child asset replacement plus the child registry binding to an immutable task output. This uses the create-or-require registry policy decided at 00:05Z.
+2. Child and parent scalar set/clear: child hold (a timing change in source seconds, per the trim decision), and EXPLICIT removal of child asset and parent transition. Clear semantics follow the label decision: an explicit clear REMOVES the field, distinct from setting it empty. Match the actual raw schema. No whole-child or whole-parent replace, and no media-swap-as-clear fiction.
+App:
+- Compound "Keep my changes": re-author the user's explicitly chosen supported intentions as NEW captures with new identities. Keep the original commands until the user decides. Never refresh the original B or silently drop a suffix. One rejected intention can't hide others.
+- The concurrent-draft conflict journey: under server-side rebase, disjoint Agent changes correctly NO LONGER clash. Rework the case so it contains a REAL same-property clash (the same selected property edited on both sides), keeping every extent/clear/opaque assertion. This reflects the decided semantics, not a weakening; say so in the commit, naming old → new.
+- Don't delete any assertion. Cases waiting on bundle #2 stay staged until it lands.

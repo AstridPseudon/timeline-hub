@@ -1,242 +1,125 @@
-# Stable word-choice recipe — executable design, awaiting review
+# M2 authored stable word references (design and bounded spike)
 
-Branch: `tl/agt-m2-word-recipe-recover`, base `b3e9d8ef31f9fcc8297ae2ac66ed7b56ad042d8d`.
-No product registration, default compiler activation, schema/ABI change, Runtime
-implementation or integration merge. PLAN still has M1 open. Bundle1/frozen R4 refs
-remain untouched. `clip.anchor` is a DESIGN-ONLY operation name.
+Decision: the canonical authored value determines the film. Accepted records are
+undo/rebase provenance; they are not needed to interpret a saved revision. This
+supersedes the 437a4b6a accepted-history fold and its proposed restore provenance
+read. RestoreArgs, Runtime DTOs, ports and ABI remain unchanged.
 
-Recovery: predecessor `/home/user/work/wt/agt-m2-word-binding-recipe` was inspected
-read-only with `git status --short`, `git diff --binary HEAD` and
-`git ls-files --others --exclude-standard`. All were empty; its HEAD equals this
-base. There was no partial source to transfer and no old tree was changed.
+## Authored schema
 
-## Result and decision needed
-
-Existing args, AgentBinding, exact transcript AgentDependency and accepted records
-can preserve the complete chosen identity and recover the previous binding on undo,
-INCLUDING an unchanged-text write. No persisted before-binding field or new history
-store is necessary when complete authenticated ancestry is available.
-
-**Revision-only restore is insufficient for binding-only changes.** Actual accepted
-A (word 1) and B (word 2) with identical declaration text produce byte-identical
-canonical documents, the SAME parent revision/digest, and DIFFERENT publications.
-Current RestoreArgs `{revision_id,content_digest}` cannot distinguish A from B.
-The spike refuses ambiguous extraction and retains the positive requirement as a
-strict xfail. This is executable evidence requiring a manager decision before
-wiring, not authorization to change the frozen schema or pick an arbitrary entry.
-
-Smallest proposed GENERIC recipe addition, before product code: permit an
-already existing general AgentRead to bind restore's exact selected publication:
-
-```json
-{"ref":"history.publication:<accepted-publication-id>","path":[],
- "state":{"state":"present","value":{"revision_id":"<revision-id>",
- "content_digest":"sha256:<64 lowercase hex>"}}}
-```
-
-This uses existing read envelopes, not a new DTO/ABI/store or private word undo.
-Provider resolves this typed history reference using existing `history_entry` and
-`revision_closure`, checks its exact scoped publication/revision/digest and ancestry,
-and supplies that immutable value to the generic read resolver. A caller's read is
-only a checked claim. Fold then selects that publication's binding state; inverse
-of restore uses the ordinary accepted restore edge. No chosen publication is inferred
-from a revision. Legacy restore without this read is safe only when ALL reachable
-occurrences of that exact revision agree on binding state; otherwise refuse visibly.
-Current State/get/claim validation does NOT implement this resolver. Review the
-reference convention/context addition before code. Alternatively manager may choose
-another exact publication carrier, but args alone demonstrably cannot work.
-
-## Exact declaration serialization and first capture
-
-`tests/editing_conformance/word_binding_recipe.py` contains the concrete closed
-parameter schema and handler. Envelope: schema_version=1, op=`clip.anchor`,
-version=`1`, select=`parent/clip:<raw-target-id>`, intent=`{anchor:follow}`.
-This bounded spike supports parent targets and occurrence-owned source clips:
-
-Example with deterministic main transcript IDs (project `example-project`, media `sha256:1111111111111111111111111111111111111111111111111111111111111111`, line `again again stop`):
+Use the existing clip `app.astrid` namespace. Keep `on` and `until` as human text
+echoes. Add one small typed map, `word_anchors`, with independently optional `on`
+and `until` entries. Each entry has exactly this shape (optional defaults omitted):
 
 ```json
 {
-  "field": "on",
-  "declaration": "\"again\"",
-  "choice": {
-    "source": "occurrence:occ/clip:voice",
-    "document": {
-      "document_id": "transcript:730ca2f9f65225055d1866602395f52e13323c5e943b26ee2864c96cc59df9b8",
-      "version": 1,
-      "content_digest": "sha256:faf5dac21aa910dfc2e994fff6e7c9833359bbc0b140ecdfcaec7651a3fab9cb"
-    },
-    "word_ids": [
-      "word:e63e7363b2e57a71fd47b117b88342ff10a2b5ca34365f4ef81ce114692d7a95"
-    ]
-  }
+  "source": "occurrence:occ/clip:voice",
+  "document": {
+    "document_id": "transcript:<existing main document identity>",
+    "version": 1,
+    "content_digest": "sha256:<64 lowercase hex digits>"
+  },
+  "word_ids": ["word:<existing main-v1 stable word identity>"],
+  "edge": "start",
+  "offset_s": 0,
+  "offset_frames": 0
 }
 ```
 
-`field` is on/until; `word_ids` is a nonempty unique ORDERED array of main's
-`word:<64hex>` IDs, optionally suffixed `:<positive duplicate ordinal>` as emitted
-by media_transcript.line_segment. No conversion to legacy word:segment:index.
-DocumentPin has exactly document_id/version/content_digest. Clear is exactly
-`{field:on,declaration:null,choice:null}` and records an absent authored leaf;
-a null choice with text or a choice with null text refuses. The handler records
-writes even when text is unchanged. No synthetic whole-parent image is used for
-undo of a declaration.
+`source`, `document`, and nonempty ordered unique `word_ids` are required.
+`document` is the existing exact transcript DocumentPin, not a new DTO. The
+transcript content must be `astrid.media.transcript.v1`; IDs use main's existing
+`word:<64 hex>(:<positive collision suffix>)?` format. A phrase names every
+consecutive word of one segment. `edge` is optional `start|end` (default start);
+`offset_s` is an optional finite JSON number (default zero); `offset_frames` is an
+optional integer (default zero). Seconds are read as decimal rationals and frame
+offsets use the exact rational canvas fps. No extra type/version wrapper is needed:
+the namespaced key defines the type, the pinned transcript defines the ID schema.
+No unknown fields inside a typed entry; unrelated namespaced data is preserved.
 
-Frontend picker operates ONCE on its original authorized snapshot: identify the
-clicked source occurrence/raw clip, exact Document and consecutive words; resolve
-an initial text/#n query there if used. The executable picker models a word click
-in a known raw clip. The existing main-Moment ordinal counterexample is exercised
-alongside it: after source reordering, the old #2 would select `other` despite the
-same document and word ID. Explicit stable choice is command intent; declaration
-text validates the selected phrase/line, and #n is never searched again on replay.
-The direct-click form allows two identical declaration strings to bind different
-words. Product UI/CLI spelling/disambiguation still needs review; there is no new
-production picker here.
+The raw occurrence/clip reference is mandatory even when another clip has the
+same CAS, exact transcript pin and exact word ID. The source shot is resolved
+through the current occurrence; the binding never chooses by timeline order.
+The spike bounds targets to parent clips and sources to occurrence-owned clips.
+Production must use the canonical ownership/materialization adapter for all other
+scopes; it must refuse unsupported shared-shot shapes, never guess an owner.
 
-Server validates registered args against its schema and derives records itself.
-It resolves the scoped source clip and owner identity from the original request
-base, reads source asset/media identity, and checks against Runtime-captured exact
-VerifiedDocuments. The pure timing kernel verifies document scope/id/version/raw
-content digest, actual media, ordered/consecutive stable words, matching phrase and
-line, half-open source window, supported maps and current availability. No inline
-schema, inline VerifiedDocument, caller recorder or latest source is authority.
-The spike first retains the transcript through the existing real Runtime fixture;
-first-use pin discovery/hydration from this new operation's args remains production
-work, not something this fixture pretends to implement.
+## Clear, precedence and reads
 
-## Existing accepted record carriers
+A present reference is authoritative, including edge and offsets. Its echo may be
+stale, absent or differently worded; it is never used to reselect or retime it.
+Changing a reference and its normal picker echo is one recorded edit. Clearing a
+field removes BOTH the echo and the reference entry, preserving the other field
+and all opaque siblings. Null is the command's explicit clear, not a stored ref.
+An echo-only write cannot retarget a present reference. Replacing it with a legacy
+text declaration must explicitly clear the reference in the same edit.
 
-Authoritative recorder emits (in addition to ordinary reads/writes/claims):
+Without a reference, a legacy word declaration may compile only when exactly ONE
+phrase occurrence in authorized retained inputs and visible source windows
+matches. A line qualifier can narrow this pool; an ordinal cannot recover a lost
+stable choice. Repeated matches, including reused-CAS raw clips, refuse with the
+exact message `ambiguous anchor; choose occurrence`. Missing matches refuse. A
+new picker selection stores the stable reference; legacy reads never persist one.
+Nonword declarations retain their existing compiler semantics.
 
-```json
-[
-  {
-    "key": "anchor.transcript",
-    "kind": "transcript",
-    "pin": {
-      "document_id": "transcript:730ca2f9f65225055d1866602395f52e13323c5e943b26ee2864c96cc59df9b8",
-      "version": 1,
-      "content_digest": "sha256:faf5dac21aa910dfc2e994fff6e7c9833359bbc0b140ecdfcaec7651a3fab9cb"
-    },
-    "policy": "exact"
-  },
-  {
-    "key": "anchor.choice",
-    "kind": "entity",
-    "pin": {
-      "target": "parent/clip:card",
-      "field": "on",
-      "declaration": "\"again\"",
-      "choice": {
-        "source": "occurrence:occ/clip:voice",
-        "document": {
-          "document_id": "transcript:730ca2f9f65225055d1866602395f52e13323c5e943b26ee2864c96cc59df9b8",
-          "version": 1,
-          "content_digest": "sha256:faf5dac21aa910dfc2e994fff6e7c9833359bbc0b140ecdfcaec7651a3fab9cb"
-        },
-        "word_ids": [
-          "word:e63e7363b2e57a71fd47b117b88342ff10a2b5ca34365f4ef81ce114692d7a95"
-        ]
-      }
-    },
-    "policy": "exact"
-  },
-  {
-    "key": "anchor.source",
-    "ref": "occurrence:occ/clip:voice",
-    "policy": "follow",
-    "dependencies": [
-      "anchor.transcript",
-      "anchor.choice"
-    ]
-  }
-]
-```
+A missing stable ID, exact pin, source owner/raw clip, media match, or selected
+word outside the half-open source/derived interval refuses clearly. Missing or
+revoked inputs never cause latest-version, text, ordinal or alternate-clip fallback.
+A word may end exactly at the source window end; a word starting there is outside.
 
-Ordered main word IDs live in typed
-args/entity pin, source occurrence/raw clip in the scoped ref, exact transcript pin
-in its SEPARATE transcript dependency. `Recording.finish` already forwards the
-source clip ref into command bindings; it never needs to widen legacy AnchorIdentity.
-Actual Runtime acceptance validates the unchanged record envelope. No new on-disk
-format, side history, retention ledger or ABI is introduced.
+## Compiler adapter, before registry activation
 
-## Pure accepted-history extraction, inverse and restore
+The pure test-local adapter first extracts the authored entries from a raw
+canonical bundle and authorized retained VerifiedDocuments. It lowers each entry
+into existing WordBinding values, resolving the owner through current placements.
+It constructs a private Moment spelling from the exact selected IDs plus typed
+edge/offsets, never from the human echo. The existing kernel checks identity,
+scoped exact pin, media, consecutive IDs, source maps and windows. Its phrase
+validation is bounded to those IDs; it cannot search the transcript/film for a
+replacement. The adapter returns the unchanged authored bundle and derived timing.
+A raw JSON canonical bundle plus retained inputs suffices, without accepted history.
 
-Input is complete scoped Runtime history pinned through the accepted head PAIR,
-including bootstrap and all recorded publications. Existing Runtime verifies receipt
-and record correspondence; Agent `_history` checks/paginates adjacency and `_records`
-checks record shape. The test uses the authenticated public history method (one
-bounded page, JSON round-trip); it does not fabricate receipts or write SQL.
+This adapter is defined and tested before test-local operation registration.
+`clip.anchor` (test-local only) takes field, declaration echo, and the typed choice
+(or null/null clear). It records ordinary writes to BOTH namespaced fields,
+source/target owner and media identity guards, the existing transcript dependency
+and follow source binding. There is no binding-state fold or synthetic history read.
 
-Fold chronologically into a disposable map keyed by `(target,field)`:
+The test-local compile-input hook validates references after native command,
+inverse, restore and replay execution, so source edits cannot accept invalidated
+anchors in this experiment. This is not product registry or default compiler
+activation. First-use authorization/hydration of pins from this operation's args,
+all-scope ownership codecs, production persistence of derived timing and consumer
+parity remain separate qualification work. The real Runtime fixture pre-retains
+V1 through its existing immutable document input seam; it does not pretend to
+implement first-use pin discovery.
 
-1. A declaration/ancestor write invalidates the previous binding, EVEN when the
-   before/after authored text is identical. An accepted registered declaration's
-   exact entity pin, transcript dependency and follow binding install its choice.
-   Clear installs no binding. Ordinary writes cannot accidentally resurrect one.
-2. For each publication keep a disposable sparse first-before/last-after delta of
-   binding state. A/B choices remain distinct even when their text writes compare
-   equal. Before-A is obtained from the authenticated prefix, never inferred from
-   text or submitted by a caller. Bootstrap declarations without recorded choice
-   remain unknown; compiling them refuses until an explicit reviewed selection.
-3. A guarded inverse uses its existing explicit target publications, coalesces
-   their binding deltas, verifies the final binding state and restores first-before.
-   Inverse of inverse works identically. This is generic accepted-history folding,
-   not per-operation undo or restoring a parent's authored snapshot. Existing
-   product inverse guards still run on authored writes/selections/intervening ABA.
-4. A native explicit restore takes the target revision's historical binding map
-   only if that revision is unambiguous. Unique-history restore and its inverse
-   execute successfully in the spike. Ambiguous same-revision/different-binding
-   restore requires the proposed generic provenance read above. Discarded maps
-   are never persisted. Production needs the exact digest and selected publication
-   verification alongside the existing closure checks, not only this fixture fold.
-5. At compile, construct WordBinding from these verified maps and current owner
-   projection, then pass only authorized captured sources to TimingInputs. Missing,
-   foreign, revoked, ambiguous, stale or incomplete history fails closed. A pin's
-   deletion/revocation must never trigger latest/ordinal fallback. There is no IO
-   in the declaration handler or fold.
+## Guards, rebase, undo and restore
 
-An after-only record viewed in isolation cannot restore A from B. Complete prefix
-reconstruction is the existing-format solution; the native provider currently
-loads only target/suffix records for undo and needs the generic full-history binding
-context before the adapter can honestly claim this behavior in production.
+Record target clip identity; exact authored writes, including unchanged echoes;
+source occurrence/shot/raw clip identity, asset and media; and exact transcript
+pin. Source order/start/window are derived inputs, not direct follow-policy guards.
+A disjoint source move/reorder rebases and follows the SAME selected IDs and raw
+clip under the current supported map. Source loss/replacement, changed target
+field/reference, concurrent clear, or out-of-window words refuse. Existing server
+rebase and inverse guards handle competing writes, ancestry and ABA. Undo B
+restores A's reference AND echo by normal recorded writes; inverse of inverse
+restores B exactly. No whole-parent undo mechanism is added.
 
-## Merge/follow policy
+Two identical echoes choosing different words (or different raw clips of the same
+CAS) MUST produce different canonical revisions and content digests. Revision-only
+restore of either source recovers its own reference and timing, including after a
+Runtime restart. Restoring and undoing the restore uses existing revision closure
+and provenance checks. No full history binding fold is needed to define a film.
 
-Original args and checked recorder claims are replayed at the server. Target
-identity, authored declaration writes (including same-value writes), selected source
-identity/asset/media, and exact transcript pin guard author intent. A competing target
-declaration/clear conflicts, including intervening ABA. Structural identity loss,
-source media replacement or missing/out-of-window selected word also refuses.
+## Evidence and boundary
 
-Follow does NOT record source start/order or every timing read as a direct authored
-intention guard. A source move/reorder may succeed; compiler recomputes timing from
-the SAME source occurrence/raw clip and word IDs under its current supported map.
-The exact transcript remains pinned: producer V2 is not silently adopted. Selection
-membership/order is consecutive words WITHIN the exact pinned transcript, not a
-guard that freezes the timeline-wide ordinal pool. No client rebase or recapture.
-
-## Executable coverage and boundaries
-
-`test_word_binding_recipe.py` drives native Agent execution, server rebase,
-Runtime acceptance/history, restart, inverse/redo and explicit native restore via
-a TEST-LOCAL registry patch. Product registry/default compiler are untouched.
-Coverage includes different/equal-text A->B->undoB AFTER a source move/reorder;
-word-identical reused-CAS raw sources; original-choice stale rebase; phrase order;
-last-write, clear/undo, unique restore/inverse; revision collision counterexample;
-missing/foreign/withdrawn pure captures, invented claims, missing IDs and incomplete
-history. Existing retained-input neighbors prove actual Runtime missing/foreign/
-revoked-source refusal and a fresh interpreter with retained V1 after producer V2.
-The spike reload proof closes/reopens Runtime and rebuilds state from JSON history;
-it is not a newly qualified production startup compiler or UI feature.
-
-Next small implementation, AFTER review and PLAN M1: authorize the declaration's
-name/schema and exact restore provenance carrier; add a generic immutable history
-read/binding context over existing port methods; capture exact first-use transcript
-pins from args; register the handler and pure fold; connect the compiler input adapter
-without changing default compilation. Then qualify native known/unknown declarations,
-all source/target ownership/materialization codecs, multi-field anchors, clear aliases,
-accepted projection/reload/restore and existing consumer timing parity. Only the later
-reviewed migration can activate the sole compiler and delete old derived writers.
-Pack snapshot custody, completed-cancel and producer numeric forwarding remain their
-owners' separate agreed seams. This task adds no alternate port or producer carrier.
+`tests/editing_conformance/word_binding_recipe.py` is the test-local adapter and
+recipe; `test_word_binding_recipe.py` drives actual Runtime acceptance/rebase,
+restart, guarded inverse/redo, native revision restore, source moves/reorder,
+reused-CAS clips, rational fps, windows, clears and invalid IDs/pins/sources.
+The original same-revision counterexample remains as strict expected failure with
+its pre-fix assertions intact; its positive restore requirement now passes.
+The report records exact executed tests and remaining unverified boundaries.
+No new production operation, port, restore argument, history semantics, general
+feature, producer carrier or compiler activation is introduced.
