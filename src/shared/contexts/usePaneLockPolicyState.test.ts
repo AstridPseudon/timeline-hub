@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { usePaneLockPolicyState } from './usePaneLockPolicyState';
 import { acquirePaneControlsHost } from '@/shared/state/paneControlsHost';
@@ -132,5 +133,65 @@ describe('usePaneLockPolicyState', () => {
 
     act(() => release());
     expect(result.current.locks.gens).toBe(true);
+  });
+});
+
+describe('usePaneLockPolicyState Tasks pane lock persistence', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    // Hold the fallback in state, as the real hook does, so a remount reads the value the hook saved before it.
+    useUserUIStateSpy.mockImplementation((_key: string, fallback: unknown) => {
+      const [value] = useState(fallback);
+      return { value, update: vi.fn(), isLoading: false };
+    });
+    useIsMobileSpy.mockReturnValue(false);
+    useIsTabletSpy.mockReturnValue(false);
+  });
+
+  it('opens the Tasks pane locked on a first desktop visit', () => {
+    const { result } = renderHook(() => usePaneLockPolicyState());
+
+    expect(result.current.locks.tasks).toBe(true);
+    expect(result.current.isTasksPaneOpenState).toBe(true);
+  });
+
+  it('restores a Tasks pane locked closed after a remount', () => {
+    const first = renderHook(() => usePaneLockPolicyState());
+    act(() => {
+      first.result.current.setIsTasksPaneLocked(false);
+    });
+    first.unmount();
+
+    const second = renderHook(() => usePaneLockPolicyState());
+    expect(second.result.current.locks.tasks).toBe(false);
+    expect(second.result.current.isTasksPaneOpenState).toBe(false);
+  });
+
+  it('restores a Tasks pane locked open after a remount', () => {
+    const first = renderHook(() => usePaneLockPolicyState());
+    act(() => {
+      first.result.current.setIsTasksPaneLocked(false);
+    });
+    first.unmount();
+
+    const second = renderHook(() => usePaneLockPolicyState());
+    act(() => {
+      second.result.current.setIsTasksPaneLocked(true);
+    });
+    second.unmount();
+
+    const third = renderHook(() => usePaneLockPolicyState());
+    expect(third.result.current.locks.tasks).toBe(true);
+    expect(third.result.current.isTasksPaneOpenState).toBe(true);
+  });
+
+  it('does not apply the locked-open default on a phone', () => {
+    useIsMobileSpy.mockReturnValue(true);
+
+    const { result } = renderHook(() => usePaneLockPolicyState());
+
+    expect(result.current.locks.tasks).toBe(false);
+    expect(result.current.isTasksPaneOpenState).toBe(false);
   });
 });
