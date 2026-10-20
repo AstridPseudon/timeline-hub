@@ -38,6 +38,26 @@ def _capability() -> Capability:
     )
 
 
+def _speech_capability() -> Capability:
+    outputs = (
+        Output(name="speech", type="file", artifact_type="audio"),
+        Output(name="speech_manifest", type="file", artifact_type=None),
+    )
+    return Capability(
+        id="generation.generate_speech",
+        capability_type="executor",
+        native_kind="executor",
+        handle=SimpleNamespace(),
+        outputs=outputs,
+        definition={
+            "outputs": [
+                {"name": "speech", "type": "file", "artifact_type": "audio"},
+                {"name": "speech_manifest", "type": "file", "artifact_type": None},
+            ]
+        },
+    )
+
+
 def test_effect_preserves_group_selector_order_and_schema_port() -> None:
     intent = {
         "version": 1,
@@ -136,6 +156,42 @@ def test_kernel_admission_predeclares_typed_effect_and_omits_it_without_intent()
     }
     assert calls[0]["settlement_effect"]["payload"]["groups"][0]["selectors"][0]["output_port"] == "generated_videos"
     assert "settlement_effect" not in calls[1]
+
+
+def test_speech_intent_uses_matching_existing_publication_effect() -> None:
+    calls = []
+
+    class Tasks:
+        def create(self, **kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(ok=True, data={"run_id": "r", "task_id": "t", "attempt_id": "a"})
+
+    intent = {
+        "version": 1,
+        "modality": "audio",
+        "partial_success_policy": "reject",
+        "groups": [{"group_key": "main", "selectors": [{
+            "selector": "speech", "ordinal": 0, "variant_key": "original", "required": True,
+        }]}],
+    }
+    _kernel_invoke(
+        _speech_capability(), kind="executor", project="project-1", inputs={}, outputs={},
+        generation_intent=intent, _client=SimpleNamespace(tasks=Tasks()),
+    )
+
+    assert calls[0]["generation_intent"] == intent
+    effect = calls[0]["settlement_effect"]
+    assert effect["effect_type"] == "generation.publish_v1"
+    assert effect["target_id"] == "project-1"
+    assert effect["payload"]["modality"] == "audio"
+    assert effect["payload"]["generation_type"] == "generation.generate_speech"
+    assert effect["payload"]["groups"] == [{
+        "group_key": "main",
+        "selectors": [{
+            "selector": "speech", "ordinal": 0, "variant_key": "original",
+            "output_port": "speech", "required": True,
+        }],
+    }]
 
 
 def _managed_output(generation_id: str | None) -> dict[str, object]:

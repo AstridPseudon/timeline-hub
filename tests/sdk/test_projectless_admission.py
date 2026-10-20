@@ -95,6 +95,51 @@ def test_openai_generation_requires_explicit_publication_intent(monkeypatch):
         )
 
 
+def test_speech_accepts_explicit_publication_intent(monkeypatch):
+    intent = {
+        "version": 1,
+        "modality": "audio",
+        "partial_success_policy": "reject",
+        "groups": [{"group_key": "main", "selectors": [{
+            "selector": "speech", "ordinal": 0, "variant_key": "original",
+        }]}],
+    }
+    fake_capability = SimpleNamespace(
+        id="generation.generate_speech",
+        capability_type="executor",
+        native_kind="external",
+        definition={"metadata": {"project_scope": "required"}},
+        inputs=(),
+    )
+    fake_registry = SimpleNamespace(
+        get=lambda executor_id: SimpleNamespace(
+            to_dict=lambda: {"id": executor_id, "version": "1"}
+        )
+    )
+    fake_sdk = SimpleNamespace(
+        _load_registries=lambda **kwargs: (fake_registry, None, None),
+        get_capability=lambda *args, **kwargs: fake_capability,
+    )
+    admitted = []
+
+    def admit(capability, **kwargs):
+        admitted.append(kwargs)
+        return "R-1", "T-1", "A-1", None, {"ok": True}, True, None
+
+    monkeypatch.setattr(invocation, "_sdk_module", lambda: fake_sdk)
+    monkeypatch.setattr(invocation, "_kernel_invoke", admit)
+    result = invocation.invoke(
+        "generation.generate_speech",
+        kind="executor",
+        inputs={"text": "Hello", "voice": "fixture", "generation_intent": intent},
+        project="project-1",
+    )
+
+    assert result.ok
+    assert admitted[0]["generation_intent"] == intent
+    assert admitted[0]["inputs"] == {"text": "Hello", "voice": "fixture"}
+
+
 @pytest.mark.parametrize("project", [None, "", "   "])
 def test_corpus_write_still_requires_project(monkeypatch, project):
     client = SimpleNamespace(projects=SimpleNamespace(current=lambda: DomainResult.failure(

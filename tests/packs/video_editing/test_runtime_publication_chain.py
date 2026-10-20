@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import io
 import json
 import shutil
 import subprocess
+import wave
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -13,6 +17,13 @@ from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolC
 from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
 from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
 from astrid.sdk.client import AstridClient
+from astrid.sdk.remote import RemoteAstridClient
+from astrid.sdk.workspace_client import WorkspaceClient
+
+
+# Private compatible Runtime fixture only; this is intentionally not a public
+# runtime.lock pin. The tested Agent path remains the normal public SDK call.
+SPEECH_RUNTIME_COMMIT = "ad97e16effc53fa13f91c43f076f6edb3c38985f"
 
 
 def _digest(value: str | bytes) -> str:
@@ -385,6 +396,149 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         )
         assert probe.returncode == 0
         assert float(probe.stdout.strip()) > 0
+    finally:
+        host.shutdown()
+        daemon.stop()
+
+
+def _speech_fixture_pack(root: Path, *, metadata_mode: str) -> Path:
+    """Create a deterministic WAV producer without a speech service."""
+    pack = root / "speech_fixture"
+    executor = pack / "executors" / "generate_speech"
+    executor.mkdir(parents=True)
+    (pack / "pack.yaml").write_text(
+        "schema_version: 2\n"
+        "id: speech_fixture\n"
+        "name: Speech fixture\n"
+        "version: 1.0.0\n"
+        "capabilities: [generate_speech]\n"
+        "content:\n  executors: executors\n",
+        encoding="utf-8",
+    )
+    script = """
+import hashlib
+import json
+import sys
+import wave
+from pathlib import Path
+
+out = Path(sys.argv[1])
+text = sys.argv[2]
+settings = {"provider": sys.argv[3], "voice": sys.argv[4], "rate": sys.argv[5],
+            "volume": sys.argv[6], "pitch": sys.argv[7]}
+metadata_mode = sys.argv[8]
+wav_path = out / "speech.wav"
+with wave.open(str(wav_path), "wb") as wav:
+    wav.setnchannels(1)
+    wav.setsampwidth(2)
+    wav.setframerate(8000)
+    wav.writeframes(b"\\x00\\x00" * 8000)
+audio_digest = hashlib.sha256(wav_path.read_bytes()).hexdigest()
+provenance = {"text": text, "text_sha256": hashlib.sha256(text.encode()).hexdigest(),
+              "settings": settings, "duration_seconds": 1.0}
+if metadata_mode != "absent":
+    provenance["audio_sha256"] = audio_digest if metadata_mode == "valid" else "0" * 64
+(out / "speech-provenance.json").write_text(json.dumps(provenance, sort_keys=True))
+manifest = {"schema_version": 1, "outputs": [
+    {"name": "speech", "path": "speech.wav", "type": "file", "artifact_type": "audio/wav",
+     "ordinal": 0, "role": "result", "is_primary": True,
+     "content_hash": "sha256:" + audio_digest, "bytes": wav_path.stat().st_size,
+     "media_type": "audio/wav"},
+    {"name": "speech_manifest", "path": "speech-provenance.json", "type": "file",
+     "artifact_type": "application/json", "ordinal": 1, "role": "auxiliary", "is_primary": False,
+     "content_hash": "sha256:" + hashlib.sha256((out / "speech-provenance.json").read_bytes()).hexdigest(),
+     "bytes": (out / "speech-provenance.json").stat().st_size, "media_type": "application/json"},
+]}
+(out / "manifest.json").write_text(json.dumps(manifest, sort_keys=True))
+"""
+    (executor / "executor.yaml").write_text(json.dumps({
+        "schema_version": 1,
+        "id": "generation.generate_speech",
+        "name": "Speech fixture",
+        "kind": "external",
+        "version": "1.0",
+        "inputs": [
+            {"name": "task_spec_json", "type": "string", "required": True},
+            {"name": "text", "type": "string", "required": True},
+            {"name": "provider", "type": "string", "required": False, "default": "edge-tts"},
+            {"name": "voice", "type": "string", "required": False, "default": "en-US-ChristopherNeural"},
+            {"name": "rate", "type": "string", "required": False, "default": "+0%"},
+            {"name": "volume", "type": "string", "required": False, "default": "+0%"},
+            {"name": "pitch", "type": "string", "required": False, "default": "+0Hz"},
+            {"name": "metadata_mode", "type": "string", "required": False, "default": metadata_mode},
+        ],
+        "command": {"argv": [
+            "{python_exec}", "-c", script, "{out}", "{text}", "{provider}", "{voice}",
+            "{rate}", "{volume}", "{pitch}", "{metadata_mode}",
+        ]},
+        "outputs": [
+            {"name": "speech", "type": "file", "path_template": "{out}/speech.wav", "artifact_type": "audio/wav"},
+            {"name": "speech_manifest", "type": "file", "path_template": "{out}/speech-provenance.json", "artifact_type": "application/json"},
+        ],
+        "isolation": {"mode": "subprocess", "network": False},
+        "metadata": {"resource_keys": [], "estimated_scratch_bytes": 1024, "estimated_output_bytes": 65536},
+    }, sort_keys=True), encoding="utf-8")
+    return pack
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("metadata_mode", ["valid", "absent", "invalid"])
+def test_normal_speech_sdk_publication_settles_fixture_wav_or_refuses_metadata(
+    tmp_path, real_runtime, metadata_mode,
+):
+    """Direct SDK speech admission settles a selection; bad provenance is refused."""
+    from astrid.packs.video_editing.shared import draft_voiceover
+
+    daemon = real_runtime(commit=SPEECH_RUNTIME_COMMIT)
+    worker = RuntimeProtocolClient(daemon.endpoint, daemon.worker_token)
+    host = GenericPackHost(
+        pack_roots=[_speech_fixture_pack(tmp_path, metadata_mode=metadata_mode)],
+        client=worker,
+        executor_id="speech-fixture-host",
+        attempt_root=tmp_path / "attempts",
+    )
+    transport = WorkspaceClient(daemon.endpoint, daemon.token)
+    transport.handshake(
+        "speech-publication-test", "1",
+        ["projects:read", "projects:write", "objects:read", "objects:write", "tasks:read", "tasks:write"],
+    )
+    remote = RemoteAstridClient(transport)
+    project_result = remote.projects.create(
+        slug=f"speech-wc5-{metadata_mode}", name="Speech WC5", idempotency_key=f"speech-wc5-{metadata_mode}",
+    )
+    assert project_result.ok, project_result.error
+    project_id = project_result.data.get("project_id") or project_result.data["id"]
+    host.discover()
+    host.preflight("generation.generate_speech")
+    host.register()
+    try:
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(host.run, once=False, poll_seconds=0.02, max_tasks=1)
+            synth = draft_voiceover.runtime_synthesizer(remote, project_id)
+            if metadata_mode == "valid":
+                result = synth("Hello", draft_voiceover.DEFAULT_SETTINGS)
+                context = result["runtime_context"]
+                assert context["task"]["task_id"] == context["task_id"]
+                assert context["task"]["attempt_id"] == context["attempt_id"]
+                assert context["generation_publish_v1"]["effect_type"] == "generation.publish_v1"
+                output = context["managed_output"]
+                selection = transport._generated.get_project_media_selection(project_id, {
+                    "association_id": output["association_id"],
+                    "object_id": output["object_id"],
+                    "version": output["lifecycle"]["version"],
+                })
+                assert set(selection) == {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
+                assert selection["object_id"] == output["object_id"]
+                verified = transport._generated.get_project_verified_media(project_id, selection)
+                assert verified["selection"] == selection
+                assert verified["media_type"] == "audio/wav"
+                assert verified["duration_seconds"] == 1.0
+                with wave.open(io.BytesIO(remote.media.read_bytes(output["object_id"])), "rb") as wav:
+                    assert (wav.getframerate(), wav.getnframes()) == (8000, 8000)
+            else:
+                with pytest.raises(draft_voiceover.VoiceoverSyncError, match="hash verification"):
+                    synth("Hello", draft_voiceover.DEFAULT_SETTINGS)
+            future.result(timeout=60)
     finally:
         host.shutdown()
         daemon.stop()
