@@ -4774,6 +4774,7 @@ class RealmStore:
         input_object_ids=None,
         settled_at=None,
         attempt_id=None,
+        duration_seconds_presence=None,
     ):
         kind = self._settlement_effect_kind(effect)
         if kind == "generation.publish_v1":
@@ -4804,6 +4805,11 @@ class RealmStore:
                     generation_metadata["thumbnail"] = self._thumbnail_metadata_descriptor(
                         group["thumbnail"], group["primary_output"]["digest"]
                     )
+                params = generation_metadata.get("params")
+                explicit_duration = (
+                    "duration_seconds" in generation_metadata
+                    or (isinstance(params, dict) and "duration_seconds" in params)
+                )
                 self.conn.execute(
                     "INSERT INTO generations(id, project_id, source_task_id, type, status, metadata_json, version, created_at, updated_at) VALUES (?, ?, ?, ?, 'completed', ?, 1, ?, ?)",
                     (
@@ -4861,6 +4867,30 @@ class RealmStore:
                         "regeneration": output.get("regeneration"),
                         "coverage": output.get("coverage"),
                     }
+                    output_key = self._generation_publish_output_key(output)
+                    if "duration_seconds" in output:
+                        variant_metadata["duration_seconds"] = output["duration_seconds"]
+                    if "duration_seconds" not in variant_metadata and (
+                        duration_seconds_presence is not None
+                        and output_key in duration_seconds_presence
+                    ):
+                        variant_metadata["duration_seconds"] = duration_seconds_presence[
+                            output_key
+                        ]
+                    media_type = str(output.get("media_type", "")).lower().split(";", 1)[0].strip()
+                    if (
+                        task_row
+                        and task_row["capability"] == "generation.generate_speech"
+                        and output.get("output_port") == "audio"
+                        and media_type in {"audio/wav", "audio/x-wav"}
+                        and "duration_seconds" not in variant_metadata
+                        and not explicit_duration
+                    ):
+                        duration = ContentAddressedStore(self.cas_root).wav_duration(
+                            output_digest, int(output["size"])
+                        )
+                        if duration is not None:
+                            variant_metadata["duration_seconds"] = duration
                     thumbnail_descriptor = group.get("thumbnails", {}).get(output["digest"])
                     thumbnail = (
                         self._thumbnail_metadata_descriptor(thumbnail_descriptor, output["digest"])
@@ -5477,7 +5507,19 @@ class RealmStore:
             raise ConflictError("managed output lifecycle changed during update")
         return self.get_managed_output(association_id)
 
-    def _settle_attempt(self, task_id, lease_token, result, *, effect=None, fence=None, attempt_id, publish=None, record=None):
+    def _settle_attempt(
+        self,
+        task_id,
+        lease_token,
+        result,
+        *,
+        effect=None,
+        fence=None,
+        attempt_id,
+        duration_seconds_presence=None,
+        publish=None,
+        record=None,
+    ):
         with self._mutex:
             task = self.conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
             if not task:
@@ -5541,6 +5583,7 @@ class RealmStore:
                         input_object_ids=input_object_ids,
                         settled_at=timestamp,
                         attempt_id=attempt_id,
+                        duration_seconds_presence=duration_seconds_presence,
                     )
                 if publish is not None and not append_effect:
                     publish()
