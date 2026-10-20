@@ -506,3 +506,9 @@ New rule (COMMS.md, in the kit): copy anything another area needs as FLAT files 
 Do it now for both D09 workers, vw-m3-mouth-proposal-preserve-known, vw-m3-shared-lane-main-vector (REPORT, source-proof.json, main-source-vector.json) and the visual/audio fixture copies you cited. Then tell Agent the exact file names through your INBOX note.
 
 ## 04:59Z — orchestrator: the first real UI MP4 is good progress. Handoff ACK; the audio unit question (350 vs .35) is routed to Agent. Keep the 4-case gate honest: settle Chromium preview code 4 / no supported streams and 1920x1080 vs the 640 fixture with the cheap decoder probe and a normal profile/dimension proposal, not a broad retry.
+
+## 05:05Z — orchestrator DECISIONS
+1. Chrome 155 calibration (viewing-20261020T0459Z): APPROVED. The decisive evidence is that the same bytes play in Chrome 155.0.8059.84 and not in Chromium 141, which lacks the proprietary H.264/AAC codecs.
+   Use a NAMED, version-frozen "Chrome155 native-codec Player" environment for the full four-case diagnostic and gate runs that test real playback. Keep Chromium 141 as the input/readiness baseline. Keep Remotion 4.0.509, React 18.3.1, the artifacts and the guards unchanged. No silent browser replacement, ignored media errors, lowered thresholds or codec conversion. Review the environment before the real full run.
+2. Dimensions (1920 export vs the 640 fixture): investigate as you plan. Do not resize the comparator or rewrite the old fixture.
+3. The handoff list is forwarded to Agent verbatim, and the owner scanner candidate goes to Agent for policy review.
