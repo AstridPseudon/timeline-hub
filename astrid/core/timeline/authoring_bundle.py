@@ -889,8 +889,8 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             )
         needs_materialization = (
             authoring_shot_id != source_shot_id
-            or candidate_shot != base_shot
-            or candidate_internal != base_internal
+            or _canonical_json(candidate_shot) != _canonical_json(base_shot)
+            or _canonical_json(candidate_internal) != _canonical_json(base_internal)
         )
         if needs_materialization:
             internal_payload = _copy(dict(candidate_internal))

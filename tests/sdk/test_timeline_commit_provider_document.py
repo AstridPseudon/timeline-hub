@@ -10,6 +10,7 @@ import pytest
 from astrid.core.timeline.authoring_bundle import AuthoringBundleError
 from astrid.sdk.timeline.commit import (
     _digest,
+    _json,
     _manifest,
     bundle_from_document,
     document_from_bundle,
@@ -150,6 +151,36 @@ def test_retained_document_pins_are_part_of_revision_identity():
     assert candidate["parent_revision"]["revision_id"] != document["parent_revision"]["revision_id"]
     assert candidate["dependency_manifest"]["documents"] == [pin]
     assert document_from_bundle(bundle_from_document(candidate)) == candidate
+
+
+@pytest.mark.parametrize('before,after', [(2, 2.0), (1, True), (True, 1)])
+@pytest.mark.parametrize('scope', ['parent', 'shot', 'internal'])
+def test_immutable_image_reuse_requires_exact_encoded_authored_content(scope, before, after):
+    original = document_fixture(shared=False)
+    image = {'parent': original['parent_revision'], 'shot': original['shot_revisions'][0],
+             'internal': original['internal_timeline_revisions'][0]}[scope]
+    image['payload']['unknown'] = {'x': before, 'opaque': [None, False, 1, 1.0]}
+    image['content_digest'] = _digest(image['payload'])
+    original['dependency_manifest'] = _manifest(
+        original['shot_revisions'], original['internal_timeline_revisions'],
+        original['dependency_manifest']['media'], [])
+    source = bundle_from_document(original)
+    candidate = copy.deepcopy(source)
+    shot = next(iter(candidate['shots'].values()))
+    target = {'parent': candidate['parent'], 'shot': shot['payload'],
+              'internal': shot['internal_timeline']}[scope]
+    target['unknown']['x'] = after
+    # The authenticated historical image must not override an exact new value.
+    result = document_from_bundle(candidate, source_bundles=(source,))
+    changed = {'parent': result['parent_revision'], 'shot': result['shot_revisions'][0],
+               'internal': result['internal_timeline_revisions'][0]}[scope]
+    assert type(changed['payload']['unknown']['x']) is type(after)
+    assert changed['payload']['unknown']['opaque'] == [None, False, 1, 1.0]
+    assert changed['revision_id'] != image['revision_id']
+    assert changed['content_digest'] == _digest(changed['payload'])
+    assert changed['content_digest'] != image['content_digest']
+    assert _json(document_from_bundle(bundle_from_document(result))) == _json(result)
+    assert _json(source['source_mapping']['_runtime_document']) == _json(original)
 
 
 def test_pure_converter_imports_without_runtime_or_renderer():
