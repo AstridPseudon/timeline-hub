@@ -57,6 +57,12 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         self._orphan_reason = "its line was removed"
         self._disk: str | None = None  # the file text this handle loaded (or last saved): what another writer may change
         self.merged: list[str] = []      # what the last save merged in from another writer, in plain words
+        # An explicitly connected checkout retains the existing target/client
+        # binding for read-only managed Scene diagnostics.  Detached checkouts
+        # leave these unset and keep their local check behaviour.
+        self._scene_client: Any = None
+        self._scene_project: str | None = None
+        self._scene_timeline: str | None = None
 
     def _refresh(self) -> None:
         """Rebuild derived checkout state after an edit transaction restores its bundle."""
@@ -83,7 +89,11 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         """Check out the current head (read-only until ``publish``)."""
         bundle = _store.fetch_bundle(project, timeline, revision_id=revision_id, client=client)
         intent.migrate(bundle)  # the fetched copy is ours; the published revision is never rewritten
-        return cls(bundle)
+        checkout = cls(bundle)
+        checkout._scene_client = client
+        checkout._scene_project = project
+        checkout._scene_timeline = timeline
+        return checkout
 
     @staticmethod
     def _pin_initial_base(bundle: dict[str, Any]) -> None:
@@ -389,6 +399,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
             tl.save(path)
             _journal.record_or_note(tl, path, kind="checkout", outcome="changed", label="checkout",
                                          after=_journal.digest(path.read_text(encoding="utf-8")))
+        tl._scene_client = client
+        tl._scene_project = project
+        tl._scene_timeline = timeline
         _store.set_current_draft(project_id, timeline_id, name)  # commands that name no draft use this one
         tl.draft_name = name
         return tl

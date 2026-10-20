@@ -216,6 +216,43 @@ class _CheckMixin:
             result, context, duration_frames=int(round(self.duration * self.fps)),
         ))
 
+    def _managed_scene_spans(self) -> list | None:
+        """Read Scene advice through an explicitly connected checkout, if bound.
+
+        Save and detached checkouts have no managed target binding and retain
+        the local structural coverage reader.  A connected checkout treats a
+        missing or stale managed result as advisory unavailability instead of
+        falling back to a different source of scene truth.
+        """
+        client = getattr(self, "_scene_client", None)
+        project = getattr(self, "_scene_project", None)
+        timeline = getattr(self, "_scene_timeline", None)
+        if client is None or not project or not timeline:
+            return None
+        from astrid.sdk.timeline_filmstrip import (
+            _invoke_scene_only,
+            _scene_only_candidate_request,
+            _scene_only_unavailable,
+        )
+
+        try:
+            if self.path:
+                request, _context = _scene_only_candidate_request(
+                    self.document(), project=project, timeline_ref=timeline, client=client,
+                )
+                # The candidate request is already frozen through the reviewed
+                # helper; _invoke_scene_only reuses that same managed path.
+                spans, _prepared = _invoke_scene_only(
+                    request, project=project, client=client,
+                )
+                return spans
+            spans, _prepared = _invoke_scene_only(
+                {"timeline_ref": timeline}, project=project, client=client,
+            )
+            return spans
+        except Exception:  # noqa: BLE001 - diagnostics remain advisory
+            return _scene_only_unavailable()
+
     def _length_problems(self) -> list[str]:
         """Visible clips that run past the end of their shot's placement: the render stops at the shot's end, so
         they would be cut off. Audio is exempt (a music bed runs out with the film). Blocking."""
@@ -587,7 +624,9 @@ class _CheckMixin:
         blocking += [f"beats   {line}" for line in self._stale_beats()]
         blocking += [f"length  {line}" for line in self._length_problems()]
         if diagnostics:
-            spans = self._on_screen()  # one pass over the film for the three readers below
+            spans = self._managed_scene_spans()
+            if spans is None:
+                spans = self._on_screen()  # one pass over the film for the three readers below
             problems += self._scene_problems(spans)
             sprite_blocking, sprite_notes = self._sprite_problems()
             blocking += sprite_blocking
