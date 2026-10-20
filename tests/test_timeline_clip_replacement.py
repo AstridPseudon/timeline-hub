@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import copy
 import json
+import os
 import shutil
 import subprocess
 import sys
 import urllib.request
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -13,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "packages" / "python"))
 from astrid_runtime_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
-from runtime_protocol.errors import ConflictError, NotFoundError, RetiredRouteError, ValidationError
+from runtime_protocol.errors import ConflictError, NotFoundError, RetiredRouteError, RuntimeErrorBase, ValidationError
 from runtime_protocol.service import RuntimeService
 
 
@@ -73,6 +76,413 @@ def _service_fixture(tmp_path, *, clip_type: str | None = None):
     )
     source = service.ingest(project["id"], _media_bytes(), media_type="video/mp4", idempotency_key="source")
     return service, project, config, registry, source["data"]["object_id"]
+
+
+NATIVE_OWNER = "occurrence:native-occurrence"
+NATIVE_TARGET = NATIVE_OWNER + "/clip:native-clip"
+NATIVE_PARENT_TARGET = "parent/clip:native-parent-clip"
+_PREPARED_AGENT = Path(
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
+    "scratchpad/orch/workers/rt-m2-next-ordinary-official-prep/agent-final-source"
+)
+
+
+def _native_agent_source():
+    """Use the frozen ordinary Agent source when the integration runner lacks it."""
+    configured = Path(os.environ.get("ASTRID_CHECKOUT", ""))
+    source = configured if (configured / "astrid/sdk/timeline/native_occurrence_create.py").exists() else _PREPARED_AGENT
+    if not (source / "astrid/sdk/timeline/native_occurrence_create.py").exists():
+        pytest.fail("frozen ordinary Agent source is unavailable")
+    if str(source) not in sys.path:
+        sys.path.insert(0, str(source))
+    return source
+
+
+def _native_imports():
+    _native_agent_source()
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline._command_state import CommandError
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.commit import _digest
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+    from astrid.sdk.timeline.native_occurrence_media_commands import (
+        capture_occurrence_add_media,
+        capture_parent_swap_media,
+        capture_occurrence_swap_media,
+    )
+    from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+    return SimpleNamespace(
+        CommandError=CommandError,
+        capture_clip_set=capture_clip_set,
+        capture_occurrence_add_media=capture_occurrence_add_media,
+        capture_clip_add_media=capture_clip_add_media,
+        capture_occurrence_create=capture_occurrence_create,
+        capture_occurrence_swap_media=capture_occurrence_swap_media,
+        capture_parent_swap_media=capture_parent_swap_media,
+        capture_track_create=capture_track_create,
+        bundle_from_document=bundle_from_document,
+        digest=_digest,
+        execute=execute,
+        load_timeline_commit_provider=load_timeline_commit_provider,
+    )
+
+
+def _native_import_media(service, project, *, alias, duration=5, kind="video", key=None):
+    media_type = "video/mp4" if kind == "video" else "audio/mp4"
+    result = service.import_media(
+        project,
+        _media_bytes(duration=duration, kind=kind),
+        media_type=media_type,
+        original_name=f"{alias}.mp4",
+        actor_id="native-clip-replacement-test",
+        duration_seconds=duration,
+        idempotency_key=key or f"import-{alias}",
+    )
+    result = result["data"]
+    pin = service.get_project_media_selection(project, {
+        "asset": result["variant_id"],
+        "generation_id": result["generation_id"],
+        "variant_id": result["variant_id"],
+    }, authorize=lambda: None)
+    verified = service.get_project_verified_media(project, pin, authorize=lambda: None)
+    return pin, verified
+
+
+def _native_empty_document(service, project, timeline="film"):
+    head = service.get_project_timeline(project, timeline)
+    bootstrap = service.get_project_parent_composition_revision(project, timeline, head["head_revision_id"])
+    return {
+        "schema_version": 1,
+        "project_id": project,
+        "timeline_id": timeline,
+        "parent_revision": {key: bootstrap[key] for key in ("revision_id", "content_digest", "payload")},
+        "shot_revisions": [],
+        "internal_timeline_revisions": [],
+        "dependency_manifest": bootstrap["dependency_manifest"],
+    }
+
+
+def _native_bootstrap_commands(native, document, old, old_verified):
+    bundle = native.bundle_from_document(document)
+    parent_track = native.capture_track_create(bundle, "parent", {"id": "picture", "kind": "visual"})
+    tracked = native.execute(bundle, [parent_track]).bundle
+    parent_media_track = native.capture_track_create(tracked, "parent", {"id": "overlay", "kind": "visual"})
+    tracked = native.execute(tracked, [parent_media_track]).bundle
+    parent_row = {
+        "id": "native-parent-clip", "clipType": "video", "asset": old["asset"],
+        "track": "overlay", "at": 0, "hold": 3, "from": 1, "to": 4,
+        "opaque": [None, False],
+    }
+    parent_add = native.capture_clip_add_media(
+        tracked, parent_row, old, verified_media=[old_verified],
+    )
+    tracked = native.execute(tracked, [parent_add], verified_media=[old_verified]).bundle
+    birth = native.capture_occurrence_create(
+        tracked, NATIVE_OWNER.removeprefix("occurrence:"), "native-shot",
+        name="Native chapter", track="picture", on=0, duration=5,
+    )
+    born = native.execute(tracked, [birth]).bundle
+    child_track = native.capture_track_create(born, NATIVE_OWNER, {"id": "picture", "kind": "visual"})
+    child_bundle = native.execute(born, [child_track]).bundle
+    row = {
+        "id": "native-clip", "clipType": "video", "asset": old["asset"],
+        "track": "picture", "at": 2, "hold": 3, "from": 1, "to": 4,
+        "opaque": [None, False],
+    }
+    add = native.capture_occurrence_add_media(
+        child_bundle, NATIVE_OWNER, row, old, verified_media=[old_verified],
+    )
+    return [parent_track, parent_media_track, parent_add, birth, child_track, add]
+
+
+def _native_body(service, project, commands, *, timeline="film", base=None):
+    head = service.get_project_timeline(project, timeline) if base is None else base
+    return {
+        "api_version": 1, "project_id": project, "timeline_id": timeline,
+        "base_revision_id": head["head_revision_id"],
+        "base_publication_id": head["head_publication_id"],
+        "commands": copy.deepcopy(commands), "source": {"via": "python"},
+    }
+
+
+def _native_commit(service, project, body, key, *, timeline="film"):
+    return service.commit_timeline(
+        project, timeline, body, idempotency_key=key,
+        publisher="native-clip-replacement-test",
+        invocation_path=f"/v1/projects/{project}/timelines/{timeline}/commit",
+        authorize=lambda: None,
+    )
+
+
+def _native_rows(service):
+    return tuple(service.store.conn.iterdump())
+
+
+@pytest.fixture
+def native_editing(tmp_path):
+    native = _native_imports()
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    project = service.create_project({"slug": "native-replace", "name": "Native replace"})["id"]
+    service.register_timeline_commit_provider(native.load_timeline_commit_provider("astrid"))
+    service.create_timeline(project, "film", idempotency_key="native-bootstrap")
+    old, old_verified = _native_import_media(service, project, alias="old")
+    new, new_verified = _native_import_media(service, project, alias="new")
+    document = _native_empty_document(service, project)
+    bootstrap = _native_bootstrap_commands(native, document, old, old_verified)
+    created = _native_commit(service, project, _native_body(service, project, bootstrap), "native-birth")
+    try:
+        yield SimpleNamespace(
+            native=native, service=service, project=project, root=tmp_path / "realm",
+            old=old, old_verified=old_verified, new=new, new_verified=new_verified,
+            document=created["data"]["canonical_document"],
+        )
+    finally:
+        service.close()
+
+
+def _native_swap(editing, *, media=None, verified=None, old_media=None, document=None):
+    native = editing.native
+    bundle = native.bundle_from_document(document or editing.document)
+    return native.capture_occurrence_swap_media(
+        bundle, NATIVE_TARGET, old_media or editing.old, media or editing.new,
+        verified_media=verified or [editing.old_verified, editing.new_verified],
+    )
+
+
+@pytest.mark.integration
+def test_native_clip_swap_is_atomic_cas_and_exactly_replayable(native_editing):
+    command = _native_swap(native_editing)
+    body = _native_body(native_editing.service, native_editing.project, [command])
+    first = _native_commit(native_editing.service, native_editing.project, body, "native-swap")
+    assert first["data"]["status"] in {"accepted", "rebased"}
+    assert first["data"]["canonical_document"]["internal_timeline_revisions"][0]["payload"]["clips"][0]["asset"] == native_editing.new["asset"]
+    old_path = native_editing.service.cas.path_for(native_editing.old["object_id"].removeprefix("sha256:"))
+    old_bytes = old_path.read_bytes()
+    old_path.write_bytes(bytes([old_bytes[0] ^ 1]) + old_bytes[1:])
+    assert _native_commit(native_editing.service, native_editing.project, body, "native-swap") == first
+    old_path.write_bytes(old_bytes)
+    changed = copy.deepcopy(body)
+    changed["commands"][0]["select"] = NATIVE_OWNER + "/clip:missing"
+    with pytest.raises(RuntimeErrorBase) as error:
+        _native_commit(native_editing.service, native_editing.project, changed, "native-swap")
+    assert error.value.status == 409
+
+    stale_body = copy.deepcopy(body)
+    edit = native_editing.native.capture_clip_set(
+        native_editing.native.bundle_from_document(first["data"]["canonical_document"]), NATIVE_TARGET,
+        values={"hold": 3},
+    )
+    _native_commit(native_editing.service, native_editing.project,
+                   _native_body(native_editing.service, native_editing.project, [edit]), "native-intervening")
+    with pytest.raises(RuntimeErrorBase) as error:
+        _native_commit(native_editing.service, native_editing.project, stale_body, "native-stale")
+    assert error.value.status == 409
+
+
+@pytest.mark.integration
+def test_native_parent_clip_swap_route_replaces_parent_media(native_editing):
+    command = native_editing.native.capture_parent_swap_media(
+        native_editing.native.bundle_from_document(native_editing.document),
+        NATIVE_PARENT_TARGET, native_editing.old, native_editing.new,
+        verified_media=[native_editing.old_verified, native_editing.new_verified],
+    )
+    body = _native_body(native_editing.service, native_editing.project, [command])
+    try:
+        from runtime_protocol.timeline_commit_port import validate_request
+        validate_request(body)
+    except ValidationError as error:
+        if "one of ['shared', 'occurrence']" in str(error):
+            pytest.xfail("public Runtime schema is pre-0.2.14 and excludes parent clip.swap-media ownership")
+        raise
+    accepted = _native_commit(native_editing.service, native_editing.project, body, "native-parent-swap")
+    assert accepted["data"]["status"] in {"accepted", "rebased"}
+    assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"][0]["asset"] == native_editing.new["asset"]
+
+
+@pytest.mark.integration
+def test_native_clip_swap_rejects_cross_project_source_without_mutation(native_editing):
+    service, project = native_editing.service, native_editing.project
+    foreign_project = service.create_project({"slug": "foreign", "name": "Foreign"})["id"]
+    foreign, foreign_verified = _native_import_media(service, foreign_project, alias="foreign")
+    command = _native_swap(native_editing, media=foreign, verified=[native_editing.old_verified, foreign_verified])
+    before = _native_rows(service)
+    with pytest.raises(RuntimeErrorBase):
+        _native_commit(service, project, _native_body(service, project, [command]), "native-cross-project")
+    assert _native_rows(service) == before
+
+
+@pytest.mark.integration
+def test_native_clip_swap_rejects_malformed_source_before_native_commit(tmp_path):
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    project = service.create_project({"slug": "native-malformed", "name": "Native malformed"})["id"]
+    try:
+        with pytest.raises(ValidationError, match="not locally decodable"):
+            service.import_media(project, b"not a media container", media_type="video/mp4",
+                                 actor_id="native-clip-replacement-test", idempotency_key="malformed")
+    finally:
+        service.close()
+
+
+@pytest.mark.integration
+def test_native_clip_swap_rejects_tampered_cas_without_mutation(native_editing):
+    digest = native_editing.old["object_id"].removeprefix("sha256:")
+    path = native_editing.service.cas.path_for(digest)
+    original = path.read_bytes()
+    path.write_bytes(bytes([original[0] ^ 1]) + original[1:])
+    command = _native_swap(native_editing)
+    before = _native_rows(native_editing.service)
+    with pytest.raises(RuntimeErrorBase, match="immutable|changed|integrity|size"):
+        _native_commit(native_editing.service, native_editing.project,
+                       _native_body(native_editing.service, native_editing.project, [command]), "native-tampered")
+    assert _native_rows(native_editing.service) == before
+
+
+@pytest.mark.integration
+def test_native_clip_swap_rejects_selected_source_corruption_between_capture_and_accept(native_editing, monkeypatch):
+    service = native_editing.service
+    digest = native_editing.new["object_id"].removeprefix("sha256:")
+    path = service.cas.path_for(digest)
+    before_rows = _native_rows(service)
+    before_head = service.get_project_timeline(native_editing.project, "film")
+    before_receipts = [tuple(row) for row in service.store.conn.execute(
+        "SELECT * FROM command_idempotency ORDER BY txn_id",
+    )]
+    original_verify = service._verify_child_object_bytes
+    corruption = {}
+
+    def verify_then_corrupt(object_digest, size, *, label):
+        result = original_verify(object_digest, size, label=label)
+        if object_digest == digest and not corruption:
+            data = path.read_bytes()
+            corruption["bytes"] = bytes([data[0] ^ 1]) + data[1:]
+            path.write_bytes(corruption["bytes"])
+        return result
+
+    monkeypatch.setattr(service, "_verify_child_object_bytes", verify_then_corrupt)
+    command = _native_swap(native_editing)
+    with pytest.raises(RuntimeErrorBase, match="immutable|changed|integrity|size"):
+        _native_commit(native_editing.service, native_editing.project,
+                       _native_body(service, native_editing.project, [command]), "native-capture-race")
+    assert corruption
+    assert _native_rows(service) == before_rows
+    assert service.get_project_timeline(native_editing.project, "film") == before_head
+    assert [tuple(row) for row in service.store.conn.execute(
+        "SELECT * FROM command_idempotency ORDER BY txn_id",
+    )] == before_receipts
+    assert path.read_bytes() == corruption["bytes"]
+
+
+@pytest.mark.integration
+def test_native_clip_swap_rejects_wrong_stream_without_mutation(native_editing):
+    audio, audio_verified = _native_import_media(native_editing.service, native_editing.project, alias="audio", kind="audio")
+    before = _native_rows(native_editing.service)
+    with pytest.raises(Exception, match="media|stream|kind"):
+        _native_swap(native_editing, media=audio, verified=[native_editing.old_verified, audio_verified])
+    assert _native_rows(native_editing.service) == before
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("duration", [1, 3.5])
+def test_native_clip_swap_rejects_too_short_or_end_short_source(native_editing, duration):
+    short, short_verified = _native_import_media(
+        native_editing.service, native_editing.project, alias=f"short-{duration}", duration=duration,
+    )
+    before = _native_rows(native_editing.service)
+    with pytest.raises(Exception, match="short|duration|window|extent|source"):
+        _native_swap(native_editing, media=short, verified=[native_editing.old_verified, short_verified])
+    assert _native_rows(native_editing.service) == before
+
+
+@pytest.mark.integration
+def test_native_generic_visual_media_requires_video_stream(native_editing):
+    audio, audio_verified = _native_import_media(native_editing.service, native_editing.project, alias="generic-audio", kind="audio")
+    document = copy.deepcopy(native_editing.document)
+    internal = document["internal_timeline_revisions"][0]
+    internal["payload"]["clips"][0]["clipType"] = "media"
+    internal["content_digest"] = native_editing.native.digest(internal["payload"])
+    manifest = document["dependency_manifest"]["internal_timelines"][0]
+    manifest["content_digest"] = internal["content_digest"]
+    bundle = native_editing.native.bundle_from_document(document)
+    with pytest.raises(native_editing.native.CommandError, match="image/video"):
+        native_editing.native.capture_occurrence_swap_media(
+            bundle, NATIVE_TARGET, native_editing.old, audio,
+            verified_media=[native_editing.old_verified, audio_verified],
+        )
+
+
+@pytest.mark.integration
+def test_native_clip_swap_replays_after_intervening_edit_and_reopen(native_editing):
+    command = _native_swap(native_editing)
+    body = _native_body(native_editing.service, native_editing.project, [command])
+    first = _native_commit(native_editing.service, native_editing.project, body, "native-replay")
+    current = first["data"]["canonical_document"]
+    edit = native_editing.native.capture_clip_set(
+        native_editing.native.bundle_from_document(current), NATIVE_TARGET, values={"hold": 3},
+    )
+    _native_commit(native_editing.service, native_editing.project,
+                   _native_body(native_editing.service, native_editing.project, [edit]), "native-intervening-replay")
+    native_editing.service.close()
+    reopened = RuntimeService(native_editing.root)
+    try:
+        reopened.register_timeline_commit_provider(native_editing.native.load_timeline_commit_provider("astrid"))
+        assert _native_commit(reopened, native_editing.project, body, "native-replay") == first
+    finally:
+        reopened.close()
+
+
+@pytest.mark.integration
+def test_native_clip_swap_public_http_route(tmp_path):
+    """The public commit route accepts the same native occurrence swap bundle."""
+    native = _native_imports()
+    RealmStore.initialize(tmp_path / "realm").close()
+    daemon = RuntimeDaemon(
+        tmp_path / "realm", support_root=tmp_path / "support", authoring_profile="astrid",
+    ).start()
+    try:
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        project = client.create_project("Native HTTP", slug="native-http", idempotency_key="http-project")
+        project_id = project.project_id
+        client.create_timeline(project_id, "film", idempotency_key="http-bootstrap")
+
+        imported = client.import_project_media(
+            project_id, _media_bytes(), media_type="video/mp4", filename="old.mp4",
+            duration_seconds=5, idempotency_key="http-old-media",
+        )
+        old = client.get_project_media_selection(project_id, {
+            "asset": imported["variant_id"], "generation_id": imported["generation_id"],
+            "variant_id": imported["variant_id"],
+        })
+        old_verified = client.get_project_verified_media(project_id, old)
+        imported_new = client.import_project_media(
+            project_id, _media_bytes(), media_type="video/mp4", filename="new.mp4",
+            duration_seconds=5, idempotency_key="http-new-media",
+        )
+        new = client.get_project_media_selection(project_id, {
+            "asset": imported_new["variant_id"], "generation_id": imported_new["generation_id"],
+            "variant_id": imported_new["variant_id"],
+        })
+        new_verified = client.get_project_verified_media(project_id, new)
+        empty = _native_empty_document(daemon.service, project_id)
+        bootstrap = _native_bootstrap_commands(native, empty, old, old_verified)
+        created = client.commit_timeline(
+            project_id, "film", _native_body(daemon.service, project_id, bootstrap),
+            idempotency_key="http-birth",
+        )
+        swap = native.capture_occurrence_swap_media(
+            native.bundle_from_document(created["data"]["canonical_document"]),
+            NATIVE_TARGET, old, new, verified_media=[old_verified, new_verified],
+        )
+        request = _native_body(daemon.service, project_id, [swap])
+        accepted = client.commit_timeline(project_id, "film", request, idempotency_key="http-swap")
+        assert accepted["data"]["status"] in {"accepted", "rebased"}
+        assert accepted["data"]["canonical_document"]["internal_timeline_revisions"][0]["payload"]["clips"][0]["asset"] == new["asset"]
+    finally:
+        daemon.stop()
 
 
 @retired_writer

@@ -25,7 +25,7 @@ from urllib.parse import unquote
 
 from . import platform
 from . import cancellation
-from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, RetiredRouteError, ValidationError
+from .errors import CapabilityUnavailableError, ConflictError, InvalidRequestError, LeaseError, NotFoundError, OwnerBusyError, RealmAdmissionError, ValidationError
 from .canonical_schema import CANONICAL_FORMAT_ID, CANONICAL_SCHEMA_SQL
 from .cas import ContentAddressedStore
 from .dirfd import remove_tree_at
@@ -1496,7 +1496,19 @@ class RealmStore:
         return [dict(row) for row in rows]
 
     def promote_shot_items(self, shot_id, expected_version, updates, *, timestamp):
-        raise RetiredRouteError("direct shot promotion is retired; use timeline commands")
+        """Apply candidate metadata and advance the shot head atomically."""
+        for item_id, metadata in updates:
+            self.conn.execute(
+                "UPDATE shot_items SET metadata_json=? WHERE id=? AND shot_id=?",
+                (canonical_json(metadata), str(item_id), str(shot_id)),
+            )
+        changed = self.conn.execute(
+            "UPDATE project_shots SET version=?, updated_at=? WHERE id=? AND version=?",
+            (int(expected_version) + 1, timestamp, str(shot_id), int(expected_version)),
+        ).rowcount
+        if changed != 1:
+            raise ConflictError("shot head conflict", details={"expected": int(expected_version)})
+        return int(expected_version) + 1
 
     def record_object(self, digest, size, media_type, original_name=None):
         with self._mutex:
