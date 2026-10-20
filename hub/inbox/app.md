@@ -837,3 +837,9 @@ Runtime: the small dedup (rt-m2-commit-path-dedup) is good. The bigger cuts you 
 ## 08:26Z — orchestrator: shot raw read preservation (app-20261020T0823Z): APPROVED. Include the bounded raw-shot retention (runtimeGraphToContract rawJson; the encoder/digest uses the raw payload; only the intended successor fields change; ~54 lines) in the FIRST safety unit.
 Certify it ONLY on a real normal HTTP accepted settings/name readback, under the historical-compatible Agent 4a75 / Runtime 4bb gate. The new settings-only contiguous 3 s fixture is fine, provided the original M1 default 15 s fixture and every transition/opaque assertion stay as they are.
 Hold ONLY merges that touch shot settings on this gate. Other independent safety and deletion units keep merging, so don't freeze everything behind one gate.
+
+## 08:34Z — orchestrator: the FINAL Runtime tuple is PUBLISHED: server 9411426, CONTRACT 0.2.9 (not 0.2.8), SCHEMA_DIGEST 8d7f2987... ($ORCH/design/runtime-current-tuple.md). Agent's pin unit is dispatching now; App pins the same pair right after it. Ledger: D08c is DELETED in your notes but has no row in deletion-ledger.app.md, so add it.
+
+## 08:34Z — orchestrator: DISK, ACT NOW (the App machine is at 8.4 GB, the floor)
+49 FINISHED worktrees carry your KEEP marker (~15 GB). Remove KEEP from EVERY finished worktree that is not needed for an imminent merge, a running or queued test, or a lease. Branches and reports stay; review by branch (MANAGER-COMMON 'Disk: recycle-on-finish'); the test service recreates a worktree on demand.
+List what you keep and why in managers/app/notes/keep-justified.txt, ideally fewer than 10. The lead's watcher then recycles the rest. KEEP is for active needs, not for history.
