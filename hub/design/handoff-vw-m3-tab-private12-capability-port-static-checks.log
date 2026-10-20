@@ -1,0 +1,12 @@
+PASS node --check tests/e2e/timeline/tab-audio-capture.analysis.mjs
+PASS node --check tests/e2e/timeline/tab-audio-capture.analysis.test.mjs
+PASS node --check tests/e2e/timeline/tab-audio-capture.controller.mjs
+PASS node --check tests/e2e/timeline/tab-audio-capture.controller.test.mjs
+PASS node --check tests/e2e/timeline/tab-audio-capture.environment.test.mjs
+PASS bash -n tests/e2e/timeline/setup-tab-audio-capture.sh
+PASS exact corrected donor bytes tests/e2e/timeline/tab-audio-capture.analysis.mjs
+PASS exact corrected donor bytes tests/e2e/timeline/tab-audio-capture.probe.ts
+PASS donor analysis assertions unchanged (trailing blank line removed)
+PASS no edits to any baseline tracked file
+PASS whitespace check all 8 new files; no-index exit 1 denotes additions
+PASS git diff --check

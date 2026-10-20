@@ -1,0 +1,30 @@
+{
+  "status": "REJECT",
+  "reason": "No READY private graph; controller binding null; actual Playwright list/preflight not reached",
+  "harnessCommittedSourceSha": "2d97bef4a39db1c2c10dc1c1d56e932d6c5dfb0c",
+  "controllerSha256": "aa44a3b4e3864f2c2130713581f49660bcae670f8059936a027f65176a010fd0",
+  "fileSha256": {
+    "setup-tab-audio-capture.sh": "0181a410569b61b41af235e80b6fed9e1ce1ccaf928c17cd710f93112cf7aca0",
+    "tab-audio-capture.analysis.mjs": "152a1a18bc4d08355e021a581f49f91a42ad3a03a1fff23ee014ca7b848c8173",
+    "tab-audio-capture.analysis.test.mjs": "c2952408d21f707e753499cab9669e8bf9e18fe7b6530a5bc53a27fd493e06d7",
+    "tab-audio-capture.config.ts": "f894ef4c68ab2922f5e2acc355206e73279d8c3e76071029fa5e27266fb1c77f",
+    "tab-audio-capture.controller.mjs": "aa44a3b4e3864f2c2130713581f49660bcae670f8059936a027f65176a010fd0",
+    "tab-audio-capture.controller.test.mjs": "e45de8c44ca3ded6c52abee6b5300769e30c141136c8f23c00c0ef1caee605b6",
+    "tab-audio-capture.environment.test.mjs": "a69f128fb1ae7dccba5916ebc8afa5c0860c67595d5693da5082284f2395d9c4",
+    "tab-audio-capture.probe.ts": "51de3cb5b6f024171f5079c6f11b42f92c2b1f22e648052f879c5f5c1bffec8d"
+  },
+  "onlyTestSourcesDiffer": true,
+  "probeBytesMatchCorrectedDonor": true,
+  "changed": [
+    "tests/e2e/timeline/setup-tab-audio-capture.sh",
+    "tests/e2e/timeline/tab-audio-capture.analysis.mjs",
+    "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs",
+    "tests/e2e/timeline/tab-audio-capture.config.ts",
+    "tests/e2e/timeline/tab-audio-capture.controller.mjs",
+    "tests/e2e/timeline/tab-audio-capture.controller.test.mjs",
+    "tests/e2e/timeline/tab-audio-capture.environment.test.mjs",
+    "tests/e2e/timeline/tab-audio-capture.probe.ts"
+  ],
+  "actualDiscoveryVerified": false,
+  "environmentFingerprintVerified": false
+}

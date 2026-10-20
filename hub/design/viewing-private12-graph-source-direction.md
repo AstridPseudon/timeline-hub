@@ -1,0 +1,7 @@
+# Manager direction — 2026-10-20 12:09 UTC
+
+Original full-copy preparer is BLOCKED: no private graph created. Its complete physical traversal found152 self-targeting links,147 beyond known6 exclusions. The old215e32c6 fingerprint covers11 selected packages, not the entire tree; source pre/post unchanged and no retained file corruption proven. Source report design/handoff-vw-m3-app-private-clean12-graph-REPORT.md is the honest correction. No historical result relabelled.
+
+Replacement worker vw-m3-app-private12-clean-install creates a fresh OWN graph by ordinary npm ci from EXACTcurrentroot0ea package/lock/public12filetar, owncache, normalpostinstall, browserdownloadsdisabled. It must not copy/borrow the polluted physical App graph. This needs no shared repair or broadened private-copy omission list. Its READY will provide fullgraph/newfingerprint andexactsource identity; do not use provisional files.
+
+Capability port and independent gate: old proposedsource5117 is a held prototype only. Use the READY clean installer graph; reconcile test-only source onto latest currentroot0ea if package/lock/source identity differs, with exact frozen source and meaningful discovery. No productchanges/Rootactivation/oldgrantreuse. Newfullgraph is sharedREADONLY afterREADY, caches/reports/temp must be in eachconsumer's OWN folder. All77packagebytes/sixpeer/fullgraph/browser/sourcepre/post required before fresh manager-only centralpreflight/capability grant. No actualbrowser/capture is authorized by this note.

@@ -1,0 +1,63 @@
+{
+  "status": "BLOCKED_NOT_READY",
+  "baseSourceSha": "5117b9da2e17828ec0b3cfbcdf3ff4987dc77ab3",
+  "baseTree": "e7e282fc958942cea263566a66b2e72d21913e0e",
+  "preparedSourceBytesHash": "b626e72d8f44fb58ee01db8ae3302f1edd8c3da42260a534d2ffe534289e9279",
+  "preparedSourceFileCount": 5806,
+  "testFiles": [
+    {
+      "path": "tests/e2e/timeline/setup-tab-audio-capture.sh",
+      "sha256": "0181a410569b61b41af235e80b6fed9e1ce1ccaf928c17cd710f93112cf7aca0",
+      "mode": "0o755",
+      "size": 2039
+    },
+    {
+      "path": "tests/e2e/timeline/tab-audio-capture.analysis.mjs",
+      "sha256": "152a1a18bc4d08355e021a581f49f91a42ad3a03a1fff23ee014ca7b848c8173",
+      "mode": "0o644",
+      "size": 9973
+    },
+    {
+      "path": "tests/e2e/timeline/tab-audio-capture.analysis.test.mjs",
+      "sha256": "c2952408d21f707e753499cab9669e8bf9e18fe7b6530a5bc53a27fd493e06d7",
+      "mode": "0o644",
+      "size": 5989
+    },
+    {
+      "path": "tests/e2e/timeline/tab-audio-capture.config.ts",
+      "sha256": "f894ef4c68ab2922f5e2acc355206e73279d8c3e76071029fa5e27266fb1c77f",
+      "mode": "0o644",
+      "size": 1365
+    },
+    {
+      "path": "tests/e2e/timeline/tab-audio-capture.controller.mjs",
+      "sha256": "aa44a3b4e3864f2c2130713581f49660bcae670f8059936a027f65176a010fd0",
+      "mode": "0o644",
+      "size": 19817
+    },
+    {
+      "path": "tests/e2e/timeline/tab-audio-capture.controller.test.mjs",
+      "sha256": "e45de8c44ca3ded6c52abee6b5300769e30c141136c8f23c00c0ef1caee605b6",
+      "mode": "0o644",
+      "size": 7555
+    },
+    {
+      "path": "tests/e2e/timeline/tab-audio-capture.environment.test.mjs",
+      "sha256": "a69f128fb1ae7dccba5916ebc8afa5c0860c67595d5693da5082284f2395d9c4",
+      "mode": "0o644",
+      "size": 2145
+    },
+    {
+      "path": "tests/e2e/timeline/tab-audio-capture.probe.ts",
+      "sha256": "51de3cb5b6f024171f5079c6f11b42f92c2b1f22e648052f879c5f5c1bffec8d",
+      "mode": "0o644",
+      "size": 11909
+    }
+  ],
+  "testFilesManifestSha256": "5af6f98f9999bd83c2c6459550ce5707c6c924292d3eaefb0c94f08d7de01f93",
+  "privateGraph": null,
+  "controllerFrozenPrivateGraph": null,
+  "actualPlaywrightList": null,
+  "finalCommittedSourceSha": null,
+  "reason": "No physical READY graph: 147 additional self-targeting package links remain beyond the permitted six exclusions. Source draft only, not a grantable environment fingerprint."
+}

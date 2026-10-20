@@ -1,0 +1,9 @@
+$ /tmp/vw-m3-agent-gate-node20.19.4/bin/node --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.controller.mjs
+exit 0
+
+$ bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-setup-tab-audio-capture.sh
+exit 0
+
+$ /tmp/vw-m3-agent-gate-node20.19.4/bin/node --input-type=module -e const m = await import('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-tab-private12-capability-port-tab-audio-capture.controller.mjs'); try { m.privateGraphRoot(); process.exitCode=2; } catch (e) { if (!e.message.includes('BLOCKED: app-private-clean12-graph has no approved full physical READY graph')) throw e; console.log(e.message); }
+exit 0
+BLOCKED: app-private-clean12-graph has no approved full physical READY graph

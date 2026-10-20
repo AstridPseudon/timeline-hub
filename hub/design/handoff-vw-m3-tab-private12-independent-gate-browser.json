@@ -1,0 +1,10 @@
+{
+  "tree": {
+    "sha256": "5b9b48fad617dc414d4a18ccfe9c7933c7bc4a8efd78c70d4f7a9e853808de0e",
+    "fileCount": 255
+  },
+  "executableSha256": "cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76",
+  "packageVersion": "155.0.8059.84-1",
+  "browserLaunched": false,
+  "freeBytes": 12336078848
+}
