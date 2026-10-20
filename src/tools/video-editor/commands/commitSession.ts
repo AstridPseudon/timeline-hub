@@ -3,7 +3,11 @@ import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
-import { authoringBundleFromDocument } from './authoringBundle.ts';
+import { clipScalarPreview, type ClipScalarArgs, type ClipScalarCapturePort } from './clipScalarGesture.ts';
+import { captureClipSet, executeClipSet } from './clipScalarCapture.ts';
+import { stableOutputIdentity } from '../data/shotComposition.ts';
+import type { CanonicalProjectedClipIdentity } from '../data/shotCompositionProjection.ts';
+import { authoringBundleFromDocument, type AuthoringBundle } from './authoringBundle.ts';
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
 import { AuthoredState, copy, equal } from './clipMovePrimitives.ts';
@@ -46,7 +50,16 @@ type Options = {
 };
 const sameHead = (a: OutboxHead, b: OutboxHead) => a.revisionId === b.revisionId && a.publicationId === b.publicationId;
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
-const json = (value: unknown): JSON => JSON.parse(JSON.stringify(value)) as JSON;
+function cloneJson(value: unknown): JSON {
+  if (value === null || typeof value !== 'object') return value as JSON;
+  if (Array.isArray(value)) return value.map(cloneJson) as JSON;
+  const copy = Object.create(null) as Record<string, JSON>;
+  for (const key of Object.keys(value)) Object.defineProperty(copy, key, {
+    value: cloneJson((value as Record<string, unknown>)[key]), enumerable: true, configurable: true, writable: true,
+  });
+  return copy;
+}
+const json = (value: unknown): JSON => cloneJson(value);
 const hasChildTrack = (bundle: AuthoredBundle, trackId: string) => Object.values(bundle.shots).some((shot) =>
   Array.isArray(shot.internal_timeline.tracks) && shot.internal_timeline.tracks.some((track) =>
     track !== null && typeof track === 'object' && !Array.isArray(track) && track.id === trackId));
@@ -365,6 +378,100 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
   };
+  function resolveOwnedClipRef(clipId: string, identity: Partial<CanonicalProjectedClipIdentity> | undefined,
+    requestedOwner: string | undefined, refusal: string): string {
+    const parentRef = `parent/clip:${clipId}`;
+    const raw = new AuthoredState(bundle);
+    // Parent app fields are authored opaque data, not projected ownership facts.
+    const ownerRef = requestedOwner ?? (
+      !clipId.includes('/') && !clipId.includes('::') && raw.entity(parentRef, true) ? 'parent' : identity?.ownerRef);
+    const select = ownerRef === 'parent' ? parentRef : identity?.clipRef;
+    if (typeof ownerRef !== 'string' || typeof select !== 'string' || select.slice(0, select.lastIndexOf('/')) !== ownerRef
+      || !/^(?:parent|occurrence:[^/]+)\/clip:[^/]+$/.test(select) || select.includes('::')
+      || !raw.entity(select, true)) {
+      throw new Error(refusal);
+    }
+    if (ownerRef !== 'parent') {
+      if (!identity || typeof identity.occurrenceId !== 'string'
+        || identity.ownerRef !== ownerRef || ownerRef !== `occurrence:${identity.occurrenceId}`
+        || typeof identity.rawClipId !== 'string' || select !== `${ownerRef}/clip:${identity.rawClipId}`
+        || clipId !== `${identity.occurrenceId}:${identity.rawClipId}` || raw.entity(parentRef, true)
+        || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId) {
+        throw new Error(refusal);
+      }
+      const occurrence = raw.occurrence(ownerRef);
+      const source = (bundle as AuthoringBundle).source_mapping.shots[String(occurrence.shot_id)];
+      if (!source || identity.shotId !== source.shot_id || identity.revisionId !== source.revision_id
+        || identity.internalTimelineRevisionId !== source.internal_timeline_revision_id
+        || identity.outputIdentity !== stableOutputIdentity(options.scope.projectId, options.scope.timelineId, identity.occurrenceId)) {
+        throw new Error(refusal);
+      }
+    }
+    return select;
+  }
+  const clipScalarPort: ClipScalarCapturePort = {
+    capture({ clipId, ownerRef: requestedOwner, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+      if (matches.length !== 1) throw new Error('Scalar edit requires one raw clip identity');
+      const identity = matches[0].app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+      const select = resolveOwnedClipRef(clipId, identity, requestedOwner, 'Scalar edit requires an explicit matching raw clip owner');
+      return json({ bundle, select, clipId, localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<ClipScalarCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      const { commands } = prepareScalarEdits([basis], args);
+      return { command: commands[0] };
+    },
+    submit({ command, preview }) { submitScalarEdits([command], preview); },
+    finishBatch(bases, args) {
+      if (!equal(args, { values: {}, clear: ['transition'] })) {
+        throw new Error('Scalar batches support only explicit transition clears');
+      }
+      return prepareScalarEdits(bases, args);
+    },
+    submitBatch({ commands, preview }) { submitScalarEdits(commands, preview); },
+  };
+  function prepareScalarEdits(bases: Parameters<ClipScalarCapturePort['finish']>[0][], args: ClipScalarArgs) {
+    assertReady();
+    if (!bases.length || new Set(bases.map((basis) => basis.select)).size !== bases.length) {
+      throw new Error('Scalar edits require distinct raw clip identities');
+    }
+    const originals = bases as unknown as Array<{ bundle: AuthoredBundle; select: string; clipId: string; localBasis: OutboxBasis }>;
+    let originalBundle = originals[0].bundle;
+    let after = bundle;
+    const commands = bases.map((basis, index) => {
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the scalar edit');
+      const original = originals[index];
+      if (!equal(original.bundle, originals[0].bundle) || !equal(original.localBasis, originals[0].localBasis)) {
+        throw new Error('Scalar batch requires one original authoring basis');
+      }
+      const command = captureClipSet(originalBundle, original.select, args);
+      originalBundle = executeClipSet(originalBundle, command).bundle;
+      after = executeClipSet(after, command).bundle;
+      return command;
+    });
+    const preview: TimelinePatch = { version: 1,
+      operations: originals.flatMap((original) => clipScalarPreview(original.clipId, args).operations) };
+    prepared.set(JSON.stringify(commands), { payload: { commands, before: bundle, after, preview },
+      generation: localGeneration, basis: originals[0].localBasis });
+    return { commands };
+  }
+  function submitScalarEdits(commands: EditCommand[], preview: TimelinePatch) {
+    assertReady();
+    const key = JSON.stringify(commands);
+    const entry = prepared.get(key);
+    if (!entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+      throw new Error('Scalar edit was not captured by this session or the timeline changed');
+    }
+    if (!equal(preview, entry.payload.preview)) throw new Error('Scalar edit requires its exact leaf-only preview');
+    prepared.delete(key);
+    enqueue({ ...entry.payload, preview }, preview, entry.basis);
+  }
   type CapturedGenericPatchBasis = GenericPatchBasis & { bundle: AuthoredBundle };
   const genericPatchPort: GenericPatchCapturePort = {
     capture({ patch, current }) {
@@ -519,6 +626,7 @@ export async function createTimelineCommandSession(options: Options) {
   } else await claim();
   return {
     port,
+    clipScalarPort,
     elementPort,
     genericPatchPort,
     trackLabelPort,

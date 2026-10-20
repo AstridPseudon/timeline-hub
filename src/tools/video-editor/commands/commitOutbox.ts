@@ -80,14 +80,23 @@ function detached<T>(value: T): T {
     if (item === null || typeof item === 'string' || typeof item === 'boolean') return;
     if (typeof item === 'number' && Number.isFinite(item)) return;
     if (Array.isArray(item)) { for (const value of item) check(value); return; }
-    if (typeof item === 'object' && Object.getPrototypeOf(item) === Object.prototype) {
+    if (typeof item === 'object' && (Object.getPrototypeOf(item) === Object.prototype || Object.getPrototypeOf(item) === null)) {
       Object.values(item).forEach(check);
       return;
     }
     throw new Error('Outbox values must be finite JSON');
   };
   check(value);
-  return JSON.parse(JSON.stringify(value)) as T;
+  const clone = (item: unknown): unknown => {
+    if (item === null || typeof item !== 'object') return item;
+    if (Array.isArray(item)) return item.map(clone);
+    const output = Object.create(null) as Record<string, unknown>;
+    for (const key of Object.keys(item)) Object.defineProperty(output, key, {
+      value: clone((item as Record<string, unknown>)[key]), enumerable: true, configurable: true, writable: true,
+    });
+    return output;
+  };
+  return clone(value) as T;
 }
 
 function newIntent(payload: OutboxJson, basis: OutboxBasis): OutboxIntent {
