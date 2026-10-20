@@ -221,11 +221,10 @@ export const test = base.extend<object, {
   fixture: [async ({ harness }, provide) => {
     const fixture = await prepareFrameParityFixture(harness);
     await harness.enableTimelineAuthoring(requiredEnv('ASTRID_PYTHON'));
-    // startRealPackHost is intentionally fail-closed until Agent provides its
-    // launcher-owned setup helper. No browser/export lane is currently qualified.
-    const host = await startRealPackHost(harness);
+    // Browser/export qualification still requires the approved Agent helper
+    // and adoption of the frozen consumer graph.
+    const host = await startRealPackHost(harness, () => readyRenderCapability(harness));
     try {
-      await readyRenderCapability(harness);
       await provide(fixture);
     } finally { await host.stop(); }
   }, { scope: 'worker', timeout: 240_000 }],

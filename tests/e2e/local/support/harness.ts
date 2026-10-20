@@ -439,7 +439,7 @@ export class DirectHarness {
 
   // -- Runtime -------------------------------------------------------------------------------
 
-  private runtimeEnv(): NodeJS.ProcessEnv {
+  runtimeEnv(): NodeJS.ProcessEnv {
     const agent = path.resolve(process.env.ASTRID_CHECKOUT
       ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
         .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
