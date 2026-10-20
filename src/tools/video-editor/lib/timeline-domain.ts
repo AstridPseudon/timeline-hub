@@ -229,6 +229,12 @@ const NORMALIZED_TOP_LEVEL_KEYS = new Set(['output', 'tracks', 'clips', 'pinnedS
 
 const ASSET_REGISTRY_ENTRY_FIELDS = [
   'file',
+  'original_name',
+  'original_filename',
+  'filename',
+  'name',
+  'title',
+  'prompt',
   'media_id',
   'url',
   'etag',

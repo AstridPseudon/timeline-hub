@@ -111,10 +111,8 @@ async function startApp(rootElement: HTMLElement): Promise<void> {
     import('@/tools/video-editor/browser/initializeVideoEditorExtensionRuntime.ts'),
     import('@/integrations/runtime/client.ts'),
   ]);
-  await Promise.all([
-    initializeVideoEditorExtensionRuntime({ development: import.meta.env.DEV }),
-    initializeWorkspaceRuntimeIdentity(),
-  ]);
+  initializeVideoEditorExtensionRuntime();
+  await initializeWorkspaceRuntimeIdentity();
   renderApp(rootElement);
   releaseBootLayerWhenReady(rootElement);
 }

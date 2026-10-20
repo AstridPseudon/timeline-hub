@@ -804,6 +804,11 @@ export class AstridAgentSessionStore {
     await this.pullEvents();
   }
 
+  /** Renew the browser lease even when a transcript load needs explicit retry. */
+  async heartbeat(projectId: string, sessionId: string): Promise<void> {
+    if (this.sessionProjects.get(sessionId) === projectId) await this.pullEvents();
+  }
+
   private async pullEvents(): Promise<void> {
     if (this.eventsPromise) return this.eventsPromise;
     this.eventsPromise = (async () => {
@@ -967,7 +972,9 @@ export class AstridAgentSessionStore {
 
 const agentStore = new AstridAgentSessionStore();
 if (typeof window !== 'undefined') {
-  window.addEventListener('pagehide', () => agentStore.closeConnectionOnPageHide());
+  const release = () => agentStore.closeConnectionOnPageHide();
+  window.addEventListener('pagehide', release);
+  window.addEventListener('beforeunload', release);
 }
 
 /**
@@ -1170,6 +1177,14 @@ export function useAssociateProjectSession(projectId: string | null | undefined)
 
 export function useAgentSession(sessionId: string | null | undefined, projectId?: string | null) {
   const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!sessionId || !projectId) return;
+    // A failed transcript query pauses RPC retries, not the live tab's lease.
+    const heartbeat = window.setInterval(() => {
+      void agentStore.heartbeat(projectId, sessionId).catch(() => undefined);
+    }, ACP_IDLE_POLL_MS);
+    return () => window.clearInterval(heartbeat);
+  }, [projectId, sessionId]);
   return useQuery({
     queryKey: agentSessionQueryKey(sessionId, projectId),
     enabled: Boolean(sessionId && projectId),
@@ -1189,6 +1204,9 @@ export function useAgentSession(sessionId: string | null | undefined, projectId?
         throw error;
       }
     },
+    // Event polls are also the browser heartbeat. Keep renewing the bridge lease
+    // in background tabs, so only a closed or unresponsive owner expires.
+    refetchIntervalInBackground: true,
     // ACP events are drained independently of the prompt response so streamed
     // assistant text and tool activity paint while a long turn is running.
     // A failed persisted-session load needs an explicit retry/reconnect, not

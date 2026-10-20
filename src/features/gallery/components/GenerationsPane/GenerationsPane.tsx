@@ -200,6 +200,7 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
             onAddGenerationToTimeline: addGenerationToTimeline,
             config: gallery.config,
             readOnly: gallery.readOnly,
+            emptyStateMessage: gallery.emptyStateMessage,
           }}
         />
       </div>

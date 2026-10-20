@@ -71,6 +71,30 @@ describe('resolveGenerationAsset (neutral generation detail read → Runtime CAS
     expect(result.asset.url).not.toBe(result.asset.thumbnailUrl);
   });
 
+  it('carries generation filename and prompt metadata onto the resolved registry entry', async () => {
+    const detail = createJourneyState().galleryDetails[0];
+    router.state.galleryDetails[0] = {
+      ...detail,
+      params: {
+        ...detail.params,
+        original_filename: 'camera/establishing-shot.mp4',
+        prompt: 'A slow pan over a mountain valley',
+      },
+    };
+
+    const result = await resolveGenerationAsset({
+      generationId: detail.generation_id,
+      projectSlug: FIXTURE_PROJECT.slug,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.asset.entry).toMatchObject({
+      original_name: 'camera/establishing-shot.mp4',
+      name: 'A slow pan over a mountain valley',
+    });
+  });
+
   it('does not use a video source URL as its image thumbnail', async () => {
     const detail = createJourneyState().galleryDetails[1];
     router.state.galleryDetails[1] = { ...detail, type: 'video' };

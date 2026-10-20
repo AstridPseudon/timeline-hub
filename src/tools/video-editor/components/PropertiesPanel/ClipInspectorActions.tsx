@@ -44,20 +44,23 @@ export function ClipInspectorActions({
     { label: 'Track down', icon: ArrowDown, onClick: onMoveTrackDown, applies: canMoveTrack },
   ];
   return (
-    <div className="grid grid-cols-3 gap-2" role="group" aria-label="Clip actions" data-astrid-inspector-actions="clip">
-      {actions.filter(({ applies }) => applies).map(({ label, icon: Icon, onClick }) => (
-        <Button
-          key={label}
-          type="button"
-          variant="outline"
-          className="h-14 flex-col gap-1 px-1 text-[11px] font-normal"
-          onClick={onClick}
-          disabled={!onClick}
-        >
-          <Icon className="h-4 w-4" aria-hidden="true" />
-          {label}
-        </Button>
-      ))}
+    // One row where the Inspector is wide (iPad); three across on a phone.
+    <div className="@container">
+      <div className="grid grid-cols-3 gap-2 @[34rem]:grid-cols-6" role="group" aria-label="Clip actions" data-astrid-inspector-actions="clip">
+        {actions.filter(({ applies }) => applies).map(({ label, icon: Icon, onClick }) => (
+          <Button
+            key={label}
+            type="button"
+            variant="outline"
+            className="h-14 flex-col gap-1 px-1 text-[11px] font-normal"
+            onClick={onClick}
+            disabled={!onClick}
+          >
+            <Icon className="h-4 w-4" aria-hidden="true" />
+            {label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 }

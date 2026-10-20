@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -502,12 +502,16 @@ describe('timeline agent ACP chat', () => {
         sessionId: 'saved-chat-retry', update: { sessionUpdate: 'agent_message_chunk', messageId: 'old-reply', content: { type: 'text', text: 'Persisted reply' } },
       } }] });
     }));
+    vi.useFakeTimers();
     const hook = renderHook(() => useAgentSession('saved-chat-retry', 'saved-project'), { wrapper });
     try {
-      await waitFor(() => expect(hook.result.current.error?.message).toContain('ACP session not found'));
-      vi.useFakeTimers();
-      await act(async () => { await vi.advanceTimersByTimeAsync(2_500); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+      expect(hook.result.current.error?.message).toContain('ACP session not found');
+      const eventReads = () => vi.mocked(globalThis.fetch).mock.calls.filter(([input]) => String(input).endsWith('/events')).length;
+      const baseline = eventReads();
+      await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
       expect(loads).toBe(1);
+      expect(eventReads()).toBe(baseline + 2);
       missing = false;
       await act(async () => { await hook.result.current.refetch(); await vi.advanceTimersByTimeAsync(10); });
       expect(loads).toBe(2);
@@ -563,6 +567,53 @@ describe('timeline agent ACP chat', () => {
       hook.unmount();
       client.clear();
       vi.unstubAllGlobals();
+    }
+  });
+
+  it.each(['pagehide', 'beforeunload'])('releases tab ownership with keepalive on %s and reconnects on return', async (event) => {
+    const release = vi.spyOn(AstridAgentSessionStore.prototype, 'closeConnectionOnPageHide');
+    window.dispatchEvent(new Event(event));
+    expect(release).toHaveBeenCalledTimes(1);
+    const acp = {
+      projectChat: vi.fn(async () => ({ sessions: [{ id: 'chat' }] })),
+      connect: vi.fn().mockResolvedValueOnce({ connection_id: 'old' }).mockResolvedValue({ connection_id: 'new' }),
+      loadSession: vi.fn(async () => ({})),
+      events: vi.fn(async () => ({ notifications: [], disconnected: false })),
+      disconnect: vi.fn().mockResolvedValue(undefined),
+    };
+    const store = new AstridAgentSessionStore({ acp } as never);
+    await store.get('project', 'chat');
+    store.closeConnectionOnPageHide();
+    store.closeConnectionOnPageHide();
+    expect(acp.disconnect).toHaveBeenCalledExactlyOnceWith('old', { keepalive: true });
+    await store.get('project', 'chat');
+    expect(acp.connect).toHaveBeenCalledTimes(2);
+    expect(acp.loadSession).toHaveBeenLastCalledWith('new', 'chat');
+  });
+
+  it('renews the heartbeat in a background tab and observes automatic writer promotion', async () => {
+    vi.useFakeTimers();
+    focusManager.setFocused(false);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    let role: 'writer' | 'follower' = 'follower';
+    const get = vi.spyOn(AstridAgentSessionStore.prototype, 'get').mockImplementation(async (_projectId, id) => ({
+      id, status: 'waiting_user', turns: [], taskLinks: [], control: { role, active: false, activeRequestId: null },
+    }));
+    const hook = renderHook(() => useAgentSession('background-chat', 'project'), { wrapper: wrapperWithClient(client) });
+    try {
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(hook.result.current.data?.control?.role).toBe('follower');
+      const baseline = get.mock.calls.length;
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(get.mock.calls.length).toBeGreaterThanOrEqual(baseline + 4);
+      role = 'writer';
+      await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
+      expect(hook.result.current.data?.control?.role).toBe('writer');
+    } finally {
+      hook.unmount();
+      client.clear();
+      focusManager.setFocused(undefined);
+      vi.useRealTimers();
     }
   });
 

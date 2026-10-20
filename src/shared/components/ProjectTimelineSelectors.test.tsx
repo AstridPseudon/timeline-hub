@@ -45,7 +45,8 @@ describe('ProjectTimelinePicker', () => {
     );
     const user = userEvent.setup();
     await user.click(screen.getByRole('combobox', { name: 'Select timeline' }));
-    await user.click(await screen.findByRole('button', { name: 'Create first timeline' }));
+    expect(await screen.findByText('No timelines for this project yet.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'New timeline' }));
     expect(onCreateTimeline).toHaveBeenCalledTimes(1);
     view.rerender(
       <ProjectTimelinePicker
@@ -61,6 +62,34 @@ describe('ProjectTimelinePicker', () => {
     );
     await user.click(screen.getByRole('combobox', { name: 'Select timeline' }));
     expect(await screen.findByRole('button', { name: 'Creating timeline…' })).toBeDisabled();
+  });
+
+  it('offers New timeline only as the last row of the timeline list', async () => {
+    const onCreateTimeline = vi.fn();
+    render(
+      <ProjectTimelinePicker
+        projects={[]}
+        timelines={[
+          { id: 'timeline-1', name: 'Intro Cut' },
+          { id: 'timeline-2', name: 'Alt Cut' },
+        ]}
+        projectId="project-id"
+        timelineId="timeline-1"
+        onSelectProject={vi.fn()}
+        onSelectTimeline={vi.fn()}
+        onCreateTimeline={onCreateTimeline}
+      />,
+    );
+    // No caption and no second button beside the picker: the combobox names itself.
+    expect(screen.queryByRole('button', { name: 'New timeline' })).toBeNull();
+    expect(screen.queryByText('Timeline')).toBeNull();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('combobox', { name: 'Select timeline' }));
+    // Still offered while a search hides every row.
+    await user.type(await screen.findByPlaceholderText('Search timelines...'), 'zzz');
+    await user.click(screen.getByRole('button', { name: 'New timeline' }));
+    expect(onCreateTimeline).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'New timeline' })).toBeNull();
   });
 
   it('retries discovery and selects canonical primary timeline IDs', async () => {

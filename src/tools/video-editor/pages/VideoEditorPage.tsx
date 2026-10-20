@@ -159,9 +159,7 @@ export default function VideoEditorPage() {
     getDevDisabledSnapshot,
   );
 
-  const extensionReleaseFlags = getExtensionReleaseFlags({
-    development: import.meta.env.DEV,
-  });
+  const extensionReleaseFlags = getExtensionReleaseFlags();
   const smokeDirectExtensions = useMemo(() => {
     // The routed native editor uses the same admitted catalog for every backend.
     const disabled = import.meta.env.DEV ? devDisabledIds : new Set<string>();

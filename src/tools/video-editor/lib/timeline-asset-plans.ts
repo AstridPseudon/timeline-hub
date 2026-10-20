@@ -39,6 +39,39 @@ export type PlannedAssetDropTarget =
       error: 'missing_timeline';
     };
 
+/** Retains the source's human name and generation prompt on a timeline asset. */
+export function getGenerationAssetDisplayMetadata(generation: {
+  name?: unknown;
+  metadata?: unknown;
+  params?: unknown;
+}): Record<string, string> {
+  const params = asMetadataRecord(generation.params);
+  const sources: Array<Record<string, unknown> | undefined> = [
+    asMetadataRecord(generation),
+    asMetadataRecord(generation.metadata),
+    params,
+    asMetadataRecord(params?.extra),
+    asMetadataRecord(params?.orchestrator_details),
+  ];
+  const fields: Record<string, string> = {};
+  for (const key of ['original_name', 'original_filename', 'originalFilename', 'filename', 'name', 'title', 'prompt']) {
+    for (const source of sources) {
+      const value = source?.[key];
+      if (typeof value === 'string' && value.trim()) {
+        fields[key === 'originalFilename' ? 'original_filename' : key] = value.trim();
+        break;
+      }
+    }
+  }
+  return fields;
+}
+
+function asMetadataRecord(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : undefined;
+}
+
 export function getPlayableAssetKind(assetEntry: AssetRegistryEntry | undefined): 'image' | 'video' | 'audio' | null {
   const mimeType = assetEntry?.type?.toLowerCase() ?? '';
   const file = (assetEntry?.file ?? assetEntry?.url ?? '').toLowerCase();
@@ -112,12 +145,19 @@ export function planGenerationAssetRegistration({
 
   const normalizedDuration = readPositiveDurationSeconds(assetDurationSeconds);
   const resolvedThumbUrl = thumbUrl || imageUrl;
+  const metadataFields = ['original_name', 'original_filename', 'filename', 'name', 'title', 'prompt'] as const;
+  const sourceNames = metadataFields.reduce<Record<string, string>>((fields, key) => {
+    const value = metadata?.[key];
+    if (typeof value === 'string' && value.trim()) fields[key] = value.trim();
+    return fields;
+  }, {});
   return {
     ok: true,
     assetId: assetId ?? generateUUID(),
     sourceUrl: imageUrl,
     assetEntry: {
       file: imageUrl,
+      ...sourceNames,
       type: mimeType,
       ...(normalizedDuration !== null ? { duration: normalizedDuration } : {}),
       generationId,

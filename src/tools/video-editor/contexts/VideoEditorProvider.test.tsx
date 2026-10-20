@@ -660,6 +660,11 @@ const media = {
   imageUrl: 'https://example.com/image.png',
   thumbUrl: 'https://example.com/image-thumb.png',
   type: 'image',
+  name: 'Still life',
+  params: {
+    prompt: 'A quiet still life',
+    extra: { original_filename: 'camera/still-life.png' },
+  },
 } as const;
 
 const LifecycleComponent: FC<{ children: ReactNode }> = ({ children }) => children;
@@ -2068,6 +2073,9 @@ describe('VideoEditorProvider', () => {
             generationId: 'generation-1',
             file: 'https://example.com/image.png',
             type: 'image/png',
+            name: 'Still life',
+            prompt: 'A quiet still life',
+            original_filename: 'camera/still-life.png',
           }),
         }),
       }),
