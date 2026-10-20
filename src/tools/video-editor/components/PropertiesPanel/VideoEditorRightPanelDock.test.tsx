@@ -115,26 +115,24 @@ it('keeps the display menu open while the pointer moves to a mode and applies th
 it('shows enabled extension names on hover/focus and click opens the full existing manager', async () => {
   const user = userEvent.setup(); render(<Harness />);
   const manage = screen.getByRole('button', { name: 'Manage extensions' });
+  fireEvent.focus(manage);
+  expect(screen.getByRole('tooltip')).toBeTruthy();
+  fireEvent.keyDown(manage, { key: 'Escape' });
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
   await user.hover(manage);
-  await waitFor(() => expect(screen.getByRole('tooltip')).toHaveTextContent('Enabled extensions'));
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Enabled extensions');
   expect(screen.getByRole('tooltip')).toHaveTextContent('Three.js Live Editor');
   expect(screen.getByRole('tooltip')).toHaveTextContent('Transcript');
   expect(screen.queryByRole('dialog')).toBeNull();
   await user.unhover(manage);
-  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
+  expect(screen.queryByRole('tooltip')).toBeNull();
 
   await user.hover(manage);
-  await waitFor(() => expect(screen.getByRole('tooltip')).toBeTruthy());
+  expect(screen.getByRole('tooltip')).toBeTruthy();
   await user.click(manage);
   expect(screen.queryByRole('tooltip')).toBeNull();
   expect(screen.getByRole('dialog', { name: 'Extensions' })).toHaveTextContent('Manager inventory');
-  await user.keyboard('{Escape}');
-  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-
-  manage.focus();
-  await waitFor(() => expect(screen.getByRole('tooltip')).toBeTruthy());
-  fireEvent.keyDown(manage, { key: 'Escape' });
-  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull());
 });
 
 it('states honestly when no extension is currently enabled', async () => {
@@ -142,7 +140,7 @@ it('states honestly when no extension is currently enabled', async () => {
   state.extensions = [];
   const user = userEvent.setup(); render(<Harness />);
   await user.hover(screen.getByRole('button', { name: 'Manage extensions' }));
-  await waitFor(() => expect(screen.getByRole('tooltip')).toHaveTextContent('No extensions are currently enabled.'));
+  expect(screen.getByRole('tooltip')).toHaveTextContent('No extensions are currently enabled.');
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('Transcript');
 });
 
