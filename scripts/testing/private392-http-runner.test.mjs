@@ -7,6 +7,11 @@ import test from 'node:test';
 
 const runner = path.resolve('scripts/testing/private392-http-runner.sh');
 const source = readFileSync(runner, 'utf8');
+const packageJson = JSON.parse(readFileSync(path.resolve('package.json'), 'utf8'));
+
+test('private392 HTTP is an App-owned named integration lane', () => {
+  assert.equal(packageJson.scripts['test:integration:private392-http'], 'sh scripts/testing/private392-http-runner.sh "$PWD"');
+});
 
 test('private392 runner retains Vitest status and cleans its root on failure', () => {
   assert.doesNotMatch(source, /exec\s+node_modules\/\.bin\/vitest/);

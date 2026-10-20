@@ -111,6 +111,7 @@
     "test:e2e:timeline": "PLAYWRIGHT_TIMELINE_DEVICES=1 PLAYWRIGHT_PORT=${PLAYWRIGHT_PORT:-} FAKE_RUNTIME_PORT=${FAKE_RUNTIME_PORT:-} playwright test --config playwright.config.ts --project=timeline-devices --workers=1",
     "test:e2e:direct": "playwright test --config playwright.direct.config.ts",
     "test:e2e:three-products": "playwright test --config playwright.three-products.config.ts",
+    "test:integration:private392-http": "sh scripts/testing/private392-http-runner.sh \"$PWD\"",
     "test:acceptance:local-project": "node scripts/acceptance/verify-local-project-gallery.mjs",
     "test:acceptance:local-project:matrix": "ASTRID_APP_ACCEPTANCE_MATRIX=1 node scripts/acceptance/verify-local-project-gallery.mjs",
     "test:acceptance:local-project:unit": "node --test scripts/acceptance/verify-local-project-gallery.test.mjs",
