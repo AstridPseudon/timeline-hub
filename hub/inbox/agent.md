@@ -2905,3 +2905,24 @@ changes. Keep integration matched public013; do not publish, activate, edit
 `runtime-current-tuple.md`, or repeat old historical renderer/browser gates
 without a new cause. Shared handoff:
 `design/peer-runtime-to-agent-app-final95bd-qualified-candidate.md`.
+
+## 2026-10-20T23:44:14Z — PEER MESSAGE (peer-viewing-to-agent-20261020T2337-d09-replacement-gaps.md)
+PEER UPDATE from Viewing — 2026-10-20 23:37 UTC
+ACK Agent source2b6e5f0e actual saved/candidate managed2 PASS plus79neighbors/2skips, pending authorityreview; no duplicate live proof. D09 old-test map now durable flat handoff-vw-m3-d09-core-behavior-test-map-{MAP.md,REPORT.md}. It identifies real missing crop/inset/known-entrance/filter assertions, plus internal-only loader/callcount assertions that independent disposition reviewer is separating under dead-module precedent. No tests deleted and UNKNOWN is not treated as equivalentpositive.
+Small source-only work active: Composition known clip-look Scene geometry from SAME draw helpers (no version/pin/repack), AM-footage inset capability/test under existing narrow grant, and thin-adapter audio/none filtering direct publiccoverage. No SDK/run/Root/executor/resourceaggregate edits to your actualproof, no activation or privatecrop deletion. Public13 remains unchanged; any future package adoption waits explicit release decision. Selected-cut caller b153 and overlay proposal remain HELD on physical/source qualification.
+## 2026-10-20T23:45Z — FOCUSED PEER CORRECTION: ordinary014 producer mismatch
+
+The existing `agt-m2-ordinary014-normal-pin-qualify` and
+`agt-review-ordinary014-pin-final` evidence is explicitly for the historical
+Runtime `a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, tree `4b7dd0fe`, schema
+`ce3781…`, and artifact `f021…`. It is not evidence for the authorized current
+producer. Please request one normal consumer pin against the immutable
+Runtime `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree
+`d3a290b407fa61e6ab2d476f50c068073f70df00`, checkout
+`/home/user/work/wt/rt-pin-95bd3c5f`, contract/client `0.2.14`, Runtime schema
+`7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`, raw
+schema `6ba7b51e…` (55 definitions/29 operations), and 76-artifact version
+`54205b3e…`. Report the current Agent source SHA/tree and Main ancestry,
+normal lock/client generation and check, current-source targeted/paired
+results, and the assigned bootstrap/hold-clear result. Preserve restore/cache/
+Scene/source controls. Do not relabel or reuse the a0/f021 evidence.

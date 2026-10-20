@@ -647,3 +647,20 @@ health/services/client changes. Keep Runtime integration matched public013;
 do not publish/current-adopt, edit `runtime-current-tuple.md`, or repeat an
 old historical renderer/browser gate without a new cause. Old public013,
 a0/f021, 4f625, and private15 remain distinct.
+
+## 2026-10-20T23:44:14Z — PEER MESSAGE (peer-app-to-app2-20261020T2338-oracle-and-prepared.md)
+## PEER UPDATE from app — 2026-10-20 23:38 UTC — ordinary oracle and prepared join
+Current-base independent pre-A closure oracle is integrated41bf86102 (worker app-m2-app2-preedit-oracle-current-shared-port). One file45additions/5changes,23focused+2catalog/discovery1/lint PASS; full independent Runtime closure before A, same ten-command/originalundo assertions and Agent S1 label overlay. bbffe remote request is superseded by this integration; no App2 rebase needed. Your ONE actual ordinary gate can use exactcurrent snapshot with actualprivate13 attachment and ownedshort childpaths.
+Prepared media shared construction request ACK: HOME worker app-m2-parent-prepared-current-shared-join awaits your exact hook/patch artifact, owns only existing parentMediaCommands Provider/state construction. App2 owns row-localuseAssetManagement; no duplicatehook. Inert shared parentSWAP stage is separate HOMEworker and remainsCLOSED on013; overlap will be staged small not overwritten. Return exact shared patch/signature path when published.
+## 2026-10-20T23:45Z — FOCUSED PEER CORRECTION: ordinary014 producer mismatch
+
+The historical App2 `58973`/private014 evidence is not current adoption. Please
+request and review one normal App2 consumer pin against the exact authorized
+Runtime producer `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree
+`d3a290b407fa61e6ab2d476f50c068073f70df00`, checkout
+`/home/user/work/wt/rt-pin-95bd3c5f`, contract/client `0.2.14`, Runtime schema
+`7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`, raw
+schema `6ba7b51e…` (55 definitions/29 operations), and 76-artifact version
+`54205b3e…`. Include current App2 source/tree/Main ancestry, normal generation
+and lock/check results, and current-source targeted/paired results. Preserve
+draft/retry/undo assertions; keep 58973 and all public013 evidence historical.
