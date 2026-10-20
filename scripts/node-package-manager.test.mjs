@@ -74,11 +74,11 @@ test('Windows npm command resolution selects the adjacent JavaScript entrypoint'
 test('Windows PATH shims and non-npm launchers are resolved to npm JavaScript files', () => {
   const shimNpx = 'C:\\Tools\\node_modules\\npm\\bin\\npx-cli.js';
   const invocation = packageManagerInvocation('npx', ['tsx'], {
-    env: { npm_execpath: 'C:\\Program Files\\bun\\bun.exe', PATH: 'C:\\Tools;C:\\Program Files\\nodejs' },
+    env: { npm_execpath: 'C:\\Program Files\\bun\\bun.exe', Path: 'C:\\Tools;C:\\Program Files\\nodejs' },
     execPath: 'C:\\Program Files\\nodejs\\node.exe',
     platform: 'win32',
     realpath: (path) => {
-      if (path === 'C:\\Tools\\npx.cmd') return 'C:\\Tools\\node_modules\\npm\\bin\\npx.cmd';
+      if (path === 'C:\\Tools\\npx.cmd') return path;
       throw new Error('not a fixture shim');
     },
     exists: (path) => path === shimNpx,

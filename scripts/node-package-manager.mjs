@@ -19,10 +19,12 @@ function packageManagerEntry(tool, { env = process.env, execPath = process.execP
 
   const candidates = [pathJoin(pathDirname(execPath), 'node_modules', 'npm', 'bin', entryName)];
   candidates.push(pathJoin(pathDirname(pathDirname(execPath)), 'lib', 'node_modules', 'npm', 'bin', entryName));
-  for (const directory of (env.PATH || '').split(platform === 'win32' ? ';' : ':').filter(Boolean)) {
+  const searchPath = env.PATH || (platform === 'win32' ? env.Path : '') || '';
+  for (const directory of searchPath.split(platform === 'win32' ? ';' : ':').filter(Boolean)) {
     for (const shim of [pathJoin(directory, tool), pathJoin(directory, `${tool}.cmd`), pathJoin(directory, `${tool}.exe`)]) {
       try {
         const target = realpath(shim);
+        candidates.push(pathJoin(pathDirname(target), 'node_modules', 'npm', 'bin', entryName));
         candidates.push(pathJoin(pathDirname(target), '..', entryName));
         candidates.push(pathJoin(pathDirname(target), entryName));
       } catch { /* Not an installed npm shim. */ }
