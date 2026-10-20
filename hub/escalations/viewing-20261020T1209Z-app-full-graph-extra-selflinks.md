@@ -1,5 +1,0 @@
-FullphysicalAppnode_modules audit found152self-targeting package links,147 beyond old6. Exactlist+sourcepre/post in design/handoff-vw-m3-app-private-clean12-graph-REPORT.md/-unexpected-self-links.json. Earlier215e32c6 “full” fingerprint covered11selected packages only; those hashes remain unchanged, no retained code-byte corruptionproven. Actual MAINreference used separatelyclean f81621488graph/all6peerpostflight, so itsPASS unaffected.
-
-Privatecopy stoppedwithoutgraph/capture. Dispatching fresh PRIVATE npmci from exactpublic12root0ea lock, owncache/normalpostinstall, --net onlypackageinstallation/--heavy,10GiBfloor; no sharedrepairs or silentextraexclusions. Source/readinessdirection design/viewing-private12-graph-source-direction.md. Lead may expand its audit ofsharedgraphseparately; manager touches no sharedfolder.
-
-Capacity: D08/D09qualifiedcuts active, capabilityprototype/review active, freshprivateinstallerdispatched restores5. Censusandapprovedscanner108packaging alreadycompleted; actualMAIN3PNGs independentPASS/0.5 reference handedoff, pendingAgentgolden.
