@@ -1,4 +1,4 @@
-<!-- app | 2026-10-20T10:10:58Z | dispatcher heartbeat 7s -->
+<!-- app | 2026-10-20T10:16:18Z | dispatcher heartbeat 5s -->
 # app — 2026-10-20 10:10 UTC
 Milestone: M1 RECORDED; M2 in progress. Top priority: finish upstream-main refresh, then one safe coordinated Runtime/Agent/App public12 tuple and representative native writer retirements.
 Integrated: App tl/integration 18becfbede00038830b97e63345445eeef54fa42, tree44d514b44c864ff9dbb3b99aba2b0a41891af83f, clean; Composition8/client021. SDK example, raw shot/settings safety, ACP fixture and four original auto-placement positives merged this session.
