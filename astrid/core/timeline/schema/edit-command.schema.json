@@ -496,6 +496,43 @@
       ],
       "description": "Patch raw clip.params by literal top-level JSON keys in stored units, never dotted paths or expressions. Null is a value; clear removes presence. Set/clear overlap is refused by the handler. Preserve unmentioned keys."
     },
+    "ElementRef": {
+      "type": "object",
+      "properties": {
+        "packId": {
+          "$ref": "#/$defs/ID"
+        },
+        "id": {
+          "$ref": "#/$defs/ID"
+        },
+        "kind": {
+          "$ref": "#/$defs/ID"
+        },
+        "revision": {
+          "$ref": "#/$defs/ID"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "revision"
+      ],
+      "additionalProperties": false,
+      "description": "The clip elementRef field, exactly as stored: draft refs carry no packId, admitted pack refs do."
+    },
+    "ClipSetElementArgs": {
+      "type": "object",
+      "properties": {
+        "elementRef": {
+          "$ref": "#/$defs/ElementRef"
+        }
+      },
+      "required": [
+        "elementRef"
+      ],
+      "additionalProperties": false,
+      "description": "Replace an existing clip elementRef with another revision of the same element id and kind. The retired element_ref alias is removed. There is no clear: a clip keeps its element."
+    },
     "ClipAddArgs": {
       "type": "object",
       "required": [
@@ -720,6 +757,36 @@
               },
               "args": {
                 "$ref": "#/$defs/ClipSetParamsArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "clip.set-element"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^(?!.*::)(?:parent|occurrence:[^/]+)/clip:[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/ClipSetElementArgs"
               },
               "intent": {
                 "type": "object",
