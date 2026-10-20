@@ -58,6 +58,7 @@ class CaptureRuntime:
 
     def snapshot(self, working_copy=False):
         inputs = {"composed_capture": True, "timeline_ref": "main", "revision_id": "parent-1"}
+        self.authoring_preview = None
         if working_copy:
             parent = self.get_project_parent_composition_revision(self.project_id, "main", "parent-1")
             shot = self.get_project_shot_revision(self.project_id, "shot-shared", "shot-rev-1")
@@ -66,15 +67,18 @@ class CaptureRuntime:
             # A real unsaved edit; it must not silently become the saved base.
             bundle["parent"]["config"]["opaque_parent_config"] = {"unsaved": True}
             inputs["authoring_preview"] = preview_authoring_candidate(bundle)
+            self.authoring_preview = deepcopy(inputs["authoring_preview"])
         prepared = prepare_filmstrip(inputs, project=self.project_id, client=self)
         return prepared["capture_snapshot"]
 
-    def ref(self, snapshot):
+    def ref(self, snapshot, *, uncertified=False):
         encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
         digest = "sha256:" + hashlib.sha256(encoded).hexdigest()
         response = self.service.ingest(self.project_id, encoded, media_type="application/json",
                                        idempotency_key="capture-" + digest.split(":")[1])
         assert response["data"]["object_id"] == digest
+        if uncertified:
+            return {"digest": digest, "project_id": self.project_id, "timeline_id": "main", "source_kind": "cas"}
         authority = snapshot["metadata"]["capture_authority"]
         ref = {"digest": digest, "project_id": self.project_id, "timeline_id": "main",
                "revision_id": authority["parent_revision_id"],
@@ -87,20 +91,26 @@ class CaptureRuntime:
                 "base_revision_digest": marker["base_parent"]["content_digest"]})
         return ref
 
-    def admit(self, snapshot, *, inline=False, duplicate=None):
+    def request(self, snapshot, *, inline=False, duplicate=None, forward_candidate=True, uncertified=False):
         authority = snapshot["metadata"].get("capture_authority", {})
         context = {"mode": "composed_capture", "project_id": self.project_id, "timeline_id": "main",
                    "revision_id": authority.get("parent_revision_id")}
         if inline:
             context["capture_snapshot"] = snapshot
         else:
-            context["capture_snapshot_ref"] = self.ref(snapshot)
+            context["capture_snapshot_ref"] = self.ref(snapshot, uncertified=uncertified)
         filmstrip = deepcopy(context)
         if duplicate is not None:
             filmstrip["capture_snapshot_ref"] = duplicate
         body = {"project": self.project_id, "capability_id": CAPABILITY,
                 "input_object_ids": [item["object_id"] for item in self.media_list(self.project_id)[0]],
                 "spec": {"inputs": {"filmstrip_authority": json.dumps(filmstrip)}, "authority_context": context}}
+        if forward_candidate and self.authoring_preview is not None:
+            body["spec"]["inputs"]["authoring_preview"] = deepcopy(self.authoring_preview)
+        return body
+
+    def admit(self, snapshot, **kwargs):
+        body = self.request(snapshot, **kwargs)
         task = self.service.create_task(body)["task"]
         claim = self.service.claim_next({"executor_id": "probe", "capability_ids": [CAPABILITY],
                                         "runtime_epoch": self.service.health()["runtime_epoch"]})
@@ -121,6 +131,9 @@ def runtime(tmp_path):
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
     try:
+        from astrid.sdk.timeline.commit import create_runtime_commit_service
+
+        service.register_timeline_commit_provider(create_runtime_commit_service())
         project = service.create_project({"slug": "source-probe", "name": "Source probe"})["id"]
         service.create_timeline(project, "main", idempotency_key="timeline")
         service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
@@ -155,16 +168,53 @@ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtim
     assert binding["authority"] == snapshot["metadata"]["capture_authority"]
     assert binding["authority"]["expansion"]["shots"][0]["content_digest"]
     assert binding["authority"]["expansion"]["children"][0]["config_hash"]
+    assert binding["authority"]["expansion"]["shots"][0]["content_digest"] == runtime.get_project_shot_revision(
+        runtime.project_id, "shot-shared", "shot-rev-1")["content_digest"]
+    assert binding["authority"]["expansion"]["children"][0]["config_hash"] == runtime.get_project_timeline_revision(
+        runtime.project_id, "main", "internal-1")["content_digest"]
     assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
     if working_copy:
         marker = snapshot["metadata"]["working_copy"]
         assert snapshot["config"]["opaque_parent_config"] == {"unsaved": True}
         assert binding["ref"]["revision_digest"] == marker["candidate_digest"]
         assert binding["ref"]["working_copy"]["base_revision_digest"] == marker["base_parent"]["content_digest"]
+        assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
+        from runtime_protocol.errors import NotFoundError
+        with pytest.raises(NotFoundError):
+            runtime.get_project_parent_composition_revision(runtime.project_id, "main", marker["candidate_parent_revision_id"])
+    else:
+        assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
     monkeypatch.setenv(SOURCE_ENV, values.timeline_source._anchor)
     parsed = RenderRequest(schema_version=1, timeline_path=values["timeline"],
                            assets_registry_path=values["assets_registry"], output_name="probe.mp4")
     assert parsed.verified_source.read() == binding
+
+
+def test_missing_candidate_explicit_cas_preview_stays_uncertified(runtime, tmp_path):
+    snapshot = runtime.snapshot(working_copy=True)
+    task = runtime.admit(snapshot, forward_candidate=False, uncertified=True)
+    values = runtime.materialize(task, tmp_path / "attempt")
+    assert values.timeline_source is None
+    assert json.loads(Path(values["timeline"]).read_text()) == snapshot["config"]
+    assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
+
+
+@pytest.mark.parametrize("inline", [False, True])
+def test_missing_candidate_certificate_refuses_before_admission_writes(runtime, inline):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    snapshot = runtime.snapshot(working_copy=True)
+    body = runtime.request(snapshot, inline=inline, forward_candidate=False)
+    connection = runtime.service.store.conn
+    before = list(connection.iterdump())
+    root = Path(runtime.service.store.root)
+    files = {str(path.relative_to(root)): path.read_bytes() if path.is_file() else None
+             for directory in ("cas", "staging") for path in (root / directory).rglob("*")}
+    with pytest.raises(RuntimeErrorBase):
+        runtime.service.create_task(body)
+    assert list(connection.iterdump()) == before
+    assert {str(path.relative_to(root)): path.read_bytes() if path.is_file() else None
+            for directory in ("cas", "staging") for path in (root / directory).rglob("*")} == files
 
 
 # All 12 cases are proven admitted: Runtime's public capture admission checks the parent revision row and the

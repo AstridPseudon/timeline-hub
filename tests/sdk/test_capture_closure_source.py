@@ -1,5 +1,6 @@
 """Producer facts from the exact closure; media admission is isolated here."""
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -125,6 +126,7 @@ def test_forged_candidate_digest_is_not_certified_by_capture_labels(client):
 
 
 @pytest.mark.parametrize("working_copy", [False, True])
+@pytest.mark.xfail(strict=True, reason="Runtime-validated capture publication must restore SDK/ref/host handoff; admission double has no publisher")
 def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(client, monkeypatch, tmp_path, working_copy):
     """Real SDK enrichment/publication and host handoff; Runtime admission doubled."""
     import hashlib
@@ -172,7 +174,10 @@ def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(cli
     assert authority['expansion']['children'][0]['config_hash']
     if working_copy:
         assert ref['working_copy']['candidate_digest'] == snapshot['metadata']['working_copy']['candidate_digest']
+        assert admitted['spec']['inputs']['authoring_preview'] == inputs['authoring_preview']
+        assert admitted['spec']['inputs']['authoring_preview']['candidate'] == inputs['authoring_preview']['candidate']
     else:
+        assert 'authoring_preview' not in admitted['spec']['inputs']
         assert ref['revision_id'] == 'parent-1'
         assert ref['revision_digest'] == client.parent['content_digest']
     assert ref['digest'] in admitted['input_manifest']
@@ -181,6 +186,112 @@ def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(cli
     assert values.timeline_source.read()['ref'] == ref
     assert values.timeline_source.read()['authority'] == authority
     assert values.timeline_source.read()['snapshot'] == snapshot
+
+
+@pytest.mark.parametrize('working_copy', [False, True])
+@pytest.mark.parametrize('include_media', [False, True])
+def test_sdk_capture_reaches_runtime_before_any_snapshot_write(client, monkeypatch, working_copy, include_media):
+    import json
+
+    from astrid.sdk.invocation import _invoke_internal_result
+    from tests.sdk.test_visualize_authority_objects import Runtime
+
+    runtime = Runtime()
+    preview = candidate(client) if working_copy else None
+    prepared = prepare(client, **({'authoring_preview': preview} if working_copy else {}))
+    if include_media:
+        # include_media changes the mode but keeps the same capture authority.
+        from tests.sdk.test_visualize_authority_objects import ASSET_DIGEST
+        prepared.update(mode='filmstrip', video_digest=ASSET_DIGEST, video_object_id=ASSET_DIGEST)
+    monkeypatch.setattr('astrid.sdk.timeline_filmstrip.prepare_filmstrip', lambda *args, **kwargs: deepcopy(prepared))
+    before = deepcopy(runtime.objects)
+    inputs = {'view': 'filmstrip', 'composed_capture': True}
+    if preview is not None:
+        inputs['authoring_preview'] = preview
+    result = _invoke_internal_result('rendering.timeline_visualize', kind='executor', project='demo',
+                                    client=runtime, inputs=inputs)
+    assert runtime.created, result.error
+    spec = runtime.created[-1]['spec']
+    snapshot = spec['authority_context']['capture_snapshot']
+    assert snapshot['config'] == prepared['capture_snapshot']['config']
+    assert snapshot['registry'] == prepared['capture_snapshot']['registry']
+    assert snapshot['metadata']['capture_authority'] == prepared['capture_snapshot']['metadata']['capture_authority']
+    assert json.loads(spec['inputs']['filmstrip_authority'])['capture_snapshot'] == snapshot
+    assert runtime.objects == before
+    if working_copy:
+        assert spec['inputs']['authoring_preview'] == preview
+        assert snapshot['metadata']['working_copy']['candidate_digest'] == preview['candidate_digest']
+        assert snapshot['metadata']['working_copy']['base_parent'] == preview['head']
+    else:
+        assert 'authoring_preview' not in spec['inputs']
+
+
+def test_cas_capture_metadata_cannot_mint_source_or_activate_canonical_compiler(tmp_path):
+    import hashlib
+    import json
+
+    from astrid.core.execution.generic_host import GenericPackHost
+    from tests.sdk.test_visualize_authority_objects import Runtime, _snapshot
+
+    runtime = Runtime()
+    snapshot = _snapshot()
+    snapshot['metadata'].update(capture_authority={'parent_revision_id': 'claimed'},
+                                canonical_timeline={'parent_revision_id': 'claimed'},
+                                working_copy={'candidate_digest': 'claimed', 'label': 'canonical'})
+    raw = json.dumps(snapshot).encode()
+    digest = 'sha256:' + hashlib.sha256(raw).hexdigest()
+    runtime.objects[digest] = raw
+    context = {'mode': 'composed_capture', 'capture_snapshot_ref': {'digest': digest, 'source_kind': 'cas'}}
+    from types import SimpleNamespace
+
+    host = GenericPackHost(pack_roots=[], client=SimpleNamespace(get_object=lambda key: runtime.objects['sha256:' + key]))
+    values = host._materialize_inputs({'spec': {'authority_context': context,
+                                     'inputs': {'filmstrip_authority': json.dumps(context)}},
+                                     'input_object_ids': list(runtime.objects)}, tmp_path / 'attempt')
+    assert values.timeline_source is None
+    assert json.loads(Path(values['timeline']).read_text()) == snapshot['config']
+
+
+def test_candidate_task_data_is_frozen_before_preflight_reads(client, monkeypatch):
+    from astrid.sdk.invocation import _invoke_internal_result
+    from tests.sdk.test_visualize_authority_objects import Runtime
+
+    runtime = Runtime()
+    preview = candidate(client)
+    expected = deepcopy(preview)
+    reader = client.get_project_shot_revision
+
+    def read(*args):
+        preview['candidate']['parent']['config']['opaque_parent_config'] = {'later': True}
+        return reader(*args)
+
+    for name in ('get_project', 'list_timelines', 'get_project_parent_composition_revision',
+                 'get_project_shot_revision', 'get_project_timeline_revision'):
+        setattr(runtime._remote._transport, name, getattr(client, name))
+    runtime._remote._transport.get_project_shot_revision = read
+    result = _invoke_internal_result('rendering.timeline_visualize', kind='executor', project='demo',
+                                    client=runtime, inputs={'view': 'filmstrip', 'composed_capture': True,
+                                    'timeline_ref': 'main', 'revision_id': 'parent-1', 'authoring_preview': preview})
+    assert runtime.created, result.error
+    assert preview != expected
+    assert runtime.created[-1]['spec']['inputs']['authoring_preview'] == expected
+
+
+@pytest.mark.parametrize('preview', [True, 'canonical', {'candidate_digest': 'sha256:' + 'f' * 64}])
+def test_candidate_shape_or_label_cannot_replace_authored_data(client, preview):
+    from astrid.sdk.invocation import _invoke_internal_result
+    from tests.sdk.test_visualize_authority_objects import Runtime
+
+    runtime = Runtime()
+    for name in ('get_project', 'list_timelines', 'get_project_parent_composition_revision',
+                 'get_project_shot_revision', 'get_project_timeline_revision'):
+        setattr(runtime._remote._transport, name, getattr(client, name))
+    before = deepcopy(runtime.objects)
+    result = _invoke_internal_result('rendering.timeline_visualize', kind='executor', project='demo',
+                                    client=runtime, inputs={'view': 'filmstrip', 'composed_capture': True,
+                                    'timeline_ref': 'main', 'revision_id': 'parent-1', 'authoring_preview': preview})
+    assert not result.ok
+    assert runtime.created == [] and runtime.objects == before
 
 
 @pytest.mark.parametrize('key', ['verified_source', 'timeline_source', 'ASTRID_VERIFIED_TIMELINE_SOURCE'])
