@@ -167,6 +167,11 @@ const SettingsFieldEditor: React.FC<SettingsFieldEditorProps> = ({
   const [isDirty, setIsDirty] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  // The "Saved" mark clears 1.5 s after a save resolves; the timer must not outlive the row.
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (savedTimerRef.current !== null) clearTimeout(savedTimerRef.current);
+  }, []);
 
   // Update edit value if currentValue changes externally
   useEffect(() => {
@@ -209,7 +214,8 @@ const SettingsFieldEditor: React.FC<SettingsFieldEditorProps> = ({
     setIsDirty(false);
     setHasSaved(true);
     await onUpdateSettings(extensionId, field.key, value);
-    setTimeout(() => setHasSaved(false), 1500);
+    if (savedTimerRef.current !== null) clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => setHasSaved(false), 1500);
   };
 
   const handleReset = async () => {

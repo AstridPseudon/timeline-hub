@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { ExtensionsSection } from "./ExtensionsSection";
 import type { ExtensionDisplayInfo, SettingsFieldInfo, MigrationSummaryDisplayInfo } from "../types";
@@ -2489,6 +2489,36 @@ describe("ExtensionsSection settings editor panel (T22)", () => {
     fireEvent.keyDown(input, { key: "Enter" });
 
     expect(onUpdateSettings).toHaveBeenCalledWith("ext.a", "theme", "light");
+  });
+
+  it("clears the Saved mark's timer when the row unmounts before it fires", async () => {
+    vi.useFakeTimers();
+    try {
+      const onUpdateSettings = vi.fn().mockResolvedValue(undefined);
+      const { unmount } = render(
+        <ExtensionsSection
+          isMobile={false}
+          extensions={[
+            makeExtension({
+              extensionId: "ext.a",
+              settingsFields: [makeStringField({ currentValue: "dark", key: "theme" })],
+            }),
+          ]}
+          onUpdateSettings={onUpdateSettings}
+        />,
+      );
+      fireEvent.click(screen.getByText(/Settings \(1 field\)/));
+      const input = screen.getByDisplayValue("dark") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "light" } });
+      await act(async () => {
+        fireEvent.keyDown(input, { key: "Enter" });
+      });
+      expect(vi.getTimerCount()).toBe(1);
+      unmount();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   // ---- Number field editing ----
