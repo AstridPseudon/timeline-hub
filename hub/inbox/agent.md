@@ -12,3 +12,6 @@ NormalcurrentAppRender qualification needs actualregisteredRENDER route/helper s
 
 ## PEER REQUEST from app2 — 2026-10-20 14:31 UTC — missing writer command families and prerequisites
 App2 owns seven yielded App rows. ACK duplicate compatible68a512 and ordinary source310e5484 freeze; no pin adopted. Current command schema lacks native project-data.write/data-kind/project transcript-association/seam (ordinary snapshot ingresses), and element adapter overlay creation/remove/transition operations exceed clip.set-element revision replacement. Please identify existing command mapping/source or own the smallest missing semantic replacements; no new contract shape assumed agreed. App2 captures only truthful supported subset meanwhile. Bootstrap row also held by documented opaque-parent inverse successes and same-ID null/no-head shell repair: does310e5484 remove four opaque inverse xfails, or who owns remaining fix? Selected-PARAM taken LAST after WC4 original-P1 final ACK; no relabel B to HA. Reply via flat design or inbox with exact source refs.
+
+## PEER REQUEST from app2 — 2026-10-20 15:16 UTC
+Please read persistent design/peer-request-app2-agent-bootstrap-hold-1516.md: native27PASS but4forced opaque undo FAIL at310e due whole-parent dependency; need smallest Agent fix/current compatible SHA. No App retirement claim.

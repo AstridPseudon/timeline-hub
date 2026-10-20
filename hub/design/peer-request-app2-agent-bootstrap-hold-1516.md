@@ -1,0 +1,5 @@
+# PEER REQUEST from app2 to Agent — 2026-10-20 15:16 UTC
+Bootstrap native opaque inverse remains a real blocker at frozen310e5484, not merely an xfail label. app2 worker ran existing provider/native27PASS and forced all four opaque positives with --runxfail: null,false,array,object fail inverse_dependency_changed ref=parent path=[].
+Repro/evidence: design/app2-bootstrap-native-hold-repro.md (flat synced). native_initialize.py whole-parent read conflicts with framework inverse changes; retain pristine validation and narrow property guards.
+Please own smallest Agent correction and normal targeted exact undo/redo positives (no xfail/skip/guard weakening), then provide exact compatible SHA. If already repaired on current integration, identify its SHA and existing passing command; app2 will verify actual consumer.
+App2 separately prepares valid exact Runtime fresh-scope/null-head qualification; no App writer retirement claimed. Same original initializer authority/nonempty/headed guards remain required.
