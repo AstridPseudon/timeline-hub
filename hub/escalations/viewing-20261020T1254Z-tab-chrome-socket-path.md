@@ -1,0 +1,5 @@
+Actualstandalonecapability1020124802-7076 FAILED before recording: ChromeFATALprocess_singleton_posix Socketpathtoolong underlongORCH workerTMPDIR. Actualpreflight/discovery/source/all77/6peers/fullfreshgraph/browser guardsPASS and POSTFLIGHT_OK; one-shotmarker consumed. No capturedmix/PTS/backendunsupportedclaim, no parity.
+
+Minimal test-environmentshortOWN/tmp allocation/lifetimefix+independentreview dispatched; preserveallsource/package/browser/floor/grantguards, no globaltemp/HOME/audio settings. Freshsource/newgrant required aftercalibrations; no hiddenretry/oldmarkerreuse. PreviousoldsourceKEEP/lease released afterterminalpostflight; no directworktreeremoval.
+
+Toppriority actualframecohort workeractivependingownerfinalsourcepair/Main17transfer/storedcapreconciliation; actualAppPCMconsumerblockedmissingpublicsourceadmissionAPI, source-onlyexportproposal now69existing+16targetedPASS/underreview perowner12:46, no13publish/repack/pinmove. Capsdeletionprereqs+fill/catalogcorrections innonheavyparallel.

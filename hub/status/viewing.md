@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-20T12:53:54Z | dispatcher heartbeat 14s -->
+<!-- viewing | 2026-10-20T12:59:17Z | dispatcher heartbeat 4s -->
 # viewing — 2026-10-20 11:34 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 active; M4 incomplete. No current frame/audio parity claim.
 Integrated: Composition e80c46baf, history joined to main67b8aa3 with unchanged tree23a994. npm test:69 PASS/0 FAIL/0 SKIP (central1020091054-4980); actual build+pack+default consumer PASS. Immutable0.0.12:58444B/77files, SHA0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3; full navy/Arial/cyan DEFAULT equals Agent. Old11 immutable. Agent source carry de62 merged c456; root12, presenter and inactive PCM kernel integrated. Extent5d merged86405964:112pytest+7Node owner checks,166pytest+11Node independent. Existing empty/gap-tail scheduling remains unqualified.
