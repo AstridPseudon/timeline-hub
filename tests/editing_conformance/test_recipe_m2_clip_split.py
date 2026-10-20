@@ -249,6 +249,41 @@ def test_split_uses_main_registry_mime_kind_normalizer(source_type):
     assert plan.bundle['parent']['clips'][1]['asset'] == 'picture'
 
 
+def test_native_move_split_mime_fixture_has_no_renderer_or_legacy_writer_imports():
+    import os
+    import subprocess
+    import sys
+
+    source = '''
+import importlib.abc, json, sys
+class Block(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, *args):
+        if fullname.startswith((
+                'astrid.packs.rendering', 'astrid.core.rendering', 'astrid.sdk.authoring_render_preview',
+                'astrid.core.timeline.compatibility', 'composition', 'runtime_protocol',
+                'astrid.sdk.timeline.edits', 'astrid.sdk.timeline.model', 'astrid.sdk.timeline.journal')):
+            raise AssertionError('native save imported ' + fullname)
+sys.meta_path.insert(0, Block())
+from astrid.sdk.timeline._split_commands import capture_clip_split
+from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
+document = json.load(sys.stdin)
+original = bundle_from_document(document)
+moved = execute(original, [capture_move(original, 'parent/clip:clip-a', 3.003)]).bundle
+plan = execute(moved, [capture_clip_split(moved, 'parent/clip:clip-a', on=4, right_id='right')])
+assert [row['id'] for row in plan.bundle['parent']['clips'][:2]] == ['clip-a', 'right']
+assert plan.bundle['parent']['registry']['assets']['picture']['type'] == 'video/mp4'
+'''
+    result = subprocess.run(
+        [sys.executable, '-c', source],
+        input=json.dumps(source_document(source_type='video/mp4')),
+        env={**os.environ, 'PYTHONPATH': str(Path(__file__).parents[2]), 'PYTHONDONTWRITEBYTECODE': '1'},
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+
 def test_split_preserves_static_move_intent_and_splits_literal_for():
     from astrid.sdk.timeline.capture import capture_move
 

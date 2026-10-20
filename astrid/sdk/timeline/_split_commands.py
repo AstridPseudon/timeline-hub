@@ -7,6 +7,7 @@ import math
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip_timeline_duration
 
 from ._command_state import CommandError, equal
+from ._common import _media_kind
 from .capture import RELATIONS, number, rate
 
 
@@ -23,9 +24,6 @@ def clip_split(ctx, command):
     source = ctx.read('parent/registry', ['assets', row['asset']])
     if not isinstance(source, dict):
         raise CommandError('clip.split v1 requires a known media source', ref=ref)
-    # Import lazily: the checkout module owns the shared normalizer and imports
-    # the command package while the command registry is being initialized.
-    from .edits import _media_kind
     if _media_kind(source) not in ('image', 'video', 'audio'):
         raise CommandError('clip.split v1 requires a known media source', ref=ref)
     for key in ('clip_type', 'asset_id', 'media_id', 'object_id', 'at_ms', 'from_ms', 'to_ms',

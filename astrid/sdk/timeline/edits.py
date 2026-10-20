@@ -11,22 +11,12 @@ from astrid.core.timeline import moments as mo
 from astrid.sdk import timeline_intent as intent
 
 from astrid.sdk.timeline import store as _store
-from astrid.sdk.timeline._common import (CANVAS, ELEMENT_TRACK, SAFE_MARGIN, TIME_RE, TimelineEditError, _num, _r)
+from astrid.sdk.timeline._common import (CANVAS, ELEMENT_TRACK, SAFE_MARGIN, TIME_RE, TimelineEditError, _media_kind, _num, _r)
 from astrid.sdk.timeline.doc import (_free_key, _set_length)
 from astrid.sdk.timeline.model import (Clip, Cut, Word, music_keyword, validate_param_value)
 
 _ASSET_REGISTRY_FIELDS = ("media_id", "content_sha256", "type", "duration", "resolution", "size", "size_bytes",
                           "handle", "filename", "pixel_provenance")
-
-
-def _media_kind(entry: Mapping[str, Any]) -> str | None:
-    """Normalize registry MIME types and legacy kind names to image/audio/video."""
-    value = str(entry.get("type") or "").strip().lower().split(";", 1)[0]
-    if "/" in value:
-        value = value.split("/", 1)[0]
-    if value.startswith(("image", "audio", "video")):
-        return value.split("-", 1)[0]
-    return value if value in {"image", "audio", "video"} else None
 
 
 class _EditMixin:
