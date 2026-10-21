@@ -39,16 +39,14 @@ export type AgentChatContextValue = {
 export type AgentChatRegistryOwner = string | symbol;
 
 export type AgentChatRegistryValue = {
-  /** Scoped updates preserve the active editor; legacy calls activate their value. */
-  register: (value: AgentChatContextValue, owner?: AgentChatRegistryOwner) => () => void;
-  unregister: (owner?: AgentChatRegistryOwner) => void;
+  /** Updates from a background owner preserve the active editor; the first owner activates itself. */
+  register: (value: AgentChatContextValue, owner: AgentChatRegistryOwner) => () => void;
+  unregister: (owner: AgentChatRegistryOwner) => void;
   activate: (owner: AgentChatRegistryOwner) => void;
   /** Route-selected project scope exists before a timeline editor mounts. */
   registerProject: (value: AgentChatContextValue) => void;
   unregisterProject: () => void;
 };
-
-const legacyAgentChatOwner = Symbol('legacy-agent-chat');
 
 // AgentChatPanel-side handlers that live as long as the panel is mounted.
 // `markEngaged` is the v5 engagement-flag pivot: clicking the message split button
@@ -108,7 +106,7 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
   const registrationsRef = useRef(new Map<AgentChatRegistryOwner, { value: AgentChatContextValue }>());
   const activeOwnerRef = useRef<AgentChatRegistryOwner | null>(null);
 
-  const unregister = useCallback((owner: AgentChatRegistryOwner = legacyAgentChatOwner) => {
+  const unregister = useCallback((owner: AgentChatRegistryOwner) => {
     const registrations = registrationsRef.current;
     if (!registrations.delete(owner)) return;
     if (activeOwnerRef.current === owner) {
@@ -132,10 +130,10 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
     setOverride(registration.value);
   }, []);
 
-  const register = useCallback((value: AgentChatContextValue, owner: AgentChatRegistryOwner = legacyAgentChatOwner) => {
+  const register = useCallback((value: AgentChatContextValue, owner: AgentChatRegistryOwner) => {
     const registration = { value };
     registrationsRef.current.set(owner, registration);
-    if (owner === legacyAgentChatOwner || activeOwnerRef.current === null) {
+    if (activeOwnerRef.current === null) {
       activate(owner);
     } else if (activeOwnerRef.current === owner) {
       setOverride(value);

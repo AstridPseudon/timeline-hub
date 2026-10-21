@@ -12,7 +12,6 @@ import { composerClearAttachments, composerRemoveAttachment } from '@/shared/sta
 import { useCurrentAttachmentSet } from '@/shared/state/currentAttachmentSet.ts';
 import { usePanesStore } from '@/shared/state/panesStore.ts';
 import {
-  isTimelineAgentSessionsAvailable,
   useAgentSession,
   useAgentSessions,
   useProjectChat,
@@ -165,23 +164,6 @@ export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange
 
   // The first-run tour shows a scripted conversation in place of the real chat: no session hooks, no agent.
   if (tourRunning) return <TourChatPanel isExpanded={isExpanded} />;
-
-  if (!isTimelineAgentSessionsAvailable()) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
-        <img
-          src="/astrid-avatar.png"
-          alt=""
-          aria-hidden="true"
-          className="h-8 w-8 rounded-full object-cover"
-        />
-        <p className="text-sm font-medium text-foreground">Timeline agent chat is managed in Astrid</p>
-        <p className="max-w-sm text-xs text-muted-foreground">
-          Run the agent workflow in Astrid, then refresh this editor to load the updated timeline.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <AvailableAgentChatPanel

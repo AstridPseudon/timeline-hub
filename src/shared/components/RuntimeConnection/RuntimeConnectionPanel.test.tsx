@@ -71,7 +71,8 @@ describe('RuntimeConnectionPanel', () => {
       // 76px like .astrid-install-avatar; the file carries its own rounded tile, so nothing rounds it again.
       expect(avatar).toHaveClass('h-[76px]', 'w-[76px]');
       expect(avatar).not.toHaveClass('rounded-xl');
-      expect(view.container.querySelector('img[src="/astrid-avatar.png"]')).toBeNull();
+      // The tile is the only picture a card shows; the still editor drawn behind it is aria-hidden scenery.
+      expect([...view.container.querySelectorAll('img')].filter((img) => !img.closest('[aria-hidden="true"]'))).toEqual([avatar]);
       // The only svgs are the button's own icon and (while the browser asks) the pointing arrow; none is a status icon.
       expect(view.container.querySelector('.lucide-plug, .lucide-wifi-off, .lucide-shield-alert, .lucide-triangle-alert')).toBeNull();
       cleanup();
