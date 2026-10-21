@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T01:09:45Z | dispatcher heartbeat 2s | live 5 (sol 0, luna 5, other 0) | busy30 36 | status age 6m -->
+<!-- app2 | 2026-10-21T01:10:40Z | dispatcher heartbeat 12s | live 4 (sol 0, luna 4, other 0) | busy30 36 | status age 7m -->
 # app2 — 2026-10-21 01:02 UTC
 Milestone: M2. Duplicate DELETED; six rows OPEN. No false whole-writer closure. Current work advances actual gates and existing native carrier reuse.
 Integrated: HOME780c502368/tree8eed52bb restores published013 bootstrap at9bda63da8 plus pinned-op guard213c952b1 and parent622 driver. Current ordinary oracle41bf, adapter7d, selected5a/db8, trim0fa/3935 and public13 buildce6 retained. No manager product edits.

@@ -40,7 +40,7 @@ OVERLAY="$overlay" RUNTIME_SHA="$RUNTIME_SHA" node --input-type=module - <<'JS'
 import { readFileSync, writeFileSync } from 'node:fs';
 const file = `${process.env.OVERLAY}/runtime.lock.json`;
 const lock = JSON.parse(readFileSync(file, 'utf8'));
-if (lock.source_commit !== '2c4ac180c2220bdad966bc01e95ad230e99ce26a') throw new Error(`unexpected App base lock: ${lock.source_commit}`);
+if (lock.source_commit !== '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c') throw new Error(`unexpected App base lock: ${lock.source_commit}`);
 lock.source_commit = process.env.RUNTIME_SHA;
 writeFileSync(file, `${JSON.stringify(lock, null, 2)}\n`);
 JS
