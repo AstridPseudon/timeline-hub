@@ -1,0 +1,1 @@
+timeline/app/tl/ap2-m2-canary-stale-references-only-0213 ff04c7d2c app2 D01-app-ordinary-batch-compiler-canary-strict-debt: approved exact stale lint and inventory deletions; two lines only, focused checks pass, no callers changed
