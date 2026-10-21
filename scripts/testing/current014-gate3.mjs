@@ -11,7 +11,7 @@
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
-  accessSync, constants, existsSync, lstatSync, readFileSync, realpathSync, statSync,
+  accessSync, constants, existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync,
 } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -29,6 +29,12 @@ export const CURRENT014_GATE3 = Object.freeze({
     componentManifest: 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5',
     artifactCount: 76,
   }),
+  vendor: Object.freeze({
+    commit: '091aa23ec83ea05ffd3b0115a640230d51c8c429',
+    tree: 'e3ae90fe482ba6cad6c3f94069127faf76ebceb6',
+    module: 'astrid/packs/rendering/elements/catalog.ts',
+    moduleSha256: 'fc53e754326cd9fc9bc3e5233026fbc70ac6a4c5fd81a9d0b2c857665f13c661',
+  }),
   composition: Object.freeze({
     archive: 'banodoco-timeline-composition-0.0.13.tgz',
     sha256: 'sha256:9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738',
@@ -37,7 +43,6 @@ export const CURRENT014_GATE3 = Object.freeze({
     version: '0.0.13',
     packageResolved: 'file:vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz',
   }),
-  vendorAstridCommit: '091aa23ec83ea05ffd3b0115a640230d51c8c429',
 });
 
 const FULL_SHA = /^[a-f0-9]{40}$/;
@@ -45,6 +50,12 @@ const APP_METADATA = 'src/integrations/runtime/generated-contract-metadata.ts';
 const AGENT_METADATA = 'astrid_runtime_client/contract_metadata.py';
 const TEST_SOURCE = 'tests/e2e/local/three-products.spec.ts';
 const CASE_TITLE = 'M2 native None single:';
+export const CURRENT014_GATE3_CASE = Object.freeze({
+  title: CASE_TITLE,
+  grep: `^${CASE_TITLE}`,
+  command: 'npm',
+  argv: Object.freeze(['run', 'test:e2e:three-products', '--', '--grep', `^${CASE_TITLE}`]),
+});
 
 function fail(message) {
   throw new Error(`[current014/gate3] ${message}`);
@@ -104,6 +115,60 @@ function jsonFile(file) {
   catch (error) { fail(`cannot read JSON ${file}: ${error.message}`); }
 }
 
+function digestEntries(entries) {
+  const hash = createHash('sha256');
+  for (const [name, bytes] of entries) {
+    hash.update(name);
+    hash.update('\0');
+    hash.update(String(bytes.length));
+    hash.update('\0');
+    hash.update(bytes);
+    hash.update('\n');
+  }
+  return `sha256:${hash.digest('hex')}`;
+}
+
+function regularFiles(root) {
+  const files = [];
+  const visit = (directory, prefix = '') => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+      const file = path.join(directory, entry.name);
+      if (entry.isDirectory()) visit(file, relative);
+      else if (entry.isFile()) files.push([relative, readFileSync(file)]);
+      else fail(`installed Composition package contains a non-regular member: ${file}`);
+    }
+  };
+  visit(root);
+  return files.sort(([a], [b]) => a.localeCompare(b));
+}
+
+function archivePayload(archive) {
+  const members = execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' }).trim().split('\n')
+    .filter((member) => member && !member.endsWith('/'));
+  return members.map((member) => {
+    const relative = member.slice('package/'.length);
+    if (!member.startsWith('package/') || relative.split('/').includes('..')) {
+      fail(`Composition archive contains an unsafe member: ${member}`);
+    }
+    return [relative, execFileSync('tar', ['-xOf', archive, member])];
+  }).sort(([a], [b]) => a.localeCompare(b));
+}
+
+function compareInstalledComposition(archive, installed) {
+  const expected = archivePayload(archive);
+  const actual = regularFiles(installed);
+  if (actual.length !== expected.length || actual.some(([name], index) => name !== expected[index][0])) {
+    fail(`installed Composition package does not contain the archive's exact ${expected.length}-file payload`);
+  }
+  for (let index = 0; index < expected.length; index++) {
+    if (!expected[index][1].equals(actual[index][1])) {
+      fail(`installed Composition bytes differ for ${expected[index][0]}`);
+    }
+  }
+  return digestEntries(actual);
+}
+
 function checkClean(root, label) {
   const status = git(root, 'status', '--porcelain', '--untracked-files=normal');
   if (status) fail(`${label} source is dirty:\n${status}`);
@@ -126,7 +191,9 @@ function checkMetadata(root, label, fileName) {
 function checkRuntimeLock(root, label) {
   const file = path.join(root, 'runtime.lock.json');
   const lock = jsonFile(file);
-  if (lock.source_commit !== CURRENT014_GATE3.runtime.commit) fail(`${label} Runtime lock source is not Runtime95`);
+  if (lock.producer !== 'astrid-runtime' || lock.source_commit !== CURRENT014_GATE3.runtime.commit) {
+    fail(`${label} Runtime lock producer/source is not Runtime95`);
+  }
   if (lock.producer_version !== CURRENT014_GATE3.runtime.producerVersion) fail(`${label} Runtime lock version is not the all76 artifact`);
   return sha256File(file);
 }
@@ -165,21 +232,37 @@ function checkGraph(env) {
     fail('effective graph must be a physical directory, not a symlink');
   }
   if (path.basename(graph) !== 'node_modules') fail('effective graph must be its physical node_modules directory');
-  if (graph === '/home/user/work/app/node_modules' || graph.startsWith('/home/user/work/runtimes/')) {
+  if (graph === '/home/user/work/app/node_modules' || graph.startsWith('/home/user/work/app/node_modules/')
+    || graph === '/home/user/work/runtimes' || graph.startsWith('/home/user/work/runtimes/')) {
     fail('effective graph resolves into a shared dependency install');
   }
   const composition = path.join(graph, '@banodoco/timeline-composition');
-  if (!existsSync(composition) || jsonFile(path.join(composition, 'package.json')).version !== CURRENT014_GATE3.composition.version) {
+  if (!existsSync(composition) || lstatSync(composition).isSymbolicLink()
+    || !statSync(composition).isDirectory()
+    || jsonFile(path.join(composition, 'package.json')).version !== CURRENT014_GATE3.composition.version) {
     fail('effective graph does not expose Composition13');
   }
   const compositionReal = realpathSync(composition);
-  if (compositionReal.startsWith('/home/user/work/app/node_modules') || compositionReal.startsWith('/home/user/work/runtimes/')) {
+  if (compositionReal === '/home/user/work/app/node_modules' || compositionReal.startsWith('/home/user/work/app/node_modules/')
+    || compositionReal === '/home/user/work/runtimes' || compositionReal.startsWith('/home/user/work/runtimes/')) {
     fail('effective graph Composition resolves into a shared dependency install');
   }
   const ready = requiredFile(env, 'TIMELINE_CURRENT014_GATE3_GRAPH_READY');
   const lease = requiredFile(env, 'TIMELINE_CURRENT014_GATE3_GRAPH_LEASE');
-  if (!readFileSync(ready, 'utf8').includes('READY')) fail(`effective graph is not marked READY: ${ready}`);
-  if (/\b(?:RELEASED|EXPIRED)\b/.test(readFileSync(lease, 'utf8'))) fail(`effective graph lease is not active: ${lease}`);
+  const readyText = readFileSync(ready, 'utf8');
+  const leaseText = readFileSync(lease, 'utf8');
+  if (!/\bREADY\b/.test(readyText)) fail(`effective graph is not marked READY: ${ready}`);
+  if (!/(?:^|\n)status=(?:READY|ACTIVE)(?:\n|$)/.test(leaseText)
+    || /(?:^|\n)(?:status=)?(?:RELEASED|EXPIRED)(?:\n|$)/.test(leaseText)) {
+    fail(`effective graph lease is not active: ${lease}`);
+  }
+  if (!new RegExp(`(?:graph|node_modules)=${graph.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\n|$)`).test(leaseText)) {
+    fail(`effective graph lease does not bind the selected node_modules path: ${lease}`);
+  }
+  if (!new RegExp(`(?:archive_sha256|composition_sha256)=${CURRENT014_GATE3.composition.sha256.slice('sha256:'.length)}(?:\\n|$)`).test(leaseText)) {
+    fail(`effective graph lease does not bind Composition13 archive bytes: ${lease}`);
+  }
+  return Object.freeze({ graph, composition: realpathSync(composition), ready, lease });
 }
 
 export function readCurrent014Gate3Inputs(env = process.env, appRoot = process.cwd()) {
@@ -191,43 +274,129 @@ export function readCurrent014Gate3Inputs(env = process.env, appRoot = process.c
   if (runtimeSha !== CURRENT014_GATE3.runtime.commit) fail(`Runtime must be ${CURRENT014_GATE3.runtime.commit}`);
   if (!path.isAbsolute(appRoot)) fail(`App root must be absolute: ${appRoot}`);
   if (env.ASTRID_APP_DIRECT_DIST) fail('ASTRID_APP_DIRECT_DIST is forbidden; use the normal hosted build helper');
-  checkGraph(env);
+  const graph = checkGraph(env);
   return Object.freeze({
     app: realpathSync(appRoot), appSha, appTree, agentSha, runtimeSha,
     agent: requiredPath(env, 'ASTRID_CHECKOUT'), runtime: requiredPath(env, 'ASTRID_RUNTIME_CHECKOUT'),
     runtimeProducer: requiredPath(env, 'TIMELINE_CURRENT014_GATE3_RUNTIME_PRODUCER_CHECKOUT'),
+    vendor: requiredPath(env, 'TIMELINE_CURRENT014_GATE3_VENDOR_SOURCE_CHECKOUT'),
+    appKeeper: requiredPath(env, 'TIMELINE_CURRENT014_GATE3_APP_KEEPER'),
     agentPython: requiredExecutable(env, 'ASTRID_PYTHON'),
     runtimePython: requiredExecutable(env, 'ASTRID_RUNTIME_PYTHON'),
-    graph: realpathSync(requiredPath(env, 'TIMELINE_CURRENT014_GATE3_GRAPH_NODE_MODULES')),
+    ...graph,
   });
 }
 
-export function checkCurrent014Gate3Sources(input) {
+function checkAppSource(input) {
   if (git(input.app, 'rev-parse', '--show-toplevel') !== input.app) fail(`App root is not the current checkout: ${input.app}`);
-  if (git(input.app, 'rev-parse', 'HEAD') !== input.appSha) fail(`App source commit changed: expected ${input.appSha}`);
-  if (git(input.app, 'rev-parse', 'HEAD^{tree}') !== input.appTree) fail(`App source tree changed: expected ${input.appTree}`);
+  if (realpathSync(input.appKeeper) === input.app) fail('App source keeper must be detached from the synthetic snapshot root');
+  if (git(input.appKeeper, 'rev-parse', '--show-toplevel') !== input.appKeeper) fail(`App keeper is not the expected checkout: ${input.appKeeper}`);
+  if (git(input.appKeeper, 'rev-parse', 'HEAD') !== input.appSha) fail(`App source keeper commit changed: expected ${input.appSha}`);
+  if (git(input.appKeeper, 'rev-parse', 'HEAD^{tree}') !== input.appTree) fail(`App source keeper tree changed: expected ${input.appTree}`);
+  if (git(input.app, 'rev-parse', 'HEAD^{tree}') !== input.appTree) fail(`App synthetic snapshot tree changed: expected ${input.appTree}`);
+  checkClean(input.appKeeper, 'App source keeper');
+  checkClean(input.app, 'App synthetic snapshot');
+}
+
+function checkVendor(input) {
+  if (input.vendor === input.agent) fail('execution Agent and vendored-source roles must use separate checkouts');
+  if (git(input.vendor, 'rev-parse', 'HEAD') !== CURRENT014_GATE3.vendor.commit
+    || git(input.vendor, 'rev-parse', 'HEAD^{tree}') !== CURRENT014_GATE3.vendor.tree) {
+    fail('vendored Astrid source identity changed');
+  }
+  checkClean(input.vendor, 'Astrid vendor source');
+  const sourceModule = path.join(input.vendor, CURRENT014_GATE3.vendor.module);
+  if (sha256File(sourceModule) !== `sha256:${CURRENT014_GATE3.vendor.moduleSha256}`) fail('vendored Astrid source module bytes changed');
+  const provenance = jsonFile(path.join(input.app, 'vendor/astrid-browser/provenance.json'));
+  if (provenance.astrid_commit !== CURRENT014_GATE3.vendor.commit || provenance.astrid_tree !== CURRENT014_GATE3.vendor.tree
+    || provenance.files?.[CURRENT014_GATE3.vendor.module] !== CURRENT014_GATE3.vendor.moduleSha256) {
+    fail('App Astrid vendor provenance does not describe the separate vendor source role');
+  }
+  const vendoredModule = path.join(input.app, 'vendor/astrid-browser', CURRENT014_GATE3.vendor.module);
+  if (sha256File(vendoredModule) !== `sha256:${CURRENT014_GATE3.vendor.moduleSha256}`
+    || !readFileSync(vendoredModule).equals(readFileSync(sourceModule))) {
+    fail('App Astrid vendor module bytes do not match the separate vendor source');
+  }
+}
+
+function checkGraphBytes(input, archive) {
+  checkGraph({
+    TIMELINE_CURRENT014_GATE3_GRAPH_NODE_MODULES: input.graph,
+    TIMELINE_CURRENT014_GATE3_GRAPH_READY: input.ready,
+    TIMELINE_CURRENT014_GATE3_GRAPH_LEASE: input.lease,
+  });
+  return {
+    ready: sha256File(input.ready),
+    lease: sha256File(input.lease),
+    compositionPackage: digestEntries(regularFiles(input.composition)),
+    installedComposition: compareInstalledComposition(archive, input.composition),
+  };
+}
+
+function sourceBytes(input) {
+  const files = [
+    ['app/package.json', path.join(input.app, 'package.json')],
+    ['app/package-lock.json', path.join(input.app, 'package-lock.json')],
+    ['app/runtime.lock.json', path.join(input.app, 'runtime.lock.json')],
+    ['app/metadata', path.join(input.app, APP_METADATA)],
+    ['app/composition', path.join(input.app, 'vendor/artifacts', CURRENT014_GATE3.composition.archive)],
+    ['app/vendor-provenance', path.join(input.app, 'vendor/astrid-browser/provenance.json')],
+    ['app/test-source', path.join(input.app, TEST_SOURCE)],
+    ['agent/runtime.lock.json', path.join(input.agent, 'runtime.lock.json')],
+    ['agent/metadata', path.join(input.agent, AGENT_METADATA)],
+    ['agent/composition', path.join(input.agent, 'remotion/artifacts', CURRENT014_GATE3.composition.archive)],
+    ['runtime/manifest', path.join(input.runtimeProducer, 'contract/artifacts.json')],
+    ['vendor/module', path.join(input.vendor, CURRENT014_GATE3.vendor.module)],
+  ];
+  return Object.fromEntries(files.map(([name, file]) => [name, { bytes: statSync(file).size, sha256: sha256File(file) }]));
+}
+
+export function checkCurrent014Gate3Sources(input) {
+  checkAppSource(input);
   if (git(input.agent, 'rev-parse', 'HEAD') !== input.agentSha || git(input.agent, 'rev-parse', 'HEAD^{tree}') !== CURRENT014_GATE3.agent.tree) fail('Agent source identity changed');
   if (git(input.runtime, 'rev-parse', 'HEAD') !== input.runtimeSha || git(input.runtime, 'rev-parse', 'HEAD^{tree}') !== CURRENT014_GATE3.runtime.tree) fail('Runtime source identity changed');
   if (git(input.runtimeProducer, 'rev-parse', 'HEAD') !== CURRENT014_GATE3.runtime.commit || git(input.runtimeProducer, 'rev-parse', 'HEAD^{tree}') !== CURRENT014_GATE3.runtime.tree) fail('Runtime producer source identity changed');
-  for (const [root, label] of [[input.app, 'App'], [input.agent, 'Agent'], [input.runtime, 'Runtime'], [input.runtimeProducer, 'Runtime producer']]) checkClean(root, label);
+  for (const [root, label] of [[input.agent, 'Agent'], [input.runtime, 'Runtime'], [input.runtimeProducer, 'Runtime producer']]) checkClean(root, label);
+  checkVendor(input);
   checkRuntimeLock(input.app, 'App');
   checkRuntimeLock(input.agent, 'Agent');
   checkMetadata(input.app, 'App', APP_METADATA);
   checkMetadata(input.agent, 'Agent', AGENT_METADATA);
   const manifest = jsonFile(path.join(input.runtimeProducer, 'contract/artifacts.json'));
-  if (manifest.producer_version !== CURRENT014_GATE3.runtime.producerVersion || Object.keys(manifest.artifacts ?? {}).length !== CURRENT014_GATE3.runtime.artifactCount) {
+  if (manifest.producer !== 'astrid-runtime' || manifest.source_commit !== CURRENT014_GATE3.runtime.commit
+    || manifest.producer_version !== CURRENT014_GATE3.runtime.producerVersion
+    || Object.keys(manifest.artifacts ?? {}).length !== CURRENT014_GATE3.runtime.artifactCount) {
     fail('Runtime producer is not the all76 artifact manifest');
   }
-  checkCompositionArchive(input.app, 'App', 'vendor/artifacts');
+  const appComposition = checkCompositionArchive(input.app, 'App', 'vendor/artifacts');
   checkCompositionArchive(input.agent, 'Agent', 'remotion/artifacts');
   checkCompositionPackage(input.app);
-  const provenance = jsonFile(path.join(input.app, 'vendor/astrid-browser/provenance.json'));
-  if (provenance.astrid_commit !== CURRENT014_GATE3.vendorAstridCommit) fail('App Astrid vendor provenance moved');
+  const graph = checkGraphBytes(input, path.join(input.app, 'vendor/artifacts', CURRENT014_GATE3.composition.archive));
   const testSource = readFileSync(path.join(input.app, TEST_SOURCE), 'utf8');
-  if (!testSource.includes(`nativeNoneTest('${CASE_TITLE}`) || !testSource.includes('expectFreshPreviewUnavailable')) {
+  const selectedCases = [...testSource.matchAll(/nativeNoneTest\('([^']+)'/g)].map((match) => match[1]);
+  if (selectedCases.filter((title) => title.startsWith(CASE_TITLE)).length !== 1 || !testSource.includes('expectFreshPreviewUnavailable')) {
     fail('Gate3 test path no longer contains the existing native-None unavailable-preview case');
   }
-  return Object.freeze({ appTree: input.appTree, appSha: input.appSha, agent: CURRENT014_GATE3.agent, runtime: CURRENT014_GATE3.runtime, composition: CURRENT014_GATE3.composition, graph: input.graph });
+  return Object.freeze({
+    appTree: input.appTree, appSha: input.appSha, agent: CURRENT014_GATE3.agent,
+    runtime: CURRENT014_GATE3.runtime, vendor: CURRENT014_GATE3.vendor,
+    composition: { ...CURRENT014_GATE3.composition, ...appComposition },
+    graph, bytes: sourceBytes(input),
+  });
+}
+
+const ZERO_TEST_OUTPUT = /(?:No tests found|No test files found|collected\s+0 items|Running\s+0 tests|0 tests found|\b0 passed\b)/i;
+
+export function assertCurrent014Gate3Result(status, output) {
+  if (ZERO_TEST_OUTPUT.test(output)) fail('Gate3 executor reported a zero-test result');
+  if (status !== 0) return;
+  if ((output.match(new RegExp(CASE_TITLE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) ?? []).length !== 1) {
+    fail('Gate3 executor did not discover exactly the selected native-None single case');
+  }
+  if (!/\b1 passed\b/i.test(output) || /\b(?:[2-9]\d*|\d{2,}) passed\b/i.test(output)) {
+    fail('Gate3 executor did not report exactly one passing test');
+  }
+  if (/\b(?:FAIL|FAILED)\b/i.test(output)) fail('Gate3 executor reported a test failure');
 }
 
 export function runCurrent014Gate3() {
@@ -236,12 +405,13 @@ export function runCurrent014Gate3() {
     || process.env.TIMELINE_CURRENT014_GATE3_CURRENT_FULL_TERMINAL !== '1') {
     fail('set the manager-approved run and current-full-terminal gates before invoking Gate3');
   }
+  if (process.argv.length !== 2) fail('Gate3 wrapper accepts no caller argv; its single-case argv is fixed');
   const input = readCurrent014Gate3Inputs();
   const before = checkCurrent014Gate3Sources(input);
   console.log('[current014/gate3] source preflight passed; caller is M2 native None single');
   let status = 1;
   try {
-    status = spawnSync('npm', ['run', 'test:e2e:three-products', '--', '--grep', `^${CASE_TITLE}`], {
+    const child = spawnSync(CURRENT014_GATE3_CASE.command, CURRENT014_GATE3_CASE.argv, {
       cwd: input.app,
       env: {
         ...process.env,
@@ -253,11 +423,16 @@ export function runCurrent014Gate3() {
         TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
         VITE_TIMELINE_COMPOSITION_ROOT: path.join(input.graph, '@banodoco/timeline-composition'),
       },
-      stdio: 'inherit', shell: false,
-    }).status ?? 1;
+      stdio: ['ignore', 'pipe', 'pipe'], shell: false,
+    });
+    if (child.error) throw child.error;
+    const output = `${child.stdout?.toString() ?? ''}${child.stderr?.toString() ?? ''}`;
+    process.stdout.write(output);
+    assertCurrent014Gate3Result(child.status ?? 1, output);
+    status = child.status ?? 1;
   } finally {
     const after = checkCurrent014Gate3Sources(input);
-    if (JSON.stringify(after) !== JSON.stringify(before)) fail('current014 Gate3 sources changed during the browser gate');
+    if (JSON.stringify(after) !== JSON.stringify(before)) fail('current014 Gate3 source or dependency bytes changed during the browser gate');
     console.log('[current014/gate3] source postflight passed');
   }
   process.exitCode = status;
