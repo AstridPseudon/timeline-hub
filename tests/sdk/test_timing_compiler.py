@@ -5,11 +5,13 @@ import copy
 import json
 from dataclasses import FrozenInstanceError, replace
 from fractions import Fraction
+from pathlib import Path
 
 import pytest
 
 from astrid.core.timeline.authoring_bundle import _digest
 from astrid.sdk.media_transcript import build_transcript, transcript_document_id
+from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.compiler import (
     TimingCompileError,
     TimingInputs,
@@ -216,7 +218,7 @@ def test_invalid_or_unsupported_intervals_refuse_the_whole_compile(patch, match)
 
 
 @pytest.mark.parametrize("declaration", [
-    {"on": '"again"'}, {"on": 'beat 1 after "again"'}, {"until": "end of c99"},
+    {"on": '"again"'}, {"until": "end of c99"},
     {"for": -1}, {"formulas": {"hold": {"word": "line:0"}}},
     {"sequence": {"id": "steps", "index": 0}}, {"orphan": "keep old cache"},
 ])
@@ -227,6 +229,174 @@ def test_missing_anchors_and_unmigrated_evaluators_refuse_honestly(declaration):
     with pytest.raises(TimingCompileError):
         project(bundle)
     assert encoded(bundle) == before
+
+
+@pytest.mark.parametrize(
+    ("declaration", "grid", "expected"),
+    [
+        ('beat 1 after "again" in line #1', {"beats": [0, .5, 1, 1.5, 2]}, Fraction(7, 2)),
+        ('downbeat 1 after "again" in line #1', {"downbeats": [0, 1, 2]}, Fraction(4)),
+    ],
+)
+def test_main_numeric_beat_carrier_resolves_legacy_moment_without_mutating_neighbor(
+        declaration, grid, expected):
+    bundle, document, _pin = captured()
+    internal = bundle["shots"]["shot"]["internal_timeline"]
+    internal["tracks"].append({"id": "music", "kind": "audio"})
+    internal["clips"].append({
+        "id": "music", "clipType": "media", "track": "music", "asset": "music",
+        "at": 0, "from": 0, "to": 4, "app": {"astrid": {"beats": grid}},
+    })
+    card(bundle)["app"]["astrid"] = {"on": declaration, "for": .5}
+    bundle["parent"]["clips"].append({
+        "id": "word-neighbor", "clipType": "am-type", "track": "type", "at": 9,
+        "hold": 1, "params": {"label": "again"},
+    })
+    before_neighbor = copy.deepcopy(bundle["parent"]["clips"][-1])
+
+    result = project(bundle, document)
+
+    assert result.timings[CARD]["start"] == expected
+    assert result.bundle["parent"]["clips"][-1] == before_neighbor
+    assert encoded(bundle) == encoded(project(bundle, document).bundle)
+
+
+def test_numeric_beat_carrier_refuses_unsupported_bars_alias():
+    bundle, document, _pin = captured()
+    internal = bundle["shots"]["shot"]["internal_timeline"]
+    internal["tracks"].append({"id": "music", "kind": "audio"})
+    internal["clips"].append({
+        "id": "music", "clipType": "media", "track": "music", "asset": "music",
+        "at": 0, "from": 0, "to": 4, "app": {"astrid": {"beats": {"bars": [0, 1, 2]}}},
+    })
+    card(bundle)["app"]["astrid"] = {"on": 'downbeat 1 after "again" in line #1', "for": .5}
+    with pytest.raises(TimingCompileError, match="no downbeat"):
+        project(bundle, document)
+
+
+def test_main_numeric_beat_carrier_uses_child_speed_and_half_open_window():
+    bundle, document, _pin = captured()
+    internal = bundle["shots"]["shot"]["internal_timeline"]
+    internal["tracks"].append({"id": "music", "kind": "audio"})
+    internal["clips"].append({
+        "id": "music", "clipType": "media", "track": "music", "asset": "music",
+        "at": 0, "from": 0, "to": 6, "speed": 2,
+        "app": {"astrid": {"beats": {"beats": [0, 2, 3, 6]}}},
+    })
+    card(bundle)["app"]["astrid"] = {"on": 'beat 1 after "again" in line #1', "for": .5}
+    assert project(bundle, document).timings[CARD]["start"] == Fraction(7, 2)
+
+    internal["clips"][-1]["app"]["astrid"]["beats"]["beats"] = [0, 2, 3, "bad"]
+    with pytest.raises(TimingCompileError, match="malformed app.astrid.beats.beats"):
+        project(bundle, document)
+
+    for invalid in (True, None):
+        internal["clips"][-1]["app"]["astrid"]["beats"]["beats"] = [0, 2, invalid]
+        with pytest.raises(TimingCompileError, match="malformed app.astrid.beats.beats"):
+            project(bundle, document)
+
+
+def test_main_numeric_beat_carrier_missing_table_fails_closed():
+    bundle, document, _pin = captured()
+    internal = bundle["shots"]["shot"]["internal_timeline"]
+    internal["tracks"].append({"id": "music", "kind": "audio"})
+    internal["clips"].append({
+        "id": "music", "clipType": "media", "track": "music", "asset": "music",
+        "at": 0, "from": 0, "to": 4, "app": {"astrid": {"beats": {}}},
+    })
+    card(bundle)["app"]["astrid"] = {"on": 'beat 1 after "again" in line #1', "for": .5}
+    with pytest.raises(TimingCompileError, match="no beat"):
+        project(bundle, document)
+
+
+def test_native_unrelated_move_recompiles_legacy_beat_and_guards_carrier_table():
+    from astrid.sdk.timeline import commands
+    from astrid.sdk.timeline.capture import capture_move
+
+    fixture = Path(__file__).parents[1] / "fixtures/timeline_editing/tiny_publishable.json"
+    bundle = json.loads(fixture.read_text())
+    bundle["parent"]["clips"].append({
+        "id": "beat-target", "clipType": "am-type", "at": 0, "hold": 1,
+        "app": {"astrid": {"on": "beat 1 after c1", "for": .5}},
+    })
+    music = bundle["shots"]["A"]["internal_timeline"]["clips"][-1]
+    music["app"] = {"astrid": {"beats": {"beats": [0, .5, 1, 1.5, 2]}}}
+
+    move = capture_move(bundle, "occurrence:occ-A/clip:a-rocket", 1.0)
+    plan = commands.execute(bundle, [move])
+    target = next(row for row in plan.bundle["parent"]["clips"] if row["id"] == "beat-target")
+    assert target["at"] == .5
+    assert any(read["path"] == ["app", "astrid", "beats"]
+               and read["ref"].endswith("/clip:a-music")
+               for read in move["reads"])
+
+    changed = copy.deepcopy(bundle)
+    changed["shots"]["A"]["internal_timeline"]["clips"][-1]["app"]["astrid"]["beats"]["beats"] = [
+        0, .25, 1
+    ]
+    with pytest.raises(commands.CommandError, match="original authored guard changed"):
+        commands.execute(changed, [move])
+
+    for field, value in (("hold", 3), ("duration", 3)):
+        changed = copy.deepcopy(bundle)
+        changed["shots"]["A"]["internal_timeline"]["clips"][-1][field] = value
+        with pytest.raises(commands.CommandError, match="original authored guard changed"):
+            commands.execute(changed, [move])
+
+    changed = copy.deepcopy(bundle)
+    changed["placements"][0]["placement"]["start_ms"] += 100
+    with pytest.raises(commands.CommandError, match="original authored guard changed"):
+        commands.execute(changed, [move])
+
+    changed = copy.deepcopy(bundle)
+    changed["shots"]["A"]["internal_timeline"]["tracks"][-1]["kind"] = "visual"
+    with pytest.raises(commands.CommandError, match="original authored guard changed"):
+        commands.execute(changed, [move])
+
+
+@pytest.mark.parametrize(
+    ("declaration", "carrier", "expected"),
+    [
+        ("beat 1 after c1", {"beats": [0, .5, 1, 1.5, 2]}, Fraction(1, 2)),
+        ("downbeat 1 after c1", {"downbeats": [0, 1, 2]}, Fraction(1)),
+    ],
+)
+def test_main_context_beats_matches_native_compiler_on_real_fixture(
+        declaration, carrier, expected):
+    from astrid.sdk.timeline.checkout import Checkout
+
+    bundle = json.loads((Path(__file__).parents[1] /
+                         "fixtures/timeline_editing/tiny_publishable.json").read_text())
+    target = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
+                  if row["id"] == "a-rocket")
+    target["app"]["astrid"] = {"on": declaration, "for": .5}
+    music = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
+                 if row["id"] == "a-music")
+    music["app"] = {"astrid": {"beats": carrier}}
+
+    main_time = Checkout(copy.deepcopy(bundle)).time(declaration)
+    native_time = project(bundle).timings[("occ-A", "A", "a-rocket")]["start"]
+    assert main_time == float(expected)
+    assert native_time == expected
+
+
+def test_main_context_and_native_compiler_both_refuse_bars_alias_on_real_fixture():
+    from astrid.sdk.timeline.checkout import Checkout
+
+    bundle = json.loads((Path(__file__).parents[1] /
+                         "fixtures/timeline_editing/tiny_publishable.json").read_text())
+    declaration = "downbeat 1 after c1"
+    target = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
+                  if row["id"] == "a-rocket")
+    target["app"]["astrid"] = {"on": declaration, "for": .5}
+    music = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
+                 if row["id"] == "a-music")
+    music["app"] = {"astrid": {"beats": {"bars": [0, 1, 2]}}}
+
+    with pytest.raises(TimelineEditError):
+        Checkout(copy.deepcopy(bundle)).time(declaration)
+    with pytest.raises(TimingCompileError, match="no downbeat"):
+        project(bundle)
 
 
 def test_second_occurrence_and_parent_clips_keep_their_own_identity_and_metadata():

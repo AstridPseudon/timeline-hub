@@ -29,6 +29,19 @@ def set_container(row, container):
         row['params'] = copy.deepcopy(container['value'])
 
 
+def test_recorded_dict_insertion_detaches_nested_setter_from_state():
+    original = {'parent': {'config': {'app': {
+        'before': {'keep': True}, 'after': {'keep': True}}}}}
+    inserted = present({'nested': {'leaf': 'before'}})
+    ctx = Recording(original, {}, 0)
+
+    ctx.assign('parent', ['config', 'app', 'target'], inserted)
+    ctx.assign('parent', ['config', 'app', 'target', 'nested', 'leaf'], present('scratch'))
+
+    assert list(original['parent']['config']['app']) == ['before', 'after', 'target']
+    assert inserted == present({'nested': {'leaf': 'before'}})
+
+
 def clear_call():
     return {'schema_version': 1, 'op': 'fixture.properties', 'version': '1', 'select': REF,
             'args': {'changes': [{'path': PATH, 'state': ABSENT}]}}

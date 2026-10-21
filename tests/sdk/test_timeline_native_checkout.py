@@ -9,9 +9,12 @@ import pytest
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline._track_commands import capture_track_set
+from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict
 from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.timeline_editing import add_track
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
 from tests.editing_conformance.test_recipe_m2_clip_trim import media_document
@@ -105,6 +108,189 @@ def test_literal_params_clear_and_opaque_values_use_one_captured_command(connect
     assert loaded.clip('a').params == clip.params
     loaded.undo([accepted['receipt']['receipt_id']])
     assert loaded.clip('a').params == {'text': 'café'}
+
+
+@pytest.mark.parametrize(
+    ('initial', 'values', 'clear', 'expected'),
+    [(None, {'label': 'Picture'}, [], 'Picture'),
+     ('Existing', {'label': ''}, [], ''),
+     ('Existing', {}, ['label'], None)],
+)
+def test_parent_track_label_publish_uses_the_existing_captured_outbox(connected, initial, values, clear, expected):
+    _, generated, _ = connected
+    bundle = copy.deepcopy(generated.bundles['r0'])
+    track = State(bundle).entity('parent/track:picture')
+    if initial is None:
+        track.pop('label', None)
+    else:
+        track['label'] = initial
+    generated.bundles['r0'] = bundle
+
+    session = open_session(connected)
+    command = capture_track_set(bundle, 'parent/track:picture', values=values, clear=clear)
+    assert session.queue(command) == command
+    tl = Checkout.attach(session)
+    assert pending(connected)['pending'] == [command]
+    accepted = tl.publish('rename picture', idempotency_key='label-A')
+
+    body = json.loads(generated.calls[-1][0])
+    assert body['base_revision_id'] == 'r0'
+    assert body['base_publication_id'] == 'pub0'
+    assert body['commands'] == [command]
+    assert body['rationale'] == 'rename picture'
+    assert accepted['receipt']['idempotency_key'] == 'label-A'
+    loaded = Checkout.attach(open_session(connected))
+    label = State(loaded.bundle).entity('parent/track:picture')
+    assert label.get('label') == expected
+    if expected is None:
+        assert 'label' not in label
+
+
+@pytest.mark.parametrize('row', [
+    {'id': 'overlay', 'kind': 'visual', 'role': 'output'},
+    {'id': 'overlay', 'kind': 'visual', 'role': 'output', 'label': ''},
+    {'id': 'overlay', 'kind': 'visual', 'role': 'source', 'label': None},
+])
+def test_parent_track_create_publish_uses_the_existing_captured_outbox(connected, row):
+    _, generated, _ = connected
+    bundle = generated.bundles['r0']
+    session = open_session(connected)
+    command = capture_track_create(bundle, 'parent', row)
+    assert session.queue(command) == command
+    tl = Checkout.attach(session)
+    assert pending(connected)['pending'] == [command]
+
+    accepted = tl.publish('create overlay track', idempotency_key='track-create-A')
+
+    body = json.loads(generated.calls[-1][0])
+    assert body['commands'] == [command]
+    assert body['rationale'] == 'create overlay track'
+    assert accepted['receipt']['idempotency_key'] == 'track-create-A'
+    loaded = Checkout.attach(open_session(connected))
+    tracks = State(loaded.bundle).config('parent')['tracks']
+    assert tracks[-1] == row
+
+
+def test_attached_add_track_queues_existing_track_create_capture(connected):
+    tl = Checkout.attach(open_session(connected))
+    track = add_track(tl, kind='visual', name='Overlay', track_id='overlay')
+
+    assert track == {'id': 'overlay', 'kind': 'visual', 'label': 'Overlay', 'name': 'Overlay'}
+    command = pending(connected)['pending'][0]
+    assert command['op'] == 'track.create'
+    assert command['select'] == 'parent'
+    assert command['args']['row'] == track
+    assert connected[1].calls == []
+
+    tl.publish('create overlay track', idempotency_key='track-create-A')
+    loaded = Checkout.attach(open_session(connected))
+    assert State(loaded.bundle).entity('parent/track:overlay') == track
+
+
+def test_attached_add_track_keeps_mixed_draft_on_existing_path(connected):
+    tl = Checkout.attach(open_session(connected))
+    tl.clip('a').on(2)
+    before = pending(connected)
+
+    with pytest.raises(TimelineEditError, match='cannot be mixed'):
+        add_track(tl, kind='visual', track_id='overlay')
+    assert pending(connected) == before
+
+
+def test_parent_track_create_publish_rejects_uncaptured_row(connected):
+    _, generated, _ = connected
+    session = open_session(connected)
+    raw = {'schema_version': 1, 'op': 'track.create', 'version': '1',
+           'select': 'parent',
+           'args': {'row': {'id': 'overlay', 'kind': 'visual'}}}
+    with session.outbox.locked():
+        state = session._state()
+        state['pending'] = [raw]
+        session.outbox.write(state)
+
+    with pytest.raises(TimelineEditError, match='held'):
+        Checkout.attach(session).publish('forged track', idempotency_key='track-forged')
+    assert pending(connected)['pending'] == [raw]
+    assert pending(connected)['flight'] is None
+    assert generated.calls == []
+
+
+def test_parent_track_create_publish_retries_original_request_after_lost_ack(connected):
+    _, generated, _ = connected
+    session = open_session(connected)
+    command = capture_track_create(generated.bundles['r0'], 'parent', {
+        'id': 'overlay', 'kind': 'visual', 'role': 'output', 'label': ''})
+    session.queue(command)
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        Checkout.attach(session).publish('create overlay track', idempotency_key='track-create-A')
+    flight = pending(connected)['flight']
+
+    retried = Checkout.attach(open_session(connected))
+    accepted = retried.publish(idempotency_key='track-create-A')
+    assert generated.calls[0] == generated.calls[1] == (flight['body'].encode(), 'track-create-A')
+    assert accepted['receipt']['idempotency_key'] == 'track-create-A'
+    assert State(retried.bundle).entity('parent/track:overlay')['label'] == ''
+
+
+def test_parent_track_label_publish_retries_the_original_request_after_lost_ack(connected):
+    _, generated, _ = connected
+    bundle = generated.bundles['r0']
+    session = open_session(connected)
+    command = capture_track_set(bundle, 'parent/track:picture', values={'label': 'Picture'})
+    session.queue(command)
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        Checkout.attach(session).publish('rename picture', idempotency_key='label-A')
+    flight = pending(connected)['flight']
+
+    retried = Checkout.attach(open_session(connected))
+    accepted = retried.publish(idempotency_key='label-A')
+    assert generated.calls[0] == generated.calls[1] == (flight['body'].encode(), 'label-A')
+    assert accepted['receipt']['idempotency_key'] == 'label-A'
+    assert pending(connected)['pending'] == []
+    assert State(retried.bundle).entity('parent/track:picture')['label'] == 'Picture'
+
+
+def test_parent_track_label_publish_keeps_original_capture_on_conflict(connected):
+    _, generated, _ = connected
+    bundle = generated.bundles['r0']
+    session = open_session(connected)
+    command = capture_track_set(bundle, 'parent/track:picture', values={'label': 'Picture'})
+    session.queue(command)
+    generated.bundles['peer'] = copy.deepcopy(bundle)
+    State(generated.bundles['peer']).entity('parent/track:picture')['label'] = 'Peer'
+    generated.head = {'revision_id': 'peer', 'publication_id': 'peer-publication'}
+
+    with pytest.raises(CommitConflict):
+        Checkout.attach(session).publish('rename picture', idempotency_key='label-A')
+    state = pending(connected)
+    assert state['pending'] == [command]
+    body = json.loads(state['flight']['body'])
+    assert body['base_revision_id'] == 'r0'
+    assert body['base_publication_id'] == 'pub0'
+    assert body['commands'] == [command]
+    assert body['rationale'] == 'rename picture'
+    assert generated.head == {'revision_id': 'peer', 'publication_id': 'peer-publication'}
+
+
+def test_parent_track_label_publish_rejects_uncaptured_label_shaped_record(connected):
+    _, generated, _ = connected
+    session = open_session(connected)
+    raw = {'schema_version': 1, 'op': 'track.set', 'version': '1',
+           'select': 'parent/track:picture',
+           'args': {'values': {'label': 'forged'}, 'clear': []}}
+    with session.outbox.locked():
+        state = session._state()
+        state['pending'] = [raw]
+        session.outbox.write(state)
+
+    with pytest.raises(TimelineEditError, match='held'):
+        Checkout.attach(session).publish('forged rationale', idempotency_key='forged')
+    state = pending(connected)
+    assert state['pending'] == [raw]
+    assert state['flight'] is None
+    assert generated.calls == []
 
 
 def test_move_then_trim_then_reload_preserves_source_hold_and_opaque_fields(connected):

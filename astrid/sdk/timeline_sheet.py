@@ -728,7 +728,6 @@ class NativeSheet:
         from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
         from astrid.sdk.timeline.native_word_anchor import capture_anchor
         from astrid.sdk.timeline.units import from_canvas
-        from astrid.sdk.timeline_address import element_schema
 
         rows, frame = self._read(text)
         missing = self._rows.keys() - rows.keys()
@@ -796,7 +795,9 @@ class NativeSheet:
                 def fixed(tokens):
                     return [token for token in tokens[1:]
                             if not re.match(r"^[A-Za-z_][\w.-]*=", token)]
+                allowed = set(original["params"]) | {"asset", "hold", "transition", "trim"}
                 if (fixed(before) != fixed(after) or not left.keys() <= right.keys()
+                        or not right.keys() <= allowed
                         or len(right) != len(row["params"]) + (row["trim"] is not None) or row["at"] is None
                         or sum(bool(re.match(r"^[A-Za-z_][\w.-]*=", token)) for token in after[4:]) != len(right)):
                     raise SheetError(f"unsupported row edit at {ref}; keep cells and use explicit key=clear")
@@ -816,8 +817,7 @@ class NativeSheet:
                                 and right[key] != "clear" and left[key] != "clear"
                                 and equal(original["params"][key], row["params"][key])):
                             continue
-                        if op == "clip.set-params" and (selected.get("packId") or key not in
-                                element_schema(clip.get("clipType") or clip.get("clip_type") or "media").get("properties", {})):
+                        if op == "clip.set-params" and selected.get("packId"):
                             raise SheetError(f"unsupported parameter {key} at {ref}; selected pack/opaque editing requires exact inputs")
                         if op == "clip.set-params" and intent.formulas(clip):
                             raise SheetError(f"unsupported formula-bound parameters at {ref}")
@@ -825,8 +825,12 @@ class NativeSheet:
                             clear.append(key)
                         else:
                             value = row["params"][key]
-                            if value is ELIDED or isinstance(value, (dict, list)) or (
-                                    isinstance(value, str) and value.startswith(("ƒ", "moment(", "formula("))):
+                            raw_value = right[key]
+                            expression = (isinstance(value, str) and
+                                          value.startswith(("ƒ", "moment(", "formula(")) and
+                                          not (op == "clip.set-params" and raw_value.startswith('"')))
+                            if (value is ELIDED or expression or
+                                    (op != "clip.set-params" and isinstance(value, (dict, list)))):
                                 raise SheetError(f"unsupported expression at {ref}: {key}")
                             values[key] = (from_canvas(clip.get("clipType") or clip.get("clip_type") or "media", key, value)
                                            if op == "clip.set-params" else value)
@@ -903,12 +907,11 @@ def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
 
 
 def _duration_sheet(sheet, artifact, parsed):
-    """Translate existing static layer durations, literal type text, and size."""
+    """Translate existing static layer durations and retained literal parameter cells."""
     from astrid.sdk.timeline._command_state import State, equal
-    from astrid.sdk.timeline_address import element_schema
 
     def refuse():
-        raise SheetError("unsupported retained sheet edit; supported fields are am-type text, size, and static duration")
+        raise SheetError("unsupported retained sheet edit; supported fields are am-type text, literal parameters, and static duration")
 
     original = parse_sheet(artifact["text"])
     edited = copy.deepcopy(parsed, {id(ELIDED): ELIDED})
@@ -921,19 +924,20 @@ def _duration_sheet(sheet, artifact, parsed):
         before = left[key]
         before_params = before.get("params") or {}
         after_params = row.get("params") or {}
-        # Presence is part of the edit. In particular, an explicit size=clear
-        # must not be confused with an absent size cell.
-        before_has_size = "size" in before_params
-        after_has_size = "size" in after_params
-        size_changed = before_has_size != after_has_size or (
-            before_has_size and after_has_size and not equal(before_params["size"], after_params["size"])
-        )
-        if equal(before["for"], row["for"]) and equal(before["text"], row["text"]) and not size_changed:
+        field_changes = []
+        for field in (set(before_params) | set(after_params)) - {"text"}:
+            before_has = field in before_params
+            after_has = field in after_params
+            if before_has != after_has or (before_has and after_has and
+                                           not equal(before_params[field], after_params[field])):
+                field_changes.append((field, before_has, after_has))
+        if equal(before["for"], row["for"]) and equal(before["text"], row["text"]) and not field_changes:
             continue
         ref = artifact["bindings"].get(".".join(key))
         if ref is None:
             refuse()
         clip = State(sheet._bundle).entity(ref)
+        selected = clip.get("elementRef") or clip.get("element_ref") or {}
         if not equal(before["for"], row["for"]):
             if before["for"] is None or row["for"] is None:
                 refuse()
@@ -966,20 +970,20 @@ def _duration_sheet(sheet, artifact, parsed):
                 replaced.append(body + suffix)
             text = "\n".join(replaced) + "\n"
             row["text"] = before["text"]
-        if size_changed:
-            if (not before_has_size or not after_has_size or clip.get("clipType") != "am-type"
-                    or "size" not in (element_schema("am-type").get("properties") or {})):
+        for field, before_has, after_has in field_changes:
+            if (not before_has or not after_has or clip.get("clipType") != "am-type"
+                    or selected.get("packId")):
                 refuse()
-            value = after_params["size"]
+            value = after_params[field]
             if value is ELIDED:
                 refuse()
-            raw_size = next((token for token in _tokens(row.get("text_line", ""))
-                             if token.startswith("size=")), None)
-            if raw_size is None:
+            raw_value = next((token for token in _tokens(row.get("text_line", ""))
+                              if token.startswith(field + "=")), None)
+            if raw_value is None:
                 refuse()
-            old_token = "size=" + json.dumps(before_params["size"], ensure_ascii=False, separators=(",", ":"))
-            new_token = ("size=clear" if raw_size == "size=clear" else
-                         "size=" + json.dumps(value, ensure_ascii=False, separators=(",", ":")))
+            old_token = field + "=" + json.dumps(before_params[field], ensure_ascii=False, separators=(",", ":"))
+            new_token = (field + "=clear" if raw_value == field + "=clear" else
+                         field + "=" + json.dumps(value, ensure_ascii=False, separators=(",", ":")))
             suffix = " # ref " + json.dumps(ref)
             replaced = []
             for line in text.splitlines():
@@ -995,7 +999,7 @@ def _duration_sheet(sheet, artifact, parsed):
                     refuse()
                 replaced.append(body + suffix)
             text = "\n".join(replaced) + "\n"
-            row["params"]["size"] = before_params["size"]
+            row["params"][field] = before_params[field]
     def semantic(value):
         if isinstance(value, dict):
             return {k: semantic(v) for k, v in value.items() if k not in {"line", "text_line"}}

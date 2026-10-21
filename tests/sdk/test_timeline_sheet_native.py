@@ -30,15 +30,17 @@ def detached_duration_bundle():
         picture.update(track="plate", hold=10, **{"from": 2, "to": 12},
                        app={"astrid": {"cut": f"c{index}", "layer": "plate"}})
         internal["clips"].append({"id": "card", "clipType": "am-type", "track": "type", "at": 1,
-            "hold": 1, "params": {"text": "LIVE", "size": 32}, "transition": None,
+            "hold": 1, "params": {"text": "LIVE", "size": 32, "font": "display", "color": "#25241F"}, "transition": None,
             "opaque": {"keep": [None, False, 1, 1.0]},
             "app": {"astrid": {"cut": f"c{index}", "layer": "card", "for": 1}}})
     return bundle
 
 
-def detached_draft(connected, tmp_path):
+def detached_draft(connected, tmp_path, *, params=None):
     client, generated, _ = connected
     original = detached_duration_bundle()
+    if params:
+        State(original).entity("occurrence:occ-1/clip:card")["params"].update(copy.deepcopy(params))
     generated.bundles["r0"] = copy.deepcopy(original)
     path = tmp_path / "detached.json"
     generated.path = path.with_name(path.name + ".outbox.json")
@@ -64,6 +66,21 @@ def text_edit(text, value):
 def size_edit(text, value):
     return "\n".join(line.replace("size=32", f"size={value}", 1)
                      if "  card  " in line else line for line in text.splitlines()) + "\n"
+
+
+def param_edit(text, field, value):
+    return "\n".join(line.replace(f"{field}=" + next(token.split("=", 1)[1] for token in line.split()
+                                                  if token.startswith(field + "=")),
+                                f"{field}={value}", 1)
+                     if "  card  " in line else line for line in text.splitlines()) + "\n"
+
+
+def append_param(text, field, value):
+    token = f" {field}={value}"
+    return "\n".join(line.replace(" # ref ", token + " # ref ", 1)
+                         if "  card  " in line and " # ref " in line else
+                         line + token if "  card  " in line else line
+                     for line in text.splitlines()) + "\n"
 
 
 def test_detached_static_duration_keeps_the_original_local_grammar(tmp_path):
@@ -117,6 +134,90 @@ def test_detached_static_size_uses_retained_native_params_command(connected, tmp
     else:
         assert card["params"]["size"] == value
     assert State(tl.bundle).entity("occurrence:occ-2/clip:card")["params"]["size"] == 32
+
+
+@pytest.mark.parametrize(("field", "value"), [("font", "label"), ("color", '"#FF6B23"')])
+def test_detached_static_type_string_uses_retained_native_params_command(connected, tmp_path, field, value):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    parsed_value = value.strip('"') if field == "color" else value
+    edited = param_edit(original_text, field, value)
+    expected = execute(original, [capture_clip_set_params(original, ref, values={field: parsed_value})])
+
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, edited, client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert generated.calls == []
+    assert state["sheet"]["bundle"] == original
+    assert state["pending"] == expected.commands
+    assert State(tl.bundle).entity(ref)["params"][field] == parsed_value
+    assert State(tl.bundle).entity("occurrence:occ-2/clip:card")["params"][field] == State(original).entity(
+        "occurrence:occ-2/clip:card")["params"][field]
+
+
+def test_detached_combined_size_and_type_string_edit_preserves_literal_neighbors(connected, tmp_path):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    edited = param_edit(size_edit(original_text, 48), "font", "label")
+    expected = execute(original, [capture_clip_set_params(original, ref, values={"size": 48, "font": "label"})])
+
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, edited, client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert state["pending"] == expected.commands
+    card = State(tl.bundle).entity(ref)
+    assert list(card["params"]) == ["text", "size", "font", "color"]
+    assert card["params"]["size"] == 48 and card["params"]["font"] == "label"
+    assert card["params"]["color"] == "#25241F"
+
+
+def test_detached_type_string_clear_uses_presence_aware_native_command(connected, tmp_path):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    edited = param_edit(original_text, "color", "clear")
+    expected = execute(original, [capture_clip_set_params(original, ref, values={}, clear=["color"])])
+
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, edited, client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert state["pending"] == expected.commands
+    card = State(tl.bundle).entity(ref)
+    assert "color" not in card["params"]
+    assert card["params"]["font"] == "display"
+
+
+@pytest.mark.parametrize(("field", "initial", "edited", "values", "clear"), [
+    ("nullable", "value", "null", {"nullable": None}, []),  # set-null
+    ("nullable", None, "clear", {}, ["nullable"]),            # clear-null
+    ("font", "display", "clear", {}, ["font"]),              # clear-value
+    ("text", "LIVE", "RENAMED", {"text": "RENAMED"}, []),   # rename
+])
+def test_detached_parameter_cells_keep_presence_and_literal_text(
+        connected, tmp_path, field, initial, edited, values, clear):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    params = {field: initial}
+    tl, original_text, ref, original = detached_draft(connected, tmp_path, params=params)
+    client, generated, _ = connected
+    text = (text_edit(original_text, edited) if field == "text"
+            else param_edit(original_text, field, edited))
+    expected = execute(original, [capture_clip_set_params(original, ref, values=values, clear=clear)])
+
+    draft = Checkout.load(tl.path)
+    assert apply_sheet(draft, text, client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert state["pending"] == expected.commands
+    result = State(draft.bundle).entity(ref)
+    if clear:
+        assert field not in result["params"]
+    else:
+        assert result["params"][field] == next(iter(values.values()))
 
 
 def test_detached_size_preserves_neighbor_presence_and_order(connected, tmp_path):  # noqa: F811
@@ -199,22 +300,67 @@ def test_detached_mixed_text_and_duration_is_one_retained_native_batch(connected
     assert State(tl.bundle).entity(ref)["params"]["text"] == "CHANGED"
 
 
-def test_detached_mixed_edit_with_unsupported_neighbor_is_not_staged(connected, tmp_path):  # noqa: F811
-    tl, original_text, ref, _ = detached_draft(connected, tmp_path)
+def test_detached_mixed_edit_with_supported_font_is_staged(connected, tmp_path):  # noqa: F811
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    _, generated, _ = connected
+    edited = param_edit(text_edit(duration_edit(original_text, 2), "CHANGED"), "font", "label")
+    expected = execute(original, [
+        capture_clip_set(original, ref, values={"hold": 2.0}),
+        capture_clip_set_params(original, ref, values={"text": "CHANGED", "font": "label"}),
+    ])
+
+    assert apply_sheet(tl, edited)
+    assert json.loads(generated.path.read_bytes())["pending"] == expected.commands
+    card = State(tl.bundle).entity(ref)
+    assert card["hold"] == 2.0 and card["params"]["text"] == "CHANGED" and card["params"]["font"] == "label"
+
+
+def test_detached_mixed_edit_with_opaque_neighbor_is_staged(connected, tmp_path):  # noqa: F811
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(
+        connected, tmp_path, params={"opaque": {"keep": [None, False]}})
     _, generated, _ = connected
     edited = text_edit(duration_edit(original_text, 2), "CHANGED")
-    unsupported = edited.replace('type   card   type   "CHANGED"       for 2s  size=32',
-                                 'type   card   type   "CHANGED"       for 2s  size=33 font=label')
+    supported = param_edit(edited, "opaque", '{"keep":[true]}')
+    unsupported = param_edit(edited, "opaque", "…")
+
     before_bundle = copy.deepcopy(tl.bundle)
     before_outbox = generated.path.read_bytes()
-
-    with pytest.raises(SheetError):
+    with pytest.raises(SheetError, match="unsupported retained sheet edit"):
         apply_sheet(tl, unsupported)
-
     assert tl.bundle == before_bundle
     assert generated.path.read_bytes() == before_outbox
-    assert State(tl.bundle).entity(ref)["hold"] == 1
-    assert State(tl.bundle).entity(ref)["params"]["text"] == "LIVE"
+
+    native_bundle = detached_duration_bundle()
+    native_ref = "occurrence:occ-1/clip:card"
+    State(native_bundle).entity(native_ref)["params"]["opaque"] = {"keep": [None, False]}
+    native = NativeSheet(native_bundle, basis={"revision_id": "r0", "publication_id": "pub0"})
+    old = "\n".join(line + " unknown=label" if 'clip:card"' in line else line
+                       for line in native.text.splitlines()) + "\n"
+    with pytest.raises(SheetError, match="invalid sheet row binding"):
+        NativeSheet._read(old)
+    native_text = native.text.replace('opaque={"keep":[null,false]}', 'opaque={"keep":[true]}')
+    rows, _ = NativeSheet._read(native_text)
+    assert native_ref in rows and rows[native_ref][2]["params"]["opaque"] == {"keep": [True]}
+    native_plan = native.preview(native_text)
+    assert native_plan.commands[0]["args"] == {
+        "values": {"opaque": {"keep": [True]}}, "clear": []}
+
+    assert apply_sheet(tl, supported)
+    expected = execute(original, [
+        capture_clip_set(original, ref, values={"hold": 2.0}),
+        capture_clip_set_params(original, ref, values={
+            "text": "CHANGED", "opaque": {"keep": [True]}}),
+    ])
+    assert json.loads(generated.path.read_bytes())["pending"] == expected.commands
+    card = State(tl.bundle).entity(ref)
+    assert card["hold"] == 2.0 and card["params"]["text"] == "CHANGED"
+    assert card["params"]["opaque"] == {"keep": [True]}
 
 
 @pytest.mark.parametrize("peer", ["none", "disjoint", "same"])

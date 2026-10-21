@@ -25,6 +25,8 @@ from astrid.sdk.timeline.document_diff import (
     document_diff_to_commands,
 )
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.timeline_editing import add_track
 from astrid.sdk.timeline_sheet import NativeSheet
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance import test_native_batch_ingress
@@ -582,6 +584,123 @@ def test_http_connected_label_clear_is_lossless_across_native_frontends(
     assert State(restored).entity(clip_ref) == original_clip
     assert restored['parent']['registry'] == original_registry
     assert len(runtime.calls) == 2
+
+
+def test_http_attached_parent_label_publish_retries_exact_capture_and_inverse(
+        runtime, monkeypatch):
+    _document, setup = seed_labeled_tiny_cut_parent(runtime)
+    runtime.restart()
+    session = runtime.session(name='attached-label')
+    loaded = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert loaded.ok
+    before = loaded.data['bundle']
+    track_ref = 'parent/track:plate'
+    original_track = copy.deepcopy(State(before).entity(track_ref))
+    original_clip = copy.deepcopy(State(before).entity('parent/clip:b-plate'))
+    command = capture_track_set(before, track_ref, values={'label': 'Renamed'})
+    assert session.queue(command) == command
+    attached = Checkout.attach(session)
+    assert json.loads(session.outbox.path.read_bytes())['pending'] == [command]
+    assert setup['data']['accepted_revision_id'] == session._state()['base']['revision_id']
+
+    def forbidden_legacy_publish(*args, **kwargs):
+        pytest.fail('attached Checkout.publish used retired publish_parent_composition')
+
+    monkeypatch.setattr(type(runtime.service()), 'publish_parent_composition', forbidden_legacy_publish)
+    key = 'attached-label-lost-ack'
+    runtime.lost.add(key)
+    with pytest.raises(WorkspaceClientError):
+        attached.publish('Rename the plate track', idempotency_key=key)
+
+    first = copy.deepcopy(runtime.calls[-1])
+    state = json.loads(session.outbox.path.read_bytes())
+    assert state['pending'] == [command]
+    assert state['flight']['key'] == key
+    assert state['flight']['body'].encode() == first[0]
+    body = json.loads(first[0])
+    assert body['rationale'] == 'Rename the plate track'
+    assert body['commands'] == [command]
+    assert command['select'] == track_ref
+    assert command['resolved'] == [track_ref]
+    assert command['bindings']['scalar.target'] == track_ref
+    assert command['expect'][track_ref + '::label']['state'] == 'present'
+
+    runtime.restart()
+    retry = Checkout.attach(runtime.session(name='attached-label'))
+    accepted = retry.publish()
+    assert runtime.calls[-1][:2] == first[:2]
+    assert accepted['receipt']['idempotency_key'] == key
+
+    runtime.restart()
+    reloaded = Checkout.attach(runtime.session(name='attached-label-after-reload'))
+    stored = reloaded.session.client.timelines.open_bundle(runtime.project, 'film')
+    assert stored.ok
+    assert State(stored.data['bundle']).entity(track_ref)['label'] == 'Renamed'
+    assert State(stored.data['bundle']).entity('parent/clip:b-plate') == original_clip
+
+    undone = reloaded.undo([accepted['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert State(restored).entity(track_ref) == original_track
+    assert State(restored).entity('parent/clip:b-plate') == original_clip
+    assert len(runtime.calls) == 3
+
+
+def test_http_original_attached_add_track_publish_retries_exact_capture_and_guarded_inverse(
+        runtime, monkeypatch):
+    _document, _target, setup = seed_tiny_cut_parent(runtime)
+    runtime.restart()
+    session = runtime.session(name='attached-track-create')
+    loaded = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert loaded.ok
+    before = loaded.data['bundle']
+    original_tracks = copy.deepcopy(State(before).config('parent')['tracks'])
+    assert setup['data']['accepted_revision_id'] == session._state()['base']['revision_id']
+
+    attached = Checkout.attach(session)
+    track = add_track(attached, kind='visual', name='Overlay', track_id='overlay')
+    command = json.loads(session.outbox.path.read_bytes())['pending'][0]
+    assert track == {'id': 'overlay', 'kind': 'visual', 'label': 'Overlay', 'name': 'Overlay'}
+    assert command['op'] == 'track.create'
+    assert command['select'] == 'parent'
+    assert command['args']['row'] == track
+
+    def forbidden_legacy_publish(*args, **kwargs):
+        pytest.fail('attached Checkout.publish used retired publish_parent_composition')
+
+    monkeypatch.setattr(type(runtime.service()), 'publish_parent_composition', forbidden_legacy_publish)
+    key = 'attached-track-create-lost-ack'
+    runtime.lost.add(key)
+    with pytest.raises(WorkspaceClientError):
+        attached.publish('Create the overlay track', idempotency_key=key)
+
+    first = copy.deepcopy(runtime.calls[-1])
+    state = json.loads(session.outbox.path.read_bytes())
+    assert state['pending'] == [command]
+    assert state['flight']['key'] == key
+    assert state['flight']['body'].encode() == first[0]
+    body = json.loads(first[0])
+    assert body['rationale'] == 'Create the overlay track'
+    assert body['commands'] == [command]
+
+    runtime.restart()
+    retry = Checkout.attach(runtime.session(name='attached-track-create'))
+    accepted = retry.publish()
+    assert runtime.calls[-1][:2] == first[:2]
+    assert accepted['receipt']['idempotency_key'] == key
+
+    runtime.restart()
+    reloaded = Checkout.attach(runtime.session(name='attached-track-create'))
+    stored = reloaded.session.client.timelines.open_bundle(runtime.project, 'film')
+    assert stored.ok
+    stored_bundle = stored.data['bundle']
+    assert State(stored_bundle).entity('parent/track:overlay') == track
+    assert State(stored_bundle).config('parent')['tracks'] == [*original_tracks, track]
+
+    undone = reloaded.undo([accepted['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert State(restored).config('parent')['tracks'] == original_tracks
+    assert State(restored).entity('parent/track:overlay', optional=True) is None
+    assert len(runtime.calls) == 3
 
 
 @pytest.mark.parametrize('entry', ['python', 'cli', 'sheet'])
