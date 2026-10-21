@@ -27,7 +27,16 @@ PRIVATE_FULL_MOVE_SET_SHA256 = 'ba0c42d6a9359c32d89d8088416f7bc9092481dbd05f236e
 PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc0f376987527ef068'
 PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
 RAW_OLD_CANONICAL_SHA256 = 'd3274d7ed2d4bd80691472dd94daf8f4b8041fc184f39f1dd562d5de5d6a15c2'
-SCALAR_SOURCE_UNION_SHA256 = '67444ca7a638e52d556cc1884ceaf582cdbce996614ae197207bca26334986c0'
+SCALAR_SOURCE_UNION_SHA256 = '0e7c7e1eca38fb5841b3ec301875663bd355b4322d7496b86974aa93628a7db6'
+
+
+def without_insertion_order(schema):
+    """Reconstruct the frozen ordinary AgentWrite carrier exactly."""
+    assert schema['$defs']['AgentWrite']['properties'].pop('insertion_order') == {
+        'type': 'array',
+        'items': {'type': 'string'},
+    }
+    return schema
 
 
 def without_move_set(schema):
@@ -88,14 +97,14 @@ def without_transcript(schema):
 def without_new_sources(schema):
     """Reconstruct the pre-movement/reference/order schema without fixtures."""
     schema = without_future_scalar_sources(schema)
-    return without_track_reorder(without_reference(without_move_set(
-        without_raw_old_swap(without_transcript(schema)))))
+    return without_insertion_order(without_track_reorder(without_reference(without_move_set(
+        without_raw_old_swap(without_transcript(schema))))))
 
 
 def without_reference_and_order(schema):
     schema = without_future_scalar_sources(schema)
-    return without_track_reorder(without_reference(without_raw_old_swap(
-        without_transcript(schema))))
+    return without_insertion_order(without_track_reorder(without_reference(without_raw_old_swap(
+        without_transcript(schema)))))
 
 
 def without_future_scalar_sources(schema):
@@ -270,7 +279,11 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
 def test_reviewed_scalar_successors_strip_to_exact_complete_10226_source():
     candidate = without_future_scalar_sources(copy.deepcopy(_SCHEMA))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
-    assert hashlib.sha256(raw).hexdigest() == '322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc'
+    assert hashlib.sha256(raw).hexdigest() == '9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6'
+    assert candidate['$defs']['AgentWrite']['properties']['insertion_order'] == {
+        'type': 'array',
+        'items': {'type': 'string'},
+    }
     assert len(candidate['$defs']) == 65
     assert len(candidate['$defs']['EditCommand']['allOf']) == 37
 
@@ -368,13 +381,13 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
         'literal-union-f448': without_new_sources(copy.deepcopy(_SCHEMA)),
         'movement3b320': without_reference_and_order(
             without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
-        'reference-order-85c': without_raw_old_swap(
+        'reference-order-85c': without_insertion_order(without_raw_old_swap(
             without_transcript(
                 without_move_set(
                     without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))
                 )
             )
-        ),
+        )),
         'ordered-remove': without_new_sources(without_opacity(without_mute(copy.deepcopy(_SCHEMA)))),
         'track-mute': without_new_sources(without_opacity(without_remove(copy.deepcopy(_SCHEMA)))),
         'opacity': without_new_sources(without_mute(without_remove(copy.deepcopy(_SCHEMA)))),
@@ -397,7 +410,8 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
 
 
 def test_transcript_successor_strips_to_exact_raw_old_schema():
-    candidate = without_transcript(without_future_scalar_sources(copy.deepcopy(_SCHEMA)))
+    candidate = without_insertion_order(without_transcript(
+        without_future_scalar_sources(copy.deepcopy(_SCHEMA))))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == RAW_OLD_CANONICAL_SHA256
     assert len(candidate['$defs']) == 64
