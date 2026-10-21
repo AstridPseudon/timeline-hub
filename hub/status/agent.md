@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T11:54:58Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 42 | status age 3m -->
+<!-- agent | 2026-10-21T12:01:41Z | dispatcher heartbeat 5s | live 4 (sol 1, luna 3, other 0) | busy30 37 | status age 10m -->
 # agent — 2026-10-21 11:51 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 (95 / all 76) and Composition 0.0.13 (9412 / all 77) remain current. Future callers stay dormant.
 Integrated: Agent c9ac7c7b0. Attached parent track creation merged ea373d7d6: one new real HTTP case proves capture, lost ACK, restart, exact retry, raw order/readback, guarded inverse and zero legacy publication. Its seven repeated neighbours get no extra credit. Word-anchor null-mirror inverse fix merged c9ac7c7b0 after independent review; 140 author tests and nine beat controls passed.
