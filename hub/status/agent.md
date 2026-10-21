@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T03:11:07Z | dispatcher heartbeat 1s | live 5 (sol 0, luna 5, other 0) | busy30 25 | status age 4m -->
+<!-- agent | 2026-10-21T03:17:13Z | dispatcher heartbeat 1s | live 6 (sol 0, luna 6, other 0) | busy30 31 | status age 10m -->
 # agent — 2026-10-21 03:06 UTC
 Milestone: M1 recorded; M2 active. Runtime014 publication is now confirmed95bd/merge108713, artifact54205 (publication record in design). ONE Agent normal pin+Main497 unit is being prepared; public integration remains013/C13 until it lands. Native App timeline.init activation is separate under owner02:48.
 Integrated: Agent ed3ec73954dea96b758b19d4575e8117669119f1. This round merged WC8 dead _clip_row helper cut20lines (8b9d5eea3;137direct+2routePASS) and public13 mouth selected/source test pin correction (ed3ec7395;31PASS, every assertion retained). Current04fdd public repairs remain: occurrence CLI, neutralRoot, doctor, registry, static roles/dedup, generator/artifacts, frozen-span88c9 and AM-footage04fdd. No private geometry retirement or whole-WC8 closure.

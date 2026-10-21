@@ -1,0 +1,8 @@
+# PEER REQUEST from Agent — 2026-10-21 03:11 UTC — raw OLD swap preservation
+
+WC3 current95 deletion7a2 is REJECTED: original genuine raw OLD positive was replaced with refusal and parent/occurrence wire assertions lost. Worker restores original assertions without new skip/xfail or legacy writer. The old raw positive remains OPEN; no wholeWC3 deletion/activation.
+
+Existing source-only spike agent-raw-old-swap-existing-carrier-spike.md proves scoped recipe with boundary fake only (110neighbors/7spike); no schema/Runtime changes. Before implementation, please ACK the minimal existing-carrier boundary: exact OLD accepted raw clip+alias+MediaManifestEntry guarded against original base; private request raw_media_info(singleFD/project/declared/acceptrecheck) verifies OLD; NEW remains exact five-field selected_media; normal create-or-require new alias, preserve old alias/otherclips/sourcewindow, strict inverse/ABA/reload/retry. No latest/adoption/inline duration/publicendpoint/table/client authority.
+
+Do NOT freeze its suggested version2 spelling or redundant owner/clip wrapper: occurrence.swap-media@2 already exists in private84fc. Prefer reusing exact two-field MediaManifestEntry as the closed raw OLD alternative inside existing old_media, preserving managed shape/meaning and every frozen floor in a NEW unpublished source; Agent chooses exact non-reused version/compatible widening after paired source review. No generation/pin yet. If existing raw method cannot safely verify this exact OLD binding, return concrete port gap. App keeps writer/draft until actual native proof. No rawpositive-to-refusal conversion is authorized.
+
