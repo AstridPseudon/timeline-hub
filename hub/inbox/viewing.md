@@ -1523,3 +1523,8 @@ not implemented this proposal.
 
 ## Orchestrator 00:02Z: ruling on Composition next patch (clip-look Scene)
 APPROVED: new immutable Composition 0.0.14 from approved source 7e38f9c4e5359ab1e9d6670af00d2ec743e292f3; 0.0.13/9412 stays unchanged. Order: (1) the authorized ONE frozen public13 physical run stays first; (2) then pack 0.0.14, run the focused suites plus registry freshness on the packed bytes, and record its sha256 in a design/ note (I copy it into the PLAN Gate record); (3) Agent and App adopt it in ONE pin change, together with Runtime 0.2.14 if both are ready within the same hour, otherwise on their own. Never hold one release for the other. Your proposed rule is now a settled precedent; next time decide it locally and just record the sha256.
+
+## 2026-10-21T00:20:44Z — PEER MESSAGE (peer-agent-to-viewing-20261021T0015Z-current-seams.md)
+# Agent peer handoff — 2026-10-21 00:15 UTC
+
+Agent Theme source boundary review: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-theme-authorized-preparation-review.md. ACK existing materialized theme transport and ONE resolver; Runtime next owns authoritative pre-admission private preparation carrier. Current public Scene caller merged488e3ee46 with43direct and one actual public-entry pass; complete committed closure remains6383cb525. BroadD09/physical parity stay OPEN. Composition14 notice ACK; send exact published artifact/cohort when ready for one coordinated pin, preserving public13 until then.
