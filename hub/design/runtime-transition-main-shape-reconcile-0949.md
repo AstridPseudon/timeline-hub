@@ -106,55 +106,31 @@ allowed. A parameter edit that intentionally adds a named parameter may
 materialize an object from null/absence, and Reset defaults remains an explicit
 SET; those are distinct user intents.
 
-## UNAPPLIED minimal diff (Agent source only)
+## Previous illustrative hunk — WITHDRAWN
 
-This is a source proposal, not an applied patch. The surrounding current
-schema/handler and all current operations must be preserved.
+The executable-looking hunk formerly in this section is withdrawn. Do not
+copy it into Agent source: it compared revision values with `.get` and chose
+between canonical and legacy references with `or`, collapsing missing,
+`null`, and empty values. The source proposal remains Agent-owned; this
+correction changes no schema, handler, operation, authority, or API.
 
-```diff
-diff --git a/astrid/core/timeline/schema/edit-command.schema.json b/astrid/core/timeline/schema/edit-command.schema.json
-@@ ClipSetArgs.values.transition.params
--                "type": "object",
-+                "type": ["object", "null"],
-                 "additionalProperties": {
-                   "$ref": "#/$defs/JSON"
-                 }
-diff --git a/astrid/sdk/timeline/_clip_scalar_commands.py b/astrid/sdk/timeline/_clip_scalar_commands.py
-@@ _transition_set
--    selected = values.get('elementRef')
--    if not isinstance(selected, dict) or selected.get('kind') != 'transition':
--        raise CommandError('transition SET requires its matching elementRef', ref=ref)
--    if selected.get('id') != transition['type'] or selected.get('revision') != transition.get('revision'):
--        raise CommandError('transition requires its matching selected reference', ref=ref)
-     before = ctx.read(ref, ['transition'])
-     previous = identity['elementRef'] or identity['element_ref']
-+    selected = values.get('elementRef')
-+    same_legacy = (isinstance(before, dict)
-+                   and before.get('type') == transition.get('type')
-+                   and before.get('revision') == transition.get('revision'))
-+    if selected is None:
-+        if previous is not None or not same_legacy:
-+            raise CommandError('transition SET requires a matching selected reference '
-+                               'for a new or referenced transition', ref=ref)
-+    else:
-+        if not isinstance(selected, dict) or selected.get('kind') != 'transition':
-+            raise CommandError('transition SET requires its matching elementRef', ref=ref)
-+        if selected.get('id') != transition['type'] or selected.get('revision') != transition.get('revision'):
-+            raise CommandError('transition requires its matching selected reference', ref=ref)
-     same = isinstance(before, dict) and before.get('type') == transition['type']
--    same = same and equal(selected, previous)
--    changed = {key: value for key, value in transition.get('params', {}).items()
-+    same = same and ((selected is None and previous is None) or equal(selected, previous))
-+    params = transition.get('params')
-+    changed = {key: value for key, value in (params.items() if isinstance(params, dict) else ())
-                if not same or not equal(present(value), ctx.state.get(ref, ['transition', 'params', key]))}
-```
+### Normative algorithm (not an executable patch)
+
+The surrounding current schema/handler and all current operations remain
+preserved. Use an explicit `MISSING` sentinel, distinct from `null`, empty
+containers, false, and other present values. Read key membership directly;
+never use `.get` or truthiness to decide authority.
+
+| Stage | Required rule |
+| --- | --- |
+| Revision identity | Compare the requested and existing transition revisions as `(key-present, value)`. Missing and present `null` are different states; equal values are insufficient when presence differs. |
+| Existing reference claims | Track `elementRef` and `element_ref` independently as `MISSING` or `PRESENT(value)`. A no-reference row has both keys `MISSING`; a present `null`, empty, or otherwise malformed value is not absence. Preserve the existing tagged presence/identity helper's handling when both spellings are present. |
+| SET with no requested `elementRef` | Authenticate only an existing transition whose type and revision `(presence, value)` exactly match, with both existing reference keys `MISSING`. Record that transition and the absent reference claims, write no reference, and allow the duration/parameter update. If the target is absent, the tuple differs, or either reference key is present, refuse. |
+| SET with a requested `elementRef` | Treat any present value, including `null` or empty, as a selected request rather than absence. Require a valid transition reference whose kind/id and revision `(presence, value)` exactly match the requested transition, then require the existing retained canonical/legacy reference claim and its existing source authority. A genuine new selected tuple therefore cannot omit or fabricate its matching reference or retained authority. |
+| Selected authority | Keep the existing downstream behavior: built-ins remain pinless; selected project packs require the exact `schema_source` and retained P1/source proof. A no-reference legacy update cannot bypass those checks. |
+| `params` preservation | Preserve the raw field state: absent stays absent and literal `null` stays `null`; an object updates only its supplied named keys. Keep existing changed-known-property and explicit-clear validation. Do not interpret `params:null` as removal of existing known parameters; materializing an object for a named parameter edit and an explicit Reset SET remain distinct intents. |
 
 The exact error text is not normative; the guards and refusal boundary are.
-The `selected`-dependent catalog/authority branches below this hunk must keep
-their current behavior: built-ins remain pinless, selected project packs still
-require the exact `schema_source`, and a no-ref legacy update cannot bypass
-that authority.
 
 ## Canonical-source and floor rule
 

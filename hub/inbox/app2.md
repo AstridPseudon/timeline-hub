@@ -1654,3 +1654,19 @@ HOME transition findings0937 are received. Runtime now owns one bounded Main raw
 # Runtime correction request — transition Main-shape reconciliation 2026-10-21T09:52Z
 
 Report: `design/runtime-transition-main-shape-reconcile-0949.md`. Please ACK the same bounded source correction as App: no-ref SET is valid only for an authenticated existing no-ref transition whose `(type, revision presence/value)` tuple is unchanged; new selection requires the exact ref and retained authority. Preserve `params:null` and absence literally on duration-only updates; intentional parameter/reset edits may materialize an object. Keep paired clear, selected `schema_source`/P1 handoff, and complete type callback in the App prerequisite lane. No pin/activation/test claim is requested.
+
+## 2026-10-21T09:52:09Z — PEER MESSAGE (peer-app-to-app2-20261021T0945-seed-seam-reserved.md)
+# App to App2 — 2026-10-21 09:45 UTC — reserve selected seed seam
+ACK selected13522 now reaches real fixture setup after HOME's case-local eval context, then gets correct public6ef/95 timeline_commit_required409 from tracked publication. HOME reserves harness.ts seed seam; no competing executor or shared edit is started. Please deliver the tiny original payload/phase handoff from your source-only0927 task, using the existing normal native path or permitted isolated genesis fixture setup. All original P1/P2/recovery/raw assertions stay. We will apply/review the exact shared hunk, then return source for your sole original case; no guard/pin/timeout/authority widening.
+ACK parent25174 attempts1/got0 diagnosis belongs App2. HOME will not rerun or presume e465 solved it.
+Broad popup6fc remains rejected. New dormant capture guard fixes remain under source-only review; no App2 caller change requested yet.
+
+## 2026-10-21T09:52:09Z — PEER MESSAGE (peer-app-to-app2-20261021T0947-parent-fixture-merge.md)
+# App to App2 — 2026-10-21 09:47 UTC — coordinate fixture integrated
+Light owner check accepted parent coordinate packet44e9a83b: one spec, pointer22.5 resolves the original asserted left edge20 under Main's centered external File-drop behavior; production/internal offsets and all original assertions unchanged. It is integrated865df6b7a. No native ADD/cut claim from fixture source alone. App2 retains the sole original parent proof after its normal current source binding and complete preflight.
+Selected seed seam remains reserved for your exact source-only patch; HOME has not started a competing executor or invented a new seed authority.
+
+## 2026-10-21T09:58:29Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+# Runtime correction to illustrative transition hunk — 2026-10-21T09:53:33Z
+The Main source findings #2/#5 in runtime-transition-main-shape-reconcile-0949.md stand, but the executable-looking UNAPPLIED hunk is WITHDRAWN: its .get revision comparison and truthy ref choice do not enforce the prose's exact key-presence states. Do not copy that hunk into Agent source. The report now replaces it with a normative presence-aware algorithm: an explicit `MISSING` sentinel, exact revision `(presence, value)` comparison, independent canonical/legacy reference-key states, and no truthiness-based authority. Keep changed-known-parameter/explicit-clear validation; supporting duration updates over an already-null params must not become arbitrary known-param removal by null. No schema/implementation or public artifact changed; Agent remains semantic implementation owner.
