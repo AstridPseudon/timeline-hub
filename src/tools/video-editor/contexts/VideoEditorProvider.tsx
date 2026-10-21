@@ -100,7 +100,8 @@ import {
   type HostOwnedExtensionOperationalEmitter,
   type ExtensionOperationalEventSink,
 } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
-import { bindEditorImagePlacementHost, type EditorImagePlacementHost } from '@/integrations/runtime/clientLocalAdapter.ts';
+import { bindEditorImagePlacementHost } from '@/integrations/runtime/clientLocalAdapter.ts';
+import type { EditorImagePlacementHost } from '@/tools/video-editor/commands/editorImagePlacement.ts';
 import { RuntimeOperationHost } from '@/integrations/runtime/operationHost.ts';
 
 const log = import.meta.env.DEV ? (...args: Parameters<typeof console.log>) => console.log(...args) : () => {};
@@ -864,7 +865,7 @@ function VideoEditorProviderInstance({
     void bindEditorImagePlacementHost(operationHost, projectId).then((bound) => {
       if (current) setImagePlacementHost({ ...bound,
         taskEventsReady: () => readyRuntimeTaskEvents(taskQueries, projectId),
-        subscribe: (notify) => subscribeRuntimeTaskUpdates(taskQueries, projectId, notify),
+        subscribe: (notify: () => void) => subscribeRuntimeTaskUpdates(taskQueries, projectId, notify),
       });
       else bound.retire?.();
     }).catch(() => {

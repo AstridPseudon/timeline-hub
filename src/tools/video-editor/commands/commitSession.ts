@@ -1239,8 +1239,9 @@ export async function createTimelineCommandSession(options: Options) {
           options.scope.timelineId,
           displayBasis.head.revisionId,
         );
+        const occurrences = originalDocument.parent_revision.payload.occurrences;
         const verifiedDisplayBasis = { ...displayBasis, canonicalDocument: originalDocument,
-          ...(originalDocument.parent_revision.payload.occurrences.length
+          ...(Array.isArray(occurrences) && occurrences.length
             ? { graph: runtimeGraphToContractFromCanonicalDocument(
               options.scope.projectId, options.scope.timelineId, originalDocument, displayBasis.head.publicationId) }
             : {}) };
