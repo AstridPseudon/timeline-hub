@@ -9,7 +9,7 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
   useOptionalVideoEditorRuntime: () => null,
 }));
 
-const EXT = 'com.test.popout';
+const EXT = 'com.test.fullscreen';
 const transcriptKey = `${EXT}:transcript`;
 const beatKey = `${EXT}:beat`;
 
@@ -49,15 +49,15 @@ function makePanel(id: string, label: string): VideoEditorPanelDescriptor {
   };
 }
 
-/** Owns the popped key the way the dock does, so pop-out and bring-back run through real state. */
+/** Owns the full-screen key the way the dock does, so enter and exit run through real state. */
 function Host({ panels, visible }: { panels: readonly VideoEditorPanelDescriptor[]; visible: ReadonlySet<string> }) {
-  const [popped, setPopped] = useState<string | null>(null);
+  const [active, setActive] = useState<string | null>(null);
   return (
     <ExtensionPanelHost
       panels={panels}
       visiblePanelKeys={visible}
-      poppedPanelKey={popped}
-      onPoppedPanelKeyChange={setPopped}
+      fullscreenPanelKey={active}
+      onFullscreenPanelKeyChange={setActive}
     />
   );
 }
@@ -71,12 +71,12 @@ function nodeOf(buttonName: string): HTMLElement {
   return node;
 }
 
-function popOut(id: string) {
-  act(() => seen.get(id)!.popout!.onOpenChange(true));
+function enter(id: string) {
+  act(() => seen.get(id)!.fullscreen!.enter());
 }
 
-describe('ExtensionPanelHost pop-out', () => {
-  it('keeps state, instanceId and the DOM node identical across pop-out and bring-back', () => {
+describe('ExtensionPanelHost full screen', () => {
+  it('keeps state, instanceId and the DOM node identical across enter and exit', () => {
     render(<Host panels={[transcript()]} visible={new Set([transcriptKey])} />);
     const button = screen.getByRole('button', { name: 'Transcript counter' });
     fireEvent.click(button);
@@ -85,8 +85,9 @@ describe('ExtensionPanelHost pop-out', () => {
     const instanceId = seen.get('transcript')!.instanceId;
     const node = nodeOf('Transcript counter');
     expect(node.closest('[role="dialog"]')).toBeNull();
+    expect(seen.get('transcript')!.fullscreen!.active).toBe(false);
 
-    popOut('transcript');
+    enter('transcript');
     const dialog = screen.getByRole('dialog');
     expect(dialog).toContainElement(node);
     expect(nodeOf('Transcript counter')).toBe(node);
@@ -94,8 +95,9 @@ describe('ExtensionPanelHost pop-out', () => {
     expect(button).toHaveTextContent('2');
     expect(screen.getByTestId('instance-transcript')).toHaveTextContent(instanceId);
     expect(seen.get('transcript')!.instanceId).toBe(instanceId);
+    expect(seen.get('transcript')!.fullscreen!.active).toBe(true);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Bring back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to sidebar' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(nodeOf('Transcript counter')).toBe(node);
     expect(node.closest('[data-panel-key]')).toHaveAttribute('data-panel-key', transcriptKey);
@@ -104,98 +106,46 @@ describe('ExtensionPanelHost pop-out', () => {
     expect(screen.getByTestId('instance-transcript')).toHaveTextContent(instanceId);
   });
 
-  it('shows a docked placeholder while popped and reports visible even when not docked', () => {
+  it('reports visible while full screen even when not docked, and shows no placeholder', () => {
     render(<Host panels={[transcript()]} visible={new Set()} />);
     expect(seen.get('transcript')!.visible).toBe(false);
 
-    popOut('transcript');
-    expect(screen.getByTestId('panel-popped-placeholder')).toHaveTextContent('Transcript is open in a window');
+    enter('transcript');
     expect(seen.get('transcript')!.visible).toBe(true);
+    expect(screen.queryByText(/open in a window/)).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Bring back', hidden: true }));
-    expect(screen.queryByTestId('panel-popped-placeholder')).toBeNull();
+    act(() => seen.get('transcript')!.fullscreen!.exit());
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(seen.get('transcript')!.visible).toBe(false);
   });
 
-  it('docks the first panel when a second panel is popped, leaving one dialog', () => {
+  it('returns the first panel to its slot when a second goes full screen, leaving one dialog', () => {
     render(<Host panels={[transcript(), beat()]} visible={new Set([transcriptKey, beatKey])} />);
     const transcriptNode = nodeOf('Transcript counter');
 
-    popOut('transcript');
+    enter('transcript');
     expect(screen.getByRole('dialog')).toContainElement(transcriptNode);
 
-    popOut('beat');
+    enter('beat');
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
     const dialog = screen.getByRole('dialog');
-    const beatNode = nodeOf('Beat Cue counter');
-    expect(dialog).toContainElement(beatNode);
+    expect(dialog).toContainElement(nodeOf('Beat Cue counter'));
     expect(dialog).not.toContainElement(transcriptNode);
     expect(transcriptNode.closest('[data-panel-key]')).toHaveAttribute('data-panel-key', transcriptKey);
-    expect(transcriptNode.closest('[data-popped]')).toBeNull();
-    expect(screen.getByTestId('panel-popped-placeholder')).toHaveTextContent('Beat Cue is open in a window');
+    expect(transcriptNode.closest('[data-fullscreen]')).toBeNull();
   });
 
-  it('offers no popout to panels when onPoppedPanelKeyChange is not supplied', () => {
+  it('exits on Escape from anywhere in the window', () => {
+    render(<Host panels={[transcript()]} visible={new Set([transcriptKey])} />);
+    enter('transcript');
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('offers no fullscreen to panels when onFullscreenPanelKeyChange is not supplied', () => {
     render(<ExtensionPanelHost panels={[transcript()]} visiblePanelKeys={new Set([transcriptKey])} />);
-    expect(seen.get('transcript')!.popout).toBeUndefined();
+    expect(seen.get('transcript')!.fullscreen).toBeUndefined();
     expect(screen.queryByRole('dialog')).toBeNull();
-  });
-});
-
-describe('ExtensionPanelHost focus on bring-back', () => {
-  function focusPanel(): VideoEditorPanelDescriptor {
-    return {
-      id: 'focus',
-      extensionId: EXT,
-      label: 'Focus',
-      placement: 'asset-panel',
-      render: (props) => {
-        seen.set('focus', props);
-        return <input aria-label="Panel field" data-autofocus="" />;
-      },
-    };
-  }
-
-  function mountWithOpener() {
-    const opener = document.createElement('button');
-    opener.textContent = 'Open';
-    document.body.appendChild(opener);
-    attached.push(opener);
-    render(<Host panels={[focusPanel()]} visible={new Set([`${EXT}:focus`])} />);
-    opener.focus();
-    expect(document.activeElement).toBe(opener);
-    return opener;
-  }
-
-  async function popOutAndSettle() {
-    await act(async () => {
-      seen.get('focus')!.popout!.onOpenChange(true);
-      await Promise.resolve();
-    });
-  }
-
-  it('focuses the panel [data-autofocus] element when the opener was removed while popped out', async () => {
-    const opener = mountWithOpener();
-    await popOutAndSettle();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-
-    opener.remove();
-    act(() => seen.get('focus')!.popout!.onOpenChange(false));
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Panel field' }));
-  });
-
-  it('returns focus to the opener when it is still connected', async () => {
-    const opener = mountWithOpener();
-    await popOutAndSettle();
-
-    act(() => seen.get('focus')!.popout!.onOpenChange(false));
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(opener.isConnected).toBe(true);
-    expect(document.activeElement).toBe(opener);
   });
 });
 

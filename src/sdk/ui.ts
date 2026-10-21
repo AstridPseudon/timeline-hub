@@ -45,9 +45,9 @@ export interface PanelVideoAdapter {
 export interface PanelRenderProps {
   /** Host-controlled extension settings surface, when supplied by the dock. */
   readonly settings?: { readonly open: boolean; readonly onOpenChange: (open: boolean) => void };
-  /** Host-owned larger window, present only where the host offers one. Lay out from your
-   *  measured size, not from `open`; your DOM may move while mounted. */
-  readonly popout?: { readonly open: boolean; readonly onOpenChange: (open: boolean) => void };
+  /** Host-owned full-screen mode, present only where the host offers one. Lay out from your
+   *  measured size, not from `active`; your DOM may move while mounted. */
+  readonly fullscreen?: { readonly active: boolean; readonly enter: () => void; readonly exit: () => void };
   /** Stable for this contribution in this mounted host, distinct between hosts. */
   readonly instanceId: string;
   /** Hidden panels remain mounted; suspend observations while false. */

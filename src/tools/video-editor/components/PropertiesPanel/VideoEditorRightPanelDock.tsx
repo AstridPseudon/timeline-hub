@@ -1,5 +1,5 @@
-import { useId, useState, type ReactNode } from 'react';
-import { ChevronDown, PictureInPicture2, Settings2 } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { ChevronDown, Maximize2, Settings2 } from 'lucide-react';
 import { PropertiesPanel } from './PropertiesPanel';
 import { VideoEditorAssetPanelSurface } from './VideoEditorAssetPanelSurface';
 import { useTimelineEditorData, useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore';
@@ -81,16 +81,23 @@ export function VideoEditorRightPanelDock({
   // keep the retained subtree.
   const [contentReady, setContentReady] = useState(Boolean(data.data));
   if (!contentReady && data.data) setContentReady(true);
-  // Transient: whether a panel is popped out is never remembered.
+  // Transient: whether a panel is full screen is never remembered.
   // A panel-less extension shown as its info view (the host key stays selected). Transient.
   const [infoExtensionId, setInfoExtensionId] = useState<string | null>(null);
-  const [poppedPanelKey, setPoppedPanelKey] = useState<string | null>(null);
+  const [fullscreenPanelKey, setFullscreenPanelKey] = useState<string | null>(null);
   const [settings, setSettings] = useState<Record<string, boolean>>({});
   const [localManagerOpen, setLocalManagerOpen] = useState(false);
   const [manageTooltipOpen, setManageTooltipOpen] = useState(false);
   const manageTooltipId = useId();
-  const [popoutTooltipOpen, setPopoutTooltipOpen] = useState(false);
-  const popoutTooltipId = useId();
+  const fullscreenButtonRef = useRef<HTMLButtonElement>(null);
+  const wasFullscreenRef = useRef(false);
+  // Leaving full screen, however it was entered, returns focus to the Full screen button.
+  useEffect(() => {
+    if (wasFullscreenRef.current && fullscreenPanelKey === null) fullscreenButtonRef.current?.focus({ preventScroll: true });
+    wasFullscreenRef.current = fullscreenPanelKey !== null;
+  }, [fullscreenPanelKey]);
+  const [fullscreenTooltipOpen, setFullscreenTooltipOpen] = useState(false);
+  const fullscreenTooltipId = useId();
   const selected = preferences.selectedRightPanelId;
   const tab = video?.activeTab ?? (selected ? selected === HOST_PROPERTIES_PANEL_KEY ? 'inspector' : 'extensions' : preferences.rightPanelTab ?? 'inspector');
   const remembered = panels.find((panel) => getPanelKey(panel) === preferences.lastExtensionPanelId) ?? panels[0];
@@ -182,9 +189,9 @@ export function VideoEditorRightPanelDock({
         </span></DropdownMenuRadioItem>;
       })}</DropdownMenuRadioGroup></DropdownMenuContent>
     </DropdownMenu>
-    {!infoActive && tool && toolKey && <div className="relative shrink-0" onPointerEnter={() => setPopoutTooltipOpen(true)} onPointerLeave={() => setPopoutTooltipOpen(false)} onFocusCapture={() => setPopoutTooltipOpen(true)} onBlurCapture={() => setPopoutTooltipOpen(false)} onPointerDownCapture={() => setPopoutTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setPopoutTooltipOpen(false); }}>
-      <button type="button" className={touch ? cn(touchControl, 'w-9 shrink-0 justify-center px-0') : `${control} shrink-0 justify-center px-2`} aria-label={`Pop out ${tool.label || tool.id}`} aria-describedby={popoutTooltipOpen ? popoutTooltipId : undefined} aria-pressed={poppedPanelKey === toolKey} onClick={() => { setPopoutTooltipOpen(false); setPoppedPanelKey(toolKey); }}><PictureInPicture2 className="h-4 w-4 shrink-0" /></button>
-      {popoutTooltipOpen && <div id={popoutTooltipId} role="tooltip" className="absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md">Pop out {tool.label || tool.id}</div>}
+    {!infoActive && tool && toolKey && <div className="relative shrink-0" onPointerEnter={() => setFullscreenTooltipOpen(true)} onPointerLeave={() => setFullscreenTooltipOpen(false)} onFocusCapture={() => setFullscreenTooltipOpen(true)} onBlurCapture={() => setFullscreenTooltipOpen(false)} onPointerDownCapture={() => setFullscreenTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setFullscreenTooltipOpen(false); }}>
+      <button ref={fullscreenButtonRef} type="button" className={touch ? cn(touchControl, 'w-9 shrink-0 justify-center px-0') : `${control} shrink-0 justify-center px-2`} aria-label={`Full screen ${tool.label || tool.id}`} aria-describedby={fullscreenTooltipOpen ? fullscreenTooltipId : undefined} aria-pressed={fullscreenPanelKey === toolKey} onClick={() => { setFullscreenTooltipOpen(false); setFullscreenPanelKey(toolKey); }}><Maximize2 className="h-4 w-4 shrink-0" /></button>
+      {fullscreenTooltipOpen && <div id={fullscreenTooltipId} role="tooltip" className="absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md">Full screen {tool.label || tool.id}</div>}
     </div>}
     <div className="relative shrink-0" onPointerEnter={() => setManageTooltipOpen(true)} onPointerLeave={() => setManageTooltipOpen(false)} onFocusCapture={() => setManageTooltipOpen(true)} onBlurCapture={() => setManageTooltipOpen(false)} onPointerDownCapture={() => setManageTooltipOpen(false)} onClickCapture={() => setManageTooltipOpen(false)} onKeyDownCapture={(event) => { if (event.key === 'Escape') setManageTooltipOpen(false); }}>
       <button type="button" className={touch ? cn(touchControl, 'w-9 shrink-0 justify-center px-0') : `${control} w-8 shrink-0 justify-center px-0`} aria-label="Manage extensions" aria-haspopup="dialog" aria-expanded={managerOpen} aria-describedby={manageTooltipOpen ? manageTooltipId : undefined} onClick={openManager}>
@@ -211,7 +218,7 @@ export function VideoEditorRightPanelDock({
     {enabled && <>
       {video && <div className="flex h-full min-h-0 flex-col" hidden={tab !== 'video'} style={{ display: tab === 'video' ? undefined : 'none' }}>{video.content}</div>}
       <div className={`h-full min-h-0 overflow-auto ${touch ? 'px-3' : 'p-3'}`} hidden={tab !== 'inspector'}><PropertiesPanel visible={open && tab === 'inspector'} /></div>
-      <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{panels.length === 0 && !infoExtension && tab === 'extensions' && <p data-testid="extensions-empty-state" className="p-4 text-center text-sm text-muted-foreground">No extensions are active for this project yet.</p>}{infoExtension && <ExtensionInfoView extension={infoExtension} commandRegistry={runtime?.commandRegistry} />}{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' && !infoActive ? toolKey : null} settingsByPanelKey={settingsByPanelKey} poppedPanelKey={poppedPanelKey} onPoppedPanelKeyChange={setPoppedPanelKey} touch={touch} />}</div>
+      <div className="h-full min-h-0 overflow-hidden" hidden={tab !== 'extensions'}>{panels.length === 0 && !infoExtension && tab === 'extensions' && <p data-testid="extensions-empty-state" className="p-4 text-center text-sm text-muted-foreground">No extensions are active for this project yet.</p>}{infoExtension && <ExtensionInfoView extension={infoExtension} commandRegistry={runtime?.commandRegistry} />}{contentReady && <VideoEditorAssetPanelSurface includeBuiltIn={false} activePanelKey={open && tab === 'extensions' && !infoActive ? toolKey : null} settingsByPanelKey={settingsByPanelKey} fullscreenPanelKey={fullscreenPanelKey} onFullscreenPanelKeyChange={setFullscreenPanelKey} />}</div>
     </>}
   </div>;
   // Touch: the Extensions picker sits inside the film-shaped box, so switching tabs never

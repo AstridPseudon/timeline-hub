@@ -149,29 +149,31 @@ arithmetic; each kind chooses its own clipping and interpretation rules.
 3. Do not call `releasePointer()` for a claim you do not own — it is a no-op unless this overlay still holds the claim. There is no public `setGestureOwner`; ownership is host-assigned.
 4. Do not delete project data from generic `DisposeHandle.dispose()` — dispose also runs on provider unmount, HMR, and reload. Provide explicit Clear/Delete Data behavior; automatic deletion is wired only when a reason-aware uninstall lifecycle exists.
 
-### 2.8 Panels that can be popped out
+### 2.8 Panels that can go full screen
 
-The host may re-parent a panel's DOM node into a larger floating window. The
-React instance, `instanceId`, and panel state are kept. Where
-`Element.moveBefore` exists, iframes inside the panel keep running; elsewhere
-an iframe reloads once after the move. At most one panel is popped out at a
-time. The manifest does not change.
+The host may re-parent a panel's DOM node into a frame covering the whole
+browser window (not the browser Fullscreen API). The React instance,
+`instanceId`, and panel state are kept. Where `Element.moveBefore` exists,
+iframes inside the panel keep running; elsewhere an iframe reloads once after
+the move. At most one panel is full screen at a time. Editor shortcuts are off
+while it is open. The manifest does not change.
 
-`PanelRenderProps.popout?: { open: boolean; onOpenChange(open: boolean): void }`
-is present only where the host offers a window. Panels hide their own pop-out
-button when it is absent.
+`PanelRenderProps.fullscreen?: { active: boolean; enter(): void; exit(): void }`
+is present only where the host offers full screen. Panels hide their own
+full-screen control when it is absent.
 
 **Author obligations:**
 
 1. Measure with a `ResizeObserver` or container queries against the panel
    wrapper (`@container/panel`), not once at mount. Lay out from measured size,
-   never from `popout.open`.
-2. Call `preventDefault` on keys the panel owns (e.g. Space, Escape) so editor
-   shortcuts and the frame's Esc-to-dock do not also act.
+   never from `fullscreen.active`.
+2. Call `preventDefault` on keys the panel owns (e.g. Escape) so the frame's
+   Esc-to-exit does not also act.
 3. Mark the first focus target with `data-autofocus`. On open, focus goes to it,
    otherwise to the first tabbable element.
 
-See [authoring.md](../extensions/authoring.md#panels-that-can-be-popped-out)
+See [authoring.md](../extensions/authoring.md#panels-that-can-go-full-screen)
+for examples.
 for examples.
 
 ---
