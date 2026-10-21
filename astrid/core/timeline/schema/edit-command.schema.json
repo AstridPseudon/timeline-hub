@@ -1032,18 +1032,33 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
+            "anyOf": [
+              {
+                "properties": {
+                  "version": {"const": "1"},
+                  "args": {"$ref": "#/$defs/ClipDeleteArgs"},
+                  "intent": {
+                    "type": "object",
+                    "additionalProperties": false
+                  }
+                }
               },
-              "args": {
-                "$ref": "#/$defs/ClipDeleteArgs"
-              },
-              "intent": {
-                "type": "object",
-                "additionalProperties": false
+              {
+                "properties": {
+                  "version": {"const": "2"},
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {"$ref": "#/$defs/ClipDeleteArgs"},
+                  "intent": {
+                    "type": "object",
+                    "properties": {"ownership": {"const": "occurrence"}},
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -2000,13 +2015,6 @@
           },
           "then": {
             "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^(?!.*::)parent/clip:[^/]+$"
-              },
               "args": {
                 "$ref": "#/$defs/ClipTrimArgs"
               },
@@ -2014,7 +2022,32 @@
                 "type": "object",
                 "additionalProperties": false
               }
-            }
+            },
+            "oneOf": [
+              {
+                "properties": {
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)parent/clip:[^/]+$"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^(?!.*::)occurrence:[^/]+/clip:[^/]+$"
+                  }
+                },
+                "description": "Dormant occurrence-owned source-window trim; activation requires peer agreement."
+              }
+            ]
           }
         },
         {

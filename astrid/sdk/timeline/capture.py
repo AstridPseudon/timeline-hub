@@ -280,6 +280,9 @@ def capture_track_create(bundle, owner, row):
 
 
 def capture_clip_delete(bundle, select):
-    """Capture a bounded parent removal through the authoritative executor."""
-    return _capture(bundle, {'schema_version': 1, 'op': 'clip.delete', 'version': '1',
-                             'select': select, 'args': {}, 'intent': {}})
+    """Capture a bounded parent or explicit occurrence-child removal."""
+    occurrence_child = isinstance(select, str) and select.startswith('occurrence:')
+    return _capture(bundle, {'schema_version': 1, 'op': 'clip.delete',
+                             'version': '2' if occurrence_child else '1',
+                             'select': select, 'args': {},
+                             'intent': {'ownership': 'occurrence'} if occurrence_child else {}})

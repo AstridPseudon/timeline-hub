@@ -12,6 +12,11 @@ SOURCE_BOUND_OPERATIONS = frozenset({
     'placement.create', 'placement.unplace', 'shot.pool',
 })
 
+# Keep the reviewed thirteen-operation carrier floor exact. The dormant
+# occurrence-child delete carrier is an additive v2 clause, not a rewrite of
+# that frozen set.
+SOURCE_BOUND_V2_ADDITIONS = frozenset({'clip.delete'})
+
 
 def capture_version(bundle, select):
     """Choose the source-bound format only while authoring a virtual shot slot."""
