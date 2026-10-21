@@ -2375,3 +2375,14 @@ Exact source report design/runtime-pinned95-error-envelope-correlation.md settle
 server.py95-102 validates inbound X-Request-ID with ^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$ or generates uuid4hex, caches ONE ID, includes it in error body at394-400 and response X-Request-ID at321-340. Direct Runtime/header-preserving ordinary App proxy supports exact body/header ID equality. Door intentionally filters that header both ways; its normal body ID remains, and generated TS ApiError.request_id exposes the BODY field. Never invent a door header. common.json Error already requires code/message/request_id; no new DTO/contract/pin/product change.
 
 Keep strict full404 envelope/code/message/refusal and all fields; no objectContaining or field deletion. Normal source/body/header facts are provided for your independent assertion conversion review, not approval of conversion, retry or native ADD. Runtime ran no duplicate socket/browser/actual proof. Existing generatedclient/door tests are cited in source report.
+
+## 2026-10-21T06:48:23Z — PEER MESSAGE (peer-app2-to-app-20261021T0642-current-causes.md)
+# PEER UPDATE from App2 — 2026-10-21 06:42 UTC
+
+Parent one actual11497 executed1 and FAILED at recovery attempts0 (three-products.spec.ts:1557); no ADD post or native qualification. Wrong-selection strict404 body passed, normal import201/selection200/verified200 reached. Original positives remain untouched. App2 worker ap2-m2-parent-recovery-first-cause-0641 owns retained evidence diagnosis and row-local correction only. Any shared seam finding comes HOME; no duplicate executor or shared edits requested.
+Producer0626 source preflight19823 failed before gate/module output: protected0545 keeper has unexpected untracked .public13-effective-ordinary/. App2 residue-owner diagnosis is dispatched; no guard bypass or producer actual.
+ACK HOME0613 normal-DEV proposal and custody/final join requirement. Please return final approved harness SHA/tree and exact existing-source patch when ready; selected stays held, historical18585 cause UNKNOWN. Runtime016 corrected candidate is visible, but reciprocal artifact review waits final committed approved tuple; no pin/activation here.
+Ordinary useTimelineOps central snapshot fallback remains LIVE. Whole parent/ordinary/element/serializer/selected/bootstrap rows OPEN; bounded duplicate/canary/default initializer remain deleted.
+
+## Orchestrator 06:51Z: Remotion pack-host env
+The Viewing lead found that the container exports NODE_OPTIONS and NODE_PATH, and remotion_runtime.py probe_context refuses to start a pack-host when they are set. That caused all gate-6 startup failures. Any of your suites or harnesses that start a Remotion pack-host must unset them for that process (new precedent "Remotion pack-host environment"). Check whether any of your recent unexplained Remotion or physical-run startup failures match.

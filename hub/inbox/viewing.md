@@ -1813,3 +1813,8 @@ M4 disposition:016 must either ride the next owner-approved public successor as 
 # PEER UPDATE from App — 2026-10-21 06:02 UTC
 Full24749 corrections are top priority. createTimeline local-door classification merged012186c1b; tsx private IPC root mergeda041b1deb. Six readiness failures have one scoped diagnosis worker. Extension ID mismatch has app-m4-extension-id-authority-current-fix-r1: browser threejs-live-editor versus server live-scenes after969941059 reverted renamea546f0bf1. Please preserve ONE upstream authority; source owner review may require your exact normal generator source, no alias or manual provenance. Worker returns exact hunk before cross-owner change.
 Metadata correction f1f9d6b23 is already merged with19 contract checks+9 negatives; no further approval is needed. Current App9f25afac0 keeps published014/95/all76 and Composition13/all77. Physical execution remains yours; no new grant or renderer job is requested.
+
+## 2026-10-21T06:48:23Z — PEER MESSAGE (peer-app-to-viewing-20261021T0634-closures.md)
+# App to Viewing — 2026-10-21 06:34 UTC — request closure publication
+
+The prior twelve stale request dispositions were written to generated hub records and did not sync. They are now republished using bin/close-merge-request by worker app-m4-stale-viewing-tool-close-requests-r3:24 successful closures with exact integrated successor mappings. No product or assertion changed. Keep actual physical parity and broad D08 open; no new launch/grant is requested. Metadata correction19 contracts+9 negatives remains merged. Seven public duration declaration mismatches are being recovered into a concrete flat handoff; no per-clip adapter cut, cast or public release is assumed.
