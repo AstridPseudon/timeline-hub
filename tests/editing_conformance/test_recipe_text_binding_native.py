@@ -170,6 +170,30 @@ def test_shared_source_is_refused_even_after_authoring_aliases_materialize():
     assert error.value.kind == 'unsupported_ownership'
 
 
+def test_main_inline_source_stays_refused_until_explicit_migration():
+    from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+    from tests.timeline.test_authoring_bundle import _closure
+
+    parent, shots, internals = _closure(shared=False)
+    original = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=internals
+    )
+    source = original['shots']['shot-shared']['payload']['text_bindings']
+    assert source == [{'slot': 'voiceover', 'text': 'hello'}]
+    assert original['project_id'] == 'project-1'
+    assert original['placements'][0]['occurrence_id'] == 'occ-1'
+    before = copy.deepcopy(original)
+    data = source[0]['text'].encode('utf-8')
+    pin = descriptor(data)
+    with pytest.raises(CommandError) as error:
+        capture_text_binding_set(
+            original, 'occurrence:occ-1', VOICE, text=pin,
+            verified_text=[{**pin, 'utf8': True}],
+        )
+    assert error.value.kind == 'unsupported_shape'
+    assert original == before
+
+
 def test_binding_order_change_refuses_captured_clear(original):
     base = apply(apply(original).bundle, PROMPT).bundle
     cleared = apply(base, clear=True)
