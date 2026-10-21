@@ -9,9 +9,11 @@ from .inverse import check_intervening
 def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None, closures=None,
            verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None,
            verified_producer=None):
-    check_intervening(plan.records, intervening_records, state=State(head_bundle),
-                      identities_only=all(command['op'] not in ('timeline.inverse', 'timeline.restore')
-                                          for command in plan.commands))
+    check_intervening(
+        plan.records, intervening_records, state=State(head_bundle),
+        identities_only=(all(command['op'] not in ('timeline.inverse', 'timeline.restore')
+                             for command in plan.commands)
+                         and not any(command['op'] == 'clip.move-set' for command in plan.commands)))
     from ._materialization import consume
     sources = {**(closures or {})}
     sources[plan.bundle['base_parent']['revision_id']] = plan.bundle

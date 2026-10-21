@@ -167,9 +167,13 @@ def test_complete_s2_schema_is_retained_additively():
     schema = json.loads((Path(__file__).parents[2] /
                          'astrid/core/timeline/schema/edit-command.schema.json').read_text())
     from tests.sdk.test_timeline_current_union_schema import without_text
-    from tests.sdk.test_timeline_materialization_schema_union import ordinary_schema
+    from tests.sdk.test_timeline_materialization_schema_union import (
+        ordinary_schema,
+        without_extent,
+        without_move_set,
+    )
 
-    assert len(schema['$defs']) == 58
+    assert len(without_move_set(without_extent(schema))['$defs']) == 58
     assert len(ordinary_schema()['$defs']) == 55
     schema = without_text(ordinary_schema())
     for name in ('AssembledTargetArgs', 'ClipAddMediaArgs', 'WordAnchor', 'ClipAnchorArgs',

@@ -40,6 +40,10 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
                 'on': 1, 'track': 'parent/track:V1',
                 'child_track': 'occurrence:occ/track:V1'},
         },
+        'occurrence.resize': {
+            'schema_version': 1, 'op': 'occurrence.resize', 'version': '1',
+            'select': 'occurrence:occ', 'args': {'duration_ms': 1000},
+        },
         'project-data.write': {
             'schema_version': 1, 'op': 'project-data.write', 'version': '1',
             'select': 'parent', 'args': {

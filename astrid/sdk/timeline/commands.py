@@ -31,6 +31,7 @@ def operations():
     from ._clip_commands import clip_add
     from ._clip_scalar_commands import clip_set, clip_set_element
     from ._delete_commands import delete
+    from ._move_set import move_set
     from ._project_data_commands import PROJECT_DATA_INTENT, project_data_write
     from ._scalar_commands import clip_set_params, track_set
     from ._shot_commands import SHOT_INTENT, shot_set
@@ -71,6 +72,7 @@ def operations():
             'occurrence.create': Operation(_SCHEMA['$defs']['OccurrenceCreateArgs'], occurrence_create,
                                           OCCURRENCE_INTENT),
             'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
+            'clip.move-set': Operation(_SCHEMA['$defs']['ClipMoveSetArgs'], move_set, MOVE_INTENT),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),
             'placement.create': Operation(_SCHEMA['$defs']['PlacementCreateArgs'], placement_create,
@@ -281,7 +283,10 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                 raise CommandError("unsupported operation intention policy")
             ctx.record['command']['intent'] = dict(intent)
             operation.handler(ctx, command)
-            ctx.record['command']['resolved'] = [command['select']] if operation.singleton else []
+            ctx.record['command']['resolved'] = (
+                [member['clip'] for member in command['args']['members']]
+                if command['op'] == 'clip.move-set'
+                else [command['select']] if operation.singleton else [])
         elif command['op'] == 'timeline.restore':
             ctx.read('timeline')
             ctx.write('timeline', [], command['args'])

@@ -448,6 +448,21 @@
       "properties": {},
       "additionalProperties": false
     },
+    "ClipMoveSetArgs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["members", "anchor", "on"],
+      "properties": {
+        "members": {"type": "array", "minItems": 1, "items": {
+          "type": "object", "additionalProperties": false, "required": ["clip", "track"],
+          "properties": {
+            "clip": {"type": "string", "pattern": "^(?!.*::)parent/clip:[^/]+$"},
+            "track": {"type": "string", "pattern": "^(?!.*::)parent/track:[^/]+$"}
+          }
+        }},
+        "anchor": {"type": "string", "pattern": "^(?!.*::)parent/clip:[^/]+$"},
+        "on": {"type": "number", "minimum": 0}
+      }
+    },
     "ClipMoveArgs": {
       "type": "object",
       "properties": {
@@ -954,6 +969,17 @@
       "additionalProperties": false,
       "description": "Client recorder fields are claims only. Provider verifies/reconstructs all observations; authorship is write classification, never authenticated actor identity. Unknown operations pass the envelope only and require installed registered schemas/handlers.",
       "allOf": [
+        {
+          "if": {"properties": {"op": {"const": "clip.move-set"}}, "required": ["op"]},
+          "then": {"properties": {
+            "version": {"const": "1"}, "select": {"const": "parent"},
+            "args": {"$ref": "#/$defs/ClipMoveSetArgs"},
+            "intent": {"type": "object", "additionalProperties": false, "properties": {
+              "ripple": {"const": "none"}, "anchor": {"const": "fixed"},
+              "position": {"const": "absolute"}
+            }}
+          }}
+        },
         {
           "if": {
             "properties": {
