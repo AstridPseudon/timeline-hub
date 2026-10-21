@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -87,7 +87,13 @@ function MountedForm({
 }) {
   const queries = { timelineQuery: { data: initial, isLoading: false }, assetRegistryQuery: { data: initial.registry } };
   const save = useTimelineSave(queries, provider, { current: createInteractionState() }, store, initial as never);
+  const [, refreshAfterSessionMount] = useState(0);
   latest.current = save;
+  useEffect(() => {
+    if (save.commands.state.status !== 'loading' && !save.commands.clipParamsPort) {
+      refreshAfterSessionMount((value) => value + 1);
+    }
+  }, [save.commands.clipParamsPort, save.commands.state.status]);
   useLayoutEffect(() => {
     store.getState().syncSlices({
       data: { ...store.getState().data, data: save.data, resolvedConfig: save.data?.resolvedConfig ?? null, dataRef: save.dataRef },
