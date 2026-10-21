@@ -532,6 +532,13 @@ export function createTimelineCommands(
           // the only await. Verification must never observe the caller's
           // mutable selection object after this point.
           const row = structuredClone(clip) as unknown as Record<string, JSON>;
+          if (row.clipType === 'media' && !Object.prototype.hasOwnProperty.call(row, 'hold')
+            && row.speed === 1
+            && typeof row.from === 'number' && Number.isFinite(row.from)
+            && typeof row.to === 'number' && Number.isFinite(row.to)
+            && row.to > row.from) {
+            row.hold = row.to - row.from;
+          }
           try {
             const basis = port.capture({ row, media: suppliedSelection, current });
             const verifiedMedia = await runtime.getProjectVerifiedMedia(runtime.projectId, basis.media);

@@ -145,4 +145,18 @@ describe('native parent clip.add-media capture', () => {
       .toThrow('exact Runtime-verified media input');
     expect(input).toEqual(before);
   });
+
+  it.each([
+    ['present-null hold', { hold: null }],
+    ['other speed', { speed: 2 }],
+    ['nonfinite from', { from: Number.POSITIVE_INFINITY }],
+    ['nonfinite to', { to: Number.POSITIVE_INFINITY }],
+    ['zero-length window', { from: 0, to: 0 }],
+    ['negative window', { from: 2, to: 1 }],
+  ])('retains refusal for newborn carrier candidate with %s', (_label, patch) => {
+    const candidate = { ...row, clipType: 'media', from: 0, to: 5, speed: 1 } as Record<string, JSON>;
+    delete candidate.hold;
+    Object.assign(candidate, patch);
+    expect(() => captureParentClipAddMedia(bundle(), candidate, media, [verified])).toThrow();
+  });
 });
