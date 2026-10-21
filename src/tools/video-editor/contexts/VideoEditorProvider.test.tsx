@@ -2302,6 +2302,41 @@ describe('VideoEditorProvider', () => {
     expect(applyEdit).not.toHaveBeenCalled();
   });
 
+  it('refuses an unqualified prepared video ADD instead of using the local writer', () => {
+    const applyEdit = vi.fn();
+    const store = buildCommandTestStore({
+      data: buildCommandTimelineData(),
+      applyEdit,
+    });
+    const before = store.getState().data.dataRef.current;
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>
+    );
+
+    const { result } = renderHook(() => useTimelineCommandsService(), { wrapper });
+    const response = result.current.addClip({
+      preparedAsset: {
+        assetKey: 'prepared-video',
+        mediaType: 'video',
+        durationSeconds: 5,
+        source: 'registered',
+        entry: { file: 'https://example.com/video.mp4', type: 'video/mp4', duration: 5 },
+      },
+      trackId: 'V1',
+      time: 2,
+    });
+
+    expect(response).toEqual({
+      ok: false,
+      error: {
+        code: 'mutation_failed',
+        message: 'Native prepared video requires its original Runtime media selection; local placement is unavailable.',
+      },
+    });
+    expect(applyEdit).not.toHaveBeenCalled();
+    expect(store.getState().data.dataRef.current).toBe(before);
+  });
+
   it('returns structured registerAsset failures without patching the registry for invalid generation inputs', async () => {
     const patchRegistry = vi.fn();
     const registerAsset = vi.fn(async () => undefined);

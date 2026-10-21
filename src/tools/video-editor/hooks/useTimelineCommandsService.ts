@@ -552,6 +552,24 @@ export function createTimelineCommands(
         })();
       }
 
+      // A simple prepared-video ADD is the parent-media path. Once native
+      // capture is available, an unqualified video must refuse here instead
+      // of becoming a local snapshot/CAS write. The remaining prepared-media
+      // branch is still needed by Main-only duplicate/replacement producers
+      // until they carry the native media selection and operation.
+      const preparedVideoNeedsNativeSelection = input.preparedAsset?.mediaType === 'video'
+        && input.afterClipId === undefined
+        && input.clipId === undefined
+        && !input.removeClipIds?.length
+        && input.replaceClipId === undefined
+        && input.pinnedShotGroupsOverride === undefined;
+      if (preparedVideoNeedsNativeSelection) {
+        return failure(
+          'mutation_failed',
+          'Native prepared video requires its original Runtime media selection; local placement is unavailable.',
+        );
+      }
+
       if (input.preparedAsset) {
         let preparedAt = input.time;
         const preparedTrackId = input.trackId;
