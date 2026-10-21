@@ -1,0 +1,10 @@
+--- design/normal014-source-common.sh	(old sha256: 3dc9034586bf8c6fe2ff877b44fd1cbbabfb4eeeb1472fe009bad6d677811014)
++++ design/normal014-source-common.sh	(new sha256: b4b142931573d6954af75ee91dd5f1c2c6cbb5a97dc4c65cbdb450ceeec04cb7)
+@@ -62,8 +62,8 @@
+ case "$NORMAL014_PROFILE:$NORMAL014_APP_SOURCE" in
+   final95:parent)
+-    APP_ROOT_SHA=da6d910f7ab3dfc71142ece7f632d43341238882
+-    APP_ROOT_TREE=6809757f93ca5e166b24b8bc0160ca09005e984a
++    APP_ROOT_SHA=b833512fcb5ef07013c47fcf8c75c4a083048d99
++    APP_ROOT_TREE=a95793cc2179200dd9ef5fe551360a4f6f965ea1
+     ;;
