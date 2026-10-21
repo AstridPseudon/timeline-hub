@@ -3,6 +3,7 @@ import {describe,expect,it,vi} from 'vitest';
 import {
   MAX_SCENE_CAMERAS,MAX_SCENE_EVENTS,
   SceneFrameHost,sanitizeSceneCameras,sanitizeSceneEvents,sanitizeSceneExplore,sanitizeSceneView,
+  MAX_STILL_CHARS,sanitizeSceneStill,
   sceneDocument,validateScenePackage,type SceneStatus,type ValidatedScenePackage,
 } from '../../../astrid/packs/rendering/ui/threejs-live-editor/runtime';
 
@@ -245,7 +246,7 @@ describe('bridge in sceneDocument',()=>{
   // Runs the injected bridge against a stub iframe window. `declared` supplies the scene's
   // events/cameras/explore; an undefined value means the property is absent and an Error is thrown on read.
   type Declared={events?:unknown;cameras?:unknown;explore?:unknown};
-  async function run(declared: Declared, duration=60) {
+  async function run(declared: Declared, duration=60, canvases: {width:number;height:number}[]=[], drawn: unknown[]=[]) {
     const html=sceneDocument(pkg(duration),'i');
     const script=/<script>([\s\S]*)<\/script><\/body>/.exec(html)![1];
     const posted: Record<string,unknown>[]=[];
@@ -264,7 +265,9 @@ describe('bridge in sceneDocument',()=>{
     }
     const win={astridScene:scene};
     new Function('window','document','parent','addEventListener',script)(
-      win,{fonts:{ready:Promise.resolve(),status:'loaded'},images:[]},parent,(type:string,fn:(e:unknown)=>void)=>{ if(type==='message') listener=fn; });
+      win,{fonts:{ready:Promise.resolve(),status:'loaded'},images:[],
+        querySelectorAll:()=>canvases,
+        createElement:()=>({width:0,height:0,getContext:()=>({drawImage:(...a:unknown[])=>drawn.push(a)}),toDataURL:(type:string)=>`data:${type};base64,AAAA`})},parent,(type:string,fn:(e:unknown)=>void)=>{ if(type==='message') listener=fn; });
     const send=(data:Record<string,unknown>)=>listener({source:parent,data:{protocol:'astrid.scene/1',instance:'i',revision:DIGEST,...data}});
     send({kind:'initialize'});
     await vi.waitFor(()=>expect(posted.length).toBeGreaterThan(0));
@@ -350,5 +353,62 @@ describe('bridge in sceneDocument',()=>{
     const invalid=await render({sourceTime:1,width:10,height:10,view:{position:[0,0,0],quaternion:[0,0,0,0],fov:45},worldTime:11});
     expect(Object.keys(invalid.arg).sort()).toEqual(['height','sourceTime','width']);
     expect(invalid.frame).toMatchObject({kind:'frame',sourceTime:1});
+  });
+  it('reads a still from the largest canvas only when the frame asks for one',async()=>{
+    const small={width:10,height:10},big={width:640,height:360};
+    const drawn:unknown[]=[];
+    const {render}=await run({},10,[small,big],drawn);
+    const plain=await render({sourceTime:1,width:320,height:180});
+    expect(plain.frame).not.toHaveProperty('image');
+    expect(drawn).toHaveLength(0);
+    const captured=await render({sourceTime:1,width:320,height:180,capture:true});
+    expect(captured.frame).toMatchObject({kind:'frame',image:'data:image/jpeg;base64,AAAA'});
+    expect(drawn).toHaveLength(1);
+    expect((drawn[0] as unknown[])[0]).toBe(big);
+    expect(Object.keys(captured.arg).sort()).toEqual(['height','sourceTime','width']);
+  });
+  it('omits the still, not the frame, when there is no canvas or the size exceeds the limit',async()=>{
+    const none=await (await run({},10,[])).render({sourceTime:1,width:320,height:180,capture:true});
+    expect(none.frame).toMatchObject({kind:'frame'});
+    expect(none.frame).not.toHaveProperty('image');
+    const oversize=await (await run({},10,[{width:9,height:9}])).render({sourceTime:1,width:2000,height:1000,capture:true});
+    expect(oversize.frame).not.toHaveProperty('image');
+  });
+});
+
+describe('stills on the host',()=>{
+  const jpeg='data:image/jpeg;base64,/9j/4AAQ';
+  it('accepts only small image data URLs',()=>{
+    expect(sanitizeSceneStill(jpeg)).toBe(jpeg);
+    for(const bad of [undefined,null,3,'http://x/y.jpg','data:text/html;base64,AAAA','data:image/svg+xml;base64,AAAA','data:image/jpeg;base64,AA AA',`data:image/jpeg;base64,${'A'.repeat(MAX_STILL_CHARS)}`])
+      expect(sanitizeSceneStill(bad)).toBeUndefined();
+  });
+  function host(duration=10){
+    const sent: Record<string,unknown>[]=[];const reports: SceneStatus[]=[];
+    const h=new SceneFrameHost(pkg(duration),'i',m=>sent.push(m),s=>reports.push(s));
+    const got=(m:Record<string,unknown>)=>h.receive({protocol:'astrid.scene/1',instance:'i',revision:DIGEST,...m});
+    got({kind:'initialized'});
+    return {h,sent,reports,got};
+  }
+  it('sends capture only when asked and reports the validated image on the acknowledged frame',()=>{
+    const {h,sent,reports,got}=host();
+    h.request({sourceTime:2,width:320,height:180,capture:true});
+    expect(sent.at(-1)).toMatchObject({kind:'render',capture:true});
+    got({kind:'frame',requestId:sent.at(-1)!.requestId,sourceTime:2,image:jpeg});
+    expect(reports.at(-1)).toMatchObject({phase:'ready',sourceTime:2,image:jpeg});
+    h.request({sourceTime:3,width:320,height:180});
+    expect(sent.at(-1)).not.toHaveProperty('capture');
+    got({kind:'frame',requestId:sent.at(-1)!.requestId,sourceTime:3,image:jpeg});
+    expect(reports.at(-1)).not.toHaveProperty('image');
+    h.dispose(false);
+  });
+  it('drops a malformed still without failing the scene, and rejects an oversized still request',()=>{
+    const {h,sent,reports,got}=host();
+    h.request({sourceTime:2,width:320,height:180,capture:true});
+    got({kind:'frame',requestId:sent.at(-1)!.requestId,sourceTime:2,image:'javascript:alert(1)'});
+    expect(reports.at(-1)).toMatchObject({phase:'ready'});
+    expect(reports.at(-1)).not.toHaveProperty('image');
+    h.request({sourceTime:2,width:4000,height:2000,capture:true});
+    expect(reports.at(-1)).toMatchObject({phase:'error'});
   });
 });

@@ -54,7 +54,19 @@ export type SceneView = { readonly position: Vec3; readonly quaternion: Quat; re
 export const MIN_VIEW_FOV = 10;
 export const MAX_VIEW_FOV = 120;
 /** The explorer sends `view` and `worldTime` (with sourceTime = worldTime); the timeline and exports send only sourceTime. */
-export type SceneFrame = { sourceTime: number; width: number; height: number; view?: SceneView; worldTime?: number };
+export type SceneFrame = { sourceTime: number; width: number; height: number; view?: SceneView; worldTime?: number;
+  /** Ask the scene to attach a still of this frame to its acknowledgement (see MAX_STILL_*). Stills come from a
+   * dedicated thumbnail instance, never the live viewer. */
+  capture?: boolean };
+/** A still is a small JPEG data URL read inside the sandboxed frame; the host re-checks its shape and size. */
+export const MAX_STILL_WIDTH = 640;
+export const MAX_STILL_HEIGHT = 360;
+export const MAX_STILL_CHARS = 262144;
+const STILL_URL = /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
+/** The still as the host accepts it, or undefined. */
+export function sanitizeSceneStill(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length <= MAX_STILL_CHARS && STILL_URL.test(value) ? value : undefined;
+}
 /** What a scene declares at initialize, all re-checked by the host. */
 export type SceneInfo = {
   readonly events: readonly SceneEvent[];
@@ -69,6 +81,8 @@ export type SceneStatus = {
   /** Present when the acknowledged frame carried a free view. */
   view?: SceneView;
   worldTime?: number;
+  /** Present when a capture frame was acknowledged with a valid still. */
+  image?: string;
   error?: string;
 };
 
@@ -361,8 +375,17 @@ export function sceneDocument(source: ValidatedScenePackage, instance: string): 
         const view=sanitizeView(m.view);if(view)arg.view=view;
         if(typeof m.worldTime==='number'&&Number.isFinite(m.worldTime)&&m.worldTime>=0&&m.worldTime<=duration)arg.worldTime=m.worldTime;
         await window.astridScene.render(arg);
+        // A thumbnail request reads the canvas in the same task as the draw (the drawing buffer is not preserved
+        // across compositing), downscaled to the requested size. A failure only omits the still.
+        let image;
+        if(m.capture===true&&arg.width<=${MAX_STILL_WIDTH}&&arg.height<=${MAX_STILL_HEIGHT}){
+          try{
+            let best=null,area=0;for(const c of document.querySelectorAll('canvas')){const a=c.width*c.height;if(a>area){area=a;best=c;}}
+            if(best){const o=document.createElement('canvas');o.width=Math.round(arg.width);o.height=Math.round(arg.height);o.getContext('2d').drawImage(best,0,0,o.width,o.height);image=o.toDataURL('image/jpeg',0.8);}
+          }catch{image=undefined;}
+        }
         trace('child-gl-complete',{requestId:m.requestId,sourceTime:m.sourceTime,nativeDrawCalls:window.MapleHollow?.renderer.info.render.calls});
-        if(!disposed)send({kind:'frame',requestId:m.requestId,sourceTime:m.sourceTime});
+        if(!disposed)send({kind:'frame',requestId:m.requestId,sourceTime:m.sourceTime,...(image?{image}:{})});
       }).catch(e=>{if(!disposed)send({kind:'error',requestId:m.requestId,error:String(e.message||e)});});
     });
     trace('child-listener-installed');
@@ -441,7 +464,9 @@ export class SceneFrameHost {
     const next: SceneFrame = {
       sourceTime: frame.sourceTime, width: frame.width, height: frame.height,
       ...(view ? { view } : {}), ...(worldTime === undefined ? {} : { worldTime }),
+      ...(frame.capture === true ? { capture: true } : {}),
     };
+    if (next.capture && (next.width > MAX_STILL_WIDTH || next.height > MAX_STILL_HEIGHT)) { this.fail('Invalid requested scene still size'); return; }
     this.latest = next;
     this.pending = next;
     this.flush();
@@ -469,7 +494,8 @@ export class SceneFrameHost {
     const frame = this.active;
     this.active = undefined;
     if (this.latest?.sourceTime === frame.sourceTime && this.latest.width === frame.width && this.latest.height === frame.height) {
-      this.report({ phase: 'ready', revision: this.source.package.revision, ...frame });
+      const image = frame.capture ? sanitizeSceneStill(message.image) : undefined;
+      this.report({ phase: 'ready', revision: this.source.package.revision, ...frame, ...(image ? { image } : {}) });
     }
     this.flush();
   }
