@@ -21,9 +21,11 @@ not a moving branch tip:
 | integration merge | `2b85341ef` merge of r44 | `2b85341ef724a15f34179e270a7acf323ac7b878` | `5ea64a704797fd034fb5fd184832448ae6b12ce0` |
 
 The exact source has both `e1c0d8d52` and `2b85341ef` as ancestors. The
-cached hub integration ref may lag; main must refuse to run unless the
-resolved `hub/timeline/app/tl/integration` (or its exact source keeper)
-resolves to `435e76eb…` / `daf4e71b…`. Do not substitute the older hub value
+cached hub integration ref currently lags at commit
+`1490fbfe90f83c7c7c380d5cb16ccfcc0e9dcfcf` / tree
+`8e242d1497841f391b6152ecd8d204143fa03b52`; main must refuse to run unless
+the resolved `hub/timeline/app/tl/integration` (or its exact source keeper)
+resolves to `435e76eb…` / `daf4e71b…`. Do not substitute that older hub value
 or a later moving tip without recording a new packet.
 
 The approved fa20 credential correction is reused at blob level, unchanged;
@@ -117,6 +119,8 @@ SOCKET=$MAIN/s
 CONFIG=$APP/playwright.parent-split.config.ts
 SHORT=/tmp/tl-split-435e
 
+mkdir -p "$MAIN/h" "$MAIN/n" "$MAIN/w" "$MAIN/v" "$MAIN/c" "$TMP" "$PROFILE" "$SOCKET" "$SHORT"
+chmod 700 "$MAIN/h" "$MAIN/n" "$MAIN/w" "$MAIN/v" "$MAIN/c" "$TMP" "$PROFILE" "$SOCKET" "$SHORT"
 test "$("$NODE" --version)" = v20.19.4
 test -x "$CHROME"
 for d in "$MAIN" "$APP" "$AGENT" "$AGENT_VENDOR" "$RUNTIME" "$GRAPH" "$PRIVATE" "$EVIDENCE" "$TMP" "$PROFILE" "$SOCKET" "$SHORT"; do
@@ -263,3 +267,6 @@ install, full suite, or create a dependency graph. Main should execute the
 single command only after the exact source publication and private normal
 fixture preflight pass; report the exact source tuple, list output, exit/count,
 and retained failure evidence.
+
+## HOME command hold — 2026-10-21 10:45 UTC
+Exact435e source and player pair are approved. Command-only effective shell/JS review r47 checks the executable source preflight, source checkout versus moving hub ref and graph prerequisites before the one actual. Do not consume the actual until its literal corrections/verdict are recorded. Main may prepare its own isolated verified dependency copy from installed read-only dependencies if required; never mutate shared installs.
