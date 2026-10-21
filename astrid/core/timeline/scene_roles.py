@@ -13,12 +13,12 @@ from pathlib import Path
 from typing import Any
 
 _PACKS_ROOT = Path(__file__).resolve().parents[2] / "packs"
-_COVERAGE_CACHE: dict[str, dict] = {}
+_COVERAGE_CACHE: dict[str, dict[str, Any]] = {}
 # Sealed S0's V3 rendering-element declarations omit these metadata values,
 # though the frozen donor declarations used them to determine frame coverage.
 # Keep this narrow semantic projection here until those unowned declarations
 # are joined; a declaration present in the V3 manifest always takes priority.
-_COVERAGE_COMPAT = {
+_COVERAGE_COMPAT: dict[str, dict[str, Any]] = {
     "am-snap-plate": {"coverage": "picture", "background_unless": ["asset", "params.src"]},
     "am-footage": {"coverage": "picture"},
     "am-presenter": {"coverage": "picture"},
@@ -71,7 +71,8 @@ def _coverage_of(element_id: str) -> dict:
             doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         except Exception:  # noqa: BLE001 - an unreadable manifest just means "declares nothing"
             continue
-        meta = doc.get("metadata") if isinstance(doc.get("metadata"), Mapping) else {}
+        raw_meta = doc.get("metadata")
+        meta: Mapping[str, Any] = raw_meta if isinstance(raw_meta, Mapping) else {}
         if meta.get("coverage") is not None:
             found = {"coverage": meta["coverage"]}
             if "background_unless" in meta:
@@ -94,7 +95,8 @@ def _has_value(clip: Mapping[str, Any], path: str) -> bool:
 
 def role_of(clip: Mapping[str, Any], track: Any, elements: Mapping[str, Mapping[str, Any]]) -> str:
     """picture | background | content | none, from the element's declared coverage, else the track convention."""
-    meta = elements.get(clip.get("clipType")) or {}
+    clip_type = clip.get("clipType")
+    meta = {} if clip_type is None else elements.get(clip_type) or {}
     coverage = meta.get("coverage")
     if coverage is not None:
         if coverage == "picture" and "background_unless" in meta:
