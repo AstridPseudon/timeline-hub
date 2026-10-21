@@ -132,9 +132,9 @@
     "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "sha256:d92ea46a3d25f3d5e952db9d3b3c41401da2f82d49a58ca60a0f1fefb22f5c9b",
     "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "sha256:2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
     "astrid/packs/rendering/ui/transcript/extension.tsx": "sha256:870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
-    "astrid/packs/video_editing/pack.yaml": "sha256:53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
+    "astrid/packs/video_editing/pack.yaml": "sha256:0befb7e5f9eff816d22ac0d9fc4b76898388309181dd88418026f84a04301981",
     "astrid/packs/video_editing/ui/video-editor/entry.json": "sha256:ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
-    "astrid/tools/catalog.json": "sha256:05677b1f9cd9f931c9681edee821e848f243159787e44cdc2cda2e4136fdf237",
+    "astrid/tools/catalog.json": "sha256:7b0c6dd47f5fb61782c222ec212a6046bd1a958bf82c3588c379b45ca134faa9",
     "cli-surface.json": "sha256:398b54f3d7efff7c8c8b21075cd5dea489e4d3eb5e3efb960472ae5d7d8ac35d",
     "remotion/public/fonts/DepartureMono-Regular.woff2": "sha256:5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
     "remotion/public/fonts/FONT_PROVENANCE.md": "sha256:f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
@@ -157,5 +157,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:fe97bd9be011f3695a50dfc0017e2c0264c8cfa8a0b01b01e92abd3f927ec25e"
+  "version": "sha256:ddcc80d6bd610a8a11670a9166a8bc6b310e5a22ed924157605c0c593ed94fd1"
 }

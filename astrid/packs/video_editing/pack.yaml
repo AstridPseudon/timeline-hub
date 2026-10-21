@@ -54,7 +54,7 @@ actions:
     name: Synchronize draft voiceover
     version: 1.0.0
     short_description: Reconcile temporary narration with pinned timeline scripts.
-    description: Compare pinned scripts with draft audio, regenerate changed passages through generation.generate_speech, and publish one caller-authorized validated revision.
+    description: Compare pinned scripts with draft audio, regenerate changed passages through generation.generate_speech, and settle one authoring proposal for requester submission.
     keywords:
     - voiceover
     - narration
@@ -98,14 +98,20 @@ actions:
       type: boolean
       required: false
       default: false
-      description: Plan and report without publishing a revision.
+      description: Advisory shared planning only; managed completion settles the report without publication.
     outputs:
+    - name: authoring_proposal
+      type: file
+      mode: create_or_replace
+      path_template: '{out}/authoring-proposal.json'
+      artifact_type: timeline/authoring-proposal
+      description: Settled edit proposal bound to the outer managed producer claim.
     - name: report
-      type: json
-      description: Synchronization report and caller-bound publication result.
-    - name: receipt
-      type: json
-      description: Caller-bound publication receipt returned by the synchronization helper.
+      type: file
+      mode: create_or_replace
+      path_template: '{out}/report.json'
+      artifact_type: application/json
+      description: Successful plan-only or unchanged advisory report; no proposal or publication is invented.
     cache:
       mode: none
     isolation:
@@ -116,6 +122,7 @@ actions:
       runtime_file: actions/sync_draft_voiceover/run.py
       runtime_module: astrid.packs.video_editing.actions.sync_draft_voiceover.run
       mutation_authority: workspace_runtime
+      output_result_manifest: true
     resources:
     - kind: implementation
       path: actions/sync_draft_voiceover/__init__.py

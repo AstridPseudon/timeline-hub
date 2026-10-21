@@ -252,6 +252,7 @@ class WorkspaceClient:
                 "update_document", "ingest_object", "ingest_project_object",
                 "get_preferences", "update_preferences",
                 "import_project_media", "get_project_media_import",
+                "get_project_media_selection", "get_project_verified_media",
                 "list_project_objects", "get_project_object_location", "create_media_relation", "list_media_relations",
                 "get_object", "head_object", "admit_task", "get_task", "list_project_tasks",
                 "cancel_task", "retry_task", "cancel_run", "retry_run", "get_run",
@@ -812,6 +813,14 @@ class WorkspaceClient:
 
     def get_project_media_import(self, project_id: str, import_operation_id: str) -> Any:
         return self._call_generated("get_project_media_import", project_id, import_operation_id)
+
+    def get_project_media_selection(self, project_id: str, selection: Mapping[str, Any]) -> Any:
+        """Read one exact Runtime-selected project media pin."""
+        return self._call_generated("get_project_media_selection", project_id, selection)
+
+    def get_project_verified_media(self, project_id: str, selection: Mapping[str, Any]) -> Any:
+        """Read the Runtime verifier result for one exact media pin."""
+        return self._call_generated("get_project_verified_media", project_id, selection)
 
     def list_project_objects(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
         return self._call_generated("list_project_objects", project_id, cursor=cursor, limit=limit)

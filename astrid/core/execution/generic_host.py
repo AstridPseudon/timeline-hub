@@ -9621,6 +9621,13 @@ class GenericPackHost:
                     if private_runtime_context:
                         worker_admission = {key: value for key, value in network_admission.items()
                                             if key not in {"task_id", "attempt_id", "fence", "network_nonce", "allowed_routes"}}
+                    else:
+                        from .executor._action_context import _producer_action_admission
+
+                        worker_admission = _producer_action_admission(
+                            record.definition, worker_admission, task_data,
+                            executor_id=self.executor_id,
+                            runtime_epoch=self.runtime_state.get("runtime_epoch"))
                     worker_env, worker_secrets = self._child_environment(
                         record, root, admission=network_admission, network_broker=network_broker,
                         allow_runtime_connection=not private_runtime_context)
