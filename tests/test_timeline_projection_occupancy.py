@@ -413,7 +413,8 @@ def shared_editing(film, request):
 
 # Reuse renderer-disabled actual-provider fixtures; Agent imports remain inside
 # their explicitly selected integration fixtures.
-from test_timeline_commit_integration import agent, film  # noqa: E402,F401
+from test_timeline_commit_integration import agent  # noqa: E402,F401
+from test_timeline_commit_integration import film as integration_film  # noqa: E402,F401
 
 
 @pytest.mark.integration

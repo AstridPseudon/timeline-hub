@@ -4,7 +4,6 @@ import copy
 from pathlib import Path
 
 import pytest
-
 from test_timeline_commit_port import prepared
 
 from runtime_protocol.contract_metadata import SCHEMA_DIGEST
