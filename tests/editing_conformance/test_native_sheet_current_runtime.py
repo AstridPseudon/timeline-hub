@@ -19,7 +19,11 @@ from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.document_diff import (
+    DocumentDiffError,
+    document_diff_to_commands,
+)
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_sheet import NativeSheet
 from astrid.sdk.workspace_client import WorkspaceClientError
@@ -165,7 +169,7 @@ def _replace_media_ids(value, replacements):
             _replace_media_ids(child, replacements)
 
 
-def seed_shared_occurrence_parent(runtime):
+def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None):
     """Seed the existing shared-source App closure at the real Runtime boundary."""
     parent, shots, internals = app_closure()
     project = runtime.project
@@ -195,6 +199,31 @@ def seed_shared_occurrence_parent(runtime):
     _replace_media_ids(shots, replacements)
     _replace_media_ids(internals, replacements)
 
+    parent_revision_id = 'native-sheet-connected-occurrence-parent'
+    if identity_scope is not None:
+        shot = shots[0]
+        old_shot_id = shot['shot_id']
+        old_shot_revision_id = shot['revision_id']
+        old_internal_revision_id = shot['internal_timeline_revision_id']
+        shot_id = f'{identity_scope}-shot'
+        shot_revision_id = f'{identity_scope}-shot-revision'
+        internal_revision_id = f'{identity_scope}-internal-revision'
+        for occurrence in parent['payload']['occurrences']:
+            if occurrence['shot_id'] == old_shot_id:
+                occurrence['shot_id'] = shot_id
+            if occurrence['shot_revision_id'] == old_shot_revision_id:
+                occurrence['shot_revision_id'] = shot_revision_id
+        shot['shot_id'] = shot_id
+        shot['revision_id'] = shot_revision_id
+        shot['internal_timeline_revision_id'] = internal_revision_id
+        shot['payload']['internal_timeline_revision_id'] = internal_revision_id
+        internal = next(item for item in internals if item['revision_id'] == old_internal_revision_id)
+        internal['revision_id'] = internal_revision_id
+        parent_revision_id = f'{identity_scope}-parent-revision'
+
+    if prepare is not None:
+        prepare(parent, shots, internals)
+
     parent['project_id'] = project
     parent['timeline_id'] = 'film'
     for image in [*shots, *internals]:
@@ -205,15 +234,141 @@ def seed_shared_occurrence_parent(runtime):
         'project_id': project,
         'timeline_id': 'film',
         'expected_head': None,
-        'parent_revision_id': 'native-sheet-connected-occurrence-parent',
+        'parent_revision_id': parent_revision_id,
         'parent_composition': parent['payload'],
         'shot_revisions': shots,
         'internal_timeline_revisions': internals,
     }
-    receipt = seed_trusted_parent(
-        runtime.service(), document, idempotency_key='native-sheet-connected-occurrence-parent',
-    )
+    seed_key = (f'{identity_scope}-seed' if identity_scope is not None
+                else 'native-sheet-connected-occurrence-parent')
+    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key=seed_key)
     return document, receipt
+
+
+def seed_document_diff_parent(runtime):
+    """Seed real App-shaped rows with the native document-diff scalar carriers."""
+    def prepare(parent, shots, internals):
+        parent_rows = parent['payload']['clips']
+        for rows in (parent_rows, parent['payload']['config']['clips']):
+            next(row for row in rows if row['id'] == 'f2-app-clip').update(hold=3)
+        child = next(row for row in internals[0]['payload']['clips']
+                     if row['id'] == 'f2-agent-clip')
+        child.update({'clipType': 'am-type', 'from': 0, 'to': 3, 'params': {'text': 'hello'}})
+        child.pop('asset', None)
+
+    return seed_shared_occurrence_parent(
+        runtime, prepare=prepare, identity_scope=f'document-diff-{runtime.project}',
+    )
+
+
+def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(runtime):
+    _document, setup = seed_document_diff_parent(runtime)
+    runtime.restart()
+    session = runtime.session(name='document-diff')
+    loaded = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert loaded.ok
+    before = loaded.data['bundle']
+    assert setup['data']['accepted_revision_id'] == runtime.history()['head']['revision_id']
+    source = occurrence_source_pin(before, OCCURRENCE_TARGET)
+    assert source['text_bindings'] == [{'slot': 'voiceover', 'text': 'hello'}]
+
+    def child(candidate):
+        shot = next(iter(candidate['shots'].values()))
+        return next(row for row in shot['internal_timeline']['clips']
+                    if row['id'] == 'f2-agent-clip')
+
+    unsupported = copy.deepcopy(before)
+    child(unsupported)['params']['null'] = None
+    head_before_refusal = copy.deepcopy(runtime.history()['head'])
+    calls_before_refusal = len(runtime.calls)
+    with pytest.raises(DocumentDiffError, match='undeclared params'):
+        document_diff_to_commands(unsupported, before)
+    assert runtime.history()['head'] == head_before_refusal
+    assert len(runtime.calls) == calls_before_refusal
+
+    candidate = copy.deepcopy(before)
+    for rows in (candidate['parent']['clips'], candidate['parent']['config']['clips']):
+        next(row for row in rows if row['id'] == 'f2-app-clip').pop('hold')
+    edited_child = child(candidate)
+    edited_child.pop('hold')
+    edited_child['params'] = {}
+    candidate['parent']['config']['tracks'][0]['label'] = 'Renamed'
+
+    native = document_diff_to_commands(candidate, before)
+    assert [command['op'] for command in native['commands']] == [
+        'track.set', 'clip.set', 'clip.set-params', 'clip.set',
+    ]
+    # Accepted responses carry commands; the recorder is published by history.
+    expected_records = execute(before, native['commands']).records
+    result = session.commit_many(native['commands'], idempotency_key='document-diff-roundtrip')
+    assert result['data']['commands'] == native['commands']
+    body = json.loads(runtime.calls[-1][0])
+    assert body['commands'] == native['commands']
+    assert body['source'] == {'via': 'python'}
+
+    # ``open_bundle`` and the native diff result are intentionally detached.
+    # The accepted setup document is the exact original base/publication and
+    # carries the private compilation context required by the pure projector.
+    original_document = setup['data']['canonical_document']
+    original = bundle_from_document(original_document)
+    assert persisted_bundle(original) == persisted_bundle(before)
+    expected_input = copy.deepcopy(native['bundle'])
+    expected_input['source_mapping']['_runtime_document'] = copy.deepcopy(
+        original['source_mapping']['_runtime_document'])
+    expected_document = document_from_bundle(expected_input)
+    assert result['data']['canonical_document'] == expected_document
+    accepted = bundle_from_document(result['data']['canonical_document'])
+    expected = bundle_from_document(expected_document)
+    assert persisted_bundle(accepted) == persisted_bundle(expected)
+    accepted_parent = next(row for row in accepted['parent']['clips'] if row['id'] == 'f2-app-clip')
+    accepted_child = State(accepted).entity(OCCURRENCE_TARGET)
+    assert 'hold' not in accepted_parent and accepted_parent['from'] == 0 and accepted_parent['to'] == 3
+    assert 'hold' not in accepted_child and accepted_child['from'] == 0 and accepted_child['to'] == 3
+    assert accepted_child['params'] == {}
+    assert accepted_child['app'] == {'f2Opaque': {'owner': 'f2', 'nested': [1, {'k': 'v'}]}}
+    assert accepted['parent']['config']['tracks'][0]['label'] == 'Renamed'
+    assert accepted['parent']['config']['x_f2_opaque'] == before['parent']['config']['x_f2_opaque']
+    # Compile materialization gives only the edited occurrence its fresh expected source pin.
+    assert occurrence_source_pin(accepted, OCCURRENCE_TARGET) == occurrence_source_pin(
+        expected, OCCURRENCE_TARGET)
+    target_pin = occurrence_source_pin(accepted, OCCURRENCE_TARGET)
+    sibling_pin = occurrence_source_pin(accepted, OCCURRENCE_SIBLING)
+    assert target_pin['shot_id'] != source['shot_id']
+    assert target_pin['revision_id'] != source['revision_id']
+    assert target_pin['internal_timeline_revision_id'] != source['internal_timeline_revision_id']
+    assert sibling_pin == occurrence_source_pin(before, OCCURRENCE_SIBLING)
+    assert State(accepted).entity(OCCURRENCE_SIBLING) == State(before).entity(OCCURRENCE_SIBLING)
+    before_occurrences = {row['occurrence_id']: row for row in before['placements']}
+    for row in accepted['placements']:
+        original = before_occurrences[row['occurrence_id']]
+        assert {key: row[key] for key in ('placement', 'source_offset', 'duration_ms', 'speed', 'track')} == {
+            key: original[key] for key in ('placement', 'source_offset', 'duration_ms', 'speed', 'track')
+        }
+
+    history = runtime.history()
+    assert history['head']['revision_id'] == result['data']['accepted_revision_id']
+    entry = next(item for item in history['items']
+                 if item['publication_id'] == result['receipt']['receipt_id'])
+    assert entry['records']['commands'] == expected_records
+
+    runtime.restart()
+    reloaded = runtime.session(name='document-diff-reloaded')
+    stored = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=result['data']['accepted_revision_id'],
+    )
+    assert stored.ok
+    assert persisted_bundle(stored.data['bundle']) == persisted_bundle(accepted)
+    # Reload preserves the accepted materialized source pin for the edited occurrence.
+    assert occurrence_source_pin(stored.data['bundle'], OCCURRENCE_TARGET) == target_pin
+
+    undone = reloaded.undo([result['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert State(restored).entity(OCCURRENCE_TARGET) == State(before).entity(OCCURRENCE_TARGET)
+    assert State(restored).entity(OCCURRENCE_SIBLING) == State(before).entity(OCCURRENCE_SIBLING)
+    assert occurrence_source_pin(restored, OCCURRENCE_TARGET) == source
+    assert restored['parent']['config']['x_f2_opaque'] == before['parent']['config']['x_f2_opaque']
+    redone = reloaded.undo([undone['receipt']['receipt_id']])
+    assert redone['data']['canonical_document'] == result['data']['canonical_document']
 
 
 def occurrence_source_pin(bundle, ref):
