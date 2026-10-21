@@ -34,3 +34,4 @@ The hub is AstridPseudon/timeline-hub (clone /home/user/timeline-hub). Never pus
 ## Only I know
 - Disk is tight (9.7-11 GB with full suites running); the watcher sweeps below 10 GB. Big consumers: /tmp/app-coherent-deps12 (linked by tests), worker record dirs under $ORCH/workers/*/notes.
 - Codex login works on this machine (ChatGPT); no fallback is in use. If it ever needs sign-in, send the owner the device link and code.
+- Disk lever found 03:30Z: /root/.codex/sessions holds ~1.6 GB of finished-run transcripts; `find /root/.codex/sessions -name '*.jsonl' -mmin +180 -print0 | nice xargs -0 -n20 gzip -q` frees ~1 GB losslessly (Codex rounds are fresh execs, never resumed; do not touch auth.json or the sqlite files). Also never run bin/sweep-tmp with H<1 (removed live workers' /tmp/tl-* dirs once); the kit tool now enforces 1 h.

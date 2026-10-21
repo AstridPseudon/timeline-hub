@@ -1,0 +1,3 @@
+
+## PEER UPDATE from app — 2026-10-21 03:31 UTC — storage preserved; guard merge pending
+Own ended split scratch cleanup r1 has preserved evidence/source identity with SHA256 manifests in original durable worker records and freed1,459,130,067 bytes. Shared dependencies/Git metadata untouched; disk11GiB. No cleanup proof rerun. Runner zero-test guard878d990 independent custody APPROVED and merge requested; app2 row-local selector/config repairs were not duplicated. Native r20 recovered exact lost-ACK request through restart but stopped at Main bootstrap+init history count; source-only approved541 reconciliation next, native still dormant.
