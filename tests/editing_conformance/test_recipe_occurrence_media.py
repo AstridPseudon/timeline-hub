@@ -74,6 +74,44 @@ def captured(operation, kind='image'):
     return document, bundle, command, verified
 
 
+def test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields():
+    document, old, new, verified = inputs()
+    bundle = bundle_from_document(document)
+    old = copy.deepcopy(old)
+    new = {**copy.deepcopy(new), 'asset': old['asset']}
+    verified = [
+        {**row, 'selection': {**row['selection'], 'asset': old['asset']}}
+        if row['selection']['asset'] == 'reserved-new' else row
+        for row in verified
+    ]
+    State(bundle).config(OWNER)['registry']['assets'][old['asset']]['label'] = 'keep-label'
+    State(bundle).config(OWNER)['registry']['assets'][old['asset']]['opaque'] = {'keep': [1, None]}
+    State(bundle).entity(TARGET)['asset'] = old['asset']
+    State(bundle).occurrence(OWNER).update(source_offset=0, speed=1)
+    before = copy.deepcopy(bundle)
+    command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
+
+    plan = execute(bundle, [command], verified_media=verified)
+    entry = State(plan.bundle).config(OWNER)['registry']['assets'][old['asset']]
+    assert entry['media_id'] == NEW
+    assert entry['generationId'] == new['generation_id']
+    assert entry['variantId'] == new['variant_id']
+    assert entry['label'] == 'keep-label'
+    assert entry['opaque'] == {'keep': [1, None]}
+    assert State(plan.bundle).entity(TARGET)['asset'] == old['asset']
+    assert plan.bundle['shots'][State(plan.bundle).occurrence(OWNER)['shot_id']]['payload']['items'][0]['media_id'] == NEW
+    assert inverse(plan.bundle, plan.records).bundle == before
+    aba = copy.deepcopy(plan.bundle)
+    State(aba).config(OWNER)['registry']['assets'][old['asset']]['media_id'] = old['object_id']
+    media_path = ['registry', 'assets', old['asset'], 'media_id']
+    with pytest.raises(CommandError, match='intervening'):
+        inverse(aba, plan.records, [{
+            'writes': [{'ref': OWNER + '/source', 'path': media_path,
+                        'before': {'state': 'present', 'value': NEW},
+                        'after': {'state': 'present', 'value': old['object_id']}}]
+        }])
+
+
 @pytest.mark.parametrize('operation', ['add', 'swap'])
 @pytest.mark.parametrize('kind', ['image', 'video'])
 def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
@@ -208,6 +246,53 @@ class MediaRealm(DetachedRealm):
 
         context = self.context(calls, base=base, dry_run=dry_run)
         return create_runtime_commit_service().commit(context, MediaPort(self, context))
+
+
+@pytest.fixture
+def same_alias_realm():
+    document, old, new, verified = inputs()
+    new['asset'] = old['asset']
+    verified[1]['selection']['asset'] = old['asset']
+    document['shot_revisions'][0]['payload']['unknown']['keep'] = True
+    document['shot_revisions'][0]['content_digest'] = _digest(document['shot_revisions'][0]['payload'])
+    document['dependency_manifest'] = _manifest(document['shot_revisions'],
+        document['internal_timeline_revisions'], document['dependency_manifest']['media'], [])
+    realm = MediaRealm(document, verified)
+    command = capture_occurrence_swap_media(bundle_from_document(document), TARGET, old, new,
+                                            verified_media=verified)
+    created = realm.call([command])
+    return realm, document, created
+
+
+def test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo(same_alias_realm):
+    realm, document, created = same_alias_realm
+    undo = realm.call([inverse_call([created['receipt']['receipt_id']])])
+    assert undo['data']['canonical_document'] == document
+    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    assert redo['data']['canonical_document'] == created['data']['canonical_document']
+
+
+@pytest.mark.parametrize('damage', ['opaque-number', 'item-identity', 'compiler-link', 'source'])
+def test_same_alias_materialized_payload_still_guards_all_other_input(same_alias_realm, damage):
+    from tests.editing_conformance.test_occurrence_media_manifest_inverse import accepted_records
+
+    realm, _, created = same_alias_realm
+    records = accepted_records(realm, realm.entries[-1])
+    bundle = bundle_from_document(created['data']['canonical_document'])
+    shot = State(bundle).occurrence(OWNER)['shot_id']
+    payload = bundle['shots'][shot]['payload']
+    if damage == 'opaque-number':
+        payload['unknown']['keep'] = 1
+    elif damage == 'item-identity':
+        payload['items'][0]['item_id'] = 'unverified-item'
+    elif damage == 'compiler-link':
+        payload['internal_timeline_revision_id'] = 'unverified-link'
+    else:
+        bundle['source_mapping']['shots'][shot]['shot_id'] = 'unverified-shot'
+    before = copy.deepcopy((bundle, realm.head, realm.entries))
+    with pytest.raises(CommandError):
+        inverse(bundle, records)
+    assert (bundle, realm.head, realm.entries) == before
 
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
