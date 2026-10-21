@@ -10,6 +10,7 @@
     "project_id": { "type": "string", "minLength": 1 },
     "kind": { "type": "string", "minLength": 1 },
     "content": {},
+    "content_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
     "version": { "type": "integer", "minimum": 1 },
     "created_at": { "type": "string" },
     "updated_at": { "type": "string" }
