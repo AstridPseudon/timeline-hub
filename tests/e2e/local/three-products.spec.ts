@@ -1414,6 +1414,36 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   await openCommandTimeline(page, harness, seed3);
 
+  // Main's external-drop coordinator centers its five-second preview. Keep
+  // the original 22.5s pointer (left edge 20s) and prepare the mounted
+  // viewport through the existing user-facing zoom control. The two rendered
+  // clips are the calibration anchors used by the drop helper; the V1 row
+  // proves that the pointer is measured against the original selected row.
+  const manualDropPointerAt = 22.5;
+  const manualDropDurationSeconds = 5;
+  const dropClip = page.locator(`.clip-action[data-clip-id="${seed3.appClipId}"]`).first();
+  const referenceClip = page.locator(`.clip-action[data-clip-id="${seed3.transitionClipId}"]`).first();
+  const timelineWrapper = page.locator('.timeline-wrapper').first();
+  await expect(page.locator('[data-row-id="V1"]').first()).toBeVisible();
+  await expect(dropClip).toBeVisible();
+  await expect(referenceClip).toBeVisible();
+  await expect(timelineWrapper).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Zoom out timeline', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Zoom out timeline', exact: true }).click();
+  const [dropBox, referenceBox, wrapperBox] = await Promise.all([
+    dropClip.boundingBox(),
+    referenceClip.boundingBox(),
+    timelineWrapper.boundingBox(),
+  ]);
+  if (!dropBox || !referenceBox || !wrapperBox) throw new Error('Cannot measure prepared manual-drop viewport');
+  const pixelsPerSecond = (referenceBox.x - dropBox.x) / THREE_PRODUCTS_REFERENCE_AT;
+  expect(pixelsPerSecond).toBeGreaterThan(0);
+  const centeredPointerX = dropBox.x + manualDropPointerAt * pixelsPerSecond;
+  expect(centeredPointerX).toBeGreaterThanOrEqual(wrapperBox.x);
+  expect(centeredPointerX).toBeLessThanOrEqual(wrapperBox.x + wrapperBox.width);
+  expect(manualDropPointerAt - manualDropDurationSeconds / 2).toBe(20);
+  expect(manualDropPointerAt - manualDropDurationSeconds / 2).toBeGreaterThanOrEqual(THREE_PRODUCTS_REFERENCE_AT + 3);
+
   const mediaObject = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(harness.seed.video.objectId)}`);
   expect(mediaObject.status).toBe(200);
   const mediaBytes = new Uint8Array(await mediaObject.arrayBuffer());
@@ -1468,12 +1498,15 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
     url.searchParams.set('object_id', `${originalObjectId!.slice(0, -1)}${lastHex === '0' ? '1' : '0'}`);
     await route.continue({ url: url.toString() });
   });
-  // External drops are centered by the production coordinator; 22.5 places the five-second preview's left edge at 20.
-  const manualDropPointerAt = 22.5;
   await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, manualDropPointerAt);
   await wrongImportResponse;
   const wrongVerified = await wrongVerifiedResponse;
-  expect([404, 409]).toContain(wrongVerified.status());
+  expect(wrongVerified.status()).toBe(404);
+  await expect(wrongVerified.json()).resolves.toEqual({
+    code: 'not_found',
+    message: 'selected media is not a managed project generation/variant/object',
+    request_id: expect.stringMatching(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$/),
+  });
   await page.unroute(wrongSelectionRoute);
   await expect(page.locator('.clip-action')).toHaveCount(baselineClipCount, CEILING);
   expect(await currentHead(harness)).toBe(original.head.revision_id);
