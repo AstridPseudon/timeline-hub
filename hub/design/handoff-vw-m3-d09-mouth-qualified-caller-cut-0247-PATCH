@@ -1,0 +1,4 @@
+NO PRODUCT PATCH.
+
+The current qualified public-first adapter is already present. No safe code
+cut exists while unqualified inputs still call the same private helpers.

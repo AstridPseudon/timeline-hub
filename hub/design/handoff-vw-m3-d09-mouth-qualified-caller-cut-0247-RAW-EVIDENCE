@@ -1,0 +1,15 @@
+Central physical result: vw-m3-mouth-corrected-wrapper-one-run-0244-e2e-viewing-mouth-browser-guard-correction-0238-1021024258-32349
+Summary: pass, one test, 13.74s; source tree a36a38e234813638530d03a6916dc84768caa9dd.
+Retained raw directory: /tmp/vw-m3-mouth-public13-0223-WpDP5W
+PNG frame-0.png: fa68d076a79c9c553fc79fc83128c55da7ed542aed47640f6e571598b2e3b2f6
+PNG frame-3.png: ddea7b2cb0e89d3cca6df0bd7b70e160338122d5a72d4ad12bed1ebf14e08886
+PNG frame-4.png: fa68d076a79c9c553fc79fc83128c55da7ed542aed47640f6e571598b2e3b2f6
+PNG frame-5.png: 79ef9e2d8d7c5456f463bd32e9432c0f9a47a60ccbc7601638f63822f1b425e7
+inspection.json: 18575ff01f265184db407637bfdc0a804d886f62a4c2b888d9802494b5581078
+Wrapper: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-mouth-browser-guard-correction-0238-run.sh
+Wrapper SHA-256: 5bf3053d3f82f2217c79a9b424f6233b1f7cad2a19769b5203702a00f04a21c9
+Browser realpath: /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
+Browser SHA-256: 63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4
+Composition public13 SHA-256: 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+Node20.19.4 SHA-256: 43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490
+Preflight SHA-256: db49c3bcb903b31068d52902fc98870fd847d8bfd150fcfb843547bef37d323a

@@ -1,0 +1,12 @@
+Product tree: unchanged; git status clean.
+
+Current source mapping:
+astrid/packs/rendering/actions/timeline_visualize/motion/sheet.py:155-189
+astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py:369-526
+astrid/packs/rendering/actions/timeline_visualize/motion/model.py:426-474,541-547,601
+
+Worker artifacts:
+workers/vw-m3-d09-mouth-qualified-caller-cut-0247/REPORT.md
+workers/vw-m3-d09-mouth-qualified-caller-cut-0247/PATCH
+workers/vw-m3-d09-mouth-qualified-caller-cut-0247/FILELIST
+workers/vw-m3-d09-mouth-qualified-caller-cut-0247/COMMAND

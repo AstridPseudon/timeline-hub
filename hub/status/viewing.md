@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T02:48:37Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 22 | status age 0m -->
+<!-- viewing | 2026-10-21T02:54:33Z | dispatcher heartbeat 9s | live 4 (sol 0, luna 4, other 0) | busy30 20 | status age 6m -->
 # viewing — 2026-10-21 02:26 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and current rules read.
 Integrated: Composition7bb54bbd/tree20467712. Approved755 pure build projection preserves canonical Remotion calculations; independent release source review approved. ONE central composition-full-1021014707-6851 `npm test` PASS84/0/0, original purity guard unchanged. Public13 source5a4/archive9412/all77 immutable; no14 archive/pin. Source7bb fresh-Main patch/bundle forward+reverse proof passes116 changed/119 tracked paths; not whole ZIP.
