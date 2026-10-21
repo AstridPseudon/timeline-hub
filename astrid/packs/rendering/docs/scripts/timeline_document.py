@@ -5,9 +5,7 @@ import hashlib
 import json
 import shlex
 from pathlib import Path
-from urllib.parse import urlparse
 
-from astrid.core.path_utils import file_uri_to_path
 from astrid.core.timeline.authoring_feedback import authoring_change_summary, publication_feedback
 from astrid.sdk import AstridClient
 from astrid.sdk.authoring_bundle import (
@@ -77,35 +75,6 @@ def resolve_media_rebinds(transport, project_id, candidate, base):
 
 def dump(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
-
-
-def reject_local_media_inputs(value, base_directory, path="candidate"):
-    """Avoid silently publishing an old media pin when a local path was edited."""
-    if isinstance(value, dict):
-        for key, child in value.items():
-            child_path = f"{path}.{key}"
-            if key == "local_path" and child:
-                raise ValueError(
-                    f"{child_path} is a local media input; import it with the public "
-                    "Astrid media client first, then pin the returned digest"
-                )
-            if key in {"file", "path", "src"} and isinstance(child, str):
-                parsed = urlparse(child)
-                local_value = file_uri_to_path(child) if parsed.scheme == "file" else child
-                local_path = Path(local_value)
-                if parsed.scheme == "file" or local_path.is_absolute():
-                    resolved_path = local_path
-                else:
-                    resolved_path = base_directory / local_path
-                if resolved_path.is_file():
-                    raise ValueError(
-                        f"{child_path} points to local media; import it with the public "
-                        "Astrid media client first, then pin the returned digest"
-                    )
-            reject_local_media_inputs(child, base_directory, child_path)
-    elif isinstance(value, list):
-        for index, child in enumerate(value):
-            reject_local_media_inputs(child, base_directory, f"{path}[{index}]")
 
 
 def workspace():
