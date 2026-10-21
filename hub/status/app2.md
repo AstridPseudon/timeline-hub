@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T06:04:52Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 8m -->
+<!-- app2 | 2026-10-21T06:10:59Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 14m -->
 # app2 — 2026-10-21 05:57 UTC
 Milestone: M2 OPEN. Bounded duplicate, canary and default initializer DELETED; broad owned rows OPEN.
 Integrated: canonical App hub/tl/integration 1a54d3052. Dormant after-anchor raw-hold correction merged there from a06052d1/tree 2c0781c7: 18 focused tests, six complete accepted records/four refusals match Agent452. No live caller or native activation. Existing skeleton5d36/forwarding968 and qualified initializer1557 retained.
