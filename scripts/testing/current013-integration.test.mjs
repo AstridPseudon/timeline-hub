@@ -72,7 +72,8 @@ function controlled(fn, { dirty = '', childStatus = 0, mutate = () => {} } = {})
     const op = args.slice(2).join(' ');
     calls.push({ root, op });
     if (op === 'rev-parse --show-toplevel') return roots.app;
-    if (op === 'rev-parse HEAD^{tree}') return root === roots.agent ? CURRENT013_AGENT.tree : env().TIMELINE_CURRENT013_APP_TREE;
+    if (op === 'rev-parse HEAD^{tree}') return root === roots.agent ? CURRENT013_AGENT.tree
+      : root === roots.runtime ? CURRENT013_RUNTIME.tree : env().TIMELINE_CURRENT013_APP_TREE;
     // A central snapshot's App commit deliberately differs from the App tree.
     if (op === 'rev-parse HEAD') return root === roots.app ? 'd'.repeat(40)
       : root === roots.agent ? CURRENT013_AGENT.commit

@@ -17,6 +17,7 @@ import path from 'node:path';
 export const CURRENT013_RUNTIME = Object.freeze({
   serverCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   producerCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
+  tree: '7ab412cc4bcbe517efcfa806e092336390312e18',
   version: '0.2.13',
   producerVersion: 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56',
   schemaDigest: 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4',
@@ -284,6 +285,8 @@ export function checkCurrent013Sources(input, { vendor = true } = {}) {
   const agentTree = git(input.agent, 'rev-parse', 'HEAD^{tree}');
   const runtimeTree = git(input.runtime, 'rev-parse', 'HEAD^{tree}');
   const producerTree = git(input.runtimeProducer, 'rev-parse', 'HEAD^{tree}');
+  if (agentTree !== CURRENT013_AGENT.tree) fail(`Agent source tree is ${agentTree}, expected ${CURRENT013_AGENT.tree}`);
+  if (runtimeTree !== CURRENT013_RUNTIME.tree) fail(`Runtime source tree is ${runtimeTree}, expected ${CURRENT013_RUNTIME.tree}`);
   checkHead(input.agent, input.agentSha, 'Agent');
   checkHead(input.runtime, input.runtimeSha, 'Runtime');
   checkHead(input.runtimeProducer, CURRENT013_RUNTIME.producerCommit, 'Runtime artifact producer');
@@ -297,14 +300,13 @@ export function checkCurrent013Sources(input, { vendor = true } = {}) {
   const agentMetadata = checkMetadata(input.agent, 'Agent', AGENT_METADATA);
   const runtimeManifest = checkRuntimeManifest(input.runtimeProducer);
   const appComposition = checkCompositionArchive(input.app, 'App');
-  const agentComposition = checkCompositionArchive(input.agent, 'Agent');
   if (vendor) {
     runVendorCheck(input, input.app, 'node', 'App');
     runVendorCheck(input, input.agent, input.agentPython, 'Agent');
   }
   return Object.freeze({
     app: { root: input.app, tree: input.appTree, lock: appLock, metadata: appMetadata, composition: appComposition },
-    agent: { root: input.agent, commit: input.agentSha, tree: agentTree, lock: agentLock, metadata: agentMetadata, composition: agentComposition },
+    agent: { root: input.agent, commit: input.agentSha, tree: agentTree, lock: agentLock, metadata: agentMetadata },
     runtime: { root: input.runtime, commit: input.runtimeSha, tree: runtimeTree },
     runtimeProducer: { root: input.runtimeProducer, commit: CURRENT013_RUNTIME.producerCommit, tree: producerTree, manifest: runtimeManifest },
   });
