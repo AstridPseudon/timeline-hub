@@ -3,7 +3,7 @@
  * then drives the actual editor UI against the actual Runtime. The image executor is a temporary GenericPackHost pack in
  * DirectHarness.tmp, not an App command or a fake Runtime endpoint.
  */
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page, type Response as PlaywrightResponse } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { mkdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -39,7 +39,33 @@ type Workspace = { harness: DirectHarness; seed: ThreeProductsSeed; vite: ViteWo
 type ViteWorkspace = { origin: string; restart(): Promise<void>; stop(): Promise<void> };
 type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> };
 function sanitizedError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  return (error instanceof Error ? error.message : String(error)).replace(/Bearer\s+\S+/ig, 'Bearer <redacted>').slice(0, 800);
+}
+
+type HttpFailure = { method: string; path: string; status: number; code?: string; type?: string; location?: string };
+const SAFE_HTTP_FACT = /^[A-Za-z0-9._:/-]{1,160}$/;
+
+function validatedHttpFact(value: unknown): string | undefined {
+  return typeof value === 'string' && SAFE_HTTP_FACT.test(value) ? value : undefined;
+}
+
+function responsePath(rawUrl: string): string {
+  try { return new URL(rawUrl).pathname.slice(0, 320); }
+  catch { return rawUrl.split(/[?#]/, 1)[0].slice(0, 320); }
+}
+
+async function readHttpFailure(response: PlaywrightResponse): Promise<HttpFailure> {
+  const fact: HttpFailure = { method: response.request().method(), path: responsePath(response.url()), status: response.status() };
+  try {
+    const body = await response.json() as Record<string, unknown>;
+    for (const key of ['code', 'type', 'location'] as const) {
+      const value = validatedHttpFact(body[key]);
+      if (value) fact[key] = value;
+    }
+  } catch {
+    // The status and path are still useful when a proxy returns a non-JSON failure.
+  }
+  return fact;
 }
 
 async function freePort(): Promise<number> {
@@ -260,7 +286,7 @@ async function chooseTextGeneration(page: Page): Promise<void> {
   await expect(textModel).toHaveAttribute('aria-checked', 'true');
 }
 
-async function expectConnectedWithDiagnostics(page: Page, diagnostics: string[]): Promise<void> {
+async function expectConnectedWithDiagnostics(page: Page, diagnostics: string[], failures: HttpFailure[] = [], pendingFailures: Array<Promise<void>> = []): Promise<void> {
   try {
     const status = page.locator(UI.status);
     if (await status.count()) {
@@ -270,17 +296,19 @@ async function expectConnectedWithDiagnostics(page: Page, diagnostics: string[])
       await expect(page.getByRole('button', { name: 'Generate image', exact: true })).toBeVisible(CEILING);
     }
   } catch (error) {
+    await Promise.allSettled(pendingFailures);
     const body = await page.locator('body').innerText().catch(() => '');
     throw new Error(`${error instanceof Error ? error.message : String(error)}\n` + [
       `page url: ${page.url()}`,
       `page title: ${await page.title().catch(() => '')}`,
       `body: ${body.slice(-4000)}`,
+      `HTTP failures: ${JSON.stringify(failures.slice(-40))}`,
       ...diagnostics.slice(-40),
     ].join('\n'));
   }
 }
 
-test('real operation proxy automatic image placement survives reconnect, lost ACK retry, reload and guarded undo', async ({ page, workspace }) => {
+test('real operation proxy automatic image placement survives reconnect, lost ACK retry, reload and guarded undo', async ({ page, workspace }, testInfo) => {
   const { harness, seed, vite } = workspace;
   const composerCheckout = path.join(harness.tmp, 'agent-compose-checkout');
   const legacy: string[] = [];
@@ -288,13 +316,22 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   const requests: string[] = [];
   const responses: string[] = [];
   const diagnostics: string[] = [];
-  page.on('pageerror', (error) => diagnostics.push(`pageerror: ${error.message}`));
-  page.on('console', (message) => { if (message.type() === 'error') diagnostics.push(`console: ${message.text()}`); });
-  page.on('requestfailed', (request) => diagnostics.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText ?? ''}`));
+  const failures: HttpFailure[] = [];
+  const pendingFailures: Array<Promise<void>> = [];
+  const failureRecord = testInfo.outputPath('auto-http-failures.json');
+  const writeFailureRecord = () => writeFileSync(failureRecord, JSON.stringify({ httpFailures: failures.slice(0, 80) }) + '\n');
+  writeFailureRecord();
+  page.on('pageerror', (error) => diagnostics.push(`pageerror: ${sanitizedError(error)}`));
+  page.on('console', (message) => { if (message.type() === 'error') diagnostics.push(`console: ${sanitizedError(message.text())}`); });
+  page.on('requestfailed', (request) => diagnostics.push(`requestfailed: ${request.method()} ${responsePath(request.url())} ${sanitizedError(request.failure()?.errorText ?? '')}`));
   page.on('response', (response) => {
     const url = new URL(response.url());
     if (url.pathname.startsWith('/api/runtime') || url.pathname.startsWith(OPERATION_PREFIX)) {
-      responses.push(`${response.status()} ${url.pathname}${url.search}`);
+      responses.push(`${response.status()} ${url.pathname}`);
+      if (response.status() >= 400 && failures.length < 80) {
+        const pending = readHttpFailure(response).then((failure) => { failures.push(failure); writeFailureRecord(); });
+        pendingFailures.push(pending);
+      }
     }
   });
   page.on('request', (request) => {
@@ -305,10 +342,10 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   });
 
   await page.goto(`${vite.origin}${APP_ENTRY_ROUTE}`);
-  await expectConnectedWithDiagnostics(page, diagnostics);
+  await expectConnectedWithDiagnostics(page, diagnostics, failures, pendingFailures);
   await openSeededTimeline(page, harness);
   await expect.poll(
-    () => responses.filter((entry) => entry.startsWith('200 /api/runtime/v1/events?')).length,
+    () => responses.filter((entry) => entry.startsWith('200 /api/runtime/v1/events')).length,
     CEILING,
   ).toBeGreaterThanOrEqual(2);
   await page.getByRole('button', { name: 'Generate image', exact: true }).click();
@@ -385,7 +422,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await vite.restart();
   await waitFor(`${vite.origin}${APP_ENTRY_ROUTE}`);
   await reloadEditor(page, `${vite.origin}${APP_ENTRY_ROUTE}`);
-  await expectConnectedWithDiagnostics(page, diagnostics);
+  await expectConnectedWithDiagnostics(page, diagnostics, failures, pendingFailures);
   await openSeededTimeline(page, harness);
   const retained = (await commandOutboxes(page, seed.timelineId)).find((item) => item.placementContinuations?.length);
   expect(retained).toBeTruthy();
@@ -417,7 +454,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await waitFor(`${vite.origin}${APP_ENTRY_ROUTE}`);
   const operationAfterRestart = operation.length;
   await reloadEditor(page, `${vite.origin}${APP_ENTRY_ROUTE}`);
-  await expectConnectedWithDiagnostics(page, diagnostics);
+  await expectConnectedWithDiagnostics(page, diagnostics, failures, pendingFailures);
   await openSeededTimeline(page, harness);
   await expect.poll(() => operation.slice(operationAfterRestart).some((entry) => entry.endsWith('/realm')), CEILING).toBe(true);
   const responsesAfterOpen = responses.length;
@@ -442,7 +479,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
 
   await page.unroute(COMMIT_PATH);
   await reloadEditor(page, `${vite.origin}${APP_ENTRY_ROUTE}`);
-  await expectConnectedWithDiagnostics(page, diagnostics);
+  await expectConnectedWithDiagnostics(page, diagnostics, failures, pendingFailures);
   await openSeededTimeline(page, harness);
   await canonicalImage(harness, seed, objectId!);
   const beforeUndo = operation.length;

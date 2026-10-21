@@ -23,6 +23,7 @@ import {
   statSync,
   symlinkSync,
   unlinkSync,
+  writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -69,6 +70,7 @@ const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const APP_METADATA = 'src/integrations/runtime/generated-contract-metadata.ts';
 const AGENT_METADATA = 'astrid_runtime_client/contract_metadata.py';
 const RUNNER = realpathSync(new URL(import.meta.url));
+const SAFE_HTTP_FACT = /^[A-Za-z0-9._:/-]{1,160}$/;
 
 function fail(message) {
   throw new Error(`[auto-real-proxy-main95] ${message}`);
@@ -130,6 +132,65 @@ function sourceStatus(root, label) {
   const status = git(root, 'status', '--porcelain', '--untracked-files=normal');
   if (status) fail(`${label} source is dirty:\n${status}`);
   return status;
+}
+
+function safeHttpFact(value) {
+  return typeof value === 'string' && SAFE_HTTP_FACT.test(value) ? value : undefined;
+}
+
+function safeHttpPath(value) {
+  if (typeof value !== 'string') return undefined;
+  let pathname = value;
+  try { pathname = new URL(value).pathname; } catch { pathname = value.split(/[?#]/, 1)[0]; }
+  return pathname.startsWith('/') && pathname.length <= 320 && !/[\u0000-\u001f\u007f]/.test(pathname) ? pathname : undefined;
+}
+
+export function sanitizeHttpFailureFacts(value) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 80).flatMap((candidate) => {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return [];
+    const item = candidate;
+    if (!Number.isInteger(item.status) || item.status < 400 || item.status > 599) return [];
+    const pathName = safeHttpPath(item.path ?? item.url);
+    if (!pathName) return [];
+    const fact = { method: safeHttpFact(item.method) ?? 'UNKNOWN', path: pathName, status: item.status };
+    for (const key of ['code', 'type', 'location']) {
+      const field = safeHttpFact(item[key]);
+      if (field) fact[key] = field;
+    }
+    return [fact];
+  });
+}
+
+function findFile(root, filename) {
+  if (!existsSync(root)) return undefined;
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const candidate = path.join(root, entry.name);
+    if (entry.isFile() && entry.name === filename) return candidate;
+    if (entry.isDirectory() && !entry.isSymbolicLink()) {
+      const found = findFile(candidate, filename);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
+export function recordFailureEvidence(runRoot, recordRoot, status, sourceIdentity = undefined) {
+  if (!path.isAbsolute(runRoot) || !path.isAbsolute(recordRoot)) fail('failure evidence roots must be absolute');
+  const run = realpathSync(runRoot);
+  mkdirSync(recordRoot, { recursive: true, mode: 0o700 });
+  const record = realpathSync(recordRoot);
+  if (record === run || record.startsWith(`${run}${path.sep}`)) fail('failure evidence must not be inside the disposable run root');
+  const source = findFile(path.join(run, 'browser-artifacts'), 'auto-http-failures.json');
+  let failures = [];
+  if (source) {
+    try { failures = sanitizeHttpFailureFacts(json(source, 'automatic HTTP failure evidence').httpFailures); }
+    catch { failures = []; }
+  }
+  const trace = findFile(path.join(run, 'browser-artifacts'), 'trace.zip');
+  writeFileSync(path.join(record, 'auto-http-failures.json'), JSON.stringify({ runner_status: status, failures }, null, 2) + '\n', { mode: 0o600 });
+  writeFileSync(path.join(record, 'trace-presence.json'), JSON.stringify({ present: Boolean(trace), bytes: trace ? statSync(trace).size : 0 }) + '\n', { mode: 0o600 });
+  writeFileSync(path.join(record, 'runner-result.json'), JSON.stringify({ status, source_identity: sourceIdentity, evidence_recorded_before_cleanup: true }) + '\n', { mode: 0o600 });
 }
 
 export function readRealProxyInputs(env = process.env, appRoot = process.cwd()) {
@@ -380,6 +441,10 @@ export function runRealProxyGate(env = process.env, appRoot = process.cwd()) {
   if (env.TIMELINE_AUTO_REAL_PROXY_RUN !== '1') fail('set TIMELINE_AUTO_REAL_PROXY_RUN=1 only for manager-authorized central execution');
   const input = readRealProxyInputs(env, appRoot);
   const runRoot = path.join(input.privateRoot, `real-proxy-${process.pid}`);
+  const recordRoot = env.TIMELINE_AUTO_REAL_PROXY_RECORD_DIR;
+  if (recordRoot !== undefined && (!path.isAbsolute(recordRoot) || recordRoot === runRoot || recordRoot.startsWith(`${runRoot}${path.sep}`))) {
+    fail('TIMELINE_AUTO_REAL_PROXY_RECORD_DIR must be an absolute path outside the disposable run root');
+  }
   mkdirSync(runRoot, { recursive: true });
   const before = checkRealProxySources(input);
   const childEnv = privateEnvironment(input, env, runRoot);
@@ -398,6 +463,17 @@ export function runRealProxyGate(env = process.env, appRoot = process.cwd()) {
       const after = checkRealProxySources(input);
       if (JSON.stringify(before) !== JSON.stringify(after)) fail('source, normal attribution, dependency, browser, or runner inputs changed during the gate');
     } finally {
+      if (recordRoot) {
+        try {
+          recordFailureEvidence(runRoot, recordRoot, status, {
+            app: { head: input.appSha, tree: input.appTree },
+            agent: { head: input.agentSha, tree: input.agentTree },
+            runtime: { head: input.runtimeSha, tree: input.runtimeTree },
+            runner: input.runnerSha,
+          });
+        }
+        catch (error) { console.error(`[auto-real-proxy-main95] failure evidence was not retained: ${error.message}`); }
+      }
       rmSync(runRoot, { recursive: true, force: true });
     }
   }
