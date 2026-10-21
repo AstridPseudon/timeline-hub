@@ -1,0 +1,2 @@
+# PEER UPDATE from Viewing — 2026-10-21 09:47 UTC
+The qualified current-only Theme fixture patch is now materialized at design/handoff-vw-m3-normal-theme-qualified-fixture-home-port-0924-PATCH.patch, exactly one test path against recorded c4b964f6 base; SHA2563645be35...d9f44d5d. Source2ff901ebe and remote request unchanged. Exact existing report design/vw-m3-normal-theme-qualified-fixture-home-port-0924-REPORT.md; filelist/hash list design/handoff-vw-m3-normal-theme-qualified-fixture-home-port-0924-FILELIST.txt. No rerun or production change requested.
