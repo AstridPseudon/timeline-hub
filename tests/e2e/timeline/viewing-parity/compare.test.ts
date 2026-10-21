@@ -21,19 +21,28 @@ test('planted terminal task failure fails with bounded fields and no executor me
       error: {
         type: 'BundleError', location: 'render.bundle', code: 'module_not_found',
         message: 'secret /home/user/project and raw stderr must never be shown',
+        stderr: 'secret stderr /var/lib/renderer',
+        path: '/var/lib/renderer/bundle.js',
       },
-      input_body: { token: 'secret' },
+      input_body: { token: 'secret', inputs: ['/var/lib/renderer/input.json'] },
     },
   }));
   assert.equal(diagnostic, 'Render task terminal failure: task_id=task-render-1 attempt_id=attempt-render-1 error_type=BundleError error_location=render.bundle code=module_not_found');
-  assert.doesNotMatch(diagnostic ?? '', /secret|home|stderr|token|message/);
+  assert.doesNotMatch(diagnostic ?? '', /secret|home|stderr|token|message|renderer|var|input/);
   assert.equal(formatTerminalTaskFailure(task({
-    state: 'failed', result: { error: { message: 'Module not found at /home/user/project' } },
-  })), 'Render task terminal failure: task_id=task-render-1 attempt_id=attempt-render-1 error_type=unknown error_location=unknown code=task_failed');
+    task_id: '/tmp/task', attempt_id: 'attempt\n', state: 'failed', result: {
+      error: { code: 'C:/secret', location: '/home/user/project', message: 'Module not found' },
+    },
+  })), 'Render task terminal failure: task_id=unknown attempt_id=unknown error_type=unknown error_location=unknown code=task_failed');
 });
 
 test('successful task remains on the existing completion path', () => {
   assert.equal(formatTerminalTaskFailure(task({ state: 'succeeded', result: { outputs: [] } })), null);
+});
+
+test('cancelled task fails with the bounded cancellation code', () => {
+  assert.equal(formatTerminalTaskFailure(task({ state: 'cancelled', result: { error: { message: 'cancelled by secret input' } } })),
+    'Render task terminal failure: task_id=task-render-1 attempt_id=attempt-render-1 error_type=unknown error_location=unknown code=task_cancelled');
 });
 
 test('same comparator accepts baseline then rejects an opaque one-host patch with pixel metric', () => {

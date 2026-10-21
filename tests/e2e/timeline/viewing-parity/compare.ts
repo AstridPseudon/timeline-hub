@@ -22,7 +22,7 @@ const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$/;
 const SAFE_ERROR_TYPE = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
 // Locations are logical labels only; filesystem-looking paths are refused.
 const SAFE_ERROR_LOCATION = /^[A-Za-z][A-Za-z0-9._:-]{0,127}$/;
-const SAFE_ERROR_CODE = /^[A-Za-z][A-Za-z0-9._:/-]{0,63}$/;
+const SAFE_ERROR_CODE = /^[A-Za-z][A-Za-z0-9._:-]{0,63}$/;
 
 function record(value: unknown): DiagnosticRecord | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
