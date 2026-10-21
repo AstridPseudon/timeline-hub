@@ -5,7 +5,7 @@ import { equal, freezeJson } from './clipMovePrimitives.ts';
 import type { JsonObject } from './types.ts';
 
 export type ClipScalarOwner = 'parent' | `occurrence:${string}`;
-export type ClipScalarArgs = { values: Record<string, JSON>; clear: Array<'hold' | 'asset' | 'transition'> };
+export type ClipScalarArgs = { values: Record<string, JSON>; clear: Array<'hold' | 'asset' | 'transition' | 'elementRef'> };
 export interface ClipScalarCapturePort {
   /** An omitted owner is resolved and validated by the same session that captures the edit. */
   capture(input: { clipId: string; ownerRef?: ClipScalarOwner; current: TimelineData }): JsonObject;

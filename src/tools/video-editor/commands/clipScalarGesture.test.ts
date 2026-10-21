@@ -19,6 +19,7 @@ describe('clip scalar gesture', () => {
     { values: { hold: 4 }, clear: [] },
     { values: {}, clear: ['asset'] },
     { values: {}, clear: ['transition'] },
+    { values: {}, clear: ['transition', 'elementRef'] },
     { values: {}, clear: ['hold'] },
   ])('retains exact args and explicit removal metadata through JSON: %j', (args) => {
     const { port, basis, current, submit } = setup();

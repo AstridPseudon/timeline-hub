@@ -24,6 +24,17 @@ const clip = (bundle: AuthoredBundle, ref: string): Record<string, JsonValue> =>
   if (!entity) throw new Error(`missing ${ref}`);
   return entity;
 };
+const inverseRecord = (bundle: AuthoredBundle, record: CommandRecord): AuthoredBundle => {
+  const restored = detached(bundle);
+  const state = new AuthoredState(restored);
+  for (const write of [...record.derived_writes].reverse()) {
+    state.set(write.ref, write.path, write.before);
+  }
+  for (const write of [...record.writes].reverse()) {
+    state.set(write.ref, write.path, write.before);
+  }
+  return restored;
+};
 
 describe('Agent built-in clip.set capture parity', () => {
   it('writes prototype-looking authored leaves as own data', () => {
@@ -169,6 +180,96 @@ describe('Agent built-in clip.set capture parity', () => {
     const nullable = executeClipSet(input, captureClipClear(input, ref, 'transition'));
     expect(nullable.record.writes[0].before).toEqual({ state: 'present', value: null });
     expect(clip(nullable.bundle, ref)).not.toHaveProperty('transition');
+  });
+
+  it('matches the canonical paired clear record, raw output, and inverse for both ref spellings', () => {
+    for (const field of ['elementRef', 'element_ref'] as const) {
+      const input = detached(golden.bundle);
+      const ref = 'parent/clip:f2-transition-clip';
+      const selected = { id: 'crossfade', kind: 'transition', revision: 'transition-r1' } as JsonValue;
+      const transition = {
+        type: 'crossfade', duration: 0.5, revision: 'transition-r1',
+        params: { opaque: { 'a.b': false, nested: [null, 0, ''] } }, future: [null, false, 0],
+      } as JsonValue;
+      const row = clip(input, ref);
+      row.transition = transition;
+      row[field] = detached(selected);
+      const command = captureClipSet(input, ref, { clear: ['transition', 'elementRef'] });
+      const result = executeClipSet(input, command);
+
+      expect(command.args).toEqual({ values: {}, clear: ['transition', 'elementRef'] });
+      expect(result.record.command).toEqual(command);
+      expect(result.record.writes).toEqual(field === 'elementRef' ? [
+        { ref, path: ['elementRef'], before: { state: 'present', value: selected }, after: { state: 'absent' } },
+        { ref, path: ['transition'], before: { state: 'present', value: transition }, after: { state: 'absent' } },
+      ] : [
+        { ref, path: ['elementRef'], before: { state: 'absent' }, after: { state: 'absent' } },
+        { ref, path: ['element_ref'], before: { state: 'present', value: selected }, after: { state: 'absent' } },
+        { ref, path: ['transition'], before: { state: 'present', value: transition }, after: { state: 'absent' } },
+      ]);
+      expect(clip(result.bundle, ref)).not.toHaveProperty('transition');
+      expect(clip(result.bundle, ref)).not.toHaveProperty('elementRef');
+      expect(clip(result.bundle, ref)).not.toHaveProperty('element_ref');
+      expect(inverseRecord(result.bundle, result.record)).toEqual(input);
+    }
+  });
+
+  it.each([
+    ['absent', undefined],
+    ['null', null],
+    ['empty', ''],
+    ['opaque', { opaque: { 'a.b': false }, future: [null, 0, ''] }],
+  ] as const)('preserves exact stored transition presence through paired clear: %s', (_label, value) => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const row = clip(input, ref);
+    if (value === undefined) delete row.transition;
+    else row.transition = value as JsonValue;
+    const before = detached(input);
+    const command = captureClipSet(input, ref, { clear: ['transition', 'elementRef'] });
+    const result = executeClipSet(input, command);
+    expect(result.record.writes).toEqual([
+      { ref, path: ['elementRef'], before: { state: 'absent' }, after: { state: 'absent' } },
+      { ref, path: ['transition'], before: value === undefined ? { state: 'absent' } : { state: 'present', value }, after: { state: 'absent' } },
+    ]);
+    expect(clip(result.bundle, ref)).not.toHaveProperty('transition');
+    expect(inverseRecord(result.bundle, result.record)).toEqual(before);
+  });
+
+  it.each([
+    { id: 'crossfade', kind: 'effect', revision: 'transition-r1' },
+    { id: 'crossfade', kind: 'transition', revision: 'wrong' },
+    'opaque legacy reference',
+  ] as const)('refuses a paired clear with an unsafe associated ref without mutation: %j', (selected) => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    clip(input, ref).transition = { type: 'crossfade', duration: 0.5, revision: 'transition-r1' };
+    clip(input, ref).element_ref = selected as JsonValue;
+    const before = detached(input);
+    expect(() => captureClipSet(input, ref, { clear: ['transition', 'elementRef'] })).toThrow();
+    expect(input).toEqual(before);
+  });
+
+  it('refuses an elementRef-only clear and leaves the draft untouched', () => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const before = detached(input);
+    expect(() => captureClipSet(input, ref, { clear: ['elementRef'] })).toThrow('requires transition clear');
+    expect(input).toEqual(before);
+  });
+
+  it.each(['elementRef', 'element_ref'] as const)('keeps unrelated %s on the existing transition-only reset', (field) => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const unrelated = { id: 'rocket', kind: 'effect', revision: 'r1' } as JsonValue;
+    clip(input, ref).transition = { type: 'crossfade', duration: 0.5 };
+    clip(input, ref)[field] = unrelated;
+    const result = executeClipSet(input, captureClipClear(input, ref, 'transition'));
+    expect(clip(result.bundle, ref)[field]).toEqual(unrelated);
+    expect(result.record.writes).toEqual([{
+      ref, path: ['transition'], before: { state: 'present', value: { type: 'crossfade', duration: 0.5 } }, after: { state: 'absent' },
+    }]);
+    expect(inverseRecord(result.bundle, result.record)).toEqual(input);
   });
 
   it('refuses alternate media selectors, malformed timing, and successor-style hold intent', () => {
