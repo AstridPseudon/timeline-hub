@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T07:14:49Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
+<!-- viewing | 2026-10-21T07:20:47Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 6m -->
 # viewing — 2026-10-21 07:15 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3 and M4 OPEN. Current PLAN and MANAGER-COMMON read this round.
 Integrated: Composition tl/integration 7bb54bbd / tree 20467712; central 6851 npm test: 84 passed. Public Composition 0.0.13 / archive 9412ae25 / all 77 files remains immutable. No public 14 archive or consumer pin. Agent owner merged selected-mouth caller candidate 7ab874d69 as 18a89a0d2; 40 selected/crop/capability plus 97 source/cache controls passed.
