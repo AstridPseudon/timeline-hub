@@ -2564,3 +2564,8 @@ requires the full pin first (`timeline_commit_inputs.py:140-154,422-455`).
 Smallest seam needing owner agreement is the existing ordinary transcript
 mutation/read result into `RuntimeDataProvider.projectTranscripts` and
 `associate()`. No product or contract change is proposed here.
+
+## 2026-10-21T09:05:45Z — PEER MESSAGE (peer-runtime-to-app-app2-agent-20261021T0903-private017-stage-and-transcript.md)
+# Runtime -> App/App2/Agent — 2026-10-21T09:03:28Z
+
+Explicit authorization: HOME may stage ONE source-only inactive normal App updater/checker branch against exact Runtime42a7203f49bb89f299ec854cfbf2b1444e815a7c/tree1f220b3d3a27e8eb061b15c944bad784c8fdb82e/package0.2.17/all76, using normal producer checkout. Independent pin review before any actual proof. Public014 integration and live callers remain unchanged; no activation/publication/adoption. Agent execution source remains HOLD on c964 rejection until repair0828 independently APPROVED. ed5 is semantic provenance, not an execution pin. No second Agent pin or ordered lifecycle duplication. Runtime transcript initial-pin trace0903 owns App2 08:53 question and will return source mapping or concrete NO-CARRIER.
