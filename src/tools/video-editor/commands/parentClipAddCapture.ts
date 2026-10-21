@@ -62,6 +62,13 @@ function mediaRead(ctx: MoveRecording, ref: string, value: AgentState): void {
   if (!ctx.command.reads!.some((prior) => equal(prior, read))) ctx.command.reads!.push(read);
 }
 
+export function readParentMediaAsset(ctx: MoveRecording, alias: string): void {
+  const registry = ctx.state.entity('parent/registry')!;
+  const assets = object(registry.assets) ? registry.assets : {};
+  mediaRead(ctx, `parent/asset:${alias}`, has(assets, alias)
+    ? { state: 'present', value: copy(assets[alias]) } : { state: 'absent' });
+}
+
 function mediaTagged(container: JSON | undefined, key: string): AgentState {
   if (!object(container) || !has(container, key)) return { state: 'absent' };
   const value = container[key];
@@ -104,8 +111,8 @@ function mediaRows(bundle: AuthoredBundle, kind: 'track' | 'clip'): JSON[] {
   return config.tracks;
 }
 
-function mediaSelection(ctx: MoveRecording, key: 'collection.tracks' | 'collection.occurrences' | 'collection.clips'): string[] {
-  const kind = key === 'collection.tracks' ? 'track' : key === 'collection.clips' ? 'clip' : 'occurrence';
+export function mediaSelection(ctx: MoveRecording, key: 'collection.tracks' | 'collection.occurrences' | 'collection.clips' | 'collection.clips.after', after?: string): string[] {
+  const kind = key === 'collection.tracks' ? 'track' : key.startsWith('collection.clips') ? 'clip' : 'occurrence';
   mediaRead(ctx, `parent/collection:${kind}`, { state: 'present', value: mediaCollectionShape(ctx.state.bundle, kind) });
   const rows = kind === 'occurrence' ? ctx.state.bundle.placements : mediaRows(ctx.state.bundle, kind);
   const ids = rows.map((row) => object(row) ? row[kind === 'occurrence' ? 'occurrence_id' : 'id'] : undefined);
@@ -113,8 +120,9 @@ function mediaSelection(ctx: MoveRecording, key: 'collection.tracks' | 'collecti
     throw new ClipMoveError('missing or ambiguous collection identity', 'identity_conflict');
   }
   const members = ids.map((id) => kind === 'occurrence' ? `occurrence:${id}` : `parent/${kind}:${id}`);
-  ctx.command.selections!.push({ key, query_version: 1, owner: 'parent', members: [...members],
-    order: [...members], boundaries: [...members], policy: 'guard-membership' });
+  ctx.command.selections!.push({ key, query_version: 1, owner: 'parent', members: after ? [after] : [...members],
+    order: [...members], boundaries: after ? members.slice(members.indexOf(after), members.indexOf(after) + 2) : [...members],
+    policy: 'guard-membership' });
   return members;
 }
 
@@ -245,14 +253,16 @@ function swapRegistry(ctx: MoveRecording, alias: string, pin: MediaSelection, ki
   ctx.dependency(create ? 'media.new' : 'media.old', 'media', pin);
 }
 
-function validateParentMediaCommand(command: EditCommand): { row: Row; media: MediaSelection } {
+function validateParentMediaCommand(command: EditCommand, afterAnchor = false): { row: Row; media: MediaSelection } {
   const fields = ['schema_version', 'op', 'version', 'select', 'args', 'intent', 'rationale', 'group_id', ...MEDIA_CLAIMS];
   if (Object.keys(command).some((key) => !fields.includes(key)) ||
     (has(command, 'rationale') && typeof command.rationale !== 'string') ||
     (has(command, 'group_id') && (typeof command.group_id !== 'string' || !command.group_id))) {
     throw new ClipMoveError('clip.add-media requires the closed EditCommand envelope');
   }
-  if (command.schema_version !== 1 || command.op !== 'clip.add-media' || command.version !== '1' || command.select !== 'parent' ||
+  if (command.schema_version !== 1 || command.op !== 'clip.add-media' || command.version !== '1' || (afterAnchor
+      ? typeof command.select !== 'string' || !/^parent\/clip:(?!.*::)[^/]+$/.test(command.select)
+      : command.select !== 'parent') ||
     !object(command.args) || !equal(Object.keys(command.args).sort(), ['media', 'row'].sort()) || !object(command.args.row)) {
     throw new ClipMoveError('clip.add-media requires parent ownership and row/media args');
   }
@@ -263,6 +273,8 @@ function validateParentMediaCommand(command: EditCommand): { row: Row; media: Me
     typeof row.asset !== 'string' || !identity(row.asset)) {
     throw new ClipMoveError('clip.add-media requires stable raw clip and asset identities');
   }
+  // Agent 3b3208c43's birth schema requires hold even for raw-window rows.
+  if (afterAnchor) mediaNumber(row.hold, 'clip.hold', true);
   return { row, media: command.args.media };
 }
 
@@ -327,9 +339,23 @@ function validateMediaRow(
   ctx.bind('media.track', trackRef);
 }
 
+function compileParentClipMirror(ctx: MoveRecording): void {
+  const parent = ctx.state.bundle.parent;
+  const config = ctx.state.config('parent');
+  if (Array.isArray(parent.clips) && Array.isArray(config.clips)) {
+    const before = ctx.state.get('parent', ['config', 'clips']);
+    const after: AgentState = { state: 'present', value: copy(parent.clips) };
+    if (!equal(before, after)) {
+      ctx.record.derived_writes.push({ ref: 'parent', path: ['config', 'clips'], before, after, cause: 0 });
+      ctx.state.set('parent', ['config', 'clips'], after);
+    }
+  }
+}
+
 /** Local authored execution of Agent clip.add-media; Runtime remains the authority for media selection. */
 export function executeParentClipAddMedia(
   bundle: AuthoredBundle, command: EditCommand, inputs: readonly VerifiedMedia[],
+  prepareAfterAnchor?: (ctx: MoveRecording) => string[],
 ) {
   assertFiniteJson(bundle);
   assertFiniteJson(command);
@@ -337,7 +363,7 @@ export function executeParentClipAddMedia(
   if (!Array.isArray(inputs) || inputs.some((input) => !object(input))) {
     throw new ClipMoveError('media capture requires detached verified inputs');
   }
-  const { row, media } = validateParentMediaCommand(command);
+  const { row, media } = validateParentMediaCommand(command, prepareAfterAnchor !== undefined);
   const { value, kind } = verifiedMedia(media, inputs);
   const ctx = new MoveRecording(bundle, { ...copy(command), intent: {} });
   ctx.command.intent = {};
@@ -347,7 +373,7 @@ export function executeParentClipAddMedia(
     throw new ClipMoveError('parent source_window is unsupported', 'unsupported_map');
   }
   ctx.bind('media.owner', 'parent');
-  validateMediaRow(ctx, row, kind, [value]);
+  validateMediaRow(ctx, row, kind, [value], prepareAfterAnchor !== undefined);
   for (const occurrence of mediaSelection(ctx, 'collection.occurrences')) {
     for (const path of [['placement', 'track'], ['track']]) {
       if (ctx.read(occurrence, path) === row.track) {
@@ -356,7 +382,9 @@ export function executeParentClipAddMedia(
     }
   }
   mediaRegistry(ctx, row.asset as string, media, kind);
-  const members = mediaSelection(ctx, 'collection.clips');
+  const ordered = prepareAfterAnchor?.(ctx);
+  if (ordered) compileParentClipMirror(ctx);
+  const members = ordered ?? mediaSelection(ctx, 'collection.clips');
   const ref = `parent/clip:${row.id}`;
   if (members.includes(ref)) throw new ClipMoveError('created identity is occupied', 'identity_collision');
   ctx.read(ref, []);
@@ -371,15 +399,9 @@ export function executeParentClipAddMedia(
   const rows = Array.isArray(direct) && (direct.length > 0 || !Array.isArray(mirror) || mirror.length === 0)
     ? direct : mirror;
   if (!Array.isArray(rows)) throw new ClipMoveError('structural edit requires an authored entity collection', 'identity_conflict');
-  rows.push(copy(row));
-  if (Array.isArray(direct) && Array.isArray(mirror)) {
-    const before = ctx.state.get('parent', ['config', 'clips']);
-    const after: AgentState = { state: 'present', value: copy(direct) };
-    if (!equal(before, after)) {
-      ctx.record.derived_writes.push({ ref: 'parent', path: ['config', 'clips'], before, after, cause: 0 });
-      ctx.state.set('parent', ['config', 'clips'], after);
-    }
-  }
+  if (ordered) rows.splice(ordered.indexOf(command.select!) + 1, 0, copy(row));
+  else rows.push(copy(row));
+  if (!ordered) compileParentClipMirror(ctx);
   ctx.compile();
   for (const key of MEDIA_CLAIMS) {
     if (has(command, key) && !equal(command[key], ctx.command[key])) {
