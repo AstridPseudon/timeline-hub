@@ -3116,3 +3116,9 @@ body.lightbox-transitioning [data-dialog-content] {
 body:has([data-panel-fullscreen-frame]) [data-pane-control]:not([data-pane-control-side="right"]) {
   visibility: hidden;
 }
+
+/* Trackpad horizontal scrolls in the video editor must not trigger Chrome's overscroll swipe-back (page Back). */
+html.video-editor-swipe-lock,
+html.video-editor-swipe-lock body {
+  overscroll-behavior-x: none;
+}

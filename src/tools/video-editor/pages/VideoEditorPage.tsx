@@ -87,6 +87,9 @@ type ProviderSelection = {
 export const LAST_OPENED_PROJECT_STORAGE_KEY =
   "astrid:lastOpenedLocalProjectSlug";
 
+/** Root class that turns off Chrome's horizontal overscroll swipe-back while the editor is mounted (see index.css). */
+export const VIDEO_EDITOR_SWIPE_LOCK_CLASS = "video-editor-swipe-lock";
+
 type EditorProject = {
   slug: string;
   name: string;
@@ -200,6 +203,11 @@ export default function VideoEditorPage() {
   const { targetPath } = useHomeNavigation();
   const globalHeaderSlot = useOptionalGlobalHeaderSlot();
   const hasGlobalHeader = globalHeaderSlot.hasProvider;
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add(VIDEO_EDITOR_SWIPE_LOCK_CLASS);
+    return () => root.classList.remove(VIDEO_EDITOR_SWIPE_LOCK_CLASS);
+  }, []);
 
   const projectId = searchParams.get("project")?.trim() || null;
   const timelineId = searchParams.get("timeline")?.trim() || null;

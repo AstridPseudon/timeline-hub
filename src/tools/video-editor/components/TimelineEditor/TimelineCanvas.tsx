@@ -1290,7 +1290,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
         ref={setScrollContainer}
         data-timeline-row-layout="managed"
         data-device-class={deviceClass}
-        className={`${EDIT_AREA_CLASS} timeline-scroll relative min-h-0 flex-1 overflow-auto overscroll-contain bg-background/70`}
+        className={`${EDIT_AREA_CLASS} timeline-scroll relative min-h-0 flex-1 overflow-auto overscroll-contain overscroll-x-contain bg-background/70`}
         {...touchGestureModeAttrs(touchGestureMode)}
         style={{ '--label-width': `${startLeft}px` } as React.CSSProperties}
         onPointerDown={onEditAreaPointerDown}

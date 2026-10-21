@@ -21,6 +21,7 @@ import {
 } from "vitest";
 import VideoEditorPage, {
   LAST_OPENED_PROJECT_STORAGE_KEY,
+  VIDEO_EDITOR_SWIPE_LOCK_CLASS,
 } from "@/tools/video-editor/pages/VideoEditorPage.tsx";
 import {
   AstridRuntimeClient,
@@ -1205,6 +1206,19 @@ describe("VideoEditorPage", () => {
       expect(state.runtimeCtor).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: "runtime-p1" }),
     );
+  });
+
+  it("locks horizontal overscroll swipe-back on the root only while the editor is mounted", async () => {
+    state.discovery.projects = [
+      { slug: "fresh-project", name: "Fresh project", project_id: "runtime-p1" },
+    ];
+    const view = renderPage(
+      "/tools/video-editor?project=runtime-p1&timeline=11111111-1111-1111-1111-111111111111",
+    );
+    await screen.findByTestId("video-editor-provider");
+    expect(document.documentElement.classList.contains(VIDEO_EDITOR_SWIPE_LOCK_CLASS)).toBe(true);
+    view.unmount();
+    expect(document.documentElement.classList.contains(VIDEO_EDITOR_SWIPE_LOCK_CLASS)).toBe(false);
   });
 
   it('automatically clears a mounted failure only after a fresh authenticated workspace probe, retaining the editor and draft scope', async () => {
