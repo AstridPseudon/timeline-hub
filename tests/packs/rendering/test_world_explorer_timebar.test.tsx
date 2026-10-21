@@ -171,38 +171,21 @@ describe('TimeBar', () => {
     expect(view.onSeek).not.toHaveBeenCalled();
   });
 
-  it('with no markers the bar is 18 px tall and has no label lane', () => {
-    const view = bar();
-    const root = view.container.querySelector('[data-time-bar]') as HTMLElement;
-    expect(root.className).toContain('h-[18px]');
-    expect(root.className).not.toContain('h-11');
-    expect(view.getByRole('slider', { name: 'Travel position' }).className).toContain('top-0');
+  it('the bar is 18 px tall with or without markers: there is no label lane', () => {
+    for (const markers of [[], [{ key: 'dawn', from: 2, to: 2, title: 'Dawn' }]]) {
+      const view = bar({ markers });
+      const root = view.container.querySelector('[data-time-bar]') as HTMLElement;
+      expect(root.className).toContain('h-[18px]');
+      expect(root.className).not.toContain('h-11');
+      view.unmount();
+    }
   });
 
-  it('with markers the bar keeps the 26 px label lane', () => {
-    const view = bar({ markers: [{ key: 'dawn', from: 2, to: 2, title: 'Dawn' }] });
-    const root = view.container.querySelector('[data-time-bar]') as HTMLElement;
-    expect(root.className).toContain('h-11');
-    expect(view.getByRole('slider', { name: 'Travel position' }).className).toContain('top-[26px]');
-  });
-
-  it('a label is drawn only when its whole title fits its room, and never truncated', () => {
-    // 5 px a character. At 320 px: Dawn (20 px) has 26 px before the next mark, Shooting star (65 px) has 26 px, Late has the rest.
-    const view = bar({
-      markers: [
-        { key: 'dawn', from: 0, to: 0, title: 'Dawn' },
-        { key: 'star', from: 1, to: 1, title: 'Shooting star' },
-        { key: 'late', from: 2, to: 2, title: 'Late' },
-      ],
-    });
-    const labelOf = (name: string) => view.getByRole('button', { name }).querySelector('span') as HTMLElement;
-    expect(labelOf('Dawn').dataset.label).toBe('shown');
-    expect(labelOf('Shooting star').dataset.label).toBe('hover');
-    expect(labelOf('Shooting star').className).toContain('hidden');
-    expect(labelOf('Late').dataset.label).toBe('shown');
-    for (const span of view.container.querySelectorAll('[data-event-marker] > span')) {
-      expect(span.textContent).not.toContain('…');
-      expect(span.className).not.toContain('truncate');
+  it('a marker name is a tooltip shown only on hover or focus, never a label on the bar', () => {
+    const view = bar({ markers: [{ key: 'star', from: 1, to: 1, title: 'Shooting star' }, { key: 'band', from: 2, to: 3, title: 'Late' }] });
+    for (const tip of view.container.querySelectorAll('[role="tooltip"]')) {
+      expect(tip.className).toContain('hidden');
+      expect(tip.className).toContain('group-hover:block');
     }
   });
 

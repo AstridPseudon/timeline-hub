@@ -767,8 +767,8 @@ describe('World Explorer free roam', () => {
 
     await waitFor(() => expect(view.getByRole('group', { name: 'Shot travel' })).toBeTruthy());
     expect(within(view.getByRole('list', { name: 'Shots' })).getByRole('button', { name: /^A,/ })).toHaveAttribute('aria-current', 'true');
-    expect(view.getByText(/Using 0:01–0:04/)).toBeTruthy();
-    expect(view.getByText('Editing clip on V1 at 0:02')).toBeTruthy();
+    expect(view.getByText(/0:01–0:04/)).toBeTruthy();
+    expect(view.getByRole('button', { name: 'Update clip' })).toBeTruthy();
   });
 
   it('the header shows the position among all worlds and Next steps through them', async () => {
@@ -930,7 +930,7 @@ describe('World Explorer free roam', () => {
 
     press(viewer, 'ArrowRight');
     press(viewer, 'o');
-    expect(view.getByText(/Using 0:01–0:02/)).toBeTruthy();
+    expect(view.getByText(/0:01–0:02/)).toBeTruthy();
   });
 
   it('in Shots mode, i starts the stretch at the travel position', async () => {
@@ -944,7 +944,7 @@ describe('World Explorer free roam', () => {
 
     press(viewer, 'ArrowRight');
     press(viewer, 'i');
-    expect(view.getByText(/Using 0:02–0:04/)).toBeTruthy();
+    expect(view.getByText(/0:02–0:04/)).toBeTruthy();
   });
 
   it('the hint survives a single drag of more than 12 px, and only fades once the user has also pressed W', async () => {
@@ -1016,19 +1016,14 @@ describe('World Explorer free roam', () => {
     expect(document.activeElement).toBe(viewer);
   });
 
-  it('offers a pick-a-shot row in Explore that switches to Shots, and hides it there', async () => {
+  it('under the Explore bar there is only the events, no pick-a-shot row', async () => {
     const harness = makeHarness({ clips: [liveClip()] });
     const view = mount(harness);
     await openReady(EXPLORE, { events: EVENTS, shots: CAMERAS });
-
-    const pick = view.getByRole('button', { name: 'pick a shot →' });
-    expect(pick.parentElement).toHaveTextContent('To add this world to your video, pick a shot →');
-    fireEvent.click(pick);
-
-    expect(view.getByRole('button', { name: 'Shots' })).toHaveAttribute('aria-pressed', 'true');
-    expect(view.getByRole('group', { name: 'Shot travel' })).toBeTruthy();
     expect(view.queryByRole('button', { name: 'pick a shot →' })).toBeNull();
+    expect(view.getByRole('group', { name: 'Events' })).toBeTruthy();
   });
+
 });
 
 describe('World Explorer layout', () => {

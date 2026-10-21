@@ -1322,6 +1322,11 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const pauseIcon = (
     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4.2" height="15" rx="1" /><rect x="13.8" y="4.5" width="4.2" height="15" rx="1" /></svg>
   );
+  // The event the playhead is in or at, named beside the clock.
+  const nowEvents: { name: string; from: number; to: number }[] = mode === 'explore'
+    ? events.map((event) => ({ name: event.name, from: event.start, to: event.end ?? event.start }))
+    : shotEvents.map(({ event, from, to }) => ({ name: event.name, from, to: event.end === undefined ? from : to }));
+  const nowEvent = selected ? nowEvents.find((event) => barTime >= event.from - 0.25 && barTime <= event.to + 0.25) : undefined;
   const keyRows = mode === 'explore' ? KEY_MAP : SHOT_KEY_MAP;
   const overlayBar = (
     <div
@@ -1340,8 +1345,16 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         {playingNow ? pauseIcon : playIcon}
       </button>
       <span className="min-w-0 truncate text-[11px] tabular-nums" aria-label="Time">
-        {clockText(barTime)} / {clockText(barEnd)}
+        {clockText(barTime)} / {clockText(barEnd)}{nowEvent ? ` · ${nowEvent.name}` : ''}
       </span>
+      {mode === 'shots' && selected && trimmed ? (
+        <span className="flex shrink-0 items-center gap-0.5 text-[11px] tabular-nums" style={{ color: 'rgba(255, 255, 255, 0.72)' }} title={`Using ${rangeClock(stretch.from)}–${rangeClock(stretch.to)} of this shot`}>
+          {rangeClock(stretch.from)}–{rangeClock(stretch.to)}
+          <button type="button" aria-label="Reset" title="Back to the whole shot" className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={resetRange}>
+            <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </span>
+      ) : null}
       <span className="flex-1" />
       {mode === 'explore' ? (
         <button
@@ -1399,43 +1412,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       ) : null}
     </div>
   );
-  const exploreExtras = (
-    <>
-      {!wide && events.length ? eventButtons : null}
-      {ready && selected ? (
-        <p className="truncate text-[11px] text-muted-foreground">To add this world to your video, <button type="button" className="underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm" onClick={() => switchMode('shots')}>pick a shot →</button></p>
-      ) : null}
-    </>
-  );
-  const shotDetails = (
-    <>
-      {selected && trimmed ? (
-        <p className="flex items-center gap-2 text-[11px] tabular-nums text-muted-foreground">
-          <span className="min-w-0 truncate">Using {rangeClock(stretch.from)}–{rangeClock(stretch.to)}</span>
-          <button type="button" className="shrink-0 rounded-sm text-foreground underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={resetRange}>Reset</button>
-        </p>
-      ) : null}
-      {followedUse ? (
-        <div className="flex items-center gap-2">
-          <p className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">Editing clip on {followedUse.track} at {clockText(followedUse.at)}</p>
-          <button
-            type="button"
-            className={`${button} shrink-0 bg-primary/10 text-primary`}
-            disabled={!followedDiffers || busy}
-            title={followedDiffers ? 'Write this range back to the clip' : 'The clip already matches'}
-            onClick={() => { void updateClip(); }}
-          >
-            Update clip
-          </button>
-        </div>
-      ) : addReason && liveScene && !busy ? (
-        <p className="text-[11px] text-muted-foreground">{addReason}</p>
-      ) : (selected?.uses.length ?? 0) > 0 ? (
-        // The "Editing clip" row comes and goes as shots are picked; keep its place so the gallery below never jumps.
-        <p className="flex min-h-10 items-center text-[11px] text-muted-foreground sm:min-h-8">Select a clip on the timeline to edit its range.</p>
-      ) : null}
-    </>
-  );
+  // Under the bar sits only the events grid (Explore, docked) or the gallery (Shots): nothing here appears, disappears or is reserved.
+  const exploreExtras = !wide && events.length ? eventButtons : null;
   const travelGroupProps = { role: 'group', 'aria-label': 'Shot travel', tabIndex: 0, onKeyDown: onTravelKeyDown } as const;
   const travelGroupClass = 'flex shrink-0 flex-col gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   const exploreBar = (
@@ -1459,7 +1437,6 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       valueText={clockText(shownTime, 1)}
       disabled={!selected}
       markers={shotMarkers}
-      reserveLabels={events.length > 0}
       uses={(selected?.uses ?? []).map((use) => ({ key: use.clipId, from: use.from, to: use.to, title: `On ${use.track} at ${clockText(use.at)}` }))}
       range={selected ? { from: stretch.from, to: stretch.to } : undefined}
       onSeek={seekTravel}
@@ -1619,19 +1596,49 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
               </span>
             ) : null}
             {mode === 'shots' && selected ? (
-              <button
-                type="button"
-                data-viewer-control
-                data-refocus
-                title={addReason ?? 'Add the part set on the bar to the video at the playhead'}
-                disabled={Boolean(addReason)}
-                className={`absolute right-2 top-2 flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 ${overlayFade}`}
-                style={PILL_STYLE}
-                onClick={() => { void addToVideo(); }}
-              >
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-                {addLabel}
-              </button>
+              followedUse ? (
+                <span
+                  data-viewer-control
+                  data-refocus
+                  className={`absolute right-2 top-2 flex h-7 items-center rounded-full pl-1 pr-0.5 text-[11px] ${overlayFade}`}
+                  style={PILL_STYLE}
+                >
+                  <button
+                    type="button"
+                    aria-label="Update clip"
+                    title={followedDiffers ? `Write this range back to the clip on ${followedUse.track} at ${clockText(followedUse.at)}` : 'The clip already matches'}
+                    disabled={!followedDiffers || busy}
+                    className="flex h-6 items-center gap-1.5 rounded-full px-2 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                    onClick={() => { void updateClip(); }}
+                  >
+                    Update clip
+                    <span className="tabular-nums opacity-70">{followedUse.track} {clockText(followedUse.at)}</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Stop editing this clip"
+                    title="Stop editing this clip"
+                    className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => setFollowedClipId(null)}
+                  >
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  data-viewer-control
+                  data-refocus
+                  title={addReason ?? 'Add the part set on the bar to the video at the playhead'}
+                  disabled={Boolean(addReason)}
+                  className={`absolute right-2 top-2 flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 ${overlayFade}`}
+                  style={PILL_STYLE}
+                  onClick={() => { void addToVideo(); }}
+                >
+                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                  {addLabel}
+                </button>
+              )
             ) : null}
             {showEmpty ? null : overlayBar}
           </div>
@@ -1640,12 +1647,10 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         {showEmpty ? null : mode === 'explore' ? (
           <div className="-mt-2 flex shrink-0 flex-col gap-2" data-refocus style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}>
             {exploreBar}
-            {wide ? exploreExtras : null}
           </div>
         ) : (
           <div {...travelGroupProps} className={`${travelGroupClass} -mt-2`} style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}>
             {shotBar}
-            {wide ? shotDetails : null}
           </div>
         )}
         </div>
@@ -1656,12 +1661,10 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
           >
             {showEmpty ? null : mode === 'explore' ? (
-              <div className="flex flex-col gap-2" data-refocus>{exploreExtras}</div>
+              exploreExtras
+
             ) : (
-              <>
-                <div className="flex flex-col gap-2" onKeyDown={onTravelKeyDown}>{shotDetails}</div>
-                {gallery}
-              </>
+              gallery
             )}
           </div>
         )}

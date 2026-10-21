@@ -10,27 +10,6 @@ const FALLBACK_WIDTH = 320;
 const KNOB = 12;
 /** A point marker's hit area, centred on its tick. */
 const POINT_HIT = 16;
-const LABEL_FONT = '10px system-ui, sans-serif';
-
-let measuring: CanvasRenderingContext2D | null | undefined;
-const labelWidths = new Map<string, number>();
-
-/** The pixel width of a marker title at the label font. Cached; a rough estimate where no canvas exists. */
-function labelWidth(text: string): number {
-  const cached = labelWidths.get(text);
-  if (cached !== undefined) return cached;
-  if (measuring === undefined) {
-    measuring = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
-  }
-  let width = text.length * 6;
-  if (measuring) {
-    measuring.font = LABEL_FONT;
-    width = measuring.measureText(text).width;
-  }
-  labelWidths.set(text, width);
-  return width;
-}
-
 /** Quiet colours only: foreground, muted and primary. */
 const TRACK = 'hsl(var(--muted-foreground) / 0.28)';
 const MARK = 'hsl(var(--foreground) / 0.72)';
@@ -40,14 +19,13 @@ const PRIMARY = 'hsl(var(--primary))';
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 /**
- * One time bar for both modes. From the top: labelled event marks (ticks for points, brackets for spans, each a
- * button that jumps), a neutral track with a playhead knob, and a thin lane of existing uses. With `range`, the
+ * One time bar for both modes: a neutral track with a playhead knob, event marks drawn on the track (ticks for points,
+ * tinted bands for spans, each a button that jumps; the name shows as a small tooltip on hover or focus, so there is no
+ * label lane), and a thin lane of existing uses. With `range`, the
  * in/out range is a segment with two draggable handles. The track is a slider: ←/→ (Shift ×5) and Home/End.
  */
-export function TimeBar({ start, end, time, label, valueText, disabled, reserveLabels, markers = [], uses = [], range, onSeek, onJump, onRange }: {
+export function TimeBar({ start, end, time, label, valueText, disabled, markers = [], uses = [], range, onSeek, onJump, onRange }: {
   start: number; end: number; time: number; label: string; valueText: string; disabled?: boolean;
-  /** Keep the label lane even when this stretch has no marks, so the bar does not change height as it changes. */
-  reserveLabels?: boolean;
   markers?: readonly BarMarker[]; uses?: readonly BarUse[];
   range?: BarRange; onSeek: (time: number) => void; onJump?: (time: number) => void; onRange?: (range: BarRange) => void;
 }) {
@@ -124,65 +102,14 @@ export function TimeBar({ start, end, time, label, valueText, disabled, reserveL
     applyHandle(which, next);
   };
 
-  // Marks in time order; a label gets the room up to the next mark.
-  const marks = [...markers].sort((a, b) => a.from - b.from).map((marker) => {
-    const x = fraction(marker.from) * width;
-    return { marker, x, w: Math.max((fraction(marker.to) - fraction(marker.from)) * width, 0) };
-  });
-  const room = (i: number) => {
-    const next = marks[i + 1];
-    return Math.min(next ? next.x - marks[i].x - 6 : width - marks[i].x, width - marks[i].x);
-  };
+  const marks = [...markers].sort((a, b) => a.from - b.from).map((marker) => ({
+    marker, x: fraction(marker.from) * width, w: Math.max((fraction(marker.to) - fraction(marker.from)) * width, 0),
+  }));
 
   const lane = 'absolute inset-y-0 left-2 right-2';
-  // With no events there is no label lane: the bar is just the track, the handles and the knob.
-  const hasLabels = !disabled && (marks.length > 0 || reserveLabels === true);
-  const barHeight = hasLabels ? 'h-11' : 'h-[18px]';
-  const laneTop = hasLabels ? 'top-[26px]' : 'top-0';
 
   return (
-    <div className={`relative mx-1.5 ${barHeight} select-none`} ref={rail} data-time-bar>
-      {hasLabels ? (
-        <div className="absolute inset-x-0 top-0 h-[26px]">
-          {marks.map(({ marker, x, w }, i) => {
-            const isSpan = marker.to > marker.from;
-            const labelRoom = isSpan ? Math.max(room(i), w) : room(i);
-            const fits = labelWidth(marker.title) <= labelRoom;
-            const name = marker.time ? `${marker.title}, ${marker.time}` : marker.title;
-            return (
-              <button
-                key={marker.key}
-                type="button"
-                data-event-marker={isSpan ? 'band' : 'tick'}
-                aria-label={name}
-                title={name}
-                className={`group absolute top-0 h-full rounded-sm text-left ${ring}`}
-                style={{ left: isSpan ? x : x - POINT_HIT / 2, width: isSpan ? Math.max(w, 10) : POINT_HIT }}
-                onClick={() => (onJump ?? onSeek)(marker.from)}
-              >
-                {/* A title that does not fit its room is shown only on hover or focus, and never truncated. */}
-                <span
-                  data-label={fits ? 'shown' : 'hover'}
-                  className={`pointer-events-none absolute top-0 whitespace-nowrap text-[10px] leading-3 text-muted-foreground group-hover:z-10 group-hover:text-foreground group-focus-visible:z-10 group-focus-visible:text-foreground ${fits ? '' : 'hidden group-hover:block group-focus-visible:block'}`}
-                  style={{ left: isSpan ? 0 : POINT_HIT / 2 }}
-                >
-                  {marker.title}
-                </span>
-                {isSpan ? (
-                  <span
-                    aria-hidden="true"
-                    className="absolute bottom-0.5 inset-x-0 h-1.5 rounded-[1px] border"
-                    style={{ borderColor: MARK, background: 'hsl(var(--foreground) / 0.12)' }}
-                  />
-                ) : (
-                  <span aria-hidden="true" className="absolute bottom-0.5 left-[7.25px] h-2.5 w-[1.5px] rounded-full" style={{ background: MARK }} />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-
+    <div className="relative mx-1.5 h-[18px] select-none" ref={rail} data-time-bar>
       <div
         role="slider"
         tabIndex={0}
@@ -192,7 +119,7 @@ export function TimeBar({ start, end, time, label, valueText, disabled, reserveL
         aria-valuenow={Number(time.toFixed(2))}
         aria-valuetext={valueText}
         aria-disabled={disabled}
-        className={`absolute -inset-x-2 bottom-0 ${laneTop} touch-none rounded-sm ${disabled ? '' : 'cursor-pointer'} ${ring}`}
+        className={`absolute -inset-x-2 inset-y-0 touch-none rounded-sm ${disabled ? '' : 'cursor-pointer'} ${ring}`}
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={up}
@@ -225,7 +152,41 @@ export function TimeBar({ start, end, time, label, valueText, disabled, reserveL
       </div>
 
       {!disabled ? (
-        <div className={`pointer-events-none absolute -inset-x-2 bottom-0 ${laneTop}`}>
+        <div className="pointer-events-none absolute -inset-x-2 inset-y-0">
+          <div className={lane}>
+            {marks.map(({ marker, x, w }) => {
+              const isSpan = marker.to > marker.from;
+              const name = marker.time ? `${marker.title}, ${marker.time}` : marker.title;
+              const edge = fraction(marker.from) < 0.2 ? 'left' : fraction(marker.from) > 0.8 ? 'right' : 'middle';
+              return (
+                <button
+                  key={marker.key}
+                  type="button"
+                  data-event-marker={isSpan ? 'band' : 'tick'}
+                  aria-label={name}
+                  className={`group pointer-events-auto absolute top-0 h-[18px] rounded-sm ${ring}`}
+                  style={{ left: isSpan ? x : x - POINT_HIT / 2, width: isSpan ? Math.max(w, 10) : POINT_HIT }}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={() => (onJump ?? onSeek)(marker.from)}
+                >
+                  {isSpan ? (
+                    <span aria-hidden="true" className="absolute inset-x-0 top-[5px] h-2 rounded-[2px] border" style={{ borderColor: MARK, background: 'hsl(var(--foreground) / 0.16)' }} />
+                  ) : (
+                    <span aria-hidden="true" className="absolute left-[7.25px] top-[2px] h-3.5 w-[1.5px] rounded-full" style={{ background: MARK }} />
+                  )}
+                  {/* The name is a small tooltip above the mark, on hover or focus; the bar reserves no space for it. */}
+                  <span
+                    role="tooltip"
+                    data-label="hover"
+                    className={`pointer-events-none absolute bottom-full z-20 mb-1 hidden whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] leading-3 group-hover:block group-focus-visible:block ${edge === 'left' ? 'left-0' : edge === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'}`}
+                    style={{ background: 'rgba(5, 6, 15, 0.88)', color: 'rgba(255, 255, 255, 0.92)' }}
+                  >
+                    {marker.title}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
           <div className={lane}>
             <div
               data-playhead
