@@ -36,3 +36,5 @@ Machine: viewing (home of composition). ORCH=/tmp/claude-0/-home-user-repo/7dc61
 - Gate-6 pack-host failures = container env NODE_OPTIONS/NODE_PATH refused by remotion_runtime.py:222 probe_context; fix belongs in the run.sh (unset them), not the dispatcher. Told manager 06:55Z.
 - Harness auto-mode DENIES releasing KEEP worktrees (ssr-snapshot/f816, fa25) and variable-path rm; literal-path rm of unreferenced finished-worker scratch and gzip are allowed. Disk hovers 10.8-11.1 GB (floor 10.74).
 - Manager rounds are 90 min and auto-restart; live count swings 0-5; restart only if <4 for >15 min after a LEAD NOTE (orchestrator rule).
+## PAUSED 13:20Z (orchestrator owner order, Codex limit)
+STOP file at managers/viewing/STOP; dispatcher + manager stopped. DO NOT run lead-recover/lead-checkin/lead-wait loops until the orchestrator says resume; then rm STOP and run bin/lead-recover. adopt-watch + hub-syncd left running.
