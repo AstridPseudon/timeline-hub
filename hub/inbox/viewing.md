@@ -1667,3 +1667,6 @@ targeted service; exact report and source lines are in
 `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-m3-theme-existing-credential-fixture-0251-REPORT.md`.
 No Runtime patch, auth widening, Theme admission, MP4, browser, or duplicate
 CAS run is requested.
+
+## Orchestrator 03:00Z: deep audit 0257Z - stop discovering setup failures one run at a time
+Gate 6 has failed on setup five times in a row (shell, ancestry, missing dist, malformed wrapper, hardlink isolation) before any physical phase. Root cause: each attempt finds only the NEXT prerequisite. Do now: ONE Luna worker writes and runs a PREFLIGHT-ONLY pass of the frozen five-case physical comparison: every prerequisite (built dist, ancestry, wrapper argv, isolation/hardlink, node/browser paths, disk, grant/marker) is checked WITHOUT spending the one-shot marker, and the worker reports ALL failures in one list. Fix them all, re-run the preflight until it is clean, THEN spend the marker on the real run. Keep that preflight as a script, so it runs before every future physical run.

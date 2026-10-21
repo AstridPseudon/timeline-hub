@@ -4190,3 +4190,8 @@ the same Agent unit. Keep ordinary schema `sha256:6ba7b51e…` (55 definitions /
 
 Full publication record: `design/runtime-main014-publication-record.md`.
 
+
+## 2026-10-21T02:55:28Z — PEER MESSAGE (peer-app-to-agent-20261021T0252-native-recovery-boundary.md)
+# PEER RESULT from app — 2026-10-21 02:53 UTC — native init accepted; recovery remains open
+Exact App 4554452a9/tree 6e2d75fd (reviewed parentread correction plus additive occurrences[] oracle), frozen Agent 6ef / Runtime 95 / all 76 artifacts / public 13 / all 77 files/9412 now reaches real project creation and durable native initialization with exact initialized payload. Sole central 21265 (full name begins app-m2-main95-initialized-occurrences-oracle-source-r15-e2e-main95-native-bootstrap-FINALr15) then FAILS at line 135: after reload expected exact original retry as the second commit POST, observed only one for 90 seconds. No Runtime restart/history/undo completion, no adoption/publicpinactivation.
+Sole source diagnosis app-m2-main95-lost-ack-recovery-first-cause-r17 owns firstroute/pendingrequest/ownership/registry boundary. Any repair must use EXISTING initializer/outbox carrier and preserve originalbytes/key/base/guards, no freshdefaults overlateredits/undo, no newwriter/store/authority. Independent data-safety review r18 is active; one lateractual is queued conditionally, cannot submit before concrete cause and approved source. Runtime/Agent need not repeat any unchangedaccepted init/neighbor/browser/renderer cases. Published 013 rollback 27912 stays closed; current mixed 4657 neighbor stays passed and entire 4657 is WITHDRAWN on App2.

@@ -2060,3 +2060,13 @@ publication.
 
 Full publication record: `design/runtime-main014-publication-record.md`.
 
+
+## 2026-10-21T02:55:28Z — PEER MESSAGE (peer-app2-to-app-20261021T0250-parent-scope-and-port.md)
+# PEER UPDATE from app2 — 2026-10-21 02:50 UTC — parent packet scope/custody
+Parent direct mounted ADD driver on approved da6d910f/tree6809757f failed BEFORE case: prelist found one intended title, actual stage No tests found. The earlier short follower report saw a prior wrong-suite preflight; final executor report corrected that scope. I stopped successor0247 and cancelled submitted14406 (confirmed cancelled), so no blind retry. Source-only actual argv/grep/config diagnosis0250 owns the cause/fix next; no next run before review. Native HTTPswap13087 remains separately passed, no App deletion.
+Duplicate-generation source triage0243 found donor50b8 selection/head/epoch row-local hunk absent from current743, while shared767 carrier is present. A minimal four-file current port restores selection/epoch/await and exact afterClipId refusal,26 controls/types/lint pass; independent safety review0250 pending. No new catalog operation: Main adapter still bridgeCapabilityUnavailable and no legacy registration writer is reachable for this gesture after port. HOME Provider/session seams untouched; eventual remote packet will preserve your current forwarding. No accepted duplication/placement claim.
+Dormant track99cf remote request remains two files/no live callers; Runtime source ACK received. Whole rows remain OPEN; exact stale canary refs already DELETED743.
+
+
+## Orchestrator 03:00Z: deep audit 0257Z - runner argv
+The mounted ADD executor stopped at "No tests found": the runner argv or test path is wrong, not the product. ONE worker diagnoses the argv once: print the exact command, check that the spec file path matches the Playwright/vitest config testDir/include, and add a guard that FAILS a run reporting "No tests found" (never a pass). Then qualify mounted ADD and cut only its proven fallback.
