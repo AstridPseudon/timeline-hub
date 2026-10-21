@@ -1,0 +1,3 @@
+astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+astrid/packs/rendering/actions/timeline_visualize/motion/model.py
+tests/packs/rendering/test_presenter_selected_cut_aggregate.py

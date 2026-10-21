@@ -1,0 +1,17 @@
+cd /home/user/work/wt/vw-m3-d09bc-one-partial-crop-proof-source-0849
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPATH="$PWD:/home/user/work/runtime"
+export ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+export ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b
+export ASTRID_COMPOSITION_TEST_ARTIFACT="$PWD/remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz"
+export ASTRID_COMPOSITION_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b/node_modules
+
+# Browser-free pure geometry and expected controls.
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_presenter_crop_equivalence.py --basetemp=/tmp/vw-m3-d09bc-partial-pure
+
+# Browser-free syntax and collection; collection does not execute physical cases.
+/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --check tests/packs/rendering/presenter_crop_geometry.mjs
+/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --check tests/packs/rendering/presenter_crop_entry.mjs
+/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --check tests/packs/rendering/presenter_crop_capture.mjs
+/home/user/work/venv-agent/bin/python -m pytest --collect-only -q -o addopts= -p no:cacheprovider tests/packs/rendering/presenter_crop_capture.py
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/presenter_crop_capture.py

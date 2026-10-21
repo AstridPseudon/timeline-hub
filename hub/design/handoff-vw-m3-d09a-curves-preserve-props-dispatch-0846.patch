@@ -1,0 +1,127 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+index 6e99dee05..4b077dabd 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+@@ -282,7 +282,19 @@ def render_curves(ctx: LayerContext) -> LayerResult:
+     start, end = ctx.window
+     frames = range(int(math.floor(start * ctx.fps)), int(math.ceil(end * ctx.fps)))
+     for element in elements:
+-        samples = [(f / ctx.fps, model.props_at(element, f / ctx.fps + 1e-6, ctx.fps)) for f in frames]
++        public_states = {}
++        if element.type == "am-presenter":
++            public_scene = ctx.shared.get("public_scene")
++            public_frames = sorted(public_scene) if isinstance(public_scene, Mapping) else ()
++            if public_frames:
++                public = _public_mouth_facts(ctx, element, public_frames)
++                public_states = public["states"] if public else {}
++        samples = []
++        for frame in frames:
++            kwargs = ({"presenter_mouth_state": public_states[frame]}
++                      if frame in public_states else {})
++            samples.append((frame / ctx.fps,
++                            model.props_at(element, frame / ctx.fps + 1e-6, ctx.fps, **kwargs)))
+         keys = sorted({k for _t, props in samples for k in props})
+         moving = [k for k in keys if len({round(props.get(k, math.nan), 3) for _t, props in samples if k in props}) > 1]
+         moving.sort(key=lambda k: (CURVE_ORDER.index(k) if k in CURVE_ORDER else len(CURVE_ORDER), k))
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/motion/model.py b/astrid/packs/rendering/actions/timeline_visualize/motion/model.py
+index e9919d1cc..6d12b40b7 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/motion/model.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/motion/model.py
+@@ -597,8 +597,10 @@ def _callout_props(element: Element, frame: int, fps: float) -> dict[str, float]
+     return {"connector": min(1.0, ((frame // step) * step) / draw), "visible": 1.0}
+ 
+ 
+-def _presenter_props(element: Element, frame: int, fps: float) -> dict[str, float]:
+-    state = mouth_state(element, frame, fps)
++def _presenter_props(element: Element, frame: int, fps: float, *,
++                     presenter_mouth_state: str | None = None) -> dict[str, float]:
++    state = (presenter_mouth_state if presenter_mouth_state is not None
++             else mouth_state(element, frame, fps))
+     scale, _ox, _oy = presenter_view(element.params, frame)
+     return {"mouth": {"closed": 0.0, "half": 0.5, "open": 1.0}[state], "zoom": scale / LOGICAL_PX, "visible": 1.0}
+ 
+@@ -624,7 +626,8 @@ PROPS: dict[str, Callable[[Element, int, float], dict[str, float]]] = {
+ }
+ 
+ 
+-def props_at(element: Element, t: float, fps: float) -> dict[str, float]:
++def props_at(element: Element, t: float, fps: float, *,
++             presenter_mouth_state: str | None = None) -> dict[str, float]:
+     """Animated properties at timeline second ``t`` (empty when not on screen)."""
+     if not element.start - 1e-6 <= t < element.end - 1e-6:
+         return {}
+@@ -633,6 +636,8 @@ def props_at(element: Element, t: float, fps: float) -> dict[str, float]:
+     if own is not None:
+         return own
+     model = PROPS.get(element.type)
++    if element.type == "am-presenter" and presenter_mouth_state is not None:
++        return _presenter_props(element, frame, fps, presenter_mouth_state=presenter_mouth_state)
+     return model(element, frame, fps) if model else {"visible": 1.0}
+ 
+ 
+diff --git a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+index cd2b2b5b3..e3c257e1a 100644
+--- a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
++++ b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+@@ -2,6 +2,7 @@
+ 
+ import hashlib
+ import json
++import math
+ import shutil
+ import subprocess
+ from copy import deepcopy
+@@ -142,6 +143,53 @@ def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_r
+     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
+ 
+ 
++def test_public_mouth_rows_drive_curve_and_missing_row_keeps_private_fallback(
++        public_capture_rows, retained, monkeypatch):
++    provider = _public_provider(retained, public_capture_rows, monkeypatch)
++    ctx = context(retained, frame_provider=provider)
++    presenter = ctx.elements[0]
++    public_states = {row["frame"]: {0.0: "closed", 0.5: "half", 1.0: "open"}[
++        row["layers"][0]["diagnostics"]["motion"]["mouth"]]
++                     for row in public_capture_rows}
++    original_mouth_state = model.mouth_state
++    private_missing = original_mouth_state(presenter, 1, ctx.fps)
++    samples = {}
++
++    def private_state(element, frame, fps):
++        if element.id == presenter.id and frame in public_states:
++            pytest.fail("admitted public mouth row consulted private mouth_state")
++        return original_mouth_state(element, frame, fps)
++
++    original_props_at = model.props_at
++
++    def record_props(element, t, fps, **kwargs):
++        props = original_props_at(element, t, fps, **kwargs)
++        if element.id == presenter.id and "mouth" in props:
++            samples[int(math.floor(t * fps))] = props["mouth"]
++        return props
++
++    monkeypatch.setattr(model, "mouth_state", private_state)
++    monkeypatch.setattr(model, "props_at", record_props)
++    builtin.render_curves(ctx)
++
++    assert {frame: samples[frame] for frame in public_states} == {
++        frame: {"closed": 0.0, "half": 0.5, "open": 1.0}[state]
++        for frame, state in public_states.items()
++    }
++    assert samples[1] == {"closed": 0.0, "half": 0.5, "open": 1.0}[private_missing]
++
++
++def test_missing_presenter_override_preserves_props_dispatch(retained, monkeypatch):
++    presenter = context(retained).elements[0]
++    dispatched = {"custom": 1.0}
++    monkeypatch.setitem(model.PROPS, presenter.type,
++                        lambda _element, _frame, _fps: dispatched)
++
++    assert model.props_at(presenter, 1 / 30 + 1e-6, 30) == dispatched
++    assert model.props_at(presenter, 1 / 30 + 1e-6, 30,
++                          presenter_mouth_state="closed")["mouth"] == 0.0
++
++
+ def test_mixed_public_mouth_facts_keep_private_fallback(public_capture_rows, retained, monkeypatch):
+     provider = _public_provider(retained, public_capture_rows, monkeypatch, mode="mixed")
+     mixed = context(retained, frame_provider=provider)

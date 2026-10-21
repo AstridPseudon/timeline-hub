@@ -1,0 +1,32 @@
+Diagnosis artifacts for worker vw-m3-theme-exact-d971-materializer-call-diagnosis-0845
+
+Selected source:
+- /home/user/work/wt/vw-m3-theme-exact-d971-materializer-call-diagnosis-0845
+- HEAD d971d4584c86a85a17d083d033c2049d83d6ef47
+- tests/integrations/test_generic_host_remotion_render.py
+- astrid/core/execution/generic_host.py
+- astrid/packs/rendering/pack.yaml
+- astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py
+- astrid/packs/rendering/shared/rendering_backend/__init__.py
+
+Frozen comparison source:
+- /home/user/work/wt/rt-pin-8f105c26/runtime_protocol/service.py
+- Runtime commit 8f105c26e3b62f9c2683f717a9773a12bc775a8e
+
+Prior evidence read:
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/vw-m3-theme-envelope-corrected-space-cleared-0839-integration-viewing-theme-normal-props-0234-1021083930-20144-REPORT.md
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m3-theme-envelope-corrected-space-cleared-0839-integration-viewing-theme-normal-props-0234-1021083930-20144/log.txt
+
+Durable output:
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-theme-exact-d971-materializer-call-diagnosis-0845-REPORT.md
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-theme-exact-d971-materializer-call-diagnosis-0845-PATCH.md
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-theme-exact-d971-materializer-call-diagnosis-0845-FILELIST
+
+Worker handoff:
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-theme-exact-d971-materializer-call-diagnosis-0845/REPORT
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-theme-exact-d971-materializer-call-diagnosis-0845/COMMAND
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-theme-exact-d971-materializer-call-diagnosis-0845/commit-msg
+- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-theme-exact-d971-materializer-call-diagnosis-0845/DONE
+
+Repository status: no product/test edits; selected worktree remained clean.
+
