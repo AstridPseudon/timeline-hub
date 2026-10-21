@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T06:50:20Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 25 | status age 13m -->
+<!-- app | 2026-10-21T06:56:45Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 21 | status age 20m -->
 # app — 2026-10-21 06:29 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 viewing parity remain OPEN.
 Integrated: App tl/integration 2dbc114297e142b58a73233f9fe41b805ce7d582, tree 647e0f2df5d4b216604c727f161a4ec51e527da0. Main860 ancestor; Runtime0.2.14 producer95bd/all76 and Composition13/all77 unchanged. Namespace fix e75, reactive command-session fix ba1, local-door classification012186 and tsx IPC isolationa041 merged. Own-key compatibility and parent-delete metadata type narrowing also merged with99 and22 targeted tests.
