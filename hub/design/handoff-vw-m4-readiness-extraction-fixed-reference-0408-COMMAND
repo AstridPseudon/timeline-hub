@@ -1,0 +1,7 @@
+One-line docs correction only:
+
+`docs/giant-file-rationale.md` row 31: recorded `1,296` -> `1,265`.
+
+AST/source equality, alias/call-patchpoint, line-count, peer-census, and diff
+checks are recorded in the worker `COMMAND` and `REPORT.md`. No unchanged
+behavioral, socket, full-inventory, or full-suite run was repeated.
