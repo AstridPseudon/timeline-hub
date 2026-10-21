@@ -97,6 +97,36 @@ def test_ordinary_edit_parent_word_anchor_uses_existing_clip_anchor_outbox(comma
     assert json.loads(capsys.readouterr().out)['data']['accepted_publication_id'] == 'pub1'
 
 
+def test_ordinary_edit_parent_word_anchor_retries_original_flight_after_reload_without_transcript(
+        command, capsys, monkeypatch):
+    from astrid.sdk.timeline import native_source_inputs
+
+    monkeypatch.setattr(native_source_inputs, 'materialize_transcript_inputs',
+                        lambda bundle, *args, **kwargs: bundle)
+    bundle, _, content = word_anchor_fixture()
+    word = content['segments'][0]['words'][2]
+    declaration = '"' + word['text'] + '"'
+    run, generated = command
+    generated.bundles['r0'] = bundle
+    args = ('edit', 't', '--clip', 'parent/clip:clip-a', '--on', declaration,
+            '--json', '--idempotency-key', 'original-word')
+    generated.lose_ack = True
+
+    assert run(*args) == 1
+    capsys.readouterr()
+    first_body, first_key = generated.calls[-1]
+    assert first_key == 'original-word'
+    assert json.loads(first_body)['commands'][0]['op'] == 'clip.anchor'
+
+    # A reload can fetch the original base without the transient transcript
+    # capture. The durable outbox still contains the exact command and flight.
+    generated.bundles['r0']['source_mapping']['pinned_documents'] = []
+    assert run(*args) == 0
+    capsys.readouterr()
+    assert generated.calls[-1] == (first_body, first_key)
+    assert len(generated.calls) == 2
+
+
 def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
     run, generated = command
 

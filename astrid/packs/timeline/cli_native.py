@@ -206,9 +206,6 @@ def commit_word_anchor(session, parsed, options):
     from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline.native_word_anchor import capture_anchor, legacy_binding
 
-    with session.outbox.locked():
-        state = session._state()
-    bundle = session._bundle({**state, 'pending': []})
     select = parsed.clip
     if (not isinstance(select, str)
             or re.fullmatch(r'parent/clip:(?!.*::)[^/]+', select) is None):
@@ -216,6 +213,22 @@ def commit_word_anchor(session, parsed, options):
     moment = _plain_word_moment(parsed.on)
     if moment is None:
         return NotImplemented
+
+    with session.outbox.locked():
+        state = session._state()
+    pending = state['pending']
+    if pending and pending[0].get('op') == 'clip.anchor':
+        command = pending[0]
+        args = command.get('args', {})
+        if (len(pending) != 1 or command.get('select') != select
+                or args.get('field') != 'on' or args.get('declaration') != parsed.on):
+            raise TimelineEditError('pending intent differs; flush the original request before another edit')
+        # The outbox already has the exact captured command (and possibly its
+        # sealed flight). Let TimelineSession validate and retry it without
+        # refreshing transcript bytes, guards, identity, or source bindings.
+        return session.commit(command, **options)
+
+    bundle = session._bundle({**state, 'pending': []})
     sources = bundle.get('source_mapping', {}).get('pinned_documents', [])
     try:
         binding = legacy_binding(bundle, select, 'on', parsed.on, sources)
