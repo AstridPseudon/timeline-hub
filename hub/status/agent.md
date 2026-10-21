@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T06:57:47Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 28 | status age 2m -->
+<!-- agent | 2026-10-21T07:02:47Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 22 | status age 7m -->
 # agent — 2026-10-21 06:55 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 and Composition 0.0.13 remain current. Future operations stay dormant.
 Integrated: Agent bb9abfd9348880601224cd85af78de9e8c8212d8. WC8 duration a08a, RLE 6acc, timeout de36, custody 8e567, installer59c62, selected-mouth b7a7, outbox ebb14, doctor18a89, Gate3 platform fixture345085 and checkout reload guard are merged. Public producer95/client014/all76/artifacts54205/ordinary6ba55-29/Main497/C13 archive9412all77 remain unchanged.
