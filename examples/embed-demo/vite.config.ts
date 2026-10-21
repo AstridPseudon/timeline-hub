@@ -16,6 +16,8 @@ export default defineConfig({
       remotion: path.resolve(repoRoot, 'node_modules/remotion'),
       '@remotion/layout-utils': path.resolve(repoRoot, 'node_modules/@remotion/layout-utils'),
       '@remotion/media': path.resolve(repoRoot, 'node_modules/@remotion/media'),
+      three: path.resolve(repoRoot, 'node_modules/three'),
+      '@remotion/three': path.resolve(repoRoot, 'node_modules/@remotion/three'),
       '@astrid/editor-sdk': path.resolve(repoRoot, 'src/sdk/index.ts'),
       '@workspace-effects': path.resolve(repoRoot, '../../banodoco-workspace/effects'),
       '@workspace-animations': path.resolve(repoRoot, '../../banodoco-workspace/animations'),
