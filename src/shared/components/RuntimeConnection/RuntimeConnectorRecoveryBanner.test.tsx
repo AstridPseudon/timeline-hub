@@ -39,11 +39,12 @@ describe('RuntimeConnectorRecoveryBanner overlay and quiet retry', () => {
 });
 
 describe('RuntimeConnectorRecoveryBanner', () => {
-  it('offers retry and both restart paths, with a truthful idle and retrying state', () => {
+  it('offers retry and both restart paths, with a truthful idle and retrying state', async () => {
     const onRetry = vi.fn();
     const view = render(<RuntimeConnectorRecoveryBanner retrying={false} error={new Error("Connection refused.")} onRetry={onRetry} />);
 
     expect(screen.getByRole('heading', { name: 'Workspace Runtime is unavailable' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry Runtime connection' })).toHaveFocus());
     expect(screen.getByTestId('workspace-connection-summary')).toHaveTextContent('The editor could not complete workspace discovery.');
     expect(screen.getByTestId('workspace-connection-diagnostic')).toHaveTextContent('Connection refused.');
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).not.toHaveAttribute('open');

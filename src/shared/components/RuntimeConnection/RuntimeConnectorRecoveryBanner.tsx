@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { AlertDialog, AlertDialogContent } from '@/shared/components/ui/alert-dialog.tsx';
 import { AlertTriangle, Check, Copy, LoaderCircle, RotateCcw } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -63,7 +63,8 @@ const QUIET_RETRY_MS = 3000;
  * A popup over whatever is behind it (the editor keeps its layout), not dismissable while the connection is down.
  * While it shows, it quietly retries every few seconds so a Runtime restart heals without a click.
  */
-function RecoveryOverlay({ onRetry, children }: { onRetry: () => void | Promise<void>; children: ReactNode }) {
+// Initial focus goes to Retry, not the first tabbable element (the diagnostic summary).
+function RecoveryOverlay({ onRetry, retryRef, children }: { onRetry: () => void | Promise<void>; retryRef: RefObject<HTMLButtonElement | null>; children: ReactNode }) {
   const latestRetry = useRef(onRetry);
   const inFlight = useRef(false);
   useEffect(() => {
@@ -86,6 +87,7 @@ function RecoveryOverlay({ onRetry, children }: { onRetry: () => void | Promise<
         backdropClassName="bg-black/55"
         className="max-h-[85vh] max-w-2xl gap-0 overflow-y-auto border-0 bg-transparent p-0 shadow-none"
         data-testid="runtime-connector-alert"
+        initialFocus={retryRef}
       >
         {children}
       </AlertDialogContent>
@@ -119,6 +121,7 @@ export function RuntimeConnectorRecoveryBanner({
       : 'Clipboard access is unavailable. Copy the brief from the field below.');
   };
 
+  const retryRef = useRef<HTMLButtonElement>(null);
   const recoveryCardShowing = useRecoveryCardShowing();
   const hosted = runtimeOrigin() !== '';
   if (hosted && recoveryCardShowing) return null;
@@ -132,13 +135,13 @@ export function RuntimeConnectorRecoveryBanner({
   const action = 'recoveryAction' in error && typeof error.recoveryAction === 'string'
     ? error.recoveryAction : 'Retry the connection to your configured Astrid Runtime.';
   if (hosted) return (
-    <RecoveryOverlay onRetry={onRetry}>
+    <RecoveryOverlay onRetry={onRetry} retryRef={retryRef}>
     <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-6 shadow-lg" role="alert">
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">{RUNTIME_CONNECTION_COPY.loadFailed.title}</p>
         <p className="mt-1 text-xs text-muted-foreground">{RUNTIME_CONNECTION_COPY.loadFailed.sentence}</p>
       </div>
-      <Button type="button" size="sm" variant="outline" onClick={() => void onRetry()} disabled={retrying}>
+      <Button ref={retryRef} type="button" size="sm" variant="outline" onClick={() => void onRetry()} disabled={retrying}>
         {retrying ? RUNTIME_CONNECTION_COPY.loadFailed.retrying : RUNTIME_CONNECTION_COPY.loadFailed.button}
       </Button>
     </div>
@@ -146,7 +149,7 @@ export function RuntimeConnectorRecoveryBanner({
   );
 
   return (
-    <RecoveryOverlay onRetry={onRetry}>
+    <RecoveryOverlay onRetry={onRetry} retryRef={retryRef}>
       <Card className="w-full min-w-0 border-border/80 shadow-lg" role="alert">
         <CardHeader>
           <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
@@ -168,7 +171,7 @@ export function RuntimeConnectorRecoveryBanner({
           {safeUrl && <p className="break-all text-xs text-muted-foreground">Configured editor origin: <code>{safeUrl}</code></p>}
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button type="button" className="h-auto min-h-10 w-full whitespace-normal py-2 sm:w-auto" onClick={() => void onRetry()} disabled={retrying}>
+          <Button ref={retryRef} type="button" className="h-auto min-h-10 w-full whitespace-normal py-2 sm:w-auto" onClick={() => void onRetry()} disabled={retrying}>
             {retrying ? <LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 shrink-0 animate-spin" /> : <RotateCcw aria-hidden="true" className="mr-2 h-4 w-4 shrink-0" />}
             {retrying ? 'Retrying Runtime connection…' : 'Retry Runtime connection'}
           </Button>
