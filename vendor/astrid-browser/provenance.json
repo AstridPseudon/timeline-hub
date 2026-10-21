@@ -1,7 +1,7 @@
 {
-  "astrid_commit": "680d1aa4f1f9576d65a603472f1dd7fc0ae9ccd1",
-  "astrid_tree": "07ce61f24ec38a1a60c4a981b6bd666f4971bd67",
-  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 680d1aa4f1f9576d65a603472f1dd7fc0ae9ccd1",
+  "astrid_commit": "e17af8bf9c7ed31d6b5b96c6a73f414f60cf2121",
+  "astrid_tree": "7210fdf26ddbea04bee6ae634bdffd094ea5a1e3",
+  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit e17af8bf9c7ed31d6b5b96c6a73f414f60cf2121",
   "declared_files": "config/astrid-vendor-files.json",
   "verify_command": "node scripts/build/verify-astrid-vendor-sources.mjs",
   "files": {
@@ -141,7 +141,7 @@
     "astrid/packs/rendering/ui/live-scenes/extension.tsx": "bb9f23ee14913b8ef9919a0dd9508f1c782705717a4484b8b40a9a544b9fa3b9",
     "astrid/packs/rendering/ui/live-scenes/identity.ts": "ab1fa9c6972518d85dd39f5f1fdeee983a2754b6ad04a738d3e4dff13ed2b3b9",
     "astrid/packs/rendering/ui/live-scenes/runtime.ts": "3bdfa73290d935699d3937798df950376cfd25209a442fc9b294fc12c98a14f2",
-    "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "d92ea46a3d25f3d5e952db9d3b3c41401da2f82d49a58ca60a0f1fefb22f5c9b",
+    "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "0284f201af0995e7a286da32eb211dad8909c6c762a88c3ecc0e95e00afdd9b3",
     "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
     "astrid/packs/rendering/ui/transcript/extension.tsx": "870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
     "astrid/packs/video_editing/pack.yaml": "53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
