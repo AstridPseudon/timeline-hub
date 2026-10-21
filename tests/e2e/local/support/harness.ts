@@ -732,6 +732,10 @@ export class DirectHarness {
       PORT: String(this.devPort),
       VITE_WORKSPACE_RUNTIME_URL: this.runtimeUrl,
       WORKSPACE_RUNTIME_TOKEN_FILE: this.credentialPath,
+      // The boot/auth probe uses the existing Astrid bridge path. Keep it on
+      // this same Runtime and product credential as the Runtime data proxy.
+      VITE_ASTRID_BRIDGE_PORT: String(this.runtimePort),
+      ASTRID_BRIDGE_TOKEN: this.productToken,
       VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: PRODUCT_ACTOR,
       VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: this.realmId,
       VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: this.runtimeInstanceId,
