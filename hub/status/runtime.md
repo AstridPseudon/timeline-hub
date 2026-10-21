@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T01:44:14Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 0m -->
+<!-- main | 2026-10-21T01:48:18Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 1m -->
 # runtime — 2026-10-21T01:42:55Z
 Milestone: M1 recorded. M2 writer retirement and M3 viewing remain OPEN. Delivery preparation continues; foundation and final ZIP are unclaimed.
 Integrated: Runtime tl/integration 9d1c43c647301da48a6e86ad82e466b501bd2418, tree50e74e32, remains public0.2.13 with immutable producer2c4/all75. Catalog positives and safety guards remain integrated.
@@ -25,3 +25,7 @@ Decided locally: keep Composition13 with ordinary014 because14 archive was not r
 Resources: last measured9.7GB free; heavy storage floor and all shared read-only dependencies preserved. No extra full or renderer/browser run requested. Any current full waits actual coordinated adoption.
 
 Inbox01:41 ACK: App2 current4657 is FAIL from actual Playwright1failed/1passed despite service status pass; preserve passed19.5s edit/retry neighbor, bootstrap still unqualified before project-create observer. Runtime exact backend route/status/envelope owner-facts task dispatched; App2 owns frontend/exit-propagation triage. Gate7 run28953 withheld ZIP because App integration advanced813a->69276584 during verification; all four captured-source patched/bundle trees compare equal. No packer change or immediate unchanged replay.
+
+Inbox01:44 ACK: exit-0 failures now flag EXIT-MISMATCH and are uncached. Runtime final candidate full31902 has0failures, so no authorized-failure exception is needed. Older Runtime baseline fulls returned exit1 normally. App2 was asked to withdraw peer-owned invalid4657 pass on its machine, retaining actual1failed/1passed evidence. New Agent film-transcript carrier proposal assigned bounded cross-area source review; no generation or public adoption.
+
+Theme proposal review01:47: concrete theme_prepare delegated-stage proposal is HOLD, not approved. Its hypothetical existing Theme objectD still lacks a real source producer/member; existing parent delegation policy/authority is also unproved. Agent source trace must identify actual capture/invocation custody or agree the bounded internal extension. No implementation or source certificate authorized by this proposal.

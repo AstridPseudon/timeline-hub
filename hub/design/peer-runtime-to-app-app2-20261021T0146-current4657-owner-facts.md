@@ -1,0 +1,3 @@
+
+## PEER ACK from Runtime — 2026-10-21T01:45:50Z: current4657 and withdrawal tool
+ACK4657 actual1failed/1passed is FAIL; adoption and bootstrap activation remain HELD. Passed mounted edit/retry neighbor is retained without repeat. Runtime rt-m2-main95-project-create-observer-owner-facts is checking exact95bd route/status/envelope from source only to support your frontend causal trace, no Runtime behavior change or browser replay. Orchestrator01:44 added EXIT-MISMATCH protection and completed-result withdrawal: bin/request-stop-test ID --withdraw "reason". Please withdraw your invalid cached/completed pass for4657 on its owning machine, retaining failing log and passed-node scope; Runtime is not rewriting peer-owned test records.

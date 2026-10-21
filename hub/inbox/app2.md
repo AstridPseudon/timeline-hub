@@ -851,3 +851,34 @@ Runtime: App-only delivery dryrun matched patch/bundle/applied tree2a19a78b, the
 
 ## Orchestrator 01:44Z: false-green test 4657
 APPROVED, and the tool now exists: after your next hub-sync, run 'bin/request-stop-test <4657 id> --withdraw "exit 0 but log 1 failed (bootstrap project response timeout)"'. Status becomes withdrawn, cache entries are removed, the original files are kept. Also new: bin/test-run now flags any exit-0 run whose log reports failures (EXIT-MISMATCH at the top of the summary, never cached). Root cause is still yours: dispatch ONE Luna worker to read the suite's command in tests/suites.conf for this e2e-gate5 suite and find where the Playwright child exit is lost (a wrapper, '|| true', a pipe without pipefail, or a post-step that returns 0). Fix that suite command so a failing child fails the run, and add a negative check: a planted failing spec must give a non-zero exit. Your proposed rule is now a precedent.
+
+## Orchestrator 01:47Z: canary deletion follow-up (hourly check of 692765846)
+The compiler-canary deletion is fine (a dead module; its tests retire with it, and most behaviours are covered elsewhere). One real data-safety gap in LIVE code surfaced: no test proves that transcript-lane/extension.ts (regenerate remove path, about lines 452-463) and scene-phase-markers (clip.update paths) SKIP clips owned by another extension or authored by the user. Dispatch ONE Luna worker to add those negative tests: a foreign-owned clip and a user clip each survive remove and update, using the old canary cases at 692765846^1:src/tools/video-editor/lib/compiler-canary.test.ts lines 681/712/800/885/1337 as the template. If a test exposes a real bug, fix it in the same worker. Also drop the stale references to the deleted files: eslint.strict-debt.js:109 and docs/cutover-inventory.md:1005.
+
+## 2026-10-21T01:48:18Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Runtime Main95 project-create facts — 2026-10-21
+
+Runtime95bd/d3a has no backend counterexample for the failed mixed4657
+bootstrap observer. The App2 packet has no observed URL/response packet, so
+the URL remains unknown on the Runtime side; classify actual4657 FAIL and keep
+the passed edit/retry neighbor retained.
+
+Owner facts: public `POST /v1/projects`, required `Idempotency-Key`, handler
+success **201**, top-level `CommittedMutation` `{data, receipt}`, with the
+project identity at `data.project_id`. Receipt fields are
+`receipt_id`, `command_kind=project.create`, `idempotency_key`, `request_hash`,
+`project_id`, `project_seq`, `event_ids`, `result`, `created_at`. Same key and
+same input replays; changed input under the key conflicts; normal replay is
+bounded by the 24-hour ledger-result window.
+
+For the browser door the expected translation is exactly
+`POST /api/runtime/v1/projects` -> `POST /v1/projects`. Exact loopback Host and
+configured HTTPS Origin are required; browser Authorization/Cookie are refused;
+the door supplies the owner-only product bearer and strips X-Request-ID.
+Idempotency-Key, not request ID, is the retry/correlation identity. Generated
+clients accepting 200/201 is client tolerance; Runtime emits 201. No alias,
+fallback, or observer timeout is justified by Runtime source.
+
+Source references and the current source-only result (**1287 passed**) are in
+`workers/rt-m2-main95-project-create-observer-owner-facts/report.md` and the
+Runtime design report.

@@ -1898,3 +1898,24 @@ Dormant seam9a7d merge ACK. Canary c8d69870c2171-line deletion queued, independe
 
 ## Orchestrator 01:44Z: exit-mismatch check (all suites)
 bin/test-run now flags any exit-0 run whose log reports failures (EXIT-MISMATCH line at the top of the summary, never cached). If your full suite has authorized expected failures and its log prints "N failed", every full will now carry that flag: confirm it once in STATUS (which suite, which N), or better, make the wrapper print the authorized cases without the word "failed". Withdraw invalid completed results with bin/request-stop-test ID --withdraw "reason".
+
+## 2026-10-21T01:48:18Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+# Runtime Main95 project-create facts — 2026-10-21
+
+Runtime95bd/d3a source review finds no backend counterexample for mixed4657.
+App’s observed project-create URL/response is not present in the App2 packet;
+keep that observation **unknown** rather than guessing it.
+
+Expected normal bridge path/response: `POST /api/runtime/v1/projects` is
+translated to upstream `POST /v1/projects`; valid configured-door admission
+returns HTTP **201** with top-level `{data, receipt}`, and the created project
+is `data.project_id`. `receipt` carries the durable `project.create` identity,
+request hash, idempotency key, project sequence, event IDs, result, and time.
+The stable retry key is `Idempotency-Key`; `X-Request-ID` is tracing only and
+is stripped/hidden by the browser door.
+
+Exact Host/Origin and owner-only product credential rules apply. Browser
+Authorization/Cookie are refused. Generated client 200/201 acceptance does not
+make 200 a Runtime-emitted success. No Runtime source supports an endpoint
+alias, fallback, or timeout workaround; App2 owns frontend causal trace and
+exit propagation.

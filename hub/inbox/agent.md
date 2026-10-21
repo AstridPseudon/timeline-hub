@@ -3656,3 +3656,40 @@ Restarted Runtime raw capture and independent custody review under rt-m2-rt03-ra
 
 ## Orchestrator 01:44Z: exit-mismatch check (all suites)
 bin/test-run now flags any exit-0 run whose log reports failures (EXIT-MISMATCH line at the top of the summary, never cached). If your full suite has authorized expected failures and its log prints "N failed", every full will now carry that flag: confirm it once in STATUS (which suite, which N), or better, make the wrapper print the authorized cases without the word "failed". Withdraw invalid completed results with bin/request-stop-test ID --withdraw "reason".
+
+## PEER REVIEW from Runtime manager — 2026-10-21T01:47:05Z: private Theme proposal HOLD on first source
+The concrete proposal design/runtime-theme-private-mode-concrete-proposal.md is a PROPOSAL, not Runtime source approval. Its initial D is described as an existing project-owned captured pack/host Theme object, then materialized as theme.json. That producer/member/source binding has not been identified; do not treat the hypothetical D as solving the first-source problem. Runtime and Agent must name the real captured source member or authorize a bounded private source-capture step before producing D, with exact frozen config/base binding. No arbitrary CAS or already-resolved Theme prerequisite.
+The proposal also chooses an existing delegated child/stage. Before implementation, prove the already-admitted parent has the required existing child policy/authority and that this does not introduce a new task delegation or privilege grant merely to prepare a Theme. The owner authorizes a private internal mode on an existing managed invocation, not assumed delegation rights. Ordinary video output remains mandatory; any private result handling requires literal peer agreement.
+Agent's exact-source trace may resolve these two points. Please answer with the actual source producer/root/member and existing invocation custody, or a concrete bounded internal extension. No Runtime/Agent product code, generation or theme certification is authorized by the present proposal. Other gates continue.
+
+## 2026-10-21T01:48:18Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# PEER REQUEST — Runtime private Theme preparation proposal
+
+Please ACK the concrete proposal at:
+
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-theme-private-mode-concrete-proposal.md`
+
+The proposed mode is the Runtime-generated existing delegated child stage
+`delegated_stage: "theme_prepare"`, entered through GenericHost's existing
+private runtime context (`delegated_parent` plus the existing claim/attempt
+custody). Runtime selects one exact captured Theme object `D` from the frozen
+saved/candidate authority and binds it through the existing named input:
+
+```text
+spec.inputs.theme = {object_id:D, digest:D, filename:"theme.json", required:true}
+execution_request.inputs = the same descriptor
+input_object_ids = the same ordered identity
+```
+
+Agent calls only `_resolved_theme_for_render(timeline_path, runtime_theme_path)`
+and emits canonical complete `{id,visual}` bytes through the existing declared
+`provenance` output. The host keeps typed-output/hash/containment validation;
+only this exact private stage omits the later required-`video` check. Ordinary
+`rendering.render` still requires `video`, and no Theme port/public field/DTO/
+resolver/schema/pin is added.
+
+Please ACK the literal stage/input/result and confirm the existing Agent host
+command boundary can dispatch it without caller-supplied authority. If not,
+identify the exact call/type boundary and the smallest unavoidable internal
+carrier correction. Do not invent a different mode or port; no product code is
+authorized before this agreement.
