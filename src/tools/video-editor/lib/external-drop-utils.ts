@@ -321,6 +321,8 @@ export async function handleFileDrop({
     : dropPosition.trackId;
   let forceNewTrack = dropPosition.isNewTrack;
   let timeOffset = 0;
+  let acceptedFile = false;
+  const placementPromises: Array<Promise<boolean>> = [];
 
   for (const file of files) {
     const kind = inferFileDropKind(file);
@@ -370,7 +372,7 @@ export async function handleFileDrop({
           entry: result.entry,
           source: 'registered',
         };
-        const placed = dropAsset(
+        const placed = await dropAsset(
           result.assetId,
           compatibleTrackId ?? targetTrackId,
           dropPosition.time + timeOffset,
@@ -381,6 +383,7 @@ export async function handleFileDrop({
         if (!placed) {
           throw new Error('The timeline drop target changed before the prepared asset was placed');
         }
+        acceptedFile = true;
         void invalidateAssetRegistry();
 
         if (!forceNewTrack || !dataRef.current) {
@@ -462,42 +465,44 @@ export async function handleFileDrop({
     };
 
     pendingOpsRef.current += 1;
-    void (async () => {
+    const placementPromise = (async (): Promise<boolean> => {
       try {
         if (isImageFile(file)) {
           const generationData = await uploadImageGeneration(file);
           const current = dataRef.current;
           if (!current) {
-            return;
+            return false;
           }
 
           const preparedAsset = prepareGenerationForDrop(generationData, dataRef, registerGenerationAsset, prepareGenerationAsset);
           if (!preparedAsset) {
             removeSkeleton();
-            return;
+            return false;
           }
-          if (!dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+          if (!placed) {
             removeSkeleton();
           }
-          return;
+          return placed;
         }
 
         if (isVideoFile(file)) {
           const generationData = await uploadVideoGeneration(file);
           const current = dataRef.current;
           if (!current) {
-            return;
+            return false;
           }
 
           const preparedAsset = prepareGenerationForDrop(generationData, dataRef, registerGenerationAsset, prepareGenerationAsset);
           if (!preparedAsset) {
             removeSkeleton();
-            return;
+            return false;
           }
-          if (!dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+          if (!placed) {
             removeSkeleton();
           }
-          return;
+          return placed;
         }
 
         // Preparation is required for placement: the compound editor command
@@ -518,30 +523,37 @@ export async function handleFileDrop({
           entry: result.entry,
           source: 'registered',
         };
-        const placed = dropAsset(result.assetId, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+        const placed = await dropAsset(result.assetId, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
         if (!placed) {
           removeSkeleton();
         }
         void invalidateAssetRegistry();
+        return placed;
       } catch (error) {
         console.error('[drop] Upload failed:', error);
         onAssetDropError?.(error);
         const current = dataRef.current;
         if (!current) {
-          return;
+          return false;
         }
 
         removeSkeleton();
+        return false;
       } finally {
         pendingOpsRef.current -= 1;
       }
     })();
+    placementPromises.push(placementPromise);
   }
 
-  return true;
+  // File drops are handled only when at least one file was actually placed.
+  // Individual uploads still run concurrently; a partial drop is accepted
+  // when any file settles successfully, while an all-refused drop is not.
+  const placedFiles = await Promise.all(placementPromises);
+  return acceptedFile || placedFiles.some(Boolean);
 }
 
-export function handleMultiGenerationDrop({
+export async function handleMultiGenerationDrop({
   generationItems,
   dataRef,
   dropPosition,
@@ -559,7 +571,7 @@ export function handleMultiGenerationDrop({
   prepareGenerationAsset?: UseAssetManagementResult['prepareGenerationAsset'];
   selectedTrackId: string | null;
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
-}): boolean {
+}): Promise<boolean> {
   if (!generationItems.length || !dataRef.current) {
     return false;
   }
@@ -627,7 +639,7 @@ export function handleMultiGenerationDrop({
       continue;
     }
 
-    dropAsset(
+    const placed = await dropAsset(
       preparedAsset.assetKey,
       targetTrackId,
       dropPosition.time + timeOffset,
@@ -635,6 +647,9 @@ export function handleMultiGenerationDrop({
       forceNewTrack ? insertAtTop : false,
       preparedAsset,
     );
+    if (!placed) {
+      return false;
+    }
 
     timeOffset += previewEdit.duration;
 
@@ -653,7 +668,7 @@ export function handleMultiGenerationDrop({
   return true;
 }
 
-export function handleSingleGenerationDrop({
+export async function handleSingleGenerationDrop({
   generationData,
   dataRef,
   dropPosition,
@@ -671,7 +686,7 @@ export function handleSingleGenerationDrop({
   prepareGenerationAsset?: UseAssetManagementResult['prepareGenerationAsset'];
   selectedTrackId: string | null;
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
-}): boolean {
+}): Promise<boolean> {
   if (!dataRef.current) {
     return false;
   }
@@ -731,7 +746,7 @@ export function handleSingleGenerationDrop({
     return true;
   }
 
-  dropAsset(
+  return dropAsset(
     preparedAsset.assetKey,
     dropPosition.isNewTrack ? undefined : dropPosition.trackId,
     dropPosition.time,
@@ -739,10 +754,9 @@ export function handleSingleGenerationDrop({
     insertAtTop,
     preparedAsset,
   );
-  return true;
 }
 
-export function handleAssetDrop({
+export async function handleAssetDrop({
   assetKey,
   assetKind,
   dataRef,
@@ -758,14 +772,13 @@ export function handleAssetDrop({
   insertAtTop: boolean;
   selectedTrackId: string | null;
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
-}): boolean {
+}): Promise<boolean> {
   if (!assetKey || !dataRef.current) {
     return false;
   }
 
   if (dropPosition.isNewTrack) {
-    dropAsset(assetKey, undefined, dropPosition.time, true, insertAtTop);
-    return true;
+    return dropAsset(assetKey, undefined, dropPosition.time, true, insertAtTop);
   }
 
   const compatibleTrackId = getCompatibleTrackId(
@@ -778,8 +791,7 @@ export function handleAssetDrop({
     return true;
   }
 
-  dropAsset(assetKey, compatibleTrackId, dropPosition.time);
-  return true;
+  return dropAsset(assetKey, compatibleTrackId, dropPosition.time);
 }
 
 export function finalizeExternalDrop({
