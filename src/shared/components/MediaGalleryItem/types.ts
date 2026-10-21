@@ -121,8 +121,6 @@ export interface MediaGalleryItemProps {
 
   /** Project aspect ratio for sizing */
   projectAspectRatio?: string;
-  /** Optional data-tour attribute for product tour targeting */
-  dataTour?: string;
 }
 
 // Re-export types that are used by sub-components

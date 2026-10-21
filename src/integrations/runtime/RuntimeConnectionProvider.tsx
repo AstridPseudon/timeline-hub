@@ -160,6 +160,14 @@ export interface RuntimeConnectionValue {
 
 const RuntimeConnectionContext = createContext<RuntimeConnectionValue | undefined>(undefined);
 
+/** False while a connection panel is still drawn over the mounted app (it is inert then); true everywhere else. */
+const RuntimeGateOpenContext = createContext(true);
+
+/** Whether the app is open to the person: no connection panel is over it. Things that start on their own (the editor tour) wait for it. */
+export function useRuntimeGateOpen(): boolean {
+  return useContext(RuntimeGateOpenContext);
+}
+
 export interface RuntimeConnectionProviderProps {
   children: React.ReactNode;
   /** Override for tests; defaults to "a Runtime origin is configured". */
@@ -439,8 +447,10 @@ export function RuntimeConnectionGate({
     <>
       {isConnected ? (
         <div key="app" className="contents" {...(overlay ? { inert: '' } : {})}>
-          {pill(connection)}
-          {children}
+          <RuntimeGateOpenContext.Provider value={!overlay}>
+            {pill(connection)}
+            {children}
+          </RuntimeGateOpenContext.Provider>
         </div>
       ) : null}
       {overlay ? <React.Fragment key="panel">{overlay}</React.Fragment> : null}

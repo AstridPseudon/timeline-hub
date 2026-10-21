@@ -122,7 +122,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
   isSelected = false,
   selectedItems = [],
   projectAspectRatio,
-  dataTour,
 }) => {
   useRenderBudget('MediaGalleryItem', 5);
   const {
@@ -428,7 +427,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onMouseEnter={handleMouseEnter}
-        data-tour={dataTour}
         onContextMenu={(event) => onContextMenu?.(event, image)}
         onTouchStart={wrapperHandlesTouch ? handleTouchStart : undefined}
         onTouchEnd={wrapperHandlesTouch ? handleInteraction : undefined}

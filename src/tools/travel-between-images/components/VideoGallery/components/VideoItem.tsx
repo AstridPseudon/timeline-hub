@@ -43,8 +43,6 @@ interface VideoItemProps {
   hideActions?: boolean;
   /** Custom tooltip text for the delete button */
   deleteTooltip?: string;
-  /** Optional data-tour attribute for product tour targeting */
-  dataTour?: string;
 }
 
 export const VideoItem = React.memo<VideoItemProps>(({
@@ -68,7 +66,6 @@ export const VideoItem = React.memo<VideoItemProps>(({
   projectId,
   hideActions = false,
   deleteTooltip,
-  dataTour
 }) => {
   // Track touch start position to distinguish taps from drags/scrolls
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -222,7 +219,7 @@ export const VideoItem = React.memo<VideoItemProps>(({
   const thumbSrcStable = resolvedThumbUrl;
 
   return (
-    <div className="relative group" style={{ contain: 'layout style paint' }} data-tour={dataTour}>
+    <div className="relative group" style={{ contain: 'layout style paint' }}>
       <div
         className="bg-gray-100 rounded-lg overflow-hidden shadow-sm border relative"
         style={aspectRatioStyle}

@@ -970,23 +970,27 @@ export function useTimelinePersistence({
       registry: cloneAttemptValue(nextData.registry),
       bundle: effectiveBundle,
     };
-    const draftWrite = draftWriteChainRef.current
-      .catch(() => {})
-      .then(() => saveTimelineDraft(
-        timelineId,
-        draft,
-        draftBaseVersion,
-        {
-          ...recoveryMetadata,
-          ...(provider.saveTimelineAtHead ? {
-            baseHeadRevisionId: head?.headRevisionId,
-            baseHeadProjectId: head?.projectId,
-            baseHeadTimelineId: head?.timelineId,
-          } : {}),
-          ownerId: draftOwnerId,
-          draftIdentity: recoveryMetadata.draftIdentity ?? draftOwnerId,
-        },
-      ));
+    // Without durable persistence (a read-only example, the editor tour) there is nothing to recover,
+    // so no draft is written and a later session never offers one.
+    const draftWrite = persistenceEnabled
+      ? draftWriteChainRef.current
+        .catch(() => {})
+        .then(() => saveTimelineDraft(
+          timelineId,
+          draft,
+          draftBaseVersion,
+          {
+            ...recoveryMetadata,
+            ...(provider.saveTimelineAtHead ? {
+              baseHeadRevisionId: head?.headRevisionId,
+              baseHeadProjectId: head?.projectId,
+              baseHeadTimelineId: head?.timelineId,
+            } : {}),
+            ownerId: draftOwnerId,
+            draftIdentity: recoveryMetadata.draftIdentity ?? draftOwnerId,
+          },
+        ))
+      : draftWriteChainRef.current;
     draftWriteChainRef.current = draftWrite;
     void draftWrite.catch(() => {});
     const scheduledSave: ScheduledSave = {
@@ -1004,7 +1008,7 @@ export function useTimelinePersistence({
     };
     latestScheduledSaveRef.current = scheduledSave;
     return scheduledSave;
-  }, [configVersionRef, headRevisionRef, provider, session, timelineId]);
+  }, [configVersionRef, headRevisionRef, persistenceEnabled, provider, session, timelineId]);
 
   const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
     // Recovery is an explicit CAS decision. Do not replace the recovered
@@ -1371,7 +1375,7 @@ export function useTimelinePersistence({
         // discard. IndexedDB compares and deletes in one transaction, so a
         // newer edit written concurrently cannot be erased by this reload.
         const shouldClearDraft = options?.clearDraft ?? !options?.preserveDraft;
-        if (shouldClearDraft) {
+        if (shouldClearDraft && isDataProviderPersistenceEnabled(provider)) {
           await waitForRecoveryDraftWrites();
           if (reloadCancelledRef.current) {
             throw new Error('Canonical reload was superseded by a new timeline edit.');

@@ -350,7 +350,6 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
               })()
             : undefined,
         }}
-        dataTour="tasks-pane-tab"
       />
       
       <div

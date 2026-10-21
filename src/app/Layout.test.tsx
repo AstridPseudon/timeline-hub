@@ -57,7 +57,6 @@ vi.mock('@/shared/components/SettingsModal/SettingsModal', () => ({
 vi.mock('@/shared/components/modals/OnboardingModal', () => ({
   OnboardingModal: () => null,
 }));
-vi.mock('@/shared/components/ProductTour', () => ({ ProductTour: () => null }));
 vi.mock('@/shared/components/AstridLoading', () => ({
   AstridLoading: () => <div data-testid="astrid-loading" />,
 }));

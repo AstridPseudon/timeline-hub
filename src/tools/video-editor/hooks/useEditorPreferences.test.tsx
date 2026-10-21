@@ -23,6 +23,21 @@ describe('useEditorPreferences right panel state', () => {
     vi.unstubAllGlobals();
   });
 
+  it('keeps preferences in memory only when persistence is off (the tour demo): nothing read, nothing written', () => {
+    localStorage.setItem('video-editor:preferences:demo', JSON.stringify({ scaleWidth: 222 }));
+    const setItem = vi.spyOn(localStorage, 'setItem');
+
+    const { result } = renderHook(() => useEditorPreferences('demo', { persist: false }));
+    expect(result.current.scaleWidth).toBe(defaultPreferences.scaleWidth);
+
+    act(() => result.current.setScaleWidth(300));
+    act(() => vi.advanceTimersByTime(500));
+
+    expect(result.current.scaleWidth).toBe(300);
+    expect(setItem).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('video-editor:preferences:demo') ?? '{}')).toEqual({ scaleWidth: 222 });
+  });
+
   it('migrates older timeline records and persists panel, slot, and lane choices', () => {
     localStorage.setItem('video-editor:preferences:legacy', JSON.stringify({
       scaleWidth: 190,

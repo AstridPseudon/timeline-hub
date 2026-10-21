@@ -16,6 +16,8 @@ type ConversationMessageProps = {
 
 type ConversationToolGroupProps = {
   pairs: ConversationToolCallPair[];
+  /** Start with the action details showing (the first-run tour's chat); the chat's own groups start collapsed. */
+  defaultOpen?: boolean;
 };
 
 export type { ConversationAttachment } from './contracts.ts';
@@ -341,8 +343,8 @@ export function ConversationAttachmentStrip({
   );
 }
 
-export function ConversationToolGroup({ pairs }: ConversationToolGroupProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ConversationToolGroup({ pairs, defaultOpen = false }: ConversationToolGroupProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const detailsId = useId();
   const count = pairs.length;
   const running = pairs.filter(pair => actionStatus(pair) === 'in_progress').length;

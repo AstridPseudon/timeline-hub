@@ -29,6 +29,8 @@ export const AUDIO_REACTIVE_OFFSET_START_FRAME: number;
 export const AUDIO_REACTIVE_OFFSET_INITIAL_COLOR: string;
 
 export function createTimelineFixtures(options?: { assetSrcBaseUrl?: string }): BridgeTimelineFixtures;
+/** The demo timeline's identity with a new timeline's content: V1 and A1, no clips, no assets. */
+export function createEmptyTimelineFixtures(): BridgeTimelineFixtures;
 export function createAudioReactiveColourFixtures(options?: { assetSrcBaseUrl?: string }): BridgeTimelineFixtures & { readonly shotComposition: BridgeShotComposition };
 export function createOffsetAudioReactiveColourFixtures(options?: { assetSrcBaseUrl?: string }): BridgeTimelineFixtures & { readonly shotComposition: BridgeShotComposition };
 export function createGalleryFixtures(): {

@@ -933,7 +933,6 @@ These files match the raw validation regex (`\.from\(|\.rpc\(|functions\.invoke|
 | `shared/components/PhaseConfigSelectorModal/components/BrowsePresetsTab.tsx` | `.from(` | Array.from({ length: 4 }).map((_, index) => ( | defer | raw-grep false positive — no supabase usage |
 | `shared/components/PhaseConfigSelectorModal/hooks/useBrowsePresetsTabModel.test.ts` | `.from(` | const publicData = Array.from({ length: 13 }, (_, index) => | defer | raw-grep false positive — no supabase usage |
 | `shared/components/PhaseConfigSelectorModal/hooks/useBrowsePresetsTabModel.ts` | `.from(` | return Array.from(presetMap.values()); | defer | raw-grep false positive — no supabase usage |
-| `shared/components/ProductTour/CustomTooltip.tsx` | `.from(` | {Array.from({ length: totalSteps }).map((_, i) => ( | defer | raw-grep false positive — no supabase usage |
 | `shared/components/SettingsModal/sections/ExtensionsSection.test.tsx` | `.from(` | const refs: ExtensionReference[] = Array.from({ length: count }, (_, i) => | defer | raw-grep false positive — no supabase usage |
 | `shared/components/ShotImageManager/components/BatchDropZone.tsx` | `.from(` | const files = Array.from(e.dataTransfer.files); | defer | raw-grep false positive — no supabase usage |
 | `shared/components/ShotImageManager/components/EmptyState.tsx` | `.from(` | const files = Array.from(e.dataTransfer.files); | defer | raw-grep false positive — no supabase usage |

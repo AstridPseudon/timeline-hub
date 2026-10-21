@@ -43,6 +43,7 @@ async function mountRecoveryEditor(options?: {
   head?: TimelineHeadRevision;
   draftMetadata?: TimelineDraftRecoveryMetadata;
   saveTimelineAtHead?: NonNullable<DataProvider['saveTimelineAtHead']>;
+  persistenceEnabled?: boolean;
 }) {
   const canonical = timelineConfig('canonical');
   const recovered = timelineConfig('recovered');
@@ -56,7 +57,7 @@ async function mountRecoveryEditor(options?: {
 
   let recoveryWriteSequence = 0;
   const provider = {
-    persistenceEnabled: true,
+    persistenceEnabled: options?.persistenceEnabled ?? true,
     loadTimeline: vi.fn(async () => ({ config: canonical, configVersion: 12 })),
     loadCanonicalTimeline: options?.loadCanonicalTimeline
       ?? vi.fn(async () => ({ config: canonical, configVersion: 12 })),
@@ -140,6 +141,20 @@ describe('useTimelineSave recovered Retry/Discard with real persistence', () => 
     vi.clearAllTimers();
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it('reads no recovery draft and offers none when the provider has no durable persistence', async () => {
+    // A leftover slot under the same key (e.g. from an older build) must stay untouched and unoffered.
+    await saveTimelineDraft('previous-shot-session', { config: timelineConfig('recovered'), registry }, 5, {
+      recoveryKey,
+      draftIdentity: 'leftover-draft',
+    });
+    const { hook } = await mountRecoveryEditor({ seedRecovery: false, persistenceEnabled: false });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(hook.result.current.recoveryDraft).toBeNull();
+    expect(await loadTimelineDraft(recoveryKey)).not.toBeNull();
   });
 
   it.each([

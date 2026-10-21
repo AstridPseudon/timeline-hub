@@ -141,7 +141,6 @@ export const ShotListDisplay: React.FC<ShotListDisplayProps> = ({
                 initialPendingUploads={shot.id === pendingNewShot.newlyCreatedShotId ? pendingNewShot.newlyCreatedShotExpectedImages : 0}
                 initialPendingBaselineNonVideoCount={shot.id === pendingNewShot.newlyCreatedShotId ? pendingNewShot.newlyCreatedShotBaselineNonVideoCount : undefined}
                 onInitialPendingUploadsConsumed={shot.id === pendingNewShot.newlyCreatedShotId ? pendingNewShot.clearNewlyCreatedShot : undefined}
-                dataTour={index === 0 ? 'first-shot' : undefined}
                 finalVideo={finalVideoMap.get(shot.id)}
               />
             );

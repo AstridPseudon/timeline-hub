@@ -35,7 +35,6 @@ export const strictLintDebtFiles = [
   "src/shared/hooks/shots/mappers.ts",
   "src/shared/hooks/tasks/useProcessingRefetchGuard.ts",
   "src/shared/hooks/useLiveRelativeTimestamp.ts",
-  "src/shared/hooks/useProductTour.ts",
   "src/shared/lib/queryKeys/index.ts",
   "src/shared/lib/settingsMigration.ts",
   "src/shared/lib/tasks/taskStatusSemantics.ts",

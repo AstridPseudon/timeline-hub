@@ -71,6 +71,12 @@ import { publishLocalTestExtensionDiagnostics } from "@/app/localTestRuntime.ts"
 import {
   selectReviewedExtensions,
 } from "@/tools/video-editor/runtime/extensionReleaseControls.ts";
+import { useEditorTour, useEditorTourRunning } from "@/shared/state/editorTourStore.ts";
+import { useEditorTourHost } from "@/tools/video-editor/tour/runner/useEditorTourHost.ts";
+import { EditorTourSlot } from "@/tools/video-editor/tour/timeline/editorTourSlot.tsx";
+import { EditorTourTimelineDriver } from "@/tools/video-editor/tour/timeline/EditorTourTimelineDriver.tsx";
+import { createEditorTourDataProvider } from "@/tools/video-editor/tour/timeline/tourDataProvider.ts";
+import { EDITOR_TOUR_TIMELINE_ID } from "@/tools/video-editor/tour/timeline/tourStages.ts";
 
 type ProviderSelection = {
   dataProvider: DataProvider;
@@ -139,6 +145,24 @@ function useVideoEditorProviderSelection({
     userId: null,
     remountKey: `runtime:${projectId}:${timelineId}`,
   } : null, [connection, projectId, projectSlug, timelineId, timelineName]);
+}
+
+/**
+ * The editor tour's selection: an in-memory demo timeline in local mode (`projectId: null`), so
+ * nothing queries, saves or registers against the user's project. Each run gets its own key.
+ */
+function useEditorTourSelection(): ProviderSelection | null {
+  const running = useEditorTourRunning();
+  const runId = useEditorTour((state) => state.runId);
+  return useMemo(() => running ? {
+    dataProvider: createEditorTourDataProvider(),
+    projectId: null,
+    projectSlug: null,
+    timelineId: EDITOR_TOUR_TIMELINE_ID,
+    timelineName: "Editor tour",
+    userId: null,
+    remountKey: `tour:${runId}`,
+  } : null, [running, runId]);
 }
 
 export default function VideoEditorPage() {
@@ -310,7 +334,7 @@ export default function VideoEditorPage() {
     setRuntimeRetrying(false);
     reportNativeFailure.current();
   }, [connectorScope]);
-  const providerSelection = useVideoEditorProviderSelection({
+  const userProviderSelection = useVideoEditorProviderSelection({
     projectId: selectionVerified ? projectId : null,
     projectSlug: selectedProject?.slug ?? projectId,
     timelineId: selectionVerified ? timelineId : null,
@@ -318,12 +342,17 @@ export default function VideoEditorPage() {
     onRuntimeError,
   });
 
+  const tourSelection = useEditorTourSelection();
+  // The trigger sees the USER's selection, which the tour's own selection never replaces.
+  useEditorTourHost(!!userProviderSelection);
+  const providerSelection = tourSelection ?? userProviderSelection;
+
   // dataKind V1 golden path (groken round 4): DEV-only fixture provider so the
   // transcript-lane example paints on any project with a media clip. Opt-in
   // via `?transcriptLaneFixture=1`; production builds drop the branch.
   const pageDataProvider = useMemo(() => {
     if (!providerSelection) return null;
-    if (!import.meta.env.DEV) return providerSelection.dataProvider;
+    if (tourSelection || !import.meta.env.DEV) return providerSelection.dataProvider;
     const fixtureMode =
       import.meta.env.MODE === "test"
         ? new URLSearchParams(window.location.search).get(
@@ -336,10 +365,10 @@ export default function VideoEditorPage() {
           renderMatrix: fixtureMode === "render-matrix",
         })
       : providerSelection.dataProvider;
-  }, [providerSelection]);
+  }, [providerSelection, tourSelection]);
 
   const nativeRecovery = useNativeEditorRecovery({
-    enabled: !!providerSelection,
+    enabled: !!userProviderSelection,
     scope: connectorScope,
     onRecovered: () => {
       setRuntimeConnectorError(null);
@@ -822,6 +851,7 @@ export default function VideoEditorPage() {
             extensionHostEnabled
             extensionReleaseRevision="shipped"
           >
+            {tourSelection && <EditorTourTimelineDriver />}
             <AstridVideoEditorShell
               mode="full"
               timelineId={providerSelection.timelineId}
@@ -871,6 +901,7 @@ export default function VideoEditorPage() {
           )}
         </>
       )}
+      <EditorTourSlot />
     </div>
   );
 }

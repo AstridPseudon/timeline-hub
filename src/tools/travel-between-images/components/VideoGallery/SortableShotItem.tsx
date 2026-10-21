@@ -37,7 +37,6 @@ interface SortableShotItemProps {
   initialPendingUploads?: number;
   initialPendingBaselineNonVideoCount?: number;
   onInitialPendingUploadsConsumed?: () => void;
-  dataTour?: string;
   finalVideo?: import('../../hooks/video/useShotFinalVideos').ShotFinalVideo;
 }
 
@@ -59,7 +58,6 @@ export const SortableShotItem: React.FC<SortableShotItemProps> = ({
   initialPendingUploads = 0,
   initialPendingBaselineNonVideoCount,
   onInitialPendingUploadsConsumed,
-  dataTour,
   finalVideo,
 }) => {
   const {
@@ -113,7 +111,6 @@ export const SortableShotItem: React.FC<SortableShotItemProps> = ({
     shouldLoadImages,
     shotIndex,
     projectAspectRatio,
-    dataTour,
     finalVideo,
   } as const;
 

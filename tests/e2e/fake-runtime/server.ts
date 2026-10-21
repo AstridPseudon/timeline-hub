@@ -28,7 +28,7 @@ import {
 } from '../../../src/test/fakeRuntimeIdentity.mjs';
 import type { FakeObjectStore } from '../../../src/test/fakeObjectStore.ts';
 import { createFakeAcp, type FakeAcp } from './acp.ts';
-import { createSeedObjectStore, createSeedTimelines, DEMO_PROJECT_ID, DEMO_PROJECT_SLUG } from './seed.ts';
+import { createSeedObjectStore, createSeedTimelines, DEMO_PROJECT_ID, DEMO_PROJECT_SLUG, type SeedName } from './seed.ts';
 
 export const READY_PREFIX = 'FAKE_RUNTIME_READY';
 
@@ -57,7 +57,7 @@ const errorReply = (status: number, code: string, message: string): Reply => ({
 /** The fixture matches case-sensitively on `Idempotency-Key`, `Content-Type`, `X-Original-Name`, `Range`. */
 const titleCase = (name: string) => name.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('-');
 
-function buildWorld(epoch: number, eventSequenceStart: number): World {
+function buildWorld(epoch: number, eventSequenceStart: number, seed: SeedName = 'demo'): World {
   const store = createSeedObjectStore();
   const router = createFakeRuntimeRouter({ objectStore: store, eventSequenceStart });
   // The visual and geometry baselines were taken against a stub whose tasks and generations were empty.
@@ -65,7 +65,7 @@ function buildWorld(epoch: number, eventSequenceStart: number): World {
   router.state.galleryPageRows.splice(0);
   router.state.media.clear();
   const instances = new Map<string, Instance>();
-  for (const seeded of createSeedTimelines()) {
+  for (const seeded of createSeedTimelines(seed)) {
     const timelineId = seeded.summary.timeline_id;
     instances.set(timelineId, {
       summary: seeded.summary,
@@ -194,12 +194,16 @@ export async function startFakeRuntimeServer(options: { token: string; port?: nu
       if (method !== 'POST') return errorReply(405, 'method_not_allowed', 'reset is POST only');
       // Neither heads nor the event feed rewind: a client holding a pre-reset cursor must still see new events.
       const events = live.router.state.events;
-      world = buildWorld(live.epoch + 1, events.length > 0 ? events[events.length - 1]!.sequence : live.eventBase);
+      // `{ "seed": "empty" }` starts the demo timeline as a new, empty one; no body (or any other) is the demo seed.
+      let seed: SeedName = 'demo';
+      try { seed = (JSON.parse(body.toString('utf8') || '{}') as { seed?: unknown }).seed === 'empty' ? 'empty' : 'demo'; } catch { seed = 'demo'; }
+      world = buildWorld(live.epoch + 1, events.length > 0 ? events[events.length - 1]!.sequence : live.eventBase, seed);
       return {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
         body: jsonBody({
           reset: true,
+          seed,
           epoch: world.epoch,
           heads: Object.fromEntries([...world.instances].map(([timelineId, instance]) => [timelineId, instance.fixture.read().headRevisionId])),
         }),

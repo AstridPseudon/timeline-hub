@@ -474,10 +474,6 @@ export const useGenerationsPaneController = () => {
   });
 
   const [isGenerationModalOpen, setIsGenerationModalOpen] = useState(false);
-  const handleOpenModal = useCallback(() => setIsGenerationModalOpen(true), []);
-  const handleCloseModal = useCallback(() => setIsGenerationModalOpen(false), []);
-  useAppEventListener('openGenerationModal', handleOpenModal);
-  useAppEventListener('closeGenerationModal', handleCloseModal);
 
   const handleNavigateToImageGeneration = useCallback(() => {
     setIsGenerationsPaneLocked(false);

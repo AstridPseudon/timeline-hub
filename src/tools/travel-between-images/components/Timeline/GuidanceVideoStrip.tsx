@@ -270,7 +270,6 @@ export const GuidanceVideoStrip: React.FC<GuidanceVideoStripProps> = ({
       <div
         ref={outerContainerRef}
         className={`${useAbsolutePosition ? 'absolute' : 'relative'} h-20 ${useAbsolutePosition ? '' : '-mt-1 mb-3'} group ${isDragging ? 'select-none' : ''}`}
-        data-tour="structure-video"
         style={{
           ...(useAbsolutePosition ? {
             left: `${stripLeftPercent}%`,

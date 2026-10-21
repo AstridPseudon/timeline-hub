@@ -196,6 +196,30 @@ declare module '@astrid/tools/catalog.json' {
   export default catalog;
 }
 
+// The editor tour's Lantern Valley (lazy): only the pieces `tour/timeline` calls.
+declare module '@astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample' {
+  export const SAMPLE_WORLD: { readonly name: string; readonly packageJson: string };
+}
+
+declare module '@astrid/packs/rendering/ui/threejs-live-editor/authoring' {
+  export type LiveScenePackageInput = Readonly<Record<string, unknown>>;
+  export function parsePreparedScenePackage(bytes: Uint8Array): Promise<LiveScenePackageInput>;
+  export function ingestPreparedPackage(
+    storage: import('@/sdk/video/assets/projectObjects.ts').ProjectObjectStorage,
+    input: LiveScenePackageInput,
+  ): Promise<{ package: unknown; liveScene: Record<string, unknown> }>;
+}
+
+declare module '@astrid/packs/rendering/ui/threejs-live-editor/SceneSurface' {
+  export function SceneSurface(props: {
+    source: unknown;
+    sourceTime: number;
+    width: number;
+    height: number;
+    onReady?: (info: unknown) => void;
+  }): import('react').ReactElement | null;
+}
+
 declare module '@astrid/packs/rendering/shared/managed-media-policy' {
   export function isManagedObjectUrl(src: string | null | undefined): boolean;
 }

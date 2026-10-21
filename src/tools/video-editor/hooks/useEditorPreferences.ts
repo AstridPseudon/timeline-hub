@@ -74,10 +74,11 @@ function normalizePreferences(value: EditorPreferences): EditorPreferences {
   };
 }
 
-export function useEditorPreferences(timelineId: string) {
+export function useEditorPreferences(timelineId: string, { persist = true }: { persist?: boolean } = {}) {
   const [preferences, setPreferences] = useEditorSettings<EditorPreferences>(
     `video-editor:preferences:${timelineId}`,
     defaultPreferences,
+    { persist },
   );
 
   const normalizedPreferences = normalizePreferences(preferences);
