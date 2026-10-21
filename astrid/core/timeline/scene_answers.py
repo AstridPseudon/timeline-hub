@@ -105,7 +105,7 @@ def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
     using these answers in a check or capture. No production caller is activated
     here. Missing inputs are unavailable, never a guessed registry or theme.
     """
-    from astrid.core.timeline.onscreen import element_coverage, role_of
+    from astrid.core.timeline.scene_roles import element_coverage, role_of
 
     timeline = props.get("timeline")
     if (not isinstance(timeline, Mapping) or not isinstance(timeline.get("tracks"), list)
