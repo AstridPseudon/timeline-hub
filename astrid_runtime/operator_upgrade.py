@@ -117,6 +117,18 @@ def _journal(paths: RuntimePaths, *, operation_id: str, state: str, journal_root
     previous = _read_support_json(path) or {}
     history = list(previous.get("history", [])) if isinstance(previous.get("history"), list) else []
     history.append({"state": state, "updated_at": time.time(), **details})
+    # Later steps must retain the identity recorded before the first mutation.
+    # A stopped/activated journal otherwise loses the roots needed to associate
+    # it with the installer's retained backup after an uncatchable interruption.
+    identity = {}
+    if previous.get("operation_id") == operation_id:
+        identity = {
+            key: previous[key]
+            for key in ("realm_id", "realm_root", "source_support_root", "schema_before")
+            if key in previous
+        }
+        if any(key in details and details[key] != value for key, value in identity.items()):
+            raise OperatorUpgradeError("upgrade transaction identity changed during the operation")
     payload = {
         "version": _JOURNAL_VERSION,
         "operation": "astrid-runtime-upgrade/v1",
@@ -124,6 +136,7 @@ def _journal(paths: RuntimePaths, *, operation_id: str, state: str, journal_root
         "state": state,
         "updated_at": time.time(),
         "history": history,
+        **identity,
         **details,
     }
     atomic_write_json(path, payload)

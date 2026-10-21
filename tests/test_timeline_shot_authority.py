@@ -17,6 +17,7 @@ from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.timeline_commit_store import TimelineCommitStore
+from runtime_protocol.util import now
 from test_timeline_commit_acceptance import context, prepared as detached_prepared, validate_prepared
 from test_timeline_commit_port import PreparedProvider
 
@@ -320,6 +321,15 @@ def historical_binding(request, tmp_path):
     try:
         binding = service.get_project_shot_text_binding(captured.pins["project_id"], captured.pins["text_binding_id"])
         assert binding["kind"] == "transcript" and binding["head"] == 1
+        # The committed archive is intentionally historical. Keep the copied
+        # receipt inside the bounded replay window so this test remains a
+        # positive exact-retry/no-write check as wall-clock time advances.
+        with service.store._mutex, service.store._transaction():
+            service.store.conn.execute(
+                "UPDATE command_idempotency SET created_at=? "
+                "WHERE command_kind='shot.text_binding.set' AND aggregate_id=?",
+                (now(), binding["binding_id"]),
+            )
         yield service, daemon, binding
         assert readonly_tree_digest(captured.backup_root) == source_before
     finally:

@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+from pathlib import Path
 import sqlite3
+import stat
 import subprocess
 import sys
 
 import pytest
 
+from runtime_protocol import platform, upgrade
 from runtime_protocol.errors import OwnerBusyError, RealmAdmissionError, ValidationError
 from runtime_protocol.store import SCHEMA_VERSION, RealmStore
 from runtime_protocol.upgrade import (
@@ -671,15 +675,155 @@ os._exit(0)
         check=True,
     )
     assert (root / "realm.sqlite3-wal").is_file()
+    original_components = {
+        path.name: path.read_bytes() for path in root.glob("realm.sqlite3*") if path.is_file()
+    }
 
     result = upgrade_realm(root, retain_backup=True, timeout_seconds=30, confirmation=f"UPGRADE {realm_id}")
     archive = root / "realm-upgrade-backups" / result["archive"].split("/")[-1]
     manifest = json.loads((archive / "manifest.json").read_text())
     assert "realm.sqlite3-wal" in manifest["components"]
     assert (archive / "realm.sqlite3-wal").is_file()
+    for name, payload in original_components.items():
+        assert (archive / name).read_bytes() == payload
+        assert manifest["components"][name]["sha256"] == hashlib.sha256(payload).hexdigest()
     assert not any((root / f"realm.sqlite3{suffix}").exists() for suffix in ("-wal", "-shm", "-journal"))
     reopened = RealmStore(root)
     try:
         assert reopened.realm["display_name"] == "WAL realm"
     finally:
         reopened.close()
+
+
+@pytest.mark.parametrize("failure_phase", ["checkpoint", "publication_flush"])
+@pytest.mark.parametrize("rollback_failure", [None, "before_publication", "after_publication"])
+def test_upgrade_restores_after_publication_and_preserves_uncertain_rollback(
+    tmp_path, monkeypatch, failure_phase, rollback_failure,
+):
+    root = tmp_path / "realm"
+    realm_id = _legacy_realm(root)
+    source_db = root / "realm.sqlite3"
+    original = source_db.read_bytes()
+    real_replace = platform.replace_path
+    real_flush = platform.flush_replace
+    failed_forward = []
+    failed_rollback = []
+
+    def rollback_source(source):
+        return Path(source).name.startswith(".realm.sqlite3.rollback-")
+
+    def publish(source, destination):
+        if rollback_failure == "before_publication" and rollback_source(source):
+            failed_rollback.append("before")
+            raise OSError("injected rollback rename failure")
+        return real_replace(source, destination)
+
+    def flush(source, destination):
+        source, destination = Path(source), Path(destination)
+        if (failure_phase == "publication_flush" and source.name == "realm.sqlite3"
+                and source.parent.name.startswith(".realm-upgrade-") and destination == source_db):
+            assert not source.exists()
+            activated = sqlite3.connect(source_db)
+            try:
+                assert activated.execute("SELECT version FROM runtime_schema").fetchone()[0] == SCHEMA_VERSION
+            finally:
+                activated.close()
+            failed_forward.append("after rename")
+            raise OSError("injected activation flush failure")
+        if rollback_failure == "after_publication" and rollback_source(source):
+            assert not source.exists()
+            assert source_db.read_bytes() == original
+            failed_rollback.append("after")
+            raise OSError("injected rollback flush failure")
+        return real_flush(source, destination)
+
+    def fail_checkpoint(source):
+        source.write_bytes(b"partially checkpointed")
+        failed_forward.append("checkpoint")
+        raise OSError("injected checkpoint failure")
+
+    monkeypatch.setattr(platform, "replace_path", publish)
+    monkeypatch.setattr(platform, "flush_replace", flush)
+    if failure_phase == "checkpoint":
+        monkeypatch.setattr(upgrade, "_checkpoint_source_wal", fail_checkpoint)
+
+    error_type = OSError if rollback_failure is None else RuntimeError
+    message = "injected" if rollback_failure is None else "rollback failed; recovery snapshot preserved at"
+    with pytest.raises(error_type, match=message) as error:
+        upgrade_realm(root, timeout_seconds=30, confirmation=f"UPGRADE {realm_id}")
+
+    assert len(failed_forward) == 1
+    assert bool(failed_rollback) == (rollback_failure is not None)
+    snapshots = list(tmp_path.glob(".realm-upgrade-transaction-*/v23-*/realm.sqlite3"))
+    if rollback_failure is None:
+        assert source_db.read_bytes() == original
+        assert snapshots == []
+    else:
+        assert len(snapshots) == 1
+        assert snapshots[0].read_bytes() == original
+        assert str(snapshots[0].parent) in str(error.value)
+        if rollback_failure == "after_publication":
+            assert source_db.read_bytes() == original
+
+
+@pytest.mark.parametrize("operation", ["upgrade", "compaction"])
+def test_upgrade_and_compaction_flush_owned_files_through_writable_handles(tmp_path, monkeypatch, operation):
+    root = tmp_path / "realm"
+    if operation == "upgrade":
+        realm_id = _legacy_realm(root)
+    else:
+        store = RealmStore.initialize(root)
+        realm_id = store.realm["id"]
+        store.close()
+    real_fsync = upgrade.os.fsync
+    flushed_files = []
+
+    def writable_fsync(fd):
+        if stat.S_ISREG(os.fstat(fd).st_mode):
+            # A zero-byte write verifies access without changing file contents
+            # or offset. POSIX and Windows CRT reject read-only descriptors.
+            os.write(fd, b"")
+            flushed_files.append(fd)
+        return real_fsync(fd)
+
+    monkeypatch.setattr(upgrade.os, "fsync", writable_fsync)
+    if operation == "upgrade":
+        assert upgrade_realm(root, confirmation=f"UPGRADE {realm_id}")["ok"]
+    else:
+        assert upgrade.compact_idempotency_ledger(root, confirmation=f"COMPACT IDEMPOTENCY {realm_id}")["ok"]
+    assert flushed_files
+
+
+def test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars(tmp_path, monkeypatch):
+    root = tmp_path / "realm"
+    realm_id = _legacy_realm(root)
+    subprocess.run([sys.executable, "-c", """
+import os, sqlite3, sys
+connection = sqlite3.connect(sys.argv[1])
+connection.execute("PRAGMA journal_mode=WAL")
+connection.execute("PRAGMA wal_autocheckpoint=0")
+connection.execute("UPDATE realm SET display_name='pending WAL'")
+connection.commit()
+os._exit(0)
+""", str(root / "realm.sqlite3")], check=True)
+    original = {
+        path.name: path.read_bytes() for path in root.glob("realm.sqlite3*")
+        if path.is_file()
+    }
+    assert "realm.sqlite3-wal" in original
+    real_flush = platform.flush_replace
+    publications = []
+
+    def flush(source, destination):
+        source = Path(source)
+        if source.name == "realm.sqlite3" and source.parent.name.startswith(".realm-upgrade-"):
+            publications.append(source)
+            raise OSError("injected post-publication failure")
+        return real_flush(source, destination)
+
+    monkeypatch.setattr(platform, "flush_replace", flush)
+    with pytest.raises(OSError, match="injected post-publication failure"):
+        upgrade_realm(root, confirmation=f"UPGRADE {realm_id}")
+    assert len(publications) == 1
+    assert {path.name: path.read_bytes() for path in root.glob("realm.sqlite3*") if path.is_file()} == original
+    assert not list(tmp_path.glob(".realm-upgrade-transaction-*"))

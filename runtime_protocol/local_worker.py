@@ -1783,7 +1783,7 @@ class LocalWorkerLauncher:
                     # A previous writer may have lost its ACK after rename
                     # but before directory fsync. Replay reestablishes durability
                     # of the exact retained record before returning the receipt.
-                    descriptor = os.open(record_path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+                    descriptor = os.open(record_path, os.O_RDWR | getattr(os, "O_NOFOLLOW", 0))
                     try:
                         os.fsync(descriptor)
                     finally:

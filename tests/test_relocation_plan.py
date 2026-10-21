@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import pytest
 
@@ -229,7 +230,7 @@ def test_relocation_restores_target_aux_when_root_rename_fails(tmp_path, monkeyp
             raise OSError("injected root rename failure")
         return original_replace(source, target)
 
-    monkeypatch.setattr("astrid_runtime.relocation.os.replace", fail_root_rename)
+    monkeypatch.setattr("astrid_runtime.relocation.platform.replace_path", fail_root_rename)
     monkeypatch.setattr("astrid_runtime.relocation._bootstrap_locked", lambda *_args, **_kwargs: BootstrapResult("started", "realm-1", "Realm", "http://127.0.0.1:1", "actor", "astrid"))
 
     with pytest.raises(RelocationError, match="rolled back"):
@@ -237,3 +238,92 @@ def test_relocation_restores_target_aux_when_root_rename_fails(tmp_path, monkeyp
 
     assert paths.app_support.is_dir()
     assert (destination / "verification" / "keep.txt").read_text(encoding="utf-8") == "keep"
+
+
+@pytest.mark.parametrize("phase", ["destination_staging", "root_move", "auxiliary_merge"])
+@pytest.mark.parametrize("rollback_failure", [None, "flush", "rename_after_publication"])
+def test_relocation_records_each_publication_before_flush_and_preserves_recovery(
+    tmp_path, monkeypatch, phase, rollback_failure,
+):
+    paths = RuntimePaths.sandbox(tmp_path / "support")
+    paths.ensure_support_dirs()
+    current = paths.realms_dir / "realm-1"
+    current.mkdir()
+    (current / "original.bin").write_bytes(b"original realm")
+    paths.catalog_path.write_text(json.dumps({
+        "version": 1, "selected_realm_id": "realm-1", "source_profiles": {},
+        "realms": [{"realm_id": "realm-1", "display_name": "Realm", "data_root": str(current)}],
+    }), encoding="utf-8")
+    original_catalog = paths.catalog_path.read_bytes()
+    paths.discovery_path.write_text(json.dumps({
+        "pid": 1234, "active_realm": "realm-1", "endpoint": "http://127.0.0.1:1",
+        "runtime_instance_id": "instance", "process_birth_id": "birth",
+    }), encoding="utf-8")
+    destination = tmp_path / "candidate"
+    destination.mkdir()
+    (destination / "a-auxiliary").mkdir()
+    (destination / "a-auxiliary" / "keep.bin").write_bytes(b"original auxiliary")
+    (destination / "z-unmerged.bin").write_bytes(b"unmerged auxiliary")
+    real_replace = runtime_platform.replace_path
+    real_flush = runtime_platform.flush_replace
+    failed_forward = []
+    failed_rollback = []
+    starts = []
+
+    def is_aux(path):
+        return path.name.startswith(".candidate.relocation-aux-")
+
+    def matches_forward(source, target):
+        if phase == "destination_staging":
+            return source == destination and is_aux(target)
+        if phase == "root_move":
+            return source == paths.app_support and target == destination
+        return is_aux(source.parent) and target.parent == destination
+
+    def matches_rollback(source, target):
+        return matches_forward(target, source)
+
+    def flush(source, target):
+        source, target = Path(source), Path(target)
+        if not failed_forward and matches_forward(source, target):
+            assert target.exists() and not source.exists()
+            failed_forward.append((source, target))
+            raise OSError("injected post-publication flush failure")
+        if rollback_failure == "flush" and matches_rollback(source, target):
+            assert target.exists() and not source.exists()
+            failed_rollback.append((source, target))
+            raise OSError("injected rollback flush failure")
+        return real_flush(source, target)
+
+    def publish(source, target):
+        real_replace(source, target)
+        if rollback_failure == "rename_after_publication" and failed_forward and matches_rollback(Path(source), Path(target)):
+            failed_rollback.append((Path(source), Path(target)))
+            raise OSError("injected uncertain rollback rename")
+
+    def bootstrap(target_paths, *_args):
+        starts.append(target_paths.app_support)
+        return BootstrapResult("started", "realm-1", "Realm", "http://127.0.0.1:1", "actor", "astrid")
+
+    monkeypatch.setattr(runtime_platform, "replace_path", publish)
+    monkeypatch.setattr(runtime_platform, "flush_replace", flush)
+    monkeypatch.setattr("astrid_runtime.relocation._bootstrap_locked", bootstrap)
+    expected = "rolled back" if rollback_failure is None else "rollback failed.*recovery material retained"
+    with pytest.raises(RelocationError, match=expected):
+        relocate(paths, _StoppedBoundary(), _config(tmp_path), object(), destination=destination, confirmation="RELOCATE realm-1")
+
+    assert len(failed_forward) == 1
+    assert bool(failed_rollback) == (rollback_failure is not None)
+    if rollback_failure != "rename_after_publication":
+        assert (current / "original.bin").read_bytes() == b"original realm"
+        assert paths.catalog_path.read_bytes() == original_catalog
+        assert (destination / "a-auxiliary" / "keep.bin").read_bytes() == b"original auxiliary"
+        assert (destination / "z-unmerged.bin").read_bytes() == b"unmerged auxiliary"
+        assert starts == ([paths.app_support] if rollback_failure is None else [])
+    else:
+        # A native failure with an uncertain rename outcome must leave every
+        # input recoverable, even when rollback cannot finish its bookkeeping.
+        assert starts == []
+        assert [item.read_bytes() for item in tmp_path.rglob("original.bin")] == [b"original realm"]
+        assert [item.read_bytes() for item in tmp_path.rglob("keep.bin")] == [b"original auxiliary"]
+        assert [item.read_bytes() for item in tmp_path.rglob("z-unmerged.bin")] == [b"unmerged auxiliary"]

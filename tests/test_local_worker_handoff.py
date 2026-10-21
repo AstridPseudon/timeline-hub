@@ -15,6 +15,7 @@ import sys
 
 import pytest
 
+from tests.lanes import requires_posix_private_modes
 from astrid_runtime import custody_broker as custody
 from runtime_protocol import local_worker_handoff as handoff
 from runtime_protocol.errors import ConflictError
@@ -85,6 +86,29 @@ def _adoption(binding, *, seal='sha256:' + '2' * 64):
 
 def _repin_intent(binding):
     binding['intent_digest'] = digest({'version': VERSION, 'binding': {k: v for k, v in binding.items() if k != 'intent_digest'}})
+
+
+@requires_posix_private_modes
+def test_successor_listener_default_parent_binds_private_socket_and_cleans_up(tmp_path):
+    request, _ = _handoff_case(tmp_path)
+    listener = handoff.HandoffSuccessorListener(request['binding'], 'sha256:' + '2' * 64)
+    root, path = listener.root, listener.path
+    try:
+        assert root.stat().st_uid == os.getuid() and root.stat().st_mode & 0o777 == 0o700
+        assert path.stat().st_uid == os.getuid() and path.stat().st_mode & 0o777 == 0o600
+        assert listener.socket.get_inheritable() is False
+        # Exercise the real local listener without substituting its temp parent.
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(2)
+            client.connect(str(path))
+            accepted, _ = listener.socket.accept()
+            with accepted:
+                client.sendall(b'probe')
+                assert accepted.recv(5) == b'probe'
+    finally:
+        listener.close()
+    assert listener.socket.fileno() == -1
+    assert not path.exists() and not root.exists()
 
 
 @pytest.mark.darwin_native

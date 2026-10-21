@@ -58,8 +58,10 @@ def _create_host_custody_scope(scope: Path) -> None:
         scope.mkdir(parents=True, exist_ok=False, mode=0o700)
     except FileExistsError as exc:
         raise ConflictError("host-only custody scope already exists") from exc
+    if os.name == "nt":
+        runtime_platform.owner_only(scope, directory=True)
     observed = scope.lstat()
-    if (not stat.S_ISDIR(observed.st_mode) or not runtime_platform.is_owner_only(observed, directory=True)
+    if (not stat.S_ISDIR(observed.st_mode) or not runtime_platform.is_owner_only(scope if os.name == "nt" else observed, directory=True)
             or scope.resolve() != scope):
         raise ConflictError("host-only custody scope is not owner-only")
 
@@ -227,8 +229,6 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
             return self._rpc_unlocked(handle, payload)
 
     def prepare(self, profile: LocalWorkerProfile, *, operation_id: str, channel_id: str) -> _PreparedWorker:
-        if os.name == "nt":
-            raise ConflictError("local Worker descriptor transport is unavailable on Windows")
         if _host_only(profile):
             return self._prepare_host_only(profile, operation_id=operation_id, channel_id=channel_id)
         if profile.engine_launch is not None:
@@ -254,11 +254,11 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     # boundary through its adjacent pyvenv.cfg.  Its kernel
                     # executable may resolve to the base interpreter, which is
                     # checked independently by OSProcessInspector below.
-                    candidate = env_root / ("Scripts" if os.name == "nt" else "bin") / ("python.exe" if os.name == "nt" else "python")
+                    candidate = runtime_platform.venv_python(env_root)
                     if candidate.is_file() and os.access(candidate, os.X_OK):
                         executable = candidate
                     environment["VIRTUAL_ENV"] = str(env_root)
-                    environment["PATH"] = str(env_root / ("Scripts" if os.name == "nt" else "bin")) + os.pathsep + environment.get("PATH", "")
+                    environment["PATH"] = str(runtime_platform.venv_python(env_root).parent) + os.pathsep + environment.get("PATH", "")
                 worker = runtime_platform.spawn_tree(
                     [str(executable), "-m", "source.runtime.supervisor", "--prepared-control-fd", str(child.fileno())],
                     cwd=str(Path(self.config["support_root"])),

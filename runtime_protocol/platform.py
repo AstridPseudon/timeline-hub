@@ -3,6 +3,11 @@
 Windows permissions use owner/SYSTEM protected DACLs and handle-based checks.
 Process identities are observations, never signal authority;
 ``signal_process`` pins a kernel handle before comparing an expected identity.
+
+Linux's public ``pidfd_open(pid, flags=0)`` and
+``pidfd_send_signal(fd, signum, siginfo=None, flags=0)`` prefer each stdlib
+wrapper independently, with a verified syscall fallback when it is absent.
+Callers using these low-level helpers own identity checks and fd closure.
 """
 from __future__ import annotations
 
@@ -25,6 +30,7 @@ from . import cancellation
 TERM = int(signal.SIGTERM)
 KILL = int(getattr(signal, "SIGKILL", 9))
 USER1 = int(signal.SIGUSR1) if hasattr(signal, "SIGUSR1") else None
+_windows_worker_spawn_lock = threading.RLock()
 _directory_mutex_guard = threading.Lock()
 _directory_mutexes: dict[int, tuple[int, threading.Lock, int]] = {}
 _directory_mutex_gates: dict[str, threading.Lock] = {}
@@ -53,6 +59,36 @@ def log_dir(home: Path | str | None = None) -> Path:
     if sys.platform == "win32":
         return data_root(home) / "logs"
     return Path(os.environ.get("XDG_STATE_HOME") or home / ".local" / "state") / "astrid-runtime" / "logs"
+
+
+def is_remote_filesystem(path: Path | str) -> bool:
+    """Identify Windows network volumes, including UNC and mapped drives.
+
+    GetVolumePathName follows junctions and mounted folders and also accepts
+    missing trailing components, so this works before a realm is created.
+    Other filesystem users (including media readers) do not need this policy.
+    """
+    if sys.platform != "win32":
+        return False
+    name = os.fspath(path).replace("/", "\\")
+    if name.startswith("\\\\") and (
+        not name.startswith(("\\\\?\\", "\\\\.\\"))
+        or name.upper().startswith("\\\\?\\UNC\\")
+    ):
+        return True
+    from ctypes import wintypes
+    kernel = _kernel()
+    kernel.GetVolumePathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+    kernel.GetVolumePathNameW.restype = wintypes.BOOL
+    kernel.GetDriveTypeW.argtypes = [wintypes.LPCWSTR]
+    kernel.GetDriveTypeW.restype = wintypes.UINT
+    volume = ctypes.create_unicode_buffer(32768)
+    if not kernel.GetVolumePathNameW(str(Path(path).absolute()), volume, len(volume)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    drive_type = kernel.GetDriveTypeW(volume.value)
+    if drive_type in (0, 1):  # DRIVE_UNKNOWN / DRIVE_NO_ROOT_DIR
+        raise OSError(errno.ENODEV, "filesystem volume type is unavailable", str(path))
+    return drive_type == 4  # DRIVE_REMOTE
 
 
 def owner_only(path_or_fd, *, directory: bool | None = None) -> None:
@@ -114,6 +150,73 @@ def private_temporary(directory, prefix):
         return create(directory, prefix)
     import tempfile
     return tempfile.mkstemp(dir=directory, prefix=prefix)
+
+
+def _retry_windows_sharing_violation(operation, *, clock=time.monotonic, sleep=time.sleep):
+    """Retry AV/reader sharing failures for at most a quarter second."""
+    deadline = clock() + 0.25
+    delay = 0.01
+    while True:
+        try:
+            return operation()
+        except OSError as exc:
+            if getattr(exc, "winerror", None) not in (5, 32, 33) or clock() >= deadline:
+                raise
+            sleep(min(delay, max(0, deadline - clock())))
+            delay = min(delay * 2, 0.05)
+
+
+def _move_file_write_through(source, destination):
+    """Replace a path with Win32's write-through namespace durability."""
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    move = kernel.MoveFileExW
+    move.argtypes = (wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD)
+    move.restype = wintypes.BOOL
+    if not move(os.fspath(source), os.fspath(destination), 0x1 | 0x8):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def fsync_directory(path):
+    """Persist a directory entry update on POSIX; Windows has no dir fsync."""
+    if sys.platform == "win32":
+        return
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def replace_path(source, destination):
+    """Publish a rename without a subsequent, fallible directory flush.
+
+    Transactions must record the completed rename before calling
+    ``flush_replace``. Windows includes write-through in the native move:
+    there is no separate portable directory flush on that platform.
+    """
+    if sys.platform == "win32":
+        return _retry_windows_sharing_violation(
+            lambda: _move_file_write_through(source, destination)
+        )
+    os.replace(source, destination)
+
+
+def flush_replace(source, destination):
+    """Persist both renamed entries after the caller records publication."""
+    parents = {Path(source).parent, Path(destination).parent}
+    for parent in parents:
+        fsync_directory(parent)
+
+
+def durable_replace(source, destination):
+    """Publish and persist a path; owns all parent-directory durability.
+
+    Use ``replace_path`` followed by ``flush_replace`` when transaction
+    bookkeeping must distinguish a rename from a subsequent flush failure.
+    """
+    replace_path(source, destination)
+    flush_replace(source, destination)
 
 
 def read_private_file(path):
@@ -290,7 +393,7 @@ class _DarwinBSDInfo(ctypes.Structure):
     ] + [("nice", ctypes.c_int32), ("start_sec", ctypes.c_uint64), ("start_usec", ctypes.c_uint64)]
 
 
-def _read_darwin_process_info(pid: int):
+def _read_darwin_process_info(pid: int, *, include_exit: bool = False):
     library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
     reader = library.proc_pidinfo
     reader.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_int]
@@ -306,7 +409,8 @@ def _read_darwin_process_info(pid: int):
     if value.pid != pid or value.start_sec == 0 or value.start_usec >= 1_000_000:
         raise OSError("native process identity observation was malformed")
     return {"pid": int(value.pid), "uid": int(value.uid), "parent_pid": int(value.ppid),
-            "start_sec": int(value.start_sec), "start_usec": int(value.start_usec)}
+            "start_sec": int(value.start_sec), "start_usec": int(value.start_usec),
+            **({"status": int(value.status)} if include_exit else {})}
 
 
 def _kernel():
@@ -613,43 +717,75 @@ def _resume_process(pid):
         kernel.CloseHandle(snapshot)
 
 
-def spawn_tree(argv, *, detached=False, **kwargs):
+def spawn_tree(argv, *, detached=False, hidden=False, **kwargs):
     """Spawn a session/Job, assigning Windows children before their first instruction.
 
-    Detached Windows daemons inherit the sole extra Job handle, so launcher
-    exit preserves the daemon, and daemon exit still kills its descendants.
+    Detached Windows daemons and retained Workers inherit their Job handles,
+    preserving custody across an orderly owner exit.
     """
     if sys.platform != "win32":
         kwargs.setdefault("start_new_session", True)
         return subprocess.Popen(argv, **kwargs)
+    # handle_list requires temporary handle inheritance. Serialize launches so
+    # concurrent callers cannot restore another launch's inheritance flags.
+    with _windows_worker_spawn_lock:
+        return _spawn_windows_tree(argv, detached=detached, hidden=hidden, **kwargs)
+
+
+def _spawn_windows_tree(argv, *, detached=False, hidden=False, **kwargs):
     kwargs.pop("start_new_session", None)
-    if kwargs.pop("pass_fds", ()):
-        raise NotImplementedError("Windows worker descriptor handoff is unavailable")
-    job = _Job()
-    if detached:
-        os.set_handle_inheritable(job.handle, True)
-        startup = kwargs.setdefault("startupinfo", subprocess.STARTUPINFO())
-        attributes = dict(startup.lpAttributeList or {})
-        attributes["handle_list"] = [*attributes.get("handle_list", []), job.handle]
-        startup.lpAttributeList = attributes
-        kwargs["env"] = dict(kwargs.get("env") or os.environ)
-        kwargs["env"]["ASTRID_RUNTIME_JOB_HANDLE"] = str(job.handle)
-        kwargs["close_fds"] = True
-    process = None
+    descriptors = kwargs.pop("pass_fds", ())
+    inheritance = job = process = None
+    ancestor_flags = []
+    # A retained Worker must keep its Job alive when owner A exits after an
+    # orderly handoff. Its own final exit closes this last handle and contains
+    # descendants, just as a detached Runtime owner does.
+    inherit_job = detached or bool(descriptors)
     try:
-        kwargs["creationflags"] = kwargs.get("creationflags", 0) | 0x200 | 0x4
+        if descriptors:
+            from .windows_handoff import InheritedHandles
+            inheritance = InheritedHandles(argv, kwargs, descriptors)
+            argv = inheritance.argv
+        job = _Job()
+        if inherit_job:
+            os.set_handle_inheritable(job.handle, True)
+            startup = kwargs.setdefault("startupinfo", subprocess.STARTUPINFO())
+            attributes = dict(startup.lpAttributeList or {})
+            ancestors = [*_inherited_ancestor_jobs, *([_inherited_job_handle] if _inherited_job_handle else [])]
+            for handle in ancestors:
+                ancestor_flags.append((handle, os.get_handle_inheritable(handle)))
+                os.set_handle_inheritable(handle, True)
+            attributes["handle_list"] = list(dict.fromkeys([*attributes.get("handle_list", []), job.handle, *ancestors]))
+            startup.lpAttributeList = attributes
+            kwargs["env"] = dict(kwargs.get("env") or os.environ)
+            kwargs["env"]["ASTRID_RUNTIME_JOB_HANDLE"] = str(job.handle)
+            kwargs["env"]["ASTRID_RUNTIME_ANCESTOR_JOB_HANDLES"] = ",".join(map(str, ancestors))
+            kwargs["close_fds"] = True
+        kwargs["creationflags"] = kwargs.get("creationflags", 0) | 0x200 | 0x4 | (0x08000000 if hidden else 0)
         process = subprocess.Popen(argv, **kwargs)
+        if inheritance is not None:
+            inheritance.restore()
+        for handle, previous in ancestor_flags:
+            os.set_handle_inheritable(handle, previous)
+        ancestor_flags.clear()
         job.assign(process)
         process._runtime_job = job
         _resume_process(process.pid)
+        if inheritance is not None:
+            inheritance.authenticate(process)
         return process
     except BaseException:
         if process is not None:
             process.kill(); process.wait()
-        job.close()
+        if job is not None:
+            job.close()
         raise
     finally:
-        if detached and job.handle:
+        if inheritance is not None:
+            inheritance.close()
+        for handle, previous in ancestor_flags:
+            os.set_handle_inheritable(handle, previous)
+        if inherit_job and job is not None and job.handle:
             os.set_handle_inheritable(job.handle, False)
 
 
@@ -675,34 +811,99 @@ def signal_tree(process_or_pid, signum):
         os.kill(pid, signal.CTRL_BREAK_EVENT)
 
 
-def stop_tree(process, grace=5.0):
+def tree_exited(process):
+    """Observe exit without reaping a POSIX tree's process-group anchor.
+
+    The caller must remain the sole waiter until stop_tree has killed any
+    surviving descendants. Windows retains that authority in the Job handle.
+    """
     if sys.platform == "linux":
-        return _stop_linux_tree(process, grace)
-    try:
-        if process.poll() is None:
-            try:
-                signal_tree(process, TERM)
-            except (OSError, ValueError):
-                if sys.platform != "win32":
-                    raise
-            try:
-                process.wait(timeout=grace)
-            except subprocess.TimeoutExpired:
-                signal_tree(process, KILL)
-                process.wait(timeout=max(2.0, grace))
-        # Kill any descendants which outlived their session leader.
-        if sys.platform != "win32":
+        with getattr(process, "_waitpid_lock", nullcontext()):
+            if process.returncode is not None:
+                return True
+            return os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None
+    if sys.platform == "darwin":
+        with getattr(process, "_waitpid_lock", nullcontext()):
+            return _darwin_tree_exited(process)
+    return process.poll() is not None
+
+
+def _darwin_tree_exited(process):
+    if process.returncode is not None:
+        return True
+    info = _read_darwin_process_info(process.pid, include_exit=True)
+    return info is None or info["status"] == 5  # SZOMB
+
+
+def stop_tree(process, grace=5.0, *, stop_channel=False):
+    if stop_channel:
+        _close_stop_channel(process)
+    if sys.platform == "linux":
+        return _stop_linux_tree(process, grace, wait_full_grace=stop_channel)
+    if sys.platform == "darwin":
+        # Keep the unreaped leader until the last group signal, as on Linux.
+        with getattr(process, "_waitpid_lock", nullcontext()):
+            if process.returncode is not None:
+                return
+            if stop_channel or not _darwin_tree_exited(process):
+                try:
+                    signal_tree(process, TERM)
+                except ProcessLookupError:
+                    pass
+            if stop_channel:
+                # Descendants share stdin and may still be handling EOF after
+                # the session leader has exited.
+                time.sleep(max(0.0, grace))
+            elif not _darwin_tree_exited(process):
+                deadline = time.monotonic() + grace
+                while time.monotonic() < deadline and not _darwin_tree_exited(process):
+                    time.sleep(min(0.05, max(0, deadline - time.monotonic())))
             try:
                 signal_tree(process, KILL)
             except ProcessLookupError:
                 pass
+        process.wait(timeout=max(2.0, grace))
+        return
+    try:
+        deadline = time.monotonic() + grace
+        if process.poll() is None:
+            try:
+                if not (stop_channel and sys.platform == "win32"):
+                    signal_tree(process, TERM)
+            except (OSError, ValueError):
+                if sys.platform != "win32":
+                    raise
+            try:
+                process.wait(timeout=max(0.0, deadline - time.monotonic()))
+            except subprocess.TimeoutExpired:
+                pass
+        if stop_channel and sys.platform == "win32":
+            # Hidden services have no console. EOF is their cooperative stop
+            # request; Job termination is the forced escalation.
+            time.sleep(max(0.0, deadline - time.monotonic()))
+        if process.poll() is None or sys.platform != "win32":
+            try:
+                signal_tree(process, KILL)
+            except ProcessLookupError:
+                pass
+        if process.poll() is None:
+            process.wait(timeout=max(2.0, grace))
     finally:
         job = getattr(process, "_runtime_job", None)
         if job:
             job.close()
 
 
-def _stop_linux_tree(process, grace):
+def _close_stop_channel(process):
+    channel = getattr(process, "stdin", None)
+    if channel is not None:
+        try:
+            channel.close()
+        except OSError:
+            pass
+
+
+def _stop_linux_tree(process, grace, *, wait_full_grace=False):
     # poll()/wait() reap the leader and release its numeric PID/PGID. Hold
     # Popen's wait lock and use WNOWAIT until the final descendant signal.
     with getattr(process, "_waitpid_lock", nullcontext()):
@@ -712,20 +913,20 @@ def _stop_linux_tree(process, grace):
             exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
         except ChildProcessError:
             return  # externally reaped: no authority to signal a bare PGID
-        if exited is None:
+        if exited is None or wait_full_grace:
             try:
                 _signal_linux_group(process, TERM)
             except ProcessLookupError:
                 pass
-            deadline = time.monotonic() + grace
-            while time.monotonic() < deadline:
-                try:
-                    exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
-                except ChildProcessError:
-                    return
-                if exited is not None:
-                    break
-                time.sleep(min(0.05, max(0, deadline - time.monotonic())))
+        deadline = time.monotonic() + grace
+        while time.monotonic() < deadline and (exited is None or wait_full_grace):
+            try:
+                exited = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            except ChildProcessError:
+                return
+            if exited is not None and not wait_full_grace:
+                break
+            time.sleep(min(0.05, max(0, deadline - time.monotonic())))
         try:
             _signal_linux_group(process, KILL)
         except ProcessLookupError:
@@ -742,6 +943,85 @@ def _signal_linux_group(process, signum):
     except ChildProcessError as exc:
         raise ProcessLookupError("process-group custody lost: child is no longer waitable") from exc
     os.killpg(process.pid, signum)
+
+
+def _linux_pidfd_syscall(operation, *arguments):
+    """Use verified Linux syscall ABIs when Python lacks a pidfd wrapper."""
+    if sys.platform != "linux":
+        raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
+    machine = os.uname().machine
+    widths = (ctypes.sizeof(ctypes.c_void_p), ctypes.sizeof(ctypes.c_long))
+    # Linux's x86, ARM EABI, powerpc and s390 syscall tables agree with
+    # asm-generic/unistd.h (used by arm64, riscv and loongarch) for these calls.
+    # x32 adds __X32_SYSCALL_BIT; MIPS uses ABI-specific syscall bases.
+    # Neither is safe to infer from the kernel's machine name alone.
+    native_width = {
+        "x86_64": 8, "i386": 4, "i486": 4, "i586": 4, "i686": 4,
+        "aarch64": 8, "armv6l": 4, "armv7l": 4,
+        "ppc64": 8, "ppc64le": 8, "s390x": 8, "riscv64": 8, "loongarch64": 8,
+    }.get(machine)
+    multiarch = getattr(sys.implementation, "_multiarch", "")
+    x32 = "x32" in multiarch  # PER_LINUX32 can make x32 report an i686 machine.
+    arm_eabi = machine not in {"armv6l", "armv7l"} or multiarch.endswith(
+        ("-gnueabi", "-gnueabihf", "-musleabi", "-musleabihf")
+    )
+    if native_width is None or widths != (native_width, native_width) or x32 or not arm_eabi:
+        raise NotImplementedError(
+            f"Linux pidfd syscall fallback does not support ABI {machine} "
+            f"(pointer/long bytes {widths}, multiarch {multiarch!r})"
+        )
+    values = []
+    for argument in arguments:
+        if argument is None:
+            values.append(ctypes.c_void_p())
+        else:
+            value = ctypes.c_int(argument)
+            if value.value != argument:
+                raise OverflowError("pidfd syscall argument does not fit a C int")
+            values.append(value)
+    try:
+        syscall = ctypes.CDLL(None, use_errno=True).syscall
+    except AttributeError as exc:
+        raise NotImplementedError("Linux pidfd syscall fallback requires libc syscall support") from exc
+    syscall.argtypes = [ctypes.c_long]
+    syscall.restype = ctypes.c_long
+    number = {"pidfd_open": 434, "pidfd_send_signal": 424}[operation]
+    result = syscall(number, *values)
+    if result == -1:
+        error = ctypes.get_errno()
+        raise OSError(error, f"{operation} failed: {os.strerror(error)}")
+    return int(result)
+
+
+def pidfd_open(pid: int, flags: int = 0) -> int:
+    """Open a Linux pidfd; the caller authenticates its target and closes it."""
+    if sys.platform != "linux":
+        raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
+    opener = getattr(os, "pidfd_open", None)
+    if opener is not None:
+        try:
+            return opener(pid, flags)
+        except TypeError:
+            # Keep compatibility with narrow test doubles and older wrappers.
+            return opener(pid)
+    return _linux_pidfd_syscall("pidfd_open", pid, flags)
+
+
+def pidfd_send_signal(fd: int, signum: int, siginfo=None, flags: int = 0) -> None:
+    """Signal a retained Linux pidfd; the caller owns identity checks and closure.
+
+    The syscall fallback accepts only ``siginfo=None``. Success returns None
+    through either route, and this helper leaves the descriptor open.
+    """
+    if sys.platform != "linux":
+        raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
+    sender = getattr(signal, "pidfd_send_signal", None)
+    if sender is not None:
+        sender(fd, signum, siginfo, flags)
+    else:
+        if siginfo is not None:
+            raise NotImplementedError("Linux pidfd syscall fallback does not support siginfo")
+        _linux_pidfd_syscall("pidfd_send_signal", fd, signum, None, flags)
 
 
 def signal_process(expected, signum):
@@ -794,14 +1074,12 @@ def signal_process(expected, signum):
         finally:
             kernel.CloseHandle(handle)
         return
-    if not hasattr(os, "pidfd_open") or not hasattr(signal, "pidfd_send_signal"):
-        raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
-    fd = os.pidfd_open(pid)
+    fd = pidfd_open(pid)
     try:
         observed = process_identity(pid)
         if observed is None or any(observed.get(k) != expected.get(k) for k in ("pid", "uid", "birth_id")):
             raise OSError("process incarnation changed")
-        signal.pidfd_send_signal(fd, signum)
+        pidfd_send_signal(fd, signum)
     finally:
         os.close(fd)
 
@@ -831,3 +1109,170 @@ def _adopt_inherited_job():
 
 
 _inherited_job_handle = _adopt_inherited_job()
+
+
+def _adopt_ancestor_jobs():
+    if sys.platform != "win32":
+        return []
+    handles = [int(value) for value in os.environ.pop("ASTRID_RUNTIME_ANCESTOR_JOB_HANDLES", "").split(",") if value]
+    for handle in handles:
+        os.set_handle_inheritable(handle, False)
+    return handles
+
+
+# Keep ancestor Jobs alive through orderly owner exit as well. All processes
+# remain in their original Jobs; no breakaway weakens process-tree containment.
+_inherited_ancestor_jobs = _adopt_ancestor_jobs()
+
+
+# Worker IPC stays here so protocol/state-machine code never selects an OS.
+def venv_python(root: Path | str) -> Path:
+    root = Path(root)
+    return root / "Scripts" / "python.exe" if sys.platform == "win32" else root / "bin" / "python"
+
+
+def _handoff_transport():
+    if sys.platform == "win32":
+        from . import windows_handoff
+        return windows_handoff
+    from . import posix_handoff
+    return posix_handoff
+
+
+def handoff_send(channel, payload, descriptors=()):
+    return _handoff_transport().send(channel, payload, descriptors)
+
+
+def handoff_receive(channel, limit):
+    return _handoff_transport().receive(channel, limit)
+
+
+def handoff_peer_uid(channel):
+    if sys.platform == "win32":
+        return _handoff_transport().verify_peer(channel)["uid"]
+    return _handoff_transport().peer_uid(channel)
+
+
+def handoff_peer_pid(channel):
+    if sys.platform == "win32":
+        return _handoff_transport().verify_peer(channel)["pid"]
+    return _handoff_transport().peer_pid(channel)
+
+
+def handoff_close(descriptor):
+    if sys.platform == "win32":
+        import socket
+        socket.close(descriptor)
+    else:
+        os.close(descriptor)
+
+
+def handoff_set_inheritable(descriptor, value):
+    if sys.platform == "win32":
+        os.set_handle_inheritable(descriptor, value)
+    else:
+        os.set_inheritable(descriptor, value)
+
+
+def handoff_get_inheritable(descriptor):
+    return os.get_handle_inheritable(descriptor) if sys.platform == "win32" else os.get_inheritable(descriptor)
+
+
+def handoff_control_family(family):
+    import socket
+    return family == (socket.AF_INET if sys.platform == "win32" else socket.AF_UNIX)
+
+
+def handoff_inspect_socket(descriptor, *, listener):
+    if sys.platform != "win32":
+        return _handoff_transport().inspect_socket(descriptor, listener=listener)
+    import socket
+    borrowed = socket.socket(fileno=descriptor)
+    try:
+        kind = borrowed.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)
+        address = borrowed.getsockname()
+        detail = (borrowed.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN), address) if listener else (borrowed.getpeername(), address)
+        if not listener and (address[0] != "127.0.0.1" or detail[0][0] != "127.0.0.1"):
+            raise OSError("Worker control is not loopback TCP")
+        return borrowed.family, kind, detail
+    finally:
+        borrowed.detach()
+
+
+def handoff_socket_parent() -> Path:
+    """Return the short native temp parent for private POSIX sockets."""
+    return Path("/private/tmp") if sys.platform == "darwin" else Path("/tmp")
+
+
+def handoff_listener(expected=None, *, timeout=5.0):
+    if sys.platform == "win32":
+        return _handoff_transport().Listener(expected, timeout=timeout)
+    return None
+
+
+def handoff_connect(endpoint, *, expected=None, timeout=5.0):
+    if sys.platform == "win32":
+        return _handoff_transport().connect(endpoint, expected=expected, timeout=timeout)
+    return None
+
+
+def handoff_token(pid):
+    """Encode native Windows identity in the existing eight-word token shape.
+
+    These are creation-time observations, not Darwin audit tokens or signal
+    authority. Signalling still opens and pins a process handle in this module.
+    """
+    observed = process_identity(pid)
+    if observed is None:
+        raise ProcessLookupError(pid)
+    created = int(observed["birth_id"].removeprefix("windows-creation:"))
+    uid = observed["uid"]
+    words = [0x41535452, pid, uid & 0xffffffff, uid >> 32,
+             created & 0xffffffff, created >> 32, 0, 0]
+    return {**handoff_token_details(words), "words": words}
+
+
+def handoff_token_details(words):
+    import struct
+    if (len(words) != 8 or any(type(value) is not int or not 0 <= value <= 0xffffffff for value in words)
+            or words[0] != 0x41535452 or words[6:] != [0, 0]):
+        raise OSError("Windows process identity token is invalid")
+    created = words[4] | words[5] << 32
+    return {"pid": words[1], "uid": words[2] | words[3] << 32,
+            "pidversion": created, "sha256": "sha256:" + hashlib.sha256(struct.pack("=8I", *words)).hexdigest()}
+
+
+def handoff_signal_token(words, signum):
+    details = handoff_token_details(words)
+    return signal_process({"pid": details["pid"], "uid": details["uid"],
+                           "birth_id": f"windows-creation:{details['pidversion']}"}, signum)
+
+
+def handoff_custody_executable(wrapper, target):
+    return target if sys.platform == "win32" else wrapper
+
+
+def handoff_adopt_socket(descriptor):
+    if sys.platform == "win32":
+        return _handoff_transport().adopt_socket(descriptor)
+    import socket
+    channel = socket.socket(fileno=descriptor)
+    channel.set_inheritable(False)
+    return channel
+
+
+def handoff_peer_token(channel):
+    return _handoff_transport().peer_token(channel)
+
+
+def handoff_child_identity(process):
+    """Pin launch identity through Popen's retained handle, before any PID lookup."""
+    if sys.platform != "win32":
+        return process_identity(process.pid)
+    handle = getattr(process, "_handle", None)
+    if handle is None or not _windows_process_active(handle):
+        raise ProcessLookupError("prepared Worker is not alive")
+    observed = _windows_identity(process.pid, handle)
+    if not _windows_process_active(handle):
+        raise ProcessLookupError("prepared Worker exited during authentication")
+    return observed

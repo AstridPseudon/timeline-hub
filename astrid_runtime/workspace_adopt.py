@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import json
 from runtime_protocol.dirfd import filesystem as os
+from runtime_protocol import platform
 from pathlib import Path
 import shutil
 import stat
@@ -314,6 +315,7 @@ def _adopt_workspace(
                             raise WorkspaceAdoptError(f"adopted realm failed final integrity checks: {report}")
                         _journal(journal_path, state="migrated", migration=migration)
                         os.rename(temporary, destination)
+                        platform.fsync_directory(destination.parent)
                         _journal(journal_path, state="published")
                     except Exception:
                         if temporary.is_dir() and not temporary.is_symlink():

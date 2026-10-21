@@ -132,6 +132,7 @@ class SourceProfile:
     capability_digest: str = ""
     source_digest: str = ""
     lock_digest: str = ""
+    service_declaration: str | None = None
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any], *, expected_profile: str = "astrid") -> "SourceProfile":
@@ -141,7 +142,7 @@ class SourceProfile:
             "profile", "runtime_checkout", "source_checkout", "runtime_environment",
             "worker_profile",
             "runtime_command", "protocol_version", "schema_version", "capability_digest",
-            "source_digest", "lock_digest",
+            "source_digest", "lock_digest", "service_declaration",
         }
         unknown = sorted(set(value) - allowed)
         if unknown:
@@ -175,6 +176,10 @@ class SourceProfile:
             raise BootstrapError(
                 "Source profile runtime_command is not an authority; configure only the pinned runtime_checkout."
             )
+        declaration = value.get("service_declaration")
+        if declaration is not None and (not isinstance(declaration, str) or not declaration
+                or not Path(declaration).expanduser().is_absolute()):
+            raise BootstrapError("Source profile service_declaration must be an absolute path.")
         return cls(
             profile=profile,
             runtime_checkout=runtime_checkout,
@@ -187,6 +192,7 @@ class SourceProfile:
             capability_digest=str(value.get("capability_digest", "")),
             source_digest=str(value.get("source_digest", "")),
             lock_digest=str(value.get("lock_digest", "")),
+            service_declaration=declaration,
         )
 
     @classmethod
@@ -215,6 +221,7 @@ class SourceProfile:
             "capability_digest": self.capability_digest,
             "source_digest": self.source_digest,
             "lock_digest": self.lock_digest,
+            **({"service_declaration": self.service_declaration} if self.service_declaration is not None else {}),
         }
 
     @property

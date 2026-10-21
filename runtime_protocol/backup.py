@@ -18,6 +18,7 @@ import threading
 from pathlib import Path
 import stat
 import tempfile
+from contextlib import ExitStack
 from typing import Any, Mapping
 
 # Backup verification hashes a complete immutable realm candidate, which can
@@ -672,12 +673,12 @@ def create_backup(store, destination: str | Path, *, binding: dict | None = None
         source_cas_fd = open_directory_chain(store.cas_root)
         cas_root_fd = mkdir_chain_at(temporary_fd, "cas/sha256")
         os.close(cas_root_fd)
-        with store._mutex:
+        with store._mutex, ExitStack() as path_pins:
             # The live connection is already pinned to the selected realm.  Do
             # not reopen ``store.db_path`` by name after parent validation.
             cas = cas_manifest(store, cas_root=store.cas_root, cas_root_fd=source_cas_fd)
             if os.name == "nt":
-                target_db = Path(os.path_from_fd(temporary_fd)) / "realm.sqlite3"
+                target_db = Path(path_pins.enter_context(os.create_file_path_at(temporary_fd, "realm.sqlite3")))
                 target = sqlite3.connect(str(target_db))
             else:
                 cwd_fd = os.open(".", os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))

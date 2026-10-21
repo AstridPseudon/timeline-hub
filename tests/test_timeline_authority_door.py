@@ -101,9 +101,11 @@ def test_authenticated_foreign_owned_resources_are_refused_without_writes_or_dis
     method, path, body = _cases(case, foreign)[family]
     before = _snapshot(daemon.service)
     status, detail = _request_error(api, method, path, body, f"foreign-{family}")
-    # The reference writer is live again (KEEP): a foreign-project reference is refused
-    # as the same non-disclosing not_found a missing reference gets, not the retired route.
-    expected_status, expected_code = (404, "not_found") if family == "reference" else (410, "retired_route")
+    # Project-catalog shot/reference writers are live (KEEP): a foreign-project
+    # resource is refused as the same non-disclosing not_found a missing row gets.
+    expected_status, expected_code = (
+        (404, "not_found") if family in {"reference", "shot"} else (410, "retired_route")
+    )
     assert status == expected_status
     assert detail["code"] == expected_code
     assert foreign not in json.dumps(detail)

@@ -6,6 +6,7 @@ import threading
 import time
 import signal
 import subprocess
+import sys
 from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -192,6 +193,15 @@ class _CustodyChild:
         return self.returncode
 
 
+@pytest.fixture
+def darwin_boundary(monkeypatch):
+    from astrid_runtime import runtime_boundary as module
+    # These broker tests exercise Darwin's audit-token custody on every host.
+    # Replace only this module's sys reference, leaving native OS helpers alone.
+    monkeypatch.setattr(module, "sys", SimpleNamespace(platform="darwin", exc_info=sys.exc_info))
+    return module
+
+
 def _stub_owner_broker(monkeypatch, child, *, exit_during_signal=False):
     from astrid_runtime import runtime_boundary as boundary_module
 
@@ -219,14 +229,14 @@ def _stub_owner_broker(monkeypatch, child, *, exit_during_signal=False):
     return boundary_module
 
 
-def test_token_signal_exit_race_uses_only_retained_child_exit(monkeypatch):
+def test_token_signal_exit_race_uses_only_retained_child_exit(monkeypatch, darwin_boundary):
     child = _CustodyChild()
     _stub_owner_broker(monkeypatch, child, exit_during_signal=True)
     LocalRuntimeBoundary._terminate(child)
     assert child.exited
 
 
-def test_unverifiable_live_owner_retains_cleanup_uncertainty(monkeypatch):
+def test_unverifiable_live_owner_retains_cleanup_uncertainty(monkeypatch, darwin_boundary):
     child = _CustodyChild()
     _stub_owner_broker(monkeypatch, child)
     with pytest.raises(BootstrapError, match="cleanup remains uncertain"):
@@ -235,7 +245,7 @@ def test_unverifiable_live_owner_retains_cleanup_uncertainty(monkeypatch):
     assert isinstance(child._runtime_cleanup_error, BootstrapError)
 
 
-def test_primary_start_error_retains_cleanup_uncertainty_as_cause(monkeypatch):
+def test_primary_start_error_retains_cleanup_uncertainty_as_cause(monkeypatch, darwin_boundary):
     child = _CustodyChild()
     _stub_owner_broker(monkeypatch, child)
     primary = OSError("ready reply failed")
@@ -249,7 +259,7 @@ def test_primary_start_error_retains_cleanup_uncertainty_as_cause(monkeypatch):
     assert not child.exited
 
 
-def test_unowned_handle_does_not_infer_termination_from_poll(monkeypatch):
+def test_unowned_handle_does_not_infer_termination_from_poll(monkeypatch, darwin_boundary):
     child = _CustodyChild()
     child.exited = True
     child._runtime_boundary_sole_reaper = False
@@ -258,8 +268,8 @@ def test_unowned_handle_does_not_infer_termination_from_poll(monkeypatch):
         LocalRuntimeBoundary._terminate(child)
 
 
-def test_runtime_spawn_retains_owner_and_wires_escrow_before_seal(tmp_path, monkeypatch):
-    from astrid_runtime import runtime_boundary as boundary_module
+def test_runtime_spawn_retains_owner_and_wires_escrow_before_seal(tmp_path, monkeypatch, darwin_boundary):
+    boundary_module = darwin_boundary
     child = _CustodyChild()
     facts = {}
 
@@ -446,7 +456,7 @@ def test_detached_legacy_active_designation_is_refused_without_signal(tmp_path, 
     assert authority._read()["transitions"] == []
 
 
-def test_retained_stop_owner_reclaims_release_before_term_kill_and_positive_wait(tmp_path, monkeypatch):
+def test_retained_stop_owner_reclaims_release_before_term_kill_and_positive_wait(tmp_path, monkeypatch, darwin_boundary):
     import subprocess
     module, boundary, authority, actors, identities, _, _, kwargs = _detached_runtime(tmp_path, monkeypatch, release=False)
     # This fixture supplies the retained role-custody broker below, so select

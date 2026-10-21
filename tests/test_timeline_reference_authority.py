@@ -6,6 +6,7 @@ pre-cut archive. Run the whole file centrally for real authenticated HTTP.
 from __future__ import annotations
 
 import json
+import sqlite3
 from types import SimpleNamespace
 
 import pytest
@@ -14,6 +15,7 @@ from astrid_runtime_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, RetiredRouteError
 from runtime_protocol.service import RuntimeService
+from runtime_protocol.util import now
 from precut_realm_fixture import load_precut_realm_fixture
 from test_shot_composition_runtime import restore_provider as actual_provider  # noqa: F401 (fixture)
 
@@ -33,7 +35,18 @@ STATES = ("fresh", "unused", "existing")
 
 def seed(root, provider):
     captured = load_precut_realm_fixture(root.parent)
-    service = RuntimeService(captured.copy_roots[1])
+    copied_root = captured.copy_roots[1]
+    # The committed archive is intentionally historical. Refresh the copied
+    # catalog receipts before RuntimeService opens the realm, otherwise its
+    # startup compaction replaces an old result body with the expiry marker.
+    with sqlite3.connect(copied_root / "realm.sqlite3") as connection:
+        connection.execute(
+            "UPDATE command_idempotency SET created_at=? "
+            "WHERE (command_kind='reference.create' AND aggregate_id=?) "
+            "OR (command_kind='reference.associate' AND aggregate_id=?)",
+            (now(), captured.pins["project_id"], captured.pins["reference_id"]),
+        )
+    service = RuntimeService(copied_root)
     if provider is not None:
         service.register_timeline_commit_provider(provider)
     cases = {}
