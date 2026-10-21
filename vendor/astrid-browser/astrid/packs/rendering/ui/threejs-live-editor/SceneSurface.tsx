@@ -65,7 +65,7 @@ function SceneInstance({ document, component, frame, visible, width, height, onS
       },
       value => {
         effectTrace('parent-status', value);
-        if (active && value.phase !== 'disposed') callback.current(document, value, host.current?.info ?? { events: [], cameras: [], explore: null });
+        if (active && value.phase !== 'disposed') callback.current(document, value, host.current?.info ?? { events: [], shots: [], explore: null });
       }, 30000, diagnostic ? effectTrace : undefined);
     host.current = instance;
     const receive = (event: MessageEvent) => {
@@ -121,12 +121,14 @@ function SceneInstance({ document, component, frame, visible, width, height, onS
   });
 }
 
-export function SceneSurface({ source, sourceTime, width, height, view, worldTime, onStatus, onReady, showStatus = false }: {
+export function SceneSurface({ source, sourceTime, width, height, view, worldTime, capture, onStatus, onReady, showStatus = false }: {
   source: unknown; sourceTime: number; width: number; height: number;
   /** The explorer's free view. Never set by the timeline preview or exports: the scene then draws its authored camera. */
   view?: SceneView;
   /** World time for the explorer (sourceTime equals it); never set by the timeline preview or exports. */
   worldTime?: number;
+  /** Thumbnail instances only: the acknowledged frame then carries `image` in its status. */
+  capture?: boolean;
   onStatus?: (status: SceneStatus) => void; showStatus?: boolean;
   /** Called once per loaded scene, when its document first becomes the displayed one. */
   onReady?: (info: SceneInfo) => void;
@@ -140,7 +142,7 @@ export function SceneSurface({ source, sourceTime, width, height, view, worldTim
   // Fence completion immediately when props change, including before effects
   // clean up an obsolete integrity check or host.
   const desired = useRef(requested); desired.current = requested;
-  const frame = useRef<SceneFrame>({ sourceTime, width, height }); frame.current = { sourceTime, width, height, ...(view ? { view } : {}), ...(worldTime === undefined ? {} : { worldTime }) };
+  const frame = useRef<SceneFrame>({ sourceTime, width, height }); frame.current = { sourceTime, width, height, ...(view ? { view } : {}), ...(worldTime === undefined ? {} : { worldTime }), ...(capture ? { capture } : {}) };
   const component = useRef({});
   const callback = useRef(onStatus); callback.current = onStatus;
   const readyCallback = useRef(onReady); readyCallback.current = onReady;

@@ -71,25 +71,27 @@ let sequence = 0;
 
 /** Build the per-extension `video.dragSource`. */
 export function createPanelClipDragSource(extensionId: string, ownership: PanelClipOwnership) {
+  const mine = new Set<string>();
   return (spec: PanelClipSpec): PanelClipDragProps | null => {
     const checked = validatePanelClipSpec(spec, extensionId, ownership);
     if (!checked.ok) return null;
-    let token: string | null = null;
     return {
       draggable: true,
       onDragStart: (event) => {
         const transfer = event.dataTransfer;
         if (!transfer) return;
-        token = `panel-clip-${++sequence}`;
+        const token = `panel-clip-${++sequence}`;
+        mine.add(token);
         active.set(token, { extensionId, spec: checked.spec });
         transfer.effectAllowed = 'copy';
         transfer.setData(PANEL_CLIP_DRAG_TYPE, token);
         // The timeline reads the lane kind from the types during dragover.
         transfer.setData('asset-kind:visual', '');
       },
+      // A re-render may swap these handlers mid-drag, so end clears every token this source issued.
       onDragEnd: () => {
-        if (token) active.delete(token);
-        token = null;
+        for (const token of mine) active.delete(token);
+        mine.clear();
       },
     };
   };
