@@ -54,10 +54,10 @@ def clip(bundle, ref='parent/clip:direct'):
     return State(bundle).entity(ref)
 
 
-def inverse(bundle, records, intervening=()):
+def inverse(bundle, records, intervening=(), *, closures=None):
     return execute(bundle, [{'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
                              'select': None, 'args': {'publications': ['accepted-publication']}}],
-                   inverse_records=records, intervening_records=intervening)
+                   inverse_records=records, intervening_records=intervening, closures=closures)
 
 
 def later(ref, path, value):

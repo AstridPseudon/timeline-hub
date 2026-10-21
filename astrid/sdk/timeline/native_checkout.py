@@ -10,6 +10,7 @@ from astrid.sdk import timeline_intent as intent
 
 from ._command_state import State, equal
 from ._common import AUDIO_KINDS, TIME_RE, TimelineEditError, _length_seconds, _r
+from ._materialization import SOURCE_BOUND_OPERATIONS, capture_version
 from .capture import move_intent, number, occurrence_start, rate
 from .checkout import Checkout
 from .commands import execute
@@ -261,7 +262,9 @@ class AttachedClip(Clip):
             row['id'] == self.track and row.get('kind') in AUDIO_KINDS for row in tracks)
 
     def _command(self, op, args):
-        command = {'schema_version': 1, 'op': op, 'version': '1', 'select': self._ref, 'args': args}
+        version = capture_version(self._tl.bundle, self._ref) if op in SOURCE_BOUND_OPERATIONS else '1'
+        command = {'schema_version': 1, 'op': op, 'version': version,
+                   'select': self._ref, 'args': args}
         if op == 'clip.move':
             command['intent'] = move_intent(self._ref)
         self._tl._queue(command)

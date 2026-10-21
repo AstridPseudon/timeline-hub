@@ -1,10 +1,11 @@
-"""Occurrence-owned shot name and bounded settings edits on the raw shot payload."""
+"""Occurrence-owned shot name, settings, and draft provenance edits."""
 from __future__ import annotations
 
 import copy
 import re
 
 from ._command_state import CommandError
+from ._materialization import capture_version
 
 SHOT_INTENT = {'ownership': 'occurrence'}
 
@@ -24,7 +25,12 @@ def shot_set(ctx, command):
     ctx.bind('shot.owner', owner)
     values, clear = command['args']['values'], command['args']['clear']
     settings = values.get('settings', {})
-    paths = {('name',): 'name' in values, **{('settings', key): True for key in settings}}
+    metadata = values.get('metadata', {})
+    paths = {
+        ('name',): 'name' in values,
+        **{('settings', key): True for key in settings},
+        ('metadata', 'draft_voiceover'): 'draft_voiceover' in metadata,
+    }
     for entry in clear:
         path = tuple(entry.split('.'))
         if paths.get(path):
@@ -37,6 +43,10 @@ def shot_set(ctx, command):
         ctx.object(ref, ['payload', 'settings'])
     for key in sorted(settings):
         ctx.write(ref, ['payload', 'settings', key], settings[key])
+    if metadata:
+        ctx.object(ref, ['payload', 'metadata'])
+    if 'draft_voiceover' in metadata:
+        ctx.write(ref, ['payload', 'metadata', 'draft_voiceover'], metadata['draft_voiceover'])
     for entry in sorted(clear):
         ctx.clear(ref, ['payload', *entry.split('.')])
 
@@ -46,5 +56,5 @@ def capture_shot_set(bundle, select, *, values=None, clear=()):
     from .commands import execute
 
     args = {'values': copy.deepcopy({} if values is None else values), 'clear': list(clear)}
-    return execute(bundle, [{'schema_version': 1, 'op': 'shot.set', 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': 'shot.set', 'version': capture_version(bundle, select),
                              'select': select, 'args': args, 'intent': dict(SHOT_INTENT)}]).commands[0]

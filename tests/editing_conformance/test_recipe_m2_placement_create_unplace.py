@@ -33,16 +33,16 @@ ON, HOLD = 9.0, 4
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_placement_create_unplace.json'
 
 
-def create_case():
+def create_case(*, capture_sources=True):
     document, _, new, verified = inputs('image')
-    bundle = bundle_from_document(document)
+    bundle = bundle_from_document(document, capture_sources=capture_sources)
     command = capture_placement_create(bundle, OWNER, 'placed', new, ON, HOLD,
                                        ownership='occurrence', verified_media=verified)
     return document, bundle, command, verified
 
 
-def unplace_case():
-    _, bundle, command, verified = create_case()
+def unplace_case(*, capture_sources=True):
+    _, bundle, command, verified = create_case(capture_sources=capture_sources)
     created = execute(bundle, [command], verified_media=verified)
     document = document_from_bundle(created.bundle)
     bundle = bundle_from_document(document)
@@ -50,10 +50,10 @@ def unplace_case():
     return document, bundle, removal
 
 
-def case(operation):
+def case(operation, *, capture_sources=True):
     if operation == 'create':
-        return create_case()
-    document, bundle, command = unplace_case()
+        return create_case(capture_sources=capture_sources)
+    document, bundle, command = unplace_case(capture_sources=capture_sources)
     return document, bundle, command, []
 
 
@@ -64,7 +64,7 @@ def plain(command):
 @pytest.mark.parametrize('operation', ['create', 'unplace'])
 def test_portable_goldens(operation):
     golden = load_fixture(FIXTURE)[operation]
-    document, bundle, command, verified = case(operation)
+    document, bundle, command, verified = case(operation, capture_sources=False)
     plan = execute(bundle, [command], verified_media=verified)
     assert golden == {'input': document, 'verified_media': verified, 'commands': [command],
                       'records': plan.records, 'output': document_from_bundle(plan.bundle)}

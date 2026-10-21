@@ -10,6 +10,7 @@ import pytest
 
 from astrid.sdk.timeline.commands import _SCHEMA, operations
 from tests.sdk.command_schema_compatibility import compatibility_errors
+from tests.sdk.test_timeline_materialization_schema_union import ordinary_schema
 
 FIXTURES = Path(__file__).parents[1] / 'fixtures' / 'current-union-command-schemas'
 SOURCES = {
@@ -112,7 +113,7 @@ def test_existing_argument_narrowing_still_fails(name):
 
 
 def s2_slice():
-    candidate = without_text(_SCHEMA)
+    candidate = without_text(ordinary_schema())
     for definition in ('WordAnchor', 'ClipAnchorArgs', 'TimelineInitArgs',
                        'AssembledTargetArgs', 'ClipAddMediaArgs', 'OccurrenceCreateArgs'):
         del candidate['$defs'][definition]
@@ -129,20 +130,21 @@ def s2_slice():
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
-    assert len(_SCHEMA['$defs']) == 55
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 29
+    assert len(_SCHEMA['$defs']) == 59
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
 
 
 def test_each_added_definition_and_operation_matches_its_approved_source():
     additions = json.loads((FIXTURES / 'next-command-additions.json').read_text())
+    ordinary = ordinary_schema()
     conditions = {item['if']['properties']['op']['const']: item
-                  for item in _SCHEMA['$defs']['EditCommand']['allOf']}
+                  for item in ordinary['$defs']['EditCommand']['allOf']}
     additions['text'] = json.loads((FIXTURES / 'text-command-additions.json').read_text())
     for source in additions.values():
         for name, value in source['definitions'].items():
-            assert _SCHEMA['$defs'][name] == value
+            assert ordinary['$defs'][name] == value
         for name, value in source.get('updates', {}).items():
-            assert _SCHEMA['$defs'][name] == value
+            assert ordinary['$defs'][name] == value
         for op, condition in source['operations'].items():
             assert conditions[op] == condition
 
@@ -153,7 +155,7 @@ def test_all_published_floors_preserve_every_field_with_only_historical_pattern_
     for version, source in sources.items():
         raw = (FIXTURES / source['file']).read_bytes()
         assert hashlib.sha256(raw).hexdigest() == source['sha256']
-        previous, candidate = json.loads(raw), without_text(_SCHEMA)
+        previous, candidate = json.loads(raw), without_text(ordinary_schema())
         if version in ('0.2.1', '0.2.2'):
             # The conservative checker cannot prove regex inclusion. Verify
             # these exact additive alternatives, then check every other field.
@@ -180,11 +182,12 @@ def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
     expected = {'text-binding.set', 'clip.swap-media', 'occurrence.create', 'clip.add', 'clip.add-media', 'clip.anchor', 'clip.delete', 'clip.move',
                 'clip.set', 'clip.set-element', 'clip.set-params', 'clip.split', 'clip.trim',
                 'occurrence.add-media', 'occurrence.delete', 'occurrence.duplicate',
-                'occurrence.swap-media', 'placement.create', 'placement.move',
+                'occurrence.resize', 'occurrence.swap-media', 'placement.create', 'placement.move',
+                'project-data.write', 'timeline.migrate-groups', 'occurrence.move',
                 'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set',
                 'timeline.assembled-target', 'timeline.init', 'timeline.inverse',
                 'timeline.restore', 'track.create', 'track.set'}
     actual = [item['if']['properties']['op']['const']
               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
-    assert len(actual) == len(set(actual)) == 29
+    assert len(actual) == len(set(actual)) == 33
     assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}

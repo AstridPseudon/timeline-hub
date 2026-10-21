@@ -28,10 +28,42 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     fixtures = Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
     commands = {command['op']: command for path in sorted(fixtures.glob('*.json'))
                 for command in fixture_commands(json.loads(path.read_text()))}
-    conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
+    commands.update({
+        'timeline.migrate-groups': {
+            'schema_version': 1, 'op': 'timeline.migrate-groups', 'version': '1',
+            'select': 'parent', 'args': {'groups': [
+                {'legacy_shot_id': 'legacy', 'shot_id': 'shot', 'occurrence_id': 'occ'}]},
+        },
+        'occurrence.move': {
+            'schema_version': 1, 'op': 'occurrence.move', 'version': '1',
+            'select': 'occurrence:occ', 'args': {
+                'on': 1, 'track': 'parent/track:V1',
+                'child_track': 'occurrence:occ/track:V1'},
+        },
+        'occurrence.resize': {
+            'schema_version': 1, 'op': 'occurrence.resize', 'version': '1',
+            'select': 'occurrence:occ', 'args': {'duration_ms': 1000},
+        },
+        'project-data.write': {
+            'schema_version': 1, 'op': 'project-data.write', 'version': '1',
+            'select': 'parent', 'args': {
+                'target': 'example', 'key': 'value', 'value': None, 'mode': 'replace'},
+        },
+    })
+    conditions = {condition['if']['properties']['op']['const']: condition['then']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     for op, operation in operations().items():
-        ref = conditions[op]['args']['$ref'].removeprefix('#/$defs/')
+        branches = conditions[op].get('anyOf', [conditions[op]])
+        for branch in branches:
+            assert branch['properties']['args'] == branches[0]['properties']['args']
+            version = branch['properties'].get('version', {}).get('const', '1')
+            validator.validate({**commands[op], 'version': version})
+            unknown = copy.deepcopy(commands[op])
+            unknown['version'] = version
+            unknown['args']['unsupported_argument'] = None
+            with pytest.raises(ValidationError):
+                validator.validate(unknown)
+        ref = branches[0]['properties']['args']['$ref'].removeprefix('#/$defs/')
         assert _SCHEMA['$defs'][ref] == operation.parameters
         assert operation.parameters['additionalProperties'] is False
         validator.validate(commands[op])

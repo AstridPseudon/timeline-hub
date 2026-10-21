@@ -2,11 +2,15 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import io
+import wave
 from pathlib import Path
 
 import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State, overlaps
+from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commands import execute, validate_command
 from astrid.sdk.timeline.commit import (
     _digest,
@@ -35,6 +39,7 @@ OWNER = 'occurrence:occ-a'
 TARGET = OWNER + '/clip:clip-a'
 NEW = 'sha256:' + '2' * 64
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_occurrence_media.json'
+MATERIALIZATION_FIXTURE = FIXTURE.with_name('recipe_m2_occurrence_media_materialization_v1.json')
 
 
 def inputs(kind='image'):
@@ -44,6 +49,9 @@ def inputs(kind='image'):
     payload['registry']['assets']['picture']['type'] = kind
     if kind == 'video':
         payload['clips'][0].update({'from': 2, 'to': 6, 'hold': 4, 'speed': 2})
+    elif kind == 'audio':
+        payload['tracks'][0]['kind'] = 'audio'
+        payload['clips'][0].update({'clipType': 'media', 'from': 0, 'to': 1, 'hold': 1})
     for row in document['parent_revision']['payload']['occurrences']:
         row.update(source_offset=0, speed=1)
     document['parent_revision']['payload']['occurrences'][0]['placement']['start_ms'] = 8000
@@ -56,18 +64,21 @@ def inputs(kind='image'):
     new = {'asset': 'reserved-new', 'generation_id': 'generation-new', 'variant_id': 'variant-new',
            'object_id': NEW, 'catalog_digest': 'sha256:' + 'b' * 64}
     verified = [{'selection': copy.deepcopy(pin), 'media_type': kind + '/fixture', 'size': 123,
-                 **({'duration_seconds': 6} if kind == 'video' else {})} for pin in (old, new)]
+                 **({'duration_seconds': 6} if kind in ('video', 'audio') else {})}
+                for pin in (old, new)]
     return document, old, new, verified
 
 
-def captured(operation, kind='image'):
+def captured(operation, kind='image', *, capture_sources=True):
     document, old, new, verified = inputs(kind)
-    bundle = bundle_from_document(document)
+    bundle = bundle_from_document(document, capture_sources=capture_sources)
     if operation == 'add':
-        row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
+        row = {'id': 'reserved-child', 'clipType': 'media' if kind == 'audio' else kind,
+               'asset': new['asset'], 'track': 'picture',
                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
                'params': None, 'opaque': [None, False, {}],
-               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else {})}
+               **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else
+                  {'from': 0, 'to': 1.25} if kind == 'audio' else {})}
         command = capture_occurrence_add_media(bundle, OWNER, row, new, verified_media=verified)
     else:
         command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
@@ -75,7 +86,7 @@ def captured(operation, kind='image'):
 
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
-@pytest.mark.parametrize('kind', ['image', 'video'])
+@pytest.mark.parametrize('kind', ['image', 'video', 'audio'])
 def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
     document, bundle, command, verified = captured(operation, kind)
     before = copy.deepcopy(bundle)
@@ -96,15 +107,79 @@ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
     assert row['at'] == (.125 if operation == 'add' else 1)
     if kind == 'video':
         assert (row['from'], row['to'], row['hold'], row['speed']) == (2, 6, 4, 2)
+    elif kind == 'audio':
+        expected = (0, 1.25, 1.25) if operation == 'add' else (0, 1, 1)
+        assert (row['from'], row['to'], row['hold']) == expected
 
 
-@pytest.mark.parametrize('operation', ['add', 'swap'])
-def test_portable_goldens(operation):
-    golden = load_fixture(FIXTURE)[operation]
-    document, bundle, command, verified = captured(operation, 'video')
+def _real_wav():
+    stream = io.BytesIO()
+    with wave.open(stream, 'wb') as output:
+        output.setnchannels(1)
+        output.setsampwidth(2)
+        output.setframerate(8000)
+        output.writeframes(b'\x01\x00' + b'\x00\x00' * 1999)
+    return stream.getvalue()
+
+
+def test_real_wav_audio_child_capture_record_and_inverse():
+    raw = _real_wav()
+    with wave.open(io.BytesIO(raw), 'rb') as source:
+        duration = source.getnframes() / source.getframerate()
+    pin = {'asset': 'voiceover', 'generation_id': 'generation-wav', 'variant_id': 'variant-wav',
+           'object_id': 'sha256:' + hashlib.sha256(raw).hexdigest(),
+           'catalog_digest': 'sha256:' + hashlib.sha256(b'catalog:' + raw).hexdigest()}
+    verified = [{'selection': copy.deepcopy(pin), 'media_type': 'audio/wav', 'size': len(raw),
+                 'duration_seconds': duration}]
+    document, _, _, _ = inputs('image')
+    bundle = bundle_from_document(document)
+    track = capture_track_create(bundle, OWNER, {'id': 'voiceover', 'kind': 'audio'})
+    with_track = execute(bundle, [track]).bundle
+    row = {'id': 'reserved-audio', 'clipType': 'media', 'asset': pin['asset'], 'track': 'voiceover',
+           'at': .125, 'hold': duration, 'from': 0, 'to': duration, 'speed': 1.5,
+           'params': None, 'opaque': [None, False, {}]}
+    command = capture_occurrence_add_media(with_track, OWNER, row, pin, verified_media=verified)
+    before = copy.deepcopy(with_track)
+    plan = execute(with_track, [command], verified_media=verified)
+    child = State(plan.bundle).entity(OWNER + '/clip:reserved-audio')
+    assert (child['track'], child['clipType'], child['from'], child['to'], child['hold'], child['speed']) == (
+        'voiceover', 'media', 0, duration, duration, 1.5)
+    assert any(dependency['pin'] == pin for dependency in plan.records[0]['dependencies'])
+    assert replay(plan, with_track, verified_media=verified).records == plan.records
+    assert inverse(plan.bundle, plan.records).bundle == before
+    assert document['parent_revision']['payload']['occurrences'][0]['occurrence_id'] == 'occ-a'
+
+
+def test_audio_media_refuses_malformed_duration_or_wrong_track_atomically():
+    _, bundle, command, verified = captured('add', 'audio')
+    for damage in ('duration', 'track'):
+        damaged_bundle = copy.deepcopy(bundle)
+        damaged_command = copy.deepcopy(command)
+        damaged_verified = copy.deepcopy(verified)
+        if damage == 'duration':
+            damaged_verified[1]['duration_seconds'] = 0
+        else:
+            State(damaged_bundle).config(OWNER)['tracks'][0]['kind'] = 'visual'
+        before = copy.deepcopy(damaged_bundle)
+        with pytest.raises(CommandError):
+            execute(damaged_bundle, [damaged_command], verified_media=damaged_verified)
+        assert damaged_bundle == before
+
+
+@pytest.mark.parametrize(('operation', 'fixture_path'), [
+    ('add', FIXTURE), ('swap', FIXTURE), ('swap', MATERIALIZATION_FIXTURE),
+])
+def test_portable_goldens(operation, fixture_path):
+    golden = load_fixture(fixture_path)[operation]
+    document, bundle, command, verified = captured(
+        operation, 'video', capture_sources=fixture_path == MATERIALIZATION_FIXTURE)
+    assert command == {**golden['commands'][0], 'version': command['version']}
+    expected_records = copy.deepcopy(golden['records'])
+    expected_records[0]['command']['version'] = command['version']
     plan = execute(bundle, [command], verified_media=verified)
-    assert golden == {'input': document, 'verified_media': verified, 'commands': [command],
-                      'records': plan.records, 'output': document_from_bundle(plan.bundle)}
+    assert golden['input'] == document and golden['verified_media'] == verified
+    assert plan.records == expected_records
+    assert document_from_bundle(plan.bundle) == golden['output']
 
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
@@ -277,3 +352,42 @@ def test_noninteger_positive_speed_preserves_source_units_and_half_open_boundary
     plain['args']['row']['at'] = 7.001
     with pytest.raises(CommandError, match='exceeds occurrence'):
         execute(bundle, [plain], verified_media=verified)
+
+
+def test_obsolete_carrier_add_v1_refuses_original_claims_with_draft_kept():
+    # legacy-capture-counterexamples.json: historical_carrier_add.original_command.
+    golden = load_fixture(MATERIALIZATION_FIXTURE)['add']
+    command = copy.deepcopy(golden['commands'][0])
+    before = copy.deepcopy(command)
+    bundle = bundle_from_document(golden['input'])
+    original = copy.deepcopy(bundle)
+    assert (len(command['reads']), len(command['selections'])) == (25, 3)
+    for version in ('1', '2'):
+        supplied = {**command, 'version': version}
+        with pytest.raises(CommandError, match='keep the draft and explicitly re-author'):
+            execute(bundle, [supplied], verified_media=golden['verified_media'])
+    assert command == before and bundle == original
+
+
+def test_obsolete_carrier_add_equivalent_reauthored_v2_succeeds():
+    # One-to-one replacement for test_portable_goldens[add-fixture_path3].
+    golden = load_fixture(MATERIALIZATION_FIXTURE)['add']
+    document, bundle, command, verified = captured('add', 'video')
+    assert document == golden['input'] and command['version'] == '2'
+    assert command['args'] == golden['commands'][0]['args']
+    assert (len(command['reads']), len(command['selections'])) == (27, 4)
+    original = copy.deepcopy(command)
+    plan = execute(bundle, [command], verified_media=verified)
+    assert document_from_bundle(plan.bundle) == golden['output']
+    assert plan.commands == [original] and command == original
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    assert inverse(plan.bundle, plan.records).bundle == bundle
+
+
+def test_private_carrier_swap_v1_refuses_without_refreshing_original_claims():
+    golden = load_fixture(MATERIALIZATION_FIXTURE)['swap']
+    command = copy.deepcopy(golden['commands'][0])
+    original = copy.deepcopy(command)
+    with pytest.raises(CommandError, match='keep the draft and explicitly re-author'):
+        execute(bundle_from_document(golden['input']), [command], verified_media=golden['verified_media'])
+    assert command == original

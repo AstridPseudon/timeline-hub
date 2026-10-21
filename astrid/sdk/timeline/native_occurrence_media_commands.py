@@ -5,6 +5,7 @@ import copy
 import re
 
 from ._command_state import ABSENT, CommandError, equal
+from ._materialization import capture_version
 from ._media_inputs import _verified
 from ._recording import active
 from .capture import MAP_FIELDS, RELATIONS, number, occurrence_start, rate
@@ -144,9 +145,10 @@ def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False):
     track = owner + '/track:' + str(row.get('track'))
     ctx.select('collection.tracks', owner)
     value = ctx.read(track)
-    if (not isinstance(value, dict) or value.get('kind') != 'visual'
+    track_kind = 'audio' if kind == 'audio' else 'visual'
+    if (not isinstance(value, dict) or value.get('kind') != track_kind
             or value.get('role', 'output') != 'output' or not active(value)):
-        raise CommandError('media edit requires an active raw visual child track')
+        raise CommandError(f'media edit requires an active raw {track_kind} child track')
     ctx.bind('media.track', track)
 
 
@@ -205,14 +207,14 @@ def capture_occurrence_add_media(bundle, owner, row, media, *, verified_media, c
     args = {'row': copy.deepcopy(row), 'media': copy.deepcopy(media)}
     if consumed:
         args['consumed'] = list(consumed)
-    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.add-media', 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.add-media', 'version': capture_version(bundle, owner),
                              'select': owner, 'args': args, 'intent': MEDIA_INTENT}], verified_media=verified_media).commands[0]
 
 
 def capture_occurrence_swap_media(bundle, select, old_media, media, *, verified_media):
     """Select an unprojected child; display occurrence:clip IDs are not raw IDs."""
     from .commands import execute
-    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.swap-media', 'version': '1',
+    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.swap-media', 'version': capture_version(bundle, select),
                              'select': select, 'args': {'old_media': copy.deepcopy(old_media),
                                                        'media': copy.deepcopy(media)},
                              'intent': MEDIA_INTENT}], verified_media=verified_media).commands[0]

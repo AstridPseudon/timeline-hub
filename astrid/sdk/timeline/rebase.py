@@ -12,7 +12,11 @@ def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_
     check_intervening(plan.records, intervening_records, state=State(head_bundle),
                       identities_only=all(command['op'] not in ('timeline.inverse', 'timeline.restore')
                                           for command in plan.commands))
-    return execute(head_bundle, plan.commands, inverse_records=inverse_records,
-                   intervening_records=intervening_records, id_map=id_map, closures=closures,
+    from ._materialization import consume
+    sources = {**(closures or {})}
+    sources[plan.bundle['base_parent']['revision_id']] = plan.bundle
+    return execute(consume(head_bundle, plan.records, closures=sources), plan.commands, inverse_records=inverse_records,
+                   intervening_records=intervening_records, id_map=plan.id_map if id_map is None else id_map, closures=sources,
+                   materializations=plan.records,
                    verified_media=verified_media, schema_inputs=schema_inputs, realm_id=realm_id,
                    resolve_inputs=resolve_inputs, verified_producer=verified_producer)

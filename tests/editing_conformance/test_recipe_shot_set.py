@@ -17,6 +17,8 @@ from astrid.sdk.timeline._shot_commands import capture_shot_set
 from astrid.sdk.timeline.commands import execute, operations
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse, later
+from tests.packs.video_editing.test_draft_voiceover import fixture as voiceover_fixture
+from tests.packs.video_editing.test_draft_voiceover import synthesis, vo
 
 FIXTURES = Path(__file__).parent / 'fixtures'
 REF = 'occurrence:occ-1/shot'
@@ -103,6 +105,58 @@ def test_name_and_coupled_settings_are_one_atomic_command_preserving_unmentioned
     assert {key: value for key, value in result.items() if key not in ('name', 'settings')} == {
         key: value for key, value in before.items() if key not in ('name', 'settings')}
     assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_original_draft_voiceover_fixture_outcome_lowers_to_one_metadata_leaf():
+    candidate, scripts = voiceover_fixture()
+    scripts['occurrences'][0]['text'] = 'Long new narration'
+    prepared = vo.prepare_draft_voiceover(candidate, scripts, synthesize=synthesis,
+                                          timing_policy='ripple', padding_seconds=.15)
+    draft = prepared['candidate']['shots']['s1']['payload']['metadata']['draft_voiceover']
+
+    original = bundle(shared=False)
+    metadata = payload(original)['metadata']
+    metadata.update({'opaque': {'keep': [None, True]}, 'namespaced': {'future': 'value'}})
+    command = capture_shot_set(original, REF, values={'metadata': {'draft_voiceover': draft}})
+    plan = execute(original, [command])
+
+    assert payload(plan.bundle)['metadata'] == {
+        'draft_voiceover': draft,
+        'opaque': {'keep': [None, True]},
+        'namespaced': {'future': 'value'},
+        'settings': {'look': 'warm'},
+    }
+    assert any(write['path'] == ['payload', 'metadata', 'draft_voiceover']
+               for write in plan.records[0]['writes'])
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_draft_voiceover_clear_preserves_metadata_and_has_exact_inverse():
+    original = bundle(shared=False)
+    metadata = payload(original)['metadata']
+    metadata.update({'draft_voiceover': {'text': 'old', 'duration': 2}, 'opaque': [1, None]})
+    command = capture_shot_set(original, REF, clear=['metadata.draft_voiceover'])
+    plan = execute(original, [command])
+    assert payload(plan.bundle)['metadata'] == {'opaque': [1, None], 'settings': {'look': 'warm'}}
+    assert inverse(plan.bundle, plan.records).bundle == original
+    assert execute(original, [command]).records == plan.records
+
+
+def test_draft_voiceover_disjoint_opaque_and_aba_guards():
+    original = bundle(shared=False)
+    draft = {'text': 'new', 'text_digest': 'sha256:' + 'a' * 64,
+             'settings': {'rate': '+5%'}, 'audio_media_id': 'sha256:' + 'b' * 64,
+             'run_id': 'run', 'task_id': 'task', 'base_head': 'h'}
+    payload(original)['metadata']['opaque'] = {'keep': True}
+    a = execute(original, [capture_shot_set(original, REF,
+                                            values={'metadata': {'draft_voiceover': draft}})])
+    b = execute(original, [capture_shot_set(original, REF,
+                                            values={'settings': {'prompt': 'disjoint'}})])
+    rebased = replay(b, a.bundle, intervening_records=a.records)
+    assert payload(rebased.bundle)['metadata']['draft_voiceover'] == draft
+    assert payload(rebased.bundle)['metadata']['opaque'] == {'keep': True}
+    with pytest.raises(CommandError, match='intervening'):
+        inverse(a.bundle, a.records, [later(REF, ['payload', 'metadata', 'draft_voiceover'], draft)])
 
 
 @pytest.mark.parametrize('shared', [True, False])

@@ -54,7 +54,7 @@ def duplicate(bundle, source, occurrence_id='occ-copy', shot_id='shot-copy'):
 
 
 def portable_golden():
-    original = bundle_from_document(duplicate_document(2, shared_shot=True))
+    original = bundle_from_document(duplicate_document(2, shared_shot=True), capture_sources=False)
     command = duplicate(original, 'occ-0')
     plan = execute(original, [command])
     return {'bundle': original, 'select': command['select'], 'command': command,

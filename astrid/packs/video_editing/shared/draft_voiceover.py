@@ -281,7 +281,8 @@ def retime_candidate(candidate: dict, durations: Mapping[str, float], *, policy:
                     raise VoiceoverSyncError("Ripple cannot stretch another audio clip")
                 if clip.get("params") and clip.get("app", {}).get("draft_voiceover_timing") != "stretch":
                     raise VoiceoverSyncError("Parameterized internal clip needs explicit stretch permission")
-                a = float(clip.get("at", 0)); b = a + _duration(clip)
+                a = float(clip.get("at", 0))
+                b = a + _duration(clip)
                 _interval(clip, a * new_length / length, b * new_length / length)
             # config may carry an admitted duration mirror.
             if "duration" in shot["internal_timeline"]:
@@ -301,7 +302,8 @@ def retime_candidate(candidate: dict, durations: Mapping[str, float], *, policy:
             shift = d - b
         return t + shift
     for clip in candidate["parent"].get("clips", []):
-        a = float(clip.get("at", 0)); b = a + _duration(clip)
+        a = float(clip.get("at", 0))
+        b = a + _duration(clip)
         c, d = warp(a), warp(b)
         if abs((d-c)-(b-a)) > 1e-8:
             if clip.get("params") and clip.get("app", {}).get("draft_voiceover_timing") != "stretch":
@@ -360,6 +362,7 @@ def prepare_draft_voiceover(candidate: Mapping, scripts: Mapping, *, synthesize:
         durations[job["occurrence_id"]] = result["duration_seconds"]
     retime_candidate(work, durations, policy=timing_policy, padding_seconds=padding_seconds)
     return {"candidate": work, "plan": plan, "changed": bool(generated),
+            "timing_policy": timing_policy, "padding_seconds": padding_seconds,
             "generated": [{"occurrence_id": job["occurrence_id"], **result} for job,result in generated]}
 
 
