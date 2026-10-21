@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T06:17:24Z | dispatcher heartbeat 15s | live 5 (sol 0, luna 5, other 0) | busy30 32 | status age 2m -->
+<!-- app | 2026-10-21T06:24:03Z | dispatcher heartbeat 5s | live 4 (sol 0, luna 4, other 0) | busy30 35 | status age 4m -->
 # app — 2026-10-21 06:14 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 physical parity remain OPEN.
 Integrated: App tl/integration ba1cd632e, with one-line reactive session installation fix; e75a96c69 restores the extension ID authority. Main860 ancestor; published Runtime 0.2.14 producer95bd/all76 and Composition13/all77 retained. Local-door createTimeline classification merged012186c1b; private tsx temp-root repair mergeda041b1deb; dormant transcript typing merged9f25afac0.
@@ -21,3 +21,5 @@ Decided locally: reuse existing native None r3/r4 repairs; diagnose six scheduli
 Resources: 6.7GiB free while full27342 runs; no new heavy install/build until recovered. Protected owned13 graph and Node20 retained; no new installs or graph builds authorized. Item13 zero-test argv guard DONE0340b3958;03:24 scratch cleanup DONE. Twelve stale Viewing merge-result records now CLOSED SUPERSEDED with exact mappings; owner-five5af/controller e9d retained. No ZIP or macOS claim.
 Settings: r17 custody HOLD proves invalid READY text accepted; r18 repairs exact record/lease/77-byte/count guards before any mounted proof. Selected DEV proposal r2 HOLD is one missing Vite operation-origin env; r3 exact correction is briefed. No selected actual is authorized.
 STORAGE NEED 3GiB for full27342 evidence and queued public Trim. Own prior safe cleanup retained15 hashed evidence files; protected active graphs and detached keepers remain needed.
+
+INCIDENT: full27342 INVALID ENVIRONMENT; lead06:16 recycled ACTIVE keeper app-pin-ba1cd632 while the full was running. Cancellation requested; no qualification. Do not recycle any source used by active r27. Next run needs explicit lease on exact keeper and same immutable source, not another product fix.
