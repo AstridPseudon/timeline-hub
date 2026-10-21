@@ -64,7 +64,7 @@ import { normalizeVideoTravelSettings } from '../settings';
 import { equal } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
 import type { ShotTimelineMediaProvider } from '../components/shotTimelineDataProvider.ts';
 
-const NATIVE_SETTINGS_SCALARS = new Set(['motionMode', 'advancedMode', 'turboMode']);
+const NATIVE_SETTINGS_SCALARS = new Set(['motionMode', 'advancedMode', 'turboMode', 'prompt']);
 
 interface ShotEditorViewProps {
   /** The shot to edit */
@@ -143,6 +143,7 @@ export function ShotEditorView({
     edit: CapturedShotSetEdit;
     settings: ShotSetSettingsValues;
   } | null>(null);
+  const nativePromptCaptureRefusedRef = useRef(false);
   const canonicalSettingsScope = canonicalComposition && canonicalOccurrence
     ? JSON.stringify([canonicalComposition.projectId, canonicalComposition.parentDocumentId, canonicalOccurrence.occurrenceId])
     : null;
@@ -194,9 +195,12 @@ export function ShotEditorView({
           const changes = Object.entries(settings as Record<string, unknown>).filter(([key]) => (
             !equal(submitted[key], normalized[key])
           ));
-          if (changes.length === 0) return;
+          const nativePromptCaptureRefused = nativePromptCaptureRefusedRef.current;
+          if (changes.length === 0 && !nativePromptCaptureRefused) return;
           const capturedSettingsEdit = capturedSettingsEditRef.current;
-          if (capturedSettingsEdit || changes.some(([key]) => NATIVE_SETTINGS_SCALARS.has(key))) {
+          if (capturedSettingsEdit || nativePromptCaptureRefused || changes.some(([key]) => (
+            NATIVE_SETTINGS_SCALARS.has(key) && key !== 'prompt'
+          ))) {
             if (!capturedSettingsEdit) {
               const error = new Error('Mounted shot.set settings authority is unavailable; draft kept.');
               normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
@@ -332,6 +336,7 @@ export function ShotEditorView({
     setPendingCanonicalName(null);
     return () => {
       capturedSettingsEditRef.current = null;
+      nativePromptCaptureRefusedRef.current = false;
     };
   }, [shotToEdit.id]);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -364,6 +369,7 @@ export function ShotEditorView({
   const handleSettingsIntent = useCallback((settings: ShotSetSettingsValues) => {
     if (!canonicalComposition || !canonicalOccurrence) return;
     if (!shotSetPort) {
+      if (Object.prototype.hasOwnProperty.call(settings, 'prompt')) nativePromptCaptureRefusedRef.current = true;
       const error = new Error('Mounted shot.set settings authority is unavailable; draft kept.');
       normalizeAndPresentError(error, {
         context: 'canonical-shot:capture-settings',
@@ -382,7 +388,9 @@ export function ShotEditorView({
         ),
         settings: structuredClone(settings),
       };
+      if (Object.prototype.hasOwnProperty.call(settings, 'prompt')) nativePromptCaptureRefusedRef.current = false;
     } catch (error) {
+      if (Object.prototype.hasOwnProperty.call(settings, 'prompt')) nativePromptCaptureRefusedRef.current = true;
       normalizeAndPresentError(error, {
         context: 'canonical-shot:capture-settings',
         toastTitle: 'Shot settings draft kept',
@@ -543,6 +551,7 @@ export function ShotEditorView({
             availableLoras={availableLoras}
             updateShotMode={updateShotMode}
             shotSettingsPersistence={canonicalSettingsPersistence}
+            onSettingsIntent={editorReadOnly ? undefined : handleSettingsIntent}
           >
             <SettingsAutoDisable
               shotId={shotToEdit.id}

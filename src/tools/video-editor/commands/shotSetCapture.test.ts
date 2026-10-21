@@ -101,6 +101,47 @@ describe('portable occurrence-owned shot.set name capture', () => {
   });
 
   it.each([
+    ['a string', 'Revised prompt'],
+    ['an explicit null', null],
+  ] as const)('preserves %s prompt value and raw siblings', (_label, prompt) => {
+    const result = finishShotSet(
+      captureShotSet(bundle(), 'occurrence:occ-1/shot', { values: { settings: { prompt: 'Old' } }, clear: [] }),
+      { values: { settings: { prompt } }, clear: [] },
+    );
+
+    expect(result.bundle.shots['shot-1'].payload.settings).toEqual({
+      prompt,
+      x_unknown: { keep: [null, false] },
+    });
+    expect(result.record.writes).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: ['payload', 'settings', 'prompt'],
+        before: { state: 'present', value: 'Old' },
+        after: { state: 'present', value: prompt },
+      }),
+    ]));
+  });
+
+  it('clears prompt presence without replacing other raw settings', () => {
+    const result = finishShotSet(
+      captureShotSet(bundle(), 'occurrence:occ-1/shot', { values: { settings: { prompt: 'Old' } }, clear: [] }),
+      { values: {}, clear: ['settings.prompt'] },
+    );
+
+    expect(Object.hasOwn(result.bundle.shots['shot-1'].payload.settings as object, 'prompt')).toBe(false);
+    expect(result.bundle.shots['shot-1'].payload.settings).toEqual({
+      x_unknown: { keep: [null, false] },
+    });
+    expect(result.record.writes).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: ['payload', 'settings', 'prompt'],
+        before: { state: 'present', value: 'Old' },
+        after: { state: 'absent' },
+      }),
+    ]));
+  });
+
+  it.each([
     'shot:source', 'parent/shot', 'occurrence:occ-1/shot::name',
   ])('refuses non-occurrence identity %s', (select) => {
     expect(() => captureShotSet(bundle(), select, { values: { name: 'N' }, clear: [] })).toThrow();
