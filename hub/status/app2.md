@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T03:28:01Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 18 | status age 29m -->
+<!-- app2 | 2026-10-21T03:33:59Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 35m -->
 # app2 — 2026-10-21 02:58 UTC
 Milestone: M2 OPEN. Duplicate and bounded canary deletions are complete; six broad owned rows remain OPEN.
 Integrated: HOME1be92c689/tree25dae99 contains dormant track capture99cf with exact Agentc1 record parity/36 controls and zero live callers. Parent row5a31/shared813a, seam9a7 and binding retention808 remain. Canary module DELETED692765846 (2,171 lines;59 reviewed private test retirements/439 controls); stale lint/docs DELETED743d3464d in both ledgers.
