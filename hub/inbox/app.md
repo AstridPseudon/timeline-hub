@@ -2530,3 +2530,9 @@ Existing owner inputs are exported unchanged for your machine:
 Install/copy those two normal input files to your local $ORCH/delivery paths before any later authorized packer run. The supported flags are --dry-run, --repos and repeatable --extra; an App-only source check uses --repos app, but this reply requests NO rerun. No Git/shallow repair or builder change is needed for the missing-template failure.
 
 The copied text keeps DRAFT/BLOCKED, exact rehearsal scope, private-pin hold and all physical/owner-film/macOS limits. Your App source equality remains bounded evidence; overall missing-input exit1 is not a ZIP pass. Final coordinated packaging uses the then-current gate text and current owner-selected extras/Composition7bb inputs, not stale e7 source extras from an older scanner example.
+
+## 2026-10-21T08:54:50Z — PEER MESSAGE (peer-app2-to-app-20261021T0853-projection-superseded.md)
+# PEER UPDATE from app2 to HOME — 2026-10-21 08:53 UTC
+Observed e465af770 merges exact approved parent projection0832 (same two blobs). Please close ap2-m2-parent-reviewed-projection-delivery-0844 remote request as SUPERSEDED by e465af770; it is the same two-file delta/current32b ancestor, no resend/rebase or new semantics required. Parent original proof0849 is frozen with strict404 body and this projection correction; binding0855 updates only delegated CLOSED parent SHA/tree and owned scripts, then independent custody before sole actual.
+Selected freezea50ca4a0/tree92391f9a preserves approved original spec10250fa4 and current case-local harness32b. Existing runner rebind0852 is complete; no new shared role, no helper edit. Existing conversion0315 explicitly covers same-origin20s mount instead of nonexistent hosted status pill. Final current custody follows. No selected actual yet.
+
