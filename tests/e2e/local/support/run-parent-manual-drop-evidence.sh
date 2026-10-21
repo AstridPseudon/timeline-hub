@@ -2,13 +2,13 @@
 set -eu
 
 # Evidence-preserving adaptation of the approved parent-drop driver. Keep the
-# current exact three-path source pins and current App tree guard; do not alter
-# the product row or broaden its selectors.
+# current exact source pins and App tree guard; do not alter the product row or
+# broaden its selectors.
 
 worker_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source_runner=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-app-central.sh
 source_common=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-source-common.sh
-expected_app_tree=78f3784287d78fc92677ebe5eb710d162b0f50ae
+expected_app_tree=65b04167395f3a13dd63d580df7be706d6403223
 
 usage() {
   echo "usage: $0 run APP_ROOT | $0 probe" >&2
@@ -36,9 +36,14 @@ write_source_identity() {
     printf 'tree=%s\n' "$(git -C "$app_root" rev-parse 'HEAD^{tree}' 2>/dev/null || printf unavailable)"
     printf 'status=%s\n' "$(git -C "$app_root" status --porcelain=v1 --untracked-files=all 2>/dev/null | tr '\n' ' ' || printf unavailable)"
     printf 'expected_tree=%s\n' "$expected_app_tree"
-    printf 'agent_pin=3c4f6de4fa777323b3386c01c7266b619b86af6d\n'
-    printf 'runtime_pin=202074110717146fc7f08af2306a8dd7f695b0b1\n'
-    printf 'producer_pin=a0dca16975dfe8f5e762703b99d9791a16cf7fd7\n'
+    printf 'agent_pin=6efc81500a0e0688c2bb41e736503f0fc3e04abb\n'
+    printf 'agent_tree=2ed2b8a12b5b3391ca221ba6ff05390f71a73556\n'
+    printf 'runtime_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
+    printf 'runtime_tree=d3a290b407fa61e6ab2d476f50c068073f70df00\n'
+    printf 'producer_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
+    printf 'producer_artifact=sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac\n'
+    printf 'agent_schema=sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d\n'
+    printf 'runtime_artifact_count=76\n'
   } >"$evidence_dir/source-identity.txt"
 }
 
