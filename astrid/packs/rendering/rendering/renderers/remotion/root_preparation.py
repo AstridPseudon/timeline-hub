@@ -80,6 +80,7 @@ def _prepared_remotion_root(
     frame_numbers: Sequence[int] | None = None,
     frame_output_dir: Path | None = None,
     on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
+    scene_frame_numbers: Sequence[int] | None = None,
     window: FrameWindow | None = None,
     composition_duration_frames: int | None = None,
 ) -> Iterator[tuple[
@@ -248,7 +249,10 @@ def _prepared_remotion_root(
             staged_video.parent.mkdir(parents=True, exist_ok=True)
             props_path.write_text(json.dumps(merged_props), encoding="utf-8")
             if on_scene_props is not None and frame_numbers is not None:
-                on_scene_props(merged_props, frame_numbers)
+                on_scene_props(
+                    merged_props,
+                    scene_frame_numbers if scene_frame_numbers is not None else frame_numbers,
+                )
             yield (
                 merged_props, props_path, runtime_tools, theme_for_props,
                 registry_state, stage_summary, remotion_temp_root, remotion_port,

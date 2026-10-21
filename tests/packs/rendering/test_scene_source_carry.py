@@ -164,9 +164,12 @@ def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None
                                              asset_registry=props["assets"])
         if callback_change:
             callback_change(props)
+        query_frames = tuple(kwargs.get("scene_frame_numbers", frames))
         calls.append((tuple(frames), copy.deepcopy(props)))
         if fail != "no_callback":
-            kwargs["on_scene_props"](props, (99,) if fail == "frames" else frames)
+            kwargs["on_scene_props"](
+                props, (99,) if fail == "frames" else query_frames,
+            )
         if fail == "capture":
             raise RuntimeError("capture failed after observation")
         produced = {}
@@ -273,8 +276,11 @@ def test_motion_scene_rows_join_exact_missing_frames_once(source_query, tmp_path
     info = p.capture(cards(0, 24), tmp_path / "motion", scene_frames=(29,))
 
     assert info["evidence_source"] == "fresh_capture"
-    assert [call[0] for call in calls] == [(0, 24, 29)]
+    assert len(calls) == 1
+    assert [call[0] for call in calls] == [(0, 24)]
+    assert p._fresh_requested == (0, 24, 29)
     assert p.fresh_scene_frames == {0, 24, 29}
+    assert p.scene_for_frame(0) is p.scene_for_frame(29) is p.scene_capture
     row = p.scene_for_frame(29).frame(29, source_identity=p.source_identity)
     assert row["frame"] == 29
     assert row["layers"][0]["clipId"] == "opaque:occ:A:opaque:source:title"
