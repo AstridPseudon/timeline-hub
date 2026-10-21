@@ -1,5 +1,5 @@
 {
-  "source": "4296a7091d30543d3839fe703c0f0626f9882ebe",
+  "source": "6efc81500a0e0688c2bb41e736503f0fc3e04abb",
   "bundle": {
     "schema_version": 1,
     "project_id": "project-1",
@@ -52,6 +52,21 @@
       "intent": {},
       "resolved": [],
       "reads": [
+        {
+          "ref": "parent",
+          "path": [],
+          "state": {
+            "state": "present",
+            "value": {
+              "config": {
+                "clips": [],
+                "tracks": []
+              },
+              "registry": {},
+              "clips": []
+            }
+          }
+        },
         {
           "ref": "parent",
           "path": [
@@ -310,6 +325,21 @@
         "reads": [
           {
             "ref": "parent",
+            "path": [],
+            "state": {
+              "state": "present",
+              "value": {
+                "config": {
+                  "clips": [],
+                  "tracks": []
+                },
+                "registry": {},
+                "clips": []
+              }
+            }
+          },
+          {
+            "ref": "parent",
             "path": [
               "config",
               "output"
@@ -434,6 +464,21 @@
         }
       ],
       "reads": [
+        {
+          "ref": "parent",
+          "path": [],
+          "state": {
+            "state": "present",
+            "value": {
+              "config": {
+                "clips": [],
+                "tracks": []
+              },
+              "registry": {},
+              "clips": []
+            }
+          }
+        },
         {
           "ref": "parent",
           "path": [
@@ -737,6 +782,51 @@
           },
           {
             "ref": "parent",
+            "path": [],
+            "state": {
+              "state": "present",
+              "value": {
+                "config": {
+                  "clips": [],
+                  "tracks": [
+                    {
+                      "id": "V1",
+                      "kind": "visual",
+                      "label": "V1",
+                      "scale": 1,
+                      "fit": "contain",
+                      "opacity": 1,
+                      "blendMode": "normal"
+                    },
+                    {
+                      "id": "A1",
+                      "kind": "audio",
+                      "label": "A1",
+                      "scale": 1,
+                      "fit": "contain",
+                      "opacity": 1,
+                      "blendMode": "normal"
+                    }
+                  ],
+                  "output": {
+                    "resolution": "1280x720",
+                    "fps": 30,
+                    "file": "output.mp4",
+                    "background": null,
+                    "background_scale": null
+                  }
+                },
+                "registry": {
+                  "assets": {}
+                },
+                "clips": [],
+                "name": "Main",
+                "slug": "main"
+              }
+            }
+          },
+          {
+            "ref": "parent",
             "path": [
               "config",
               "output"
@@ -1033,6 +1123,51 @@
         },
         {
           "ref": "parent",
+          "path": [],
+          "state": {
+            "state": "present",
+            "value": {
+              "config": {
+                "clips": [],
+                "tracks": [
+                  {
+                    "id": "V1",
+                    "kind": "visual",
+                    "label": "V1",
+                    "scale": 1,
+                    "fit": "contain",
+                    "opacity": 1,
+                    "blendMode": "normal"
+                  },
+                  {
+                    "id": "A1",
+                    "kind": "audio",
+                    "label": "A1",
+                    "scale": 1,
+                    "fit": "contain",
+                    "opacity": 1,
+                    "blendMode": "normal"
+                  }
+                ],
+                "output": {
+                  "resolution": "1280x720",
+                  "fps": 30,
+                  "file": "output.mp4",
+                  "background": null,
+                  "background_scale": null
+                }
+              },
+              "registry": {
+                "assets": {}
+              },
+              "clips": [],
+              "name": "Main",
+              "slug": "main"
+            }
+          }
+        },
+        {
+          "ref": "parent",
           "path": [
             "config",
             "output"
@@ -1186,6 +1321,21 @@
                   "state": "present",
                   "value": {}
                 }
+              }
+            }
+          },
+          {
+            "ref": "parent",
+            "path": [],
+            "state": {
+              "state": "present",
+              "value": {
+                "config": {
+                  "clips": [],
+                  "tracks": []
+                },
+                "registry": {},
+                "clips": []
               }
             }
           },
@@ -1411,6 +1561,21 @@
                 "state": "present",
                 "value": {}
               }
+            }
+          }
+        },
+        {
+          "ref": "parent",
+          "path": [],
+          "state": {
+            "state": "present",
+            "value": {
+              "config": {
+                "clips": [],
+                "tracks": []
+              },
+              "registry": {},
+              "clips": []
             }
           }
         },
