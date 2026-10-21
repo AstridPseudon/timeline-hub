@@ -1468,7 +1468,9 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
     url.searchParams.set('object_id', `${originalObjectId!.slice(0, -1)}${lastHex === '0' ? '1' : '0'}`);
     await route.continue({ url: url.toString() });
   });
-  await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 20);
+  // External drops are centered by the production coordinator; 22.5 places the five-second preview's left edge at 20.
+  const manualDropPointerAt = 22.5;
+  await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, manualDropPointerAt);
   await wrongImportResponse;
   const wrongVerified = await wrongVerifiedResponse;
   expect([404, 409]).toContain(wrongVerified.status());
@@ -1484,7 +1486,7 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
   const importResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/media-imports$/.test(new URL(response.url()).pathname), CEILING);
   const selectionResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
   const verifiedResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\/verified\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
-  await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 20);
+  await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, manualDropPointerAt);
   const imported = await importResponse;
   expect(imported.status()).toBe(201);
   const importedBody = await imported.json() as { data: Record<string, any> };
