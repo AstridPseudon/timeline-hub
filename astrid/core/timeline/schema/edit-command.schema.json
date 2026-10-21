@@ -2825,6 +2825,46 @@
               "minimum": 0,
               "maximum": 1,
               "description": "Raw visual opacity fraction in the inclusive range 0..1."
+            },
+            "transition": {
+              "type": "object",
+              "required": [
+                "type",
+                "duration"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "duration": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "params": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  }
+                },
+                "id": false,
+                "durationFrames": false,
+                "align": false,
+                "incomingPolicy": false
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/JSON"
+              }
+            },
+            "elementRef": {
+              "$ref": "#/$defs/ElementRef"
             }
           },
           "additionalProperties": false
@@ -2836,10 +2876,14 @@
               "hold",
               "asset",
               "transition",
-              "opacity"
+              "opacity",
+              "elementRef"
             ]
           },
           "uniqueItems": true
+        },
+        "schema_source": {
+          "$ref": "#/$defs/DocumentPin"
         }
       },
       "required": [
@@ -2863,7 +2907,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction, or atomically set an incoming transition with its matching elementRef; explicitly remove hold, asset, incoming transition or opacity, or remove a transition and its matching elementRef as a closed pair. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media. Selected pack transitions require an exact schema_source."
     },
     "ProjectDataWriteArgs": {
       "type": "object",

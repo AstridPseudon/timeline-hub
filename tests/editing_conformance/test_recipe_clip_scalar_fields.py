@@ -71,6 +71,14 @@ def app_bundle():
     return open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
 
 
+def adjacent_transition_bundle():
+    original = app_bundle()
+    rows = original['parent']['clips']
+    rows[1]['at'] = 3
+    original['parent']['config']['clips'] = copy.deepcopy(rows)
+    return original
+
+
 def app_calls(original):
     return [capture_clip_set(original, CHILD, values={'hold': 4}),
             capture_clip_set(original, CLEAR, clear=['asset']),

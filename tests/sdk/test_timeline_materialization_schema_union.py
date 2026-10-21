@@ -28,10 +28,33 @@ PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc
 PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
 RAW_OLD_CANONICAL_SHA256 = 'd3274d7ed2d4bd80691472dd94daf8f4b8041fc184f39f1dd562d5de5d6a15c2'
 FROZEN_10226_CANONICAL_SHA256 = '322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc'
+TRANSITION_FLOOR_CANONICAL_SHA256 = '9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6'
+
+
+def without_transition(schema):
+    """Strip only incoming-transition additions from the complete current schema."""
+    args = schema['$defs']['ClipSetArgs']
+    had_transition = ('transition' in args['properties']['values']['properties']
+                      or 'elementRef' in args['properties']['values']['properties']
+                      or 'schema_source' in args['properties'])
+    args['properties']['values']['properties'].pop('transition', None)
+    args['properties']['values']['properties'].pop('elementRef', None)
+    enum = args['properties']['clear']['items']['enum']
+    if 'elementRef' in enum:
+        enum.remove('elementRef')
+    args['properties'].pop('schema_source', None)
+    if had_transition:
+        args['description'] = (
+            'Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; '
+            'explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, '
+            'never sets null/empty. Asset assignment requires the scoped clip.swap-media or '
+            'occurrence.swap-media; transition authoring is outside v1.')
+    return schema
 
 
 def without_insertion_order(schema):
     """Reconstruct the frozen 10226 AgentWrite carrier exactly."""
+    without_transition(schema)
     assert schema['$defs']['AgentWrite']['properties'].pop('insertion_order') == {
         'type': 'array',
         'items': {'type': 'string'},
@@ -86,6 +109,7 @@ def without_raw_old_swap(schema):
 
 def without_transcript(schema):
     """Remove only the reviewed transcript successor from the raw-OLD union."""
+    without_transition(schema)
     del schema['$defs']['TranscriptAssociateArgs']
     schema['$defs']['EditCommand']['allOf'] = [
         clause for clause in schema['$defs']['EditCommand']['allOf']
@@ -123,6 +147,7 @@ def without_mute(schema):
 
 def without_opacity(schema):
     """Remove only the reviewed raw clip opacity leaf from a copied schema."""
+    without_transition(schema)
     args = schema['$defs']['ClipSetArgs']
     assert args['properties']['values']['properties'].pop('opacity') == {
         'type': 'number',
@@ -167,6 +192,7 @@ def without_voiceover(schema):
 
 def without_remove(schema):
     """Reconstruct the reviewed private voiceover/extent source."""
+    without_transition(schema)
     args = schema['$defs']['ProjectDataWriteArgs']
     assert args['properties']['mode']['enum'] == ['replace', 'remove']
     args['properties']['mode'] = {'const': 'replace'}
@@ -344,6 +370,14 @@ def test_transcript_successor_strips_to_exact_raw_old_schema():
     assert hashlib.sha256(raw).hexdigest() == RAW_OLD_CANONICAL_SHA256
     assert len(candidate['$defs']) == 64
     assert len(candidate['$defs']['EditCommand']['allOf']) == 36
+
+
+def test_transition_successor_strips_to_exact_ed5_canonical_schema():
+    candidate = without_transition(copy.deepcopy(_SCHEMA))
+    raw = (json.dumps(candidate, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == TRANSITION_FLOOR_CANONICAL_SHA256
+    assert len(candidate['$defs']) == 65
+    assert len(candidate['$defs']['EditCommand']['allOf']) == 37
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():

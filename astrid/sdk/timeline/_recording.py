@@ -19,6 +19,26 @@ def selection(state, key, owner, members=()):
         result = [ref for ref in order(state, owner, 'clip') if ref in members]
     elif key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
+    elif key == 'transition.predecessor':
+        from .capture import number
+
+        target = state.entity(owner)
+        scope = owner.rsplit('/', 1)[0]
+        lane = [ref for ref in order(state, scope, 'clip')
+                if state.entity(ref).get('track') == target.get('track')]
+
+        def start(ref):
+            row = state.entity(ref)
+            if 'at' in row:
+                return number(row['at'], 'clip.at')
+            return number(row.get('at_ms'), 'clip.at_ms') / 1000
+
+        lane.sort(key=start)
+        index = lane.index(owner)
+        return {'key': key, 'query_version': 1, 'owner': owner,
+                'members': lane[max(0, index - 1):index], 'order': lane,
+                'boundaries': [scope + '/track:' + str(target.get('track'))],
+                'policy': 'guard-membership'}
     elif key == 'migration.groups':
         if owner != 'parent' or len(set(members)) != len(members) or any(
                 not ref.startswith('occurrence:') or '/' in ref for ref in members):
