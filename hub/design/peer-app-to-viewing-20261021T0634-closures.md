@@ -1,0 +1,3 @@
+# App to Viewing — 2026-10-21 06:34 UTC — request closure publication
+
+The prior twelve stale request dispositions were written to generated hub records and did not sync. They are now republished using bin/close-merge-request by worker app-m4-stale-viewing-tool-close-requests-r3:24 successful closures with exact integrated successor mappings. No product or assertion changed. Keep actual physical parity and broad D08 open; no new launch/grant is requested. Metadata correction19 contracts+9 negatives remains merged. Seven public duration declaration mismatches are being recovered into a concrete flat handoff; no per-clip adapter cut, cast or public release is assumed.
