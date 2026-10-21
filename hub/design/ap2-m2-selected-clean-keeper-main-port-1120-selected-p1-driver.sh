@@ -10,8 +10,8 @@ test -f "$APP_ROOT/package.json"
 test -z "$(git -C "$APP_ROOT" status --porcelain=v1 --untracked-files=all)"
 
 ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
-LOCKED_GRAPH="$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph"
-LOCKED_GRAPH_ARCHIVE="$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar"
+LOCKED_GRAPH=${LOCKED_GRAPH:-"$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph"}
+LOCKED_GRAPH_ARCHIVE=${LOCKED_GRAPH_ARCHIVE:-"$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar"}
 AGENT_REPO=/home/user/peteromallet/astrid-agent
 RUNTIME_REPO=/home/user/banodoco/banodoco-workspace-runtime
 AGENT_SHA=8130a401bf44a518d5a40ae274d398b8c560be55
@@ -35,7 +35,7 @@ test "$(git -C "$RUNTIME_REPO" rev-parse "$RUNTIME_SHA^{commit}")" = "$RUNTIME_S
 test "$(git -C "$RUNTIME_REPO" rev-parse "$RUNTIME_SHA^{tree}")" = "$RUNTIME_TREE"
 
 RUN_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/ap2-m2-selected-p1.XXXXXX")
-TRACE_DEST="$ORCH/workers/ap2-m2-selected-draft-p1-review-gate/central-trace"
+TRACE_DEST=${SELECTED_TRACE_DEST:-/tmp/ap2-m2-selected-clean-keeper-main-port-1120-central-trace}
 RUN_LOG="$RUN_ROOT/driver.stderr"
 # The frozen Agent asks the neutral Runtime to start an already-selected workspace.
 # Create that workspace through Runtime's own command in this per-run realm; do
@@ -133,7 +133,8 @@ fi
 
 # Reuse the reviewed private graph builder; it symlinks package contents read-only
 # and creates only private bin links. Vite/Playwright caches stay below RUN_ROOT.
-. /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-selected-clean-keeper-main-port-1120-source-common.sh
+NORMAL014_LOCKED_GRAPH="$LOCKED_GRAPH" NORMAL014_LOCKED_GRAPH_ARCHIVE="$LOCKED_GRAPH_ARCHIVE" \
+  . /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-selected-clean-keeper-main-port-1120-source-common.sh
 prepare_private_node_graph "$LOCKED_GRAPH/node_modules" "$RUN_ROOT/private-node-modules"
 test "$(realpath "$RUN_ROOT/private-node-modules")" = "$RUN_ROOT/private-node-modules"
 

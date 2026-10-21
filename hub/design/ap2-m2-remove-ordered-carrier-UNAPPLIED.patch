@@ -1,0 +1,348 @@
+# Unapplied App source delta recovered from worker ap2-m2-remove-ordered-carrier-unapplied-1118.
+# Tested private candidate: App base commit 0cc2583aaf07e89190b9344b5ac82849d6279586,
+# tree 320e74a93676c781e83885b86ec237b4a1465d80; exact tested source blob
+# identities are recorded in the three index lines below.
+# Source attribution: worker1118 retained transcript lines 7331-10354; evidence
+# report: ap2-m2-remove-ordered-carrier-unapplied-1118-REPORT.md.
+# Generated AgentWrite binding and private-agent-write-proof.ts are intentionally excluded.
+
+diff --git a/src/tools/video-editor/commands/clipMovePrimitives.ts b/src/tools/video-editor/commands/clipMovePrimitives.ts
+index 401c559c179eb4d4f675e5e3eff052abadf4c3ac..442c5ba4a497d3147fcccad8948025b5610a0c5b 100644
+--- a/src/tools/video-editor/commands/clipMovePrimitives.ts
++++ b/src/tools/video-editor/commands/clipMovePrimitives.ts
+@@ -219,7 +219,7 @@ export class AuthoredState {
+       actual.value === this.isolatedOwner(ref.slice(0, -'/shot'.length), expected.value);
+   }
+ 
+-  set(ref: string, path: string[], state: AgentState): void {
++  set(ref: string, path: string[], state: AgentState, insertionOrder?: readonly string[]): void {
+     if (!path.length && (ref.includes('/asset:') || ref.includes('/clip:'))) {
+       const slash = ref.lastIndexOf('/');
+       const owner = ref.slice(0, slash);
+@@ -249,9 +249,29 @@ export class AuthoredState {
+     }
+     const key = path[path.length - 1];
+     if (state.state === 'absent') delete target[key];
+-    else Object.defineProperty(target, key, {
+-      value: copy(state.value), enumerable: true, configurable: true, writable: true,
+-    });
++    else {
++      const next = copy(state.value);
++      if (insertionOrder !== undefined) {
++        const existing = Object.keys(target);
++        if (!insertionOrder.includes(key) || existing.some((name) => !insertionOrder.includes(name)) ||
++          existing.length !== new Set(existing).size ||
++          existing.join('\u0000') !== insertionOrder.filter((name) => existing.includes(name)).join('\u0000')) {
++          throw new ClipMoveError('historical object order differs from state', 'history_unavailable');
++        }
++        const following = new Set(insertionOrder.slice(insertionOrder.indexOf(key) + 1));
++        const before = existing.find((name) => following.has(name));
++        const index = before === undefined ? existing.length : existing.indexOf(before);
++        existing.splice(index, 0, key);
++        const values = new Map(Object.entries(target));
++        values.set(key, next);
++        for (const name of Object.keys(target)) delete target[name];
++        for (const name of existing) Object.defineProperty(target, name, {
++          value: values.get(name), enumerable: true, configurable: true, writable: true,
++        });
++      } else Object.defineProperty(target, key, {
++        value: next, enumerable: true, configurable: true, writable: true,
++      });
++    }
+   }
+ }
+ 
+@@ -375,20 +375,22 @@ export class MoveRecording {
+     }
+   }
+ 
+-  assign(ref: string, path: string[], after: AgentState): void {
++  assign(ref: string, path: string[], after: AgentState, insertionOrder?: readonly string[]): void {
+     const address = `${ref}::${path.join('.')}`;
+     if (!has(this.command.expect!, address)) this.command.expect![address] = this.state.get(ref, path);
+     this.command.authorship![address] = 'direct';
+-    this.record.writes.push({ ref, path: [...path], before: this.state.get(ref, path), after: copy(after) });
+-    this.state.set(ref, path, after);
++    const write = { ref, path: [...path], before: this.state.get(ref, path), after: copy(after) } as CommandRecord['writes'][number];
++    this.record.writes.push(write);
++    if (insertionOrder !== undefined) write.insertion_order = [...insertionOrder];
++    this.state.set(ref, path, after, insertionOrder);
+   }
+ 
+   write(ref: string, path: string[], value: JSON): void {
+     this.assign(ref, path, { state: 'present', value });
+   }
+ 
+-  clear(ref: string, path: string[]): void {
+-    this.assign(ref, path, { state: 'absent' });
++  clear(ref: string, path: string[], insertionOrder?: readonly string[]): void {
++    this.assign(ref, path, { state: 'absent' }, insertionOrder);
+   }
+ 
+   object(ref: string, path: string[]): void {
+
+diff --git a/src/tools/video-editor/commands/projectDataMember.ts b/src/tools/video-editor/commands/projectDataMember.ts
+index 5d4dd26be9e5b296c18fab1372a67ebef2d8d78f..a8ce58a4097d1a56bc9806bf47a23ca487defb89 100644
+--- a/src/tools/video-editor/commands/projectDataMember.ts
++++ b/src/tools/video-editor/commands/projectDataMember.ts
+@@ -23,8 +23,12 @@ const CLAIMS = ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bind
+ type ProjectDataArgs = {
+   target: string;
+   key: string;
++  mode: 'replace';
+   value: JSON;
+-  mode: 'replace';
++} | {
++  target: string;
++  key: string;
++  mode: 'remove';
+ };
+ 
+ type ProjectDataPatchArgs = {
+@@ -34,8 +38,8 @@ type ProjectDataPatchArgs = {
+ };
+ 
+ type ProjectDataOperation = TimelinePatchOperation & {
+-  op: 'project-data.write';
+-  payload: ProjectDataPatchArgs;
++  op: 'project-data.write' | 'project-data.delete';
++  payload: ProjectDataPatchArgs | { key: string };
+ };
+ 
+ export type ProjectDataMemberCapture = {
+@@ -124,24 +128,35 @@ function validatePatchArgs(args: unknown): asserts args is ProjectDataPatchArgs {
+ }
+ 
+ function validateArgs(args: unknown): asserts args is ProjectDataArgs {
+-  if (!object(args) || !equal(Object.keys(args).sort(), ['key', 'mode', 'target', 'value'])) {
++  if (!object(args) || typeof args.mode !== 'string' ||
++    !equal(Object.keys(args).sort(), args.mode === 'remove'
++      ? ['key', 'mode', 'target'] : ['key', 'mode', 'target', 'value'])) {
+     throw new ClipMoveError('project-data.write requires target, key, value, and mode arguments');
+   }
+   validateTarget(args.target);
+   validateKey(args.key);
+-  if (args.mode !== 'replace') throw new ClipMoveError('project-data.write only supports mode "replace"');
+-  validateValue(args.value);
++  if (args.mode !== 'replace' && args.mode !== 'remove') {
++    throw new ClipMoveError('project-data.write only supports mode "replace" or "remove"');
++  }
++  if (args.mode === 'replace') validateValue(args.value);
+ }
+ 
+ function validateOperation(operation: TimelinePatchOperation): asserts operation is ProjectDataOperation {
+   if (Object.keys(operation).some((key) => !['op', 'target', 'payload', 'order'].includes(key)) ||
+-    operation.op !== 'project-data.write' || typeof operation.target !== 'string' ||
++    (operation.op !== 'project-data.write' && operation.op !== 'project-data.delete') ||
++    typeof operation.target !== 'string' ||
+     (operation.order !== undefined && (typeof operation.order !== 'number' || !Number.isFinite(operation.order))) ||
+     !object(operation.payload)) {
+     throw new ClipMoveError('Only a closed project-data.write operation is supported');
+   }
+   validateTarget(operation.target);
+-  validatePatchArgs(operation.payload);
++  if (operation.op === 'project-data.write') validatePatchArgs(operation.payload);
++  else {
++    if (!equal(Object.keys(operation.payload).sort(), ['key'])) {
++      throw new ClipMoveError('project-data.delete requires a key argument');
++    }
++    validateKey(operation.payload.key);
++  }
+ }
+ 
+ function pathClaim(ref: string, path: readonly string[]): string {
+@@ -247,6 +262,33 @@ function closedCommand(command: EditCommand): void {
+   validateArgs(command.args);
+ }
+ 
++function removeProjectDataMember(ctx: MoveRecording, args: Extract<ProjectDataArgs, { mode: 'remove' }>): void {
++  const targetPath = ['config', 'app', args.target];
++  const namespace = ctx.state.get('parent', targetPath);
++  if (namespace.state === 'absent') {
++    ctx.read('parent', targetPath);
++    return;
++  }
++  if (namespace.value !== null && !object(namespace.value)) {
++    throw new ClipMoveError('intent container must be object or null');
++  }
++  const app = ctx.state.get('parent', ['config', 'app']);
++  const insertionOrder = app.state === 'present' && object(app.value) ? Object.keys(app.value) : undefined;
++  if (namespace.value === null || !Object.keys(namespace.value as Record<string, JSON>).length) {
++    ctx.clear('parent', targetPath, insertionOrder);
++  } else {
++    ctx.clear('parent', [...targetPath, args.key]);
++    const remaining = ctx.state.get('parent', targetPath);
++    if (remaining.state === 'present' && object(remaining.value) && !Object.keys(remaining.value).length) {
++      ctx.clear('parent', targetPath, insertionOrder);
++    }
++  }
++  const remainingApp = ctx.state.get('parent', ['config', 'app']);
++  if (remainingApp.state === 'present' && object(remainingApp.value) && !Object.keys(remainingApp.value).length) {
++    ctx.clear('parent', ['config', 'app']);
++  }
++}
++
+ function applyProjectDataMember(
+   bundle: AuthoredBundle,
+   supplied: EditCommand,
+@@ -258,19 +300,22 @@ function applyProjectDataMember(
+     authorship: {}, bindings: {}, created: [] } as EditCommand;
+   const args = command.args as unknown as ProjectDataArgs;
+   const ctx = new MoveRecording(bundle, command);
+-  // project-data.write is a non-singleton parent operation in Agent's registry.
+   ctx.command.resolved = [];
+-  ctx.object('parent', ['config']);
+-  ctx.object('parent', ['config', 'app']);
+-  ctx.object('parent', ['config', 'app', args.target]);
+-  const original = ctx.state.get('parent', ['config', 'app', args.target, args.key]);
+-  const projectedValue = lowerProjectDataValue(
+-    original.state === 'present' ? original.value : undefined,
+-    { value: args.value, mode: sourceMode },
+-  );
+-  validateLimits(bundle, args, projectedValue);
+-  (ctx.command.args as unknown as ProjectDataArgs).value = projectedValue;
+-  ctx.write('parent', ['config', 'app', args.target, args.key], projectedValue);
++  if (args.mode === 'remove') removeProjectDataMember(ctx, args);
++  else {
++    // project-data.write is a non-singleton parent operation in Agent's registry.
++    ctx.object('parent', ['config']);
++    ctx.object('parent', ['config', 'app']);
++    ctx.object('parent', ['config', 'app', args.target]);
++    const original = ctx.state.get('parent', ['config', 'app', args.target, args.key]);
++    const projectedValue = lowerProjectDataValue(
++      original.state === 'present' ? original.value : undefined,
++      { value: args.value, mode: sourceMode },
++    );
++    validateLimits(bundle, args, projectedValue);
++    (ctx.command.args as unknown as ProjectDataArgs).value = projectedValue;
++    ctx.write('parent', ['config', 'app', args.target, args.key], projectedValue);
++  }
+   replaceGeneratedClaims(ctx);
+   ctx.record.ordinal = ordinal;
+   ctx.record.derived_writes.forEach((write) => { write.cause = ordinal; });
+@@ -295,7 +340,7 @@ function unsupportedReason(operation: TimelinePatchOperation): string | undefined {
+   }
+ }
+ 
+-/** Capture one ordered source/source-map project-data batch without registering it. */
++/** Capture one ordered project-data batch without registering it. */
+ export function captureProjectDataMember(bundle: AuthoredBundle, patch: TimelinePatch): ProjectDataMemberCapture {
+   assertFiniteJson(bundle);
+   assertFiniteJson(patch);
+@@ -318,7 +363,11 @@ export function captureProjectDataMember(bundle: AuthoredBundle, patch: TimelinePatch): ProjectDataMemberCapture {
+         op: 'project-data.write',
+         version: '1',
+         select: 'parent',
+-        args: {
++        args: operation.op === 'project-data.delete' ? {
++          target: operation.target,
++          key: operation.payload.key,
++          mode: 'remove',
++        } : {
+           target: operation.target,
+           key: operation.payload.key,
+           value: copy(operation.payload.value),
+@@ -326,7 +375,8 @@ export function captureProjectDataMember(bundle: AuthoredBundle, patch: TimelinePatch): ProjectDataMemberCapture
+         } as unknown as Record<string, JSON>,
+         intent: {},
+       };
+-      const result = applyProjectDataMember(after, command, commands.length, operation.payload.mode ?? 'replace');
++      const result = applyProjectDataMember(after, command, commands.length,
++        operation.op === 'project-data.write' ? operation.payload.mode ?? 'replace' : 'replace');
+       after = result.bundle;
+       commands.push(result.command);
+       records.push(result.record);
+
+diff --git a/src/tools/video-editor/commands/projectDataMember.test.ts b/src/tools/video-editor/commands/projectDataMember.test.ts
+index 704baa3652086b949161638173d8f75bde8b6ada..e140a59955753b6113f17f1ff28e45260459c8d0 100644
+--- a/src/tools/video-editor/commands/projectDataMember.test.ts
++++ b/src/tools/video-editor/commands/projectDataMember.test.ts
+@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
+ import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
+ import { compileTimelinePatch } from '../lib/timeline-patch.ts';
+ import { authoringBundleFromDocument } from './authoringBundle.ts';
+-import { copy } from './clipMovePrimitives.ts';
++import { AuthoredState, copy } from './clipMovePrimitives.ts';
+ import {
+   captureProjectDataMember,
+   executeProjectDataMember,
+@@ -16,6 +16,10 @@ function write(key: string, value: unknown, extra: Record<string, unknown> = {}, order?: number) {
+   return { op: 'project-data.write' as const, target, payload: { key, value, ...extra }, ...(order === undefined ? {} : { order }) };
+ }
+ 
++function remove(key: string, order?: number) {
++  return { op: 'project-data.delete' as const, target, payload: { key }, ...(order === undefined ? {} : { order }) };
++}
++
+ async function authoredBundle() {
+   const env = await environment();
+   return authoringBundleFromDocument(env.initial.canonicalDocument);
+@@ -89,6 +93,68 @@ describe('bounded inert project-data member', () => {
+     expect(bundle).toEqual(before);
+   });
+ 
++  it('captures dormant delete as Agent remove and restores a pruned namespace order after JSON reload', async () => {
++    const bundle = await authoredBundle();
++    bundle.parent.config.app = {
++      before: { opaque: true },
++      [target]: { gone: null },
++      after: { keep: [null, false, 0] },
++    };
++    const before = copy(bundle);
++    const captured = captureProjectDataMember(bundle, { version: 1, operations: [remove('gone')] });
++
++    expect(captured.commands[0].args).toEqual({ target, key: 'gone', mode: 'remove' });
++    expect(captured.bundle.parent.config.app).toEqual({
++      before: { opaque: true },
++      after: { keep: [null, false, 0] },
++    });
++    expect(captured.records[0].writes).toEqual([
++      { ref: 'parent', path: ['config', 'app', target, 'gone'],
++        before: { state: 'present', value: null }, after: { state: 'absent' } },
++      { ref: 'parent', path: ['config', 'app', target],
++        before: { state: 'present', value: {} }, after: { state: 'absent' },
++        insertion_order: ['before', target, 'after'] },
++    ]);
++
++    const replayed = executeProjectDataMember(copy(bundle), JSON.parse(JSON.stringify(captured.commands)));
++    expect(replayed).toEqual({ bundle: captured.bundle, records: captured.records });
++    const restored = copy(captured.bundle);
++    const state = new AuthoredState(restored);
++    for (const write of [...captured.records[0].writes].reverse()) {
++      state.set(write.ref, write.path, write.before, write.insertion_order);
++    }
++    expect(restored).toEqual(before);
++    expect(Object.keys(restored.parent.config.app!)).toEqual(['before', target, 'after']);
++  });
++
++  it('keeps delete absent/null/opaque compatibility without manufacturing an order carrier', async () => {
++    const bundle = await authoredBundle();
++    bundle.parent.config.app = { [target]: { keep: { opaque: true }, gone: false }, sibling: null };
++    const removed = captureProjectDataMember(bundle, { version: 1, operations: [remove('gone')] });
++    expect(removed.bundle.parent.config.app).toEqual({ [target]: { keep: { opaque: true } }, sibling: null });
++    expect(removed.records[0].writes).toEqual([
++      { ref: 'parent', path: ['config', 'app', target, 'gone'],
++        before: { state: 'present', value: false }, after: { state: 'absent' } },
++    ]);
++
++    const absent = captureProjectDataMember(bundle, { version: 1, operations: [remove('missing')] });
++    expect(absent.bundle).toEqual(bundle);
++    expect(absent.records[0].writes).toHaveLength(1);
++    expect(absent.records[0].writes[0]).toMatchObject({
++      path: ['config', 'app', target, 'missing'],
++      before: { state: 'absent' }, after: { state: 'absent' },
++    });
++    expect('insertion_order' in absent.records[0].writes[0]).toBe(false);
++
++    const nullNamespace = copy(bundle);
++    nullNamespace.parent.config.app = { before: 1, [target]: null, after: { opaque: true } };
++    const nulled = captureProjectDataMember(nullNamespace, { version: 1, operations: [remove('gone')] });
++    expect(nulled.bundle.parent.config.app).toEqual({ before: 1, after: { opaque: true } });
++    expect(nulled.records[0].writes[0]).toMatchObject({
++      insertion_order: ['before', target, 'after'],
++    });
++  });
++
+   it('lowers Main merge, default replace, and declared order to native replace cells', async () => {
+     const env = await environment();
+     const bundle = await authoringBundleFromDocument(env.initial.canonicalDocument);

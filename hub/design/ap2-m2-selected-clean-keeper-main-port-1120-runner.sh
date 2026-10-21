@@ -31,8 +31,8 @@ OWNED_RECORD="$ORCH/design"
 OLD_DRIVER="$ORCH/design/ap2-m2-selected-clean-keeper-main-port-1120-selected-p1-driver.sh"
 SOURCE_COMMON="$ORCH/design/ap2-m2-selected-clean-keeper-main-port-1120-source-common.sh"
 PARENT_MEDIA="$ORCH/design/ap2-m2-selected-clean-keeper-main-port-1120-parent-media-central.sh"
-LOCKED_GRAPH="$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph"
-LOCKED_GRAPH_ARCHIVE="$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar"
+LOCKED_GRAPH=${LOCKED_GRAPH:-"$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph"}
+LOCKED_GRAPH_ARCHIVE=${LOCKED_GRAPH_ARCHIVE:-"$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar"}
 AGENT_REPO=/home/user/peteromallet/astrid-agent
 RUNTIME_REPO=/home/user/banodoco/banodoco-workspace-runtime
 
@@ -525,7 +525,9 @@ run_cheap_preflight() {
   # This is the only preflight operation that enters the private App overlay.
   # It collects Playwright's one-test list and never starts Vite, Runtime, a
   # browser, a daemon, a socket listener, a build, or the actual test.
-  NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent . "$SOURCE_COMMON"
+  NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent \
+    NORMAL014_LOCKED_GRAPH="$LOCKED_GRAPH" NORMAL014_LOCKED_GRAPH_ARCHIVE="$LOCKED_GRAPH_ARCHIVE" \
+    . "$SOURCE_COMMON"
   restore_owned_tuple
   prepare_private_node_graph "$LOCKED_GRAPH/node_modules" "$RUN_ROOT/private-node-modules" >"$CHECK_OUTPUT/private-graph" 2>&1 || {
     echo 'FAIL  private graph preparation and exact list1';
@@ -618,15 +620,17 @@ restore_owned_tuple() {
   MANIFEST_SHA=a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d
   MANIFEST_COUNT=76
   SCHEMA_SHA=6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
-  LOCKED_GRAPH="$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph"
-  LOCKED_GRAPH_ARCHIVE="$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar"
+  LOCKED_GRAPH=${LOCKED_GRAPH:-"$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph"}
+  LOCKED_GRAPH_ARCHIVE=${LOCKED_GRAPH_ARCHIVE:-"$ORCH/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar"}
 }
 
 run_actual() {
   # The actual path is deliberately unreachable from the default invocation.
   # It retains the original selected argv/title/spec and the qualified parent
   # private-source/graph/copy controls for the central service.
-  NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent . "$SOURCE_COMMON"
+  NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent \
+    NORMAL014_LOCKED_GRAPH="$LOCKED_GRAPH" NORMAL014_LOCKED_GRAPH_ARCHIVE="$LOCKED_GRAPH_ARCHIVE" \
+    . "$SOURCE_COMMON"
   restore_owned_tuple
   # Use the runner's already-created root.  Do not call normal014_start_run:
   # the shared helper's trap and root would otherwise replace this runner's

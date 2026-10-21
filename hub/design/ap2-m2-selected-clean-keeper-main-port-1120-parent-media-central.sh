@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+NORMAL014_LOCKED_GRAPH=${NORMAL014_LOCKED_GRAPH:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph}
+NORMAL014_LOCKED_GRAPH_ARCHIVE=${NORMAL014_LOCKED_GRAPH_ARCHIVE:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar}
+export NORMAL014_LOCKED_GRAPH NORMAL014_LOCKED_GRAPH_ARCHIVE
 . /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-selected-clean-keeper-main-port-1120-source-common.sh
 
 mode=${1:-preflight}
