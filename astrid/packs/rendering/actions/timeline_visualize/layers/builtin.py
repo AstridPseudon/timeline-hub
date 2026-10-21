@@ -475,11 +475,15 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
     draw = ImageDraw.Draw(image)
     findings = []
     start, end = float(ctx.cut["start"]), float(ctx.cut["end"])
-    series = [f for f in _sorted_frames(ctx) if start <= f / ctx.fps < end]
-    # Motion rows are independently useful semantic evidence. The private
-    # mouth_box crop below remains the pixel/statistics path until D09a's live
-    # mouth_state duplication can be retired.
-    public = _public_mouth_facts(ctx, presenters[0], series, allow_default_motion=True)
+    # Keep the PNG-card clock sparse for the existing crop/statistics lane.
+    pixel_series = [f for f in _sorted_frames(ctx) if start <= f / ctx.fps < end]
+    # The query-only producer supplies the complete source-bound semantic clock
+    # separately from those cards. Use it for motion admission when available;
+    # the private mouth_box crop below remains on the pixel clock.
+    public_scene = ctx.shared.get("public_scene")
+    semantic_series = ([f for f in sorted(public_scene) if start <= f / ctx.fps < end]
+                       if isinstance(public_scene, Mapping) else pixel_series)
+    public = _public_mouth_facts(ctx, presenters[0], semantic_series, allow_default_motion=True)
     public_states = public["states"] if public is not None else None
     for index, presenter in enumerate(presenters):
         top = 30 + index * 70
@@ -492,7 +496,7 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
         vo = [w for w in ctx.words if w.end > start and w.start < end]
         for frame in range(first, last):
             t = frame / ctx.fps
-            if public_states is not None:
+            if public_states is not None and frame in public_states:
                 state = public_states[frame]
             else:
                 state = model.mouth_state(
@@ -539,20 +543,20 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
     crop = (_public_crop(public["rect"], public["basis"], ctx.frame_size)
             if public and public["rect"] is not None else None)
     box = None if crop is not None else model.mouth_box(presenter, 0)
-    if crop is None and box and len(series) >= 3:
+    if crop is None and box and len(pixel_series) >= 3:
         sx, sy = ctx.frame_size[0] / model.CANVAS[0], ctx.frame_size[1] / model.CANVAS[1]
         crop = (max(0, int(box[0] * sx)), max(0, int(box[1] * sy)), int(box[2] * sx) + 1, int(box[3] * sy) + 1)
-    if crop and len(series) >= 3:
+    if crop and len(pixel_series) >= 3:
         changes = 0
         previous = None
-        for frame in series:
+        for frame in pixel_series:
             image_frame = ctx.frame_image(frame)
             region = image_frame.crop(crop) if image_frame else None
             if region is not None and previous is not None:
                 fraction, _mask = _diff_fraction(previous, region)
                 changes += fraction > 0.02
             previous = region
-        findings.append(f"LIPSYNC pixels: mouth region changed between {changes} of {len(series) - 1} sampled frame pairs")
+        findings.append(f"LIPSYNC pixels: mouth region changed between {changes} of {len(pixel_series) - 1} sampled frame pairs")
     return LayerResult(image, findings, "lipsync")
 
 

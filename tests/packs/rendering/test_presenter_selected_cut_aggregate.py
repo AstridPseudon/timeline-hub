@@ -147,13 +147,41 @@ def _public_provider(case, rows, monkeypatch, *, mode="fresh"):
     return Provider()
 
 
-def context(case, order=(0, 3, 4, 5), frame_provider=None):
+def _dense_public_provider(case, rows, semantic_frames, pixel_paths, monkeypatch):
+    props = deepcopy(case["props"])
+    rows = deepcopy(rows)
+    by_frame = {row["frame"]: row for row in rows}
+
+    def host_frames(current_props, current_basis, frames):
+        assert current_props == props
+        assert current_basis == case["basis"]
+        assert tuple(frames) == tuple(semantic_frames)
+        return [by_frame[frame] for frame in frames]
+
+    monkeypatch.setattr(scene_answers, "host_frames_at", host_frames)
+    capture = CaptureSceneLabels(source_identity="dense-presenter", props=props,
+                                 basis=case["basis"], addresses={"presenter": "presenter"})
+    capture.observe(props, semantic_frames)
+    capture.retain(pixel_paths, pixel_frames=tuple(pixel_paths))
+
+    class Provider:
+        source_identity = "dense-presenter"
+        fresh_scene_frames = set(semantic_frames)
+        _cached_scenes = {}
+
+        def scene_for_frame(self, frame):
+            return capture if frame in by_frame else None
+
+    return Provider()
+
+
+def context(case, order=(0, 3, 4, 5), frame_provider=None, frame_paths=None):
     # The original Root timeline is already flat; do not invent occurrence IDs,
     # clip aliases, neighbouring clips, extra captures or timing for this case.
     snapshot = {**deepcopy(case["props"]["timeline"]),
                 "config": deepcopy(case["props"]["timeline"]), "fps_rational": [30, 1]}
     cut = sheet.select_cut(snapshot, "presenter", case["basis"]["fps"])
-    frames = {f: FIXTURE / f"frame-{f}.png" for f in order}
+    frames = frame_paths or {f: FIXTURE / f"frame-{f}.png" for f in order}
     return sheet.build_context(snapshot, cut, frames, fps=case["basis"]["fps"],
                                frame_size=tuple(case["size"]), frame_provider=frame_provider)
 
@@ -179,6 +207,34 @@ def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_r
     monkeypatch.setattr(model, "mouth_box", lambda *_args: pytest.fail("public ROI used private crop"))
     result = builtin.render_lipsync(ctx)
     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
+
+
+def test_sparse_pixels_use_dense_public_semantic_clock(presenter_query, retained, monkeypatch):
+    case = deepcopy(retained)
+    case["props"]["timeline"]["clips"][0]["hold"] = 1
+    semantic_frames = tuple(range(30))
+    public_rows = _public_rows_for_case(presenter_query, {**case, "frames": list(semantic_frames)})
+    pixel_paths = {
+        0: FIXTURE / "frame-0.png",
+        24: FIXTURE / "frame-4.png",
+        29: FIXTURE / "frame-5.png",
+    }
+    provider = _dense_public_provider(case, public_rows, semantic_frames, pixel_paths, monkeypatch)
+    ctx = context(case, order=tuple(pixel_paths), frame_provider=provider, frame_paths=pixel_paths)
+    presenter = ctx.elements[0]
+    private_state = model.mouth_state
+
+    def no_private_state(element, frame, fps):
+        if element.id == presenter.id:
+            pytest.fail(f"dense public semantic row consulted private mouth_state at {frame}")
+        return private_state(element, frame, fps)
+
+    monkeypatch.setattr(model, "mouth_state", no_private_state)
+    result = builtin.render_lipsync(ctx)
+
+    assert ctx.shared["public_scene_evidence_mode"] == "fresh_capture"
+    assert sorted(ctx.shared["public_scene"]) == list(semantic_frames)
+    assert "LIPSYNC pixels: mouth region changed between 1 of 2 sampled frame pairs" in result.findings
 
 
 def test_public_mouth_rows_drive_curve_and_missing_row_keeps_private_fallback(
