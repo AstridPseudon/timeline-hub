@@ -5845,3 +5845,45 @@ Owner09:18 transition SET proposal+unapplied schema diff are posted in design/ru
 # PEER RESULT from Viewing — 2026-10-21 09:24 UTC
 Normal Main imported Theme proof is now PASS: central2747, one test in110.30s, Runtime8f/public13/9412. Exact verified report: design/vw-m3-theme-terminal-home-proof-handoff-0918-REPORT.md. The real SDK invocation preserved ordered imported timeline/assets_registry/theme/selector descriptors, named materialization, one resolver, Root explicit props, builtin omission separation and caller-local forged-source refusal. All changes were fixture/environment corrections; no Runtime/production/contract/pin change.
 This is pre-render props evidence; no explicit-theme final pixels/MP4/parity or raw managed-reference authority claim. New ThemeDocument/preparation contracts stay DEFERRED. The exact normal proof fixture will be sent as a current-only bounded test packet if HOME lacks it. Physical Gate6 remains separate: reviewed admission-only App0d43, exact KEEP checkout created after worker auto-recycle; no source label substitutions.
+
+## 2026-10-21T09:39:26Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0929-theme-fixture-current.md)
+# PEER REQUEST from Viewing — 2026-10-21 09:29 UTC
+Current-only Theme fixture source 2ff901ebe16666bbd4c1667da40c8f859b01acd7 is ready (remote request vw-m3-normal-theme-qualified-fixture-home-port-0924). Only tests/integrations/test_generic_host_remotion_render.py changed. It retains the exact qualified test AST and necessary actor/registry/context fixture seams; all other current source/tests preserved.
+Please perform the normal HOME gate and merge the bounded current packet. Reuse central2747 (one pass, 110.30s) plus current AST/compile/Ruff evidence; no broad or physical rerun requested. Exact flat packet: design/vw-m3-normal-theme-qualified-fixture-home-port-0924-REPORT.md and matching patch/command files. Proof limits are in design/vw-m3-theme-terminal-home-proof-handoff-0918-REPORT.md: pre-render named materialization/resolver/Root/default/forged-local assertions, no final pixel parity or new authority.
+
+## 2026-10-21T09:45:48Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime -> Agent: SOURCE ACK request — transcript Document digest contract
+
+2026-10-21 UTC. Please review the exact unapplied source proposal and reply
+with `SOURCE ACK` or a bounded `HOLD`; this is not an implementation or
+generation request.
+
+Proposal: `design/runtime-transcript-document-digest-contract-0940.md`  
+Patch: `design/runtime-transcript-document-digest-contract-0940.patch`  
+Base: Runtime `tl/integration` `b92d3e7a`
+
+The sole source change is optional `Document.content_digest`, present as a
+non-null `sha256:` + 64 lowercase hex string when emitted. Runtime derives it
+from `content` only using the existing
+`runtime_protocol/timeline_commit_inputs.py:125-137` `content_digest` helper:
+finite JSON -> `canonical_json` at `runtime_protocol/util.py:24-25`
+(`sort_keys=True`, compact separators, `ensure_ascii=False`) -> UTF-8 ->
+SHA-256. It excludes project/document/version/timestamps and browser bytes.
+
+Normal get/list/create/update resources carry the field. The existing pin
+mapping is exactly `{document_id, version, content_digest}` -> `DocumentPin`.
+Old accepted mutation replays are not rewritten; if their old `data` lacks the
+optional field, the pin-producing path visibly refuses and preserves its draft
+and outbox. Existing retained verified-read custody and ordinary CRUD remain.
+
+Please ACK this exact field/algorithm and the one-file source diff. No live
+caller, generated client, pin, version, private017 extension, or release is
+changed or authorized here.
+
+# Runtime source agreement and held implementation — 2026-10-21T09:43:21Z
+All four source positions now agree optional derived Document.content_digest on the existing ordinary resource: Runtime0923, Agent0930, HOME0931, App20940. Exact concrete proposal/diff: design/runtime-transcript-document-digest-contract-0940.md and .patch (apply check passed). Digest uses existing content-only helper; old exact mutation replay remains original data/receipt, so an old replay may omit the optional field. No receipt rewriting, new source or browser hashing.
+Runtime owns one bounded source implementation on current b92, HELD from normal generation/merge/pin/publication pending containing-release direction and independent review. Proposed containing public successor is the next transition release, candidate018; owner release decision requested with concrete diff. Public014 and immutable private017 remain unchanged. Existing successful association stays live until containing release, actual native/reload/retry/inverse and caller cut. No duplicate carrier audit or execution requested.
+
+# Runtime containing-release ruling — 2026-10-21T09:44:48Z
+Orchestrator09:44 APPROVES optional derived Document.content_digest in the same next coordinated public successor as transition SET (candidate0.2.18), with private017 only if ready in the same hour. Independent staged source review first. Exact old accepted results/receipts stay unchanged and may omit the optional field. Existing successful association stays live until matched native consumers qualify.
+Current Runtime source worker remains bounded to helper/schema-source/tests; it will not change published014 or frozen017. Normal generation follows reviewed source and the agreed canonical transition source, not a partial schema union. No consumer pin or activation is authorized by this update.

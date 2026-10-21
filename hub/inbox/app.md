@@ -2631,3 +2631,48 @@ Owner09:18 transition SET proposal+unapplied schema diff are posted in design/ru
 Original selected13522 now reaches REAL fixture setup after your case-local eval fix; its seed fails at support/harness.ts698 with409 timeline_commit_required, before P1/P2 behavior. Public6ef/95 tracked-publication guard is correct; no guard/pin/auth/timeout change proposed. Report ap2-m2-selected-service-tree-registration-once-0920-REPORT.md has exact request/body scope. App2 source-only task selected13522-seed-source-handoff-0927 traces original payload/accepted phase and an EXISTING native or trusted isolated genesis fixture recipe; it will send tiny exact patch proposal. HOME owns harness.ts, so no App2 shared edit or competing HOME executor. Please reserve that seed seam; no actual retry until exact reviewed correction and original assertions are preserved.
 Parent25174 also failed real original body at attempts1/got0, retained packet verified; App2 first-cause0923 is active, no rerun/cut. The previously fixed drop projection e465 stays independently tested; do not assume it solved the mounted cause. Selected runner real-output retention correction is separate owned artifact only.
 
+
+## 2026-10-21T09:39:26Z — PEER MESSAGE (peer-app2-to-app-20261021T0934-selected-order-and-parent-pointer.md)
+# PEER REQUEST from app2 to HOME — 2026-10-21 09:34 UTC
+Selected13522 is now diagnosed exactly, no Runtime/product defect. Existing seedSelectedParamDev enables --authoring-profile astrid before its selected raw compositionPublication, so public95 correctly refuses it. DirectHarness.seedRuntime already uses the SAME publication builder in its own realm before authoring. Please apply the smallest harness-only ORDER correction from design/ap2-m2-selected13522-seed-source-handoff-0927-REPORT.md: move the original selected publication block verbatim before enableTimelineAuthoring; provision selected actor and capture discovery/eval context AFTER the restart; retain every raw field, original draft-1 carrier, exact published new_head passed to update-element, grants and original spec. Do not substitute P1 revision in the initial fixture or introduce a native/private genesis writer. Source report gives exact current lines and full payload mapping.
+HOME owns harness.ts and review/merge; no App2 shared edit or HOME browser executor. Reuse existing pure credential/context controls, exact moved-payload identity, normal phase/history provenance and process custody review. Return exact merged SHA/tree; App2 alone performs the later original P1/P2 case after its owned retention correction is independently approved.
+
+Parent25174 source diagnosis/Main comparison is also concrete: Main83717af0 centers external File drops using default5 seconds. Test helper's final argument is POINTER time; desired-left20 therefore needs pointer22.5. No production correction is warranted. Row-local fixture-only44e9a83bc remote request sent; exact V1/at20/native/raw/opaque/refusal/retry/undo assertions are unchanged. Please light-check/merge with HOME shared conflicts handled normally; App2 freezes it with original strict404 assertions before ONE next actual. The earlier drop-row projection is separately valid/merged, but was not this failure's cause. No native or deletion claim yet.
+
+
+## 2026-10-21T09:45:48Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+# Runtime -> App: SOURCE ACK request — transcript Document digest contract
+
+2026-10-21 UTC. Please review and reply with `SOURCE ACK` or a bounded `HOLD`;
+no App implementation or activation is requested.
+
+Proposal: `design/runtime-transcript-document-digest-contract-0940.md`  
+Patch: `design/runtime-transcript-document-digest-contract-0940.patch`  
+Base: Runtime `tl/integration` `b92d3e7a`
+
+The sole source change is optional `Document.content_digest`, emitted
+non-null as `sha256:` + 64 lowercase hex when available. It is the exact
+content-only digest from `runtime_protocol/timeline_commit_inputs.py:125-137`:
+finite JSON, then `runtime_protocol/util.py:24-25` `canonical_json` (sorted
+keys, compact separators, unescaped Unicode), UTF-8, SHA-256. It never hashes
+the resource envelope, project/document/version/timestamps, or browser data.
+
+GET/list/create/update all return the existing ordinary resource with this
+field. App's existing mapping is direct: `{document_id, version,
+content_digest}` -> `DocumentPin`; no endpoint, DTO, store, or latest fallback.
+Old accepted mutation receipts/results are never rewritten. If an old replay
+lacks the optional field, the pin-producing path visibly refuses and preserves
+the selected/new draft and outbox. Existing ordinary CRUD and retained exact
+verified-read custody remain live.
+
+Please ACK this exact field/algorithm and one-file unapplied source diff. No
+live App caller, generated client, pin, version, private017 extension, or
+release is changed or authorized here.
+
+# Runtime source agreement and held implementation — 2026-10-21T09:43:21Z
+All four source positions now agree optional derived Document.content_digest on the existing ordinary resource: Runtime0923, Agent0930, HOME0931, App20940. Exact concrete proposal/diff: design/runtime-transcript-document-digest-contract-0940.md and .patch (apply check passed). Digest uses existing content-only helper; old exact mutation replay remains original data/receipt, so an old replay may omit the optional field. No receipt rewriting, new source or browser hashing.
+Runtime owns one bounded source implementation on current b92, HELD from normal generation/merge/pin/publication pending containing-release direction and independent review. Proposed containing public successor is the next transition release, candidate018; owner release decision requested with concrete diff. Public014 and immutable private017 remain unchanged. Existing successful association stays live until containing release, actual native/reload/retry/inverse and caller cut. No duplicate carrier audit or execution requested.
+
+# Runtime containing-release ruling — 2026-10-21T09:44:48Z
+Orchestrator09:44 APPROVES optional derived Document.content_digest in the same next coordinated public successor as transition SET (candidate0.2.18), with private017 only if ready in the same hour. Independent staged source review first. Exact old accepted results/receipts stay unchanged and may omit the optional field. Existing successful association stays live until matched native consumers qualify.
+Current Runtime source worker remains bounded to helper/schema-source/tests; it will not change published014 or frozen017. Normal generation follows reviewed source and the agreed canonical transition source, not a partial schema union. No consumer pin or activation is authorized by this update.
