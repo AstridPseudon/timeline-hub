@@ -4,7 +4,6 @@ export const AGENT_CHAT_COPY = {
   useAgentDefault: 'Use the agent’s default model',
   noModels: 'No models available.',
   modelsFailed: 'Could not load models.',
-  newMenuHint: 'A chat keeps its agent and model. Press → to pick a model.',
   thinkingUsage: 'Use `/thinking <level>` to update this session.',
   selectProjectToReadModel: 'Select a project to read this chat’s model.',
 };

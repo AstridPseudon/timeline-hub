@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TooltipProvider } from '@/shared/components/ui/tooltip.tsx';
 
 let origin = '';
 vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
@@ -39,7 +38,7 @@ const agents = { defaultAgent: 'astrid', agents: [{ id: 'astrid', name: 'Astrid'
 
 function withQueryClient({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  return <QueryClientProvider client={client}><TooltipProvider>{children}</TooltipProvider></QueryClientProvider>;
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
 describe('agent chat on the hosted build', () => {

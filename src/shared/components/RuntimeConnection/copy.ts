@@ -21,7 +21,7 @@ import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection
  */
 
 /** The browser's name goes where a card says `{browser}`: the one the landing page's install dialog detected. */
-export const BROWSER_PLACEHOLDER = '{browser}';
+const BROWSER_PLACEHOLDER = '{browser}';
 
 /** `text` with every `{browser}` filled in (Chrome or Edge); the browser is detected once per call unless given. */
 export function withBrowser(text: string, browser: string = installBrowserName()): string {

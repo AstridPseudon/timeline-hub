@@ -310,7 +310,7 @@ describe('AgentChat', () => {
     });
   });
 
-  it('shows the fixed agent and model with its thinking level in an info tooltip', async () => {
+  it('shows the fixed agent and model with its thinking level in the model line', async () => {
     const state = createState();
     const sessionId = 'codex:session-1';
     const projectId = 'project-1';

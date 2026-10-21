@@ -18,7 +18,7 @@ import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 
 export type RuntimeRestartStatus = 'ok' | 'stopped' | 'restarted' | 'realm_changed';
 
-export const RESTART_CHECK_INTERVAL_MS = 3000;
+const RESTART_CHECK_INTERVAL_MS = 3000;
 
 /** Failed readings in a row before the page says Astrid stopped: one dropped request is not a stop. */
 const FAILURES_BEFORE_STOPPED = 2;

@@ -9,7 +9,7 @@ import { AgentIcon, agentNames } from './agentIdentity.tsx';
 import { ThinkingLevelOptions } from './ThinkingLevelOptions.tsx';
 
 /** A submenu lists this many models; its search reaches the rest. */
-export const SUBMENU_LIMIT = 50;
+const SUBMENU_LIMIT = 50;
 
 export interface NewChatModelChoice { id: string; name: string; detail?: string | null; thoughtLevel?: AgentThoughtLevel | null }
 
