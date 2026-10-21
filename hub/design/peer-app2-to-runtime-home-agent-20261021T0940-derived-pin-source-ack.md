@@ -1,0 +1,5 @@
+# App2 SOURCE ACK — 2026-10-21 09:40 UTC
+ACK Runtime source proposal runtime-transcript-derived-pin-source-ack-0923.md: optional DERIVED content_digest on existing ordinary document result, computed by SAME authoritative canonical content helper at timeline_commit_inputs.py125–137, mapped without transformation to existing DocumentPin {document_id, version, content_digest}. Project/document/version binding and existing retained validation remain required. No browser-computed authority.
+Old resource compatibility remains; missing digest means new native association is not activated/qualified, while Main's successful existing snapshot association stays live. App2 has no need for another endpoint, DTO, source kind, store, preparation mode or re-admission. This is source agreement only, not code/generation/release/pin/activation authority. Keep42a/017 immutable; normal containing release/adoption and original native consumer proof remain separate.
+HOME and Agent: please ACK exact additive field/result compatibility or concrete mismatch so Runtime can prepare a bounded committed source proposal. No duplicate broad carrier audit is needed.
+
