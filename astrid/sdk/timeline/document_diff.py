@@ -24,6 +24,9 @@ class DocumentDiffError(ValueError):
     """The detached document contains an edit outside the native view slice."""
 
 
+_PRESENCE_REFUSAL = "presence-only change not supported yet"
+
+
 def _rows(value, key, path):
     if isinstance(value, Mapping):
         value = list(value.values())
@@ -37,6 +40,74 @@ def _rows(value, key, path):
             raise DocumentDiffError(f"{path} has duplicate {key} identity {row[key]!r}")
         result[row[key]] = row
     return result
+
+
+def _reject_matched_row_presence_changes(before_rows, after_rows, key, path):
+    """Refuse field presence changes while leaving row births/deletes to callers."""
+    before = _rows(before_rows, key, path + ".base")
+    after = _rows(after_rows, key, path + ".candidate")
+    for identity in before.keys() & after.keys():
+        if set(before[identity]) != set(after[identity]):
+            raise DocumentDiffError(_PRESENCE_REFUSAL)
+
+
+def _asset_entries(timeline):
+    registry = timeline.get("registry") if isinstance(timeline, Mapping) else None
+    assets = registry.get("assets") if isinstance(registry, Mapping) else None
+    return assets if isinstance(assets, Mapping) else {}
+
+
+def _reject_matched_asset_presence_changes(before_timeline, after_timeline):
+    """Refuse field presence changes on stable registry aliases."""
+    before, after = _asset_entries(before_timeline), _asset_entries(after_timeline)
+    for alias in before.keys() & after.keys():
+        before_entry, after_entry = before[alias], after[alias]
+        if isinstance(before_entry, Mapping) and isinstance(after_entry, Mapping):
+            if set(before_entry) != set(after_entry):
+                raise DocumentDiffError(_PRESENCE_REFUSAL)
+
+
+def _reject_document_presence_changes(candidate, base):
+    """Apply the temporary presence boundary to every stable document row."""
+    candidate_parent = candidate.get("parent")
+    base_parent = base.get("parent")
+    if not isinstance(candidate_parent, Mapping) or not isinstance(base_parent, Mapping):
+        return
+
+    for rows_key, path in (("clips", "parent.clips"),):
+        candidate_rows, base_rows = candidate_parent.get(rows_key), base_parent.get(rows_key)
+        if isinstance(candidate_rows, (list, Mapping)) and isinstance(base_rows, (list, Mapping)):
+            _reject_matched_row_presence_changes(base_rows, candidate_rows, "id", path)
+
+    candidate_config = candidate_parent.get("config")
+    base_config = base_parent.get("config")
+    if isinstance(candidate_config, Mapping) and isinstance(base_config, Mapping):
+        for rows_key in ("clips", "tracks"):
+            candidate_rows, base_rows = candidate_config.get(rows_key), base_config.get(rows_key)
+            if isinstance(candidate_rows, (list, Mapping)) and isinstance(base_rows, (list, Mapping)):
+                _reject_matched_row_presence_changes(
+                    base_rows, candidate_rows, "id", f"parent.config.{rows_key}"
+                )
+
+    _reject_matched_asset_presence_changes(base_parent, candidate_parent)
+    _reject_matched_asset_presence_changes(base_config, candidate_config)
+
+    base_shots = base.get("shots")
+    candidate_shots = candidate.get("shots")
+    if not isinstance(base_shots, Mapping) or not isinstance(candidate_shots, Mapping):
+        return
+    for shot_id in base_shots.keys() & candidate_shots.keys():
+        base_timeline = base_shots[shot_id].get("internal_timeline")
+        candidate_timeline = candidate_shots[shot_id].get("internal_timeline")
+        if not isinstance(base_timeline, Mapping) or not isinstance(candidate_timeline, Mapping):
+            continue
+        for rows_key in ("clips", "tracks"):
+            candidate_rows, base_rows = candidate_timeline.get(rows_key), base_timeline.get(rows_key)
+            if isinstance(candidate_rows, (list, Mapping)) and isinstance(base_rows, (list, Mapping)):
+                _reject_matched_row_presence_changes(
+                    base_rows, candidate_rows, "id", f"shots[{shot_id!r}].{rows_key}"
+                )
+        _reject_matched_asset_presence_changes(base_timeline, candidate_timeline)
 
 
 def _require_same(before, after, message):
@@ -294,6 +365,7 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
                               defer_media=False):
     """Translate supported raw document fields to captured commands."""
     _validate_pinned_bundle(candidate, base)
+    _reject_document_presence_changes(candidate, base)
     working = copy.deepcopy(base)
     commands = []
     working, emitted = _native_track_commands(working, base, candidate)
