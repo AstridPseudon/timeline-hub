@@ -29,6 +29,7 @@ import { playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-su
 import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import {
   VideoEditorRuntimeProvider,
   useVideoEditorRuntime,
@@ -381,6 +382,8 @@ function InnerProvider({
   operationalEmitter,
   assembly,
   initialTimelineData,
+  occurrenceAddMediaPort,
+  getOccurrenceAddMediaCurrent,
 }: {
   children: React.ReactNode;
   effectCatalog?: VideoEditorEffectCatalog | null;
@@ -390,6 +393,8 @@ function InnerProvider({
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
   assembly: EditorRuntimeAssembly;
   initialTimelineData?: TimelineData;
+  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
+  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
 }) {
   useRenderDiagnostic('VideoEditorProvider');
   const runtime = useVideoEditorRuntime();
@@ -433,7 +438,8 @@ function InnerProvider({
   });
   return (
     <VideoEditorRuntimeContent assembly={assembly} sync={sync}
-      onSaveStatusChange={onSaveStatusChange} onPendingWorkChange={onPendingWorkChange} operationalEmitter={operationalEmitter}>
+      onSaveStatusChange={onSaveStatusChange} onPendingWorkChange={onPendingWorkChange} operationalEmitter={operationalEmitter}
+      occurrenceAddMediaPort={occurrenceAddMediaPort} getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}>
       {children}
     </VideoEditorRuntimeContent>
   );
@@ -441,7 +447,8 @@ function InnerProvider({
 
 /** Shared routed/editor content; the caller owns the one runtime assembly and store. */
 export function VideoEditorRuntimeContent({
-  children, assembly, sync, onSaveStatusChange, onPendingWorkChange, operationalEmitter, operationsEnabled = true,
+  children, assembly, sync, onSaveStatusChange, onPendingWorkChange, operationalEmitter,
+  occurrenceAddMediaPort, getOccurrenceAddMediaCurrent, operationsEnabled = true,
 }: {
   children: React.ReactNode;
   assembly: EditorRuntimeAssembly;
@@ -449,6 +456,8 @@ export function VideoEditorRuntimeContent({
   onSaveStatusChange?: (status: SaveStatus) => void;
   onPendingWorkChange?: (state: ExtensionPendingWorkState) => void;
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
+  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
+  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   operationsEnabled?: boolean;
 }) {
   const runtime = useVideoEditorRuntime();
@@ -743,14 +752,30 @@ export function VideoEditorRuntimeContent({
     });
   }, [lightboxAssetKey, lightboxClipId, lightboxFallbackMedia, lightboxGenerationId, lightboxQuery.data, lightboxQuery.isLoading]);
 
-  const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
-    ...mountedEditorOps,
-    // SWAP remains dormant until its own supported consumer is activated.
-    parentClipSwapMedia: editor.parentClipSwapMedia,
-    transcriptHost,
-    onDoubleClickAsset,
-    setLightboxAssetKey,
-  }), [editor.parentClipSwapMedia, mountedEditorOps, transcriptHost, onDoubleClickAsset, setLightboxAssetKey]);
+  const editorOps = useMemo<TimelineEditorOpsContextValue>(() => {
+    const occurrenceAddMedia = occurrenceAddMediaPort
+      ? {
+          capture(input: Parameters<OccurrenceAddMediaCapturePort['capture']>[0]) {
+            const current = getOccurrenceAddMediaCurrent?.() ?? null;
+            if (!current) {
+              throw new Error('Parent timeline data is unavailable for occurrence media add');
+            }
+            return occurrenceAddMediaPort.capture({ ...input, current });
+          },
+          finish: occurrenceAddMediaPort.finish,
+          submit: occurrenceAddMediaPort.submit,
+        }
+      : mountedEditorOps.occurrenceAddMedia;
+    return {
+      ...mountedEditorOps,
+      // SWAP remains dormant until its own supported consumer is activated.
+      parentClipSwapMedia: editor.parentClipSwapMedia,
+      occurrenceAddMedia,
+      transcriptHost,
+      onDoubleClickAsset,
+      setLightboxAssetKey,
+    };
+  }, [editor.parentClipSwapMedia, getOccurrenceAddMediaCurrent, mountedEditorOps, occurrenceAddMediaPort, transcriptHost, onDoubleClickAsset, setLightboxAssetKey]);
 
   useLayoutEffect(() => {
     store.getState().syncOpsSlice(editorOps);
@@ -813,6 +838,10 @@ export interface VideoEditorProviderProps {
   timelineEditability?: TimelineEditability;
   /** Optional synchronous data seed for hosts with an already-resolved projection. */
   initialTimelineData?: TimelineData;
+  /** Reuse an already-mounted parent command session for occurrence media adds. */
+  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
+  /** Read the mounted parent timeline at occurrence-add capture time. */
+  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   /** Whether this editor hosts extensions for lifecycle telemetry. */
   extensionHostEnabled?: boolean;
   /** Host revision attached to privacy-safe operational events. */
@@ -849,6 +878,8 @@ function VideoEditorProviderInstance({
   timelineOverlaysEnabled = false,
   timelineEditability,
   initialTimelineData,
+  occurrenceAddMediaPort,
+  getOccurrenceAddMediaCurrent,
   extensionHostEnabled = false,
   extensionReleaseRevision = 'unset',
   extensionOperationalEventSink = dispatchExtensionOperationalEvent,
@@ -1120,6 +1151,8 @@ function VideoEditorProviderInstance({
         operationalEmitter={extensionHostEnabled ? operationalEmitter : undefined}
         assembly={assembly}
         initialTimelineData={initialTimelineData}
+        occurrenceAddMediaPort={occurrenceAddMediaPort}
+        getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
       >
         {children}
       </InnerProvider>

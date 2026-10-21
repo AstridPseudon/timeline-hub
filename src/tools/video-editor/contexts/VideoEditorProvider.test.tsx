@@ -390,6 +390,12 @@ function Consumer() {
   );
 }
 
+function CaptureOccurrenceOps({ onCapture }: { onCapture: (ops: ReturnType<typeof useTimelineEditorOps>) => void }) {
+  const editorOps = useTimelineEditorOps();
+  onCapture(editorOps);
+  return null;
+}
+
 function buildCommandTimelineData(): TimelineData {
   const config = {
     output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
@@ -1502,6 +1508,62 @@ describe('VideoEditorProvider', () => {
       clipId: 'clip-1',
       url: 'https://example.com/image.png',
     }));
+  });
+
+  it('passes occurrence media capture to the parent session and refuses absent parent data', () => {
+    const provider: DataProvider = {
+      loadTimeline: vi.fn(),
+      saveTimeline: vi.fn(),
+      loadAssetRegistry: vi.fn(),
+      resolveAssetUrl: vi.fn(),
+    };
+    const parentPort = {
+      capture: vi.fn(),
+      finish: vi.fn(),
+      submit: vi.fn(),
+    };
+    const current = buildCommandTimelineData();
+    const getCurrent = vi.fn(() => current);
+    let editorOps!: ReturnType<typeof useTimelineEditorOps>;
+
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={new QueryClient()}>
+          <AgentChatProvider>
+            <VideoEditorProvider
+              dataProvider={provider}
+              projectId="project-1"
+              timelineId="timeline-1"
+              userId="user-1"
+              occurrenceAddMediaPort={parentPort}
+              getOccurrenceAddMediaCurrent={getCurrent}
+            >
+              <CaptureOccurrenceOps onCapture={(ops) => { editorOps = ops; }} />
+            </VideoEditorProvider>
+          </AgentChatProvider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    const input = {
+      ownerRef: 'occurrence:occ-1' as const,
+      row: { id: 'child-1', track: 'V1', clipType: 'hold' },
+      media: { id: 'media-1' },
+    };
+    editorOps.occurrenceAddMedia!.capture(input as never);
+    expect(getCurrent).toHaveBeenCalledOnce();
+    expect(parentPort.capture).toHaveBeenCalledWith({ ...input, current });
+
+    editorOps.occurrenceAddMedia!.finish('basis' as never, 'verified' as never);
+    editorOps.occurrenceAddMedia!.submit({ command: 'command' as never, preview: null });
+    expect(parentPort.finish).toHaveBeenCalledWith('basis', 'verified');
+    expect(parentPort.submit).toHaveBeenCalledWith({ command: 'command', preview: null });
+
+    getCurrent.mockReturnValue(null);
+    expect(() => editorOps.occurrenceAddMedia!.capture(input as never)).toThrow(
+      'Parent timeline data is unavailable for occurrence media add',
+    );
+    expect(parentPort.capture).toHaveBeenCalledOnce();
   });
 
   it('uses an injected effect catalog without enabling the legacy effect query', () => {
