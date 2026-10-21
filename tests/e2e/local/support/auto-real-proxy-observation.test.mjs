@@ -89,6 +89,20 @@ test('pure: traffic controls classify native, task, read-only, and retired paths
   ]) assert.equal(classifyRuntimePost(method, path), expected, `${method} ${path}`);
 });
 
+test('pure: all mutation methods classify the legacy route without admitting reads or kept catalog operations', () => {
+  const legacyPath = '/api/runtime/v1/projects/p/timelines/t/composition-revisions';
+  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+    assert.equal(classifyRuntimePost(method, legacyPath), 'legacy-writer', `${method} ${legacyPath}`);
+  }
+  for (const [method, path, expected] of [
+    ['GET', legacyPath, 'other'],
+    ['POST', '/api/runtime/v1/projects/p/timelines/t/commit', 'native-commit'],
+    ['GET', '/api/astrid/v1/capabilities', 'other'],
+  ]) {
+    assert.equal(classifyRuntimePost(method, path), expected, `${method} ${path}`);
+  }
+});
+
 test('pure: authoritative head uses the Runtime pair and refuses incomplete values', () => {
   assert.deepEqual(requireAuthoritativeHead({ head: { revision_id: 'reused-older-head', publication_id: 'reused-head-publication' } }), {
     revision_id: 'reused-older-head', publication_id: 'reused-head-publication',
