@@ -766,19 +766,29 @@ def test_current014_detached_opaque_null_rename_uses_retained_basis_and_guarded_
         runtime.project, 'film', revision_id=renamed_head['revision_id']).data['bundle']
     assert State(reopened_rename).entity(ref)['params']['opaque'] == {'renamed': [True]}
     undone = reopened.undo([renamed_head['publication_id']])
+    undone_head = copy.deepcopy(runtime.history()['head'])
     restored = bundle_from_document(undone['data']['canonical_document'])
     assert _json(State(restored).entity(ref)) == _json(State(null_bundle).entity(ref))
     redone = reopened.undo([undone['receipt']['receipt_id']])
+    redone_head = copy.deepcopy(runtime.history()['head'])
     assert _json(State(bundle_from_document(redone['data']['canonical_document'])).entity(ref)) == _json(
         State(renamed_bundle).entity(ref))
+    assert redone_head['revision_id'] == renamed_head['revision_id']
+    assert redone_head['publication_id'] == redone['receipt']['receipt_id']
+    assert redone_head['publication_id'] != renamed_head['publication_id']
+    redo_entry = next(item for item in runtime.history()['items']
+                      if item['publication_id'] == redone_head['publication_id'])
+    assert redo_entry['previous'] == undone_head
+    assert redo_entry['records']['undo_of'] == [undone['receipt']['receipt_id']]
 
     # The first retained capture is now stale.  It must refuse before queueing
     # or sending anything, rather than refreshing its original basis.
     before_stale = reopened.outbox.path.read_bytes()
+    before_stale_history = copy.deepcopy(runtime.history())
     calls = len(runtime.calls)
     stale_native_text = native.text.replace(original_opaque, 'opaque=null', 1)
     with pytest.raises(SheetError, match='share the original project, timeline and basis'):
         native.apply(stale_native_text, session=reopened, dry_run=False)
     assert reopened.outbox.path.read_bytes() == before_stale
     assert len(runtime.calls) == calls
-    assert runtime.history()['head'] == renamed_head
+    assert runtime.history() == before_stale_history
