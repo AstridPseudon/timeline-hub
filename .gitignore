@@ -54,6 +54,7 @@ temp/
 !docs/quality/*.md
 !vendor/astrid-browser/remotion/public/fonts/FONT_PROVENANCE.md
 !docs/state_management_context_audit.md
+!design/peer-app-to-app2-popup-add-caller-1030.md
 !docs/design/*.md
 !docs/governance/contracts/astrid-plan-a.md
 !docs/extensions/foundation-contract-ledger.md
