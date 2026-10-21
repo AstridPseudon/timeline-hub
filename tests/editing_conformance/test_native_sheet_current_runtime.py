@@ -314,7 +314,9 @@ def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(r
     assert accepted_child['app'] == {'f2Opaque': {'owner': 'f2', 'nested': [1, {'k': 'v'}]}}
     assert accepted['parent']['config']['tracks'][0]['label'] == 'Renamed'
     assert accepted['parent']['config']['x_f2_opaque'] == before['parent']['config']['x_f2_opaque']
-    assert occurrence_source_pin(accepted, OCCURRENCE_TARGET) == source
+    # Compile materialization gives only the edited occurrence its fresh expected source pin.
+    assert occurrence_source_pin(accepted, OCCURRENCE_TARGET) == occurrence_source_pin(
+        expected, OCCURRENCE_TARGET)
     target_pin = occurrence_source_pin(accepted, OCCURRENCE_TARGET)
     sibling_pin = occurrence_source_pin(accepted, OCCURRENCE_SIBLING)
     assert target_pin['shot_id'] != source['shot_id']
@@ -342,7 +344,8 @@ def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(r
     )
     assert stored.ok
     assert persisted_bundle(stored.data['bundle']) == persisted_bundle(accepted)
-    assert occurrence_source_pin(stored.data['bundle'], OCCURRENCE_TARGET) == source
+    # Reload preserves the accepted materialized source pin for the edited occurrence.
+    assert occurrence_source_pin(stored.data['bundle'], OCCURRENCE_TARGET) == target_pin
 
     undone = reloaded.undo([result['receipt']['receipt_id']])
     restored = bundle_from_document(undone['data']['canonical_document'])
