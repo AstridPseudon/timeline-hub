@@ -6,9 +6,9 @@ import ts from 'typescript';
 
 const source = readFileSync(new URL('./auto-real-proxy-helpers.ts', import.meta.url), 'utf8');
 const observerSource = readFileSync(new URL('../three-products.spec.ts', import.meta.url), 'utf8');
-const constants = source.match(/^export const (?:NATIVE_RUNTIME_COMMIT|TASK_API_POST|READ_ONLY_RUNTIME_POST|LEGACY_POST) = [^;]+;/gm)
+const constants = source.match(/^export const (?:NATIVE_RUNTIME_COMMIT|TASK_API_POST|READ_ONLY_RUNTIME_POST|MEDIA_IMPORT_POST|LEGACY_POST) = [^;]+;/gm)
   ?.map((line) => line.replace(/^export /, ''));
-assert.equal(constants?.length, 4, 'traffic classifier constants must remain source-visible');
+assert.equal(constants?.length, 5, 'traffic classifier constants must remain source-visible');
 const helper = source.match(/^export function classifyRuntimePost\([^]*?^}/m)?.[0];
 assert.ok(helper, 'traffic classifier helper must remain source-visible');
 const classifyRuntimePost = compileFunction(
@@ -108,6 +108,31 @@ test('pure: all mutation methods classify the legacy route without admitting rea
     ['GET', '/api/astrid/v1/capabilities', 'other'],
   ]) {
     assert.equal(classifyRuntimePost(method, path), expected, `${method} ${path}`);
+  }
+});
+
+test('pure: only the exact generated media-import POST is kept catalog traffic', () => {
+  const mediaImportPath = '/api/runtime/v1/projects/p/media-imports';
+  assert.equal(classifyRuntimePost('POST', mediaImportPath), 'other');
+  for (const [method, expected] of [['GET', 'other'], ['PUT', 'legacy-writer'], ['PATCH', 'legacy-writer'], ['DELETE', 'legacy-writer']]) {
+    assert.equal(classifyRuntimePost(method, mediaImportPath), expected, `${method} ${mediaImportPath}`);
+  }
+  for (const path of [
+    `${mediaImportPath}/`,
+    `${mediaImportPath}/operation-1`,
+    '/api/runtime/v1/projects/p/media-imports-extra',
+    '/api/runtime/v1/projects/p/timelines/t/media-imports',
+  ]) {
+    assert.equal(classifyRuntimePost('POST', path), 'legacy-writer', `POST ${path}`);
+  }
+  for (const path of [
+    '/api/runtime/v1/projects/p/timelines/t/composition-revisions',
+    '/api/runtime/v1/projects/p/timelines/t/composition-revisions/publish',
+    '/api/runtime/v1/proxiedv1/projects/p/timelines/t/composition-revisions',
+  ]) {
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      assert.equal(classifyRuntimePost(method, path), 'legacy-writer', `${method} ${path}`);
+    }
   }
 });
 

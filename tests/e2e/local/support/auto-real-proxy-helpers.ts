@@ -3,6 +3,7 @@ export const NATIVE_RUNTIME_COMMIT = /^\/api\/runtime\/v1\/projects\/[^/]+\/time
 export const TASK_API_POST = /^\/api\/runtime\/v1\/(?:tasks(?:\/[^/]+\/(?:cancel|retry))?|managed-outputs\/[^/]+\/export)$/;
 // Runtime's generated handshake and inspectTimeline operations are POST-shaped reads.
 export const READ_ONLY_RUNTIME_POST = /^\/api\/runtime\/v1\/(?:handshake|projects\/[^/]+\/timelines\/[^/]+\/inspect)$/;
+export const MEDIA_IMPORT_POST = /^\/api\/runtime\/v1\/projects\/[^/]+\/media-imports$/;
 export const LEGACY_POST = /^\/api\/runtime\/.*$/;
 
 export type RuntimePostKind = 'native-commit' | 'task-api' | 'read-only' | 'legacy-writer' | 'other';
@@ -44,6 +45,7 @@ export function relevantEvidenceRoute(rawUrl: string): EvidenceRoute | undefined
 export function classifyRuntimePost(method: string, pathname: string): RuntimePostKind {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return 'other';
   if (method === 'POST') {
+    if (MEDIA_IMPORT_POST.test(pathname)) return 'other';
     if (NATIVE_RUNTIME_COMMIT.test(pathname)) return 'native-commit';
     if (TASK_API_POST.test(pathname)) return 'task-api';
     if (READ_ONLY_RUNTIME_POST.test(pathname)) return 'read-only';
