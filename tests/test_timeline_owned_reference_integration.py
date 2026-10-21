@@ -13,7 +13,7 @@ import pytest
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-from runtime_protocol.timeline_commit_port import route_path
+from runtime_protocol.timeline_commit_port import route_path, validate_request
 from test_timeline_commit_integration import agent, film  # noqa: F401 (shared fixtures)
 
 
@@ -186,12 +186,36 @@ def test_actual_provider_preserves_original_owned_unplaced_reference_contract(
                 "id": "exact-reference", "object_id": exact_pin["media_id"], "role": "source"
             }) == 1
             changed = copy.deepcopy(exact_body)
-            changed["commands"][0]["args"]["role"] = "target"
+            # Rationale is the existing schema-valid request-level mutation;
+            # keep the closed source-only role mutation as its own 422 case.
+            changed["rationale"] = "changed request rationale"
+            validate_request(changed)
+            assert changed["commands"] == exact_body["commands"]
             before_changed = tuple(restarted.store.conn.iterdump())
+            head_before_changed = _head(restarted, project)
+            history_before_changed = restarted.list_timeline_commits(
+                project, "main", authorize=lambda: None)["items"]
             with pytest.raises(RuntimeErrorBase) as changed_error:
                 _commit(restarted, project, changed, "exact-reference-key")
             assert changed_error.value.status == 409
             assert tuple(restarted.store.conn.iterdump()) == before_changed
+            assert _head(restarted, project) == head_before_changed
+            assert restarted.list_timeline_commits(
+                project, "main", authorize=lambda: None)["items"] == history_before_changed
+
+            invalid_role = copy.deepcopy(exact_body)
+            invalid_role["commands"][0]["args"]["role"] = "target"
+            before_invalid_role = tuple(restarted.store.conn.iterdump())
+            head_before_invalid_role = _head(restarted, project)
+            history_before_invalid_role = restarted.list_timeline_commits(
+                project, "main", authorize=lambda: None)["items"]
+            with pytest.raises(RuntimeErrorBase) as invalid_role_error:
+                _commit(restarted, project, invalid_role, "exact-reference-key")
+            assert invalid_role_error.value.status == 422
+            assert tuple(restarted.store.conn.iterdump()) == before_invalid_role
+            assert _head(restarted, project) == head_before_invalid_role
+            assert restarted.list_timeline_commits(
+                project, "main", authorize=lambda: None)["items"] == history_before_invalid_role
 
             foreign = restarted.create_project({"slug": "foreign", "name": "Foreign"})["id"]
             foreign_pin = _media(restarted, foreign, b"foreign-owned-raw", "foreign.raw")
