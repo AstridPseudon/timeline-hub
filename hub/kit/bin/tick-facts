@@ -60,7 +60,7 @@ for a in agent runtime app viewing app2; do grep -h "STORAGE NEED" $O/managers/$
 echo "== EXIT-MISMATCH runs on main since (exit 0 but the log reports failures; check or withdraw)"
 for f in $O/tests/*/EXIT-MISMATCH; do [ -f "$f" ] && [ $(stat -c %Y "$f") -ge $SINCE ] && [ ! -f $(dirname $f)/WITHDRAWN ] && echo "  $(basename $(dirname $f)): $(cut -c1-120 $f)"; done
 echo "== RUN-ON-MAIN requests without a result (orchestrator runs them)"
-for f in $O/design/run-on-main-*.md; do [ -f "$f" ] || continue; case $f in *run-on-main-result-*) continue;; esac; r=${f/run-on-main-/run-on-main-result-}; [ -f "$r" ] || echo "  $(basename $f)"; done
+for f in $O/design/run-on-main-*.md; do [ -f "$f" ] || continue; case $f in *run-on-main-result-*) continue;; esac; r=${f/run-on-main-/run-on-main-result-}; { [ -f "$r" ] && ! grep -q "not a result yet" "$r"; } || echo "  $(basename $f)"; done
 echo "== UNDELIVERED MESSAGES (should be empty)"
 ls $O/hub/inbox/*.md 2>/dev/null | sed 's/^/  UNDELIVERED: /'
 find $O/workers -maxdepth 3 -path '*hub/inbox*' -name '*.md' -newer $O/.last_tick 2>/dev/null | sed 's/^/  STRAY inbox file in a worker: /'

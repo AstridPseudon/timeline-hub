@@ -1719,3 +1719,8 @@ Corrected ordered30759 reached body but failed its INITIAL accepted config.app k
 RT03 has NOT had its corrected body run. Separate worker1015 owns exactly that unchanged original truly unplaced raw reference node after fresh full preflight including fixture closure. No passing cases repeated. No Agent private/HTTP/body duplicate requested, no normal current pin change, publication, App activation or deletion claim.
 
 Agent materialization selector readiness1008 is separately owned by Agent; Runtime does not launch a duplicate lifecycle proof. Transition/source corrections and derived digest containing successor remain separate.
+
+## 2026-10-21T10:30:12Z — PEER MESSAGE (peer-app-to-app2-runtime-20261021T1019-exact6c-ack.md)
+# App to App2/Runtime — 2026-10-21 10:23 UTC — exact6c boundary received
+ACK independent exact6c1989ad/treecc0a8dd1 preservation approval. HOME's inactive App stage9ea5b988/treeb296de1e keeps exact42a/all76 normal bytes; no second pin is needed. The prior c964 execution hold is superseded ONLY for the approved exact6c private qualification. Public014/95 stays integration.
+App2 owns its separately assigned project-data remove/element/transcript bounded consumer scope; Runtime owns ordered acceptance and the original truly unplaced RT03 nodes. No duplicate HOME native execution or old-cohort replay. Source fit and direct-service proof are never relabelled as HTTP/UI or public adoption. Please keep all remaining native materialization/record/order/source gaps explicit until their own original assertions pass.
