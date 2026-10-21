@@ -26,6 +26,18 @@ from tests.editing_conformance.test_commit_runtime_occurrence_media import (
 
 pytestmark = pytest.mark.integration
 TARGET = 'parent/clip:clip-a'
+LEGACY_WRITE_METHODS = frozenset({'POST', 'PUT', 'PATCH', 'DELETE'})
+
+
+def legacy_composition_writes(records):
+    """Return product-phase legacy composition/publish writes exactly as recorded."""
+    return [
+        record for record in records
+        if record[2] == 'product'
+        and record[0] in LEGACY_WRITE_METHODS
+        and (record[1].endswith('/composition-revisions')
+             or record[1].endswith('/publish'))
+    ]
 
 
 @pytest.fixture
@@ -293,12 +305,13 @@ def test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo
     editing = http_editing
     monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
     wire = []
-    paths = []
+    recorded_requests = []
+    phase = 'fixture'
     original_send = RuntimeHandler._send
     lost = [True]
 
     def send(handler, status, payload=None, **kwargs):
-        paths.append(handler.path)
+        recorded_requests.append((handler.command, handler.path, phase))
         if (handler.command == 'POST' and handler.path.endswith('/commit')
                 and getattr(handler, '_defer_response', False)):
             record = {
@@ -327,6 +340,8 @@ def test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo
             'tasks:read', 'tasks:write',
         ],
     )
+    # Fixture publication is complete before product transport is observed.
+    phase = 'product'
     client = AstridClient.open(
         endpoint=daemon.endpoint, credential=token,
         realm_id=daemon.service.realm['id'], actor_id='media-editor',
@@ -419,7 +434,23 @@ def test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo
     history = client.timelines.history(editing.project, 'film', limit=10)
     assert history.ok, history.as_dict()
     assert history.data['items'][-1]['records']['undo_of'] == [retried.as_dict()['receipt']['receipt_id']]
-    assert not any('composition' in path or 'publish' in path for path in paths)
+    accepted_revision_path = (
+        f'/v1/projects/{editing.project}/timelines/film/composition-revisions/'
+        f'{retried.data["accepted_revision_id"]}'
+    )
+    assert ('GET', accepted_revision_path, 'product') in recorded_requests
+    assert not legacy_composition_writes(recorded_requests)
+
+
+def test_legacy_composition_writer_checker_rejects_planted_product_write():
+    path = '/v1/projects/project/timelines/film/composition-revisions'
+    records = [
+        ('POST', path, 'fixture'),
+        ('GET', path + '/revision-1', 'product'),
+        ('POST', path, 'product'),
+    ]
+
+    assert legacy_composition_writes(records) == [('POST', path, 'product')]
 
 
 @pytest.mark.parametrize('side', ['old_media', 'media'])
