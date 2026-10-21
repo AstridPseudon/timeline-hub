@@ -21,6 +21,10 @@ def parent_tracks(timeline):
 
 def media_track_bundle():
     timeline = bundle()
+    timeline['parent']['config']['app'] = {
+        'timelineDataLanePlacement': {'data-1': 'between'},
+        'opaque': {'keep': None},
+    }
     parent_tracks(timeline).extend([
         {'id': 'audio', 'kind': 'audio', 'label': None,
          'opaque': {'null': None, 'false': False, 'zero': 0}},
@@ -47,15 +51,33 @@ def test_parent_reorder_is_raw_lossless_and_reloadable_inverse_recipe():
     assert plan.bundle['parent']['clips'] == before['parent']['clips']
     assert plan.bundle['parent']['config']['clips'] == before['parent']['config']['clips']
     assert plan.bundle['parent']['opaque_parent'] == before['parent']['opaque_parent']
+    assert plan.bundle['parent']['config']['app'] == before['parent']['config']['app']
+    assert 'track_order' not in plan.bundle['parent']
+    assert 'track_order' not in plan.bundle['parent']['config']
+    assert plan.bundle['parent']['config']['tracks'] == [
+        next(row for row in before['parent']['config']['tracks'] if row['id'] == ref.rsplit(':', 1)[1])
+        for ref in desired
+    ]
     assert command['expect'] == {'parent::track_order': present(old)}
     assert command['authorship'] == {'parent::track_order': 'direct'}
-    assert command['selections'][0]['order'] == old
+    assert command['reads'][0]['ref'] == 'parent/collection:track'
+    assert command['selections'][0] == {
+        'key': 'collection.tracks',
+        'query_version': 1,
+        'owner': 'parent',
+        'members': old,
+        'order': old,
+        'boundaries': old,
+        'policy': 'guard-membership',
+    }
 
     reloaded = json.loads(json.dumps(plan.bundle))
     assert replay(plan, json.loads(json.dumps(before))).bundle == reloaded
-    undone = inverse(reloaded, plan.records)
+    reloaded_records = json.loads(json.dumps(plan.records))
+    undone = inverse(reloaded, reloaded_records)
     assert undone.bundle == before
-    assert inverse(undone.bundle, undone.records).bundle == reloaded
+    redone = inverse(undone.bundle, json.loads(json.dumps(undone.records)))
+    assert redone.bundle == reloaded
 
     equal_state = execute(original, [capture_track_reorder(original, old)])
     assert equal_state.bundle == original
@@ -101,6 +123,14 @@ def test_reorder_allows_disjoint_track_leaf_rebase_but_guards_order_and_aba():
         ])
     assert undo.commands[0]['op'] == 'timeline.inverse'
 
+    away_plan = execute(reorder.bundle, [capture_track_reorder(reorder.bundle, away)])
+    back_plan = execute(away_plan.bundle, [capture_track_reorder(away_plan.bundle,
+                                                                   reorder.commands[0]['args']['order'])])
+    assert back_plan.bundle == reorder.bundle
+    with pytest.raises(CommandError, match='intervening'):
+        inverse(reorder.bundle, reorder.records,
+                [*away_plan.records, *back_plan.records])
+
 
 def test_reorder_refuses_cross_owner_or_incomplete_membership_without_writing():
     original = media_track_bundle()
@@ -114,5 +144,17 @@ def test_reorder_refuses_cross_owner_or_incomplete_membership_without_writing():
     command = capture_track_reorder(original, old[::-1])
     command['args']['order'] = old[:-1]
     with pytest.raises(CommandError, match='permutation|array'):
+        execute(original, [command])
+    assert original == snapshot
+
+    command = capture_track_reorder(original, old[::-1])
+    command['args']['order'] = [old[0], old[0], old[2]]
+    with pytest.raises(CommandError, match='permutation|unique|array'):
+        execute(original, [command])
+    assert original == snapshot
+
+    command = capture_track_reorder(original, old[::-1])
+    command['args']['lanes'] = {'data-1': 'between'}
+    with pytest.raises(CommandError, match='[Aa]dditional properties'):
         execute(original, [command])
     assert original == snapshot

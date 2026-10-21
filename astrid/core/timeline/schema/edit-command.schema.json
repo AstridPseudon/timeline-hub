@@ -405,6 +405,7 @@
           "items": {
             "$ref": "#/$defs/ID"
           },
+          "minItems": 1,
           "uniqueItems": true
         }
       },
