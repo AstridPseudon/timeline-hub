@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 import { chmod, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
+import { PassThrough } from 'node:stream';
 import { test } from 'node:test';
 import { assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
-import { resolveReviewedPackHostHelper } from './bootstrap';
+import { resolveReviewedPackHostHelper, startRealPackHost } from './bootstrap';
 import { mediaHash } from './media';
 import { playerBrowserProfile } from './browser-profile';
 
@@ -53,6 +56,31 @@ esac
 `);
   await chmod(executable, 0o755);
   return { root, env: { ASTRID_PACK_HOST_HELPER_CHECKOUT: '', PATH: `${root}${delimiter}${process.env.PATH ?? ''}` } };
+}
+
+class FailedHelper extends EventEmitter {
+  stdin = new PassThrough();
+  stdout = new PassThrough();
+  stderr = new PassThrough();
+  closed = false;
+
+  constructor() {
+    super();
+    this.stdin.on('finish', () => {
+      this.closed = true;
+      this.stdout.end();
+      this.stderr.end();
+      setImmediate(() => this.emit('close', 1));
+    });
+  }
+
+  kill(): boolean {
+    this.closed = true;
+    this.stdout.end();
+    this.stderr.end();
+    setImmediate(() => this.emit('close', null));
+    return true;
+  }
 }
 
 test('accepts only the reviewed committed pack-host helper carrier', async () => {
@@ -117,6 +145,49 @@ test('refuses a missing or wrong pack-host helper carrier', async () => {
   } finally {
     await releaseImmutableCarrier(root);
     await Promise.all([rm(root, { recursive: true, force: true }), rm(stub.root, { recursive: true, force: true })]);
+  }
+});
+
+test('preserves a safe helper failure when startup cleanup also fails', async () => {
+  const carrier = await helperCarrier(true);
+  const stub = await gitStub(false);
+  const helper = new FailedHelper();
+  const env = {
+    ...stub.env,
+    ASTRID_CHECKOUT: process.cwd(),
+    ASTRID_RUNTIME_CHECKOUT: process.cwd(),
+    ASTRID_PYTHON: '/parent/python',
+    ASTRID_PACK_HOST_HELPER_CHECKOUT: carrier,
+  };
+  const spawnHelper = ((..._args: Parameters<typeof spawn>) => {
+    setImmediate(() => {
+      helper.stderr.write('do-not-print credentials');
+      helper.stdout.write(`${JSON.stringify({
+        status: 'failed', error_type: 'RuntimeError', error_location: '/trusted/helper.py:321',
+        secret: 'do-not-print',
+      })}\n`);
+    });
+    return helper as unknown as ChildProcessWithoutNullStreams;
+  }) as typeof spawn;
+  try {
+    await assert.rejects(
+      startRealPackHost({
+        tmp: carrier, realmDir: join(carrier, 'realm'), supportDir: join(carrier, 'support'),
+        runtimeInstanceId: 'instance-exact',
+      }, async () => {}, { env, spawn: spawnHelper, startupTimeoutMs: 100, stopTimeoutMs: 100 }),
+      error => {
+        assert.ok(error instanceof Error);
+        assert.match(error.message,
+          /Pack-host helper reported failure \(error_type=RuntimeError, error_location=\/trusted\/helper\.py:321\)/);
+        assert.match(error.message, /pack-host startup cleanup failed$/);
+        assert.doesNotMatch(error.message, /do-not-print|secret|credential/i);
+        return true;
+      },
+    );
+    assert.equal(helper.closed, true);
+  } finally {
+    await releaseImmutableCarrier(carrier);
+    await Promise.all([rm(carrier, { recursive: true, force: true }), rm(stub.root, { recursive: true, force: true })]);
   }
 });
 

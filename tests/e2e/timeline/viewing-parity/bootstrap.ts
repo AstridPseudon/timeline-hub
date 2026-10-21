@@ -81,6 +81,19 @@ interface BootstrapOptions {
   stopTimeoutMs?: number;
 }
 
+const HELPER_ERROR_TYPE = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/;
+const HELPER_ERROR_LOCATION = /^[A-Za-z0-9_./\\-]{1,1024}:\d+$/;
+
+function helperFailureMessage(message: Record<string, unknown>): string {
+  const errorType = message.error_type;
+  const errorLocation = message.error_location;
+  if (typeof errorType === 'string' && HELPER_ERROR_TYPE.test(errorType)
+    && typeof errorLocation === 'string' && HELPER_ERROR_LOCATION.test(errorLocation)) {
+    return `Pack-host helper reported failure (error_type=${errorType}, error_location=${errorLocation})`;
+  }
+  return 'Pack-host helper reported failure';
+}
+
 /** Requires an owner-approved helper in the parent's frozen ASTRID_CHECKOUT.
  * The Agent owns launch authority and host cleanup, including SIGTERM cleanup.
  * This adapter owns only its direct helper child, never a reported host PID.
@@ -166,7 +179,7 @@ export async function startRealPackHost(
         } else if (message.status === 'stopped' && !stopped && message.host_pid === hostPid && ready) {
           stopped = true;
         } else {
-          fail(message.status === 'failed' ? 'Pack-host helper reported failure' : 'Invalid pack-host helper status');
+          fail(message.status === 'failed' ? helperFailureMessage(message) : 'Invalid pack-host helper status');
         }
       } catch {
         fail('Malformed pack-host helper output');
