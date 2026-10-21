@@ -9,6 +9,7 @@ from astrid.core.timeline import moments as mo
 from astrid.core.timeline.authoring_bundle import _digest
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.media_transcript import SCHEMA, transcript_document_id
+from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.compiler import TimingCompileError, TimingCycleError
 from astrid.sdk.timeline.units import (
     _playback_rate,
@@ -111,9 +112,9 @@ def _walk(graph, functions):
 
 
 class _Context:
-    def __init__(self, fps, own=None, cuts=None, words=(), in_point=None):
+    def __init__(self, fps, own=None, cuts=None, words=(), beats=None, in_point=None):
         self.fps, self.own, self.cuts = fps, own, cuts or {}
-        self.bound_words, self.in_point = words, in_point
+        self.bound_words, self.bound_beats, self.in_point = words, beats or {}, in_point
 
     def own_cut(self):
         return self.own
@@ -127,8 +128,115 @@ class _Context:
     def words(self):
         return self.bound_words
 
+    def beats(self, kind):
+        return self.bound_beats.get(kind, ())
+
     def line_in_point(self, line):
         return self.in_point
+
+
+def _beat_values(clip, kind):
+    """Return Main's numeric beat carrier, preserving its authored order."""
+    value = intent._app(clip).get("beats")
+    if value is None:
+        return None
+    if isinstance(value, list):
+        if kind != "beat":
+            return []
+        key = "beats"
+        rows = value
+    elif isinstance(value, dict):
+        key = "downbeats" if kind == "downbeat" else "beats"
+        if key not in value:
+            return []
+        rows = value[key]
+    else:
+        raise TimingCompileError("malformed app.astrid.beats carrier")
+    if not isinstance(rows, list):
+        raise TimingCompileError(f"malformed app.astrid.beats.{key} carrier")
+    result = []
+    for index, row in enumerate(rows):
+        number = row[0] if isinstance(row, (list, tuple)) and row else row
+        try:
+            result.append(_timing_number(number))
+        except (TypeError, ValueError, ArithmeticError, TimelineEditError) as exc:
+            raise TimingCompileError(f"malformed app.astrid.beats.{key}[{index}]") from exc
+    if isinstance(value, list):
+        source_start = _timing_number(_value(clip, "from"))
+        speed = _playback_rate(_value(clip, "speed", 1))
+        return [source_start + point * speed for point in result]
+    return result
+
+
+def _resolved_beats(kind, clips, values, node, is_source):
+    points = []
+    for ordinal, (owner, clip) in enumerate(clips.items()):
+        if not is_source(owner, clip):
+            continue
+        table = _beat_values(clip, kind)
+        if table is None or not table:
+            continue
+        start = values[node(owner, "start")]
+        end = values[node(owner, "end")]
+        source_start = _timing_number(_value(clip, "from"))
+        speed = _playback_rate(_value(clip, "speed", 1))
+        for index, point in enumerate(table):
+            timeline = source_to_timeline_time(point, source_start=source_start,
+                                                timeline_start=start, speed=speed)
+            if start <= timeline < end:
+                points.append((timeline, ordinal, index))
+    # Main's Context.beats sorts timeline positions.  Stable owner/table
+    # order keeps equal times deterministic without inventing marker IDs.
+    return {kind: tuple(point[0] for point in sorted(points))}
+
+
+def _legacy_words(documents, clips, internals, values, node, is_source):
+    """Build Main's word pool from the exact captured transcript/source rows."""
+    words = []
+    for capture in documents.values():
+        document = capture["document"]
+        content = document.get("content") or {}
+        media_id = content.get("media_id")
+        for owner, clip in clips.items():
+            if not is_source(owner, clip):
+                continue
+            internal = internals[owner]
+            asset = (internal.get("registry") or {}).get("assets", {}).get(clip.get("asset"))
+            if not isinstance(asset, dict) or asset.get("media_id") != media_id:
+                continue
+            source_start = _timing_number(_value(clip, "from"))
+            speed = _playback_rate(_value(clip, "speed", 1))
+            source_end = source_start + _duration(clip) * speed
+            timeline_start = values[node(owner, "start")]
+            timeline_end = values[node(owner, "end")]
+            for segment in content.get("segments") or []:
+                for index, word in enumerate(segment.get("words") or []):
+                    start, end = (_timing_number(word[key]) for key in ("start", "end"))
+                    if not source_start <= start < end <= source_end:
+                        continue
+                    start, end = (source_to_timeline_time(
+                        value, source_start=source_start, timeline_start=timeline_start,
+                        speed=_value(clip, "speed", 1)) for value in (start, end))
+                    if start < timeline_start or start >= timeline_end or end > timeline_end:
+                        continue
+                    words.append(SimpleNamespace(text=word["text"], segment=segment["id"],
+                                                 index=index, start=start, end=end,
+                                                 owner=owner, id=word.get("id", "")))
+    return sorted(words, key=lambda word: (word.start, word.owner, word.id))
+
+
+def _legacy_word_owners(documents, clips, internals, is_source):
+    media_ids = {capture["document"].get("content", {}).get("media_id")
+                 for capture in documents.values()}
+    owners = []
+    for owner, clip in clips.items():
+        if not is_source(owner, clip):
+            continue
+        assets = (internals[owner].get("registry") or {}).get("assets", {})
+        asset = assets.get(clip.get("asset")) if isinstance(assets, dict) else None
+        if isinstance(asset, dict) and asset.get("media_id") in media_ids:
+            owners.append(owner)
+    return owners
 
 
 def evaluate(bundle, sources, bindings, policy):
@@ -190,6 +298,9 @@ def evaluate(bundle, sources, bindings, policy):
     def cut_node(cut, edge):
         return ("cut", cut, edge)
 
+    def is_beat_source(owner, clip):
+        return owner[0] != "parent" and lookup._is_audio(owner[1], clip)
+
     def add(key, dependencies, function):
         graph[key], functions[key] = set(dependencies), function
 
@@ -231,8 +342,6 @@ def evaluate(bundle, sources, bindings, policy):
 
     def moment_rule(owner, field, text, in_point=False):
         moment = mo.parse(text)
-        if moment.kind in ("beat", "downbeat"):
-            raise TimingCompileError(f"unsupported {moment.kind} anchor: needs a captured marker resolver")
         dependencies = []
         bound = None
         if moment.kind == "word":
@@ -244,6 +353,37 @@ def evaluate(bundle, sources, bindings, policy):
             used.add((owner, field))
             bound = _bound_words(bundle, documents, pin, clips, internals)
             dependencies = [node(pin.source, "start")]
+        elif moment.kind in ("beat", "downbeat"):
+            # Main's legacy beat grammar is resolved from the authored numeric
+            # grid, not from a generic marker publication.  Depend on every
+            # captured carrier so a changed carrier cannot silently reuse the
+            # old derived time; the resolver below keeps Main's stable array
+            # order and half-open clip window.
+            dependencies.extend(
+                dependency for owner_and_clip in clips.items()
+                if is_beat_source(*owner_and_clip)
+                and _beat_values(owner_and_clip[1], moment.kind) is not None
+                for dependency in (node(owner_and_clip[0], "start"), node(owner_and_clip[0], "end"))
+            )
+            dependencies.extend(dependency for group in groups
+                                for dependency in (cut_node(group["id"], "start"),
+                                                   cut_node(group["id"], "end")))
+            if moment.base is not None and moment.base.kind == "word":
+                # The existing Main word pool is assembled from captured
+                # source clips.  Make those exact clip intervals available
+                # before resolving the beat's word base.
+                dependencies.extend(
+                    dependency for source_owner in _legacy_word_owners(
+                        documents, clips, internals, is_beat_source)
+                    for dependency in (node(source_owner, "start"), node(source_owner, "end"))
+                )
+            elif moment.base is not None and moment.base.kind in ("cut", "cut_end"):
+                base_cut = lookup._cut_id(moment.base.cut)
+                if base_cut not in bases:
+                    raise TimingCompileError(f"missing cut anchor {text!r} for {owner}")
+                dependencies.append(cut_node(base_cut, "end" if moment.base.kind == "cut_end" else "start"))
+            if moment.base is not None and moment.base.kind in ("beat", "downbeat"):
+                raise TimingCompileError("nested beat anchors are unsupported")
         else:
             cut = moment.cut or intent.cut_of(clips[owner])
             cut = lookup._cut_id(cut) if cut else None
@@ -283,6 +423,17 @@ def evaluate(bundle, sources, bindings, policy):
                     t = source_start - source_in / speed
                 else:
                     t += moment.offset_s + moment.offset_frames / fps
+            elif moment.kind in ("beat", "downbeat"):
+                words = _legacy_words(documents, clips, internals, values, node, is_beat_source)
+                beat_values = _resolved_beats(moment.kind, clips, values, node, is_beat_source)
+                cuts = {group["id"]: (values[cut_node(group["id"], "start")],
+                                      values[cut_node(group["id"], "end")])
+                        for group in groups}
+                context = _Context(fps, cuts=cuts, words=words, beats=beat_values)
+                try:
+                    t = mo.resolve(moment, context, in_point=in_point)
+                except mo.MomentError as exc:
+                    raise TimingCompileError(str(exc)) from exc
             else:
                 t = values[dependencies[0]]
                 context = _Context(fps, own=(t, t), cuts={cut: (t, t)})
