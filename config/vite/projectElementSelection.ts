@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {verifyElementAdmissions, type VerifiedElementAdmission, type ElementVerificationCache} from './astridElementAdmissions';
 export type ElementRef = {packId:string;kind:'effect'|'animation'|'transition';id:string;revision:string};
 export type ProjectPackDocument = {document_id:string;project_id:string;kind:string;version:number;content:unknown};
-type Admission = {id:string;kind:string;revision:string;snapshot_digest:string};
+type Admission = {id:string;kind:string;revision:string;snapshot_digest:string;snapshot_object?:{object_id:string;digest:string;size:number;media_type:'application/json'}};
 type Binding = {schema:string;pack_id:string;source_binding_key:string;relative_manifest:string;admissions:Admission[]};
 export function stableJson(value: unknown): string {
   if(Array.isArray(value))return '['+value.map(stableJson).join(',')+']';
@@ -66,21 +66,22 @@ export async function selectProjectElements(projectId:string,refs:ElementRef[],o
     const selected=content.admissions.find(entry=>entry.id===ref.id&&entry.kind===ref.kind&&entry.revision===ref.revision);
     if(!selected){unavailable.push(ref);continue;}
     if(!/^[a-f0-9]{64}$/.test(selected.snapshot_digest))throw new Error('Invalid canonical admission digest');
-    const cacheKey=sha256(stableJson([options.realmId,projectId,ref,selected.snapshot_digest,content.source_binding_key,content.relative_manifest,sourceRoot,artifactRoot,'astrid-pack-host-v1']));
+    const documentContentDigest='sha256:'+sha256(stableJson(document.content));
+    const cacheKey=sha256(stableJson([options.realmId,projectId,ref,document.document_id,document.version,documentContentDigest,selected.snapshot_digest,content.source_binding_key,content.relative_manifest,sourceRoot,artifactRoot,'astrid-pack-host-v1']));
     let verified=options.resolvedCache?.get(cacheKey);
     if(!verified) {
       if(!options.resolveRecord)throw new Error('Native canonical element resolver is not configured');
       const record=await options.resolveRecord(projectId,ref);
-      const resolved=record as unknown as VerifiedElementAdmission['elements'][number] & {binding:{projectId:string;documentId:string;documentVersion:number;contentDigest:string}};
+      const resolved=record as unknown as VerifiedElementAdmission['elements'][number] & {binding:{projectId:string;documentId:string;documentVersion:number;contentDigest:string};snapshot_object?:Admission['snapshot_object']};
       if(resolved.binding?.projectId!==projectId||resolved.binding.documentId!==document.document_id||resolved.binding.documentVersion!==document.version
-        || resolved.binding.contentDigest!=='sha256:'+sha256(stableJson(document.content)))throw new Error('Canonical element resolution raced its Runtime document; retry the scoped read');
+        || resolved.binding.contentDigest!==documentContentDigest)throw new Error('Canonical element resolution raced its Runtime document; retry the scoped read');
       if(resolved.projectId!==projectId||refKey(resolved.descriptor as ElementRef)!==refKey(ref))throw new Error('Canonical element resolver returned another exact ref');
       const expectedPackRoot=path.dirname(path.join(sourceRoot,content.relative_manifest));
       if(resolved.authoring.packRoot!==expectedPackRoot||resolved.snapshot.root!==path.join(artifactRoot,options.realmId,projectId,ref.packId,'snapshots',selected.snapshot_digest))throw new Error('Snapshot or authoring paths are not selected by the canonical project document');
       const closure=[...resolved.snapshot.files].sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
       if(sha256(stableJson(closure))!==selected.snapshot_digest)throw new Error('Snapshot closure does not match canonical admission');
       verified=verifyElementAdmissions(undefined,{schema:'astrid.element-admissions/v1',realmId:options.realmId,
-        projects:[{...project,packId:ref.packId,packRoot:expectedPackRoot}],elements:[resolved]},options.verificationCache);
+        projects:[{...project,packId:ref.packId,packRoot:expectedPackRoot}],elements:[{...resolved,snapshot_object:selected.snapshot_object}]},options.verificationCache);
       options.resolvedCache?.set(cacheKey,verified);
     }
     const entry=verified.elements[0];

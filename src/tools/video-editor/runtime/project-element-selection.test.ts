@@ -15,7 +15,8 @@ function fixture(){
  const ref={packId,id:'blocks',kind:'effect' as const,revision:'sha256:old'};
  const source='export default function Blocks(){return null;}';const files=[{path:'component.tsx',sha256:sha256(source)}];const closure=sha256(stableJson(files));
  const snapshotRoot=path.join(artifactRoot,realmId,projectId,packId,'snapshots',closure);fs.mkdirSync(snapshotRoot,{recursive:true});fs.writeFileSync(path.join(snapshotRoot,'component.tsx'),source);
- const content={schema:'astrid.project-pack/v1',pack_id:packId,source_binding_key:'project-packs',relative_manifest:`${realmId}/${projectId}/packs/${packId}/pack.yaml`,admissions:[{id:ref.id,kind:ref.kind,revision:ref.revision,snapshot_digest:closure}]};
+ const snapshot_object={object_id:'sha256:'+'d'.repeat(64),digest:'sha256:'+'d'.repeat(64),size:12,media_type:'application/json' as const};
+ const content={schema:'astrid.project-pack/v1',pack_id:packId,source_binding_key:'project-packs',relative_manifest:`${realmId}/${projectId}/packs/${packId}/pack.yaml`,admissions:[{id:ref.id,kind:ref.kind,revision:ref.revision,snapshot_digest:closure,snapshot_object}]};
  const document={document_id:projectPackDocumentId(projectId),project_id:projectId,kind:'astrid.project-pack',version:2,content};
  const packRoot=path.dirname(path.join(sourceRoot,content.relative_manifest));
  const index={schema:'astrid.element-admissions/v1',realmId,binding:{projectId,documentId:document.document_id,documentVersion:2,contentDigest:'sha256:'+sha256(stableJson(content))},
@@ -33,12 +34,19 @@ describe('Runtime-owned active project admission selection',()=>{
   const selected=await selectProjectElements(f.projectId,[f.ref],f.options);
   expect(f.options.readDocument).toHaveBeenCalledTimes(1);expect(f.options.resolveRecord).toHaveBeenCalledTimes(1);
   expect(selected.elements).toHaveLength(1);expect(selected.files).toHaveLength(1);expect(selected.unavailable).toEqual([]);
+  expect((selected.elements[0] as typeof selected.elements[number] & {snapshot_object:typeof f.content.admissions[number]['snapshot_object']}).snapshot_object).toEqual(f.content.admissions[0].snapshot_object);
   const module=generateElementAdmissionModule(selected,true);
   expect(module.match(/^import Component/gm)).toHaveLength(1);expect(module).not.toContain('unrelated-');
+  expect(module).toContain(JSON.stringify(f.content.admissions[0].snapshot_object));
   expect(f.options.resolveRecord).toHaveBeenCalledWith(f.projectId,f.ref);
   const firstHashes=read.mock.calls.length;
   await selectProjectElements(f.projectId,[f.ref],f.options);
   expect(read.mock.calls.length).toBe(firstHashes); // immutable closure verified once, not1000 unrelated hashes or repeated compilation
+  f.document.version=3;f.content.admissions[0].snapshot_object={object_id:'sha256:'+'e'.repeat(64),digest:'sha256:'+'e'.repeat(64),size:13,media_type:'application/json'};
+  f.index.binding.documentVersion=3;f.index.binding.contentDigest='sha256:'+sha256(stableJson(f.content));
+  const refreshed=await selectProjectElements(f.projectId,[f.ref],f.options);
+  expect(f.options.resolveRecord).toHaveBeenCalledTimes(2);
+  expect((refreshed.elements[0] as typeof refreshed.elements[number] & {snapshot_object:typeof f.content.admissions[number]['snapshot_object']}).snapshot_object).toEqual(f.content.admissions[0].snapshot_object);
  });
  it('invalidates only a changed selected immutable build without remounting the editor host',async()=>{
   const f=fixture();const plugin=createElementAdmissionsPlugin(f.options);
