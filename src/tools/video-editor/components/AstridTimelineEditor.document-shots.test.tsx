@@ -15,6 +15,14 @@ const mocks = vi.hoisted(() => ({
     submit: vi.fn(),
   },
   promotePrimaryVariant: vi.fn(async () => []),
+  duplicateGenerationAsset: vi.fn(),
+  prepareGenerationAsset: vi.fn(),
+  registerGenerationAsset: vi.fn(),
+  parentClipAddMedia: undefined as {
+    prepare: () => unknown;
+    assertPreparationCurrent: (preparation: unknown) => void;
+  } | undefined,
+  addClip: vi.fn(),
   reloadFromServer: vi.fn(async () => undefined),
   galleryGet: vi.fn(async () => ({
     generation_id: 'gen-a',
@@ -43,14 +51,22 @@ const data = {
   config: {
     output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },
     tracks: [{ id: 'V1', kind: 'visual', label: 'Visual' }],
-    clips: [],
+    clips: [{ id: 'clip-source', clipType: 'media', track: 'V1', at: 0, hold: 2, asset: 'asset-source' }],
     pinnedShotGroups: [],
   },
   configVersion: 13,
-  registry: { assets: {} },
-  resolvedConfig: { registry: {} },
-  rows: [{ id: 'V1', actions: [] }],
-  meta: {},
+  registry: { assets: {
+    'asset-source': {
+      file: 'https://example.test/source.mp4', type: 'video/mp4', generationId: 'generation-source',
+      variantId: 'variant-source', duration: 2,
+    },
+  } },
+  resolvedConfig: {
+    registry: {},
+    clips: [{ id: 'clip-source', clipType: 'media', track: 'V1', at: 0, hold: 2, asset: 'asset-source' }],
+  },
+  rows: [{ id: 'V1', actions: [{ id: 'clip-source', start: 0, end: 2 }] }],
+  meta: { 'clip-source': { asset: 'asset-source', track: 'V1', clipType: 'media' } },
 };
 const dataRef = { current: data };
 
@@ -94,6 +110,8 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
     unpatchRegistry: vi.fn(),
     registerAsset: vi.fn(),
     registerGenerationAsset: vi.fn(),
+    prepareGenerationAsset: mocks.prepareGenerationAsset,
+    parentClipAddMedia: mocks.parentClipAddMedia,
     occurrenceDuplicate: mocks.occurrenceDuplicate,
     reloadFromServer: mocks.reloadFromServer,
   }),
@@ -102,7 +120,7 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
   }),
 }));
 vi.mock('@/tools/video-editor/hooks/useTimelineCommandsService.ts', () => ({
-  useTimelineCommandsService: () => ({ addClip: vi.fn(() => ({ ok: false })) }),
+  useTimelineCommandsService: () => ({ addClip: mocks.addClip }),
 }));
 vi.mock('@/tools/video-editor/hooks/usePinnedShotGroups.ts', () => ({
   usePinnedShotGroups: () => ({ pinGroup: vi.fn(), unpinGroup: vi.fn() }),
@@ -157,12 +175,14 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx',
     onShotGroupNavigate?: unknown;
     onShotGroupGenerateVideo?: unknown;
     onShotGroupOpen?: (occurrence: typeof mocks.canonicalOccurrence) => void;
+    onDuplicateGenerationClip?: (clipId: string) => void | Promise<void>;
   }) => (
     <div>
       <button onClick={() => props.onShotGroupDuplicate?.({
         shotId: 'shot-a', trackId: 'V1', ...(mocks.canonicalMode ? { canonicalIdentity: mocks.canonicalOccurrence } : {}),
       })}>Duplicate document shot</button>
       <button onClick={() => props.onShotGroupPromotePrimary?.({ shotId: 'shot-a', trackId: 'V1' })}>Promote document variant</button>
+      <button onClick={() => props.onDuplicateGenerationClip?.('clip-source')}>Duplicate generation</button>
       {props.onShotGroupOpen && (
         <button onClick={() => props.onShotGroupOpen?.(mocks.canonicalOccurrence)}>Open canonical document shot</button>
       )}
@@ -170,7 +190,7 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx',
     </div>
   ),
 }));
-vi.mock('@/tools/video-editor/lib/generation-utils.ts', () => ({ duplicateGenerationAsset: vi.fn() }));
+vi.mock('@/tools/video-editor/lib/generation-utils.ts', () => ({ duplicateGenerationAsset: mocks.duplicateGenerationAsset }));
 vi.mock('@/tools/travel-between-images/components/VideoGenerationModal.tsx', () => ({ VideoGenerationModal: () => null }));
 vi.mock('@/tools/travel-between-images/pages/LocalTimelineShotBrowser.tsx', () => ({
   LocalTimelineShotBrowser: (props: { shotRef?: string; onClose?: () => void }) => (
@@ -191,6 +211,7 @@ describe('AstridTimelineEditor document-derived shot consumer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.canonicalMode = false;
+    mocks.parentClipAddMedia = undefined;
   });
 
   it('holds a just-published graph only while the host still reports a known pre-publish head', () => {
@@ -303,5 +324,174 @@ describe('AstridTimelineEditor document-derived shot consumer', () => {
     expect(mocks.occurrenceDuplicate.submit).not.toHaveBeenCalled();
     expect(mocks.duplicateShotGroup).not.toHaveBeenCalled();
     expect(mocks.reloadFromServer).not.toHaveBeenCalled();
+  });
+
+  it('passes the original duplicated-media selection to one native insert intent without registering a legacy asset', async () => {
+    const mediaSelection = {
+      asset: 'asset-duplicated',
+      generation_id: 'generation-duplicated',
+      variant_id: 'variant-duplicated',
+      object_id: `sha256:${'a'.repeat(64)}`,
+      catalog_digest: `sha256:${'b'.repeat(64)}`,
+    };
+    const preparedAsset = {
+      assetKey: 'asset-duplicated',
+      mediaType: 'video' as const,
+      durationSeconds: 2,
+      entry: { file: 'https://example.test/duplicated.mp4', type: 'video/mp4', duration: 2 },
+      source: 'registered' as const,
+      mediaSelection,
+    };
+    mocks.duplicateGenerationAsset.mockResolvedValueOnce({
+      generationId: 'generation-duplicated',
+      variantId: 'variant-duplicated',
+      variantType: 'video',
+      imageUrl: 'https://example.test/duplicated.mp4',
+      thumbUrl: 'https://example.test/duplicated-thumb.jpg',
+      mediaSelection,
+    });
+    mocks.prepareGenerationAsset.mockReturnValueOnce(preparedAsset);
+    mocks.addClip.mockResolvedValueOnce({ ok: true, data: { clipId: 'clip-duplicated', trackId: 'V1' } });
+    render(<AstridTimelineEditor />);
+
+    fireEvent.click(screen.getByText('Duplicate generation'));
+
+    await waitFor(() => expect(mocks.addClip).toHaveBeenCalledTimes(1));
+    expect(mocks.prepareGenerationAsset).toHaveBeenCalledWith(expect.objectContaining({ mediaSelection }));
+    expect(mocks.addClip).toHaveBeenCalledWith({ preparedAsset, afterClipId: 'clip-source' });
+    expect(mocks.registerGenerationAsset).not.toHaveBeenCalled();
+  });
+
+  it('refuses a duplicate when the parent head changes during generation duplication', async () => {
+    const presenter = vi.fn(() => true);
+    installRuntimeErrorPresenter(presenter);
+    let resolveDuplicate!: (value: {
+      generationId: string;
+      variantId: string;
+      variantType: 'video';
+      imageUrl: string;
+      thumbUrl: string;
+    }) => void;
+    mocks.duplicateGenerationAsset.mockImplementationOnce(() => new Promise((resolve) => {
+      resolveDuplicate = resolve;
+    }));
+    render(<AstridTimelineEditor />);
+
+    fireEvent.click(screen.getByText('Duplicate generation'));
+    dataRef.current = { ...data, head: { revision_id: 'changed-before-insert' } };
+    resolveDuplicate({
+      generationId: 'generation-duplicated',
+      variantId: 'variant-duplicated',
+      variantType: 'video',
+      imageUrl: 'https://example.test/duplicated.mp4',
+      thumbUrl: 'https://example.test/duplicated-thumb.jpg',
+    });
+
+    await waitFor(() => expect(presenter).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('timeline changed') }),
+      'Failed to duplicate generation',
+    ));
+    expect(mocks.prepareGenerationAsset).not.toHaveBeenCalled();
+    expect(mocks.addClip).not.toHaveBeenCalled();
+    dataRef.current = data;
+  });
+
+  it('refuses a duplicate when the native parent-media preparation epoch changes', async () => {
+    const presenter = vi.fn(() => true);
+    installRuntimeErrorPresenter(presenter);
+    let sessionGeneration = 0;
+    const preparation = { localGeneration: 0 };
+    mocks.parentClipAddMedia = {
+      prepare: vi.fn(() => preparation),
+      assertPreparationCurrent: vi.fn((captured) => {
+        if ((captured as typeof preparation).localGeneration !== sessionGeneration) {
+          throw new Error('Timeline changed during parent clip.add-media preparation');
+        }
+      }),
+    };
+    let resolveDuplicate!: (value: {
+      generationId: string;
+      variantId: string;
+      variantType: 'video';
+      imageUrl: string;
+      thumbUrl: string;
+      mediaSelection: Record<string, string>;
+    }) => void;
+    mocks.duplicateGenerationAsset.mockImplementationOnce(() => new Promise((resolve) => {
+      resolveDuplicate = resolve;
+    }));
+    render(<AstridTimelineEditor />);
+
+    fireEvent.click(screen.getByText('Duplicate generation'));
+    sessionGeneration = 1;
+    resolveDuplicate({
+      generationId: 'generation-duplicated',
+      variantId: 'variant-duplicated',
+      variantType: 'video',
+      imageUrl: 'https://example.test/duplicated.mp4',
+      thumbUrl: 'https://example.test/duplicated-thumb.jpg',
+      mediaSelection: {
+        asset: 'asset-duplicated',
+        generation_id: 'generation-duplicated',
+        variant_id: 'variant-duplicated',
+        object_id: `sha256:${'e'.repeat(64)}`,
+        catalog_digest: `sha256:${'f'.repeat(64)}`,
+      },
+    });
+
+    await waitFor(() => expect(presenter).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('parent clip.add-media preparation') }),
+      'Failed to duplicate generation',
+    ));
+    expect(mocks.parentClipAddMedia?.prepare).toHaveBeenCalledOnce();
+    expect(mocks.parentClipAddMedia?.assertPreparationCurrent).toHaveBeenCalledOnce();
+    expect(mocks.prepareGenerationAsset).not.toHaveBeenCalled();
+    expect(mocks.addClip).not.toHaveBeenCalled();
+    expect(mocks.registerGenerationAsset).not.toHaveBeenCalled();
+  });
+
+  it('surfaces the native exact-placement refusal and does not write the legacy registry', async () => {
+    const presenter = vi.fn(() => true);
+    installRuntimeErrorPresenter(presenter);
+    const mediaSelection = {
+      asset: 'asset-duplicated',
+      generation_id: 'generation-duplicated',
+      variant_id: 'variant-duplicated',
+      object_id: `sha256:${'c'.repeat(64)}`,
+      catalog_digest: `sha256:${'d'.repeat(64)}`,
+    };
+    mocks.duplicateGenerationAsset.mockResolvedValueOnce({
+      generationId: 'generation-duplicated',
+      variantId: 'variant-duplicated',
+      variantType: 'video',
+      imageUrl: 'https://example.test/duplicated.mp4',
+      thumbUrl: 'https://example.test/duplicated-thumb.jpg',
+      mediaSelection,
+    });
+    mocks.prepareGenerationAsset.mockReturnValueOnce({
+      assetKey: 'asset-duplicated',
+      mediaType: 'video',
+      durationSeconds: 2,
+      entry: { file: 'https://example.test/duplicated.mp4', type: 'video/mp4', duration: 2 },
+      source: 'registered',
+      mediaSelection,
+    });
+    mocks.addClip.mockResolvedValueOnce({
+      ok: false,
+      error: {
+        code: 'invalid_argument',
+        message: 'Native prepared parent media cannot represent exact afterClip placement yet.',
+      },
+    });
+    render(<AstridTimelineEditor />);
+
+    fireEvent.click(screen.getByText('Duplicate generation'));
+
+    await waitFor(() => expect(presenter).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('exact afterClip placement') }),
+      'Failed to duplicate generation',
+    ));
+    expect(mocks.addClip).toHaveBeenCalledWith(expect.objectContaining({ afterClipId: 'clip-source' }));
+    expect(mocks.registerGenerationAsset).not.toHaveBeenCalled();
   });
 });
