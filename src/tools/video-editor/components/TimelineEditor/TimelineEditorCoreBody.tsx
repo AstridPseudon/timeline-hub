@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { useOptionalVideoEditorRuntime as useMarqueeEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
@@ -178,13 +179,13 @@ export function resolveWaveformAudioSrc(
   }
 
   if (track.kind === 'audio') {
-    return clip.volume === 0 ? undefined : clip.assetEntry.src;
+    return getEffectiveClipVolume(clip) > 0 ? clip.assetEntry.src : undefined;
   }
 
   if (
     track.kind === 'visual'
     && clip.assetEntry.type?.startsWith('video/')
-    && (clip.volume ?? 1) > 0
+    && getEffectiveClipVolume(clip) > 0
   ) {
     return clip.assetEntry.src;
   }

@@ -353,7 +353,8 @@ function projectClip(
         : hasTrim
           ? Math.max(1, (rawTo - rawFrom) * 1000)
           : Math.max(1, occurrence.durationMs * speed);
-  const gain = finiteNumber(rawClip.gain ?? rawClip.volume, occurrence.gain ?? 1);
+  // An unset gain stays unset: the effective volume rule (element default, else 1) applies downstream.
+  const gain = optionalFiniteNumber(rawClip.gain ?? rawClip.volume) ?? optionalFiniteNumber(occurrence.gain);
   const muted = rawClip.muted === true || rawClip.mute === true || occurrence.muted === true;
   const track = text(rawClip.track) ?? occurrence.trackId ?? 'video';
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? 'media';
@@ -388,7 +389,7 @@ function projectClip(
     // retain those trim bounds instead of being converted to a parent-sized
     // hold. Hold remains the deterministic fallback for duration-only clips.
     ...(hasTrim ? {} : { hold: durationMs / 1000 }),
-    volume: muted ? 0 : gain,
+    ...(muted ? { volume: 0 } : gain !== undefined ? { volume: gain } : {}),
     ...preservedGeometry,
     ...(params ? { params } : {}),
     ...(record(rawClip.text) ? { text: rawClip.text as TimelineClip['text'] } : {}),

@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { useMemo, useState, type CSSProperties, type FC, type ReactNode } from 'react';
 import { AbsoluteFill, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
 import { ReadinessImage } from '@astrid/packs/rendering/shared/readiness-image';
@@ -304,7 +305,7 @@ const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
     return <MissingAssetBody clipId={clip.id} clipType={clip.clipType ?? 'media'} />;
   }
 
-  const clipVolume = getSanitizedVolume(clip.volume);
+  const clipVolume = getEffectiveClipVolume(clip);
   const effectiveVolume = track.muted ? 0 : getSanitizedVolume(track.volume) * clipVolume;
   const playbackRate = getSanitizedPlaybackRate(clip.speed);
   const trimProps = getSanitizedMediaTrimProps(clip, fps);

@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { useMemo, useRef, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -283,7 +284,7 @@ export function ClipPanelBody({
 
       {showInspectorActions && (
         <ClipInspectorActions
-          muted={(clip.volume ?? 1) <= 0}
+          muted={getEffectiveClipVolume(clip) <= 0}
           canMoveTrack={canMoveTrack}
           canSplit={canSplit}
           canToggleMute={canToggleMute}
@@ -453,7 +454,7 @@ export function ClipPanelBody({
                 Volume
               </div>
               <Slider
-                value={[clip.volume ?? 1]}
+                value={[getEffectiveClipVolume(clip)]}
                 min={0}
                 max={1}
                 step={0.05}
