@@ -10,7 +10,11 @@ export const CURRENT013_PARENT_SPLIT_AGENT = '8130a401bf44a518d5a40ae274d398b8c5
 export const CURRENT013_PARENT_SPLIT_AGENT_TREE = '236c3e57e0265c52b81ba8085de3193026176bff';
 export const CURRENT013_PARENT_SPLIT_RUNTIME = '2c4ac180c2220bdad966bc01e95ad230e99ce26a';
 export const CURRENT013_PARENT_SPLIT_RUNTIME_TREE = '7ab412cc4bcbe517efcfa806e092336390312e18';
+export const CURRENT013_PARENT_SPLIT_APP = '72e99122ab711f54f392e164bf250a8979317dc2';
+export const CURRENT013_PARENT_SPLIT_APP_TREE = '7cd720126ef39cfd0a3af858610034fc17ebfdac';
 export const PUBLIC13_ARCHIVE_SHA256 = '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738';
+
+const FULL_SHA = /^[0-9a-f]{40}$/;
 
 function fail(message) { throw new Error(`[current013/parent-split] ${message}`); }
 function required(env, name) {
@@ -42,23 +46,44 @@ function safeArchive(file) {
 }
 
 export function readCurrent013ParentSplitInputs(env = process.env, appRoot = process.cwd()) {
+  const appSha = required(env, 'TIMELINE_CURRENT013_APP_SHA');
   const appTree = required(env, 'TIMELINE_CURRENT013_APP_TREE');
   const agentSha = required(env, 'TIMELINE_CURRENT013_AGENT_SHA');
   const runtimeSha = required(env, 'TIMELINE_CURRENT013_RUNTIME_SHA');
-  if (![appTree, agentSha, runtimeSha].every((value) => /^[0-9a-f]{40}$/.test(value))) fail('source identities must be full lowercase SHA values');
+  if (![appSha, appTree, agentSha, runtimeSha].every((value) => FULL_SHA.test(value))) fail('source identities must be full lowercase SHA values');
+  if (appSha !== CURRENT013_PARENT_SPLIT_APP) fail(`requires App ${CURRENT013_PARENT_SPLIT_APP}`);
+  if (appTree !== CURRENT013_PARENT_SPLIT_APP_TREE) fail(`requires App tree ${CURRENT013_PARENT_SPLIT_APP_TREE}`);
   if (agentSha !== CURRENT013_PARENT_SPLIT_AGENT) fail(`requires Agent ${CURRENT013_PARENT_SPLIT_AGENT}`);
   if (runtimeSha !== CURRENT013_PARENT_SPLIT_RUNTIME) fail(`requires Runtime ${CURRENT013_PARENT_SPLIT_RUNTIME}`);
   if (!path.isAbsolute(appRoot)) fail('App root must be absolute');
   return Object.freeze({
-    app: realpathSync(appRoot), appTree, agentSha, runtimeSha,
+    app: realpathSync(appRoot), appSha, appTree, agentSha, runtimeSha,
     agent: requiredPath(env, 'ASTRID_CHECKOUT'), runtime: requiredPath(env, 'ASTRID_RUNTIME_CHECKOUT'),
     runtimeProducer: requiredPath(env, 'TIMELINE_CURRENT013_RUNTIME_PRODUCER_CHECKOUT'),
     agentPython: requiredExecutable(env, 'ASTRID_PYTHON'), runtimePython: requiredExecutable(env, 'ASTRID_RUNTIME_PYTHON'),
   });
 }
 
+/**
+ * The central service gives App a synthetic snapshot commit. Accept that HEAD
+ * only when the snapshot tree and the independently resolved pinned source
+ * commit tree are identical and the snapshot is clean.
+ */
+export function assertAppSnapshotIdentity(expectedSha, expectedTree, observed) {
+  if (!FULL_SHA.test(observed.head)) fail(`App snapshot HEAD is not a full 40-character SHA: ${observed.head}`);
+  if (observed.sourceTree !== expectedTree) fail(`App source commit/tree mismatch: expected ${expectedTree}, got ${observed.sourceTree}`);
+  if (observed.tree !== expectedTree) fail(`App snapshot tree changed: expected ${expectedTree}, got ${observed.tree}`);
+  if (observed.status) fail(`App source is dirty:\n${observed.status}`);
+  return Object.freeze({ commit: expectedSha, head: observed.head, tree: observed.tree, sourceTree: observed.sourceTree, clean: true });
+}
+
 export function checkCurrent013ParentSplitSources(input, env = process.env) {
-  if (git(input.app, 'rev-parse', 'HEAD^{tree}') !== input.appTree) fail('App tree changed');
+  const appIdentity = assertAppSnapshotIdentity(input.appSha, input.appTree, {
+    head: git(input.app, 'rev-parse', 'HEAD'),
+    tree: git(input.app, 'rev-parse', 'HEAD^{tree}'),
+    sourceTree: git(input.app, 'rev-parse', `${input.appSha}^{tree}`),
+    status: git(input.app, 'status', '--porcelain', '--untracked-files=normal'),
+  });
   if (git(input.agent, 'rev-parse', 'HEAD') !== input.agentSha || git(input.agent, 'rev-parse', 'HEAD^{tree}') !== CURRENT013_PARENT_SPLIT_AGENT_TREE) fail('Agent HEAD/tree is not the approved Agent8130 source');
   if (git(input.runtime, 'rev-parse', 'HEAD') !== input.runtimeSha || git(input.runtime, 'rev-parse', 'HEAD^{tree}') !== CURRENT013_PARENT_SPLIT_RUNTIME_TREE) fail('Runtime HEAD/tree is not the approved Runtime source');
   for (const [root, label] of [[input.app, 'App'], [input.agent, 'Agent'], [input.runtime, 'Runtime'], [input.runtimeProducer, 'Runtime producer']]) {
@@ -75,12 +100,12 @@ export function checkCurrent013ParentSplitSources(input, env = process.env) {
   if (!existsSync(ready)) fail(`private13 readiness marker is missing: ${ready}`);
   const browser = required(env, 'PLAYWRIGHT_CHROMIUM_EXECUTABLE');
   if (!path.isAbsolute(browser) || !existsSync(browser)) fail('Chromium executable is missing');
-  return { appTree: input.appTree, agentTree: CURRENT013_PARENT_SPLIT_AGENT_TREE, runtimeTree: CURRENT013_PARENT_SPLIT_RUNTIME_TREE, archive: PUBLIC13_ARCHIVE_SHA256, artifactCount: 75 };
+  return { app: appIdentity, appTree: input.appTree, agentTree: CURRENT013_PARENT_SPLIT_AGENT_TREE, runtimeTree: CURRENT013_PARENT_SPLIT_RUNTIME_TREE, archive: PUBLIC13_ARCHIVE_SHA256, artifactCount: 75 };
 }
 
 export function parentSplitCacheIdentity(input) {
   const hash = (file) => createHash('sha256').update(readFileSync(new URL(file, import.meta.url))).digest('hex');
-  return `parent-split-tree${input.appTree}-agent${input.agentSha}-runtime${input.runtimeSha}-public13-${PUBLIC13_ARCHIVE_SHA256}-all75-all77-runner${hash('./current013-parent-split.mjs')}`;
+  return `parent-split-app${input.appSha}-tree${input.appTree}-agent${input.agentSha}-runtime${input.runtimeSha}-public13-${PUBLIC13_ARCHIVE_SHA256}-all75-all77-runner${hash('./current013-parent-split.mjs')}`;
 }
 
 export function runCurrent013ParentSplit() {
