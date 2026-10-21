@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T06:30:38Z | dispatcher heartbeat 4s | live 5 (sol 0, luna 5, other 0) | busy30 39 | status age 1m -->
+<!-- app | 2026-10-21T06:37:15Z | dispatcher heartbeat 0s | live 6 (sol 0, luna 6, other 0) | busy30 36 | status age 0m -->
 # app — 2026-10-21 06:29 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 viewing parity remain OPEN.
 Integrated: App tl/integration 2dbc114297e142b58a73233f9fe41b805ce7d582, tree 647e0f2df5d4b216604c727f161a4ec51e527da0. Main860 ancestor; Runtime0.2.14 producer95bd/all76 and Composition13/all77 unchanged. Namespace fix e75, reactive command-session fix ba1, local-door classification012186 and tsx IPC isolationa041 merged. Own-key compatibility and parent-delete metadata type narrowing also merged with99 and22 targeted tests.
@@ -19,3 +19,6 @@ Gate7 types: correct13 retained63 =52 transcript (fixed7dd),2 ES2020 (fixed),2 m
 Inbox: ACK lead06:16/06:21 keeper incident and06:23 new close-merge-request tool; closure worker re-publishes twelve stale results with tool (old direct hub writes did not sync). ACK Runtime06:12 exact404 request_id body/header distinction; App2 owns the original strict envelope conversion and actual parent proof. Private016 allocation supersedes015; future callers remain dormant. Agent group5672 is source-only, published014 lacks group/free-multi; original3 it.fails retained. App2 transcript7dd merged9f25; no concurrent parent binding edits by HOME.
 Decided locally: keep current full on exact ba1 despite later type-only safe fixes; repeat only for known external keeper deletion with explicit lease; preserve legacy popup and ordinary publishers until their exact consumer family qualifies; do not replay unknown historical503 or4657; no new Theme authority.
 Resources:13GiB free after lead cleanup. New builds wait for the corrected full terminal and local lock/disk checks. Active owned13 graph and source leases stay protected. Item13 zero-test guard0340 DONE;03:24 scratch cleanup DONE. No ZIP, macOS or physical parity claim.
+
+RELEASE: app-pin-ce6deafa. The admitted-node20194 keeper is NOT released: its live Node20 lease remains protected. Historical ce6 suite row was unregistered with evidence retained by r30.
+Decided locally: durable worker details go to notes/DETAILS.md because report.md can be replaced by the final answer; final reports must carry concrete outcomes, not self-links.
