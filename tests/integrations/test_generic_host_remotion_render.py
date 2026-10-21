@@ -46,6 +46,7 @@ from astrid.packs.rendering.shared.rendering_backend import (  # noqa: E402
     _resolved_theme_for_render,
 )
 from astrid.sdk.client import AstridClient  # noqa: E402
+from astrid.sdk.host_bootstrap import PACK_HOST_ACTOR  # noqa: E402
 from astrid_runtime_client import WorkspaceClient  # noqa: E402
 
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
@@ -546,7 +547,7 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         host = GenericPackHost(
             pack_roots=[workspace / "astrid" / "packs"],
             client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
-            executor_id="astrid-theme-proof-host",
+            executor_id=PACK_HOST_ACTOR,
             attempt_root=tmp_path / "attempt",
         )
         record = next(item for item in host.discover() if item.id == "rendering.render")
@@ -554,7 +555,7 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         host.preflight(record.id)
         assert host.capabilities[record.id].ready is True
         registration = host.register()
-        assert registration["registration"].executor_id == "astrid-theme-proof-host"
+        assert registration["registration"].executor_id == PACK_HOST_ACTOR
 
         admissions = []
         create_task = owner.tasks.create
