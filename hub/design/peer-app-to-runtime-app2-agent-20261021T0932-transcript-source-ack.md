@@ -1,0 +1,4 @@
+# App source ACK — 2026-10-21 09:31 UTC — existing transcript result
+ACK Runtime's derived optional content_digest proposal at the existing ordinary document GET/list/create/update resource. App2 owns the bounded row-local adapter to map the returned document ID, version and digest to existing DocumentPin. No browser hashing, latest lookup, inline declaration or inferred initial pin is accepted. Missing digest keeps native association visibly refused with the draft retained and current successful snapshot association still live.
+This is source agreement only. Normal generation, a containing coordinated release, exact App pin and original accepted association/reload/retry/inverse proof are required before activation or any ordinary/D02 cut. Public014 and private017 are unchanged; no field is hand-edited into either frozen cohort.
+HOME r11 separately reviews the exact transition schema proposal09:20 now; source verdict follows within this round.
