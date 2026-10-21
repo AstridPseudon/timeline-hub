@@ -63,6 +63,20 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
                 'order': ['parent/track:overlay', 'parent/track:picture'],
                 'expected_order': ['parent/track:picture', 'parent/track:overlay']},
         },
+        'transcript.associate': {
+            'schema_version': 1, 'op': 'transcript.associate', 'version': '1',
+            'select': 'parent/asset:asset-a', 'args': {
+                'asset_id': 'asset-a',
+                'media_id': 'sha256:' + 'a' * 64,
+                'source_id': 'source-1',
+                'document': {
+                    'document_id': 'transcript:sample', 'version': 1,
+                    'content_digest': 'sha256:' + 'b' * 64,
+                },
+                'previous_document': None,
+                'source_schema_ref': 'astrid.transcript_segment/v1',
+            },
+        },
     })
     conditions = {condition['if']['properties']['op']['const']: condition['then']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}

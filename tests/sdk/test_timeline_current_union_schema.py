@@ -133,8 +133,8 @@ def s2_slice():
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
-    assert len(_SCHEMA['$defs']) == 64
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 36
+    assert len(_SCHEMA['$defs']) == 65
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 37
 
 
 def test_each_added_definition_and_operation_matches_its_approved_source():
@@ -189,9 +189,9 @@ def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
                 'project-data.write', 'timeline.migrate-groups', 'occurrence.move',
                 'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set',
                 'timeline.assembled-target', 'timeline.init', 'timeline.inverse',
-                'timeline.reference', 'track.reorder',
+                'timeline.reference', 'track.reorder', 'transcript.associate',
                 'timeline.restore', 'track.create', 'track.set'}
     actual = [item['if']['properties']['op']['const']
               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
-    assert len(actual) == len(set(actual)) == 36
+    assert len(actual) == len(set(actual)) == 37
     assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}

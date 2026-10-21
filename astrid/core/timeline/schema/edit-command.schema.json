@@ -1898,6 +1898,41 @@
           "if": {
             "properties": {
               "op": {
+                "const": "transcript.associate"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^parent/asset:(?!.*::)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/TranscriptAssociateArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "parent"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "clip.set"
               }
             },
@@ -2990,6 +3025,46 @@
       ],
       "additionalProperties": false,
       "description": "Exact original admitted project-pack Document pin for selected parameter validation."
+    },
+    "TranscriptAssociateArgs": {
+      "type": "object",
+      "required": [
+        "asset_id",
+        "media_id",
+        "source_id",
+        "document",
+        "previous_document",
+        "source_schema_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "media_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "source_id": {
+          "$ref": "#/$defs/ID"
+        },
+        "document": {
+          "$ref": "#/$defs/DocumentPin"
+        },
+        "previous_document": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/DocumentPin"
+            }
+          ]
+        },
+        "source_schema_ref": {
+          "const": "astrid.transcript_segment/v1"
+        }
+      },
+      "description": "Unfrozen source-only film carrier. Selects one parent asset and atomically records its exact transcript association and canonical source-item collection. Caption/review reconciliation is not part of v1."
     },
     "ProducerAdmittedTarget": {
       "type": "object",
