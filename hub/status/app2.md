@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T00:41:06Z | dispatcher heartbeat 5s | live 5 (sol 0, luna 5, other 0) | busy30 13 | status age 0m -->
+<!-- app2 | 2026-10-21T00:45:42Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 15 | status age 4m -->
 # app2 — 2026-10-21 00:41 UTC
 Milestone: M2. Duplicate DELETED; six rows OPEN. Restart recovered. Bootstrap public013 regression is HOME's top-priority rollback; App2 activation/product edits paused.
 Integrated: latest fetched HOME 780c502368 (not newly qualified here); previous oracle41bf, adapter7d, selected5a, trim0fa/3935 and public13 buildce6/e401 retained. No manager product edits or new merge this round.
