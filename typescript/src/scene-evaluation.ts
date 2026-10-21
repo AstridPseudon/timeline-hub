@@ -8,7 +8,7 @@ import {mediaModifierBounds} from './lib/modifier-bounds';
 import type {AssetRegistry, TimelineClip, TrackDefinition} from './types';
 import {provenOpaqueMedia, type SceneCapabilities, type ComponentDiagnostics} from './scene-capabilities';
 import type {ModifierRegistry, ModifierBounds} from './modifier-types';
-import {ANIMATION_DEFAULTS} from './animations.generated';
+import {ANIMATION_DEFAULTS} from './animation-metadata.generated';
 import {computeRenderBounds, getVisibleBoundsFromCrop, type RenderBounds} from './lib/render-bounds';
 
 export type SceneFinding = {code: string; clipId: string; reason: string; instanceId?: string; element?: string};

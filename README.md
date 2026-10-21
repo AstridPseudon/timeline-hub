@@ -399,7 +399,7 @@ interface. This smoke does not prove browser pixels, Player audio or film parity
 Registry generation uses only `scripts/builtin-inputs.json` and the listed local
 components/defaults/meta under `typescript/src/builtins`. `npm run gen-registry`
 updates checked-in generated source; `gen-registry:check` refuses drift in any of
-the four files. Installed themes and neighboring workspaces cannot affect this
+the five files. Installed themes and neighboring workspaces cannot affect this
 output. Optional host discovery/generation stays in the host and supplies maps
 through the same scoped input.
 

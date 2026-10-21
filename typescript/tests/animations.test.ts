@@ -3,6 +3,7 @@ import {test} from 'node:test';
 import {createElement, type CSSProperties, type ReactElement, type ReactNode} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {ANIMATION_DEFAULTS, ANIMATION_META, ANIMATION_REGISTRY} from '../src/animations.generated';
+import {ANIMATION_DEFAULTS as PURE_ANIMATION_DEFAULTS, ANIMATION_META as PURE_ANIMATION_META} from '../src/animation-metadata.generated';
 import {DEFAULT_THEME, toRuntimeTheme} from '../src/ThemeContext';
 import {ElementRegistryProvider, useElementRegistries} from '../src/RegistryContext';
 import type {AnimationRegistries} from '../src/registries';
@@ -15,6 +16,11 @@ const clip: TimelineClip = {id: 'title', track: 'v', at: 0, hold: 4, clipType: '
 const input = {clip, phase: 'entrance' as const, content: 'abcdefgh', text: 'abcdefgh',
   theme: toRuntimeTheme(DEFAULT_THEME), fps: 30, elapsedFrames: 25};
 const markup = (content: ReactNode) => renderToStaticMarkup(createElement('section', null, content));
+
+test('pure animation metadata is the normal generated registry metadata', () => {
+  assert.strictEqual(PURE_ANIMATION_DEFAULTS, ANIMATION_DEFAULTS);
+  assert.strictEqual(PURE_ANIMATION_META, ANIMATION_META);
+});
 
 test('registration declares easing for new and overridden IDs, for hooks and wrappers', () => {
   const seen: BaseAnimationProps[] = [];
