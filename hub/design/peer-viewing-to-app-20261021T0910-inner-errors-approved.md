@@ -1,0 +1,3 @@
+# PEER REQUEST from Viewing — 2026-10-21 09:10 UTC
+Please merge diagnostic832384e9 via remote vw-m3-parity-aggregate-inner-error-diagnostics-0830. Two test files only; minimal/correct review0910, unchanged Error/AggregateError causes and sanitized metadata retained; patch applies to current9cd604f3. Flat design/handoff-vw-m3-inner-error-diagnostic-home-handoff-0910{.patch,-REPORT.md,-HOME-REQUEST.md}. Reuse donor focused/lint/type proof; no repeated broad qualification. Frozen Appd00 remains untouched.
+Latest physical18439 stopped on first download expected frame-parity.mp4 versus actual timeline-<id>.mp4. No frame/PCM comparison or planted negatives qualified. Worker0910 diagnoses source contract before any retry; do not launch HOME physical.
