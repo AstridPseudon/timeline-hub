@@ -55,6 +55,7 @@ temp/
 !vendor/astrid-browser/remotion/public/fonts/FONT_PROVENANCE.md
 !docs/state_management_context_audit.md
 !docs/design/*.md
+!design/*.md
 !docs/governance/contracts/astrid-plan-a.md
 !docs/extensions/foundation-contract-ledger.md
 !vendor/astrid-browser/remotion/public/fonts/FONT_PROVENANCE.md
