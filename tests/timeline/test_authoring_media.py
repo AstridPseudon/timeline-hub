@@ -554,6 +554,72 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     }]
     first_shot['payload']['opaque_namespace'] = {'media': old_media['object_id']}
     first_shot['payload']['internal_timeline_revision_id'] = old_internal_id
+
+    # The real text-binding API only creates bindings for unplaced catalog
+    # shots.  Persist this exact child closure on a private empty timeline so
+    # the normal catalog writer can create the authoritative voiceover before
+    # the accepted film baseline exists.  This is trusted fixture setup only;
+    # the proof below still publishes through the native document route.
+    from runtime_protocol.timeline_commit_store import digest
+
+    voiceover_text = b'hello'
+    voiceover_media_id = 'sha256:' + hashlib.sha256(voiceover_text).hexdigest()
+    voiceover_binding_id = RuntimeService._text_binding_id(
+        project, 'shot-1', 'voiceover_script', None
+    )
+    voiceover_pin = {
+        'binding_id': voiceover_binding_id,
+        'project_id': project,
+        'shot_id': 'shot-1',
+        'kind': 'voiceover_script',
+        'slot': None,
+        'media_id': voiceover_media_id,
+        'event_stream_id': voiceover_binding_id + ':shot.text_binding',
+        'head': 1,
+        'content_hash': voiceover_media_id,
+        'mime_type': 'text/plain',
+        'byte_size': len(voiceover_text),
+        'text': voiceover_text.decode('utf-8'),
+    }
+    first_shot['payload']['text_bindings'] = [
+        *(first_shot['payload'].get('text_bindings') or []), voiceover_pin,
+    ]
+    first_internal['content_digest'] = digest(first_internal['payload'])
+    first_shot['content_digest'] = digest(first_shot['payload'])
+    service.create_timeline(project, 'film-bootstrap', idempotency_key='wc6-bootstrap-timeline')
+    commits, _ = service._timeline_commits()
+    commits.bootstrap(project, 'film-bootstrap', authorize=lambda: None)
+    bootstrap = commits.revision_closure(
+        project, 'film-bootstrap', commits.head(project, 'film-bootstrap')['revision_id']
+    )
+    bootstrap['shot_revisions'] = copy.deepcopy(shots)
+    bootstrap['internal_timeline_revisions'] = copy.deepcopy(internals)
+    with service.store._transaction():
+        commits._persist_closure(bootstrap)
+    returned_voiceover = service.set_project_shot_text_binding(
+        project,
+        {
+            'shot_id': 'shot-1', 'kind': 'voiceover_script', 'text': voiceover_text,
+            'expected_head': 0,
+        },
+        idempotency_key='wc6-voiceover-binding',
+    )['data']
+    assert {
+        key: returned_voiceover[key]
+        for key in ('binding_id', 'project_id', 'shot_id', 'kind', 'slot', 'media_id',
+                    'event_stream_id', 'head', 'content_hash', 'mime_type', 'byte_size')
+    } == {key: voiceover_pin[key] for key in (
+        'binding_id', 'project_id', 'shot_id', 'kind', 'slot', 'media_id',
+        'event_stream_id', 'head', 'content_hash', 'mime_type', 'byte_size'
+    )}
+    assert service.list_project_shot_text_bindings(
+        project, shot_id='shot-1', kind='voiceover_script'
+    )['items'] == [returned_voiceover]
+    assert service.get_project_shot_text_binding(
+        project, returned_voiceover['binding_id']
+    ) == returned_voiceover
+    assert service.cas.read(returned_voiceover['media_id'].removeprefix('sha256:')) == voiceover_text
+
     baseline_head = service.get_project_timeline(project, 'film')['head_revision_id']
     seeded = seed_trusted_parent(
         service,
@@ -585,6 +651,13 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
 
     client = open_client(daemon)
     transport = WorkspaceClient(daemon.endpoint, daemon.credential_path)
+    authoritative_voiceover = client.shots.show_text_binding(
+        project, returned_voiceover['binding_id'], include_text=True
+    )
+    assert authoritative_voiceover.ok
+    assert authoritative_voiceover.data == {
+        **returned_voiceover, 'text': voiceover_pin['text']
+    }
     script = Path(__file__).parents[2] / 'astrid/packs/rendering/docs/scripts/timeline_document.py'
     spec = importlib.util.spec_from_file_location('timeline_document_wc6_native_test', script)
     helper = importlib.util.module_from_spec(spec)
@@ -606,6 +679,9 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     checkout_clip = next(row for row in checkout_timeline['clips'] if row['id'] == 'clip-1')
     original_narration = copy.deepcopy(checkout_shot['payload'].get('text_bindings'))
     assert original_narration
+    assert next(
+        row for row in original_narration if row['kind'] == 'voiceover_script'
+    ) == voiceover_pin
     original_metadata = copy.deepcopy(checkout_shot['payload'].get('metadata'))
     original_source_window = {
         key: checkout_clip.get(key) for key in ('from', 'to', 'source_window')
@@ -647,6 +723,10 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     assert published_shot['payload']['assets'][0]['source']['media_id'] == new_digest
     assert published_shot['payload']['opaque_namespace']['media'] == old_media['object_id']
     assert published_shot['payload']['text_bindings'] == original_narration
+    assert next(
+        row for row in published_shot['payload']['text_bindings']
+        if row['kind'] == 'voiceover_script'
+    ) == voiceover_pin
     assert published_shot['payload']['metadata'] == original_metadata
     second_shot = next(row for row in published_document['shot_revisions'] if row['shot_id'] == 'shot-2')
     baseline_second = next(row for row in baseline['shot_revisions'] if row['shot_id'] == 'shot-2')
@@ -664,6 +744,10 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     assert reloaded_document['base_parent']['revision_id'] == published_document['parent_revision']['revision_id']
     assert reloaded_document['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['media_id'] == new_digest
     assert reloaded_document['shots'][first_id]['payload']['text_bindings'] == original_narration
+    assert next(
+        row for row in reloaded_document['shots'][first_id]['payload']['text_bindings']
+        if row['kind'] == 'voiceover_script'
+    ) == voiceover_pin
 
     from runtime_protocol.server import RuntimeHandler
 
