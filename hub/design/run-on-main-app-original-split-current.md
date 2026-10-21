@@ -1,6 +1,6 @@
 # Run on main: App original parent split, current paired-seek source
 
-Status: **one-run packet; do not execute in this worker**.
+Status: **READY FOR MAIN — one-run packet; do not execute in this worker**.
 
 This is the PLAN D01 original parent-split proof on the integrated paired-seek
 successor. It reuses the existing normal three-products driver, fixture,
@@ -23,10 +23,11 @@ not a moving branch tip:
 The exact source has both `e1c0d8d52` and `2b85341ef` as ancestors. The
 cached hub integration ref currently lags at commit
 `1490fbfe90f83c7c7c380d5cb16ccfcc0e9dcfcf` / tree
-`8e242d1497841f391b6152ecd8d204143fa03b52`; main must refuse to run unless
-the resolved `hub/timeline/app/tl/integration` (or its exact source keeper)
-resolves to `435e76eb…` / `daf4e71b…`. Do not substitute that older hub value
-or a later moving tip without recording a new packet.
+`8e242d1497841f391b6152ecd8d204143fa03b52`; this is publication context only.
+The selected App checkout (or exact source keeper) must resolve to
+`435e76eb…` / `daf4e71b…`, while the hub integration ref need only be reachable
+and may move; it need not equal exact435e. Do not substitute another selected
+App source without recording a new packet.
 
 The approved fa20 credential correction is reused at blob level, unchanged;
 its commit is intentionally not claimed as an ancestor of the integrated
@@ -57,8 +58,15 @@ The existing launcher and source guards require this exact tuple:
 | Composition carrier | `0.0.13`, archive SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738` | exactly 77 safe regular archive files |
 
 Use the existing private public13 graph and normal fixture. Do not install,
-repack, mutate, or replace shared `node_modules`; a missing private graph is a
-main-machine prerequisite failure, not permission to make a new graph.
+repack, mutate, or replace shared `node_modules`. If `GRAPH/node_modules` is
+absent, main may materialize an own, physical, symlink-free copy under
+`GRAPH/node_modules` from installed read-only dependencies already present on
+the machine. That copy must not resolve through `/home/user/work/app/node_modules`
+or any other shared install. No network, `npm install`, package-manager
+postinstall, archive extraction into shared `node_modules`, or unqualified pin
+is permitted. Before list1, verify the exact public13 archive, its 77 safe
+regular files, the Runtime all76 manifest, and the required peer versions
+below. If any source or byte identity cannot be verified, stop.
 
 ## One mandatory case and zero-failure rule
 
@@ -97,8 +105,8 @@ it as a pass.
 
 The App-machine-only runner needs a private source/graph/credential setup that
 is not available in this worker. Main should use short, physical mode-0700
-paths; the path to every resolved temporary directory, Chromium profile, and
-Unix socket must be less than 100 characters. The following names are the
+paths; the path to every resolved temporary directory and Unix socket must be
+less than 100 characters. The following names are the
 packet's concrete layout, not new authority:
 
 ```bash
@@ -114,22 +122,21 @@ EVIDENCE=$MAIN/evidence/split-current
 NODE=$MAIN/node-v20.19.4-linux-x64/bin/node
 CHROME=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
 TMP=$MAIN/t
-PROFILE=$MAIN/p
 SOCKET=$MAIN/s
 CONFIG=$APP/playwright.parent-split.config.ts
 SHORT=/tmp/tl-split-435e
 
-mkdir -p "$MAIN/h" "$MAIN/n" "$MAIN/w" "$MAIN/v" "$MAIN/c" "$TMP" "$PROFILE" "$SOCKET" "$SHORT"
-chmod 700 "$MAIN/h" "$MAIN/n" "$MAIN/w" "$MAIN/v" "$MAIN/c" "$TMP" "$PROFILE" "$SOCKET" "$SHORT"
+mkdir -p "$MAIN/h" "$MAIN/n" "$MAIN/w" "$MAIN/v" "$MAIN/c" "$TMP" "$SOCKET" "$SHORT" "$EVIDENCE"
+chmod 700 "$MAIN/h" "$MAIN/n" "$MAIN/w" "$MAIN/v" "$MAIN/c" "$TMP" "$SOCKET" "$SHORT" "$EVIDENCE"
 test "$("$NODE" --version)" = v20.19.4
 test -x "$CHROME"
-for d in "$MAIN" "$APP" "$AGENT" "$AGENT_VENDOR" "$RUNTIME" "$GRAPH" "$PRIVATE" "$EVIDENCE" "$TMP" "$PROFILE" "$SOCKET" "$SHORT"; do
+for d in "$MAIN" "$APP" "$AGENT" "$AGENT_VENDOR" "$RUNTIME" "$GRAPH" "$GRAPH/node_modules" "$PRIVATE" "$EVIDENCE" "$TMP" "$SOCKET" "$SHORT"; do
   test -d "$d" && test ! -L "$d"
 done
-for d in "$PRIVATE" "$EVIDENCE" "$TMP" "$PROFILE" "$SOCKET" "$SHORT"; do
+for d in "$PRIVATE" "$EVIDENCE" "$TMP" "$SOCKET" "$SHORT"; do
   test "$(stat -c '%a' "$d")" = 700
 done
-test "${#TMP}" -lt 100; test "${#PROFILE}" -lt 100; test "${#SOCKET}" -lt 100
+test "${#TMP}" -lt 100; test "${#SOCKET}" -lt 100
 test "$(git -C "$APP" rev-parse HEAD)" = 435e76eb3f2dcaa0324ed69d4c019ab9c32bfbef
 test "$(git -C "$APP" rev-parse HEAD^{tree})" = daf4e71ba71ebaf6a2bc8b6cd6e66fc13d762273
 git -C "$APP" merge-base --is-ancestor e1c0d8d52bd37c792368523ce8a6bfc7a55ad40a HEAD
@@ -138,16 +145,34 @@ test -z "$(git -C "$APP" status --porcelain --untracked-files=normal)"
 test -z "$(git -C "$AGENT" status --porcelain --untracked-files=normal)"
 test -z "$(git -C "$AGENT_VENDOR" status --porcelain --untracked-files=normal)"
 test -z "$(git -C "$RUNTIME" status --porcelain --untracked-files=normal)"
+test "$(realpath "$APP/node_modules")" = "$(realpath "$GRAPH/node_modules")"
+test "$(realpath "$GRAPH/node_modules")" != "$(realpath /home/user/work/app/node_modules)"
+test ! -L "$GRAPH/node_modules"
+test -z "$(find "$GRAPH/node_modules" -type l -print -quit)"
+test "$(sha256sum "$APP/tests/e2e/local/parent-split-command.spec.ts" | awk '{print $1}')" = 48938cfeffed2f3d6180206a4e7744c00979b31a14021f61c66ff98638f1f574
+test "$(sha256sum "$APP/playwright.parent-split.config.ts" | awk '{print $1}')" = 7eb1bff0269a554f1b9bfd5d750c622cec07b3472827f68290874fc4b690bad4
+test "$(sha256sum "$APP/scripts/testing/current013-parent-split.mjs" | awk '{print $1}')" = 93c0a21a35ca9a6d254aa12ad7150994ff870e1f7eeac4ecf78172d4a05c86b7
+test "$(sha256sum "$APP/scripts/testing/current013-parent-split.test.mjs" | awk '{print $1}')" = 0cd2e7cbbef272e5ac8d8f6ea5e515498fa6dc78c4815c6658a835937b046449
+test "$(sha256sum "$APP/vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz" | awk '{print $1}')" = 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+test "$(tar -tzf "$APP/vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz" | awk '!/\/$/{n++; if ($0 !~ /^package\// || $0 ~ /(^|\/)\.\.\//) bad=1} END { if (n != 77 || bad) exit 1; print n }')" = 77
+test "$("$NODE" -p "require('$GRAPH/node_modules/@banodoco/timeline-composition/package.json').version")" = 0.0.13
+test "$("$NODE" -p "require('$GRAPH/node_modules/react/package.json').version")" = 18.3.1
+test "$("$NODE" -p "require('$GRAPH/node_modules/react-dom/package.json').version")" = 18.3.1
+test "$("$NODE" -p "require('$GRAPH/node_modules/remotion/package.json').version")" = 4.0.509
+test "$("$NODE" -p "require('$GRAPH/node_modules/@remotion/player/package.json').version")" = 4.0.509
+test "$("$NODE" -p "require('$GRAPH/node_modules/three/package.json').version")" = 0.185.1
+test "$("$NODE" -p "require('$GRAPH/node_modules/playwright/package.json').version")" = 1.60.0
+test "$("$NODE" -p "require('$GRAPH/node_modules/@playwright/test/package.json').version")" = 1.60.0
+test "$("$NODE" -p "Object.keys(require('$RUNTIME/contract/artifacts.json').artifacts).length")" = 76
+command -v ss >/dev/null
+test -z "$(ss -Hln 'sport = :17340' 2>/dev/null)"
 ```
 
 Also compare the four packet files against the exact SHA-256 table above,
-verify `APP/node_modules` resolves only into the private `$GRAPH/node_modules`,
-verify the Runtime manifest has 76 artifacts and the Composition archive has
-77 safe regular files with SHA-256 `9412…d54738`, and verify the existing
-mode-0600 Runtime product credential is not an owner/admin/worker credential.
-The direct door port must be free. These are pure identity, permissions,
-archive, and source checks; they start no browser, Runtime, Vite, socket,
-build, install, or test.
+and verify the existing mode-0600 Runtime product credential is not an
+owner/admin/worker credential. The `realpath`, symlink, peer, archive, manifest,
+and `ss` checks above are executable pure guards. They start no browser,
+Runtime, Vite, socket, build, install, or test.
 
 The existing source-only driver check may then be run from `$APP` with the
 normal private paths. It must print the source identities and pass the
@@ -172,35 +197,34 @@ env -i \
   TIMELINE_CURRENT013_PRIVATE13_LEASE="$PRIVATE/LEASE" \
   TIMELINE_CURRENT013_SHORT_TMPDIR="$SHORT" \
   TIMELINE_CURRENT013_CONFIG_PATH="$CONFIG" \
-  PLAYWRIGHT_CHROMIUM_EXECUTABLE="$CHROME" \
+  PLAYWRIGHT_CHROMIUM_EXECUTABLE="$CHROME" PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers \
+  ASTRID_APP_DIRECT_DOOR_PORT=17340 TMPDIR="$TMP" XDG_RUNTIME_DIR="$SOCKET" \
+  npm_config_cache="$MAIN/n" npm_config_offline=true PWTEST_CACHE_DIR="$MAIN/w" \
+  VITE_CACHE_DIR="$MAIN/v" XDG_CACHE_HOME="$MAIN/c" \
   WORKSPACE_RUNTIME_TOKEN_FILE="$PRIVATE/product-credential.json" \
-  "$NODE" --input-type=module -e '\
-    import { readCurrent013ParentSplitInputs, checkCurrent013ParentSplitSources } from "./scripts/testing/current013-parent-split.mjs";\
-    const input = readCurrent013ParentSplitInputs(process.env, process.cwd());\
-    console.log(JSON.stringify(checkCurrent013ParentSplitSources(input)));\
-  '
+  "$NODE" --input-type=module -e 'import { readCurrent013ParentSplitInputs, checkCurrent013ParentSplitSources } from "./scripts/testing/current013-parent-split.mjs"; const input = readCurrent013ParentSplitInputs(process.env, process.cwd()); console.log(JSON.stringify(checkCurrent013ParentSplitSources(input)));'
 ```
 
-The direct `--list` check is mandatory and is the only collection command in
-preflight. It must select one test, once:
+The existing driver API supplies the mandatory list1 check and is the only
+collection path. Do not replace its `npm run` dispatch with direct `npm exec`.
+Its exact internal list argv is:
 
-```bash
-cd "$APP"
-env -i HOME="$MAIN/h" LANG=C.UTF-8 PATH="$MAIN/node-v20.19.4-linux-x64/bin:/usr/bin:/bin" \
-  ASTRID_CHECKOUT="$AGENT" ASTRID_RUNTIME_CHECKOUT="$RUNTIME" \
-  ASTRID_PYTHON=/home/user/work/venv-agent/bin/python \
-  ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python \
-  npm_config_cache="$MAIN/n" npm_config_offline=true \
-  npm exec -- playwright test \
-    --config "$CONFIG" tests/e2e/local/parent-split-command.spec.ts --list
-# Required: exactly one title, one file, and “Total: 1 test in 1 file”.
+```text
+npm ["run", "test:e2e:three-products", "--", "--config", "playwright.parent-split.config.ts", "--list"]
 ```
+
+The same private module/cache/browser environment and exact bundle heads must
+be present for list1 and the actual. The driver itself injects
+`TIMELINE_BUNDLE_AGENT_HEAD` and `TIMELINE_BUNDLE_RUNTIME_HEAD` into both
+children, runs list1 exactly once, and refuses unless the output has exactly
+one title, one file, and `Total: 1 test in 1 file`; the one actual command below
+then dispatches the original test once.
 
 If the private driver, exact pinned checkouts, credential, or normal public13
-graph is absent, stop here. The worker cannot recreate or qualify an
-App-machine-only browser/localhost graph. Main may recreate the private source
-keepers only from these immutable pins (without touching shared installs),
-then repeat the preflight; it must not choose another source:
+graph is absent, stop here. Main may prepare the own private graph/source
+keepers only from the immutable pins and installed read-only dependencies
+described above (without touching shared installs), then repeat the preflight;
+it must not choose another source:
 
 ```bash
 git -C "$APP" rev-parse HEAD HEAD^{tree}
@@ -211,18 +235,35 @@ git -C "$APP" show-ref --verify refs/remotes/hub/timeline/app/tl/integration
 ```
 
 The last command is a publication check, not permission to use a stale hub
-ref. The graph remains the existing normal fixture graph; no `npm install`,
-package extraction, graph build, or shared-node_modules mutation is allowed.
+ref or to require the moving hub tip to equal exact435e. The selected App
+checkout must itself be exact435e; the hub ref only needs to be reachable from
+hub integration. The graph remains the verified normal fixture graph; no
+`npm install`, package extraction, graph build, or shared-node_modules mutation
+is allowed.
 
 ## One exact main command
 
-After every preflight check passes, run this existing Playwright command once
-from `$APP`, with no `--grep`, selector override, timeout override, retry loop,
-or alternate config. `env -i` keeps `NODE_OPTIONS`, `NODE_PATH`, `PYTHONHOME`,
-and all `LD_*` variables unset for the harness children.
+After every preflight check passes, set `CACHE_ID` from the existing driver's
+`parentSplitCacheIdentity(input)` with a pure source-only import, then run the
+existing driver once from `$APP`. This is the one original actual command; it
+has no `--grep`, selector override, timeout override, retry loop, or alternate
+config. `env -i` keeps `NODE_OPTIONS`, `NODE_PATH`, `PYTHONHOME`, and all
+`LD_*` variables unset for the harness children.
 
 ```bash
 cd "$APP"
+CACHE_ID="$(env -i HOME="$MAIN/h" LANG=C.UTF-8 PATH="$MAIN/node-v20.19.4-linux-x64/bin:/usr/bin:/bin" \
+  "$NODE" --input-type=module -e 'import { parentSplitCacheIdentity } from "./scripts/testing/current013-parent-split.mjs"; console.log(parentSplitCacheIdentity({ appSha: "435e76eb3f2dcaa0324ed69d4c019ab9c32bfbef", appTree: "daf4e71ba71ebaf6a2bc8b6cd6e66fc13d762273", agentSha: "6efc81500a0e0688c2bb41e736503f0fc3e04abb", runtimeSha: "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c" }));')"
+test -n "$CACHE_ID"
+```
+
+```bash
+cd "$APP"
+GRAPH_NODE_MODULES_REALPATH="$(realpath "$GRAPH/node_modules")"
+SHARED_NODE_MODULES_REALPATH="$(realpath /home/user/work/app/node_modules)"
+: > "$EVIDENCE/driver.log"
+printf 'graph-node-modules-before=%s\nshared-node-modules-before=%s\n' "$GRAPH_NODE_MODULES_REALPATH" "$SHARED_NODE_MODULES_REALPATH" >> "$EVIDENCE/driver.log"
+set +e
 env -i \
   HOME="$MAIN/h" LANG=C.UTF-8 PATH="$MAIN/node-v20.19.4-linux-x64/bin:/usr/bin:/bin" \
   ASTRID_CHECKOUT="$AGENT" ASTRID_RUNTIME_CHECKOUT="$RUNTIME" \
@@ -248,25 +289,54 @@ env -i \
   npm_config_cache="$MAIN/n" npm_config_offline=true PWTEST_CACHE_DIR="$MAIN/w" \
   VITE_CACHE_DIR="$MAIN/v" XDG_CACHE_HOME="$MAIN/c" \
   PLAYWRIGHT_OUTPUT_DIR="$EVIDENCE" \
-  npm exec -- playwright test \
-    --config "$CONFIG" tests/e2e/local/parent-split-command.spec.ts \
-  > "$EVIDENCE/playwright.log" 2>&1
+  TIMELINE_CURRENT013_RUN=1 TIMELINE_CURRENT013_CACHE_ID="$CACHE_ID" \
+  "$NODE" scripts/testing/current013-parent-split.mjs \
+  >> "$EVIDENCE/driver.log" 2>&1
+STATUS=$?
+set -e
+POSTFLIGHT=0
+test "$(realpath "$APP/node_modules")" = "$GRAPH_NODE_MODULES_REALPATH" || POSTFLIGHT=1
+test "$(realpath "$GRAPH/node_modules")" = "$GRAPH_NODE_MODULES_REALPATH" || POSTFLIGHT=1
+test "$(realpath /home/user/work/app/node_modules)" = "$SHARED_NODE_MODULES_REALPATH" || POSTFLIGHT=1
+test "$GRAPH_NODE_MODULES_REALPATH" != "$SHARED_NODE_MODULES_REALPATH" || POSTFLIGHT=1
+printf 'graph-node-modules-after=%s\nshared-node-modules-after=%s\npostflight=%s\n' "$(realpath "$GRAPH/node_modules")" "$(realpath /home/user/work/app/node_modules)" "$POSTFLIGHT" >> "$EVIDENCE/driver.log"
+if test "$POSTFLIGHT" -ne 0; then exit 1; fi
+exit "$STATUS"
 ```
 
-The command carries the exact source, private-graph, credential, Runtime,
-Agent, and Chromium assignments used by the source preflight. Preserve the
-evidence directory on failure, including the Playwright trace and failure
-context. A passing result is only the exact one-test, zero-failure result
-above.
+The command carries every source, credential, graph, Runtime, Agent, port,
+cache, temp, browser, and bundle-head assignment consumed by the existing
+driver. The driver rechecks sources immediately before dispatch, runs the
+original list1, dispatches the original actual, and rechecks all source,
+vendor-lock, manifest, archive, clean-tree, and credential guards in `finally`
+while preserving the child status. It spawns no `npm exec`; its exact internal
+actual argv is:
+
+```text
+npm ["run", "test:e2e:three-products", "--", "--config", "playwright.parent-split.config.ts"]
+```
+
+Preserve the evidence directory on failure, including the driver log,
+Playwright trace, and failure context. A passing result is only the exact
+one-test, zero-failure result above.
 
 ## Scope and next step
 
 This worker performed read-only ancestry/blob/source checks and documentation
 only. It did not run the actual, browser, localhost/live-socket, build,
 install, full suite, or create a dependency graph. Main should execute the
-single command only after the exact source publication and private normal
-fixture preflight pass; report the exact source tuple, list output, exit/count,
-and retained failure evidence.
+single driver command only after the exact source publication and private
+normal fixture preflight pass; report the exact source tuple, list output,
+exit/count, and retained failure evidence.
 
 ## HOME command hold — 2026-10-21 10:45 UTC
-Exact435e source and player pair are approved. Command-only effective shell/JS review r47 checks the executable source preflight, source checkout versus moving hub ref and graph prerequisites before the one actual. Do not consume the actual until its literal corrections/verdict are recorded. Main may prepare its own isolated verified dependency copy from installed read-only dependencies if required; never mutate shared installs.
+Exact435e source and player pair are approved. r47 HOLD corrections are
+resolved here: the source-only `-e` payload is one physical line; main may
+prepare its own isolated verified dependency copy from installed read-only
+dependencies; graph/module/archive/peer/port/list/credential/source/cache/temp
+guards are executable; list1 uses the existing driver argv/env; and the sole
+actual uses the existing driver's preflight/dispatch/postflight custody. The
+hub integration ref is publication reachability only, not a moving-tip
+identity requirement. No browser, build, install, new graph, full suite, or
+actual was run in this worker. READY FOR MAIN means main still must satisfy
+the real machine prerequisite checks and consume the one command once.

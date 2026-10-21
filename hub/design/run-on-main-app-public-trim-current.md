@@ -163,17 +163,48 @@ credential/realm/actor/project/Origin checks. Main may use its own isolated
 verified dependency graph, but shared node_modules, venvs, and caches remain
 read-only; no guard may be bypassed.
 
+Pure environment/path validation, before either Playwright command (no browser,
+build, install, graph generation, or actual):
+
+```bash
+env -i \
+  PATH=/usr/bin:/bin \
+  MAIN="$MAIN" NODE="$NODE" CHROME=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
+  PRIVATE="$PRIVATE" EVIDENCE="$EVIDENCE" GRAPH="$GRAPH" \
+  /bin/bash -eu -c '
+    test "$("$NODE" --version)" = v20.19.4
+    test -x "$CHROME"
+    test "$(sha256sum "$CHROME" | awk "{print \$1}")" = 85918a9937192b78da8edb51c38a7af4920ac6bd9ba19939ecb0bb724d5a1a95
+    for path in "$MAIN" "$PRIVATE" "$MAIN/run" "$MAIN/run/t" "$MAIN/home" "$MAIN/cache" "$MAIN/cache/pw" "$MAIN/cache/vite" "$MAIN/cache/xdg" "$MAIN/cache/npm" "$EVIDENCE"; do
+      test -d "$path"
+      test ! -L "$path"
+      test "$(realpath "$path")" = "$path"
+      test "$(stat -c %a "$path")" = 700
+      test "${#path}" -lt 100
+    done
+    test -d "$GRAPH/node_modules"
+    test -z "$(find "$GRAPH/node_modules" -type l -print -quit)"
+    while IFS= read -r -d "" socket; do
+      resolved=$(realpath "$socket")
+      test "${#resolved}" -lt 100
+    done < <(find "$MAIN/run" -type s -print0)
+  '
+```
+
+The existing harness must keep all allocated socket paths under `$MAIN/run`;
+the final `find` check is repeated after allocation and after teardown.
+
 ## Pure preflight evidence in this worker
 
 Using private cache directories only:
 
 ```bash
-env -i HOME=/tmp/tl-app-m2-public-trim-r42-preflight/home LANG=C.UTF-8 \
+env -i HOME=/tmp/tl-app-m2-trim-existing-fixture-port-readiness-r43/home LANG=C.UTF-8 \
   PATH=/opt/node20/bin:/usr/bin:/bin \
-  npm_config_cache=/tmp/tl-app-m2-public-trim-r42-preflight/npm-cache \
+  npm_config_cache=/tmp/tl-app-m2-trim-existing-fixture-port-readiness-r43/npm-cache \
   npm_config_offline=true \
-  VITE_CACHE_DIR=/tmp/tl-app-m2-public-trim-r42-preflight/vite-cache \
-  XDG_CACHE_HOME=/tmp/tl-app-m2-public-trim-r42-preflight/xdg-cache \
+  VITE_CACHE_DIR=/tmp/tl-app-m2-trim-existing-fixture-port-readiness-r43/vite-cache \
+  XDG_CACHE_HOME=/tmp/tl-app-m2-trim-existing-fixture-port-readiness-r43/xdg-cache \
   npm exec -- playwright test \
     --config playwright.public-trim.config.ts \
     --list
@@ -189,10 +220,12 @@ proof.
 Pure preflight test:
 
 ```bash
-env -i HOME=/tmp/tl-app-m2-public-trim-r42-preflight/home LANG=C.UTF-8 \
+env -i HOME=/tmp/tl-app-m2-trim-existing-fixture-port-readiness-r43/home LANG=C.UTF-8 \
   PATH=/opt/node20/bin:/usr/bin:/bin \
-  npm_config_cache=/tmp/tl-app-m2-public-trim-r42-preflight/npm-cache \
+  npm_config_cache=/tmp/tl-app-m2-trim-existing-fixture-port-readiness-r43/npm-cache \
   npm_config_offline=true \
+  VITE_CACHE_DIR=/tmp/tl-app-m2-trim-existing-fixture-port-readiness-r43/vite-cache \
+  XDG_CACHE_HOME=/tmp/tl-app-m2-trim-existing-fixture-port-readiness-r43/xdg-cache \
   /opt/node20/bin/node --import ./node_modules/tsx/dist/esm/index.mjs \
   --test tests/e2e/local/support/public-trim-preflight.test.ts
 ```
