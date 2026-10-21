@@ -130,6 +130,8 @@ actions:
       path: actions/sync_draft_voiceover/run.py
     - kind: implementation
       path: shared/draft_voiceover.py
+    - kind: implementation
+      path: shared/voiceover_requester.py
     - kind: documentation
       path: actions/sync_draft_voiceover/STAGE.md
   cut:
