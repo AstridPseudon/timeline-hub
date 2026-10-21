@@ -3110,3 +3110,9 @@ body.lightbox-transitioning [data-dialog-content] {
     transition: none !important;
   }
 }
+
+/* A full-screen extension panel owns the editor area: the editor's floating pane controls
+   (gallery, shots, editor tabs) must not draw over it. The Tasks pane's own edge tab stays. */
+body:has([data-panel-fullscreen-frame]) [data-pane-control]:not([data-pane-control-side="right"]) {
+  visibility: hidden;
+}

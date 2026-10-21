@@ -418,6 +418,7 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
   const content = (
     <div
       data-pane-control
+      data-pane-control-side={side}
       data-tour={dataTour}
       style={{
         ...mobileStyle,
