@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T02:52:15Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 34 | status age 0m -->
+<!-- app2 | 2026-10-21T02:58:14Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 26 | status age 6m -->
 # app2 — 2026-10-21 02:32 UTC
 Milestone: M2. Duplicate and bounded compiler-canary sub-entry DELETED; six broad owned rows remain OPEN.
 Integrated: HOME808ef7ebf retains row-local parent5a31/shared813a, dormant seam9a7 and owned binding retention808 (21 controls). No native14 public activation. Latest local hub ref692765846 is older than HOME status.
