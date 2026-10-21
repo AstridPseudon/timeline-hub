@@ -1,5 +1,6 @@
 import type { ClipScalarCapturePort } from '../commands/clipScalarGesture.ts';
 import type { ClipTrimCapturePort } from '../commands/clipTrimGesture.ts';
+import type { ClipSplitCapturePort } from '@/tools/video-editor/commands/clipSplitGesture.ts';
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
 import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
@@ -148,6 +149,7 @@ export interface TimelineEditorOpsContextValue {
   element?: ElementCapturePort;
   clipScalar?: ClipScalarCapturePort;
   clipTrim?: ClipTrimCapturePort;
+  clipSplit?: ClipSplitCapturePort;
   selectedParam?: ClipParamsCapturePort;
   trackLabel?: TrackLabelCapturePort;
   shotSet?: ShotSetCapturePort;

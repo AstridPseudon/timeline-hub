@@ -186,6 +186,7 @@ function useTimelineEditorContextValue({
   trackLabelPort,
   clipScalarPort,
   clipTrimPort,
+  clipSplitPort,
   selectedParamPort,
   elementPort,
   shotSetPort,
@@ -235,6 +236,7 @@ function useTimelineEditorContextValue({
   trackLabelPort?: TrackLabelCapturePort;
   clipScalarPort?: ClipScalarCapturePort;
   clipTrimPort?: ClipTrimCapturePort;
+  clipSplitPort?: import('@/tools/video-editor/commands/clipSplitGesture.ts').ClipSplitCapturePort;
   selectedParamPort?: ClipParamsCapturePort;
   elementPort?: import('@/tools/video-editor/commands/elementGesture.ts').ElementCapturePort;
   shotSetPort?: ShotSetCapturePort;
@@ -265,6 +267,7 @@ function useTimelineEditorContextValue({
   return useMemo<TimelineEditorContextValue>(() => ({
     clipScalar: clipScalarPort,
     clipTrim: clipTrimPort,
+    clipSplit: clipSplitPort,
     selectedParam: selectedParamPort,
     element: elementPort,
     trackLabel: trackLabelPort,
@@ -371,6 +374,7 @@ function useTimelineEditorContextValue({
   }), [
     applyEdit,
     commands,
+    clipSplitPort,
     assetManagement.handleAssetDrop,
     assetManagement.registerGenerationAsset,
     assetManagement.prepareGenerationAsset,
@@ -980,6 +984,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   });
 
   const clipEditing = useClipEditing({
+    clipSplit: save.commands.clipSplitPort,
     genericPatchPort: save.commands.genericPatchPort,
     editability: runtime.timelineEditability,
     dataRef,
@@ -1170,6 +1175,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     trackLabelPort: save.commands.trackLabelPort,
     clipScalarPort: save.commands.clipScalarPort,
     clipTrimPort: save.commands.clipTrimPort,
+    clipSplitPort: save.commands.clipSplitPort,
     selectedParamPort: save.commands.clipParamsPort,
     elementPort: save.commands.elementPort,
     shotSetPort: save.commands.shotSetPort,
@@ -1262,6 +1268,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     clipMove: save.commands.port,
     clipScalar: save.commands.clipScalarPort,
     clipTrim: save.commands.clipTrimPort,
+    clipSplit: save.commands.clipSplitPort,
     selectedParam: save.commands.clipParamsPort,
     element: save.commands.elementPort,
     trackLabel: save.commands.trackLabelPort,
@@ -1329,7 +1336,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
   }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
-    save.commands.port, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipParamsPort,
+    save.commands.port, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipSplitPort, save.commands.clipParamsPort,
     save.commands.elementPort, save.commands.trackLabelPort, save.commands.shotSetPort, save.commands.occurrenceAddMediaPort,
     save.commands.parentClipAddMediaPort, save.commands.parentClipSwapMediaPort, save.commands.occurrenceDuplicatePort]);
 
