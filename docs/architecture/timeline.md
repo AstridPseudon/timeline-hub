@@ -24,8 +24,9 @@ structure, timing, references, authority, and ancestry without importing a
 renderer; undo and restore are new guarded commits.
 
 Supported derived timing goes through `astrid/sdk/timeline/compiler.py::compile_timing`
-and `_timing_evaluators.py`; old retime/reflow and other derived writers remain
-held below. See has one evaluator in Composition (`typescript/src/evaluation.ts`
+and `astrid/sdk/timeline/_timing_evaluators.py`; D07's deprecated retime helpers
+are deleted, while live reflow and other derived writers remain held below. See
+has one evaluator in Composition (`typescript/src/evaluation.ts`
 and `scene-evaluation.ts`). Managed Scene is an explicit diagnostic boundary:
 `astrid/packs/rendering/actions/timeline_visualize/scene_only.py` asks the pinned
 managed host for Scene answers and emits the filmstrip diagnostic artifact;
@@ -41,13 +42,13 @@ authorize its own projection, never a newer catalog head
 (`runtime_protocol/timeline_commit_store.py`).
 
 The current tree includes published014/Main497 and the WC6 native document-script
-cut/dead-leaf deletion. It consumes the locked Runtime source `95bd3c5f` /
-producer `2c4ac180` and Composition `0.0.13`; this is not a delivery or M2
+cut/dead-leaf deletion. It consumes the normal published014 Runtime
+source/producer lock `95bd3c5f` and Composition `0.0.13`; this is not a delivery or M2
 completion claim.
 
 Held legacy paths are visible: Agent's detached `Checkout.publish` /
 `publish_authoring_candidate`, remaining cut-sheet three-way publication, and
-whole-bundle mutations; timing `retime`/`resolve`/`reflow` plus narration,
+whole-bundle mutations; timing `resolve`/`reflow` plus narration,
 music, and sequence writers; App snapshot ingress
 (`useTimelineOps.ts:277-321`), parent publication and `saveTimeline`/
 `saveTimelineAtHead` (`dataProvider.ts:295,1000-1131`), popup add/swap, and
