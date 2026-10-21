@@ -730,7 +730,7 @@ def prepare_filmstrip(
     if 'output' not in components['resolved'] and timeline_row is not None and not exact:
         if not (timeline_row.get('head_revision_id') or timeline_row.get('parent_revision_id')):
             _fail('Timeline has no canonical current parent head.')
-        timeline_identity_keys = (
+        timeline_identity_keys: tuple[str, ...] = (
             'timeline_id', 'slug', 'config_version', 'head_event_id', 'head_hash',
             'config_hash', 'registry_hash',
         )

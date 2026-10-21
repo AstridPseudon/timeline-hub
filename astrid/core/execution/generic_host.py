@@ -44,6 +44,11 @@ from runtime_protocol.dirfd import filesystem as os
 
 from astrid.core.execution.pipe_io import PipeReader, PipeWriter, close_pipe_workers
 from astrid.core.execution.platform_helpers import owned_by_current_user
+from astrid.core.source_identity import (
+    _source_digest,
+    source_checkout_closure,
+    source_checkout_closure_digest,
+)
 
 # Startup observations use only the existing private stderr sink. Regular-file
 # latency is not bounded; this diagnostic never changes descriptor flags.
@@ -2115,18 +2120,6 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
     return {"ok": True, "checkout": str(checkout), "revision": revision}
 
 
-def _source_digest(root: Path) -> str:
-    """Hash the complete executor source tree without retaining a source path in a task."""
-    entries: list[tuple[str, str]] = []
-    if root.is_file():
-        return hashlib.sha256(root.read_bytes()).hexdigest()
-    for path in sorted(root.rglob("*")):
-        if not path.is_file() or "__pycache__" in path.parts:
-            continue
-        entries.append((str(path.relative_to(root)), hashlib.sha256(path.read_bytes()).hexdigest()))
-    return _canonical_digest(entries)
-
-
 def _attempt_tree_bytes(root: Path) -> int:
     """Count owned attempt bytes without following symlink escapes."""
     total = 0
@@ -4111,50 +4104,6 @@ def source_checkout_digest(checkout: str | Path) -> str:
     return _source_digest(pack_root)
 
 
-def source_checkout_closure(checkout: str | Path) -> dict[str, Any]:
-    """Measure the executable host closure owned by this checkout.
-
-    The legacy pack digest remains the capability-admission identity.  This
-    separate receipt covers the process host, Astrid core, SDK/bootstrap,
-    package entrypoints, launcher, and vendored workspace-client files that
-    can change what an admitted executable does.
-    """
-    root = Path(checkout).expanduser().resolve()
-    components = {
-        "host": root / "astrid" / "core" / "execution" / "generic_host.py",
-        "core": root / "astrid" / "core",
-        "sdk": root / "astrid" / "sdk",
-        "launcher": root / "astrid" / "omp_agent.py",
-        "astrid_entrypoint": root / "astrid" / "__init__.py",
-        "astrid_version": root / "astrid" / "version.py",
-        "astrid_main": root / "astrid" / "__main__.py",
-        "astrid_runtime_cli": root / "astrid" / "runtime_cli.py",
-        "vendored_workspace_client": root / "astrid_runtime_client",
-    }
-    measured: list[dict[str, str]] = []
-    for name, path in components.items():
-        if path.is_symlink() or not path.exists():
-            raise ValueError(f"source closure component is missing or symlinked: {name}")
-        if path.is_dir() and any(child.is_symlink() for child in path.rglob("*")):
-            raise ValueError(f"source closure component contains a symlink: {name}")
-        measured.append({
-            "component": name,
-            "path": str(path.relative_to(root)),
-            "sha256": _source_digest(path),
-        })
-    measured.sort(key=lambda item: item["component"])
-    return {
-        "schema_version": 1,
-        "components": measured,
-        "digest": _canonical_digest(measured),
-    }
-
-
-def source_checkout_closure_digest(checkout: str | Path) -> str:
-    """Return the deterministic digest for the executable source closure."""
-    return str(source_checkout_closure(checkout)["digest"])
-
-
 def process_birth_identity(pid: int | None = None) -> str:
     """Return the OS birth token used to distinguish a reused PID."""
     return _process_birth_identity(pid)
@@ -5323,13 +5272,20 @@ class GenericPackHost:
             root = self.attempt_base / f"{task_id}-{attempt_id}"
             if root.exists() or root.is_symlink():
                 raise HostError(f"attempt-base allocation already exists: {root.name}")
-            root.mkdir()
-            root.chmod(0o700)
+            if sys.platform == "win32":
+                platform.private_directory(root)
+            else:
+                root.mkdir()
+                root.chmod(0o700)
             return root.resolve()
         # The lease and progress marker carry the task/attempt/fence identity;
         # do not put those values in an ephemeral filesystem basename.  Keep
         # the established reclaim prefix so storage_ownership still finds
         # crash-abandoned roots.
+        if self.attempt_root is None and sys.platform == "win32":
+            root = Path(tempfile.gettempdir()) / f"astrid-attempt-{secrets_module.token_hex(16)}"
+            platform.private_directory(root)
+            return root.resolve()
         root = self.attempt_root or Path(tempfile.mkdtemp(prefix="astrid-attempt-")).resolve()
         root.mkdir(parents=True, exist_ok=True)
         if self.attempt_root is None:

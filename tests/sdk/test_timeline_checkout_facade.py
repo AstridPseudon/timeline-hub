@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import ast
 import importlib
+import os
 import pathlib
+import subprocess
+import sys
 
 import pytest
 
@@ -105,6 +108,38 @@ def test_public_api_module_reexports_the_facade_objects():
     assert api.Checkout is tc.Checkout
     assert api.TimelineEditError is tc.TimelineEditError
     assert api.describe_changes is tc.describe_changes
+
+
+def test_public_checkout_and_session_imports_work_in_a_fresh_process():
+    from tests.helpers.runtime import runtime_checkout
+
+    repo = PACKAGE.parents[2]
+    runtime = runtime_checkout()
+    script = """
+import sys
+
+class BlockRendererImports:
+    def find_spec(self, fullname, *args):
+        if fullname.startswith(("node", "remotion", "composition", "astrid.packs.rendering",
+                                "astrid.core.rendering")):
+            raise AssertionError("renderer dependency imported: " + fullname)
+
+sys.meta_path.insert(0, BlockRendererImports())
+from astrid.sdk.timeline.api import Checkout
+from astrid.sdk.timeline.sync import TimelineSession
+
+assert Checkout.__module__ == "astrid.sdk.timeline.checkout"
+assert TimelineSession.__module__ == "astrid.sdk.timeline.sync"
+assert "astrid.core.rendering" not in sys.modules
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=repo,
+        env={**os.environ, "PYTHONPATH": os.pathsep.join((str(repo), str(runtime)))},
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_all_is_unchanged():

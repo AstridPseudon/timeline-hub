@@ -9,6 +9,7 @@ from threading import Event
 from types import SimpleNamespace
 
 import pytest
+from runtime_protocol import platform
 
 from astrid.core.receipts.canonical import canonical_json
 from astrid.core.timeline.authoring_bundle import compile_authoring_candidate, open_authoring_bundle
@@ -18,7 +19,7 @@ from astrid.sdk.timeline import store
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.outbox import request_bytes
+from astrid.sdk.timeline.outbox import Outbox, request_bytes
 from astrid.sdk.timeline.rebase import replay
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
@@ -168,6 +169,21 @@ def connected(tmp_path, monkeypatch):
 def open_session(connected):
     client, _, path = connected
     return TimelineSession.open("project-slug", "timeline-slug", client=client, outbox_path=path)
+
+
+def test_outbox_unlocks_when_locked_body_raises(tmp_path, monkeypatch):
+    released = []
+    unlock = platform.unlock_file
+
+    def observe(fd):
+        released.append(fd)
+        unlock(fd)
+
+    monkeypatch.setattr(platform, "unlock_file", observe)
+    with pytest.raises(RuntimeError, match="body failed"):
+        with Outbox(tmp_path / "outbox.json").locked():
+            raise RuntimeError("body failed")
+    assert len(released) == 1
 
 
 @pytest.mark.parametrize('guard', ['sheet', 'producer'])

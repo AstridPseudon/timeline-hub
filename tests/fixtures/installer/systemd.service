@@ -14,4 +14,3 @@ StandardError="append:/logs/runtime-service.log"
 
 [Install]
 WantedBy=default.target
-

@@ -98,7 +98,7 @@ def timeline_to_source_time(
     ) * rate
 
 
-def quantize_time(seconds: int | float | Fraction, fps: int | float, *, policy: str = "nearest") -> int:
+def quantize_time(seconds: int | float | Fraction, fps: int | float | Fraction, *, policy: str = "nearest") -> int:
     if isinstance(fps, bool) or isinstance(seconds, bool) or fps <= 0 or policy not in {"floor", "ceil", "nearest"}:
         raise TimelineEditError("invalid fps or quantization policy")
     frames = _time_fraction(seconds, "seconds") * Fraction(str(fps))

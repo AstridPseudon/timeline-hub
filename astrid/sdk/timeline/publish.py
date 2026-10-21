@@ -6,7 +6,7 @@ import re
 import sys
 import uuid
 from pathlib import Path
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
@@ -20,11 +20,14 @@ from astrid.sdk.timeline.doc import (_row_start, _set_length, _strip_derived)
 from astrid.sdk.timeline.model import Voice
 from astrid.sdk import timeline_transcripts as _transcripts  # module access: its functions resolve at call time
 
+if TYPE_CHECKING:
+    from astrid.sdk.timeline.checkout import Checkout
+
 
 class _PublishMixin:
     """Checkout: publish, narration binding, and the document as it is saved (annotated) and read back (absorb)."""
 
-    def publish(self, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
+    def publish(self: Checkout, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
                 force: bool = False, restructure: bool = False) -> dict[str, Any]:
         """Check, then publish one revision.
 
@@ -86,7 +89,7 @@ class _PublishMixin:
         receipt["message"] = message
         return receipt
 
-    def _reset_base(self, *, client: Any = None) -> None:
+    def _reset_base(self: Checkout, *, client: Any = None) -> None:
         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""
         self._retire_draft_history()
         try:
@@ -99,7 +102,8 @@ class _PublishMixin:
 
         head = flatten(head)
         old, old_disk = self.bundle, self._disk
-        self.bundle, self._mcache, self._journal, self._disk = head, None, [], None
+        journal: list[tuple[str, str | None]] = []
+        self.bundle, self._mcache, self._journal, self._disk = head, None, journal, None
         try:
             target = Path(self.path)
             with _store._file_lock(target):

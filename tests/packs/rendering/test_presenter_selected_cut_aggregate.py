@@ -137,7 +137,7 @@ def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_r
     presenter = ctx.elements[0]
     assert ctx.shared["public_scene_evidence_mode"] == ("fresh_capture" if mode == "fresh" else "cache")
     assert builtin._public_mouth_facts(ctx, presenter, [0, 3, 4, 5])["rect"] == (894.0, 606.0, 138.0, 48.0)
-    monkeypatch.setattr(model, "mouth_box", lambda *_args: None)
+    monkeypatch.setattr(model, "mouth_box", lambda *_args: pytest.fail("public ROI used private crop"))
     result = builtin.render_lipsync(ctx)
     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
 

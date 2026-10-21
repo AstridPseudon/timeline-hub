@@ -38,6 +38,8 @@ def runtime_abi(monkeypatch):
     # two ABI exceptions/metadata are faked; all command execution is real.
     runtime = types.ModuleType("runtime_protocol")
     runtime.__path__ = []
+    if (platform := sys.modules.get("runtime_protocol.platform")) is not None:
+        runtime.platform = platform
     metadata = types.ModuleType("runtime_protocol.contract_metadata")
     metadata.SCHEMA_DIGEST = "exact-installed-runtime-digest"
     abi = types.ModuleType("runtime_protocol.timeline_commit")
@@ -686,6 +688,9 @@ class Blocked:
             raise AssertionError('renderer dependency: ' + fullname)
 sys.meta_path.insert(0, Blocked())
 import pytest
+from tests.helpers.runtime import use_runtime
+use_runtime()
+import runtime_protocol.platform
 from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse, restore, runtime_abi
 runtime_abi.__wrapped__(pytest.MonkeyPatch())
 realm = DetachedRealm()

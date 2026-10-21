@@ -2867,8 +2867,8 @@ def _kernel_invoke(
     # Admission has already used the projected documents to derive media and
     # storage bounds. Persist each exact projection once in Runtime CAS and
     # send only its digest/revision identity in the task request.
-    spec_inputs = spec.get("inputs") if isinstance(spec.get("inputs"), dict) else {}
-    snapshot_context = spec.get("authority_context") if isinstance(spec.get("authority_context"), dict) else {}
+    spec_inputs: dict[str, Any] = spec.get("inputs") if isinstance(spec.get("inputs"), dict) else {}
+    snapshot_context: dict[str, Any] = spec.get("authority_context") if isinstance(spec.get("authority_context"), dict) else {}
     has_inline_snapshot = isinstance(spec_inputs.get("timeline_snapshot"), Mapping) or any(
         isinstance(snapshot_context.get(key), Mapping)
         for key in ("filmstrip_snapshot", "input_snapshot", "capture_snapshot")
