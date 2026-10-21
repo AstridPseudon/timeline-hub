@@ -301,7 +301,16 @@ def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(r
     assert body['commands'] == native['commands']
     assert body['source'] == {'via': 'python'}
 
-    expected_document = document_from_bundle(native['bundle'])
+    # ``open_bundle`` and the native diff result are intentionally detached.
+    # The accepted setup document is the exact original base/publication and
+    # carries the private compilation context required by the pure projector.
+    original_document = setup['data']['canonical_document']
+    original = bundle_from_document(original_document)
+    assert persisted_bundle(original) == persisted_bundle(before)
+    expected_input = copy.deepcopy(native['bundle'])
+    expected_input['source_mapping']['_runtime_document'] = copy.deepcopy(
+        original['source_mapping']['_runtime_document'])
+    expected_document = document_from_bundle(expected_input)
     assert result['data']['canonical_document'] == expected_document
     accepted = bundle_from_document(result['data']['canonical_document'])
     expected = bundle_from_document(expected_document)
