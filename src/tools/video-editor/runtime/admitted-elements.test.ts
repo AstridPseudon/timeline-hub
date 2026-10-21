@@ -70,6 +70,58 @@ describe('atomic admitted host refresh',()=>{
     expect(host.admittedComponent({packId:'project_pack',kind:'effect',id:'blocks',revision:'new'})).toBeUndefined();
     expect(owner.active).toBe(true);expect(changes).toBe(1);release();
   });
+  it('returns the exact raw project pin and snapshot object for one owner-qualified row', async () => {
+    const digest = 'a'.repeat(64);
+    const ref = { packId: 'project_pack', kind: 'effect', id: 'blocks', revision: 'sha256:' + digest } as const;
+    const selected = {
+      ...build('b'.repeat(64), ref.revision),
+      elements: [{
+        ...build('b'.repeat(64), ref.revision).elements[0],
+        descriptor: { ...build('b'.repeat(64), ref.revision).elements[0].descriptor, ...ref },
+        binding: {
+          projectId: 'project', documentId: 'document:pack', documentVersion: 3,
+          contentDigest: 'sha256:' + 'c'.repeat(64),
+        },
+        snapshot_object: {
+          object_id: 'sha256:' + 'd'.repeat(64), digest: 'sha256:' + 'd'.repeat(64), size: 12, media_type: 'application/json',
+        },
+      }],
+    } as AdmittedElementSelection;
+    await host.refreshAdmittedElements(async () => info(selected.selectionDigest), async () => selected);
+
+    expect(host.admittedElementSource('project', ref)).toEqual({
+      status: 'available',
+      pin: { document_id: 'document:pack', version: 3, content_digest: 'sha256:' + 'c'.repeat(64) },
+      object: { object_id: 'sha256:' + 'd'.repeat(64), digest: 'sha256:' + 'd'.repeat(64), size: 12, media_type: 'application/json' },
+    });
+  });
+  it('returns a visible refusal for missing source data or a mismatched project', async () => {
+    const ref = { packId: 'project_pack', kind: 'effect', id: 'blocks', revision: 'old' } as const;
+    const missing = build('c'.repeat(64));
+    await host.refreshAdmittedElements(async () => info(missing.selectionDigest), async () => missing);
+    expect(host.admittedElementSource('project', ref)).toEqual({
+      status: 'refused', reason: 'The admitted project element has no exact source binding.',
+    });
+
+    const foreign = {
+      ...build('d'.repeat(64)),
+      elements: [{
+        ...build('d'.repeat(64)).elements[0],
+        projectId: 'other-project',
+        binding: {
+          projectId: 'project', documentId: 'document:pack', documentVersion: 3,
+          contentDigest: 'sha256:' + 'c'.repeat(64),
+        },
+        snapshot_object: {
+          object_id: 'sha256:' + 'd'.repeat(64), digest: 'sha256:' + 'd'.repeat(64), size: 12, media_type: 'application/json',
+        },
+      }],
+    } as AdmittedElementSelection;
+    await host.refreshAdmittedElements(async () => info(foreign.selectionDigest), async () => foreign);
+    expect(host.admittedElementSource('project', ref)).toEqual({
+      status: 'refused', reason: 'The admitted project element belongs to another project.',
+    });
+  });
   it('rejects a failed/incomplete/foreign build atomically and retains prior revisions',async()=>{
     const first=build('a'.repeat(64));await host.refreshAdmittedElements(async()=>info(first.selectionDigest),async()=>first);
     const activated=host.getAdmittedElementSelection();

@@ -5,6 +5,7 @@ import { ASTRID_BRIDGE_REQUEST_TIMEOUT_MS } from '../data/astridBridgeWire';
 type AdmittedDescriptor = AstridElementDescriptor & {label:string; description:string; parameters:import('../types/index').ParameterSchema; defaults:Record<string,unknown>; renderability:{preview:'supported'|'blocked'|'unknown';browserExport:'supported'|'blocked'|'unknown';workerExport:'supported'|'blocked'|'unknown'}};
 import type { AstridElementComponentProps } from './astrid-element-host';
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
+import type { DocumentPin, VerifiedDocumentObject } from '@/integrations/runtime/timeline-commit-types.ts';
 
 export type ProjectElementAuthoring = {
   projectId: string; packId: string; packRoot: string; status: string;
@@ -19,6 +20,20 @@ export type AdmittedElementSelection = {
   projects: readonly ProjectElementAuthoring[]; elements: readonly AdmittedElement[];
   components: Readonly<Record<string, ComponentType<AstridElementComponentProps>>>;
 };
+type AdmittedElementBinding = {
+  projectId: string;
+  documentId: string;
+  documentVersion: number;
+  contentDigest: string;
+};
+type AdmittedSnapshotObject = Pick<VerifiedDocumentObject, 'object_id' | 'digest' | 'size' | 'media_type'>;
+type RawAdmittedElement = AdmittedElement & {
+  binding?: AdmittedElementBinding;
+  snapshot_object?: AdmittedSnapshotObject;
+};
+export type AdmittedElementSourceResult =
+  | { status: 'available'; pin: DocumentPin; object: AdmittedSnapshotObject }
+  | { status: 'refused'; reason: string };
 const refKey = (ref: {packId?: string; kind: string; id: string; revision: string}) => JSON.stringify([ref.packId, ref.kind, ref.id, ref.revision]);
 const listeners = new Set<() => void>();
 // Pack selection talks to the same local Runtime as editor data requests.
@@ -52,6 +67,61 @@ export function setAdmittedElementScope(projectId:string,refs:NonNullable<typeof
 
 export const getAdmittedElementSelection = () => current;
 export const subscribeAdmittedElements = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; };
+
+const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
+const exactKeys = (value: Record<string, unknown>, keys: readonly string[]) => Object.keys(value).length === keys.length
+  && keys.every((key) => Object.prototype.hasOwnProperty.call(value, key));
+const exactBinding = (value: unknown): value is AdmittedElementBinding => isRecord(value)
+  && exactKeys(value, ['projectId', 'documentId', 'documentVersion', 'contentDigest'])
+  && typeof value.projectId === 'string' && value.projectId.length > 0
+  && typeof value.documentId === 'string' && value.documentId.length > 0
+  && typeof value.documentVersion === 'number' && Number.isSafeInteger(value.documentVersion) && value.documentVersion > 0
+  && typeof value.contentDigest === 'string' && /^sha256:[0-9a-f]{64}$/.test(value.contentDigest);
+const exactSnapshotObject = (value: unknown): value is AdmittedSnapshotObject => isRecord(value)
+  && exactKeys(value, ['object_id', 'digest', 'size', 'media_type'])
+  && typeof value.object_id === 'string' && /^sha256:[0-9a-f]{64}$/.test(value.object_id)
+  && value.digest === value.object_id
+  && typeof value.size === 'number' && Number.isSafeInteger(value.size) && value.size > 0
+  && value.media_type === 'application/json';
+
+/**
+ * Resolve only the raw, already-admitted project source for one exact row.
+ * This is intentionally dormant until the current admitted module carries the
+ * raw binding and snapshot object; it does not consult a catalog or Runtime.
+ */
+export function admittedElementSource(
+  projectId: string,
+  ref: {packId?: string; kind: string; id: string; revision: string},
+): AdmittedElementSourceResult {
+  if (typeof ref.packId !== 'string' || ref.packId.length === 0) {
+    return { status: 'refused', reason: 'Admitted project source requires an owner-qualified element ref.' };
+  }
+  const entry = (current.elements as readonly RawAdmittedElement[]).find(({ descriptor }) => refKey(descriptor) === refKey(ref));
+  if (!entry) {
+    return { status: 'refused', reason: 'The exact admitted project element ref is unavailable.' };
+  }
+  if (entry.projectId !== projectId) {
+    return { status: 'refused', reason: 'The admitted project element belongs to another project.' };
+  }
+  if (!exactBinding(entry.binding)) {
+    return { status: 'refused', reason: 'The admitted project element has no exact source binding.' };
+  }
+  if (entry.binding.projectId !== projectId) {
+    return { status: 'refused', reason: 'The admitted source binding belongs to another project.' };
+  }
+  if (!exactSnapshotObject(entry.snapshot_object)) {
+    return { status: 'refused', reason: 'The admitted project element snapshot object is unavailable.' };
+  }
+  return {
+    status: 'available',
+    pin: {
+      document_id: entry.binding.documentId,
+      version: entry.binding.documentVersion,
+      content_digest: entry.binding.contentDigest,
+    },
+    object: entry.snapshot_object,
+  };
+}
 
 /** Native receiving-build refresh, independent of mounted editor/ACP authority. */
 export async function refreshAdmittedElements(
