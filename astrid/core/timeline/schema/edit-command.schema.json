@@ -1814,27 +1814,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^parent/clip:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/OccurrenceSwapMediaArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "parent"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^parent/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "parent"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^parent/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/RawOldSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "parent"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -1935,6 +1962,38 @@
         "variant_id",
         "object_id",
         "catalog_digest"
+      ],
+      "additionalProperties": false
+    },
+    "MediaManifestEntry": {
+      "type": "object",
+      "properties": {
+        "media_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "content_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "required": [
+        "media_id",
+        "content_digest"
+      ],
+      "additionalProperties": false
+    },
+    "RawOldSwapMediaArgs": {
+      "type": "object",
+      "properties": {
+        "old_media": {
+          "$ref": "#/$defs/MediaManifestEntry"
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      },
+      "required": [
+        "old_media",
+        "media"
       ],
       "additionalProperties": false
     },
