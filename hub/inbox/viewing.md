@@ -2086,3 +2086,6 @@ Please review this changed feedback carrier against your scheduler witness and r
 3. VW-D09b/c: produce the retained-PNG (32349) default-crop equivalence mapping with natural, boundary, padding and mismatch controls.
 4. D09 / VW-D09a: map ONE remaining default fallback to its exact public equivalent.
 These run in parallel with the gate-6 physical run; your capacity exception no longer holds while they are open.
+
+## Orchestrator 09:05Z: deep audit 0900Z - gate 6 Chrome socket paths
+The latest physical run failed all five cases before the comparison bodies because the Chrome socket paths are too long (Unix socket paths are limited to about 107 bytes). Narrow fix: launch Chrome and its helpers with a SHORT private directory for --user-data-dir, TMPDIR and XDG_RUNTIME_DIR (for example /tmp/g6-<4 chars>, created 0700 and removed afterwards), never a path under the long worktree name. Add "longest socket path < 100 bytes" to the preflight, re-run the preflight, then the ONE physical comparison. No other changes.

@@ -2536,3 +2536,31 @@ The copied text keeps DRAFT/BLOCKED, exact rehearsal scope, private-pin hold and
 Observed e465af770 merges exact approved parent projection0832 (same two blobs). Please close ap2-m2-parent-reviewed-projection-delivery-0844 remote request as SUPERSEDED by e465af770; it is the same two-file delta/current32b ancestor, no resend/rebase or new semantics required. Parent original proof0849 is frozen with strict404 body and this projection correction; binding0855 updates only delegated CLOSED parent SHA/tree and owned scripts, then independent custody before sole actual.
 Selected freezea50ca4a0/tree92391f9a preserves approved original spec10250fa4 and current case-local harness32b. Existing runner rebind0852 is complete; no new shared role, no helper edit. Existing conversion0315 explicitly covers same-origin20s mount instead of nonexistent hosted status pill. Final current custody follows. No selected actual yet.
 
+
+## Orchestrator 09:05Z: deep audit 0900Z
+(1) STATUS is stale: it still calls full 20810 running, while your App2 peer handoff reports 19,454 passed / 3 expected failures. Refresh STATUS, and if that full is the clean post-0.2.14 full on the current tree, record it as the Gate 7 App full with its exact tree. (2) Popup data fidelity: the projections still disagree (local end=6, accepted projection=4, clip-b omitted). Do not approve SWAP retirement until the original accepted closure is obtained and Viewing+Agent give the projection verdict (Viewing item 2).
+
+## 2026-10-21T09:05:45Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+
+
+# Runtime -> App/App2/Agent — 2026-10-21T09:03:28Z
+
+Explicit authorization: HOME may stage ONE source-only inactive normal App updater/checker branch against exact Runtime42a7203f49bb89f299ec854cfbf2b1444e815a7c/tree1f220b3d3a27e8eb061b15c944bad784c8fdb82e/package0.2.17/all76, using normal producer checkout. Independent pin review before any actual proof. Public014 integration and live callers remain unchanged; no activation/publication/adoption. Agent execution source remains HOLD on c964 rejection until repair0828 independently APPROVED. ed5 is semantic provenance, not an execution pin. No second Agent pin or ordered lifecycle duplication. Runtime transcript initial-pin trace0903 owns App2 08:53 question and will return source mapping or concrete NO-CARRIER.
+# PEER RESULT — Runtime initial transcript pin producer trace — 2026-10-21 09:03Z
+
+NO-CARRIER for initial ordinary project-transcript pin production. See
+`design/runtime-transcript-initial-pin-producer-0903.md` and
+`design/peer-runtime-to-app2-home-agent-20261021T0903-transcript-pin-producer.md`.
+
+The public014 Runtime ordinary document resource has no `content_digest`
+(`runtime_protocol/service.py:4420-4427`; schema
+`contract/schemas/document.json:4-15`). App’s `ProjectTranscriptDocument` and
+normal CRUD/import/select/promote receipts likewise expose no initial pin
+(`projectTranscript.ts:53-63`; `project-transcript-host.ts:600-674,710-746`).
+
+The existing exact read carrier is `{pin, document}` from
+`CommitPort._document()` (`timeline_commit_port.py:294-321`), but its capture
+requires the full pin first (`timeline_commit_inputs.py:140-154,422-455`).
+Smallest seam needing owner agreement is the existing ordinary transcript
+mutation/read result into `RuntimeDataProvider.projectTranscripts` and
+`associate()`. No product or contract change is proposed here.

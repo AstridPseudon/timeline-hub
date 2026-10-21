@@ -1,9 +1,12 @@
 # Published014 original retained-text compatibility pair
 
-Status: **BLOCKED before central execution**. The required public two-node
-`--runxfail` lane is not present in the supported test-service allow-list. No
-private017/c964 source, old7d Runtime, or alternate text/native control was
-used.
+Status: **Central execution attempted; failed before collection**. The exact
+public two-node `--runxfail` lane was added to the supported test-service
+allow-list and submitted once. The service snapshots the requested tree into
+a synthetic commit before running the command, so the suite's first guard
+(`git rev-parse HEAD == afe379…`) failed even though the captured Agent tree
+was the exact public tree `f2cedd08…`. No private017/c964 source, old7d
+Runtime, or alternate text/native control was used.
 
 ## Exact qualification tuple
 
@@ -54,12 +57,31 @@ inverse/redo, and zero-selection-on-clear assertions.
 
 ## Central request disposition
 
-No central request was submitted, so there is no test-service ID or execution
-result. The supported `text-native-private-pair-integration` command points to
-the rejected PRIVATE017/c964 worker and is forbidden. The supported
-`rt-wc8-current14-integration` command is generic but runs the whole integration
-lane and has no `--runxfail` or exact public95/b92 guards; it was not reused for
-this two-node qualification. No old7d lane was used.
+One central request was submitted, and no retry was made:
+
+```text
+request-test rt-m2-public014-text-pair-execute-0903 public014-retained-text-original-pair-integration
+wait-test rt-m2-public014-text-pair-execute-0903-public014-retained-text-original-pair-integration-1021090309-19713
+```
+
+Result: **FAIL exit 1 before pytest collection**, test-service result
+`.../tests/rt-m2-public014-text-pair-execute-0903-public014-retained-text-original-pair-integration-1021090309-19713/`.
+The service captured Agent tree `f2cedd08a01b1a360df79046e4b9c2a5cb101dd5`,
+but `test-run` creates a synthetic commit from that tree before executing the
+suite. Therefore the first chained assertion, the Agent commit equality
+`git rev-parse HEAD == afe37906433773a29b5928b35abd8075be8a7ecf`, failed.
+The Runtime/client/artifact guards were not reached in the central process;
+the central log has no collection count and no test bodies executed. The
+offline preflight independently passed every guard against Agent
+`afe379…`/`f2cedd…` and Runtime `b92d…`/`6abc2f…`, including actual imports,
+schema7d4, published95 lock, all76 artifacts, fixture, dependencies, and
+private temp storage.
+
+The prior `text-native-private-pair-integration` command still points to the
+rejected PRIVATE017/c964 worker and was not used. The generic
+`rt-wc8-current14-integration` command was not reused because it runs the
+whole integration lane and lacks the exact public95/b92 guards and
+`--runxfail`. No old7d lane was used.
 
 Exact one-line suite proposal, if the orchestrator chooses to allowlist a new
 public lane:
@@ -76,3 +98,27 @@ completion. Authenticated retained legacy `text/plain` descriptors remain live;
 new selections still require `text/plain; charset=utf-8`. Agent owns the later
 marker/consumer migration and must preserve the existing legacy consumers and
 positives through an explicit recorded migration.
+
+## Execution worker evidence
+
+Fresh preflight: **PASS**. Agent source was clean at
+`afe37906433773a29b5928b35abd8075be8a7ecf` / tree
+`f2cedd08a01b1a360df79046e4b9c2a5cb101dd5`; Runtime was clean at
+`b92d3e7a05eec65c142294ef4873edd059e9b31d` / tree
+`6abc2f117391de8e7e35c0283f575a002199894d`; actual imports came from this
+Agent worktree and `/home/user/work/runtime`; schema digest was
+`sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`;
+the lock pointed to published producer `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`;
+the Runtime manifest contained 76 artifacts at version
+`sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac`;
+the normal fixture was present; shared dependency realpaths were unchanged;
+and private `/tmp` storage write/read passed. No renderer was imported.
+
+Corrected exact collection command: **2 tests collected**, exit 0. The first
+local collection attempt omitted the Runtime checkout from that command's
+`PYTHONPATH` and failed to import `runtime_protocol`; no test body ran. The
+corrected command used the suite environment and passed:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 ASTRID_CHECKOUT=$PWD ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -m integration --runxfail --collect-only tests/editing_conformance/test_commit_runtime_text_binding.py::test_rebind_existing_main_descriptor_undo_is_exact tests/editing_conformance/test_commit_runtime_text_binding.py::test_clear_existing_main_descriptor_and_inverse_are_exact
+```

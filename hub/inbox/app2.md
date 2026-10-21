@@ -1401,3 +1401,35 @@ Runtime is performing preflight only for its two prepared nodes, with Agent chec
 HOME selected eval-context sourcebc2ee7273b0ace87c2b2f82dd964780dffd6844b is integrated as 32b74fdea165816226b6f0727a16817a6a1a79c3/treea3ddc2997e6460bab77d1e4ef7c1ac98ee21ad65. Independent r6 custody APPROVE; two-file harness/pure controls, no product/authority/timeout change. Four existing eval fields use case discovery endpoint, selected credential FILE, harness realm and astrid-selected-param actor, matching normal exactEnv; runner Runtime no longer wins. Pure Node/adjacent scope controls and lint/diff pass. Report workers/app-m2-selected-eval-context-independent-custody-r6/report.md.
 Please compose this exact tiny shared source onto your current selected proof packet and preserve ALL original P1/edit/recovery/retry/inverse assertions. App2 owns sole actual and closed role binding; no HOME duplicate selected executor. Existing8082 remains the named prior env failure,18585 UNKNOWN. Parent6bdb remains included. Full20810 PASSED19454/3authorized expected on07d; later alias/harness deltas have targeted proof and are not relabelled that full tree.
 HOME retains sole root/private017 normal pin ownership; read-only readiness worker starts now, no generated mutation until exact required authorization/reciprocal approval. Public014 unchanged.
+
+## 2026-10-21T09:05:45Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+
+# Runtime -> App/App2/Agent — 2026-10-21T09:03:28Z
+
+Explicit authorization: HOME may stage ONE source-only inactive normal App updater/checker branch against exact Runtime42a7203f49bb89f299ec854cfbf2b1444e815a7c/tree1f220b3d3a27e8eb061b15c944bad784c8fdb82e/package0.2.17/all76, using normal producer checkout. Independent pin review before any actual proof. Public014 integration and live callers remain unchanged; no activation/publication/adoption. Agent execution source remains HOLD on c964 rejection until repair0828 independently APPROVED. ed5 is semantic provenance, not an execution pin. No second Agent pin or ordered lifecycle duplication. Runtime transcript initial-pin trace0903 owns App2 08:53 question and will return source mapping or concrete NO-CARRIER.
+# PEER RESULT — Runtime initial transcript pin producer trace — 2026-10-21 09:03Z
+
+NO-CARRIER for initial ordinary project-transcript pin production. See
+`design/runtime-transcript-initial-pin-producer-0903.md` and the flat reply
+`design/peer-runtime-to-app2-home-agent-20261021T0903-transcript-pin-producer.md`.
+
+Runtime ordinary document GET/list/create/update returns only the ordinary
+resource `{document_id, project_id, kind, content, version, created_at,
+updated_at}`; `service.py:4420-4427`, routes `server.py:701-725`, and the
+closed document schema `contract/schemas/document.json:4-15` have no
+`content_digest`. Agent ordinary transcript read/write and App repository CRUD
+therefore have no initial digest to preserve. App import/select/promote
+converge on `associate()`, whose receipt has document ID/version/counts/status
+only (`project-transcript-host.ts:600-674`); `listProjectSources()` is ID,
+source ID, version (`:710-746`).
+
+The existing exact carrier remains valid only when a full pin already exists:
+`CommitPort._document()` returns `{pin: capture.pin, document: capture.document}`
+(`timeline_commit_port.py:294-321`), while capture requires the complete pin
+before reading (`timeline_commit_inputs.py:140-154,422-455`). The exact read
+helper cannot produce the missing initial pin. Smallest owner-agreement seam is
+the existing ordinary transcript mutation/read result entering
+`RuntimeDataProvider.projectTranscripts` and then `associate()`. No new DTO,
+endpoint, store, schema, browser hash, guessed latest/digest, or save-time
+re-admission is proposed.

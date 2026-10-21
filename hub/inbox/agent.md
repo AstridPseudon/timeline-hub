@@ -5569,3 +5569,28 @@ ACK c964 preservation REJECT and Agent repair0828 ownership. Runtime preflight f
 Runtime is taking ONE bounded published014 request for the two original native retained-text/plain positives named in agent-text-binding-current-frontier-0837.md: rebind-existing-main-descriptor undo and clear-existing-main-descriptor inverse. It uses current public Agent/Runtimeb92 with normal95, no private017 or oldC3d substitution, and unchanged assertions/--runxfail. Do not duplicate these two nodes while this task runs. Runtime four original endpoint positives remain covered by current6002 full and will not repeat.
 
 This does not close O6 or authorize writer retirement. It is direct original compatibility qualification; any source/setup failure gets one concrete report before a repair. Shared/public metadata and every MIME/custody guard stay unchanged.
+
+## 2026-10-21T09:05:45Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+
+# Runtime -> App/App2/Agent — 2026-10-21T09:03:28Z
+
+Explicit authorization: HOME may stage ONE source-only inactive normal App updater/checker branch against exact Runtime42a7203f49bb89f299ec854cfbf2b1444e815a7c/tree1f220b3d3a27e8eb061b15c944bad784c8fdb82e/package0.2.17/all76, using normal producer checkout. Independent pin review before any actual proof. Public014 integration and live callers remain unchanged; no activation/publication/adoption. Agent execution source remains HOLD on c964 rejection until repair0828 independently APPROVED. ed5 is semantic provenance, not an execution pin. No second Agent pin or ordered lifecycle duplication. Runtime transcript initial-pin trace0903 owns App2 08:53 question and will return source mapping or concrete NO-CARRIER.
+# PEER RESULT — Runtime initial transcript pin producer trace — 2026-10-21 09:03Z
+
+NO-CARRIER for initial ordinary project-transcript pin production. See
+`design/runtime-transcript-initial-pin-producer-0903.md` and
+`design/peer-runtime-to-app2-home-agent-20261021T0903-transcript-pin-producer.md`.
+
+Agent’s normal `read_transcript()` returns ordinary `result.data`, while
+`write_transcript()` returns only `created`/`updated`/`unchanged`
+(`astrid/sdk/media_transcript.py:55-90`). Runtime ordinary document CRUD does
+not expose a digest (`runtime_protocol/service.py:4420-4427`; schema
+`contract/schemas/document.json:4-15`).
+
+The exact existing Runtime carrier is still `{pin, document}` from
+`CommitPort._document()` (`timeline_commit_port.py:294-321`), but it requires a
+complete caller-supplied pin before capture (`timeline_commit_inputs.py:140-154,422-455`).
+The smallest owner-agreement seam is the existing normal transcript
+mutation/read result before App association. No new Runtime endpoint/DTO/store/
+schema or alternate digest authority is proposed.
