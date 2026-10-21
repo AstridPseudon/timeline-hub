@@ -522,7 +522,8 @@ Know which layer an edit touches:
   audio.
 
 After publishing, open the world in the World Explorer. Explore it, check the
-shots and events the host kept, then render the pinned revision.
+shots and events the host kept, and give the user the editor link. Render the
+pinned revision only if the user asks.
 
 ## Audio, security and export boundaries
 
@@ -573,7 +574,8 @@ editor.
 
 ## Check a world
 
-Before calling a world done:
+Before calling a world done (items 2 to 5 render frames: run them only when the
+user asks for frames or a render):
 
 1. The declarations the host kept (`events`, `shots`, `explore`) match what
    you wrote. The explorer shows them, and so does `SceneFrameHost.info`.

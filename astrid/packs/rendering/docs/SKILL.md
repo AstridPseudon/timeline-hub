@@ -78,27 +78,36 @@ The canvas and frame rate are stored in the parent-composition config at
 key is the supported retry path. The retired whole-document `timelines create`
 route and local timeline files are not authorities.
 
-## Look in the editor first
+## Point the user to the editor; render only on request
 
-People watch timelines in the Astrid editor, which plays the live composition
-in the browser with nothing to render:
+After any timeline edit, publish, then give the user the editor link and the
+times to look at. Do not render, open a fresh render, or capture composed
+frames as a step of the work. Render, or run `timelines visualize` for composed
+frames, only when the user asks for a render, an exported file, or frames.
+
+To check your own edit without rendering, read timing and structure with
+`timelines show --as script` and declared placement with
+`timelines visualize --mode inputs`.
+
+Build the link from two ids:
 
 ```text
-https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-slug>
+https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>
 ```
 
-After a publish, give the user that link and the times to look at instead of
-rendering a video for them to review; each published revision shows there at
-once. For your own checks, read timing with `timelines show --as script` and
-look at a few `timelines visualize` frames at the moments you changed (960x540
-unless you need detail; `--preset motion --at <t>` for a move). Composed frames
-go through the shared pack host, so dense full-resolution sweeps are slow and
-queue behind other work. Render only when someone needs the exported file.
+- `<project-id>` is `project_id` from `projects list --json` (the 32-hex id,
+  such as `811a657af5fe43e4b2b48a670de1f3e8`).
+- `<timeline-id>` is `timeline_id` from `timelines list --project <project>
+  --json`. Named timelines use their slug (`almost-ready-no-first-second-v2`);
+  others use a ULID. The editor also resolves a project slug, and a timeline
+  slug or ULID, to these ids, but use the ids.
 
-## Visualize before rendering
+Each published revision shows in the editor at once.
 
-Start review with the canonical structural view, then use the public
-visualizer before spending a render attempt:
+## Visualize (on request)
+
+The structural view and `--mode inputs` are render-free. Composed frames are
+for when the user asks for frames:
 
 ```bash
 python3 -m astrid timelines show <timeline> --project <project> --json
@@ -106,7 +115,7 @@ python3 -m astrid timelines visualize <timeline> --project <project> \
   --mode inputs --format md --format png --json
 ```
 
-Look at the film the way you mean to, one page each (pass a window and the view follows it):
+When the user asks for frames, look at the film the way they mean to, one page each (pass a window and the view follows it):
 
 ```bash
 python3 -m astrid timelines visualize <timeline> --project <project>                          # overview: a tile per cut
@@ -136,7 +145,7 @@ plus `rendering.render` with `timeline_ref`; there is intentionally no
 
 ## Render and validate output
 
-When a rendered export is required, use the supported runtime-owned route:
+Only when the user asks for a render or an exported file. When one is required, use the supported runtime-owned route:
 
 ```bash
 python3 -m astrid timelines render <timeline> --project <project> \
@@ -196,7 +205,7 @@ For repeatable draft narration synchronization, use `video_editing.sync_draft_vo
 
 ### CLI checks and journal
 
-Use `timelines check <timeline> --project <project> --sweep` for bounded checks across every cut. Changed edits sweep after a reflow, more than three changed cuts, or explicit `--sweep`; `--no-sweep` suppresses the sweep. A sweep returns 0 for expected results, 1 for unexpected picture changes, or 2 when capture was not made. An unchanged edit returns 3 without sweeping.
+Use `timelines check <timeline> --project <project> --sweep` for bounded checks across every cut. Changed edits sweep after a reflow, more than three changed cuts, or explicit `--sweep`; `--no-sweep` suppresses the sweep, which captures composed frames; pass it unless the user asks for frames. A sweep returns 0 for expected results, 1 for unexpected picture changes, or 2 when capture was not made. An unchanged edit returns 3 without sweeping.
 
 Use `timelines log <timeline> --project <project> --verify --json` to verify the journal hash chain. A broken chain returns 1 with `error.code: validation_error`; a missing journal returns 0. See the [timeline editing guide](../../../../docs/timeline-editing-guide.md) for filters and details.
 
@@ -282,8 +291,8 @@ Use this loop for every inspection or edit:
    a stale candidate.
 5. **Validate and save.** Validate the complete candidate, inspect its diff,
    and save through the existing compare-and-swap/idempotent publication boundary.
-   Preview, rendering, and focused readback are optional unless the request
-   needs them. For an explicit preview-before-save request, inspect/deliver a
+   Preview, rendering, and focused readback are optional unless the user asks
+   for them. For an explicit preview-before-save request, inspect/deliver a
    successful unpublished candidate render before saving that same candidate.
    Keep the receipt; further corrective edits and saves are allowed.
 6. **Explain the evidence.** Report what was observed, what was changed, and
@@ -466,7 +475,7 @@ Keep the returned `head`, parent/revision identity, candidate digest, and
 render identity together. A cursor is valid only for that complete scope;
 reopen the composition after a head change instead of continuing an old page.
 
-For visual continuity review, use the filmstrip. It composes the requested
+When the user asks for visual continuity review, use the filmstrip. It composes the requested
 frames from the exact saved canonical revision, including when a matching
 successful MP4 exists. `--render-run` can select the revision to inspect, but
 the MP4 never supplies frame pixels. The result is a PNG contact sheet,
@@ -523,7 +532,7 @@ results are intentional: open the numbered pages in order, then rerun with
 The frame index records the effective page size, page count, row ranges, and
 copyable navigation guidance.
 
-For a complete review pass, use `--show output,inputs,text,audio --every 5`.
+When the user asks for a complete review pass, use `--show output,inputs,text,audio --every 5`.
 The command reports the primary PNG, all numbered pages, and a bounded inspect
 command. Open the pages in order; then use `--range 0..25 --every 0.25 --detail`
 to zoom into one window, `--shot first` (or `--shot N`) to focus an authored
@@ -830,12 +839,8 @@ still use their current path. Stream copy is disabled for this overlay path.
 
 ## Render and open
 
-Before starting or repeating a preview render, ask whether the user is reviewing
-the timeline in the live interface, unless that is already established in the
-conversation. Remember their answer for the session. If they are using the live
-interface, save and validate edits for live review; do not render previews unless
-they explicitly request an export or rendered preview. Only use preview renders
-for the feedback cycle when they are not using the live interface. A previous
+Only when the user asks for a render, an exported file, or a rendered preview.
+Otherwise publish and give the editor link (see the section above). A previous
 render does not by itself authorize re-rendering after subsequent edits.
 
 When a preview render is needed (including reference-frame and storyboard
@@ -887,7 +892,8 @@ python3 -m astrid runs open <run-id> --project <project>
 ```
 
 Use `--default-timeline` for the project's default. If no matching successful
-render exists, render first or inspect `runs list/show`.
+render exists, inspect `runs list/show`, and render only if the user asked
+for one.
 
 The [render capability contract](../actions/render/STAGE.md) covers detailed
 SDK inputs and outputs; the [visualization contract](../actions/timeline_visualize/STAGE.md)

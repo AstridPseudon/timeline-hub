@@ -103,7 +103,7 @@ The normal inspection loop is deliberately short:
 ```text
 timelines show       authored structure and timing
         ↓
-timelines visualize  composed pixels, with synchronized input lanes
+timelines visualize  composed pixels, with synchronized input lanes (only on request)
         ↓
 checkout             detached, editable JSON at the current head
         ↓
@@ -203,8 +203,8 @@ rewrite separately.
   Astrid App after publication. `timelines visualize --mode inputs` gives declared
   placement evidence without rendering. The default/`--mode auto` route uses a
   matching render when available and otherwise captures bounded composed frames
-  through the canonical Remotion route. Use `--mode inputs` for render-free
-  evidence; a frozen candidate JSON is not a visual preview.
+  through the canonical Remotion route; use it only when the user asks for
+  frames. Use `--mode inputs` for render-free evidence; a frozen candidate JSON is not a visual preview.
 - **Empty or wrong project list:** check the launcher/runtime selection before
   creating a new project or importing data.
 - **Stale head:** check out a new file and reapply the intended edits. Do not

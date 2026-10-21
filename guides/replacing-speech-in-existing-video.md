@@ -81,7 +81,7 @@ Use **Astrid timeline editing → review-mode render → integrated filmstrip in
 | Obtain transcription through the supported capability | [Editorial skill](../astrid/packs/editorial/skill/SKILL.md) and [transcription contract](../astrid/packs/editorial/executors/transcribe/STAGE.md) |
 | Find the capability for generating replacement speech or edited media | [Creative-work routing skill](../astrid/packs/_core/docs/creative-work/SKILL.md) |
 
-During editorial feedback, render with `--review` (SDK input `review: true`) by default and retain it through subsequent revisions unless the user asks for a clean export. Give registered shots meaningful names, and verify that shot names and timecodes are readable in the actual exported video. A labeled filmstrip alone does not let someone identify a frame while watching the video. When a shot contains several reference poses, use the shot name plus timecode to distinguish them.
+When the user asks for a render during editorial feedback, render with `--review` (SDK input `review: true`) by default and retain it through subsequent revisions unless the user asks for a clean export. Give registered shots meaningful names, and verify that shot names and timecodes are readable in the actual exported video. A labeled filmstrip alone does not let someone identify a frame while watching the video. When a shot contains several reference poses, use the shot name plus timecode to distinguish them.
 The default Remotion review artifact is scaled by the backend with `--scale` to
 fit inside 640x360, preserving the authored aspect ratio and canvas coordinates.
 Its probed profile records the emitted size and the video marks it with the
@@ -125,7 +125,7 @@ Put the source clips and temporary speech on the Astrid timeline. Use reaction s
 
 When adding an introduction, preserve the complete opening line and the rest of the approved script. When removing a reference still, adjust the remaining picture coverage without deleting the speech underneath it. If a zoom must reveal the speaking shot, end on the actual source footage and verify source-time continuity into the next clip; a generated likeness does not establish that continuity.
 
-Render this draft early in review mode. A playable edit makes feedback such as “stay on the hand until ‘who knows’” much more precise than discussing the script alone.
+If the user asks for a render, make it early and in review mode; otherwise publish and point them to the editor. A playable edit makes feedback such as “stay on the hand until ‘who knows’” much more precise than discussing the script alone.
 
 ## 4. Review picture, words and sound together
 
