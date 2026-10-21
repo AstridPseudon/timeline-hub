@@ -1430,6 +1430,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         </div>
       ) : addReason && liveScene && !busy ? (
         <p className="text-[11px] text-muted-foreground">{addReason}</p>
+      ) : (selected?.uses.length ?? 0) > 0 ? (
+        // The "Editing clip" row comes and goes as shots are picked; keep its place so the gallery below never jumps.
+        <p className="flex min-h-10 items-center text-[11px] text-muted-foreground sm:min-h-8">Select a clip on the timeline to edit its range.</p>
       ) : null}
     </>
   );
