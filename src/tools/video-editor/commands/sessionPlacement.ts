@@ -1,7 +1,7 @@
 import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
 import { copy } from './clipMovePrimitives.ts';
-import type { OutboxHead, OutboxPlacementContinuation, OutboxScope } from './commitOutbox.ts';
+import { toOutboxJson, type OutboxHead, type OutboxPlacementContinuation, type OutboxScope } from './commitOutbox.ts';
 import { readNativePlacementCapture } from './nativePlacementCapture.ts';
 import { createPlacementRequester, type PlacementCaptureContext } from './placementRequester.ts';
 
@@ -23,8 +23,8 @@ export function createSessionPlacementRequester(options: Parameters<typeof creat
       const before = await authoringBundleFromDocument(source.savedCanonicalDocument);
       await context.check();
       context.assertCurrent();
-      return { commands, before, after: bundle, preview: null,
-        displayBasis: { head: source.head, canonicalDocument: source.savedCanonicalDocument } };
+      return toOutboxJson({ commands, before, after: bundle, preview: null,
+        displayBasis: { head: source.head, canonicalDocument: source.savedCanonicalDocument } });
     }, { requesterContext: true as const }),
   });
 }

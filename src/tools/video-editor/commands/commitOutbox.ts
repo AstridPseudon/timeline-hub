@@ -136,6 +136,13 @@ function detached<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+/** Cross the durable outbox boundary without widening its finite-JSON contract. */
+export function toOutboxJson(value: unknown): OutboxJson {
+  // `detached` has already validated and cloned the value; this boundary
+  // narrows its generic implementation result to the persisted JSON union.
+  return detached(value) as OutboxJson;
+}
+
 function newIntent(payload: OutboxJson, basis: OutboxBasis): OutboxIntent {
   return detached({ id: crypto.randomUUID(), payload, basis,
     ...('head' in basis ? { readyBase: basis.head } : {}) });
