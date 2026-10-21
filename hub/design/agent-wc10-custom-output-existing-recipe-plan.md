@@ -1,15 +1,16 @@
-# Agent WC10 custom output: existing-recipe source proposal
+# Agent WC10 custom raw config: existing-carrier correction
 
-Status: **NO EXISTING PUBLISHED CARRIER FOR THE ORIGINAL CUSTOM POSITIVE**
-(read-only source trace, 2026-10-21). Runtime owns the actual remote creator;
-this is the Agent-side source contract and smallest-carrier proposal for
-Runtime/App HOME ACK. No implementation, schema registration, generated
-client, activation, or positive conversion is included here.
+Status: **CUSTOM ORIGINAL POSITIVE OPEN; NO EXISTING NATIVE RAW CARRIER**
+(read-only source trace, 2026-10-21). This correction replaces the prior
+output-derivation proposal. Runtime owns the remote creator; this page records
+the Agent-side contract and the unresolved cross-product seam for Runtime/App
+HOME ACK. No implementation, schema registration, generated client,
+activation, or positive conversion is included here.
 
-## One-screen source contract
+## Source contract and upstream behavior
 
 The original `timelines create` positive accepts this exact non-default config
-and publishes it as the parent config:
+and publishes it as `parent_composition.config`:
 
 ```json
 {
@@ -20,113 +21,87 @@ and publishes it as the parent config:
 }
 ```
 
-That is `DEFAULT_CONFIG` in the pre-native positive
-(`tests/v10/test_timelines_create.py`, parent of `a9f16a9ae`). Its legacy
-writer sends the whole `parent_composition.config` unchanged, followed by
-empty `registry`, `clips`, `occurrences`, no shots, and the caller's `-head`
-key. The positive therefore proves authored custom canvas geometry, not merely
-that a shell exists.
+This is `DEFAULT_CONFIG` in `tests/v10/test_timelines_create.py:24-29`.
+The upstream `origin/main` CLI constructs that raw shape at
+`astrid/packs/timeline/cli.py:175-192`; upstream
+`RemoteTimelines.create_empty` copies the caller config unchanged into the
+publication at `astrid/sdk/remote.py:476-546`, including all unknown siblings,
+explicit `null`s, and absent fields. The rendering contract says that canvas
+and fps are stored at `theme_overrides.visual.canvas`, not at `output`
+(`astrid/packs/rendering/docs/SKILL.md:54-70`). The positive therefore proves
+authored raw-config roundtrip, not merely equivalent output geometry.
 
-The `a9f16a9ae` stage keeps the shell call but refuses every config except
-`{"tracks": []}` before the shell is created, then captures a `timeline.init`
-whose output is hard-coded to `1280x720`, `30`, `output.mp4`, `null`, `null`.
-The frozen 6ba recipe has the same semantic boundary: `TimelineInitArgs`
-requires those five exact output values and `native_initialize.initialize`
-writes only `parent.config.output`, `parent.name`, `parent.slug`, and
-`parent.registry.assets`.
+The current native caller's v1 `timeline.init` is a different recipe. Its
+schema accepts only the fixed App output object
+(`astrid/core/timeline/schema/edit-command.schema.json:2393-2442`), and its
+implementation writes only `parent.config.output`, `parent.name`,
+`parent.slug`, and `parent.registry.assets`
+(`astrid/sdk/timeline/native_initialize.py:7-22`). Converting the canvas to
+`output.resolution` would lose the authored `theme_overrides` path and any
+opaque config siblings; it cannot claim the original positive's roundtrip.
 
-**Exact missing field:** the existing `timeline.init` command has no accepted
-way to carry the original explicit canvas `{width: 1920, height: 1080,
-fps: 30}` into the authored Main output settings. Its `output.resolution` is
-fixed at `1280x720`, and no init read/write target exists for the source's
-`theme_overrides.visual.canvas` path. `withDefaultTimelineOutput` in App can
-derive output locally, but it is not a Runtime-accepted recorded carrier.
+## Existing carrier trace
 
-## Existing Main fields and recording footprint
+On current Runtime, `create_timeline` is the provider-backed initial carrier:
+it creates the shell and installs the authenticated empty bootstrap when the
+timeline commit provider is enabled (`runtime_protocol/service.py:1697-1743`).
+That bootstrap is the pristine native-init basis; it does not accept the
+caller's original config. The old raw carrier,
+`publish_parent_composition`, is explicitly refused once a tracked head exists
+(`runtime_protocol/service.py:2779-2807`, especially the
+`timeline_commit_required` refusal at `:2804-2807`). Thus there is no existing
+provider-backed path that carries this fixture's raw config into the initial
+head.
 
-App Main's actual authored output contract is
-`src/tools/video-editor/lib/defaults.ts:25-31`:
+The smallest **existing** init footprint is therefore v1 unchanged. It
+preserves the supported App default only. There is no honest v2 example that
+uses the existing `output` field: that would be a lossy projection, not raw
+preservation. Do not add a generic root writer, normalize the config, refuse
+opaque siblings while calling the result a roundtrip, or silently convert
+`theme_overrides.visual.canvas` into `output`.
 
-```json
-{
-  "resolution": "1280x720",
-  "fps": 30,
-  "file": "output.mp4",
-  "background": null,
-  "background_scale": null
-}
-```
+## Precise unresolved requirement
 
-The App bootstrap capture writes this object at
-`parent.config.output` (`src/tools/video-editor/commands/bootstrapCapture.ts:23-27`),
-not at `theme_overrides.visual.canvas`. Agent's existing command recorder has
-the matching four targets, in this order:
+To close the custom original positive, the paired products need an
+authenticated, idempotent initial-head carrier that accepts the caller's full
+raw `parent_composition.config` and preserves, exactly:
 
-1. read the whole pristine `parent` (`config.clips=[]`, `config.tracks=[]`,
-   `registry={}`, `clips=[]`);
-2. read/guard `parent.config.output` absent;
-3. read/guard `parent.name` absent;
-4. read/guard `parent.slug` absent;
-5. read/guard `parent.registry.assets` absent;
-6. write `parent.config.output`, `parent.name`, `parent.slug`, then
-   `parent.registry.assets={}`.
+- the original config path (`theme_overrides.visual.canvas`),
+- explicit `null` versus absence,
+- unknown/opaque sibling fields and their authored values,
+- the existing pristine/ordinal/placement/shot guards, and
+- the existing receipt, retry, inverse, and later-edit refusal semantics.
 
-`native_initialize.initialize` also requires ordinal zero, no placements or
-shots, and the exact pristine parent. Existing recording/replay/inverse code
-already retains tagged absence versus explicit `null`, object key order, raw
-unknown siblings, and exact selection/order guards. The Runtime provider's
-bootstrap-history check supplies the separate defaults-over-later-edits and
-edit-then-undo refusal. These are constraints on the proposed extension, not
-permission to loosen the current recipe.
+The carrier must be scoped to the authenticated pristine bootstrap and must
+not become a generic root replacement writer. Existing
+`publish_parent_composition` is the only traced raw carrier, but Runtime
+refuses it for provider-backed tracked timelines; v1 `timeline.init` has no
+raw-config target. Selecting or designing the next carrier is therefore
+unresolved and requires an explicit cross-product decision; this page does
+not invent a schema or product change.
 
-## Smallest proposal: extend the existing recipe, never add a writer
+## HOME ACK questions
 
-Keep `timeline.init` v1 byte-for-byte and semantically unchanged for the
-default path. Add a versioned explicit-output form to the **same** operation
-(use v2 if the captured custom input is considered a changed capture
-meaning), with the existing five authored output fields and the existing
-`parent.config.output` target:
+Runtime HOME (`runtime_protocol/service.py:1697-1743` and `:2779-2807`):
 
-```json
-{
-  "schema_version": 1,
-  "op": "timeline.init",
-  "version": "2",
-  "select": "parent",
-  "args": {
-    "name": "Main",
-    "slug": "main",
-    "output": {
-      "resolution": "1920x1080",
-      "fps": 30,
-      "file": "output.mp4",
-      "background": null,
-      "background_scale": null
-    }
-  }
-}
-```
+1. Confirm that provider-backed `create_timeline` plus v1 `timeline.init` is
+   the accepted default path, and that the old publication route cannot be
+   used as an unrecorded custom-config escape hatch.
+2. Identify the existing Runtime-authorized carrier, if one exists, that can
+   pass the exact raw `parent_composition.config` into the initial head without
+   a generic root writer. If none exists, acknowledge this as an open seam
+   rather than approving output conversion.
 
-The caller-side adapter may accept the old config shape only when it is the
-precise known custom-canvas shape above, derive `resolution` from its integer
-width/height, retain the default file/background fields, and capture this
-existing recipe. Omitted config continues to use v1's
-`1280x720@30/output.mp4/null/null` defaults. Do not accept a generic `config`
-argument, replace the parent root, create a dummy film, or add a second
-operation/store/DTO.
+App HOME (`src/tools/video-editor/lib/defaults.ts:25-99` and
+`src/tools/video-editor/commands/bootstrapCapture.ts:7-27`):
 
-The v2 capture must retain the current guard and recorder footprint. It must
-refuse, before the shell, any extra or unknown key, explicit null where a
-field is absent, malformed/nonfinite canvas member, changed track/row order,
-opaque sibling, pre-authored output/name/slug/assets, nonempty placements or
-shots, or any accepted history that is not the authenticated pristine
-bootstrap. Refusal must leave the original input untouched. A committed v2
-retry must replay the original receipt; inverse and inverse-of-inverse must
-use the recorded write/absence claims; an edit or edit-then-undo must still
-refuse a fresh initialization. No later defaulting may overwrite authored
-output fields.
+1. Confirm that `DEFAULT_OUTPUT`/`withDefaultTimelineOutput` is an App output
+   projection and not evidence that an Agent `theme_overrides` config may be
+   rewritten to `output`.
+2. Confirm that `captureBootstrap` remains limited to the exact App defaults
+   until the raw-config carrier is resolved; do not claim the custom original
+   positive is covered by App bootstrap capture.
 
-This is a proposal only. Runtime/App HOME should ACK the carrier shape and
-whether v2 is required before any implementation or qualification is
-started. The current custom positive remains a hold-condition regression until
-that ACK and a later paired proof.
+Until those ACKs and a paired proof exist, keep `timeline.init` v1 unchanged
+and keep the custom original positive OPEN. This document makes no product,
+schema, or test change.
