@@ -3,6 +3,8 @@ See deletion-ledger.md for the rules. Add rows here for contradicting code your 
 
 ## D08 / VW-AUDIO-STEP exit map (2026-10-21)
 
+Current physical result (10:05 UTC): `vw-m3-gate6-ready0d43-sole-physical-1002-e2e-viewing-gate6-ready0d43-sole-physical-1002-physical-1021100528-15923` reached actual App Render. The task failed at 10% because external Remotion staging omitted exact d0a sibling `SceneSurface.tsx`, `runtime.ts`, and `diagnostics.ts`. First case FAILED; remaining four NOT RUN after cancellation. No valid MP4 or completed frame/PCM comparison exists. D08 and VW-AUDIO-STEP remain OPEN; source retirement evidence is unchanged. Diagnosis: `vw-m3-scenesurface-normal-source-closure-diagnosis-1021.md`; owned source-carrier review and full preflight are assigned to 1038 workers. No deletion is unlocked by this result.
+
 | surface | disposition | real replacement tests / raw proof |
 |---|---|---|
 | App private trim formula, playback-rate wrapper, whole-timeline duration delegation, DebugTrack, dead `renderPipeline`, and dead render-runtime factories | **bounded leaves DELETED**; no remaining interchangeable formula was found | `src/tools/video-editor/lib/config-utils.test.ts`, `src/tools/video-editor/compositions/playerEvaluation.test.ts`, `src/tools/video-editor/compositions/VisualClip.test.tsx`, `src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx`, `src/tools/video-editor/compositions/AudioTrack.test.tsx`, and `src/tools/video-editor/compositions/TimelineComposition.media-conformance.test.tsx`; exact trim gate is `handoff-vw-m3-d08-trim-final-gate-REPORT.md`, current frontier is `handoff-vw-m3-d08-final-duplicate-frontier-REPORT.md`. |
