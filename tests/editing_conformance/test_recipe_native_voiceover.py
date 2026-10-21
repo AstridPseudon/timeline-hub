@@ -7,13 +7,13 @@ import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.compiler import TimingInputs, compile_timing
 from astrid.sdk.timeline.commit import (
     _digest,
     _manifest,
     bundle_from_document,
     document_from_bundle,
 )
+from astrid.sdk.timeline.compiler import TimingInputs, compile_timing
 from astrid.sdk.timeline.native_voiceover import capture_draft_voiceover
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse
