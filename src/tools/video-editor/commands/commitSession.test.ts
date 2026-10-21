@@ -233,6 +233,36 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     delete (raw as Partial<typeof raw>).dependency_manifest;
     await expect(environment(raw)).rejects.toThrow('dependency manifest');
   });
+  it.each([
+    ['missing dependency manifest', (raw: Record<string, unknown>) => { delete raw.dependency_manifest; }, 'dependency_manifest'],
+    ['changed project scope', (raw: Record<string, unknown>) => { raw.project_id = 'other-project'; }, 'outside the requested project/timeline'],
+  ] as const)('refuses a corrupt original display closure and retains the saved draft: %s', async (_name, corrupt, reason) => {
+    const env = await environment();
+    const first = await env.mount();
+    env.setFault('busy');
+    env.move(first, 5);
+    await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
+    await first.dispose();
+    const [saved] = await env.outboxes.list(scope);
+
+    await editOwner(env, (record) => {
+      const payload = record.intents[0].payload as unknown as { displayBasis?: { canonicalDocument?: Record<string, unknown> } };
+      corrupt(payload.displayBasis!.canonicalDocument!);
+    });
+    const [corrupted] = await env.outboxes.list(scope);
+    const newer = { ...env.initial, head: { revisionId: 'newer', publicationId: 'newer-p' },
+      canonicalDocument: { ...env.initial.canonicalDocument,
+        parent_revision: { ...env.initial.canonicalDocument.parent_revision, revision_id: 'newer' } } };
+    const beforeRefusal = { intents: structuredClone(corrupted.intents), pending: structuredClone(corrupted.pending) };
+    const reopened = await env.mount(newer);
+    await expect(reopened.recover(saved.ownerId)).rejects.toThrow(reason);
+    expect(reopened.getState()).toMatchObject({ status: 'error', canUndo: false });
+    expect(env.projected).toHaveLength(0);
+    expect(env.commits()).toHaveLength(1);
+    const [retained] = await env.outboxes.list(scope);
+    expect({ intents: retained.intents, pending: retained.pending }).toEqual(beforeRefusal);
+    await reopened.dispose();
+  });
   it('captures dependent A5/B7 before preview, submits B at HA with original guards and a fresh key', async () => {
     const env = await environment();
     const session = await env.mount();
