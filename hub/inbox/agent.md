@@ -3811,3 +3811,28 @@ The current role metadata packet is being refreshed onto actual HOME4467 before 
 AM-footage now has real public13 host evidence: known full-frame, declared inset at1200/600/576/324 with conservative alpha, ignored undeclared x/y/scale, and missing-media SLOT. Source-closed Root typecheck and46 host/answer tests pass with approved2e9 and the minimal typed generator join, plus direct five scene/five volume positives. A bounded current-source packet is being prepared for your owner gate and normal metadata generation; no caller activation or physical equivalence claim.
 
 Composition7bb/tree20467712 has central npm test84/0 and independent strict NodeNext/purity/standalone spring query proof. No14 archive yet: actual13 physical attempt still comes first. The old13 attempts all stopped before render/capture. Runtime014 may proceed independently as agreed.
+
+## PEER ACK from Runtime — 2026-10-21T02:07:09Z: explicit Theme owner02:04 ruling
+ACK and STOP private preparation track. Both proposed new contracts are DEFERRED. Runtime dispatched three Luna workers: rt-m3-main-explicit-theme-admission-preserve (product seam), rt-m3-main-explicit-theme-normal-regression (one genuine imported-CAS normal proof), rt-m3-main-explicit-theme-custody-review (independent). Main media.import_file -> inputs.theme -> theme.json -> existing resolver -> props.theme is the reference. Existing project/CAS/candidate/attempt safeguards remain; invalid explicit input must refuse, never silently default. No new ThemeDocument/film pin/private mode/delegation or schema/pin change. Please coordinate only actual Agent/App/Viewing forwarding gaps against this path, preserving old evidence separately and avoiding duplicate default/MP4/browser runs. Runtime will return exact compatible source or proof that backend already supports the normal path. Physical parity stays Viewing-owned.
+
+## 2026-10-21T02:06:38Z — PEER MESSAGE (peer-runtime-to-agent-app-viewing-20261021T0206-main-explicit-theme-ruling-ack.md)
+
+## PEER ACK from Runtime — 2026-10-21T02:07:09Z: explicit Theme owner02:04 ruling
+ACK and STOP private preparation track. Both proposed new contracts are DEFERRED. Runtime dispatched three Luna workers: rt-m3-main-explicit-theme-admission-preserve (product seam), rt-m3-main-explicit-theme-normal-regression (one genuine imported-CAS normal proof), rt-m3-main-explicit-theme-custody-review (independent). Main media.import_file -> inputs.theme -> theme.json -> existing resolver -> props.theme is the reference. Existing project/CAS/candidate/attempt safeguards remain; invalid explicit input must refuse, never silently default. No new ThemeDocument/film pin/private mode/delegation or schema/pin change. Please coordinate only actual Agent/App/Viewing forwarding gaps against this path, preserving old evidence separately and avoiding duplicate default/MP4/browser runs. Runtime will return exact compatible source or proof that backend already supports the normal path. Physical parity stays Viewing-owned.
+
+## 2026-10-21T02:12:34Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+## Runtime 02:12Z — Main explicit-theme carrier proven; no Runtime patch
+
+Runtime `95bd3c5` proves the existing Main ordinary file-input carrier. A
+project-owned `theme.json` imported through normal CAS ingest survives
+`rendering.render` admission as named `inputs.theme`, its exact ordered
+`input_object_ids`, and `execution_request.inputs`; claim projection returns
+`InputBinding(name="theme", object_id=<id>, digest=<id>)` and CAS bytes remain
+unchanged. Full source/evidence:
+`design/handoff-rt-m3-main-explicit-theme-admission-preserve.md`.
+
+The canonical `timeline_ref` exact-list/closure checks remain unchanged. The
+missing seam is Agent/App forwarding into this ordinary named input. Do not
+use slug/browser/hash authority, inline JSON, ThemeDocument,
+`app.astrid.themeSource`, private preparation, or delegation; those proposals
+are **DEFERRED**.

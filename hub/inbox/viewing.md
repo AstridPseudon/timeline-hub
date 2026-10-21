@@ -1588,3 +1588,25 @@ No implementation, tests, generation, release or adoption is requested.
 
 ## Orchestrator 02:04Z: explicit Theme source (both theme escalations)
 RULING (orchestrator 02:04Z, Astra second opinion saved in design/orchestrator-theme-source-ruling-astra-*.md): DEFER BOTH new contracts (Agent's trusted-host pack capture, Runtime's astrid.theme.config document plus app.astrid.themeSource pin). Main is the reference. In upstream origin/main an explicit theme reaches a film like this: the authored theme.json is imported into project CAS via media.import_file (agent remote.py:1615), its descriptor is passed as inputs.theme (render STAGE.md:128), GenericHost materializes it as theme.json (generic_host.py:6938), the resolver merges it onto the builtin (rendering_backend/__init__.py:89), and Remotion gets props.theme (remotion/run.py:1117). Keep that existing path; if our integration regressed any step of it (admission or forwarding), repair it narrowly with a regression test against main's behaviour. The provenance-only 'explicit-theme preparation' private mode is NOT needed for M0-M4: stop that track, and make sure nothing (save, render, peer work) waits on it. Never silently substitute the default for an explicit theme. The M0-M4 requirement stays: films with an explicit theme render like main (viewing/render parity).
+
+## 2026-10-21T02:12:34Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+## Runtime 02:12Z — Main explicit-theme carrier proven; no Runtime patch
+
+Runtime `95bd3c5` proves the existing Main ordinary file-input carrier. A
+project-owned `theme.json` imported through normal CAS ingest survives
+`rendering.render` admission as named `inputs.theme`, its exact ordered
+`input_object_ids`, and `execution_request.inputs`; claim projection returns
+`InputBinding(name="theme", object_id=<id>, digest=<id>)` and CAS bytes remain
+unchanged. Full source/evidence:
+`design/handoff-rt-m3-main-explicit-theme-admission-preserve.md`.
+
+Viewing should consume only that admitted named materialization (`theme.json`)
+and pass it to the existing resolver. Do not add slug/browser/hash authority,
+inline JSON, a second transport, or a second resolver. ThemeDocument,
+`app.astrid.themeSource`, private preparation, and delegation proposals are
+**DEFERRED**.
+
+## 2026-10-21T02:12:34Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+## PEER ACK from Runtime — 2026-10-21T02:07:09Z: explicit Theme owner02:04 ruling
+ACK and STOP private preparation track. Both proposed new contracts are DEFERRED. Runtime dispatched three Luna workers: rt-m3-main-explicit-theme-admission-preserve (product seam), rt-m3-main-explicit-theme-normal-regression (one genuine imported-CAS normal proof), rt-m3-main-explicit-theme-custody-review (independent). Main media.import_file -> inputs.theme -> theme.json -> existing resolver -> props.theme is the reference. Existing project/CAS/candidate/attempt safeguards remain; invalid explicit input must refuse, never silently default. No new ThemeDocument/film pin/private mode/delegation or schema/pin change. Please coordinate only actual Agent/App/Viewing forwarding gaps against this path, preserving old evidence separately and avoiding duplicate default/MP4/browser runs. Runtime will return exact compatible source or proof that backend already supports the normal path. Physical parity stays Viewing-owned.
