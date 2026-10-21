@@ -6,7 +6,7 @@
 import { expect, type Page } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
-import { mkdirSync, unlinkSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { APP_ENTRY_ROUTE, commandOutboxes, openSeededTimeline, test as appTest, UI } from './support/app.ts';
 import { ASTRID_CHECKOUT, ASTRID_PYTHON } from './support/astrid.ts';
@@ -47,6 +47,28 @@ async function freePort(): Promise<number> {
   const port = (server.address() as { port: number }).port;
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   return port;
+}
+
+function publishProxyProfile(harness: DirectHarness): string {
+  const discovery = harness.discovery();
+  const catalog = JSON.parse(readFileSync(path.join(harness.supportDir, 'catalog.json'), 'utf8'));
+  const rows = Array.isArray(catalog.realms)
+    ? catalog.realms.filter((row) => row?.realm_id === discovery.active_realm) : [];
+  if (discovery.active_realm !== harness.realmId || catalog.selected_realm_id !== harness.realmId
+    || rows.length !== 1 || (rows[0].source_profile !== undefined && rows[0].source_profile !== 'astrid')
+    || realpathSync(String(discovery.realm_root)) !== realpathSync(harness.realmDir)
+    || realpathSync(String(rows[0].data_root)) !== realpathSync(harness.realmDir)) {
+    throw new Error('test Runtime discovery does not match the seeded Astrid realm');
+  }
+  // Supply the product profile normally published by astrid-runtime up, keeping daemon discovery separate.
+  const directory = path.join(harness.tmp, 'proxy-profile');
+  mkdirSync(directory, { recursive: true, mode: 0o700 });
+  writeFileSync(path.join(directory, 'catalog.json'), JSON.stringify({ ...catalog,
+    realms: catalog.realms.map((row) => row.realm_id === harness.realmId ? { ...row, source_profile: 'astrid' } : row),
+  }), { mode: 0o600 });
+  const discoveryPath = path.join(directory, 'discovery.json');
+  writeFileSync(discoveryPath, JSON.stringify({ ...discovery, credential_file: harness.credentialPath }), { mode: 0o600 });
+  return discoveryPath;
 }
 
 async function waitFor(url: string, ready: (response: Response) => boolean = (response) => response.ok): Promise<void> {
@@ -112,9 +134,10 @@ async function startViteWorkspace(harness: DirectHarness, composerCheckout: stri
   // external Runtime or producer pin.
   execFileSync('tar', ['-xzf', path.resolve('vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz'), '-C', compositionOverlay]);
   const compositionRoot = path.join(compositionOverlay, 'package');
+  const proxyDiscovery = publishProxyProfile(harness);
   const baseEnv = processEnv(harness);
   const proxy = spawnGroup(process.execPath, [path.resolve('scripts/runtime-discovery-proxy.mjs')], {
-    cwd: process.cwd(), env: { ...baseEnv, ASTRID_RUNTIME_PROXY_PORT: String(proxyPort), ASTRID_RUNTIME_OPERATION_ORIGIN: origin },
+    cwd: process.cwd(), env: { ...baseEnv, ASTRID_WORKSPACE_DISCOVERY: proxyDiscovery, ASTRID_RUNTIME_PROXY_PORT: String(proxyPort), ASTRID_RUNTIME_OPERATION_ORIGIN: origin },
   });
   const start = () => spawnGroup(process.execPath, [path.resolve('node_modules/vite/bin/vite.js'), '--config', 'config/vite/vite.config.ts', '--host', '127.0.0.1', '--port', String(vitePort), '--strictPort'], {
     cwd: process.cwd(), env: {
@@ -151,7 +174,7 @@ async function startViteWorkspace(harness: DirectHarness, composerCheckout: stri
   }
   return {
     origin,
-    async restart() { await stopGroup(vite); vite = start(); await waitFor(origin); },
+    async restart() { await stopGroup(vite); publishProxyProfile(harness); vite = start(); await waitFor(origin); },
     async stop() { await stopGroup(vite); await stopGroup(proxy); },
   };
 }
