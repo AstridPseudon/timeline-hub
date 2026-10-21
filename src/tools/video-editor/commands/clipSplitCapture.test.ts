@@ -138,6 +138,35 @@ describe('native parent clip.split capture parity', () => {
     expect(result.command.created).toEqual(['parent/clip:right']);
   });
 
+  it('matches the source-clock Agent witness and refuses a derived timeline hold', async () => {
+    const input = await bundle();
+    const rows = [clips(input)[0], ((input.parent.config as Record<string, JsonValue>).clips as Array<Record<string, JsonValue>>)[0]];
+    for (const clip of rows) {
+      clip.from = 0;
+      clip.to = 4;
+      clip.hold = 4;
+      clip.speed = 1.3;
+      ((clip.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>).for = 4 / 1.3;
+    }
+    const derived = detached(input);
+    for (const clip of [clips(derived)[0], ((derived.parent.config as Record<string, JsonValue>).clips as Array<Record<string, JsonValue>>)[0]]) {
+      clip.hold = 4 / 1.3;
+    }
+    expect(() => captureClipSplit(derived, select, args)).toThrow('matching hold and source window');
+
+    const result = finishClipSplit(captureClipSplit(input, select, args));
+    const [left, right] = clips(result.bundle);
+    expect(left).toMatchObject({ id: 'clip-a', at: 1, from: 0, to: 2.6, hold: 2.6, speed: 1.3 });
+    expect(right).toMatchObject({ id: 'right', at: 3, from: 2.6, to: 4, hold: 1.4, speed: 1.3 });
+    const originalApp = clips(await bundle())[0].app as Record<string, JsonValue>;
+    expect(left.app).toMatchObject({ 'org.example': originalApp['org.example'], astrid: { opaque: (originalApp.astrid as Record<string, JsonValue>).opaque } });
+    expect(right.opaque).toEqual(left.opaque);
+    expect(right.params).toEqual(left.params);
+    expect(left.app && (left.app as Record<string, JsonValue>).astrid).toMatchObject({ for: 2 });
+    expect(right.app && (right.app as Record<string, JsonValue>).astrid).toMatchObject({ for: 4 / 1.3 - 2 });
+    expect(result.command.created).toEqual(['parent/clip:right']);
+  });
+
   it('allows disjoint neighbor edits while refusing touched source and selection claims', async () => {
     const original = await bundle();
     const command = captureClipSplit(original, select, args).command;

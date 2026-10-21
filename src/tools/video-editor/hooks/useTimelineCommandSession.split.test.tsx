@@ -359,6 +359,38 @@ describe('production single-parent split ingress', () => {
     env.hook.unmount();
   });
 
+  it('routes an authored source-clock hold through native capture and exact retry', async () => {
+    const env = await mounted(undefined, (document) => {
+      const payload = document.parent_revision.payload as Record<string, unknown>;
+      const rows = payload.clips as Array<Record<string, unknown>>;
+      const config = payload.config as Record<string, unknown>;
+      for (const row of [rows[0], (config.clips as Array<Record<string, unknown>>)[0]]) {
+        row.from = 0;
+        row.to = 4;
+        row.hold = 4;
+        row.speed = 1.3;
+        (row.app as Record<string, Record<string, unknown>>).astrid.for = 4 / 1.3;
+      }
+    });
+    act(() => { env.hook.result.current.editing.handleSplitSelectedClip(); });
+    await waitFor(() => expect(env.provider.commitTimeline).toHaveBeenCalledOnce());
+    const request = structuredClone(vi.mocked(env.provider.commitTimeline!).mock.calls[0]);
+    const command = request[0].commands[0];
+    expect(command).toMatchObject({ op: 'clip.split', select: 'parent/clip:clip-a', args: { on: 3 } });
+    const draft = env.hook.result.current.commit.data!;
+    expect(draft.config.clips[0]).toMatchObject({ from: 0, to: 2.6, hold: 2.6, speed: 1.3 });
+    expect(draft.config.clips[1]).toMatchObject({ from: 2.6, to: 4, hold: 1.4, speed: 1.3 });
+    expect(draft.config.clips[1].opaque).toEqual(draft.config.clips[0].opaque);
+    expect(draft.config.clips[1].params).toEqual(draft.config.clips[0].params);
+    expect(env.applyEdit).not.toHaveBeenCalled();
+    expect(env.scheduled).not.toHaveBeenCalled();
+    await act(async () => { await env.hook.result.current.commands.retry(); });
+    expect(vi.mocked(env.provider.commitTimeline!).mock.calls[1]).toEqual(request);
+    expect(env.provider.saveTimeline).not.toHaveBeenCalled();
+    expect(env.provider.saveTimelineAtHead).not.toHaveBeenCalled();
+    env.hook.unmount();
+  });
+
   it('keeps the SDK legacy split positive when no native port is supplied', async () => {
     const env = await mounted();
     const state = env.store.getState();
