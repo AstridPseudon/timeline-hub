@@ -641,7 +641,6 @@ export class DirectHarness {
    */
   async seedSelectedParamDev(): Promise<SelectedParamDevSeed> {
     if (this.selectedParamDevSeed) return this.selectedParamDevSeed;
-    await this.enableTimelineAuthoring(this.agentPython());
     const python = this.agentPython();
     const sourceRoot = path.join(this.tmp, 'selected-project-packs');
     const artifactRoot = path.join(this.tmp, 'selected-element-artifacts');
@@ -649,39 +648,11 @@ export class DirectHarness {
     const verifier = path.join(this.tmp, 'selected-element-build-verifier.py');
     mkdirSync(sourceRoot, { recursive: true, mode: 0o700 });
     mkdirSync(artifactRoot, { recursive: true, mode: 0o700 });
-    await this.provisionCredential('astrid-selected-param', path.basename(credentialFile));
-    const discovery = this.discovery();
     writeFileSync(verifier, "import hashlib,json,sys\nfrom pathlib import Path\np=Path(sys.argv[1])\nselection=json.loads(p.read_text())\nprint(json.dumps({'schema':'astrid.element-build/v1','selectionDigest':'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest(),'elements':[{'projectId':e['projectId'],**{k:e['descriptor'][k] for k in ('packId','id','kind','revision')}} for e in selection['elements']]}))\n");
     this.selectedParamPython = python;
     this.selectedParamVerifier = verifier;
-    this.selectedParamEnv = {
-      ...selectedParamEvalEnv(process.env, credentialFile, {
-        endpoint: discovery.endpoint,
-        realmId: this.realmId,
-        actorId: 'astrid-selected-param',
-      }),
-      ...this.runtimeEnv(),
-      ASTRID_RUNTIME_ENDPOINT: this.runtimeUrl,
-      ASTRID_PROJECT_PACKS_ROOT: sourceRoot,
-      ASTRID_ELEMENT_ARTIFACT_ROOT: artifactRoot,
-      ASTRID_ELEMENT_BUILD_COMMAND: JSON.stringify([python, verifier]),
-    };
     const { projectId, timelineId, image } = this.seed;
-    const initialized = this.projectPackCommand(['init', '--realm', this.realmId, '--project', projectId]);
-    const packId = initialized.packId;
-    const sourcePackRoot = initialized.packRoot;
     const elementId = 'selected_param_fixture';
-    const elementRoot = path.join(sourcePackRoot, 'rendering/elements/effects', elementId);
-    mkdirSync(elementRoot, { recursive: true });
-    writeFileSync(path.join(sourcePackRoot, 'pack.yaml'), `schema_version: 3\nid: ${packId}\nname: Project drafts\nversion: 0.1.0\nstatus: active\ndomain: media\nstability: experimental\nsupport: project\nvisibility: visible\ndescription: Editable project-owned visual elements.\npermissions:\n  - id: project_files\n    reason: Provides project-owned visual source.\ndocumentation:\n  kind: skill\n  path: docs/SKILL.md\nrendering:\n  effects/${elementId}:\n    type: element\n    path: rendering/elements/effects/${elementId}/element.yaml\n    resources:\n      - kind: implementation\n        path: rendering/elements/effects/${elementId}/component.tsx\n`);
-    writeFileSync(path.join(elementRoot, 'component.tsx'), "import React from 'react';\nimport {AbsoluteFill} from 'remotion';\nexport default function SelectedParamFixture() { return <AbsoluteFill />; }\n");
-    const writeDefinition = (maximum: number) => writeFileSync(path.join(elementRoot, 'element.yaml'), `schema_version: 1\nid: ${elementId}\nkind: effect\npack_id: ${packId}\nshort_description: Selected PARAM fixture.\ndefaults:\n  amount: 4\nschema:\n  title: Amount\n  type: object\n  properties:\n    amount:\n      type: number\n      minimum: 0\n      maximum: ${maximum}\n  required:\n    - amount\n  additionalProperties: false\nruntime:\n  adapter: remotion\n`);
-    writeDefinition(10);
-    const admitted = this.projectPackCommand(['admit', '--realm', this.realmId, '--project', projectId]);
-    if (!Array.isArray(admitted.elements) || admitted.elements.length !== 1) throw new Error(`selected PARAM admission did not admit one element: ${JSON.stringify(admitted)}`);
-    const p1 = admitted.elements[0].descriptor as SelectedParamDevSeed['p1'];
-    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
-    if (project.status !== 200) throw new Error(`selected PARAM project read: ${project.status} ${JSON.stringify(project.body)}`);
     const clipId = 'selected-param-clip';
     const clips = [
       { id: 'selected-base-clip', at: 0, track: 'V1', clipType: 'media', asset: 'selected-image', from: 0, to: 3, speed: 1 },
@@ -696,6 +667,35 @@ export class DirectHarness {
     publication.parent_composition.registry = { assets: { 'selected-image': { file: 'selected-image.png', type: 'image/png', media_id: image.objectId, content_sha256: image.digest } } } as unknown as typeof publication.parent_composition.registry;
     const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
     if (published.status !== 200) throw new Error(`selected PARAM timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    await this.enableTimelineAuthoring(python);
+    await this.provisionCredential('astrid-selected-param', path.basename(credentialFile));
+    const discovery = this.discovery();
+    this.selectedParamEnv = {
+      ...selectedParamEvalEnv(process.env, credentialFile, {
+        endpoint: discovery.endpoint,
+        realmId: this.realmId,
+        actorId: 'astrid-selected-param',
+      }),
+      ...this.runtimeEnv(),
+      ASTRID_RUNTIME_ENDPOINT: this.runtimeUrl,
+      ASTRID_PROJECT_PACKS_ROOT: sourceRoot,
+      ASTRID_ELEMENT_ARTIFACT_ROOT: artifactRoot,
+      ASTRID_ELEMENT_BUILD_COMMAND: JSON.stringify([python, verifier]),
+    };
+    const initialized = this.projectPackCommand(['init', '--realm', this.realmId, '--project', projectId]);
+    const packId = initialized.packId;
+    const sourcePackRoot = initialized.packRoot;
+    const elementRoot = path.join(sourcePackRoot, 'rendering/elements/effects', elementId);
+    mkdirSync(elementRoot, { recursive: true });
+    writeFileSync(path.join(sourcePackRoot, 'pack.yaml'), `schema_version: 3\nid: ${packId}\nname: Project drafts\nversion: 0.1.0\nstatus: active\ndomain: media\nstability: experimental\nsupport: project\nvisibility: visible\ndescription: Editable project-owned visual elements.\npermissions:\n  - id: project_files\n    reason: Provides project-owned visual source.\ndocumentation:\n  kind: skill\n  path: docs/SKILL.md\nrendering:\n  effects/${elementId}:\n    type: element\n    path: rendering/elements/effects/${elementId}/element.yaml\n    resources:\n      - kind: implementation\n        path: rendering/elements/effects/${elementId}/component.tsx\n`);
+    writeFileSync(path.join(elementRoot, 'component.tsx'), "import React from 'react';\nimport {AbsoluteFill} from 'remotion';\nexport default function SelectedParamFixture() { return <AbsoluteFill />; }\n");
+    const writeDefinition = (maximum: number) => writeFileSync(path.join(elementRoot, 'element.yaml'), `schema_version: 1\nid: ${elementId}\nkind: effect\npack_id: ${packId}\nshort_description: Selected PARAM fixture.\ndefaults:\n  amount: 4\nschema:\n  title: Amount\n  type: object\n  properties:\n    amount:\n      type: number\n      minimum: 0\n      maximum: ${maximum}\n  required:\n    - amount\n  additionalProperties: false\nruntime:\n  adapter: remotion\n`);
+    writeDefinition(10);
+    const admitted = this.projectPackCommand(['admit', '--realm', this.realmId, '--project', projectId]);
+    if (!Array.isArray(admitted.elements) || admitted.elements.length !== 1) throw new Error(`selected PARAM admission did not admit one element: ${JSON.stringify(admitted)}`);
+    const p1 = admitted.elements[0].descriptor as SelectedParamDevSeed['p1'];
+    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
+    if (project.status !== 200) throw new Error(`selected PARAM project read: ${project.status} ${JSON.stringify(project.body)}`);
     const applied = this.agentCommand(['timelines', 'update-element', '--project', projectId, timelineId, '--realm', this.realmId,
       '--clip-id', clipId, '--pack', p1.packId, '--element', p1.id, '--kind', p1.kind, '--revision', p1.revision,
       '--expected-head', published.body.data.new_head, '--params-json', JSON.stringify({ amount: 4 }), '--json']);
