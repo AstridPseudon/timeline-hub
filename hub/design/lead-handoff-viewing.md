@@ -32,3 +32,7 @@ Machine: viewing (home of composition). ORCH=/tmp/claude-0/-home-user-repo/7dc61
 ## Update 00:42Z
 - Manager restarted 22:43Z (capacity rule) and 00:42Z (kit 90-min rounds, orchestrator item 10). READY queue: bin/request-ready (dispatcher auto-starts under 5 live; log lines "READY viewing live=N" in dispatcher.log). Capacity swings 0-5 as short workers end together; only restart if <4 live for >15 min with empty ready/.
 - Gate 6 one-shot worker failed closed 00:05Z for lack of a manager grant; orchestrator 00:09Z: manager sign-off is enough; put "authority: manager grant <ts>, tuple <ids>" in the run worker's brief. lead-checkin overwrites hub/status/viewing-lead.md with the subagent text; rewrite my own line after each check-in.
+## Update 06:55Z
+- Gate-6 pack-host failures = container env NODE_OPTIONS/NODE_PATH refused by remotion_runtime.py:222 probe_context; fix belongs in the run.sh (unset them), not the dispatcher. Told manager 06:55Z.
+- Harness auto-mode DENIES releasing KEEP worktrees (ssr-snapshot/f816, fa25) and variable-path rm; literal-path rm of unreferenced finished-worker scratch and gzip are allowed. Disk hovers 10.8-11.1 GB (floor 10.74).
+- Manager rounds are 90 min and auto-restart; live count swings 0-5; restart only if <4 for >15 min after a LEAD NOTE (orchestrator rule).
