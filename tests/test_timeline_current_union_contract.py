@@ -46,7 +46,7 @@ def command(op, select, args):
 
 def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     raw = (ROOT / "contract/schemas/edit-command.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
+    assert hashlib.sha256(raw).hexdigest() == "9397d5faf66776c0a27d3611def6af42d9526dd965ad60eef11dc52bd3dd3e3a"
     schema = json.loads(raw)
     assert len(schema["$defs"]) == 55
     assert len(schema["$defs"]["EditCommand"]["allOf"]) == 29

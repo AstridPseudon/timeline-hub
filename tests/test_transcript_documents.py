@@ -13,6 +13,7 @@ import yaml
 from runtime_protocol.errors import ConflictError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_inputs import content_digest
 from runtime_protocol.util import canonical_json
 
 
@@ -86,8 +87,10 @@ def test_create_read_update_cas_and_retry_preserve_rich_source(service):
     created = service.create_document(project["id"], body, idempotency_key="transcript-create")
     assert created["data"]["kind"] == "media.transcript"
     assert created["data"]["version"] == 1
+    assert created["data"]["content_digest"] == content_digest(content)
     assert service.create_document(project["id"], body, idempotency_key="transcript-create") == created
     assert service.get_document(project["id"], body["document_id"])["content"] == content
+    assert service.get_document(project["id"], body["document_id"])["content_digest"] == content_digest(content)
     assert service.list_documents(project["id"], kind="media.transcript")["items"] == [created["data"]]
 
     corrected = copy.deepcopy(content)
@@ -98,6 +101,8 @@ def test_create_read_update_cas_and_retry_preserve_rich_source(service):
         idempotency_key="transcript-correction",
     )
     assert updated["data"]["version"] == 2
+    assert updated["data"]["content_digest"] == content_digest(corrected)
+    assert updated["data"]["content_digest"] != created["data"]["content_digest"]
     assert updated["data"]["content"]["segments"][0]["text"] == "Hello there, 世界"
     assert updated["data"]["content"]["segments"][0]["words"] == content["segments"][0]["words"]
     assert service.update_document(
@@ -122,6 +127,39 @@ def test_create_read_update_cas_and_retry_preserve_rich_source(service):
     assert service.list_documents(project["id"], kind="media.transcript")["items"][0]["document_id"] == body["document_id"]
 
 
+def test_document_digest_is_content_only_and_project_scoped(service):
+    first = _project(service, "Digest first")
+    second = _project(service, "Digest second")
+    content = {"text": "same source", "nested": {"value": "世界"}}
+
+    first_result = service.create_document(
+        first["id"], {"document_id": "shared", "kind": "example.notes", "content": content},
+        idempotency_key="digest-first",
+    )
+    second_result = service.create_document(
+        second["id"], {"document_id": "shared-second", "kind": "example.notes", "content": content},
+        idempotency_key="digest-second",
+    )
+    expected = content_digest(content)
+    assert first_result["data"]["content_digest"] == expected
+    assert second_result["data"]["content_digest"] == expected
+    assert first_result["data"]["project_id"] == first["id"]
+    assert second_result["data"]["project_id"] == second["id"]
+    assert content_digest(first_result["data"]["content"]) == expected
+    assert content_digest(second_result["data"]["content"]) == expected
+    assert content_digest(first_result["data"]) != expected
+
+    changed = {"text": "changed", "nested": {"value": "世界"}}
+    updated = service.update_document(
+        first["id"], "shared", {"expected_version": 1, "content": changed},
+        idempotency_key="digest-update",
+    )
+    assert updated["data"]["content_digest"] == content_digest(changed)
+    assert updated["data"]["content_digest"] != expected
+    assert service.list_documents(first["id"])["items"] == [updated["data"]]
+    assert service.list_documents(second["id"])["items"] == [second_result["data"]]
+
+
 def test_transcript_resource_and_idempotent_receipts_survive_runtime_restart(tmp_path):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
@@ -136,6 +174,9 @@ def test_transcript_resource_and_idempotent_receipts_survive_runtime_restart(tmp
     updated = first.update_document(
         project["id"], body["document_id"], update_body, idempotency_key="restart-update"
     )
+    assert created["data"]["content_digest"] == content_digest(content)
+    assert updated["data"]["content_digest"] == content_digest(corrected)
+    assert updated["data"]["content_digest"] != created["data"]["content_digest"]
     first.close()
 
     restarted = RuntimeService(root)

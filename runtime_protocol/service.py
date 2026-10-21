@@ -4424,6 +4424,8 @@ class RuntimeService:
         value["document_id"] = value.pop("id")
         value.pop("content_json")
         value["content"] = content
+        from .timeline_commit_inputs import content_digest
+        value["content_digest"] = content_digest(content)
         return value
 
     @staticmethod

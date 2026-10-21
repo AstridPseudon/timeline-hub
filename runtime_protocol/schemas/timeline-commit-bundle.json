@@ -221,6 +221,10 @@
       ],
       "properties": {
         "content": {},
+        "content_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
         "created_at": {
           "type": "string"
         },
@@ -674,26 +678,70 @@
               }
             }
           ],
-          "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1.",
+          "description": "Bounded raw clip fields. Set hold in source seconds or atomically set an incoming transition with its matching elementRef; explicitly remove hold, asset or transition, or remove a transition and its matching elementRef as a closed pair. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; selected pack transitions require an exact schema_source.",
           "properties": {
             "clear": {
               "items": {
                 "enum": [
                   "hold",
                   "asset",
-                  "transition"
+                  "transition",
+                  "elementRef"
                 ]
               },
               "type": "array",
               "uniqueItems": true
             },
+            "schema_source": {
+              "$ref": "#/$defs/DocumentPin"
+            },
             "values": {
               "additionalProperties": false,
               "properties": {
+                "elementRef": {
+                  "$ref": "#/$defs/ElementRef"
+                },
                 "hold": {
                   "description": "Positive finite source seconds; timeline duration is hold/speed.",
                   "exclusiveMinimum": 0,
                   "type": "number"
+                },
+                "transition": {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JSON"
+                  },
+                  "properties": {
+                    "align": false,
+                    "duration": {
+                      "exclusiveMinimum": 0,
+                      "type": "number"
+                    },
+                    "durationFrames": false,
+                    "id": false,
+                    "incomingPolicy": false,
+                    "params": {
+                      "additionalProperties": {
+                        "$ref": "#/$defs/JSON"
+                      },
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "revision": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "type": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "duration"
+                  ],
+                  "type": "object"
                 }
               },
               "type": "object"
