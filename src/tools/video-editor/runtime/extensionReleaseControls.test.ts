@@ -36,12 +36,12 @@ describe('extension release controls', () => {
 
   it('rejects unreviewed extensions while admitting shipped extensions', () => {
     const all = [
-      extension('haus.astrid.live-scenes'),
+      extension('haus.astrid.threejs-live-editor'),
       extension('haus.astrid.unreviewed-local-example'),
       extension(TRANSCRIPT_LANE_EXTENSION_ID),
     ];
     expect(selectReviewedExtensions(all).map((item) => item.manifest.id)).toEqual([
-      'haus.astrid.live-scenes', TRANSCRIPT_LANE_EXTENSION_ID,
+      'haus.astrid.threejs-live-editor', TRANSCRIPT_LANE_EXTENSION_ID,
     ]);
   });
 
