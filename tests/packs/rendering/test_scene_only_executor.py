@@ -338,3 +338,41 @@ def test_prepared_scene_query_keeps_root_alive_and_validates_source(monkeypatch,
     )
     assert [row["frame"] for row in result] == [3, 0, 3]
     assert events == ["lock-enter", "prepare-enter", "prepare-exit", "lock-exit"]
+
+
+def test_prepared_scene_root_preserves_backend_lifetime_on_body_failure(monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+    from astrid.packs.rendering.rendering.renderers.remotion import lock, root_preparation
+
+    events = []
+
+    @contextmanager
+    def backend_lock():
+        events.append("lock-enter")
+        try:
+            yield
+        finally:
+            events.append("lock-exit")
+
+    @contextmanager
+    def backend_prepare(*args, **kwargs):
+        events.append("prepare-enter")
+        try:
+            yield "prepared-root"
+        finally:
+            events.append("prepare-exit")
+
+    monkeypatch.setattr(lock, "remotion_render_lock", backend_lock)
+    monkeypatch.setattr(root_preparation, "_prepared_remotion_root", backend_prepare)
+
+    with remotion_runtime.prepared_scene_root("timeline", "assets", "video") as prepared:
+        assert prepared == "prepared-root"
+        events.append("body")
+    assert events == ["lock-enter", "prepare-enter", "body", "prepare-exit", "lock-exit"]
+
+    events.clear()
+    with pytest.raises(RuntimeError, match="body failed"):
+        with remotion_runtime.prepared_scene_root("timeline", "assets", "video"):
+            events.append("body")
+            raise RuntimeError("body failed")
+    assert events == ["lock-enter", "prepare-enter", "body", "prepare-exit", "lock-exit"]
