@@ -175,7 +175,8 @@ def historical_sheet_film(tmp_path, request):
          'transition': {'type': 'crossfade', 'duration': .25},
          'app': {'org.example': {'literal': 'video', 'value': None}}},
         {'id': 'title', 'clipType': 'am-type', 'track': 'picture', 'at': 6, 'hold': 1.013,
-         'params': {'text': 'Before', 'size': 32, 'opaque': {'keep': [None, False, 1, 1.0]}},
+         'params': {'text': 'Before', 'size': 32, 'font': 'display', 'color': '#25241F',
+                   'opaque': {'keep': [None, False, 1, 1.0]}},
          'org.example/data': {'float': 1.0}},
     ]
     # Main's publication evaluator only accepts numeric FPS; rational-object
@@ -600,6 +601,74 @@ def test_current014_detached_size_clear_uses_one_native_http_commit_and_guarded_
     restored_target = State(restored).entity(ref)
     assert restored_target['params']['size'] == 32
     assert _json(restored_target) == _json(State(before).entity(ref))
+    redone = reloaded.undo([undone['receipt']['receipt_id']])
+    redone_bundle = bundle_from_document(redone['data']['canonical_document'])
+    assert _json(State(redone_bundle).entity(ref)) == _json(target)
+
+
+@pytest.mark.parametrize('runtime', ['historical'], indirect=True)
+@pytest.mark.parametrize('historical_sheet_film', ['detached'], indirect=True)
+def test_current014_detached_font_color_uses_one_native_http_commit_and_guarded_inverse(
+        runtime, historical_sheet_film):
+    from astrid.sdk.timeline.checkout import _sheet_session
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_sheet import apply_sheet, render_sheet
+
+    client = runtime.client()
+    assert historical_sheet_film[1] == runtime.project
+    tl = Checkout.draft(runtime.project, 'film', client=client)
+    original_text = render_sheet(tl, cuts=['c1'])
+    card_line = next(line for line in original_text.splitlines() if 'card' in line)
+    assert 'color=#25241F font=display opaque={"keep":[null,false,1,1.0]} size=32' in card_line
+    edited = (original_text.replace('size=32', 'size=48', 1)
+              .replace('font=display', 'font=label', 1)
+              .replace('color=#25241F', 'color="#FF6B23"', 1))
+    assert edited != original_text
+    assert b'font=label' in edited.encode() and b'color="#FF6B23"' in edited.encode()
+
+    session = _sheet_session(tl)
+    native = NativeSheet.load(session)
+    artifact = json.loads(session.outbox.path.read_bytes())['sheet']
+    bundle, basis = artifact['bundle'], artifact['basis']
+    ref = artifact['detached']['bindings']['c1.card']
+    sibling = 'occurrence:occ/clip:video'
+    before = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=runtime.history()['head']['revision_id']).data['bundle']
+    expected = [capture_clip_set_params(bundle, ref,
+                                        values={'size': 48, 'font': 'label', 'color': '#FF6B23'})]
+    assert native._bundle == bundle and native._basis == basis
+    assert apply_sheet(tl, edited, client=client)
+    assert json.loads(session.outbox.path.read_bytes())['pending'] == expected
+
+    tl.save(quiet=True)
+    request = json.loads(runtime.calls[-1][0])
+    assert request['base_revision_id'] == basis['revision_id']
+    assert request['base_publication_id'] == basis['publication_id']
+    assert request['commands'] == expected and request['source'] == {'via': 'sheet'}
+    accepted = copy.deepcopy(runtime.history()['head'])
+    after = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=accepted['revision_id']).data['bundle']
+    target = State(after).entity(ref)
+    before_target = State(before).entity(ref)
+    assert list(target['params']) == list(before_target['params'])
+    assert target['params']['size'] == 48 and target['params']['font'] == 'label'
+    assert target['params']['color'] == '#FF6B23'
+    assert target['params']['opaque'] == {'keep': [None, False, 1, 1.0]}
+    assert 'asset' not in target and 'from' not in target and 'to' not in target
+    assert [clip['id'] for shot in after['shots'].values()
+            for clip in shot['internal_timeline']['clips']] == ['video', 'title']
+    assert State(after).entity(sibling) == State(before).entity(sibling)
+    assert after['parent']['config']['org.example/data'] == {'null': None}
+
+    runtime.restart()
+    reloaded = runtime.session(name='current014-font-color-reloaded')
+    reloaded_bundle = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=accepted['revision_id']).data['bundle']
+    assert State(reloaded_bundle).entity(ref) == target
+    undone = reloaded.undo([accepted['publication_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert _json(State(restored).entity(ref)) == _json(State(before).entity(ref))
+    assert State(restored).entity(sibling) == State(before).entity(sibling)
     redone = reloaded.undo([undone['receipt']['receipt_id']])
     redone_bundle = bundle_from_document(redone['data']['canonical_document'])
     assert _json(State(redone_bundle).entity(ref)) == _json(target)
