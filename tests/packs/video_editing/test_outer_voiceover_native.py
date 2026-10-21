@@ -4,8 +4,12 @@ from __future__ import annotations
 import copy
 import json
 import os
+import subprocess
+import sys
+import tempfile
 import threading
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from runtime_protocol.timeline_commit_port import route_path
@@ -36,16 +40,21 @@ SETTINGS = {
 
 def _fixture_generation_pack(root: Path) -> Path:
     """Build a network-disabled speech executor with text-distinct WAV output."""
-    pack = root / "private15_speech_fixture"
+    pack = root / "generation"
     executor = pack / "executors" / "generate_speech"
     executor.mkdir(parents=True)
     (pack / "pack.yaml").write_text(
         "schema_version: 2\n"
-        "id: private15_speech_fixture\n"
+        "id: generation\n"
         "name: Private15 speech fixture\n"
         "version: 1.0.0\n"
         "capabilities: [generate_speech]\n"
         "content:\n  executors: executors\n",
+        encoding="utf-8",
+    )
+    (executor / "STAGE.md").write_text(
+        "# Private15 speech fixture\n\n"
+        "This executor is a deterministic, network-disabled test fixture.\n",
         encoding="utf-8",
     )
     script = r'''
@@ -129,6 +138,104 @@ def _selection(row):
     value = row.get("selection", row)
     return {key: value[key] for key in (
         "asset", "generation_id", "variant_id", "object_id", "catalog_digest")}
+
+
+def _preflight_fixture(pack: Path) -> None:
+    """Validate the complete fixture closure before starting a real worker flow."""
+    from astrid.core._shared.result_manifest import harvest_staged_outputs
+    from astrid.core.execution.executor.folder import (
+        discover_folder_executor_roots,
+        load_folder_executor,
+    )
+    from astrid.core.execution.generic_host import component_load_failures
+    from astrid.core.pack.canonical import validate_canonical_pack
+    from astrid.core.pack.loader import discover_packs
+    from astrid.core.pack.validate import validate_pack
+    from astrid.sdk.invocation import _generation_publish_effect
+
+    errors, warnings = validate_pack(pack)
+    assert errors == [], errors
+    assert warnings == [], warnings
+    canonical = validate_canonical_pack(pack)
+    assert canonical.definition.id == pack.name == "generation"
+    discovered_packs = discover_packs(pack.parent)
+    assert [(item.id, item.root.name) for item in discovered_packs] == [("generation", "generation")]
+    assert component_load_failures([pack]) == []
+
+    executor_roots = discover_folder_executor_roots(pack)
+    assert executor_roots == (pack / "executors" / "generate_speech",)
+    definition = load_folder_executor(executor_roots[0])
+    assert definition.id == "generation.generate_speech"
+    assert definition.metadata["generation_publication"] == {
+        "version": 1,
+        "modality": "audio",
+        "output_port": "speech",
+    }
+    assert definition.isolation.network is False
+    assert {output.name for output in definition.outputs} == {"speech", "speech_manifest"}
+    assert {
+        output.path_template for output in definition.outputs
+    } == {"{out}/audio/speech.wav", "{out}/speech-provenance.json"}
+    assert json.loads((executor_roots[0] / "executor.yaml").read_text())["isolation"] == {
+        "mode": "subprocess",
+        "network": False,
+    }
+
+    host = GenericPackHost(pack_roots=[pack], client=None, attempt_root=pack.parent / "preflight-attempts")
+    try:
+        records = host.discover()
+        assert [record.id for record in records] == ["generation.generate_speech"]
+        host.preflight("generation.generate_speech")
+        record = host.capabilities["generation.generate_speech"]
+        assert record.ready
+        assert record.preflight["network"] == {"ok": True}
+        assert record.definition.metadata["source_pack"] == "generation"
+        effect = _generation_publish_effect(
+            SimpleNamespace(
+                id=record.id,
+                outputs=record.definition.outputs,
+                definition=record.definition.to_dict(),
+            ),
+            project="preflight-project",
+            generation_intent={
+                "version": 1,
+                "modality": "audio",
+                "partial_success_policy": "reject",
+                "groups": [{
+                    "group_key": "main",
+                    "selectors": [{
+                        "selector": "main-0",
+                        "ordinal": 0,
+                        "variant_key": "original",
+                    }],
+                }],
+            },
+        )
+        assert effect["effect_type"] == "generation.publish_v1"
+        assert effect["payload"]["generation_type"] == record.id
+        assert effect["payload"]["groups"][0]["selectors"][0]["output_port"] == "speech"
+
+        with tempfile.TemporaryDirectory(prefix="private15-fixture-output-") as output_dir:
+            output_root = Path(output_dir)
+            command = [
+                sys.executable if argument == "{python_exec}" else argument
+                for argument in record.definition.command.argv
+            ]
+            command = [
+                str(output_root) if argument == "{out}" else argument
+                for argument in command
+            ] + ["Preflight narration"]
+            completed = subprocess.run(command, check=False, capture_output=True, text=True)
+            assert completed.returncode == 0, completed.stderr
+            harvested = harvest_staged_outputs(
+                output_root, definition=record.definition, require=True
+            )
+            assert {item["name"] for item in harvested} == {"speech", "speech_manifest"}
+            assert {Path(item["path"]).name for item in harvested} == {
+                "speech.wav", "speech-provenance.json"
+            }
+    finally:
+        host.shutdown()
 
 
 def _speech_result(client, project: str, text: str, key: str):
@@ -277,6 +384,8 @@ def _outer_admission(owner, record, project: str, target: dict, script_object: s
 def test_outer_native_voiceover_proposal_outbox_retry_undo(tmp_path: Path, real_runtime, monkeypatch):
     """Managed outer action -> real speech -> settled proposal -> durable requester."""
     use_runtime()
+    generation_root = _fixture_generation_pack(tmp_path)
+    _preflight_fixture(generation_root)
     daemon = real_runtime()
     inner = outer = sdk = None
     inner_thread = None
@@ -317,7 +426,6 @@ def test_outer_native_voiceover_proposal_outbox_retry_undo(tmp_path: Path, real_
             "PYTHONPATH",
             os.pathsep.join((str(dependency_root), os.environ.get("PYTHONPATH", ""))),
         )
-        generation_root = _fixture_generation_pack(tmp_path)
         inner = GenericPackHost(
             pack_roots=[generation_root],
             client=RuntimeProtocolClient(
