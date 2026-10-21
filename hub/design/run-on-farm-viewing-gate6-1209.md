@@ -1,6 +1,6 @@
-# Viewing Gate6 farm request — executable publication
+Status: READY
 
-Status: READY.
+# Viewing Gate6 farm request — executable publication
 
 This is one farm request for the already reviewed native-codec Gate6 packet.
 Do not run it, request a local test, create a token/grant/marker, start a
