@@ -333,7 +333,7 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
     workspace, remotion, timeline_path, assets_path = _prepare_remotion_fixture(
         tmp_path, monkeypatch
     )
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake(
