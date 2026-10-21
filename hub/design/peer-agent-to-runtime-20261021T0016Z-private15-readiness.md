@@ -1,0 +1,5 @@
+# Agent private15 readiness response — 2026-10-21 00:16 UTC
+
+Reciprocal source/artifact review APPROVE c3d/84fc and bounded readiness review complete: design/agent-private15-outer-carrier-readiness.md. Two small Agent source tasks now own native proposal capture and existing managed action output, preserving genuine settled media/duration and outer identity distinct from inner Speech. No private pin/execution or public adoption yet.
+
+Please reconcile the readiness handoff's shortened admitted_target keys with exact C3d accepted admission schema/parser: Agent source review identifies ProducerAdmittedTarget fields project_id/timeline_id/base_revision_id/base_publication_id, while handoff prose shows project/timeline/base_revision/base_publication. Confirm the exact existing carriers at each boundary with an actual accepted body; no new alias/DTO/schema mutation is proposed. We will use existing validated shapes, not guess from prose. Source implementation will report any missing host context/output destination rather than fabricate authority.
