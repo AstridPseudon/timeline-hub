@@ -98,7 +98,7 @@ with pytest.MonkeyPatch.context() as patch:
 
     state = SimpleNamespace(**json.loads((tmp_path / 'seed.json').read_text()),
                             root=tmp_path / 'publish', selected=[], closures=[], candidates=[],
-                            before_accept=None)
+                            before_accept=None, owner=media_owner)
     state.effect = lambda project: {**copy.deepcopy(state.effect_template), 'target_id': project}
     state.service = RuntimeService(state.root)
     state.service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
@@ -136,13 +136,33 @@ with pytest.MonkeyPatch.context() as patch:
         state.service.close()
 
 
+@pytest.fixture(params=['parent', 'occurrence:occ-a'])
+def http_editing(request, tmp_path, monkeypatch):
+    """Use one normal image fixture for the bounded parent/occurrence HTTP proof."""
+    from tests.editing_conformance.test_commit_runtime_occurrence_media import (
+        editing as occurrence_editing,
+    )
+
+    fixture = occurrence_editing.__wrapped__(
+        SimpleNamespace(param='image'), tmp_path, monkeypatch, 'swap', request.param,
+        source_bytes.__wrapped__(tmp_path),
+    )
+    try:
+        state = next(fixture)
+        # Preserve the raw owner binding used to construct this exact fixture.
+        state.owner = request.param
+        yield state
+    finally:
+        fixture.close()
+
+
 def command(editing):
     return {'schema_version': 1, 'op': 'clip.swap-media', 'version': '1', 'select': TARGET,
             'args': {'old_media': editing.old, 'media': editing.new},
             'intent': {'ownership': 'parent'}}
 
 
-def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editing, monkeypatch):
+def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editing, monkeypatch, real_runtime):
     import runtime_protocol.service as service_module
     import runtime_protocol.visual_seam as visual_seam
     from runtime_protocol.errors import RuntimeErrorBase
@@ -204,8 +224,42 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
     assert redone['data']['canonical_document'] == output
     assert editing.service.store.integrity_report()['ok']
 
+    # The SDK caller must use the normal supported client transport.  Opening
+    # AstridClient performs the real health/handshake exchange; no transport
+    # identity or health state is fabricated by this test.
+    from astrid.sdk.client import AstridClient
+
+    editing.service.close()
+    daemon = real_runtime(editing.root, support_root=editing.root.parent / 'http-support',
+                          commit='95bd3c5f', authoring_profile='astrid')
+    token, _ = daemon.credentials.provision(
+        'media-editor', [
+            'handshake',
+            'projects:read', 'projects:write', 'objects:read', 'objects:write',
+            'tasks:read', 'tasks:write',
+        ],
+    )
+    client = AstridClient.open(
+        endpoint=daemon.endpoint, credential=token,
+        realm_id=daemon.service.realm['id'], actor_id='media-editor',
+        client_name='timeline-selected-media-test', client_version='1',
+        protocol_version='workspace.v1',
+    )
+    head = client.timelines.history(editing.project, 'film', limit=1)
+    assert head.ok, head.as_dict()
+    head = head.data['head']
+    result = client.timelines.replace_parent_media(
+        editing.project, 'film', occurrence_id=None, clip_id='clip-a',
+        source_object_id=editing.old['object_id'], expected_head=head['revision_id'],
+        expected_publication=head['publication_id'], old_media=editing.new,
+        media=editing.old, idempotency_key='sdk-swap-back')
+    assert result.ok, result.error
+    assert State(bundle_from_document(result.data['canonical_document'])).entity(TARGET)['asset'] == editing.old['asset']
+
     # The WC3 SDK adapter submits the original head pair and selected pins.
     # Use an already existing alias after redo: no new allocation is needed.
+    from astrid.sdk.remote import RemoteTimelines
+
     class Transport:
         def list_timelines(self, project, *, cursor=None, limit=50):
             return ([{'project_id': project, 'timeline_id': 'film', 'slug': 'film'}], None)
@@ -225,6 +279,147 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
         media=editing.old, idempotency_key='sdk-swap-back')
     assert result.ok, result.error
     assert State(bundle_from_document(result.data['canonical_document'])).entity(TARGET)['asset'] == editing.old['asset']
+
+
+def test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo(
+        http_editing, monkeypatch, real_runtime, tmp_path):
+    """Prove one bounded native swap for both raw parent and explicit occurrence owners."""
+    from runtime_protocol.server import RuntimeHandler
+
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline._command_state import State
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    editing = http_editing
+    monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
+    wire = []
+    paths = []
+    original_send = RuntimeHandler._send
+    lost = [True]
+
+    def send(handler, status, payload=None, **kwargs):
+        paths.append(handler.path)
+        if (handler.command == 'POST' and handler.path.endswith('/commit')
+                and getattr(handler, '_defer_response', False)):
+            record = {
+                'key': handler.headers['Idempotency-Key'],
+                'body': handler._prefetched_body,
+                'status': status,
+                'response': copy.deepcopy(payload),
+            }
+            wire.append(record)
+            if status == 200 and lost[0]:
+                lost[0] = False
+                raise ConnectionError('selected swap lost ACK after durable acceptance')
+        return original_send(handler, status, payload, **kwargs)
+
+    monkeypatch.setattr(RuntimeHandler, '_send', send)
+    # The fixture's in-process service owns this realm until the HTTP daemon takes over.
+    editing.service.close()
+    daemon = real_runtime(
+        editing.root, support_root=tmp_path / 'http-support',
+        commit='b92d3e7a05eec65c142294ef4873edd059e9b31d', authoring_profile='astrid',
+    )
+    token, _ = daemon.credentials.provision(
+        'media-editor', [
+            'handshake',
+            'projects:read', 'projects:write', 'objects:read', 'objects:write',
+            'tasks:read', 'tasks:write',
+        ],
+    )
+    client = AstridClient.open(
+        endpoint=daemon.endpoint, credential=token,
+        realm_id=daemon.service.realm['id'], actor_id='media-editor',
+        client_name='timeline-selected-media-http-test', client_version='1',
+        protocol_version='workspace.v1',
+    )
+    initial = client.timelines.history(editing.project, 'film', limit=1)
+    assert initial.ok, initial.as_dict()
+    initial_head = initial.data['head']
+    target = editing.owner + '/clip:clip-a'
+    key = 'selected-http-' + ('parent' if editing.owner == 'parent' else 'occurrence')
+
+    result = client.timelines.replace_parent_media(
+        editing.project, 'film', occurrence_id=None if editing.owner == 'parent' else 'occ-a',
+        clip_id='clip-a', source_object_id=editing.new['object_id'],
+        expected_head=initial_head['revision_id'],
+        expected_publication=initial_head['publication_id'], old_media=editing.old,
+        media=editing.new, idempotency_key=key,
+    )
+    assert not result.ok
+    assert result.error.code in {'transport_error', 'service_unavailable'}
+    assert len(wire) == 1
+
+    first = copy.deepcopy(wire[0])
+    first_body = json.loads(first['body'])
+    assert first['key'] == key
+    assert first_body['base_revision_id'] == initial_head['revision_id']
+    assert first_body['base_publication_id'] == initial_head['publication_id']
+    command = first_body['commands'][0]
+    assert command['select'] == target
+    assert command['op'] == ('clip.swap-media' if editing.owner == 'parent' else 'occurrence.swap-media')
+    assert command['args'] == {'old_media': editing.old, 'media': editing.new}
+    outbox = next((path for path in (tmp_path / 'client-data' / 'timeline-outbox').glob('*.json')))
+    saved = json.loads(outbox.read_text())
+    assert saved['flight']['key'] == first['key']
+    assert saved['flight']['body'].encode() == first['body']
+    assert saved['base'] == {
+        'revision_id': initial_head['revision_id'],
+        'publication_id': initial_head['publication_id'],
+    }
+
+    port, instance = daemon.httpd.server_port, daemon.instance_id
+    daemon.stop()
+    daemon = real_runtime(
+        editing.root, support_root=tmp_path / 'http-support', port=port,
+        commit='b92d3e7a05eec65c142294ef4873edd059e9b31d', authoring_profile='astrid',
+    )
+    assert daemon.instance_id != instance
+    client = AstridClient.open(
+        endpoint=daemon.endpoint, credential=token,
+        realm_id=daemon.service.realm['id'], actor_id='media-editor',
+        client_name='timeline-selected-media-http-test', client_version='1',
+        protocol_version='workspace.v1',
+    )
+    retried = client.timelines.replace_parent_media(
+        editing.project, 'film', occurrence_id=None if editing.owner == 'parent' else 'occ-a',
+        clip_id='clip-a', source_object_id=editing.new['object_id'],
+        expected_head=initial_head['revision_id'],
+        expected_publication=initial_head['publication_id'], old_media=editing.old,
+        media=editing.new, idempotency_key='different-caller-key-is-ignored',
+    )
+    assert retried.ok, retried.as_dict()
+    assert len(wire) == 2
+    assert {wire[1][field] for field in ('key', 'body')} == {first[field] for field in ('key', 'body')}
+    retry_body = json.loads(wire[1]['body'])
+    assert (retry_body['base_revision_id'], retry_body['base_publication_id']) == (
+        first_body['base_revision_id'], first_body['base_publication_id'])
+    assert retry_body == first_body
+    assert not json.loads(outbox.read_text())['pending']
+
+    reloaded = client.timelines.open_bundle(
+        editing.project, 'film', revision_id=retried.data['accepted_revision_id'])
+    assert reloaded.ok, reloaded.as_dict()
+    assert State(reloaded.data['bundle']).entity(target)['asset'] == editing.new['asset']
+
+    session = TimelineSession.open(editing.project, 'film', client=client, outbox_path=outbox)
+    undone = session.undo(
+        [retried.as_dict()['receipt']['receipt_id']], idempotency_key=key + '-undo',
+    )
+    assert undone['data']['status'] in {'accepted', 'rebased'}
+    undo_body = json.loads(wire[-1]['body'])
+    assert undo_body['commands'] == [{
+        'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
+        'args': {'publications': [retried.as_dict()['receipt']['receipt_id']]},
+    }]
+    restored = client.timelines.open_bundle(
+        editing.project, 'film', revision_id=undone['data']['accepted_revision_id'])
+    assert restored.ok, restored.as_dict()
+    assert State(restored.data['bundle']).entity(target)['asset'] == editing.old['asset']
+    history = client.timelines.history(editing.project, 'film', limit=10)
+    assert history.ok, history.as_dict()
+    assert history.data['items'][-1]['records']['undo_of'] == [retried.as_dict()['receipt']['receipt_id']]
+    assert not any('composition' in path or 'publish' in path for path in paths)
 
 
 @pytest.mark.parametrize('side', ['old_media', 'media'])
