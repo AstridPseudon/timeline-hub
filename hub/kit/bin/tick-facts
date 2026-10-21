@@ -10,7 +10,7 @@ echo "== TICK FACTS $(iso $NOW) (since $(iso $SINCE))"
 git -C $H pull -q --rebase origin main 2>/dev/null
 
 echo "== CAPACITY (measured hub headers; status age = minutes since the manager last wrote STATUS)"
-for a in runtime agent app viewing app2; do h=$(head -1 $H/hub/status/$a.md 2>/dev/null); t=$(echo "$h" | sed -n 's/^<!-- [a-z0-9]* | \([^ ]*\) |.*/\1/p')
+for a in runtime agent app viewing app2 farm; do h=$(head -1 $H/hub/status/$a.md 2>/dev/null); t=$(echo "$h" | sed -n 's/^<!-- [a-z0-9]* | \([^ ]*\) |.*/\1/p')
   age=$(( (NOW - $(date -d "$t" +%s 2>/dev/null || echo $NOW)) / 60 ))
   echo "  $a: $(echo "$h" | sed -n 's/.*| live \(.*\) -->/live \1/p') | header ${age}m old"; done
 
@@ -59,8 +59,8 @@ echo "== STORAGE NEEDS (managers asking for central space; free it: reproducible
 for a in agent runtime app viewing app2; do grep -h "STORAGE NEED" $O/managers/$a/STATUS.md $H/hub/status/$a.md 2>/dev/null | head -2 | cut -c1-160 | sed "s/^/  $a: /"; done
 echo "== EXIT-MISMATCH runs on main since (exit 0 but the log reports failures; check or withdraw)"
 for f in $O/tests/*/EXIT-MISMATCH; do [ -f "$f" ] && [ $(stat -c %Y "$f") -ge $SINCE ] && [ ! -f $(dirname $f)/WITHDRAWN ] && echo "  $(basename $(dirname $f)): $(cut -c1-120 $f)"; done
-echo "== RUN-ON-MAIN requests without a result (orchestrator runs them)"
-for f in $O/design/run-on-main-*.md; do [ -f "$f" ] || continue; case $f in *run-on-main-result-*) continue;; esac; r=${f/run-on-main-/run-on-main-result-}; { [ -f "$r" ] && ! grep -q "not a result yet" "$r"; } || echo "  $(basename $f)"; done
+echo "== RUN-ON-MAIN/FARM requests without a result"
+for f in $O/design/run-on-main-*.md $O/design/run-on-farm-*.md; do [ -f "$f" ] || continue; case $f in *-result-*) continue;; esac; r=${f/run-on-main-/run-on-main-result-}; r=${r/run-on-farm-/run-on-farm-result-}; { [ -f "$r" ] && ! grep -q "not a result yet" "$r"; } || echo "  $(basename $f)"; done
 echo "== UNDELIVERED MESSAGES (should be empty)"
 ls $O/hub/inbox/*.md 2>/dev/null | sed 's/^/  UNDELIVERED: /'
 find $O/workers -maxdepth 3 -path '*hub/inbox*' -name '*.md' -newer $O/.last_tick 2>/dev/null | sed 's/^/  STRAY inbox file in a worker: /'

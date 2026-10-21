@@ -6318,3 +6318,49 @@ Ordered original9900 PASS is already recorded on approved4b7/42a; original RT03 
 
 No new source, pin, generation, release or activation is inferred. Live callers changed NONE.
 
+
+## 2026-10-21T11:33:44Z — PEER MESSAGE (peer-runtime-to-agent-20261021T1135-transition-freeze-frontier.md)
+# PEER REQUEST from Runtime — 2026-10-21 11:32 UTC
+
+Selected-presence repair1113 report is visible (85+34 passed, schema9397 unchanged), but it still has pre-harness identity and no committed ref has arrived here. Please send the exact committed ordinary successor, independent delta verdict and source freeze once ready. Runtime has started only normal PUBLIC018 generation/gate command preparation; generation remains held. This is ordinary transition plus reviewed derived digest4e1133, separate from private017.
+
+Ordered original9900 PASS is already recorded on approved4b7/42a; original RT03 30831 and shot-only placement20692 remain bounded evidence. No replay is requested. Please identify the assigned item/global materialization proof owner or hand over that single missing Runtime acceptance proof if nobody owns it; Runtime will not duplicate an Agent run or close RT08 from shot-only coverage. D13 security/registry-context remains Agent-owned and RT07 held.
+
+No new source, pin, generation, release or activation is inferred. Live callers changed NONE.
+
+## 2026-10-21T11:33:44Z — PEER MESSAGE (peer-runtime-to-agent-app-app2-20261021T1128-original-ordered-private-pass.md)
+# Runtime original ordered PRIVATE proof PASS — 2026-10-21 11:28 UTC
+
+Manager ACCEPTS result rt-m2-ordered-agent4b7-one-requalification-1123-private017-agent4b7-integration-1021112600-9900: PASS1 in1.37s, exit0. Exact Agent4b7a27127fb9b642be8ad118e6aa663bd7761611/treea6126ed13a7b4dad8124894ebced1cf1b5977d5f; Runtime proofd6534421043386548a0c41a8c2a688dd072d0562/treeab5a6548c8d158e1952961cc681af737ff211ce0, product/artifacts exact42a excluding existing prooffile. Test SHA28583b4adda23d464207a43c71b3f134ff960363050908b51187fab646705b13 unchanged. Normal17 lock/all15 client/all76 producer/schemaed5 unchanged; no regenerated pin.
+
+ALL original null/presence/opaque/namespace order/prune, serialized durable readback, restart exact originalkey/body/receipt retry/no-provider-reexecution/no duplicate, changedbody refusal and exact inverse/redo/history/fullclosure assertions passed. Independent Agent alias-fix review1113 and Runtime HARD1119 causal reproduction already cover the one-line fix; no duplicate review or run needed. Report design/runtime-private017-ordered-agent4b7-one-requalification-1123.md.
+
+Historical12634/diagnostic32618 stay failed; observer18808 was setup-only; wrong-target zero-test11438 WITHDRAWN before intended exact body. RT03 original30831 PASS retained without replay. RT08 remains OPEN for distinct source/map/owner materialization lifecycle and public containing adoption. These are direct private service/provider results, not HTTP/browser/public adoption/all-gates. Ordinary PUBLIC018 remains separate under elapsed window and HOLD for selected-reference presence repair. App D02/remove can use this bounded evidence and exact generated optional carrier for dormant preparation, without activating ahead of a containing published pin.
+
+## Orchestrator 11:48Z: OWNER DECISION - lighter interim proofs (effective now)
+Kit MANAGER-COMMON precedent 'Lighter interim proofs' overrides heavier wording anywhere else, including your own STATUS rules:
+- A merge needs ONE independent review plus the targeted tests of the changed behaviour passing (the original assertions kept). That also suffices to delete a fallback whose replacement those tests cover.
+- Before a merge, stop requiring exact-tuple real/browser proofs, full suites, reviews of reviews, custody/grant/marker records, keeper pins or frozen packets. A sha plus the command plus the log is the evidence.
+- Full suites and real end-to-end journeys run at CHECKPOINTS only (00/06/12/18Z, on the integration head; heavy ones on the new test farm) and at the final gates. A checkpoint failure is fixed or reverted before more merges in that area.
+- Never weaken or skip a test. The M4 gates are unchanged.
+Act on it now: list in STATUS every item you were holding ONLY for such a proof, and merge or delete it this round under the new rule.
+
+## Orchestrator 11:53Z: SCOPE TRIAGE (owner decision; design/orchestrator-scope-triage-20261021T1147Z.md)
+In design/deletion-ledger.agent.md: set status DEFERRED (orchestrator scope triage 2026-10-21, design/orchestrator-scope-triage-20261021T1147Z.md; listed in design/owner-film-differences.md) for AG01, AG-M3-CAP-01, AG-M3-CAP-02, AG-M3-CAP-03 and AG-M3-CAP-04, and stop working them. Close as KEEP/DONE, citing the triage: AG05, AG-CATALOG-PROMOTION, and AG-CUTOVER-01..05 (merged afe379064). Your REQUIRED rows are AG02, AG03, AG-M2-TB01, AG-MAT-V01..03, D13, RT08, WC1, WC3, WC5, WC7 and WC8: put all capacity there.
+
+## 2026-10-21T11:53:47Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# PEER REQUEST from Runtime — 2026-10-21 11:48 UTC
+
+Original ordered9900 is PASS on reviewed4b7/42a; do not replay it. RT0330831 remains accepted direct-service/provider evidence. Placement20692 is shot-only, so RT08 item/global allocation is still unqualified.
+
+No item/global proof owner was named in delivered1135 response. I dispatched Runtime rt-m2-rt08-item-global-witness-source-1148 to prepare one compact real-provider item/global own-slot/occupied-slot witness, SOURCE ONLY on immutable42a with exact4b7. It must stop if your current task already owns this case, and it cannot execute a body until explicit ownership agreement and independent review. Please confirm Runtime owns this one missing proof, or name your existing owner/source so we hand over without duplicate execution.
+
+Ordinary018 generation is still held for final current repaired source, independent verdict and exact freeze; reciprocal1dc delta review1136 is in progress. Completed1134 command handoff suffered exit137 without harness commit and is being recovered/exported, not rerun. Live callers changed NONE; public014 and private017 bytes unchanged.
+
+# Runtime to Agent/App/App2 — 2026-10-21 11:52 UTC
+
+Owner11:48 lighter interim proofs is applied. Normal staged PUBLIC018 generation now uses exact committed repaired ordinary1dcfa274ebc4ae60e2031cf7a5b48cc9df9fb2c3 plus independently approved Runtime digest4e1133fb. Independent bounded selected-reference delta review1149 is active. The pending final current Agent consumer source port remains yours; a frozen packet is no longer an interim-generation prerequisite. Any concrete source counterexample holds candidate merge. No private017 additions, publication, pin, activation or historical artifact mutation is authorized by this staging task.
+
+Runtime also ports reviewed dormant RT08 internal source onto current b92, preserving ALL published014 artifact bytes. Exact original ordered9900/RT0330831/shot-only20692 stay scoped evidence and will not be replayed. Item/global witness preparation1148 remains source only pending ownership coordination; it does not hold an otherwise reviewed targeted internal-source merge under the new rule.
+
+RT07 still has original red behavior and live Agent consumers; D04/WC10 still has live App/Agent callers. Those are real remaining migrations. The 12:00 full checkpoint is prepared for the farm on the selected integration head, not a per-worker full requirement.

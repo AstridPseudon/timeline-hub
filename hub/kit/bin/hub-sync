@@ -10,11 +10,11 @@ W=/home/user/work
 #   remote writes hub/status/<area>.READY -> main stops its local manager, publishes final STATUS/INBOX,
 #   marks $ORCH/managers/<area>/REMOTE and writes hub/status/<area>.HANDOVER -> remote starts its manager.
 # Until then main keeps the area (and its home repo) local.
-declare -A REPO_OF=( [app]=app [viewing]=composition [app2]=app [agent]=agent )
+declare -A REPO_OF=( [app]=app [viewing]=composition [app2]=app [agent]=agent [farm]=none )
 case $M in
   main)    AREAS="runtime"; HOME_REPOS="runtime"; REMOTE_AREAS=""
-           for a in agent app viewing app2; do
-             [ $a = app2 ] && [ ! -e $ORCH/managers/app2/REMOTE ] && continue   # app2 only ever runs remotely
+           for a in agent app viewing app2 farm; do
+             case $a in app2|farm) [ -e $ORCH/managers/$a/REMOTE ] || continue;; esac   # app2 and the test farm only ever run remotely
              if [ -e $ORCH/managers/$a/REMOTE ]; then REMOTE_AREAS="$REMOTE_AREAS $a"
              else AREAS="$AREAS $a"; HOME_REPOS="$HOME_REPOS ${REPO_OF[$a]}"; fi
            done;;
@@ -23,11 +23,14 @@ case $M in
   agent)   AREAS="agent";         HOME_REPOS="agent";         REMOTE_AREAS="";;   # Agent's own machine (2026-10-20), via the normal handover
   # app2: a second App machine (2026-10-20). Owns NO repo: its app branches merge through the App home via merge requests. No handover.
   app2)    AREAS="app2";          HOME_REPOS="";              REMOTE_AREAS=""; mkdir -p $ORCH/managers/app2; touch $ORCH/managers/app2/HANDOVER_DONE;;
-  *) echo "usage: hub-sync main|app|viewing|app2|agent"; exit 2;;
+  # farm: the test farm (2026-10-21). Owns NO repo and has no Codex manager: its lead runs heavy proofs for every area
+  # (design/run-on-farm-*.md requests -> run-on-farm-result-*.md). Worker prefix tf-.
+  farm)    AREAS="farm";          HOME_REPOS="";              REMOTE_AREAS=""; mkdir -p $ORCH/managers/farm; touch $ORCH/managers/farm/HANDOVER_DONE;;
+  *) echo "usage: hub-sync main|app|viewing|app2|agent|farm"; exit 2;;
 esac
 # on a remote machine, home repos count as mine only once the handover arrived
 [ $M != main ] && [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ] && HOME_REPOS=""
-[ $M = app2 ] && HOME_REPOS=""
+case $M in app2|farm) HOME_REPOS="";; esac
 exec 8>$ORCH/.hub-sync.lock; flock -w 300 8 || exit 0   # never race hub-syncd
 now=$(date -u +%FT%TZ)
 retry(){ local d=2; for i in 1 2 3 4 5; do "$@" && return 0; sleep $d; d=$((d*2)); done; return 1; }
@@ -73,7 +76,7 @@ elif [ ! -e $ORCH/managers/$AREAS/HANDOVER_DONE ]; then
 fi
 
 hb=$(( $(date +%s) - $(stat -c %Y $ORCH/dispatcher.heartbeat 2>/dev/null || echo 0) ))
-declare -A WPFX=( [agent]=agt [runtime]=rt [app]=app [viewing]=vw [app2]=ap2 )
+declare -A WPFX=( [agent]=agt [runtime]=rt [app]=app [viewing]=vw [app2]=ap2 [farm]=tf )
 for a in $AREAS; do
   # measured, not self-reported: live workers with a running marker, their models, and how old the manager's STATUS.md is
   live=0; sol=0; luna=0; other=0; for d in $ORCH/workers/${WPFX[$a]}-*/; do [ -f $d/running ] && [ ! -e $d/IMPORTED ] || continue; live=$((live+1))
@@ -104,7 +107,7 @@ if [ $M = main ]; then
   done
 fi
 # shared kit: main publishes tools and rules; remote machines take them (PLAN changes and tool fixes propagate)
-KIT="PLAN.md COMMON.md MANAGER-COMMON.md MODELS.md COMMS.md AREA-LEAD.md LEAD.md"
+KIT="PLAN.md COMMON.md MANAGER-COMMON.md MODELS.md COMMS.md AREA-LEAD.md LEAD.md LEAD-FARM.md"
 if [ $M = main ]; then mkdir -p hub/kit/bin; cp -p $ORCH/bin/* hub/kit/bin/ 2>/dev/null; rm -f hub/kit/bin/*.bak; for f in $KIT; do cp -p $ORCH/$f hub/kit/; done
 else [ -d hub/kit ] && { for f in $KIT; do [ -f hub/kit/$f ] && cp -p hub/kit/$f $ORCH/$f; done; for f in hub/kit/bin/*; do b=$(basename $f); [ $b = hub-sync ] && continue; cmp -s $f $ORCH/bin/$b || { cp -p $f $ORCH/bin/.$b.new && mv $ORCH/bin/.$b.new $ORCH/bin/$b; }; done   # atomic: never rewrite a running script in place
   cmp -s hub/kit/bin/hub-sync $ORCH/bin/hub-sync || cp -p hub/kit/bin/hub-sync $ORCH/bin/hub-sync.next; }   # applied by hub-syncd between cycles
@@ -112,8 +115,8 @@ fi
 
 # worker evidence for handed-over areas: main publishes its workers' report/meta/exit/commit.log + log tail and
 # the area's test-service results; the remote machine copies them into its $ORCH/workers and $ORCH/tests (no overwrite)
-declare -A PFX=( [app]=app [viewing]=vw [app2]=ap2 [agent]=agt )
-declare -A TREPO=( [app]=app [viewing]=composition [app2]=app [agent]=agent )
+declare -A PFX=( [app]=app [viewing]=vw [app2]=ap2 [agent]=agt [farm]=tf )
+declare -A TREPO=( [app]=app [viewing]=composition [app2]=app [agent]=agent [farm]=none )
 if [ $M = main ]; then
   for a in $REMOTE_AREAS; do
     for d in $ORCH/workers/${PFX[$a]}-*; do [ -d "$d" ] || continue; w=$(basename $d); mkdir -p hub/workers/$w

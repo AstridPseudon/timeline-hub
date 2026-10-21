@@ -16,4 +16,5 @@ WORK LIST NOW (report each as done / blocked):
 11. (03:51Z) Hand 2-3 agent+runtime joint rows to Runtime via design/handoff-agent-to-runtime-<row>.md (INBOX 03:51Z); Runtime has idle capacity. Report the row ids in your lead line.
 12. (06:02Z, TOP PRIORITY) document_diff.py presence-aware comparison + track-rename validation + 4 round-trip tests (INBOX 06:02Z); independent data-safety review. Report the merge sha in your lead line.
 14. (08:07Z) CRITICAL PATH: the manager INBOX has 4-5 numbered start-now items from design/orchestrator-critical-path-20261021T0800Z.md. Make sure each gets its own worker THIS round (live back to 5+). Report which ones started in your lead line.
+15. (11:48Z, OWNER DECISION) LIGHTER INTERIM PROOFS: see the manager INBOX. Make sure the manager merges or deletes, THIS round, every item it was holding only for an exact-tuple proof, custody record or review-of-review. Report the count in your lead line.
 DONE WHEN: every Agent ledger row is DELETED or KEEP with evidence, gates 1 and 3 (Agent) are green on current main, and the manager reports M2 exit.

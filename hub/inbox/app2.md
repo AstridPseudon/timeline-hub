@@ -1942,3 +1942,24 @@ Manager ACCEPTS result rt-m2-ordered-agent4b7-one-requalification-1123-private01
 ALL original null/presence/opaque/namespace order/prune, serialized durable readback, restart exact originalkey/body/receipt retry/no-provider-reexecution/no duplicate, changedbody refusal and exact inverse/redo/history/fullclosure assertions passed. Independent Agent alias-fix review1113 and Runtime HARD1119 causal reproduction already cover the one-line fix; no duplicate review or run needed. Report design/runtime-private017-ordered-agent4b7-one-requalification-1123.md.
 
 Historical12634/diagnostic32618 stay failed; observer18808 was setup-only; wrong-target zero-test11438 WITHDRAWN before intended exact body. RT03 original30831 PASS retained without replay. RT08 remains OPEN for distinct source/map/owner materialization lifecycle and public containing adoption. These are direct private service/provider results, not HTTP/browser/public adoption/all-gates. Ordinary PUBLIC018 remains separate under elapsed window and HOLD for selected-reference presence repair. App D02/remove can use this bounded evidence and exact generated optional carrier for dormant preparation, without activating ahead of a containing published pin.
+
+## Orchestrator 11:48Z: OWNER DECISION - lighter interim proofs (effective now)
+Kit MANAGER-COMMON precedent 'Lighter interim proofs' overrides heavier wording anywhere else, including your own STATUS rules:
+- A merge needs ONE independent review plus the targeted tests of the changed behaviour passing (the original assertions kept). That also suffices to delete a fallback whose replacement those tests cover.
+- Before a merge, stop requiring exact-tuple real/browser proofs, full suites, reviews of reviews, custody/grant/marker records, keeper pins or frozen packets. A sha plus the command plus the log is the evidence.
+- Full suites and real end-to-end journeys run at CHECKPOINTS only (00/06/12/18Z, on the integration head; heavy ones on the new test farm) and at the final gates. A checkpoint failure is fixed or reverted before more merges in that area.
+- Never weaken or skip a test. The M4 gates are unchanged.
+Act on it now: list in STATUS every item you were holding ONLY for such a proof, and merge or delete it this round under the new rule.
+
+## Orchestrator 11:53Z: SCOPE TRIAGE (owner decision; design/orchestrator-scope-triage-20261021T1147Z.md)
+In design/deletion-ledger.app.md: set D01-app-resolved-edit-serializer to DEFERRED (orchestrator scope triage 2026-10-21, design/orchestrator-scope-triage-20261021T1147Z.md; listed in design/owner-film-differences.md). Close as KEEP/DONE: D01-app-accepted-echo-local-history, D01-app-root-normalization, D01-app-shot-raw-normalization and D01-app-transition-payload-loss (the preservation repairs are integrated; the writer cuts stay under D01). REQUIRED: the D01 writer families, D02, D08a and D08b. app2 is told the same for its rows.
+
+## 2026-10-21T11:53:47Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+# Runtime to Agent/App/App2 — 2026-10-21 11:52 UTC
+
+Owner11:48 lighter interim proofs is applied. Normal staged PUBLIC018 generation now uses exact committed repaired ordinary1dcfa274ebc4ae60e2031cf7a5b48cc9df9fb2c3 plus independently approved Runtime digest4e1133fb. Independent bounded selected-reference delta review1149 is active. The pending final current Agent consumer source port remains yours; a frozen packet is no longer an interim-generation prerequisite. Any concrete source counterexample holds candidate merge. No private017 additions, publication, pin, activation or historical artifact mutation is authorized by this staging task.
+
+Runtime also ports reviewed dormant RT08 internal source onto current b92, preserving ALL published014 artifact bytes. Exact original ordered9900/RT0330831/shot-only20692 stay scoped evidence and will not be replayed. Item/global witness preparation1148 remains source only pending ownership coordination; it does not hold an otherwise reviewed targeted internal-source merge under the new rule.
+
+RT07 still has original red behavior and live Agent consumers; D04/WC10 still has live App/Agent callers. Those are real remaining migrations. The 12:00 full checkpoint is prepared for the farm on the selected integration head, not a per-worker full requirement.

@@ -11,4 +11,5 @@ WORK LIST NOW:
 10. (00:36Z) MANAGER RESTART ONCE NOW: managers only read kit rule changes at round start. bin/run-manager now uses 90-min rounds (was 3 h). After your hub-sync installs the new bin/run-manager (grep '90m' $ORCH/bin/run-manager), restart the manager once, with a LEAD NOTE: 'top up managers/<area>/ready to 3 via bin/request-ready, then dispatch to 5 live'. Report the READY count and live count in your lead line.
 11. (01:47Z) Canary deletion follow-up (INBOX 01:47Z): one Luna worker adds the foreign-owned/user-clip skip tests for transcript-lane and scene-phase-markers remove/update, and drops the 2 stale references. Report the merge sha in your lead line.
 13. (03:00Z, deep audit) Runner argv: 'No tests found' must FAIL a run; one worker checks the spec path against the config, then qualify mounted ADD (INBOX).
+15. (11:48Z, OWNER DECISION) LIGHTER INTERIM PROOFS: see the manager INBOX. Make sure the manager merges or deletes, THIS round, every item it was holding only for an exact-tuple proof, custody record or review-of-review. Report the count in your lead line.
 DONE WHEN: all 7 rows are DELETED with merge shas.

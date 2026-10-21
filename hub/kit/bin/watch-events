@@ -13,25 +13,25 @@ while true; do
     [ -e $ORCH/managers/$m/REMOTE ] && continue
     [ -e $ORCH/managers/$m/running ] || emit "MANAGER_STOPPED $m $(date -u +%Y%m%dT%H)"
   done
-  for m in agent app viewing app2; do [ -e $ORCH/managers/$m/REMOTE ] || continue
+  for m in agent app viewing app2 farm; do [ -e $ORCH/managers/$m/REMOTE ] || continue
     t=$(head -1 $ORCH/managers/$m/STATUS.md 2>/dev/null | sed -n 's/^<!-- [a-z]* | \([^ ]*\) |.*/\1/p'); [ -n "$t" ] || continue
     age=$(( now - $(date -d "$t" +%s 2>/dev/null || echo $now) )); [ $age -gt 1200 ] && emit "REMOTE_STALE $m since $t"
   done
   # speed and stall alarms (2026-10-20): read the measured header that hub-sync writes for every area
-  for m in runtime agent app viewing app2; do
+  for m in runtime agent app viewing app2 farm; do
     h=$( { [ -e $ORCH/managers/$m/REMOTE ] && head -1 $ORCH/managers/$m/STATUS.md; } 2>/dev/null )
     [ -e $ORCH/managers/$m/REMOTE ] || h=$(head -1 /home/user/timeline-hub/hub/status/$m.md 2>/dev/null)
     sage=$(echo "$h" | sed -n 's/.*status age \([0-9]*\)m.*/\1/p'); live=$(echo "$h" | sed -n 's/.*| live \([0-9]*\) .*/\1/p')
     [ -n "$sage" ] && [ "$sage" -gt 45 ] && emitk "MANAGER_QUIET $m $(date -u +%Y%m%dT%H)" "MANAGER_QUIET $m status ${sage}m old"
     busy=$(echo "$h" | sed -n 's/.*busy30 \([0-9]*\).*/\1/p'); [ -n "$busy" ] || busy=$live   # busy30 = running now or finished in the last 30 min
-    [ -n "$busy" ] && [ "$busy" -lt 4 ] && emitk "LOW_CAPACITY $m $(date -u +%Y%m%dT%H)" "LOW_CAPACITY $m live $live busy30 $busy"
+    [ $m != farm ] && [ -n "$busy" ] && [ "$busy" -lt 4 ] && emitk "LOW_CAPACITY $m $(date -u +%Y%m%dT%H)" "LOW_CAPACITY $m live $live busy30 $busy"
   done
   # M2 burndown: alarm when no ledger row became DELETED for 2 hours
   dc=$(grep -cE '^\|[^|]*\|.*\| *DELETED' $ORCH/design/deletion-ledger.md 2>/dev/null); dc=${dc:-0}
   [ "$dc" != "$(cat $ORCH/.ledger_deleted 2>/dev/null)" ] && { echo "$dc" > $ORCH/.ledger_deleted; touch $ORCH/.ledger_deleted_changed; }
   [ $(( now - $(stat -c %Y $ORCH/.ledger_deleted_changed 2>/dev/null || echo $now) )) -gt 7200 ] && emit "NO_DELETIONS_2H at $dc $(date -u +%Y%m%dT%H)"
   # lead health (2026-10-20, leads moved to Sonnet): each remote lead keeps hub/status/<area>-lead.md fresh; alarm if over 75 min old
-  for m in agent app viewing app2; do f=/home/user/timeline-hub/hub/status/$m-lead.md; [ -f $f ] || continue
+  for m in agent app viewing app2 farm; do f=/home/user/timeline-hub/hub/status/$m-lead.md; [ -f $f ] || continue
     la=$(( (now - $(git -C /home/user/timeline-hub log -1 --format=%ct -- hub/status/$m-lead.md 2>/dev/null || echo $now)) / 60 ))
     [ $la -gt 75 ] && emitk "LEAD_QUIET $m $(date -u +%Y%m%dT%H)" "LEAD_QUIET $m lead line ${la}m old"; done
   la=$(ls -t $ORCH/audits/*.log 2>/dev/null | head -1); [ -n "$la" ] && [ $(( now - $(stat -c %Y $la) )) -ge 10800 ] && emitk "AUDIT_DUE $(date -u +%Y%m%dT%H)" "AUDIT_DUE: the last deep audit started over 3 h ago; run bin/audit"

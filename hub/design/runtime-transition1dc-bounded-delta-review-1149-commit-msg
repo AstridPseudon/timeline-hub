@@ -1,0 +1,5 @@
+docs(timeline): record reciprocal review of selected-reference repair
+
+Record the bounded reciprocal source ACK for committed 1dcfa274e, including
+presence-aware canonical and legacy reference handling and explicit release
+limitations.
