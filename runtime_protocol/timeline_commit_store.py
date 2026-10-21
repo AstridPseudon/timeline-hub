@@ -902,6 +902,24 @@ class TimelineCommitStore:
                 self._check_shot_destinations(context, prepared, inputs)
                 candidate = self._validate(context, prepared, inputs)
                 request, previous = context["request"], prepared["expected_head"]
+                from .timeline_commit_reference_projection import (
+                    ReferenceProjectionError,
+                    prepare_reference_projection,
+                )
+                try:
+                    previous_document = self.revision_closure(
+                        request["project_id"], request["timeline_id"], previous["revision_id"]
+                    )
+                    timeline = self.conn.execute(
+                        "SELECT version FROM timelines WHERE id=? AND project_id=?",
+                        (request["timeline_id"], request["project_id"]),
+                    ).fetchone()
+                    reference_projection = prepare_reference_projection(
+                        self.conn, candidate["canonical_document"], previous_document,
+                        next_version=int(timeline["version"]) + 1,
+                    )
+                except ReferenceProjectionError as exc:
+                    reject(exc.reason, exc.message, status=exc.status)
                 base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
                 data = {"status": "accepted" if previous == base else "rebased", "base_revision_id": base["revision_id"],
                         "base_publication_id": base["publication_id"], "previous_revision_id": previous["revision_id"],
@@ -911,6 +929,11 @@ class TimelineCommitStore:
                         **{k: request[k] for k in _METADATA if k in request}}
                 self._persist_closure(candidate["canonical_document"])
                 result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"])
+                from .timeline_commit_reference_projection import (
+                    apply_reference_projection,
+                )
+                if reference_projection is not None:
+                    apply_reference_projection(self.conn, reference_projection)
                 self._project_text_bindings(candidate["canonical_document"], prepared["records"], result["receipt"]["receipt_id"])
                 if inputs is not None:
                     inputs.persist(prepared, result["receipt"]["receipt_id"], data["accepted_revision_id"])
