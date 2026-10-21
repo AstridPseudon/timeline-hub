@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
+import { object } from '../../commands/clipMovePrimitives.ts';
 import type { ClipEditingContext, DeleteClipOptions } from './types.ts';
 
 function isParentClipDeleteTarget(current: ClipEditingContext['dataRef']['current'], clipId: string): boolean {
@@ -7,7 +8,7 @@ function isParentClipDeleteTarget(current: ClipEditingContext['dataRef']['curren
   const clip = current.resolvedConfig.clips.find((candidate) => candidate.id === clipId);
   if (!clip) return false;
   const canonical = clip.app?.canonical;
-  if (!canonical || typeof canonical !== 'object') return true;
+  if (!object(canonical)) return true;
   const ownerRef = canonical.ownerRef;
   const clipRef = canonical.clipRef;
   return ![ownerRef, clipRef].some((ref) => typeof ref === 'string' && ref.startsWith('occurrence:'));
