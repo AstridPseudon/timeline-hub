@@ -14,6 +14,7 @@ import pytest
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
+from runtime_protocol.timeline_materialization import materialization_join
 from test_timeline_commit_acceptance import (
     context, realm, validate_prepared,  # noqa: F401 (shared API-built fixture)
 )
@@ -315,6 +316,64 @@ def test_exact_immutable_reuse_does_not_write_occupied_projection(realm):
     assert accepted["data"]["canonical_document"]["shot_revisions"] == [source[0]]
     assert [tuple(r) for r in service.store.conn.execute("SELECT * FROM project_shots")] == before
     assert service.store.conn.execute("SELECT COUNT(*) FROM shot_revisions").fetchone()[0] == 1
+
+
+def test_item_bearing_materialization_uses_validated_destination_pairs(realm):
+    service, commits, project, _, _ = realm
+    source_pair = proposal(service, commits, project, "main", "source-parent",
+                           shots=[image("source", "source-v1", items=[{"item_id": "source-item"}])])
+    source_document = source_pair[1]["canonical_document"]
+    source_shot = source_document["shot_revisions"][0]
+    source_internal = source_document["internal_timeline_revisions"][0]
+    source = {
+        "shot_id": source_shot["shot_id"], "revision_id": source_shot["revision_id"],
+        "content_digest": source_shot["content_digest"],
+        "internal_timeline_id": source_internal["timeline_id"],
+        "internal_timeline_revision_id": source_internal["revision_id"],
+        "internal_timeline_content_digest": source_internal["content_digest"],
+        "item_id_map": {"source-item": "destination-item"},
+    }
+    destination_pair = proposal(service, commits, project, "main", "destination-parent",
+                                shots=[image("destination", "destination-v1",
+                                              items=[{"item_id": "destination-item"}])])
+    prepared = destination_pair[1]
+    prepared["expected_head"] = {k: source_document["parent_revision"][k]
+                                  for k in ("revision_id", "content_digest")}
+    record = prepared["records"]["commands"][0]
+    source_ref = "shot:source"
+    destination_ref = "shot:destination"
+    dependency_key = "materialization.source:" + destination_ref
+    owner_key = "materialization.owner:" + destination_ref
+    pairs = {
+        destination_ref: source_ref,
+        destination_ref + "/item:destination-item": source_ref + "/item:source-item",
+        owner_key: "occurrence:occ-0",
+    }
+    record["command"]["bindings"] = pairs
+    record["dependencies"] = [{
+        "key": dependency_key, "kind": "entity",
+        "pin": {"parent": {k: source_document["parent_revision"][k]
+                              for k in ("revision_id", "content_digest")},
+                "source": source},
+        "policy": "exact",
+    }]
+    record["bindings"] = [{"key": key, "ref": ref, "policy": "fixed", "dependencies": [dependency_key]}
+                           for key, ref in pairs.items()]
+    record["reads"] = [{"ref": "occurrence:occ-0/shot", "path": ["shot_id"],
+                        "state": {"state": "present", "value": "source"}}]
+    prepared["id_map"] = {
+        destination_ref: "destination",
+        destination_ref + "/item:destination-item": "destination-item",
+    }
+    closure = lambda revision_id: source_document if revision_id == source_document["parent_revision"]["revision_id"] \
+        else prepared["canonical_document"]
+
+    allocations = materialization_join(prepared, project, "main", closure)
+
+    assert allocations == {"destination": ("occ-0", {
+        "parent": {k: source_document["parent_revision"][k] for k in ("revision_id", "content_digest")},
+        "source": source,
+    })}
 
 
 @pytest.fixture

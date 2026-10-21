@@ -142,7 +142,8 @@ def materialization_join(prepared, project, timeline, closure):
                 allocations[destination], owners[owner[1]] = allocation, destination
                 raw_items.update(items.values())
             expected[ref] = destination
-            expected.update({ref + "/item:" + j: j for j in items.values()})
+            expected.update({ref + "/item:" + destination_item: destination_item
+                             for _, destination_item in items.items()})
             original = scoped(closure(parent["revision_id"]))
             require(same(parent, {k: original["parent_revision"][k] for k in parent}))
             edge = (source["shot_id"], source["revision_id"])
