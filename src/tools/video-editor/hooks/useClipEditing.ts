@@ -24,11 +24,13 @@ import {
   useClipTextOverlay,
 } from './clip-editing/index.ts';
 import type { ClipEditingContext } from './clip-editing/index.ts';
+import type { ClipSplitCapturePort } from '../commands/clipSplitGesture.ts';
 import type { DeleteClipOptions } from './clip-editing/types.ts';
 import type { GenericPatchCapturePort } from '../commands/genericPatchCapture.ts';
 import type { TimelineEditability } from '../lib/timeline-editability.ts';
 
 export interface UseClipEditingArgs {
+  clipSplit?: ClipSplitCapturePort;
   dataRef: MutableRefObject<TimelineData | null>;
   resolvedConfig: TimelineData['resolvedConfig'] | null;
   selectedClipId: string | null;
@@ -66,6 +68,7 @@ export type { DeleteClipOptions } from './clip-editing/types.ts';
 const PINNED_GROUP_EDIT_MESSAGE = 'Use Delete shot from the shot menu';
 
 export function useClipEditing({
+  clipSplit,
   dataRef,
   resolvedConfig,
   selectedClipId,
@@ -289,6 +292,7 @@ export function useClipEditing({
   }, [applyRowsEdit, dataRef, selectedClipId]);
 
   const clipEditingContext: ClipEditingContext = {
+    clipSplit,
     dataRef,
     resolvedConfig,
     selectedClipId,
