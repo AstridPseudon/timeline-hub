@@ -5,5 +5,5 @@ ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchp
 echo $$ > $ORCH/hub-syncd.pid
 while true; do
   [ -f $ORCH/bin/hub-sync.next ] && bash -n $ORCH/bin/hub-sync.next && mv $ORCH/bin/hub-sync.next $ORCH/bin/hub-sync && chmod +x $ORCH/bin/hub-sync
-  timeout 600 $ORCH/bin/hub-sync "$1"; sleep 300
+  timeout 1200 $ORCH/bin/hub-sync "$1"   # 20 min: the first pass after a container restart can exceed 10; sleep 300
 done
