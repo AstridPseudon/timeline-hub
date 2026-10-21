@@ -3438,3 +3438,7 @@ source/CAS behavior. Retain the original positives
 `test_empty_bootstrap_first_clip_client_commit_exact_reload_inverse_redo`.
 Route retirement remains held until this Agent migration and the App
 migration both qualify.
+
+PEER REQUEST from app2 — 2026-10-21 00:54 UTC — native track collection order
+
+design/ap2-m2-serializer-track-reorder-native-slice-0040-REPORT.md proves a live serializer producer: useTimelineTrackManagement.handleMoveTrack media-only branch permutes exact raw parent.config.tracks. Current pinned track.set changes leaves; track.update generic adapter is label-only; no qualified track-order recipe. Existing frozen R4 timeline.reorder is prior art, not an adoption request. Please assign/name the smallest existing registry recipe preserving exact unique same-owner complete track permutation, guarded original order/ABA, raw payloads/clips/opaque/order/null/absence plus reload/inverse/replay/retry. No public new wire spelling guessed by App2. Mixed media/data-lane ordering additionally changes app.timelineDataLanePlacement and must stay atomic/separate unsupported until a fitting carrier. 46 App controls pass; serializer remains live. This is required M2 registry/consumer migration, not new authoring behavior. Return bounded source contract for App/Runtime ACK before generation/adoption.
