@@ -1,68 +1,70 @@
 # Runtime current production tuple
 
-## Current compatible server (post-launcher merge source)
+## Current compatible server (post-Speech merge source)
 
-**CURRENT SERVER — 2026-10-21T03:36:34Z — compatible source overlay, not a new publication**
+**CURRENT SERVER — 2026-10-21T03:48:20Z — compatible Speech source overlay, not a new publication**
 
 The immutable publication below remains the producer and consumer pin. The
 current Runtime integration server is the descendant below; consumers may use
-it as the compatible source for the merged follow-up facts, but this update
+it as the compatible source for the Speech follow-up facts, but this update
 does not change the published 0.2.14 tuple, pins, or release version.
 
 | Field | Exact value |
 | --- | --- |
-| Current compatible Runtime source | `30413e3c3e6db027f450e864ea9cb4a07446475b` |
-| Current compatible server tree | `2c5a5088c90cddfb38fba6dadcad899b28fb2c59` |
-| Current server parents | `be8d254aef249cd421946cbf06ed86d58bc4b307` + `8eae9cb331c447a2f5aa87d59e763a55789aefa3` |
+| Current compatible Runtime source | `b92d3e7a05eec65c142294ef4873edd059e9b31d` |
+| Current compatible server tree | `6abc2f117391de8e7e35c0283f575a002199894d` |
+| Current server parents | `30413e3c3e6db027f450e864ea9cb4a07446475b` + `40708263d26ef39ac484cbc9f1ae7f34cfc368bc` |
+| Approved Speech source merged | `40708263d26ef39ac484cbc9f1ae7f34cfc368bc` / tree `6abc2f117391de8e7e35c0283f575a002199894d` |
 | Published source producer retained as base | `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c` / tree `d3a290b407fa61e6ab2d476f50c068073f70df00` |
-| Transcript source and integration merge | `e2912b3afb6a6d019154185ac8214724da058d58` -> `2a9bd811ba1d1e65c0fb2c829eefd12939eed83` / tree `4fa58b2551f716c35cab6005cc8add84e59da8a9` |
-| Rational source and integration merge | `60a919a22f42f0b5b0a246ce84cb43e9f46c2106` -> `be8d254aef249cd421946cbf06ed86d58bc4b307` / tree `6d74348b66ee4a3602cfa4fd56b9b7c0ed7508e0` |
+| External full-run source tuple | Agent `7ab6cbae273f133b3adf2a7bae9f2439f02ce71e`; App `c45cc175a62701593af4ec2503467d681ec9c2f7`; Composition `7bb54bbd64107e5090643ecca1e4d33164173e85` |
 
-The current merge carries the validated local-launch profile forwarding fix
-from `8f70a8184aca5bb61b2fcb133c5cedc3c6e0800` and the installed-process
-fixture/test lineage `e194c9ea97abd3a9fd0481b917fbf3009f88f9f6` ->
-`8eae9cb331c447a2f5aa87d59e763a55789aefa3`. The actual installed fixture
-proof was `rt-m2-wc10-sdk-envelope-fixture-one-proof-0322-wc10-installed-launcher-integration-1021032335-4406` on tree
-`3f6ddd17e4e264e24b8e780c9a62e70fcdbe412f`: **1 passed in 31.99s**.
-The independent `8eae` review added only a purpose comment; it did not alter
-the product, assertion, threshold, or test flow. Commit `30413…` is an actual
-descendant of published producer `95bd…` through first parent `be8d…`.
-
-The transcript delta admits retained transcript source reads in
-`runtime_protocol/timeline_commit_port.py` and adds its source-boundary
-coverage. The rational delta accepts authored rational FPS object mappings at
-the inspection boundary and reads them locally at the visual seam without
-rewriting stored payloads. Relative to the published `95bd…` tree, those two
-compatible-source deltas are five files, 112 insertions and four deletions:
-three Runtime modules and two tests. Current `30413…` additionally carries
-the approved launcher forwarding change and the installed-process fixture
-test lineage described above. There is no schema, generated-client, artifact,
-pin, or release-version delta.
-
-The two source controls are separately bounded: transcript has the exact
-public native `786` node pass plus 29 neighboring cases; rational has 14
-controls plus actual admission and malformed-mapping negative coverage. This
-does not activate broader association or free-multi behavior.
+The Speech product delta is limited to the existing primary-WAV fallback:
+the first settlement now accepts the already-declared `audio` or `speech`
+output port when the settled output is WAV and duration is absent. It remains
+absent-only, respects explicit duration metadata and null/value behavior, and
+does not consult sidecars or caller authority. The restored audio positive and
+new speech behavior are covered without changing the DTO, generated clients,
+schema, accepted metadata/catalog/receipt rows, or publication identity. The
+merge is an actual descendant of published producer `95bd…` through
+`30413…`; the earlier `30413` full is historical after this source change.
+The source qualification retained the prior **36 passed, 1 deselected** local
+speech controls and **16 passed** central targeted settlement controls; the
+restored legacy audio positive then passed as **1 passed** and the speech test
+body remained identical to the prior passing source.
 
 All 76 paths listed by the published `contract/artifacts.json` were compared
-byte-for-byte between `95bd…` and current `30413…`; the comparison returned no
-differences, and all 76 current blobs match the published manifest hashes. The
-immutable artifact facts therefore remain producer
-`astrid-runtime`, version `sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac`,
-artifact manifest `sha256:a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d`,
+byte-for-byte between `95bd…` and current `b92d…`: **0 differences, 0 missing
+paths**, and all 76 current blobs match the published manifest hashes. The
+immutable artifact facts therefore remain producer `astrid-runtime`, version
+`sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac`,
+artifact manifest
+`sha256:a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d`,
 Runtime schema `sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`,
-and raw Agent schema `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
+and raw Agent schema
+`sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`
 (55 definitions, 29 operations; raw bundle
 `sha256:6d707cb84a232f6ecd7e17c09c8722a379bb76b6a9d2869efea691d6bd8366e3`).
 
-The one requested central integration run on current `30413…` is terminal and
-green: `runtime-full-retained-owned-temp-integration-1021033039-31374`, status
-`pass`, exit `0`, on Runtime tree `2c5a5088…`; `6000 passed, 26 skipped,
-15 xfailed, 14 warnings` in 302.42 seconds. The exact command and external
-source snapshot are recorded in the run result under the shared orchestration
-directory. The prior `be8d…` run `full25226` (`5997 passed, 26 skipped, 15
-xfailed, 12 warnings`) remains historical and is not current-`30413` evidence.
-No browser, renderer, pin, release-version, gate-closure, or ZIP claim is made.
+The one requested central integration run on current `b92d…` is terminal and
+green: `runtime-full-retained-owned-temp-integration-1021035028-28646`, status
+`pass`, exit `0`, on Runtime tree `6abc2f117391de8e7e35c0283f575a002199894d`;
+`6002 passed, 26 skipped, 15 xfailed, 12 warnings` in 298.37 seconds. The
+exact command was `env ASTRID_CHECKOUT=/home/user/work/agent
+PYTHONPATH=$PWD:/home/user/work/agent /home/user/work/venv-runtime/bin/python
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m4-full-temp-retain-all-final/runtime-full-retained-temp.py
+-- /home/user/work/venv-runtime/bin/python -m pytest -q -n 3`.
+The 26 skips are Windows-native API cases; the 15 xfails are the held RT02/D04
+legacy timeline-writer/clip-replacement cases; the 12 warnings are Python
+3.13 fork deprecations (10 from `tests/test_realm_admission_hardening.py`, 2
+from `tests/test_t4_replacement_foundation.py`). There were no failures. The
+prior `30413` run `runtime-full-retained-owned-temp-integration-1021033039-31374`
+(`6000 passed, 26 skipped, 15 xfailed, 14 warnings`) remains historical and
+its baseline is not relabeled or lowered.
+
+The current private C3d Speech descendant is separate. Ordinary Main014 is
+not a private15 tuple; no pin, version, adoption, or release change follows
+from this compatible-server fact. No browser, renderer, root/outer Speech
+workflow, gate-closure, or ZIP claim is made.
 
 **PUBLISHED — 2026-10-21T02:51:25Z — ordinary Main014**
 
