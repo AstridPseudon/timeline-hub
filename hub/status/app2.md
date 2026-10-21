@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T01:52:44Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 18 | status age 18m -->
+<!-- app2 | 2026-10-21T01:58:42Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 19 | status age 24m -->
 # app2 — 2026-10-21 01:34 UTC
 Milestone: M2. Duplicate DELETED; six broad rows OPEN. New bounded private canary deletion is reviewed and queued. No whole-writer closure without actual proof.
 Integrated: HOME813a85106/tree2a19a78b includes parent row-local2fb→5a31d6dd4 and reviewed HOME constructionec0→813a (same32e source), plus driver780. Published013 bootstrap restore9bda/guard213 retained. Dormant seam member bce8→9a7d30228 now MERGED (16 App,17 Agent, distinct actual private392 Door casePASS1); no live caller/pin change.

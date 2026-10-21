@@ -63,6 +63,13 @@ overlay="$run_root/app"
 mkdir -p "$overlay"
 cp -a "$app_root"/. "$overlay"/
 rm -rf "$overlay/node_modules"
+normal014_private_spec=${NORMAL014_PRIVATE_SPEC:-}
+if [ -n "$normal014_private_spec" ]; then
+  test -f "$normal014_private_spec"
+  normal014_private_spec=$(realpath "$normal014_private_spec")
+  test "$normal014_private_spec" = "$(realpath "$normal014_private_spec")"
+  cp -- "$normal014_private_spec" "$overlay/tests/e2e/local/normal014-negative.spec.ts"
+fi
 source_node_modules=$(realpath "$LOCKED_GRAPH/node_modules")
 test "$source_node_modules" = "$LOCKED_GRAPH/node_modules"
 private_node_modules="$run_root/private-node-modules"
@@ -141,13 +148,20 @@ if [ "$mode" = preflight ]; then
   exit 0
 fi
 
-if flock -w 600 /home/user/work/.app-m1-browser.lock \
-  node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \
-  --grep "^${normal014_required_case}$"; then
-  normal014_exit_status=0
+set +e
+if [ -n "$normal014_private_spec" ]; then
+  flock -w 600 /home/user/work/.app-m1-browser.lock \
+    node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \
+    --grep "^${normal014_required_case}$" tests/e2e/local/normal014-negative.spec.ts
 else
-  normal014_exit_status=$?
+  flock -w 600 /home/user/work/.app-m1-browser.lock \
+    node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \
+    --grep "^${normal014_required_case}$"
 fi
+normal014_playwright_exit_status=$?
+echo "normal014 Playwright child exit: $normal014_playwright_exit_status" >&2
+set -e
+normal014_exit_status=$normal014_playwright_exit_status
 
 normal014_verdict_status=0
 if normal014_verify_required_case; then

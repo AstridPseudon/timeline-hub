@@ -77,7 +77,8 @@ esac
 
 # Both private candidates start from the checked-in public013 App lock.  The
 # selected profile is applied only by the normal updater below.
-APP_BASE_RUNTIME_SHA=2c4ac180c2220bdad966bc01e95ad230e99ce26a
+# final95's checked-in App lock already carries the final95 Runtime source.
+APP_BASE_RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
 MARKER_SHA=150a7abb340040e45c34742bc871ef83caab0575
 D05E_SHA=d05e6383f4ccaf7541698a65b2737fbc5f3f0fbb
 LOCKED_GRAPH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph
