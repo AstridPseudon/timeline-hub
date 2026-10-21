@@ -49,6 +49,14 @@ async function openComposedEditor(page: Page): Promise<string[]> {
 
 async function openExtensionsPanel(page: Page): Promise<Locator> {
   // Desktop's dock and the touch editor's picture-area tabs share one Video | Inspector | Extensions tab list.
+  // Below 1024 px the desk dock starts closed (INSPECTOR_DEFAULT_OPEN_MIN_VIEWPORT_PX), so a reader opens it from
+  // the preview's Panel display control first; the touch editor's tabs and the wide desk dock are open already.
+  const dock = page.getByTestId('video-editor-right-panel-dock');
+  if ((await dock.getAttribute('data-open')) === 'false') {
+    await page.getByRole('button', { name: 'Panel display' }).click();
+    await page.getByRole('menuitemradio', { name: 'Full-height' }).click();
+    await expect(dock).toHaveAttribute('data-open', 'true');
+  }
   const extensionsTab = page.getByRole('tab', { name: 'Extensions' });
   await expect(extensionsTab).toBeVisible();
   await extensionsTab.click();
