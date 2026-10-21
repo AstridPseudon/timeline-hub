@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 from .contracts import DomainResult, ErrorObject
 
@@ -16,6 +16,13 @@ class _RemoteTimelineRevisionMixin:
     moves no authority or transport policy; it only keeps the cohesive
     revision-operation facade together in a private neighboring module.
     """
+
+    if TYPE_CHECKING:
+        def _resolve_timeline(self, project: Any, ref: Any) -> DomainResult[Any]: ...
+
+        def _typed(
+            self, operation: str, *args: Any, key: str | None = None, **kwargs: Any,
+        ) -> DomainResult[Any]: ...
 
     def open_bundle(self, project, ref, *, revision_id=None):
         """Read one complete, read-only authoring bundle (parent → shots → internal timelines).

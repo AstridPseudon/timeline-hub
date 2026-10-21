@@ -7,7 +7,7 @@ import json
 import math
 import re
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Protocol
 
 from astrid.core.timeline import moments as mo
 from astrid.sdk import timeline_intent as intent
@@ -21,6 +21,18 @@ from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.doc import _get_path
 from astrid.sdk.timeline.model import Clip
 from astrid.sdk.timeline.units import (formula_short, to_canvas)
+
+if TYPE_CHECKING:
+    from astrid.sdk.timeline.checkout import Checkout
+
+
+class _MutableSceneSpan(Protocol):
+    """The mutable span shape used by managed Scene's advisory result."""
+
+    start_frame: int
+    end_frame: int
+    cls: str
+    content: str | None
 
 
 def _broken_head() -> list[str]:
@@ -78,7 +90,7 @@ class _CheckMixin:
                            + (f"; {note}" if "outside" in note else "") + f" (size {fits:g} fits; or move x/width)")
         return out
 
-    def _on_screen(self) -> list:
+    def _on_screen(self: Checkout) -> list:
         """Every frame of the film, covered or not: ``onscreen.coverage`` over the checkout's visual clips in
         timeline seconds (the render config's shape), tracks top first. Run per check, not per clip."""
         from astrid.core.timeline import onscreen
@@ -200,16 +212,18 @@ class _CheckMixin:
         membership changes can still be reported as one continuous DIP.  Copy
         rows before extending them so the detailed answer rows are untouched.
         """
-        summary = []
+        from astrid.core.timeline.onscreen import Span
+
+        summary: list[Span | _MutableSceneSpan] = []
         for span in spans:
             if (summary and summary[-1].end_frame == span.start_frame
                     and summary[-1].cls == span.cls and summary[-1].content == span.content):
                 previous = summary[-1]
-                if dataclasses.is_dataclass(previous):
+                if isinstance(previous, Span):
                     summary[-1] = dataclasses.replace(previous, end_frame=span.end_frame)
                 else:
                     merged = copy.copy(previous)
-                    merged.end_frame = span.end_frame
+                    object.__setattr__(merged, "end_frame", span.end_frame)
                     summary[-1] = merged
             else:
                 summary.append(copy.copy(span))
@@ -229,7 +243,7 @@ class _CheckMixin:
                        + (f": {', '.join(span.findings)}" if span.findings else ""))
         return out
 
-    def _managed_scene_spans(self) -> list | None:
+    def _managed_scene_spans(self: Checkout) -> list | None:
         """Read Scene advice through an explicitly connected checkout, if bound.
 
         Save and detached checkouts have no managed target binding and retain

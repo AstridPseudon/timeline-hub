@@ -641,6 +641,12 @@ class NativeSheet:
                 props = {key: value if selected.get("packId") else to_canvas(element, key, value)
                          for key, value in params.items() if re.fullmatch(r"[A-Za-z_][\w.-]*", key)
                          and key not in {"hold", "asset", "transition", "trim", "slip"}}
+                app = clip.get("app") if isinstance(clip.get("app"), dict) else {}
+                astrid = app.get("astrid") if isinstance(app.get("astrid"), dict) else {}
+                anchors = astrid.get("word_anchors") if isinstance(astrid.get("word_anchors"), dict) else {}
+                if "on" in anchors:
+                    props["on"] = {"field": "on", "declaration": astrid.get("on"),
+                                   "choice": copy.deepcopy(anchors["on"])}
                 for key in ("hold", "transition"):
                     if key in clip:
                         props[key] = clip[key]
@@ -711,7 +717,7 @@ class NativeSheet:
                 used.add(row["line"] - 1)
         return rows, [line for i, line in enumerate(lines) if i not in used]
 
-    def preview(self, text):
+    def preview(self, text, *, session=None):
         """Return native commands, records and preview bundle without writing anything."""
         from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
         from astrid.sdk.timeline._command_state import State, equal
@@ -719,6 +725,8 @@ class NativeSheet:
         from astrid.sdk.timeline._trim_commands import capture_clip_trim
         from astrid.sdk.timeline.capture import capture_clip_delete, capture_move
         from astrid.sdk.timeline.commands import Plan, execute
+        from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
+        from astrid.sdk.timeline.native_word_anchor import capture_anchor
         from astrid.sdk.timeline.units import from_canvas
         from astrid.sdk.timeline_address import element_schema
 
@@ -731,6 +739,19 @@ class NativeSheet:
             section, _, _ = self._rows[ref]
             if section != "clips" or not ref.startswith("parent/clip:"):
                 raise SheetError(f"only an addressed parent clip row may be omitted: {ref}")
+        anchor_commands = []
+        for ref, (section, _, _) in self._rows.items():
+            if ref in missing or section != "clips":
+                continue
+            _, _, row = rows[ref]
+            carrier = row["params"].get("on")
+            if isinstance(carrier, dict):
+                anchor_commands.append({"schema_version": 1, "op": "clip.anchor", "version": "1",
+                                        "select": ref, "args": copy.deepcopy(carrier)})
+        if anchor_commands and session is not None:
+            materialize_transcript_inputs(
+                self._bundle, anchor_commands,
+                client=session.client.timelines._client, project=session.project_id)
         commands = []
         working = self._bundle
         capturers = {"clip.delete": capture_clip_delete, "clip.move": capture_move,
@@ -741,6 +762,19 @@ class NativeSheet:
         def emit(op, ref, args):
             nonlocal working
             command = capturers[op](working, ref, **args)
+            commands.append(command)
+            working = execute(working, [command]).bundle
+
+        def emit_anchor(ref, carrier):
+            nonlocal working
+            if carrier is None:
+                command = capture_anchor(working, ref, "on", None, None)
+            elif isinstance(carrier, dict) and set(carrier) == {"field", "declaration", "choice"}:
+                if carrier["field"] != "on":
+                    raise SheetError(f"word anchor at {ref} must target field=on")
+                command = capture_anchor(working, ref, **carrier)
+            else:
+                raise SheetError(f"word anchor at {ref} requires the exact clip.anchor carrier")
             commands.append(command)
             working = execute(working, [command]).bundle
 
@@ -770,10 +804,12 @@ class NativeSheet:
                     emit("clip.move", ref, {"on": _read_value(after[0], row["line"])})
                 if row["trim"] != original["trim"]:
                     emit("clip.trim", ref, dict(zip(("in_s", "out_s"), row["trim"])))
-                clip = State(self._bundle).entity(ref)
+                if "on" in right and left.get("on") != right["on"]:
+                    emit_anchor(ref, row["params"].get("on"))
+                clip = State(working).entity(ref)
                 selected = clip.get("elementRef") or clip.get("element_ref") or {}
                 for op, keys in (("clip.set", {"hold", "asset", "transition"}),
-                                 ("clip.set-params", set(right) - {"hold", "asset", "transition", "trim"})):
+                                 ("clip.set-params", set(right) - {"hold", "asset", "transition", "trim", "on"})):
                     values, clear = {}, []
                     for key in sorted(keys & right.keys()):
                         if left.get(key) == right[key] or (key in original["params"]
@@ -810,7 +846,14 @@ class NativeSheet:
         """Capture against the export once, then use the normal atomic native batch."""
         from astrid.sdk.timeline._command_state import equal
 
-        plan = self.preview(text)
+        def authored(bundle):
+            bundle = copy.deepcopy(bundle)
+            mapping = bundle.get("source_mapping")
+            if isinstance(mapping, dict):
+                mapping["pinned_documents"] = []
+            return bundle
+
+        plan = self.preview(text, session=session)
         if dry_run or (not plan.commands and session is None):
             return plan
         if session is None:
@@ -825,7 +868,7 @@ class NativeSheet:
                 raise SheetError("flush original pending intent before applying another sheet")
         if not plan.commands:
             return plan
-        if not prefix and not equal(session._bundle(state), self._bundle):
+        if not prefix and not equal(authored(session._bundle(state)), authored(self._bundle)):
             raise SheetError("sheet bundle differs from its pinned session basis")
         return session.commit_many(plan.commands, idempotency_key=idempotency_key, via="sheet", base=self._basis)
 
@@ -860,38 +903,68 @@ def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
 
 
 def _duration_sheet(sheet, artifact, parsed):
-    """Translate only existing static layer durations, using the export's bindings."""
+    """Translate existing static layer durations and literal type text."""
     from astrid.sdk.timeline._command_state import State, equal
+
+    def refuse():
+        raise SheetError("unsupported retained sheet edit; supported fields are am-type text and static duration")
 
     original = parse_sheet(artifact["text"])
     edited = copy.deepcopy(parsed, {id(ELIDED): ELIDED})
     left = {(cut, row["name"]): row for cut, row in iter_layers(original)}
     right = {(cut, row["name"]): row for cut, row in iter_layers(edited)}
     if left.keys() != right.keys() or len(left) != sum(len(c["layers"]) for c in original["cuts"]):
-        return None
+        refuse()
     text = sheet.text
     for key, row in right.items():
         before = left[key]
-        if equal(before["for"], row["for"]):
+        if equal(before["for"], row["for"]) and equal(before["text"], row["text"]):
             continue
         ref = artifact["bindings"].get(".".join(key))
-        if ref is None or before["for"] is None or row["for"] is None:
-            return None
+        if ref is None:
+            refuse()
         clip = State(sheet._bundle).entity(ref)
-        if clip.get("clipType") != "am-type" or type(clip.get("hold")) not in (int, float) or row["until"] or row["on"]:
-            return None
-        value = row["for"] * (clip.get("speed") or 1)
-        suffix = " # ref " + json.dumps(ref)
-        text = "\n".join(re.sub(r"(?<!\S)hold=\S+", "hold=" + repr(value), line)
-                         if line.endswith(suffix) else line for line in text.splitlines()) + "\n"
-        row["for"] = before["for"]
+        if not equal(before["for"], row["for"]):
+            if before["for"] is None or row["for"] is None:
+                refuse()
+            if clip.get("clipType") != "am-type" or type(clip.get("hold")) not in (int, float) or row["until"] or row["on"]:
+                refuse()
+            value = row["for"] * (clip.get("speed") or 1)
+            suffix = " # ref " + json.dumps(ref)
+            text = "\n".join(re.sub(r"(?<!\S)hold=\S+", "hold=" + repr(value), line)
+                             if line.endswith(suffix) else line for line in text.splitlines()) + "\n"
+            row["for"] = before["for"]
+        if not equal(before["text"], row["text"]):
+            if (before["text"] is None or not isinstance(row["text"], str)
+                    or clip.get("clipType") != "am-type" or row["until"] or row["on"]):
+                refuse()
+            old_token = "text=" + json.dumps(before["text"], ensure_ascii=False)
+            new_token = "text=" + json.dumps(row["text"], ensure_ascii=False)
+            suffix = " # ref " + json.dumps(ref)
+            replaced = []
+            for line in text.splitlines():
+                if not line.endswith(suffix):
+                    replaced.append(line)
+                    continue
+                body = line[:-len(suffix)]
+                if _tokens(body.strip()).count(old_token) != 1:
+                    refuse()
+                body, count = re.subn(rf"(?<!\S){re.escape(old_token)}(?=\s|$)",
+                                      lambda _: new_token, body, count=1)
+                if count != 1:
+                    refuse()
+                replaced.append(body + suffix)
+            text = "\n".join(replaced) + "\n"
+            row["text"] = before["text"]
     def semantic(value):
         if isinstance(value, dict):
             return {k: semantic(v) for k, v in value.items() if k not in {"line", "text_line"}}
         if isinstance(value, list):
             return [semantic(v) for v in value]
         return "…" if value is ELIDED else value
-    return text if equal(semantic(original), semantic(edited)) else None
+    if not equal(semantic(original), semantic(edited)):
+        refuse()
+    return text
 
 
 def find_version(tl: Any, version: str, *, client: Any = None) -> Any:

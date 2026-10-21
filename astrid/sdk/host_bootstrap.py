@@ -708,18 +708,54 @@ def _installed_execution_origins(source_path: Path, python_executable: str) -> d
     The profile must bind the installed product root as its execution source.
     An old provenance checkout is diagnostic data, never import authority.
     """
-    probe = """import importlib.util,json
-modules={'host':'astrid.core.execution.generic_host','child':'astrid.core.execution.generic_host_worker','action':'astrid.packs.rendering.actions.render.run','client':'astrid_runtime_client','sdk':'astrid.sdk.invocation'}
-print(json.dumps({key:importlib.util.find_spec(module).origin for key,module in modules.items()}))
+    # Even importing the measurement helper would execute unvalidated product
+    # code. Resolve every parent explicitly; dotted util.find_spec imports it.
+    probe = """import importlib.machinery,json,pathlib,sys
+root = pathlib.Path(sys.argv[1]).absolute()
+modules={'host':'astrid.core.execution.generic_host','child':'astrid.core.execution.generic_host_worker','action':'astrid.packs.rendering.actions.render.run','client':'astrid_runtime_client','sdk':'astrid.sdk.invocation','runtime_protocol':'runtime_protocol','runtime_protocol.platform':'runtime_protocol.platform','astrid_runtime':'astrid_runtime'}
+origins = {}
+for key, module in modules.items():
+    parts = module.split('.')
+    for depth in range(1, len(parts) + 1):
+        name = '.'.join(parts[:depth])
+        search = [str(root.joinpath(*parts[:depth - 1]))] if depth > 1 else sys.path
+        # Leaf lookup avoids namespace paths consulting unloaded dotted parents.
+        spec = importlib.machinery.PathFinder.find_spec(parts[depth - 1], search)
+        expected = root.joinpath(*parts[:depth])
+        if spec is None:
+            raise ValueError('missing installed module: ' + name)
+        if spec.submodule_search_locations is not None:
+            if list(spec.submodule_search_locations) != [str(expected)]:
+                raise ValueError('installed package search path differs: ' + name)
+            if spec.origin is None:
+                if depth == len(parts):
+                    raise ValueError('installed entrypoint requires source: ' + name)
+                if any(path.is_symlink() for path in (expected, *expected.parents)):
+                    raise ValueError('installed namespace contains a source alias: ' + name)
+                continue
+            expected = expected / '__init__.py'
+        else:
+            expected = expected.with_suffix('.py')
+        if (spec.origin != str(expected) or not expected.is_file()
+                or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
+                or any(path.is_symlink() for path in (expected, *expected.parents))):
+            raise ValueError('installed source origin differs: ' + name)
+    origins[key] = str(expected)
+for name in ('runtime_protocol', 'astrid_runtime'):
+    if any(path.is_symlink() for path in (root / name).rglob('*')):
+        raise ValueError('installed Runtime package contains a symlink: ' + name)
+print(json.dumps(origins))
 """
-    completed = subprocess.run([python_executable, "-I", "-c", probe],
+    completed = subprocess.run([python_executable, "-I", "-c", probe, str(source_path)],
                                cwd=tempfile.gettempdir(), capture_output=True, text=True,
                                timeout=20, check=False,
                                env={key: value for key, value in os.environ.items()
                                     if key in {"PATH", "HOME", "LANG", "LC_ALL", "TMPDIR"}})
     try:
         origins = json.loads(completed.stdout) if completed.returncode == 0 else None
-        if not isinstance(origins, dict) or set(origins) != {"host", "child", "action", "client", "sdk"}:
+        required = {"host", "child", "action", "client", "sdk",
+                    "runtime_protocol", "runtime_protocol.platform", "astrid_runtime"}
+        if not isinstance(origins, dict) or set(origins) != required:
             raise ValueError("missing installed origins")
         for name, origin in origins.items():
             path = Path(origin)
@@ -730,7 +766,7 @@ print(json.dumps({key:importlib.util.find_spec(module).origin for key,module in 
         return {name: str(Path(origin).resolve()) for name, origin in origins.items()}
     except (TypeError, ValueError, json.JSONDecodeError) as exc:
         raise PackHostBootstrapError(
-            "installed host profile does not bind actual installed host/child/action/client origins; "
+            "installed host profile does not bind actual installed host/child/action/client/Runtime origins; "
             "rebind the profile to the selected interpreter's noneditable product tree") from exc
 
 

@@ -4,9 +4,20 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+from collections.abc import Mapping
 from pathlib import Path
 
 from astrid.core.cli.domain_output import DomainResult, print_result
+
+
+def _render_commit_result(value: object, *, dry_run: bool) -> str:
+    if dry_run:
+        return "preview only; no publication accepted"
+    if not isinstance(value, DomainResult) or not isinstance(value.data, Mapping):
+        raise TypeError("native commit renderer received an invalid result envelope")
+    data = value.data
+    return (f"accepted revision {data['accepted_revision_id']} · publication {data['accepted_publication_id']}\n"
+            f"{data['show_command']}")
 
 
 def ordinary_trim_requested(parsed):
@@ -208,11 +219,8 @@ def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=N
         else:
             error = ErrorObject(getattr(exc, "code", "timeline_edit_error"), message, getattr(exc, "details", {}))
         shown = DomainResult.failure(error)
-    return print_result(shown, as_json=parsed.json, human_renderer=lambda value: (
-        "preview only; no publication accepted" if parsed.dry_run else
-        f"accepted revision {value.data['accepted_revision_id']} · publication {value.data['accepted_publication_id']}\n"
-        f"{value.data['show_command']}"
-    ))
+    return print_result(shown, as_json=parsed.json,
+                        human_renderer=lambda value: _render_commit_result(value, dry_run=parsed.dry_run))
 
 
 def configure_track_label(parser):
