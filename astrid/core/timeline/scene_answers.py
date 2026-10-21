@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import subprocess
@@ -13,25 +14,36 @@ from typing import Any
 from astrid.core.env_vars import ASTRID_PACKS_PATH
 
 
+def _rendering_attribute(module_name: str, attribute: str):
+    """Resolve the optional renderer only when a scene query needs it.
+
+    Timeline inspection and save paths own this module, while native scene
+    answers optionally use the renderer's admitted host.  Keep that boundary
+    lazy so importing timeline code does not import the renderer package.
+    """
+    module = importlib.import_module(module_name)
+    return getattr(module, attribute)
+
+
 def remotion_runtime_status(*args, **kwargs):
     """Resolve renderer admission only when a native scene query is requested."""
-    from astrid.core.rendering.remotion_runtime import remotion_runtime_status as _status
-
-    return _status(*args, **kwargs)
+    return _rendering_attribute(
+        "astrid.core.rendering.remotion_runtime", "remotion_runtime_status"
+    )(*args, **kwargs)
 
 
 def probe_context(*args, **kwargs):
     """Resolve renderer environment probing only when a native scene query is requested."""
-    from astrid.core.rendering.remotion_runtime import probe_context as _probe
-
-    return _probe(*args, **kwargs)
+    return _rendering_attribute(
+        "astrid.core.rendering.remotion_runtime", "probe_context"
+    )(*args, **kwargs)
 
 
 def prepared_scene_root(*args, **kwargs):
     """Use the neutral runtime seam for the existing prepared Root lifetime."""
-    from astrid.core.rendering.remotion_runtime import prepared_scene_root as _prepare
-
-    return _prepare(*args, **kwargs)
+    return _rendering_attribute(
+        "astrid.core.rendering.remotion_runtime", "prepared_scene_root"
+    )(*args, **kwargs)
 
 
 class SceneQueryUnavailable(RuntimeError):
@@ -55,7 +67,9 @@ def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any
     requested = list(frames)
     payload = {**payload, "frames": requested}
     try:
-        from astrid.core.rendering.remotion_runtime import RemotionValidationError
+        remotion_validation_error = _rendering_attribute(
+            "astrid.core.rendering.remotion_runtime", "RemotionValidationError"
+        )
     except ImportError as exc:
         raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
 
@@ -92,7 +106,8 @@ def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any
                        for answer, frame in zip(answers, requested))):
             raise SceneQueryUnavailable("invalid scene query response")
         return answers
-    except (OSError, ValueError, TypeError, subprocess.SubprocessError, RemotionValidationError) as exc:
+    except (OSError, ValueError, TypeError, subprocess.SubprocessError,
+            remotion_validation_error) as exc:
         raise SceneQueryUnavailable(f"scene evaluation unavailable: {exc}") from exc
 
 
@@ -153,8 +168,12 @@ def _prepared_host_frames_at(
     """
     requested = tuple(frames)
     try:
-        from astrid.core.rendering.profile import resolve_render_profile
-        from astrid.core.rendering.verified_source import inherited_source
+        resolve_render_profile = _rendering_attribute(
+            "astrid.core.rendering.profile", "resolve_render_profile"
+        )
+        inherited_source = _rendering_attribute(
+            "astrid.core.rendering.verified_source", "inherited_source"
+        )
 
         runtime = remotion_runtime_status(require_explicit_project=True)
         if (not runtime.available or runtime.project_dir is None
