@@ -123,8 +123,8 @@ export function createEditorImagePlacement(options: {
               autoApprove: true, createdIds: [(policy as { clipId: string }).clipId],
             }, () => assertCurrent(box));
             assertCurrent(box);
-            await options.reserved?.();
           },
+          settled: async () => { await options.reserved?.(); },
         },
       };
     },

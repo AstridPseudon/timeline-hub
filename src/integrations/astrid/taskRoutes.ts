@@ -34,6 +34,8 @@ export type TaskAdmissionReservation = {
   reserve(request: { method: string; path: string; body: string; key: string }): Promise<void>;
   assertCurrent(): void;
   admitted?(task: BridgeTaskAdmissionResponse['task']): Promise<void>;
+  /** Notify the existing requester only after the whole managed admission settles. */
+  settled?(): Promise<void>;
 };
 
 export type TaskRoutesOptions = {

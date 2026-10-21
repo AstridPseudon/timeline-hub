@@ -351,13 +351,18 @@ export async function createTask(
         ? await client.tasks.admit(validatedTaskParams, idempotency_key, options.reservation)
         : await client.tasks.admit(validatedTaskParams, idempotency_key);
 
-      return parseTaskCreationResponse(
+      const result = parseTaskCreationResponse(
         {
           task_id: response.task.id,
           status: mapBridgeTaskStatus(response.task.status),
         },
         requestContext,
       );
+      // The requester may observe the durable reservation before this
+      // invocation reaches the POST. Wake it only after the managed admission
+      // has completed successfully, when admitted() has saved the locator.
+      await options?.reservation?.settled?.();
+      return result;
     } catch (err: unknown) {
       lastError = err;
       const durationMs = Date.now() - startTime;
