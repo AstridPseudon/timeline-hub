@@ -6,9 +6,30 @@ from functools import lru_cache
 from ._command_state import ABSENT, CommandError, State, equal
 
 _MISSING = object()
+_INVALID = object()
 
 
-def _association(record, select):
+def _selected_reference(values):
+    """Read both selected-reference spellings without collapsing presence."""
+    references = [(key, values[key]) for key in ('elementRef', 'element_ref')
+                  if key in values]
+    if len(references) == 2 and not equal(references[0][1], references[1][1]):
+        return _INVALID
+    return references[0][1] if references else ABSENT
+
+
+def _selected_reference_from_reads(reads):
+    values = {}
+    for key in ('elementRef', 'element_ref'):
+        state = reads.get(key, ABSENT)
+        if not isinstance(state, dict) or state.get('state') not in ('absent', 'present'):
+            return _INVALID
+        if state['state'] == 'present':
+            values[key] = state.get('value')
+    return _selected_reference(values)
+
+
+def _association(record, select, *, strict_reference=False):
     from .commit import _document_pin
 
     command = record['command']
@@ -42,9 +63,16 @@ def _association(record, select):
     if command['op'] in ('clip.set-params', 'clip.set'):
         reads = {r['path'][0]: r['state'] for r in record['reads']
                  if r['ref'] == select and r['path'] in (['elementRef'], ['element_ref'])}
-        previous = (reads['elementRef'] if 'elementRef' in reads
-                    else reads['element_ref'] if 'element_ref' in reads else ABSENT)
-        if previous['state'] == 'present' and not equal(previous['value'], pin['element']):
+        previous = (_selected_reference_from_reads(reads) if strict_reference else
+                    (reads['elementRef'] if 'elementRef' in reads
+                     else reads['element_ref'] if 'element_ref' in reads else ABSENT))
+        if strict_reference and previous is _INVALID:
+            return None
+        if (strict_reference and previous is not ABSENT
+                and not equal(previous, pin['element'])):
+            return None
+        if (not strict_reference and previous['state'] == 'present'
+                and not equal(previous['value'], pin['element'])):
             return None
         if (command['op'] == 'clip.set'
                 and ('elementRef' not in command['args']['values']
@@ -53,7 +81,8 @@ def _association(record, select):
     return pin
 
 
-def resolve_selected_param_source(port, *, context, through, select, staged=()):
+def resolve_selected_param_source(port, *, context, through, select, staged=(),
+                                   strict_reference=False):
     """Return the proven P/E/O association, or permanently refuse this edit.
 
     Publication identity orders effects even when complete revision bytes are
@@ -102,7 +131,9 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
             return value
         command = record['command']
         if command['op'] in ('clip.set-element', 'clip.set-params', 'clip.set'):
-            association = _association(record, select)
+            association = _association(
+                record, select,
+                strict_reference=strict_reference)
             if association is None:
                 return None
             element = association['element']
@@ -158,7 +189,11 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
             for record in records:
                 value = effect(value, record, index, entry['records'])
             row = state(index).entity(select, optional=True)
-            if row is None:
+            if strict_reference:
+                element = _selected_reference(row or {})
+                if element is _INVALID or element is ABSENT:
+                    element = _MISSING
+            elif row is None:
                 element = _MISSING
             elif 'elementRef' in row:
                 element = row['elementRef']

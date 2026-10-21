@@ -3,15 +3,21 @@ from __future__ import annotations
 
 import copy
 import json
+import shutil
 
 import pytest
+import yaml
 
 from astrid.core.element import project_packs
 from astrid.sdk.timeline._clip_commands import capture_clip_add
-from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set_element
+from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set, capture_clip_set_element
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
-from astrid.sdk.timeline.commit import _digest, _history, create_runtime_commit_service
+from astrid.sdk.timeline.commit import (
+    _digest,
+    _history,
+    create_runtime_commit_service,
+)
 from astrid.sdk.timeline.native_occurrence_duplicate import capture_occurrence_duplicate
 from tests.core import test_project_packs
 from tests.editing_conformance.test_recipe_m2_clip_add import empty_document
@@ -45,6 +51,36 @@ def two_pins(configured_project_pack):
     return element, first, second
 
 
+@pytest.fixture
+def transition_pins(configured_project_pack):
+    root, directory, manifest = test_project_packs.seed('project-1')
+    definition_path = directory / 'element.yaml'
+    definition = yaml.safe_load(definition_path.read_text())
+    definition.update(id='pack-cross-fade', kind='transition')
+    definition_path.write_text(yaml.safe_dump(definition))
+    declaration = manifest['rendering'].pop('effects/reveal')
+    manifest['rendering']['transitions/pack-cross-fade'] = declaration
+    (root / 'pack.yaml').write_text(yaml.safe_dump(manifest))
+    record = project_packs.admit_project_pack('realm', 'project-1')['elements'][0]
+    element = {key: record['descriptor'][key] for key in ('packId', 'id', 'kind', 'revision')}
+    first = schema_options(configured_project_pack, element)
+    other = directory.parent / 'fade'
+    shutil.copytree(directory, other)
+    other_definition = yaml.safe_load((other / 'element.yaml').read_text())
+    other_definition['id'] = 'fade'
+    (other / 'element.yaml').write_text(yaml.safe_dump(other_definition))
+    other_declaration = copy.deepcopy(manifest['rendering']['transitions/pack-cross-fade'])
+    other_declaration['path'] = other_declaration['path'].replace('/reveal/', '/fade/')
+    for resource in other_declaration['resources']:
+        resource['path'] = resource['path'].replace('/reveal/', '/fade/')
+    manifest['rendering']['transitions/fade'] = other_declaration
+    (root / 'pack.yaml').write_text(yaml.safe_dump(manifest))
+    project_packs.admit_project_pack('realm', 'project-1')
+    second = schema_options(configured_project_pack, element)
+    assert first['schema_source'] != second['schema_source']
+    return element, first, second
+
+
 def _realm(two_pins, document=None):
     realm = DetachedRealm(document or empty_document())
     for options in two_pins[1:]:
@@ -65,6 +101,48 @@ def _birth(realm, element):
     row = {'id': 'effect', 'clipType': element['id'], 'elementRef': element,
            'at': 0, 'hold': 2, 'track': 'picture', 'params': {'seed': 4}}
     _commit(realm, [capture_clip_add(current(realm), 'parent', row)])
+
+
+def _transition_birth(transition_pins):
+    element, p1, p2 = transition_pins
+    realm = _realm(transition_pins)
+    _commit(realm, [track_create('picture')])
+    _commit(realm, [capture_clip_add(current(realm), 'parent', {
+        'id': 'before', 'clipType': 'text', 'at': 0, 'hold': 2, 'track': 'picture',
+    })])
+    _commit(realm, [capture_clip_add(current(realm), 'parent', {
+        'id': 'effect', 'clipType': element['id'], 'element_ref': element,
+        'at': 2, 'hold': 2, 'track': 'picture', 'params': {'seed': 4},
+    })])
+    return realm, element, p1, p2
+
+
+def _transition_command(bundle, element, options):
+    return capture_clip_set(
+        bundle, REF,
+        values={'elementRef': element,
+                'transition': {'type': element['id'], 'duration': .5,
+                               'revision': element['revision']}},
+        **options)
+
+
+def _establish_legacy_authority(realm, element, options):
+    _reselect(realm, element, options)
+    record = realm.entries[-1]['records']['commands'][0]
+    reads = {read['path'][0]: read['state'] for read in record['reads']
+             if read['path'] in (['elementRef'], ['element_ref'])}
+    assert reads['elementRef'] == {'state': 'absent'}
+    assert reads['element_ref'] == {'state': 'present', 'value': element}
+    revision = realm.head['revision_id']
+    document = copy.deepcopy(realm.documents[revision])
+    for rows in (document['parent_revision']['payload']['clips'],
+                 document['parent_revision']['payload']['config']['clips']):
+        row = next(row for row in rows if row['id'] == 'effect')
+        row['element_ref'] = row.pop('elementRef')
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    realm.documents[revision] = document
+    assert State(current(realm)).entity(REF)['element_ref'] == element
+    assert 'elementRef' not in State(current(realm)).entity(REF)
 
 
 def _reselect(realm, element, options, ref=REF):
@@ -256,6 +334,49 @@ def test_param_cannot_reselect_pin_after_relevant_peer_selection(two_pins):
     with pytest.raises(CommitRejected):
         _commit(realm, [command], base=base)
     assert (realm.head, realm.entries, realm.documents) == before
+
+
+def test_transition_refuses_new_pin_after_legacy_authority_and_preserves_document(
+        transition_pins):
+    realm, element, p1, p2 = _transition_birth(transition_pins)
+    _establish_legacy_authority(realm, element, p1)
+    command = _transition_command(current(realm), element, p2)
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected):
+        _commit(realm, [command])
+    assert (realm.head, realm.entries, realm.documents) == before
+
+
+def test_transition_refuses_canonical_null_over_legacy_authority_and_preserves_document(
+        transition_pins):
+    realm, element, p1, p2 = _transition_birth(transition_pins)
+    _establish_legacy_authority(realm, element, p1)
+    revision = realm.head['revision_id']
+    malformed = copy.deepcopy(realm.documents[revision])
+    for rows in (malformed['parent_revision']['payload']['clips'],
+                 malformed['parent_revision']['payload']['config']['clips']):
+        row = next(row for row in rows if row['id'] == 'effect')
+        row['elementRef'] = None
+        row['element_ref'] = copy.deepcopy(element)
+    malformed['parent_revision']['content_digest'] = _digest(malformed['parent_revision']['payload'])
+    document = malformed
+    realm.documents[revision] = document
+    _commit(realm, [restore(document)])
+    command = _transition_command(current(realm), element, p2)
+    before = copy.deepcopy((realm.head, realm.entries, realm.documents))
+    with pytest.raises(CommitRejected):
+        _commit(realm, [command])
+    assert (realm.head, realm.entries, realm.documents) == before
+
+
+def test_transition_accepts_matching_legacy_authority(transition_pins):
+    realm, element, p1, _ = _transition_birth(transition_pins)
+    _establish_legacy_authority(realm, element, p1)
+    accepted = _commit(realm, [_transition_command(current(realm), element, p1)])
+    assert accepted['data']['status'] in ('accepted', 'rebased')
+    row = State(current(realm)).entity(REF)
+    assert row['elementRef'] == element
+    assert 'element_ref' not in row
 
 
 def test_legacy_unchanged_param_requires_selection_authority(two_pins):
