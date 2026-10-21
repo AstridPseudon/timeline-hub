@@ -166,7 +166,7 @@ def _replace_media_ids(value, replacements):
             _replace_media_ids(child, replacements)
 
 
-def seed_shared_occurrence_parent(runtime, *, prepare=None):
+def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None):
     """Seed the existing shared-source App closure at the real Runtime boundary."""
     parent, shots, internals = app_closure()
     project = runtime.project
@@ -196,6 +196,28 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None):
     _replace_media_ids(shots, replacements)
     _replace_media_ids(internals, replacements)
 
+    parent_revision_id = 'native-sheet-connected-occurrence-parent'
+    if identity_scope is not None:
+        shot = shots[0]
+        old_shot_id = shot['shot_id']
+        old_shot_revision_id = shot['revision_id']
+        old_internal_revision_id = shot['internal_timeline_revision_id']
+        shot_id = f'{identity_scope}-shot'
+        shot_revision_id = f'{identity_scope}-shot-revision'
+        internal_revision_id = f'{identity_scope}-internal-revision'
+        for occurrence in parent['payload']['occurrences']:
+            if occurrence['shot_id'] == old_shot_id:
+                occurrence['shot_id'] = shot_id
+            if occurrence['shot_revision_id'] == old_shot_revision_id:
+                occurrence['shot_revision_id'] = shot_revision_id
+        shot['shot_id'] = shot_id
+        shot['revision_id'] = shot_revision_id
+        shot['internal_timeline_revision_id'] = internal_revision_id
+        shot['payload']['internal_timeline_revision_id'] = internal_revision_id
+        internal = next(item for item in internals if item['revision_id'] == old_internal_revision_id)
+        internal['revision_id'] = internal_revision_id
+        parent_revision_id = f'{identity_scope}-parent-revision'
+
     if prepare is not None:
         prepare(parent, shots, internals)
 
@@ -209,13 +231,15 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None):
         'project_id': project,
         'timeline_id': 'film',
         'expected_head': None,
-        'parent_revision_id': 'native-sheet-connected-occurrence-parent',
+        'parent_revision_id': parent_revision_id,
         'parent_composition': parent['payload'],
         'shot_revisions': shots,
         'internal_timeline_revisions': internals,
     }
+    seed_key = (f'{identity_scope}-seed' if identity_scope is not None
+                else 'native-sheet-connected-occurrence-parent')
     receipt = seed_trusted_parent(
-        runtime.service(), document, idempotency_key='native-sheet-connected-occurrence-parent',
+        runtime.service(), document, idempotency_key=seed_key,
     )
     return document, receipt
 
@@ -231,7 +255,9 @@ def seed_document_diff_parent(runtime):
         child.update({'clipType': 'am-type', 'from': 0, 'to': 3, 'params': {'text': 'hello'}})
         child.pop('asset', None)
 
-    return seed_shared_occurrence_parent(runtime, prepare=prepare)
+    return seed_shared_occurrence_parent(
+        runtime, prepare=prepare, identity_scope=f'document-diff-{runtime.project}',
+    )
 
 
 def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(runtime):
