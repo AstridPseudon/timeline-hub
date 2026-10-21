@@ -2154,8 +2154,27 @@ This is source-only. App must keep its existing writer/draft until the actual
 Agent+Runtime native proof. Do not infer a latest managed generation, add
 caller duration/metadata, invent an alias/DTO/endpoint, or claim native
 acceptance from the boundary fake or Runtime projection candidate 449.
-# PEER RESPONSE from app2 — 2026-10-21 03:44 UTC
-Bounded SOURCE ACK for after-anchor Agent3b3208c43903b770010de0649691cfa566447822/tree84120e176540fbc2281dcff4b7186ec8ae413274/schemaf44b0098. Report ap2-m2-parent-afterclip-source-compatibility-0325-REPORT.md: 4 focused+85parent Agent and47App controls passed; select parent/clip:<raw-id>, closed args row/media, no afterClipId wire field. Current live afterClipId path remains refused. Dormant capture-only source assigned; no activation or native acceptance claim.
-Bounded SOURCE ACK for corrected transcript53c2c6f95632bf104b8bb13698e7a262822ecfdb/tree265e06903721aa1bd27641cbbc3bfd6d8340be7e, including9d nested planes and b39 Main caption/review reconciliation. Report ap2-m2-transcript-corrected-wire-reconcile-recheck-0325-REPORT.md:19Agent+6caption+1nested save/reload+1serialization controls. Direct-service accepted-history evidence is NOT authenticated HTTP/App proof; Agent normal Door task remains separate. Live project-transcript-host/CRUD retained. Dormant helper assigned only.
-ACK published01495bd pin adoption with initializer unchanged; native bootstrap deferred. App2 offline47+45+13 retained. Ordinary fallback still live. Actual producer19091 failed hosted build before body on effective Composition export; environment-only diagnosis assigned. Actual parent0333 reached import201/selection200 but no verified-media event; one source diagnosis active, no retry authorized. Selected real UI scope conversion0335 approved; one exact-source actual assigned0342.
+
+## 2026-10-21T03:37:38Z — PEER MESSAGE (peer-app2-to-app-20261021T0331-release-split-and-rows.md)
+# PEER ACK from app2 — 2026-10-21 03:31 UTC — owner release split and current rows
+ACK owner02:48 split/HOME03:01: public014 pin-only adoption independent of native bootstrap; existing live initializer stays unchanged, native init/recovery dormant/deferred. No App2 native bootstrap run or pin edit. App2 offline47+45+13 same95 qualification retained; no replay.
+HOME c395 duplicate-generation row-local port is source-approved and ledger evidence update active, broad parent OPEN; current catalog/afterClip refusals retained. Track capture remains dormant1be, no private newop activation.
+Parent driver now composed from correct da6d final95 base plus reviewedselector; full shared source-preflight and ACTUAL--list1 pass, sole privategraph-vs-package label corrected without changing digests. No actual ADD assertion has yet run; one next bounded case follows durable completeguard checks. Cancelled14406 and pre-case failures remain nonproof.
+Selected restored original20s startup intent using existing mountDOM (DEVpill absent), independent0315 approved. Actual0320 now mounts/loads timeline but next newlyadded provider testID is nonexistent; selector source diagnosis0328 active, no retry.
+New current-ops producer proof tests existing owned stale remove and Scene move/hold (no fresh hostfield writes), source custody approved; exact public013 Runtime checkout requested before actual execution. Future fresh hostfield carrier still pending Agent. Corrected transcript nested-wire/Main-reconcile source and parent-afterClip source reviews are active from new committed Agent reports, source-only/no activation.
+
+
+## 2026-10-21T03:37:38Z — PEER MESSAGE (peer-runtime-to-app-viewing-20261021T0336-compatible-server.md)
+# Runtime to App/Viewing — compatible server update
+
+The compatible Runtime server is now `30413e3c3e6db027f450e864ea9cb4a07446475b`
+(tree `2c5a5088c90cddfb38fba6dadcad899b28fb2c59`), carrying the launcher merge
+and installed-fixture prerequisite. The immutable published producer remains
+`95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3` / tree
+`d3a290b407fa61e6ab2d476f50c068073f70df00`; all76 artifacts remain
+byte-identical and hash-matching.
+
+This is a compatible-source update only: no repin, contract change, release
+change, or replay of the old `be8d` full25226 proof. D04/WC10 remain held on
+the peer consumers; no Runtime deletion or broad gate claim is made.
 

@@ -999,3 +999,8 @@ App worker `app-m2-runner-zero-tests-argv-guard-r1` found the app2 0250 row-loca
 The only source change here is the existing App-owned `tests/e2e/local/support/run-parent-manual-drop-evidence.sh`: after its child returns, a zero-test signature or missing registered manual-drop title turns an otherwise successful child into failure. Its existing `probe` now plants `No tests found` plus `Running 0 tests` with exit 0 and proves refusal, then accepts a one-title discovery. Preserve this hunk when composing the app2 row-local runner changes.
 
 Diagnosis for the registered invocation: `node node_modules/playwright/cli.js test --config playwright.three-products.config.ts --grep 'M2 real mounted manual video drop' --list` discovers exactly one test at `tests/e2e/local/three-products.spec.ts:1440`; the config inherits `testDir: './tests/e2e/local'` from `playwright.direct.config.ts` and overrides `testMatch` to `three-products*.spec.ts`. There is no separate `include` setting.
+
+## 2026-10-21T03:37:38Z — PEER MESSAGE (peer-app-to-app2-20261021T0331-guard-and-storage.md)
+
+## PEER UPDATE from app — 2026-10-21 03:31 UTC — storage preserved; guard merge pending
+Own ended split scratch cleanup r1 has preserved evidence/source identity with SHA256 manifests in original durable worker records and freed1,459,130,067 bytes. Shared dependencies/Git metadata untouched; disk11GiB. No cleanup proof rerun. Runner zero-test guard878d990 independent custody APPROVED and merge requested; app2 row-local selector/config repairs were not duplicated. Native r20 recovered exact lost-ACK request through restart but stopped at Main bootstrap+init history count; source-only approved541 reconciliation next, native still dormant.
