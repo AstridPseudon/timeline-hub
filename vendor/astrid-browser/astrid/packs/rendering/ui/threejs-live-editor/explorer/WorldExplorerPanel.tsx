@@ -58,7 +58,7 @@ const SPEEDS = [0.5, 1, 2];
 const MIN_VIEW_WIDTH = 160;
 const FALLBACK_VIEW_WIDTH = 320;
 const FALLBACK_ASPECT = 16 / 9;
-/** At this container width the panel uses its side column (the popped-out layout). */
+/** At this container width the panel uses its side column (the full-screen layout). */
 const WIDE_REM = 38;
 const SIDE_COLUMN = '13rem';
 /** Both modes' controls share this height in the side layout, so the viewer keeps its size when the mode changes. */
@@ -132,7 +132,7 @@ function writeSetting(ctx: ExtensionContext, key: string, value: unknown) {
 }
 
 export function WorldExplorerPanel(props: PanelRenderProps & { context: ExtensionContext }) {
-  const { context: ctx, video, visible, popout } = props;
+  const { context: ctx, video, visible, fullscreen } = props;
   const storage = ctx.creative.projectObjects;
 
   const [snap, setSnap] = useState<TimelineSnapshot | undefined>(() => readSnapshot(ctx));
@@ -1084,7 +1084,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const exploring = mode === 'explore' && ready && Boolean(explore);
   const showHint = exploring && !hintDismissed;
   const touch = touchSeen || (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches);
-  const canExpand = Boolean(popout) && !popout!.open;
+  const canExpand = Boolean(fullscreen) && !fullscreen!.active;
 
   const importControl = (
     <input
@@ -1398,11 +1398,11 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             {canExpand ? (
               <button
                 type="button"
-                aria-label="Pop out World Explorer"
-                title="Pop out into a larger window"
+                aria-label="Full screen World Explorer"
+                title="Full screen"
                 className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 style={PILL_STYLE}
-                onClick={() => popout!.onOpenChange(true)}
+                onClick={() => fullscreen!.enter()}
               >
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
               </button>
