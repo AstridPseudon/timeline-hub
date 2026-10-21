@@ -1,12 +1,13 @@
 """Atomic storage for unsent commands and one exact in-flight request."""
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
+
+from runtime_protocol import platform
 
 
 def request_bytes(value):
@@ -32,8 +33,11 @@ class Outbox:
             finally:
                 os.close(descriptor)
         with self.path.with_suffix(self.path.suffix + ".lock").open("a") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
-            yield
+            platform.lock_file(lock.fileno())
+            try:
+                yield
+            finally:
+                platform.unlock_file(lock.fileno())
 
     def read(self):
         return json.loads(self.path.read_bytes()) if self.path.exists() else None
