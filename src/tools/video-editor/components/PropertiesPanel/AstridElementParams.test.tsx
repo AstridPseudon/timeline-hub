@@ -182,6 +182,7 @@ describe('AstridElementParams', () => {
 
     expect(capture).toHaveBeenCalledTimes(1);
     expect(submit).toHaveBeenCalledTimes(1);
+    expect(submit).toHaveBeenCalledWith({ command, preview });
     expect(onChange).not.toHaveBeenCalled();
   });
 
