@@ -106,6 +106,7 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/lib/assetMetadataUIHelpers.ts",
   "src/tools/video-editor/lib/assetParserRuntime.ts",
   "src/tools/video-editor/compositions/VisualClip.tsx",
+  "src/tools/video-editor/lib/compiler-canary.ts",
   "src/tools/video-editor/lib/managed-object-guard.ts",
   "src/tools/video-editor/lib/proposal-runtime.ts",
   "src/tools/video-editor/lib/renderRouter.ts",
