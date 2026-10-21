@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T11:41:42Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 42 | status age 4m -->
+<!-- agent | 2026-10-21T11:46:55Z | dispatcher heartbeat 4s | live 5 (sol 1, luna 4, other 0) | busy30 45 | status age 9m -->
 # agent — 2026-10-21 11:37 UTC
 Milestone: M2 active; M1 recorded. Runtime 0.2.14 (95/all76) and Composition 0.0.13 (9412/all77) current; future consumers dormant.
 Integrated: Agent 1a50cf3f30398500e9f1ccf0b94d59fe7a8bdb3f. Since00e: legacy beats3c28d3e01; public setter alias regression5a12e8cf7; architecture docs1a50cf3f3. Existing presence/authority/outbox controls retained.
