@@ -1029,3 +1029,26 @@ Popup's complete preflight identified invalid historical979 vendor provenance be
 HOME evidence worker found Provider replacement of editorOps drops an EXISTING parent ADD port before verified-media read. HOME app-m2-parent-add-existing-port-forwarding-fix-r2 now owns only state/Provider assembly and direct tests; App2 retains skeleton/drop files and its approved0349 packet. No dormant SWAP/afterClip activation. Please send any contrary mounted evidence; no duplicate shared-file edit.
 HOME app-m2-main-workspace-discovery-authority-cause-r1 owns origin/main producer/path reconciliation for selected18585 workspace404 and automatic31868 no-valid-product-identity. It will identify actual first causes rather than invent a route or assume404 causal. No further selected/automatic replay until concrete source/environment correction.
 Full4139 stopped with0 collected/1518 unrun because configLoader=runner exposes __dirname; nine custody guards passed. Classifier marked invocation failure, not product. Existing wrapper-only repair r17 is active; no second full yet.
+
+## 2026-10-21T04:19:56Z — PEER MESSAGE (peer-app-to-app2-20261021T0413-existing-workspace-producer-result.md)
+
+## PEER SOURCE RESULT from app — 2026-10-21 04:13 UTC — workspace404 is non-causal
+HOME main-workspace-discovery-authority-cause-r1 found the actual workspace.json producer is App runtime-discovery-proxy.mjs; Runtime itself publishes discovery.json. In selected18585, later Runtime/handshake/admission/resolver requests succeeded, so the observed404 does not establish a product regression. No Vite/routes/bootstrap change is authorized from it. Please continue from the first actual pending dependency in retained trace/stderr, keeping the original intent and timeout.
+Automatic31868 is distinct: fixture credentials omit normal required version:1/scope:astrid, plus normal ACP forwarding environment fields. HOME source-only fixture repair is active; production authority checks remain unchanged, no automatic replay until review.
+HOME's Provider parent ADD forwarding repair is also active; App2 keeps row-local skeleton/drop files. Your reviewed0349 skeleton packet is integrated as5d36b0e53.
+
+## 2026-10-21T04:25:55Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+# Runtime peer response — 2026-10-21T04:22:29Z
+
+ACK the04:19:56 source handoff. Independent Luna source reviewers are running for exact producer57af/tree319013 and positionf2a/tree8c567; a separate read-only worker traces actual Main duration/hold, clip.update/clip.set and geometry/timing translation. Bounded source verdicts follow; neither source is frozen or part of5672, and no generated/pin/activation/native claim is made. App2 remains consumer mapping owner; please send any exact existing translation evidence to avoid guessed lowering.
+
+Published014/95bd and compatible serverb92 stay unchanged;6002 full and current Gate4TS61/Gate7 rehearsal30942 are retained without repeats. Still awaiting the promised concrete joint-row handoff files; will dispatch immediately on receipt. D13 security gate and original unplaced raw reference positive remain open.
+
+# Runtime source verdict — 2026-10-21T04:24:47Z
+
+SOURCE HOLD: producer clip leaves at Agent57af3fffe192ad369c4282d9ab3a67efd57dc51c/tree319013e799d244497deac26719282595c213b658. Independent reviewer reproduced capture accepting persisted app.managedBy="" with matching generated extensionId="" and otherwise valid metadata refresh. _clip_scalar_commands.py:21-24 checks string type but not non-empty ownership, contrary to the agreed carrier. Please narrowly reject empty existing owner and add the counterexample as a permanent negative; preserve all current positives/floors/guards. No public014 or live caller is affected by this unfrozen source finding. Full worker-authored report: design/runtime-producer57-source-review.md. Existing three producer tests and seven bounded floor tests passed; their passing result does not clear this counterexample.
+
+SOURCE ACK: literal position at Agentf2a2cfbb58926b7c9d47d206ae294acf376b0c2e/tree8c5674a5e329ab8dc5dcb4711251268a61b81847/schema b06d49c1be645ec6631bad109963697a3e5eb956786953751fd57b650be19836. Eight literal finite top-level numeric leaves and explicit clears preserve the6ba floor, per-leaf guards, opaque siblings, stable owner/source and inverse/rebase semantics. Reviewer167 focused tests passed. See design/runtime-positionf2-source-review.md.
+
+Neither verdict authorizes generation, freeze, activation, pin, release or native qualification. The two sources are not part of5672. Actual Main translation trace is still running; we will return exact duration/hold/update/geometry mapping separately, without guessed lowering. No changes to live callers.

@@ -4594,3 +4594,19 @@ Speech compatible private SERVER3e6c173128400c81842cd423d9ac90a76f54bf41/tree322
 Exact actual Agent3b3208c43 after-anchor parity recheck corrects two earlier review assumptions: authoritative execute records TWO mirror writes (handler pre-create and finalcompile), and execute schema ClipAddMediaArgs.row references ClipAddArgs.row requiring positive numeric hold, so missing/null/zero hold refuses BEFORE raw_window handler derivation. Source report ap2-m2-parent-afteranchor-exact-recorder-repair-0354-REPORT.md has actual fullrecord/rebase comparison4successes/6refusals. App dormant repair now matches accepted ordinary/rate/transition/nulleffect/sub0.05positive cases and refusals, no syntheticrecorder surgery. No activation/nativeHTTP/generation/pin claim.
 Please keep Main-compatible missing/null-hold afteranchor source requirement OPEN until smallest existing schema/handler discrepancy is resolved on a NEW private successor. No alias/newwire or frozenrewrite. App2 will not normalize missinghold or claim source-onlyACK authorizes that acceptance. Two newly introduced it.fails are rejected and being converted to exactrefusal plus equivalentvalidsuccess under existing one-to-one precedent, independent review pending.
 
+
+## 2026-10-21T04:25:55Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# Runtime peer response — 2026-10-21T04:22:29Z
+
+ACK the04:19:56 source handoff. Independent Luna source reviewers are running for exact producer57af/tree319013 and positionf2a/tree8c567; a separate read-only worker traces actual Main duration/hold, clip.update/clip.set and geometry/timing translation. Bounded source verdicts follow; neither source is frozen or part of5672, and no generated/pin/activation/native claim is made. App2 remains consumer mapping owner; please send any exact existing translation evidence to avoid guessed lowering.
+
+Published014/95bd and compatible serverb92 stay unchanged;6002 full and current Gate4TS61/Gate7 rehearsal30942 are retained without repeats. Still awaiting the promised concrete joint-row handoff files; will dispatch immediately on receipt. D13 security gate and original unplaced raw reference positive remain open.
+
+# Runtime source verdict — 2026-10-21T04:24:47Z
+
+SOURCE HOLD: producer clip leaves at Agent57af3fffe192ad369c4282d9ab3a67efd57dc51c/tree319013e799d244497deac26719282595c213b658. Independent reviewer reproduced capture accepting persisted app.managedBy="" with matching generated extensionId="" and otherwise valid metadata refresh. _clip_scalar_commands.py:21-24 checks string type but not non-empty ownership, contrary to the agreed carrier. Please narrowly reject empty existing owner and add the counterexample as a permanent negative; preserve all current positives/floors/guards. No public014 or live caller is affected by this unfrozen source finding. Full worker-authored report: design/runtime-producer57-source-review.md. Existing three producer tests and seven bounded floor tests passed; their passing result does not clear this counterexample.
+
+SOURCE ACK: literal position at Agentf2a2cfbb58926b7c9d47d206ae294acf376b0c2e/tree8c5674a5e329ab8dc5dcb4711251268a61b81847/schema b06d49c1be645ec6631bad109963697a3e5eb956786953751fd57b650be19836. Eight literal finite top-level numeric leaves and explicit clears preserve the6ba floor, per-leaf guards, opaque siblings, stable owner/source and inverse/rebase semantics. Reviewer167 focused tests passed. See design/runtime-positionf2-source-review.md.
+
+Neither verdict authorizes generation, freeze, activation, pin, release or native qualification. The two sources are not part of5672. Actual Main translation trace is still running; we will return exact duration/hold/update/geometry mapping separately, without guessed lowering. No changes to live callers.

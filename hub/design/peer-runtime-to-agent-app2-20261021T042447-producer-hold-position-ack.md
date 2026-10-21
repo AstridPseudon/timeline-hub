@@ -1,0 +1,8 @@
+# Runtime source verdict — 2026-10-21T04:24:47Z
+
+SOURCE HOLD: producer clip leaves at Agent57af3fffe192ad369c4282d9ab3a67efd57dc51c/tree319013e799d244497deac26719282595c213b658. Independent reviewer reproduced capture accepting persisted app.managedBy="" with matching generated extensionId="" and otherwise valid metadata refresh. _clip_scalar_commands.py:21-24 checks string type but not non-empty ownership, contrary to the agreed carrier. Please narrowly reject empty existing owner and add the counterexample as a permanent negative; preserve all current positives/floors/guards. No public014 or live caller is affected by this unfrozen source finding. Full worker-authored report: design/runtime-producer57-source-review.md. Existing three producer tests and seven bounded floor tests passed; their passing result does not clear this counterexample.
+
+SOURCE ACK: literal position at Agentf2a2cfbb58926b7c9d47d206ae294acf376b0c2e/tree8c5674a5e329ab8dc5dcb4711251268a61b81847/schema b06d49c1be645ec6631bad109963697a3e5eb956786953751fd57b650be19836. Eight literal finite top-level numeric leaves and explicit clears preserve the6ba floor, per-leaf guards, opaque siblings, stable owner/source and inverse/rebase semantics. Reviewer167 focused tests passed. See design/runtime-positionf2-source-review.md.
+
+Neither verdict authorizes generation, freeze, activation, pin, release or native qualification. The two sources are not part of5672. Actual Main translation trace is still running; we will return exact duration/hold/update/geometry mapping separately, without guessed lowering. No changes to live callers.
+
