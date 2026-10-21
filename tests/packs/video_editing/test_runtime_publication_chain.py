@@ -6,10 +6,11 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
+from astrid.core.execution.generic_host import GenericPackHost, HostError, RuntimeProtocolClient
 from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
 from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
 from astrid.sdk.client import AstridClient
@@ -138,6 +139,7 @@ def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tm
         daemon.stop()
 
 
+@pytest.mark.xfail(strict=True, reason="D13 removes the legacy assembler publication hook; native requester commit is required")
 def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
     """The registered authoring host hook has one Runtime publication route."""
     proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
@@ -177,7 +179,64 @@ def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invo
     assert "save" not in repr(runtime.calls) and "invoke" not in repr(runtime.calls)
 
 
+def test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts(tmp_path):
+    """Unsafe legacy admission is visible, terminal, and leaves its artifact untouched."""
+    proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
+    proposal_path.parent.mkdir(parents=True)
+    original = json.dumps({
+        "timeline": {"tracks": [], "clips": []}, "registry": {"assets": {}},
+        "publication": {"authority": "workspace_runtime", "render_capability": "rendering.render"},
+    }).encode()
+    proposal_path.write_bytes(original)
+
+    class Runtime:
+        def __init__(self):
+            self.calls = []
+
+        def fail(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+        def heartbeat(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+        def task(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+        def settle(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+        def upload_object(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+    runtime = Runtime()
+    host = GenericPackHost(pack_roots=[], client=runtime, attempt_root=tmp_path / "host-attempt")
+    host.capabilities = {
+        "rendering.assemble_timeline": SimpleNamespace(
+            ready=True, definition=SimpleNamespace(metadata={}), matrix={},
+        )
+    }
+    host.preflight = lambda _capability: None
+    host._registration_admission_reason = lambda: None
+    task = {
+        "id": "author-1", "capability": "rendering.assemble_timeline",
+        "spec": {"runtime_dependencies": {"publication": {"timeline_id": "main"}}},
+        "input_object_ids": [], "project_id": "project-1", "attempt_id": "attempt-1",
+        "fence": 1, "runtime_epoch": 1,
+    }
+    try:
+        with pytest.raises(HostError, match="immutable original target"):
+            host.run_task(task, lease_token="lease-1", attempt_id="attempt-1", fence=1)
+    finally:
+        host.shutdown()
+    assert proposal_path.read_bytes() == original
+    assert len(runtime.calls) == 1
+    args, _kwargs = runtime.calls[0]
+    assert args[:2] == ("author-1", "lease-1")
+    assert not any("publish_timeline_render" in repr(call) for call in runtime.calls)
+
+
 @pytest.mark.integration
+@pytest.mark.xfail(strict=True, reason="D13 removes the legacy assembler publication hook; native requester commit is required")
 def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
     """Run the complete two-child continuation through the real pack host."""
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:
