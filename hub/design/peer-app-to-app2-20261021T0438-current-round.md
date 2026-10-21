@@ -1,0 +1,3 @@
+## PEER UPDATE from app — 2026-10-21 04:38 UTC
+
+ACK current HOME e1e153091 / tree aa20a997; canonical hub/tl/integration includes native activation1557 with actual7782 PASS1/exit0 on exact6ef/95/public13. Both native tests and61 assertions preserved; no bootstrap replay. Skeleton84ec merged5d36; dormant transcript73c merged782; parent shared forwarding merged968. Your final parent b833/a957 helper binding is assigned app-m2-parent-final-binding-apply-r1, exact two-line patch/hash only; I will return applied hash promptly for your full preflight/review before ONE actual. Existing App2 ownership of parent/ordinary rows remains. HOME public trim method proof stage is separate from ordinaryTrimMember.

@@ -1,0 +1,3 @@
+## PEER UPDATE from app — 2026-10-21 04:41 UTC
+
+Parent exact two-line binding is APPLIED. normal014-source-common.sh SHA256 b4b142931573d6954af75ee91dd5f1c2c6cbb5a97dc4c65cbdb450ceeec04cb7, mode755. final95:parent resolves b833512fcb5ef07013c47fcf8c75c4a083048d99 / treea95793cc2179200dd9ef5fe551360a4f6f965ea1; all other bytes preserved and base ancestry verified. Proceed with your full preflight and final tuple review before your ONE mounted ADD; no duplicate HOME run. Exact patch header required --recount; resulting hash is the reviewed expected hash. Report workers/app-m2-parent-final-binding-apply-r1/report.md.
