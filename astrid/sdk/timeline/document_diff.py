@@ -66,7 +66,8 @@ def _require_container(before, after, message, *, rows=False):
                   message + " container presence is held by the document view")
 
 
-def _require_explicit_rows(pinned_rows, candidate_rows, result_rows, message):
+def _require_explicit_rows(pinned_rows, candidate_rows, result_rows, message,
+                           *, reject_candidate_only=False):
     """Verify explicit targets and deletions, retaining new command-derived fields."""
     _require_container(pinned_rows, candidate_rows, message, rows=True)
     _require_container(candidate_rows, result_rows, message, rows=True)
@@ -78,6 +79,13 @@ def _require_explicit_rows(pinned_rows, candidate_rows, result_rows, message):
     if list(pinned_map) != list(candidate_map) or list(candidate_map) != list(result_map):
         raise DocumentDiffError(message + " changed row membership/order")
     for identity, row in candidate_map.items():
+        if reject_candidate_only:
+            candidate_only = set(row) - set(pinned_map[identity])
+            if candidate_only:
+                raise DocumentDiffError(
+                    f"{message} has explicit candidate-only fields at row {identity!r}: "
+                    f"{sorted(candidate_only)}"
+                )
         if any(not equal(_field(result_map[identity], field), _field(row, field))
                for field in set(pinned_map[identity]) | set(row)):
             raise DocumentDiffError(f"{message} differs at row {identity!r}")
@@ -478,7 +486,8 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
                            "parent.config.tracks differs from the native command result")
     _require_explicit_rows(_field(base_config, "clips"), _field(config, "clips"),
                            _field(result_config, "clips"),
-                           "parent.config.clips differs from the native command result")
+                           "parent.config.clips differs from the native command result",
+                           reject_candidate_only=True)
     _require_explicit_rows(_field(base_parent, "clips"), _field(parent, "clips"),
                            _field(working["parent"], "clips"),
                            "parent.clips differs from the native command result")

@@ -415,6 +415,20 @@ def test_document_view_adapter_holds_mirror_only_field_deletions(field, value):
     assert work == before and base == pinned
 
 
+def test_document_view_adapter_refuses_candidate_only_mirror_field_matching_move_result():
+    work = bundle()
+    base = copy.deepcopy(work)
+    work["parent"]["clips"][0]["at"] = 4
+    mirror = work["parent"]["config"]["clips"][0]
+    mirror["at"] = 4
+    mirror["app"] = {"astrid": {"fixed_start": True, "for": 1.0}}
+
+    before, pinned = copy.deepcopy(work), copy.deepcopy(base)
+    with pytest.raises(DocumentDiffError, match="candidate-only"):
+        document_diff_to_commands(work, base)
+    assert work == before and base == pinned
+
+
 def test_document_view_adapter_accepts_identity_map_spelling_and_new_native_move_fields():
     work = bundle()
     base = copy.deepcopy(work)
