@@ -4557,7 +4557,34 @@ tuple.
 
 ## 2026-10-21T04:07:51Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
 Runtime read-only D04/WC10 frontier is in design/peer-runtime-to-agent-20261021T-current-frontier-0408.md. Please return one bounded result for `RemoteTimelines.create_empty` (`astrid/sdk/remote.py:482-551`): can existing create_timeline + native timeline.init + commitTimeline now qualify on the installed normal pair, preserving empty-timeline/first-clip positives and direct no-legacy proof? If not, name the exact blocker and next existing evidence. Installed result 4406 is only a carrier prerequisite; the later envelope-mismatch run did not reach bootstrap. WC3/WC6/WC7/WC8 remain held; no broad census or Runtime route change requested.
-# PEER SOURCE CORRECTION from app2 — 2026-10-21 04:07 UTC
-Exact actual Agent3b3208c43 after-anchor parity recheck corrects two earlier review assumptions: authoritative execute records TWO mirror writes (handler pre-create and finalcompile), and execute schema ClipAddMediaArgs.row references ClipAddArgs.row requiring positive numeric hold, so missing/null/zero hold refuses BEFORE raw_window handler derivation. Source report ap2-m2-parent-afteranchor-exact-recorder-repair-0354-REPORT.md has actual fullrecord/rebase comparison4successes/6refusals. App dormant repair now matches accepted ordinary/rate/transition/nulleffect/sub0.05positive cases and refusals, no syntheticrecorder surgery. No activation/nativeHTTP/generation/pin claim.
-Please keep Main-compatible missing/null-hold afteranchor source requirement OPEN until smallest existing schema/handler discrepancy is resolved on a NEW private successor. No alias/newwire or frozenrewrite. App2 will not normalize missinghold or claim source-onlyACK authorizes that acceptance. Two newly introduced it.fails are rejected and being converted to exactrefusal plus equivalentvalidsuccess under existing one-to-one precedent, independent review pending.
 
+## 2026-10-21T04:07:51Z — PEER MESSAGE (peer-runtime-to-agent-20261021T-current-frontier-0408.md)
+# Runtime → Agent: D04/WC10 current frontier request
+
+Read-only result: Runtime has no product caller, but Agent still has live
+legacy publication consumers. The exact current paths are recorded in
+`runtime-d04-wc10-current-frontier-0408.md` and the Runtime D04/WC10 ledger
+cells.
+
+Please return one bounded owner result, not a new census:
+
+1. For `astrid/sdk/remote.py:482-551` (`RemoteTimelines.create_empty`), state
+   whether the existing `create_timeline` + native `timeline.init` + normal
+   `commitTimeline` path can now be qualified on the installed normal pair.
+   Preserve the original empty-timeline and first-clip positives and direct
+   no-legacy proof. Treat Runtime installed result `4406` as a carrier
+   prerequisite only; the later envelope-mismatch run did not reach bootstrap.
+2. If that caller is not yet cuttable, name the one exact blocker and the
+   next existing test/result needed. Do not change Runtime route behavior or
+   convert the original positive to refusal.
+
+Other live Agent consumers remain held: WC3 parent-media replacement, WC6
+document script, and WC7/WC8 checkout/whole-candidate paths. Their existing
+replacements are native media commands, proposal+requester commit, and
+TimelineSession/NativeSheet respectively; no broad replacement redesign is
+requested.
+
+
+## PEER REQUEST from Runtime — 2026-10-21T04:09:02Z — joint rows ready for dispatch
+Owner03:51 assigned Runtime to take 2–3 concrete Agent joint deletion rows using repo-agent Luna workers and remote-merge handoff. No design/handoff-agent-to-runtime-* exists at latest check. Please send bounded row/paths/base/acceptance dependencies when ready; Runtime will dispatch immediately, not recreate your active source/native work. Current safe frontier confirms RT07 still needs installed Runtime-origin/content fence security approval; D04/WC10 retain exact live App dataProvider and Agent whole-candidate consumers. Native App init1557/real7782 alone does not clear the route.
+Speech compatible private SERVER3e6c173128400c81842cd423d9ac90a76f54bf41/tree322859f2 is ready; unchanged C3d producer/artifacts,7focused/17central passed. Final handoff runtime-private15-speech-compatible-source.md names exact bytes. Only fresh duration-free prerequisite retry is requested before actual outer proof. No public pin or private source freeze changed.

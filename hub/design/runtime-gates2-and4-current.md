@@ -2,9 +2,11 @@
 
 Date: 2026-10-21 UTC (restart reconciliation)
 
-## Current boundary and final6ef affected proof
+## Current disposition and final6ef affected proof
 
-The public Runtime integration remains `9d1c43c647301da48a6e86ad82e466b501bd2418`, tree `50e74e3243c5da4cf77b6e6cc76605fae8aeb649` (0.2.13). The qualified ordinary014 candidate is **not integrated**: Runtime `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree `d3a290b407fa61e6ab2d476f50c068073f70df00`; Agent `6efc81500a0e0688c2bb41e736503f0fc3e04abb`, tree `2ed2b8a12b5b3391ca221ba6ff05390f71a73556`. App pin approval is independent and adoption remains outstanding.
+The current Runtime integration is `b92d3e7a05eec65c142294ef4873edd059e9b31d`, tree `6abc2f117391de8e7e35c0283f575a002199894d`. It descends from the immutable published Runtime 0.2.14 producer `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree `d3a290b407fa61e6ab2d476f50c068073f70df00`; the published `all76` artifact set remains byte-identical. Agent adopted that producer in `091aa23ec83ea05ffd3b0115a640230d51c8c429`, tree `e3ae90fe482ba6cad6c3f94069127faf76ebceb6`, and App adopted it in `3be3c116610c4ffdf019cba447464280fd7b8e06`, tree `d030e4b8b41a1d5ec46de1c0c245111cafa7e98a`. Those pins are ancestors of the current integration descendants: Agent `7ab6cbae273f133b3adf2a7bae9f2439f02ce71e`, tree `075339b2c6d5e57c1b0e76754457d053b51edf2c`; App `1557c312b999ddc0a21c1728acbc64052ef6491f`, tree `cf94daef960fe1426f6f50e4000b00c0fc42867e`.
+
+The current Runtime full is `runtime-full-retained-owned-temp-integration-1021035028-28646`: **6002 passed, 26 skipped, 15 xfailed, 12 warnings**, exit 0, on tree `6abc2f117391de8e7e35c0283f575a002199894d`. This is current Runtime evidence, not a new Gate 2/4 targeted run. App's native `timeline.init` activation is separate: App `1557c312` and `real7782` prove the initializer create/init, lost-response, reload/restart, history, and immutable-readback path, not Gate 2/4 or all remaining App publication consumers.
 
 The initial final6ef affected run was **not green**:
 
@@ -34,31 +36,31 @@ The retained normal Agent `e35ad5e72ed9acc61d659a6b4b9c32d69208ab8d`, tree `a245
 
 ## Current Gate 4 disposition
 
-Named door result `rt-m2-gates2-and4-parallel-proof-track-gate4-door-integration-1020213206-10752` passed **29 Python in 16.01s and 61 TypeScript generated-client tests**, exit 0, on central Runtime snapshot tree `183dbcf45a6b3a25f7437415df10100101ef8bbd`. The exact command is the `gate4-door-integration` line in `ORCH/tests/suites.conf`; it covers the commit-route and response-lock files, door origin/auth/preflight nodes, real commit admission/project-scope and lost-ack nodes, two-project isolation, Python generated-client/parity nodes, and `cd packages/typescript && PATH=/home/user/work/app/node_modules/typescript/bin:$PATH npm test`.
+The retained named door proof `rt-m2-gates2-and4-parallel-proof-track-gate4-door-integration-1020213206-10752` passed **29 Python in 16.01s and 61 TypeScript generated-client tests**, exit 0, on central Runtime snapshot tree `183dbcf45a6b3a25f7437415df10100101ef8bbd`. The exact command is the `gate4-door-integration` line in `ORCH/tests/suites.conf`; it covers the commit-route and response-lock files, door origin/auth/preflight nodes, real commit admission/project-scope and lost-ack nodes, two-project isolation, Python generated-client/parity nodes, and `cd packages/typescript && PATH=/home/user/work/app/node_modules/typescript/bin:$PATH npm test`.
 
-This proves `/v1` route/door admission, origin and browser-credential refusal, project route/body scope, two-project isolation, response-lock behavior, exact retry, and generated Python/TypeScript client contracts within that named scope. Source-diff audit against candidate95bd found only an unselected door-audit assertion change and the added Gate2 concurrency test in the relevant files; selected Gate4 node bodies are unchanged. The result therefore transfers to the candidate transport surface within scope, but not to public013 integration or App adoption. Candidate qualification separately records full `31902` (**5,988 passed, 26 skipped, 15 xfailed**) and scoped `5889` (**6 passed in 2.75s**) on the 95bd contract tuple.
+This proves `/v1` route/door admission, origin and browser-credential refusal, project route/body scope, two-project isolation, response-lock behavior, exact retry, and generated Python/TypeScript client contracts within that named scope. Source-diff audit against candidate95bd found only an unselected door-audit assertion change and the added Gate2 concurrency test in the relevant files; selected Gate4 node bodies are unchanged. The result transfers only to the named transport source scope. Its Python source is bound to current b92 and the current full covers that Runtime side; the TypeScript generated inputs changed from 0.2.13 to the published 0.2.14 package, so the **61 TypeScript tests remain historical 0.2.13 evidence**. The current 0.2.14 TypeScript evidence is handled separately by `rt-m2-gate4-main014-ts-evidence-0407`; no current 61-test result is claimed here. Candidate qualification separately records full `31902` (**5,988 passed, 26 skipped, 15 xfailed**) and scoped `5889` (**6 passed in 2.75s**) on the 95bd contract tuple.
 
 ## Remaining requirement
 
-No additional Runtime Gate2/4 run is justified. The genuine remaining boundary is downstream: integrate/adopt the 95bd/6ef/App tuple, then run the authorized current integration full. App's native bootstrap/restart/lost-response proof remains outstanding. No full, browser, render, macOS, owner-film, final ZIP, or coordinated four-product result is claimed here.
+No additional Runtime Gate2/4 run is justified by this record. The current integration full is recorded above; the adopted Runtime/Agent/App tuple and the separate App native activation are no longer pending adoption claims. The remaining Gate 2/4 qualification boundary is the current 0.2.14 TypeScript generated-client result owned by task 0407. No browser, render, macOS, owner-film, final ZIP, or coordinated four-product result is claimed here.
 
 The original sections below retain the historical proof snapshot and exact commands for audit; their 2026-10-20 source labels must not be read as public013 or final6ef adoption.
 
 ## Source
 
-- Current Runtime integration: `b88a56feb2e1879455b9f1eb2403e171aa125f3c`, tree `29cb052c96ebcea435dcb920605c9604de8041c1`. It contains merged `168b3fa8006e6bbef99f56d76017604d38e25b8b` plus the current real-door concurrency proof.
+- Current Runtime integration: `b92d3e7a05eec65c142294ef4873edd059e9b31d`, tree `6abc2f117391de8e7e35c0283f575a002199894d`. It contains the approved launcher and Speech merges plus the current Runtime full evidence above.
 - Gate2 proof snapshot used by the central test service: `36082cf3701de2328d47855bb4cd37455ef4cf57`.
 - Gate4 proof snapshot used by the central test service: `183dbcf45a6b3a25f7437415df10100101ef8bbd`.
-- Actual Agent provider checkout: `/home/user/work/agent`, `d30894a7abfa6e3163c13a59175b4a0d298c7fea`.
+- Actual Agent provider checkout: `/home/user/work/agent`, `7ab6cbae273f133b3adf2a7bae9f2439f02ce71e` (tree `075339b2c6d5e57c1b0e76754457d053b51edf2c`).
 - Shared environments were referenced read-only. The TypeScript check used the existing `/home/user/work/app/node_modules/typescript` path; no dependency or cache files were changed.
 
 ### Current-file binding check
 
-The allow-listed suite lines are still present in `ORCH/tests/suites.conf` at lines 128–129. They retain explicit selected integration nodes and the existing `not darwin_native and not live` filter; no broad/full command replaced them.
+The allow-listed suite lines are still present in `ORCH/tests/suites.conf` at lines 135–137. They retain explicit selected integration nodes and the existing `not darwin_native and not live` filter; no broad/full command replaced them.
 
-- Gate2's selected integration functions have identical AST/source hashes in current `b88a56f` and the recorded `36082cf` snapshot: `test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip`, `test_real_door_concurrent_disjoint_moves_accept_and_rebase`, and `test_real_door_lost_ack_restart_exact_retry_never_executes_provider`.
-- Gate4's selected integration functions have identical AST/source hashes in current `b88a56f` and the recorded `183dbcf` snapshot: `test_real_door_commit_admission_checks_origin_auth_and_project_scope` and `test_real_door_lost_ack_restart_exact_retry_never_executes_provider`.
-- The current merged file adds only the complementary Gate4 admission node relative to the Gate2 snapshot and the Gate2 concurrency node relative to the Gate4 snapshot; both are named on the appropriate suite line. The current Gate2/Gate4 source selections therefore remain bound to the recorded **51 Python** and **29 Python / 61 TypeScript** evidence without rerunning either suite.
+- Gate2's selected integration functions have identical AST/source hashes in current `b92d3e7` and the recorded `36082cf` snapshot: `test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip`, `test_real_door_concurrent_disjoint_moves_accept_and_rebase`, and `test_real_door_lost_ack_restart_exact_retry_never_executes_provider`.
+- Gate4's selected integration functions have identical AST/source hashes in current `b92d3e7` and the recorded `183dbcf` snapshot: `test_real_door_commit_admission_checks_origin_auth_and_project_scope` and `test_real_door_lost_ack_restart_exact_retry_never_executes_provider`.
+- The current merged file adds only the complementary Gate4 admission node relative to the Gate2 snapshot and the Gate2 concurrency node relative to the Gate4 snapshot; both are named on the appropriate suite line. The current Gate2/Gate4 source selections therefore remain bound to the recorded **51 Python** and the historical **29 Python / 61 TypeScript** evidence without rerunning either suite.
 - The later baseline/fixture and boundary changes did not remove transport or custody assertions: current object IDs for `tests/test_timeline_commit_baseline.py`, `tests/precut_realm_fixture.py`, `tests/timeline_commit_film_fixture.py`, `tests/test_runtime_boundary.py`, `tests/test_zero_shim_boundary.py`, `tests/test_door_transport.py`, `tests/test_http_response_lock.py`, and `tests/test_timeline_commit_routes.py` are identical to the proof snapshot. The relevant current-to-proof diff is empty.
 
 ## Changes
@@ -94,7 +96,7 @@ Evidence includes normal `/v1` commit transport, origin and browser-credential r
 ## Gaps and next steps
 
 - Gate 2 now includes a simultaneous two-request HTTP-door race using the real Agent provider. The coordinator-level race tests remain complementary coverage for same-key waiters and different-key CAS behavior.
-- No full suite, render suite, or separate browser/e2e suite was requested or run. The Gate 4 door tests are the required Runtime transport coverage.
-- Gate 4 remains the prior current result: **29 Python tests passed in 16.01s; TypeScript generated-client suite 61 passed, 0 failed**, on proof snapshot `183dbcf45a6b3a25f7437415df10100101ef8bbd`. It was not repeated for this Gate2-only task.
+- No Gate 2/4 full, render, or separate browser/e2e suite was requested or run; the current Runtime full `28646` is recorded above. The Gate 4 door tests are the required retained Runtime transport coverage.
+- Gate 4's retained historical result is **29 Python tests passed in 16.01s; TypeScript generated-client suite 61 passed, 0 failed**, on proof snapshot `183dbcf45a6b3a25f7437415df10100101ef8bbd`; it was not repeated on current b92. The current 0.2.14 TypeScript generated-client lane is owned by `rt-m2-gate4-main014-ts-evidence-0407`.
 - Retired publication/D04 consumers remain held and are not silently counted as current Gate2/Gate4 coverage. When the held integration-marked public publication tests are ported, the exact deferred allow-list addition is `tests/test_timeline_public_s2_mixed_cli_journey.py` on the existing Runtime `commit-integration` line (or its exact qualified node, if the port narrows the file). Do not add or run that line now: the current suite already has the historical pinned lines, and this task deliberately avoids duplicating their run.
 - No external blocker remains. The remaining gate gaps are outside this Runtime Gate2/Gate4 proof: Gate 3 renderer-independent save evidence, Gate 5 adversarial App journey, Gate 6 one-writer/one-viewer parity and legacy-endpoint rejection across representative gestures, and Gate 7 delivery/ZIP/owner-film evidence.
