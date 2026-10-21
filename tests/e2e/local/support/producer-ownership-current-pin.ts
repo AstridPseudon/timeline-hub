@@ -262,15 +262,26 @@ export interface CommitObservation {
   response: Record<string, any> | null;
 }
 
+// Keep the mounted parent/duplicate journeys' film-save boundary: setup reads
+// and catalog/document operations are not legacy writes, but every mutation
+// verb on a legacy save route is.
+const LEGACY_WRITES = /\/(?:composition-revisions|revisions|restore|restore-history)(?:\/[^/]+)?$/;
+
 export function observeProducerCommits(page: Page) {
   const requests: CommitObservation[] = [];
+  const legacy: string[] = [];
   const listener = (request: import('@playwright/test').Request) => {
-    if (request.method() !== 'POST' || !new URL(request.url()).pathname.endsWith('/commit')) return;
+    const method = request.method();
+    const pathname = new URL(request.url()).pathname;
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && LEGACY_WRITES.test(pathname)) {
+      legacy.push(`${method} ${pathname}`);
+    }
+    if (method !== 'POST' || !pathname.endsWith('/commit')) return;
     const rawBody = request.postData() ?? '{}';
     requests.push({ body: JSON.parse(rawBody) as Record<string, any>, rawBody, key: request.headers()['idempotency-key'], status: null, response: null });
   };
   page.on('request', listener);
-  return { requests, dispose: () => page.off('request', listener) };
+  return { requests, legacy, dispose: () => page.off('request', listener) };
 }
 
 /** Let Runtime accept a commit, then drop only the browser acknowledgement. */

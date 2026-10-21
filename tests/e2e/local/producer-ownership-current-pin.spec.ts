@@ -104,6 +104,7 @@ test.describe('producer ownership on the current mounted route', () => {
       app: { managedBy: 'haus.astrid.scene-phase-markers' },
     });
 
+    const legacyTraffic = observeProducerCommits(page);
     const transcriptTraffic = observeProducerCommits(page);
     const transcriptAlerts = await page.getByRole('alert').allTextContents();
     await transcriptRegenerate(page);
@@ -173,6 +174,7 @@ test.describe('producer ownership on the current mounted route', () => {
     } finally {
       await lostAcknowledgement.dispose();
       sceneTraffic.dispose();
+      expect(legacyTraffic.legacy, 'producer gestures must not use legacy film-save routes').toEqual([]);
     }
 
     const afterScene = await currentPinRevision(harness, producerSeed);
@@ -189,6 +191,11 @@ test.describe('producer ownership on the current mounted route', () => {
       await waitForHeadChange(harness, producerSeed, afterScene.head);
     } finally {
       undoTraffic.dispose();
+      try {
+        expect(legacyTraffic.legacy, 'producer gestures must not use legacy film-save routes').toEqual([]);
+      } finally {
+        legacyTraffic.dispose();
+      }
     }
     const afterUndo = await currentPinRevision(harness, producerSeed);
     expect(clipFromRevision(afterUndo.body, producerSeed.sceneOwnedClipId)).toMatchObject({ at: 30, hold: 2 });
