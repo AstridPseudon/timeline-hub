@@ -15,7 +15,6 @@ export type UndoSnapshot = {
 export type UndoEntry = {
   snapshot: UndoSnapshot;
   timestamp: string;
-  label?: string;
   transactionId?: string;
   command?: {
     history: TimelineCommandHistoryMetadata;
