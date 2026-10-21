@@ -102,14 +102,14 @@ def _fixture(tmp_path, *, effect_factory=_effect, slug="publish", capability=CAP
     return service, project, task, attempt, effect
 
 
-def _speech_effect(project_id, *, metadata=None):
+def _speech_effect(project_id, *, output_port="speech", metadata=None):
     effect = _effect(
         project_id,
         groups=[{
             "group_key": "main",
             "selectors": [{
                 "selector": "speech", "ordinal": 0,
-                "variant_key": "original", "output_port": "speech",
+                "variant_key": "original", "output_port": output_port,
             }],
         }],
     )
@@ -493,10 +493,13 @@ def test_generic_output_generation_id_remains_managed_only(tmp_path):
         service.close()
 
 
-def test_speech_settlement_derives_wav_duration_for_exact_media_selection(tmp_path):
+@pytest.mark.parametrize("output_port", ["audio", "speech"])
+def test_speech_settlement_derives_wav_duration_for_exact_media_selection(tmp_path, output_port):
     service, project, task, attempt, effect = _fixture(
         tmp_path,
-        effect_factory=_speech_effect,
+        effect_factory=lambda project_id: _speech_effect(
+            project_id, output_port=output_port
+        ),
         slug="speech-wav",
         capability="generation.generate_speech",
     )
@@ -507,7 +510,7 @@ def test_speech_settlement_derives_wav_duration_for_exact_media_selection(tmp_pa
             attempt,
             [_output(
                 wav,
-                output_port="speech",
+                output_port=output_port,
                 group_key="main",
                 variant_key="original",
                 ordinal=0,
