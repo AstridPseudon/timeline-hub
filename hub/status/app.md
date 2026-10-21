@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T01:08:25Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 28 | status age 0m -->
+<!-- app | 2026-10-21T01:14:37Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 28 | status age 6m -->
 # app — 2026-10-21 01:05 UTC
 Milestone: M1 RECORDED. M2 all-writer retirement and M3 gates OPEN.
 Integrated: App tl/integration 813a85106ecb4abbaf224081abe6c33b8dab0df7, tree 2a19a78bb1bdfb3fd779f568a1b513b094318982; Main860 ancestor retained. Latest changes: guard-only followup ee6b809e6; App2 approved parent row 5a31d6dd4; HOME approved shared parent construction 813a85106. Parent assembly passes37 direct controls, preserving prior183+17 authority review. App2 owns ONE actual parent gate after this combined source; READY/source/tree sent01:04.
