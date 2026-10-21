@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { footageVolume } from '@astrid/packs/astrid_motion/rendering/elements/effects/am-footage/volume.ts';
 import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume';
 import { getClipVolume, isClipMuted } from '@/tools/video-editor/lib/editor-utils';
@@ -55,5 +55,32 @@ describe('effective clip volume: editor preview equals render', () => {
     expect(getEffectiveClipVolume(legacy)).toBe(renderVolume(legacy));
     const explicit = clip({ clipType: 'am-footage', volume: 0.75, params: { volume: 0.25 } });
     expect(getEffectiveClipVolume(explicit)).toBe(renderVolume(explicit));
+  });
+});
+
+describe('clamp to the element-declared max', () => {
+  it('am-footage never exceeds 1, like footageVolume', () => {
+    const c = clip({ clipType: 'am-footage', volume: 1.5 });
+    expect(getEffectiveClipVolume(c)).toBe(renderVolume(c));
+  });
+  it('plain media is not capped', () => {
+    expect(getEffectiveClipVolume(clip({ clipType: 'media', volume: 1.5 }))).toBe(1.5);
+  });
+});
+
+describe('runtime-admitted elements', () => {
+  it('feed their manifest default and max into the same rule', async () => {
+    const admitted = await import('@/tools/video-editor/runtime/admitted-elements');
+    const spy = vi.spyOn(admitted, 'getAdmittedElementSelection').mockReturnValue({
+      elements: [{ descriptor: { id: 'proj-footage', packId: 'proj', defaults: { volume: 0.25 }, parameters: [{ name: 'volume', max: 0.5 }] } }],
+    } as never);
+    try {
+      const c = clip({ elementRef: { id: 'proj-footage', packId: 'proj', kind: 'effect', revision: '1' } });
+      expect(getEffectiveClipVolume(c)).toBe(0.25);
+      expect(getEffectiveClipVolume({ ...c, volume: 0.9 })).toBe(0.5);
+      expect(getEffectiveClipVolume({ ...c, volume: 0 })).toBe(0);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

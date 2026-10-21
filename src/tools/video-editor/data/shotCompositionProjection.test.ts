@@ -170,6 +170,21 @@ describe('canonical shot-composition downstream projection', () => {
     });
   });
 
+  it('leaves an unset volume unset instead of freezing the effective value', () => {
+    const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
+    for (const occurrence of graph.occurrences) {
+      delete (occurrence as Record<string, unknown>).gain;
+      delete (occurrence as Record<string, unknown>).muted;
+    }
+    const projection = projectCanonicalComposition(
+      createShotCompositionAdapter({ load: async () => graph }).prepare(graph),
+    );
+    const projected = projection.config.clips.filter((clip) => clip.id.startsWith('occ-'));
+    expect(projected.length).toBeGreaterThan(0);
+    // The fixture authors no volume or gain anywhere.
+    for (const clip of projected) expect(clip.volume).toBeUndefined();
+  });
+
   it('projects occurrence timing and source/audio controls without legacy group or shot clips', () => {
     const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     graph.occurrences[0] = {
