@@ -158,6 +158,9 @@ export function useTimelineCommandSession(options: {
           return fresh;
         },
         send: (request, key) => provider.commitTimeline!(request, key),
+        recoverBootstrap: provider.recoverNativeBootstrapTimeline
+          ? (ownerId) => provider.recoverNativeBootstrapTimeline!(timelineId, ownerId)
+          : undefined,
         changed,
         preview: (patch) => {
           if (disposed) throw new Error('Timeline command session is closed');

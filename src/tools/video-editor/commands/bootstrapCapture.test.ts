@@ -18,6 +18,7 @@ describe('native App bootstrap capture', () => {
     expect(result.commands[2].selections![0].order).toEqual(['parent/track:V1']);
     expect(result.commands[0].expect!['parent::config.output']).toEqual({ state: 'absent' });
     expect(result.commands[0].reads).toEqual([
+      { ref: 'parent', path: [], state: { state: 'present', value: original.parent } },
       { ref: 'parent', path: ['config', 'output'], state: { state: 'absent' } },
       { ref: 'parent', path: ['name'], state: { state: 'absent' } },
       { ref: 'parent', path: ['slug'], state: { state: 'absent' } },

@@ -443,6 +443,8 @@ export interface DataProvider extends AssetResolver {
   commitTimeline?(request: CommitRequest, idempotencyKey: string): Promise<TimelineCommitResult>;
   undoTimeline?(base: TimelineHeadRevision, publications: readonly string[], idempotencyKey: string): Promise<TimelineCommitResult>;
   getRecoverableIdentity?(): Promise<TimelineRecoveryIdentity>;
+  /** Resume an existing native bootstrap owner without creating a new timeline or request. */
+  recoverNativeBootstrapTimeline?(timelineId: string, ownerId: string): Promise<TimelineCommandBasis>;
   /** Exact retained inputs through this provider's authenticated project session. */
   readonly paramReadClient?: {
     getProjectVerifiedDocument(projectId: string, pin: DocumentPin): Promise<VerifiedDocument>;
