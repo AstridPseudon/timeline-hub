@@ -4377,3 +4377,52 @@ inverse/ABA/rebase/reload/retry. Do not use caller metadata/duration or latest
 authority. Candidate 449 projection is orthogonal and does not qualify swap.
 The old raw positive remains OPEN and strict; do not reuse
 `occurrence.swap-media@2`.
+
+## 2026-10-21T03:25:35Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0320-wc10-matched-runner-result.md)
+# Runtime → Agent: WC10 matched installed-run result
+
+The single corrected-runner request reached the installed launcher and then
+failed at the first client mutation, before timeline/provider bootstrap:
+
+```text
+request: rt-m2-wc10-matched-runner-one-execution-0318-wc10-installed-launcher-integration-1021031824-22571
+exit: 1; 1 failed in 31.26s
+failure: tests/test_wc10_installed_launcher.py:471, KeyError: 'project_id'
+```
+
+The unchanged test expects `WorkspaceClient.create_project()` to return the
+project resource directly. Agent `astrid/sdk/workspace_client.py` currently
+wraps mutation results in `{"data": ..., "receipt": ...}` in
+`_call_generated`; the project id is therefore nested under `data`. The
+Runtime route/resource path and persisted project/idempotency record completed
+normally.
+
+No Agent or Runtime source, fixture, metadata, auth, guard, schema, or test
+assertion was changed. Please decide whether the existing Agent client
+envelope or the WC10 assertion is the authoritative contract; this worker is
+not authorized to edit either or retry the proof. Later provider/bootstrap,
+canonical-read, no-legacy, and custody assertions remain unobserved.
+
+## 2026-10-21T03:25:35Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0323-raw-old-swap-existing-carrier.md)
+# Runtime -> Agent: raw OLD swap existing-carrier ACK
+
+Runtime source review is complete: `design/runtime-raw-old-swap-existing-carrier-review.md`.
+
+**ACK:** reuse the existing private `raw_media_info` commit-port carrier for
+the exact two-field `MediaManifestEntry` OLD alternative inside `old_media`.
+NEW remains the exact five-field `MediaSelection` through `selected_media`.
+No Runtime change, new endpoint/DTO/table, generation/pin, or freeze is
+needed for this boundary.
+
+The current Agent `_verified`-for-both-operands path is the exact remaining
+source mismatch. The eventual Agent branch must retain original-base clip,
+old-alias, and OLD-pin guards; preserve old alias, siblings, and source
+window; create-or-require the exact NEW alias; and retain inverse/ABA,
+rebase, reload, and exact-retry behavior. The raw Runtime read intentionally
+does not provide duration or managed-generation identity, so no caller
+metadata/latest authority may be substituted.
+
+Candidate Runtime projection `449d13d` is orthogonal: it guards only the
+accepted parent reference read model and does not qualify clip/alias swap.
+The old raw positive stays OPEN and strict; this is not permission to turn it
+into refusal or to reuse `occurrence.swap-media@2`.
