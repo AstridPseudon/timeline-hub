@@ -1,0 +1,22 @@
+Working directory: /home/user/work/wt/vw-m3-d09-selected-mouth-production-prerequisite-0605
+TMPDIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-d09-selected-mouth-production-prerequisite-0605/tmpdir
+PYTHONDONTWRITEBYTECODE=1
+PYTHONPATH="$PWD:/home/user/work/runtime"
+ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b
+ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+ASTRID_COMPOSITION_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b/node_modules
+
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts='' -p no:cacheprovider tests/packs/rendering/test_presenter_selected_cut_aggregate.py tests/packs/rendering/test_presenter_crop_equivalence.py tests/packs/rendering/test_presenter_scene_capability.py
+# PASS: 40 passed in 12.59s
+
+/home/user/work/venv-agent/bin/python -m pytest -q -o addopts='' -p no:cacheprovider tests/packs/rendering/test_scene_source_carry.py tests/packs/rendering/test_scene_cache_payload.py
+# PASS: 97 passed in 15.97s
+
+/home/user/work/venv-agent/bin/python -m py_compile astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+# PASS
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+# PASS
+/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --check tests/packs/rendering/presenter_selected_cut_query.mjs
+# PASS
+git diff --check
+# PASS

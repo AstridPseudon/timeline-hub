@@ -1,0 +1,26 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+index 2a26cd7d1..6e99dee05 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+@@ -509,7 +509,7 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
+             findings.append(f"LIPSYNC {name}: presenter has {len(own)} words, VO has {len(vo)} under the cut; no pairs within 0.3 s")
+     # pixel check: does the mouth region actually change in the captured frames?
+     presenter = presenters[0]
+-    box = model.mouth_box(presenter, 0)
++    box = None if public else model.mouth_box(presenter, 0)
+     crop = _public_crop(public["rect"], public["basis"], ctx.frame_size) if public else None
+     if crop is None and box and len(series) >= 3:
+         sx, sy = ctx.frame_size[0] / model.CANVAS[0], ctx.frame_size[1] / model.CANVAS[1]
+diff --git a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+index 8a93dac95..cd2b2b5b3 100644
+--- a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
++++ b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+@@ -137,7 +137,7 @@ def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_r
+     presenter = ctx.elements[0]
+     assert ctx.shared["public_scene_evidence_mode"] == ("fresh_capture" if mode == "fresh" else "cache")
+     assert builtin._public_mouth_facts(ctx, presenter, [0, 3, 4, 5])["rect"] == (894.0, 606.0, 138.0, 48.0)
+-    monkeypatch.setattr(model, "mouth_box", lambda *_args: None)
++    monkeypatch.setattr(model, "mouth_box", lambda *_args: pytest.fail("public ROI used private crop"))
+     result = builtin.render_lipsync(ctx)
+     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
+ 
