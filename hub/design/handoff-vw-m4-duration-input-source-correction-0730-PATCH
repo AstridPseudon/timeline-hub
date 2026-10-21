@@ -1,0 +1,36 @@
+--- a/typescript/src/lib/duration.ts
++++ b/typescript/src/lib/duration.ts
+@@ -31,7 +31,8 @@ export const getClipDurationInFrames = (clip: TimelineClip, fps: number): number => {
+  return Math.max(1, secondsToFrames(getClipTimelineDuration(clip)));
+ };
+ 
+-export const getTimelineDurationInFrames = (timeline: TimelineConfig, fps: number): number => {
++export const getTimelineDurationInFrames = <T extends Pick<TimelineConfig, 'clips'>>(
++  timeline: T, fps: number): number => {
+   return Math.max(
+     1,
+     ...timeline.clips.map((clip) => {
+       return secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps);
+     }),
+   );
+ };
+--- /dev/null
++++ b/typescript/tests/duration.test.ts
+@@ -0,0 +1,17 @@
++import assert from 'node:assert/strict';
++import {test} from 'node:test';
++import {getTimelineDurationInFrames, type TimelineClip} from '../src/index';
++
++const clip: TimelineClip = {id: 'clip', at: 0, hold: 1, track: 'visual'};
++const resolvedConfig: {clips: TimelineClip[]; theme?: string; resolvedOnly: true} = {
++  clips: [clip], resolvedOnly: true,
++};
++
++test('timeline duration accepts clip-only, resolved, and full-config inputs', () => {
++  assert.equal(getTimelineDurationInFrames({clips: [clip]}, 30), 30);
++  assert.equal(getTimelineDurationInFrames(resolvedConfig, 30), 30);
++  assert.equal(getTimelineDurationInFrames({
++    theme: 'default', clips: [clip], tracks: [], output: {},
++    pinnedShotGroups: undefined, theme_overrides: undefined,
++  }, 30), 30);
++});

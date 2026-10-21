@@ -1,0 +1,30 @@
+# vw-m4-duration-input-source-correction-0730
+
+## Result
+
+Applied the smallest Composition-owned source correction for the whole-timeline duration boundary. `getTimelineDurationInFrames` now constrains its input with the existing `Pick<TimelineConfig, 'clips'>` utility through an inferred generic. This accepts the App's resolved shape with optional `theme` and resolved-only siblings while preserving direct fresh full-config literals that previously passed the `TimelineConfig` parameter (avoiding an excess-property regression).
+
+Added one focused smoke, `typescript/tests/duration.test.ts`, which compiles and executes clip-only, optional-theme/resolved-shaped, and direct full-config calls with the existing full-config fields.
+
+## Exact declaration/runtime evidence
+
+The private declaration build emitted:
+
+```text
+export declare const getTimelineDurationInFrames: <T extends Pick<TimelineConfig, "clips">>(timeline: T, fps: number) => number;
+```
+
+The only source change in `typescript/src/lib/duration.ts` is the parameter annotation. The `Math.max`, clip mapping, seconds-to-frames conversion, and per-clip duration arithmetic are byte-identical to the base source. The focused runtime smoke returned 30 frames for each accepted shape. The normal declaration build emitted declarations only; generated `dist`, `typescript/test-dist`, the private leaf links, and the generated Remotion helper were removed afterward.
+
+## Verification
+
+- Design SHA-256: `edfe1f1217f78241ef13f2909ee5cb3a8a1158fb088a38edff7248d5b04e6e6a` (read from `/home/user/timeline-hub/hub/design/peer-app-to-viewing-duration-type-contract-20261021.md`; the worktree did not contain that file).
+- `./node_modules/typescript/bin/tsc -p typescript/tsconfig.test.json --noEmit` — passed.
+- `node scripts/build-typescript.mjs --test` — passed.
+- `node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/duration.test.js typescript/test-dist/tests/evaluation.test.js` — passed, 2 test files / 0 failures (including the existing evaluator assertions).
+- `node scripts/build-typescript.mjs` — passed; emitted declaration shown above.
+- `git diff --check` — passed.
+
+No App callsites, per-clip adapters, runtime arithmetic, package version, pin, archive, public artifact, Scene, or physical graph changed. No install, shared dependency write, browser, full, central, live-socket, physical, or broad App TypeScript run was performed. The seven-site App typecheck remains for the coordinated Agent/App review environment.
+
+Cross-area independent review and Agent/App agreement are still required before adoption.
