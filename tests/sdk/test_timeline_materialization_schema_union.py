@@ -32,6 +32,15 @@ def without_groups(schema):
     return schema
 
 
+def without_raw_reference(schema):
+    del schema['$defs']['TimelineReferenceArgs']
+    schema['$defs']['EditCommand']['allOf'] = [
+        clause for clause in schema['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] != 'timeline.reference'
+    ]
+    return schema
+
+
 def without_voiceover(schema):
     shot = schema['$defs']['ShotSetArgs']
     del shot['properties']['values']['properties']['metadata']
@@ -62,7 +71,9 @@ def without_extent(schema):
 
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
-    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_raw_reference(
+        without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    )
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -101,13 +112,16 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
     assert len(ordinary['$defs']) == 55
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
-    assert len(_SCHEMA['$defs']) == 59
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
+    frozen = without_raw_reference(copy.deepcopy(_SCHEMA))
+    assert len(frozen['$defs']) == 59
+    assert len(frozen['$defs']['EditCommand']['allOf']) == 33
     assert compatibility_errors(ordinary, _SCHEMA) == []
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
-    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_raw_reference(
+        without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    )
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
     assert len(candidate['$defs']) == 56
@@ -115,7 +129,9 @@ def test_removing_only_group_additions_reconstructs_project_data_bytes():
 
 
 def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
-    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_raw_reference(
+        without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    )
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -128,19 +144,22 @@ def test_removing_group_and_project_data_additions_reconstructs_private_carrier_
 
 
 def test_project_data_proposal_has_a_new_closed_schema_hash():
-    raw = (json.dumps(without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))), indent=2) + '\n').encode()
+    raw = (json.dumps(without_raw_reference(
+        without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    ), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
 def test_private_extent_proposal_is_one_addition_on_voiceover_floor():
-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+    raw = (json.dumps(without_raw_reference(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_EXTENT_SHA256
-    assert len(_SCHEMA['$defs']) == 59
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
+    frozen = without_raw_reference(copy.deepcopy(_SCHEMA))
+    assert len(frozen['$defs']) == 59
+    assert len(frozen['$defs']['EditCommand']['allOf']) == 33
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
-    candidate = without_extent(copy.deepcopy(_SCHEMA))
+    candidate = without_raw_reference(without_extent(copy.deepcopy(_SCHEMA)))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_VOICEOVER_SHA256
     assert len(candidate['$defs']) == 58
@@ -148,7 +167,9 @@ def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
 
 
 def test_voiceover_property_preserves_the_prior_group_schema_hash():
-    raw = (json.dumps(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
+    raw = (json.dumps(without_raw_reference(
+        without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))
+    ), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
 
 
@@ -156,7 +177,7 @@ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schem
     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
 
     previous = baseline('agent-frozen-s2-26ef2bbb')
-    current = without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))
+    current = without_raw_reference(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
     raw = (FIXTURES / 'agent-frozen-s2-26ef2bbb.json').read_bytes()
     for name in (*REFERENCES, 'AnchorIdentity'):
         addition = copy.deepcopy(
