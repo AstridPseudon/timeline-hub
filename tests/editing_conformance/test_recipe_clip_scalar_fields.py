@@ -415,6 +415,71 @@ def test_private_transition_set_update_remove_pairs_element_ref_and_roundtrips()
     assert inverse(removed.bundle, removed.records).bundle == changed.bundle
 
 
+@pytest.mark.parametrize('params', [ABSENT, present(None), present({'opaque': [None, False, 0]})])
+def test_existing_unreferenced_transition_set_preserves_params_presence(params):
+    original = adjacent_transition_bundle()
+    target = clip(original, PARENT)
+    target['transition'] = {'type': 'cross-fade', 'duration': .5, 'revision': 'r1',
+                            'future': {'keep': [None, False]}}
+    State(original).set(PARENT, ['transition', 'params'], params)
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+
+    plan = execute(original, [capture_clip_set(original, PARENT, values={
+        'transition': {'type': 'cross-fade', 'duration': .75, 'revision': 'r1'}})])
+
+    expected = copy.deepcopy(target['transition'])
+    expected['duration'] = .75
+    if params['state'] == 'present':
+        expected['params'] = copy.deepcopy(params['value'])
+    assert clip(plan.bundle, PARENT)['transition'] == expected
+    assert 'elementRef' not in clip(plan.bundle, PARENT)
+    assert 'element_ref' not in clip(plan.bundle, PARENT)
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_existing_unreferenced_transition_params_merge_and_opaque_fields_survive():
+    original = adjacent_transition_bundle()
+    target = clip(original, PARENT)
+    target['transition'] = {'type': 'cross-fade', 'duration': .5, 'revision': 'r1',
+                            'params': {'keep': [None, False], 'replace': 1},
+                            'future': {'keep': True}}
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+
+    plan = execute(original, [capture_clip_set(original, PARENT, values={'transition': {
+        'type': 'cross-fade', 'duration': .75, 'revision': 'r1',
+        'params': {'replace': 2}}})])
+
+    assert clip(plan.bundle, PARENT)['transition'] == {
+        'type': 'cross-fade', 'duration': .75, 'revision': 'r1',
+        'params': {'keep': [None, False], 'replace': 2}, 'future': {'keep': True}}
+
+
+@pytest.mark.parametrize('field', ['elementRef', 'element_ref'])
+def test_unreferenced_transition_set_refuses_present_reference_spelling(field):
+    original = adjacent_transition_bundle()
+    target = clip(original, PARENT)
+    target['transition'] = {'type': 'cross-fade', 'duration': .5, 'revision': 'r1'}
+    target[field] = None
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    with pytest.raises(CommandError, match='existing raw identity'):
+        capture_clip_set(original, PARENT, values={'transition': {
+            'type': 'cross-fade', 'duration': .75, 'revision': 'r1'}})
+
+
+@pytest.mark.parametrize('transition', [
+    {'type': 'cross-fade', 'duration': .75},
+    {'type': 'cross-fade', 'duration': .75, 'revision': 'r2'},
+    {'type': 'fade', 'duration': .75, 'revision': 'r1'},
+])
+def test_unreferenced_transition_set_refuses_changed_type_or_revision_presence(transition):
+    original = adjacent_transition_bundle()
+    clip(original, PARENT)['transition'] = {
+        'type': 'cross-fade', 'duration': .5, 'revision': 'r1'}
+    original['parent']['config']['clips'] = copy.deepcopy(original['parent']['clips'])
+    with pytest.raises(CommandError, match='existing raw identity'):
+        capture_clip_set(original, PARENT, values={'transition': transition})
+
+
 @pytest.mark.parametrize('field', ['elementRef', 'element_ref'])
 def test_transition_only_clear_preserves_unrelated_element_identity(field):
     original = app_bundle()

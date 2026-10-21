@@ -1744,7 +1744,10 @@
                   "minLength": 1
                 },
                 "params": {
-                  "type": "object",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
                   "additionalProperties": {
                     "$ref": "#/$defs/JSON"
                   }

@@ -98,7 +98,7 @@ def test_existing_argument_narrowing_still_fails(name):
 def test_canonical_schema_is_byte_identical_to_approved_s2():
     path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
     assert hashlib.sha256(path.read_bytes()).hexdigest() == (
-        'a70f0e8898c6acccb34062e73733c93dd4e7bc22c34ef012431e1791907e1f4a')
+        '27b76296a6c1a81495a1cdd80b13d765ebf7952af1967eb839d2fd3606413eab')
 
 
 def test_private_transition_successor_is_an_additive_clip_set_carrier():

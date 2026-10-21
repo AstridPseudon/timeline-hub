@@ -3,7 +3,9 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from ._command_state import CommandError, State
+from ._command_state import ABSENT, CommandError, State, equal
+
+_MISSING = object()
 
 
 def _association(record, select):
@@ -38,13 +40,15 @@ def _association(record, select):
         return None
     _document_pin(pin['source'])
     if command['op'] in ('clip.set-params', 'clip.set'):
-        reads = {r['path'][0]: r['state'].get('value') for r in record['reads']
+        reads = {r['path'][0]: r['state'] for r in record['reads']
                  if r['ref'] == select and r['path'] in (['elementRef'], ['element_ref'])}
-        previous = reads.get('elementRef') or reads.get('element_ref')
-        if previous is not None and previous != pin['element']:
+        previous = (reads['elementRef'] if 'elementRef' in reads
+                    else reads['element_ref'] if 'element_ref' in reads else ABSENT)
+        if previous['state'] == 'present' and not equal(previous['value'], pin['element']):
             return None
         if (command['op'] == 'clip.set'
-                and command['args']['values'].get('elementRef') != pin['element']):
+                and ('elementRef' not in command['args']['values']
+                     or not equal(command['args']['values']['elementRef'], pin['element']))):
             return None
     return pin
 
@@ -154,8 +158,15 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
             for record in records:
                 value = effect(value, record, index, entry['records'])
             row = state(index).entity(select, optional=True)
-            element = (row.get('elementRef') or row.get('element_ref')) if row else None
-            if value is not None and element != value['element']:
+            if row is None:
+                element = _MISSING
+            elif 'elementRef' in row:
+                element = row['elementRef']
+            elif 'element_ref' in row:
+                element = row['element_ref']
+            else:
+                element = _MISSING
+            if value is not None and (element is _MISSING or not equal(element, value['element'])):
                 value = None
         return value
 

@@ -17,6 +17,24 @@ from ._scalar_commands import (
 )
 from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occurrence_start, rate
 
+_MISSING = object()
+
+
+def _same_field(left, right, key):
+    """Compare a raw field's presence and value, not just its value."""
+    left_present, right_present = key in left, key in right
+    return (left_present == right_present
+            and (not left_present or equal(left[key], right[key])))
+
+
+def _existing_ref(row):
+    """Return the canonical ref, legacy ref, or an explicit missing marker."""
+    if 'elementRef' in row:
+        return row['elementRef']
+    if 'element_ref' in row:
+        return row['element_ref']
+    return _MISSING
+
 
 def _hold_extent(ctx, ref, values, clear):
     owner = ref.rsplit('/', 1)[0]
@@ -97,34 +115,66 @@ def _transition_set(ctx, command, ref, values, identity):
 
     transition = values['transition']
     number(transition['duration'], 'transition.duration', positive=True)
-    selected = values.get('elementRef')
-    if not isinstance(selected, dict) or selected.get('kind') != 'transition':
-        raise CommandError('transition SET requires its matching elementRef', ref=ref)
-    if selected.get('id') != transition['type'] or selected.get('revision') != transition.get('revision'):
-        raise CommandError('transition requires its matching selected reference', ref=ref)
     before = ctx.read(ref, ['transition'])
-    previous = identity['elementRef'] or identity['element_ref']
-    same = isinstance(before, dict) and before.get('type') == transition['type']
-    same = same and equal(selected, previous)
-    changed = {key: value for key, value in transition.get('params', {}).items()
-               if not same or not equal(present(value), ctx.state.get(ref, ['transition', 'params', key]))}
-    builtin = next((item for item in list_element_descriptors('transitions')
-                    if all(item.get(key) == selected.get(key)
-                           for key in ('id', 'kind', 'revision', 'packId'))), None)
-    if builtin is not None:
-        if 'schema_source' in command['args']:
-            raise CommandError('builtin transition does not use schema_source', ref=ref)
-        schema = builtin['schema']
-    elif selected.get('packId'):
-        schema = (_selected_schema(ctx, command, ref, selected)
-                  if changed or not same or 'schema_source' in command['args'] else {})
+    row = ctx.state.entity(ref)
+    selected = values['elementRef'] if 'elementRef' in values else _MISSING
+    previous = _existing_ref(row)
+    same_transition = (isinstance(before, dict) and 'type' in before
+                       and equal(before['type'], transition['type'])
+                       and _same_field(before, transition, 'revision'))
+    if selected is _MISSING:
+        if not same_transition or previous is not _MISSING:
+            raise CommandError('transition SET without elementRef requires the existing raw identity',
+                               ref=ref)
+        same = True
     else:
+        if not isinstance(selected, dict) or selected.get('kind') != 'transition':
+            raise CommandError('transition SET requires its matching elementRef', ref=ref)
+        if (selected.get('id') != transition['type']
+                or selected.get('revision') != transition.get('revision')):
+            raise CommandError('transition requires its matching selected reference', ref=ref)
+        same = same_transition and previous is not _MISSING and equal(selected, previous)
+    params = transition['params'] if 'params' in transition else _MISSING
+    changed = {key: value for key, value in params.items()} if isinstance(params, dict) else {}
+    if changed:
+        changed = {key: value for key, value in changed.items()
+                   if not same or not equal(present(value), ctx.state.get(ref, ['transition', 'params', key]))}
+    if selected is _MISSING:
         if 'schema_source' in command['args']:
             raise CommandError('schema_source requires a selected project pack transition', ref=ref)
-        if selected:
-            raise CommandError('selected transition declaration is unavailable', ref=ref)
-        schema = read_transition_schema(transition['type']) if transition['type'] in list_transition_ids() else {}
+        schema = (read_transition_schema(transition['type'])
+                  if transition['type'] in list_transition_ids() else {})
+    else:
+        builtin = next((item for item in list_element_descriptors('transitions')
+                        if all(item.get(key) == selected.get(key)
+                               for key in ('id', 'kind', 'revision', 'packId'))), None)
+        if builtin is not None:
+            if 'schema_source' in command['args']:
+                raise CommandError('builtin transition does not use schema_source', ref=ref)
+            schema = builtin['schema']
+        elif selected.get('packId'):
+            schema = (_selected_schema(ctx, command, ref, selected)
+                      if changed or not same or 'schema_source' in command['args'] else {})
+        else:
+            if 'schema_source' in command['args']:
+                raise CommandError('schema_source requires a selected project pack transition', ref=ref)
+            if selected:
+                raise CommandError('selected transition declaration is unavailable', ref=ref)
+            schema = read_transition_schema(transition['type']) if transition['type'] in list_transition_ids() else {}
     _validate_param_values(ref, changed, schema)
+    next_transition = copy.deepcopy(before) if isinstance(before, dict) else {}
+    next_transition.update(copy.deepcopy(transition))
+    existing_params = (before['params'] if isinstance(before, dict) and 'params' in before else _MISSING)
+    if params is _MISSING:
+        if existing_params is not _MISSING:
+            next_transition['params'] = copy.deepcopy(existing_params)
+    elif params is None:
+        # A duration-only/null-shaped update must not erase known parameters.
+        if isinstance(existing_params, dict):
+            next_transition['params'] = copy.deepcopy(existing_params)
+    elif isinstance(params, dict):
+        base_params = existing_params if isinstance(existing_params, dict) else {}
+        next_transition['params'] = {**copy.deepcopy(base_params), **copy.deepcopy(params)}
     owner = ref.rsplit('/', 1)[0]
     if identity['clipType'] == 'effect-layer':
         raise CommandError('effect layers cannot own incoming transitions', ref=ref)
@@ -176,6 +226,8 @@ def _transition_set(ctx, command, ref, values, identity):
             for key in RELATIONS:
                 ctx.read(neighbor, prefix + [key])
 
+    return next_transition
+
 
 def _transition_clear_pair(ctx, ref):
     """Validate the explicit transition/elementRef removal pair.
@@ -212,13 +264,15 @@ def clip_set(ctx, command):
         _transition_clear_pair(ctx, ref)
     if 'elementRef' in values and 'transition' not in values:
         raise CommandError('elementRef requires transition SET', ref=ref)
+    transition_write = None
     if 'transition' in values:
-        _transition_set(ctx, command, ref, values, identity)
+        transition_write = _transition_set(ctx, command, ref, values, identity)
     elif 'schema_source' in command['args']:
         raise CommandError('schema_source requires transition SET', ref=ref)
-    if 'hold' in values and isinstance(identity['elementRef'] or identity['element_ref'], dict):
-        ctx.select('element.targets', ref.rsplit('/', 1)[0])
     row = ctx.state.entity(ref)
+    existing_ref = _existing_ref(row)
+    if 'hold' in values and isinstance(existing_ref, dict):
+        ctx.select('element.targets', ref.rsplit('/', 1)[0])
     if 'asset' in clear:
         for key in ('asset_id', 'media_id', 'object_id'):
             if key in row:
@@ -231,6 +285,9 @@ def clip_set(ctx, command):
         for path in duration_paths:
             ctx.write(ref, path, duration)
     for key in sorted(values):
+        if key == 'transition':
+            ctx.write(ref, [key], transition_write)
+            continue
         ctx.write(ref, [key], values[key])
     if 'elementRef' in values and 'element_ref' in row:
         ctx.clear(ref, ['element_ref'])

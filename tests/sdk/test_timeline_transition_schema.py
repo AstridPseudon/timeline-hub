@@ -88,6 +88,25 @@ def test_provider_selected_transition_validates_exact_schema_and_redoes(configur
     assert redone['data']['canonical_document'] == document
 
 
+def test_selected_transition_null_params_preserves_known_parameter(configured_project_pack):  # noqa: F811
+    _, selected = admitted_transition(configured_project_pack)
+    realm = DetachedRealm(adjacent_app_document())
+    options = schema_options(configured_project_pack, selected)
+    verified, realm.snapshot_objects = options['schema_inputs'][0]
+    realm.live_sources[_digest(verified['pin'])] = verified
+    values = {'elementRef': selected, 'transition': {'type': selected['id'], 'duration': .5,
+              'revision': selected['revision'], 'params': {'seed': 8}}}
+    accepted = commit(realm, [capture_clip_set(current(realm), PARENT, values=values, **options)])
+    update = {'elementRef': selected, 'transition': {'type': selected['id'], 'duration': .75,
+              'revision': selected['revision'], 'params': None}}
+    changed = commit(realm, [capture_clip_set(current(realm), PARENT, values=update, **options)])
+    clip = changed['data']['canonical_document']['parent_revision']['payload']['clips'][1]
+    assert clip['transition']['params'] == {'seed': 8}
+    assert clip['transition']['duration'] == .75
+    assert accepted['data']['canonical_document']['parent_revision']['payload']['clips'][1][
+        'transition']['params'] == {'seed': 8}
+
+
 def test_first_selected_transition_exact_document_inverse(configured_project_pack):  # noqa: F811
     _, selected = admitted_transition(configured_project_pack)
     realm = DetachedRealm(adjacent_app_document())
