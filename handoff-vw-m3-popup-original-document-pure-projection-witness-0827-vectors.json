@@ -1,0 +1,32 @@
+{
+  "comparison": "PURE projector comparison on supplied SWAP output; not Runtime acceptance or full SWAP qualification",
+  "source_file_sha256": "e30ed3303532e3d73adfd07670e04d1312003b7e10d2c5c008629b8b9bffad46",
+  "source_output_canonical_sha256": "4d6c769a1e958af371b6b86a9d7137486a10a32156ba956140f4ae90e9ddc0ee",
+  "source_parent_revision": "authoring-parent-revision-d35a5f7f583efa7dfd35b1d753cb32828cc5883957a1b396696c1e433871e09b",
+  "source_occurrences": [
+    {"occurrence_id":"occ-a","shot_id":"shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f","shot_revision_id":"authoring-shot-revision-441b672f3fb1e57e4b13a81fd56e8859a83c13724d3dffc1cd69e0b9fa9c424e","at_ms":8000,"duration_ms":10000},
+    {"occurrence_id":"occ-b","shot_id":"chapter-shot","shot_revision_id":"shot-1","at_ms":10000,"duration_ms":10000}
+  ],
+  "raw_authored_child": {"track":"picture","at":1,"hold":4,"from":2,"to":6,"speed":2},
+  "fps": {"numerator":30000,"denominator":1001},
+  "local_unbounded": [
+    {"id":"clip-a","track":"picture","at":1,"hold":2,"asset":"picture"},
+    {"id":"clip-b","track":"picture","at":5,"hold":2,"asset":"picture"},
+    {"id":"occ-a:clip-a","track":"picture","at":9,"from":2,"to":6,"speed":2,"asset":"reserved-new","canonicalTiming":{"sourceOffsetMs":0,"speed":2,"gain":1,"muted":false,"durationMs":4000,"occurrenceStartMs":8000,"occurrenceDurationMs":2000,"storedOccurrenceDurationMs":10000}},
+    {"id":"occ-a:clip-b","track":"picture","at":13,"hold":2,"asset":"picture","canonicalTiming":{"sourceOffsetMs":0,"speed":1,"gain":1,"muted":false,"durationMs":2000,"occurrenceStartMs":8000,"occurrenceDurationMs":2000,"storedOccurrenceDurationMs":10000}},
+    {"id":"occ-b:clip-a","track":"picture","at":11,"from":2,"to":6,"speed":2,"asset":"picture","canonicalTiming":{"sourceOffsetMs":0,"speed":2,"gain":1,"muted":false,"durationMs":4000,"occurrenceStartMs":10000,"occurrenceDurationMs":7000,"storedOccurrenceDurationMs":10000}},
+    {"id":"occ-b:clip-b","track":"picture","at":15,"hold":2,"asset":"picture","canonicalTiming":{"sourceOffsetMs":0,"speed":1,"gain":1,"muted":false,"durationMs":2000,"occurrenceStartMs":10000,"occurrenceDurationMs":7000,"storedOccurrenceDurationMs":10000}
+    }
+  ],
+  "accepted_capped": [
+    {"id":"clip-a","track":"picture","at":1,"hold":2,"asset":"picture"},
+    {"id":"clip-b","track":"picture","at":5,"hold":2,"asset":"picture"},
+    {"id":"occ-a:clip-a","track":"picture","at":9,"from":2,"to":4,"speed":2,"asset":"reserved-new","canonicalTiming":{"sourceOffsetMs":0,"speed":2,"gain":1,"muted":false,"durationMs":4000,"occurrenceStartMs":8000,"occurrenceDurationMs":2000,"storedOccurrenceDurationMs":10000}},
+    {"id":"occ-b:clip-a","track":"picture","at":11,"from":2,"to":6,"speed":2,"asset":"picture","canonicalTiming":{"sourceOffsetMs":0,"speed":2,"gain":1,"muted":false,"durationMs":4000,"occurrenceStartMs":10000,"occurrenceDurationMs":7000,"storedOccurrenceDurationMs":10000}},
+    {"id":"occ-b:clip-b","track":"picture","at":15,"hold":2,"asset":"picture","canonicalTiming":{"sourceOffsetMs":0,"speed":1,"gain":1,"muted":false,"durationMs":2000,"occurrenceStartMs":10000,"occurrenceDurationMs":7000,"storedOccurrenceDurationMs":10000}
+    }
+  ],
+  "resolved_vectors_match_config_vectors": true,
+  "first_derived_difference": {"field":"occ-a:clip-a.to","local":6,"accepted":4,"source":"src/tools/video-editor/data/shotCompositionProjection.ts:442-448"},
+  "second_derived_difference": {"field":"occ-a:clip-b","local":"present","accepted":"omitted","source":"src/tools/video-editor/data/shotCompositionProjection.ts:442-444"}
+}
