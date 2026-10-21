@@ -90,22 +90,32 @@ must not be relabelled or mutated.
 ## Durable wrapper and final delta
 
 The wrapper source is
-`scripts/full_coherent_public_current_integration.sh`. Its durable publication
-target is:
+`scripts/full_coherent_public_current_integration.sh`. The previously
+approved wrapper baseline was published at:
 
 ```text
 hub/tl/agt-m4-full-wrapper-current-batch-main-request-finalize-1023:
 scripts/full_coherent_public_current_integration.sh
 ```
 
-The exact committed wrapper is commit
-`297fbe0e5cf9bc37c7115dae294838f96df95f16`, tree
+Its exact commit `297fbe0e5cf9bc37c7115dae294838f96df95f16`, tree
 `a4fdb4a28b9d7a88267105f8261518336a18047e`, blob
-`aa8dda3e9cf81301c163294ceec805d97be0d5c8`, SHA-256
-`09822614697e50a0764c2a125bfd0575baadeeb2f87661b4b3a4a10551e96438`.
-That exact identity replaces the obsolete "pending harness publication"
-statement. It is the independently approved wrapper baseline, but its C13
+`aa8dda3e9cf81301c163294ceec805d97be0d5c8`, and SHA-256
+`09822614697e50a0764c2a125bfd0575baadeeb2f87661b4b3a4a10551e96438` are
+historical provenance only. That baseline is not an executable target: its C13
 marker still names old 30da and it must not be used for this full.
+
+The approved durable publication target is the exact wrapper at the verified
+branch:
+
+```text
+hub/tl/agt-review-main-full-remotion-binding-delta-1102:
+scripts/full_coherent_public_current_integration.sh
+```
+
+The exact approved wrapper identity is recorded below. This target resolves to
+the independently approved source-coherent wrapper; its C13 marker and fallback
+runtime path are the b3c/0014 values described below.
 
 This worktree changes only the wrapper metadata needed for source coherence:
 `EXPECTED_C13_SOURCE` becomes b3c and the fallback project path becomes
