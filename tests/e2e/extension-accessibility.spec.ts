@@ -6,7 +6,7 @@ import {
   resetFakeRuntimeBaseline,
 } from './timeline/support';
 
-const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1' } });
+const EDITOR_URL = editorPath({ params: { transcriptLaneFixture: '1' } });
 // The harness mounts no data provider. `localProject` is kept only because Layout's sessionless auth gate keys off it.
 const HARNESS_URL = `/tools/video-editor/harness?scenario=populated&localProject=${PROJECT_SLUG}&localTimeline=${TIMELINE_SLUG}&localTest=1`;
 // The routed editor uses the generated Astrid catalog.

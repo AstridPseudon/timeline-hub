@@ -7,7 +7,7 @@ import {
   resetFakeRuntimeBaseline,
 } from './timeline/support';
 
-const EDITOR_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: '1' } });
+const EDITOR_URL = editorPath({ params: { transcriptLaneFixture: '1' } });
 
 function collectIssues(page: Page): string[] {
   const issues: string[] = [];

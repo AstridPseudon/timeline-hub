@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { editorPath, resetFakeRuntimeBaseline, seedEditorPreferences } from './timeline/support';
 
-const COMPOSED_URL = editorPath({ params: { timelineOverlayCanary: '1', transcriptLaneFixture: 'render-matrix' } });
+const COMPOSED_URL = editorPath({ params: { transcriptLaneFixture: 'render-matrix' } });
 
 /**
  * `touch` runs are touch-emulated (`hasTouch` + `isMobile`), the way the toolbar-reachable spec runs the same

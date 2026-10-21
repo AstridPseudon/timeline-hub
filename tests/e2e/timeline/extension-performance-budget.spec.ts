@@ -2,7 +2,7 @@ import { expect, test, type BrowserContext } from '@playwright/test';
 import { PROJECT_ID, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline } from './support';
 
 const EDITOR_URL = editorPath({
-  params: { timelineOverlayCanary: '1', transcriptLaneFixture: 'render-matrix' },
+  params: { transcriptLaneFixture: 'render-matrix' },
 });
 // Timeline hydration reads the head composition from the Runtime (`composition-revisions/<head>`, through the
 // Vite proxy at `/api/runtime`).

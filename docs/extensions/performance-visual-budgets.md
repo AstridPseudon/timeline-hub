@@ -38,6 +38,13 @@ The other signals have their own owners:
 | Mounted lane items and the sparse window stay bounded at 500, 5,000 and 50,000 source intervals; late-time ids mount and early ids unmount after a viewport move | `npm run test:extension-scale` (`DataLaneList.test.tsx`, the `it.each([500, 5_000, 50_000])` cases and the 50k full-lane action case) |
 | Horizontal document overflow of the composed editor shell | `tests/e2e/timeline/shell-responsive-overflow.spec.ts` at desktop, tablet-portrait and phone |
 
+No loaded extension contributes a `timelineOverlay` (the Scene Phase Markers fixture was retired with the
+fixture catalog), so there is no real-browser case for overlay edge auto-scroll or for an overlay refusing a
+pinch. The first shipped extension that contributes a `timelineOverlay` must bring both back as browser cases.
+Marker-versus-pinch keeps its jsdom home in `src/tools/video-editor/lib/mobile-interaction-conformance.test.tsx`
+(`overlay-owned pinch — declines acquisition`); the overlay host contract stays in
+`TimelineExtensionOverlayHost.test.tsx` and its integration test.
+
 The scale gate is deterministic and structural: it proves the rendered item count equals the DOM budget
 (`DATA_LANE_DOM_ITEM_BUDGET`, 128) at every size while `data-total-items` keeps the full count, with no
 wall-clock or heap readings, which vary with machine load and GC timing.
