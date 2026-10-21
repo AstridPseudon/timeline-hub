@@ -102,6 +102,8 @@ def commit_trim(session, parsed, options):
 
 
 def commit_move(session, parsed, options):
+    from astrid.sdk.timeline._command_state import CommandError
+
     with session.outbox.locked():
         state = session._state()
     # Resolve aliases against the pinned original head. The native command
@@ -111,7 +113,16 @@ def commit_move(session, parsed, options):
     select = _trim_selector(bundle, parsed)
     if select is None:
         return NotImplemented
-    return session.move(select, float(parsed.on), **options)
+    try:
+        return session.move(select, float(parsed.on), **options)
+    except CommandError as exc:
+        # Legacy occurrence timelines can carry source maps that the native
+        # clip.move recipe deliberately does not support.  Let the detached
+        # editor retain its owner-resolution path for those maps only; native
+        # guard, identity, timing, and authority failures must remain visible.
+        if select.startswith('occurrence:') and exc.kind == 'unsupported_map':
+            return NotImplemented
+        raise
 
 
 def configure_track_label(parser):

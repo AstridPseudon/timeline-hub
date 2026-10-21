@@ -44,13 +44,13 @@ def _cut_in(table: list[tuple[float, float, str]], t: float) -> str | None:
 
 
 def element_coverage_cached(element_ids: Iterable[str]) -> dict[str, dict]:
-    """``onscreen.element_coverage`` read once per process per element (the registry load is the cost)."""
-    from astrid.core.timeline import onscreen
+    """``scene_roles.element_coverage`` read once per process per element (the registry load is the cost)."""
+    from astrid.core.timeline import scene_roles
 
     ids = list(element_ids)
     missing = sorted({i for i in ids if i not in _ELEMENT_COVERAGE})
     if missing:
-        _ELEMENT_COVERAGE.update(onscreen.element_coverage(missing))
+        _ELEMENT_COVERAGE.update(scene_roles.element_coverage(missing))
     return {i: _ELEMENT_COVERAGE[i] for i in ids}
 
 
@@ -191,11 +191,36 @@ class _CheckMixin:
                        "a declared fade/dip (not a gap)")
         return out
 
+    @staticmethod
+    def _scene_warning_spans(spans: list) -> list:
+        """Project adjacent equal coverage/content rows for display warnings only.
+
+        Scene answers retain per-frame membership, findings and identity.  The
+        warning format has no use for membership, so a fade whose visible
+        membership changes can still be reported as one continuous DIP.  Copy
+        rows before extending them so the detailed answer rows are untouched.
+        """
+        summary = []
+        for span in spans:
+            if (summary and summary[-1].end_frame == span.start_frame
+                    and summary[-1].cls == span.cls and summary[-1].content == span.content):
+                previous = summary[-1]
+                if dataclasses.is_dataclass(previous):
+                    summary[-1] = dataclasses.replace(previous, end_frame=span.end_frame)
+                else:
+                    merged = copy.copy(previous)
+                    merged.end_frame = span.end_frame
+                    summary[-1] = merged
+            else:
+                summary.append(copy.copy(span))
+        return summary
+
     def _scene_problems(self, spans: list) -> list[str]:
         """Advisory scene findings, retaining cut addresses and deliberate-hold classification."""
-        sustained, incidental = self.empty_cuts(spans)
-        out = [f"picture {line}" for line in self.picture_gaps(spans)]
-        out += sustained + incidental + self.dips(spans)
+        warning_spans = self._scene_warning_spans(spans)
+        sustained, incidental = self.empty_cuts(warning_spans)
+        out = [f"picture {line}" for line in self.picture_gaps(warning_spans)]
+        out += sustained + incidental + self.dips(warning_spans)
         for span in spans:
             if span.cls not in {"UNKNOWN", "UNAVAILABLE"} and span.content != "UNKNOWN":
                 continue
@@ -203,18 +228,6 @@ class _CheckMixin:
             out.append(f"scene   {kind} {span.start_frame / self.fps:.3f}–{span.end_frame / self.fps:.3f} s"
                        + (f": {', '.join(span.findings)}" if span.findings else ""))
         return out
-
-    def _scene_only_problems(self, result: Any, context: Mapping[str, Any]) -> list[str]:
-        """Format a bound managed Scene result with the established advisory reader.
-
-        The explicit-check caller may use this after Viewing supplies the
-        managed invocation result. Save/core paths do not call it.
-        """
-        from astrid.sdk.timeline_filmstrip import _scene_only_spans
-
-        return self._scene_problems(_scene_only_spans(
-            result, context, duration_frames=int(round(self.duration * self.fps)),
-        ))
 
     def _managed_scene_spans(self) -> list | None:
         """Read Scene advice through an explicitly connected checkout, if bound.

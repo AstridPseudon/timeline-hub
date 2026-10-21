@@ -17,10 +17,11 @@ import subprocess
 import sys
 import tempfile
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterator, Mapping
 
 from runtime_protocol import platform
 
@@ -1342,6 +1343,33 @@ def remotion_runtime_status(
     )
 
 
+@contextmanager
+def prepared_scene_root(*args: Any, **kwargs: Any) -> Iterator[Any]:
+    """Yield the existing prepared Root under the renderer's shared lock.
+
+    Scene observers use this neutral runtime seam so they do not import a
+    concrete renderer. The backend preparation context remains the single
+    owner of Root admission and cleanup; this helper only preserves its
+    existing lock-and-lifetime boundary.
+    """
+    from astrid.packs.rendering.rendering.renderers.remotion import lock
+    from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (
+        _prepared_remotion_root,
+    )
+
+    with lock.remotion_render_lock(), _prepared_remotion_root(*args, **kwargs) as prepared:
+        yield prepared
+
+
+def default_composition_id() -> str:
+    """Return the backend-owned default without exposing the backend to callers."""
+    from astrid.packs.rendering.rendering.renderers.remotion.run import (
+        DEFAULT_COMPOSITION_ID,
+    )
+
+    return DEFAULT_COMPOSITION_ID
+
+
 __all__ = [
     "NODE_EXECUTABLE_ENV",
     "REMOTION_CLI_RELATIVE_PATH",
@@ -1349,6 +1377,8 @@ __all__ = [
     "RemotionRuntimeTools",
     "TIMELINE_SCHEMA_PYTHONPATH_ENV",
     "RemotionRuntimeStatus",
+    "default_composition_id",
+    "prepared_scene_root",
     "resolve_remotion_project_dir",
     "resolve_remotion_runtime_tools",
     "remotion_install_problem",

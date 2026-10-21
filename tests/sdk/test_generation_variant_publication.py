@@ -11,6 +11,7 @@ from astrid.sdk.invocation import (
     _kernel_invoke,
     _generation_capability_modality,
     _resolve_generation_variant,
+    invoke as public_invoke,
 )
 from astrid.sdk.results import Capability
 
@@ -305,3 +306,179 @@ def test_absent_explicit_port_keeps_legacy_ambiguous_rejection(registered_h3_fin
         _generation_primary_output_port(replace(capability, definition={**capability.definition, "metadata": metadata}), "video")
     with pytest.raises(HostError, match="exactly one primary"):
         _generation_output_port(SimpleNamespace(definition=replace(definition, metadata=metadata)), {"modality": "video"})
+
+
+@pytest.fixture(scope="module")
+def registered_speech_generator():
+    from astrid import sdk
+    from astrid.sdk.invocation import get_capability
+
+    registries = sdk._load_registries(include_elements=False)
+    capability = get_capability(
+        "generation.generate_speech",
+        kind="executor",
+        include_elements=False,
+        _registries=registries,
+    )
+    return capability, registries[0].get(capability.id)
+
+
+def _speech_publication_intent():
+    return {
+        "version": 1,
+        "modality": "audio",
+        "partial_success_policy": "reject",
+        "groups": [{
+            "group_key": "main",
+            "selectors": [{
+                "selector": "main-0",
+                "ordinal": 0,
+                "variant_key": "original",
+                "required": True,
+            }],
+        }],
+    }
+
+
+@pytest.mark.parametrize("explicit", [False, True], ids=["automatic", "explicit"])
+def test_registered_speech_public_invocation_admits_project_bound_publication(
+    registered_speech_generator, explicit
+):
+    capability, _ = registered_speech_generator
+    assert capability.definition["metadata"]["generation_publication"] == {
+        "version": 1,
+        "modality": "audio",
+        "output_port": "speech",
+    }
+    calls = []
+
+    class Tasks:
+        def create(self, **kwargs):
+            calls.append(kwargs)
+            return _Result({
+                "run_id": "speech-run",
+                "task_id": "speech-task",
+                "attempt_id": "speech-attempt",
+            })
+
+    inputs = {"text": "Hello from the registered speech capability."}
+    if explicit:
+        inputs["generation_intent"] = _speech_publication_intent()
+    public_invoke(
+        "generation.generate_speech",
+        kind="executor",
+        project="project-1",
+        inputs=inputs,
+        client=SimpleNamespace(tasks=Tasks()),
+    )
+
+    assert len(calls) == 1
+    admission = calls[0]
+    intent = admission["generation_intent"]
+    assert intent["version"] == 1
+    assert intent["modality"] == "audio"
+    if not explicit:
+        assert "metadata" not in intent
+    selector = intent["groups"][0]["selectors"][0]
+    assert (selector["selector"], selector["ordinal"]) == ("main-0", 0)
+    assert admission["project_id"] == "project-1"
+    assert admission["settlement_effect"]["effect_type"] == "generation.publish_v1"
+    assert admission["settlement_effect"]["target_id"] == "project-1"
+    published_selector = admission["settlement_effect"]["payload"]["groups"][0]["selectors"][0]
+    assert published_selector["ordinal"] == 0
+    assert published_selector["output_port"] == "speech"
+    assert admission["spec"]["inputs"] == {"text": "Hello from the registered speech capability."}
+    assert "generation_intent" not in admission["spec"]["inputs"]
+
+
+def test_registered_speech_host_uses_speech_port_and_keeps_provenance_outputs(
+    registered_speech_generator,
+):
+    from astrid.core.execution.generic_host import _generation_selector_declarations
+
+    capability, definition = registered_speech_generator
+    intent = _speech_publication_intent()
+    port, selectors = _generation_selector_declarations(
+        SimpleNamespace(definition=definition), intent
+    )
+
+    assert port == "speech"
+    assert selectors[0]["output_port"] == "speech"
+    assert [
+        (output.name, output.type, output.path_template, output.artifact_type)
+        for output in capability.outputs
+    ] == [
+        ("speech", "file", "{out}/audio/speech.wav", "audio"),
+        ("speech_manifest", "file", "{out}/speech-provenance.json", None),
+        ("speech_words", "file", "{out}/speech-words.json", "application/json"),
+    ]
+    assert capability.definition["metadata"]["generation_publication"] == {
+        "version": 1,
+        "modality": "audio",
+        "output_port": "speech",
+    }
+
+
+@pytest.mark.parametrize("fault", ["modality", "port", "version", "ambiguous"])
+def test_registered_speech_invalid_or_ambiguous_publication_declaration_refuses(
+    registered_speech_generator, fault
+):
+    from copy import deepcopy
+    from dataclasses import replace
+
+    from astrid.core.execution.generic_host import HostError, _generation_output_port
+    from astrid.sdk.invocation import _generation_primary_output_port
+
+    capability, definition = registered_speech_generator
+    metadata = deepcopy(capability.definition["metadata"])
+    declaration = metadata["generation_publication"]
+    if fault == "modality":
+        declaration["modality"] = "video"
+    elif fault == "port":
+        declaration["output_port"] = "speech_manifest"
+    elif fault == "version":
+        declaration["version"] = 2
+    else:
+        del declaration["output_port"]
+    sdk_capability = replace(
+        capability,
+        definition={**capability.definition, "metadata": metadata},
+    )
+    host_definition = replace(definition, metadata=metadata)
+
+    with pytest.raises(CapabilityValidationError):
+        _generation_primary_output_port(sdk_capability, "audio")
+    with pytest.raises(HostError):
+        _generation_output_port(
+            SimpleNamespace(definition=host_definition), {"modality": "audio"}
+        )
+
+
+def test_registered_speech_publication_requires_a_project_before_admission(
+    registered_speech_generator,
+):
+    calls = []
+
+    class Tasks:
+        def create(self, **kwargs):
+            calls.append(kwargs)
+            return _Result({"run_id": "speech-run", "task_id": "speech-task"})
+
+    class Projects:
+        def current(self):
+            return SimpleNamespace(
+                ok=False,
+                error=SimpleNamespace(code="not_found"),
+            )
+
+    with pytest.raises(CapabilityPreconditionError):
+        public_invoke(
+            "generation.generate_speech",
+            kind="executor",
+            inputs={
+                "text": "This request has no project.",
+                "generation_intent": _speech_publication_intent(),
+            },
+            client=SimpleNamespace(tasks=Tasks(), projects=Projects()),
+        )
+    assert calls == []

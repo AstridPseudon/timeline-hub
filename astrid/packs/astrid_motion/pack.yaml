@@ -197,6 +197,14 @@
         },
         {
           "kind": "implementation",
+          "path": "rendering/elements/effects/am-footage/helper.ts"
+        },
+        {
+          "kind": "implementation",
+          "path": "rendering/elements/effects/am-footage/scene.ts"
+        },
+        {
+          "kind": "implementation",
           "path": "rendering/elements/effects/am-footage/element.yaml"
         }
       ]

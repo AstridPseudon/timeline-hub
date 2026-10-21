@@ -1599,6 +1599,10 @@ actions:
     - edge-tts
     - voiceover
     metadata:
+      generation_publication:
+        version: 1
+        modality: audio
+        output_port: speech
       output_result_manifest: true
       requires_timeline: false
       api_provider: edge-tts
