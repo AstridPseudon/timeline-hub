@@ -50,11 +50,17 @@ const APP_METADATA = 'src/integrations/runtime/generated-contract-metadata.ts';
 const AGENT_METADATA = 'astrid_runtime_client/contract_metadata.py';
 const TEST_SOURCE = 'tests/e2e/local/three-products.spec.ts';
 const CASE_TITLE = 'M2 native None single:';
+const CASE_FULL_TITLE = 'M2 native None single: ordinary default crossfade clears raw mirrors, reloads, retries exactly after restart and undoes through Runtime';
+const CASE_GREP = '^.*M2 native None single:';
 export const CURRENT014_GATE3_CASE = Object.freeze({
   title: CASE_TITLE,
-  grep: `^${CASE_TITLE}`,
+  fullTitle: CASE_FULL_TITLE,
+  grep: CASE_GREP,
+  config: 'playwright.three-products.config.ts',
+  testDir: 'tests/e2e/local',
+  testMatch: 'three-products*.spec.ts',
   command: 'npm',
-  argv: Object.freeze(['run', 'test:e2e:three-products', '--', '--grep', `^${CASE_TITLE}`]),
+  argv: Object.freeze(['run', 'test:e2e:three-products', '--', '--grep', CASE_GREP]),
 });
 
 function fail(message) {
@@ -404,7 +410,7 @@ export function checkCurrent014Gate3Sources(input) {
   const graph = checkGraphBytes(input, path.join(input.app, 'vendor/artifacts', CURRENT014_GATE3.composition.archive));
   const testSource = readFileSync(path.join(input.app, TEST_SOURCE), 'utf8');
   const selectedCases = [...testSource.matchAll(/nativeNoneTest\('([^']+)'/g)].map((match) => match[1]);
-  if (selectedCases.filter((title) => title.startsWith(CASE_TITLE)).length !== 1 || !testSource.includes('expectFreshPreviewUnavailable')) {
+  if (selectedCases.filter((title) => title === CASE_FULL_TITLE).length !== 1 || !testSource.includes('expectFreshPreviewUnavailable')) {
     fail('Gate3 test path no longer contains the existing native-None unavailable-preview case');
   }
   return Object.freeze({
@@ -417,6 +423,28 @@ export function checkCurrent014Gate3Sources(input) {
 
 const ZERO_TEST_OUTPUT = /(?:No tests found|No test files found|collected\s+0 items|Running\s+0 tests|0 tests found|\b0 passed\b)/i;
 
+function listedFullTitles(output) {
+  return output.split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.includes(' › '))
+    .map((line) => line.slice(line.indexOf(' › ') + 3));
+}
+
+function listedTitleLines(output) {
+  return output.split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.includes(' › '));
+}
+
+export function assertCurrent014Gate3Selection(status, output) {
+  if (status !== 0 || ZERO_TEST_OUTPUT.test(output)) fail('Gate3 --list selection did not succeed');
+  const titles = listedFullTitles(output);
+  const selected = titles.filter((title) => title === CASE_FULL_TITLE);
+  if (selected.length !== 1 || titles.length !== 1) {
+    fail(`Gate3 --list selected ${titles.length} tests; expected exactly ${CASE_FULL_TITLE}`);
+  }
+}
+
 export function assertCurrent014Gate3Result(status, output) {
   if (ZERO_TEST_OUTPUT.test(output)) fail('Gate3 executor reported a zero-test result');
   if (status !== 0) return;
@@ -427,6 +455,40 @@ export function assertCurrent014Gate3Result(status, output) {
     fail('Gate3 executor did not report exactly one passing test');
   }
   if (/\b(?:FAIL|FAILED)\b/i.test(output)) fail('Gate3 executor reported a test failure');
+}
+
+function childEnv(input) {
+  return {
+    ...process.env,
+    ASTRID_CHECKOUT: input.agent,
+    ASTRID_RUNTIME_CHECKOUT: input.runtime,
+    ASTRID_PYTHON: input.agentPython,
+    ASTRID_RUNTIME_PYTHON: input.runtimePython,
+    TIMELINE_BUNDLE_AGENT_HEAD: input.agentSha,
+    TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
+    VITE_TIMELINE_COMPOSITION_ROOT: path.join(input.graph, '@banodoco/timeline-composition'),
+  };
+}
+
+function runCurrent014Gate3Selection(input) {
+  const child = spawnSync(CURRENT014_GATE3_CASE.command, [...CURRENT014_GATE3_CASE.argv, '--list'], {
+    cwd: input.app,
+    env: childEnv(input),
+    stdio: ['ignore', 'pipe', 'pipe'], shell: false,
+  });
+  if (child.error) throw child.error;
+  const output = `${child.stdout?.toString() ?? ''}${child.stderr?.toString() ?? ''}`;
+  assertCurrent014Gate3Selection(child.status ?? 1, output);
+  console.log('[current014/gate3] selection', JSON.stringify({
+    argv: CURRENT014_GATE3.argv,
+    listArgv: [...CURRENT014_GATE3.argv, '--list'],
+    cwd: input.app,
+    config: path.join(input.app, CURRENT014_GATE3_CASE.config),
+    testDir: CURRENT014_GATE3_CASE.testDir,
+    testMatch: CURRENT014_GATE3_CASE.testMatch,
+    grep: CURRENT014_GATE3_CASE.grep,
+    fullTitle: listedTitleLines(output)[0],
+  }));
 }
 
 export function runCurrent014Gate3() {
@@ -441,18 +503,10 @@ export function runCurrent014Gate3() {
   console.log('[current014/gate3] source preflight passed; caller is M2 native None single');
   let status = 1;
   try {
+    runCurrent014Gate3Selection(input);
     const child = spawnSync(CURRENT014_GATE3_CASE.command, CURRENT014_GATE3_CASE.argv, {
       cwd: input.app,
-      env: {
-        ...process.env,
-        ASTRID_CHECKOUT: input.agent,
-        ASTRID_RUNTIME_CHECKOUT: input.runtime,
-        ASTRID_PYTHON: input.agentPython,
-        ASTRID_RUNTIME_PYTHON: input.runtimePython,
-        TIMELINE_BUNDLE_AGENT_HEAD: input.agentSha,
-        TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
-        VITE_TIMELINE_COMPOSITION_ROOT: path.join(input.graph, '@banodoco/timeline-composition'),
-      },
+      env: childEnv(input),
       stdio: ['ignore', 'pipe', 'pipe'], shell: false,
     });
     if (child.error) throw child.error;

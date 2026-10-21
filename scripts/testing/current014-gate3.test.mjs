@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import {
-  assertCurrent014Gate3Result, checkRuntimeLock, checkRuntimeProducerManifest, CURRENT014_GATE3, CURRENT014_GATE3_CASE,
+  assertCurrent014Gate3Result, assertCurrent014Gate3Selection, checkRuntimeLock, checkRuntimeProducerManifest,
+  CURRENT014_GATE3, CURRENT014_GATE3_CASE,
 } from './current014-gate3.mjs';
 
 const testSource = readFileSync(new URL('../../tests/e2e/local/three-products.spec.ts', import.meta.url), 'utf8');
@@ -22,15 +23,27 @@ test('pins the current014 tuple, public Composition13, and exact one-case argv',
   assert.equal(CURRENT014_GATE3.vendor.commit, '091aa23ec83ea05ffd3b0115a640230d51c8c429');
   assert.equal(CURRENT014_GATE3.vendor.tree, 'e3ae90fe482ba6cad6c3f94069127faf76ebceb6');
   assert.equal(CURRENT014_GATE3.composition.fileCount, 77);
+  assert.equal(CURRENT014_GATE3_CASE.grep, '^.*M2 native None single:');
+  assert.equal(CURRENT014_GATE3_CASE.fullTitle, 'M2 native None single: ordinary default crossfade clears raw mirrors, reloads, retries exactly after restart and undoes through Runtime');
   assert.deepEqual(CURRENT014_GATE3_CASE.argv, [
-    'run', 'test:e2e:three-products', '--', '--grep', '^M2 native None single:',
+    'run', 'test:e2e:three-products', '--', '--grep', '^.*M2 native None single:',
   ]);
 });
 
 test('discovers exactly the existing native-None single case in source', () => {
   const cases = [...testSource.matchAll(/nativeNoneTest\('([^']+)'/g)].map((match) => match[1]);
-  assert.equal(cases.filter((title) => title.startsWith(CURRENT014_GATE3_CASE.title)).length, 1);
+  assert.equal(cases.filter((title) => title === CURRENT014_GATE3_CASE.fullTitle).length, 1);
   assert.match(testSource, /expectFreshPreviewUnavailable/);
+});
+
+test('the exact child argv accepts one full title, while the old anchored grep fails', () => {
+  assert.deepEqual([...CURRENT014_GATE3_CASE.argv, '--list'], [
+    'run', 'test:e2e:three-products', '--', '--grep', '^.*M2 native None single:', '--list',
+  ]);
+  const listed = `Listing tests:\n  three-products.spec.ts:2248:1 › ${CURRENT014_GATE3_CASE.fullTitle}\nTotal: 1 test in 1 file`;
+  assert.doesNotThrow(() => assertCurrent014Gate3Selection(0, listed));
+  const zero = 'Error: No tests found\nListing tests:\nTotal: 0 tests in 0 files';
+  assert.throws(() => assertCurrent014Gate3Selection(1, zero), /--list selection/);
 });
 
 test('checks the real App and Agent locks through their normal producer checkers', () => {
