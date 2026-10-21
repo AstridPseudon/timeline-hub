@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator, ValidationError
@@ -28,6 +29,8 @@ PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc
 PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
 RAW_OLD_CANONICAL_SHA256 = 'd3274d7ed2d4bd80691472dd94daf8f4b8041fc184f39f1dd562d5de5d6a15c2'
 FROZEN_10226_CANONICAL_SHA256 = '322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc'
+TRANSITION_RAW_SHA256 = '95193e5a1f90a8072f55deb19f8b7ac63dc5054130c14eab097f0dd73f149729'
+TRANSITION_CANONICAL_SHA256 = '8500046e82587856c16cd6e241f27c886f9089538884a0b806fa75138a57cb49'
 TRANSITION_FLOOR_CANONICAL_SHA256 = '9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6'
 
 
@@ -378,6 +381,13 @@ def test_transition_successor_strips_to_exact_ed5_canonical_schema():
     assert hashlib.sha256(raw).hexdigest() == TRANSITION_FLOOR_CANONICAL_SHA256
     assert len(candidate['$defs']) == 65
     assert len(candidate['$defs']['EditCommand']['allOf']) == 37
+
+
+def test_transition_schema_has_exact_raw_and_canonical_source_hashes():
+    path = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == TRANSITION_RAW_SHA256
+    canonical = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+    assert hashlib.sha256(canonical).hexdigest() == TRANSITION_CANONICAL_SHA256
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
