@@ -1,73 +1,65 @@
-# After-anchor schema refusal test correction
+# After-anchor refusal conversion review
 
-Scope: App after-anchor recorder test only. No product, schema, normalization, wire, caller, or activation change.
+Decision: **APPROVE the exact test correction only.** Approved commit
+`72cd82ae1e6ad11fd8de3f08beee85154a0af589`, tree
+`7742222511ed705b5dddcb46c2b578700774ac9f`. This is a test-only child of the
+independently reviewed recorder repair `0fa122179fdd15ba18f6c37346308049edb52cd5`.
+It is not approval to activate the dormant App path or to claim missing/null
+hold compatibility.
 
-## Change
+## Exact ledger mapping
 
-Converted the two new impossible `it.fails.each(['missing', 'null'])` cases in
-`src/tools/video-editor/commands/parentAfterAnchorCapture.test.ts` into ordinary
-passing assertions:
+- The two former `it.fails.each(['missing', 'null'])` cases are converted
+  one-for-one by the same `it.each` values.
+- Each missing/null case now asserts the exact App refusal
+  `clip.hold must be a finite positive number` and deep equality with the
+  pre-capture bundle, proving atomic refusal.
+- Each case creates an equivalent fresh positive-hold (`hold: 4`) fixture with
+  the same `from: 2`, `to: 6`, and incoming transition, then asserts successful
+  capture/finish and preservation of the window and transition.
+- The delta has exactly one modified path:
+  `src/tools/video-editor/commands/parentAfterAnchorCapture.test.ts`.
+  There are no remaining `it.fails`/`test.fails` markers in that test.
+- The prior positive, strict record/selection/binding/write/created-ID checks,
+  zero-hold refusal, sub-0.05 floor, at_ms refusal, and explicit-null behavior
+  are unchanged. No assertion was skipped, weakened, or deleted, and no new
+  failure marker was introduced.
 
-- missing hold: exact `clip.hold must be a finite positive number` refusal;
-- null hold: exact `clip.hold must be a finite positive number` refusal;
-- both assert the input bundle is unchanged after refusal;
-- each has an equivalent positive numeric-hold case retaining the `from`/`to`
-  window and incoming transition and asserting successful capture/replay.
-
-No pre-existing positive assertion, full-record parity case, zero-hold refusal,
-or sub-0.05 positive-floor case was changed. No `it.fails` marker remains in
-the after-anchor test.
-
-The Main-compatible missing/null-hold acceptance requirement remains explicitly
-**OPEN**. Frozen Agent `3b3208c43903b770010de0649691cfa566447822` requires a
-positive numeric hold in the authoritative birth schema before raw-window
-derivation; this worker does not invent acceptance or bypass that boundary.
+The independent recorder0354 verdict remains in force: frozen Agent
+`3b3208c43903b770010de0649691cfa566447822` has a positive numeric `hold`
+requirement before raw-window derivation; the recorder repair matched four
+complete records/replays and six refusals. Main-compatible missing/null-hold
+acceptance is therefore still explicitly **OPEN**, and the helper remains
+dormant. No App normalization, new wire field, activation, pin, or gate
+closure is claimed.
 
 ## Verification
 
-All commands ran with shared dependencies read-only and Vitest cache/temp data
-under `/tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca`:
+Direct candidate test, run from a private archive of the exact approved commit
+with the shared `node_modules` installation read-only and `--no-cache`:
 
 ```sh
-TMPDIR=/tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca PARENT_AFTER_PARITY_OUTPUT=/tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca/parity.json ./node_modules/.bin/vitest run --config config/testing/vitest.config.ts --no-cache src/tools/video-editor/commands/parentAfterAnchorCapture.test.ts src/tools/video-editor/commands/parentClipAddCapture.test.ts src/tools/video-editor/commands/parentClipSwapCapture.test.ts src/tools/video-editor/commands/clipMovePrimitives.test.ts src/tools/video-editor/commands/commitSession.parentMedia.test.ts src/tools/video-editor/services/parentMediaCommands.test.ts
+TMPDIR=/tmp/ap2-m2-afteranchor-refusal-conversion-review-0407.V2ADt4/tmp \
+./node_modules/.bin/vitest run --config config/testing/vitest.config.ts --no-cache \
+  src/tools/video-editor/commands/parentAfterAnchorCapture.test.ts
 ```
 
-Passed: 4 files, 47 tests.
+Result: **1 file passed, 8 tests passed**.
+
+Additional review checks:
 
 ```sh
-TMPDIR=/tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca ./node_modules/.bin/vitest run --config config/testing/vitest.config.ts --no-cache src/tools/video-editor/commands/commitSession.test.ts src/tools/video-editor/commands/media.test.ts
+git diff --name-status 0fa122179fdd15ba18f6c37346308049edb52cd5 72cd82ae1
+git diff --check 0fa122179fdd15ba18f6c37346308049edb52cd5 72cd82ae1
 ```
 
-Passed: 2 files, 82 tests.
+Result: one expected test path modified; diff check passed. The correction
+worker's reported focused cohort (47 tests) and neighboring session/media
+cohort (82 tests) were consumed, not rerun here. No unchanged recorder review,
+build, browser, HTTP, native Door, or full suite was repeated.
 
-The embedded parity checker was run against a private archive of frozen Agent
-commit `3b3208c43903b770010de0649691cfa566447822`:
+## Recommendation
 
-```sh
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca/agent-exact TMPDIR=/tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca /home/user/work/venv-app2-native/bin/python - /tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca/parity.json <<'PY'
-from pathlib import Path
-exec(Path('src/tools/video-editor/commands/parentAfterAnchorCapture.test.ts').read_text().split('PYTHON_AFTER_PARITY\n')[1].split('\nPYTHON_AFTER_PARITY')[0])
-PY
-```
-
-Passed: 4 complete command/record/bundle and deterministic rebase matches, 6
-matching refusals, and zero-duration floor check.
-
-```sh
-TMPDIR=/tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca ./node_modules/.bin/eslint src/tools/video-editor/commands/parentAfterAnchorCapture.test.ts --max-warnings 0
-./node_modules/.bin/tsc -p /tmp/ap2-m2-afteranchor-schema-refusal-test-correction-0407.nbd3ca/tsconfig.focused.json --noEmit --pretty false
-git diff --check
-```
-
-All passed. No browser, HTTP, native Door, or full suite was run.
-
-## Review and handoff
-
-The independent assertion-conversion review verified that the only changed
-source path is the after-anchor test, the two refusal cases are atomic and
-schema-aligned, the paired positive cases preserve window/transition intent,
-and no expected-failure marker or original positive behavior was weakened.
-Recommended next step: resolve the Agent schema/raw-window discrepancy in a
-separate successor before claiming missing/null-hold acceptance or activating
-this dormant path.
-
+Merge/retain this test correction as the exact conversion. Keep the dormant
+after-anchor source and the Main-compatible missing/null-hold requirement OPEN
+until Agent resolves the schema/raw-window discrepancy in a separate successor.
