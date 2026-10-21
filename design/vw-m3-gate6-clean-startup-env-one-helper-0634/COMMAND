@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+# This private copy is a one-shot helper-only readiness fixture. The frozen
+# source checkouts below are never modified or replaced by this command.
+
+# Named-suite proposal only; not registered or submitted by this worker:
+# composition e2e-viewing-gate6-clean-startup-env-one-helper-0634 bash design/vw-m3-gate6-clean-startup-env-one-helper-0634/run.sh
+
+WORKER=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+APP_CHECKOUT=/home/user/work/wt/app-pin-d00a6613
+HOME_APP=/home/user/work/app
+AGENT_CHECKOUT=/home/user/work/wt/agt-pin-d0a5072b
+RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-8f105c26
+HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56
+COMPOSITION_CHECKOUT=/home/user/work/wt/vw-pin-5a4e9b72
+OLD909_GRAPH=/home/user/work/wt/app-pin-3ee19006/node_modules
+NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+PYTHON=/home/user/work/venv-agent/bin/python
+RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python
+SCHEMA=/home/user/work/venv-agent/lib/python3.11/site-packages
+REMOTION=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b
+BROWSER=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
+DRIVER=$WORKER/current-pack-host-readiness.mjs
+GRAPH_GUARD=$APP_CHECKOUT/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs
+MODE=${1:---run}
+case "$MODE" in --run|--imports-only) ;; *) echo 'usage: COMMAND [--imports-only]' >&2; exit 2 ;; esac
+[ "$#" -le 1 ] || exit 2
+
+git_guard() {
+  local root=$1 expected_commit=$2 expected_tree=$3
+  test "$(realpath "$root")" = "$root"
+  test "$(git -C "$root" rev-parse HEAD)" = "$expected_commit"
+  test "$(git -C "$root" rev-parse HEAD^{tree})" = "$expected_tree"
+  test -z "$(git -C "$root" status --porcelain --untracked-files=all)"
+}
+
+hash_guard() {
+  test "$(sha256sum "$1" | cut -d' ' -f1)" = "$2"
+}
+
+git_guard "$APP_CHECKOUT" d00a66134f330672ea7471dc69db38c1566d94cf a8bf53d5d5e865aa88825bbc20f6f530bfbaa7ba
+git_guard "$AGENT_CHECKOUT" d0a5072bbe7b7ce9489f43aa0a81027ec400343b 6adb4a1190dfb2874e101565f37eccd392b1ae2f
+git_guard "$RUNTIME_CHECKOUT" 8f105c26e3b62f9c2683f717a9773a12bc775a8e b7f456d5135cba6049980ebc43a91c7a72ab8f7e
+git_guard "$HELPER_CHECKOUT" b70b9d569b2c80885d72734c61cd57e64c3715a8 687f077c4771e3dbb66bfb7ff2b98f310ac054b6
+git_guard "$COMPOSITION_CHECKOUT" 5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8 13e375534fffd704305eced5686699d2c8c9c948
+
+# The App pin must be an ancestor of the actual HOME head after true join0354.
+# This intentionally fails on pre-join HOME; it never changes HOME or a pin.
+HOME_HEAD=$(git -C "$HOME_APP" rev-parse HEAD)
+git -C "$HOME_APP" merge-base --is-ancestor d00a66134f330672ea7471dc69db38c1566d94cf "$HOME_HEAD"
+
+test "$(realpath "$NODE")" = "$NODE"
+test -x "$NODE"
+hash_guard "$NODE" 43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490
+test "$($NODE --version)" = v20.19.4
+test -x "$PYTHON" && test "$(realpath "$PYTHON")" = /usr/bin/python3.11
+test -x "$RUNTIME_PYTHON" && test "$(realpath "$RUNTIME_PYTHON")" = /usr/bin/python3.11
+test -d "$SCHEMA" && test "$(realpath "$SCHEMA")" = "$SCHEMA"
+test -f "$SCHEMA/banodoco_timeline_schema/__init__.py"
+test -f "$HELPER_CHECKOUT/tests/packs/rendering/real_pack_host.py"
+hash_guard "$HELPER_CHECKOUT/tests/packs/rendering/real_pack_host.py" bc75d73f21c6310efad7fc41e4a3d790bfe3a8975e0eb96c08c3dec63e62961b
+test "$(realpath "$REMOTION")" = "$REMOTION"
+test -d "$REMOTION/node_modules"
+test "$(realpath "$BROWSER")" = "$BROWSER"
+test -x "$BROWSER"
+hash_guard "$BROWSER" 63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4
+hash_guard "$REMOTION/package-lock.json" c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24
+
+# Reuse the reviewed 0240 graph controls without copying or modifying the graph.
+test "$(realpath "$OLD909_GRAPH")" = "$OLD909_GRAPH"
+GRAPH_GUARD="$GRAPH_GUARD" RUNTIME_GRAPH="$REMOTION" "$NODE" --input-type=module -e '
+  const guard = await import(`file://${process.env.GRAPH_GUARD}`);
+  const result = guard.assertFrozenRuntimeGraph(process.env.RUNTIME_GRAPH);
+  guard.assertPhysicalPrivateGraph(`${process.env.RUNTIME_GRAPH}/node_modules`);
+  if (result.graph.sha256 !== "4913a37e5403c8372a283dcca8fd30c846b636abd88f59cfc572809d2fd0bd3c" || result.graph.fileCount !== 21455) process.exit(1);
+  if (result.artifact !== "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738" || result.regularMembers !== 77) process.exit(1);
+'
+
+export HOME=/root
+export LANG=C.UTF-8
+export PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/usr/local/bin:/usr/bin:/bin
+export ASTRID_CHECKOUT=$AGENT_CHECKOUT
+export ASTRID_PACK_HOST_HELPER_CHECKOUT=$HELPER_CHECKOUT
+export ASTRID_RUNTIME_CHECKOUT=$RUNTIME_CHECKOUT
+export ASTRID_RUNTIME_PYTHON=$RUNTIME_PYTHON
+export ASTRID_PYTHON=$PYTHON
+export ASTRID_TIMELINE_SCHEMA_PYTHONPATH=$SCHEMA
+export ASTRID_APP_DIRECT_DIST=$APP_CHECKOUT/dist
+export ASTRID_REMOTION_PROJECT_DIR=$REMOTION
+export ASTRID_REMOTION_BROWSER_EXECUTABLE=$BROWSER
+export ASTRID_NODE_EXECUTABLE=$NODE
+export TIMELINE_COMPOSITION_CHECKOUT=$COMPOSITION_CHECKOUT
+export TIMELINE_VIEWING_APP_SOURCE=d00a66134f330672ea7471dc69db38c1566d94cf
+export TIMELINE_VIEWING_APP_TREE=a8bf53d5d5e865aa88825bbc20f6f530bfbaa7ba
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONUNBUFFERED=1
+export TSX_DISABLE_CACHE=1
+unset NODE_OPTIONS NODE_PATH
+
+# The pin is source-only. Custody must materialize an exact d00 production dist
+# before --run; no ambient HOME dist is accepted.
+test -f "$ASTRID_APP_DIRECT_DIST/index.html"
+
+stage=$(mktemp -d "$WORKER/import-stage-XXXXXX")
+cleanup_stage() {
+  find "$stage" -depth -type l -delete 2>/dev/null || true
+  find "$stage" -depth -type d -empty -delete 2>/dev/null || true
+}
+trap cleanup_stage EXIT
+mkdir "$stage/app"
+while IFS= read -r -d '' entry; do
+  name=${entry##*/}
+  case "$name" in .git|node_modules) continue ;; esac
+  ln -s "$(realpath "$entry")" "$stage/app/$name"
+done < <(find "$APP_CHECKOUT" -mindepth 1 -maxdepth 1 -print0)
+ln -s "$OLD909_GRAPH" "$stage/app/node_modules"
+test "$(realpath "$stage/app/node_modules")" = "$OLD909_GRAPH"
+test "$(realpath "$stage/app")" = "$stage/app"
+
+export APP_CHECKOUT
+export APP_IMPORT_ROOT=$stage/app
+cd "$APP_CHECKOUT"
+if [ "$MODE" = --imports-only ]; then
+  "$NODE" --check "$DRIVER"
+  "$NODE" --preserve-symlinks --preserve-symlinks-main \
+    --import /home/user/work/app/node_modules/tsx/dist/loader.mjs \
+    "$DRIVER" --imports-only
+  exit 0
+fi
+
+# Helper-only readiness: DirectHarness creates the empty realm; the existing
+# bootstrap/helper owns readiness and cleanup. No seed, Browser, Task,
+# RenderGrant, marker, or DIY process kill is permitted here.
+"$NODE" --preserve-symlinks --preserve-symlinks-main \
+  --import /home/user/work/app/node_modules/tsx/dist/loader.mjs \
+  "$DRIVER"
