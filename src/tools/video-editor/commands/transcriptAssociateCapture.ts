@@ -76,7 +76,7 @@ function stringValue(value: unknown, message: string): string {
 }
 
 function exactPin(value: unknown, label: string): DocumentPin {
-  const pin = asObject(value, `exact transcript ${label} DocumentPin is required`);
+  const pin = object(value) ? value : fail(`exact transcript ${label} DocumentPin is required`, 'invalid_source');
   if (!equal(Object.keys(pin).sort(), ['content_digest', 'document_id', 'version']) ||
     typeof pin.document_id !== 'string' || !pin.document_id.startsWith('transcript:') ||
     typeof pin.version !== 'number' || !Number.isSafeInteger(pin.version) || pin.version < 1 ||
