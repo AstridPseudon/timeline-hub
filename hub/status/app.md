@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T08:49:20Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 28m -->
+<!-- app | 2026-10-21T08:55:51Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 35m -->
 # app — 2026-10-21 08:20 UTC
 Milestone: M1 RECORDED. M2 writers and M3 viewing parity OPEN; no M4 completion claim.
 Integrated: App tl/integration e2267a418a89d659c1a70524b17dde631f12fd16, tree 99af03128b9df4d20e5ca8779cb7540a8bc8be8a; Main860 ancestor. Published Runtime014/95bd/all76 and Composition13/9412/all77 unchanged. Newborn6bdb (134 tests plus independent review), scoped pack-host env0c9b (custody approved), AgentChat oracle07d (49 tests) and singleton-only alias e226 (9/9 resolver/SSR controls) merged.
