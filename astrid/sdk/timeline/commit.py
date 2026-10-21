@@ -432,7 +432,7 @@ def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
                         pins.append(pin)
     for call in calls:
         pin = call.get('args', {}).get('schema_source')
-        if call['op'] in ('clip.set-params', 'clip.set-element') and pin is not None:
+        if call['op'] in ('clip.set-params', 'clip.set-element', 'clip.set') and pin is not None:
             pin = _document_pin(pin)
             if pin not in pins:
                 pins.append(pin)
@@ -490,22 +490,46 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
         command = ctx.record['command']
         required = []
         authority = None
-        if command['op'] == 'clip.set-params':
+        if command['op'] in ('clip.set-params', 'clip.set'):
             row = ctx.state.entity(command['select'])
-            selected = row.get('elementRef') or row.get('element_ref')
+            strict_transition = (command['op'] == 'clip.set'
+                                 and 'transition' in command['args']['values'])
+            if strict_transition:
+                from ._command_state import ABSENT
+                from ._selected_param_authority import _INVALID, _selected_reference
+
+                selected = _selected_reference(row)
+                if selected is _INVALID or (
+                        selected is not ABSENT
+                        and (not isinstance(selected, dict)
+                             or any(not isinstance(selected.get(key), str)
+                                    or not selected[key]
+                                    for key in ('id', 'kind', 'revision')))):
+                    raise CommandError('selected transition reference is malformed',
+                                       ref=command['select'])
+            else:
+                selected = row.get('elementRef') or row.get('element_ref')
             if isinstance(selected, dict) and selected.get('packId'):
                 from ._selected_param_authority import resolve_selected_param_source
 
-                authority = resolve_selected_param_source(
-                    port, context=context, through=through, select=command['select'],
-                    staged=ctx.prior_records)
+                requested = (command['args']['values'].get('elementRef')
+                             if command['op'] == 'clip.set' else selected)
+                same_reference = (isinstance(requested, dict)
+                                  and all(selected.get(key) == requested.get(key)
+                                          for key in ('packId', 'id', 'kind')))
+                if command['op'] == 'clip.set-params' or same_reference:
+                    authority = resolve_selected_param_source(
+                        port, context=context, through=through, select=command['select'],
+                        staged=ctx.prior_records, strict_reference=strict_transition)
                 if 'schema_source' not in command['args']:
                     raise CommandError('selected project pack requires exact schema_source',
                                        ref=command['select'])
-        if command['op'] in ('clip.set-params', 'clip.set-element') and 'schema_source' in command['args']:
+        if command['op'] in ('clip.set-params', 'clip.set-element', 'clip.set') and 'schema_source' in command['args']:
             row = ctx.state.entity(command['select'])
             selected = (command['args']['elementRef'] if command['op'] == 'clip.set-element'
-                        else row.get('elementRef') or row.get('element_ref'))
+                        else (command['args']['values'].get('elementRef')
+                              if command['op'] == 'clip.set'
+                              else row.get('elementRef') or row.get('element_ref')))
             if isinstance(selected, dict) and selected.get('packId'):
                 required.append((command['args']['schema_source'], selected))
         elif command['op'] == 'timeline.inverse':
