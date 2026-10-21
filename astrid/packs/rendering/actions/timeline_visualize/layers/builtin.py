@@ -459,14 +459,8 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
             "states": states}
 
 
-def _public_crop(rect: Sequence[float], basis: Mapping[str, int], size: tuple[int, int]) -> tuple[int, int, int, int]:
-    """Scale a public canvas footprint into the existing PNG crop convention."""
-    sx, sy = size[0] / basis["width"], size[1] / basis["height"]
-    x, y, width, height = rect
-    return max(0, int(x * sx)), max(0, int(y * sy)), int((x + width) * sx) + 1, int((y + height) * sy) + 1
-
 def render_lipsync(ctx: LayerContext) -> LayerResult:
-    """Presenter mouth state per frame vs VO word intervals (and the presenter's own word list)."""
+    """Compare VO and presenter words, using admitted public motion and private pixels."""
     presenters = [e for e in ctx.elements if e.type == "am-presenter"]
     if not presenters:
         return LayerResult(None, [], "lipsync")
@@ -475,7 +469,10 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
     findings = []
     start, end = float(ctx.cut["start"]), float(ctx.cut["end"])
     series = [f for f in _sorted_frames(ctx) if start <= f / ctx.fps < end]
-    public = _public_mouth_facts(ctx, presenters[0], series)
+    # Motion rows are independently useful semantic evidence. The private
+    # mouth_box crop below remains the pixel/statistics path until D09a's live
+    # mouth_state duplication can be retired.
+    public = _public_mouth_facts(ctx, presenters[0], series, allow_default_motion=True)
     for index, presenter in enumerate(presenters):
         top = 30 + index * 70
         draw_text(draw, (10, top + 4), "mouth", 12, PALETTE["muted"])
@@ -527,9 +524,9 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
             findings.append(f"LIPSYNC {name}: presenter has {len(own)} words, VO has {len(vo)} under the cut; no pairs within 0.3 s")
     # pixel check: does the mouth region actually change in the captured frames?
     presenter = presenters[0]
-    box = None if public else model.mouth_box(presenter, 0)
-    crop = _public_crop(public["rect"], public["basis"], ctx.frame_size) if public else None
-    if crop is None and box and len(series) >= 3:
+    box = model.mouth_box(presenter, 0)
+    crop = None
+    if box and len(series) >= 3:
         sx, sy = ctx.frame_size[0] / model.CANVAS[0], ctx.frame_size[1] / model.CANVAS[1]
         crop = (max(0, int(box[0] * sx)), max(0, int(box[1] * sy)), int(box[2] * sx) + 1, int(box[3] * sy) + 1)
     if crop and len(series) >= 3:
