@@ -222,4 +222,13 @@ describe('dormant native occurrence.add-media capture', () => {
     const state = new AuthoredState(bundle());
     expect(state.occurrence(owner).occurrence_id).toBe('occ-a');
   });
+
+  it('refuses a missing occurrence owner with an identity conflict', () => {
+    const input = bundle();
+    input.placements = input.placements.slice(1);
+
+    expect(() => captureOccurrenceAddMedia(input, owner, row, media, [verified])).toThrowError(
+      expect.objectContaining({ kind: 'identity_conflict' }),
+    );
+  });
 });
