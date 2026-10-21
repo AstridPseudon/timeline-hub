@@ -14,7 +14,6 @@ export class ClipMoveError extends Error {
     super(message);
   }
 }
-
 export const copy = <T>(value: T): T => structuredClone(value);
 export const has = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
 export const object = (value: unknown): value is ObjectValue =>
@@ -134,6 +133,15 @@ export class AuthoredState {
   }
 
   entity(ref: string, optional = false): ObjectValue | undefined {
+    if (ref.includes('/asset:')) {
+      const [owner, identity] = ref.split('/asset:');
+      const registry = this.config(owner).registry;
+      if (!object(registry) || !object(registry.assets)) throw new ClipMoveError('asset collection must be an object');
+      const entry = has(registry.assets, identity) ? registry.assets[identity] : undefined;
+      if (entry === undefined && optional) return undefined;
+      if (!object(entry)) throw new ClipMoveError('missing or invalid asset binding', 'identity_conflict');
+      return entry;
+    }
     if (ref.includes('/clip:') || ref.includes('/track:')) {
       const slash = ref.lastIndexOf('/');
       const owner = ref.slice(0, slash);
@@ -182,6 +190,16 @@ export class AuthoredState {
   }
 
   get(ref: string, path: string[]): AgentState {
+    if (ref.includes('/collection:')) {
+      const [owner, kind] = ref.split('/collection:');
+      if (path.length) throw new ClipMoveError('collection shape requires the whole guard');
+      if (kind === 'occurrence' && owner === 'parent') return { state: 'present', value: { container: 'array' } };
+      if (owner === 'parent' || !['clip', 'track'].includes(kind)) throw new ClipMoveError('unsupported collection shape');
+      const config = this.config(owner);
+      const field = `${kind}s`;
+      return { state: 'present', value: { members: !has(config, field) ? { state: 'absent' }
+        : { state: 'present', value: Array.isArray(config[field]) ? [] : object(config[field]) ? {} : config[field] } } };
+    }
     const entity = this.entity(ref, true);
     if (entity === undefined) return { state: 'absent' };
     let value: JSON = entity;
@@ -202,6 +220,28 @@ export class AuthoredState {
   }
 
   set(ref: string, path: string[], state: AgentState): void {
+    if (!path.length && (ref.includes('/asset:') || ref.includes('/clip:'))) {
+      const slash = ref.lastIndexOf('/');
+      const owner = ref.slice(0, slash);
+      const entity = ref.slice(slash + 1);
+      const colon = entity.indexOf(':');
+      const kind = entity.slice(0, colon), identity = entity.slice(colon + 1);
+      if (kind === 'asset') {
+        const assets = (this.config(owner).registry as ObjectValue).assets as ObjectValue;
+        if (state.state === 'absent') delete assets[identity];
+        else if (object(state.value)) Object.defineProperty(assets, identity, { value: copy(state.value), enumerable: true, configurable: true, writable: true });
+        else throw new ClipMoveError('asset binding must be an object');
+      } else {
+        const rows = this.config(owner).clips as ObjectValue[];
+        const index = rows.findIndex((row) => row.id === identity);
+        if (state.state === 'present') {
+          if (!object(state.value) || state.value.id !== identity) throw new ClipMoveError('row identity differs from its reference');
+          if (index < 0) rows.push(copy(state.value));
+          else rows[index] = copy(state.value);
+        } else if (index >= 0) rows.splice(index, 1);
+      }
+      return;
+    }
     let target = this.entity(ref)!;
     for (const key of path.slice(0, -1)) {
       if (!has(target, key) || !object(target[key])) throw new ClipMoveError('write requires recorded container creation');
@@ -237,8 +277,36 @@ export class MoveRecording {
     return state.state === 'present' ? copy(state.value) : undefined;
   }
 
-  select(key: 'move.target' | 'move.blockers', owner: string, members: string[] = []): string[] {
+  select(key: 'move.target' | 'move.blockers' | 'collection.clips' | 'collection.tracks' | 'collection.occurrences' | 'placement.owners', owner: string, members: string[] = []): string[] {
     let result: string[];
+    if (!['move.target', 'move.blockers', 'collection.clips', 'collection.tracks', 'collection.occurrences', 'placement.owners'].includes(key)) {
+      throw new ClipMoveError('unsupported recorded query');
+    }
+    if (key.startsWith('collection.') || key === 'placement.owners') {
+      const kind = key === 'collection.clips' ? 'clip' : key === 'collection.tracks' ? 'track' : 'occurrence';
+      const rows = kind === 'occurrence' ? this.state.bundle.placements : this.state.config(owner)[`${kind}s`];
+      if (!Array.isArray(rows) || rows.some((row) => !object(row))) throw new ClipMoveError('invalid authored collection');
+      const identities = (rows as ObjectValue[]).map((row) => row[kind === 'occurrence' ? 'occurrence_id' : 'id']);
+      if (new Set(identities).size !== identities.length || identities.some((id) => typeof id !== 'string' || !id || id.includes('/') || id.includes('::'))) {
+        throw new ClipMoveError('missing or ambiguous collection identity', 'identity_conflict');
+      }
+      result = (rows as ObjectValue[]).filter((row) => key !== 'placement.owners' || row.shot_id === this.state.occurrence(owner).shot_id)
+        .map((row) => kind === 'occurrence' ? `occurrence:${row.occurrence_id}` : `${owner}/${kind}:${row.id}`);
+      const selected = { key, query_version: 1, owner, members: result, order: [...result],
+        boundaries: key === 'placement.owners' ? ['shot:' + this.state.occurrence(owner).shot_id] : [...result], policy: 'guard-membership' as const };
+      if (!this.command.selections!.some((other) => equal(other, selected))) {
+        if (key.startsWith('collection.')) {
+          this.read(owner + '/collection:' + kind, []);
+          if (owner !== 'parent') {
+            this.read(owner, ['occurrence_id']);
+            this.read(owner + '/shot', ['shot_id']);
+            this.bind('collection.owner:' + key, owner);
+          }
+        }
+        this.command.selections!.push(selected);
+      }
+      return result;
+    }
     if (key === 'move.target') result = members.filter((ref) => this.state.entity(ref, true) !== undefined);
     else {
       const row = this.state.occurrence(owner);
@@ -265,6 +333,21 @@ export class MoveRecording {
 
   dependency(key: string, kind: AgentDependency['kind'], pin: ObjectValue): void {
     this.record.dependencies.push({ key, kind, pin: copy(pin), policy: 'exact' });
+  }
+
+  create(owner: string, kind: 'clip' | 'asset', identity: string, value: ObjectValue): void {
+    this.read(owner, ['occurrence_id']);
+    this.read(owner + '/shot', ['shot_id']);
+    if (kind === 'clip') {
+      this.bind('create.owner', owner);
+      this.select('collection.clips', owner);
+    }
+    const ref = `${owner}/${kind}:${identity}`;
+    if (this.state.get(ref, []).state !== 'absent') throw new ClipMoveError('created identity is occupied', 'identity_collision');
+    this.read(ref, []);
+    this.write(ref, [], value);
+    this.command.created!.push(ref);
+    this.record.created.push({ ref, kind, owner });
   }
 
   compile(): void {

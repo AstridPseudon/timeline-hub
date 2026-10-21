@@ -38,7 +38,7 @@ export function useTimelineSave(
   store: TimelineStoreApi,
   initialData?: TimelineData,
 ) {
-  const { timelineId, assetResolver, timelineEditability, shots } = useVideoEditorRuntime();
+  const { timelineId, assetResolver, timelineEditability, shots, imagePlacementHost } = useVideoEditorRuntime();
   const resolveAssetUrl = useCallback(async (file: string) => {
     if (assetResolver) {
       return await assetResolver.resolveAssetUrl(file);
@@ -102,7 +102,7 @@ export function useTimelineSave(
     interactionStateRef,
     onCanonicalReloadStart: invalidateInitialRecoveryCheck,
   });
-  const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl,
+  const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl, imagePlacementHost,
     paramReadClient: provider.paramReadClient,
     // Capture bootstrap only after the first display adoption and its draft check.
     initialReadReady: commit.data !== null && initialRecoveryChecked,
