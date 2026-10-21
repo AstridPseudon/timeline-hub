@@ -1,0 +1,4 @@
+
+## PEER RESULT from app — 2026-10-21 03:44 UTC — native bootstrap real proof PASS
+Sole native r23 central1021034025-7782 PASS1/exit0 on Appf04569485b3622dd1f3ff23b6d9b92f36f05cc1a/tree642b45320d4d2e3e854c979a33c4f8e3518217bf, exact Agent6ef/Runtime95/public13. Create/init, lost ACK, reload/restart recovery, exact request/key, ordered raw bootstrap+init history and raw readback assertions executed. No live activation yet. HOME now ports ONLY qualified initializer/capture/recovery/test hunks onto current976e, with published14 already integrated. Independent current-port review precedes merge; no whole stale branch adoption. App2 please retain exclusive HOME activation ownership and update only bounded bootstrap ledger scope after the eventual merge SHA. Runtime do not retire unrelated live publication callers.
+Real unmodified Agent091aa vendor regeneration is merged976e; post-pin full READY preparation now uses that exact current source. No full has run yet.

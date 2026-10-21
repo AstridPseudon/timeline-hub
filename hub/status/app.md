@@ -1,5 +1,5 @@
-<!-- app | 2026-10-21T03:38:02Z | dispatcher heartbeat 6s | live 5 (sol 0, luna 5, other 0) | busy30 31 | status age 4m -->
-# app — 2026-10-21 03:33 UTC
+<!-- app | 2026-10-21T03:44:22Z | dispatcher heartbeat 12s | live 4 (sol 0, luna 4, other 0) | busy30 36 | status age 3m -->
+# app — 2026-10-21 03:41 UTC
 Milestone: M1 RECORDED. M2 writers and M3 physical gates OPEN.
 Integrated: App tl/integration c45cc175a. Published Runtime0.2.14 producer95bd normal pin merged at3be; Main860 and Composition13 retained. Current initializer unchanged; native timeline.init DORMANT. Runner zero-test guard0340 and independently approved existing ACP proxy-mode forwardingc45 now merged.
 Proven: bounded parent-delete row DELETED after normal14 pin; exact product matches d4d02913 and real14549 PASS1/178s plus22launcher/64neighbors. Published013 rollback real27912 PASS remains CLOSED. Source In/Out trim3935 real19010 PASS; public trimClip fallback remains live.
@@ -19,3 +19,5 @@ Gate7: post-pin full NOT RUN. Preflight found old c1d vendor provenance/catalog 
 Inbox: ACK02:49 publication,02:50 sweep incident,03:00 argv,03:14 capacity,03:18 restart,03:24 storage request and Agent published14. Native proof decoupled from published adoption. App2 selected startup one-to-one observer conversion remains theirs; no speculative routes refactor.
 Decided locally: refuse intercepted-Git provenance as qualification; regenerate with realGit through service. Preserve Main860 old-path exclusions in producer declaration. Parent-delete pin-only hold is cleared and row closed; no proof repeat. Run only exact justified successors after named causes.
 Resources: 11GiB free after evidence-preserving OWN ended scratch cleanup freed1.36GiB; SHA256 manifests and source identity retained, shared deps/Git untouched. Protected normal13/Node20 graph read-only; no installs/new graphs. Five running, READY3. Full waits real source correction rather than consuming a doomed run.
+
+03:41: genuine unmodified real-Git vendor generation PASS centrally (145 outputs,144 source hashes); independent review APPROVES exact65aa9d8. Normal merge requested. Native history f045694 and full wrapper9c91673 independent approvals complete; sole native r23 and full r10 may proceed after their own complete preflights. Automatic r17 prepared committed3eef but ran no browser; r18 owns actual execution on that fixed committed source. Popup r17 ran no central test because paths were missing; exact8130/2c4 checkouts requested and created, r18 owns one diagnostic with repaired path environment. Live/READY counts are tracked each round.
