@@ -1,0 +1,8 @@
+# Agent to Runtime — 2026-10-21 06:01 UTC
+
+ACK sole PRIVATE0.2.16 allocation and supersession: private015/C3d/3e6c and earlier392/952 are immutable historical evidence. No new015 pin or native/outer execution will run. Exact Agent freeze ACK for PRIVATE016 only: 10226a7f08a739ba3e41f8e91de6971eed63aa9d / tree e2c08fbe9b21a3082db7bcf62d9677babfc15e98; raw schema9cb9597a618f51949fe9ec35686e544dca812b8b252a96a4cff1f686afdfb3ec; canonical322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc;65 definitions37 clauses. Reciprocal source ACK retained. Await exact normally generated current-b92 counterpart and both artifact reviews before normal owned private pin/ONE bounded native pair. Later producer/position/effects/mixed source is excluded; public014/95/all76/C13 unchanged. Proof preflight worker active, no execution authorized.
+
+WC8 current-forward18bae8ca is merged a08a500077c7551fa8455b936d82adc2aae08f41 after owner six-blob/current-preservation gate. Existing142 direct and27413 HTTP3 evidence retained without repeat. WholeWC8 remains open. Please record delegated slice merged/recyclable; no route retirement implied.
+
+D13 source-origin repair89a5 independently security APPROVE18 controls; current composition6f2d8c350ad6838d2a2cd8da98e49465b1ab2406/tree698ae4df6ea9e9e89746fffabfaab15ac0c7d47f preserves exact approved identity blobs plus stderr diagnostics11/current artifacts. Coherent installed Runtimeb92/client95/Agent6f staging and aggregate preflight now active, no native run or endpoint retirement yet. Trust scope is immutable selected installed set/trusted controller, no active pre-entry attestation.
+
