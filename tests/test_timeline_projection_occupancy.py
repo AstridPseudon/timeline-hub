@@ -67,6 +67,44 @@ def refresh(value):
     value["document_digest"] = digest(document)
 
 
+def publish_source_items(service, film):
+    """Publish real source items through the normal parent-composition API."""
+    project, timeline = film.fixture.project_id, film.fixture.timeline_id
+    head = service.get_project_timeline(project, timeline)["head_revision_id"]
+    document = service._timeline_commits()[0].revision_closure(project, timeline, head)
+    shot_revisions, internal_revisions = [], []
+    parent = copy.deepcopy(document["parent_revision"]["payload"])
+    for shot_id in ("shot-2", "shot-3"):
+        source = next(row for row in document["shot_revisions"] if row["shot_id"] == shot_id)
+        internal = next(row for row in document["internal_timeline_revisions"]
+                        if row["revision_id"] == source["internal_timeline_revision_id"])
+        item_id = "rt08-source-item-" + shot_id.removeprefix("shot-")
+        item = {"item_id": item_id, "media_id": film.fixture.media_ids[0],
+                "source_frame": 7, "metadata": {"opaque": [None, {"keep": True}],
+                                                    "source_item_id": item_id}}
+        payload = copy.deepcopy(source["payload"])
+        payload["items"] = [item]
+        internal_revision_id = "rt08-source-internal-" + shot_id.removeprefix("shot-")
+        shot_revision_id = "rt08-source-revision-" + shot_id.removeprefix("shot-")
+        payload["internal_timeline_revision_id"] = internal_revision_id
+        shot_revisions.append({"shot_id": shot_id, "revision_id": shot_revision_id,
+                               "internal_timeline_revision_id": internal_revision_id,
+                               "payload": payload})
+        internal_revisions.append({"timeline_id": internal["timeline_id"],
+                                   "revision_id": internal_revision_id,
+                                   "payload": copy.deepcopy(internal["payload"])})
+        for occurrence in parent["occurrences"]:
+            if occurrence["shot_id"] == shot_id:
+                occurrence["shot_revision_id"] = shot_revision_id
+    return service.publish_parent_composition(
+        project, timeline,
+        {"project_id": project, "timeline_id": timeline, "expected_head": head,
+         "parent_revision_id": "rt08-source-items-parent", "parent_composition": parent,
+         "shot_revisions": shot_revisions, "internal_timeline_revisions": internal_revisions},
+        idempotency_key="rt08-source-items",
+    )
+
+
 def image(shot, revision, *, items=(), archived=False):
     internal_payload = {"clips": [], "tracks": []}
     internal = {"timeline_id": "shot:" + shot, "revision_id": revision + "-internal",
@@ -354,7 +392,9 @@ def shared_editing(film, request):
 
 # Reuse renderer-disabled actual-provider fixtures; Agent imports remain inside
 # their explicitly selected integration fixtures.
-from test_timeline_commit_integration import agent, film  # noqa: E402,F401
+from test_timeline_commit_integration import (  # noqa: E402,F401
+    Editing, _start_door, agent, film, inverse, rows,
+)
 
 
 @pytest.mark.integration
@@ -374,4 +414,91 @@ def test_actual_provider_historical_slot_rematerializes_after_verified_restore(s
     editing.assert_readback(rematerialized)
     assert {s["shot_id"] for s in rematerialized["data"]["canonical_document"]["shot_revisions"]} == {
         s["shot_id"] for s in first["data"]["canonical_document"]["shot_revisions"]}
+
+
+@pytest.mark.integration
+def test_startup_provider_materializes_source_items_and_refuses_global_item_occupancy(
+    film, agent, tmp_path,
+):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    setup = RuntimeService(film.fixture.duplicate_root)
+    try:
+        publish_source_items(setup, film)
+    finally:
+        setup.close()
+
+    world = _start_door(film, tmp_path)
+    try:
+        editing = Editing(world.daemon.service, film, agent)
+        owner = "occurrence:occurrence-3/clip:clip-3"
+        original = editing.document()
+        source_item = next(
+            item for shot in original["shot_revisions"] if shot["shot_id"] == "shot-3"
+            for item in shot["payload"]["items"]
+        )
+        first_command = editing.agent.move(editing.agent.bundle(original), owner, 3.5)
+        first = editing.commit(editing.body([first_command]), "rt08-item-first")
+        record = editing.history()[-1]["records"]["commands"][0]
+        source_pin = next(dep["pin"] for dep in record["dependencies"]
+                          if dep["key"].startswith("materialization.source:"))
+        owner_binding = next(binding for binding in record["bindings"]
+                             if binding["key"].startswith("materialization.owner:"))
+        physical_items = source_pin["source"]["item_id_map"]
+        assert source_pin["source"]["shot_id"] == "shot-3"
+        assert owner_binding["ref"] == "occurrence:occurrence-3"
+        assert set(physical_items) == {source_item["item_id"]}
+        physical_shot = next(
+            occurrence["shot_id"]
+            for occurrence in first["data"]["canonical_document"]["parent_revision"]["payload"]["occurrences"]
+            if occurrence["occurrence_id"] == "occurrence-3"
+        )
+        physical = next(shot for shot in first["data"]["canonical_document"]["shot_revisions"]
+                        if shot["shot_id"] == physical_shot)
+        assert physical_shot != source_pin["source"]["shot_id"]
+        assert {item["item_id"] for item in physical["payload"]["items"]} == set(physical_items.values())
+        assert physical["payload"]["items"][0]["metadata"]["opaque"] == [None, {"keep": True}]
+
+        world.stop()
+        world = _start_door(film, tmp_path)
+        editing = Editing(world.daemon.service, film, agent)
+        restored = editing.commit(editing.body([inverse(first["receipt"]["receipt_id"])]), "rt08-item-restore")
+        assert next(occurrence["shot_id"] for occurrence in
+                    restored["data"]["canonical_document"]["parent_revision"]["payload"]["occurrences"]
+                    if occurrence["occurrence_id"] == "occurrence-3") == "shot-3"
+        second_command = editing.agent.move(editing.agent.bundle(editing.document()), owner, 3.6)
+        second = editing.commit(editing.body([second_command]), "rt08-item-reuse")
+        second_record = editing.history()[-1]["records"]["commands"][0]
+        second_pin = next(dep["pin"] for dep in second_record["dependencies"]
+                          if dep["key"].startswith("materialization.source:"))
+        assert second_pin["source"] == source_pin["source"]
+        assert second["data"]["id_map"] == first["data"]["id_map"]
+
+        candidate_bundle = editing.agent.bundle(editing.document())
+        candidate_command = editing.agent.move(
+            candidate_bundle, "occurrence:occurrence-2/clip:clip-2", 2.5,
+        )
+        from astrid.sdk.timeline.commands import execute
+
+        candidate = execute(candidate_bundle, [candidate_command])
+        occupied_item = next(ref.rsplit("/item:", 1)[1] for ref in candidate.id_map
+                             if "/item:" in ref)
+        project, occupier = film.fixture.project_id, "rt08-unrelated-item-occupier"
+        world.daemon.service.create_project_shot(
+            project, {"shot_id": occupier, "name": "Unrelated item owner"},
+            idempotency_key="rt08-occupier-shot",
+        )
+        world.daemon.service.add_shot_item(
+            project, occupier,
+            {"item_id": occupied_item, "media_id": film.fixture.media_ids[0],
+             "metadata": {"unrelated": True}},
+            idempotency_key="rt08-occupier-item",
+        )
+        before = rows(world.daemon.service)
+        with pytest.raises(RuntimeErrorBase) as error:
+            editing.commit(editing.body([candidate_command]), "rt08-global-item-conflict")
+        assert error.value.details["reason"] == "identity_collision"
+        assert rows(world.daemon.service) == before
+    finally:
+        world.stop()
 
