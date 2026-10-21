@@ -273,8 +273,10 @@ function validateParentMediaCommand(command: EditCommand, afterAnchor = false): 
     typeof row.asset !== 'string' || !identity(row.asset)) {
     throw new ClipMoveError('clip.add-media requires stable raw clip and asset identities');
   }
-  // Agent 3b3208c43's birth schema requires hold even for raw-window rows.
-  if (afterAnchor) mediaNumber(row.hold, 'clip.hold', true);
+  // Raw after-anchor video rows may carry the source's absent/null hold; the
+  // raw-window validator derives its duration from the source window below.
+  // Zero and non-video rows remain strict there, as do ordinary births.
+  if (afterAnchor && row.hold != null) mediaNumber(row.hold, 'clip.hold', true);
   return { row, media: command.args.media };
 }
 

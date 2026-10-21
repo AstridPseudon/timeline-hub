@@ -7,6 +7,7 @@ import {
   finishParentClipAddMediaAfterAnchor,
   executeParentClipAddMediaAfterAnchor,
 } from './parentAfterAnchorCapture.ts';
+import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { ClipMoveError, copy } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 
@@ -205,9 +206,7 @@ describe('dormant parent after-anchor media capture', () => {
     parity.push({ original: input, requested: { id: 'born' }, ...result });
   });
 
-  // Exact Agent 3b3208c43 requires a positive numeric hold before raw-window
-  // validation; keep the Main-compatible missing/null-hold requirement open.
-  it.each(['missing', 'null'])('refuses a %s video hold atomically and accepts the equivalent positive window', (hold) => {
+  it.each(['missing', 'null'])('preserves a %s raw video hold and derives placement from source seconds', (hold) => {
     const input = bundle();
     const source = (input.parent.clips as Record<string, JSON>[])[1];
     if (hold === 'missing') delete source.hold;
@@ -215,22 +214,48 @@ describe('dormant parent after-anchor media capture', () => {
     source.transition = { type: 'crossfade', duration: .5, opaque: [false, null] };
     (input.parent.config as Record<string, JSON>).clips = copy(input.parent.clips);
     const before = copy(input);
-    expect(() => captureParentClipAddMediaAfterAnchor(
+    const result = finishParentClipAddMediaAfterAnchor(captureParentClipAddMediaAfterAnchor(
       input, 'parent/clip:anchor', { id: 'born' }, media, [verified],
+    ));
+    expect(result.command.args.row).toEqual({
+      ...source, id: 'born', asset: media.asset, at: 3.003, effectId: 'effect-born',
+    });
+    expect(result.bundle.parent.clips).toEqual(result.bundle.parent.config!.clips);
+    expect((result.bundle.parent.clips as Record<string, JSON>[]).find((row) => row.id === 'later'))
+      .toMatchObject({ at: 8, at_ms: 8000 });
+    expect(finishParentClipAddMediaAfterAnchor(JSON.parse(JSON.stringify(
+      captureParentClipAddMediaAfterAnchor(input, 'parent/clip:anchor', { id: 'born' }, media, [verified]),
+    )))).toEqual(result);
+    expect(input).toEqual(before);
+    parity.push({ original: input, requested: { id: 'born' }, ...result });
+  });
+
+  it.each(['missing', 'null'])('refuses a %s non-video after-anchor hold without mutation', (hold) => {
+    const input = bundle();
+    const source = (input.parent.clips as Record<string, JSON>[])[1];
+    source.clipType = 'image';
+    if (hold === 'missing') delete source.hold;
+    else source.hold = null;
+    (input.parent.config as Record<string, JSON>).clips = copy(input.parent.clips);
+    const before = copy(input);
+    expect(() => captureParentClipAddMediaAfterAnchor(
+      input, 'parent/clip:anchor', { id: 'born' }, media,
+      [{ ...verified, media_type: 'image/fixture' }],
     )).toThrow('clip.hold must be a finite positive number');
     expect(input).toEqual(before);
-    parity.push({ original: input, requested: { id: 'born' }, refused: true });
+  });
 
-    const validInput = bundle();
-    const validSource = (validInput.parent.clips as Record<string, JSON>[])[1];
-    validSource.transition = copy(source.transition);
-    (validInput.parent.config as Record<string, JSON>).clips = copy(validInput.parent.clips);
-    const result = finishParentClipAddMediaAfterAnchor(
-      captureParentClipAddMediaAfterAnchor(validInput, 'parent/clip:anchor', { id: 'born' }, media, [verified]));
-    expect(result.command.args.row).toEqual({
-      ...validSource, id: 'born', asset: media.asset, at: 3.003, effectId: 'effect-born',
-    });
-    expect(result.command.args.row).toMatchObject({ hold: 4, from: 2, to: 6, transition: source.transition });
+  it.each(['missing', 'null'])('keeps a %s ordinary parent birth strict', (hold) => {
+    const input = bundle();
+    const row: Record<string, JSON> = {
+      id: 'born', clipType: 'video', asset: media.asset, track: 'overlay', at: 3.003,
+      from: 2, to: 6, speed: 2,
+    };
+    if (hold === 'null') row.hold = null;
+    const before = copy(input);
+    expect(() => captureParentClipAddMedia(input, row, media, [verified]))
+      .toThrow('clip.hold must be a finite positive number');
+    expect(input).toEqual(before);
   });
 
   it('preserves explicit null effects but refuses explicit null track/asset overrides', () => {
@@ -325,7 +350,7 @@ for sample in samples:
         assert replay(plan, original, verified_media=verified).records == plan.records
         accepted += 1
     assert original == before, 'input mutated'
-assert (accepted, refused) == (4, 6)
-print('Exact Agent 3b3208c43: 4 complete commands/records/bundles and replay; 6 refusals; zero duration floor matched')
+assert (accepted, refused) == (6, 4)
+print('Exact Agent452: 6 complete commands/records/bundles and replay; 4 refusals; raw absent/null and zero controls matched')
 PYTHON_AFTER_PARITY
 */
