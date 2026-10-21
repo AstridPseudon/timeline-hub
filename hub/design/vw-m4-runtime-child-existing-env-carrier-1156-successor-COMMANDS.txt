@@ -1,0 +1,48 @@
+Base:
+  composition tl/integration == df7b86308902fae90eda1dc3080d17d8fc30ea78
+  original proposal:
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156.patch
+  successor:
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor.patch
+
+Read-only inspection:
+  sed -n '1,275p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md
+  sed -n '1,320p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-runtime-layout1156-custody-review-1209-REPORT.md
+  sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime
+  sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv
+
+Successor syntax/apply proof:
+  bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor-fixture.sh
+  CHECK=$(mktemp -d /tmp/vw-m4-runtime1156-exact-carrier-fix-1210-check.XXXXXX)
+  mkdir -p "$CHECK/bin"
+  cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime "$CHECK/bin/make-runtime"
+  cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv "$CHECK/bin/make-child-venv"
+  patch --dry-run -p1 -d "$CHECK" < /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor.patch
+  patch -p1 -d "$CHECK" < /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor.patch
+  bash -n "$CHECK/bin/make-runtime"
+  bash -n "$CHECK/bin/make-child-venv"
+  find "$CHECK" -depth -delete
+
+Actual changed-hunk fixture and log:
+  bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor-fixture.sh
+  Log:
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor-TEST.log
+
+The fixture applies original 1156 and successor patches to private copies of
+only the two kit scripts. Synthetic Git/archive/Python boundaries prevent
+runtime, venv, package, network, build, or real source allocation. Each run
+records one exact mkdtemp root and removes that root in its EXIT trap.
+
+Artifact verification:
+  sha256sum \
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156.patch \
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor.patch \
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor-fixture.sh \
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime \
+    /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv
+  git -C /home/user/work/wt/vw-m4-runtime1156-exact-carrier-fix-1210 status --short --branch
+  git -C /home/user/work/wt/vw-m4-runtime1156-exact-carrier-fix-1210 diff --check
+
+Not run by instruction: runtime/child creation, npm/PyPI install, venv or
+package installation, network, source/graph copy, build, browser, server,
+socket, render, central test service, or full suite.

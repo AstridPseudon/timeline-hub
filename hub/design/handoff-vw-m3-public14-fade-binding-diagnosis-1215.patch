@@ -1,0 +1,24 @@
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx
+index 1e8e685bc..03b42eef6 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx
+@@ -12,6 +12,7 @@ import {
+   type ElementComponentProps,
+ } from '../../_shared/am';
+ import {footageVolume} from './volume';
++import {prepareFootageScene} from './scene';
+ import {MosaicImage, mosaicBlockAt, paintMosaic, type MosaicRamp, type Rect} from '../../_shared/mosaic';
+ 
+ // am-footage: a REAL-FOOTAGE SLOT. It shows a filmed shot (video or still on
+@@ -182,7 +183,7 @@ const labelStyle: CSSProperties = {
+   opacity: 0.9,
+ };
+ 
+-export default function AmFootage(props: ElementComponentProps): ReactElement | null {
++function AmFootage(props: ElementComponentProps): ReactElement | null {
+@@ -314,3 +315,5 @@ export default function AmFootage(props: ElementComponentProps): ReactElement |
+     </AbsoluteFill>
+   );
+ }
++
++export default Object.assign(AmFootage, {prepareSceneCapability: prepareFootageScene});

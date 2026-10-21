@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import {assertCompleteStage} from './stage-audit.mjs';
+import {assertDiscoveryReadiness} from './discovery-readiness.mjs';
+
+const [app, agent, runtime, stage] = process.argv.slice(2);
+assert(app && agent && runtime && stage);
+const controller = await import(pathToFileURL(`${app}/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs`).href);
+controller.assertCandidateTuple({app: controller.readAppSourceSelection(), agent: controller.AGENT13, runtime: controller.RUNTIME13, composition: controller.COMPOSITION13});
+controller.assertRuntimeArtifact();
+controller.assertOwnerPorts();
+controller.assertCompletedAppConsumer(app);
+controller.assertExactGraph({appRoot: app, agentRoot: agent, runtimeRoot: runtime});
+controller.assertResources(app);
+controller.assertOwnedShortTemp();
+await assertCompleteStage(stage);
+controller.assertNode20();
+controller.assertChrome155();
+const discovery = assertDiscoveryReadiness(controller, app);
+controller.assertFreshGrantAndMarker(app);
+console.log(`READY: complete stage, frozen tuple, ${discovery.discovery}, direct refusal controls, fresh grant and marker passed`);

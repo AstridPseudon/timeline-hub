@@ -1,0 +1,329 @@
+COMMAND: bash -n successor fixture
+COMMAND: successor patch dry-run and bash -n in exact private root
+private check root: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210-check.UdBPQt
+checking file bin/make-runtime
+checking file bin/make-child-venv
+PASS successor patch dry-run and bash -n
+COMMAND: actual patched-hunk fixture
+fixture root: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/old/bin/make-runtime agent-remotion-runtime-missing-carrier synthetic-agent
+STATUS: 1
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+archive failed
+PASS 1156 red runtime case reached archive: runtime-missing-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-runtime agent-remotion-runtime-missing-carrier-successor synthetic-agent
+STATUS: 2
+REFUSED: agent remotion-0012-nodes must contain exactly one ASTRID_REMOTION_PROJECT_DIR
+PASS successor refuses runtime case before allocation: runtime-missing-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/old/bin/make-runtime agent-remotion-runtime-foreign-carrier synthetic-agent
+STATUS: 1
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+archive failed
+PASS 1156 red runtime case reached archive: runtime-foreign-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-runtime agent-remotion-runtime-foreign-carrier-successor synthetic-agent
+STATUS: 2
+REFUSED: foreign or broken ASTRID_REMOTION_PROJECT_DIR in agent remotion-0012-nodes
+PASS successor refuses runtime case before allocation: runtime-foreign-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/old/bin/make-runtime agent-remotion-runtime-broken-carrier synthetic-agent
+STATUS: 1
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+archive failed
+PASS 1156 red runtime case reached archive: runtime-broken-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-runtime agent-remotion-runtime-broken-carrier-successor synthetic-agent
+STATUS: 2
+REFUSED: foreign or broken ASTRID_REMOTION_PROJECT_DIR in agent remotion-0012-nodes
+PASS successor refuses runtime case before allocation: runtime-broken-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/old/bin/make-runtime agent-remotion-runtime-duplicate-carrier synthetic-agent
+STATUS: 1
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+archive failed
+PASS 1156 red runtime case reached archive: runtime-duplicate-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-runtime agent-remotion-runtime-duplicate-carrier-successor synthetic-agent
+STATUS: 2
+REFUSED: agent remotion-0012-nodes must contain exactly one ASTRID_REMOTION_PROJECT_DIR
+PASS successor refuses runtime case before allocation: runtime-duplicate-carrier
+COMMAND: BASH_XTRACEFD=2 bash -x /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-runtime agent-remotion-positive-agent-remotion-0012 synthetic-agent
+STATUS: 1
++ O=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch
++ A=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent
++ W=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work
++ N=agent-remotion-positive-agent-remotion-0012
++ S=synthetic-agent
++ L=
++ case "$N" in
++ D=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-agent-remotion-0012
++ '[' -e /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-agent-remotion-0012 ']'
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent cat-file -e 'synthetic-agent^{commit}'
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent cat-file -e 'synthetic-agent^{commit}'
++ ENV=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-0012.env
++ SUITES=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ MISSING=
++ '[' -s /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-0012.env ']'
++ '[' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf ']'
++ '[' '!' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf ']'
++ grep -q '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ '[' -z '' ']'
+++ grep -c '^ASTRID_REMOTION_PROJECT_DIR=' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-0012.env
++ ENV_COUNT=1
++ '[' 1 = 1 ']'
+++ sed -n 's/^ASTRID_REMOTION_PROJECT_DIR=//p' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-0012.env
++ LEGACY_PROJECT=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012
++ case "$LEGACY_PROJECT" in
+++ grep -c '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ case "$LEGACY_PROJECT" in
++ SUITE_ROWS=1
++ '[' 1 = 1 ']'
+++ grep '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ BASE_LINE='agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012 venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012 venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ count=0; for (i=1; i<=NF; i++) if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) count++; print count }'
++ SUITE_CARRIER_COUNT=1
++ '[' 1 = 1 ']'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012 venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ for (i=1; i<=NF; i++) if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) { sub(/^ASTRID_REMOTION_PROJECT_DIR=/, "", $i); print $i; exit } }'
++ SUITE_PROJECT=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012
++ case "$SUITE_PROJECT" in
++ NODE=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/bin
++ T=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-agent-remotion-0012.partial
++ rm -rf /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-agent-remotion-0012.partial
++ mkdir -p /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-agent-remotion-0012.partial/remotion
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent archive synthetic-agent remotion
++ tar -x -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-agent-remotion-0012.partial/remotion --strip-components=1
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
++ echo 'archive failed'
+archive failed
++ exit 1
+PASS successor retains runtime carrier: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012
+COMMAND: BASH_XTRACEFD=2 bash -x /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-runtime agent-remotion-positive-remotion synthetic-agent
+STATUS: 1
++ O=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch
++ A=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent
++ W=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work
++ N=agent-remotion-positive-remotion
++ S=synthetic-agent
++ L=
++ case "$N" in
++ D=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-remotion
++ '[' -e /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-remotion ']'
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent cat-file -e 'synthetic-agent^{commit}'
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent cat-file -e 'synthetic-agent^{commit}'
++ ENV=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-0012.env
++ SUITES=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ MISSING=
++ '[' -s /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-0012.env ']'
++ '[' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf ']'
++ '[' '!' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf ']'
++ grep -q '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ '[' -z '' ']'
+++ grep -c '^ASTRID_REMOTION_PROJECT_DIR=' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-0012.env
++ ENV_COUNT=1
++ '[' 1 = 1 ']'
+++ sed -n 's/^ASTRID_REMOTION_PROJECT_DIR=//p' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-0012.env
++ LEGACY_PROJECT=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012/remotion
++ case "$LEGACY_PROJECT" in
+++ grep -c '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ case "$LEGACY_PROJECT" in
++ SUITE_ROWS=1
++ '[' 1 = 1 ']'
+++ grep '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ BASE_LINE='agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012/remotion venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012/remotion venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ count=0; for (i=1; i<=NF; i++) if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) count++; print count }'
++ SUITE_CARRIER_COUNT=1
++ '[' 1 = 1 ']'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012/remotion venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ for (i=1; i<=NF; i++) if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) { sub(/^ASTRID_REMOTION_PROJECT_DIR=/, "", $i); print $i; exit } }'
++ SUITE_PROJECT=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012/remotion
++ case "$SUITE_PROJECT" in
++ NODE=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/bin
++ T=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-remotion.partial
++ rm -rf /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-remotion.partial
++ mkdir -p /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-remotion.partial/remotion
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent archive synthetic-agent remotion
++ tar -x -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-positive-remotion.partial/remotion --strip-components=1
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
++ echo 'archive failed'
+archive failed
++ exit 1
+PASS successor retains runtime carrier: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-0012/remotion
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/old/bin/make-child-venv venv-agent-child-child-duplicate-carrier-old synthetic-agent remotion-0012-nodes agent-remotion-child-runtime
+STATUS: 1
+build failed
+PASS 1156 red child case reached venv allocation: child-duplicate-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-child-venv venv-agent-child-child-duplicate-carrier-successor synthetic-agent remotion-0012-nodes agent-remotion-child-runtime
+STATUS: 2
+REFUSED: suite agent remotion-0012-nodes must contain exactly one ASTRID_REMOTION_PROJECT_DIR
+PASS successor refuses child case before allocation: child-duplicate-carrier
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/old/bin/make-child-venv venv-agent-child-child-duplicate-selector-old synthetic-agent remotion-0012-nodes agent-remotion-child-runtime
+STATUS: 1
+build failed
+PASS 1156 red child case reached venv allocation: child-duplicate-selector
+COMMAND: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-child-venv venv-agent-child-child-duplicate-selector-successor synthetic-agent remotion-0012-nodes agent-remotion-child-runtime
+STATUS: 2
+REFUSED: suite agent remotion-0012-nodes must contain exactly one venv-agent-child-s2 selector
+PASS successor refuses child case before allocation: child-duplicate-selector
+COMMAND: BASH_XTRACEFD=2 bash -x /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-child-venv venv-agent-child-positive-agent-remotion-child-runtime synthetic-agent remotion-0012-nodes agent-remotion-child-runtime
+STATUS: 1
++ O=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch
++ A=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent
++ W=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work
++ N=venv-agent-child-positive-agent-remotion-child-runtime
++ S=synthetic-agent
++ BS=remotion-0012-nodes
++ RT=agent-remotion-child-runtime
++ case "$N" in
++ D=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-agent-remotion-child-runtime
++ '[' -e /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-agent-remotion-child-runtime ']'
++ '[' -n remotion-0012-nodes ']'
++ '[' -n remotion-0012-nodes ']'
++ '[' -n agent-remotion-child-runtime ']'
++ case "$RT" in
++ SUITES=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ ENV=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-child-runtime.env
++ MISSING=
++ '[' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf ']'
++ '[' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-child-runtime.env ']'
++ '[' '!' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf ']'
++ grep -q '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ '[' -z '' ']'
+++ grep -c '^ASTRID_REMOTION_PROJECT_DIR=' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-child-runtime.env
++ ENV_COUNT=1
++ '[' 1 = 1 ']'
+++ sed -n 's/^ASTRID_REMOTION_PROJECT_DIR=//p' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-child-runtime.env
++ PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime
++ case "$PROJECT_DIR" in
+++ grep '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ case "$PROJECT_DIR" in
+++ head -n 1
++ case "$PROJECT_DIR" in
++ case "$PROJECT_DIR" in
++ BASE_LINE='agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ count=0; for (i=1; i<=NF; i++) if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) count++; print count }'
++ SUITE_CARRIER_COUNT=1
++ '[' 1 = 1 ']'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ count=0; for (i=1; i<=NF; i++) if ($i == "venv-agent-child-s2") count++; print count }'
++ CHILD_SELECTOR_COUNT=1
++ '[' 1 = 1 ']'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ for (i=1; i<=NF; i++) if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) { sub(/^ASTRID_REMOTION_PROJECT_DIR=/, "", $i); print $i; exit } }'
++ SUITE_PROJECT=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime
++ case "$SUITE_PROJECT" in
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
++ case "$SUITE_PROJECT" in
+++ awk -v name=venv-agent-child-positive-agent-remotion-child-runtime -v project=ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime '{
+    $1="agent"; $2=name "-full"
+    for (i=3; i<=NF; i++) {
+      if ($i == "venv-agent-child-s2") $i=name
+      if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) $i=project
+    }
+    print
+  }'
++ case "$SUITE_PROJECT" in
++ case "$SUITE_PROJECT" in
++ CHILD_LINE='agent venv-agent-child-positive-agent-remotion-child-runtime-full env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime venv-agent-child-positive-agent-remotion-child-runtime /home/user/work/venv-agent-child-s2/bin/python'
++ '[' -n 'agent venv-agent-child-positive-agent-remotion-child-runtime-full env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime venv-agent-child-positive-agent-remotion-child-runtime /home/user/work/venv-agent-child-s2/bin/python' ']'
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent cat-file -e 'synthetic-agent^{commit}'
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent cat-file -e 'synthetic-agent^{commit}'
++ F=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/provision/venv-agent-child-s2.txt
++ T=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-agent-remotion-child-runtime.partial
+++ mktemp -d
++ SRC=/tmp/w-27f0fe56ac/tmp.DxMvmuMQKe
++ rm -rf /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-agent-remotion-child-runtime.partial
++ python3.13 -m venv /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-agent-remotion-child-runtime.partial
++ echo 'build failed'
+build failed
++ rm -rf /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-agent-remotion-child-runtime.partial /tmp/w-27f0fe56ac/tmp.DxMvmuMQKe
++ exit 1
+PASS successor retains child carrier and selector: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime
+COMMAND: BASH_XTRACEFD=2 bash -x /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/successor/bin/make-child-venv venv-agent-child-positive-remotion synthetic-agent remotion-0012-nodes agent-remotion-child-runtime
+STATUS: 1
++ O=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch
++ A=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent
++ W=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work
++ N=venv-agent-child-positive-remotion
++ S=synthetic-agent
++ BS=remotion-0012-nodes
++ RT=agent-remotion-child-runtime
++ case "$N" in
++ D=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-remotion
++ '[' -e /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-remotion ']'
++ '[' -n remotion-0012-nodes ']'
++ '[' -n remotion-0012-nodes ']'
++ '[' -n agent-remotion-child-runtime ']'
++ case "$RT" in
++ SUITES=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ ENV=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-child-runtime.env
++ MISSING=
++ '[' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf ']'
++ '[' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-child-runtime.env ']'
++ '[' '!' -f /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf ']'
++ grep -q '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ '[' -z '' ']'
+++ grep -c '^ASTRID_REMOTION_PROJECT_DIR=' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-child-runtime.env
++ ENV_COUNT=1
++ '[' 1 = 1 ']'
+++ sed -n 's/^ASTRID_REMOTION_PROJECT_DIR=//p' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/agent-remotion-child-runtime.env
++ PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion
++ case "$PROJECT_DIR" in
+++ grep '^agent remotion-0012-nodes ' /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/suites.conf
++ case "$PROJECT_DIR" in
+++ head -n 1
++ case "$PROJECT_DIR" in
++ case "$PROJECT_DIR" in
++ BASE_LINE='agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ count=0; for (i=1; i<=NF; i++) if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) count++; print count }'
++ SUITE_CARRIER_COUNT=1
++ '[' 1 = 1 ']'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ count=0; for (i=1; i<=NF; i++) if ($i == "venv-agent-child-s2") count++; print count }'
++ CHILD_SELECTOR_COUNT=1
++ '[' 1 = 1 ']'
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
+++ awk '{ for (i=1; i<=NF; i++) if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) { sub(/^ASTRID_REMOTION_PROJECT_DIR=/, "", $i); print $i; exit } }'
++ SUITE_PROJECT=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion
++ case "$SUITE_PROJECT" in
+++ printf '%s\n' 'agent remotion-0012-nodes env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion venv-agent-child-s2 /home/user/work/venv-agent-child-s2/bin/python'
++ case "$SUITE_PROJECT" in
+++ awk -v name=venv-agent-child-positive-remotion -v project=ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion '{
+    $1="agent"; $2=name "-full"
+    for (i=3; i<=NF; i++) {
+      if ($i == "venv-agent-child-s2") $i=name
+      if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) $i=project
+    }
+    print
+  }'
++ case "$SUITE_PROJECT" in
++ case "$SUITE_PROJECT" in
++ CHILD_LINE='agent venv-agent-child-positive-remotion-full env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion venv-agent-child-positive-remotion /home/user/work/venv-agent-child-s2/bin/python'
++ '[' -n 'agent venv-agent-child-positive-remotion-full env ASTRID_REMOTION_PROJECT_DIR=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion venv-agent-child-positive-remotion /home/user/work/venv-agent-child-s2/bin/python' ']'
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent cat-file -e 'synthetic-agent^{commit}'
++ git -C /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/agent cat-file -e 'synthetic-agent^{commit}'
++ F=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/orch/tests/provision/venv-agent-child-s2.txt
++ T=/tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-remotion.partial
+++ mktemp -d
++ SRC=/tmp/w-27f0fe56ac/tmp.sAyGIxf1rz
++ rm -rf /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-remotion.partial
++ python3.13 -m venv /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-remotion.partial
++ echo 'build failed'
+build failed
++ rm -rf /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/venv-agent-child-positive-remotion.partial /tmp/w-27f0fe56ac/tmp.sAyGIxf1rz
++ exit 1
+PASS successor retains child carrier and selector: /tmp/vw-m4-runtime1156-exact-carrier-fix-1210.e62Uuf/work/runtimes/agent-remotion-child-runtime/remotion
+PASS actual 1156 red and successor green changed-hunk probes
+COMMAND: source and artifact hashes
+cd5ae1b3444686789465fee7d07a0275647188d4d12893a991485a3bb1fb42ad  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156.patch
+12937a65da6a96eb5934ef83fddbfa3e6d7309a39eb18a28ffa19f445b3442ca  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor.patch
+2c034ec72189b63ba87dee8c5dd9cd81c60e43f6ebbfd8247e0c20d181e8ba7d  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-successor-fixture.sh
+0bba1f5e69319dad8b68295eac1fddf7ba35ea21cc32d784407852700e7df202  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime
+b136f3c3fb24aa252dd4bb4ec875bc87c0b1565edf1f8392c1b08e514b0d89c4  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv
+COMMAND: composition worktree cleanliness
+## tl/vw-m4-runtime1156-exact-carrier-fix-1210
