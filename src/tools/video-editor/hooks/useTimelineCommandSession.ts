@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type { DataProvider, TimelineCommandBasis, TimelineHeadRevision } from '../data/DataProvider.ts';
+import { logPopupPostSelectionDiagnostic } from '../commands/popupPostSelectionDiagnostic.ts';
 import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
@@ -276,14 +277,62 @@ export function useTimelineCommandSession(options: {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before adding prepared parent media');
         };
         session.parentClipAddMediaPort = {
-          prepare() { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.prepare(); },
+          prepare() {
+            logPopupPostSelectionDiagnostic('session.prepare', 'enter', { hasSession: true });
+            requireCleanParentClipAddMedia();
+            return parentClipAddMediaPort.prepare();
+          },
           assertPreparationCurrent(preparation) {
             requireCleanParentClipAddMedia();
             parentClipAddMediaPort.assertPreparationCurrent(preparation);
           },
-          capture(input) { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.capture(input); },
-          finish(basis, verifiedMedia) { requireCleanParentClipAddMedia(); return parentClipAddMediaPort.finish(basis, verifiedMedia); },
-          submit(input) { requireCleanParentClipAddMedia(); parentClipAddMediaPort.submit(input); },
+          capture(input) {
+            logPopupPostSelectionDiagnostic('session.capture', 'enter', {
+              ownerRef: 'parent', trackRef: `parent/track:${String(input.row.track)}`, hasSession: true,
+            });
+            try {
+              requireCleanParentClipAddMedia();
+              const basis = parentClipAddMediaPort.capture(input);
+              logPopupPostSelectionDiagnostic('session.capture', 'return', {
+                ownerRef: 'parent', trackRef: `parent/track:${String(input.row.track)}`, hasSession: true,
+              });
+              return basis;
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.capture', 'throw', { ownerRef: 'parent', hasSession: true }, error);
+              throw error;
+            }
+          },
+          finish(basis, verifiedMedia) {
+            logPopupPostSelectionDiagnostic('session.finish', 'enter', { ownerRef: 'parent', hasSession: true });
+            try {
+              requireCleanParentClipAddMedia();
+              const result = parentClipAddMediaPort.finish(basis, verifiedMedia);
+              logPopupPostSelectionDiagnostic('session.finish', 'return', {
+                ownerRef: 'parent', commandOp: result.command.op, hasSession: true,
+              });
+              return result;
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.finish', 'throw', { ownerRef: 'parent', hasSession: true }, error);
+              throw error;
+            }
+          },
+          submit(input) {
+            logPopupPostSelectionDiagnostic('session.submit', 'enter', {
+              ownerRef: 'parent', commandOp: input.command.op, hasSession: true,
+            });
+            try {
+              requireCleanParentClipAddMedia();
+              parentClipAddMediaPort.submit(input);
+              logPopupPostSelectionDiagnostic('session.submit', 'return', {
+                ownerRef: 'parent', commandOp: input.command.op, hasSession: true,
+              });
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.submit', 'throw', {
+                ownerRef: 'parent', commandOp: input.command.op, hasSession: true,
+              }, error);
+              throw error;
+            }
+          },
         };
         const parentClipSwapMediaPort = session.parentClipSwapMediaPort;
         const requireCleanParentClipSwapMedia = () => {

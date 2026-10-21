@@ -24,6 +24,7 @@ import {
   type TimelineData,
 } from '@/tools/video-editor/lib/timeline-data.ts';
 import { isTransientUploadPlaceholder } from '@/tools/video-editor/lib/external-drop-utils.ts';
+import { logPopupPostSelectionDiagnostic } from '@/tools/video-editor/commands/popupPostSelectionDiagnostic.ts';
 import {
   buildAssetDropEdit,
   estimateAssetDuration,
@@ -284,13 +285,22 @@ export function useAssetManagement({
     removeClipId?: string,
   ): boolean | Promise<boolean> => {
     if (prepared.mediaType === 'video') {
+      logPopupPostSelectionDiagnostic('target', 'enter', {
+        ownerRef: 'parent', hasPort: Boolean(commands), hasSelection: Boolean(prepared.mediaSelection), hasTarget: true,
+      });
       if (!prepared.mediaSelection) {
+        logPopupPostSelectionDiagnostic('target', 'refused', {
+          ownerRef: 'parent', hasPort: Boolean(commands), hasSelection: false, hasTarget: true,
+        });
         runtime.toast.error('Failed to save asset', {
           description: 'Runtime prepared video is missing its original media selection.',
         });
         return false;
       }
       if (!commands) {
+        logPopupPostSelectionDiagnostic('target', 'refused', {
+          ownerRef: 'parent', hasPort: false, hasSelection: true, hasTarget: true,
+        });
         runtime.toast.error('Failed to save asset', {
           description: 'Runtime prepared video placement is unavailable.',
         });
@@ -309,11 +319,22 @@ export function useAssetManagement({
         ...(nativeRemoveClipId !== undefined ? { removeClipId: nativeRemoveClipId } : {}),
       })).then((result) => {
         if (!result.ok) {
+          logPopupPostSelectionDiagnostic('target.native', 'refused', {
+            ownerRef: 'parent', hasPort: true, hasSelection: true, hasTarget: true,
+          }, result.error);
           const description = result.error.message.trim().slice(0, NATIVE_REFUSAL_MESSAGE_LIMIT)
             || 'Native prepared video placement was refused.';
           runtime.toast.error('Failed to save asset', { description });
         }
+        logPopupPostSelectionDiagnostic('target.native', 'return', {
+          ownerRef: 'parent', hasPort: true, hasSelection: true, hasTarget: true,
+        });
         return result.ok;
+      }).catch((error) => {
+        logPopupPostSelectionDiagnostic('target.native', 'throw', {
+          ownerRef: 'parent', hasPort: true, hasSelection: true, hasTarget: true,
+        }, error);
+        throw error;
       });
     }
 

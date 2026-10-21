@@ -45,6 +45,7 @@ import type { ShotSetCapturePort } from './shotSetGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { captureParentClipSwapMedia, finishParentClipSwapMedia } from './parentClipSwapCapture.ts';
+import { logPopupPostSelectionDiagnostic } from './popupPostSelectionDiagnostic.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -367,6 +368,7 @@ export async function createTimelineCommandSession(options: Options) {
   const intentIds = new Map<string, string>();
   const parentClipAddMediaPort: ParentClipAddMediaCapturePort = {
     prepare() {
+      logPopupPostSelectionDiagnostic('native.prepare', 'enter', { hasSession: true });
       assertReady();
       return Object.freeze({
         bundle: copy(bundle),
@@ -376,6 +378,7 @@ export async function createTimelineCommandSession(options: Options) {
       });
     },
     assertPreparationCurrent(preparation) {
+      logPopupPostSelectionDiagnostic('native.prepare.current', 'enter', { hasSession: true });
       assertReady();
       const currentBasis = lastIntent ? { after: lastIntent } : { head: known.head };
       if (preparation.localGeneration !== localGeneration || !sameHead(preparation.displayHead, displayHead)
@@ -384,61 +387,92 @@ export async function createTimelineCommandSession(options: Options) {
       }
     },
     capture({ row, media, current }) {
-      assertReady();
-      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
-        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
-        throw new Error('Displayed timeline does not match the raw authoring basis');
+      const details = { ownerRef: 'parent', trackRef: `parent/track:${String(row.track)}`, hasSession: true };
+      logPopupPostSelectionDiagnostic('native.capture', 'enter', details);
+      try {
+        assertReady();
+        if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+          || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+          throw new Error('Displayed timeline does not match the raw authoring basis');
+        }
+        if (current.resolvedConfig.clips.some((clip) => clip.id === row.id)
+          || current.config.clips.some((clip) => clip.id === row.id)) {
+          throw new Error('Parent clip.add-media identity is already displayed');
+        }
+        const basis = freezeJson({
+          bundle: copy(bundle),
+          row: copy(row),
+          media: copy(media),
+          localGeneration,
+          localBasis: copy(lastIntent ? { after: lastIntent } : { head: known.head }),
+          displayHead: copy(displayHead),
+        }) as ParentClipAddMediaCaptureBasis;
+        logPopupPostSelectionDiagnostic('native.capture', 'return', { ...details, hasTarget: true });
+        return basis;
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('native.capture', 'throw', details, error);
+        throw error;
       }
-      if (current.resolvedConfig.clips.some((clip) => clip.id === row.id)
-        || current.config.clips.some((clip) => clip.id === row.id)) {
-        throw new Error('Parent clip.add-media identity is already displayed');
-      }
-      return freezeJson({
-        bundle: copy(bundle),
-        row: copy(row),
-        media: copy(media),
-        localGeneration,
-        localBasis: copy(lastIntent ? { after: lastIntent } : { head: known.head }),
-        displayHead: copy(displayHead),
-      }) as ParentClipAddMediaCaptureBasis;
     },
     finish(basis, verifiedMedia) {
-      assertReady();
-      if (basis.localGeneration !== localGeneration || !sameHead(basis.displayHead, displayHead)
-        || !equal(basis.bundle, bundle)) {
-        throw new Error('Timeline changed during parent clip.add-media');
+      logPopupPostSelectionDiagnostic('native.finish', 'enter', { ownerRef: 'parent', hasSession: true });
+      try {
+        assertReady();
+        if (basis.localGeneration !== localGeneration || !sameHead(basis.displayHead, displayHead)
+          || !equal(basis.bundle, bundle)) {
+          throw new Error('Timeline changed during parent clip.add-media');
+        }
+        const result = captureParentClipAddMedia(basis.bundle, basis.row, basis.media, [verifiedMedia]);
+        const preview: TimelinePatch = {
+          version: 1,
+          source: 'timeline.native-parent-media-add',
+          operations: [{
+            op: 'clip.add',
+            target: basis.row.id as string,
+            payload: {
+              track: basis.row.track,
+              at: basis.row.at,
+              clipType: basis.row.clipType,
+            },
+          }],
+        };
+        prepared.set(JSON.stringify(result.command), {
+          payload: { commands: [result.command], before: basis.bundle, after: result.bundle, preview },
+          generation: localGeneration,
+          basis: basis.localBasis,
+        });
+        logPopupPostSelectionDiagnostic('native.finish', 'return', {
+          ownerRef: 'parent', commandOp: result.command.op, hasSession: true,
+        });
+        return { command: result.command, preview };
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('native.finish', 'throw', { ownerRef: 'parent', hasSession: true }, error);
+        throw error;
       }
-      const result = captureParentClipAddMedia(basis.bundle, basis.row, basis.media, [verifiedMedia]);
-      const preview: TimelinePatch = {
-        version: 1,
-        source: 'timeline.native-parent-media-add',
-        operations: [{
-          op: 'clip.add',
-          target: basis.row.id as string,
-          payload: {
-            track: basis.row.track,
-            at: basis.row.at,
-            clipType: basis.row.clipType,
-          },
-        }],
-      };
-      prepared.set(JSON.stringify(result.command), {
-        payload: { commands: [result.command], before: basis.bundle, after: result.bundle, preview },
-        generation: localGeneration,
-        basis: basis.localBasis,
-      });
-      return { command: result.command, preview };
     },
     submit({ command, preview }) {
-      assertReady();
-      const key = JSON.stringify(command);
-      const entry = prepared.get(key);
-      if (command.op !== 'clip.add-media' || !entry || entry.generation !== localGeneration
-        || !equal(entry.payload.before, bundle) || !equal(entry.payload.preview, preview)) {
-        throw new Error('Parent clip.add-media was not captured by this session or the timeline changed');
+      logPopupPostSelectionDiagnostic('native.submit', 'enter', {
+        ownerRef: 'parent', commandOp: command.op, hasSession: true,
+      });
+      try {
+        assertReady();
+        const key = JSON.stringify(command);
+        const entry = prepared.get(key);
+        if (command.op !== 'clip.add-media' || !entry || entry.generation !== localGeneration
+          || !equal(entry.payload.before, bundle) || !equal(entry.payload.preview, preview)) {
+          throw new Error('Parent clip.add-media was not captured by this session or the timeline changed');
+        }
+        prepared.delete(key);
+        enqueue(entry.payload, preview, entry.basis);
+        logPopupPostSelectionDiagnostic('native.submit', 'return', {
+          ownerRef: 'parent', commandOp: command.op, hasSession: true,
+        });
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('native.submit', 'throw', {
+          ownerRef: 'parent', commandOp: command.op, hasSession: true,
+        }, error);
+        throw error;
       }
-      prepared.delete(key);
-      enqueue(entry.payload, preview, entry.basis);
     },
   };
   const parentClipSwapMediaPort: ParentClipSwapMediaCapturePort = {

@@ -149,7 +149,7 @@ function captureBoundedBrowserEvidence(page: Page): void {
     })());
   });
   page.on('console', (message) => {
-    if (!/drop|media|native|refus|commit/i.test(message.text()) || evidence.console.length >= 80) return;
+    if (!/drop|media|native|refus|commit|popup-post-selection-diagnostic/i.test(message.text()) || evidence.console.length >= 80) return;
     evidence.console.push({ type: message.type(), text: boundedText(message.text()) });
   });
   page.on('pageerror', (error) => {
