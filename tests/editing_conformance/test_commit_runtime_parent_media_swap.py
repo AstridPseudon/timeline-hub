@@ -228,6 +228,7 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
                           commit='95bd3c5f', authoring_profile='astrid')
     token, _ = daemon.credentials.provision(
         'media-editor', [
+            'handshake',
             'projects:read', 'projects:write', 'objects:read', 'objects:write',
             'tasks:read', 'tasks:write',
         ],
@@ -291,6 +292,7 @@ def test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo
     )
     token, _ = daemon.credentials.provision(
         'media-editor', [
+            'handshake',
             'projects:read', 'projects:write', 'objects:read', 'objects:write',
             'tasks:read', 'tasks:write',
         ],
