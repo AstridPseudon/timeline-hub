@@ -16,6 +16,7 @@ from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, captur
 from astrid.sdk.timeline.commit import (
     _digest,
     _history,
+    bundle_from_document,
     create_runtime_commit_service,
 )
 from astrid.sdk.timeline.native_occurrence_duplicate import capture_occurrence_duplicate
@@ -377,6 +378,57 @@ def test_transition_accepts_matching_legacy_authority(transition_pins):
     row = State(current(realm)).entity(REF)
     assert row['elementRef'] == element
     assert 'element_ref' not in row
+
+
+# Requirement: an explicit transition reselection establishes the chosen
+# source authority before the next same-reference transition update.
+@pytest.mark.xfail(strict=True,
+                   reason='explicit transition reselection must establish selected source authority')
+def test_distinct_transition_reselection_reload_update_inverse_restores_legacy_raw(
+        transition_pins, configured_project_pack):
+    realm, legacy_element, _, _ = _transition_birth(transition_pins)
+    original = copy.deepcopy(State(current(realm)).entity(REF))
+    content = next(row['content'] for (project, _), row in configured_project_pack.rows.items()
+                   if project == 'project-1' and row['content']['pack_id'] == legacy_element['packId'])
+    admission = next(item for item in content['admissions'] if item['id'] == 'fade')
+    selected = {key: admission[key] for key in ('id', 'kind', 'revision')}
+    selected['packId'] = legacy_element['packId']
+    options = schema_options(configured_project_pack, selected)
+    verified, objects = options['schema_inputs'][0]
+    realm.live_sources[_digest(verified['pin'])] = copy.deepcopy(verified)
+    realm.snapshot_objects.update(copy.deepcopy(objects))
+
+    first_command = capture_clip_set(
+        current(realm), REF,
+        values={'elementRef': selected,
+                'transition': {'type': selected['id'], 'duration': .5,
+                               'revision': selected['revision'],
+                               'params': {'opaque': [None, False, 0],
+                                          'future': {'literal': 'kept'}}}},
+        **options)
+    first = _commit(realm, [first_command])
+    first_document = json.loads(json.dumps(first['data']['canonical_document']))
+    reloaded = bundle_from_document(first_document)
+    reloaded_row = State(reloaded).entity(REF)
+    assert reloaded_row['elementRef'] == selected
+    assert 'element_ref' not in reloaded_row
+
+    second_command = capture_clip_set(
+        reloaded, REF,
+        values={'elementRef': selected,
+                'transition': {'type': selected['id'], 'duration': .75,
+                               'revision': selected['revision'],
+                               'params': {'opaque': [None, False, 0], 'new': ''}}},
+        **options)
+    second = _commit(realm, [second_command])
+    updated = State(current(realm)).entity(REF)
+    assert updated['transition'] == {
+        'type': selected['id'], 'duration': .75, 'revision': selected['revision'],
+        'params': {'opaque': [None, False, 0], 'future': {'literal': 'kept'}, 'new': ''}}
+
+    _commit(realm, [inverse([
+        first['receipt']['receipt_id'], second['receipt']['receipt_id']])])
+    assert State(current(realm)).entity(REF) == original
 
 
 def test_legacy_unchanged_param_requires_selection_authority(two_pins):
