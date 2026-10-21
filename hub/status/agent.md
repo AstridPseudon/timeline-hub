@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T04:19:02Z | dispatcher heartbeat 0s | live 5 (sol 1, luna 4, other 0) | busy30 20 | status age 30m -->
+<!-- agent | 2026-10-21T04:25:07Z | dispatcher heartbeat 3s | live 3 (sol 1, luna 2, other 0) | busy30 21 | status age 36m -->
 # agent — 2026-10-21 03:47 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 and Main497 are now adopted together. Native App initialization activation is separate.
 Integrated: Agent7ab6cbae2 (published014/Main497 adoption091aa plus pure audio-cache extraction). Source68dc independent APPROVE: exact Runtime95bd client/76 artifacts54205/ordinary6ba55/29/C13all77,110affected tests. Later sheet deadhelper8b9 and mouth test ported3 retained;137+2 and31PASS. Audio cache helper AST identical,69neighbors+10closure/artifact PASS, fixed2015+50 threshold retained.
