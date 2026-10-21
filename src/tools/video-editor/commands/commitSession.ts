@@ -45,6 +45,7 @@ import type { ShotSetCapturePort } from './shotSetGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { captureParentClipSwapMedia, finishParentClipSwapMedia } from './parentClipSwapCapture.ts';
+import { captureOccurrenceAddMedia, finishOccurrenceAddMedia } from './occurrenceMediaCapture.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -97,6 +98,31 @@ export interface ParentClipSwapMediaCapturePort extends ParentClipSwapMediaPrepa
   capture(input: { clipId: string; media: MediaSelection; current: TimelineData }): ParentClipSwapMediaCaptureBasis;
   finish(basis: ParentClipSwapMediaCaptureBasis, verifiedMedia: readonly VerifiedMedia[]): { command: EditCommand; preview: TimelinePatch };
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
+}
+
+/** The one occurrence-owned ADD seam; it uses this session's existing outbox. */
+export type OccurrenceAddMediaCaptureBasis = Readonly<{
+  bundle: AuthoredBundle;
+  ownerRef: `occurrence:${string}`;
+  row: Record<string, JSON>;
+  media: MediaSelection;
+  localGeneration: number;
+  localBasis: OutboxBasis;
+  displayHead: OutboxHead;
+}>;
+
+export interface OccurrenceAddMediaCapturePort {
+  capture(input: {
+    ownerRef: `occurrence:${string}`;
+    row: Record<string, JSON>;
+    media: MediaSelection;
+    current: TimelineData;
+  }): OccurrenceAddMediaCaptureBasis;
+  finish(basis: OccurrenceAddMediaCaptureBasis, verifiedMedia: VerifiedMedia): {
+    command: EditCommand;
+    preview: TimelinePatch | null;
+  };
+  submit(input: { command: EditCommand; preview: TimelinePatch | null }): void;
 }
 export type CommandSessionState = {
   status: 'loading' | 'saved' | 'dirty' | 'saving' | 'retry' | 'conflict' | 'error' | 'recovery';
@@ -504,6 +530,50 @@ export async function createTimelineCommandSession(options: Options) {
       if (command.op !== 'clip.swap-media' || !entry || entry.generation !== localGeneration
         || !equal(entry.payload.before, bundle) || !equal(entry.payload.preview, preview)) {
         throw new Error('Parent clip.swap-media was not captured by this session or the timeline changed');
+      }
+      prepared.delete(key);
+      enqueue(entry.payload, preview, entry.basis);
+    },
+  };
+  const occurrenceAddMediaPort: OccurrenceAddMediaCapturePort = {
+    capture({ ownerRef, row, media, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      return freezeJson({
+        bundle: copy(bundle), ownerRef, row: copy(row), media: copy(media), localGeneration,
+        localBasis: copy(lastIntent ? { after: lastIntent } : { head: known.head }),
+        displayHead: copy(displayHead),
+      }) as OccurrenceAddMediaCaptureBasis;
+    },
+    finish(basis, verifiedMedia) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration || !sameHead(basis.displayHead, displayHead)
+        || !equal(basis.bundle, bundle)) {
+        throw new Error('Timeline changed during occurrence.add-media');
+      }
+      const captured = captureOccurrenceAddMedia(
+        basis.bundle, basis.ownerRef, basis.row, basis.media, [verifiedMedia],
+      );
+      const result = finishOccurrenceAddMedia(captured);
+      const preview: TimelinePatch | null = null;
+      prepared.set(JSON.stringify(result.command), {
+        payload: { commands: [result.command], before: basis.bundle, after: result.bundle, preview },
+        generation: localGeneration,
+        basis: basis.localBasis,
+      });
+      return { command: result.command, preview };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'occurrence.add-media' || !entry
+        || entry.generation !== localGeneration || !equal(entry.payload.before, bundle)
+        || !equal(entry.payload.preview, preview)) {
+        throw new Error('Occurrence add-media was not captured by this session or the timeline changed');
       }
       prepared.delete(key);
       enqueue(entry.payload, preview, entry.basis);
@@ -1173,6 +1243,7 @@ export async function createTimelineCommandSession(options: Options) {
     shotSetPort,
     parentClipAddMediaPort,
     parentClipSwapMediaPort,
+    occurrenceAddMediaPort,
     occurrenceDuplicatePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),

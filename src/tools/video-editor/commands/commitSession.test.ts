@@ -6,9 +6,15 @@ import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitF
 import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
-import type { OutboxRecord, OutboxRequest } from './commitOutbox.ts';
+import { createCommitOutbox, type OutboxRecord, type OutboxRequest } from './commitOutbox.ts';
 import type { TimelineCommandBasis } from '../data/DataProvider.ts';
-import type { EditCommand, MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
+import { createFakeIndexedDB } from 'fake-indexeddb';
+import type { CanonicalDocument } from '@/integrations/runtime/generated.ts';
+import type { EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import { authoringBundleFromDocument } from './authoringBundle.ts';
+import { captureOccurrenceAddMedia, finishOccurrenceAddMedia } from './occurrenceMediaCapture.ts';
+import occurrenceFixture from './fixtures/recipe_m2_app_occurrence_duplicate.json';
+import type { TimelineData } from '../lib/timeline-data.ts';
 
 async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (record: OutboxRecord) => void) {
   await new Promise<void>((resolve, reject) => {
@@ -29,6 +35,33 @@ async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (
       tx.addEventListener('abort', () => { db.close(); reject(tx.error); });
     });
   });
+}
+
+const occurrenceScope = { projectId: 'project-1', timelineId: 'doc /é', realmId: 'realm-1', actorId: 'actor-1' };
+const occurrenceOwner = 'occurrence:occ-0' as const;
+const occurrenceMedia: MediaSelection = {
+  asset: 'reserved-new', generation_id: 'generation-new', variant_id: 'variant-new',
+  object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+  catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+};
+const occurrenceRow: Record<string, JSON> = {
+  id: 'reserved-child', clipType: 'video', asset: 'reserved-new', track: 'picture', at: 0.125, hold: 4,
+  from: 2, to: 6, speed: 2, params: null, opaque: [null, false, {}],
+};
+const occurrenceVerified: VerifiedMedia = {
+  selection: occurrenceMedia, media_type: 'video/fixture', size: 123, duration_seconds: 6,
+};
+
+function occurrenceDocument(): CanonicalDocument {
+  const raw = structuredClone(occurrenceFixture.bundle.source_mapping._runtime_document) as unknown as CanonicalDocument;
+  for (const internal of raw.internal_timeline_revisions) {
+    const payload = internal.payload as Record<string, JSON>;
+    delete payload.source_window;
+    internal.content_digest = fixtureDigest(payload);
+    const manifest = raw.dependency_manifest.internal_timelines.find((pin) => pin.timeline_id === internal.timeline_id);
+    if (manifest) manifest.content_digest = internal.content_digest;
+  }
+  return raw;
 }
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
@@ -101,6 +134,86 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     expect(env.commits()).toHaveLength(2);
     expect(env.commits()[1]).toEqual(first);
     expect(env.current().config.clips).toContainEqual(expect.objectContaining({ id: 'native-clip', asset: 'reserved-media' }));
+    await session.dispose();
+  });
+
+  it('captures one occurrence ADD batch through the session outbox and refuses stale or unverified input', async () => {
+    const initialDocument = occurrenceDocument();
+    const initial: TimelineCommandBasis = {
+      head: { revisionId: initialDocument.parent_revision.revision_id, publicationId: 'p0' },
+      canonicalDocument: initialDocument,
+    };
+    const held = new Set<string>();
+    const outboxes = createCommitOutbox({
+      indexedDB: createFakeIndexedDB(),
+      exclusiveLock: async (key, work) => {
+        if (held.has(key)) throw new Error('claimed');
+        held.add(key);
+        try { return await work(); } finally { held.delete(key); }
+      },
+    });
+    const calls: EditCommand[][] = [];
+    const send = async (request: { commands: EditCommand[] }, key: string) => {
+      calls.push(structuredClone(request.commands));
+      const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' },
+        { revision_id: initial.head.revisionId, publication_id: initial.head.publicationId }, {
+          projectId: occurrenceScope.projectId, timelineId: occurrenceScope.timelineId, commands: request.commands,
+        });
+      response.data.canonical_document = structuredClone(initialDocument);
+      response.data.document_digest = fixtureDigest(initialDocument);
+      response.receipt.result = response.data;
+      response.receipt.idempotency_key = key;
+      return {
+        response,
+        canonicalDocument: structuredClone(initialDocument),
+        graph: {},
+        receipt: response.receipt,
+        accepted: { revisionId: 'r1', publicationId: 'p1' },
+      };
+    };
+    const project = vi.fn(async () => undefined);
+    const preview = vi.fn();
+    const session = await createTimelineCommandSession({
+      scope: occurrenceScope,
+      initial,
+      outboxes,
+      send,
+      preview,
+      project,
+      changed: () => {},
+    });
+    const current = { head: {
+      projectId: occurrenceScope.projectId, timelineId: occurrenceScope.timelineId,
+      headRevisionId: initial.head.revisionId, headPublicationId: initial.head.publicationId,
+    } } as TimelineData;
+    const basisBundle = await authoringBundleFromDocument(initialDocument);
+    const expected = finishOccurrenceAddMedia(captureOccurrenceAddMedia(
+      basisBundle, occurrenceOwner, occurrenceRow, occurrenceMedia, [occurrenceVerified],
+    ));
+    const captured = session.occurrenceAddMediaPort.capture({
+      ownerRef: occurrenceOwner, row: occurrenceRow, media: occurrenceMedia, current,
+    });
+    expect(() => session.occurrenceAddMediaPort.capture({
+      ownerRef: occurrenceOwner, row: occurrenceRow, media: occurrenceMedia,
+      current: { ...current, head: { ...current.head, headRevisionId: 'stale' } },
+    })).toThrow('Displayed timeline does not match the raw authoring basis');
+    expect(() => session.occurrenceAddMediaPort.finish(captured, {
+      ...occurrenceVerified, selection: { ...occurrenceMedia, asset: 'wrong-reserved-id' },
+    })).toThrow('exact Runtime-verified media input');
+
+    const finished = session.occurrenceAddMediaPort.finish(captured, occurrenceVerified);
+    expect(finished).toEqual({ command: expected.command, preview: null });
+    session.occurrenceAddMediaPort.submit(finished);
+    await expect(session.flush()).resolves.toEqual({ revisionId: 'r1', publicationId: 'p1' });
+
+    expect(calls).toEqual([[expected.command]]);
+    expect(expected.record).toMatchObject({ command: expected.command, reads: expected.command.reads,
+      selections: expected.command.selections, created: expect.arrayContaining([
+        { ref: `${occurrenceOwner}/asset:${occurrenceMedia.asset}`, kind: 'asset', owner: occurrenceOwner },
+        { ref: `${occurrenceOwner}/clip:${occurrenceRow.id}`, kind: 'clip', owner: occurrenceOwner },
+      ]) });
+    expect(preview).not.toHaveBeenCalled();
+    expect(project.mock.calls.every(([, patches]) => patches?.length === 0)).toBe(true);
     await session.dispose();
   });
 
