@@ -11,14 +11,18 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.core.timeline.authoring_bundle import open_authoring_bundle, publish_authoring_candidate
+from astrid.core.timeline.authoring_bundle import (
+    compile_authoring_candidate,
+    open_authoring_bundle,
+    publish_authoring_candidate,
+)
 from astrid.core.timeline.authoring_feedback import authoring_change_summary, publication_feedback
 from astrid.packs.timeline.cli import _configure_diff, _configure_show, _configure_visualize
 from astrid.sdk.authoring_remote import AuthoringRemoteError, TargetBoundAuthoringBundle
 from astrid.sdk.timeline.document_diff import DocumentDiffError, document_diff_to_commands
 from astrid.sdk.timeline_editing import duplicate_authoring_shot, remove_authoring_shot
 from astrid.sdk.workspace_client import WorkspaceClientError
-from tests.timeline.test_authoring_bundle import NEW, OLD, _closure, _digest
+from tests.timeline.test_authoring_bundle import AUDIO, NEW, OLD, _closure, _digest
 
 
 def bundle(*, images=1, shared=False):
@@ -308,6 +312,199 @@ def test_document_view_adapter_requires_the_exact_pinned_base():
         document_diff_to_commands(work, base)
 
 
+@pytest.mark.parametrize("scope,remove,move", [
+    ("parent", False, False), ("config", False, False),
+    ("parent", True, False), ("config", True, False), ("parent", False, True),
+])
+def test_document_view_adapter_holds_opaque_presence_atomically(scope, remove, move):
+    parent, shots, internals = _closure(shared=False)
+    payload = parent["payload"]
+    if remove:
+        (payload["config"] if scope == "config" else payload)["presence_probe"] = None
+    parent["content_digest"] = _digest(payload)
+    work = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    base = copy.deepcopy(work)
+    target = work["parent"]["config"] if scope == "config" else work["parent"]
+    if remove:
+        target.pop("presence_probe")
+    else:
+        target["presence_probe"] = None
+    if move:
+        for rows in (work["parent"]["clips"], work["parent"]["config"]["clips"]):
+            rows[0]["at"] = 4
+    compile_authoring_candidate(work)
+    before, pinned = copy.deepcopy(work), copy.deepcopy(base)
+    for defer_media in (True, False):
+        with pytest.raises(DocumentDiffError, match="held by the document view"):
+            document_diff_to_commands(work, base, defer_media=defer_media)
+        assert work == before and base == pinned
+
+
+@pytest.mark.parametrize("container", ["parent-clips", "config-clips", "tracks", "config", "child-clips"])
+@pytest.mark.parametrize("remove", [True, False])
+def test_document_view_adapter_holds_empty_container_presence(container, remove):
+    parent, shots, internals = _closure(shared=False)
+    payload, internal = parent["payload"], internals[0]["payload"]
+    payload["clips"] = []
+    payload["config"]["clips"] = []
+    if container == "tracks":
+        payload["config"]["tracks"] = []
+    if container == "config":
+        payload["config"] = {}
+    if container == "child-clips":
+        internal["clips"] = []
+    source, key = {
+        "parent-clips": (payload, "clips"), "config-clips": (payload["config"], "clips"),
+        "tracks": (payload["config"], "tracks"), "config": (payload, "config"),
+        "child-clips": (internal, "clips"),
+    }[container]
+    empty = copy.deepcopy(source[key])
+    if not remove:
+        source.pop(key)
+    parent["content_digest"] = _digest(payload)
+    internals[0]["content_digest"] = _digest(internal)
+    work = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    base = copy.deepcopy(work)
+    target = (next(iter(work["shots"].values()))["internal_timeline"] if container == "child-clips"
+              else work["parent"]["config"] if container in {"config-clips", "tracks"} else work["parent"])
+    if remove:
+        target.pop(key)
+    else:
+        target[key] = empty
+    compile_authoring_candidate(work)
+    before, pinned = copy.deepcopy(work), copy.deepcopy(base)
+    with pytest.raises(DocumentDiffError, match="container presence"):
+        document_diff_to_commands(work, base)
+    assert work == before and base == pinned
+
+
+def test_document_view_adapter_holds_missing_registry_to_null_with_parent_authority():
+    parent, shots, internals = _closure(shared=False)
+    parent["payload"]["registry"]["assets"].update({
+        "old-picture": {"media_id": OLD, "type": "image"},
+        "voice": {"media_id": AUDIO, "type": "audio"},
+    })
+    internals[0]["payload"].pop("registry")
+    parent["content_digest"] = _digest(parent["payload"])
+    internals[0]["content_digest"] = _digest(internals[0]["payload"])
+    work = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    base = copy.deepcopy(work)
+    assert document_diff_to_commands(work, base)["commands"] == []
+    next(iter(work["shots"].values()))["internal_timeline"]["registry"] = None
+    compile_authoring_candidate(work)
+    before, pinned = copy.deepcopy(work), copy.deepcopy(base)
+    for defer_media in (True, False):
+        with pytest.raises(DocumentDiffError, match="registry/media edits are held"):
+            document_diff_to_commands(work, base, defer_media=defer_media)
+    assert work == before and base == pinned
+
+
+@pytest.mark.parametrize("field,value", [("asset", "direct"), ("params", None), ("hold", 1),
+                                         ("at", 3), ("opaque", None), ("app", {})])
+def test_document_view_adapter_holds_mirror_only_field_deletions(field, value):
+    parent, shots, internals = _closure(shared=False)
+    for rows in (parent["payload"]["clips"], parent["payload"]["config"]["clips"]):
+        rows[0][field] = value
+    parent["content_digest"] = _digest(parent["payload"])
+    work = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    base = copy.deepcopy(work)
+    work["parent"]["config"]["clips"][0].pop(field)
+    before, pinned = copy.deepcopy(work), copy.deepcopy(base)
+    with pytest.raises(DocumentDiffError, match="native command result"):
+        document_diff_to_commands(work, base)
+    assert work == before and base == pinned
+
+
+def test_document_view_adapter_accepts_identity_map_spelling_and_new_native_move_fields():
+    work = bundle()
+    base = copy.deepcopy(work)
+    for timeline in (work["parent"], work["parent"]["config"],
+                     next(iter(work["shots"].values()))["internal_timeline"]):
+        timeline["clips"] = {row["id"]: row for row in timeline["clips"]}
+    config = work["parent"]["config"]
+    config["tracks"] = {row["id"]: row for row in config["tracks"]}
+    work["parent"]["clips"]["direct"]["at"] = 4
+    config["clips"]["direct"]["at"] = 4
+    native = document_diff_to_commands(work, base)
+    assert [command["op"] for command in native["commands"]] == ["clip.move"]
+    result = native["bundle"]["parent"]
+    assert result["clips"][0]["at"] == result["config"]["clips"][0]["at"] == 4
+    assert "app" in result["clips"][0] and "app" not in base["parent"]["clips"][0]
+
+
+def test_document_view_adapter_checks_native_media_rebind_and_unrelated_held_edits():
+    from astrid.sdk.timeline.commit import _digest, bundle_from_document
+    from tests.editing_conformance.test_recipe_occurrence_media import inputs
+
+    document, old, new, verified = inputs()
+    parent = document["parent_revision"]
+    parent["payload"]["occurrences"] = parent["payload"]["occurrences"][:1]
+    parent["content_digest"] = _digest(parent["payload"])
+    base = bundle_from_document(document)
+    work = copy.deepcopy(base)
+    owner = "occurrence:occ-a"
+    shot = next(iter(work["shots"].values()))
+    alias = old["asset"]
+    new = {**new, "asset": alias}
+    verified = [{**row, "selection": {**row["selection"], "asset": alias}} for row in verified]
+    shot["internal_timeline"]["registry"]["assets"][alias].update(
+        media_id=new["object_id"], generationId=new["generation_id"], variantId=new["variant_id"])
+    shot["payload"]["items"][0]["media_id"] = new["object_id"]
+    assert document_diff_to_commands(work, base, defer_media=True)["commands"] == []
+    selections = {(owner, alias): {"old": old, "new": new}}
+    result = document_diff_to_commands(work, base, media_selections=selections, verified_media=verified)
+    assert [command["op"] for command in result["commands"]] == ["occurrence.swap-media"]
+    replayed = result["bundle"]["shots"][shot["shot_id"]]
+    assert replayed["internal_timeline"]["registry"] == shot["internal_timeline"]["registry"]
+    assert replayed["payload"] == shot["payload"]
+    # Both pre-import validation and final replay must retain unrelated presence.
+    shot["internal_timeline"]["registry"]["opaque"] = None
+    before, pinned = copy.deepcopy(work), copy.deepcopy(base)
+    for kwargs in ({"defer_media": True}, {"media_selections": selections, "verified_media": verified}):
+        with pytest.raises(DocumentDiffError, match="registry"):
+            document_diff_to_commands(work, base, **kwargs)
+    assert work == before and base == pinned
+
+
+@pytest.mark.parametrize("operation", ["trim", "params", "label-clear"])
+def test_document_view_adapter_preserves_native_writes_and_literal_script_slots(operation):
+    parent, shots, internals = _closure(shared=False)
+    parent["payload"]["registry"]["assets"]["direct"].update(type="video", duration=2)
+    for rows in (parent["payload"]["clips"], parent["payload"]["config"]["clips"]):
+        rows[0].update({"from": 0, "to": 1})
+    parent["payload"]["config"]["tracks"][0]["label"] = "Picture"
+    internals[0]["payload"]["clips"][0].update(clipType="am-type", params={"text": "hello"})
+    shots[0]["payload"].update(script=None, slot="hello")
+    for image in (parent, shots[0], internals[0]):
+        image["content_digest"] = _digest(image["payload"])
+    work = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    base = copy.deepcopy(work)
+    shot = next(iter(work["shots"].values()))
+    if operation == "trim":
+        for rows in (work["parent"]["clips"], work["parent"]["config"]["clips"]):
+            rows[0].update({"from": .25, "to": 1.25})
+        expected_op = "clip.trim"
+    elif operation == "params":
+        shot["internal_timeline"]["clips"][0]["params"]["text"] = "ordinary value"
+        expected_op = "clip.set-params"
+    else:
+        work["parent"]["config"]["tracks"][0].pop("label")
+        expected_op = "track.set"
+    result = document_diff_to_commands(work, base)
+    assert [command["op"] for command in result["commands"]] == [expected_op]
+    replayed = result["bundle"]
+    if operation == "trim":
+        for rows in (replayed["parent"]["clips"], replayed["parent"]["config"]["clips"]):
+            assert (rows[0]["from"], rows[0]["to"]) == (.25, 1.25)
+    elif operation == "params":
+        assert replayed["shots"][shot["shot_id"]]["internal_timeline"]["clips"][0]["params"] == {
+            "text": "ordinary value"}
+    else:
+        assert "label" not in replayed["parent"]["config"]["tracks"][0]
+    assert replayed["shots"][shot["shot_id"]]["payload"] == shot["payload"]
+    assert shot["payload"]["script"] is None and shot["payload"]["slot"] == "hello"
+
+
 def test_unchanged_checkout_reports_no_authored_changes_and_unknown_imports_by_default():
     result = publish_authoring_candidate(bundle(), Writer(), idempotency_key="noop")
     assert result["update"].startswith("No authored changes. Saved revision saved-revision.")
@@ -369,6 +566,38 @@ def test_next_actions_quote_authoritative_scope_and_parse_supported_options():
     assert "Use timelines show to view the timeline" in result["update"]
     assert "Use timelines visualize to visualize" in result["update"]
     assert "--mode inputs" in result["update"]
+
+
+def test_document_publish_holds_move_with_presence_edit_before_import_and_keeps_file(tmp_path, monkeypatch):
+    script = Path(__file__).resolve().parents[2] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
+    spec = importlib.util.spec_from_file_location("timeline_document_presence_test", script)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    base = bundle()
+    base["base_parent"]["publication_id"] = "publication-1"
+    work = copy.deepcopy(base)
+    work["parent"]["presence_probe"] = None
+    for rows in (work["parent"]["clips"], work["parent"]["config"]["clips"]):
+        rows[0]["at"] = 4
+    path = tmp_path / "draft.json"
+    source = json.dumps(work)
+    path.write_text(source)
+    session = SimpleNamespace(
+        _state=lambda: {"base": {"revision_id": "parent-1", "publication_id": "publication-1"}},
+        _bundle=lambda state: base,
+        commit_many=lambda *args, **kwargs: pytest.fail("held draft reached commit"),
+    )
+    monkeypatch.setattr(helper.AstridClient, "open_from_launcher", lambda **kwargs: nullcontext(object()))
+    monkeypatch.setattr(helper, "workspace", lambda: object())
+    monkeypatch.setattr(helper.TimelineSession, "open", lambda *args, **kwargs: session)
+    monkeypatch.setattr(helper, "import_authoring_media",
+                        lambda *args: pytest.fail("held draft reached import"))
+    monkeypatch.setattr("sys.argv", [str(script), "publish", "--file", str(path), "--idempotency-key", "held-move"])
+    with pytest.raises(RuntimeError, match="document publish is held: parent field 'presence_probe'"):
+        helper.main()
+    assert path.read_text() == source
+    assert not path.with_suffix(".publication.json").exists()
+    assert not path.with_suffix(".prepared.json").exists()
 
 
 def test_document_publish_stdout_and_durable_receipt_contain_shared_feedback(tmp_path, monkeypatch, capsys):

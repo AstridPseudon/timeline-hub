@@ -344,6 +344,26 @@ def plan_authoring_media(
     imports: dict[str, dict[str, Any]] = {}
     by_path: dict[Path, dict[str, Any]] = {}
 
+    def check_containers(node: Mapping[str, Any], path: str) -> None:
+        if not isinstance(node, Mapping):
+            raise ValueError(f"Malformed media container at {path}: expected an object")
+        if "registry" in node:
+            registry = node["registry"]
+            if not isinstance(registry, Mapping):
+                raise ValueError(f"Malformed media container at {path}.registry: expected an object")
+            if "assets" in registry and not isinstance(registry["assets"], Mapping):
+                raise ValueError(f"Malformed media container at {path}.registry.assets: expected an object")
+
+    # Refuse malformed explicit containers before probing any local file. Missing
+    # registries remain missing; inherited asset authority is only a lookup view.
+    for key in ("parent", "base_parent_payload"):
+        check_containers(work[key], f"candidate.{key}")
+        if "config" in work[key]:
+            check_containers(work[key]["config"], f"candidate.{key}.config")
+    for shot_id, shot in work["shots"].items():
+        for key in ("internal_timeline", "base_internal_timeline"):
+            check_containers(shot[key], f"candidate.shots[{shot_id!r}].{key}")
+
     def source(value: str) -> dict[str, Any]:
         path = _path(value, directory)
         if path not in by_path:

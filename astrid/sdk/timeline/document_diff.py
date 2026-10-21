@@ -11,7 +11,7 @@ import math
 from collections.abc import Mapping
 
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
-from astrid.sdk.timeline._command_state import CommandError, equal
+from astrid.sdk.timeline._command_state import ABSENT, CommandError, equal, present
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
 from astrid.sdk.timeline.capture import capture_move, occurrence_start
@@ -51,15 +51,35 @@ def _require_same(before, after, message):
         raise DocumentDiffError(message)
 
 
-def _require_explicit_rows(candidate_rows, result_rows, message):
-    """Compare the view's explicit fields, retaining command-derived fields."""
+def _container_tag(value, message, *, rows=False):
+    if value is MISSING:
+        return ABSENT
+    if not isinstance(value, (list, Mapping) if rows else Mapping):
+        raise DocumentDiffError(message + " has a malformed container")
+    # Lists and identity maps are equivalent view spellings, not storage edits.
+    return present([] if rows else {})
+
+
+def _require_container(before, after, message, *, rows=False):
+    _require_same(_container_tag(before, message, rows=rows),
+                  _container_tag(after, message, rows=rows),
+                  message + " container presence is held by the document view")
+
+
+def _require_explicit_rows(pinned_rows, candidate_rows, result_rows, message):
+    """Verify explicit targets and deletions, retaining new command-derived fields."""
+    _require_container(pinned_rows, candidate_rows, message, rows=True)
+    _require_container(candidate_rows, result_rows, message, rows=True)
+    pinned_map = _rows([] if pinned_rows is MISSING else pinned_rows, "id", message + ".base")
+    candidate_rows = [] if candidate_rows is MISSING else candidate_rows
+    result_rows = [] if result_rows is MISSING else result_rows
     candidate_map = _rows(candidate_rows, "id", message + ".candidate")
     result_map = _rows(result_rows, "id", message + ".result")
-    if list(candidate_map) != list(result_map):
+    if list(pinned_map) != list(candidate_map) or list(candidate_map) != list(result_map):
         raise DocumentDiffError(message + " changed row membership/order")
     for identity, row in candidate_map.items():
-        if any(not equal(_field(result_map[identity], field), value)
-               for field, value in row.items()):
+        if any(not equal(_field(result_map[identity], field), _field(row, field))
+               for field in set(pinned_map[identity]) | set(row)):
             raise DocumentDiffError(f"{message} differs at row {identity!r}")
 
 
@@ -155,8 +175,11 @@ def _replace_registry_media(registry, replacements):
         if not isinstance(entry, dict):
             continue
         for key in ("media_id", "type", "generationId", "variantId"):
-            if key in new and entry.get(key) == new.get(key):
-                entry[key] = old.get(key)
+            if key in new and equal(_field(entry, key), _field(new, key)):
+                if key in old:
+                    entry[key] = old[key]
+                else:
+                    entry.pop(key, None)
     return value
 
 
@@ -315,6 +338,15 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
                               defer_media=False):
     """Translate supported raw document fields to captured commands."""
     _validate_pinned_bundle(candidate, base)
+    parent = candidate.get("parent")
+    base_parent = candidate.get("base_parent_payload")
+    if not isinstance(parent, Mapping) or not isinstance(base_parent, Mapping):
+        raise DocumentDiffError("candidate parent is malformed")
+    _require_container(_field(base_parent, "config"), _field(parent, "config"), "parent.config")
+    _require_container(_field(base_parent, "clips"), _field(parent, "clips"), "parent.clips", rows=True)
+    config, base_config = parent.get("config", {}), base_parent.get("config", {})
+    for key in ("clips", "tracks"):
+        _require_container(_field(base_config, key), _field(config, key), f"parent.config.{key}", rows=True)
     working = copy.deepcopy(base)
     commands = []
     working, emitted = _native_track_commands(working, base, candidate)
@@ -325,6 +357,10 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
                       if row["shot_id"] == shot_id), None)
         if owner is None:
             raise DocumentDiffError(f"candidate shot {shot_id!r} has no stable occurrence owner")
+        if not isinstance(shot.get("internal_timeline"), Mapping):
+            raise DocumentDiffError(f"{owner} internal timeline is malformed")
+        _require_container(_field(shot["base_internal_timeline"], "clips"),
+                           _field(shot["internal_timeline"], "clips"), f"{owner} clips", rows=True)
         before_rows = _rows(canonical_shots[shot_id]["internal_timeline"].get("clips", []), "id",
                             f"Runtime shots[{shot_id!r}].internal_timeline.clips")
         pinned_rows = _rows(shot["base_internal_timeline"].get("clips", []), "id",
@@ -374,30 +410,31 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
             working, emitted = _emit_clip_commands(working, owner, before, after)
             commands.extend(emitted)
         _require_explicit_rows(
-            shot["internal_timeline"].get("clips", []),
-            working["shots"][shot_id]["internal_timeline"].get("clips", []),
+            _field(shot["base_internal_timeline"], "clips"),
+            _field(shot["internal_timeline"], "clips"),
+            _field(working["shots"][shot_id]["internal_timeline"], "clips"),
             f"{owner} clips differ from the native command result",
         )
         _require_same(_field(shot["internal_timeline"], "tracks"),
                       _field(shot["base_internal_timeline"], "tracks"),
                       f"{owner} track edits are held by the document view")
         if not media_changes:
-            _require_same(shot["internal_timeline"].get("registry"),
-                          shot["base_internal_timeline"].get("registry"),
+            _require_same(_field(shot["internal_timeline"], "registry"),
+                          _field(shot["base_internal_timeline"], "registry"),
                           f"{owner} registry/media edits are held by the document view")
             _require_same(shot.get("payload"), shot.get("base_payload"),
                           f"{owner} shot payload/narration edits are held by the document view")
         else:
             if deferred:
                 _require_same(
-                    _replace_registry_media(shot["internal_timeline"].get("registry"),
+                    _replace_registry_media(_field(shot["internal_timeline"], "registry"),
                                             {alias: media_changes[alias] for alias in deferred}),
-                    shot["base_internal_timeline"].get("registry"),
+                    _field(shot["base_internal_timeline"], "registry"),
                     f"{owner} registry contains unsupported media fields",
                 )
             else:
-                _require_same(shot["internal_timeline"].get("registry"),
-                              working["shots"][shot_id]["internal_timeline"].get("registry"),
+                _require_same(_field(shot["internal_timeline"], "registry"),
+                              _field(working["shots"][shot_id]["internal_timeline"], "registry"),
                               f"{owner} registry/media differs from the native command result")
             if deferred:
                 replacements = {
@@ -416,14 +453,10 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
                           _field(shot["base_internal_timeline"], key),
                           f"{owner} internal field {key!r} is held by the document view")
 
-    parent = candidate.get("parent")
-    base_parent = candidate.get("base_parent_payload")
-    if not isinstance(parent, Mapping) or not isinstance(base_parent, Mapping):
-        raise DocumentDiffError("candidate parent is malformed")
     for key in set(parent) | set(base_parent):
         if key in {"clips", "config"}:
             continue
-        _require_same(parent.get(key), base_parent.get(key), f"parent field {key!r} is held by the document view")
+        _require_same(_field(parent, key), _field(base_parent, key), f"parent field {key!r} is held by the document view")
     parent_clips = _rows(parent.get("clips", []), "id", "candidate.parent.clips")
     base_clips = _rows(base_parent.get("clips", []), "id", "candidate.base_parent_payload.clips")
     if list(parent_clips) != list(base_clips):
@@ -434,17 +467,20 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
         _check_clip_shape(before, parent_clips[clip_id], owner="parent", clip_id=clip_id)
         working, emitted = _emit_clip_commands(working, "parent", before, parent_clips[clip_id])
         commands.extend(emitted)
-    for key in set(parent.get("config", {})) | set(base_parent.get("config", {})):
+    for key in set(config) | set(base_config):
         if key not in {"clips", "tracks"}:
-            _require_same(parent.get("config", {}).get(key), base_parent.get("config", {}).get(key),
+            _require_same(_field(config, key), _field(base_config, key),
                           f"parent.config field {key!r} is held by the document view")
-    _require_explicit_rows(parent.get("config", {}).get("tracks", []),
-                           working.get("parent", {}).get("config", {}).get("tracks", []),
+    _require_container(_field(parent, "config"), _field(working["parent"], "config"), "parent.config")
+    result_config = working["parent"].get("config", {})
+    _require_explicit_rows(_field(base_config, "tracks"), _field(config, "tracks"),
+                           _field(result_config, "tracks"),
                            "parent.config.tracks differs from the native command result")
-    _require_explicit_rows(parent.get("config", {}).get("clips", []),
-                           working.get("parent", {}).get("config", {}).get("clips", []),
+    _require_explicit_rows(_field(base_config, "clips"), _field(config, "clips"),
+                           _field(result_config, "clips"),
                            "parent.config.clips differs from the native command result")
-    _require_explicit_rows(parent.get("clips", []), working.get("parent", {}).get("clips", []),
+    _require_explicit_rows(_field(base_parent, "clips"), _field(parent, "clips"),
+                           _field(working["parent"], "clips"),
                            "parent.clips differs from the native command result")
     return {"commands": commands, "bundle": working}
 
