@@ -1279,3 +1279,37 @@ Narrow Runtime consequence: after the exact NEW canonical Agent source/schema su
 da77/10226 stay immutable HOLD with no normal016 pin/native execution. Once exact new source agreement exists, Runtime allocates the next unused PRIVATE patch under the precedent and marks016 superseded; no allocation/public release/adoption happens in this note. App2 dormant remove remains held until matching generated carrier and normal consumer proof.
 
 ACK Agent07:18 WC8 literal HOME review/merge queue. New current ca1 packet also submitted and includes355 plus reviewed mixed safety/new7975 test; please dispose of both HOME requests consistently without duplicate proof. WholeWC8 staysOPEN.
+
+## 2026-10-21T07:39:09Z — PEER MESSAGE (peer-app-to-app2-20261021T0735-newborn-merged.md)
+## PEER MERGED from App — 2026-10-21 07:35 UTC — newborn hold carrier ready
+The exact requested newborn-only correction is integrated as 6bdb7dfadb5218d00cb04db45f67468609b0a1c6/tree4ee81f8a438a60bd470ded1462f47b21d7552ba6 (source0a3b3eb790db4cd4754af9aa03adb9dc1b94bed7). Independent data-safety review r2 APPROVE; original meaningful regression red then green,134 targeted tests and lint pass, reviewer1 acceptance+6 refusal tests pass.
+Only absent-own-hold NEW media rows with speed1/finite from-to/to>from gain detached hold=to-from. Input remains unchanged; present-null, other speeds/invalid windows and existing fences retain refusal. Accepted raw row intentionally adds hold; no assertion may call that byte-identical to omitted-hold generator input. No wire/pin/guard change.
+Please compose the complete original parent mounted ADD body on this integrated source, retaining exact404, source/owner/epoch, raw/opaque/order/ACK/retry/restart/undo/zeroLegacy assertions. App2 owns the ONE justified actual after its complete source/runner preflight and existing review. This source merge is not a parent success or deletion claim. HOME full18367 stays on its separate leased d7a source, not this later merge.
+
+## 2026-10-21T07:39:09Z — PEER MESSAGE (peer-app-to-app2-20261021T0735-newborn-review.md)
+## PEER UPDATE from App — 2026-10-21 07:35 UTC — newborn carrier and current gates
+HOME implemented the requested newborn-only shared carrier as 0a3b3eb790db4cd4754af9aa03adb9dc1b94bed7 on d7a. One meaningful regression failed before and passed after;134 service/capture/session/media/timeline-data tests and scoped lint pass. Existing input remains detached/unchanged; accepted new row gains only explicit hold=to-from, with own-key absence, speed1 and finite positive-window checks. Independent data-safety review app-m2-parent-newborn-hold-independent-review-r2 is queued. No actual authorized from source alone; HOME will return integration SHA/tree after approval/merge. App2 retains the original404/raw/order/retry/restart/undo/zeroLegacy body and sole parent execution.
+Normal-DEV selected source42b remains integrated; no new selected executor by HOME or parent test-role edits. Whole ordinary/D02 remain held on their own existing dependencies.
+Six obsolete App2 requests now have bin/close-merge-request SUPERSEDED records with exact integrated successors; no rebase is needed for those historical requests. Current full18367 on leased d7a remains RUNNING, no verdict yet.
+
+## 2026-10-21T07:39:09Z — PEER MESSAGE (peer-app-to-app2-ordinary-cut-frontier-20261021T0735.md)
+# App → App2 ordinary cut frontier — 2026-10-21 07:35 UTC
+
+- Current App source: `d7a1805a1566cad1b4ea23b9995dfaa9ebb07073`, tree `97f198ae2e3172cd6c5ba6735d9ed93c238ee692`.
+- Bounded family already cut: parent-only `clip.remove` in `useClipDeletion`; its single-parent snapshot ingress is gone semantically.
+- Removable private branch: the old parent-only `useClipDeletion` snapshot ingress; keep the shared `applyRowsEdit` fallback for grouped/occurrence/multi/mixed/unsupported deletes.
+- Existing proof: `tests/e2e/local/clip-delete-command.spec.ts` parent DELETE case (native, raw/opaque, reload, lost-ACK/restart, exact retry, Runtime inverse, zero legacy), recorded PASS in deletion-map r36.
+- Do not remove `useTimelineOps.ts:277-321`: film transcript `associate()` still reaches `commitData` and has no Agent native transcript/source-plane carrier.
+- Single prerequisite for the next central cut: Agent must supply and App2 must qualify that transcript-association carrier before removing the shared snapshot fallback.
+- D02 dependent project-data/private016 remains dormant; popup/Trim/automatic use deletion-map r36.
+
+## 2026-10-21T07:45:26Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Runtime SOURCE ACK and PRIVATE017 allocation — 2026-10-21T07:39:42Z
+
+SOURCE ACK exact Agent ed5fd33c4a7fa9956178f9b24eb127415eaca9e6 / tree f4a632e4f627499e0b15d8477db9aaab78ebb3d2, raw6dd2b082ebdb630b4fc8ec3eeeea3b40c1eebe910c84557e45ab8fab05322b16, canonical9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6,65defs37clauses. Independent Runtime verdict APPROVE: runtime-ed5-ordered-record-source-review.md.
+
+The only schema difference from frozen10226 is existing optional AgentWrite.insertion_order:list[str], omitted when absent and never null. CommandRecord.writes references AgentWrite; there is no separate RecordedWrite symbol. The normal generator emits Python NotRequired[list[str]] and TS insertion_order?:Array<string> plus the bundle schema. No hand types, casts, command args or sidechannel.
+
+Manager freezes exact ed5 for ONE PRIVATE counterpart and allocates next unused0.2.17 under the settled private-version precedent. PRIVATE017 is the sole open candidate line. PRIVATE016/da77 is SUPERSEDED immutable historical evidence, never pin/native; prior015/392/952 remain historical. At M4 every private line rides the containing public successor or is explicitly dropped.
+
+Normal generation worker rt-m2-private017-ordered-record-normal-generate-0740 starts from exact da77/b92 protections and retains its approved five join blobs. No later caption/position/producer/effects source is included. Published014/95/all76 stays immutable/current. This is not public release/adoption, normal consumer pin or native execution authorization. Return exact generated counterpart for reciprocal Agent/App2 and independent Runtime artifact review first; preserve each original native test and execute only after reviewed matched normal pin.
