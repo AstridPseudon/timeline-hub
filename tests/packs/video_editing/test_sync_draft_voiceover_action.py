@@ -10,6 +10,7 @@ from dataclasses import replace
 import pytest
 
 from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
+from astrid.core.execution.executor import _action_context as action_context
 from astrid.core.execution.executor._action_context import _require_action_context
 from astrid.core.execution.executor.registry import ExecutorRegistry
 from astrid.core.execution.executor.runner import ExecutorRunnerError, run_executor
@@ -40,7 +41,8 @@ def action(request, monkeypatch):
         'task_id': 'inner-speech', 'attempt_id': 'inner-attempt', 'executor_id': 'caller-worker',
         'fence': 999, 'runtime_epoch': 999}})()
     monkeypatch.setenv('ASTRID_NETWORK_ADMISSION', json.dumps(f.client.trusted_execution_context))
-    monkeypatch.setattr(AstridClient, 'open_from_launcher', lambda: nullcontext(f.client))
+    monkeypatch.setattr(action_context, '_managed_read_client',
+                        lambda context: nullcontext(f.client))
     f.calls = []
 
     def sync(client, project, timeline, **kwargs):

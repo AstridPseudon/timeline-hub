@@ -160,3 +160,36 @@ class _PreparationTarget:
     def __getattr__(self, name):
         self._context._check()
         return getattr(self._target, name)
+
+
+@contextmanager
+def _managed_read_client(context: _ActionContext):
+    """Open the host's existing worker read connection without launcher startup.
+
+    The generic host already supplies this endpoint and bearer to ordinary
+    Python actions.  Negotiate only the worker's existing execution/read
+    scopes, then bind the authenticated actor to the admitted executor.  This
+    keeps the action on the normal SDK read surface while avoiding the
+    user-client launcher handshake, which also requests write scopes.
+    """
+    context._check()
+    from astrid.sdk import AstridClient
+    from astrid.sdk.remote import RemoteAstridClient
+    from astrid.sdk.workspace_client import WorkspaceClient
+
+    endpoint = os.environ.get("ASTRID_RUNTIME_ENDPOINT", "").strip()
+    credential = os.environ.get("ASTRID_RUNTIME_CREDENTIAL", "").strip()
+    if not endpoint or not credential:
+        raise ValueError("managed Python producer requires the host runtime read connection")
+    transport = WorkspaceClient(endpoint, credential)
+    requested_scopes = ["worker:execute", "projects:read", "tasks:read", "objects:read"]
+    handshake = transport.handshake("astrid-managed-python", "stage1", requested_scopes)
+    if isinstance(handshake, Mapping):
+        actor_id, scopes = handshake.get("actor_id"), handshake.get("scopes")
+    else:
+        actor_id, scopes = getattr(handshake, "actor_id", None), getattr(handshake, "scopes", None)
+    if (actor_id != context.producer["executor_id"]
+            or tuple(scopes or ()) != tuple(requested_scopes)):
+        raise ValueError("managed Python producer read connection identity or scopes changed")
+    transport.actor_id = actor_id
+    yield AstridClient(remote=RemoteAstridClient(transport))

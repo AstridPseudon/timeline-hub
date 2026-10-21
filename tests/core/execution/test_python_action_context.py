@@ -14,6 +14,7 @@ import yaml
 from astrid.core.execution.executor import _action_context as context_module
 from astrid.core.execution.executor._action_context import (
     _action_context_scope,
+    _managed_read_client,
     _producer_action_admission,
     _require_action_context,
 )
@@ -124,6 +125,50 @@ def test_context_has_read_only_identity_and_expires_even_in_copied_context(manag
         retained.run(_require_action_context)
     with pytest.raises(ValueError, match='lifetime'):
         _ = context.out
+
+
+def test_managed_read_client_uses_host_worker_identity_and_read_scopes(managed_invocation, monkeypatch):
+    f = managed_invocation
+    monkeypatch.setenv('ASTRID_RUNTIME_ENDPOINT', 'http://127.0.0.1:8765')
+    monkeypatch.setenv('ASTRID_RUNTIME_CREDENTIAL', 'worker-token')
+    requested = []
+
+    class Transport:
+        def __init__(self, endpoint, credential):
+            self.endpoint, self.credential, self.actor_id = endpoint, credential, None
+
+        def handshake(self, name, version, scopes):
+            requested.append((name, version, tuple(scopes)))
+            return {'actor_id': 'host-worker', 'scopes': list(scopes)}
+
+    monkeypatch.setattr('astrid.sdk.workspace_client.WorkspaceClient', Transport)
+    with _action_context_scope(f.request, f.bound):
+        with _managed_read_client(_require_action_context()) as client:
+            transport = client._remote._transport
+            assert transport.endpoint == 'http://127.0.0.1:8765'
+            assert transport.credential == 'worker-token'
+            assert transport.actor_id == f.bound['executor_id']
+    assert requested == [('astrid-managed-python', 'stage1',
+                          ('worker:execute', 'projects:read', 'tasks:read', 'objects:read'))]
+
+
+def test_managed_read_client_refuses_actor_substitution(managed_invocation, monkeypatch):
+    f = managed_invocation
+    monkeypatch.setenv('ASTRID_RUNTIME_ENDPOINT', 'http://127.0.0.1:8765')
+    monkeypatch.setenv('ASTRID_RUNTIME_CREDENTIAL', 'worker-token')
+
+    class Transport:
+        def __init__(self, endpoint, credential):
+            self.endpoint, self.credential = endpoint, credential
+
+        def handshake(self, *args):
+            return {'actor_id': 'inner-speech', 'scopes': list(args[-1])}
+
+    monkeypatch.setattr('astrid.sdk.workspace_client.WorkspaceClient', Transport)
+    with _action_context_scope(f.request, f.bound):
+        with pytest.raises(ValueError, match='identity or scopes'):
+            with _managed_read_client(_require_action_context()):
+                pass
 
 
 @pytest.mark.parametrize('field,value', [('out', None), ('run_root', None),

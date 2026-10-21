@@ -37,6 +37,7 @@ def run(
     """Settle a managed proposal or the helper's advisory report; never publish."""
     from astrid.core._shared.result_manifest import build_manifest, write_manifest
     from astrid.core.execution.executor._action_context import (
+        _managed_read_client,
         _PreparationClient,
         _require_action_context,
     )
@@ -57,9 +58,7 @@ def run(
     if adopt_value is None:
         adopt_value = []
 
-    from astrid.sdk import AstridClient
-
-    with AstridClient.open_from_launcher() as client:
+    with _managed_read_client(context) as client:
         result = _sync_draft_voiceover_proposal(
             _PreparationClient(client, context),
             project,
