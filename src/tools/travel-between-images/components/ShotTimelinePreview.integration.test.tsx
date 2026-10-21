@@ -10,11 +10,27 @@ import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import { clearTimelineDraft, loadTimelineDraft, saveTimelineDraft } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
+import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider.tsx';
+import { TimelineEditorCore } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx';
+import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { allowTimelineEdits } from '@/tools/video-editor/lib/timeline-editability.ts';
 import { ShotTimelinePreview } from './ShotTimelinePreview.tsx';
 import * as shotTimelineDataProvider from './shotTimelineDataProvider.ts';
-import { shotTimelineRecoveryId } from './shotTimelineDataProvider.ts';
+import {
+  createShotTimelineDataProvider,
+  createShotTimelineInitialData,
+  shotTimelineRecoveryId,
+} from './shotTimelineDataProvider.ts';
+import { ShotTimelineRecoveryControls } from './ShotTimelinePreview.tsx';
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
+
+const staleVariantRepository = vi.hoisted(() => ({
+  fetchCurrentPrimaryVariant: vi.fn(),
+  fetchPrimaryVariantLocations: vi.fn(),
+}));
+vi.mock('@/tools/video-editor/adapters/app/staleVariantRepository.ts', () => staleVariantRepository);
+
 vi.mock('@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx', () => ({
   RemotionPreview: React.forwardRef(() => <div data-testid="preview" />),
 }));
@@ -68,9 +84,22 @@ function editedGraph(atMs: number, headId: string) {
   return graph;
 }
 
+function graphWithGenerationBackedPopupAsset(headId: string) {
+  const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
+  graph.primary_timeline.head.revision_id = headId;
+  return graph;
+}
+
+function SaveStatusProbe() {
+  const chrome = useTimelineChromeContext();
+  return <output data-testid="popup-save-status">{chrome.isConflictExhausted ? 'conflict' : chrome.saveStatus}</output>;
+}
+
 describe('shot timeline popup real recovery integration', () => {
   beforeEach(async () => {
     vi.restoreAllMocks();
+    staleVariantRepository.fetchCurrentPrimaryVariant.mockReset();
+    staleVariantRepository.fetchPrimaryVariantLocations.mockReset();
     resetFakeIndexedDB();
     await clearTimelineDraft(recoveryKey);
   });
@@ -165,6 +194,81 @@ describe('shot timeline popup real recovery integration', () => {
       composition: expect.objectContaining({ parentDocumentId: composition.parentDocumentId }),
     }));
     expect(publish).not.toHaveBeenCalled();
+  });
+
+  it('shows a Main CAS refusal and keeps the selected stale-variant replacement in recovery', async () => {
+    const graph = graphWithGenerationBackedPopupAsset('head-swap-refused');
+    const publish = vi.fn().mockRejectedValue(
+      Object.assign(new Error('Main timeline head advanced'), { status: 409 }),
+    );
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish });
+    const composition = adapter.prepare(graph);
+    const projected = projectCanonicalComposition({
+      ...composition,
+      occurrences: [composition.occurrences.find((item) => item.occurrenceId === 'occ-1')!],
+    }, {
+      output: { resolution: '1920x1080', fps: 30, file: 'shot-occ-1.mp4' },
+      tracks: [], clips: [], registry: {},
+    }, { clampToOccurrenceDuration: false }).config!;
+    const config = {
+      ...projected,
+      registry: {
+        ...projected.registry,
+        'alpha-image': {
+          ...projected.registry['alpha-image'],
+          generationId: 'generation-alpha',
+          variantId: 'variant-old',
+        },
+      },
+    };
+    const provider = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
+    staleVariantRepository.fetchCurrentPrimaryVariant.mockResolvedValue({
+      id: 'variant-new',
+      location: 'https://media.example/variant-new.png',
+    });
+
+    render(
+      <VideoEditorProvider
+        dataProvider={provider}
+        projectId={composition.projectId}
+        projectSlug={composition.projectId}
+        timelineId="popup-swap-refusal"
+        userId={null}
+        timelineEditability={allowTimelineEdits}
+        initialTimelineData={createShotTimelineInitialData(config)}
+      >
+        <TimelineEditorCore />
+        <ShotTimelineRecoveryControls />
+        <SaveStatusProbe />
+      </VideoEditorProvider>,
+      { wrapper: wrapper() },
+    );
+
+    const clip = await waitFor(() => {
+      const element = document.querySelector('.clip-action');
+      if (!element) throw new Error('timeline clip has not rendered');
+      return element;
+    });
+    fireEvent.keyDown(clip, { key: 'Enter' });
+    fireEvent.contextMenu(clip);
+    fireEvent.click(await screen.findByText('Update to current variant'));
+
+    expect(staleVariantRepository.fetchCurrentPrimaryVariant).toHaveBeenCalledWith('generation-alpha');
+    await waitFor(() => expect(publish).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId('popup-save-status')).toHaveTextContent('conflict'));
+
+    const recovery = await loadTimelineDraft(recoveryKey);
+    // RED: a refused Main save must keep the exact replacement selected by the user.
+    expect(recovery?.draft.registry).toMatchObject({
+      assets: {
+        'alpha-image': {
+          file: 'https://media.example/variant-new.png',
+          variantId: 'variant-new',
+        },
+      },
+    });
+    expect(recovery?.draft.config).toBeTruthy();
+    expect(screen.getByRole('alert')).toHaveTextContent('This timeline changed elsewhere');
   });
 
   it.each([

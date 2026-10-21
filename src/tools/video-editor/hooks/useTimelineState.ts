@@ -24,6 +24,7 @@ import {
 } from '@/shared/state/selectionStore.ts';
 import { createInteractionState, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ROW_HEIGHT, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useAssetOperations } from '@/tools/video-editor/hooks/useAssetOperations.ts';
@@ -43,6 +44,7 @@ import {
   createTimelineStore,
   seedTimelineStoreBeforeRender,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { createTimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 import {
   createTimelineCommandRunner,
   MEDIA_COMMAND_DESCRIPTORS,
@@ -933,6 +935,25 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     editability: runtime.timelineEditability,
   });
 
+  const runtimeProvider = runtime.provider;
+  const runtimeProjectId = runtime.project.projectId;
+  const parentMediaRuntime = useMemo(() => {
+    const provider = runtimeProvider as typeof runtimeProvider & {
+      getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
+    };
+    const getProjectVerifiedMedia = provider.getProjectVerifiedMedia;
+    return typeof getProjectVerifiedMedia === 'function' && typeof runtimeProjectId === 'string'
+      ? { projectId: runtimeProjectId, getProjectVerifiedMedia: getProjectVerifiedMedia.bind(provider) }
+      : undefined;
+  }, [runtimeProjectId, runtimeProvider]);
+  const parentMediaCommands = useMemo(
+    () => createTimelineCommands(store, {
+      timelineEditability: runtime.timelineEditability,
+      parentMediaRuntime,
+    }),
+    [parentMediaRuntime, runtime.timelineEditability, store],
+  );
+
   const assetManagement = services.useAssetManagement({
     store,
     dataRef,
@@ -944,6 +965,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry,
     invalidateAssetRegistry,
     resolveAssetUrl,
+    commands: parentMediaCommands,
   });
 
   const clipResize = useClipResize({
@@ -1239,6 +1261,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     trackLabel: save.commands.trackLabelPort,
     shotSet: save.commands.shotSetPort,
     parentClipAddMedia: save.commands.parentClipAddMediaPort,
+    parentClipSwapMedia: save.commands.parentClipSwapMediaPort,
     occurrenceDuplicate: save.commands.occurrenceDuplicatePort,
     transcriptHost,
     setInputModality: editor.setInputModality,
@@ -1301,7 +1324,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
     save.commands.port, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipParamsPort,
     save.commands.elementPort, save.commands.trackLabelPort, save.commands.shotSetPort,
-    save.commands.parentClipAddMediaPort, save.commands.occurrenceDuplicatePort]);
+    save.commands.parentClipAddMediaPort, save.commands.parentClipSwapMediaPort, save.commands.occurrenceDuplicatePort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,

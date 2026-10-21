@@ -292,6 +292,12 @@ export function useTimelineCommandSession(options: {
             requireCleanParentClipSwapMedia();
             parentClipSwapMediaPort.assertPreparationCurrent(preparation);
           },
+          capture(input) { requireCleanParentClipSwapMedia(); return parentClipSwapMediaPort.capture(input); },
+          finish(basis, verifiedMedia) {
+            requireCleanParentClipSwapMedia();
+            return parentClipSwapMediaPort.finish(basis, verifiedMedia);
+          },
+          submit(input) { requireCleanParentClipSwapMedia(); parentClipSwapMediaPort.submit(input); },
         };
         const occurrenceDuplicatePort = session.occurrenceDuplicatePort;
         const requireCleanDuplicate = () => {
@@ -347,7 +353,9 @@ export function useTimelineCommandSession(options: {
           submit(input) { requireCleanTrim(); trimPort.submit(input); },
         };
         sessionRef.current = session;
-        setState({ ...session.getState() });
+        // Initial state can already own an accepted publication after reload.
+        // Route it through the same ownership side effects as later updates.
+        changed(session.getState());
       }
     })().catch((error) => {
       clearSelectedBasis();

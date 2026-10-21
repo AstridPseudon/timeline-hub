@@ -748,6 +748,7 @@ export function VideoEditorRuntimeContent({
     element: editor.element,
     occurrenceDuplicate: editor.occurrenceDuplicate,
     parentClipAddMedia: editor.parentClipAddMedia,
+    parentClipSwapMedia: editor.parentClipSwapMedia,
     shotSet: editor.shotSet,
     trackLabel: editor.trackLabel,
     clipScalar: editor.clipScalar,

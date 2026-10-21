@@ -15,7 +15,8 @@ function fixture(){
  const ref={packId,id:'blocks',kind:'effect' as const,revision:'sha256:old'};
  const source='export default function Blocks(){return null;}';const files=[{path:'component.tsx',sha256:sha256(source)}];const closure=sha256(stableJson(files));
  const snapshotRoot=path.join(artifactRoot,realmId,projectId,packId,'snapshots',closure);fs.mkdirSync(snapshotRoot,{recursive:true});fs.writeFileSync(path.join(snapshotRoot,'component.tsx'),source);
- const content={schema:'astrid.project-pack/v1',pack_id:packId,source_binding_key:'project-packs',relative_manifest:`${realmId}/${projectId}/packs/${packId}/pack.yaml`,admissions:[{id:ref.id,kind:ref.kind,revision:ref.revision,snapshot_digest:closure}]};
+ const snapshotObject={object_id:'sha256:'+sha256('snapshot-object'),digest:'sha256:'+sha256('snapshot-object'),size:123,media_type:'application/json'};
+ const content={schema:'astrid.project-pack/v1',pack_id:packId,source_binding_key:'project-packs',relative_manifest:`${realmId}/${projectId}/packs/${packId}/pack.yaml`,admissions:[{id:ref.id,kind:ref.kind,revision:ref.revision,snapshot_digest:closure,snapshot_object:snapshotObject}]};
  const document={document_id:projectPackDocumentId(projectId),project_id:projectId,kind:'astrid.project-pack',version:2,content};
  const packRoot=path.dirname(path.join(sourceRoot,content.relative_manifest));
  const index={schema:'astrid.element-admissions/v1',realmId,binding:{projectId,documentId:document.document_id,documentVersion:2,contentDigest:'sha256:'+sha256(stableJson(content))},
@@ -23,9 +24,15 @@ function fixture(){
   elements:[{projectId,descriptor:{...ref,label:'Blocks',componentPath:`external/${packId}/old/component.tsx`,parameters:[],schema:{type:'object'},defaults:{}},authoring:{packRoot,componentPath:path.join(packRoot,'component.tsx'),descriptorPath:path.join(packRoot,'element.yaml'),status:'ready'},snapshot:{root:snapshotRoot,componentPath:'component.tsx',files}}]};
  const readDocument=vi.fn(async(_project:string,id:string)=>id===document.document_id?document:null);
  const resolveRecord=vi.fn(async()=>({...index.elements[0],binding:index.binding}));
- return {root,projectId,ref,content,document,index,options:{realmId,artifactRoot,sourceRoot,readDocument,resolveRecord,verificationCache:new Map(),resolvedCache:new Map()}};
+ return {root,projectId,ref,content,document,index,snapshotObject,options:{realmId,artifactRoot,sourceRoot,readDocument,resolveRecord,verificationCache:new Map(),resolvedCache:new Map()}};
 }
 describe('Runtime-owned active project admission selection',()=>{
+ it('retains the exact resolver binding and matching admitted snapshot object on the raw element',async()=>{
+  const f=fixture();const selected=await selectProjectElements(f.projectId,[f.ref],f.options);const element=selected.elements[0] as typeof selected.elements[number]&{binding:unknown;snapshot_object:unknown};
+  expect(element.binding).toEqual(f.index.binding);expect(element.snapshot_object).toEqual(f.snapshotObject);
+  expect(element.binding).toEqual({projectId:f.projectId,documentId:f.document.document_id,documentVersion:f.document.version,contentDigest:'sha256:'+sha256(stableJson(f.document.content))});
+  const module=generateElementAdmissionModule(selected,true);const metadata=module.split('export const elements=')[1].split(';')[0];expect(metadata).toContain(JSON.stringify(f.snapshotObject));expect(metadata).not.toContain(f.index.elements[0].snapshot.root);
+ });
  it('reads one canonical default binding and only exact required snapshot input despite1000 unrelated documents/artifacts',async()=>{
   const f=fixture();const unrelated=new Map(Array.from({length:1000},(_,i)=>['unrelated-'+i,{project_id:'other',content:{}}]));
   f.options.readDocument.mockImplementation(async(_project,id)=>{if(unrelated.has(id))throw new Error('Unrelated document read');return id===f.document.document_id?f.document:null;});
@@ -99,5 +106,12 @@ describe('Runtime-owned active project admission selection',()=>{
  it('rejects a different project document and unsafe source binding',async()=>{
   const f=fixture();f.document.project_id='other';await expect(selectProjectElements(f.projectId,[f.ref],f.options)).rejects.toThrow('another project');
   f.document.project_id='project';f.content.relative_manifest='../escape';await expect(selectProjectElements(f.projectId,[f.ref],f.options)).rejects.toThrow('Unsafe');
+ });
+ it.each([
+  ['missing binding',undefined],
+  ['mismatched binding project',{projectId:'other',documentId:'wrong',documentVersion:2,contentDigest:'sha256:wrong'}],
+ ])('refuses an owned ref with a %s',async(_label,binding)=>{
+  const f=fixture();f.options.resolveRecord.mockResolvedValue({...f.index.elements[0],...(binding===undefined?{}:{binding})} as Record<string,unknown>);
+  await expect(selectProjectElements(f.projectId,[f.ref],f.options)).rejects.toThrow('raced');
  });
 });
