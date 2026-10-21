@@ -46,6 +46,7 @@ import {
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
 export type TimelineCommandErrorCode =
@@ -841,6 +842,33 @@ export function createTimelineCommands(
       }
       if (nextEnd <= nextStart) {
         return failure('invalid_argument', 'trimClip requires an end time after the start time.');
+      }
+
+      // The native trim contract owns source-window precision and recording,
+      // but does not move a clip on the timeline. A supported source-only
+      // trim must use that port; falling through to a snapshot mutation would
+      // report success without durable command acceptance when the session is
+      // absent, stale, or refuses the clip's ownership shape.
+      if (clip.clipType === 'media' && !isHoldClip(clip) && nextStart === currentStart) {
+        const trimPort = state.ops.clipTrim;
+        if (!trimPort) {
+          return failure('mutation_failed', 'Native clip trim is unavailable until the mounted command session is ready.');
+        }
+
+        try {
+          const captured = captureClipTrimEdit(trimPort, current, input.clipId);
+          const speed = clip.speed ?? 1;
+          const currentFrom = clip.from ?? 0;
+          const nextTo = currentFrom + (nextEnd - nextStart) * speed;
+          submitClipTrimEdit(captured, { out_s: nextTo });
+          return success({ clipId: input.clipId, startTime: nextStart, endTime: nextEnd });
+        } catch (cause) {
+          return failure(
+            'mutation_failed',
+            cause instanceof Error ? cause.message : 'Native clip trim failed.',
+            { cause },
+          );
+        }
       }
 
       const nextConfig = updateClipInConfig(current.resolvedConfig, input.clipId, (existingClip) => {
