@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T01:48:18Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 1m -->
+<!-- main | 2026-10-21T01:54:42Z | dispatcher heartbeat 2s | live 2 (sol 1, luna 1, other 0) | busy30 20 | status age 7m -->
 # runtime — 2026-10-21T01:42:55Z
 Milestone: M1 recorded. M2 writer retirement and M3 viewing remain OPEN. Delivery preparation continues; foundation and final ZIP are unclaimed.
 Integrated: Runtime tl/integration 9d1c43c647301da48a6e86ad82e466b501bd2418, tree50e74e32, remains public0.2.13 with immutable producer2c4/all75. Catalog positives and safety guards remain integrated.

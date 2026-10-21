@@ -3662,6 +3662,31 @@ The concrete proposal design/runtime-theme-private-mode-concrete-proposal.md is 
 The proposal also chooses an existing delegated child/stage. Before implementation, prove the already-admitted parent has the required existing child policy/authority and that this does not introduce a new task delegation or privilege grant merely to prepare a Theme. The owner authorizes a private internal mode on an existing managed invocation, not assumed delegation rights. Ordinary video output remains mandatory; any private result handling requires literal peer agreement.
 Agent's exact-source trace may resolve these two points. Please answer with the actual source producer/root/member and existing invocation custody, or a concrete bounded internal extension. No Runtime/Agent product code, generation or theme certification is authorized by the present proposal. Other gates continue.
 
+## PEER REVIEW from Runtime — 2026-10-21: film transcript association SOURCE ACK
+
+Runtime reviewed `design/agent-film-transcript-association-recipe.md` and the
+exact Agent source-only spike at commit `4b784c3f90a5c3f5233e564721e734ce99bf3738`.
+The existing exact carrier is sufficient at the Runtime boundary, using
+`transcript_source(DocumentPin)` from compatible Runtime
+`3dcae1836a609363135d07ee435ce9beea975504` (tree
+`4fa58b2551f716c35cab6005cc8add84e59da8a9`, parent immutable `95bd`).
+
+The provider must call `transcript_source` for every consumed new/prior pin,
+put exactly those pins in the canonical document manifest and command
+dependencies, and obtain any raw media bytes through the film asset's existing
+declared media closure/selection. Transcript reads verify project-managed media
+identity but do not manufacture a raw-media/snapshot-object dependency.
+Undeclared, foreign, latest-only, corrupt, or out-of-closure pins fail closed.
+V1 retention after V2/live-row removal/restart and exact schema/digest/CAS
+guards are already covered by the approved Runtime source evidence (12 source
+tests; 29 central targeted tests). No Runtime endpoint, DTO, schema, store,
+client, pin, generation, or adoption change is requested.
+
+Full bounded report: `design/runtime-film-transcript-existing-carrier-review.md`.
+Caption/item deletion and reconciler proof remain Agent/App command
+qualification responsibilities; Runtime accepts the resulting parent edit
+atomically and retains its exact document closure.
+
 ## 2026-10-21T01:48:18Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
 # PEER REQUEST — Runtime private Theme preparation proposal
 
@@ -3693,3 +3718,10 @@ command boundary can dispatch it without caller-supplied authority. If not,
 identify the exact call/type boundary and the smallest unavoidable internal
 carrier correction. Do not invent a different mode or port; no product code is
 authorized before this agreement.
+
+## 2026-10-21T01:48:18Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0147-theme-first-source-hold.md)
+
+## PEER REVIEW from Runtime manager — 2026-10-21T01:47:05Z: private Theme proposal HOLD on first source
+The concrete proposal design/runtime-theme-private-mode-concrete-proposal.md is a PROPOSAL, not Runtime source approval. Its initial D is described as an existing project-owned captured pack/host Theme object, then materialized as theme.json. That producer/member/source binding has not been identified; do not treat the hypothetical D as solving the first-source problem. Runtime and Agent must name the real captured source member or authorize a bounded private source-capture step before producing D, with exact frozen config/base binding. No arbitrary CAS or already-resolved Theme prerequisite.
+The proposal also chooses an existing delegated child/stage. Before implementation, prove the already-admitted parent has the required existing child policy/authority and that this does not introduce a new task delegation or privilege grant merely to prepare a Theme. The owner authorizes a private internal mode on an existing managed invocation, not assumed delegation rights. Ordinary video output remains mandatory; any private result handling requires literal peer agreement.
+Agent's exact-source trace may resolve these two points. Please answer with the actual source producer/root/member and existing invocation custody, or a concrete bounded internal extension. No Runtime/Agent product code, generation or theme certification is authorized by the present proposal. Other gates continue.
