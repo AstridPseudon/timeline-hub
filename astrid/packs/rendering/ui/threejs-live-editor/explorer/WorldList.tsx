@@ -43,7 +43,9 @@ function WorldRow({ row, removable, selected, busy, onPick, onRemove, onRename }
     if (name && name !== row.name) onRename(row, name);
   };
   return (
-    <li className="world-explorer-row flex min-w-0 items-center gap-1 rounded-md hover:bg-muted">
+    <li className="world-explorer-row relative flex min-w-0 items-center rounded-md hover:bg-muted"
+      style={selected ? { background: 'hsl(var(--primary) / 0.12)' } : undefined}
+    >
       {renaming ? (
         <RenameField name={row.name} onDone={finishRename} />
       ) : (
@@ -51,12 +53,11 @@ function WorldRow({ row, removable, selected, busy, onPick, onRemove, onRename }
           type="button"
           className="min-h-8 min-w-0 flex-1 truncate rounded-md px-2 py-1 text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-current={selected ? 'true' : undefined}
-          style={selected ? { background: 'hsl(var(--primary) / 0.12)' } : undefined}
           onClick={() => onPick(row.key)}
           onDoubleClick={() => setRenaming(true)}
         >
-          {row.name} <span className="tabular-nums text-muted-foreground">{clockText(row.duration)}</span>
-          {row.uses.length ? <span className="text-muted-foreground"> · {row.uses.length} use{row.uses.length === 1 ? '' : 's'}</span> : null}
+          {row.name}{row.qualifier ? <span className="text-muted-foreground"> · {row.qualifier}</span> : null} <span className="tabular-nums text-muted-foreground">{clockText(row.duration)}</span>
+          {row.uses.length ? <span className="text-muted-foreground"> · {row.uses.length} clip{row.uses.length === 1 ? '' : 's'}</span> : null}
         </button>
       )}
       <button
@@ -64,7 +65,7 @@ function WorldRow({ row, removable, selected, busy, onPick, onRemove, onRename }
         aria-label={`Rename ${row.name}`}
         title={`Rename ${row.name}`}
         disabled={busy}
-        className="world-explorer-rename flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+        className={`world-explorer-rename absolute ${removable ? 'right-9' : 'right-1'} flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50`}
         onClick={() => setRenaming(true)}
       >
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
@@ -75,7 +76,7 @@ function WorldRow({ row, removable, selected, busy, onPick, onRemove, onRename }
           aria-label={`Remove ${row.name} from library`}
           title={`Remove ${row.name} from library`}
           disabled={busy}
-          className="world-explorer-remove flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          className="world-explorer-remove absolute right-1 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           onClick={() => onRemove(row)}
         >
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>

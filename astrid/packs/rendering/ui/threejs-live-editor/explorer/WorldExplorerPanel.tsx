@@ -43,7 +43,7 @@ import {
 } from './model';
 import { buildRows, rowFromEntry, type Row } from './rows';
 import { TimeBar, type BarMarker } from './TimeBar';
-import { button, chip, clockText, ERROR_STYLE, errorMessage, OVERLAY_STYLE, PILL_STYLE, speedLabel, VIEWER_STYLE } from './ui';
+import { button, clockText, eventChip, eventRow, ERROR_STYLE, errorMessage, OVERLAY_STYLE, PILL_STYLE, speedLabel, VIEWER_STYLE } from './ui';
 import { ShotGallery } from './ShotGallery';
 import { WorldList } from './WorldList';
 
@@ -65,8 +65,8 @@ const MIN_VIEW_WIDTH = 160;
 const FALLBACK_VIEW_WIDTH = 320;
 const FALLBACK_ASPECT = 16 / 9;
 /** At this container width the panel uses its side column (the full-screen layout). */
-const WIDE_REM = 38;
-const SIDE_COLUMN = '22rem';
+const WIDE_REM = 46;
+const SIDE_COLUMN = '26rem';
 /** Both modes' controls share this height in the side layout, so the viewer keeps its size when the mode changes. */
 const CONTROLS_MIN_HEIGHT = '6rem';
 /** Docked, the scrolling section below the pinned viewer always keeps at least this much height; the viewer shrinks first. */
@@ -1207,33 +1207,20 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     <p className="text-[11px] text-muted-foreground">This world has no free view yet, so only its shots can be shown.</p>
   ) : null;
 
+  // Docked: a two-column grid of chips that fill their cells. Side column: one event per row, like a world-list row.
   const eventButtons = (
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Events" data-refocus>
+    <div className={wide ? 'flex flex-col gap-0.5' : 'grid grid-cols-2 gap-1.5'} role="group" aria-label="Events" data-refocus>
       {events.map((event, i) => (
         <button
           key={`${i}:${event.start}:${event.name}`}
           type="button"
-          className={chip}
+          className={wide ? eventRow : eventChip}
           disabled={!ready}
           title={event.end === undefined ? `At ${clockText(event.start, 1)}` : `${clockText(event.start, 1)} – ${clockText(event.end, 1)}`}
           onClick={() => seekWorld(event.start)}
         >
-          {event.name} <span className="tabular-nums text-muted-foreground">{clockText(event.start)}</span>
-        </button>
-      ))}
-    </div>
-  );
-  const shotEventButtons = (
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Shot events">
-      {shotEvents.map(({ event, from }, i) => (
-        <button
-          key={`${i}:${event.start}:${event.name}`}
-          type="button"
-          className={chip}
-          disabled={!ready}
-          onClick={() => seekTravel(from)}
-        >
-          {event.name} <span className="tabular-nums text-muted-foreground">{clockText(from)}</span>
+          <span className="min-w-0 truncate">{event.name}</span>{' '}
+          <span className="shrink-0 tabular-nums text-muted-foreground">{clockText(event.start)}</span>
         </button>
       ))}
     </div>
@@ -1285,22 +1272,27 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     </aside>
   );
 
+  const pickerCell = 'flex items-center text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-50';
   // Docked header: ‹ World name  2 / 5 ›, and the name opens the full list.
   const header = (
     <div className="flex flex-col gap-2">
-      <div className="flex min-w-0 items-center gap-1">
-        <button type="button" aria-label="Previous world" className={`${button} shrink-0`} disabled={allRows.length < 2} onClick={() => stepWorld(-1)}>‹</button>
-        <button
-          type="button"
-          aria-label="Choose world"
-          aria-expanded={listOpen}
-          className={`${button} flex min-w-0 flex-1 items-center border border-border/70 text-left`}
-          onClick={() => setListOpen((open) => !open)}
-        >
-          <span className="min-w-0 truncate">{selected?.name ?? 'Choose a world'}</span>
-          {selectedIndex >= 0 ? <span className="ml-2 shrink-0 tabular-nums text-muted-foreground">{selectedIndex + 1} / {allRows.length}</span> : null}
-        </button>
-        <button type="button" aria-label="Next world" className={`${button} shrink-0`} disabled={allRows.length < 2} onClick={() => stepWorld(1)}>›</button>
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="flex h-8 min-w-0 flex-1 items-stretch overflow-hidden rounded-md border border-border/70">
+          <button type="button" aria-label="Previous world" className={`${pickerCell} w-8 shrink-0 justify-center border-r border-border/70`} disabled={allRows.length < 2} onClick={() => stepWorld(-1)}>‹</button>
+          <button
+            type="button"
+            aria-label="Choose world"
+            aria-expanded={listOpen}
+            className={`${pickerCell} min-w-0 flex-1 gap-2 px-2 text-left`}
+            onClick={() => setListOpen((open) => !open)}
+          >
+            <span className="min-w-0 truncate">{selected?.name ?? 'Choose a world'}</span>
+            {selected?.qualifier ? <span className="shrink-0 text-muted-foreground">· {selected.qualifier}</span> : null}
+            {selectedIndex >= 0 ? <span className="shrink-0 tabular-nums text-muted-foreground">{selectedIndex + 1} / {allRows.length}</span> : null}
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`ml-auto shrink-0 text-muted-foreground transition-transform ${listOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
+          </button>
+          <button type="button" aria-label="Next world" className={`${pickerCell} w-8 shrink-0 justify-center border-l border-border/70`} disabled={allRows.length < 2} onClick={() => stepWorld(1)}>›</button>
+        </div>
         {showEmpty ? null : modeToggle}
       </div>
       {!showEmpty ? notExplorable : null}
@@ -1439,7 +1431,6 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       ) : addReason && liveScene && !busy ? (
         <p className="text-[11px] text-muted-foreground">{addReason}</p>
       ) : null}
-      {shotEvents.length ? shotEventButtons : null}
     </>
   );
   const travelGroupProps = { role: 'group', 'aria-label': 'Shot travel', tabIndex: 0, onKeyDown: onTravelKeyDown } as const;
@@ -1465,6 +1456,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       valueText={clockText(shownTime, 1)}
       disabled={!selected}
       markers={shotMarkers}
+      reserveLabels={events.length > 0}
       uses={(selected?.uses ?? []).map((use) => ({ key: use.clipId, from: use.from, to: use.to, title: `On ${use.track} at ${clockText(use.at)}` }))}
       range={selected ? { from: stretch.from, to: stretch.to } : undefined}
       onSeek={seekTravel}

@@ -116,7 +116,7 @@ const SAMPLE = await sampleLiveScene();
 const SAMPLE_END = SAMPLE.duration;
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const tenths = (s: number) => `${mmss(Math.floor(s))}.${Math.round((s % 1) * 10)}`;
-const SCENE_USE = new RegExp(`^Lantern valley ${mmss(SAMPLE_END)}\\s*· 1 use$`);
+const SCENE_USE = new RegExp(`^Lantern valley ${mmss(SAMPLE_END)}\\s*· 1 clip$`);
 
 /** What a scene declares when it supports free roam: a start view the viewer can move from. */
 const EXPLORE = { start: { position: [0, 1, 5] as [number, number, number], target: [0, 1, 0] as [number, number, number] } };

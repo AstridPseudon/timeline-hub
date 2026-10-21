@@ -744,16 +744,17 @@ describe('World Explorer free roam', () => {
     expect(slider).toHaveAttribute('aria-valuemax', String(SAMPLE.duration));
   });
 
-  it('events covered by a shot appear as chips in Shot events', async () => {
+  it('events covered by a shot appear as cue labels on the time bar', async () => {
     const harness = makeHarness({ clips: [liveClip()] });
     const view = mount(harness);
     await openReady(EXPLORE, { events: EVENTS, shots: CAMERAS });
     fireEvent.click(view.getByRole('button', { name: 'Shots' }));
 
-    const chips = () => within(view.getByRole('group', { name: 'Shot events' })).getAllByRole('button').map((b) => b.textContent);
-    expect(chips()).toEqual(['Dawn 0:01']);
+    const chips = () => Array.from(view.container.querySelectorAll('[data-event-marker]')).map((b) => b.getAttribute('aria-label'));
+    expect(view.queryByRole('group', { name: 'Shot events' })).toBeNull();
+    expect(chips()).toEqual(['Dawn, 0:01.0']);
     fireEvent.click(within(view.getByRole('list', { name: 'Shots' })).getByRole('button', { name: /^B,/ }));
-    expect(chips()).toEqual(['Lanterns 0:04']);
+    expect(chips()).toEqual(['Lanterns, 0:04.0']);
   });
 
   it('selecting a live-scene clip opens its world in Shots mode on the shot holding its start, with its stretch', async () => {

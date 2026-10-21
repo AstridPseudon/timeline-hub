@@ -87,10 +87,11 @@ function ShotCard({ shot, index, current, revision, fullscreen, addDisabled, add
           type="button"
           {...dragProps}
           aria-label={`Add ${shot.name} to video, or drag it onto the timeline`}
-          title="Drag onto the timeline (Enter adds at the playhead)"
+          title={addDisabled && addTitle ? addTitle : 'Drag onto the timeline (Enter adds at the playhead)'}
           data-testid="shot-drag-handle"
-          className={`${ACTION} cursor-grab active:cursor-grabbing`}
-          onClick={() => onAdd(index)}
+          aria-disabled={addDisabled || undefined}
+          className={`${ACTION} cursor-grab active:cursor-grabbing ${addDisabled ? 'opacity-50' : ''}`}
+          onClick={() => { if (!addDisabled) onAdd(index); }}
           onDragStart={(event: DragEvent<HTMLButtonElement>) => {
             dragProps.onDragStart(event);
             try { if (card.current) event.dataTransfer.setDragImage(card.current, 16, 16); } catch { /* the default ghost is fine */ }
@@ -148,16 +149,28 @@ export function ShotGallery({ shots, currentIndex, revision, fullscreen, addDisa
       {/* The search row stays at the top of the scroller while the cards scroll under it. The pager sits last, so its place never moves. */}
       <div className="sticky top-0 z-10 -mt-1 flex items-center gap-2 bg-background pb-1 pt-1">
         <label htmlFor={searchId} className="sr-only">Search shots</label>
+        <div className="relative min-w-0 flex-1">
         <input
           id={searchId}
           type="search"
           value={query}
           placeholder="Search shots"
           autoComplete="off"
-          className="min-h-10 min-w-0 flex-1 rounded-md border border-border/70 bg-transparent px-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-8"
+          className="min-h-10 w-full min-w-0 appearance-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-cancel-button]:appearance-none rounded-md border border-border/70 bg-transparent pl-2 pr-7 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-8"
           onChange={(event) => { setQuery(event.target.value); setRequestedPage(0); }}
           onKeyDown={(event) => { if (event.key === 'Escape' && query) { event.stopPropagation(); setQuery(''); setRequestedPage(0); } }}
         />
+        {query && matches.length > 0 ? (
+          <button
+            type="button"
+            aria-label="Clear search"
+            className="absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={() => { setQuery(''); setRequestedPage(0); }}
+          >
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        ) : null}
+        </div>
         <span aria-live="polite" className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{countText}</span>
         {pages > 1 ? (
           <nav aria-label="Shots pages" className="flex shrink-0 items-center">

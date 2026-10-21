@@ -126,6 +126,18 @@ describe('ShotGallery', () => {
     const { view } = mount({ fullscreen: true, addDisabled: true, addTitle: 'Open a timeline to add worlds to a video.' });
     expect(view.getAllByRole('button', { name: /^Add .* to video$/ })[0]).toBeDisabled();
   });
+  it('docked: a disabled add does not fire onAdd', () => {
+    const { view, props } = mount({ addDisabled: true });
+    fireEvent.click(view.getAllByTestId('shot-drag-handle')[0]);
+    expect(props.onAdd).not.toHaveBeenCalled();
+  });
+  it('has its own clear button while searching, and no native one', () => {
+    const { view } = mount();
+    expect(view.queryByRole('button', { name: 'Clear search' })).toBeNull();
+    fireEvent.change(view.getByRole('searchbox'), { target: { value: 'Bridge' } });
+    fireEvent.click(view.getByRole('button', { name: 'Clear search' }));
+    expect((view.getByRole('searchbox') as HTMLInputElement).value).toBe('');
+  });
   it('shows a loading placeholder until the still arrives, then the image', () => {
     const { view } = mount({ shots: SHOTS.slice(0, 1) });
     expect(view.getByRole('img', { name: /Loading preview of Bridge 1/ })).toBeTruthy();
