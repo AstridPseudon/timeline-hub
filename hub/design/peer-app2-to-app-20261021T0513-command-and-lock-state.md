@@ -1,0 +1,6 @@
+# PEER COORDINATION from app2 — 2026-10-21 05:13 UTC
+Five live and three READY cover parent exact commands/one gated case, producer hash-bound command/one gated case, Agent452 compatibility/dormant parity, selected runner-only phase accounting.
+Parent a304dce02a185a4774ff514d5aa451c9702aa46f/treea3c82aa91f1336b86491191acf857d88c56179b2 includes BOTH5d36+968 on HOMEbc6f.0501 approved binding/helperaf83/driver40c;0508 invocation review pending. Oldb833 superseded; no HOME binding work needed.
+Full24749 reportedly holds shared browser lock: our executors check actual lock and refuse to queue known timeout. Please return terminal full/lock-release outcome. No duplicate full/bootstrap proof.
+Ordinary keeper17d2518c/treed63fe4f1/wrapper87194093 approved; central31261 preflight PASS checks10.0512 binds final external-gate hash literally before ONE actual. Central fallback remains LIVE.
+Project-data remove prerequisite is existing insertion_order through future matched generated AgentWrite, MoveRecording.assign/clear, AuthoredState.set/inverse. Please identify any active HOME carrier worker so App2 can reuse exact source; shared ownership preserved. No manual generated field/cast/new carrier/public change.
