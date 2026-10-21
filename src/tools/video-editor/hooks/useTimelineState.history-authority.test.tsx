@@ -8,6 +8,7 @@ import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFi
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { PUBLIC_TIMELINE_SERVICE_HOOKS } from '../runtime/timelineHostServiceHooks.ts';
+import type { TimelineHostServiceHooks } from '../runtime/timelineHostServiceHooks.ts';
 import { useTimelineState } from './useTimelineState.ts';
 import { createTimelineCommands } from './useTimelineCommandsService.ts';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts.ts';
@@ -28,7 +29,11 @@ vi.mock('./useRenderState.ts', () => ({ useRenderState: () => ({ setRenderDirty:
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-async function mounted(raw = commandDocument(), existing?: Awaited<ReturnType<typeof environment>>) {
+async function mounted(
+  raw = commandDocument(),
+  existing?: Awaited<ReturnType<typeof environment>>,
+  timelineServices: TimelineHostServiceHooks = PUBLIC_TIMELINE_SERVICE_HOOKS,
+) {
   const env = existing ?? await environment(raw);
   vi.stubGlobal('indexedDB', env.factory);
   const held = new Set<string>();
@@ -49,7 +54,7 @@ async function mounted(raw = commandDocument(), existing?: Awaited<ReturnType<ty
   const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client },
     createElement(VideoEditorRuntimeProvider, { value: runtime }, children));
   const hook = renderHook(({ loaded }) => {
-    const state = useTimelineState(PUBLIC_TIMELINE_SERVICE_HOOKS, loaded);
+    const state = useTimelineState(timelineServices, loaded);
     useKeyboardShortcuts({ hasSelectedClip: false, canMoveSelectedClipToTrack: false,
       precisionEnabled: false, selectedClipIds: new Set(), timelineFps: 30,
       undo: state.chrome.undo, redo: state.chrome.redo,
@@ -73,6 +78,77 @@ async function latestData(env: Awaited<ReturnType<typeof environment>>) {
 }
 
 describe('mounted editor history authority', () => {
+  it('passes the provider-bound native addClip facade into the mounted asset consumer', async () => {
+    const env = await environment();
+    const selection = {
+      asset: 'prepared-asset',
+      generation_id: 'prepared-generation',
+      variant_id: 'prepared-variant',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    } as const;
+    const verifiedRead = vi.spyOn(env.provider, 'getProjectVerifiedMedia').mockResolvedValue({
+      selection: { ...selection },
+      media_type: 'video/mp4',
+      size: 1,
+      duration_seconds: 1,
+    });
+    const legacySave = vi.spyOn(env.provider, 'saveTimeline');
+    let received: { commands?: { addClip: (...args: never[]) => unknown } } | undefined;
+    const timelineServices: TimelineHostServiceHooks = {
+      ...PUBLIC_TIMELINE_SERVICE_HOOKS,
+      useAssetManagement(args) {
+        received = args as typeof received;
+        const fallback = PUBLIC_TIMELINE_SERVICE_HOOKS.useAssetManagement(args);
+        return {
+          ...fallback,
+          // This is the row-local consumer contract supplied by App2's exact
+          // restore patch: prepared video rows call the injected native facade.
+          handleAssetDrop: (...input: Parameters<typeof fallback.handleAssetDrop>) => {
+            const prepared = input[5];
+            if (!prepared || !received?.commands) return false;
+            return Promise.resolve(received.commands.addClip({
+              preparedAsset: prepared,
+              ...(input[1] !== undefined ? { trackId: input[1] } : {}),
+              time: input[2],
+            } as never)).then((result) => Boolean((result as { ok?: unknown })?.ok));
+          },
+        } as never;
+      },
+    };
+    const { hook } = await mounted(undefined, env, timelineServices);
+    await waitFor(() => expect(received?.commands?.addClip).toBeTypeOf('function'));
+    const nativePort = {
+      capture: vi.fn(() => ({ media: selection }) as never),
+      finish: vi.fn(() => ({
+        command: { op: 'clip.add-media' },
+        preview: { version: 1, source: 'test', operations: [] },
+      }) as never),
+      submit: vi.fn(),
+    };
+    hook.result.current.store.getState().syncOpsSlice({
+      ...hook.result.current.store.getState().ops,
+      parentClipAddMedia: nativePort as never,
+    });
+
+    const preparedAsset = {
+      assetKey: selection.asset,
+      mediaType: 'video' as const,
+      durationSeconds: 1,
+      source: 'registered' as const,
+      entry: { file: 'https://runtime.test/prepared.mp4', type: 'video/mp4', duration: 1 },
+      mediaSelection: selection,
+    };
+    await expect(hook.result.current.editor.handleAssetDrop(
+      selection.asset, 'V1', 3, false, false, preparedAsset,
+    )).resolves.toBe(true);
+    expect(verifiedRead).toHaveBeenCalledWith('project-commit', selection);
+    expect(nativePort.capture).toHaveBeenCalledOnce();
+    expect(nativePort.finish).toHaveBeenCalledOnce();
+    expect(nativePort.submit).toHaveBeenCalledOnce();
+    expect(legacySave).not.toHaveBeenCalled();
+  });
+
   it.each(['undo', 'redo'] as const)('does not rewind an accepted echo through local %s', async (direction) => {
     const raw = commandDocument();
     // Already normalized authored data lets two producers write identical
