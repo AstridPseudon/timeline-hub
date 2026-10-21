@@ -113,6 +113,12 @@ const operationalChromeState = {
   renderStatus: 'idle' as 'idle' | 'rendering' | 'done' | 'error',
 };
 
+const parentClipAddMediaPort = {
+  capture: vi.fn(),
+  finish: vi.fn(),
+  submit: vi.fn(),
+};
+
 vi.mock('@/tools/video-editor/hooks/useEffects', () => ({
   useEffects: (...args: unknown[]) => useEffectsMock(...args),
 }));
@@ -198,7 +204,6 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       selectedClipHasPredecessor: false,
       element: { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() },
       occurrenceDuplicate: { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() },
-      parentClipAddMedia: { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() },
       compositionSize: { width: 1920, height: 1080 },
       trackScaleMap: {},
       scale: 1,
@@ -322,7 +327,7 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       editor,
       chrome,
       playback,
-      editorOps: { transcriptHost: undefined },
+      editorOps: { ...editor, transcriptHost: undefined, parentClipAddMedia: parentClipAddMediaPort },
     };
   },
 }));
@@ -796,6 +801,7 @@ describe('VideoEditorProvider', () => {
     operationalChromeState.store = null;
     operationalChromeState.isConflictExhausted = false;
     operationalChromeState.renderStatus = 'idle';
+    Object.values(parentClipAddMediaPort).forEach((mock) => mock.mockClear());
   });
 
 
