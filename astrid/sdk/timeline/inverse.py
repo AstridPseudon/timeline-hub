@@ -453,10 +453,19 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
 
     # Historical checks above are internal. Public claims describe H even when
     # the same address is read after another reversal during installation.
+    deferred_selections = []
     for record in records:
         for read in record['reads']:
             ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
+            # A grouped inverse can restore a track after its create selection
+            # is replayed. Keep the original membership claim, but defer only
+            # that selection until the staged writes have recreated the track.
+            if (selected['key'] == 'track.create'
+                    and any(ctx.state.entity(ref, optional=True) is None
+                            for ref in selected['members'])):
+                deferred_selections.append(selected)
+                continue
             if selected['key'].endswith('.after'):
                 ctx.select(selected['key'].removesuffix('.after'), selected['owner'])
             else:
@@ -495,3 +504,12 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
 
     for record in reversed(records):
         arrange_restored(ctx.state, record, root_orders.get(id(record)))
+    for selected in deferred_selections:
+        # Deferred structural claims describe the restored head, so they must
+        # not be read from the inverse's pre-write input snapshot.
+        original_input = ctx.input_state
+        ctx.input_state = None
+        try:
+            ctx.select(selected['key'], selected['owner'], selected['members'])
+        finally:
+            ctx.input_state = original_input
