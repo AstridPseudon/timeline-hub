@@ -2,13 +2,21 @@
 from __future__ import annotations
 
 import copy
+import json
+from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
-from astrid.sdk.timeline._command_state import CommandError
+from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline._recording import Recording
-from astrid.sdk.timeline._trim_commands import capture_clip_trim
+from astrid.sdk.timeline._trim_commands import (
+    _capture_clip_trim_v2,
+    _record_clip_trim_v2,
+    capture_clip_trim,
+)
 from astrid.sdk.timeline.commit import bundle_from_document
+from tests.editing_conformance.test_recipe_m1_commands import inverse
 from tests.editing_conformance.test_recipe_m2_clip_trim import REF, media_document
 from tests.editing_conformance.test_recipe_occurrence_media import OWNER, TARGET, inputs
 
@@ -95,3 +103,60 @@ def test_occurrence_trim_gap_and_existing_recorder_source_footprint():
     assert bundle == before
     assert record['command']['select'] == TARGET
     assert record['command']['version'] == '2'
+
+
+def test_dormant_v2_schema_keeps_v1_parent_boundary_and_is_not_registered():
+    schema = json.loads((Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json').read_text())
+    validator = Draft202012Validator(schema)
+    command = {'schema_version': 1, 'op': 'clip.trim', 'version': '2', 'select': TARGET,
+               'args': {'in_s': 3, 'out_s': 5}, 'intent': {}}
+    validator.validate(command)
+    assert list(validator.iter_errors({**command, 'version': '1'}))
+
+    from astrid.sdk.timeline._trim_commands import clip_trim
+    from astrid.sdk.timeline.commands import operations
+
+    assert operations()['clip.trim'].handler is clip_trim
+
+
+def test_dormant_occurrence_trim_writes_source_seconds_only_and_inverse_is_exact():
+    document, _old, _new, verified = inputs('video')
+    original = bundle_from_document(document)
+    State(original).entity(TARGET)['app'] = None
+    original = copy.deepcopy(original)
+    sibling = next(OWNER + '/clip:' + row['id'] for row in State(original).collection(OWNER, 'clip')
+                   if OWNER + '/clip:' + row['id'] != TARGET)
+    capture_input = copy.deepcopy(original)
+    assert _capture_clip_trim_v2(capture_input, TARGET, in_s=3, out_s=5,
+                                  verified_media=verified)['version'] == '2'
+    assert capture_input == original
+    candidate, record = _record_clip_trim_v2(copy.deepcopy(original), TARGET,
+                                              in_s=3.0000004, out_s=5.0000004,
+                                              verified_media=verified)
+
+    assert [(write['ref'], write['path'], write['after']['value']) for write in record['writes']] == [
+        (TARGET, ['from'], 3.0), (TARGET, ['to'], 5.0), (TARGET, ['hold'], 2.0),
+    ]
+    assert candidate['parent'] == original['parent']
+    assert State(candidate).entity(sibling) == State(original).entity(sibling)
+    assert inverse(candidate, [record]).bundle == original
+    assert record['dependencies'][0]['pin']['source']['duration_seconds'] == 6.0
+    assert record['command']['bindings']['trim.target'] == TARGET
+
+
+@pytest.mark.parametrize('damage', ['missing', 'wrong-object', 'wrong-type', 'source-map'])
+def test_dormant_occurrence_trim_refuses_unverified_or_mapped_source_without_mutation(damage):
+    document, _old, _new, verified = inputs('video')
+    bundle = bundle_from_document(document)
+    if damage == 'missing':
+        verified = []
+    elif damage == 'wrong-object':
+        verified[0]['selection']['object_id'] = 'sha256:' + '9' * 64
+    elif damage == 'wrong-type':
+        verified[0]['media_type'] = 'audio/fixture'
+    else:
+        bundle['placements'][0]['source_offset'] = 1
+    before = copy.deepcopy(bundle)
+    with pytest.raises(CommandError):
+        _capture_clip_trim_v2(bundle, TARGET, in_s=3, out_s=5, verified_media=verified)
+    assert bundle == before
