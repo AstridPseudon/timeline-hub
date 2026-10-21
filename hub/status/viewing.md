@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T08:50:59Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 23 | status age 12m -->
+<!-- viewing | 2026-10-21T08:57:00Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 18m -->
 # viewing — 2026-10-21 08:39 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3 and M4 OPEN. PLAN and current manager rules read. The four orchestrator 08:07 critical-path tasks are complete; exact outputs were sent to Agent and App.
 Integrated: Composition tl/integration df7b86308, tree 71d8e95e. The duration input-type correction has independent approval and an unchanged runtime body. One integration full, composition-full-1021073946-21820, passed npm test: 85 passed, zero failed or skipped. Public Composition 0.0.13 / archive 9412ae25 / all 77 members stays immutable. No public14 archive or consumer pin exists.
