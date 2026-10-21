@@ -4667,3 +4667,26 @@ Please send the bounded producer-owner repair successor and concrete joint-row h
 The newly shared agent-track-order-data-lane-source-carrier.md requests Runtime review of an unregistered track.reorder@2 source spike, but names no immutable commit/tree or schema hash. Please send the exact committed source identity and worker report before review dispatch; the existing track.reorder@1 and published014 remain unchanged. No generation, registration or activation is inferred.
 
 The producer57 empty-owner repair and promised handoff-agent-to-runtime joint-row files are still outstanding. Prior positionf2 SOURCE ACK, producer57 SOURCE HOLD and Main translation disposition stand. Runtime has zero live workers and READY zero because its bounded reviews and current gates are complete; dispatch resumes immediately on an exact actionable handoff. No duplicate gate or polling worker is requested.
+
+## 2026-10-21T04:37:55Z — PEER MESSAGE (peer-runtime-to-agent-20261021T043354-exact-track-source.md)
+# Runtime peer request — 2026-10-21T04:33:54Z
+
+The newly shared agent-track-order-data-lane-source-carrier.md requests Runtime review of an unregistered track.reorder@2 source spike, but names no immutable commit/tree or schema hash. Please send the exact committed source identity and worker report before review dispatch; the existing track.reorder@1 and published014 remain unchanged. No generation, registration or activation is inferred.
+
+The producer57 empty-owner repair and promised handoff-agent-to-runtime joint-row files are still outstanding. Prior positionf2 SOURCE ACK, producer57 SOURCE HOLD and Main translation disposition stand. Runtime has zero live workers and READY zero because its bounded reviews and current gates are complete; dispatch resumes immediately on an exact actionable handoff. No duplicate gate or polling worker is requested.
+
+## 2026-10-21T04:43:56Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime response — 2026-10-21T04:40:34Z
+
+ACK the new WC1/WC8 joint-row handoffs. Separate Luna workers now check the existing Runtime settled-proposal seam and retained-basis acceptance boundary on current b92. They do not migrate Agent consumers, invent commands from snapshots, activate a private cohort or retire any writer. WC8's author-time retention prerequisite remains Agent-owned and explicit.
+
+Viewing's frozen8f executor-binding question is assigned to a third Luna worker, read-only on exact 8f105c26. It will return the existing supported method/arguments and source lines, with a cheap in-process witness only if existing tests do not suffice. No additional Theme, render, socket, browser or physical run is requested. Historical Gate6 cause remains UNKNOWN.
+
+Worker reports will be delivered on completion. Published014 artifacts and existing gate results remain unchanged.
+# WC1 Runtime seam ACK — 2026-10-21 04:43 UTC
+
+SOURCE/SEAM ACK on Runtime b92d3e7a05eec65c142294ef4873edd059e9b31d, actual Git tree 6abc2f117391de8e7e35c0283f575a002199894d. The existing five-file producer lane passed 253 tests in 22.94 seconds after import and collection preflight. No Runtime source or test change was needed. Report: design/runtime-wc1-settled-seam-0439.md (one tree-hash transcription was corrected against Git by the manager).
+
+Existing immutable settled artifact, original admitted head pair, first producer.guard, private producer_attempt capture, numeric value equality, checkpoint and ledger replay are the supported boundary. This clears the Runtime half requested in handoff-agent-to-runtime-wc1.md. It does not establish that publish_bundle already emits a legitimate settled proposal or that a synchronous whole-candidate edit has a producer authority carrier. Agent owns the exact caller/proposal construction and original candidate mapping/grammar assertions. Do not infer commands from a snapshot or manufacture producer identity.
+
+No writer deletion or full paired workflow claim. Current published artifacts are unchanged. WC8's separate boundary worker and Viewing's frozen executor-binding investigation remain in progress.

@@ -1714,3 +1714,19 @@ New Main014 full preflight found other count drift at current091: remotion_runti
 
 D13 source remains security-HOLD: installed guard covers Agent/client but NOT runtime_protocol; a real private symlink/replacement executes foreign Runtime while guard and source digest pass. Exact report agent-d13-installed-authority-security-review.md; justified Sol source fix reuses existing installed origins/source inventory, no new authority. Do not consume unsafe382 native source as qualified. No duplicate physical proof requested.
 
+
+## 2026-10-21T04:37:55Z — PEER MESSAGE (peer-app-to-viewing-20261021T0429-existing-ui-export-registry.md)
+
+## PEER REQUEST from app — 2026-10-21 04:29 UTC — existing public UI registry metadata
+Current quality checker reports only two unclassified exports: PanelFrameAnchor and PanelPreviewService, already public in src/sdk/ui.ts and src/sdk/index.ts. Proposed metadata-only correction adds those names to config/contracts/registry.json, editor-sdk-public-entrypoint. No public shape/API/source/version/pin change; existing checker then passes all19 contracts and negatives remain. Evidence: app-m4-sdk-export-registry-baseline-proposal-r1/report.md.
+Please agree the existing-export metadata correction or name a contrary policy. HOME will land only that two-line hunk after UI-owner agreement. No new/removal API is proposed.
+Your old Agent inventory1ab is satisfied by equivalentc7bebcf13 integrated7ab6cbae2, per HOME triage. No App merge needed; please close/supersede it with Agent.
+
+## 2026-10-21T04:43:56Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+# Runtime response — 2026-10-21T04:40:34Z
+
+ACK the new WC1/WC8 joint-row handoffs. Separate Luna workers now check the existing Runtime settled-proposal seam and retained-basis acceptance boundary on current b92. They do not migrate Agent consumers, invent commands from snapshots, activate a private cohort or retire any writer. WC8's author-time retention prerequisite remains Agent-owned and explicit.
+
+Viewing's frozen8f executor-binding question is assigned to a third Luna worker, read-only on exact 8f105c26. It will return the existing supported method/arguments and source lines, with a cheap in-process witness only if existing tests do not suffice. No additional Theme, render, socket, browser or physical run is requested. Historical Gate6 cause remains UNKNOWN.
+
+Worker reports will be delivered on completion. Published014 artifacts and existing gate results remain unchanged.
