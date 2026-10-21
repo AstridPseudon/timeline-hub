@@ -1,0 +1,217 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Bounded Composition source delivery. This command emits only the source
+# patch/bundle and proves application to a fresh origin/main extraction. It
+# does not invoke package, scanner, carrier, product-test, or ZIP tooling.
+REPO=/home/user/work/wt/vw-m4-source7bb-final-delivery
+SOURCE_REF=tl/integration
+PRIOR_SOURCE_REF=4788e107f183e0523a740b691a20eb8261d7183c
+SOURCE_COMMIT=7bb54bbd64107e5090643ecca1e4d33164173e85
+SOURCE_TREE=20467712e66dbadff4d562c0d5baae22b8c077a7
+PRIOR_SOURCE_TREE=585e8c4784ee78ccbfbff4b6ce26f577b8eda05e
+BASE_REF=origin/main
+MAIN_COMMIT=67b8aa3d0d6831d3e3504a340ff583c3da253707
+MAIN_TREE=62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120
+OUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-source7bb-final-delivery
+DELIVERY="$OUT/delivery"
+PATCH="$DELIVERY/composition-origin-main-to-7bb54bbd.patch"
+BUNDLE="$DELIVERY/composition-origin-main-to-7bb54bbd.bundle"
+MANIFEST="$DELIVERY/composition-origin-main-to-7bb54bbd.manifest.json"
+MANIFEST_SHA="$DELIVERY/composition-origin-main-to-7bb54bbd.manifest.sha256"
+SCANNER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-owner-scanner-delivery-payload-scanner-v1.0.8.zip
+CARRIER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build
+
+mkdir -p "$DELIVERY"
+exec > >(tee "$OUT/COMMAND.log") 2>&1
+cd "$REPO"
+test "$(realpath -e "$REPO")" = "$REPO"
+test "$(realpath -e "$OUT")" = "$OUT"
+test "$(realpath -e "$DELIVERY")" = "$DELIVERY"
+test "$(realpath -e "$SCANNER")" = "$SCANNER"
+test "$(realpath -e "$CARRIER")" = "$CARRIER"
+test -z "$(git status --porcelain=v1)"
+test "$(git rev-parse "$SOURCE_REF")" = "$SOURCE_COMMIT"
+test "$(git rev-parse "$SOURCE_REF^{tree}")" = "$SOURCE_TREE"
+test "$(git rev-parse "$PRIOR_SOURCE_REF^{tree}")" = "$PRIOR_SOURCE_TREE"
+test "$(git rev-parse "$BASE_REF")" = "$MAIN_COMMIT"
+test "$(git rev-parse "$BASE_REF^{tree}")" = "$MAIN_TREE"
+git merge-base --is-ancestor "$BASE_REF" "$SOURCE_REF"
+test "$(git merge-base "$BASE_REF" "$SOURCE_REF")" = "$MAIN_COMMIT"
+git merge-base --is-ancestor "$PRIOR_SOURCE_REF" "$SOURCE_REF"
+
+# Capture the complete current frontier, including generated metadata and
+# build/projection files introduced after the superseded 4788 source.
+git diff --name-only "$BASE_REF" "$SOURCE_REF" > "$DELIVERY/main-to-source.paths"
+git diff --name-only "$PRIOR_SOURCE_REF" "$SOURCE_REF" > "$DELIVERY/prior-to-source.paths"
+test "$(wc -l < "$DELIVERY/main-to-source.paths")" -eq 116
+test "$(git ls-tree -r --name-only "$SOURCE_REF" | wc -l)" -eq 119
+test "$(wc -l < "$DELIVERY/prior-to-source.paths")" -eq 17
+test "$(git ls-tree -r --format='%(objectmode)' "$BASE_REF" | sort -u)" = 100644
+test "$(git ls-tree -r --format='%(objectmode)' "$SOURCE_REF" | sort -u)" = 100644
+diff -u "$DELIVERY/prior-to-source.paths" <(printf '%s\n' \
+  .gitignore \
+  Makefile \
+  README.md \
+  package.json \
+  scripts/build-remotion-primitives.mjs \
+  scripts/build-remotion-primitives.test.mjs \
+  scripts/build-typescript.mjs \
+  scripts/build.mjs \
+  scripts/gen-registry.test.mjs \
+  scripts/gen-registry.ts \
+  typescript/src/animation-metadata.generated.ts \
+  typescript/src/animations.generated.ts \
+  typescript/src/lib/clip-look.ts \
+  typescript/src/lib/remotion-primitives.generated.d.ts \
+  typescript/src/scene-evaluation.ts \
+  typescript/tests/animations.test.ts \
+  typescript/tests/remotion-primitives.test.ts)
+
+# Scanner 1.0.8 and carrier inputs are immutable hash witnesses only.
+test "$(sha256sum "$SCANNER" | cut -d' ' -f1)" = 204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee
+test "$(sha256sum "$CARRIER" | cut -d' ' -f1)" = 3dfd5c28a9be9ab809e6c1fe1e9a83fbf8417ea888afc1b10eec5f751023e990
+
+rm -f "$PATCH" "$BUNDLE" "$MANIFEST" "$MANIFEST_SHA" \
+  "$DELIVERY/bundle-verify.txt" "$DELIVERY/bundle-heads.txt"
+rm -rf "$DELIVERY/fresh-main-apply"
+
+# Normal Git source delivery APIs only.
+git diff --binary --full-index --no-ext-diff --no-renames "$BASE_REF" "$SOURCE_REF" > "$PATCH"
+git bundle create "$BUNDLE" "$BASE_REF..$SOURCE_REF"
+git bundle verify "$BUNDLE" > "$DELIVERY/bundle-verify.txt"
+git bundle list-heads "$BUNDLE" > "$DELIVERY/bundle-heads.txt"
+grep -F "$SOURCE_COMMIT refs/heads/tl/integration" "$DELIVERY/bundle-heads.txt"
+grep -F "The bundle requires" "$DELIVERY/bundle-verify.txt"
+grep -F "$MAIN_COMMIT" "$DELIVERY/bundle-verify.txt"
+git diff --check "$BASE_REF" "$SOURCE_REF"
+
+STAGE="$DELIVERY/fresh-main-apply"
+mkdir -p "$STAGE/original" "$STAGE/patched" "$STAGE/target"
+test "$(realpath -e "$STAGE")" = "$STAGE"
+git archive --format=tar "$BASE_REF" | tar -xf - -C "$STAGE/original"
+git archive --format=tar "$BASE_REF" | tar -xf - -C "$STAGE/patched"
+git archive --format=tar "$SOURCE_REF" | tar -xf - -C "$STAGE/target"
+# GNU tar extracts Git's normal 100644 entries as 0664 under the current
+# umask; normalize the private proof trees to their tracked Git mode.
+find "$STAGE/original" "$STAGE/patched" "$STAGE/target" -type f -exec chmod 0644 {} +
+
+(cd "$STAGE/patched" && git apply --binary --check "$PATCH")
+(cd "$STAGE/patched" && git apply --binary "$PATCH")
+(cd "$STAGE/patched" && git apply --binary --reverse --check "$PATCH")
+(cd "$STAGE/patched" && git apply --binary --reverse "$PATCH")
+
+python3 - "$STAGE/original" "$STAGE/patched" <<'PY'
+import hashlib
+import os
+import stat
+import sys
+
+def snapshot(root):
+    out = {}
+    for directory, _, names in os.walk(root):
+        for name in names:
+            path = os.path.join(directory, name)
+            rel = os.path.relpath(path, root)
+            st = os.lstat(path)
+            mode = stat.S_IMODE(st.st_mode)
+            if stat.S_ISLNK(st.st_mode):
+                value = ("symlink", mode, os.readlink(path))
+            else:
+                digest = hashlib.sha256()
+                with open(path, "rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(chunk)
+                value = ("file", mode, digest.hexdigest())
+            out[rel] = value
+    return out
+
+left = snapshot(sys.argv[1])
+right = snapshot(sys.argv[2])
+if left != right:
+    raise SystemExit("REVERSE_EQUALS_FRESH_MAIN=FAIL")
+print(f"REVERSE_EQUALS_FRESH_MAIN=PASS paths={len(left)}")
+PY
+
+# Reapply after reverse proof so the retained tree is the delivered target
+# used for the all-tracked-path byte/mode equality check.
+(cd "$STAGE/patched" && git apply --binary --check "$PATCH")
+(cd "$STAGE/patched" && git apply --binary "$PATCH")
+
+python3 - "$STAGE/patched" "$STAGE/target" "$MANIFEST" "$PATCH" "$BUNDLE" "$SCANNER" "$CARRIER" "$DELIVERY/main-to-source.paths" "$DELIVERY/prior-to-source.paths" <<'PY'
+import hashlib
+import json
+import os
+import stat
+import sys
+
+def snapshot(root):
+    out = {}
+    for directory, _, names in os.walk(root):
+        for name in names:
+            path = os.path.join(directory, name)
+            rel = os.path.relpath(path, root)
+            st = os.lstat(path)
+            mode = stat.S_IMODE(st.st_mode)
+            if stat.S_ISLNK(st.st_mode):
+                value = ("symlink", mode, os.readlink(path))
+            else:
+                digest = hashlib.sha256()
+                with open(path, "rb") as stream:
+                    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                        digest.update(chunk)
+                value = ("file", mode, digest.hexdigest())
+            out[rel] = value
+    return out
+
+def sha256(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+patched = snapshot(sys.argv[1])
+target = snapshot(sys.argv[2])
+if patched != target:
+    only_patched = sorted(set(patched) - set(target))
+    only_target = sorted(set(target) - set(patched))
+    changed = sorted(key for key in set(patched) & set(target) if patched[key] != target[key])
+    print(f"only_patched={only_patched}", file=sys.stderr)
+    print(f"only_target={only_target}", file=sys.stderr)
+    print(f"changed={changed}", file=sys.stderr)
+    raise SystemExit("PATCHED_EQUALS_TARGET=FAIL")
+print(f"PATCHED_EQUALS_TARGET=PASS paths={len(patched)}")
+
+read_paths = lambda path: [line.rstrip("\n") for line in open(path, encoding="utf-8")]
+manifest = {
+    "kind": "composition-source-git-delivery",
+    "base": {"ref": "origin/main", "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120"},
+    "prior_source": {"commit": "4788e107f183e0523a740b691a20eb8261d7183c", "tree": "585e8c4784ee78ccbfbff4b6ce26f577b8eda05e", "changed_paths": len(read_paths(sys.argv[9]))},
+    "source": {"ref": "tl/integration", "commit": "7bb54bbd64107e5090643ecca1e4d33164173e85", "tree": "20467712e66dbadff4d562c0d5baae22b8c077a7"},
+    "source_tracked_paths": len(target),
+    "main_to_source_changed_paths": len(read_paths(sys.argv[8])),
+    "prior_to_source_changed_paths": len(read_paths(sys.argv[9])),
+    "fresh_main_apply": {"forward": "pass", "reverse": "pass", "all_tracked_paths_equal": True, "comparison": "sha256 bytes and stat mode"},
+    "artifacts": {
+        "patch": {"path": os.path.basename(sys.argv[4]), "sha256": sha256(sys.argv[4]), "bytes": os.path.getsize(sys.argv[4])},
+        "bundle": {"path": os.path.basename(sys.argv[5]), "sha256": sha256(sys.argv[5]), "bytes": os.path.getsize(sys.argv[5])},
+    },
+    "preserved_inputs": {
+        "scanner_1_0_8_sha256": sha256(sys.argv[6]),
+        "carrier_sha256": sha256(sys.argv[7]),
+    },
+    "changed_paths": read_paths(sys.argv[8]),
+    "prior_to_source_paths": read_paths(sys.argv[9]),
+    "target_paths": sorted(target),
+}
+with open(sys.argv[3], "w", encoding="utf-8") as stream:
+    json.dump(manifest, stream, indent=2, sort_keys=True)
+    stream.write("\n")
+PY
+
+sha256sum "$PATCH" "$BUNDLE" "$MANIFEST" > "$MANIFEST_SHA"
+cat "$MANIFEST_SHA"
+rm -rf "$STAGE"
+test ! -e "$STAGE"
+echo "DELIVERY_SOURCE7BB=PASS"
