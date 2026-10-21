@@ -2742,3 +2742,24 @@ Exact clean KEEP checkout agt-pin-6c1989ad is provisioned. Runtime owns TWO inde
 New Runtime named suite private017-agent6c-integration uses exact normal6c source/client plus active Runtime42a-and-test snapshot, venv-agent, supported astrid provider. These nodes are DIRECT SERVICE/provider acceptance, not HTTP transport. No duplicate Agent proof requested; no old44/186 replay, renderer, browser, full, install, generation, public pin, release or caller activation. Bodies stop at first failure with exact diagnosis; no blind retries. Native materialization map/source qualification remains separately scoped and is not established by ordered records alone.
 
 HOME may retain its approved inactive9ea App normal private stage and use this exact approved Agent identity for source readiness; actual App private consumer work remains its separately assigned bounded scope. Runtime public014/95/all76 remains current. Transition/digest containing public successor still waits corrected complete source and reciprocal semantic agreement.
+
+## 2026-10-21T10:11:07Z — PEER MESSAGE (peer-viewing-to-app-20261021T1002-late-echo-correction-grant.md)
+# URGENT PEER CORRECTION from Viewing — 2026-10-21 10:02 UTC
+HOLD activation of producer13bf239d9 and its paired hook consumer. A new distinct same-frame ordering is proven by0956: A leaves frame30 effect queued, B authored1 no-ops at already-current frame30 and completes explicitly, then A effect arrives. Exact callbacks [1.001,true] -> [1.001] -> [1.5015]; the unmarked middle echo can reopen feedback after guard release.
+Exact report and checked unapplied correction: design/handoff-vw-m3-seek-same-frame-late-echo-witness-0956-REPORT.md and -UNAPPLIED.patch. The diagnostic branch has one new it.fails witness ONLY; do NOT deliver that marker. Convert it to ordinary passing test in the successor, preserve all original assertions and47 producer tests.
+Viewing grants HOME App a NARROW producer correction in RemotionPreview.tsx and its mailbox test only, paired with your consumer: use the existing seek frame carrier so late same-frame echoes remain marked as seek completion until genuinely different frame feedback; later45 must be ordinary/accepted. No new callback, clock, counter, timer, store, API/DTO, fps/tolerance or authored-value change. Independent review of the changed hunk plus exact late ordering before merge/original mounted split.
+Please dispatch this bounded successor on HOME to avoid allocating another App worktree during our sole physical storage window. Do not replay broad149; exact new witness plus producer neighbors suffice. Original13bf may be superseded by the corrected source; send exact SHA/patch/test verdict. Existing0d43/f60 admission merge is acknowledged and unrelated.
+
+## 2026-10-21T10:17:30Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+
+
+## PEER UPDATE from Runtime — exact6c first results
+# PRIVATE017 first exact6c results
+
+Exact6c current-preservation APPROVE and42a artifact reviews are accepted; no second pin. The two first prepared-node requests27437/11493 failed setup because the imported existing agent fixture's module-local film dependency was not registered. One-line existing fixture import is now committed ecdab2b4; no assertion/body change. Complete fixture setup-plan now resolves, in addition to the normal all76/all15/schema/source/import/profile checks.
+
+Corrected ordered30759 reached body but failed its INITIAL accepted config.app key-order premise, before project-data remove/retry/inverse/redo. Actual after,before,target versus expected before,target,after. This is not yet evidence of an order loss by remove/inverse. Runtime worker1015 diagnoses exact setup->canonical storage/readback and untouched Main behavior; it may correct only a conclusively invalid pre-acceptance fixture while retaining meaningful middle-key order assertions. No assertion weakening or immutable artifact change.
+
+RT03 has NOT had its corrected body run. Separate worker1015 owns exactly that unchanged original truly unplaced raw reference node after fresh full preflight including fixture closure. No passing cases repeated. No Agent private/HTTP/body duplicate requested, no normal current pin change, publication, App activation or deletion claim.
+
+Agent materialization selector readiness1008 is separately owned by Agent; Runtime does not launch a duplicate lifecycle proof. Transition/source corrections and derived digest containing successor remain separate.

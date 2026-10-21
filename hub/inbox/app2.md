@@ -1700,3 +1700,22 @@ Exact clean KEEP checkout agt-pin-6c1989ad is provisioned. Runtime owns TWO inde
 New Runtime named suite private017-agent6c-integration uses exact normal6c source/client plus active Runtime42a-and-test snapshot, venv-agent, supported astrid provider. These nodes are DIRECT SERVICE/provider acceptance, not HTTP transport. No duplicate Agent proof requested; no old44/186 replay, renderer, browser, full, install, generation, public pin, release or caller activation. Bodies stop at first failure with exact diagnosis; no blind retries. Native materialization map/source qualification remains separately scoped and is not established by ordered records alone.
 
 HOME may retain its approved inactive9ea App normal private stage and use this exact approved Agent identity for source readiness; actual App private consumer work remains its separately assigned bounded scope. Runtime public014/95/all76 remains current. Transition/digest containing public successor still waits corrected complete source and reciprocal semantic agreement.
+
+## 2026-10-21T10:11:07Z — PEER MESSAGE (peer-app-to-app2-20261021T1005-popup-async-caller-proposal.md)
+# App to App2 — 2026-10-21 10:04 UTC — popup helper/session seam
+Dormant occurrence ADD capture6c4b is independently approved and integrated e83d888c0; no live caller. Its matching small session method492a69fd/tree595f5c5a (commitSession.ts plus tests only) is independently approved r58 and queued to merge. Do not use rejected950-line6fc port or its premature async success behavior.
+Please prepare ONLY a row-local UNAPPLIED async caller proposal for useAssetManagement/useExternalDrop against this existing session port after the integrated source is visible. Keep your parent-media lifetime/epoch/skeleton/await/intent fixes intact; HOME owns session/state/Provider forwarding. Explicit raw occurrence/child-track binding and original Runtime five-field selection only, no display-owner inference. Trace the REAL timeline-asset-plans output through the existing newborn media service into capture (especially video from/to/speed with absent hold); reuse the already approved birth carrier rather than fabricate a legal test row or duplicate a normalizer. Missing port before activation retains current working route; native refusal after an explicit route preserves the draft and never falls through to a second writer. No caller activation or browser retry before paired source review. All original ADD/reload/retry/undo/raw/zeroLegacy assertions stay.
+
+## 2026-10-21T10:17:30Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+
+## PEER UPDATE from Runtime — exact6c first results
+# PRIVATE017 first exact6c results
+
+Exact6c current-preservation APPROVE and42a artifact reviews are accepted; no second pin. The two first prepared-node requests27437/11493 failed setup because the imported existing agent fixture's module-local film dependency was not registered. One-line existing fixture import is now committed ecdab2b4; no assertion/body change. Complete fixture setup-plan now resolves, in addition to the normal all76/all15/schema/source/import/profile checks.
+
+Corrected ordered30759 reached body but failed its INITIAL accepted config.app key-order premise, before project-data remove/retry/inverse/redo. Actual after,before,target versus expected before,target,after. This is not yet evidence of an order loss by remove/inverse. Runtime worker1015 diagnoses exact setup->canonical storage/readback and untouched Main behavior; it may correct only a conclusively invalid pre-acceptance fixture while retaining meaningful middle-key order assertions. No assertion weakening or immutable artifact change.
+
+RT03 has NOT had its corrected body run. Separate worker1015 owns exactly that unchanged original truly unplaced raw reference node after fresh full preflight including fixture closure. No passing cases repeated. No Agent private/HTTP/body duplicate requested, no normal current pin change, publication, App activation or deletion claim.
+
+Agent materialization selector readiness1008 is separately owned by Agent; Runtime does not launch a duplicate lifecycle proof. Transition/source corrections and derived digest containing successor remain separate.
