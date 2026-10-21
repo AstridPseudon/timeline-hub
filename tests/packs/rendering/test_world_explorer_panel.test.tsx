@@ -582,9 +582,9 @@ describe('World Explorer panel', () => {
 
     await waitFor(() => expect(view.getByText(/0:01–0:04/)).toBeTruthy());
     expect(view.getByRole('button', { name: 'Shots' })).toHaveAttribute('aria-pressed', 'true');
-    expect(view.getByRole('button', { name: 'Update clip' })).toBeTruthy();
-    const update = view.getByRole('button', { name: 'Update clip' });
-    expect(update).toBeDisabled();
+    expect(view.getByText(/Editing V1/)).toBeTruthy();
+    expect(view.queryByRole('button', { name: 'Update clip' })).toBeNull(); // matches: a status, not a button
+
 
     await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
     // The travel clock opens at the stretch start (1 s); two steps forward, then the end moves to 3.
@@ -788,7 +788,7 @@ describe('World Explorer panel', () => {
     const harness = makeHarness({ clips: [liveClip()] });
     const view = mount(harness);
     harness.selectClip(['c1']);
-    await waitFor(() => expect(view.getByRole('button', { name: 'Update clip' })).toBeTruthy());
+    await waitFor(() => expect(view.getByText(/Editing V1/)).toBeTruthy());
     await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
 
     const travel = view.getByRole('group', { name: 'Shot travel' });
@@ -801,7 +801,8 @@ describe('World Explorer panel', () => {
 
     // The harness timeline does not write back, so the snapshot takes the clip as the timeline would store it: 1 s to 3 s.
     harness.setClips([{ ...liveClip(), sourceOffset: 1, sourceEnd: 3 }]);
-    expect(view.getByRole('button', { name: 'Update clip' })).toBeDisabled();
+    expect(view.queryByRole('button', { name: 'Update clip' })).toBeNull();
+    expect(view.getByText(/Editing V1/)).toBeTruthy();
     expect(view.getByText(/0:01–0:03/)).toBeTruthy();
     expect(view.container.textContent).not.toMatch(/stretch/i);
   });
@@ -877,14 +878,14 @@ describe('World Explorer panel', () => {
       const harness = makeHarness({ clips: [liveClip()] });
       const view = mount(harness);
       harness.selectClip(['c1']);
-      await waitFor(() => expect(view.getByRole('button', { name: 'Update clip' })).toBeTruthy());
+      await waitFor(() => expect(view.getByText(/Editing V1/)).toBeTruthy());
       await readyWorld(true, SAMPLE_WORLD.shots);
       ackLastFrame();
       const [first, second] = SAMPLE_WORLD.shots;
       fireEvent.click(await view.findByRole('button', { name: new RegExp(`^${first.name},`) }));
       ackLastFrame();
       expect(scene.renders.at(-1)!.sourceTime).toBe(first.start);
-      expect(view.queryByRole('button', { name: 'Update clip' })).toBeNull();
+      expect(view.queryByText(/Editing V1|Update clip on/)).toBeNull();
 
       fireEvent.click(view.getByRole('button', { name: new RegExp(`^${second.name},`) }));
       ackLastFrame();

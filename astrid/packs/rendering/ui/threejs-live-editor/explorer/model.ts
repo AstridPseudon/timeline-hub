@@ -205,7 +205,8 @@ export type BarRange = { readonly from: number; readonly to: number };
 
 /** Moves one handle of an in/out range to time `t`: it stays inside [start, end] and MIN_STRETCH away from the other handle. */
 export function moveRangeHandle(range: BarRange, which: 'from' | 'to', t: number, bounds: { start: number; end: number }): BarRange {
-  const time = Number.isFinite(t) ? t : which === 'from' ? range.from : range.to;
+  // Handles snap to 0.1 s, so what the bar shows and the length the pill adds always agree.
+  const time = Number.isFinite(t) ? Math.round(t * 10) / 10 : which === 'from' ? range.from : range.to;
   if (which === 'from') return { from: Math.min(Math.max(time, bounds.start), Math.max(bounds.start, range.to - MIN_STRETCH)), to: range.to };
   return { from: range.from, to: Math.max(Math.min(time, bounds.end), Math.min(bounds.end, range.from + MIN_STRETCH)) };
 }

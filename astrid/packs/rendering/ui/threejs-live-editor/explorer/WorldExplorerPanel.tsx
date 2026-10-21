@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import type { ExtensionContext, PanelRenderProps, ProjectDocumentSurface, TimelineSnapshot } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../identity';
 import type { SceneExplore, SceneInfo, SceneStatus } from '../runtime';
@@ -68,7 +68,6 @@ const FALLBACK_ASPECT = 16 / 9;
 const WIDE_REM = 46;
 const SIDE_COLUMN = '26rem';
 /** Both modes' controls share this height in the side layout, so the viewer keeps its size when the mode changes. */
-const CONTROLS_MIN_HEIGHT = '6rem';
 /** Docked, the scrolling section below the pinned viewer always keeps at least this much height; the viewer shrinks first. */
 const SCROLL_MIN_HEIGHT = 160;
 const MIN_VIEW_HEIGHT = 90;
@@ -396,6 +395,19 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     }
     return { width, height };
   }, [wide, stage.width, stage.height, aspect, dock.rootHeight, dock.extra]);
+
+  // The sticky search row paints the dock's own background: the nearest opaque ancestor colour, set once on the root.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof getComputedStyle === 'undefined') return;
+    for (let node: HTMLElement | null = root.parentElement; node; node = node.parentElement) {
+      const color = getComputedStyle(node).backgroundColor;
+      if (color && color !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(color)) {
+        root.style.setProperty('--explorer-surface', color);
+        return;
+      }
+    }
+  }, []);
 
   // Measure the panel (layout switch) and the stage (viewer fit) in both dimensions; jsdom and hidden hosts keep the fallback.
   useEffect(() => {
@@ -1209,7 +1221,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   // Docked: a two-column grid of chips that fill their cells. Side column: one event per row, like a world-list row.
   const eventButtons = (
-    <div className={wide ? 'flex flex-col gap-0.5' : 'grid grid-cols-2 gap-1.5'} role="group" aria-label="Events" data-refocus>
+    <div className={wide ? 'flex flex-col gap-0.5' : 'grid grid-cols-2 gap-1.5 pt-2'} role="group" aria-label="Events" data-refocus>
       {events.map((event, i) => (
         <button
           key={`${i}:${event.start}:${event.name}`}
@@ -1261,7 +1273,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         {mode === 'explore' ? (
           events.length ? (
             <>
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Events</p>
+              <p className="px-2 text-[10px] uppercase tracking-wide text-muted-foreground">Events</p>
               {eventButtons}
             </>
           ) : null
@@ -1343,11 +1355,12 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       >
         {playingNow ? pauseIcon : playIcon}
       </button>
-      <span className="min-w-0 truncate text-[11px] tabular-nums" aria-label="Time">
-        {clockText(barTime)} / {clockText(barEnd)}{nowEvent ? ` · ${nowEvent.name}` : ''}
+      <span className="shrink-0 text-[11px] tabular-nums" aria-label="Time">
+        {clockText(barTime)} / {clockText(barEnd)}
       </span>
+      {nowEvent ? <span className="min-w-0 truncate text-[11px]" style={{ color: 'rgba(255, 255, 255, 0.72)' }}>· {nowEvent.name}</span> : null}
       {mode === 'shots' && selected && trimmed ? (
-        <span className="flex shrink-0 items-center gap-0.5 text-[11px] tabular-nums" style={{ color: 'rgba(255, 255, 255, 0.72)' }} title={`Using ${rangeClock(stretch.from)}–${rangeClock(stretch.to)} of this shot`}>
+        <span className="ml-1 flex h-6 shrink-0 items-center gap-0.5 rounded-full pl-2 pr-0.5 text-[11px] tabular-nums" style={{ background: 'rgba(255, 255, 255, 0.12)' }} title={`Using ${rangeClock(stretch.from)}–${rangeClock(stretch.to)} of this shot`}>
           {rangeClock(stretch.from)}–{rangeClock(stretch.to)}
           <button type="button" aria-label="Reset" title="Back to the whole shot" className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={resetRange}>
             <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
@@ -1602,17 +1615,23 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
                   className={`absolute right-2 top-2 flex h-7 items-center rounded-full pl-1 pr-0.5 text-[11px] ${overlayFade}`}
                   style={PILL_STYLE}
                 >
-                  <button
-                    type="button"
-                    aria-label="Update clip"
-                    title={followedDiffers ? `Write this range back to the clip on ${followedUse.track} at ${clockText(followedUse.at)}` : 'The clip already matches'}
-                    disabled={!followedDiffers || busy}
-                    className="flex h-6 items-center gap-1.5 rounded-full px-2 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                    onClick={() => { void updateClip(); }}
-                  >
-                    Update clip
-                    <span className="tabular-nums opacity-70">{followedUse.track} {clockText(followedUse.at)}</span>
-                  </button>
+                  {followedDiffers ? (
+                    <button
+                      type="button"
+                      aria-label="Update clip"
+                      title={`Write this range back to the clip on ${followedUse.track} at ${clockText(followedUse.at)}`}
+                      disabled={busy}
+                      className="flex h-6 items-center gap-1.5 rounded-full px-2.5 text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                      style={{ background: 'hsl(var(--primary))' }}
+                      onClick={() => { void updateClip(); }}
+                    >
+                      Update clip on {followedUse.track}
+                    </button>
+                  ) : (
+                    <span role="status" className="flex h-6 items-center px-2 tabular-nums" title="The clip already matches this range">
+                      Editing {followedUse.track} · {clockText(followedUse.at)}
+                    </span>
+                  )}
                   <button
                     type="button"
                     aria-label="Stop editing this clip"
@@ -1644,11 +1663,11 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         </div>
 
         {showEmpty ? null : mode === 'explore' ? (
-          <div className="-mt-2 flex shrink-0 flex-col gap-2" data-refocus style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}>
+          <div className="-mt-2 flex shrink-0 flex-col gap-2" data-refocus>
             {exploreBar}
           </div>
         ) : (
-          <div {...travelGroupProps} className={`${travelGroupClass} -mt-2`} style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}>
+          <div {...travelGroupProps} className={`${travelGroupClass} -mt-2`}>
             {shotBar}
           </div>
         )}
@@ -1656,7 +1675,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         {wide ? <div ref={spacerRef} data-stage-spacer className="min-h-0 flex-1" /> : (
           <div
             data-testid="explorer-scroll"
-            className={`flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto border-t px-3 pb-3 pt-3 ${scrolled ? 'border-border/70 shadow-[inset_0_6px_6px_-6px_rgba(0,0,0,0.35)]' : 'border-transparent'}`}
+            className={`flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto border-t px-3 pb-3 pt-0 ${scrolled ? 'border-border/70 shadow-[inset_0_6px_6px_-6px_rgba(0,0,0,0.35)]' : 'border-transparent'}`}
             onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
           >
             {showEmpty ? null : mode === 'explore' ? (

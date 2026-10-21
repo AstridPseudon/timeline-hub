@@ -768,7 +768,7 @@ describe('World Explorer free roam', () => {
     await waitFor(() => expect(view.getByRole('group', { name: 'Shot travel' })).toBeTruthy());
     expect(within(view.getByRole('list', { name: 'Shots' })).getByRole('button', { name: /^A,/ })).toHaveAttribute('aria-current', 'true');
     expect(view.getByText(/0:01–0:04/)).toBeTruthy();
-    expect(view.getByRole('button', { name: 'Update clip' })).toBeTruthy();
+    expect(view.getByText(/Editing V1/)).toBeTruthy();
   });
 
   it('the header shows the position among all worlds and Next steps through them', async () => {

@@ -724,6 +724,10 @@ describe('lastWorldKey', () => {
 });
 
 describe('moveRangeHandle', () => {
+  it('snaps a handle to 0.1 s', () => {
+    expect(moveRangeHandle({ from: 1, to: 5 }, 'to', 3.54, { start: 0, end: 10 })).toEqual({ from: 1, to: 3.5 });
+    expect(moveRangeHandle({ from: 1, to: 5 }, 'from', 1.26, { start: 0, end: 10 })).toEqual({ from: 1.3, to: 5 });
+  });
   const bounds = { start: 0, end: 4 };
 
   it('moves one handle to the requested time', () => {
