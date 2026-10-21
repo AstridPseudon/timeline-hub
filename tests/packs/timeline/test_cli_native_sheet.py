@@ -117,6 +117,27 @@ def test_export_preview_apply_and_undo(native_cli, tmp_path, capsys):
     assert path.read_text() == edited
 
 
+def test_original_detached_apply_uses_retained_duration_target(connected, tmp_path, monkeypatch, capsys):  # noqa: F811
+    from tests.sdk.test_timeline_sheet_native import detached_draft, duration_edit
+
+    tl, text, ref, _ = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    path = tmp_path / 'detached.sheet'
+    edited = duration_edit(text, 2)
+    path.write_text(edited)
+    monkeypatch.setattr(cli, '_edit_checkout', lambda parsed: Checkout.load(tl.path))
+    monkeypatch.setattr('astrid.sdk.timeline_sheet._apply_parsed', lambda *a: pytest.fail('legacy duration writer'))
+    parsed = cli.build_parser(client).parse_args(['apply', 't', str(path), '--project', 'p'])
+    assert parsed.handler(parsed) == 0
+    assert capsys.readouterr().out == 'applied sheet\n'
+    body = json.loads(generated.calls[-1][0])
+    assert body['base_revision_id'] == 'r0' and body['base_publication_id'] == 'pub0'
+    assert body['source'] == {'via': 'sheet'}
+    assert body['commands'][0]['select'] == ref
+    assert State(generated.bundles['r1']).entity(ref)['hold'] == 2
+    assert path.read_text() == edited
+
+
 @pytest.mark.parametrize("relevant", [False, True])
 def test_stale_export_refuses_without_recapturing(native_cli, tmp_path, capsys, relevant):
     run, client, generated = native_cli

@@ -127,7 +127,11 @@ def render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, 
             out.append(f"         why: {note['why']}")
         if note.get("hold") == "deliberate":
             out.append("         hold: deliberate")
-    return "\n".join(out) + "\n"
+    text = "\n".join(out) + "\n"
+    from astrid.sdk.timeline.checkout import _retain_sheet
+
+    _retain_sheet(tl, text)
+    return text
 
 
 def _loose_in(tl, lo, hi):
@@ -834,6 +838,11 @@ def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
     parsed = parse_sheet(text)
     if "clips" in parsed or "tracks" in parsed:
         raise SheetError("native sheet rows require NativeSheet and TimelineSession")
+    from astrid.sdk.timeline.checkout import _stage_sheet
+
+    retained = _stage_sheet(tl, text, parsed, client=client)
+    if retained is not None:
+        return retained
     before = Checkout(copy.deepcopy(tl.bundle))
     if parsed.get("version") and parsed["version"] != sheet_version(tl):
         base = find_version(tl, parsed["version"], client=client)
@@ -848,6 +857,41 @@ def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
         tl.bundle = before.bundle
         tl._refresh()
         raise
+
+
+def _duration_sheet(sheet, artifact, parsed):
+    """Translate only existing static layer durations, using the export's bindings."""
+    from astrid.sdk.timeline._command_state import State, equal
+
+    original = parse_sheet(artifact["text"])
+    edited = copy.deepcopy(parsed, {id(ELIDED): ELIDED})
+    left = {(cut, row["name"]): row for cut, row in iter_layers(original)}
+    right = {(cut, row["name"]): row for cut, row in iter_layers(edited)}
+    if left.keys() != right.keys() or len(left) != sum(len(c["layers"]) for c in original["cuts"]):
+        return None
+    text = sheet.text
+    for key, row in right.items():
+        before = left[key]
+        if equal(before["for"], row["for"]):
+            continue
+        ref = artifact["bindings"].get(".".join(key))
+        if ref is None or before["for"] is None or row["for"] is None:
+            return None
+        clip = State(sheet._bundle).entity(ref)
+        if clip.get("clipType") != "am-type" or type(clip.get("hold")) not in (int, float) or row["until"] or row["on"]:
+            return None
+        value = row["for"] * (clip.get("speed") or 1)
+        suffix = " # ref " + json.dumps(ref)
+        text = "\n".join(re.sub(r"(?<!\S)hold=\S+", "hold=" + repr(value), line)
+                         if line.endswith(suffix) else line for line in text.splitlines()) + "\n"
+        row["for"] = before["for"]
+    def semantic(value):
+        if isinstance(value, dict):
+            return {k: semantic(v) for k, v in value.items() if k not in {"line", "text_line"}}
+        if isinstance(value, list):
+            return [semantic(v) for v in value]
+        return "…" if value is ELIDED else value
+    return text if equal(semantic(original), semantic(edited)) else None
 
 
 def find_version(tl: Any, version: str, *, client: Any = None) -> Any:
