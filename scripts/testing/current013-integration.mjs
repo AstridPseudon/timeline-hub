@@ -334,7 +334,7 @@ export function runCurrent013Integration() {
   };
   let status = 1;
   try {
-    status = spawnSync('npm', ['exec', '--', 'playwright', 'test', '--config', 'playwright.direct.config.ts', REAL_HTTP_TEST], { cwd: input.app, env: childEnv, stdio: 'inherit', shell: false }).status ?? 1;
+    status = spawnSync('npm', ['exec', '--', 'playwright', 'test', '--config', 'playwright.bootstrap013.config.ts', REAL_HTTP_TEST], { cwd: input.app, env: childEnv, stdio: 'inherit', shell: false }).status ?? 1;
   } finally {
     const after = checkCurrent013Sources(input);
     if (JSON.stringify(after) !== JSON.stringify(before)) fail('source checks changed between the start and end of the browser gate');

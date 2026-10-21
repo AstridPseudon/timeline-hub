@@ -172,7 +172,7 @@ test('same-tree snapshot and ignored output pass both boundaries; focused real-H
     runCurrent013Integration();
     assert.equal(process.exitCode, 0);
     const child = calls.find(({ command }) => command === 'npm');
-    assert.deepEqual(child.args, ['exec', '--', 'playwright', 'test', '--config', 'playwright.direct.config.ts', 'tests/e2e/local/bootstrap013-real-http.spec.ts']);
+    assert.deepEqual(child.args, ['exec', '--', 'playwright', 'test', '--config', 'playwright.bootstrap013.config.ts', 'tests/e2e/local/bootstrap013-real-http.spec.ts']);
     assert.equal(child.options.cwd, roots.app);
     assert.equal(child.options.env.ASTRID_PYTHON, env().ASTRID_PYTHON);
     assert.equal(child.options.env.ASTRID_RUNTIME_PYTHON, env().ASTRID_RUNTIME_PYTHON);
