@@ -421,6 +421,8 @@ export class DirectHarness {
   /** The App's Runtime base (`runtimeApiBase()`) under the door's origin. */
   get doorBase() { return `http://127.0.0.1:${this.doorPort}${this.doorPrefix}`; }
   get doorPrefix() { return '/api/runtime'; }
+  /** The App's Astrid bridge base (`astridBase()`) under the same configured door origin. */
+  get bridgeBase() { return this.doorBase.replace(/\/api\/runtime$/, '/api/astrid'); }
 
   /** Browser context options: the local-network permission is granted (the prompt itself is a manual-checklist item). */
   get contextOptions() {
