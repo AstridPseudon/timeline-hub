@@ -139,6 +139,20 @@ def test_minimal_two_percent_counterexample_without_invented_pixels(crop_cases):
     assert 8 / area(old) <= .02 < 8 / area(new)
 
 
+def test_partial_pixel_crop_denominators_are_pure_expected_controls(crop_cases):
+    case = next(c for c in crop_cases if c["name"] == "partial" and c["basis"]["fps"] == 30)
+    private = png_crop(model.mouth_box(legacy_element(case), 0), (640, 360))
+    compat = png_crop(public_box(case["rows"][0]), (640, 360))
+    erase = png_crop(public_box(case["rows"][0], "erase"), (640, 360))
+    assert private == (298, 202, 339, 219)
+    assert compat == (298, 202, 345, 219)
+    assert erase == (300, 206, 343, 215)
+    assert (area(private), area(compat), area(erase)) == (697, 799, 387)
+    assert 8 / area(private) <= .02 < 8 / area(erase)
+    assert 15 / area(private) > .02 >= 15 / area(compat)
+    assert 16 / area(private) > .02 and 16 / area(compat) > .02
+
+
 def test_frame_zero_series_crop_cannot_follow_a_moving_region(crop_cases):
     for name in ("push", "punch", "bob"):
         case = next(c for c in crop_cases if c["name"] == name and c["basis"]["fps"] == 30)
