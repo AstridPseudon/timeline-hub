@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 import shutil
 import subprocess
 from copy import deepcopy
@@ -140,6 +141,42 @@ def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_r
     monkeypatch.setattr(model, "mouth_box", lambda *_args: pytest.fail("public ROI used private crop"))
     result = builtin.render_lipsync(ctx)
     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
+
+
+def test_public_mouth_rows_drive_curve_and_missing_row_keeps_private_fallback(
+        public_capture_rows, retained, monkeypatch):
+    provider = _public_provider(retained, public_capture_rows, monkeypatch)
+    ctx = context(retained, frame_provider=provider)
+    presenter = ctx.elements[0]
+    public_states = {row["frame"]: {0.0: "closed", 0.5: "half", 1.0: "open"}[
+        row["layers"][0]["diagnostics"]["motion"]["mouth"]]
+                     for row in public_capture_rows}
+    original_mouth_state = model.mouth_state
+    private_missing = original_mouth_state(presenter, 1, ctx.fps)
+    samples = {}
+
+    def private_state(element, frame, fps):
+        if element.id == presenter.id and frame in public_states:
+            pytest.fail("admitted public mouth row consulted private mouth_state")
+        return original_mouth_state(element, frame, fps)
+
+    original_props_at = model.props_at
+
+    def record_props(element, t, fps, **kwargs):
+        props = original_props_at(element, t, fps, **kwargs)
+        if element.id == presenter.id and "mouth" in props:
+            samples[int(math.floor(t * fps))] = props["mouth"]
+        return props
+
+    monkeypatch.setattr(model, "mouth_state", private_state)
+    monkeypatch.setattr(model, "props_at", record_props)
+    builtin.render_curves(ctx)
+
+    assert {frame: samples[frame] for frame in public_states} == {
+        frame: {"closed": 0.0, "half": 0.5, "open": 1.0}[state]
+        for frame, state in public_states.items()
+    }
+    assert samples[1] == {"closed": 0.0, "half": 0.5, "open": 1.0}[private_missing]
 
 
 def test_mixed_public_mouth_facts_keep_private_fallback(public_capture_rows, retained, monkeypatch):

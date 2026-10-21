@@ -282,7 +282,19 @@ def render_curves(ctx: LayerContext) -> LayerResult:
     start, end = ctx.window
     frames = range(int(math.floor(start * ctx.fps)), int(math.ceil(end * ctx.fps)))
     for element in elements:
-        samples = [(f / ctx.fps, model.props_at(element, f / ctx.fps + 1e-6, ctx.fps)) for f in frames]
+        public_states = {}
+        if element.type == "am-presenter":
+            public_scene = ctx.shared.get("public_scene")
+            public_frames = sorted(public_scene) if isinstance(public_scene, Mapping) else ()
+            if public_frames:
+                public = _public_mouth_facts(ctx, element, public_frames)
+                public_states = public["states"] if public else {}
+        samples = []
+        for frame in frames:
+            kwargs = ({"presenter_mouth_state": public_states[frame]}
+                      if frame in public_states else {})
+            samples.append((frame / ctx.fps,
+                            model.props_at(element, frame / ctx.fps + 1e-6, ctx.fps, **kwargs)))
         keys = sorted({k for _t, props in samples for k in props})
         moving = [k for k in keys if len({round(props.get(k, math.nan), 3) for _t, props in samples if k in props}) > 1]
         moving.sort(key=lambda k: (CURVE_ORDER.index(k) if k in CURVE_ORDER else len(CURVE_ORDER), k))
