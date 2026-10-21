@@ -396,7 +396,7 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
   // Previously getProjectVerifiedMedia fell into pairedCalls, which expected
   // /api/runtime -> runtime and /api/astrid -> astrid; the explicit mapping below
   // replaces that with refusal through both aliases.
-  const localDoorOnly = new Set(['commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'getProjectVerifiedMedia']);
+  const localDoorOnly = new Set(['commitTimeline', 'listTimelineCommits', 'createTimeline', 'getProjectMediaSelection', 'getProjectVerifiedMedia']);
   const pairedCalls = calls.filter(({ op }) => !localDoorOnly.has(op));
   const localDoorOnlyCalls = calls.filter(({ op }) => localDoorOnly.has(op));
 
@@ -411,7 +411,7 @@ describe('paired route policy vs the App\'s Workspace v1 calls', () => {
     expect(calls.every(({ path }) => path.startsWith('/v1/') && !path.includes('${'))).toBe(true);
     expect(calls.flatMap((call) => call.headers)).toEqual(expect.arrayContaining(['content-type', 'idempotency-key', 'x-original-name', 'range']));
     expect(new Set(localDoorOnlyCalls.map(({ op }) => op))).toEqual(localDoorOnly);
-    expect(localDoorOnlyCalls).toHaveLength(4);
+    expect(localDoorOnlyCalls).toHaveLength(5);
   });
 
   describe.each(pairedCalls)('$op: $method $path', ({ method, path, op }) => {
