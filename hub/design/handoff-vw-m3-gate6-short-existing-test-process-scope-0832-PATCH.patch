@@ -1,0 +1,302 @@
+--- a/preflight.sh
++++ b/preflight.sh
+@@ -13,7 +13,19 @@
+ case "$mode" in --run|--preflight|--plant-missing-dist) ;; *) echo 'usage: run.sh [--preflight|--plant-missing-dist]' >&2; exit 2 ;; esac
+ [ "$#" -le 1 ] || exit 2
+ tmpdir=$(mktemp -d "$worker/tmp-XXXXXX")
+-trap 'rm -rf -- "$tmpdir"' EXIT
++test_process_tmpdir=$(mktemp -d /tmp/vw-XXXXXX)
++chmod 700 "$test_process_tmpdir"
++/home/user/work/venv-agent/bin/python -B "$worker/short-player-temp-controls.py" --claim "$test_process_tmpdir"
++cleanup_owned_process_tmpdir() {
++  status=$?
++  if ! /home/user/work/venv-agent/bin/python -B "$worker/short-player-temp-controls.py" --cleanup "$test_process_tmpdir"; then
++    echo "refusing unsafe short Player temp cleanup" >&2
++    status=1
++  fi
++  rm -rf -- "$tmpdir"
++  exit "$status"
++}
++trap cleanup_owned_process_tmpdir EXIT
+ 
+ test -e /proc/self/fd/9
+ flock -n 9
+@@ -50,13 +62,13 @@
+ mkdir -p "$worker/evidence"
+ PREFLIGHT_DIR=$(mktemp -d "$worker/evidence/preflight-XXXXXX")
+ [ "$(realpath "$PREFLIGHT_DIR")" = "$PREFLIGHT_DIR" ]
+-export TMPDIR=$tmpdir TMP=$tmpdir TEMP=$tmpdir
++export TMPDIR=$test_process_tmpdir TMP=$test_process_tmpdir TEMP=$test_process_tmpdir
+ export PWTEST_CACHE_DIR=$tmpdir/playwright-cache
+ export PLAYWRIGHT_OUTPUT_DIR=$tmpdir/playwright-output
+ export RUN_DIR=$run_dir
+ cd "$app"
+ env -i \
+-  HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$tmpdir" TMP="$tmpdir" TEMP="$tmpdir" \
++  HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$test_process_tmpdir" TMP="$test_process_tmpdir" TEMP="$test_process_tmpdir" \
+   PREFLIGHT_DIR="$PREFLIGHT_DIR" RUN_DIR="$RUN_DIR" APP_CHECKOUT="$app" \
+   ASTRID_CHECKOUT="$agent" ASTRID_PACK_HOST_HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56 \
+   ASTRID_RUNTIME_CHECKOUT="$runtime" ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python \
+@@ -76,7 +88,7 @@
+ fi
+ 
+ env -i \
+-  HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$tmpdir" TMP="$tmpdir" TEMP="$tmpdir" \
++  HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$test_process_tmpdir" TMP="$test_process_tmpdir" TEMP="$test_process_tmpdir" \
+   PREFLIGHT_DIR="$PREFLIGHT_DIR" RUN_DIR="$RUN_DIR" APP_CHECKOUT="$app" \
+   ASTRID_CHECKOUT="$agent" ASTRID_PACK_HOST_HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56 \
+   ASTRID_RUNTIME_CHECKOUT="$runtime" ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python \
+@@ -95,7 +107,7 @@
+ export TAB_AUDIO_RUN_MARKER=$run_dir/one-shot-marker.json
+ export PLAYWRIGHT_OUTPUT_DIR=$run_dir/playwright-output
+ env -i \
+-  HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$tmpdir" TMP="$tmpdir" TEMP="$tmpdir" \
++  HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$test_process_tmpdir" TMP="$test_process_tmpdir" TEMP="$test_process_tmpdir" \
+   APP_CHECKOUT="$app" ASTRID_CHECKOUT="$agent" ASTRID_RUNTIME_CHECKOUT="$runtime" \
+   ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python ASTRID_PYTHON=/home/user/work/venv-agent/bin/python \
+   ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.11/site-packages \
+@@ -111,7 +123,7 @@
+   PLAYWRIGHT_OUTPUT_DIR="$PLAYWRIGHT_OUTPUT_DIR" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 TSX_DISABLE_CACHE=1 \
+   "$node" tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs --ready "$app" "$agent" "$runtime"
+ env -i \
+-  HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$tmpdir" TMP="$tmpdir" TEMP="$tmpdir" \
++  HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$test_process_tmpdir" TMP="$test_process_tmpdir" TEMP="$test_process_tmpdir" \
+   APP_CHECKOUT="$app" ASTRID_CHECKOUT="$agent" ASTRID_RUNTIME_CHECKOUT="$runtime" \
+   ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python ASTRID_PYTHON=/home/user/work/venv-agent/bin/python \
+   ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.11/site-packages \
+--- /dev/null
++++ b/short-player-temp-controls.py
+@@ -0,0 +1,222 @@
++#!/usr/bin/env python3
++"""Custody and path-budget checks for one per-run Chromium temp root.
++
++This helper deliberately uses lstat/os.scandir semantics.  A Chrome-created
++leaf symlink is removed as a link; its target is never traversed or removed.
++"""
++
++from __future__ import annotations
++
++import argparse
++import os
++from pathlib import Path
++import shutil
++import stat
++import tempfile
++
++
++CLAIM = ".vw-player-temp-claim"
++PREFIX = "vw-"
++TMP_ROOT = Path("/tmp")
++OLD_SOCKET = (
++    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
++    "scratchpad/orch/workers/vw-m3-gate6-runner-child-contract-repair-0803/"
++    "tmp-5aZG7i/com.google.Chrome.tFXWh4/SingletonSocket"
++)
++
++
++class Refused(RuntimeError):
++    pass
++
++
++def _lstat(path: Path) -> os.stat_result:
++    try:
++        return path.lstat()
++    except FileNotFoundError as exc:
++        raise Refused(f"missing path: {path}") from exc
++
++
++def validate_root(path: Path, *, expected_uid: int | None = None) -> os.stat_result:
++    """Validate a claimed, direct child of physical /tmp without resolving it."""
++
++    if not path.is_absolute() or path.parent != TMP_ROOT:
++        raise Refused(f"foreign root: {path}")
++    if not path.name.startswith(PREFIX):
++        raise Refused(f"foreign root name: {path}")
++    root_stat = _lstat(path)
++    if not stat.S_ISDIR(root_stat.st_mode) or stat.S_ISLNK(root_stat.st_mode):
++        raise Refused(f"symlink/non-directory root: {path}")
++    if expected_uid is None:
++        expected_uid = os.getuid()
++    if root_stat.st_uid != expected_uid:
++        raise Refused(f"foreign owner: {path}")
++    if stat.S_IMODE(root_stat.st_mode) != 0o700:
++        raise Refused(f"root mode is not 0700: {path}")
++    claim = path / CLAIM
++    claim_stat = _lstat(claim)
++    if not stat.S_ISREG(claim_stat.st_mode) or stat.S_ISLNK(claim_stat.st_mode):
++        raise Refused(f"invalid claim: {claim}")
++    if claim_stat.st_uid != expected_uid or stat.S_IMODE(claim_stat.st_mode) != 0o600:
++        raise Refused(f"foreign claim: {claim}")
++    return root_stat
++
++
++def claim(path: Path) -> None:
++    path = Path(path)
++    if not path.is_absolute() or path.parent != TMP_ROOT or not path.name.startswith(PREFIX):
++        raise Refused(f"foreign root: {path}")
++    root_stat = _lstat(path)
++    if stat.S_ISLNK(root_stat.st_mode) or not stat.S_ISDIR(root_stat.st_mode):
++        raise Refused(f"symlink/non-directory root: {path}")
++    if root_stat.st_uid != os.getuid() or stat.S_IMODE(root_stat.st_mode) != 0o700:
++        raise Refused(f"unowned or incorrectly protected root: {path}")
++    claim_path = path / CLAIM
++    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
++    try:
++        fd = os.open(claim_path, flags, 0o600)
++    except FileExistsError as exc:
++        raise Refused(f"root already claimed: {path}") from exc
++    with os.fdopen(fd, "w", encoding="ascii") as stream:
++        stream.write(f"pid={os.getpid()}\n")
++    print(f"claim=PASS root={path} mode=0700 owner={os.getuid()}")
++
++
++def _audit_owned_tree(path: Path) -> None:
++    """Audit entries with lstat; symlink targets are intentionally opaque."""
++
++    for current, dirs, files in os.walk(path, topdown=False, followlinks=False):
++        current_path = Path(current)
++        for name in files + dirs:
++            entry = current_path / name
++            entry_stat = _lstat(entry)
++            if entry_stat.st_uid != os.getuid():
++                raise Refused(f"foreign-owned entry: {entry}")
++
++
++def cleanup(path: Path) -> None:
++    path = Path(path)
++    validate_root(path)
++    _audit_owned_tree(path)
++    # rmtree(unlink) is intentionally implemented with lstat and unlink so a
++    # Chrome internal symlink is removed as a leaf and never followed.
++    for current, dirs, files in os.walk(path, topdown=False, followlinks=False):
++        current_path = Path(current)
++        for name in files:
++            entry = current_path / name
++            if entry.is_symlink() or entry.is_file():
++                entry.unlink()
++            else:
++                raise Refused(f"unexpected file node: {entry}")
++        for name in dirs:
++            entry = current_path / name
++            if entry.is_symlink():
++                entry.unlink()
++            else:
++                entry.rmdir()
++    path.rmdir()
++    print(f"cleanup=PASS root={path} symlinks=unlinked-without-following")
++
++
++def path_budget() -> None:
++    short_root = "/tmp/vw-XXXXXX"
++    # Bound the Chrome profile component before a run.  The observed Chrome
++    # form is much shorter; 58 bytes is a conservative cap that stays below
++    # the 108-byte Unix socket limit with this root and leaf name.
++    profile_component = "com.google.Chrome." + ("x" * 58)
++    short_socket = f"{short_root}/{profile_component}/SingletonSocket"
++    if len(OLD_SOCKET.encode()) != 188:
++        raise Refused(f"recorded long witness changed length={len(OLD_SOCKET.encode())}")
++    if len(short_socket.encode()) >= 108:
++        raise Refused(f"short worst-case exceeds 107 bytes: {len(short_socket.encode())}")
++    print(f"long-witness-bytes={len(OLD_SOCKET.encode())}")
++    print(f"short-worst-case-bytes={len(short_socket.encode())} (<108)")
++    print(f"short-worst-case={short_socket}")
++
++
++def self_test() -> None:
++    path_budget()
++    root = Path(tempfile.mkdtemp(prefix=PREFIX, dir=TMP_ROOT))
++    os.chmod(root, 0o700)
++    claim(root)
++    outside = Path(tempfile.mkstemp(prefix="vw-foreign-target-", dir=TMP_ROOT)[1])
++    (root / "com.google.Chrome.example").mkdir()
++    (root / "com.google.Chrome.example" / "SingletonSocket").symlink_to(outside)
++    cleanup(root)
++    if not outside.exists():
++        raise Refused("symlink target was followed or removed")
++    outside.unlink()
++
++    unclaimed = Path(tempfile.mkdtemp(prefix=PREFIX, dir=TMP_ROOT))
++    os.chmod(unclaimed, 0o700)
++    try:
++        try:
++            validate_root(unclaimed)
++        except Refused as exc:
++            print(f"unclaimed-root-refusal=PASS reason={exc}")
++        else:
++            raise Refused("unclaimed root accepted")
++    finally:
++        shutil.rmtree(unclaimed)
++
++    foreign = Path(tempfile.mkdtemp(prefix="foreign-", dir=TMP_ROOT))
++    os.chmod(foreign, 0o700)
++    try:
++        try:
++            validate_root(foreign)
++        except Refused as exc:
++            print(f"foreign-root-refusal=PASS reason={exc}")
++        else:
++            raise Refused("foreign root accepted")
++        owner_probe = TMP_ROOT / f"vw-owner-{foreign.name}"
++        foreign.rename(owner_probe)
++        try:
++            validate_root(owner_probe, expected_uid=os.getuid() + 1)
++        except Refused as exc:
++            print(f"owner-refusal=PASS reason={exc}")
++        else:
++            raise Refused("foreign owner accepted")
++        finally:
++            shutil.rmtree(owner_probe)
++    finally:
++        if foreign.exists():
++            shutil.rmtree(foreign)
++
++    target = Path(tempfile.mkdtemp(prefix="vw-symlink-target-", dir=TMP_ROOT))
++    link = TMP_ROOT / "vw-symlink-root-self-test"
++    link.symlink_to(target, target_is_directory=True)
++    try:
++        try:
++            validate_root(link)
++        except Refused as exc:
++            print(f"symlink-root-refusal=PASS reason={exc}")
++        else:
++            raise Refused("symlink root accepted")
++    finally:
++        link.unlink()
++        target.rmdir()
++    print("self-test=PASS")
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser()
++    group = parser.add_mutually_exclusive_group(required=True)
++    group.add_argument("--claim")
++    group.add_argument("--cleanup")
++    group.add_argument("--paths", action="store_true")
++    group.add_argument("--self-test", action="store_true")
++    args = parser.parse_args()
++    if args.claim:
++        claim(Path(args.claim))
++    elif args.cleanup:
++        cleanup(Path(args.cleanup))
++    elif args.paths:
++        path_budget()
++    else:
++        self_test()
++
++
++if __name__ == "__main__":
++    try:
++        main()
++    except Refused as exc:
++        raise SystemExit(f"REFUSED: {exc}")
+--- a/SHA256SUMS
++++ b/SHA256SUMS
+@@ -1,5 +1,6 @@
+ 6b7527d414bc30c0595bea3b93fd182198f2cf30aaf4915930e1e9bacfd58949  run.sh
+-ad0e93cb725763ac5180aed06f18a880a21564890f727e809ddabefac8bf2078  preflight.sh
++96ffbbe329c414ef7b15602d1249d1cf67266a8ec5d8337977d63940dffdae38  preflight.sh
++97c96e8df3c1d5c06dc645abc62bea8ab7dca88d2fdc3ac43aaba914d3909de1  short-player-temp-controls.py
+ 7ad93869a27ff241319559881ade5207c65005f1b1bf9cdb7eb5641a713fd074  prepare.mjs
+ 8c6fc14d75c8cd486b08389fc9bdcde1b21ab1ce74f7655d6f9721697fdf854f  issue.mjs
+ fb7632d2c69da10c65db04052f0b04ede1b6e72064817fdc600098135ea50dfd  dist-availability.mjs
+
