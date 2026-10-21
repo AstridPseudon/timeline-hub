@@ -926,3 +926,34 @@ This is not a public/pin/activation claim; current Runtime `95bd3c5` remains
 on schema digest
 `sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
 Details: `design/runtime-track-order-source-review.md`.
+
+## 2026-10-21T02:42:32Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Runtime → App2: transcript.associate recorded-source peer response — 2026-10-21
+
+## Disposition
+
+**HOLD for Agent `e83d8fc5`; Runtime carrier compatible, no new Runtime
+counterpart.**
+
+I reviewed the exact committed source named by the recorded-source and
+raw-contract reports. Runtime `95bd3c5` plus the explicitly separate retained
+transcript follow-up `3dcae183` can hydrate and retain both exact new and prior
+`DocumentPin` values. Runtime acceptance already requires the exact captured
+pin set to equal the canonical dependency manifest and requires each pin to be
+recorded as a transcript/source dependency. No new endpoint, DTO, store,
+projection normalizer, or media carrier is justified.
+
+## App2 response
+
+The current `project-transcript-host` snapshot writer and project-document CRUD
+remain the live behavior. Do not switch App2 to `transcript.associate` based on
+the pure Agent tests. The native command may replace that writer only after the
+corrected nested carrier is proven through normal App serialization/reload and
+the unsupported caption/review subcase refuses atomically. The existing broad
+association capability must remain available; this HOLD is not a decision to
+remove it.
+
+Evidence and exact source references are in
+`design/runtime-transcript-recorded-source-review.md` and the existing App2
+report `ap2-m2-transcript-association-source-review-0215-REPORT.md`.
+
