@@ -58,7 +58,7 @@ export { createLifecycleEvent } from './contracts';
 export { type ExtensionI18nService, type ExtensionDiagnosticsService, type CreativeContext, type CreativeProjectDocument, type CreativeDocumentPage, type ProjectDocumentSurface, type CreativeAssetReadSurface, type ExtensionPendingWorkState, type ExtensionPendingWorkService, type ExtensionCommandService, type ExtensionContext, createCreativeContext, createCreativeContextStubs, disposeExtensionContextServices, CONTEXT_DISPOSE_SYMBOL, ExtensionNotImplementedError, CREATIVE_MEMBER_MILESTONE } from './context';
 
 // ui renderer contracts
-export { type ExtensionRenderer, type ExtensionUiService, type PanelRenderProps, type PanelVideoAdapter, type PanelFrameAnchor, type PanelPreviewService } from './ui';
+export { type ExtensionRenderer, type ExtensionUiService, type PanelRenderProps, type PanelVideoAdapter, type PanelClipSpec, type PanelClipDragProps, type PanelFrameAnchor, type PanelPreviewService } from './ui';
 
 // family bridge
 export { CONTRIBUTION_KIND_MILESTONE, contributionKindNotYetBridged, getVideoFamilyDefinition, getVideoFamilyConformanceReport, getVideoFamilyLegacyBridgeStatus } from './familyBridge';

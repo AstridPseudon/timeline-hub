@@ -29,6 +29,35 @@ export interface PanelPreviewService {
   showFrame(input: { readonly seconds: number; readonly anchor: PanelFrameAnchor }): DisposeHandle;
 }
 
+/**
+ * A clip an extension panel offers to the timeline: the same facts "Add to video" places.
+ * The clip type must be one the extension owns; the host rejects anything else.
+ */
+export interface PanelClipSpec {
+  /** A clip type declared and registered by the dragging extension. */
+  readonly clipType: string;
+  /** Source range start, seconds (>= 0). */
+  readonly from: number;
+  /** Source range end, seconds (> from). */
+  readonly to: number;
+  /** Playback rate; defaults to 1. */
+  readonly speed?: number;
+  /** Clip label shown on the timeline. */
+  readonly label?: string;
+  /** The clip's `app` sidecar (JSON-serialisable, bounded by the host). */
+  readonly app?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Props to spread on any element that should drag a clip onto the timeline. They are
+ * structural (no React dependency): `draggable`, `onDragStart`, `onDragEnd`.
+ */
+export interface PanelClipDragProps {
+  readonly draggable: true;
+  readonly onDragStart: (event: { readonly dataTransfer: DataTransfer | null }) => void;
+  readonly onDragEnd: () => void;
+}
+
 /** Optional video context; a generic panel needs neither playback nor a lane. */
 export interface PanelVideoAdapter {
   readonly view: TimelineViewStore;
@@ -39,6 +68,13 @@ export interface PanelVideoAdapter {
   /** Select these clips in the timeline, replacing the current selection. Unknown ids
    *  are ignored; an empty list clears it. Optional: absent where the host has no timeline. */
   select?(clipIds: readonly string[]): void;
+  /**
+   * Make an element a drag source for `spec`: spread the result on it. Dropping on the
+   * timeline inserts the clip at the drop time and track and selects it. Returns null when
+   * the spec is invalid or its clip type is not owned by this extension (nothing can be
+   * dragged), or where the host has no timeline. Optional.
+   */
+  dragSource?(spec: PanelClipSpec): PanelClipDragProps | null;
 }
 
 /** Props supplied to a registered trusted React panel renderer. */

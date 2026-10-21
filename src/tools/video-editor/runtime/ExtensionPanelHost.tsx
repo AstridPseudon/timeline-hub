@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { PanelRenderProps, PanelVideoAdapter } from '@astrid/editor-sdk';
 import type { VideoEditorPanelDescriptor } from './extensionSurface';
@@ -41,6 +41,8 @@ export interface ExtensionPanelHostProps {
   /** Panels shown in their docked slot. A full-screen panel is visible regardless. */
   readonly visiblePanelKeys: ReadonlySet<string>;
   readonly video?: PanelVideoAdapter;
+  /** Give one extension's panels their own adapter (e.g. one that knows who is dragging). */
+  readonly bindVideo?: (video: PanelVideoAdapter, extensionId: string) => PanelVideoAdapter;
   readonly settingsByPanelKey?: Readonly<Record<string, PanelRenderProps['settings']>>;
   readonly onError?: (info: ContributionErrorInfo) => void;
   /** Controlled: the one panel shown full screen, if any. */
@@ -61,12 +63,18 @@ interface PanelSlotProps {
   readonly fullscreenActive: boolean;
   readonly frameBody: () => HTMLElement | null;
   readonly video?: PanelVideoAdapter;
+  readonly bindVideo?: ExtensionPanelHostProps['bindVideo'];
   readonly settings?: PanelRenderProps['settings'];
   readonly fullscreen?: PanelRenderProps['fullscreen'];
   readonly onError?: (info: ContributionErrorInfo) => void;
 }
 
-function PanelSlot({ panel, panelKey, instanceId, dockedVisible, fullscreenActive, frameBody, video, settings, fullscreen, onError }: PanelSlotProps) {
+function PanelSlot({ panel, panelKey, instanceId, dockedVisible, fullscreenActive, frameBody, video: hostVideo, bindVideo, settings, fullscreen, onError }: PanelSlotProps) {
+  const extensionId = panel.extensionId;
+  const video = useMemo(
+    () => (hostVideo && bindVideo && extensionId ? bindVideo(hostVideo, extensionId) : hostVideo),
+    [hostVideo, bindVideo, extensionId],
+  );
   // One DOM node per panel for its whole life; it is only ever moved, never recreated.
   const [node] = useState(() => {
     const el = document.createElement('div');
@@ -101,7 +109,7 @@ function PanelSlot({ panel, panelKey, instanceId, dockedVisible, fullscreenActiv
 }
 
 /** One React instance per qualified contribution in each mounted host. */
-export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError, settingsByPanelKey, fullscreenPanelKey = null, onFullscreenPanelKeyChange }: ExtensionPanelHostProps) {
+export function ExtensionPanelHost({ panels, visiblePanelKeys, video, bindVideo, onError, settingsByPanelKey, fullscreenPanelKey = null, onFullscreenPanelKeyChange }: ExtensionPanelHostProps) {
   const hostId = useId();
   const frameRef = useRef<HTMLDivElement>(null);
   const fullscreenPanel = fullscreenPanelKey === null ? undefined : panels.find((panel) => getPanelKey(panel) === fullscreenPanelKey);
@@ -137,6 +145,7 @@ export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError, s
             fullscreenActive={active}
             frameBody={() => frameRef.current}
             video={video}
+            bindVideo={bindVideo}
             settings={settingsByPanelKey?.[key]}
             fullscreen={onFullscreenPanelKeyChange ? {
               active,
