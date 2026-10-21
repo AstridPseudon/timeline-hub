@@ -1,6 +1,6 @@
 # @banodoco/timeline-composition
 
-Version 0.0.13 ships built ESM and declarations for the timeline evaluator,
+Version 0.0.14 ships built ESM and declarations for the timeline evaluator,
 Remotion composition, theme API and default registries. Plain Node can import
 `@banodoco/timeline-composition/evaluation` without React, Remotion or a TypeScript
 loader. The renderer uses host peers React/React DOM 18.3.1 and
@@ -9,7 +9,29 @@ Remotion/media/layout-utils 4.0.509; those runtimes are never bundled.
 The package owns text-card (including the `text` alias), six animations, two
 transitions and four 2rp effects relocated from App. The bundled 2rp source is
 **0.1.0**; equivalence to the separately referenced 0.1.1 theme is unverified.
-Fonts, media and project pack admission remain host responsibilities.
+Fonts, media and project pack admission remain host responsibilities. The
+qualified 0.0.14 archive is 80 regular members, SHA-256
+`21fde4d2a5d62a83f97a85d4b8d9f9d3f707a6489c07eb421c6331eccf893e6e`, from
+source commit `df7b86308902fae90eda1dc3080d17d8fc30ea78`.
+
+## Evaluator ownership and host adapters
+
+The public pure evaluator is exported by `typescript/src/evaluation.ts`; its
+scene implementation is `typescript/src/scene-evaluation.ts`, including
+`prepareScene`, `querySceneFrame` and `querySceneOcclusion`. The React/Remotion
+adapter is `typescript/src/TimelineComposition.tsx`. Host registry and theme
+adaptation are the scoped seams in `typescript/src/registries.ts`,
+`typescript/src/RegistryContext.tsx` and `typescript/src/theme-api.ts`. These
+are legitimate adapters around the one evaluator, not second evaluators or
+source loaders. Shared clip-look and render geometry live in
+`typescript/src/lib/clip-look.ts` and `typescript/src/lib/render-bounds.ts`.
+
+The external normal-route adapters remain host-owned: Agent's
+`astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py` and
+`astrid/packs/rendering/shared/rendering_backend/__init__.py` consume admitted
+inputs, while App's `src/tools/video-editor/compositions/TimelineRenderer.tsx`
+supplies its preview projection. No vendored Composition source is a valid
+adapter.
 
 In 0.0.9, `ComponentCapabilityContext.assetEntry?: Readonly<AssetRegistryEntry>`
 is the same selected entry passed to the rendered component, resolved by the
@@ -330,10 +352,22 @@ host route is source-bound:
    through `inherited_source(timeline_path, assets_path)`, the existing
    verified-source path. It does not mint source identity from package metadata
    or a stale snapshot.
-2. The existing `_prepared_remotion_root` materializes that source and passes
+2. For the normal Main imported-theme route, Runtime's imported `theme.json`
+   descriptor is admitted as the existing `theme` input; Agent's
+   `astrid/core/execution/generic_host.py` materializes it,
+   `_resolved_theme_for_render()` in
+   `astrid/packs/rendering/shared/rendering_backend/__init__.py` resolves it,
+   and the result becomes `merged_props["theme"]`. The route is
+   `media.import_file`/CAS descriptor -> `inputs.theme` -> GenericHost ->
+   existing resolver -> Root props. A theme slug alone is not a Theme
+   document and must not trigger checkout lookup. App's selected-theme
+   authority is `src/tools/video-editor/compositions/installed-themes.ts`,
+   with the existing render payload assembly in
+   `src/tools/video-editor/lib/renderRouter.ts`.
+3. The existing `_prepared_remotion_root` materializes that source and passes
    its compiled tracks, assets, resolved theme/registries, canvas and rational
    frame rate to `prepareCompositionScene`.
-3. Root rendering and `querySceneFrame` queries use that same prepared scene. A
+4. Root rendering and `querySceneFrame` queries use that same prepared scene. A
    private advisory `scene_only` request may write the existing
    `filmstrip_bundle` entrypoint (`scene-answers.json`); it does not render PNGs
    or create a new public route.
@@ -350,32 +384,32 @@ Saving is renderer-free. Commit, reload, retry, rebase, undo, and history
 acceptance must work with Node, Root, and the renderer stopped. Preview and
 Scene availability are separate reports.
 
+Owner-film inspection remains deliberately bounded. `VW-D09b`/`VW-D09c` are
+deferred solely for heavy proof: the private `model.mouth_box` fallback and
+legacy PNG crop selection remain, along with their existing statistics and
+strict thresholds. The retained partial case is not equivalent to the
+explicit case (697 vs 799 pixels; 16/697 vs 16/799 threshold crossing), and the
+387-pixel erase control remains separate. `InspectionMouth` is not in 0.0.14;
+no public geometry/crop field, fallback retirement, or statistic rewrite is
+implied by this package.
+
 ## Build, package and verify
 
-Use the immutable exact-d0a/c4d pairing: Agent source
-`d0a5072bbe7b7ce9489f43aa0a81027ec400343b` and its
-`remotion/package-lock.json` SHA-256
-`c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24`.
-Composition 0.0.13 is the corresponding 77-member artifact with SHA-256
-`9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`.
+Use the qualified 0.0.14 archive at
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.14.tgz`.
+The package-smoke installed integrity is
+`sha512-Bgf9lHdk3CJCTsA3Jbd5WW9UYCHEZQTF3VFM1YO6dimZ+q8bQ8cX6CZ4FCfClBNgg10DQ1bozGMqFCpkGNXvvw==`.
+The 0.0.13/77-member archive remains historical evidence and is not the
+current setup instruction.
 
-The named immutable runtime request is
-`agent-remotion-viewing13-d0a5072b`. Its environment-generation attempt was
-refused because it ran Node 22.22.0/npm 10.9.4 instead of the required Node
-20.19.4/npm 10.8.2. The recorded host carrier is held for graph-ready and
-independent custody validation; do not treat it as a working environment until
-that validation passes. No duplicate install, extraction, or source copy is
-implied by this record.
-
-After the graph-ready worker validates the environment, the canonical checks
-from the real Composition root are:
+The canonical checks from the real Composition root are:
 
 ```sh
 cd /home/user/work/composition
 make build
 make test
 npm run test:package -- \
-  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.13.tgz
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/banodoco-timeline-composition-0.0.14.tgz
 ```
 
 `make build` runs registry-drift checks, strict TypeScript/declaration checks,
@@ -412,6 +446,12 @@ the five files. Installed themes and neighboring workspaces cannot affect this
 output. Optional host discovery/generation stays in the host and supplies maps
 through the same scoped input.
 
+Release14's duration surface is intentionally generic over any object carrying
+the required clip list: `getTimelineDurationInFrames<T extends
+Pick<TimelineConfig, "clips">>(timeline: T, fps: number): number`, implemented
+in `typescript/src/lib/duration.ts`. The duration body is unchanged; full
+timeline configs and narrower clip-bearing callers remain valid.
+
 The public ESM/declaration exports are `.`, `./evaluation`, `./theme-api`,
 `./registries`, `./registry.generated`, `./effects.generated`,
 `./animations.generated`, `./transitions.generated` and `./package.json`.
@@ -436,16 +476,26 @@ not setup instructions for the current route.
 
 ## Current qualification boundary
 
-The normal export fixture is pinned to the current Agent source `d0a5072b`
-(`21e84b7d` source handoff), Runtime producer `2c4ac180`, and Composition
-0.0.13. Its offline source staging, registry generation, typecheck, and bundle
-were recorded as passing. The central normal export has not produced an MP4:
-the latest attempt stopped before admission at the existing `/tmp` disk guard
-with `10,538,319,872` free bytes, below the required `10,737,418,240` (10 GiB).
-No MP4, frame/audio parity, or export certification follows from that attempt.
+The qualified package source is Composition commit
+`df7b86308902fae90eda1dc3080d17d8fc30ea78`, tree
+`71d8e95edb1bb2d187c3193ef3462d4cfde277fa`, published as 0.0.14. Its source
+full suite recorded 85 passed, zero failed/skipped, and the exact package smoke
+passed plain Node ESM/SSR, peer identity, scoped host capability, strict
+NodeNext declarations and installed-file integrity. This qualifies the package
+artifact, not consumer adoption.
 
-Physical frame parity and physical audio parity, macOS playback, owner-film
-viewing, and whole-project ZIP delivery were not run here and are not claimed.
+Physical Gate 6 remains **OPEN**. The latest corrected readiness/physical
+attempt failed before all five comparison bodies: 0 executed, 5 not run, and
+no media was produced. The still-unrun gate cases are native-size Player vs
+CPU-export frames, Player PCM against the same export, a picture-only planted
+mismatch, and a half-gain audio negative (with the required normal positive
+case). The farm packet is held; no browser, live socket, physical run, or
+parity claim belongs in this page until that gate passes.
+
+Also unrun or still open: coordinated Agent/App 0.0.14 consumer pin and route
+journey evidence, whole-project ZIP application to fresh main, and owner-film
+viewing. Scanner108 payload `204a` and `instructions969` remain immutable
+delivery inputs; this page does not edit or replace either one.
 
 ## Keyframe origin
 
