@@ -656,6 +656,7 @@ export function ShotTimelinePreview({
         initialTimelineData={initialTimelineData}
         occurrenceAddMediaPort={occurrenceAddMediaPort}
         getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
+        occurrenceOwnerRef={`occurrence:${occurrenceId}`}
       >
         <ShotTimelineEditorSurface
           config={projection.config}

@@ -358,7 +358,7 @@ describe('EditorRuntimeProvider timeline services', () => {
       </EditorRuntimeProvider>,
     );
 
-    expect(useTimelineState).toHaveBeenCalledWith(timelineServices, undefined);
+    expect(useTimelineState).toHaveBeenCalledWith(timelineServices, undefined, undefined);
   });
 });
 

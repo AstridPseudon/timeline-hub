@@ -30,6 +30,7 @@ import type { PreparedShotComposition } from '@/tools/video-editor/data/shotComp
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
+import type { UseAssetManagementOccurrenceOptions } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import {
   VideoEditorRuntimeProvider,
   useVideoEditorRuntime,
@@ -384,6 +385,7 @@ function InnerProvider({
   initialTimelineData,
   occurrenceAddMediaPort,
   getOccurrenceAddMediaCurrent,
+  occurrenceOwnerRef,
 }: {
   children: React.ReactNode;
   effectCatalog?: VideoEditorEffectCatalog | null;
@@ -395,6 +397,7 @@ function InnerProvider({
   initialTimelineData?: TimelineData;
   occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
   getOccurrenceAddMediaCurrent?: () => TimelineData | null;
+  occurrenceOwnerRef?: UseAssetManagementOccurrenceOptions['occurrenceOwnerRef'];
 }) {
   useRenderDiagnostic('VideoEditorProvider');
   const runtime = useVideoEditorRuntime();
@@ -434,6 +437,9 @@ function InnerProvider({
     proposalPersistenceProvider: proposalPersistenceRef.current,
     eagerProposalRetry: true,
     initialTimelineData,
+    occurrenceOptions: occurrenceOwnerRef || occurrenceAddMediaPort || getOccurrenceAddMediaCurrent
+      ? { occurrenceOwnerRef, occurrenceAddMediaPort, getOccurrenceAddMediaCurrent }
+      : undefined,
     shotComposition: readPlayedComposition,
   });
   return (
@@ -842,6 +848,8 @@ export interface VideoEditorProviderProps {
   occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
   /** Read the mounted parent timeline at occurrence-add capture time. */
   getOccurrenceAddMediaCurrent?: () => TimelineData | null;
+  /** Explicit local occurrence owner for the nested asset-management seam. */
+  occurrenceOwnerRef?: UseAssetManagementOccurrenceOptions['occurrenceOwnerRef'];
   /** Whether this editor hosts extensions for lifecycle telemetry. */
   extensionHostEnabled?: boolean;
   /** Host revision attached to privacy-safe operational events. */
@@ -880,6 +888,7 @@ function VideoEditorProviderInstance({
   initialTimelineData,
   occurrenceAddMediaPort,
   getOccurrenceAddMediaCurrent,
+  occurrenceOwnerRef,
   extensionHostEnabled = false,
   extensionReleaseRevision = 'unset',
   extensionOperationalEventSink = dispatchExtensionOperationalEvent,
@@ -1153,6 +1162,7 @@ function VideoEditorProviderInstance({
         initialTimelineData={initialTimelineData}
         occurrenceAddMediaPort={occurrenceAddMediaPort}
         getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
+        occurrenceOwnerRef={occurrenceOwnerRef}
       >
         {children}
       </InnerProvider>

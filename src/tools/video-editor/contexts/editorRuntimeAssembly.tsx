@@ -62,6 +62,7 @@ import { useTimelineState } from '@/tools/video-editor/hooks/useTimelineState.ts
 import { PUBLIC_TIMELINE_SERVICE_HOOKS, type TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 import type { UseTimelineStateResult } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { UseAssetManagementOccurrenceOptions } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
   normalizeExtensionRuntime,
@@ -587,6 +588,8 @@ export interface UseEditorRuntimeSyncOptions {
   };
   /** Synchronously seed a host-owned timeline projection before provider I/O. */
   initialTimelineData?: TimelineData;
+  /** Local popup-only occurrence-owned media inputs; never serialized. */
+  occurrenceOptions?: UseAssetManagementOccurrenceOptions;
   /** Live getter for the shot composition the timeline plays; feeds the
    *  reader's `shots` so extensions can read what each placed shot contains. */
   shotComposition?: () => PreparedShotComposition | null;
@@ -618,6 +621,7 @@ export function useEditorRuntimeSync({
   eagerProposalRetry = false,
   settings,
   initialTimelineData,
+  occurrenceOptions,
   shotComposition,
 }: UseEditorRuntimeSyncOptions): EditorRuntimeSync {
   const {
@@ -648,7 +652,11 @@ export function useEditorRuntimeSync({
     sequenceComponentCatalog,
   );
 
-  const { store, editor, chrome, editorOps } = useTimelineState(timelineServices, initialTimelineData);
+  const { store, editor, chrome, editorOps } = useTimelineState(
+    timelineServices,
+    initialTimelineData,
+    occurrenceOptions,
+  );
   const diagnosticCollection = useVideoEditorRuntime().diagnosticCollection;
   const activeExtensionIds = useMemo(
     () => new Set(extensionRuntime.extensions.map((ext) => ext.manifest.id as string)),

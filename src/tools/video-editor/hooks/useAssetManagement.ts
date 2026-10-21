@@ -38,6 +38,7 @@ import type {
 } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
 import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
+import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 
 type UploadedGenerationData = GenerationDropData & {
   assetId?: string;
@@ -64,7 +65,14 @@ type UploadedGenerationResult = {
 
 const NATIVE_REFUSAL_MESSAGE_LIMIT = 240;
 
-export interface UseAssetManagementArgs {
+/** Local popup-only inputs for an explicit occurrence-owned native add. */
+export interface UseAssetManagementOccurrenceOptions {
+  occurrenceOwnerRef?: `occurrence:${string}`;
+  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
+  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
+}
+
+export interface UseAssetManagementArgs extends UseAssetManagementOccurrenceOptions {
   store?: TimelineStoreApi;
   dataRef: MutableRefObject<TimelineData | null>;
   selectedTrackId: string | null;

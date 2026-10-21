@@ -10,6 +10,7 @@ import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from 
 import { PUBLIC_TIMELINE_SERVICE_HOOKS } from '../runtime/timelineHostServiceHooks.ts';
 import type { TimelineHostServiceHooks } from '../runtime/timelineHostServiceHooks.ts';
 import { useTimelineState } from './useTimelineState.ts';
+import type { UseAssetManagementArgs } from './useAssetManagement.ts';
 import { createTimelineCommands } from './useTimelineCommandsService.ts';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts.ts';
 import { buildTimelineData } from '../lib/timeline-data.ts';
@@ -33,6 +34,7 @@ async function mounted(
   raw = commandDocument(),
   existing?: Awaited<ReturnType<typeof environment>>,
   timelineServices: TimelineHostServiceHooks = PUBLIC_TIMELINE_SERVICE_HOOKS,
+  occurrenceOptions?: Parameters<typeof useTimelineState>[2],
 ) {
   const env = existing ?? await environment(raw);
   vi.stubGlobal('indexedDB', env.factory);
@@ -54,7 +56,7 @@ async function mounted(
   const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client },
     createElement(VideoEditorRuntimeProvider, { value: runtime }, children));
   const hook = renderHook(({ loaded }) => {
-    const state = useTimelineState(timelineServices, loaded);
+    const state = useTimelineState(timelineServices, loaded, occurrenceOptions);
     useKeyboardShortcuts({ hasSelectedClip: false, canMoveSelectedClipToTrack: false,
       precisionEnabled: false, selectedClipIds: new Set(), timelineFps: 30,
       undo: state.chrome.undo, redo: state.chrome.redo,
@@ -147,6 +149,34 @@ describe('mounted editor history authority', () => {
     expect(nativePort.finish).toHaveBeenCalledOnce();
     expect(nativePort.submit).toHaveBeenCalledOnce();
     expect(legacySave).not.toHaveBeenCalled();
+  });
+
+  it('passes explicit popup ownership and the parent capture basis into asset management', async () => {
+    const env = await environment();
+    let received: Partial<UseAssetManagementArgs> | undefined;
+    const parentPort = {
+      capture: vi.fn(),
+      finish: vi.fn(),
+      submit: vi.fn(),
+    };
+    const getCurrent = vi.fn(() => env.current());
+    const timelineServices: TimelineHostServiceHooks = {
+      ...PUBLIC_TIMELINE_SERVICE_HOOKS,
+      useAssetManagement(args) {
+        received = args;
+        return PUBLIC_TIMELINE_SERVICE_HOOKS.useAssetManagement(args);
+      },
+    };
+
+    await mounted(undefined, env, timelineServices, {
+      occurrenceOwnerRef: 'occurrence:occ-1',
+      occurrenceAddMediaPort: parentPort as never,
+      getOccurrenceAddMediaCurrent: getCurrent,
+    });
+
+    await waitFor(() => expect(received?.occurrenceOwnerRef).toBe('occurrence:occ-1'));
+    expect(received?.occurrenceAddMediaPort).toBe(parentPort);
+    expect(received?.getOccurrenceAddMediaCurrent).toBe(getCurrent);
   });
 
   it.each(['undo', 'redo'] as const)('does not rewind an accepted echo through local %s', async (direction) => {

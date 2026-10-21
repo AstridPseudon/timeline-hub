@@ -71,6 +71,13 @@ const popupChrome = vi.hoisted(() => ({
   onTimelineLoadStarted: vi.fn(),
 }));
 const previewProps = vi.hoisted(() => ({currentTime: undefined as number | undefined}));
+const providerProps = vi.hoisted(() => ({
+  current: null as null | {
+    occurrenceOwnerRef?: string;
+    occurrenceAddMediaPort?: unknown;
+    getOccurrenceAddMediaCurrent?: unknown;
+  },
+}));
 
 vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
   const ReactModule = await import('react');
@@ -88,7 +95,7 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
   const store = await import('@/tools/video-editor/hooks/timelineStore.ts') as unknown as {
     __shotTimelineTestContext: React.Context<Record<string, unknown>>;
   };
-  function VideoEditorProvider({ children, dataProvider, timelineId, timelineEditability }: {
+  function VideoEditorProvider({ children, dataProvider, timelineId, timelineEditability, occurrenceOwnerRef, occurrenceAddMediaPort, getOccurrenceAddMediaCurrent }: {
     children: React.ReactNode;
     dataProvider: {
       readonly timelineQueryIdentity: string;
@@ -99,7 +106,11 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
     timelineEditability: {
       check: (input: { clipId: string; sourceTrackId: string | null; targetTrackId: string | null }) => { allowed: boolean };
     };
+    occurrenceOwnerRef?: string;
+    occurrenceAddMediaPort?: unknown;
+    getOccurrenceAddMediaCurrent?: unknown;
   }) {
+    providerProps.current = { occurrenceOwnerRef, occurrenceAddMediaPort, getOccurrenceAddMediaCurrent };
     const [undoCount, setUndoCount] = ReactModule.useState(0);
     const [loaded, setLoaded] = ReactModule.useState<{
       config: { clips: Array<{ id: string; at: number; hold?: number }>; app?: unknown };
@@ -174,6 +185,7 @@ describe('shot timeline popup persistence', () => {
     popupChrome.isConflictExhausted = false;
     popupChrome.recoveryDraft = null;
     popupChrome.timelineLoadGate = null;
+    providerProps.current = null;
     vi.clearAllMocks();
     previewProps.currentTime = undefined;
     popupChrome.reloadFromServer.mockResolvedValue(undefined);
@@ -186,6 +198,26 @@ describe('shot timeline popup persistence', () => {
 
     await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
     expect(previewProps.currentTime).toBeUndefined();
+  });
+
+  it('mounts the selected occurrence owner with the existing parent media seam', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+    const parentPort = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    const getCurrent = vi.fn();
+
+    render(React.createElement(ShotTimelinePreview, {
+      composition,
+      occurrenceId: 'occ-1',
+      occurrenceAddMediaPort: parentPort,
+      getOccurrenceAddMediaCurrent: getCurrent,
+    }));
+
+    await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
+    expect(providerProps.current).toMatchObject({
+      occurrenceOwnerRef: 'occurrence:occ-1',
+      occurrenceAddMediaPort: parentPort,
+      getOccurrenceAddMediaCurrent: getCurrent,
+    });
   });
 
   it('renders recovery controls in the mounted popup surface', async () => {

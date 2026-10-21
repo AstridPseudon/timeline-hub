@@ -84,6 +84,9 @@ const fixtureAstridElementHost: import('@/tools/video-editor/runtime/astrid-elem
 const navigateMock = vi.fn();
 const useEffectsMock = vi.fn();
 const useResolvedEffectCatalogMock = vi.fn();
+const timelineStateCall = vi.hoisted(() => ({
+  occurrenceOptions: null as unknown,
+}));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -181,7 +184,8 @@ vi.mock('@/tools/travel-between-images/hooks/video/useShotFinalVideos', () => ({
 }));
 
 vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
-  useTimelineState: () => {
+  useTimelineState: (_services: unknown, _initialTimelineData: unknown, occurrenceOptions: unknown) => {
+    timelineStateCall.occurrenceOptions = occurrenceOptions;
     const editor = {
       data: operationalChromeState.editorData,
       resolvedConfig: { registry: {} },
@@ -815,6 +819,7 @@ describe('VideoEditorProvider', () => {
     operationalChromeState.store = null;
     operationalChromeState.isConflictExhausted = false;
     operationalChromeState.renderStatus = 'idle';
+    timelineStateCall.occurrenceOptions = null;
     Object.values(parentClipAddMediaPort).forEach((mock) => mock.mockClear());
     Object.values(occurrenceAddMediaPort).forEach((mock) => mock.mockClear());
   });
@@ -1564,6 +1569,47 @@ describe('VideoEditorProvider', () => {
       'Parent timeline data is unavailable for occurrence media add',
     );
     expect(parentPort.capture).toHaveBeenCalledOnce();
+  });
+
+  it('passes the explicit popup occurrence owner and parent capture basis into asset assembly', () => {
+    const provider: DataProvider = {
+      loadTimeline: vi.fn(),
+      saveTimeline: vi.fn(),
+      loadAssetRegistry: vi.fn(),
+      resolveAssetUrl: vi.fn(),
+    };
+    const parentPort = {
+      capture: vi.fn(),
+      finish: vi.fn(),
+      submit: vi.fn(),
+    };
+    const getCurrent = vi.fn(() => buildCommandTimelineData());
+
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={new QueryClient()}>
+          <AgentChatProvider>
+            <VideoEditorProvider
+              dataProvider={provider}
+              projectId="project-1"
+              timelineId="timeline-popup-occ-7"
+              userId={null}
+              occurrenceOwnerRef="occurrence:occ-7"
+              occurrenceAddMediaPort={parentPort}
+              getOccurrenceAddMediaCurrent={getCurrent}
+            >
+              <CaptureOccurrenceOps onCapture={() => undefined} />
+            </VideoEditorProvider>
+          </AgentChatProvider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    expect(timelineStateCall.occurrenceOptions).toMatchObject({
+      occurrenceOwnerRef: 'occurrence:occ-7',
+      occurrenceAddMediaPort: parentPort,
+      getOccurrenceAddMediaCurrent: getCurrent,
+    });
   });
 
   it('uses an injected effect catalog without enabling the legacy effect query', () => {

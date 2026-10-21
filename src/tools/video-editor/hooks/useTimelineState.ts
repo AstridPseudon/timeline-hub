@@ -27,7 +27,10 @@ import { createInteractionState, type InteractionStateRef } from '@/tools/video-
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ROW_HEIGHT, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
-import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+import type {
+  UseAssetManagementOccurrenceOptions,
+  UseAssetManagementResult,
+} from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useAssetOperations } from '@/tools/video-editor/hooks/useAssetOperations.ts';
 import { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
 import { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
@@ -641,7 +644,11 @@ function useTimelinePlaybackContextValue({
   ]);
 }
 
-export function useTimelineState(services: TimelineHostServiceHooks, initialTimelineData?: TimelineData): UseTimelineStateResult {
+export function useTimelineState(
+  services: TimelineHostServiceHooks,
+  initialTimelineData?: TimelineData,
+  occurrenceOptions?: UseAssetManagementOccurrenceOptions,
+): UseTimelineStateResult {
   const runtime = useVideoEditorRuntime();
   const runtimeRef = useRef(runtime);
   runtimeRef.current = runtime;
@@ -971,6 +978,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     invalidateAssetRegistry,
     resolveAssetUrl,
     commands: parentMediaCommands,
+    ...occurrenceOptions,
   });
 
   const clipResize = useClipResize({
