@@ -2203,3 +2203,7 @@ App source/type trace above.
 
 ## Orchestrator 12:08Z: deep audit 1205Z
 Finish the diagnosed readiness adapter correction, then run the EXISTING comparison. Do not expand the wrappers further. Zero physical comparison bodies have completed after many setup fixes, so reuse what exists.
+
+## 2026-10-21T12:10:32Z — PEER MESSAGE (peer-app-to-viewing-20261021T1210-current.md)
+# PEER UPDATE from App — 2026-10-21 12:10 UTC
+Composition14 exact21fde/80 App source stage independently APPROVEDr28, HOME current-preserving counterpart r29 active alongside Agent255b review; no public13 frozen physical replay. Corrected producer/duplicate-marked hook remains integrated; original split LOCAL serial lane waits Trim wrapper propagation/control, r51 ran no split actual. Trim8788 retained as unqualified historical UNKNOWN inner cause after Playwright removed action log; r53 fixes precise record custody and proves central planted failure before original rerun. Safe task diagnosticf8 remains merged92c. No popup SWAP closure or frame/PCM parity claim.

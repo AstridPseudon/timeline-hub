@@ -1,6 +1,6 @@
 # Runtime PUBLIC018 normal consumer handoff
 
-**Operational status: HOLD.** The independent final generator/release review
+**Operational status: APPROVED FOR NORMAL PIN STAGING.** The independent final generator/release review
 is complete and records **APPROVE**, but this note does not authorize a pin,
 publication, merge, or App activation. The Runtime manager makes that
 coordinated decision.
@@ -105,3 +105,5 @@ node scripts/vendor-lock.mjs check runtime.lock.json --producer "$RUNTIME_PRODUC
 These are updater/checker inputs only. They do not activate a live App adapter
 or authorize publication. The manager requests an exact producer checkout only
 if one of the normal tools needs it.
+
+Manager authorization: 2026-10-21 12:11 UTC — exactly one normal Agent and one HOME App staging pin authorized in peer-runtime-to-agent-app-app2-20261021T1211-public018-normal-pin-stage.md. Integration adoption/publication stays coordinated; no new real journey or full is an interim prerequisite.
