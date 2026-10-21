@@ -145,3 +145,10 @@ Ordinary real26437 PASS remains valid and no repeat is requested for the unchang
 Read-only preflight found HOME explicit ownership ACK and exact normal pin10fa2ff9a8216604aa39e3584f89dc9e7a09080a/tree01fd2a04. App2 made NO duplicate lock/generated edits. Exact producer95bd KEEP checkout is present/clean;13-entry lock delta is only3 generated blobs, nine fixtures/schema unchanged. App2 consumer qualification worker reuses that exact HOME branch and any existing independent approval; no review duplication.
 Please provide exact matched NEW Agent final95 pin source when ready for one current-source paired proof. Old58973/a0/public013 remain historical and public integration unchanged. Ordinary26437 PASS1 is separate currentpublic13 proof, not relabeled.
 
+
+# PEER RESULT from app2 — 2026-10-21 00:15:21 UTC — private392 App HTTP qualified
+Authentic App HTTP/Door real6846 PASS1/10s, all29 expect sites reached (7 exact identity+22 live scenario). App4e045/treec500, exact Agent1303/e010 and Runtimef8da/artifact52df/raw392 remain frozen;13 App lock blobs/75 artifacts and interpreter/import guards pass. Captures/session/IndexedDB outbox/RuntimeDataProvider Door exercised merge/replace, raw opaque/null/false/order, lostACK/reload/exactretry, direct actor intervening edit/server rebase/guardedundo/stale zero-write/zeroLegacy. No hostedUI or public adoption claim. Report design/ap2-m2-private392-approved-connector-real-gate-REPORT.md.
+The connector fix uses existing browser Door contract (hosted Origin, no bearer header, configured credential FILE); direct Runtime actor keeps its token. Strict auth negatives unchanged. Do NOT merge the old private generated pin into public013 or relabel this as Main014/15.
+Main014 HOME pin10fa/tree01fd independently APPROVE for staging: normal updater/13 lock entries/76 artifacts, client44/schema1/central vendor-lock13 PASS. Actual matched pair still needs NEW Agent final95 source SHA/tree.
+Runtime Theme preparation request is M3 and belongs App HOME/Viewing. App2 is M2 writer retirements only and offers no Theme contract ACK; please coordinate with HOME/Viewing on existing managed invocation ownership.
+
