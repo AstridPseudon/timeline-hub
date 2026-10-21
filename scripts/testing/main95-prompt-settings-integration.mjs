@@ -119,6 +119,36 @@ function sha256File(file) {
   return `sha256:${createHash('sha256').update(readFileSync(file)).digest('hex')}`;
 }
 
+function within(root, target) {
+  const relative = path.relative(root, target);
+  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+}
+
+export function assertPinnedImportedModule({ graph, packageName, packageFile, expectedVersion, moduleFile, expectedHash }) {
+  const graphRoot = realpathSync(graph);
+  const expectedPackageRoot = path.join(graphRoot, packageName);
+  if (!existsSync(expectedPackageRoot)) fail(`${packageName} package is missing from the owned graph`);
+  const packageRoot = realpathSync(expectedPackageRoot);
+  if (!within(graphRoot, packageRoot)) fail(`${packageName} package target escaped the owned graph: ${packageRoot}`);
+  const resolvedPackageFile = realpathSync(packageFile);
+  if (resolvedPackageFile !== path.join(packageRoot, 'package.json')) {
+    fail(`${packageName} resolved to the wrong package: ${resolvedPackageFile}`);
+  }
+  const packageJson = JSON.parse(readFileSync(resolvedPackageFile, 'utf8'));
+  if (packageJson.version !== expectedVersion) {
+    fail(`${packageName} resolved version ${packageJson.version}, expected ${expectedVersion}`);
+  }
+  const resolvedModuleFile = realpathSync(moduleFile);
+  if (!within(packageRoot, resolvedModuleFile)) {
+    fail(`${packageName} source target escaped its package: ${resolvedModuleFile}`);
+  }
+  const moduleHash = sha256File(resolvedModuleFile);
+  if (moduleHash !== expectedHash) {
+    fail(`${packageName} module hash changed: ${moduleHash}, expected ${expectedHash}`);
+  }
+  return { packageFile: resolvedPackageFile, moduleFile: resolvedModuleFile, moduleHash, version: packageJson.version };
+}
+
 function jsonFile(file) {
   try { return JSON.parse(readFileSync(file, 'utf8')); }
   catch (error) { fail(`cannot read JSON ${file}: ${error.message}`); }
@@ -303,10 +333,13 @@ function checkResolvedPrivatePackages(input, outputDir) {
     import { createRequire } from 'node:module';
     import { readFileSync, realpathSync } from 'node:fs';
     import path from 'node:path';
+    import { fileURLToPath, pathToFileURL } from 'node:url';
+    import { assertPinnedImportedModule } from ${JSON.stringify(import.meta.url)};
     const app = ${JSON.stringify(input.app)};
     const graph = ${JSON.stringify(graph)};
     const requireFromApp = createRequire(path.join(app, 'package.json'));
     const hash = (file) => 'sha256:' + createHash('sha256').update(readFileSync(file)).digest('hex');
+    const importer = pathToFileURL(path.join(app, 'package.json')).href;
     const packageVersions = ${JSON.stringify(NORMAL_GRAPH_PACKAGE_VERSIONS)};
     const resolved = {};
     for (const [name, version] of Object.entries(packageVersions)) {
@@ -317,9 +350,19 @@ function checkResolvedPrivatePackages(input, outputDir) {
       resolved[name] = { packageFile, packageHash: hash(packageFile), version: packageJson.version };
     }
     for (const name of ['@banodoco/timeline-composition/evaluation', '@remotion/media']) {
-      const moduleFile = realpathSync(requireFromApp.resolve(name));
-      if (!moduleFile.startsWith(graph + path.sep)) throw new Error(name + ' module escaped graph: ' + moduleFile);
-      resolved[name] = { moduleFile, moduleHash: hash(moduleFile) };
+      const packageName = name.startsWith('@') ? name.split('/').slice(0, 2).join('/') : name.split('/')[0];
+      const moduleUrl = import.meta.resolve(name, importer);
+      if (!moduleUrl.startsWith('file:')) throw new Error(name + ' did not resolve to a file URL: ' + moduleUrl);
+      const moduleFile = realpathSync(fileURLToPath(moduleUrl));
+      const checked = assertPinnedImportedModule({
+        graph,
+        packageName,
+        packageFile: resolved[packageName].packageFile,
+        expectedVersion: packageVersions[packageName],
+        moduleFile,
+        expectedHash: ${JSON.stringify(NORMAL_GRAPH_MODULE_HASHES)}[name],
+      });
+      resolved[name] = { moduleFile: checked.moduleFile, moduleHash: checked.moduleHash };
     }
     process.stdout.write(JSON.stringify({ graph: realpathSync(graph), resolved }));
   `;
