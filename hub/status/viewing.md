@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T01:08:37Z | dispatcher heartbeat 9s | live 4 (sol 0, luna 4, other 0) | busy30 40 | status age 4m -->
+<!-- viewing | 2026-10-21T01:14:31Z | dispatcher heartbeat 0s | live 2 (sol 0, luna 2, other 0) | busy30 36 | status age 10m -->
 # viewing — 2026-10-21 01:04 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 and M4 remain open. PLAN and MANAGER-COMMON re-read; rules rev 2026-10-20 read.
 Integrated: Composition e7ef7a072 / tree408633d6. Central composition-full-1020230739-25938: npm test, 78 passed, 0 failed, 0 skipped. Public0.0.13 source5a4e9b72, archive9412ae25 and all77 files remain immutable.

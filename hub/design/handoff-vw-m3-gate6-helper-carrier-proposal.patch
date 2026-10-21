@@ -1,0 +1,155 @@
+diff --git a/tests/e2e/timeline/viewing-parity/bootstrap.ts b/tests/e2e/timeline/viewing-parity/bootstrap.ts
+index 33fb8ef8c..fc0641b7b 100644
+--- a/tests/e2e/timeline/viewing-parity/bootstrap.ts
++++ b/tests/e2e/timeline/viewing-parity/bootstrap.ts
+@@ -1,12 +1,57 @@
+-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+-import { stat } from 'node:fs/promises';
+-import { delimiter, isAbsolute, join } from 'node:path';
++import { execFileSync, spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
++import { createHash } from 'node:crypto';
++import { lstat, readFile, realpath } from 'node:fs/promises';
++import { delimiter, isAbsolute, join, relative } from 'node:path';
+ import type { DirectHarness } from '../../local/support/harness';
+ 
+ export interface PackHostSession {
+   stop(): Promise<void>;
+ }
+ 
++const REVIEWED_HELPER_COMMIT = 'b70b9d569b2c80885d72734c61cd57e64c3715a8';
++const REVIEWED_HELPER_TREE = '687f077c4771e3dbb66bfb7ff2b98f310ac054b6';
++const REVIEWED_HELPER_PATH = 'tests/packs/rendering/real_pack_host.py';
++const REVIEWED_HELPER_BYTES = 10_938;
++const REVIEWED_HELPER_SHA256 = 'sha256:bc75d73f21c6310efad7fc41e4a3d790bfe3a8975e0eb96c08c3dec63e62961b';
++
++function gitRevision(root: string, ...args: string[]): string {
++  try {
++    return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
++  } catch {
++    throw new Error('Reviewed Agent pack-host helper must come from its approved committed carrier');
++  }
++}
++
++/** Resolve only the reviewed helper blob; normal Agent imports still come from the frozen source root. */
++export async function resolveReviewedPackHostHelper(source: string, env: NodeJS.ProcessEnv = process.env): Promise<string> {
++  const carrier = env.ASTRID_PACK_HOST_HELPER_CHECKOUT;
++  if (!carrier || !isAbsolute(carrier)) {
++    throw new Error('Pack-host bootstrap requires frozen absolute ASTRID_PACK_HOST_HELPER_CHECKOUT');
++  }
++  const carrierRoot = await realpath(carrier).catch(() => null);
++  if (!carrierRoot) throw new Error('Reviewed Agent pack-host helper carrier is unavailable');
++  const sourceRoot = await realpath(source).catch(() => null);
++  if (!sourceRoot) throw new Error('Frozen ASTRID_CHECKOUT is unavailable');
++  if (sourceRoot === carrierRoot) throw new Error('Reviewed helper carrier must remain separate from frozen ASTRID_CHECKOUT');
++  const helper = join(carrierRoot, REVIEWED_HELPER_PATH);
++  const helperInfo = await lstat(helper).catch(() => null);
++  const resolvedHelper = await realpath(helper).catch(() => null);
++  if (!helperInfo?.isFile() || helperInfo.isSymbolicLink() || !resolvedHelper
++    || relative(carrierRoot, resolvedHelper) !== REVIEWED_HELPER_PATH) {
++    throw new Error('Reviewed Agent pack-host helper escaped its approved carrier or is not a regular file');
++  }
++  const bytes = await readFile(resolvedHelper);
++  const digest = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
++  if (bytes.byteLength !== REVIEWED_HELPER_BYTES || digest !== REVIEWED_HELPER_SHA256) {
++    throw new Error('Reviewed Agent pack-host helper bytes changed');
++  }
++  if (gitRevision(carrierRoot, 'rev-parse', 'HEAD') !== REVIEWED_HELPER_COMMIT
++    || gitRevision(carrierRoot, 'rev-parse', 'HEAD^{tree}') !== REVIEWED_HELPER_TREE) {
++    throw new Error('Reviewed Agent pack-host helper source revision changed');
++  }
++  return resolvedHelper;
++}
++
+ interface BootstrapOptions {
+   env?: NodeJS.ProcessEnv;
+   spawn?: typeof spawn;
+@@ -32,16 +77,13 @@ export async function startRealPackHost(
+   if (!source || !isAbsolute(source) || !python || !isAbsolute(python)) {
+     throw new Error('Pack-host bootstrap requires frozen absolute ASTRID_CHECKOUT and ASTRID_PYTHON');
+   }
+-  const helper = join(source, 'tests/packs/rendering/real_pack_host.py');
+-  if (!(await stat(helper).catch(() => null))?.isFile()) {
+-    throw new Error('Approved Agent pack-host helper is absent from frozen ASTRID_CHECKOUT');
+-  }
++  const helper = await resolveReviewedPackHostHelper(source, env);
+   if (options.signal?.aborted) throw new Error('Pack-host startup aborted');
+-  env.PYTHONPATH = [runtime, source, env.PYTHONPATH].filter(Boolean).join(delimiter);
++  env.PYTHONPATH = [source, runtime, env.PYTHONPATH].filter(Boolean).join(delimiter);
+   const startupDeadline = performance.now() + (options.startupTimeoutMs ?? 210_000);
+   let child: ChildProcessWithoutNullStreams;
+   try {
+-    child = (options.spawn ?? spawn)(python, ['-m', 'tests.packs.rendering.real_pack_host',
++    child = (options.spawn ?? spawn)(python, [helper,
+       '--realm-dir', harness.realmDir, '--support-dir', harness.supportDir,
+       '--discovery-file', join(harness.supportDir, 'discovery.json'),
+       '--source-checkout', source, '--runtime-instance-id', harness.runtimeInstanceId,
+diff --git a/tests/e2e/timeline/viewing-parity/harness.test.ts b/tests/e2e/timeline/viewing-parity/harness.test.ts
+index 95df9f20e..143105ef1 100644
+--- a/tests/e2e/timeline/viewing-parity/harness.test.ts
++++ b/tests/e2e/timeline/viewing-parity/harness.test.ts
+@@ -1,9 +1,10 @@
+ import assert from 'node:assert/strict';
+-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
++import { mkdtemp, mkdir, realpath, rm, writeFile } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { test } from 'node:test';
+ import { assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
++import { resolveReviewedPackHostHelper } from './bootstrap';
+ import { mediaHash } from './media';
+ import { playerBrowserProfile } from './browser-profile';
+ 
+@@ -17,6 +18,32 @@ async function fixture(files: Record<string, string>): Promise<string> {
+   return root;
+ }
+ 
++test('accepts only the reviewed committed pack-host helper carrier', async () => {
++  assert.ok(process.env.ASTRID_CHECKOUT, 'ASTRID_CHECKOUT must select the frozen Agent source');
++  assert.ok(process.env.ASTRID_PACK_HOST_HELPER_CHECKOUT,
++    'ASTRID_PACK_HOST_HELPER_CHECKOUT must select the reviewed helper carrier');
++  const helper = await resolveReviewedPackHostHelper(process.env.ASTRID_CHECKOUT!);
++  assert.equal(helper, join(await realpath(process.env.ASTRID_PACK_HOST_HELPER_CHECKOUT!), 'tests/packs/rendering/real_pack_host.py'));
++});
++
++test('refuses a missing or wrong pack-host helper carrier', async () => {
++  const root = await mkdtemp(join(tmpdir(), 'viewing-parity-helper-'));
++  try {
++    await assert.rejects(
++      resolveReviewedPackHostHelper(process.cwd(), { ASTRID_PACK_HOST_HELPER_CHECKOUT: join(root, 'missing') }),
++      /Reviewed Agent pack-host helper carrier is unavailable/,
++    );
++    await mkdir(join(root, 'tests/packs/rendering'), { recursive: true });
++    await writeFile(join(root, 'tests/packs/rendering/real_pack_host.py'), 'wrong helper');
++    await assert.rejects(
++      resolveReviewedPackHostHelper(process.cwd(), { ASTRID_PACK_HOST_HELPER_CHECKOUT: root }),
++      /Reviewed Agent pack-host helper bytes changed/,
++    );
++  } finally {
++    await rm(root, { recursive: true, force: true });
++  }
++});
++
+ test('verifies independent consumer graphs against frozen file bytes', async () => {
+   const app = await fixture({ 'remotion/player.js': 'app-player', 'remotion/audio.js': 'app-audio' });
+   const agent = await fixture({ 'remotion/player.js': 'agent-player', 'remotion/audio.js': 'agent-audio' });
+diff --git a/tests/e2e/timeline/viewing-parity/harness.ts b/tests/e2e/timeline/viewing-parity/harness.ts
+index 240e00225..be58c7a0f 100644
+--- a/tests/e2e/timeline/viewing-parity/harness.ts
++++ b/tests/e2e/timeline/viewing-parity/harness.ts
+@@ -4,7 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
+ import { access, lstat, readFile, readdir, readlink, realpath } from 'node:fs/promises';
+ import { join, relative, resolve } from 'node:path';
+ import { DirectHarness, harnessUnavailableReason, REPO_ROOT } from '../../local/support/harness';
+-import { startRealPackHost } from './bootstrap';
++import { resolveReviewedPackHostHelper, startRealPackHost } from './bootstrap';
+ import { nativeFrameParitySetup, prepareFrameParityFixture, prepareNativeFrameParityRealm, type FrameParityFixture, readRuntimeJson } from './fixture';
+ import { mediaHash } from './media';
+ import { ORIGINAL_640, type ParityCanvas } from './canvas';
+@@ -153,6 +153,7 @@ export async function sourceVersions(profile?: unknown) {
+     app: REPO_ROOT, agent: requiredEnv('ASTRID_CHECKOUT'), runtime: requiredEnv('ASTRID_RUNTIME_CHECKOUT'),
+     composition: requiredEnv('TIMELINE_COMPOSITION_CHECKOUT'),
+   };
++  await resolveReviewedPackHostHelper(roots.agent);
+   const sourceState: Record<string, unknown> = {};
+   for (const [name, root] of Object.entries(roots)) {
+     const pin: SourcePin = tuple.sources[name as keyof typeof roots];

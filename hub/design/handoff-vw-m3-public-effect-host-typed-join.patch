@@ -1,0 +1,31 @@
+diff --git a/scripts/gen_effect_registry.py b/scripts/gen_effect_registry.py
+index 61410ed90..42bc3d124 100644
+--- a/scripts/gen_effect_registry.py
++++ b/scripts/gen_effect_registry.py
+@@ -517,7 +517,7 @@ def _generate_effect_registry(
+         effect_id: (
+             public_symbols[effect_id]
+             if effect_id in public_effects and not include_local
+-            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
++            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}] as EffectComponent"
+             if effect_id in public_effects
+             else _component_name(effect_id)
+         )
+@@ -532,7 +532,7 @@ def _generate_effect_registry(
+         owners[effect_id][pack_id] = (
+             winner_symbols[effect_id]
+             if not include_local
+-            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
++            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}] as EffectComponent"
+         )
+     for element in all_elements:
+         if not include_local and element.source == "pack:local":
+@@ -580,7 +580,7 @@ def _generate_effect_registry(
+                 "",
+                 "const PUBLIC_EFFECT_REGISTRY = resolveElementRegistries(DEFAULT_THEME).effects;",
+                 *(
+-                    f"const {public_symbols[effect_id]} = PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}];"
++                    f"const {public_symbols[effect_id]} = PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}] as EffectComponent;"
+                     for effect_id in sorted(public_effects)
+                 ),
+             ]
