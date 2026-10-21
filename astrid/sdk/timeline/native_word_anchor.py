@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 from astrid.core.timeline import moments
 from astrid.sdk.timeline._command_state import CommandError, equal, present
+from astrid.sdk.timeline._common import AUDIO_KINDS
 from astrid.sdk.timeline._recording import active
 from astrid.sdk.timeline.compiler import (
     TimingCompileError,
@@ -184,6 +185,15 @@ def _has_legacy_beat(bundle):
                for field in ("on", "until"))
 
 
+def _legacy_beat_source(internal, clip):
+    track = str(clip.get("track") or "")
+    return track in AUDIO_KINDS or any(
+        row.get("id") == track and row.get("kind") in AUDIO_KINDS
+        for row in internal.get("tracks") or []
+        if isinstance(row, dict)
+    )
+
+
 def _guard_legacy_beat_inputs(ctx):
     """Record Main's existing carrier arrays and owner order as replay guards."""
     bundle = ctx.state.bundle
@@ -198,18 +208,23 @@ def _guard_legacy_beat_inputs(ctx):
         owner = "occurrence:" + row["occurrence_id"]
         ctx.select("collection.clips", owner)
         ctx.read(owner, ["occurrence_id"])
-        for field in ("source_offset", "speed", "time_map", "timeMap"):
-            ctx.read(owner, [field])
+        for path in (
+            ["placement", "start_ms"], ["at_ms"], ["duration_ms"],
+            ["source_offset"], ["speed"], ["time_map"], ["timeMap"],
+        ):
+            ctx.read(owner, path)
         internal = bundle["shots"][row["shot_id"]]["internal_timeline"]
         for clip in internal.get("clips", []):
-            if "beats" not in _namespace(clip):
+            if "beats" not in _namespace(clip) or not _legacy_beat_source(internal, clip):
                 continue
             ref = owner + "/clip:" + clip["id"]
             ctx.read(ref, ["id"])
             ctx.read(ref, ["app", "astrid", "beats"])
-            for field in ("at", "from", "to", "speed", "from_ms", "to_ms"):
-                if field in clip:
-                    ctx.read(ref, [field])
+            for field in ("track", "at", "from", "to", "hold", "duration", "speed", "from_ms", "to_ms"):
+                ctx.read(ref, [field])
+            track = str(clip.get("track") or "")
+            if track and any(item.get("id") == track for item in internal.get("tracks") or []):
+                ctx.read(owner + "/track:" + track, ["kind"])
 
 
 def compile_authored(bundle, sources):

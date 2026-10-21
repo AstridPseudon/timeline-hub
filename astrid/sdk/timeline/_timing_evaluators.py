@@ -170,9 +170,11 @@ def _beat_values(clip, kind):
     return result
 
 
-def _resolved_beats(kind, clips, values, node):
+def _resolved_beats(kind, clips, values, node, is_source):
     points = []
     for ordinal, (owner, clip) in enumerate(clips.items()):
+        if not is_source(owner, clip):
+            continue
         table = _beat_values(clip, kind)
         if table is None or not table:
             continue
@@ -190,7 +192,7 @@ def _resolved_beats(kind, clips, values, node):
     return {kind: tuple(point[0] for point in sorted(points))}
 
 
-def _legacy_words(documents, clips, internals, values, node):
+def _legacy_words(documents, clips, internals, values, node, is_source):
     """Build Main's word pool from the exact captured transcript/source rows."""
     words = []
     for capture in documents.values():
@@ -198,12 +200,15 @@ def _legacy_words(documents, clips, internals, values, node):
         content = document.get("content") or {}
         media_id = content.get("media_id")
         for owner, clip in clips.items():
+            if not is_source(owner, clip):
+                continue
             internal = internals[owner]
             asset = (internal.get("registry") or {}).get("assets", {}).get(clip.get("asset"))
             if not isinstance(asset, dict) or asset.get("media_id") != media_id:
                 continue
             source_start = _timing_number(_value(clip, "from"))
-            source_end = source_start + _duration(clip)
+            speed = _playback_rate(_value(clip, "speed", 1))
+            source_end = source_start + _duration(clip) * speed
             timeline_start = values[node(owner, "start")]
             timeline_end = values[node(owner, "end")]
             for segment in content.get("segments") or []:
@@ -222,11 +227,13 @@ def _legacy_words(documents, clips, internals, values, node):
     return sorted(words, key=lambda word: (word.start, word.owner, word.id))
 
 
-def _legacy_word_owners(documents, clips, internals):
+def _legacy_word_owners(documents, clips, internals, is_source):
     media_ids = {capture["document"].get("content", {}).get("media_id")
                  for capture in documents.values()}
     owners = []
     for owner, clip in clips.items():
+        if not is_source(owner, clip):
+            continue
         assets = (internals[owner].get("registry") or {}).get("assets", {})
         asset = assets.get(clip.get("asset")) if isinstance(assets, dict) else None
         if isinstance(asset, dict) and asset.get("media_id") in media_ids:
@@ -293,6 +300,9 @@ def evaluate(bundle, sources, bindings, policy):
     def cut_node(cut, edge):
         return ("cut", cut, edge)
 
+    def is_beat_source(owner, clip):
+        return owner[0] != "parent" and lookup._is_audio(owner[1], clip)
+
     def add(key, dependencies, function):
         graph[key], functions[key] = set(dependencies), function
 
@@ -353,7 +363,8 @@ def evaluate(bundle, sources, bindings, policy):
             # order and half-open clip window.
             dependencies.extend(
                 dependency for owner_and_clip in clips.items()
-                if _beat_values(owner_and_clip[1], moment.kind) is not None
+                if is_beat_source(*owner_and_clip)
+                and _beat_values(owner_and_clip[1], moment.kind) is not None
                 for dependency in (node(owner_and_clip[0], "start"), node(owner_and_clip[0], "end"))
             )
             dependencies.extend(dependency for group in groups
@@ -364,7 +375,8 @@ def evaluate(bundle, sources, bindings, policy):
                 # source clips.  Make those exact clip intervals available
                 # before resolving the beat's word base.
                 dependencies.extend(
-                    dependency for source_owner in _legacy_word_owners(documents, clips, internals)
+                    dependency for source_owner in _legacy_word_owners(
+                        documents, clips, internals, is_beat_source)
                     for dependency in (node(source_owner, "start"), node(source_owner, "end"))
                 )
             elif moment.base is not None and moment.base.kind in ("cut", "cut_end"):
@@ -414,8 +426,8 @@ def evaluate(bundle, sources, bindings, policy):
                 else:
                     t += moment.offset_s + moment.offset_frames / fps
             elif moment.kind in ("beat", "downbeat"):
-                words = _legacy_words(documents, clips, internals, values, node)
-                beat_values = _resolved_beats(moment.kind, clips, values, node)
+                words = _legacy_words(documents, clips, internals, values, node, is_beat_source)
+                beat_values = _resolved_beats(moment.kind, clips, values, node, is_beat_source)
                 cuts = {group["id"]: (values[cut_node(group["id"], "start")],
                                       values[cut_node(group["id"], "end")])
                         for group in groups}

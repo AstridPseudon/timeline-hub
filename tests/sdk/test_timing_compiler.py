@@ -277,6 +277,11 @@ def test_main_numeric_beat_carrier_uses_child_speed_and_half_open_window():
     with pytest.raises(TimingCompileError, match="malformed app.astrid.beats.beats"):
         project(bundle, document)
 
+    for invalid in (True, None):
+        internal["clips"][-1]["app"]["astrid"]["beats"]["beats"] = [0, 2, invalid]
+        with pytest.raises(TimingCompileError, match="malformed app.astrid.beats.beats"):
+            project(bundle, document)
+
 
 def test_main_numeric_beat_carrier_missing_table_fails_closed():
     bundle, document, _pin = captured()
@@ -318,6 +323,39 @@ def test_native_unrelated_move_recompiles_legacy_beat_and_guards_carrier_table()
     ]
     with pytest.raises(commands.CommandError, match="original authored guard changed"):
         commands.execute(changed, [move])
+
+    for field, value in (("hold", 3), ("duration", 3)):
+        changed = copy.deepcopy(bundle)
+        changed["shots"]["A"]["internal_timeline"]["clips"][-1][field] = value
+        with pytest.raises(commands.CommandError, match="original authored guard changed"):
+            commands.execute(changed, [move])
+
+    changed = copy.deepcopy(bundle)
+    changed["placements"][0]["placement"]["start_ms"] += 100
+    with pytest.raises(commands.CommandError, match="original authored guard changed"):
+        commands.execute(changed, [move])
+
+    changed = copy.deepcopy(bundle)
+    changed["shots"]["A"]["internal_timeline"]["tracks"][-1]["kind"] = "visual"
+    with pytest.raises(commands.CommandError, match="original authored guard changed"):
+        commands.execute(changed, [move])
+
+
+def test_main_context_beats_matches_native_compiler_on_real_fixture():
+    from astrid.sdk.timeline.checkout import Checkout
+
+    bundle = json.loads((Path(__file__).parents[1] /
+                         "fixtures/timeline_editing/tiny_publishable.json").read_text())
+    target = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
+                  if row["id"] == "a-rocket")
+    target["app"]["astrid"] = {"on": "beat 1 after c1", "for": .5}
+    music = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
+                 if row["id"] == "a-music")
+    music["app"] = {"astrid": {"beats": {"beats": [0, .5, 1, 1.5, 2]}}}
+
+    main_time = Checkout(copy.deepcopy(bundle)).time("beat 1 after c1")
+    native_time = project(bundle).timings[("occ-A", "A", "a-rocket")]["start"]
+    assert native_time == Fraction(str(main_time))
 
 
 def test_second_occurrence_and_parent_clips_keep_their_own_identity_and_metadata():
