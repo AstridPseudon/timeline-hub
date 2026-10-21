@@ -18,7 +18,10 @@ from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit_baseline import verify_baseline
 from precut_realm_fixture import load_precut_realm_fixture
-from timeline_commit_film_fixture import FilmFixture
+from timeline_commit_film_fixture import (
+    FilmFixture,
+    refresh_copied_legacy_publication_receipts,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -37,6 +40,9 @@ def film(tmp_path):
         transcript_document_id=pins["transcript_document_id"],
         text_binding_id=pins["text_binding_id"],
     )
+    # Preserve the historical receipt bodies while keeping this copied
+    # legacy baseline inside Runtime's real replay window before startup.
+    refresh_copied_legacy_publication_receipts(fixture.duplicate_root, fixture.timeline_id)
     # The capture contains the original two clips, opaque data and config mirror.
     # Read its verified publication without replaying the retired writer.
     service = RuntimeService(fixture.duplicate_root)

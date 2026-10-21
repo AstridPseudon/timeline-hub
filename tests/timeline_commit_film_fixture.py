@@ -6,10 +6,12 @@ only the duplicate, preserving the captured source and its immutable provenance.
 
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 
 from runtime_protocol.service import RuntimeService
+from runtime_protocol.util import now
 from precut_realm_fixture import load_precut_realm_fixture
 
 
@@ -23,6 +25,22 @@ class FilmFixture:
     media_ids: tuple[str, ...]
     transcript_document_id: str
     text_binding_id: str
+
+
+def refresh_copied_legacy_publication_receipts(root: Path, timeline_id: str) -> None:
+    """Refresh only copied baseline receipt clocks before service startup.
+
+    The committed archive is intentionally historical.  Its legacy
+    ``parent_composition.publish`` result bodies must remain unchanged, while
+    their copied timestamps stay inside Runtime's real replay window during
+    the test.
+    """
+    with sqlite3.connect(root / "realm.sqlite3") as connection:
+        connection.execute(
+            "UPDATE command_idempotency SET created_at=? "
+            "WHERE command_kind='parent_composition.publish' AND aggregate_id=?",
+            (now(), timeline_id),
+        )
 
 
 def build_film_fixture(tmp_path: Path) -> FilmFixture:
