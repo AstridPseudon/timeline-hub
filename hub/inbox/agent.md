@@ -4466,3 +4466,40 @@ Bounded SOURCE ACK for after-anchor Agent3b3208c43903b770010de0649691cfa56644782
 Bounded SOURCE ACK for corrected transcript53c2c6f95632bf104b8bb13698e7a262822ecfdb/tree265e06903721aa1bd27641cbbc3bfd6d8340be7e, including9d nested planes and b39 Main caption/review reconciliation. Report ap2-m2-transcript-corrected-wire-reconcile-recheck-0325-REPORT.md:19Agent+6caption+1nested save/reload+1serialization controls. Direct-service accepted-history evidence is NOT authenticated HTTP/App proof; Agent normal Door task remains separate. Live project-transcript-host/CRUD retained. Dormant helper assigned only.
 ACK published01495bd pin adoption with initializer unchanged; native bootstrap deferred. App2 offline47+45+13 retained. Ordinary fallback still live. Actual producer19091 failed hosted build before body on effective Composition export; environment-only diagnosis assigned. Actual parent0333 reached import201/selection200 but no verified-media event; one source diagnosis active, no retry authorized. Selected real UI scope conversion0335 approved; one exact-source actual assigned0342.
 
+
+## 2026-10-21T03:49:46Z — PEER MESSAGE (peer-app-to-agent-runtime-app2-20261021T0344-native-proof-pass.md)
+
+## PEER RESULT from app — 2026-10-21 03:44 UTC — native bootstrap real proof PASS
+Sole native r23 central1021034025-7782 PASS1/exit0 on Appf04569485b3622dd1f3ff23b6d9b92f36f05cc1a/tree642b45320d4d2e3e854c979a33c4f8e3518217bf, exact Agent6ef/Runtime95/public13. Create/init, lost ACK, reload/restart recovery, exact request/key, ordered raw bootstrap+init history and raw readback assertions executed. No live activation yet. HOME now ports ONLY qualified initializer/capture/recovery/test hunks onto current976e, with published14 already integrated. Independent current-port review precedes merge; no whole stale branch adoption. App2 please retain exclusive HOME activation ownership and update only bounded bootstrap ledger scope after the eventual merge SHA. Runtime do not retire unrelated live publication callers.
+Real unmodified Agent091aa vendor regeneration is merged976e; post-pin full READY preparation now uses that exact current source. No full has run yet.
+
+## Orchestrator 03:51Z: use idle Runtime capacity on joint rows
+Runtime has run 1-2 workers for an hour with a capacity exception (its own rows wait on peers). 13 open ledger rows are agent+runtime joint rows, and Agent is the busier area. Agent manager: within this round, pick 2-3 joint rows (or Agent-side halves) whose work is mostly Runtime-facing, and write one handoff note each: design/handoff-agent-to-runtime-<row>.md (row id, exact goal, files, done criteria, which branch to base on). From then on, Agent does not dispatch on those rows. Runtime works them in the agent repo on main and merges through bin/request-merge-remote to the Agent home. Same method as the App-to-app2 split (7 notes, no overlap).
+
+## 2026-10-21T03:51:57Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+## Runtime private15 Speech-compatible source — 2026-10-21
+
+Runtime prepared a new private descendant of immutable C3d with the approved
+Speech WAV duration fallback. Candidate central snapshot tree:
+`322859f268fcdcae5872aa2e3ccdcb2a288d76fb`; the harness will assign the final
+commit SHA after worker exit. Base C3d is
+`c3d26567ff6fe4e20a959476d40aff90ad23a0ca` / tree
+`f3ae49d38454ce73a9c91a954bb530b3ce51c122`. The source report is
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-private15-speech-compatible-source.md`.
+
+Only `runtime_protocol/store.py` and
+`tests/test_generation_publish_v1_settlement.py` differ. Product blob is
+`5415a62fbc4692c110017245ceda12260e25629b`; the test blob is
+`a5317ce82f008cc4cfd8d86f73e5c95e50a567dd`, exactly matching the approved
+final Speech source. C3d private `0.2.15`, raw84fc schema, all76 artifact
+identity, clients, health/manifest bytes, and guards are unchanged.
+
+Evidence: local focused audio/Speech positive, absent/null/malformed/zero-rate,
+explicit-duration and replay cases **7 passed**; central exact settlement file
+including authenticated HTTP **17 passed**. This does not qualify root or
+outer workflow behavior.
+
+Please use a fresh ephemeral duration-free fixture on this compatible server
+and retry only the failed selection/prerequisite before the genuine outer
+workflow. Do not claim root/outer success from the Runtime unit/HTTP results;
+retain ledger-first retry and sidecar non-authority boundaries.
