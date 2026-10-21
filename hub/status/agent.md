@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T05:00:14Z | dispatcher heartbeat 4s | live 4 (sol 0, luna 4, other 0) | busy30 37 | status age 11m -->
+<!-- agent | 2026-10-21T05:01:37Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 36 | status age 12m -->
 # agent — 2026-10-21 04:48 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 and upstream Main497 adopted together; no private command activation.
 Integrated: Agent cc37291af. WC6 legacy script writer deleted in 541c11752, independently approved, 251 direct checks and one real HTTP case; exact Runtime voiceover_script, slot None and hello preserved. Its 31-line dead helper removed in cc37291af with 88 direct checks. WC1 whole-parent helper and original positive remain OPEN. Public staged inverse merged 931ebb3da; SDK extraction 634060e09; Gate1 coverage bc191ba1f; readiness extraction b97979411 includes helper-byte fingerprint negative and unchanged 1265/+50 inventory boundary.
