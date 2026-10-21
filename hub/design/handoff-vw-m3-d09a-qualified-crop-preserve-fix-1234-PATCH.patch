@@ -1,0 +1,64 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+index 3ca899eca4013574c1e386a5fc77e7ead93d1880..4b64e48477c29772c6ad94edc392ac975ed85558 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+@@ -441,7 +441,7 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
+         states[frame] = state
+         rows.append(layer)
+     rect = None
+-    if not allow_default_motion:
++    if "mouth" in params:
+         zero_rows = [layer for layer in rows if layer.get("contentFrame") == 0]
+         if len(zero_rows) != 1:
+             return None
+@@ -459,6 +459,13 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
+             "states": states}
+ 
+ 
++def _public_crop(rect: Sequence[float], basis: Mapping[str, int], size: tuple[int, int]) -> tuple[int, int, int, int]:
++    """Scale a public canvas footprint into the existing PNG crop convention."""
++    sx, sy = size[0] / basis["width"], size[1] / basis["height"]
++    x, y, width, height = rect
++    return max(0, int(x * sx)), max(0, int(y * sy)), int((x + width) * sx) + 1, int((y + height) * sy) + 1
++
++
+ def render_lipsync(ctx: LayerContext) -> LayerResult:
+     """Compare VO and presenter words, using admitted public motion and private pixels."""
+     presenters = [e for e in ctx.elements if e.type == "am-presenter"]
+@@ -524,9 +531,10 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
+             findings.append(f"LIPSYNC {name}: presenter has {len(own)} words, VO has {len(vo)} under the cut; no pairs within 0.3 s")
+     # pixel check: does the mouth region actually change in the captured frames?
+     presenter = presenters[0]
+-    box = model.mouth_box(presenter, 0)
+-    crop = None
+-    if box and len(series) >= 3:
++    crop = (_public_crop(public["rect"], public["basis"], ctx.frame_size)
++            if public and public["rect"] is not None else None)
++    box = None if crop is not None else model.mouth_box(presenter, 0)
++    if crop is None and box and len(series) >= 3:
+         sx, sy = ctx.frame_size[0] / model.CANVAS[0], ctx.frame_size[1] / model.CANVAS[1]
+         crop = (max(0, int(box[0] * sx)), max(0, int(box[1] * sy)), int(box[2] * sx) + 1, int(box[3] * sy) + 1)
+     if crop and len(series) >= 3:
+diff --git a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+index 71405a45f7a58da9f08b9288e370a7df25de58f0..1cf41b418133da8ff9f3ad22ae49b0e5296a6ea9 100644
+--- a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
++++ b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+@@ -175,17 +175,9 @@ def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_r
+             pytest.fail("admitted public motion consulted private mouth_state")
+         return original_mouth_state(element, frame, fps)
+ 
+-    original_mouth_box = model.mouth_box
+-    private_crops = []
+-
+-    def private_box(element, frame=0):
+-        private_crops.append((element.id, frame))
+-        return original_mouth_box(element, frame)
+-
+     monkeypatch.setattr(model, "mouth_state", private_state)
+-    monkeypatch.setattr(model, "mouth_box", private_box)
++    monkeypatch.setattr(model, "mouth_box", lambda *_args: pytest.fail("public ROI used private crop"))
+     result = builtin.render_lipsync(ctx)
+-    assert private_crops == [(presenter.id, 0)]
+     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
+ 
+ 
