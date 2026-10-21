@@ -223,3 +223,23 @@ installed profile, record the exact Agent source identity, run the five
 targeted commands above, and then update these dispositions from evidence.
 Do not replace the retained `138 failed / 4 errors` result or its source
 snapshot identities with that future result.
+
+## Gate7 group4 repair mapping (2026-10-21 UTC)
+
+The three service snapshots were corrected to the exact `origin/main` rendering
+contract: `service.render()` emits one terminal newline, so the retained blank
+line in `tests/fixtures/installer/{launchd.plist,systemd.service,task.xml}` was
+removed. No service definition content changed.
+
+The obsolete schema-lock assertion was replaced one-to-one as follows:
+
+| Retained assertion | Current C13 assertion |
+| --- | --- |
+| Composition package was pinned to the reviewed package URL and version 0.0.6 | `package.json` and `package-lock.json` pin the immutable local Composition 0.0.13 archive, exact resolved path, and exact integrity. |
+| Composition's lock entry named the transitive `@banodoco/timeline-schema` package and its version/resolved/integrity | The C13 lock has no separate `timeline-schema` or `timeline-theme-2rp` package entry; the immutable archive manifest exposes the eight reviewed public entries and every conditional target is a compiled `./dist/` file present in the archive. |
+
+The installed compiled-package readiness and refusal behavior remains covered
+by the unchanged `tests/packs/rendering/test_composition_package.py` checks:
+the valid extracted archive is accepted, while missing compiled files, missing
+export targets, and export targets outside the package are refused. This repair
+does not reinstall, repin, regenerate, skip, delete, or xfail any assertion.
