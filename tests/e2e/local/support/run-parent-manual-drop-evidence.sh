@@ -165,7 +165,8 @@ run_gate() {
   cleanup_runner=1
   sed \
     -e "s|^\. \"\$HERE/normal014-source-common.sh\"$|. \"$source_common\"|" \
-    -e "s/--grep 'M2 real gate 5'/--grep 'M2 real mounted manual video drop'/" \
+    -e "s|^normal014_required_case='M2 real gate 5 bootstrap actual consumer: production initializer uses native create/init, exact retry, restart and guarded undo'$|normal014_required_case='M2 real mounted manual video drop: Runtime selection refusal is closed, native ADD recovers exactly, and undo preserves opaque data'|" \
+    -e 's|^normal014_playwright_grep="^\${normal014_required_case}\$"$|normal014_playwright_grep="M2 real mounted manual video drop"|' \
     -e "/^npm run build:hosted$/i\\
 node node_modules/playwright/cli.js test --config playwright.three-products.config.ts --grep 'M2 real mounted manual video drop' --list\\
 " \
