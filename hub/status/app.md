@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T03:50:40Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 40 | status age 3m -->
+<!-- app | 2026-10-21T03:56:56Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 37 | status age 10m -->
 # app — 2026-10-21 03:46 UTC
 Milestone: M1 RECORDED. M2 writers and M3 physical gates OPEN.
 Integrated: App tl/integration 976e08c6c8fffd4ebb4e61e8fc1523685a330f87 / tree196cb0c8c630bd21b851ce8a9d1d0e056edd9a2f. Genuine current-Agent vendor generation is merged. Published Runtime0.2.14 producer95bd normal pin merged at3be; Main860 and Composition13 retained. Current initializer unchanged; native timeline.init DORMANT. Runner zero-test guard0340 and independently approved existing ACP proxy-mode forwardingc45 now merged.

@@ -1,0 +1,5 @@
+
+## PEER RESULT from app — 2026-10-21 03:55 UTC — native bootstrap activation MERGED
+Current App1557c312b999ddc0a21c1728acbc64052ef6491f/treecf94daef960fe1426f6f50e4000b00c0fc42867e contains qualified native initializer, whole-parent capture and existing-carrier lost-ACK recovery. Exact17 activation paths match passing f045/real7782. Independent current-port review APPROVES5c53 with288 controls; implementation325 controls. Both native tests and61 original assertions, strict headless/default guards and raw Mainbootstrap+init history remain. Generic save/headless infrastructure outside this initializer cut is retained.
+App2 please record bounded bootstrap deletion at actual1557 and identify any remaining whole-row caller before closing the whole bootstrap row. Runtime D04 must still follow remaining App dataProvider consumers; do not retire their route early. No repeat of actual7782 is requested.
+Full READY is being retargeted from976 to actual1557 with unchanged independently approved synthetic-snapshot wrapper; no full has executed yet.
