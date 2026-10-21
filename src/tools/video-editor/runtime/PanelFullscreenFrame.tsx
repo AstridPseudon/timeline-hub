@@ -85,7 +85,7 @@ export const PanelFullscreenFrame = forwardRef<HTMLDivElement, PanelFullscreenFr
       aria-modal="false"
       aria-label={title}
       data-panel-fullscreen-frame
-      className={cn('flex min-h-0 flex-col bg-background text-foreground', fillsWindow ? 'fixed inset-0 z-[100017]' : 'absolute inset-0 z-50')}
+      className={cn('flex min-h-0 flex-col bg-background text-foreground', fillsWindow ? 'fixed inset-0 z-[100017]' : 'absolute inset-y-0 left-0 right-3.5 z-50')}
     >
       <div data-panel-fullscreen-titlebar className="flex h-9 shrink-0 select-none items-center gap-2 border-b border-border bg-muted/40 px-3">
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{title}</span>

@@ -114,6 +114,8 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
   const handleOpen = customOpenAction ?? openPane;
   const useDesktopBehavior = !isMobile || isTablet;
   const [selectionActive, setSelectionActive] = React.useState(false);
+  const [hovered, setHovered] = React.useState(false);
+  const [focused, setFocused] = React.useState(false);
   const paneControlsHosted = usePaneControlsHosted();
   const isBottom = side === 'bottom' || side === 'top';
   const showTooltips = !isMobile;
@@ -415,9 +417,15 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
     marginBottom: safeAreaCalc.marginBottom(0.5),
   } : dynamicStyle;
 
+  // The Tasks/chat tab rests as a slim grip in the gutter beside the pane so it
+  // covers none of the page; hover or keyboard focus expands it to the full tab.
+  const restsAsGrip = isTasksPane && !isMobile && !(isOpen && !isLocked);
+  const gripResting = restsAsGrip && !hovered && !focused;
+
   const content = (
     <div
       data-pane-control
+      data-pane-control-grip={gripResting ? 'true' : undefined}
       data-pane-control-side={side}
       data-tour={dataTour}
       style={{
@@ -431,12 +439,27 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
         positionClasses,
         'opacity-100 touch-none',
         // Taller touch target for mobile side panes with single button
-        isMobileSidePane && 'min-h-[72px] justify-center'
+        isMobileSidePane && 'min-h-[72px] justify-center',
+        gripResting && 'h-12 w-[10px] justify-center overflow-hidden !p-0 [&>button]:opacity-0 [&>div]:opacity-0',
       )}
-      onMouseEnter={useDesktopBehavior && isOpen && !isLocked ? handlePaneEnter : undefined}
-      onMouseLeave={useDesktopBehavior && isOpen && !isLocked ? handlePaneLeave : undefined}
+      onMouseEnter={() => {
+        if (restsAsGrip) setHovered(true);
+        if (useDesktopBehavior && isOpen && !isLocked) handlePaneEnter();
+      }}
+      onMouseLeave={() => {
+        if (restsAsGrip) setHovered(false);
+        if (useDesktopBehavior && isOpen && !isLocked) handlePaneLeave();
+      }}
+      onFocus={restsAsGrip ? () => setFocused(true) : undefined}
+      onBlur={restsAsGrip ? () => setFocused(false) : undefined}
       {...containerEventHandlers}
     >
+      {gripResting && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 rounded-full bg-muted-foreground/60"
+        />
+      )}
       {buttons.map(renderButton)}
     </div>
   );
