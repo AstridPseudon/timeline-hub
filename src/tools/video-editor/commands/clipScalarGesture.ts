@@ -21,7 +21,8 @@ export interface CapturedClipScalarEdit {
 }
 
 export function clipScalarPreview(clipId: string, args: ClipScalarArgs): TimelinePatch {
-  const transitionSet = Object.hasOwn(args.values, 'transition') || Object.hasOwn(args.values, 'elementRef');
+  const transitionSet = Object.prototype.hasOwnProperty.call(args.values, 'transition')
+    || Object.prototype.hasOwnProperty.call(args.values, 'elementRef');
   return { version: 1, operations: [{
     op: 'clip.update', target: clipId, payload: structuredClone(args.values),
     ...(args.clear.length || !transitionSet ? { clear: [...args.clear] } : {}),
