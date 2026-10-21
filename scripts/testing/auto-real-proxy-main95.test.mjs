@@ -5,7 +5,7 @@ import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
 import { after, test } from 'node:test';
 import { createRuntimeProxyServer, readWorkspaceRuntimeConfig } from '../runtime-discovery-proxy.mjs';
-import { normalAcpEnvironment, REAL_PROXY_RUNTIME, prepareNodeModulesOverlay, readRealProxyInputs, resolveFailureRecordRoot } from './auto-real-proxy-main95.mjs';
+import { normalAcpEnvironment, preparePrivateRunTempRoot, REAL_PROXY_RUNTIME, prepareNodeModulesOverlay, readRealProxyInputs, resolveFailureRecordRoot } from './auto-real-proxy-main95.mjs';
 
 const scratch = mkdtempSync(path.join(os.tmpdir(), 'auto-real-proxy-current-root-'));
 after(() => rmSync(scratch, { recursive: true, force: true }));
@@ -56,6 +56,21 @@ test('runner always resolves an absolute worker-owned failure record directory',
   assert.equal(resolveFailureRecordRoot({ TIMELINE_AUTO_REAL_PROXY_RECORD_DIR: path.join(scratch, 'worker-record') }, privateRoot, runRoot), path.join(scratch, 'worker-record'));
   assert.throws(() => resolveFailureRecordRoot({ TIMELINE_AUTO_REAL_PROXY_RECORD_DIR: 'relative-record' }, privateRoot, runRoot), /absolute path/);
   assert.throws(() => resolveFailureRecordRoot({ TIMELINE_AUTO_REAL_PROXY_RECORD_DIR: runRoot }, privateRoot, runRoot), /outside the disposable run root/);
+});
+
+test('runner refuses a planted file where the private TMPDIR must be a directory', () => {
+  const runRoot = path.join(scratch, 'file-as-temp-run');
+  mkdirSync(runRoot, { recursive: true });
+  writeFileSync(path.join(runRoot, 'tmpdir'), 'record-file');
+  assert.throws(() => preparePrivateRunTempRoot(runRoot), /private run TMPDIR must be a physical directory/);
+});
+
+test('runner creates a real private TMPDIR under the disposable run root', () => {
+  const runRoot = path.join(scratch, 'physical-temp-run');
+  const tempRoot = preparePrivateRunTempRoot(runRoot);
+  assert.equal(statSync(tempRoot).isDirectory(), true);
+  assert.equal(lstatSync(tempRoot).isSymbolicLink(), false);
+  assert.equal(path.dirname(tempRoot), runRoot);
 });
 
 function normalParserFixture(overrides = {}) {

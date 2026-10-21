@@ -365,6 +365,25 @@ function checkVendorLock(input, root, command, label) {
   if (result.status !== 0) fail(`${label} vendor-lock check failed (exit ${result.status ?? 'signal'})`);
 }
 
+function ensurePhysicalDirectory(directory, label) {
+  try {
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+  } catch (error) {
+    fail(`${label} must be a physical directory: ${error.message}`);
+  }
+  let stats;
+  try { stats = lstatSync(directory); }
+  catch (error) { fail(`${label} must be a physical directory: ${error.message}`); }
+  if (!stats.isDirectory() || stats.isSymbolicLink()) fail(`${label} must be a physical directory`);
+  return directory;
+}
+
+export function preparePrivateRunTempRoot(runRoot) {
+  if (!path.isAbsolute(runRoot)) fail('private run root must be absolute');
+  ensurePhysicalDirectory(runRoot, 'private run root');
+  return ensurePhysicalDirectory(path.join(runRoot, 'tmpdir'), 'private run TMPDIR');
+}
+
 export function checkRealProxySources(input) {
   if (git(input.app, 'rev-parse', '--show-toplevel') !== input.app) fail('App root is not the current checkout');
   if (git(input.app, 'rev-parse', `${input.appSha}^{tree}`) !== input.appTree) fail('declared App commit does not map to the declared tree');
@@ -393,6 +412,7 @@ export function checkRealProxySources(input) {
 }
 
 function privateEnvironment(input, env, runRoot) {
+  const tempRoot = preparePrivateRunTempRoot(runRoot);
   const value = {
     ...env,
     ASTRID_CHECKOUT: input.agent,
@@ -403,6 +423,7 @@ function privateEnvironment(input, env, runRoot) {
     TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
     npm_config_cache: path.join(runRoot, 'npm-cache'),
     npm_config_offline: 'true',
+    TMPDIR: tempRoot,
     PWTEST_CACHE_DIR: path.join(runRoot, 'playwright-cache'),
     PLAYWRIGHT_OUTPUT_DIR: path.join(runRoot, 'browser-artifacts'),
     TIMELINE_AUTO_REAL_PROXY_RECORD_DIR: resolveFailureRecordRoot(env, input.privateRoot, runRoot),
@@ -484,7 +505,7 @@ export function runRealProxyGate(env = process.env, appRoot = process.cwd()) {
   const input = readRealProxyInputs(env, appRoot);
   const runRoot = path.join(input.privateRoot, `real-proxy-${process.pid}`);
   const recordRoot = resolveFailureRecordRoot(env, input.privateRoot, runRoot);
-  mkdirSync(runRoot, { recursive: true });
+  ensurePhysicalDirectory(runRoot, 'private run root');
   const before = checkRealProxySources(input);
   const childEnv = privateEnvironment(input, env, runRoot);
   const restoreModules = prepareNodeModulesOverlay(input.app, input.dependencyRoot, input.privateRoot);
