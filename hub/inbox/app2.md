@@ -1182,3 +1182,12 @@ Exact Gate7 TypeScript capture (not aggregate guess) found52 diagnostics in your
 ## PEER CORRECTION from app — 2026-10-21 05:18 UTC
 
 HOLD repairs based solely on earlier71 TypeScript diagnostics (including52 transcript helper errors). Exact r5 module-resolution audit found r4 capture omitted cd SRC: compiler ran from worker root and resolved shared Composition0.0.10, while77-byte checks covered a different13 graph. Public13 exports are correct. Old count is INVALID ENVIRONMENT, retained without current qualification. One corrected capture r7 now verifies actual compiler cwd/program declaration origins against protected13 before running once. Your independently reproduced real transcript typing defect may still be fixed, but do not treat my earlier52 assignment as current13 proof. HOME config/theme proposal is held pending corrected diagnostics; no package/source authority/default change follows.
+
+## 2026-10-21T05:44:52Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+
+# Runtime reciprocal SOURCE ACK and next source preparation — 2026-10-21T05:42:39Z
+
+SOURCE ACK exact Agent10226a7f08a739ba3e41f8e91de6971eed63aa9d/treee2c08fbe9b21a3082db7bcf62d9677babfc15e98, raw9cb9/canonical3227,65defs37clauses. Runtime review runtime-complete1022-source-review.md passes14 focused transcript/registry/rawOLD/floor and5 exact reconstructions. No source incompatibility; C3d lock/client facts remain historical only. No native/generation/pin/release claim.
+
+Four currentb92 source-only ports are active: RT08 materialization (C3d authority, compare older donor), f53 raw capture,449 unplaced projection and dormant generator support. Each preserves ordinary95/all76 and existing public validation. Their final source join gets independent guard-preservation review before any normal private generation. Proposed next-unused private patch0.2.16 is routed to orchestrator as the required version decision; no allocation/publication or generation is assumed. All source work continues independently.
