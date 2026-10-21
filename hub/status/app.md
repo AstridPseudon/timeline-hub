@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T04:28:15Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 30 | status age 6m -->
+<!-- app | 2026-10-21T04:34:30Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 25 | status age 13m -->
 # app — 2026-10-21 04:08 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 physical gates remain OPEN.
 Integrated: App tl/integration 1557c312b999ddc0a21c1728acbc64052ef6491f / tree cf94daef960fe1426f6f50e4000b00c0fc42867e. Main860, published Runtime0.2.14 producer95bd and Composition13 retained. Genuine Agent091aa vendor regeneration merged976e. Native initializer activation merged1557 after real proof and independent review.
