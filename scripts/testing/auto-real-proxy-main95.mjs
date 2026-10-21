@@ -34,7 +34,7 @@ export const REAL_PROXY_RUNTIME = Object.freeze({
   producerVersion: 'sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac',
   schemaDigest: 'sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816',
   componentManifest: 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5',
-  artifactCount: 75,
+  artifactCount: 76,
 });
 
 export const REAL_PROXY_COMPOSITIONS = Object.freeze({
@@ -220,7 +220,7 @@ function checkManifest(input) {
   const value = json(file, 'Runtime artifact manifest');
   if (value.producer !== 'astrid-runtime' || value.version !== REAL_PROXY_RUNTIME.producerVersion) fail('Runtime artifact manifest pin changed');
   const artifactCount = Object.keys(value.artifacts ?? {}).length;
-  if (artifactCount !== REAL_PROXY_RUNTIME.artifactCount) fail(`Runtime artifact manifest has ${artifactCount} entries, expected 75`);
+  if (artifactCount !== REAL_PROXY_RUNTIME.artifactCount) fail(`Runtime artifact manifest has ${artifactCount} entries, expected 76`);
   return { sha256: digest(file), version: value.version, artifactCount };
 }
 
