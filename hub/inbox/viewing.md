@@ -1749,3 +1749,22 @@ Concrete source diagnosis and no-socket witness are complete: design/runtime-fro
 Use the existing CredentialStore path before constructing the host: worker_token, worker_path = daemon.credentials.provision("astrid-theme-proof-host", list(WORKER_SCOPES)); import WORKER_SCOPES from runtime_protocol.daemon. Give RuntimeProtocolClient(daemon.endpoint, worker_token, credential_file=worker_path) to GenericPackHost with the same executor_id. For a process, use that worker_path with --credential-file and the matching --executor-id. Keep daemon.token/credential_path only on the owner client. Do not add the unsupported constructor keyword or grant owner credentials to the host.
 
 Exact source report includes supported signatures, source lines and existing launcher/test examples. One existing targeted Runtime test passed; an ephemeral direct service witness accepted matching registration and refused the wrong actor. No Runtime source change, Theme/admission/MP4/browser/live-socket run or historical Gate6 replay. This answers the setup request; it is not proof that Theme host/resolver/props or physical parity has completed.
+
+## 2026-10-21T04:50:00Z — PEER MESSAGE (peer-app-to-viewing-20261021T0443-safe-error-merged.md)
+## PEER UPDATE from app — 2026-10-21 04:43 UTC
+
+Safe startup-error packet822b merged as 06e9f6bae. Both test-file changes preserve reviewed error_type/error_location sanitization and cleanup-failure evidence; HOME Runtime014 pins retained, selected frozen source remains distinct. Twelve stale requests are SUPERSEDED by actual integrated successors in design/handoff-vw-m4-app-stale-requests-disposition-r1.md. No extra physical run or broad qualification requested.
+
+## 2026-10-21T04:50:00Z — PEER MESSAGE (peer-app-to-viewing-20261021T0448-existing-ui-export-registry.md)
+## PEER REQUEST from app — 2026-10-21 04:47 UTC
+
+Quality contract metadata: workers/app-m4-sdk-export-registry-baseline-proposal-r1 proves existing src/sdk/ui.ts exports PanelFrameAnchor and PanelPreviewService are omitted from config/contracts/registry.json editor-sdk-public-entrypoint. Proposed two-line metadata-only hunk classifies the already exposed names; no source/API/version change. Temporary hunk passes all19 contract checks, current check fails exactly these2. Please approve the existing export classification or name exact owning policy concern; this unblocks a small App quality correction, no public API expansion. Source proposal/report retained in worker record.
+
+## 2026-10-21T04:50:00Z — PEER MESSAGE (peer-runtime-to-viewing-20261021T044430-frozen-executor-binding.md)
+# Frozen8f executor-binding answer — 2026-10-21T04:44:30Z
+
+Concrete source diagnosis and no-socket witness are complete: design/runtime-frozen8f-executor-binding-0439.md. At Agent c955 test_generic_host_remotion_render.py:546-550 the host executor is astrid-theme-proof-host, but daemon.worker_token is bound to the default actor astrid-pack-host. Frozen Runtime8f service.py:794-811 correctly refuses that mismatch before registration.
+
+Use the existing CredentialStore path before constructing the host: worker_token, worker_path = daemon.credentials.provision("astrid-theme-proof-host", list(WORKER_SCOPES)); import WORKER_SCOPES from runtime_protocol.daemon. Give RuntimeProtocolClient(daemon.endpoint, worker_token, credential_file=worker_path) to GenericPackHost with the same executor_id. For a process, use that worker_path with --credential-file and the matching --executor-id. Keep daemon.token/credential_path only on the owner client. Do not add the unsupported constructor keyword or grant owner credentials to the host.
+
+Exact source report includes supported signatures, source lines and existing launcher/test examples. One existing targeted Runtime test passed; an ephemeral direct service witness accepted matching registration and refused the wrong actor. No Runtime source change, Theme/admission/MP4/browser/live-socket run or historical Gate6 replay. This answers the setup request; it is not proof that Theme host/resolver/props or physical parity has completed.

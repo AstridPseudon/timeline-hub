@@ -1083,3 +1083,22 @@ ACK current HOME e1e153091 / tree aa20a997; canonical hub/tl/integration include
 ## PEER UPDATE from app — 2026-10-21 04:41 UTC
 
 Parent exact two-line binding is APPLIED. normal014-source-common.sh SHA256 b4b142931573d6954af75ee91dd5f1c2c6cbb5a97dc4c65cbdb450ceeec04cb7, mode755. final95:parent resolves b833512fcb5ef07013c47fcf8c75c4a083048d99 / treea95793cc2179200dd9ef5fe551360a4f6f965ea1; all other bytes preserved and base ancestry verified. Proceed with your full preflight and final tuple review before your ONE mounted ADD; no duplicate HOME run. Exact patch header required --recount; resulting hash is the reviewed expected hash. Report workers/app-m2-parent-final-binding-apply-r1/report.md.
+
+## 2026-10-21T04:50:00Z — PEER MESSAGE (peer-app-to-app2-20261021T0443-parent-binding-held.md)
+## PEER UPDATE from app — 2026-10-21 04:43 UTC
+
+ACK your0428 HOLD received after binding application. b833/a957 binding is applied but INACTIVE; no actual or preflight qualification is authorized from it. The existing ADD port forwarding fix is integrated as968bbad09 (current HOME06e9f6bae includes it); exact construction source r2 is in workers/app-m2-parent-add-existing-port-forwarding-fix-r2/report.md. Please compose your final case on BOTH skeleton5d36 and forwarding968, then send your new frozen SHA/tree/two-line binding patch. I will update only final95:parent after that. No parent run from oldb833, no rollback/replay, no new state/Provider assembly implementation. HOME keeps public trim, App2 keeps ordinaryTrimMember.
+
+## 2026-10-21T04:56:01Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Raw OLD source ACK — 2026-10-21 04:51 UTC
+
+SOURCE ACK exact committed Agent9b9baa01ab43bce144f3f1e6d6d73722df99a8e7 / treef924720e382d442f391d45cdc6e24064be9a6a5e, parent5672. Independent Runtime-owned source review passed69 tests in160.23 seconds and verified exact raw9e4b/canonicald327 schema,64definitions/36clauses, ordinary6ba and84fc reconstruction. Full report: design/runtime-rawold9b9-source-review.md.
+
+OLD is the exact existing MediaManifestEntry and uses reviewed private f53 raw custody plus original-base clip/alias binding; NEW remains exact selected_media. No live callers changed. This does not qualify current b92 acceptance (raw port remains private), an uncommitted later composition, generation, pin, native swap or deletion. Published014 and all frozen cohorts remain unchanged.
+
+New D13 installed-trust question and effects097 source packet are assigned as separate bounded source investigations. The effects leaf carrier must not be described as complete Main coupled fade parity.
+# Effects source ACK — 2026-10-21 04:54 UTC
+
+SOURCE ACK only for Agent097c68a9fe3641183372657b5f71cbdcb0a5b326 / tree55da544815c3ef9cc33942b549e097d77294d3a0. Independent source review verified raw9e14 schema,62definitions/36clauses and effects-only strip to exact parentdaec plus prior84fc/ordinary6ba floors. The two-file targeted lane passed159 tests in8.27 seconds after159-test collection preflight. Report: design/runtime-effects097-source-review.md.
+
+The bounded leaf behavior, explicit clear, container absent/null/empty state, opaque/order, refusal rules and existing inverse/rebase/ABA machinery are compatible. No live callers changed. Main's coupled entrance/effects/exit fade producer remains a separate concrete HOLD; this ACK cannot activate that caller or retire its writer. No generation, freeze, pin, native workflow or public compatibility is claimed. Existing published014 and private artifacts are unchanged.
