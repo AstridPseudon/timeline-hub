@@ -179,6 +179,17 @@ def test_public_mouth_rows_drive_curve_and_missing_row_keeps_private_fallback(
     assert samples[1] == {"closed": 0.0, "half": 0.5, "open": 1.0}[private_missing]
 
 
+def test_missing_presenter_override_preserves_props_dispatch(retained, monkeypatch):
+    presenter = context(retained).elements[0]
+    dispatched = {"custom": 1.0}
+    monkeypatch.setitem(model.PROPS, presenter.type,
+                        lambda _element, _frame, _fps: dispatched)
+
+    assert model.props_at(presenter, 1 / 30 + 1e-6, 30) == dispatched
+    assert model.props_at(presenter, 1 / 30 + 1e-6, 30,
+                          presenter_mouth_state="closed")["mouth"] == 0.0
+
+
 def test_mixed_public_mouth_facts_keep_private_fallback(public_capture_rows, retained, monkeypatch):
     provider = _public_provider(retained, public_capture_rows, monkeypatch, mode="mixed")
     mixed = context(retained, frame_provider=provider)

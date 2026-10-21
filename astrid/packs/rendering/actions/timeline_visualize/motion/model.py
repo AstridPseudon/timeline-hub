@@ -636,7 +636,7 @@ def props_at(element: Element, t: float, fps: float, *,
     if own is not None:
         return own
     model = PROPS.get(element.type)
-    if element.type == "am-presenter":
+    if element.type == "am-presenter" and presenter_mouth_state is not None:
         return _presenter_props(element, frame, fps, presenter_mouth_state=presenter_mouth_state)
     return model(element, frame, fps) if model else {"visible": 1.0}
 
