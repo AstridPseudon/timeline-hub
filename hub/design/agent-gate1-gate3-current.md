@@ -552,3 +552,46 @@ member/generic-patch capture change. It is App command-producer work and does
 not alter Agent Gate1/Gate3 nodes or the Agent save path, so no replay was
 needed. Current heads: Agent `0542b4291`, Runtime `9d1c43c`, App `e4ee1dceb`,
 Composition `e7ef7a0`.
+
+## Corrected current frontier (2026-10-21)
+
+The detailed bounded map is in the completed 0729 worker report
+([report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-gate1-current-frontier-proof-plan-0729/report.md)).
+This page records the current correction and does not turn collected or staged
+evidence into a current-head pass.
+
+- Current Agent integration is `7c9ef2ed5e70da1a13e89278496c74321453955a`
+  (tree `293084643595ddb6048456610e9f4e2a37217bcd`). Its latest relevant
+  merges are installed-origin `45729a6be` (source `76f3337cd`), typed SDK
+  forward `75a96ec95`, and Ruff shrink-only refresh `96eebbd70`. The merged
+  document stopgap remains `ac9a93579` (source `a362c7fd`): it refuses some
+  lossy row-presence changes, but does not close every parent/config/registry/
+  container or mirror-deletion field.
+- The 0727 document proof was not only a pre-pytest snapshot failure. The
+  earlier run
+  `agt-m2-document-approved-coherent-http-once-0721-document-diff-approved-coherent-http-once-0721-integration-1021072359-1130`
+  stopped before pytest because the synthetic snapshot `9bcacb83` changed
+  `HEAD` while preserving source commit `e51732a` and tree
+  `f157ce2451296d8de1ba59a8567a46f4e112bd75`. After the guard correction, the
+  authorized run
+  `agt-m2-document-snapshot-identity-diagnose-and-one-proof-0727-document-diff-approved-coherent-http-once-0721-integration-1021072907-7153`
+  executed the authenticated HTTP node once. It failed after acceptance at
+  `persisted_bundle(accepted) == persisted_bundle(native["bundle"])`:
+  Runtime created a new shot/shot-revision for the edited occurrence while
+  `shared-sibling` retained the original. Reload and inverse were not reached;
+  no retry was authorized. Exact run pins were Agent `e51732a...` / tree
+  `f157ce...`, snapshot `9bcacb83...`, Runtime `b92d3e7a...` / tree
+  `6abc2f117391de8e7e35c0283f575a002199894d`.
+- Fresh transcript/source binding is still pending current-source port
+  `agt-m2-gate1-fresh-transcript-current-source-port-0737`. Its predecessor's
+  candidate result (`2000b0bc...`, Runtime `3dcae183...`, result
+  `agt-m2-gate1-anchor-native-frontends-fix-gate1-fresh-word-transcript-frontends-1021020618-14833`)
+  is staged evidence, not normal current-cohort proof. No current-source
+  three-frontend result is claimed.
+- The 0729 worker only collected the proposed selectors: 18 selected tests
+  (20 including two deselected parametrized items); no test body ran. The
+  existing 83-pass timing and 130-pass non-timing results remain bounded
+  snapshots with their recorded identities, not a blanket current pass. The
+  current full baseline remains red/unqualified (`cc372` / tree `0698`,
+  15,840 passed, 138 failed, 4 errors, 456 skipped, 4 xfailed); no full suite
+  was requested for this correction.
