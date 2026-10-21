@@ -1,0 +1,2 @@
+BLOCKED: no patch or product files produced
+Reason: explicit Agent/App source ACKs and the Composition-1058 source result were absent.
