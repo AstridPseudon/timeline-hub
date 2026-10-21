@@ -5,6 +5,7 @@ import copy
 
 import pytest
 
+from astrid.packs.video_editing.shared.draft_voiceover import _build_voiceover_proposal
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import (
@@ -14,6 +15,7 @@ from astrid.sdk.timeline.commit import (
     document_from_bundle,
 )
 from astrid.sdk.timeline.native_voiceover import capture_draft_voiceover
+from astrid.sdk.timeline.producer import build_producer_batch
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm
@@ -79,6 +81,38 @@ def test_original_voiceover_outcome_lowers_to_audio_and_metadata_commands_with_i
         prepared["candidate"]["shots"]["shot-shared"]["payload"]["metadata"][vo.KEY]
     assert replay(plan, authored, verified_media=verified).records == plan.records
     assert inverse(plan.bundle, plan.records).bundle == before
+
+
+def test_original_ripple_source_capture_wraps_in_existing_requester_batch():
+    authored, prepared = _voiceover_bundle_and_outcome()
+    old = {"asset": "voice", "generation_id": "generation-old", "variant_id": "variant-old",
+           "object_id": OLD, "catalog_digest": "sha256:" + "a" * 64}
+    new = {"asset": "draft-voiceover-vo", "generation_id": "generation-new",
+           "variant_id": "variant-new", "object_id": NEW,
+           "catalog_digest": "sha256:" + "b" * 64}
+    verified = [{"selection": copy.deepcopy(media), "media_type": "audio/wav", "size": 4,
+                 "duration_seconds": 4} for media in (old, new)]
+    lowered = capture_draft_voiceover(
+        authored, prepared, media_by_occurrence={"occ-1": new},
+        old_media_by_occurrence={"occ-1": old}, verified_media=verified)
+
+    candidate = copy.deepcopy(authored)
+    candidate.update(project_id="project", timeline_id="timeline")
+    target = {"project_id": "project", "timeline_id": "timeline",
+              "base_revision_id": candidate["base_parent"]["revision_id"],
+              "base_publication_id": "publication"}
+    proposal = _build_voiceover_proposal(
+        producer={"task_id": "outer-task", "attempt_id": "outer-attempt",
+                  "executor_id": "host-worker", "fence": 4, "runtime_epoch": 7},
+        candidate=candidate, base_publication_id="publication",
+        commands=lowered["commands"], admitted_target=target)
+    batch = build_producer_batch(proposal)
+
+    assert batch["commands"][0]["op"] == "producer.guard"
+    assert batch["commands"][1:] == lowered["commands"]
+    assert proposal["rationale"] == "Insert settled managed voiceover WAV and preserve its frozen script binding"
+    assert lowered["capture"]["jobs"][0]["source"] == {"from": 0, "to": 4, "hold": 4}
+    assert lowered["capture"]["timing_policy"] == "ripple"
 
 
 @pytest.mark.parametrize("source_bound", [False, True])
