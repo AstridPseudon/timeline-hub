@@ -20,10 +20,18 @@ export function useTimelineSync({
   const lastTimeUpdateRef = useRef(0);
 
   const onPreviewTimeUpdate = useCallback((time: number, seekComplete = false) => {
-    if (isSyncingFromTimeline.current) {
-      if (seekComplete) {
+    if (seekComplete) {
+      if (isSyncingFromTimeline.current) {
         isSyncingFromTimeline.current = false;
+        isSyncingFromPreview.current = true;
+        requestAnimationFrame(() => {
+          isSyncingFromPreview.current = false;
+        });
       }
+      return;
+    }
+
+    if (isSyncingFromTimeline.current) {
       return;
     }
 

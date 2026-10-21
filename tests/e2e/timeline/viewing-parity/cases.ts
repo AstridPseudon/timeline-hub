@@ -17,6 +17,7 @@ import {
 import {
   assertFrameWithinBound, capturePlayerFrame, compareRgbFrames, decodeExportFrame,
 } from './frames';
+import { formatTerminalTaskFailure } from './compare';
 import { captureActualPlayerTab, installTabAudioObservation } from './tab-audio';
 import { compareNativeAudio, decodeNativeAudio } from './audio-join';
 
@@ -107,13 +108,23 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
       const resultDialog = page.getByRole('dialog', { name: 'Rendered film', exact: true });
       const downloadButton = resultDialog.getByRole('button', { name: 'Download', exact: true });
       const blocker = page.locator('[data-video-editor-render-blocker="true"]');
-      await expect.poll(async () => {
-        const task = await readRuntimeJson<Task>(harness, taskPath);
-        if (['failed', 'cancelled'].includes(task.state)) return `error:task-${task.state}`;
-        const error = (await blocker.allTextContents()).join('\n').trim();
-        if (error) return `error:${error}`;
-        return task.state === 'succeeded' && await downloadButton.isVisible() ? 'done' : 'pending';
-      }, { timeout: 240_000, message: 'mounted App Render action must finish through the real generic pack host' }).toBe('done');
+      const waitForCompletion = async () => {
+        const deadline = Date.now() + 240_000;
+        while (Date.now() < deadline) {
+          const task = await readRuntimeJson<Task>(harness, taskPath);
+          const terminalFailure = formatTerminalTaskFailure(task);
+          if (terminalFailure) throw new Error(terminalFailure);
+          const error = (await blocker.allTextContents()).join('\n').trim();
+          if (error) {
+            await new Promise(resolve => setTimeout(resolve, 250));
+            continue;
+          }
+          if (task.state === 'succeeded' && await downloadButton.isVisible()) return;
+          await new Promise(resolve => setTimeout(resolve, 250));
+        }
+        throw new Error('mounted App Render action must finish through the real generic pack host');
+      };
+      await waitForCompletion();
       expect(polls.some(url => url.endsWith(taskPath)), 'App must poll its admitted task').toBe(true);
       expect(legacyWrites, 'Render must not publish through a legacy writer').toEqual([]);
       const completed = await readRuntimeJson<Task>(harness, taskPath);

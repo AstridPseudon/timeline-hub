@@ -30,7 +30,7 @@ describe('useTimelineSync', () => {
     expect(setCurrentTime).toHaveBeenNthCalledWith(2, 2.5);
   });
 
-  it('holds timeline feedback through queued completion and suppresses its quantized echo', () => {
+  it('suppresses duplicate marked completion while accepting the later ordinary frame', () => {
     const fps = 30000 / 1001;
     const seek = vi.fn();
     const setCurrentTime = vi.fn();
@@ -50,6 +50,7 @@ describe('useTimelineSync', () => {
       result.current.onClickTimeArea(1);
       result.current.onPreviewTimeUpdate(15 / fps);
       result.current.onPreviewTimeUpdate(30 / fps, true);
+      result.current.onPreviewTimeUpdate(30 / fps, true);
       result.current.onPreviewTimeUpdate(45 / fps);
     });
 
@@ -58,7 +59,7 @@ describe('useTimelineSync', () => {
     expect(setCurrentTime).toHaveBeenNthCalledWith(1, 0.5);
     expect(setCurrentTime).toHaveBeenNthCalledWith(2, 1);
     expect(setCurrentTime).not.toHaveBeenCalledWith(30 / fps);
-    expect(setTime).toHaveBeenCalledWith(45 / fps);
+    expect(setTime.mock.calls).toEqual([[45 / fps]]);
     expect(isSyncingFromTimeline.current).toBe(false);
   });
 });
