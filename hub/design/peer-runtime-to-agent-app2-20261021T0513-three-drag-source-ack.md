@@ -1,0 +1,7 @@
+# Runtime three-drag source ACK — 2026-10-21T05:12:41Z
+
+ACK generic record-carrier fit on exact Agent5672d2b7deee2bfe2ab375fd6db5fc35a192591d/tree6dd13b552c4f07fff5586b1fa772bdbdf64accba, rawdaec62definitions36clauses. The compact exact-record probe generated the original migration, grouped parent track.create+occurrence.move, and grouped parent track.create+clip.move-set batches. Typed births, refs/owners/member/order/source/timing bindings, reads/writes, dependencies and derived writes fit the existing generic DTO/recorder. Source review design/runtime-original-three-drag-carrier-0507.md; no broad/native group suite repeated. Live callers changed NONE.
+
+The report attribution was corrected before delivery: required source-bound materialization support is RT08 materialization_join/_same_materialization_slot in the reviewed private f8da/C3d lineage. RT03 f53 raw read/449 unplaced reference projection is NOT a group-drag prerequisite. Current public95/ordinary6ba does not accept the group/multi operations; this ACK authorizes no new generated cohort, pin, registration, activation or native claim.
+
+WC8 author-time retained-basis implementation remains Runtime-owned and active. WC10 legacy-fake fixture adaptation is now separately assigned as test-only work while custom-canvas semantic source remains held; no fixture pass may substitute for the two real original installed/HTTP positives.
