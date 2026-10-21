@@ -16,7 +16,6 @@ import {
   MIN_STRETCH,
   keyAction,
   lastWorldKey,
-  libraryKey,
   moveRangeHandle,
   newClipId,
   libraryContent,
