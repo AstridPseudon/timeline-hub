@@ -51,7 +51,7 @@ export function TourSpotlight({ rects, clickable, reducedMotion }: TourSpotlight
             ))}
           </mask>
         </defs>
-        <rect width="100%" height="100%" fill="hsl(var(--foreground) / 0.6)" mask="url(#editor-tour-dim)" />
+        <rect width="100%" height="100%" fill="rgb(0 0 0 / 0.6)" mask="url(#editor-tour-dim)" />
       </svg>
     </div>
   );
