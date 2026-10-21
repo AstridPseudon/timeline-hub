@@ -9,6 +9,8 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useTimelineOps } from './useTimelineOps';
 import { configToRows, type TimelineData } from '../lib/timeline-data';
+import { createTimelineReader } from '../lib/timeline-reader';
+import { createProposalRuntime } from '../lib/proposal-runtime';
 import { getConfigSignature, getStableConfigSignature } from '../lib/config-utils';
 import type { TimelineConfig } from '../types';
 import type { Checkpoint } from '../types/history';
@@ -18,7 +20,8 @@ import type {
   TimelinePatchValidationResult,
   TimelinePreviewResult,
 } from '@/sdk/video/timeline/patch.ts';
-import type { GenericPatchCapturePort } from '../commands/genericPatchCapture.ts';
+import type { EditCommand } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { GenericPatchCapturePort, GenericPatchBasis } from '../commands/genericPatchCapture.ts';
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -169,6 +172,105 @@ describe('useTimelineOps', () => {
     expect(diff.entries).toEqual(expect.arrayContaining([
       expect.objectContaining({ target: 'V1' }),
     ]));
+  });
+
+  it('accepts a supported proposal through one native batch without snapshot traffic', () => {
+    const dataRef = { current: makeBaseTimelineData() };
+    const commitData = vi.fn();
+    const patch: TimelinePatch = {
+      version: 1,
+      source: 'agent.proposal',
+      meta: { group_id: 'proposal-group', intent: 'preserve-order' },
+      operations: [
+        { op: 'clip.update', target: 'clip-1', payload: { hold: 4 }, order: 0 },
+        { op: 'track.update', target: 'V1', payload: { label: 'Picture' }, order: 1 },
+      ],
+    };
+    const command = {
+      schema_version: 1,
+      op: 'clip.set',
+      version: '1',
+      select: 'parent/clip:clip-1',
+      args: { values: { hold: 4 }, clear: [] },
+    } as EditCommand;
+    const preview: TimelinePatch = {
+      version: 1,
+      source: 'timeline.native-ordinary',
+      operations: patch.operations,
+    };
+    const genericPatchPort = {
+      capture: vi.fn((input: { patch: TimelinePatch; current: TimelineData }) => ({
+        current: input.current,
+        capture: {},
+      } as unknown as GenericPatchBasis)),
+      finish: vi.fn(() => ({ commands: [command], preview })),
+      submit: vi.fn(),
+    } as unknown as GenericPatchCapturePort;
+    const { result } = renderHook(() => useTimelineOps({
+      dataRef,
+      commitData,
+      genericPatchPort,
+      createManualCheckpoint: vi.fn(),
+      jumpToCheckpoint: vi.fn(),
+      checkpoints: [],
+    }));
+    const proposalRuntime = createProposalRuntime({
+      timelineOps: result.current,
+      reader: createTimelineReader({ data: dataRef.current! }),
+    });
+    const proposal = proposalRuntime.create({
+      source: 'agent.proposal',
+      patch,
+      baseVersion: 1,
+    });
+
+    expect(proposalRuntime.accept(proposal.id).entries).toEqual(expect.arrayContaining([
+      expect.objectContaining({ target: 'clip-1' }),
+      expect.objectContaining({ target: 'V1' }),
+    ]));
+    expect(genericPatchPort.capture).toHaveBeenCalledWith({ patch, current: dataRef.current });
+    expect(genericPatchPort.finish).toHaveBeenCalledOnce();
+    expect(genericPatchPort.submit).toHaveBeenCalledWith({ commands: [command], preview });
+    expect(proposalRuntime.get(proposal.id)?.state).toBe('accepted');
+    expect(commitData).not.toHaveBeenCalled();
+  });
+
+  it('refuses a mixed proposal atomically and preserves its draft without snapshot traffic', () => {
+    const dataRef = { current: makeBaseTimelineData() };
+    const commitData = vi.fn();
+    const patch: TimelinePatch = {
+      version: 1,
+      source: 'agent.proposal',
+      operations: [
+        { op: 'clip.update', target: 'clip-1', payload: { hold: 4 }, order: 0 },
+        { op: 'project-data.write', target: 'com.example.producer', payload: { key: 'source', value: 'draft' }, order: 1 },
+      ],
+    };
+    const genericPatchPort = {
+      capture: vi.fn(() => { throw new Error('mixed native batch refused'); }),
+      finish: vi.fn(),
+      submit: vi.fn(),
+    } as unknown as GenericPatchCapturePort;
+    const { result } = renderHook(() => useTimelineOps({
+      dataRef,
+      commitData,
+      genericPatchPort,
+      createManualCheckpoint: vi.fn(),
+      jumpToCheckpoint: vi.fn(),
+      checkpoints: [],
+    }));
+    const proposalRuntime = createProposalRuntime({
+      timelineOps: result.current,
+      reader: createTimelineReader({ data: dataRef.current! }),
+    });
+    const proposal = proposalRuntime.create({ source: 'agent.proposal', patch, baseVersion: 1 });
+
+    expect(() => proposalRuntime.accept(proposal.id)).toThrow('mixed native batch refused');
+    expect(proposalRuntime.get(proposal.id)?.state).toBe('pending');
+    expect(genericPatchPort.capture).toHaveBeenCalledOnce();
+    expect(genericPatchPort.finish).not.toHaveBeenCalled();
+    expect(genericPatchPort.submit).not.toHaveBeenCalled();
+    expect(commitData).not.toHaveBeenCalled();
   });
 
   it('keeps standalone compiler data on the guarded snapshot path', () => {
