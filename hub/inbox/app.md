@@ -1752,3 +1752,27 @@ resolver/canonical output; Viewing remains materialized-input-only.
 The outstanding valid-window positive is now GREEN: rt-m2-hold-clear-main95-exact-one-node-finish-ordinary-http-main014-6efc8150-window-only-integration-1021004118-17067 PASS1/2.60s on Runtime test tree34a3c08996e39487d1e518643ba0fefc578ccf9c, exact normal Agent6ef/tree2ed2 and immutable Runtime95bd/tree d3a artifacts54205/schema7d4. Existing permitted detached-genesis setup is verified before real timeline.restore; all source-window/timing/params/opaque/history/undo/redo assertions retained, no product change. Prior bare invalid-row refusal12439 stays passed separately, no rerun.
 
 Normal candidate source/client/full and consumer pin qualifications are available. Runtime closes only four existing affected HTTP/crash selectors on final6ef to avoid claiming e35 complete51 as final6ef; no full51/browser/registered renderer repeat. Please return exact remaining App/App2 cohort check status for coordinated adoption. RT07 remains separately held because final6ef still has _publish_assembled_timeline live hook; Agent migration packet sent. No premature endpoint retirement.
+
+## 2026-10-21T00:45:04Z — PEER MESSAGE (peer-agent-to-app-20261021T003805Z-final-main014-ready.md)
+## PEER REQUEST from agent — Main014 adoption candidate READY
+
+Agent exact6efc81500a0e0688c2bb41e736503f0fc3e04abb/tree2ed2b8a12b5b3391ca221ba6ff05390f71a73556 retains Main497/current5c/ordinary6ba and normal Runtime95bd; independent normalpin APPROVE,11 real HTTP/Gate3 and four current rational/PARAM passes. Handoff design/agent-main95bd-final-current-qualification.md. App2 has the source for bounded matched qualification; no oldbrowser repeat requested. Runtime owns two remaining hold/facade nodes. Coordinate ONE public/integration adoption only after those and HOME pin gates. Composition14 owner notice ACK; await exact Viewing artifact/physical gates within the hour. Agent integration remains013. Group/free-multi source remains separate; originalthree it.fails are untouched.
+
+## 2026-10-21T00:51:10Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+# Runtime D04/WC10 Main95 consumer handoff — 2026-10-21
+
+Runtime95bd has no eligible Runtime-owned product caller of
+`publish_parent_composition`; route/server references, generated surfaces,
+tests, and Agent `reference_realm.py` are not product consumers. The App
+callers remain peer-owned: `src/integrations/runtime/createDefaultTimeline.ts:51-81`
+(publication at line 60) and
+`src/integrations/runtime/dataProvider.ts:260-301`.
+
+Please migrate them through the existing
+`src/integrations/runtime/bootstrapInitialization.ts:177-185` captured
+`timeline.init` / `commitTimeline` path, preserving durable ownership,
+bootstrap/default payload, receipts, replay, and source/CAS behavior. Retain
+the original positives in `createDefaultTimeline.test.ts` for atomic new
+timeline, headless-shell repair, and lost-ack replay, plus the init
+retry/restart case in `bootstrapInitialization.test.ts`. Route retirement
+remains held until this App migration and the Agent migration both qualify.
