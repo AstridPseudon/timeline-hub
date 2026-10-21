@@ -13,6 +13,27 @@ reviewed paths and has no other changed or untracked paths. The custody review
 approval remains the source of truth; no independent audit or behavior change
 was added here.
 
+## Correction: delivery is source-only and public activation is held
+
+The earlier custody wording must not be read as “no public activation
+change.” The delivered source is the `b69c85ea7` App delta, and its live
+`createDefaultTimeline` path calls
+`RuntimeDataProvider.initializeNativeBootstrapTimeline`. The live product
+callers are `useProjectCRUD.ts:154`, `VideoEditorPage.tsx:461`
+(`ensureProjectHasTimeline`) and `VideoEditorPage.tsx:551`
+(`createCanonicalTimeline`); the provider path then calls
+`AstridRuntimeClient.createTimeline` and emits `timeline.init@1` plus
+`track.create@1`.
+
+That is incompatible with the exact pinned public013 Runtime: contract
+`0.2.13`, producer `2c4ac180c2220bdad966bc01e95ad230e99ce26a`, schema
+`sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`,
+whose edit-command schema has `track.create` but no `timeline.init`.
+HOME owns the revert. This source delivery is therefore **HELD** for public
+use until matched Main014 Agent/Runtime/App adoption and real create/init/
+restart proof. A private202 overlay test is separate private evidence and
+cannot establish public readiness.
+
 ## Verification
 
 - Targeted Vitest: 4 files, 128 tests passed.

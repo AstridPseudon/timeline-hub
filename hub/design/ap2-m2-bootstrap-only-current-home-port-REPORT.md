@@ -43,8 +43,66 @@ out-of-scope current files changed, including `src/tools/travel-between-images/c
 `src/tools/video-editor/commands/shotSetSession.test.ts`,
 `tests/e2e/local/shot-name-command.spec.ts`, and
 `tests/e2e/local/support/harness.ts`. The retained7d/selected5a/trim behavior
-and current settings authority were preserved. No pin, adoption, schema, DTO,
-dependency, or public activation change was made.
+and current settings authority were preserved. The final sentence above was
+incorrect and is corrected here: `b69c85ea7` did make a live public call-path
+change. It replaced the live `createDefaultTimeline` initializer's
+`publishParentComposition` path with
+`RuntimeDataProvider.initializeNativeBootstrapTimeline`, whose captured batch
+starts with `timeline.init@1`. The checked-in public013 Runtime contract does
+not accept that operation. HOME owns the call-path revert; this report does
+not duplicate or modify it.
+
+## Live-caller and contract correction
+
+This is an activation-impacting source packet, not an inert helper port. The
+following changed exports/surfaces have live product callers (the search
+excluded tests, `tests/**`, `__tests__/**`, and vendor trees):
+
+| Changed surface | Live product caller(s) | Effect in `b69c85ea7` |
+| --- | --- | --- |
+| `createCanonicalTimeline` | `src/tools/video-editor/pages/VideoEditorPage.tsx:551`; internally `createDefaultTimeline.ts:108` | Additional-timeline creation now runs native create/init/commit. |
+| `ensureProjectHasTimeline` | `src/shared/hooks/projects/useProjectCRUD.ts:154`; `src/tools/video-editor/pages/VideoEditorPage.tsx:461`; internally `createDefaultTimeline.ts:108` | Project creation and first/headless-timeline repair now run native create/init/commit. |
+| `RuntimeDataProvider.initializeNativeBootstrapTimeline` | `src/integrations/runtime/createDefaultTimeline.ts:64` | Routes the initializer through the configured Runtime client and native bootstrap owner. |
+| `initializeBootstrapTimeline` | `src/integrations/runtime/dataProvider.ts:78,503` | Live durable create/init boundary, not test-only glue. |
+| `reserveBootstrapInitialization` / `resumeBootstrapInitialization` | `src/integrations/runtime/bootstrapInitialization.ts:213,216-217` | Live recovery path; `reserveBootstrapInitialization` calls `outbox.reserveCreate` at `:34`. |
+| `captureBootstrap` | `src/integrations/runtime/bootstrapInitialization.ts:170` | Live capture emits `timeline.init@1` followed by `track.create@1` records. |
+| `AstridRuntimeClient.createTimeline` | `src/integrations/runtime/dataProvider.ts:508` | Live create request used before the native commit. |
+| `createCommitOutbox` / `reserveCreate` surface | `src/tools/video-editor/commands/commitSession.ts:133`; `src/integrations/runtime/bootstrapInitialization.ts:209` | Shared live outbox; the initializer invokes it, so it is not inert. |
+
+The required private bootstrap command cohort is:
+
+```text
+timeline.init@1 (select=parent; args=name, slug, output) + track.create@1...
+```
+
+The currently pinned public013 Runtime is exact, not a moving-main
+assumption: App `runtime.lock.json` pins producer source
+`2c4ac180c2220bdad966bc01e95ad230e99ce26a`, producer version
+`sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56`,
+contract `0.2.13`, and schema digest
+`sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4`.
+Its exact `contract/schemas/edit-command.json` contains `track.create` but no
+`timeline.init`; its generated public types contain no `TimelineInitArgs`.
+The public HTTP operations `createTimeline` and `commitTimeline` do not imply
+that the command operation `timeline.init` is accepted.
+
+The private202 overlay is a different cohort: Runtime
+`202074110717146fc7f08af2306a8dd7f695b0b1` / producer
+`a0dca16975dfe8f5e762703b99d9791a16cf7fd7`, contract `0.2.14`, schema digest
+`sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59`.
+Its exact edit-command schema adds `timeline.init@1` and `TimelineInitArgs`.
+Any activation test using that overlay is private202 evidence only; it is
+never public013 readiness evidence.
+
+## Disposition
+
+The source-only bootstrap packet may remain privately qualified against the
+matched private202 Agent/Runtime pair, but public delivery is **HELD**. Do not
+claim public activation, public writer retirement, or a public bootstrap gate
+from this packet. Re-activation requires HOME's reverted public call path plus
+one matched Main014 Agent/Runtime/App adoption and its real create/init/restart
+proof. No pin, schema, product, call-path, or test change was made by this
+correction.
 
 ## Verification
 
@@ -71,12 +129,16 @@ source path above passed. No shared install or venv was modified.
 ## Boundaries and next step
 
 No `request-test`, local driver, browser execution, localhost/live socket,
-full suite, pin/adoption, or schema run was performed. The actual production
-create/init/retry/restart/undo journey remains unverified here.
+full suite, pin/adoption, or product schema-generation run was performed. The
+public013 mismatch is established by exact pinned source inspection above; the
+actual public production create/init/retry/restart/undo journey remains
+unverified here and is not claimed.
 
-After the harness commits this candidate, use the dedicated bootstrap-only
-central suite, not the generic Gate5 wrapper which may select an ordinary
-journey:
+The original next-step instruction below is superseded by this correction.
+Do not request a gate from this packet: HOME must first land its public call-
+path revert, and a matched Main014 cohort must be adopted. Only then may the
+orchestrator authorize a dedicated bootstrap-only central suite; the generic
+Gate5 wrapper must not be used because it may select an ordinary journey:
 
 ```sh
 R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test ap2-m2-bootstrap-only-current-home-port ap2-m2-bootstrap-observed-request-match-fix) && /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test "$R"
