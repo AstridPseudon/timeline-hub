@@ -7,19 +7,13 @@ import { ToolsPane } from '@/shared/components/ToolsPane/ToolsPane';
 import { AstridLoading } from '@/shared/components/AstridLoading';
 import { SettingsModal } from '@/shared/components/SettingsModal/SettingsModal';
 import { OnboardingModal } from '@/shared/components/modals/OnboardingModal';
-import { ChunkLoadErrorBoundary } from '@/shared/runtime/ChunkLoadErrorBoundary';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents';
 
-// Lazy load ProductTour since it only shows during onboarding
-const LazyProductTour = React.lazy(() =>
-  import('@/shared/components/ProductTour').then(module => ({
-    default: module.ProductTour
-  }))
-);
 import { AIInputModeProvider } from '@/shared/contexts/AIInputModeContext';
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
+import { beginEditorTour } from '@/tools/video-editor/tour/runner/tourFlag';
 import { SocialIcons } from './components/SocialIcons';
 
 import { useAuth } from '@/shared/contexts/AuthContext';
@@ -155,6 +149,7 @@ const LayoutShell: React.FC = () => {
         <SettingsModal
           isOpen={isSettingsModalOpen}
           onOpenChange={setIsSettingsModalOpen}
+          onReplayTour={isVideoEditorShellActive && !isMobile && !isTablet ? beginEditorTour : undefined}
           initialTab={settingsInitialTab}
           creditsTab={settingsCreditsTab}
         />
@@ -165,13 +160,6 @@ const LayoutShell: React.FC = () => {
           mode={onboardingMode}
           onClose={handleOnboardingClose}
         />
-
-        {/* Product Tour - lazy loaded since only needed during onboarding */}
-        <ChunkLoadErrorBoundary>
-          <React.Suspense fallback={null}>
-            <LazyProductTour />
-          </React.Suspense>
-        </ChunkLoadErrorBoundary>
       </div>
     </AIInputModeProvider>
   );

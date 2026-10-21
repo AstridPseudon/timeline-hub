@@ -7,6 +7,8 @@ export interface SettingsModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   initialTab?: string;
+  /** Offered only where the tour can run (the video editor); starts the tour again. */
+  onReplayTour?: () => void;
   creditsTab?: 'purchase' | 'history' | 'task-log';
   /** Optional extension display data for the Extensions tab. */
   extensions?: readonly ExtensionDisplayInfo[];
@@ -38,6 +40,7 @@ export interface PreferencesSectionProps {
   isMobile: boolean;
   aiInputMode: AIInputMode;
   setAIInputMode: (mode: AIInputMode) => void;
+  onReplayTour?: () => void;
 }
 
 // ---------------------------------------------------------------------------

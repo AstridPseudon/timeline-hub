@@ -8,6 +8,7 @@ import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarge
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/shared/components/ui/dropdown-menu.tsx';
 import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
+import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { clampTimelineScaleWidth, TIMELINE_ZOOM_STEP } from '@/tools/video-editor/lib/timeline-scale.ts';
 
@@ -137,6 +138,9 @@ export function TimelineEditorShellToolbar({
   timelineLoaded?: boolean;
 }) {
   const chrome = useTimelineChromeContext();
+  // The tour's demo timeline saves nothing, so a "Dirty" badge there would only read as an error.
+  const tourRunning = useEditorTourRunning();
+  const statusVisible = timelineLoaded && !tourRunning;
   const toolbarButtonSizeClass = touchChrome ? 'h-11 w-11' : 'h-6 w-6';
 
   // While the hosted build's "Astrid stopped" / "restarted" card is up, a failed save is not an editor fault: the changes
@@ -150,8 +154,8 @@ export function TimelineEditorShellToolbar({
   const saveBadge = (
     <Badge
       variant={notSaved ? 'outline' : STATUS_VARIANT[chrome.saveStatus]}
-      className={cn('h-5 px-1.5 text-[10px]', notSaved ? 'text-muted-foreground' : 'capitalize', !timelineLoaded && 'invisible')}
-      aria-hidden={!timelineLoaded || undefined}
+      className={cn('h-5 px-1.5 text-[10px]', notSaved ? 'text-muted-foreground' : 'capitalize', !statusVisible && 'invisible')}
+      aria-hidden={!statusVisible || undefined}
     >
       {notSaved ? 'Not saved' : chrome.saveStatus}
     </Badge>
@@ -290,7 +294,7 @@ export function TimelineEditorShellToolbar({
           <>
             <div className="flex min-w-0 flex-1 items-center gap-2">
               {leading}
-              {quietStatus && timelineLoaded && (
+              {quietStatus && statusVisible && (
                 <span
                   className={cn(
                     'shrink-0 text-[11px]',

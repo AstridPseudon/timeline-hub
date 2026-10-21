@@ -5,14 +5,12 @@ import { useOnboardingFlow } from './useOnboardingFlow';
 const {
   navigateMock,
   closeOnboardingModalMock,
-  startTourMock,
   handleErrorMock,
   checkAstridDoctorAvailabilityMock,
   useUserUIStateMock,
 } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
   closeOnboardingModalMock: vi.fn(),
-  startTourMock: vi.fn(),
   handleErrorMock: vi.fn(),
   checkAstridDoctorAvailabilityMock: vi.fn(),
   useUserUIStateMock: vi.fn(),
@@ -41,12 +39,6 @@ vi.mock('@/shared/hooks/useUserUIState', () => ({
   useUserUIState: useUserUIStateMock,
 }));
 
-vi.mock('@/shared/hooks/useProductTour', () => ({
-  useProductTour: () => ({
-    startTour: startTourMock,
-  }),
-}));
-
 describe('useOnboardingFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -66,10 +58,6 @@ describe('useOnboardingFlow', () => {
     expect(result.current.doctorAvailability).toEqual({ status: 'available' });
     expect(navigateMock).toHaveBeenCalledWith('/tools/travel-between-images');
 
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-    expect(startTourMock).toHaveBeenCalledTimes(1);
     expect(handleErrorMock).not.toHaveBeenCalled();
 
     unmount();
@@ -102,7 +90,6 @@ describe('useOnboardingFlow', () => {
     );
     expect(closeOnboardingModalMock).not.toHaveBeenCalled();
     expect(navigateMock).not.toHaveBeenCalled();
-    expect(startTourMock).not.toHaveBeenCalled();
 
     unmount();
     vi.useRealTimers();
@@ -119,7 +106,6 @@ describe('useOnboardingFlow', () => {
     expect(closeOnboardingModalMock).toHaveBeenCalledTimes(1);
     expect(checkAstridDoctorAvailabilityMock).not.toHaveBeenCalled();
     expect(navigateMock).not.toHaveBeenCalled();
-    expect(startTourMock).not.toHaveBeenCalled();
 
     unmount();
     window.history.replaceState({}, '', '/');
@@ -134,10 +120,6 @@ describe('useOnboardingFlow', () => {
     });
     unmount();
 
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-    expect(startTourMock).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 });

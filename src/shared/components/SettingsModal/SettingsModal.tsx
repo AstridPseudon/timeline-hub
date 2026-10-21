@@ -20,6 +20,7 @@ import type { SettingsModalProps } from "./types";
 const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onOpenChange,
+  onReplayTour,
 }) => {
   const isMobile = useIsMobile();
 
@@ -75,6 +76,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             isMobile={isMobile}
             aiInputMode={aiInputMode}
             setAIInputMode={setAIInputMode}
+            onReplayTour={onReplayTour && (() => {
+              onOpenChange(false);
+              onReplayTour();
+            })}
           />
 
         </div>

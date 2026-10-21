@@ -72,24 +72,10 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
     navigate(TOOL_ROUTES.IMAGE_GENERATION);
   }, [onClose, navigate]);
 
-  // Check if product tour is active (Joyride elements exist in DOM)
-  const isTourActive = useCallback(() => {
-    return !!document.querySelector('.react-joyride__overlay');
-  }, []);
-
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        // Check tour status fresh (not stale render-time value)
-        const tourActiveNow = isTourActive();
-
-        // During tour, the modal is controlled entirely by the isOpen prop
-        // (which is set by the closeGenerationModal event from ProductTour)
-        // So we ignore onOpenChange during the tour
-        if (!open && tourActiveNow) {
-          return;
-        }
         if (!open) onClose();
       }}
     >

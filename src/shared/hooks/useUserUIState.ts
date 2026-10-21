@@ -29,10 +29,6 @@ interface UISettings {
   theme: {
     darkMode: boolean; // Defaults to true (dark mode) for new users
   };
-  productTour?: {
-    completed: boolean;
-    skipped: boolean;
-  };
 }
 
 function toRecord(value: unknown): Record<string, unknown> | undefined {
@@ -136,17 +132,6 @@ function decodeTheme(
   };
 }
 
-function decodeProductTour(
-  value: unknown,
-  fallback: NonNullable<UISettings['productTour']>,
-): NonNullable<UISettings['productTour']> {
-  const record = toRecord(value);
-  return {
-    completed: readBoolean(record?.completed, fallback.completed),
-    skipped: readBoolean(record?.skipped, fallback.skipped),
-  };
-}
-
 function normalizeUserUISetting<K extends keyof UISettings>(
   key: K,
   value: unknown,
@@ -178,11 +163,6 @@ function normalizeUserUISetting<K extends keyof UISettings>(
       ) as UISettings[K];
     case 'theme':
       return decodeTheme(value, fallback as UISettings['theme']) as UISettings[K];
-    case 'productTour':
-      return decodeProductTour(
-        value,
-        fallback as NonNullable<UISettings['productTour']>,
-      ) as UISettings[K];
     default:
       return fallback;
   }

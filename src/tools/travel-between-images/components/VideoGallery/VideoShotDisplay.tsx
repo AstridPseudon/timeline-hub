@@ -38,7 +38,6 @@ interface VideoShotDisplayProps {
   pendingUploads?: number;
   imagesOverlay?: React.ReactNode;
   dropLoadingState?: 'idle' | 'loading' | 'success';
-  dataTour?: string;
   finalVideo?: ShotFinalVideo;
 }
 
@@ -59,7 +58,6 @@ export const VideoShotDisplay: React.FC<VideoShotDisplayProps> = ({
   pendingUploads = 0,
   imagesOverlay,
   dropLoadingState = 'idle',
-  dataTour,
   finalVideo,
 }) => {
   const isTempShot = shot.id.startsWith('temp-');
@@ -280,7 +278,6 @@ export const VideoShotDisplay: React.FC<VideoShotDisplayProps> = ({
         style={rippleStyles}
         onPointerDown={isTempShot ? undefined : handleRippleTrigger}
         onClick={handleClick}
-        data-tour={dataTour}
       >
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2 flex-1 min-w-0">

@@ -10,8 +10,6 @@ interface AppCustomEvents {
   openGenerationsPane: void;
   /** Open the Tasks pane on the agent chat with its composer focused. */
   openAgentComposer: void;
-  openGenerationModal: void;
-  closeGenerationModal: void;
 
   // --- Generation / gallery ---
   'generation-star-updated': { generationId: string; shotId: string; starred: boolean };

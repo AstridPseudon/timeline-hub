@@ -68,9 +68,6 @@ interface PaneControlTabProps {
      */
     splitButton?: { primary: PaneControlAction; secondary: PaneControlAction };
   };
-  dataTour?: string;
-  dataTourLock?: string;
-  dataTourFourthButton?: string;
 }
 
 // Helper component to wrap buttons in tooltips (desktop only)
@@ -102,9 +99,6 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
   handlers: { toggleLock, openPane, handlePaneEnter, handlePaneLeave, customOpenAction },
   display: { paneIcon = 'chevron', customIcon, paneTooltip, allowMobileLock = false, shortcutHint } = {},
   actions,
-  dataTour,
-  dataTourLock,
-  dataTourFourthButton,
 }) => {
   const thirdButton = actions?.thirdButton;
   const fourthButton = actions?.fourthButton;
@@ -250,7 +244,6 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
               onClick={(e) => e.stopPropagation()}
               className={baseClass}
               aria-label={fourthButton.ariaLabel}
-              data-tour={dataTourFourthButton}
             >
               {fourthButton.content || <Square className={iconSize} />}
             </Button>
@@ -267,7 +260,6 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
               onClick={(e) => e.stopPropagation()}
               className={baseClass}
               aria-label="Lock pane"
-              data-tour={dataTourLock}
             >
               <LockIcon className={iconSize} />
             </Button>
@@ -427,7 +419,6 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
       data-pane-control
       data-pane-control-grip={gripResting ? 'true' : undefined}
       data-pane-control-side={side}
-      data-tour={dataTour}
       style={{
         ...mobileStyle,
         ...(isTasksPane ? { zIndex: tasksPaneZIndex } : {}),

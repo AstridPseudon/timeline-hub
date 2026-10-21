@@ -284,16 +284,6 @@ describe('useGenerationsPaneController', () => {
     expect(result.current.modal.isGenerationModalOpen).toBe(false);
 
     act(() => {
-      mocks.eventHandlers.openGenerationModal();
-    });
-    expect(result.current.modal.isGenerationModalOpen).toBe(true);
-
-    act(() => {
-      mocks.eventHandlers.closeGenerationModal();
-    });
-    expect(result.current.modal.isGenerationModalOpen).toBe(false);
-
-    act(() => {
       mocks.eventHandlers.openGenerationsPane();
     });
     expect(openPane).toHaveBeenCalledTimes(1);

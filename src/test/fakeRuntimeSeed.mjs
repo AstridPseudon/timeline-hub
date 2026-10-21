@@ -142,6 +142,28 @@ export function createTimelineFixtures({ assetSrcBaseUrl = '' } = {}) {
 }
 
 /**
+ * The demo timeline as a first-run user has it: what the App publishes for a new timeline
+ * (`createDefaultTimelineConfig`: one visual and one audio row, no clips) under the demo timeline's
+ * identity, so the usual editor URL opens it. Specs opt in per run through the fake Runtime's reset
+ * (`{ seed: 'empty' }`); every other spec keeps the demo content.
+ */
+export function createEmptyTimelineFixtures() {
+  const demo = createTimelineFixtures();
+  return {
+    timelineSummary: demo.timelineSummary,
+    registry: { assets: {} },
+    config: {
+      output: { resolution: '1280x720', fps: 30, file: 'output.mp4', background: null, background_scale: null },
+      tracks: [
+        { id: 'V1', kind: 'visual', label: 'V1', scale: 1, fit: 'contain', opacity: 1, blendMode: 'normal' },
+        { id: 'A1', kind: 'audio', label: 'A1', scale: 1, fit: 'contain', opacity: 1, blendMode: 'normal' },
+      ],
+      clips: [],
+    },
+  };
+}
+
+/**
  * The isolated browser/export fixture for Astrid's pinned
  * `audio-reactive-colour` semantic contract.  Keep this separate from the
  * general four-clip demo: the effect fast path is deliberately one visual

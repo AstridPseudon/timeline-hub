@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { useOnboarding } from '@/shared/hooks/useOnboarding';
-import { useProductTour } from '@/shared/hooks/useProductTour';
 import {
   checkAstridDoctorAvailability,
   type AstridDoctorAvailability,
@@ -13,19 +12,10 @@ import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
 export function useOnboardingFlow() {
   const { showOnboardingModal, onboardingMode, closeOnboardingModal } = useOnboarding();
   const navigate = useNavigate();
-  const { startTour } = useProductTour();
-  const tourStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const availabilityRequestRef = useRef(0);
   const [doctorAvailability, setDoctorAvailability] = useState<AstridDoctorAvailability>({
     status: 'checking',
   });
-
-  const clearTourStartTimeout = useCallback(() => {
-    if (tourStartTimeoutRef.current) {
-      clearTimeout(tourStartTimeoutRef.current);
-      tourStartTimeoutRef.current = null;
-    }
-  }, []);
 
   const refreshDoctorAvailability = useCallback(async () => {
     const requestVersion = ++availabilityRequestRef.current;
@@ -61,30 +51,17 @@ export function useOnboardingFlow() {
 
     closeOnboardingModal();
     navigate('/tools/travel-between-images');
-    clearTourStartTimeout();
-    tourStartTimeoutRef.current = setTimeout(() => {
-      tourStartTimeoutRef.current = null;
-      startTour();
-    }, 1000);
-  }, [clearTourStartTimeout, closeOnboardingModal, navigate, onboardingMode, refreshDoctorAvailability, startTour]);
+  }, [closeOnboardingModal, navigate, onboardingMode, refreshDoctorAvailability]);
 
-  // Preload ProductTour chunk when onboarding is shown
   useEffect(() => {
     if (showOnboardingModal) {
       void refreshDoctorAvailability();
-      import('@/shared/components/ProductTour').catch((error) => {
-        normalizeAndPresentError(error, {
-          context: 'useOnboardingFlow.preloadProductTour',
-          showToast: false,
-        });
-      });
     }
   }, [refreshDoctorAvailability, showOnboardingModal]);
 
   useEffect(() => () => {
     availabilityRequestRef.current += 1;
-    clearTourStartTimeout();
-  }, [clearTourStartTimeout]);
+  }, []);
 
   return {
     showOnboardingModal,

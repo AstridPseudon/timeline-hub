@@ -53,6 +53,7 @@ import type {
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { CanonicalShotTimelinePublication } from '@/tools/video-editor/runtime/ports.ts';
 import { managedOutputMatchesOccurrence } from '@/tools/video-editor/data/shotCompositionProjection.ts';
+import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
 
 interface AstridTimelineEditorProps {
   onOpenSequenceCreator?: () => void;
@@ -116,6 +117,8 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     if (runtime.shots?.canonicalCompositionError ?? runtime.shots?.error) runtime.shots?.refetchShots();
   });
   const isDocumentShotMode = runtime.userId === null;
+  // The tour's demo timeline is in-memory local mode, which this banner would misreport as a missing shot composition.
+  const tourRunning = useEditorTourRunning();
   const canonicalOccurrences = runtime.shots?.canonicalOccurrences ?? [];
   const pendingOccurrences = (runtime.shots as (typeof runtime.shots & {
     pendingOccurrences?: readonly ShotPlacement[];
@@ -620,7 +623,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
 
   return (
     <>
-      {!hosted && isDocumentShotMode && !isCanonicalEditor ? (
+      {!hosted && !tourRunning && isDocumentShotMode && !isCanonicalEditor ? (
         <div role="status" data-canonical-load-state="legacy" className="border-b px-3 py-1.5 text-center text-xs">
           Canonical shot composition is unavailable; showing the explicit legacy shot view.
         </div>

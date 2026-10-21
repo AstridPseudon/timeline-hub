@@ -3,6 +3,7 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { exitEditorTour, startEditorTour } from '@/shared/state/editorTourStore.ts';
 import { TimelineEditorShellToolbar } from './TimelineEditorShellToolbar.tsx';
 import { createTimelineStore, TimelineStoreProvider } from '@/tools/video-editor/hooks/timelineStore.ts';
 
@@ -116,6 +117,23 @@ describe('TimelineEditorShellToolbar', () => {
           view.unmount();
         }
       });
+    });
+
+    it('is hidden while the editor tour runs, since the demo timeline saves nothing', () => {
+      try {
+        renderToolbar('dirty');
+        expect(screen.getByText('dirty').className).not.toContain('invisible');
+
+        act(() => startEditorTour());
+        const badge = screen.getByText('dirty');
+        expect(badge.className).toContain('invisible');
+        expect(badge).toHaveAttribute('aria-hidden', 'true');
+
+        act(() => exitEditorTour());
+        expect(screen.getByText('dirty').className).not.toContain('invisible');
+      } finally {
+        act(() => exitEditorTour());
+      }
     });
 
     it('still says saved when nothing is wrong, card or not', () => {

@@ -117,6 +117,20 @@ describe('identity and auth', () => {
     assert.equal((await call('/__test/reset', { method: 'GET' })).status, 405);
   });
 
+  test('reset with { seed: "empty" } starts the demo timeline as a new, empty one; a plain reset brings the demo back', async () => {
+    const empty = await (await postJson('/__test/reset', { seed: 'empty' })).json();
+    assert.equal(empty.seed, 'empty');
+    const blank = await revision(FIXTURE_TIMELINE_ID, empty.heads[FIXTURE_TIMELINE_ID]);
+    assert.deepEqual(blank.payload.config.clips, []);
+    assert.deepEqual(blank.payload.config.tracks.map((track) => track.id), ['V1', 'A1']);
+    assert.deepEqual(blank.payload.registry.assets, {});
+
+    const demo = await reset();
+    assert.equal(demo.seed, 'demo');
+    const restored = await revision(FIXTURE_TIMELINE_ID, demo.heads[FIXTURE_TIMELINE_ID]);
+    assert.deepEqual(restored.payload.config, createTimelineFixtures().config);
+  });
+
   test('health, handshake and realm come from the fixture with the fixed identity; the router health is shadowed', async () => {
     const health = await json('/v1/health');
     assert.equal(health.runtime_instance_id, FAKE_RUNTIME_INSTANCE_ID);
@@ -527,6 +541,40 @@ describe('ACP chat reads', () => {
     assert.deepEqual(await (await postJson('/local-test-connection/rpc', { method: 'session/list', params: {} })).json(), { result: { sessions: [] } });
     assert.equal((await postJson('/local-test-connection/rpc', { method: 'session/prompt', params: {} })).status, 404);
     assert.deepEqual(await json('/local-test-connection/events'), { notifications: [], disconnected: false });
+  });
+
+  test('the chat creates and selects its own sessions; reset forgets them; a prompt is still not served', async () => {
+    const create = (body) => postJson(`/projects/${PROJECT_ID}/chat/sessions`, { connection_id: 'local-test-connection', ...body });
+    const first = await (await create({ mode: 'ensure', operation_id: 'op-1' })).json();
+    assert.equal(first.operation_session_id, 'fake-session-1');
+    assert.equal(first.selected_session_id, 'fake-session-1');
+    assert.deepEqual(first.sessions, [{ id: 'fake-session-1', title: 'Main' }]);
+    assert.equal(first.revision, 1);
+    assert.equal('main_session_id' in first, false);
+    // Ensure and a replayed operation return the same session instead of adding another.
+    assert.equal((await (await create({ mode: 'ensure', operation_id: 'op-2' })).json()).operation_session_id, 'fake-session-1');
+    assert.equal((await (await create({ mode: 'new', operation_id: 'op-1' })).json()).operation_session_id, 'fake-session-1');
+    const second = await (await create({ mode: 'new', operation_id: 'op-3' })).json();
+    assert.equal(second.operation_session_id, 'fake-session-2');
+    assert.equal(second.sessions.length, 2);
+
+    const select = (body) => call(`/projects/${PROJECT_ID}/chat`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    assert.equal((await select({ expected_revision: 0, selected_session_id: 'fake-session-1' })).status, 409);
+    assert.equal((await select({ expected_revision: second.revision, selected_session_id: 'nope' })).status, 409);
+    const selected = await (await select({ expected_revision: second.revision, selected_session_id: 'fake-session-1' })).json();
+    assert.equal(selected.selected_session_id, 'fake-session-1');
+
+    assert.equal((await postJson(`/projects/other-project/chat/sessions`, { connection_id: 'local-test-connection', mode: 'ensure' })).status, 404);
+    assert.equal((await postJson(`/projects/${PROJECT_ID}/chat/sessions`, { connection_id: 'elsewhere', mode: 'ensure' })).status, 404);
+    // Attaching the created session and closing the creator's connection are canned; a prompt is not.
+    assert.deepEqual(await (await postJson('/local-test-connection/rpc', { method: 'session/load', params: { sessionId: 'fake-session-1' } })).json(), { result: {} });
+    assert.deepEqual(await json('/local-test-connection/models?sessionId=fake-session-1'), { models: null });
+    assert.deepEqual(await (await call('/local-test-connection', { method: 'DELETE' })).json(), { connection_id: 'local-test-connection', closed: true });
+    assert.equal((await postJson('/local-test-connection/rpc', { method: 'session/prompt', params: {} })).status, 404);
+
+    await reset();
+    const cleared = await json(`/projects/${PROJECT_ID}/chat`);
+    assert.deepEqual([cleared.revision, cleared.selected_session_id, cleared.sessions], [0, null, []]);
   });
 
   test('the agent and model catalogs are canned: one ready Astrid, no providers', async () => {

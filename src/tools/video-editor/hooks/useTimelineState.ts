@@ -3,6 +3,7 @@ import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
 import { createPendingWorkRegistry } from '@/tools/video-editor/runtime/pendingWorkRegistry.ts';
 import { transcriptRepositoryFromDocuments } from '@/tools/video-editor/data/typed/projectTranscript.ts';
+import { isDataProviderPersistenceEnabled } from '@/tools/video-editor/data/DataProvider.ts';
 import { createEditorAssetSurface, loadEditorAssetProfile } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
 import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import { useQueryClient } from '@tanstack/react-query';
@@ -584,7 +585,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   // that the lazy-init guard above establishes on `storeRef.current`.
   const store = storeRef.current;
   const playback = useTimelinePlayback();
-  const preferences = useEditorPreferences(runtime.timelineId);
+  const preferences = useEditorPreferences(runtime.timelineId, { persist: isDataProviderPersistenceEnabled(runtime.provider) });
   const resolveAssetUrl = useCallback(async (file: string) => {
     if (runtime.assetResolver) {
       return await runtime.assetResolver.resolveAssetUrl(file);

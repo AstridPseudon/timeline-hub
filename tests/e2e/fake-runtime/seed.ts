@@ -12,7 +12,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
-import { type BridgeShotComposition, type BridgeTimelineFixtures, AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID, FIXTURE_PROJECT, FIXTURE_TIMELINE_ID, createAudioReactiveColourFixtures, createOffsetAudioReactiveColourFixtures, createTimelineFixtures } from '../../../src/test/fakeRuntimeSeed.mjs';
+import { type BridgeShotComposition, type BridgeTimelineFixtures, AUDIO_REACTIVE_FIXTURE_TIMELINE_ID, AUDIO_REACTIVE_OFFSET_FIXTURE_TIMELINE_ID, FIXTURE_PROJECT, FIXTURE_TIMELINE_ID, createAudioReactiveColourFixtures, createEmptyTimelineFixtures, createOffsetAudioReactiveColourFixtures, createTimelineFixtures } from '../../../src/test/fakeRuntimeSeed.mjs';
 import type { FakeObjectStore } from '../../../src/test/fakeObjectStore.ts';
 
 /** The canonical id of the one seeded project; its slug is `FIXTURE_PROJECT.slug`. */
@@ -80,10 +80,13 @@ function seedTimeline(fixture: BridgeTimelineFixtures & { shotComposition?: Brid
   };
 }
 
+/** Which content the demo timeline starts from: the demo clips, or a new timeline's empty rows. */
+export type SeedName = 'demo' | 'empty';
+
 /** Fresh, unshared seed timelines (default first). Call once per world build so no state leaks across a reset. */
-export function createSeedTimelines(): SeededTimeline[] {
+export function createSeedTimelines(seed: SeedName = 'demo'): SeededTimeline[] {
   return [
-    createTimelineFixtures(),
+    seed === 'empty' ? createEmptyTimelineFixtures() : createTimelineFixtures(),
     createAudioReactiveColourFixtures(),
     createOffsetAudioReactiveColourFixtures(),
   ].map(seedTimeline);

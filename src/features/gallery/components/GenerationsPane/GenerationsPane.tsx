@@ -86,9 +86,6 @@ function GenerationsPaneTab({ controller }: { controller: GenerationsPaneControl
           content: <Sparkles className="h-4 w-4" />,
         } : undefined,
       }}
-      dataTour="generations-pane-tab"
-      dataTourLock="generations-lock"
-      dataTourFourthButton="generations-sparkles"
     />
   );
 }

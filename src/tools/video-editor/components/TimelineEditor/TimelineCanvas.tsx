@@ -48,6 +48,7 @@ import { TrackListRenderer } from '@/tools/video-editor/components/TimelineEdito
 import { TimelineGhostLayer } from '@/tools/video-editor/components/TimelineEditor/TimelineGhostLayer.tsx';
 import { TimelineDurationGuide } from '@/tools/video-editor/components/TimelineEditor/TimelineDurationGuide.tsx';
 import { VideoEditorRuntimeContext } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { EDITOR_TOUR_ANCHORS, EDITOR_TOUR_ANCHOR_ATTRIBUTE } from '@/tools/video-editor/tour/anchors.ts';
 import type { TimelineGhostEntry } from '@/tools/video-editor/types/timeline-canvas.ts';
 import { useClipResizeGesture } from '@/tools/video-editor/hooks/useClipResizeGesture.ts';
 import { shotGroupEndSeconds, shotGroupVideoKey, type ShotGroup } from '@/tools/video-editor/hooks/useShotGroups.ts';
@@ -1254,6 +1255,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   return (
     <div
       className="relative flex h-full min-h-0 flex-col bg-background/70"
+      {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.timeline }}
       style={VIDEO_EDITOR_THEME_VARS}
       onPointerOverCapture={updateHoveredShotGroup}
       onPointerMoveCapture={updateHoveredShotGroup}

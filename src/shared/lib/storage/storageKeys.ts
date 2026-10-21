@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   LAST_ACTIVE_UI_SETTINGS: (projectId: string) => `last-active-ui-settings-${projectId}`,
   LAST_EDITED_LORA: (projectId: string) => `last-edited-lora-${projectId}`,
   GLOBAL_LAST_ACTIVE_SHOT_SETTINGS: 'global-last-active-shot-settings',
+  EDITOR_TOUR_SEEN: 'astrid-editor-tour-v1',
   APPLY_PROJECT_DEFAULTS: (shotId: string) => `apply-project-defaults-${shotId}`,
   LAST_ACTIVE_JOIN_SEGMENTS_SETTINGS: (projectId: string) => `last-active-join-segments-${projectId}`,
   GLOBAL_LAST_ACTIVE_JOIN_SEGMENTS_SETTINGS: 'global-last-active-join-segments',

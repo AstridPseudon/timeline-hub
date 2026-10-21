@@ -192,7 +192,6 @@ export function GenerationsPaneGallery({
         ref={containerRef}
         className="flex-grow px-1 sm:px-3 overflow-y-auto overscroll-contain flex flex-col"
         style={{ WebkitOverflowScrolling: 'touch' }}
-        data-tour="gallery-section"
       >
         {loading.isLoading && gallery.items.length === 0 && (
           <SkeletonGallery

@@ -19,6 +19,7 @@ import { actionSlotAttrs, resizeHandleAttrs, rowAttrs } from '@/tools/video-edit
 import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import type { TimelineRowLayout, TimelineVisualRow } from '@/tools/video-editor/lib/timeline-row-layout.ts';
 import type { TrackDefinition } from '@/tools/video-editor/types/index.ts';
+import { EDITOR_TOUR_TRACK_ATTRIBUTE } from '@/tools/video-editor/tour/anchors.ts';
 import type {
   TimelineAction,
   TimelineRow,
@@ -212,6 +213,7 @@ function SortableRow({
         isDropTarget && 'bg-[var(--video-editor-accent-bg)] outline outline-1 outline-offset-[-1px] outline-[var(--video-editor-accent-ring)]',
       )}
       {...rowAttrs(row.id)}
+      {...{ [EDITOR_TOUR_TRACK_ATTRIBUTE]: track.id }}
       data-sortable-id={sortableId}
       data-drop-target={isDropTarget ? 'true' : undefined}
       style={style}
