@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T02:46:19Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 37 | status age 4m -->
+<!-- app2 | 2026-10-21T02:52:15Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 34 | status age 0m -->
 # app2 — 2026-10-21 02:32 UTC
 Milestone: M2. Duplicate and bounded compiler-canary sub-entry DELETED; six broad owned rows remain OPEN.
 Integrated: HOME808ef7ebf retains row-local parent5a31/shared813a, dormant seam9a7 and owned binding retention808 (21 controls). No native14 public activation. Latest local hub ref692765846 is older than HOME status.
@@ -28,3 +28,5 @@ Resources:17 GiB free at02:23; five running/four READY at02:31. At most two norm
 Capacity constraint 02:40: five parent-packet workers active, two independent proof-custody READY items. A third independent READY item is blocked by HOME selected startup/native95 and Agent transcript/host-field/shader/SYSTEM carrier responses (requests02:24-02:28); no duplicate review, unchanged retest, outside-row work or premature activation will be dispatched to fill a slot.
 
 02:41 parent duplicate-generation source proposal is prepared but reports missing generation-backed fixture/catalog duplicate carrier/original MediaSelection propagation and afterClipId refusal. Source custody review must reject any fake accepted path; no second native gate planned.
+
+02:52 capacity/READY constraint: three running/requested (parent selector diagnosis, duplicate row-port safety review, repaired producer test custody review) plus two fully briefed dependent delivery/selector-review items. Other independent work is blocked on HOME selected startup/native95 and Agent transcript/host-field/shader/system carriers; no duplicate audit or unchanged replay will fill slots. Parent run14406 is CANCELLED; prior direct driver failed No tests found, so no further actual submission before diagnosed argv fix/review and manager direction. New source-bound suite added: ap2-parent-mounted-add-da6d-final95-e2e-integration, existing driver only.
