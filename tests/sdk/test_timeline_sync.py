@@ -245,10 +245,12 @@ def test_lost_ack_reload_retries_exact_request_before_sending_suffix(connected, 
     # An independent peer changes the head after the ambiguous request.
     generated.bundles["peer"] = copy.deepcopy(generated.bundles["r1"])
     generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
-    session.flush()
+    replayed = session.flush()
     after = json.loads(path.read_bytes())
     assert generated.calls[0] == generated.calls[1]
     assert generated.calls[1] == (before["body"].encode(), "original")
+    assert replayed["receipt"] == generated.accepted["original"][1]["receipt"]
+    assert len(generated.accepted) == 1
     assert after["base"] == {"revision_id": "r1", "publication_id": "pub1"}
     assert after["pending"] == [suffix]
     assert after["flight"] is None
