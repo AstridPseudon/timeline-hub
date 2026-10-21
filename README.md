@@ -1,20 +1,69 @@
 # Astrid Runtime
 
-## Running tests
+## Build and test
 
-Run locally with `python -m pytest -q -n 2`; avoid `-n auto` on small machines.
-Run the full default lane (`python -m pytest -q -n 2`) before pushing.
-Run the full nightly lane with `ASTRID_CHECKOUT` set:
-`python -m pytest -q -m "integration or darwin_native or live"`.
-Nightly CI runs the integration subset on Linux with the pinned Astrid checkout
-installed into the runner interpreter. For a local integration run, use:
-`ASTRID_CHECKOUT=/path/to/astrid-agent .venv/bin/python -m pytest -m integration`.
-When the checkout has its own `.venv`, host materialization uses that interpreter
-so Astrid's dependencies stay in the agent environment.
+There is no Makefile. Install the Runtime and its test dependencies into the
+interpreter you will use for the commands below:
+
+```bash
+python -m pip install -e '.[test]'
+```
+
+The default pytest configuration in `pyproject.toml` excludes `integration`,
+`darwin_native`, and `live` tests. Run the default lane with two workers (avoid
+`-n auto` on small machines):
+
+```bash
+python -m pytest -q -n 2
+```
+
+The explicit non-default lane is:
+
+```bash
+python -m pytest -q -m "integration or darwin_native or live"
+```
+
+Integration tests that use the Astrid provider require the pinned checkout from
+`tests/astrid-agent.pin` installed into the same interpreter. The CI-equivalent
+local form is:
+
+```bash
+ASTRID_CHECKOUT=/path/to/astrid-agent
+python -m pip install -e "$ASTRID_CHECKOUT"
+python -m pytest -q -m integration
+```
+
+For a read-only contract/build check, run the generators in check mode and the
+artifact-manifest check. The TypeScript conformance generator is a Node command,
+not a Python module:
+
+```bash
+python generators/generate.py --check
+node tools/generate_typescript_conformance.mjs \
+  --contract contract/openapi/workspace-v1.yaml \
+  --schema-manifest contract/manifest.json \
+  --component-manifest contract/component-manifest.json \
+  --fixture-root conformance/fixtures --check
+python scripts/artifact_manifest.py --check
+```
+
+After changing canonical contract inputs, run those generators without `--check`
+in the same order, then repeat the check commands. Do not hand-edit generated
+clients or `contract/artifacts.json`. The distributable TypeScript client has its
+own build/test lane:
+
+```bash
+(cd packages/typescript && npm ci && npm test)
+```
 
 Independent neutral runtime and protocol repository for the Astrid Stage 1 beta and later Astrid App integration.
 
-The repository contains the first independently runnable neutral-runtime slice. It is dependency-free Python and can be exercised without any product checkout or hosted service. The daemon owns one realm's canonical SQLite database, append-only SHA-256 CAS, task/event ledger, credentials, and loopback HTTP boundary. Realm creation is explicit; startup and doctor never migrate or repair an existing root.
+The repository contains the first independently runnable neutral-runtime slice.
+Neutral mode requires only the Runtime's declared Python dependencies and no
+product checkout or hosted service. The daemon owns one realm's canonical
+SQLite database, append-only SHA-256 CAS, task/event ledger, credentials, and
+loopback HTTP boundary. Realm creation is explicit; startup and doctor never
+migrate or repair an existing root.
 
 ## Custody
 
@@ -26,6 +75,50 @@ The repository contains the first independently runnable neutral-runtime slice. 
 ## Development boundary
 
 The runtime owns durable structured state, task/lease semantics, capability registration, append-only CAS accounting, verified backup/restore/replacement, and the language-neutral protocol. Product repositories consume generated clients and never open its database or storage directly.
+
+## Timeline Runtime boundary
+
+For tracked timelines, `POST
+/v1/projects/{project_id}/timelines/{timeline_id}/commit` is the one public
+edit path. Its companion `GET
+/v1/projects/{project_id}/timelines/{timeline_id}/commits` reads accepted
+history. Runtime
+authenticates the project scope, validates the immutable command closure and
+exact referenced inputs, invokes the semantic provider, and durably records an
+accepted revision and idempotent receipt. A dry run is a non-persistent preview;
+save acceptance does not require a renderer.
+
+The semantic provider is selected at daemon startup, not per request. Neutral
+startup mounts no provider and the commit route reports `runtime_unavailable`.
+An explicit `authoring_profile="astrid"` startup imports
+`astrid.sdk.timeline.commit.create_runtime_commit_service`, validates the
+`astrid-v1` provider identity, interface version, contract digest, and
+synchronous `commit` ABI, then registers it before readiness is published.
+Registration is startup-only. The Runtime still owns authorization, reads,
+atomic acceptance, retry identity, and revision/history persistence; the Agent
+provider owns command meaning and rebase semantics.
+
+Legacy direct film writers refuse before mutation and name `commitTimeline` as
+their replacement. `publishParentComposition` remains a compatibility route
+only for an untracked timeline with the expected head; tracked timelines must
+use `commitTimeline`. The retained project-scoped catalog CRUD is separate from
+canonical film editing and is not evidence of a second timeline writer.
+
+### Current qualification lanes
+
+These labels are release boundaries, not interchangeable setup recipes:
+
+| Lane | Identity and use |
+| --- | --- |
+| Integration public013 | Immutable public Runtime `0.2.13` producer `2c4ac180c2220bdad966bc01e95ad230e99ce26a`; keep existing integration consumers on this tuple. |
+| Qualified ordinary014 | This Main-foundation handoff is Runtime `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3`, tree `d3a290b407fa61e6ab2d476f50c068073f70df00`, contract metadata `0.2.14`; it is a reviewed normal candidate, not a public release or automatic consumer adoption. |
+| Private15 | A downstream private proposal/adapter lane; it is not part of this Runtime source baseline and supplies no public contract, generated-client, release, or integration qualification. |
+
+The M4 Runtime verification target is Linux. macOS can run the
+portable/offline subset, while `darwin_native` cases require macOS native APIs;
+Linux detached process custody requires Linux 5.3+. Neither platform note
+claims browser, renderer, owner-film, physical audio/video parity, or ZIP
+delivery.
 
 ## Client contract releases
 
@@ -162,7 +255,9 @@ reconnect, hash verification, path safety, and sole-owner refusal.
 The HTTP binding in this slice is the canonical Stage 1 runtime transport
 boundary used by the daemon and product integrations. OpenAPI and generated
 product bindings consume this same protocol contract in the
-protocol/conformance lane. No runtime module imports a product checkout.
+protocol/conformance lane. Neutral startup remains product-independent; only
+the explicit `astrid` authoring profile imports the installed Agent provider
+through the startup seam described above.
 
 Remote worker preparation currently supports one remote worker credential
 generation per Runtime, using the shared `astrid-pack-host` actor. A local

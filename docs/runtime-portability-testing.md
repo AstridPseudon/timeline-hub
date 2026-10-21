@@ -104,133 +104,16 @@ work on Linux. These paths are not required to serve projects, timelines, or
 media through the door. Installer/service registration and real GPU/chat
 qualification belong to the subsequent installer and agent workstreams.
 
-## Verification in the restricted macOS worktree
+## Verification boundary
 
-Port-binding and process-signaling integration tests are written and collected
-but require an unrestricted runner. Exploratory server tests were rejected by
-the sandbox before binding; the full macOS suite could not be completed here.
-Windows-native APIs cannot be executed on this host. The three-host CI job is
-the remaining native validation gate, not a claim that it has already passed.
-The safe test selection and final result are recorded below.
+This page gives maintained commands and platform boundaries; it is not a
+qualification report. The Linux M4 target runs the default Runtime lane plus
+the relevant integration lane on an unrestricted runner. macOS may run the
+portable subset above, but `darwin_native` tests require native macOS APIs and
+the sandbox cannot stand in for that evidence. Windows-only APIs and the
+Windows filesystem adapter require the native CI jobs.
 
-Final safe selection: **453 passed, 13 skipped, 9 deselected** on macOS.
-Skipped tests need Windows APIs; deselected tests include the process-tree,
-installed lifecycle, and Darwin-native lanes, plus the real TCP health test.
-Compilation, `git diff --check`, and `scripts/artifact_manifest.py --check`
-also passed. The pytest session's pre-existing process guard could not invoke
-`ps` under the sandbox and printed a warning.
-
-```sh
-.venv/bin/python -m pytest -q \
-  tests/test_bootstrap.py tests/test_runtime_boundary.py \
-  tests/test_role_custody_authority.py tests/test_data_root.py \
-  tests/test_foreground.py tests/test_native_custody.py \
-  tests/test_dirfd_publication.py tests/test_platform.py \
-  tests/test_platform_windows.py tests/test_platform_filesystem.py \
-  tests/test_realm_tiered_admission.py tests/test_workspace_adopt.py \
-  tests/test_relocation_plan.py tests/test_local_worker_composition.py \
-  tests/test_local_execution_supervisor.py tests/test_verified_host_launch.py \
-  tests/test_portable_lifecycle.py -k 'not slow_healthy_runtime'
-```
-
-## Files left uncommitted
-
-Review follow-up safe verification: **470 passed, 18 skipped, 15 deselected**
-on macOS, using the preceding safe selection plus `tests/test_m1_review.py`.
-The 18 skips require native Windows APIs; the deselections cover integration,
-Darwin-native, and real TCP health checks. All six new integrations collected
-successfully without execution. Compilation, artifact-manifest verification,
-and `git diff --check` passed. The existing pytest process inventory guard
-could not run `ps` in this sandbox.
-
-The list below describes the original portability branch. The independent
-review follow-up changes `.github/workflows/ci.yml`, `tests/lanes.py`,
-`tests/test_foreground.py`, and the following runtime files:
-
-- `runtime_protocol/server.py`, `platform.py`, `windows_security.py` (new),
-  `cancellation.py` (new), `auth.py`, `catalog.py`, `daemon.py`, `door.py`,
-  `store.py`, and the M2 qualification docstring in `dirfd.py`.
-- `astrid_runtime/bootstrap.py`, `cli.py`, `paths.py`, `io.py`,
-  `runtime_boundary.py`, and `custody_broker.py`.
-- New `tests/test_m1_review.py` contains mocked regressions, Windows security
-  checks, a Windows rebind integration, a Linux exited-leader integration,
-  and SIGTERM/SIGINT startup lock/door integrations.
-- This document records the scope and native qualification limits.
-
-Regression tests were added and observed failing before fixes where runnable
-on macOS. Windows-native tests are written but cannot execute here. No port
-binds, signals, or commits were performed in this follow-up. The safe selection
-excludes all integration/Darwin-native/live tests and the existing real TCP
-health test. Native Windows security/socket tests, Linux group cleanup, and
-SIGTERM/SIGINT startup integrations require their native unrestricted runners.
-
-### Runtime source
-
-- `astrid_runtime/__init__.py`
-- `astrid_runtime/bootstrap.py`
-- `astrid_runtime/cli.py`
-- `astrid_runtime/custody_broker.py`
-- `astrid_runtime/io.py`
-- `astrid_runtime/operator_upgrade.py`
-- `astrid_runtime/paths.py`
-- `astrid_runtime/relocation.py`
-- `astrid_runtime/runtime_boundary.py`
-- `astrid_runtime/workspace_adopt.py`
-- `runtime_protocol/auth.py`
-- `runtime_protocol/backup.py`
-- `runtime_protocol/cas.py`
-- `runtime_protocol/catalog.py`
-- `runtime_protocol/cli.py`
-- `runtime_protocol/daemon.py`
-- `runtime_protocol/dirfd.py`
-- `runtime_protocol/door.py`
-- `runtime_protocol/fsclone.py`
-- `runtime_protocol/local_execution_handoff.py`
-- `runtime_protocol/local_execution_supervisor.py`
-- `runtime_protocol/local_worker.py`
-- `runtime_protocol/local_worker_composition.py`
-- `runtime_protocol/local_worker_handoff.py`
-- `runtime_protocol/platform.py`
-- `runtime_protocol/service.py`
-- `runtime_protocol/snapshot_refs.py`
-- `runtime_protocol/store.py`
-- `runtime_protocol/upgrade.py`
-
-### Tests
-
-- `tests/conftest.py`
-- `tests/process_groups.py`
-- `tests/test_astrid_activation_join.py`
-- `tests/test_bootstrap.py`
-- `tests/test_data_root.py`
-- `tests/test_door_lifecycle.py`
-- `tests/test_foreground.py`
-- `tests/test_installed_wheel_source_parity.py`
-- `tests/test_local_execution_supervisor.py`
-- `tests/test_local_worker_composition.py`
-- `tests/test_local_worker_placement.py`
-- `tests/test_native_custody.py`
-- `tests/test_operator_upgrade.py`
-- `tests/test_platform.py`
-- `tests/test_platform_filesystem.py`
-- `tests/test_platform_windows.py`
-- `tests/test_portable_lifecycle.py`
-- `tests/test_process_group_cleanup.py`
-- `tests/test_realm_admission_hardening.py`
-- `tests/test_relocation_plan.py`
-- `tests/test_relocation_real_e2e.py`
-- `tests/test_replay_policy_process.py`
-- `tests/test_role_custody_authority.py`
-- `tests/test_runtime_boundary.py`
-- `tests/test_runtime_e2e.py`
-- `tests/test_runtime_upgrade.py`
-- `tests/test_t4_replacement_foundation.py`
-- `tests/test_workspace_adopt.py`
-- `tests/test_workspace_lifecycle.py`
-
-### Documentation and CI
-
-- `.github/workflows/ci.yml`
-- `README.md`
-- `docs/runtime-portability-testing.md`
+Do not infer Timeline, browser, renderer, physical audio/video parity, or
+owner-film qualification from a portable subset. Record the exact commit,
+platform, command, and result for each native run.
 
