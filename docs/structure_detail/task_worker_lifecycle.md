@@ -60,12 +60,14 @@ App gesture or authoring client
 ```
 
 Retired edge authoring handlers and append helpers are not authoring routes.
-Open ordinary and popup producers still use the Runtime's head-checked
-parent-publication boundary, and the current empty-timeline bootstrap/repair
-initializer remains on that boundary. The staged native `timeline.init`
-outbox path has not been activated. Producers that have migrated to commands
-must use the Runtime commit door; completion and media preparation alone do
-not grant a canonical write.
+Current empty-timeline creation and repair use the native bootstrap seam in
+`src/integrations/runtime/bootstrapInitialization.ts`: create is reserved in
+the same outbox, the sole empty parent baseline is verified, and
+`timeline.init` plus two `track.create` commands are committed through `/v1`.
+Open shot-composition, popup, and placement producers still use the Runtime's
+head-checked parent-publication boundary until their native captures land.
+Producers that have migrated to commands must use the Runtime commit door;
+completion and media preparation alone do not grant a canonical write.
 
 ## Worker responsibilities
 
