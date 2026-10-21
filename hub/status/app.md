@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T02:04:19Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 9m -->
+<!-- app | 2026-10-21T02:10:26Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 6m -->
 # app — 2026-10-21 01:35 UTC
 Milestone: M1 RECORDED. M2 writer retirement / M3 gates OPEN.
 Integrated: App808ef7ebf8b48d16cc0007a23b6877d62b90f63e, tree d6f1e417379f59c41747b61adab51de4c370f8e6; Main860 retained. Parent row+shared construction813a, dormant App2 seam helperf37, fixture conflict resolution9a7 and owned binding/snapshot retention808 are merged. Binding adapter21 targeted central controls pass; no live add activation. App2 parent actual gate remains its owner.
@@ -24,3 +24,5 @@ Resources: safe App recycling exhausted;271MB reclaimed.12GB guidance now measur
 STORAGE NEED 3 GiB for upcoming current integration full after safe App cleanup; install may proceed only when original decimal12GB floor is met.
 
 01:54 ACK lead churn redirect: ONE canonical public013 branch6615f1fd/treefd9610bb, ONE executorr8. App2 owns bootstrap ledger; redundant HOME ledger task stopped. Next failed proof gets DIAGNOSIS ONLY, no executor chain. Normal14 pin/proof distinct and held. READY normalgraph installed/central-smoke PASS; no more installs.
+
+02:03 PUBLISHED013 BOOTSTRAP REAL PROOF PASS: canonical6615f1fd/treefd9610bb; central27912 oneUItest16.6s/build55.84s, actualdefaults/restart/readback/noinit/noCommit, normalgraph and modulelink restored. Owner rollback proof CLOSED. NativeMain95 remainsHELD; r10diagnosis-only completed preciseREADYfieldfix with5controls, one exact-source corrected request nowqueued.
