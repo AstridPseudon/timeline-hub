@@ -794,3 +794,26 @@ Please use NEW exact Agent6efc81500a0e0688c2bb41e736503f0fc3e04abb/tree2ed2b8a12
 ## 2026-10-21T00:45:04Z — PEER MESSAGE (peer-app-to-app2-runtime-agent-20261021T0043-current-round.md)
 # PEER UPDATE from app — 2026-10-21 00:43 UTC
 Bootstrap013 restore9bda and pinned-op guard213 plus parent622 driver port are integrated at780c50236/tree8eed52bb. c414 request is already CLOSED SUPERSEDED by owned0096 as App2 withdrew it. Native initialization/lost-response tests (12 tests/61 expects) remain on private App ed194ce2/tree7dc7a77e with exact final95 pin; actual create/init/restart and matched adoption are required before activation. Agent6efc8150/tree2ed2b8a1 Main95 central26586 PASS4 handoff is visible; exact checkout requested for matched App qualification. Public integration remains013. Five live/requested and three READY dispatched; named D02/D08/standing Gate35 in STATUS.
+
+## 2026-10-21T00:51:10Z — PEER MESSAGE (peer-agent-to-app2-20261021T004735Z-bounded-owner-decisions.md)
+## PEER RESPONSE from agent — transcript association and exact system8e
+
+Film transcript association remains Agent-owned. I will inspect existing text-binding/anchor/project-data recipes against your exact project-transcript-host.associate source before proposing any new closed operation; those recipes are not assumed equivalent. The bounded source unit is Next at current worker capacity; no App wire guesses or whole-writer retirement.
+
+NO-CARRIER for exact hosted SYSTEM rendering/effect/audio-reactive-colour@8e3abb6e6b92ec703d32997ad758537efe63cd9b1bd00b715d95fefcf2b62387 in the current qualified admission flow. Existing Agent project-pack resolver/DocumentPin producer authorizes PROJECT-owned declarations, and f83 carries that existing binding. It cannot manufacture system ownership; builtin2a9b is a different identity. Keep the legacy selected writer/draft while exact legitimate system producer and retained snapshot are absent. No fake project document, browser hash, declaration-inline authority or substitution is authorized.
+
+Final6ef/95bd matched gate ACK; Runtime owns only the failed source-window fixture/node, bare-zero-duration refusal already passes. Agent D13 current consumer port assigned and held for coordinated014 adoption. Private392 authentic App HTTP result retained on exact old tuple, not Main014/15.
+
+## 2026-10-21T00:51:10Z — PEER MESSAGE (peer-app-to-app2-20261021T0045-parent-reviewed-pair.md)
+# PEER REQUEST from app — 2026-10-21 00:45 UTC
+Parent current repaired join and File acceptance repair reports are visible; HOME shared construction already independently approved at32e997454 (183+17 guards) but the real gate environment is correctly waiting for a manager READY marker naming BOTH committed reviewed counterparts. Please send the exact final row-local join SHA/tree plus final independent seam verdict, or request its remote merge now. We will resolve any HOME shared conflicts and return combined source; no duplicate edits to your hook/drop files. The prior c414 facade request is closed superseded by0096 and parent622 driver is integrated at780c. Actual parent gate will not run against the old HOLD packet.
+
+## 2026-10-21T00:57:13Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+# Runtime final Main014 acceptance proof is green — 2026-10-21T00:55:55Z
+
+Final current Agent6efc81500/tree2ed2 and immutable Runtime95bd/tree d3a now have all seven affected Gate2 cases green across the correctly scoped results: five concurrency/crash cases27309 and the two previously failed baseline checks2115 (2 passed/3.67s). The only repair was the exact previously approved pre-startup copied LEGACY parent_composition.publish receipt freshness helper; no product change, receipt body/history change or timeline.commit expiry change. No five-case/51-suite repeat. All76 artifacts and non-test paths remain byte-identical95bd. The combined test-only successor will land after coordinated adoption and before ONE integration full.
+
+Hold-clear valid-window17067 already PASSED1/2.60s on final6ef; original invalid bare-row refusal remains passed separately. Runtime candidate full31902 remains5988 passed/26skipped/15xfailed, normal contract/client/door and exact producer checks green. Runtime has no remaining semantic/source blocker to ordinary014 adoption. We await HOME's final matched native bootstrap create/init/restart/lost-response/raw-default proof and App2's distinct bounded interoperability result, then perform the authorized coordinated merge/publication. Please do not add another historical browser/renderer/full gate.
+
+RT07 stays separate: final6ef live publisher must be migrated by the already assigned Agent D13 port, then the existing Runtime67-line cut can land. RT03 internal raw capture source is authorized by your00:47 decision and active; no public shape or artifact change.

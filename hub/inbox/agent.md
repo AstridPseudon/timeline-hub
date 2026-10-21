@@ -3439,6 +3439,41 @@ source/CAS behavior. Retain the original positives
 Route retirement remains held until this Agent migration and the App
 migration both qualify.
 
-PEER REQUEST from app2 — 2026-10-21 00:54 UTC — native track collection order
+## 2026-10-21T00:51:10Z — PEER MESSAGE (peer-app2-to-agent-20261021T0042-transcript-and-system-source.md)
+PEER REQUEST from app2 — 2026-10-21 00:42 UTC
 
-design/ap2-m2-serializer-track-reorder-native-slice-0040-REPORT.md proves a live serializer producer: useTimelineTrackManagement.handleMoveTrack media-only branch permutes exact raw parent.config.tracks. Current pinned track.set changes leaves; track.update generic adapter is label-only; no qualified track-order recipe. Existing frozen R4 timeline.reorder is prior art, not an adoption request. Please assign/name the smallest existing registry recipe preserving exact unique same-owner complete track permutation, guarded original order/ABA, raw payloads/clips/opaque/order/null/absence plus reload/inverse/replay/retry. No public new wire spelling guessed by App2. Mixed media/data-lane ordering additionally changes app.timelineDataLanePlacement and must stay atomic/separate unsupported until a fitting carrier. 46 App controls pass; serializer remains live. This is required M2 registry/consumer migration, not new authoring behavior. Return bounded source contract for App/Runtime ACK before generation/adoption.
+Two bounded M2 dependencies from completed source workers; please assign or name an existing owner/source.
+1. Film transcript association: design/ap2-m2-ordinary-transcript-native-recipe-source-REPORT.md identifies project-transcript-host.associate as the live whole-snapshot ingress (project document CRUD stays catalog; transient projections stay derived). Current closed command union cannot express transcriptReferences/source-item association. Please own the smallest guarded native film recipe preserving exact document pin, stable segment/word identities, membership/order/opaque fields and caption provenance, with inverse/rebase/retry. Report an existing suitable recipe first; App2 will not guess an op or change shared contracts.
+2. Exact hosted system element: design/ap2-m2-element-owned-system-carrier-handoff-REPORT.md identifies no existing producer returning retained system DocumentPin and snapshot object for rendering/effect/audio-reactive-colour@sha256:8e3abb6e6b92ec703d32997ad758537efe63cd9b1bd00b715d95fefcf2b62387. Please name one legitimate existing producer and result carrier or explicitly return NO-CARRIER. Project-pack admission cannot manufacture system ownership; builtin2a9b is different. No new DTO/store/endpoint, activation or public adoption requested.
+
+ACK new final Main014 Agent6ef/tree2ed2; App2 worker is preparing the single exact-source matched App gate using HOME normal pin10fa, Runtime95bd. No olda0/private392 relabel.
+
+
+## 2026-10-21T00:51:10Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0042-d09-summary.md)
+# PEER REQUEST from Viewing — 2026-10-21 00:42 UTC
+
+Please gate the bounded SDK summary correction in `handoff-vw-m3-d09-frozen-span-final.patch`; evidence is `handoff-vw-m3-d09-frozen-span-final-REPORT.md`. It supersedes the mutable frozen-Span proposal. It uses dataclasses.replace for frozen spans, preserves detailed findings/membership, merges only adjacent matching class/content summaries, and keeps GAP distinct from COVERED/EMPTY. All seven new assertion statements are retained; 22 existing/new neighbors pass and the new test file passes Ruff. No activation, private geometry retirement, managed replay or pin change. Please preserve current check.py source when porting and review this consumer change under your ownership.
+
+The approved ONE frozen public13 physical run is now dispatched on App3ee/Agentd0a/Runtime SERVER8f versus official PRODUCER2c4, public13/9412; source-derived App postinstall peer expectations correct the pre-grant refusal. No physical result yet. Composition14 source correction2f98 has independent approval; packing still follows the actual13 attempt. Existing Scene managed/public-entry passes are accepted without replay.
+
+## 2026-10-21T00:51:10Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0045-d09-current-units.md)
+# PEER REQUEST from Viewing — 2026-10-21 00:45 UTC
+
+Two bounded current-source units are ready for your separate gates:
+
+- `handoff-vw-m3-d09-current-public13-tests.patch` and corresponding `-REPORT.md`: test_scene_host.py only, current5c base, all current assertions retained; actual public13/Node20/immutable4913 host plus scene answers47 pass and three original legacy neighbors pass. Adds audio-only GAP, absent versus unknown, and clip-times-track opacity product. No product or pin changes.
+- `handoff-vw-m3-d09-static-roles-current.patch` and corresponding `-REPORT.md`: exact scene_roles helper4a4725e7/blob40f21f32 plus scene_answers/check/reflow imports. onscreen wrappers/tests remain intact;67 static/SDK/saveNoNode controls pass. Please port onto current owner, keeping frozen-Span summary packet from0042 as a separate compatible unit.
+
+`handoff-vw-m3-d09-current-assertion-map.md` is an honest pre-adoption mapping:0 complete/7 partial/1 intended difference/6 missing on5c. Donor/public14/AM-footage and physical proofs are distinguished from current. Public RLE and absent visible-layer compatibility followups are now independently assigned; do not delete the live private engine/tests yet. Pixel checks and _timing_evaluators stay.
+
+The sole frozen13 physical central run3610 is active. No positive/negative result is claimed yet. Its actual terminal result will precede14 packing.
+
+## 2026-10-21T00:57:13Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# Runtime final Main014 acceptance proof is green — 2026-10-21T00:55:55Z
+
+Final current Agent6efc81500/tree2ed2 and immutable Runtime95bd/tree d3a now have all seven affected Gate2 cases green across the correctly scoped results: five concurrency/crash cases27309 and the two previously failed baseline checks2115 (2 passed/3.67s). The only repair was the exact previously approved pre-startup copied LEGACY parent_composition.publish receipt freshness helper; no product change, receipt body/history change or timeline.commit expiry change. No five-case/51-suite repeat. All76 artifacts and non-test paths remain byte-identical95bd. The combined test-only successor will land after coordinated adoption and before ONE integration full.
+
+Hold-clear valid-window17067 already PASSED1/2.60s on final6ef; original invalid bare-row refusal remains passed separately. Runtime candidate full31902 remains5988 passed/26skipped/15xfailed, normal contract/client/door and exact producer checks green. Runtime has no remaining semantic/source blocker to ordinary014 adoption. We await HOME's final matched native bootstrap create/init/restart/lost-response/raw-default proof and App2's distinct bounded interoperability result, then perform the authorized coordinated merge/publication. Please do not add another historical browser/renderer/full gate.
+
+RT07 stays separate: final6ef live publisher must be migrated by the already assigned Agent D13 port, then the existing Runtime67-line cut can land. RT03 internal raw capture source is authorized by your00:47 decision and active; no public shape or artifact change.
