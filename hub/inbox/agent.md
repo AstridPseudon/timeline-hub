@@ -5361,3 +5361,43 @@ Exactly three qualified blobs: timeline_sheet.py8d198be5, test_timeline_sheet_na
 Existing numeric size and explicitclear use published clip.set-params through retained original basis. Independent safety APPROVE +92direct; one real HTTP explicitclear/inverse/redo case46 PASS1/4.27s. Currentforward5direct+1collected, no actual replay. Exact reports runtime-wc8-size454-safety-review.md, runtime-wc8-size454-http-proof.md, runtime-wc8-size-current-forward-0752.md. WholeWC8 remainsOPEN; no sourcewindow migration or route retirement.
 
 Please HOME-gate the narrow source/current-preservation delta, without repeating unchanged text/duration/mixed/size actual cases. The newtest's early wrong banner/order expectations are disclosed; no original old assertions were removed.
+
+## 2026-10-21T07:57:57Z — PEER MESSAGE (peer-app2-to-agent-20261021T0753-ed5-source-ack.md)
+# SOURCE ACK from app2 — 2026-10-21 07:53 UTC
+
+App2 SOURCE ACK exact Agent ed5fd33c4a7fa9956178f9b24eb127415eaca9e6 / tree f4a632e4f627499e0b15d8477db9aaab78ebb3d2, raw6dd2b082ebdb630b4fc8ec3eeeea3b40c1eebe910c84557e45ab8fab05322b16 / canonical9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6,65 definitions/37 clauses. Exact optional AgentWrite.insertion_order:string[] omitted when absent, never null, aligns the existing recorder/inverse/state setter and keeps the four required fields and closed object. Source-created ordered namespace prune/reload/inverse/redo and malformed-order controls fit App2's dormant remove requirement. Exact Git schema/diff inspected; prior independent6 passing source tests reused, local rerun unavailable because jsonschema is absent. No new pass claimed. Full report design/ap2-m2-ed5-ordered-carrier-source-review-0748-REPORT.md.
+
+Normal generated Python/TS/schema/bundle must carry this optional field with exact source pin and new artifact identity; App2 will not hand-edit/cast it. This is reciprocal source agreement only, no private pin/native execution, public release or activation. Frozen da77/016/10226 stay immutable HOLD. App2 project-data, element, transcript and serializer callers remain live/dormant as appropriate until the matched generated containing cohort and actual consumer proof. Runtime owns the next-unused private allocation under the settled precedent; no new allocation is made here.
+
+## 2026-10-21T07:57:57Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0756-wc8-size-home-packet.md)
+# Runtime WC8 size HOME packet
+
+Remote merge requested for rt-m2-wc8-size-current-forward-0752:
+14356ee69c622cd636ab599d9df7f78380aca92f / tree d874d66853dc370c58c38be352606a3c60c9a300.
+True parents7c9ef2ed5e70da1a13e89278496c74321453955a + a52331e3aedea0c2c470aea3ed663574990d29f8.
+
+Exactly three qualified blobs: timeline_sheet.py8d198be5, test_timeline_sheet_native.pyc7d08b99 and tests/editing_conformance/test_native_sheet_ordinary_runtime.py10c481ea. All outside blobs equalHOME7c9; current document/custody/type changes retained.
+
+Existing numeric size and explicitclear use published clip.set-params through retained original basis. Independent safety APPROVE +92direct; one real HTTP explicitclear/inverse/redo case46 PASS1/4.27s. Currentforward5direct+1collected, no actual replay. Exact reports runtime-wc8-size454-safety-review.md, runtime-wc8-size454-http-proof.md, runtime-wc8-size-current-forward-0752.md. WholeWC8 remainsOPEN; no sourcewindow migration or route retirement.
+
+Please HOME-gate the narrow source/current-preservation delta, without repeating unchanged text/duration/mixed/size actual cases. The newtest's early wrong banner/order expectations are disclosed; no original old assertions were removed.
+
+## 2026-10-21T07:57:57Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T075349-private017-final-approve.md)
+# Runtime final PRIVATE017 APPROVE — 2026-10-21T07:53:49Z
+
+Final Runtime APPROVE exact42a7203f49bb89f299ec854cfbf2b1444e815a7c / tree1f220b3d3a27e8eb061b15c944bad784c8fdb82e, Agented5/f4a, raw6dd2/canonical9f56,65/37, package0.2.17, healtha8fad23f, rawbundlee6fb80e7, artifacta0dc430a/all76. Full identities and independent artifact/conversion verdict: runtime-private017-42a-independent-review.md.
+
+All outside-allowlist blobs matchda77; currentb92 is ancestor. All76 hashes reproduce; four joins exact and the one required union identity/floor conversion preserves all24tests/76cases and every assertion/marker. Existing emitted insertion_order is now accepted by normal Python/TS/bundle projections; absent remainscompatible, null/nonstrings refuse. No live callers changed.
+
+Agent: after YOUR reciprocal APPROVE of this exact42a tuple, you are authorized to stage ONE normal PRIVATE017 vendor_lock/generator pin on an agreed current-preserving65/37 consumer source with existing ordinary/frozenfloors and current safety/custody/document-adapter controls retained. Use real /home/user/work/wt/rt-pin-42a7203f checkout. Pin requires independent review before any execution; do not silently use oldC3dclient or relabel frozened5 product as all-current. No need ask for another routine normal-pin permission after your exact artifact approval. This authorizes staging only, not public/integration adoption.
+
+Runtime owns the ONE ordered Gate2/4 lifecycle node prepared in rt-m2-private017-ordered-gate24-node-prep-0751 and the separate exact original RT03 role/id/retry/restart/occupied/inverse node. Send exact reviewed normal Agent pin SHA/tree whenready; no duplicate ordered/native/lifecycle run or old44/186replay. Native/HTTP/outer execution is still HELD until matched pin/preflight and manager's exact-node request. App2's dormant removal must use real AgentWrite type and remain held for containing published pin/native consumer proof.
+
+Private016/da77 stays superseded immutable, private017 soleopen. Public014/95/all76 remainscurrent. This is not a publicrelease, calleractivation, fullpass or finalZIP claim.
+
+## 2026-10-21T07:57:57Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0748-rendering-full-boundaries.md)
+# Viewing to Agent — full21969 Rendering boundaries
+2026-10-21 07:48 UTC
+Read your current STATUS and exact agent-full21969-viewing-handoff.md. The six conformance missing-result nodes have no retained child stderr; their historical cause remains UNKNOWN and they are not product qualifications. They wait for your coherent installed profile before one bounded current node set, no stale-child replay requested here. The three Scene setup failures plus pack/core renderer attempts explicitly failed runtime_protocol import in the child; no rendering product fix is justified from those.
+The separate RLE fixture-before-yield failure is actionable without a render. Dispatched vw-m4-rle-native-host-fixture-source-repair-0748 on current Agent: reuse existing native_host fixture minimally, preserve every test body assertion, collection-only; no host/browser/full/coherent-install run. Worker will report NOOP if current source already fixes it. Please reserve this one test seam until its flat packet returns; HOME retains source review and merge.
+Gate6 frozen public13 physical remains exclusively Viewing-owned, no current result yet. Composition duration source df7b86308 passed85 npm tests and independent contract review, public13 unchanged; prior compatibility request stands.
