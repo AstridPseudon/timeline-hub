@@ -1763,7 +1763,10 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
                 source_root=pack_root, matrix=matrix.get(definition.id, {}))
     # The SDK caller can carry import paths removed from the installed host
     # launch. Qualify the explicit host mapping, not that caller's ambient env.
-    dependencies = dependency_pythonpath(environment)
+    runtime_checkout = environment.get('ASTRID_RUNTIME_CHECKOUT')
+    dependencies = tuple(dict.fromkeys((
+        *((str(Path(runtime_checkout).resolve()),) if runtime_checkout else ()),
+        *dependency_pythonpath(environment))))
     baseline = build_child_subprocess_env(base=environment, parent=environment)
     variants = [baseline]
     for record in records.values():
@@ -8396,8 +8399,11 @@ class GenericPackHost:
         # Preserve the host-created sitecustomize hook when replacing the
         # worker import path; arbitrary child PYTHONPATH is still excluded.
         network_hook_roots = (str(attempt_path / ".astrid-network-hook"),) if env.get("ASTRID_NETWORK_POLICY") else ()
+        runtime_checkout = env.get('ASTRID_RUNTIME_CHECKOUT')
         env["PYTHONPATH"] = os.pathsep.join(
-            dict.fromkeys((*network_hook_roots, package_parent, *_dependency_pythonpath(), *import_roots))
+            dict.fromkeys((*network_hook_roots, package_parent,
+                           *((str(Path(runtime_checkout).resolve()),) if runtime_checkout else ()),
+                           *_dependency_pythonpath(), *import_roots))
         )
         env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")

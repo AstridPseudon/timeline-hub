@@ -427,7 +427,11 @@ def _build_environment(env: Mapping[str, str] | None) -> dict[str, str]:
     base = dict(os.environ)
     if env is not None:
         base.update({str(key): str(value) for key, value in env.items()})
-    return build_child_subprocess_env(base=base, parent=base)
+    # Source-host children need the same selected Runtime as their parent;
+    # arbitrary ambient Python import paths still do not cross this boundary.
+    runtime_checkout = base.get("ASTRID_RUNTIME_CHECKOUT")
+    explicit = {"PYTHONPATH": str(Path(runtime_checkout).resolve())} if runtime_checkout else None
+    return build_child_subprocess_env(base=base, parent=base, explicit_env=explicit)
 
 
 def _resolve_executable(

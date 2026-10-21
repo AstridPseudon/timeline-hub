@@ -270,6 +270,7 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
     assert os.environ.get("ASTRID_REMOTION_PROJECT_DIR")
     assert os.environ.get("ASTRID_NODE_EXECUTABLE")
     assert os.environ.get("ASTRID_TIMELINE_SCHEMA_PYTHONPATH")
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
     from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
 
     # The central runner's loopback proxy presents a self-signed certificate
@@ -296,12 +297,19 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
     )
     (tmp_path / "astrid").symlink_to(astrid_root / "astrid", target_is_directory=True)
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(private_remotion))
+    pack_roots = (astrid_root / "astrid/packs/rendering",)
+    launch_environment = dict(os.environ)
     validation = prepare_remotion_validation(
         artifact_directory=tmp_path / "remotion-validation",
         host_environment=dict(os.environ),
         python_executable=os.sys.executable,
         launch_id=hashlib.sha256(str(tmp_path).encode()).hexdigest()[:32],
-        contexts={"host": dict(os.environ), "worker": [dict(os.environ)]},
+        contexts={
+            "host": launch_environment,
+            "worker": _launch_worker_probe_environments(
+                pack_roots, launch_environment, remotion_only=True,
+            ),
+        },
     )
     for name, value in validation.items():
         monkeypatch.setenv(name, value)
@@ -309,7 +317,7 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
     service = daemon.service
     client = None
     host = GenericPackHost(
-        pack_roots=[astrid_root / "astrid/packs/rendering"],
+        pack_roots=pack_roots,
         client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
         executor_id="astrid-pack-host",
         attempt_root=tmp_path / "attempt",
