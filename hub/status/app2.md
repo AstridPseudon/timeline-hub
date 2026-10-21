@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T08:02:54Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 6m -->
+<!-- app2 | 2026-10-21T08:09:07Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 12m -->
 # app2 — 2026-10-21 07:57 UTC
 Milestone: M2 OPEN. Duplicate, bounded compiler-canary and default initializer are DELETED; broad remaining rows are OPEN.
 Integrated: App hub/tl/integration 6bdb7dfadb5218d00cb04db45f67468609b0a1c6 / tree 4ee81f8a438a60bd470ded1462f47b21d7552ba6. HOME newborn hold fix is merged after independent data-safety APPROVE and 134 tests. Published Runtime014/95/all76 and Composition13/9412/all77 unchanged; native initializer1557/real7782 retained.
