@@ -32,3 +32,25 @@ The native alias was introduced by the beat port in `astrid/sdk/timeline/_timing
 
 No full, repeated-57, native/HTTP, browser, renderer, or live-socket suite was run.
 
+
+## Current-forward ready packet
+
+- Approved source/tree: `da7312fe1ec88107da33ce33d557891a5345ab85` / `06cd859fa0b73490db404580a052d692d5c7cd79`.
+- Current base/tree: `00e73f9252ce9dc45ade5819f7b044d5c190933a` (current00e).
+- Forwarded blobs, byte-for-byte from the approved source: `astrid/sdk/timeline/_timing_evaluators.py`, `astrid/sdk/timeline/compiler.py`, `astrid/sdk/timeline/native_word_anchor.py`, `astrid/sdk/timeline_intent.py`, and `tests/sdk/test_timing_compiler.py`. No other source/test blob was forwarded.
+- Uncommitted five-file binary patch SHA-256: `046787db15ba571bb8aae34d3d927f4e548940928574710ac930eb916cacdc98`.
+
+The one-to-one conversion is retained exactly: ordinary `beats` and genuine
+`downbeats` remain positive in Main and native timing; the invented
+bars-only native positive is converted to the existing Main refusal, with the
+native alias removed and both paths refusing. Existing malformed/empty carrier,
+source speed/window, placed-audio ownership, replay-guard, and transcript
+correction assertions remain. Current non-legacy blobs remain byte-for-byte
+preserved. No marker authority, schema, client, pin, endpoint, or activation
+was added.
+
+Evidence is reused from the exact approved blobs: the 49-case compiler lane
+and the prior 9 + 2 focused lanes, plus the approved direct Main/native
+downbeat and bars-only probe. No new join was needed, so no compact product
+lane was rerun; no full, HTTP, native, renderer, browser, body, or live-socket
+suite was run.

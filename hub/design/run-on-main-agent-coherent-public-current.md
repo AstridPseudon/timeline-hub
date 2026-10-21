@@ -357,3 +357,43 @@ need remains plainly: preserve the >13 GiB admission floor until MAIN has an
 actual source-coherent setup/full-run peak measurement with known `-n 3`
 concurrency and a 2 GiB margin. Do not change the wrapper threshold based on
 this report.
+
+## Final MAIN handoff consolidation (2026-10-21)
+
+**Status remains CODE APPROVED / STORAGE HOLD.** The approved code identity is
+wrapper commit `fc4c23d079f17aa4d8f167b385c7e5bda2edd299`, tree
+`7ce6a0b8022928cd98a2f7cd448bf9d24a442587`, blob
+`198a94ad1f1c9921705399febb7e7f71dffd419d`, SHA-256
+`0e1b5ccd2157788d53d6ba7fa6c0e1adc362e97f190e734cc023bf4ff92e87d`.
+The product source remains Agent b3c/tree3467; C13 remains Composition
+0.0.13, not 0.0.14. The `agent-remotion-0014` name is only the new immutable
+runtime destination: that runtime must be built from the exact b3c source.
+
+MAIN is blocked until every prerequisite below is present and independently
+verified in the MAIN profile:
+
+1. Clean full-Git checkouts at `/home/user/work/main-timeline/coherent-public-current-b3c96a758/source/agent-b3c96a758` (Agent b3c/tree3467 and `runtime.lock.json` naming client 95bd), `.../source/runtime-b92d3e7a` (Runtime b92/tree6abc), and `.../source/client-95bd3c5f` (client 95bd/tree d3a290), with exact HEAD/tree checks.
+2. Immutable `/home/user/work/runtimes/agent-remotion-0014` with `.source-commit` b3c, the C13 0.0.13 tarball SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`, the C13 lock SHA-256 `c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24`, and a private symlink-free `node_modules`; the generated `agent-remotion-0014.env` must point to that runtime and Node v20.19.4.
+3. The durable runner at `/home/user/work/main-timeline/coherent-public-current-b3c96a758/runner/approved-current-wrapper/full_coherent_public_current_integration.sh` must match the approved wrapper identity above.
+4. Private `/home/user/work/main-timeline/coherent-public-current-b3c96a758/profile/agent-coherent-public-current-b3c96a758` must contain `venv/bin/python`, private site-packages, `profile/astrid.json`, the 164-pin carrier SHA-256 `478af081b0f27c1e90dac1ab4b0b645583f34787ecfe7b8079d1bb88ca034761`, metadata `venv-agent-child-s2.txt`, and exactly the three local product wheels (Agent 0.1.0, Runtime 0.1.0, client 0.2.14). It must verify 166 distributions, 166 `RECORD` files, eight private import origins, and source/wheel/install byte parity.
+5. `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node`, `/home/user/work/fixtures/vibecomfy/`, `/usr/bin/ffmpeg`, and `/usr/bin/ffprobe` must pass the wrapper checks. The required `env -i` invocation and direct final `exec "$PROFILE_PY" -m pytest -q -n 3 "$@"` remain unchanged.
+6. MAIN must measure more than 13 GiB free on its own `/home/user/work` filesystem immediately before admission: threshold `13,958,643,712` bytes. No retained-size estimate substitutes for the missing transient `-n 3` setup/full-run peak.
+
+Storage is still below the gate. The worker-side current read-only
+`df -B1 /home/user/work` is `12,755,468,288` bytes free (`11.879456 GiB`),
+short by `1,203,175,424` bytes (`1.120544 GiB`). The MAIN note separately
+reports approximately 11 GB available; that is an admission fact for MAIN,
+not a substitute for a MAIN-time measurement. The retained measurement at
+2026-10-21T10:51:38Z was `12,480,892,928` bytes (`11.623737 GiB`), short by
+`1,477,750,784` bytes (`1.376263 GiB`). Its retained `du -sx -B1` setup
+subtotal was `1,254,760,448` bytes (`1.168587 GiB`): profile reference
+`716,853,248`, exact source-checkout analogues `143,859,712`, and old C13
+reference runtime `394,047,488`. The b3c-source 0014 runtime and the
+transient full-run peak are UNKNOWN. Do not lower the >13 GiB floor.
+
+Lead action: free or otherwise obtain the missing MAIN storage, then have
+MAIN request/materialize the exact 0014 runtime and private profile, complete
+the prerequisite census, and make exactly one allowed `env -i` full request.
+Until that happens, do not request a full or named suite, build/install/run
+anything, substitute 0013 or C13/14, or claim a MAIN result. Record the
+terminal result only after the exact run; this handoff is not that result.
