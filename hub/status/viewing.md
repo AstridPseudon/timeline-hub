@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T09:27:15Z | dispatcher heartbeat 7s | live 5 (sol 0, luna 5, other 0) | busy30 31 | status age 0m -->
+<!-- viewing | 2026-10-21T09:33:20Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 34 | status age 6m -->
 # viewing — 2026-10-21 09:27 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3 and M4 OPEN. PLAN and current manager rules read. Four orchestrator08:07 source tasks delivered; original accepted popup closure remains peer-owned.
 Integrated: Composition df7b86308 / tree71d8e95e. Duration source correction independently approved, unchanged runtime body. Integration full composition-full-1021073946-21820: npm test85 PASS, zero failed/skipped. Public13 / archive9412 / all77 immutable; no public14 archive or consumer pin.

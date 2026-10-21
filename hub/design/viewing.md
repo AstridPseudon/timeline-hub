@@ -31,14 +31,18 @@ not proof that every viewer/private caller has already been unified: D09
 private callers and private ROI/crop/statistics machinery remain active
 pending their managed Scene proof and equivalent caller coverage.
 
-The normal explicit-theme path is the existing Main path: imported
-`theme.json` enters project CAS through `media.import_file`, is passed as
-`inputs.theme`, materialized by GenericHost, resolved by the existing resolver,
-and arrives as `props.theme`. When absent, the existing builtin default remains
-in force. Do not infer authority from a theme slug or caller-only value, and do
-not add a ThemeDocument, `themeSource`, resolver, DTO, copied theme, or new
-producer requirement. This records the orchestrator's 02:04 ruling; the
-deferred preparation/source-selection contracts are not part of M4.
+The qualified normal imported-theme path is: CAS import -> ordered named input
+-> managed `theme.json` -> ONE resolver -> Root props. In the existing Main
+path, imported `theme.json` enters project CAS through `media.import_file`; the
+ordered input is `inputs.theme`, GenericHost materializes the managed named
+file, and the existing resolver supplies `props.theme`. Test2747 records one
+pass in 110.30s and proves the pre-render explicit/default distinction plus
+forged caller-local refusal; final explicit-theme pixels remain open. See
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-theme-terminal-home-proof-handoff-0918-REPORT.md`.
+When absent, the existing builtin default remains in force. Do not infer
+authority from a theme slug or caller-only value, and do not add a
+ThemeDocument, `themeSource`, resolver, DTO, copied theme, or new producer
+requirement. The preparation/source-selection contract is not part of M4.
 
 The evaluator is not the frame/audio parity proof. Gate 6 is an independent
 App Player/final-export comparison on the same delivered closure, with

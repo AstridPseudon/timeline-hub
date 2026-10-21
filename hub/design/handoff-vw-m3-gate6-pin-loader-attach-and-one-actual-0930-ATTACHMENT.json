@@ -1,0 +1,46 @@
+{
+  "recordedAt": "2026-10-21T09:30:00Z",
+  "authority": "manager grant 2026-10-21T09:30Z; one authorized read-only top-level node_modules symlink attachment",
+  "appSource": {
+    "root": "/home/user/work/wt/app-pin-0d432391",
+    "commit": "0d4323913b92c4e0e3830bf14ec7f35d981475ca",
+    "tree": "5a1e0e85d0f336f642426b91ccf3b3f1984ebd14",
+    "gitStatus": "clean; node_modules ignored by .gitignore:10"
+  },
+  "link": {
+    "path": "/home/user/work/wt/app-pin-0d432391/node_modules",
+    "kind": "top-level symbolic link",
+    "readlink": "/home/user/work/wt/app-pin-d00a6613/node_modules",
+    "realpath": "/home/user/work/wt/app-pin-d00a6613/node_modules",
+    "linkDevice": 65024,
+    "linkInode": 5464071,
+    "targetDevice": 65024,
+    "targetInode": 3574084
+  },
+  "targetManifest": {
+    "sha256": "8bdc44e93ce6f712f2a26fc44f1f8e904215c1785f54ed97f826a98fe0145c5b",
+    "entries": 32393,
+    "targetRoot": "/home/user/work/wt/app-pin-d00a6613/node_modules",
+    "privateGraphCheckBeforeAttach": "PASS",
+    "targetIsRealDirectory": true,
+    "zeroSharedRegularInodesAndZeroEscapingLinks": true
+  },
+  "peerManifest": {
+    "runtimeGraph": "4913a37e5403c8372a283dcca8fd30c846b636abd88f59cfc572809d2fd0bd3c/21455",
+    "public13CompositionArchive": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "public13RegularMembers": 77,
+    "react": "18.3.1",
+    "reactDom": "18.3.1",
+    "remotion": "4.0.509",
+    "remotionPlayer": "4.0.509",
+    "remotionMedia": "4.0.509",
+    "tsx": "4.21.0",
+    "playwrightTest": "1.60.0"
+  },
+  "guardProbe": {
+    "path": "/home/user/work/wt/app-pin-0d432391/node_modules",
+    "result": "REFUSED",
+    "exactMessage": "private dependency graph must be a real directory",
+    "action": "preserved guard; no relaxation"
+  }
+}
