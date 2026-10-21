@@ -65,7 +65,7 @@ def test_scene_request_and_sdk_admission_keep_certified_source(runtime, tmp_path
 
     # Run executor23db's actual pack writer with the real host-minted source;
     # only Scene evaluation is doubled, so no Node or rendering occurs.
-    from astrid.core.timeline import scene_answers
+    from astrid.core.rendering import scene_answers
     from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution
 
     monkeypatch.setattr('astrid.core.rendering.verified_source.inherited_source',

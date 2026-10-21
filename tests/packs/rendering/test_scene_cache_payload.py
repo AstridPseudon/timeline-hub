@@ -11,7 +11,8 @@ import zlib
 import pytest
 from PIL import Image
 
-from astrid.core.timeline import Timeline, scene_answers
+from astrid.core.rendering import scene_answers
+from astrid.core.timeline import Timeline
 from astrid.packs.rendering.actions.timeline_visualize import composed_frame
 from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
 from tests.packs.rendering.test_scene_source_carry import (  # noqa: F401

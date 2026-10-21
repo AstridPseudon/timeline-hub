@@ -42,7 +42,7 @@ PACK_ROOTS = (
 def _assert_current_source_imports() -> None:
     """Keep the live proof tied to the committed candidate source tree."""
     from astrid.core.rendering import verified_source
-    from astrid.core.timeline import scene_answers
+    from astrid.core.rendering import scene_answers
     from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution, scene_only
     from astrid.packs.rendering.rendering.renderers.remotion import root_preparation
 

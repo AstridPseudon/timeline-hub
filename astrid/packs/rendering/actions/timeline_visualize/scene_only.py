@@ -31,9 +31,9 @@ def execute_scene_only(
 ) -> dict[str, Any]:
     """Return public Scene answers through the ordinary filmstrip artifact."""
     from astrid.core.foundation.paths import REPO_ROOT
+    from astrid.core.rendering import scene_answers
     from astrid.core.rendering.remotion_runtime import default_composition_id
     from astrid.core.rendering.verified_source import inherited_source
-    from astrid.core.timeline import scene_answers
 
     snapshot = authority.get("capture_snapshot") or authority.get("filmstrip_snapshot")
     if not isinstance(snapshot, Mapping) or snapshot.get("project_slug") != args.project_slug:

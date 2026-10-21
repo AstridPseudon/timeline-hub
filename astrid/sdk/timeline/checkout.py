@@ -159,8 +159,15 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         what is there now), like publish. Edits to different clips merge (``self.merged`` says
         what came in); the same clip changed by both refuses, unless ``force`` (yours wins)."""
         target = Path(path or self.path or "timeline.checkout.json")
+        sheet = _pending_sheet(self, target)
         with _store._file_lock(target):
+            if sheet and target.is_file() and target.read_text(encoding="utf-8") != self._disk:
+                raise TimelineEditError("retained sheet draft changed on disk; reopen it before saving")
             saved = self._save_locked(target, force=force)
+        if sheet:
+            native, session, text = sheet
+            native.apply(text, session=session, dry_run=False)
+            self._retire_draft_history()
         if (self.SAY_SAVED if quiet is None else not quiet) and not _store._cli_running():
             name = getattr(self, "draft_name", None)
             changed = len(self.edits().get("changes") or [])
@@ -484,6 +491,131 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
         before = Checkout(copy.deepcopy(dict(against)) if against is not None else base_bundle(self.document()))
         return describe_changes(before, self)
+
+
+def _sheet_content(bundle):
+    return Checkout(copy.deepcopy(bundle)).document()
+
+
+def _sheet_session(tl, *, client=None, path=None, pending_only=False):
+    """Reopen only this draft's retained outbox, without consulting a new head."""
+    from astrid.sdk.timeline.outbox import Outbox
+    from astrid.sdk.timeline.sync import TimelineSession, _connection
+
+    target = path or tl.path
+    if target is None:
+        return None
+    outbox = Outbox(Path(str(target) + ".outbox.json"))
+    state = outbox.read()
+    if state is None or "detached" not in state.get("sheet", {}) or (pending_only and not state["pending"]):
+        return None
+    client = client or tl._scene_client
+    if client is None:
+        raise TimelineEditError("retained sheet needs its original authenticated Runtime client")
+    session = TimelineSession(client, outbox, _connection(client), tl.bundle["project_id"], tl.bundle["timeline_id"])
+    with outbox.locked():
+        session._state()  # checks realm, actor, project and timeline, including on retry
+    return session
+
+
+def _retain_sheet(tl, text):
+    """Keep native source and legacy row bindings before returning editable text."""
+    from astrid.sdk.timeline._command_state import equal
+    from astrid.sdk.timeline.sync import TimelineSession, _connection
+    from astrid.sdk.timeline_sheet import NativeSheet, SheetError
+
+    client = tl._scene_client
+    if tl.path is None or client is None or "structure_base" in tl.bundle:
+        return
+    try:
+        _connection(client)
+    except (AttributeError, TimelineEditError):
+        return  # A local checkout without a verified target remains local.
+    try:
+        session = TimelineSession.open(tl.bundle["project_id"], tl.bundle["timeline_id"], client=client,
+                                       outbox_path=Path(str(tl.path) + ".outbox.json"))
+    except TimelineEditError as exc:
+        if str(exc) == "timeline has no verified publication; editing is unavailable":
+            return
+        raise
+    with session.outbox.locked():
+        state = session._state()
+        if state["pending"] or state["flight"] is not None:
+            raise SheetError("flush original pending intent before exporting another sheet")
+        bundle = session._bundle(state)
+        if bundle["base_parent"] != tl.bundle["base_parent"] or not equal(_sheet_content(bundle), _sheet_content(tl.bundle)):
+            return  # Never certify a draft authored over a different/local basis.
+        native = NativeSheet(bundle, basis=state["base"])
+        bindings = {}
+        for group in tl._cut_groups():
+            for clip in group["clips"]:
+                owners = [row for row in bundle["placements"] if row["shot_id"] == clip.shot_id]
+                if len(owners) == 1:
+                    bindings[group["id"] + "." + (intent.layer_of(clip.data) or clip.id)] = (
+                        "occurrence:" + owners[0]["occurrence_id"] + "/clip:" + clip.id)
+        state["sheet"] = {"bundle": native._bundle, "basis": native._basis,
+                          "detached": {"text": text, "bindings": bindings, "checkout": tl.document()}}
+        session.outbox.write(state)
+
+
+def _stage_sheet(tl, text, parsed, *, client=None):
+    """Save original captured duration intent before exposing its local preview."""
+    from astrid.sdk.timeline._command_state import equal
+    from astrid.sdk.timeline_sheet import NativeSheet, SheetError, _duration_sheet
+
+    session = _sheet_session(tl, client=client)
+    if session is None:
+        return None
+    tl._scene_client = session.client
+    with session.outbox.locked():
+        state = session._state()
+        native = NativeSheet(state["sheet"]["bundle"], basis=state["sheet"]["basis"])
+        artifact = state["sheet"]["detached"]
+        translated = _duration_sheet(native, artifact, parsed)
+        if translated is None:
+            if state["pending"] or state["flight"] is not None:
+                raise SheetError("flush original pending sheet intent before editing other cells")
+            return None
+        plan = native.preview(translated)
+        if not plan.commands:
+            if state["pending"]:
+                raise SheetError("flush original pending sheet intent before editing other cells")
+            return []
+        if state["base"] != native._basis:
+            raise SheetError("sheet no longer has its original authored basis; export again")
+        if state["pending"] and not equal(state["pending"], plan.commands):
+            raise SheetError("flush original pending sheet intent before editing other cells")
+        candidate = Checkout(copy.deepcopy(plan.bundle))
+        current = _sheet_content(tl.bundle)
+        if not any(equal(current, _sheet_content(bundle)) for bundle in (artifact["checkout"], candidate.bundle)):
+            raise SheetError("local draft differs from the retained sheet; keep it and export again")
+        changes = describe_changes(tl, candidate)
+        state["pending"] = plan.commands
+        artifact["edited"] = text
+        session.outbox.write(state)
+    tl.bundle = candidate.bundle
+    tl._refresh()
+    return changes or ["sheet edit pending acceptance"]
+
+
+def _pending_sheet(tl, target):
+    from astrid.sdk.timeline._command_state import equal
+    from astrid.sdk.timeline_sheet import NativeSheet, SheetError, _duration_sheet, parse_sheet
+
+    session = _sheet_session(tl, path=target, pending_only=True)
+    if session is None:
+        return None
+    with session.outbox.locked():
+        state = session._state()
+        if not state["pending"]:
+            return None
+        native = NativeSheet(state["sheet"]["bundle"], basis=state["sheet"]["basis"])
+        artifact = state["sheet"]["detached"]
+        text = _duration_sheet(native, artifact, parse_sheet(artifact["edited"]))
+        plan = native.preview(text)
+        if not equal(plan.commands, state["pending"]) or not equal(_sheet_content(tl.bundle), _sheet_content(plan.bundle)):
+            raise SheetError("local draft differs from the original pending sheet intent")
+        return native, session, text
 
 
 def _clip_changes(before_text: str, after_text: str) -> tuple[list[str], list[str]]:

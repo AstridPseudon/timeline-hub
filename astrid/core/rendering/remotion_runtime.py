@@ -757,10 +757,15 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
         generator_env = {**generator_env, **lock.remotion_render_lock_child_env()}
         result, generator_wait = _owned_registry_probe([python, str(REPO_ROOT / 'scripts/gen_effect_registry.py')],
                                                       cwd=REPO_ROOT, env=generator_env, phase='registry_generator')
-        _require_completed_probe(generator_wait, phase='registry_generator')
+        try:
+            _require_completed_probe(generator_wait, phase='registry_generator')
+        except RemotionValidationError as error:
+            _keep_probe_stderr(error, result, phase='registry_generator')
+            raise
         if result.returncode:
             error = RemotionValidationError('owned registry generator failed')
             error.probe_receipt = generator_wait
+            _keep_probe_stderr(error, result, phase='registry_generator')
             raise error
         if run._registry_output_content_hashes(project) != expected['content_hashes']:
             raise RemotionValidationError('owned registry generator outputs differ from complete expected state')
