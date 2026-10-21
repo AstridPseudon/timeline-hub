@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   APP_ENTRY_PATH,
   classifyBrowserEntry,
@@ -72,7 +72,7 @@ describe('browser entry classification', () => {
     rememberAppEntryPreference();
     expect(prefersAppEntry()).toBe(true);
     expect(resolveReturningAppEntry(new URL('https://astrid.test/?ref=x'), true))
-      .toBe('/tools/video-editor?project=demo-project-id&timeline=demo-timeline');
+      .toBe('/tools/video-editor');
   });
 
   it('sends installer root links to the Runtime gate with their query intact', () => {
@@ -111,16 +111,8 @@ describe('browser entry classification', () => {
     )).toBeNull();
   });
 
-  it('opens the Runtime\'s own projects on the hosted build, where the demo project does not exist', async () => {
-    vi.stubEnv('VITE_RUNTIME_ORIGIN', 'http://127.0.0.1:17340');
-    try {
-      vi.resetModules();
-      const hosted = await import('./entryClassification.ts');
-      expect(hosted.APP_ENTRY_PATH).toBe('/tools/video-editor');
-      expect(hosted.resolveReturningAppEntry(new URL('https://astrid.test/'), true)).toBe('/tools/video-editor');
-    } finally {
-      vi.unstubAllEnvs();
-      vi.resetModules();
-    }
+  it('enters the editor on the bare route in every build, leaving project choice to the Runtime', () => {
+    expect(APP_ENTRY_PATH).toBe('/tools/video-editor');
+    expect(resolveReturningAppEntry(new URL('https://astrid.test/'), true)).toBe('/tools/video-editor');
   });
 });
