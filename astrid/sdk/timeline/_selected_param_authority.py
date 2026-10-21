@@ -3,10 +3,77 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from ._command_state import CommandError, State
+from ._command_state import ABSENT, CommandError, State, equal
+
+_MISSING = object()
+_INVALID = object()
 
 
-def _association(record, select):
+def _selected_reference(values):
+    """Read both selected-reference spellings without collapsing presence."""
+    references = [(key, values[key]) for key in ('elementRef', 'element_ref')
+                  if key in values]
+    if len(references) == 2 and not equal(references[0][1], references[1][1]):
+        return _INVALID
+    return references[0][1] if references else ABSENT
+
+
+def _selected_reference_from_reads(reads):
+    values = {}
+    for key in ('elementRef', 'element_ref'):
+        state = reads.get(key, ABSENT)
+        if not isinstance(state, dict) or state.get('state') not in ('absent', 'present'):
+            return _INVALID
+        if state['state'] == 'present':
+            values[key] = state.get('value')
+    return _selected_reference(values)
+
+
+def _is_transition_reselection(record, select, element):
+    """Recognize one recorded transition selection over a legacy reference."""
+    command = record['command']
+    args = command.get('args', {})
+    values = args.get('values')
+    if (command['op'] != 'clip.set' or command['select'] != select
+            or not isinstance(element, dict)
+            or not isinstance(values, dict)
+            or set(values) != {'elementRef', 'transition'}
+            or args.get('clear') != []
+            or not equal(values['elementRef'], element)):
+        return False
+    transition = values['transition']
+    if (not isinstance(transition, dict)
+            or transition.get('type') != element.get('id')
+            or transition.get('revision') != element.get('revision')):
+        return False
+    reads = [read for read in record['reads']
+             if read['ref'] == select and read['path'] in (
+                 ['elementRef'], ['element_ref'])]
+    if (len(reads) != 2
+            or {read['path'][0] for read in reads} != {'elementRef', 'element_ref'}):
+        return False
+    read_states = {read['path'][0]: read['state'] for read in reads}
+    legacy = read_states.get('element_ref')
+    if (read_states.get('elementRef') != {'state': 'absent'}
+            or not isinstance(legacy, dict)
+            or legacy.get('state') != 'present'
+            or not isinstance(legacy.get('value'), dict)
+            or equal(legacy['value'], element)):
+        return False
+    return record['writes'] == [
+        {'ref': select, 'path': ['elementRef'],
+         'before': {'state': 'absent'},
+         'after': {'state': 'present', 'value': element}},
+        {'ref': select, 'path': ['transition'],
+         'before': {'state': 'absent'},
+         'after': {'state': 'present', 'value': transition}},
+        {'ref': select, 'path': ['element_ref'],
+         'before': {'state': 'present', 'value': legacy['value']},
+         'after': {'state': 'absent'}},
+    ]
+
+
+def _association(record, select, *, strict_reference=False):
     from .commit import _document_pin
 
     command = record['command']
@@ -37,15 +104,30 @@ def _association(record, select):
             or set(pin['element']) != {'packId', 'id', 'kind', 'revision'}):
         return None
     _document_pin(pin['source'])
-    if command['op'] == 'clip.set-params':
-        reads = {r['path'][0]: r['state'].get('value') for r in record['reads']
+    if command['op'] in ('clip.set-params', 'clip.set'):
+        reads = {r['path'][0]: r['state'] for r in record['reads']
                  if r['ref'] == select and r['path'] in (['elementRef'], ['element_ref'])}
-        if (reads.get('elementRef') or reads.get('element_ref')) != pin['element']:
+        previous = (_selected_reference_from_reads(reads) if strict_reference else
+                    (reads['elementRef'] if 'elementRef' in reads
+                     else reads['element_ref'] if 'element_ref' in reads else ABSENT))
+        if strict_reference and previous is _INVALID:
+            return None
+        if (strict_reference and previous is not ABSENT
+                and not equal(previous, pin['element'])
+                and not _is_transition_reselection(record, select, pin['element'])):
+            return None
+        if (not strict_reference and previous['state'] == 'present'
+                and not equal(previous['value'], pin['element'])):
+            return None
+        if (command['op'] == 'clip.set'
+                and ('elementRef' not in command['args']['values']
+                     or not equal(command['args']['values']['elementRef'], pin['element']))):
             return None
     return pin
 
 
-def resolve_selected_param_source(port, *, context, through, select, staged=()):
+def resolve_selected_param_source(port, *, context, through, select, staged=(),
+                                   strict_reference=False):
     """Return the proven P/E/O association, or permanently refuse this edit.
 
     Publication identity orders effects even when complete revision bytes are
@@ -83,15 +165,20 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
                         if current.entity(owner, optional=True) is not None else None)
                 if shot and ref == 'shot:' + shot['shot_id']:
                     return True
-        return record['command']['select'] == select and record['command']['op'] in (
-            'clip.set-element', 'clip.set-params')
+        command = record['command']
+        return (command['select'] == select and command['op'] in (
+            'clip.set-element', 'clip.set-params')) or (
+                command['select'] == select and command['op'] == 'clip.set'
+                and 'schema_source' in command['args'])
 
     def effect(value, record, index, envelope=None):
         if not relevant(record, index):
             return value
         command = record['command']
-        if command['op'] in ('clip.set-element', 'clip.set-params'):
-            association = _association(record, select)
+        if command['op'] in ('clip.set-element', 'clip.set-params', 'clip.set'):
+            association = _association(
+                record, select,
+                strict_reference=strict_reference)
             if association is None:
                 return None
             element = association['element']
@@ -147,8 +234,19 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
             for record in records:
                 value = effect(value, record, index, entry['records'])
             row = state(index).entity(select, optional=True)
-            element = (row.get('elementRef') or row.get('element_ref')) if row else None
-            if value is not None and element != value['element']:
+            if strict_reference:
+                element = _selected_reference(row or {})
+                if element is _INVALID or element is ABSENT:
+                    element = _MISSING
+            elif row is None:
+                element = _MISSING
+            elif 'elementRef' in row:
+                element = row['elementRef']
+            elif 'element_ref' in row:
+                element = row['element_ref']
+            else:
+                element = _MISSING
+            if value is not None and (element is _MISSING or not equal(element, value['element'])):
                 value = None
         return value
 
