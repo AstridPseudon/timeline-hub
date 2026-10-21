@@ -39,7 +39,8 @@ _D13_REQUIRED_ORIGINS = (
     "host", "child", "action", "client", "sdk", "runtime_protocol",
     "runtime_protocol.platform", "astrid_runtime",
 )
-_D13_CONTROLLER_DIRS = ("runtime-support", "realm", "home", "tmp")
+_D13_CONTROLLER_DIRS = ("runtime-support", "home", "tmp")
+_D13_REALM_DIR = "realm"
 
 
 @dataclass(frozen=True)
@@ -347,33 +348,42 @@ def _d13_resource_locks(profile: Mapping[str, str], inputs: _D13Inputs) -> dict[
 
 
 def _d13_controller_paths(root: Path) -> tuple[Path, ...]:
-    """Return the private Runtime controller roots, separate from pytest state."""
-    return tuple(root / name for name in _D13_CONTROLLER_DIRS)
+    """Return controller roots plus the deliberately absent fresh realm root."""
+    support, home, temp_root = (root / name for name in _D13_CONTROLLER_DIRS)
+    return support, root / _D13_REALM_DIR, home, temp_root
 
 
-def _d13_controller_prerequisite_failures(tmp_path: Path) -> list[str]:
+def _d13_controller_prerequisite_failures(
+    tmp_path: Path, *, controller_root: Path | None = None
+) -> list[str]:
     """Exercise the same private controller directory setup used by the native fixture."""
     failures: list[str] = []
+    owns_root = controller_root is None
     try:
-        root = Path(tempfile.mkdtemp(prefix="d13-ctrl-"))
+        root = controller_root or Path(tempfile.mkdtemp(prefix="d13-ctrl-"))
     except OSError as exc:
         return [f"private D13 controller root could not be created: {exc}"]
     try:
-        paths = _d13_controller_paths(root)
+        support, realm, home, temp_root = _d13_controller_paths(root)
+        paths = (support, realm, home, temp_root)
+        controller_paths = (support, home, temp_root)
         if len(set(paths)) != len(paths):
             failures.append("D13 controller directory names are not distinct")
         if root == tmp_path or root.is_relative_to(tmp_path):
             failures.append("D13 controller root is inside pytest-owned fixture state")
         if any(path.parent != root for path in paths):
             failures.append("D13 controller directory escaped its private root")
-        for path in paths:
+        if realm.exists() or realm.is_symlink():
+            failures.append("D13 fresh realm root must be absent before workspace create")
+        for path in controller_paths:
             path.mkdir()
             if not path.is_dir() or path.is_symlink():
                 failures.append(f"D13 controller prerequisite is not a private directory: {path}")
     except OSError as exc:
         failures.append(f"D13 controller prerequisites could not be created: {exc}")
     finally:
-        shutil.rmtree(root, ignore_errors=True)
+        if owns_root:
+            shutil.rmtree(root, ignore_errors=True)
     return failures
 
 
@@ -624,8 +634,9 @@ def installed_runtime(tmp_path, monkeypatch):
     runtime_cli = environment / "bin" / "astrid-runtime"
     controller_root = Path(tempfile.mkdtemp(prefix="d13-ctrl-"))
     support, realm_root, home, temp_root = _d13_controller_paths(controller_root)
-    for path in (support, realm_root, home, temp_root):
+    for path in (support, home, temp_root):
         path.mkdir()
+    assert not realm_root.exists(), "workspace create owns fresh realm root initialization"
     runtime_env = {
         "HOME": str(home),
         "LANG": "C.UTF-8",
@@ -700,16 +711,31 @@ def installed_runtime(tmp_path, monkeypatch):
 
 
 def test_d13_controller_paths_do_not_reuse_pytest_fixture_roots(tmp_path):
-    """Keep Runtime controller state out of the autouse pytest sandbox roots."""
+    """Keep existing controller state out of pytest roots and leave realm creation to Runtime."""
     root = Path(tempfile.mkdtemp(prefix="d13-ctrl-"))
     try:
-        paths = _d13_controller_paths(root)
+        support, realm, home, temp_root = _d13_controller_paths(root)
+        paths = (support, realm, home, temp_root)
         assert root != tmp_path and not root.is_relative_to(tmp_path)
         assert len(set(paths)) == len(paths)
-        assert paths[2] != tmp_path / "home"
-        assert paths[3] != tmp_path / "tmp"
-        for path in paths:
+        assert home != tmp_path / "home"
+        assert temp_root != tmp_path / "tmp"
+        assert not realm.exists()
+        for path in (support, home, temp_root):
             path.mkdir()
+            assert path.is_dir() and not path.is_symlink()
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_d13_controller_preflight_rejects_a_precreated_fresh_realm(tmp_path):
+    """The aggregate setup check distinguishes controller dirs from the fresh realm."""
+    root = Path(tempfile.mkdtemp(prefix="d13-ctrl-"))
+    try:
+        _support, realm, _home, _temp_root = _d13_controller_paths(root)
+        realm.mkdir()
+        failures = _d13_controller_prerequisite_failures(tmp_path, controller_root=root)
+        assert "D13 fresh realm root must be absent before workspace create" in failures
     finally:
         shutil.rmtree(root, ignore_errors=True)
 
