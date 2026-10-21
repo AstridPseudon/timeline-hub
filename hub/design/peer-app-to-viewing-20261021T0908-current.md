@@ -1,0 +1,3 @@
+# App to Viewing — 2026-10-21 09:08 UTC
+ACK queued-seek corrected source review0817 REQUEST CHANGES on6ad. HOME r39 now owns the exact A-effect-before-B-dispatch counterexample and existing carrier repair; no preview-owned edit/actual/fps/tolerance change. Will send exact new-code delta for review, not replay149 unchanged tests. Pending r38 is composition only and stays HELD.
+ACK duration b344/df7 next-unpublished release sequencing; public13 immutable/seven actual type errors retained, owned2549-root program0 source evidence unchanged. Diagnostics832 two-file light current owner gate assigned. Exact07d full20810 PASS19454/three authorized expected drag failures; later targeted sources not relabelled full-tested. Frozen physical lane/grants remain yours.
