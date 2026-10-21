@@ -6,16 +6,16 @@ set -eu
 
 AGENT_REPO=${AGENT_REPO:-/home/user/peteromallet/astrid-agent}
 RUNTIME_REPO=${RUNTIME_REPO:-/home/user/banodoco/banodoco-workspace-runtime}
-AGENT_SHA=3c4f6de4fa777323b3386c01c7266b619b86af6d
-AGENT_TREE=aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c
-RUNTIME_SHA=202074110717146fc7f08af2306a8dd7f695b0b1
-RUNTIME_TREE=ee39286bd0eb27d4075074cc4785d6d15e33f243
-PRODUCER_SHA=a0dca16975dfe8f5e762703b99d9791a16cf7fd7
-PRODUCER_TREE=4b7dd0fe44be973c344bab3de568eaf0bdd28476
-ARTIFACT_SHA=sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa0
-MANIFEST_SHA=ecda762ebe682f266395161af055921c3db33ee9914fb00860626e7e4852d815
+AGENT_SHA=6efc81500a0e0688c2bb41e736503f0fc3e04abb
+AGENT_TREE=2ed2b8a12b5b3391ca221ba6ff05390f71a73556
+RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
+RUNTIME_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
+PRODUCER_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
+PRODUCER_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
+ARTIFACT_SHA=sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac
+MANIFEST_SHA=a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d
 SCHEMA_SHA=6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
-WIRE_SHA=sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59
+WIRE_SHA=sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816
 MARKER_SHA=150a7abb340040e45c34742bc871ef83caab0575
 D05E_SHA=d05e6383f4ccaf7541698a65b2737fbc5f3f0fbb
 LOCKED_GRAPH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph
@@ -92,7 +92,7 @@ manifest_bytes = git_show(runtime, "HEAD:contract/artifacts.json")
 manifest = json.loads(manifest_bytes)
 assert manifest["producer"] == "astrid-runtime"
 assert manifest["version"] == os.environ["EXPECTED_ARTIFACT"]
-assert len(manifest["artifacts"]) == 75
+assert len(manifest["artifacts"]) == 76
 assert digest(manifest_bytes) == os.environ["EXPECTED_MANIFEST"]
 for relative, expected in manifest["artifacts"].items():
     candidate = git_show(runtime, f"HEAD:{relative}")
@@ -104,7 +104,7 @@ runtime_schema = git_show(runtime, "HEAD:contract/schemas/edit-command.json")
 agent_schema = git_show(Path(os.environ["AGENT"]), "HEAD:astrid/core/timeline/schema/edit-command.schema.json")
 assert digest(runtime_schema) == os.environ["EXPECTED_SCHEMA"]
 assert agent_schema == runtime_schema
-print(f"verified artifacts=75 manifest={digest(manifest_bytes)} schema={digest(runtime_schema)}")
+print(f"verified artifacts=76 manifest={digest(manifest_bytes)} schema={digest(runtime_schema)}")
 PY
 }
 
@@ -254,12 +254,12 @@ PY
 prepare_sources() {
   root=$1
   mkdir -p "$root"
-  prepare_checkout "$AGENT_REPO" "$AGENT_SHA" "$root/agent-3c4" "$AGENT_TREE"
-  prepare_checkout "$RUNTIME_REPO" "$RUNTIME_SHA" "$root/runtime-202" "$RUNTIME_TREE"
-  prepare_checkout "$RUNTIME_REPO" "$PRODUCER_SHA" "$root/producer-a0" "$PRODUCER_TREE"
-  git -C "$root/runtime-202" merge-base --is-ancestor "$PRODUCER_SHA" "$RUNTIME_SHA"
-  AGENT="$root/agent-3c4" verify_artifacts "$root/runtime-202" "$root/producer-a0"
-  test "$(git -C "$root/agent-3c4" show -s --format=%T HEAD)" = "$AGENT_TREE"
-  test "$(git -C "$root/runtime-202" show -s --format=%T HEAD)" = "$RUNTIME_TREE"
-  test "$(git -C "$root/producer-a0" show -s --format=%T HEAD)" = "$PRODUCER_TREE"
+  prepare_checkout "$AGENT_REPO" "$AGENT_SHA" "$root/agent-6ef" "$AGENT_TREE"
+  prepare_checkout "$RUNTIME_REPO" "$RUNTIME_SHA" "$root/runtime-95" "$RUNTIME_TREE"
+  prepare_checkout "$RUNTIME_REPO" "$PRODUCER_SHA" "$root/producer-95" "$PRODUCER_TREE"
+  git -C "$root/runtime-95" merge-base --is-ancestor "$PRODUCER_SHA" "$RUNTIME_SHA"
+  AGENT="$root/agent-6ef" verify_artifacts "$root/runtime-95" "$root/producer-95"
+  test "$(git -C "$root/agent-6ef" show -s --format=%T HEAD)" = "$AGENT_TREE"
+  test "$(git -C "$root/runtime-95" show -s --format=%T HEAD)" = "$RUNTIME_TREE"
+  test "$(git -C "$root/producer-95" show -s --format=%T HEAD)" = "$PRODUCER_TREE"
 }

@@ -16,9 +16,9 @@ esac
 
 test -f "$app_root/package.json"
 prepare_sources "$run_root/sources"
-agent="$run_root/sources/agent-3c4"
-runtime="$run_root/sources/runtime-202"
-producer="$run_root/sources/producer-a0"
+agent="$run_root/sources/agent-6ef"
+runtime="$run_root/sources/runtime-95"
+producer="$run_root/sources/producer-95"
 verify_locked_graph
 prepare_private_python "$run_root"
 verify_python_imports_and_collection "$NORMAL014_PYTHON" "$agent" "$runtime"
@@ -51,8 +51,8 @@ node scripts/vendor-lock.mjs check runtime.lock.json --producer "$runtime"
 node scripts/vendor-lock.mjs check runtime.lock.json
 AGENT="$agent" verify_artifacts "$runtime" "$producer"
 test "$(node -e 'console.log(require("./runtime.lock.json").source_commit)')" = "$RUNTIME_SHA"
-test "$(sha256sum src/integrations/runtime/generated-contract-metadata.ts | cut -d' ' -f1)" = 9b3b8723a8d86a78d57bf83f43eb82914d1d0cd81ae89ebdf993b1560ddc57dd
-test "$(sha256sum src/integrations/runtime/generated.ts | cut -d' ' -f1)" = c422ce38279e6df9eb93c5b53993d57e68339b0807d34ed69d85b2408ed98be2
+test "$(sha256sum src/integrations/runtime/generated-contract-metadata.ts | cut -d' ' -f1)" = 4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044
+test "$(sha256sum src/integrations/runtime/generated.ts | cut -d' ' -f1)" = c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d
 test "$(sha256sum src/integrations/runtime/timeline-commit-types.ts | cut -d' ' -f1)" = f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
 test "$(sha256sum vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json | cut -d' ' -f1)" = f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1
 

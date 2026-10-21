@@ -14,8 +14,8 @@ case "$mode" in
 esac
 
 prepare_sources "$run_root/sources"
-runtime="$run_root/sources/runtime-202"
-agent="$run_root/sources/agent-3c4"
+runtime="$run_root/sources/runtime-95"
+agent="$run_root/sources/agent-6ef"
 verify_locked_graph
 prepare_private_python "$run_root"
 
