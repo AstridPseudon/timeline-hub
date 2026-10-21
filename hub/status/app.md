@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T04:53:55Z | dispatcher heartbeat 12s | live 4 (sol 0, luna 4, other 0) | busy30 26 | status age 3m -->
+<!-- app | 2026-10-21T05:00:37Z | dispatcher heartbeat 4s | live 5 (sol 0, luna 5, other 0) | busy30 28 | status age 3m -->
 # app — 2026-10-21 04:50 UTC
 Milestone: M1 RECORDED. M2 writer deletions and Gate 6 physical parity remain OPEN.
 Integrated: App tl/integration bc6f9dd39; latest merge removes unused private UndoEntry.label. Full remains frozen on e1e153091 / tree aa20a99731b91c2fa5e36b258c131147f3d7d651. Main860 ancestor, published Runtime 0.2.14 producer95bd, Composition13; genuine Agent091aa vendor output retained. Native initializer activated1557 after actual7782 PASS1 and independent review; original two native tests and61 assertions preserved.
@@ -27,3 +27,5 @@ Decided locally: reject public-trim r5 hidden production button/query probe. Kee
 Deletion closed: D02-app-undo-entry-label DELETED at bc6f9dd39; existing history 38 and TimelineOps 71 neighbor tests pass. Whole D02 remains OPEN. Split conversion r26 APPROVE exact f8c2f50e / tree 69f14602; one subsequent actual assigned, no assertion or source-window change. Settings r17 made no central request: spec still named old 8130/2c4/e700; exact containing-cohort guard source repair r18 is READY.
 
 04:50: Popup r24 APPROVE exact d3e8364e / tree05c2d9ea; original979 spec byte-identical,122 focused tests reused. One central diagnostic r25 requested. Public Trim r6 confirms no ordinary invocation seam; r7 will build only a test-owned mounted fixture, keeping original field-gesture case and all product test controls absent. Quality71 individual ownership remains UNKNOWN because ratchet retained only aggregate; one underlying diagnostics capture waits until full24749 finishes.
+
+04:58: Browser scheduling cause named: full24749 intentionally owns .app-m1-browser.lock. Auto11124 timed out608s before preflight/body. Popup12116 and split28584 cancellation requested before their known600s lock timeout; preserve original frozen sources, no product evidence. Do not submit another browser request until full24749 completes. Split registration also names Agent8130 with Runtime95; source/producer roles must be reconciled to a matched pair before execution, not inferred from operation similarity.
