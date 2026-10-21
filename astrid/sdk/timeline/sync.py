@@ -226,9 +226,11 @@ class TimelineSession:
 
         bundle = fetch_bundle(self.project_id, self.timeline_id,
                               revision_id=state["base"]["revision_id"], client=self.client)
-        materialize_transcript_inputs(
-            bundle, [*state["pending"], *extra_commands],
-            client=self.client.timelines._client, project=self.project_id)
+        commands = [*state["pending"], *extra_commands]
+        if any(command.get("op") == "clip.anchor" for command in commands):
+            materialize_transcript_inputs(
+                bundle, commands,
+                client=self.client.timelines._client, project=self.project_id)
         return execute(bundle, state["pending"]).bundle if state["pending"] else bundle
 
     def queue_move(self, select, on):

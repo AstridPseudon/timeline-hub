@@ -552,6 +552,26 @@ def test_foreign_status_fails_closed(tmp_path, isolated, channel):
     assert [item["op"] for item in messages] == ["submit", "status"]
 
 
+def test_child_status_error_preserves_identity_guard_and_close():
+    local, host = socket.socketpair()
+    bridge = bridge_module.ChildBridge(local)
+    foreign = {
+        "association_id": "A-child", "run_id": "R-child", "task_id": "T-foreign",
+        "attempt_id": "A-attempt", "object_id": "sha256:" + "a" * 64,
+        "digest": "sha256:" + "a" * 64, "size": 0, "ordinal": 0,
+        "filename": "output.txt", "media_type": "text/plain", "output_port": "text",
+    }
+    try:
+        with pytest.raises(ValueError, match="invalid child output descriptor"):
+            bridge_module._validate_output(foreign, task_id="T-child", run_id="R-child")
+        bridge.close()
+        assert bridge._closed
+        assert local.fileno() == -1
+    finally:
+        bridge.close()
+        host.close()
+
+
 @pytest.mark.parametrize("failure", [
     "late_reply", "late_timeout", "late_partial", "early_timeout", "early_timeout_diagnostic_delay",
     "early_timeout_cleanup_delay", "late_eof", "late_oversized", "late_multiframe",

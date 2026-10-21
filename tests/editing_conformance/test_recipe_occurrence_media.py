@@ -285,6 +285,55 @@ class MediaRealm(DetachedRealm):
         return create_runtime_commit_service().commit(context, MediaPort(self, context))
 
 
+def _raw_old_occurrence_swap():
+    document, old, new, verified = inputs('video')
+    document['shot_revisions'][0]['payload']['unknown']['keep'] = True
+    document['shot_revisions'][0]['content_digest'] = _digest(document['shot_revisions'][0]['payload'])
+    document['dependency_manifest'] = _manifest(document['shot_revisions'],
+        document['internal_timeline_revisions'], document['dependency_manifest']['media'], [])
+    bundle = bundle_from_document(document)
+    raw = {'media_id': old['object_id'], 'content_digest': old['object_id']}
+    alias = OWNER + '/asset:picture'
+    State(bundle).entity(alias).clear()
+    State(bundle).entity(alias).update(raw)
+    raw_verified = [
+        {'raw_pin': copy.deepcopy(raw), 'media_info': {
+            'object_id': raw['media_id'], 'media_type': 'video/mp4', 'size': 9,
+        }},
+        copy.deepcopy(verified[1]),
+    ]
+    command = capture_occurrence_swap_media(bundle, TARGET, raw, new,
+                                            verified_media=raw_verified)
+    return bundle, command, raw_verified
+
+
+def test_obsolete_same_alias_carrier_refuses_without_refreshing_original_claims():
+    # The former positive same-alias carrier is obsolete: the current raw-old
+    # successor must refuse it instead of silently refreshing its claims.
+    document, old, new, verified = inputs()
+    bundle = bundle_from_document(document)
+    command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
+    new = {**new, 'asset': old['asset']}
+    verified[1]['selection']['asset'] = old['asset']
+    command['args']['media'] = new
+    original = copy.deepcopy(command)
+    before = copy.deepcopy(bundle)
+    with pytest.raises(CommandError, match='existing registry binding'):
+        execute(bundle, [command], verified_media=verified)
+    assert command == original and bundle == before
+
+
+def test_current_raw_old_successor_preserves_payload_and_exact_undo_redo():
+    bundle, command, verified = _raw_old_occurrence_swap()
+    before = copy.deepcopy(bundle)
+    assert command['version'] == '3'
+    plan = execute(bundle, [command], verified_media=verified)
+    shot = State(plan.bundle).occurrence(OWNER)['shot_id']
+    assert plan.bundle['shots'][shot]['payload']['unknown']['keep'] is True
+    assert inverse(plan.bundle, plan.records).bundle == before
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+
+
 @pytest.mark.parametrize('operation', ['add', 'swap'])
 def test_provider_exact_reload_inverse_redo_and_retired_asset_reservation(operation):
     document, _, command, verified = captured(operation, 'video')
