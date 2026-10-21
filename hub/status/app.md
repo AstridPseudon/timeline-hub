@@ -1,14 +1,14 @@
-<!-- app | 2026-10-21T05:00:37Z | dispatcher heartbeat 4s | live 5 (sol 0, luna 5, other 0) | busy30 28 | status age 3m -->
-# app — 2026-10-21 04:50 UTC
+<!-- app | 2026-10-21T05:07:00Z | dispatcher heartbeat 2s | live 5 (sol 0, luna 5, other 0) | busy30 30 | status age 3m -->
+# app — 2026-10-21 05:01 UTC
 Milestone: M1 RECORDED. M2 writer deletions and Gate 6 physical parity remain OPEN.
 Integrated: App tl/integration bc6f9dd39; latest merge removes unused private UndoEntry.label. Full remains frozen on e1e153091 / tree aa20a99731b91c2fa5e36b258c131147f3d7d651. Main860 ancestor, published Runtime 0.2.14 producer95bd, Composition13; genuine Agent091aa vendor output retained. Native initializer activated1557 after actual7782 PASS1 and independent review; original two native tests and61 assertions preserved.
-In flight (five live/requested; target 5–7):
-- app-m4-canonical-full-current-execute-r21 — sole full24749 on App e1e153091/tree aa20,1520 files collected; no duplicate.
-- app-m2-auto-approved-source-central-registration-r25 — D01-app-placement approved fixture and exact central registration.
-- app-m2-settings-complete-cohort-guard-source-r18 — item10 settings spec and runner must match the containing published cohort.
-- app-m2-split-approved-unit-one-real-r27 — one real proof after independently approved source-unit expectation correction.
-- app-m2-popup-approved-original-one-diagnostic-r25 — Gate6 original occurrence ADD after exact scope/custody APPROVE.
-READY3: original TypeScript diagnostics after full; test-only mounted public Trim fixture; D02 retained-caller migration dependency.
+In flight (five live at 05:00; READY five):
+- app-m4-canonical-full-current-execute-r21 — sole full24749 running; intentional browser-lock owner.
+- app-m4-quality71-original-diagnostics-capture-r4 — prepare exact underlying diagnostics; typecheck waits full completion.
+- app-m2-transition-clear-mounted-readiness-cause-r3 — D01 transition clear fixture first-cause diagnosis, product routing already native.
+- app-m2-popup-approved-original-one-diagnostic-r25 — request12116 CANCELLED before preflight; worker finalizing evidence.
+- app-m2-split-approved-unit-one-real-r27 — request28584 CANCELLED before preflight; worker finalizing evidence.
+READY5: automatic exact case after full; public Trim fixture custody review; selected workspace404 cause; split matched-cohort registration diagnosis; settings canonical READY/committed-source registration repair.
 Next5: run corrected full once; automatic actual proof then applicable cut; settings review then mounted proof; public trim proof then bounded cut; popup ADD proof and dataProvider295 consumer migration.
 Rows one step from deletion: native initializer caller physically removed28 lines at5c53/1557, App2 owns bounded ledger closure. Automatic requires actual task/restart/retry/undo/zeroLegacy. Popup ADD requires actual native POST and full body; SWAP separate. Public trim requires actual public-method route. D02 sweeper must establish zero live callers before cutting. Ordinary snapshot save remains App2-owned and live.
 Gate3/5: public013 central9946 PASS4 retained; current6ef/95 mixed4657 neighbor PASS19.5s only, whole run WITHDRAWN. Historical exit-loss cause UNKNOWN; planted3198 and independent review close hardening. No repeat.
@@ -29,3 +29,7 @@ Deletion closed: D02-app-undo-entry-label DELETED at bc6f9dd39; existing history
 04:50: Popup r24 APPROVE exact d3e8364e / tree05c2d9ea; original979 spec byte-identical,122 focused tests reused. One central diagnostic r25 requested. Public Trim r6 confirms no ordinary invocation seam; r7 will build only a test-owned mounted fixture, keeping original field-gesture case and all product test controls absent. Quality71 individual ownership remains UNKNOWN because ratchet retained only aggregate; one underlying diagnostics capture waits until full24749 finishes.
 
 04:58: Browser scheduling cause named: full24749 intentionally owns .app-m1-browser.lock. Auto11124 timed out608s before preflight/body. Popup12116 and split28584 cancellation requested before their known600s lock timeout; preserve original frozen sources, no product evidence. Do not submit another browser request until full24749 completes. Split registration also names Agent8130 with Runtime95; source/producer roles must be reconciled to a matched pair before execution, not inferred from operation similarity.
+
+D02 next cut is HELD on App2 ordinary project-data capture/finish/submit migration. Current useTimelineHistory.restoreHistoryEntry still serves unmigrated operations; unsent snapshot undo/recovery cannot be deleted. Existing six-file132 test proof retained. No safe further D02 deletion now. Browser11124 failure is infrastructure scheduling only; popup12116 and split28584 cancelled, no product assertions executed. Next actuals wait full24749 and retain strict locks.
+
+05:03: Full24749 completed FAIL exit2,19428 passed/14 failed/3 authorized expected failures,6 failed+1514 passed files. Postflight additionally says App-keeper HEAD changed. Counts are diagnostic only pending exact custody attribution; no qualification/zero-new claim. r21 classifies fourteen nodes; r22 diagnoses keeper independently. Browser lock is now released; post-full actuals remain one per approved frozen case.
