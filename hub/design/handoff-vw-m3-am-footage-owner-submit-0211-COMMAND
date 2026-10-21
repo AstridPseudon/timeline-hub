@@ -1,0 +1,51 @@
+# AM-footage owner-gate handoff. Run from a clean Agent owner checkout.
+set -eu
+
+BASE=4467c1c1a9ed81fa7cd1b2d7687b8ada54dc216a
+DONOR=53d1f5c7282064fcf8802646313bf31612dd8ee8
+PATCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-am-footage-owner-submit-0211-PATCH
+PYTHON=/home/user/work/venv-agent/bin/python
+NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+PEERS=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b/node_modules
+: "${PRIVATE_PROJECT:?set PRIVATE_PROJECT to an owner-created real private project scope}"
+: "${PRIVATE_SCOPE:?set PRIVATE_SCOPE to an owner-created real private package scope}"
+: "${PRIVATE_REMOTION:?set PRIVATE_REMOTION to an owner-created real private Remotion scope}"
+
+git rev-parse HEAD
+git show -s --format='%H %P %s' "$DONOR"
+git apply --check "$PATCH"
+git diff --check
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" "$PYTHON" \
+  -m astrid.core.pack.cli validate astrid/packs/astrid_motion
+PATH="$(dirname "$NODE"):$PATH" "$NODE" \
+  astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.test.mjs \
+  "$PRIVATE_PROJECT" "$PWD"
+PATH="$(dirname "$NODE"):$PATH" "$NODE" --test \
+  remotion/tests/am-footage-volume.test.cjs
+
+env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONPATH="$PWD" PATH="$(dirname "$NODE"):$PEERS/.bin:/usr/local/bin:/usr/bin:/bin" \
+  ASTRID_NODE_EXECUTABLE="$NODE" ASTRID_TEST_NODE_MODULES="$PEERS" \
+  ASTRID_REMOTION_PROJECT_DIR="$PRIVATE_SCOPE" \
+  "$PYTHON" -m pytest -q -p no:cacheprovider -o addopts= \
+  tests/packs/rendering/test_scene_host.py tests/packs/rendering/test_scene_answers.py
+
+env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONPATH="$PWD" PATH="$(dirname "$NODE"):$PEERS/.bin:/usr/local/bin:/usr/bin:/bin" \
+  ASTRID_NODE_EXECUTABLE="$NODE" ASTRID_REMOTION_PROJECT_DIR="$PRIVATE_SCOPE" \
+  "$PYTHON" -m pytest -q -p no:cacheprovider -o addopts= \
+  tests/packs/rendering/test_remotion_element_generation.py \
+  tests/packs/rendering/test_effect_registry_target.py
+
+ASTRID_REMOTION_PROJECT_DIR="$PRIVATE_REMOTION" ASTRID_NODE_EXECUTABLE="$NODE" \
+  PYTHONPATH="$PWD" "$PYTHON" -B scripts/gen_remotion_types.py \
+  "$PRIVATE_REMOTION/src/types.generated.ts" --include-element-registries
+(cd "$PRIVATE_REMOTION" && PATH="$PEERS/.bin:$(dirname "$NODE"):/usr/local/bin:/usr/bin:/bin" \
+  ASTRID_REMOTION_PROJECT_DIR="$PRIVATE_REMOTION" ASTRID_NODE_EXECUTABLE="$NODE" \
+  ASTRID_CHECKOUT="$PRIVATE_REMOTION/../astrid" PYTHONPATH="$PWD" tsc --noEmit)
+ASTRID_REMOTION_PROJECT_DIR="$PRIVATE_SCOPE" ASTRID_NODE_EXECUTABLE="$NODE" \
+  PYTHONPATH="$PWD" "$PYTHON" scripts/gen_element_catalog.py --check
+git diff --check
+
+# No install, activation, render, physical run, or full suite is part of this handoff.
