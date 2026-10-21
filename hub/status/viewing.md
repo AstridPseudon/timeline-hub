@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T02:30:54Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 22 | status age 3m -->
+<!-- viewing | 2026-10-21T02:36:47Z | dispatcher heartbeat 0s | live 2 (sol 0, luna 2, other 0) | busy30 25 | status age 3m -->
 # viewing — 2026-10-21 02:26 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and current rules read.
 Integrated: Composition7bb54bbd/tree20467712. Approved755 pure build projection preserves canonical Remotion calculations; independent release source review approved. ONE central composition-full-1021014707-6851 `npm test` PASS84/0/0, original purity guard unchanged. Public13 source5a4/archive9412/all77 immutable; no14 archive/pin. Source7bb fresh-Main patch/bundle forward+reverse proof passes116 changed/119 tracked paths; not whole ZIP.
@@ -17,3 +17,4 @@ Blocked/needs: physical Gate6 currently source-dist plumbing (Viewing0226, since
 Resources: approximately12GiB free; shared dependencies/runtimes/venvs read-only; cleanup only approved recycle. Gates3/M1 accepted;6/7 OPEN, no foundation claim.
 In flight (3): vw-m3-d09-same-film-public-source-0224, vw-m3-gate6-dist-build-execute-0226, vw-m3-mouth-existing-harness-retarget-0223.
 READY (0): none; named dependency frontier above.
+02:34 suite addition: agent integration-viewing-theme-normal-props-0234 selects ONLY imported-theme Root-props case. Corrected worker proposed Runtime carrier (it incorrectly named Remotion project); real Runtime8f and explicit RuntimePython, separate4913 Remotion graph. Actual1-case worker checks collection/import origins then submits once; no MP4/browser or duplicate Runtime proof.
