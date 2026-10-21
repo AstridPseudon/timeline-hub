@@ -100,9 +100,13 @@ describe('same-origin operation owner (inactive)', () => {
 
   it.each(['bind', 'reconnect', 'dispose', 'failed-acquire'] as const)('retires callbacks synchronously before %s', async action => {
     const f = env(); const old = await f.host.bind();
+    const request = { method: 'POST', path: '/v1/tasks', body: '{}', key: 'pending' };
+    old.beginTaskSubmission(request, () => {});
+    expect(old.isTaskSubmissionActive(request)).toBe(true);
     if (action === 'failed-acquire') f.intercept((path, options, response) => path === O && options.method === 'POST' ? reply({}, 503) : response);
     const pending = action === 'dispose' ? Promise.resolve(f.host.dispose()) : action === 'reconnect' ? f.host.reconnect() : f.host.bind();
     expect(old.isCurrentIdentity(launch)).toBe(false);
+    expect(old.isTaskSubmissionActive(request)).toBe(false);
     await expect(old.getTask('late')).rejects.toThrow(/retired/);
     if (action === 'failed-acquire') await expect(pending).rejects.toThrow(); else await pending;
     if (action === 'dispose') await expect(f.host.bind()).rejects.toThrow();

@@ -20,6 +20,7 @@ type Client = Pick<WorkspaceClient, 'admitTask' | 'getTask' | 'listManagedOutput
   getProjectVerifiedMedia?: WorkspaceClient['getProjectVerifiedMedia'];
   // A host using the existing App route preserves its already-normalized bytes on lost-ACK replay.
   admitPreparedTask?(request: OutboxRequest): Promise<Task>;
+  isTaskSubmissionActive?(request: OutboxRequest): boolean;
   // The authenticated host adapter checks its live lifecycle, including invalidation, synchronously.
   // A generated client or a cached handshake alone cannot supply this binding.
   isCurrentIdentity?(expected: Identity): boolean;
@@ -214,6 +215,7 @@ export function createPlacementRequester(options: {
           await authorize(scope, box);
           assertCurrent(scope, box);
           const request = original.input.request;
+          if (options.client.isTaskSubmissionActive?.(request)) return progress('waiting');
           if (!options.client.admitPreparedTask && preparePlacementTask(prepared, request.key).body !== request.body) {
             throw new Error('Exact prepared task replay binding is unavailable');
           }

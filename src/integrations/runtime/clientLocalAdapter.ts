@@ -99,25 +99,27 @@ export function createOperationLocalClient(operation: RuntimeOperation, projectI
       const parsed = bridgeTaskAdmissionRequestSchema.parse(request);
       if (parsed.project !== projectId) throw new Error('Task admission project differs from the bound editor project');
       const body = canonicalAdmission(parsed);
-      if (reservation) {
-        if (reservation.key !== idempotencyKey) throw new Error('Placement admission key changed');
-        await reservation.reserve({ method: 'POST', path: '/v1/tasks', body, key: idempotencyKey });
-        reservation.assertCurrent();
-      }
-      const admitted = await operation.admitPreparedTask({
-        method: 'POST', path: '/v1/tasks', body, key: idempotencyKey,
-      } satisfies OutboxRequest);
-      if (admitted.project_id !== parsed.project || admitted.idempotency_key !== idempotencyKey
-        || admitted.capability_id !== parsed.capability_id || admitted.capability_digest !== parsed.capability_digest) {
-        throw new Error('Task response differs from the reserved admission');
-      }
-      const task = admittedResponse(projectId, admitted);
-      if (reservation?.admitted) {
-        reservation.assertCurrent();
-        await reservation.admitted(task.task);
-        reservation.assertCurrent();
-      }
-      return task;
+      if (reservation && reservation.key !== idempotencyKey) throw new Error('Placement admission key changed');
+      const saved: OutboxRequest = { method: 'POST', path: '/v1/tasks', body, key: idempotencyKey };
+      const release = reservation ? operation.beginTaskSubmission(saved, reservation.assertCurrent) : undefined;
+      try {
+        if (reservation) {
+          await reservation.reserve(saved);
+          reservation.assertCurrent();
+        }
+        const admitted = await operation.admitPreparedTask(saved);
+        if (admitted.project_id !== parsed.project || admitted.idempotency_key !== idempotencyKey
+          || admitted.capability_id !== parsed.capability_id || admitted.capability_digest !== parsed.capability_digest) {
+          throw new Error('Task response differs from the reserved admission');
+        }
+        const task = admittedResponse(projectId, admitted);
+        if (reservation?.admitted) {
+          reservation.assertCurrent();
+          await reservation.admitted(task.task);
+          reservation.assertCurrent();
+        }
+        return task;
+      } finally { release?.(); }
     },
   };
   return { catalog, objects, tasks } as LocalClient;

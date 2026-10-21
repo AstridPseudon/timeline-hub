@@ -81,6 +81,13 @@ export class RuntimeOperationHost {
     const fetchImpl = this.fetchImpl;
     let retired = false;
     let negotiated: Identity | undefined;
+    let taskSubmission: { request: OutboxRequest; assertCurrent(): void } | undefined;
+    const currentTaskSubmission = () => {
+      // A released editor claim makes even a still-pending POST uncertain.
+      try { taskSubmission?.assertCurrent(); }
+      catch { taskSubmission = undefined; }
+      return taskSubmission;
+    };
     const options = (method: string, handle?: string): RequestInit => ({
       method, cache: 'no-store', mode: 'same-origin', credentials: 'omit', redirect: 'error',
       signal: controller.signal,
@@ -97,6 +104,7 @@ export class RuntimeOperationHost {
         if (retired) return;
         retired = true;
         negotiated = undefined;
+        taskSubmission = undefined;
         controller.abort();
         if (binding.handle) cleanup(binding.handle);
       },
@@ -239,6 +247,20 @@ export class RuntimeOperationHost {
       return Object.freeze({
         retire: () => binding.retire(),
         isCurrentIdentity,
+        // Covers reservation through locator persistence, not just the HTTP POST.
+        beginTaskSubmission(request: OutboxRequest, assertCurrent: () => void) {
+          active();
+          assertCurrent();
+          if (currentTaskSubmission()) throw new Error('Original task submission is still active');
+          const pending = { request: { ...request }, assertCurrent };
+          taskSubmission = pending;
+          return () => { if (taskSubmission === pending) taskSubmission = undefined; };
+        },
+        isTaskSubmissionActive(request: OutboxRequest) {
+          const pending = currentTaskSubmission()?.request;
+          return !!pending && pending.method === request.method && pending.path === request.path
+            && pending.key === request.key && pending.body === request.body;
+        },
         getRecoverableIdentity: () => run(async () => {
           active();
           if (!negotiated) throw new Error('Operation is not negotiated');

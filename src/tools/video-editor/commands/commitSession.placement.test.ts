@@ -4,7 +4,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { runtimeTaskQueryKey, subscribeRuntimeTaskUpdates } from '@/features/tasks/components/TasksPane/hooks/useRuntimeTaskEvents.ts';
 import { initializeWorkspaceRuntimeIdentity, RUNTIME_CLIENT_SCOPES } from '@/integrations/runtime/client.ts';
 import { RUNTIME_SCHEMA_DIGEST, RUNTIME_TARGETED_EXECUTION_CAPABILITY } from '@/integrations/runtime/contract-metadata.ts';
-import { RuntimeOperationHost } from '@/integrations/runtime/operationHost.ts';
+import { RuntimeOperationHost, type RuntimeOperation } from '@/integrations/runtime/operationHost.ts';
 import { createEditorImagePlacementHost } from '@/integrations/runtime/clientLocalAdapter.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, Task } from '@/integrations/runtime/generated.ts';
@@ -98,7 +98,7 @@ function environment() {
     if (path.endsWith('/v1/realm')) return reply({ realm_id: launch.realmId });
     if (path.endsWith('/v1/tasks') && options.method === 'POST') {
       task.idempotency_key = headers.get('Idempotency-Key')!;
-      if (holdAdmission) await admissionGate?.promise;
+      if (holdAdmission) { holdAdmission = false; await admissionGate?.promise; }
       if (lostAdmission) { lostAdmission = false; throw new Error('Lost admission ACK'); }
       return reply({ data: task, receipt: {} }, 201);
     }
@@ -126,10 +126,10 @@ function environment() {
   };
   const projected: TimelineCommandBasis[] = [];
   const directSend = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>(async () => { throw new Error('Placement must use the bound operation'); });
-  const mount = async (basis = initial, project?: (basis: TimelineCommandBasis) => Promise<void>) => {
+  const mount = async (basis = initial, project?: (basis: TimelineCommandBasis) => Promise<void>, existingOperation?: RuntimeOperation) => {
     const operationHost = new RuntimeOperationHost(fetchImpl as typeof fetch);
     operationHosts.push(operationHost);
-    const operation = await operationHost.bind();
+    const operation = existingOperation ?? await operationHost.bind();
     const host = createEditorImagePlacementHost(operation, scope.projectId);
     const session = await createTimelineCommandSession({ scope, initial: basis, outboxes,
       imagePlacementHost: { ...host, taskEventsReady: async () => { await eventReady?.promise; }, subscribe: (notify) => {
@@ -181,16 +181,28 @@ describe('production command session automatic image continuation', () => {
     expect(env.admissions()).toEqual([]);
   });
 
-  it('does not re-admit while the original reserved task POST is pending, then recovers after its lost acknowledgement', async () => {
+  it.each([false, true])('does not re-admit while the original reserved task POST is pending, then recovers (lost ACK: %s)', async (lostAck) => {
     const env = environment(), first = await env.mount(), gate = env.pauseAdmission();
     const admitting = env.admit(first.session);
     await vi.waitFor(() => expect(env.admissions()).toHaveLength(1));
-    await Promise.resolve();
+    const [reserved] = await env.outboxes.list(scope);
+    const original = structuredClone(reserved.placementContinuations![0].input);
+    expect(reserved.placementContinuations![0].taskLocator).toBeUndefined();
+    expect(first.operation.isTaskSubmissionActive(original.request)).toBe(true);
+    // Refresh the durable reservation, then drain each existing wake while
+    // the original submit still has no acknowledgement or task locator.
+    await first.session.retry();
+    first.session.observe(env.initial);
+    await first.session.resumePlacements();
+    env.notify();
+    await first.session.resumePlacements();
     expect(env.admissions()).toHaveLength(1);
 
-    env.loseAdmission();
+    if (lostAck) env.loseAdmission();
     gate.release();
-    await expect(admitting).rejects.toThrow();
+    if (lostAck) await expect(admitting).rejects.toThrow();
+    else await admitting;
+    expect(first.operation.isTaskSubmissionActive(original.request)).toBe(false);
     expect(env.admissions()).toHaveLength(1);
     await first.session.dispose();
 
@@ -199,11 +211,34 @@ describe('production command session automatic image continuation', () => {
     const second = await env.mount();
     await second.session.recover(saved.ownerId);
     expect(second.session.getState()).toMatchObject({ status: 'saved', canUndo: true });
+    expect(env.admissions()).toHaveLength(lostAck ? 2 : 1);
+    for (const { body, key } of env.admissions()) expect({ body, key }).toEqual({ body: original.request.body, key: original.request.key });
+    const [accepted] = await env.outboxes.list(scope);
+    expect(accepted.placementContinuations![0]).toMatchObject({ input: original, mediaPin: pin,
+      placement: { accepted: { head: { revisionId: 'r1', publicationId: 'p1' } } } });
+  });
+
+  it.each(['session', 'operation'] as const)('retires a pending admission on %s disposal and recovers before the old response arrives', async (lifetime) => {
+    const env = environment(), first = await env.mount(), gate = env.pauseAdmission();
+    const admitting = env.admit(first.session);
+    const refused = expect(admitting).rejects.toThrow();
+    await vi.waitFor(() => expect(env.admissions()).toHaveLength(1));
+    const [saved] = await env.outboxes.list(scope);
+    const original = structuredClone(saved.placementContinuations![0].input);
+    const stale = [...env.events][0];
+    await first.session.dispose();
+    if (lifetime === 'operation') first.operationHost.dispose();
+    expect(first.operation.isTaskSubmissionActive(original.request)).toBe(false);
+    first.session.observe(env.initial); stale();
+    env.task.state = 'succeeded';
+    const second = await env.mount(env.initial, undefined, lifetime === 'session' ? first.operation : undefined);
+    await second.session.recover(saved.ownerId);
+    expect(second.session.getState()).toMatchObject({ status: 'saved', canUndo: true });
+    const [accepted] = await env.outboxes.list(scope);
+    gate.release(); await refused;
     expect(env.admissions()).toHaveLength(2);
-    expect(env.admissions().map(({ body, key }) => ({ body, key }))).toEqual([
-      { body: saved.placementContinuations![0].input.request.body, key: saved.placementContinuations![0].input.request.key },
-      { body: saved.placementContinuations![0].input.request.body, key: saved.placementContinuations![0].input.request.key },
-    ]);
+    for (const { body, key } of env.admissions()) expect({ body, key }).toEqual({ body: original.request.body, key: original.request.key });
+    expect((await env.outboxes.list(scope))[0]).toEqual(accepted);
   });
 
   it('keeps the Provider-owned operation current when a command session is replaced', async () => {

@@ -23,13 +23,15 @@ const task: Task = {
 
 function operation() {
   const calls: string[] = [];
+  const release = vi.fn();
   const fake = {
+    beginTaskSubmission: vi.fn(() => release),
     listCapabilities: vi.fn(async () => ({ items: [{ capability_id: request.capability_id, definition_digest: request.capability_digest,
       status: 'ready' as const, required_resource_keys: [], estimated_scratch_bytes: 1, estimated_output_bytes: 1 }], next_cursor: null })),
     listProjectObjects: vi.fn(async () => ({ items: [], next_cursor: null })),
     admitPreparedTask: vi.fn(async (saved: { body: string }) => { calls.push(saved.body); return task; }),
   };
-  return { fake: fake as unknown as RuntimeOperation, calls };
+  return { fake: fake as unknown as RuntimeOperation, calls, release };
 }
 
 describe('operation-to-local task client adapter', () => {
@@ -51,6 +53,26 @@ describe('operation-to-local task client adapter', () => {
     });
     expect(admitted).toHaveBeenCalledWith(response.task);
     expect(assertCurrent).toHaveBeenCalled();
+    expect(env.release).toHaveBeenCalledOnce();
+  });
+
+  it.each(['reserve', 'admit', 'locator'] as const)('releases the active submission after a %s failure', async (stage) => {
+    const env = operation();
+    const client = createOperationLocalClient(env.fake, 'project');
+    const reserve = vi.fn(async () => {
+      expect(env.fake.beginTaskSubmission).toHaveBeenCalledOnce();
+      expect(env.release).not.toHaveBeenCalled();
+      if (stage === 'reserve') throw new Error('reserve failed');
+    });
+    if (stage === 'admit') vi.mocked(env.fake.admitPreparedTask).mockRejectedValueOnce(new Error('admit failed'));
+    const admitted = vi.fn(async () => {
+      expect(env.release).not.toHaveBeenCalled();
+      throw new Error('locator failed');
+    });
+    await expect(client.tasks.admit(request, 'key', { key: 'key', reserve, assertCurrent: vi.fn(), admitted }))
+      .rejects.toThrow(`${stage} failed`);
+    expect(env.release).toHaveBeenCalledOnce();
+    expect(env.calls).toHaveLength(stage === 'locator' ? 1 : 0);
   });
 
   it('refuses an idempotency key that differs from the reserved key before admission', async () => {
