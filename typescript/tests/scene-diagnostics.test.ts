@@ -130,12 +130,16 @@ const modifier = (bounds: 'preserve' | 'unknown'): ModifierRegistry => ({shift: 
 }});
 
 test('animation and undeclared modifier geometry cannot manufacture opaque occlusion', () => {
-  for (const upper of [clip('upper', {entrance: 'fade-up'}), clip('upper', {cropTop: .1}),
-    clip('upper', {modifiers: [{id: 'shift', element: 'shift', params: {}}]})]) {
+  for (const upper of [clip('upper', {entrance: 'fade-up'}), clip('upper', {cropTop: .1})]) {
     const answer = querySceneFrame(prepare([clip('target'), upper], modifier('unknown')), 10);
     assert.equal(answer.layers[0].visible, true);
-    assert.equal(querySceneOcclusion(answer, 'target', .9).status, 'unknown');
+    assert.equal(querySceneOcclusion(answer, 'target', .9).status, 'known');
   }
+  const answer = querySceneFrame(prepare([clip('target'), clip('upper', {
+    modifiers: [{id: 'shift', element: 'shift', params: {}}],
+  })], modifier('unknown')), 10);
+  assert.equal(answer.layers[0].visible, true);
+  assert.equal(querySceneOcclusion(answer, 'target', .9).status, 'unknown');
 });
 
 test('opaque occlusion uses the actual transition and track opacity, modifier support and blend facts', () => {

@@ -1,12 +1,14 @@
-// Pure clip-look and animation-shape helpers. No remotion/react imports so the
-// node tests can compile and run this module directly.
+// Pure clip-look and animation-shape helpers. No React imports; Remotion is
+// used only for its pure animation math so render and scene share the result.
 
 import type {TimelineClip} from '../types';
 import {getClipDurationInFrames, secondsToFrames} from './duration';
 import {normalizeRenderCropValues} from './render-bounds';
+import {interpolate, spring} from 'remotion';
+import {animationProgress} from './animation-easing';
 
 // Structurally identical to effects-types AnimationReferenceList (kept local so
-// this module imports nothing that pulls in react or remotion).
+// this module does not pull in React component trees).
 export type AnimationReferenceItem = string | {
   id: string;
   durationFrames?: number;
@@ -178,4 +180,20 @@ export const clipSpeed = (speed: unknown): number =>
 export const remappedFrame = (frame: number, speed: unknown): number => {
   const s = clipSpeed(speed);
   return s === 1 ? frame : Math.floor(frame * s);
+};
+
+export type BuiltinClipLookStyle = {opacity: number; transform: string; translateY?: number; scale?: number};
+
+/** Shared by the rendered wrapper and the scene geometry query. */
+export const builtinClipLookStyle = (id: 'fade-up' | 'scale-in', elapsedFrames: number,
+  durationFrames: number, fps: number, easing?: unknown, suppliedProgress?: number): BuiltinClipLookStyle => {
+  const explicitProgress = suppliedProgress ?? animationProgress(elapsedFrames, durationFrames, easing);
+  const progress = explicitProgress ?? spring({frame: elapsedFrames, fps, from: 0, to: 1,
+    durationInFrames: durationFrames, config: {damping: 14, stiffness: 110}});
+  if (id === 'fade-up') {
+    const translateY = explicitProgress === undefined ? interpolate(progress, [0, 1], [40, 0]) : 40 * (1 - progress);
+    return {opacity: progress, translateY, transform: `translateY(${translateY}px)`};
+  }
+  const scale = explicitProgress === undefined ? interpolate(progress, [0, 1], [0.85, 1]) : 0.85 + 0.15 * progress;
+  return {opacity: progress, scale, transform: `scale(${scale})`};
 };

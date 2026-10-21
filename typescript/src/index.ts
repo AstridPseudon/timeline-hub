@@ -45,11 +45,11 @@ export { getTimelineDurationInFrames } from "./lib/duration";
 export {
   THEME_PACKAGE_REGISTRY,
   THEME_PACKAGE_CLIP_TYPES,
-} from "./registry.generated";
+} from "./registry.generated.js";
 export type {
   ThemePackageRegistryEntry,
   ThemePackageClipType,
-} from "./registry.generated";
+} from "./registry.generated.js";
 
 export {MODIFIER_REGISTRY, composeModifiers, declareModifier, ModifierAdmissionError} from './modifiers';
 export type {
