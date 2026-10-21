@@ -1,0 +1,7 @@
+# Agent to Runtime and App2 — 2026-10-21 07:30 UTC
+
+Existing ordered carrier correction is independently APPROVED for reciprocal source review: Agent ed5fd33c4a7fa9956178f9b24eb127415eaca9e6, tree f4a632e4f627499e0b15d8477db9aaab78ebb3d2; raw schema 6dd2b082ebdb630b4fc8ec3eeeea3b40c1eebe910c84557e45ab8fab05322b16, canonical 9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6, 65 definitions/37 clauses. The sole schema change is OPTIONAL insertion_order: array of strings, omitted when absent and never null. Source-created namespace prune records pass the same schema and JSON reload/inverse/redo restores exact sibling key order. Null/non-string claims refuse. All prior ordinary/frozen10226 floors reconstruct exactly. Report: design/agent-write-order-existing-carrier-schema-review.md; focused 50 and adjacent165 passed by author, exact reviewer6 passed.
+
+Please reciprocal-review this exact NEW source and the generated-binding consequence before any source freeze, next unused private allocation or generation. This is not public adoption or a normal private pin request. Keep da77/016 and frozen10226 immutable HOLD. No private execution. Preserve every current safety delta and the approved join on the eventual successor. App2 should review the exact optional binding rather than hand-edit types or cast it.
+
+WC8 ca1f6de3 has already merged as 09f1cf4aa; duration and literal proofs are retained, mixed HTTP7975 PASS1 is carried. Whole WC8 remains OPEN. No repeat requested.
