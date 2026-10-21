@@ -101,28 +101,60 @@ def without_opacity(schema):
 
 
 def without_effects(schema):
-    """Remove only the unpublished Main numeric effects fade leaf slice."""
+    """Remove only the unpublished Main coupled effects/fade slice."""
     args = schema['$defs']['ClipSetArgs']
     assert args['properties']['values']['properties'].pop('effects') == {
         'type': 'object',
         'minProperties': 1,
         'properties': {
             'fade_in': {
-                'type': 'number',
-                'description': 'Raw Main fade-in duration in seconds; no frame conversion or clamping.',
+                'type': ['number', 'null'],
+                'minimum': 0,
+                'description': 'Raw Main fade-in duration in source seconds; null is only valid with a paired null entrance.',
             },
             'fade_out': {
-                'type': 'number',
-                'description': 'Raw Main fade-out duration in seconds; no frame conversion or clamping.',
+                'type': ['number', 'null'],
+                'minimum': 0,
+                'description': 'Raw Main fade-out duration in source seconds; null is only valid with a paired null exit.',
             },
         },
         'additionalProperties': False,
-        'description': 'Patch only numeric fade leaves. Existing opaque effects members and object order '
-                       'survive; ordered effects arrays are unsupported.',
+        'description': 'Patch only fade leaves in source seconds. Existing opaque effects members and object '
+                       'order survive; ordered effects arrays are unsupported.',
     }
+    assert args['properties']['values']['properties'].pop('entrance') == {
+        'anyOf': [
+            {'type': 'null'},
+            {'type': 'object', 'required': ['type', 'duration'], 'properties': {
+                'type': {'const': 'fade'}, 'duration': {'type': 'number', 'minimum': 0}},
+             'additionalProperties': False},
+        ],
+        'description': 'Main fade entrance replacement; must accompany effects.fade_in and uses source seconds.',
+    }
+    assert args['properties']['values']['properties'].pop('exit') == {
+        'anyOf': [
+            {'type': 'null'},
+            {'type': 'object', 'required': ['type', 'duration'], 'properties': {
+                'type': {'const': 'fade-out'}, 'duration': {'type': 'number', 'minimum': 0}},
+             'additionalProperties': False},
+        ],
+        'description': 'Main fade-out exit replacement; must accompany effects.fade_out and uses source seconds.',
+    }
+    assert args['properties']['values'].pop('allOf') == [
+        {'if': {'required': ['entrance']}, 'then': {
+            'required': ['effects'], 'properties': {'effects': {'required': ['fade_in']}}}},
+        {'if': {'required': ['exit']}, 'then': {
+            'required': ['effects'], 'properties': {'effects': {'required': ['fade_out']}}}},
+    ]
     clear = args['properties']['clear']['items']
-    assert clear['enum'][-2:] == ['effects.fade_in', 'effects.fade_out']
-    clear['enum'] = clear['enum'][:-2]
+    assert clear['enum'][-4:] == ['effects.fade_in', 'effects.fade_out', 'entrance', 'exit']
+    clear['enum'] = clear['enum'][:-4]
+    assert args.pop('allOf') == [
+        {'if': {'properties': {'clear': {'contains': {'const': 'entrance'}}}}, 'then': {
+            'properties': {'clear': {'contains': {'const': 'effects.fade_in'}}}}},
+        {'if': {'properties': {'clear': {'contains': {'const': 'exit'}}}}, 'then': {
+            'properties': {'clear': {'contains': {'const': 'effects.fade_out'}}}}},
+    ]
     args['description'] = (
         'Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly '
         'remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. '

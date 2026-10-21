@@ -312,6 +312,82 @@ def test_main_app_effect_capture_is_top_level_clip_set_and_fade_out_is_separate(
     assert inverse(plan.bundle, plan.records).bundle == original
 
 
+def test_coupled_main_fades_use_source_seconds_and_restore_opaque_slots_exactly():
+    original = bundle()
+    ref = 'parent/clip:direct'
+    target = clip(original, ref)
+    target.update(
+        effects={'opaque_before': None, 'fade_out': 0.8, 'opaque_after': [False, {'keep': 1}]},
+        entrance={'type': 'wipe', 'duration': 1.2, 'opaque': {'before': True}},
+        exit={'type': 'cut', 'duration': 0.3, 'opaque': {'after': False}},
+        transition={'type': 'crossfade', 'duration': 0.5})
+    before = copy.deepcopy(original)
+    command = capture_clip_set(original, ref, values={
+        'effects': {'fade_in': 0.35, 'fade_out': 1.25},
+        'entrance': {'type': 'fade', 'duration': 0.35},
+        'exit': {'type': 'fade-out', 'duration': 1.25},
+    })
+    plan = execute(original, [command])
+    changed = clip(plan.bundle, ref)
+    assert changed['effects'] == {
+        'opaque_before': None, 'fade_out': 1.25, 'opaque_after': [False, {'keep': 1}],
+        'fade_in': 0.35}
+    assert changed['entrance'] == {'type': 'fade', 'duration': 0.35}
+    assert changed['exit'] == {'type': 'fade-out', 'duration': 1.25}
+    assert changed['transition'] == before['parent']['clips'][0]['transition']
+    assert {tuple(read['path']) for read in plan.records[0]['reads']} >= {
+        ('entrance',), ('effects',), ('exit',)}
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
+def test_coupled_fade_null_and_clear_keep_presence_and_standalone_effects_behavior():
+    original = bundle()
+    ref = 'parent/clip:direct'
+    clip(original, ref).update(effects={'keep': None}, entrance={'type': 'fade', 'duration': 0.35})
+    null_plan = execute(original, [capture_clip_set(original, ref, values={
+        'effects': {'fade_in': None}, 'entrance': None})])
+    assert State(null_plan.bundle).get(ref, ['effects']) == present({'keep': None, 'fade_in': None})
+    assert State(null_plan.bundle).get(ref, ['entrance']) == present(None)
+    assert inverse(null_plan.bundle, null_plan.records).bundle == original
+
+    cleared = execute(original, [capture_clip_set(
+        original, ref, clear=['effects.fade_in', 'entrance'])])
+    assert clip(cleared.bundle, ref)['effects'] == {'keep': None}
+    assert State(cleared.bundle).get(ref, ['entrance']) == ABSENT
+    assert inverse(cleared.bundle, cleared.records).bundle == original
+
+    with pytest.raises(CommandError):
+        capture_clip_set(original, ref, values={'effects': {'fade_in': None}})
+
+
+@pytest.mark.parametrize('values,clear', [
+    ({'entrance': {'type': 'fade', 'duration': 0.35}}, []),
+    ({'effects': {'fade_in': 0.35}, 'entrance': {'type': 'fade', 'duration': 0.36}}, []),
+    ({'effects': {'fade_in': 0.35}, 'entrance': {'type': 'fade', 'duration': 0.35}},
+     ['effects.fade_in']),
+    ({}, ['entrance']),
+])
+def test_coupled_fade_pair_shape_and_clear_are_atomic(values, clear):
+    original = bundle()
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        capture_clip_set(original, REF, values=values, clear=clear)
+    assert original == before
+
+
+def test_coupled_fade_rejects_raw_effect_arrays_without_normalization():
+    original = bundle()
+    clip(original, REF).update(
+        effects=[{'fade_in': 0.2}], entrance={'type': 'fade', 'duration': 0.2})
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        capture_clip_set(original, REF, values={
+            'effects': {'fade_in': 0.35},
+            'entrance': {'type': 'fade', 'duration': 0.35},
+        })
+    assert original == before
+
+
 @pytest.mark.parametrize('values,clear', [
     ({'effects': {}}, []),
     ({'effects': {'fade_in': None}}, []),

@@ -2706,18 +2706,54 @@
               "minProperties": 1,
               "properties": {
                 "fade_in": {
-                  "type": "number",
-                  "description": "Raw Main fade-in duration in seconds; no frame conversion or clamping."
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "Raw Main fade-in duration in source seconds; null is only valid with a paired null entrance."
                 },
                 "fade_out": {
-                  "type": "number",
-                  "description": "Raw Main fade-out duration in seconds; no frame conversion or clamping."
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "Raw Main fade-out duration in source seconds; null is only valid with a paired null exit."
                 }
               },
               "additionalProperties": false,
-              "description": "Patch only numeric fade leaves. Existing opaque effects members and object order survive; ordered effects arrays are unsupported."
+              "description": "Patch only fade leaves in source seconds. Existing opaque effects members and object order survive; ordered effects arrays are unsupported."
+            },
+            "entrance": {
+              "anyOf": [
+                {"type": "null"},
+                {"type": "object", "required": ["type", "duration"], "properties": {
+                  "type": {"const": "fade"},
+                  "duration": {"type": "number", "minimum": 0}
+                }, "additionalProperties": false}
+              ],
+              "description": "Main fade entrance replacement; must accompany effects.fade_in and uses source seconds."
+            },
+            "exit": {
+              "anyOf": [
+                {"type": "null"},
+                {"type": "object", "required": ["type", "duration"], "properties": {
+                  "type": {"const": "fade-out"},
+                  "duration": {"type": "number", "minimum": 0}
+                }, "additionalProperties": false}
+              ],
+              "description": "Main fade-out exit replacement; must accompany effects.fade_out and uses source seconds."
             }
           },
+          "allOf": [
+            {"if": {"required": ["entrance"]}, "then": {
+              "required": ["effects"], "properties": {"effects": {"required": ["fade_in"]}}
+            }},
+            {"if": {"required": ["exit"]}, "then": {
+              "required": ["effects"], "properties": {"effects": {"required": ["fade_out"]}}
+            }}
+          ],
           "additionalProperties": false
         },
         "clear": {
@@ -2729,12 +2765,22 @@
               "transition",
               "opacity",
               "effects.fade_in",
-              "effects.fade_out"
+              "effects.fade_out",
+              "entrance",
+              "exit"
             ]
           },
           "uniqueItems": true
         }
       },
+      "allOf": [
+        {"if": {"properties": {"clear": {"contains": {"const": "entrance"}}}}, "then": {
+          "properties": {"clear": {"contains": {"const": "effects.fade_in"}}}
+        }},
+        {"if": {"properties": {"clear": {"contains": {"const": "exit"}}}}, "then": {
+          "properties": {"clear": {"contains": {"const": "effects.fade_out"}}}
+        }}
+      ],
       "required": [
         "values",
         "clear"
@@ -2756,7 +2802,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds, opacity as a raw 0..1 fraction, or Main numeric effects fade leaves in seconds; explicitly remove hold, asset, incoming transition, opacity, or one effects fade leaf. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds, opacity as a raw 0..1 fraction, or Main fade pairs in source seconds; explicitly remove hold, asset, incoming transition, opacity, a standalone effects fade leaf, or an exact effects/entrance or effects/exit pair. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
     },
     "ProjectDataWriteArgs": {
       "type": "object",

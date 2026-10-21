@@ -87,16 +87,69 @@ def _hold_extent(ctx, ref, values, clear):
     return duration_paths, duration
 
 
+_FADE_PAIRS = {
+    'fade_in': ('entrance', 'fade'),
+    'fade_out': ('exit', 'fade-out'),
+}
+
+
+def _fade_duration(value, label):
+    if value is None:
+        return None
+    result = number(value, label)
+    if result < 0:
+        raise CommandError(f'{label} must be non-negative', kind='unsupported_timing')
+    return result
+
+
 def _effect_values(ctx, ref, values, clear):
+    """Apply numeric effect leaves and Main's exact coupled fade slots."""
     patch = values.get('effects')
     cleared = {key.removeprefix('effects.') for key in clear
                if key.startswith('effects.')}
+    coupled = {}
+    for fade, (slot, slot_type) in _FADE_PAIRS.items():
+        effect_set = isinstance(patch, dict) and fade in patch
+        slot_set = slot in values
+        effect_clear = fade in cleared
+        slot_clear = slot in clear
+        if slot_set and not effect_set:
+            raise CommandError(f'{slot} must be paired with effects.{fade}', ref=ref,
+                               path=[slot])
+        if slot_clear and not effect_clear:
+            raise CommandError(f'{slot} clear must be paired with effects.{fade}', ref=ref,
+                               path=[slot])
+        if (effect_set or slot_set) and (effect_clear or slot_clear):
+            raise CommandError(f'cannot set and clear the {fade} pair', ref=ref,
+                               path=['effects', fade])
+        if slot_set:
+            effect = patch[fade]
+            slot_value = values[slot]
+            if effect is None:
+                if slot_value is not None:
+                    raise CommandError(f'{fade} and {slot} must both be null or numeric',
+                                       ref=ref, path=['effects', fade])
+            else:
+                duration = _fade_duration(effect, 'effects.' + fade)
+                if (not isinstance(slot_value, dict)
+                        or set(slot_value) != {'type', 'duration'}
+                        or slot_value.get('type') != slot_type
+                        or _fade_duration(slot_value.get('duration'), slot + '.duration') != duration):
+                    raise CommandError(f'{fade} and {slot} must be the same Main fade',
+                                       ref=ref, path=['effects', fade])
+            coupled[fade] = (slot, slot_value)
+        elif slot_clear:
+            coupled[fade] = (slot, None)
+
+    if coupled:
+        # Coupled commands guard the original slots and complete effects
+        # container, including opaque members and insertion order.
+        ctx.read(ref, ['entrance'])
+        ctx.read(ref, ['effects'])
+        ctx.read(ref, ['exit'])
+
     if patch is None and not cleared:
         return
-    if patch is not None and cleared.intersection(patch):
-        raise CommandError('an effects fade leaf cannot be both set and cleared', ref=ref,
-                           path=['effects'])
-
     if patch is not None:
         current = ctx.state.get(ref, ['effects'])
         if (current['state'] == 'present' and current['value'] is not None
@@ -105,7 +158,11 @@ def _effect_values(ctx, ref, values, clear):
                                path=['effects'])
         ctx.object(ref, ['effects'])
         for key in sorted(patch):
-            number(patch[key], 'effects.' + key)
+            if key in coupled:
+                if patch[key] is not None:
+                    _fade_duration(patch[key], 'effects.' + key)
+            else:
+                number(patch[key], 'effects.' + key)
             ctx.write(ref, ['effects', key], patch[key])
 
     for key in sorted(cleared):
@@ -117,6 +174,12 @@ def _effect_values(ctx, ref, values, clear):
         # State.clear records an absent/null parent as an exact no-op leaf
         # write, preserving the raw distinction in the command guard.
         ctx.clear(ref, ['effects', key])
+
+    for fade, (slot, slot_value) in coupled.items():
+        if isinstance(patch, dict) and fade in patch:
+            ctx.write(ref, [slot], slot_value)
+        else:
+            ctx.clear(ref, [slot])
 
 
 def clip_set(ctx, command):
@@ -139,10 +202,10 @@ def clip_set(ctx, command):
             ctx.write(ref, path, duration)
     _effect_values(ctx, ref, values, clear)
     for key in sorted(values):
-        if key != 'effects':
+        if key not in {'effects', 'entrance', 'exit'}:
             ctx.write(ref, [key], values[key])
     for key in sorted(clear):
-        if not key.startswith('effects.'):
+        if not key.startswith('effects.') and key not in {'entrance', 'exit'}:
             ctx.clear(ref, [key])
 
 
