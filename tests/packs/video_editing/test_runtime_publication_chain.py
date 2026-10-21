@@ -3,16 +3,23 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
+from astrid.core.execution.generic_host import GenericPackHost, HostError, RuntimeProtocolClient
 from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
 from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
 from astrid.sdk.client import AstridClient
+from astrid.sdk.timeline.assembly import read_assembly_proposal
+from astrid.sdk.timeline.sync import TimelineSession
+from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.helpers.runtime import use_runtime
 
 
 def _digest(value: str | bytes) -> str:
@@ -51,6 +58,23 @@ def _settle_child(service, attempt: dict, *, index: int, value: bytes, digest: s
         idempotency_key=f"chain-settle-{index}",
     )
     return {"task_id": attempt["task_id"], "digest": digest}
+
+
+def _media_effect(project_id: str) -> dict:
+    return {
+        "effect_type": "generation.publish_v1",
+        "target_id": project_id,
+        "payload": {
+            "version": 1,
+            "modality": "video",
+            "generation_type": "multi_output_render",
+            "metadata": {"params": {"duration_seconds": 1.0, "width": 64, "height": 36}},
+            "partial_success_policy": "reject",
+            "groups": [{"group_key": "main", "selectors": [{
+                "selector": "primary", "ordinal": 0, "variant_key": "primary", "output_port": "video",
+            }]}],
+        },
+    }
 
 
 @pytest.mark.integration
@@ -138,6 +162,7 @@ def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tm
         daemon.stop()
 
 
+@pytest.mark.xfail(strict=True, reason="D13 removes the legacy assembler publication hook; native requester commit is required")
 def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
     """The registered authoring host hook has one Runtime publication route."""
     proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
@@ -177,22 +202,122 @@ def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invo
     assert "save" not in repr(runtime.calls) and "invoke" not in repr(runtime.calls)
 
 
+def test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts(tmp_path):
+    """Unsafe legacy admission is visible, terminal, and leaves its artifact untouched."""
+    proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
+    proposal_path.parent.mkdir(parents=True)
+    original = json.dumps({
+        "timeline": {"tracks": [], "clips": []}, "registry": {"assets": {}},
+        "publication": {"authority": "workspace_runtime", "render_capability": "rendering.render"},
+    }).encode()
+    proposal_path.write_bytes(original)
+
+    class Runtime:
+        def __init__(self):
+            self.calls = []
+
+        def fail(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+        def heartbeat(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+        def task(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+        def settle(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+        def upload_object(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+
+    runtime = Runtime()
+    host = GenericPackHost(pack_roots=[], client=runtime, attempt_root=tmp_path / "host-attempt")
+    host.capabilities = {
+        "rendering.assemble_timeline": SimpleNamespace(
+            ready=True, definition=SimpleNamespace(metadata={}), matrix={},
+        )
+    }
+    host.preflight = lambda _capability: None
+    host._registration_admission_reason = lambda: None
+    task = {
+        "id": "author-1", "capability": "rendering.assemble_timeline",
+        "spec": {"runtime_dependencies": {"publication": {"timeline_id": "main"}}},
+        "input_object_ids": [], "project_id": "project-1", "attempt_id": "attempt-1",
+        "fence": 1, "runtime_epoch": 1,
+    }
+    try:
+        with pytest.raises(HostError, match="immutable original target"):
+            host.run_task(task, lease_token="lease-1", attempt_id="attempt-1", fence=1)
+    finally:
+        host.shutdown()
+    assert proposal_path.read_bytes() == original
+    assert len(runtime.calls) == 1
+    args, _kwargs = runtime.calls[0]
+    assert args[:2] == ("author-1", "lease-1")
+    assert not any("publish_timeline_render" in repr(call) for call in runtime.calls)
+
+
 @pytest.mark.integration
 def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
-    """Run the complete two-child continuation through the real pack host."""
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:
-        pytest.skip("ffmpeg, ffprobe, and node are required for the daemon render chain")
+    """Run registered native assembly through requester, host, Runtime, and render."""
+    use_runtime()
     astrid_root = Path(__file__).resolve().parents[3]
-    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(astrid_root / "remotion"))
-    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", shutil.which("node") or "node")
-    monkeypatch.setenv(
-        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
-        str(astrid_root / "remotion/node_modules/@banodoco/timeline-schema/python"),
+    # The named integration suite supplies the pinned current Remotion/runtime
+    # pair. Keep this bootstrap read-only and do not redirect it to a mutable
+    # checkout-local renderer.
+    monkeypatch.setenv("ASTRID_PACKS_PATH", str(astrid_root / "astrid/packs/rendering"))
+    assert os.environ.get("ASTRID_REMOTION_PROJECT_DIR")
+    assert os.environ.get("ASTRID_NODE_EXECUTABLE")
+    assert os.environ.get("ASTRID_TIMELINE_SCHEMA_PYTHONPATH")
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
+
+    # The central runner's loopback proxy presents a self-signed certificate
+    # to Remotion's usage beacon. Inject its CA only through this private
+    # wrapper around the pinned Node executable, so host admission still sees
+    # the same registered runtime and no shared environment is changed.
+    pinned_node = Path(os.environ["ASTRID_NODE_EXECUTABLE"]).resolve()
+    ca_bundle = Path("/root/.ccr/ca-bundle.crt")
+    assert ca_bundle.is_file()
+    trusted_node = tmp_path / "node-current-with-runner-ca"
+    trusted_node.write_text(
+        "#!/bin/sh\n"
+        f"export NODE_EXTRA_CA_CERTS={shlex.quote(str(ca_bundle))}\n"
+        f"exec {shlex.quote(str(pinned_node))} \"$@\"\n",
+        encoding="utf-8",
     )
-    daemon = real_runtime(production_worker_credentials=True)
+    trusted_node.chmod(0o755)
+    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(trusted_node))
+    pinned_remotion = Path(os.environ["ASTRID_REMOTION_PROJECT_DIR"]).resolve()
+    private_remotion = tmp_path / "remotion-current"
+    shutil.copytree(
+        pinned_remotion, private_remotion, symlinks=True,
+        ignore=shutil.ignore_patterns(".git"),
+    )
+    (tmp_path / "astrid").symlink_to(astrid_root / "astrid", target_is_directory=True)
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(private_remotion))
+    pack_roots = (astrid_root / "astrid/packs/rendering",)
+    launch_environment = dict(os.environ)
+    validation = prepare_remotion_validation(
+        artifact_directory=tmp_path / "remotion-validation",
+        host_environment=dict(os.environ),
+        python_executable=os.sys.executable,
+        launch_id=hashlib.sha256(str(tmp_path).encode()).hexdigest()[:32],
+        contexts={
+            "host": launch_environment,
+            "worker": _launch_worker_probe_environments(
+                pack_roots, launch_environment, remotion_only=True,
+            ),
+        },
+    )
+    for name, value in validation.items():
+        monkeypatch.setenv(name, value)
+    daemon = real_runtime(authoring_profile="astrid")
     service = daemon.service
+    client = None
     host = GenericPackHost(
-        pack_roots=[astrid_root / "astrid/packs/rendering"],
+        pack_roots=pack_roots,
         client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
         executor_id="astrid-pack-host",
         attempt_root=tmp_path / "attempt",
@@ -222,11 +347,13 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
             },
             idempotency_key="host-chain-register",
         )
-        service.create_timeline_document(
-            project["id"],
-            {"timeline_id": "main", "slug": "main", "name": "Main", "config": {}, "registry": {}},
-            idempotency_key="host-chain-timeline",
+        client = AstridClient.open(
+            endpoint=daemon.endpoint,
+            credential=daemon.credential_path,
+            realm_id=service.realm["id"], actor_id="owner", client_name="astrid-chain-test",
+            client_version="stage1", protocol_version="workspace.v1",
         )
+        service.create_timeline(project["id"], "main", name="Main", idempotency_key="host-chain-timeline")
         blobs = []
         for index, colour in enumerate(("blue", "red")):
             path = tmp_path / f"child-{index}.mp4"
@@ -250,6 +377,7 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
                         "capability_digest": child_digest,
                         "input_object_ids": [],
                         "spec": {"index": index},
+                        "settlement_effect": _media_effect(project["id"]),
                         "idempotency_key": f"host-chain-child-{index}",
                     }
                 )["task"]["id"]
@@ -277,55 +405,60 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
                     "lease_id": claim["lease_id"],
                     "fence": claim["fence"],
                     "runtime_epoch": claim["runtime_epoch"],
-                    "outputs": [
-                        {
-                            "digest": _digest(blobs[index]),
-                            "data_base64": base64.b64encode(blobs[index]).decode(),
-                            "media_type": "video/mp4",
-                            "name": f"child-{index}",
-                            "role": "primary",
-                            "is_primary": True,
-                            "duration_seconds": 1.0,
-                        }
-                    ],
+                    "outputs": [{
+                        "digest": _digest(blobs[index]),
+                        "data_base64": base64.b64encode(blobs[index]).decode(),
+                        "media_type": "video/mp4",
+                        "name": f"child-{index}",
+                        "output_port": "video",
+                        "group_key": "main",
+                        "variant_key": "primary",
+                        "ordinal": 0,
+                        "role": "primary",
+                        "is_primary": True,
+                        "duration_seconds": 1.0,
+                    }],
+                    "effect": _media_effect(project["id"]),
                 },
                 idempotency_key=f"host-chain-settle-child-{index}",
             )
-        render_spec = {
-            "capability_id": "rendering.render",
-            "schema_version": "1",
-            "spec": {
-                "capability_id": "rendering.render",
-                "kind": "executor",
-                "inputs": {"selector": "rendering.ffmpeg", "output_name": "host-chain.mp4"},
-                "outputs": {},
-            },
+        selectors = []
+        for child_id in child_ids:
+            associations = service.managed_outputs(child_id)
+            association = next(row for row in associations if row["output_port"] == "video")
+            selectors.append({
+                "association_id": association["association_id"],
+                "object_id": association["object_id"],
+                "version": association["lifecycle"]["version"],
+            })
+        session = TimelineSession.open(
+            project["id"], "main", client=client, outbox_path=tmp_path / "host-chain-outbox.json",
+        )
+        admission = session.admit_assembly(
+            selectors, replace_clips=[], assembler_digest=assemble_digest,
+            idempotency_key="host-chain-author",
+        )
+        author = admission["data"]["task_id"]
+        admitted_task = service.task(author)["task"]
+        admitted_spec = admitted_task["spec"]["spec"]
+        admitted_capture = admitted_spec["inputs"]["resolved_children"]
+        admitted_target = admitted_capture["admitted_target"]
+        assert admitted_task["capability"] == "rendering.assemble_timeline"
+        assert admitted_spec["runtime_dependencies"]["publication"]["admitted_target"] == admitted_target
+        assert admitted_capture["replace_clips"] == []
+        assert [child["association"] for child in admitted_capture["children"]] == selectors
+        assert [child["media"]["object_id"] for child in admitted_capture["children"]] == [
+            selector["object_id"] for selector in selectors
+        ]
+        assert admitted_spec["runtime_dependencies"]["aggregation"]["order"] == [
+            selector["object_id"] for selector in selectors
+        ]
+        assert admitted_spec["outputs"]["authoring_proposal"] == {
+            "type": "file", "artifact_type": "timeline/authoring-proposal",
         }
-        author = service.create_task(
-            {
-                "project": project["id"],
-                "capability_id": "rendering.assemble_timeline",
-                "capability_digest": assemble_digest,
-                "input_object_ids": [],
-                "spec": {
-                    "runtime_dependencies": {
-                        "edges": [
-                            {"from_task_id": task_id, "to": "self", "requires_event": "task.succeeded", "fence": "runtime_task"}
-                            for task_id in child_ids
-                        ],
-                        "aggregation": {"kind": "ordered_cas_inputs", "order": []},
-                        "publication": {"timeline_id": "main", "expected_version": 1, "render": render_spec},
-                    }
-                },
-                "idempotency_key": "host-chain-author",
-            }
-        )["task"]["id"]
-        author_claim = service.claim_next(
-            {
-                "executor_id": "astrid-pack-host",
-                "capability_ids": ["rendering.assemble_timeline"],
-                "runtime_epoch": service.health()["runtime_epoch"],
-            },
+        author_claim = host.client.claim_next(
+            executor_id="astrid-pack-host",
+            capability_ids=["rendering.assemble_timeline"],
             idempotency_key="host-chain-claim-author",
         )
         host.run_task(
@@ -336,8 +469,10 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
                     "spec": author_claim["spec"],
                     "input_object_ids": author_claim["input_object_ids"],
                     "project_id": author_claim["project_id"],
+                    "run_id": author_claim["run_id"],
                     "attempt_id": author_claim["attempt_id"],
                     "fence": author_claim["fence"],
+                    "runtime_epoch": author_claim["runtime_epoch"],
                 }
             },
             lease_token=author_claim["lease_id"],
@@ -346,14 +481,56 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
             keep_attempt=True,
         )
         author_result = service.task(author)["task"]["result"]
-        publication = author_result["timeline_render_publication"]
-        render_task_id = publication["render_task_id"]
-        render_claim = service.claim_next(
-            {
-                "executor_id": "astrid-pack-host",
-                "capability_ids": ["rendering.render"],
-                "runtime_epoch": service.health()["runtime_epoch"],
-            },
+        assert {item["name"] for item in author_result["outputs"]} >= {"authoring_proposal", "timeline", "assets"}
+        settled = read_assembly_proposal(session, author, attempt_id=author_claim["attempt_id"])
+        assert [command["op"] for command in settled["commands"][:3]] == [
+            "timeline.assembled-target", "track.create", "clip.add-media",
+        ]
+        assert [command["args"]["media"]["object_id"] for command in settled["commands"] if command["op"] == "clip.add-media"] == [
+            selector["object_id"] for selector in selectors
+        ]
+        assert settled["admitted_target"] == admitted_target
+        assert settled["commands"][0]["args"]["replace_clips"] == admitted_capture["replace_clips"]
+        session.queue_assembly(author, attempt_id=author_claim["attempt_id"])
+        pending = json.loads((tmp_path / "host-chain-outbox.json").read_text())
+        assert pending["pending"][0]["op"] == "producer.guard"
+        original_commit = client.timelines.commit
+
+        def lose_ack(*args, **kwargs):
+            original_commit(*args, **kwargs)
+            raise WorkspaceClientError(0, "transport_error", "lost commit acknowledgement")
+
+        client.timelines.commit = lose_ack
+        with pytest.raises(WorkspaceClientError, match="lost commit acknowledgement"):
+            session.flush(idempotency_key="host-chain-commit")
+        saved_flight = json.loads((tmp_path / "host-chain-outbox.json").read_text())["flight"]
+        assert saved_flight["key"] == "host-chain-commit"
+        client.timelines.commit = original_commit
+        restarted = TimelineSession.open(
+            project["id"], "main", client=client, outbox_path=tmp_path / "host-chain-outbox.json",
+        )
+        committed = restarted.flush(idempotency_key="host-chain-commit")
+        accepted_revision = committed["data"]["accepted_revision_id"]
+        accepted_publication = committed["data"]["accepted_publication_id"]
+        assert accepted_revision and accepted_publication
+        assert json.loads((tmp_path / "host-chain-outbox.json").read_text())["flight"] is None
+
+        scope = client.timelines.resolve_scope(project["id"], "main")
+        assert scope.ok and isinstance(scope.data.get("version"), int)
+        render_admission = client.invoke_result(
+            "rendering.render", kind="executor", project=project["id"],
+            inputs={"timeline_ref": "main", "expected_version": scope.data["version"], "output_name": "host-chain.mp4"},
+            wait=False,
+        )
+        assert render_admission.ok
+        render_task_id = render_admission.kernel_task_id
+        assert isinstance(render_task_id, str) and render_task_id
+        assert service.store.conn.execute(
+            "SELECT COUNT(*) FROM tasks WHERE capability=?", ("rendering.render",)
+        ).fetchone()[0] == 1
+        render_claim = host.client.claim_next(
+            executor_id="astrid-pack-host",
+            capability_ids=["rendering.render"],
             idempotency_key="host-chain-claim-render",
         )
         host.run_task(
@@ -364,8 +541,10 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
                     "spec": render_claim["spec"],
                     "input_object_ids": render_claim["input_object_ids"],
                     "project_id": render_claim["project_id"],
+                    "run_id": render_claim["run_id"],
                     "attempt_id": render_claim["attempt_id"],
                     "fence": render_claim["fence"],
+                    "runtime_epoch": render_claim["runtime_epoch"],
                 }
             },
             lease_token=render_claim["lease_id"],
@@ -385,6 +564,12 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         )
         assert probe.returncode == 0
         assert float(probe.stdout.strip()) > 0
+        render_task = service.task(render_task_id)["task"]
+        render_inputs = render_task["spec"]["spec"]["inputs"]
+        assert render_inputs["timeline_authority"]["config_version"] == scope.data["version"]
+        assert render_inputs["timeline_authority"]["parent_revision_id"] == accepted_revision
+        undone = restarted.undo([accepted_publication], idempotency_key="host-chain-undo")
+        assert undone["data"]["accepted_revision_id"]
     finally:
         host.shutdown()
         daemon.stop()

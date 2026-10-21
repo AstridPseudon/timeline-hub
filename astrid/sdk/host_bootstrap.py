@@ -708,11 +708,44 @@ def _installed_execution_origins(source_path: Path, python_executable: str) -> d
     The profile must bind the installed product root as its execution source.
     An old provenance checkout is diagnostic data, never import authority.
     """
-    probe = """import importlib.util,json
-modules={'host':'astrid.core.execution.generic_host','child':'astrid.core.execution.generic_host_worker','action':'astrid.packs.rendering.actions.render.run','client':'astrid_runtime_client','sdk':'astrid.sdk.invocation'}
-print(json.dumps({key:importlib.util.find_spec(module).origin for key,module in modules.items()}))
+    # Even importing the measurement helper would execute unvalidated product
+    # code. Resolve every parent explicitly; dotted util.find_spec imports it.
+    probe = """import importlib.machinery,json,pathlib,sys
+root = pathlib.Path(sys.argv[1]).absolute()
+modules={'host':'astrid.core.execution.generic_host','child':'astrid.core.execution.generic_host_worker','action':'astrid.packs.rendering.actions.render.run','client':'astrid_runtime_client','sdk':'astrid.sdk.invocation','runtime_protocol':'runtime_protocol','runtime_protocol.platform':'runtime_protocol.platform','astrid_runtime':'astrid_runtime'}
+origins = {}
+for key, module in modules.items():
+    parts = module.split('.')
+    for depth in range(1, len(parts) + 1):
+        name = '.'.join(parts[:depth])
+        search = [str(root.joinpath(*parts[:depth - 1]))] if depth > 1 else sys.path
+        spec = importlib.machinery.PathFinder.find_spec(name, search)
+        expected = root.joinpath(*parts[:depth])
+        if spec is None:
+            raise ValueError('missing installed module: ' + name)
+        if spec.submodule_search_locations is not None:
+            if list(spec.submodule_search_locations) != [str(expected)]:
+                raise ValueError('installed package search path differs: ' + name)
+            if spec.origin is None:
+                if depth == len(parts):
+                    raise ValueError('installed entrypoint requires source: ' + name)
+                if any(path.is_symlink() for path in (expected, *expected.parents)):
+                    raise ValueError('installed namespace contains a source alias: ' + name)
+                continue
+            expected = expected / '__init__.py'
+        else:
+            expected = expected.with_suffix('.py')
+        if (spec.origin != str(expected) or not expected.is_file()
+                or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
+                or any(path.is_symlink() for path in (expected, *expected.parents))):
+            raise ValueError('installed source origin differs: ' + name)
+    origins[key] = str(expected)
+for name in ('runtime_protocol', 'astrid_runtime'):
+    if any(path.is_symlink() for path in (root / name).rglob('*')):
+        raise ValueError('installed Runtime package contains a symlink: ' + name)
+print(json.dumps(origins))
 """
-    completed = subprocess.run([python_executable, "-I", "-c", probe],
+    completed = subprocess.run([python_executable, "-I", "-c", probe, str(source_path)],
                                cwd=tempfile.gettempdir(), capture_output=True, text=True,
                                timeout=20, check=False,
                                env={key: value for key, value in os.environ.items()

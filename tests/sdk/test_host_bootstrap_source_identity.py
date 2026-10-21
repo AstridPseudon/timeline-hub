@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ast
+import importlib
 import json
 import os
 import subprocess
@@ -472,6 +474,41 @@ def test_installed_profile_refuses_checkout_origins_from_isolated_probe(monkeypa
     assert seen[0][0][:3] == ["/selected/python", "-I", "-c"]
     assert "PYTHONPATH" not in seen[0][1]["env"]
     assert seen[0][1]["cwd"] != str(tmp_path)
+
+
+def test_installed_origin_probe_resolves_without_product_imports():
+    tree = ast.parse(Path(host_bootstrap.__file__).read_text())
+    function = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                    and node.name == "_installed_execution_origins")
+    probe = next(node.value.value for node in function.body if isinstance(node, ast.Assign)
+                 and any(isinstance(target, ast.Name) and target.id == "probe" for target in node.targets))
+    probe_tree = ast.parse(probe)
+    assert {alias.name for node in ast.walk(probe_tree) if isinstance(node, ast.Import)
+            for alias in node.names} == {"importlib.machinery", "json", "pathlib", "sys"}
+    assert not any(isinstance(node, ast.ImportFrom) for node in ast.walk(probe_tree))
+    calls = [ast.unparse(node.func) for node in ast.walk(probe_tree) if isinstance(node, ast.Call)]
+    assert "importlib.machinery.PathFinder.find_spec" in calls
+    assert not any(call.rsplit(".", 1)[-1] in {
+        "__import__", "import_module", "exec", "eval", "compile", "exec_module", "load_module", "get_code",
+    } for call in calls)
+    assert not any(call.endswith("find_spec") and call != "importlib.machinery.PathFinder.find_spec"
+                   for call in calls)
+
+
+def test_python_source_loader_can_read_cache_before_bytecode_write_policy():
+    # Read the trusted loader, never generate or execute a bytecode payload.
+    # A .py origin/SourceFileLoader and -B cannot establish source-only execution.
+    path = Path(importlib.__file__).with_name("_bootstrap_external.py")
+    tree = ast.parse(path.read_text())
+    loader = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "SourceLoader")
+    get_code = next(node for node in loader.body if isinstance(node, ast.FunctionDef) and node.name == "get_code")
+    cached_return = next(node for node in ast.walk(get_code) if isinstance(node, ast.Return)
+                         and isinstance(node.value, ast.Call) and ast.unparse(node.value.func) == "_compile_bytecode")
+    write_policy = next(node for node in ast.walk(get_code) if isinstance(node, ast.If)
+                        and "sys.dont_write_bytecode" in ast.unparse(node.test))
+    assert cached_return.lineno < write_policy.lineno
+    assert "_validate_timestamp_pyc" in ast.unparse(get_code)
+    assert "_imp.check_hash_based_pycs" in ast.unparse(get_code)
 
 
 def test_installed_profile_launch_preserves_identity_and_uses_isolated_interpreter(monkeypatch, tmp_path):

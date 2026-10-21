@@ -26,6 +26,19 @@ class CommitConflict(TimelineEditError):
         super().__init__(failure.get("message", "timeline commit refused"))
 
 
+def _flight_kind(flight):
+    """Return the processing kind without defaulting a present discriminator."""
+    if flight is None:
+        return None
+    if not isinstance(flight, dict):
+        raise TimelineEditError("invalid in-flight request kind; original intent retained")
+    if "kind" not in flight:
+        return "commit"
+    if flight["kind"] == "assembly-admission":
+        return "assembly-admission"
+    raise TimelineEditError("invalid in-flight request kind; original intent retained")
+
+
 def _connection(client):
     transport = client._remote._transport
     handshake = transport._last_handshake or {}
@@ -170,6 +183,7 @@ class TimelineSession:
     def _state(self):
         identity = _connection(self.client)
         state = self.outbox.read()
+        _flight_kind(state.get("flight"))
         if identity != self.identity or state["scope"] != {
             **identity, "project_id": self.project_id, "timeline_id": self.timeline_id,
         }:
@@ -189,6 +203,60 @@ class TimelineSession:
         from astrid.sdk.timeline.capture import capture_move
 
         return self._queue(lambda state: capture_move(self._bundle(state), select, on))
+
+    def admit_assembly(self, child_outputs, *, replace_clips, assembler_digest, idempotency_key,
+                       rationale="Assemble ordered child visuals"):
+        """Freeze the original closure before registered assembler work."""
+        from astrid.core.contracts.runtime_orchestration import build_assembler_admission
+        from astrid.sdk.timeline.assembly import admission_body, capture_assembly, retry_assembly
+
+        child_outputs, replace_clips = copy.deepcopy(list(child_outputs)), list(replace_clips)
+        with self.outbox.locked():
+            state = self._state()
+            flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                retry_assembly(self, state, flight, child_outputs, replace_clips,
+                               assembler_digest, idempotency_key, rationale)
+            elif state["pending"] or flight is not None:
+                raise TimelineEditError("flush pending intent before admitting assembly")
+        if flight is None:
+            capture = capture_assembly(self, state, child_outputs,
+                                       replace_clips=replace_clips, rationale=rationale)
+            admission = build_assembler_admission(capture=capture, assembler_digest=assembler_digest,
+                                                  idempotency_key=idempotency_key)
+            body = admission.body
+            prepared = _response(self.client.tasks.prepare_admission(
+                project_id=body["project"], capability=body["capability_id"],
+                capability_digest=body["capability_digest"], spec=body["spec"],
+                input_manifest=body["input_object_ids"], storage_estimate=body["storage_estimate"],
+                idempotency_key=admission.idempotency_key))["data"]
+            flight = {"kind": "assembly-admission",
+                      "body": request_bytes(admission_body(prepared)).decode(),
+                      "key": prepared["idempotency_key"], "fence": uuid.uuid4().hex}
+            with self.outbox.locked():
+                if self._state() != state:
+                    raise TimelineEditError("outbox changed during assembly capture; nothing was admitted")
+                state["flight"] = flight
+                self.outbox.write(state)
+        body = json.loads(flight["body"])
+        arguments = {key: value for key, value in body.items() if key != "project"}
+        arguments.update(project_id=body["project"], idempotency_key=flight["key"])
+        result = _response(self.client.tasks.dispatch_admission(arguments))
+        with self.outbox.locked():
+            state = self._state()
+            if state["flight"] == flight:
+                state["flight"] = None
+                self.outbox.write(state)
+        return result
+
+    def queue_assembly(self, task_id, *, attempt_id):
+        """Read one exact settled native proposal, then queue it normally."""
+        from astrid.sdk.timeline.assembly import read_assembly_proposal
+
+        with self.outbox.locked():
+            self._state()
+        proposal = read_assembly_proposal(self, task_id, attempt_id)
+        return self.queue_proposal(proposal)
 
     def queue_proposal(self, proposal):
         """Persist the settled batch unchanged at its original admitted base."""
@@ -263,7 +331,10 @@ class TimelineSession:
                 if any(call['op'] == 'producer.guard' for call in state['pending']):
                     raise TimelineEditError('flush the producer proposal before another edit')
                 if matches is not None and state["pending"]:
-                    prefix = state["pending"][:state["flight"]["count"]] if state["flight"] else state["pending"]
+                    flight = state["flight"]
+                    prefix = (state["pending"][:flight["count"]]
+                              if flight and _flight_kind(flight) != "assembly-admission"
+                              else state["pending"])
                     if not matches(prefix):
                         raise TimelineEditError("pending intent differs; flush the original request before another edit")
                     return copy.deepcopy(prefix)
@@ -305,6 +376,8 @@ class TimelineSession:
                    "select": None, "args": {"publications": publications}}
         with self.outbox.locked():
             state = self._state()
+            if _flight_kind(state["flight"]) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before undo")
             if state["pending"] and state["pending"] != [command]:
                 raise TimelineEditError("flush pending intent before undo")
             state["pending"] = [command]
@@ -347,6 +420,8 @@ class TimelineSession:
             if prepare is not None:
                 prepare(state)
             flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before flushing commands")
             if flight is None:
                 if not state["pending"]:
                     raise TimelineEditError("no pending timeline commands")
