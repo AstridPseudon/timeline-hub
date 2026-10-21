@@ -43,8 +43,17 @@ class Generated:
         self.bundles = {"r0": initial_bundle()}
         self.head = {"revision_id": "r0", "publication_id": "pub0"}
         self.calls, self.accepted, self.records = [], {}, {}
+        self.verified_documents = {}
+        self.verified_document_calls = []
         self.lose_ack = False
         self.refusal = None
+
+    def get_project_verified_document(self, project, pin):
+        self.verified_document_calls.append((project, copy.deepcopy(pin)))
+        value = self.verified_documents.get((project, tuple(sorted(pin.items()))))
+        if value is None:
+            raise ApiError(404, "not_found", "exact document input is unavailable")
+        return copy.deepcopy(value)
 
     def list_timeline_commits(self, project, timeline, *, cursor=None, limit):
         assert (project, timeline, limit) == ("p", "t", 1)

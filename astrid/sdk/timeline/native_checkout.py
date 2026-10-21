@@ -94,14 +94,18 @@ class AttachedCheckout(Checkout):
         self.fps = float(rate(self.bundle['parent'].get('config', {}).get('output', {}).get('fps')))
         self._mcache = None
 
-    def _bundle(self, state):
+    def _bundle(self, state, extra_commands=()):
         """Materialize pending selected PARAM commands from their exact pins."""
         from astrid.sdk.timeline_elements import _read_selected_param_inputs
+        from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
 
         from .store import fetch_bundle
 
         bundle = fetch_bundle(self.session.project_id, self.session.timeline_id,
                               revision_id=state['base']['revision_id'], client=self.session.client)
+        materialize_transcript_inputs(
+            bundle, [*state['pending'], *extra_commands], client=self.session.client.timelines._client,
+            project=self.session.project_id)
         if not state['pending']:
             return bundle
         inputs = []
@@ -125,7 +129,7 @@ class AttachedCheckout(Checkout):
             )
             inputs.extend(captured)
         if not inputs:
-            return self.session._bundle(state)
+            return execute(bundle, state['pending']).bundle
         return execute(bundle, state['pending'], schema_inputs=inputs,
                        realm_id=self.session.identity['realm_id']).bundle
 
@@ -145,8 +149,8 @@ class AttachedCheckout(Checkout):
 
         def capture(state):
             self._unchanged_basis(state)
-            bundle = self._bundle(state)
-            if not equal(bundle, self._preview):
+            bundle = self._bundle(state, [command])
+            if not self._same_preview(bundle):
                 raise TimelineEditError('attached checkout basis changed; reattach before editing')
             plan = execute(bundle, [command], schema_inputs=schema_inputs, realm_id=realm_id)
             plans.append(plan)
@@ -158,6 +162,16 @@ class AttachedCheckout(Checkout):
         self.bundle = plans[0].bundle
         self._preview = copy.deepcopy(self.bundle)
         self._mcache = None
+
+    def _same_preview(self, bundle):
+        """Compare authored preview state; retained source hydration is read-only."""
+        def authored(value):
+            value = copy.deepcopy(value)
+            mapping = value.get('source_mapping')
+            if isinstance(mapping, dict):
+                mapping['pinned_documents'] = []
+            return value
+        return equal(authored(bundle), authored(self._preview))
 
     @property
     def clips(self):

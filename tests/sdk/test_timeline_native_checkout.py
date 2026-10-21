@@ -28,6 +28,8 @@ def attached(connected, bundle=None):
     if bundle is not None:
         generated.bundles['r0'] = copy.deepcopy(bundle)
         generated.bundles['r0'].update(project_id='p', timeline_id='t')
+        for capture in bundle.get('source_mapping', {}).get('pinned_documents', []):
+            generated.verified_documents[('p', tuple(sorted(capture['pin'].items())))] = capture
     return Checkout.attach(open_session(connected))
 
 
@@ -193,6 +195,52 @@ def test_attached_word_anchor_refuses_without_exact_capture_or_on_text(connected
     with pytest.raises(TimelineEditError, match='cannot be mixed'):
         tl.clip('parent/clip:clip-a').set(on=value, text='also')
 
+    assert tl.bundle == before
+    assert pending(connected) == state
+
+
+def test_attached_word_anchor_hydrates_exact_pin_after_fresh_open_and_restart(connected):
+    bundle, value = anchored_bundle()
+    capture = copy.deepcopy(bundle['source_mapping']['pinned_documents'][0])
+    bundle['source_mapping']['pinned_documents'] = []
+    generated = connected[1]
+    generated.verified_documents[('p', tuple(sorted(capture['pin'].items())))] = capture
+
+    tl = attached(connected, bundle)
+    tl.clip('parent/clip:clip-a').set(on=value)
+    assert generated.verified_document_calls == [('p', capture['pin'])]
+    assert tl.bundle['source_mapping']['pinned_documents'] == [capture]
+
+    reloaded = Checkout.attach(open_session(connected))
+    assert generated.verified_document_calls == [('p', capture['pin']), ('p', capture['pin'])]
+    assert reloaded.bundle['source_mapping']['pinned_documents'] == [capture]
+    assert reloaded._pending == tl._pending
+    assert reloaded._basis == tl._basis
+
+
+@pytest.mark.parametrize('mismatch', ['foreign', 'version', 'hash'])
+def test_attached_word_anchor_refuses_verified_pin_mismatch_without_mutation(connected, mismatch):
+    bundle, value = anchored_bundle()
+    capture = copy.deepcopy(bundle['source_mapping']['pinned_documents'][0])
+    bundle['source_mapping']['pinned_documents'] = []
+    document = capture['document']
+    if mismatch == 'foreign':
+        document['project_id'] = 'foreign-project'
+    elif mismatch == 'version':
+        document['version'] = 2
+    else:
+        document['content']['segments'][0]['text'] = 'changed'
+    generated = connected[1]
+    generated.verified_documents[('p', tuple(sorted(capture['pin'].items())))] = capture
+    tl = attached(connected, bundle)
+    before, state = copy.deepcopy(tl.bundle), pending(connected)
+
+    message = {
+        'foreign': 'scope or version', 'version': 'scope or version',
+        'hash': 'content bytes',
+    }[mismatch]
+    with pytest.raises(TimelineEditError, match=message):
+        tl.clip('parent/clip:clip-a').set(on=value)
     assert tl.bundle == before
     assert pending(connected) == state
 
