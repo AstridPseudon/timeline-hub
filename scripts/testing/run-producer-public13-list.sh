@@ -19,14 +19,17 @@ if test "${PRODUCER_PUBLIC13_NPM_FORWARDER:-0}" = 1; then
     && test "${5:-}" = 'M2 ordinary extension batch' \
     && test "$#" = 5; then
     LIST_LOG=${PRODUCER_PUBLIC13_LIST_LOG:?missing list log}
+    REALM_TMPDIR=${PRODUCER_PUBLIC13_REALM_TMPDIR:?missing physical realm temp directory}
+    test -d "$REALM_TMPDIR" \
+      && test "$(realpath "$REALM_TMPDIR")" = "$REALM_TMPDIR"
     set +e
     if test "$PRODUCER_PUBLIC13_RUN_MODE" = list; then
-      "$PRODUCER_PUBLIC13_APP_ROOT/node_modules/.bin/playwright" test \
+      TMPDIR="$REALM_TMPDIR" "$PRODUCER_PUBLIC13_APP_ROOT/node_modules/.bin/playwright" test \
         --config playwright.producer-ownership-current-pin.config.ts \
         tests/e2e/local/producer-ownership-current-pin.spec.ts --list \
         >"$LIST_LOG" 2>&1
     else
-      "$PRODUCER_PUBLIC13_APP_ROOT/node_modules/.bin/playwright" test \
+      TMPDIR="$REALM_TMPDIR" "$PRODUCER_PUBLIC13_APP_ROOT/node_modules/.bin/playwright" test \
         --config playwright.producer-ownership-current-pin.config.ts \
         tests/e2e/local/producer-ownership-current-pin.spec.ts \
         >"$LIST_LOG" 2>&1
@@ -253,6 +256,11 @@ trap cleanup_short_environment EXIT HUP INT TERM
 
 export XDG_CACHE_HOME="$SHORT_ENV_ROOT/xdg-cache"
 export XDG_CONFIG_HOME="$SHORT_ENV_ROOT/xdg-config"
+# Runtime validates every realm/support-root parent, so keep the harness's existing
+# per-run temp carrier physical while leaving the runner's short App/cache paths intact.
+REALM_TMP_ROOT=$(realpath "$SHORT_ENV_ROOT")
+test -d "$REALM_TMP_ROOT"
+export PRODUCER_PUBLIC13_REALM_TMPDIR="$REALM_TMP_ROOT"
 
 set +e
 sh "$PUBLIC13_RUNNER" "$SHORT_APP_ROOT" ordinary
