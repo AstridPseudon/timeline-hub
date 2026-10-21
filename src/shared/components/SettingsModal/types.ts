@@ -7,7 +7,7 @@ export interface SettingsModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   initialTab?: string;
-  /** Offered only where the tour can run (the video editor); starts the tour again. */
+  /** Offered where the tour can run (desktop, none running); replays the whole tour. */
   onReplayTour?: () => void;
   creditsTab?: 'purchase' | 'history' | 'task-log';
   /** Optional extension display data for the Extensions tab. */

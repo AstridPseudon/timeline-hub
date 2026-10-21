@@ -84,6 +84,9 @@ vi.mock('./hooks/useSettingsModal', () => ({
     handleOpenSettings: vi.fn(),
   }),
 }));
+vi.mock('./hooks/useReplayEditorTour', () => ({
+  useReplayEditorTour: () => undefined,
+}));
 vi.mock('./hooks/useOnboardingFlow', () => ({
   useOnboardingFlow: () => ({ showOnboardingModal: false, handleOnboardingClose: vi.fn() }),
 }));

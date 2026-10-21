@@ -309,4 +309,36 @@ test.describe('editor tour', () => {
     await page.locator('[data-track-id]').first().waitFor({ timeout: 30_000 });
     await expectRealEditor(page);
   });
+
+  test('Settings > Replay tour runs the whole tour again, and a reload after it does not restart it', async ({ page }) => {
+    test.setTimeout(180_000);
+    // Seen already (the project default): the editor is idle, as for any returning user.
+    await loadEditor(page);
+    await expectRealEditor(page);
+    const realTracks = await page.locator('[data-track-id]').evaluateAll((els) => els.map((el) => el.getAttribute('data-track-id')));
+
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Replay tour', exact: true }).click();
+
+    // Settings closes and the tour starts from the welcome card.
+    await expect(dialog).toHaveCount(0);
+    await waitSettled(page, 1, 'welcome');
+    await expect(page.locator(SHIELD)).toBeVisible();
+    await pressPrimary(page, { act: 1, beat: 'welcome' });
+    await waitSettled(page, 1, 'compose');
+
+    // Leave with Esc: the user's own timeline is back, untouched.
+    await page.keyboard.press('Escape');
+    await expectRealEditor(page);
+    await expectRealComposerFocused(page);
+    await expect.poll(() => page.locator('[data-track-id]').evaluateAll((els) => els.map((el) => el.getAttribute('data-track-id'))))
+      .toEqual(realTracks);
+
+    // Replay never changes "seen": a reload does not start the tour.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: 'Render', exact: true }).waitFor({ state: 'visible', timeout: 45_000 });
+    await page.locator('[data-track-id]').first().waitFor({ timeout: 30_000 });
+    await expectRealEditor(page);
+  });
 });

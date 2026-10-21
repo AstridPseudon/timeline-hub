@@ -63,7 +63,7 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = ({
           <h3 className="text-sm font-medium text-muted-foreground mb-3">Tour</h3>
           <div className={`${isMobile ? 'p-3' : 'p-4'} bg-muted/30 rounded-lg flex items-center justify-between gap-3`}>
             <span className="text-xs text-muted-foreground">Walk through what Astrid can do, step by step</span>
-            <Button variant="retro-secondary" size="retro-sm" onClick={onReplayTour}>Replay the tour</Button>
+            <Button variant="retro-secondary" size="retro-sm" onClick={onReplayTour}>Replay tour</Button>
           </div>
         </div>
       )}

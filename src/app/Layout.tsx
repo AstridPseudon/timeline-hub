@@ -13,7 +13,6 @@ import { AIInputModeProvider } from '@/shared/contexts/AIInputModeContext';
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
-import { beginEditorTour } from '@/tools/video-editor/tour/runner/tourFlag';
 import { SocialIcons } from './components/SocialIcons';
 
 import { useAuth } from '@/shared/contexts/AuthContext';
@@ -21,6 +20,7 @@ import { APP_ENTRY_PATH, prefersAppEntry } from './entryClassification.ts';
 import { useSplitViewScroll } from './hooks/useSplitViewScroll';
 import { useGlobalPaneShortcuts } from './hooks/useGlobalPaneShortcuts';
 import { useSettingsModal } from './hooks/useSettingsModal';
+import { useReplayEditorTour } from './hooks/useReplayEditorTour';
 import { useOnboardingFlow } from './hooks/useOnboardingFlow';
 import { useResetCurrentShotOnRouteChange } from './hooks/useResetCurrentShotOnRouteChange';
 import { LayoutMainContent } from './components/LayoutMainContent';
@@ -64,6 +64,7 @@ const LayoutShell: React.FC = () => {
   const { splitViewWrapperRef } = useSplitViewScroll(isMobileSplitView);
   const { isAuthenticated, isLoading } = useAuth();
   const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab, settingsCreditsTab, handleOpenSettings } = useSettingsModal();
+  const replayEditorTour = useReplayEditorTour();
   const { showOnboardingModal, onboardingMode, handleOnboardingClose } = useOnboardingFlow();
   useResetCurrentShotOnRouteChange();
   useGlobalPaneShortcuts();
@@ -149,7 +150,7 @@ const LayoutShell: React.FC = () => {
         <SettingsModal
           isOpen={isSettingsModalOpen}
           onOpenChange={setIsSettingsModalOpen}
-          onReplayTour={isVideoEditorShellActive && !isMobile && !isTablet ? beginEditorTour : undefined}
+          onReplayTour={replayEditorTour}
           initialTab={settingsInitialTab}
           creditsTab={settingsCreditsTab}
         />
