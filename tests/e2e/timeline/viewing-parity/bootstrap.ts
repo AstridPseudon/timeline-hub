@@ -1,10 +1,76 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
-import { stat } from 'node:fs/promises';
-import { delimiter, isAbsolute, join } from 'node:path';
+import { execFileSync, spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { lstat, readFile, realpath } from 'node:fs/promises';
+import { delimiter, isAbsolute, join, relative } from 'node:path';
 import type { DirectHarness } from '../../local/support/harness';
 
 export interface PackHostSession {
   stop(): Promise<void>;
+}
+
+const REVIEWED_HELPER_COMMIT = 'b70b9d569b2c80885d72734c61cd57e64c3715a8';
+const REVIEWED_HELPER_TREE = '687f077c4771e3dbb66bfb7ff2b98f310ac054b6';
+const REVIEWED_HELPER_PATH = 'tests/packs/rendering/real_pack_host.py';
+const REVIEWED_HELPER_BYTES = 10_938;
+const REVIEWED_HELPER_SHA256 = 'sha256:bc75d73f21c6310efad7fc41e4a3d790bfe3a8975e0eb96c08c3dec63e62961b';
+
+function gitRevision(root: string, env: NodeJS.ProcessEnv, ...args: string[]): string {
+  try {
+    return execFileSync('git', ['-C', root, ...args], {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env,
+    }).trim();
+  } catch {
+    throw new Error('Reviewed Agent pack-host helper must come from its approved committed carrier');
+  }
+}
+
+function assertCarrierClean(root: string, env: NodeJS.ProcessEnv): void {
+  if (gitRevision(root, env, 'status', '--porcelain', '--untracked-files=all')) {
+    throw new Error('Reviewed Agent pack-host helper carrier is dirty');
+  }
+}
+
+async function assertImmutableCarrier(carrierRoot: string): Promise<string> {
+  const paths = [carrierRoot, ...REVIEWED_HELPER_PATH.split('/').map((_, index, parts) =>
+    join(carrierRoot, ...parts.slice(0, index + 1)))];
+  for (const [index, path] of paths.entries()) {
+    const info = await lstat(path).catch(() => null);
+    const resolved = await realpath(path).catch(() => null);
+    const isLeaf = index === paths.length - 1;
+    if (!info || info.isSymbolicLink() || !resolved || resolved !== path
+      || (isLeaf ? !info.isFile() : !info.isDirectory()) || (info.mode & 0o222) !== 0) {
+      throw new Error('Reviewed Agent pack-host helper carrier must be immutable regular files and directories');
+    }
+  }
+  return paths[paths.length - 1];
+}
+
+/** Resolve only the reviewed helper blob; normal Agent imports still come from the frozen source root. */
+export async function resolveReviewedPackHostHelper(source: string, env: NodeJS.ProcessEnv = process.env): Promise<string> {
+  const carrier = env.ASTRID_PACK_HOST_HELPER_CHECKOUT;
+  if (!carrier || !isAbsolute(carrier)) {
+    throw new Error('Pack-host bootstrap requires frozen absolute ASTRID_PACK_HOST_HELPER_CHECKOUT');
+  }
+  const carrierRoot = await realpath(carrier).catch(() => null);
+  if (!carrierRoot) throw new Error('Reviewed Agent pack-host helper carrier is unavailable');
+  const sourceRoot = await realpath(source).catch(() => null);
+  if (!sourceRoot) throw new Error('Frozen ASTRID_CHECKOUT is unavailable');
+  if (sourceRoot === carrierRoot) throw new Error('Reviewed helper carrier must remain separate from frozen ASTRID_CHECKOUT');
+  assertCarrierClean(carrierRoot, env);
+  const resolvedHelper = await assertImmutableCarrier(carrierRoot);
+  if (relative(carrierRoot, resolvedHelper) !== REVIEWED_HELPER_PATH) {
+    throw new Error('Reviewed Agent pack-host helper escaped its approved carrier or is not a regular file');
+  }
+  const bytes = await readFile(resolvedHelper);
+  const digest = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
+  if (bytes.byteLength !== REVIEWED_HELPER_BYTES || digest !== REVIEWED_HELPER_SHA256) {
+    throw new Error('Reviewed Agent pack-host helper bytes changed');
+  }
+  if (gitRevision(carrierRoot, env, 'rev-parse', 'HEAD') !== REVIEWED_HELPER_COMMIT
+    || gitRevision(carrierRoot, env, 'rev-parse', 'HEAD^{tree}') !== REVIEWED_HELPER_TREE) {
+    throw new Error('Reviewed Agent pack-host helper source revision changed');
+  }
+  return resolvedHelper;
 }
 
 interface BootstrapOptions {
@@ -32,16 +98,15 @@ export async function startRealPackHost(
   if (!source || !isAbsolute(source) || !python || !isAbsolute(python)) {
     throw new Error('Pack-host bootstrap requires frozen absolute ASTRID_CHECKOUT and ASTRID_PYTHON');
   }
-  const helper = join(source, 'tests/packs/rendering/real_pack_host.py');
-  if (!(await stat(helper).catch(() => null))?.isFile()) {
-    throw new Error('Approved Agent pack-host helper is absent from frozen ASTRID_CHECKOUT');
-  }
+  const helper = await resolveReviewedPackHostHelper(source, env);
   if (options.signal?.aborted) throw new Error('Pack-host startup aborted');
-  env.PYTHONPATH = [runtime, source, env.PYTHONPATH].filter(Boolean).join(delimiter);
+  env.PYTHONPATH = [source, runtime, env.PYTHONPATH].filter(Boolean).join(delimiter);
   const startupDeadline = performance.now() + (options.startupTimeoutMs ?? 210_000);
   let child: ChildProcessWithoutNullStreams;
+  const finalHelper = await resolveReviewedPackHostHelper(source, env);
+  if (finalHelper !== helper) throw new Error('Reviewed Agent pack-host helper changed before spawn');
   try {
-    child = (options.spawn ?? spawn)(python, ['-m', 'tests.packs.rendering.real_pack_host',
+    child = (options.spawn ?? spawn)(python, [finalHelper,
       '--realm-dir', harness.realmDir, '--support-dir', harness.supportDir,
       '--discovery-file', join(harness.supportDir, 'discovery.json'),
       '--source-checkout', source, '--runtime-instance-id', harness.runtimeInstanceId,
