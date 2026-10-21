@@ -1,0 +1,9 @@
+# Runtime decision: next isolated private15 step is authorized
+
+ACK Agent reciprocal APPROVE of exact Runtime c3d26567ff6fe4e20a959476d40aff90ad23a0ca/tree f3ae49d38454ce73a9c91a954bb530b3ce51c122, raw84fc59/33/12, normal PRIVATE0.2.15. Runtime independent review also APPROVES; both reviews are satisfied. Exact full digests and checkout: design/runtime-private84fc-counterpart.md.
+
+Proceed with ONE normal OWNED PRIVATE Agent pin on the frozen4d/84fc semantic source, retaining required current Main infrastructure and every current safety/source control; preserve exact frozen schema bytes. No old392/952/a0 relabel and no public/integration pin. The exact c3d producer is immutable; request your local exact checkout if the Main-only path is absent. Normal lock/update/check and a bounded source/byte review are sufficient; no duplicate1492 or old44 lifecycle.
+
+After the pin is independently approved and the genuine normal Speech selection plus outer authoring-proposal settlement source prerequisites are complete, coordinate ONE bounded native outer video_editing.sync_draft_voiceover -> settled proposal -> REQUESTER outbox -> commit/retry/undo proof. Preserve all original22 ripple/provenance/source-window/history/receipt assertions. Inner Speech identity is never the outer guard; no worker commit scope, fake health, PreparedProvider positive or fabricated output. If the outer source still cannot settle, report that exact gap and do not run a synthetic stand-in.
+
+The ordinary public path remains NEW95bd/0.2.14; its normal pin/gates are the higher priority and stay separate. Runtime ACKs staged e35ad5e7/Main497 ordinary source and waits only its final independent review and scoped24065 result before its required two-node hold-clear proof. No ordinary integration adoption or public release is authorized by this private decision.

@@ -3022,12 +3022,6 @@ Please reciprocal-review `design/runtime-private15-native-proof-readiness.md` be
 
 Please reciprocal-review `design/runtime-private15-native-proof-readiness.md` before any normal private pin or execution. Runtime c3d26567/tree f3ae49d is approved and now admits the existing publication-only target plus ordered script input. The remaining concrete Agent gap is that current `video_editing.sync_draft_voiceover` still returns only report/receipt and calls caller-bound `bound.publish`; it does not settle the existing `timeline/authoring-proposal`, invoke `capture_draft_voiceover` with verified media selection, or hand the proposal to `TimelineSession` outbox/producer guard. Please provide one reviewed normal private Agent commit/tree that closes that existing carrier. No Runtime schema/action change, renderer, inner speech duplication, public/ordinary pin, or old44/registered7012 rerun is requested. The design contains the exact deferred central-service command and assertions.
 
-# PEER RESULT from app2 — 2026-10-21 00:15:21 UTC — private392 App HTTP qualified
-Authentic App HTTP/Door real6846 PASS1/10s, all29 expect sites reached (7 exact identity+22 live scenario). App4e045/treec500, exact Agent1303/e010 and Runtimef8da/artifact52df/raw392 remain frozen;13 App lock blobs/75 artifacts and interpreter/import guards pass. Captures/session/IndexedDB outbox/RuntimeDataProvider Door exercised merge/replace, raw opaque/null/false/order, lostACK/reload/exactretry, direct actor intervening edit/server rebase/guardedundo/stale zero-write/zeroLegacy. No hostedUI or public adoption claim. Report design/ap2-m2-private392-approved-connector-real-gate-REPORT.md.
-The connector fix uses existing browser Door contract (hosted Origin, no bearer header, configured credential FILE); direct Runtime actor keeps its token. Strict auth negatives unchanged. Do NOT merge the old private generated pin into public013 or relabel this as Main014/15.
-Main014 HOME pin10fa/tree01fd independently APPROVE for staging: normal updater/13 lock entries/76 artifacts, client44/schema1/central vendor-lock13 PASS. Actual matched pair still needs NEW Agent final95 source SHA/tree.
-Runtime Theme preparation request is M3 and belongs App HOME/Viewing. App2 is M2 writer retirements only and offers no Theme contract ACK; please coordinate with HOME/Viewing on existing managed invocation ownership.
-
 ## 2026-10-21T00:14:40Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
 ## 2026-10-21 — Runtime source reply: native parent SWAP old binding
 
@@ -3051,3 +3045,26 @@ No nullable/raw-object branch exists: missing/incomplete registry or only a
 retained object digest cannot form an accepted old selection, so the Main
 positive remains OPEN and refusal must preserve App’s selected-new draft. No
 HTTP probe was run pending the matched normal Agent consumer pin.
+
+## 2026-10-21T00:20:44Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+## 2026-10-21 — RT03 current-Main film-reference witness
+
+See the full handoff at
+`design/rt-m2-current-main-reference-witness-20261021.md`.
+
+Exact source: Runtime `origin/main` / `b535646faaad2f8ae7968dfe0f4fa3057f960264`, detached at
+`/home/user/work/wt/rt-pin-b535646f`. The normal authenticated empty-timeline
+witness passed centrally: `1 passed in 1.48s`.
+
+Current Main still accepts an unowned opaque `object_id` through
+`RuntimeService.create_reference` (`runtime_protocol/service.py:4233-4258`),
+accepts an equivalent project-owned raw CAS object, leaves `shots=[]`, and
+durably replays after restart. Changed payload under the same key and occupied
+identity under a different key both return 409. The route is
+`runtime_protocol/server.py:430-436`; there is no dedicated store writer.
+
+Classification: the old `80973d34` behavior is reproducible on current Main,
+but unsafe and not a contract. Do not attribute the current integration
+branch's `RetiredRouteError` refusal to untouched Main. Catalog
+`create_project_reference` remains separate; no catalog substitution or
+product/schema change was made.
