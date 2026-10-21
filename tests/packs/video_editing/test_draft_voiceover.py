@@ -268,6 +268,47 @@ def test_coordinator_publishes_once_with_provenance(monkeypatch):
     assert result['generated'][0]['text']=='New'
 
 
+def test_private_requester_entry_forwards_current_target_and_source(monkeypatch, tmp_path):
+    c,s=fixture();s['occurrences'][0]['text']='New'
+    client,bound=coordinator_client(c,s)
+    calls=[]
+
+    def requester(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {'status': 'published', 'published': True}
+
+    monkeypatch.setattr(
+        'astrid.packs.video_editing.shared.voiceover_requester._requester_sync_draft_voiceover',
+        requester,
+    )
+    result=vo._sync_draft_voiceover(
+        client, 'p', 't', timing_policy='ripple', requester_entry=True,
+        outbox_path=tmp_path / 'outbox.json',
+    )
+    assert result == {'status': 'published', 'published': True}
+    assert not bound.published
+    assert len(calls) == 1
+    args, kwargs = calls[0]
+    assert args == (client, 'p', 't')
+    assert kwargs['candidate'] == c
+    assert kwargs['scripts'] == s
+    assert kwargs['admitted_target'] == {
+        'project_id': 'p', 'timeline_id': 't',
+        'base_revision_id': 'h', 'base_publication_id': 'pub-h',
+    }
+    assert kwargs['outbox_path'] == tmp_path / 'outbox.json'
+
+    unchanged_candidate, unchanged_scripts = fixture()
+    unchanged_client, unchanged_bound = coordinator_client(
+        unchanged_candidate, unchanged_scripts,
+    )
+    unchanged = vo._sync_draft_voiceover(
+        unchanged_client, 'p', 't', timing_policy='ripple', requester_entry=True,
+    )
+    assert unchanged['status'] == 'unchanged'
+    assert not unchanged_bound.published and len(calls) == 1
+
+
 def test_managed_proposal_refuses_without_private_host_context(monkeypatch):
     c,s=fixture();s['occurrences'][0]['text']='New'
     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:coordinator_synthesis)

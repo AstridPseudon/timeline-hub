@@ -10,6 +10,7 @@ from dataclasses import replace
 import pytest
 
 from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
+from astrid.core.execution.executor import _action_context as action_context
 from astrid.core.execution.executor._action_context import _require_action_context
 from astrid.core.execution.executor.registry import ExecutorRegistry
 from astrid.core.execution.executor.runner import ExecutorRunnerError, run_executor
@@ -40,7 +41,8 @@ def action(request, monkeypatch):
         'task_id': 'inner-speech', 'attempt_id': 'inner-attempt', 'executor_id': 'caller-worker',
         'fence': 999, 'runtime_epoch': 999}})()
     monkeypatch.setenv('ASTRID_NETWORK_ADMISSION', json.dumps(f.client.trusted_execution_context))
-    monkeypatch.setattr(AstridClient, 'open_from_launcher', lambda: nullcontext(f.client))
+    monkeypatch.setattr(action_context, '_managed_read_client',
+                        lambda context: nullcontext(f.client))
     f.calls = []
 
     def sync(client, project, timeline, **kwargs):
@@ -93,11 +95,26 @@ def test_action_uses_private_managed_entry_not_public_sync(action, monkeypatch):
     assert_closed()
 
 
-def test_declaration_keeps_existing_eight_inputs_and_network_false(action):
+def test_optional_settled_input_is_bound_to_the_existing_attempt(action):
+    f = action
+    input_path = f.request.run_root / 'inputs' / 'settled-speech.json'
+    input_path.parent.mkdir()
+    input_path.write_text('{"entries": []}')
+    request = replace(f.request, inputs={**f.request.inputs,
+                                         'settled_speech_input': str(input_path)})
+    result = invoke(f, request=request)
+    assert result.ok
+    kwargs = f.calls[0][3]
+    assert kwargs['settled_speech_input'] == str(input_path)
+    assert kwargs['attempt_root'] == f.request.run_root
+    assert_closed()
+
+
+def test_declaration_keeps_existing_inputs_and_network_false(action):
     f = action
     assert [port.name for port in f.definition.inputs] == [
         'project', 'timeline_ref', 'timing_policy', 'settings', 'occurrence_ids',
-        'adopt_clip_ids', 'padding_seconds', 'plan_only']
+        'adopt_clip_ids', 'padding_seconds', 'plan_only', 'settled_speech_input']
     assert f.definition.isolation.network is False
     assert f.definition.metadata['output_result_manifest'] is True
     assert [port.artifact_type for port in f.definition.outputs] == [

@@ -33,10 +33,12 @@ def run(
     adopt_clip_ids: Any = None,
     padding_seconds: float = 0.15,
     plan_only: bool = False,
+    settled_speech_input: Any = None,
 ) -> dict[str, Any]:
     """Settle a managed proposal or the helper's advisory report; never publish."""
     from astrid.core._shared.result_manifest import build_manifest, write_manifest
     from astrid.core.execution.executor._action_context import (
+        _managed_read_client,
         _PreparationClient,
         _require_action_context,
     )
@@ -57,9 +59,7 @@ def run(
     if adopt_value is None:
         adopt_value = []
 
-    from astrid.sdk import AstridClient
-
-    with AstridClient.open_from_launcher() as client:
+    with _managed_read_client(context) as client:
         result = _sync_draft_voiceover_proposal(
             _PreparationClient(client, context),
             project,
@@ -70,6 +70,8 @@ def run(
             timing_policy=timing_policy,
             padding_seconds=float(padding_seconds),
             plan_only=_as_bool(plan_only),
+            settled_speech_input=settled_speech_input,
+            attempt_root=context.run_root,
         )
     if not isinstance(result, dict):
         raise TypeError("draft voiceover synchronization must return a mapping")

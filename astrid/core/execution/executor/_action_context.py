@@ -73,6 +73,7 @@ class _ActionContext:
             raise ValueError("managed Python producer output root does not match its attempt")
         self._producer = MappingProxyType(producer)
         self._target = MappingProxyType(dict(target))
+        self._root = root.resolve()
         self._out = out.resolve()
         self._directory = self._out.stat()
         self._owner = (os.getpid(), threading.get_ident())
@@ -101,6 +102,11 @@ class _ActionContext:
     def out(self) -> Path:
         self._check()
         return self._out
+
+    @property
+    def run_root(self) -> Path:
+        self._check()
+        return self._root
 
 
 def _require_action_context() -> _ActionContext:
@@ -160,3 +166,29 @@ class _PreparationTarget:
     def __getattr__(self, name):
         self._context._check()
         return getattr(self._target, name)
+
+
+@contextmanager
+def _managed_read_client(context: _ActionContext):
+    """Open the host's existing worker read connection for managed actions."""
+    context._check()
+    from astrid.sdk import AstridClient
+    from astrid.sdk.remote import RemoteAstridClient
+    from astrid.sdk.workspace_client import WorkspaceClient
+
+    endpoint = os.environ.get("ASTRID_RUNTIME_ENDPOINT", "").strip()
+    credential = os.environ.get("ASTRID_RUNTIME_CREDENTIAL", "").strip()
+    if not endpoint or not credential:
+        raise ValueError("managed Python producer requires the host runtime read connection")
+    transport = WorkspaceClient(endpoint, credential)
+    requested_scopes = ["worker:execute", "projects:read", "tasks:read", "objects:read"]
+    handshake = transport.handshake("astrid-managed-python", "stage1", requested_scopes)
+    if isinstance(handshake, Mapping):
+        actor_id, scopes = handshake.get("actor_id"), handshake.get("scopes")
+    else:
+        actor_id, scopes = getattr(handshake, "actor_id", None), getattr(handshake, "scopes", None)
+    if (actor_id != context.producer["executor_id"]
+            or tuple(scopes or ()) != tuple(requested_scopes)):
+        raise ValueError("managed Python producer read connection identity or scopes changed")
+    transport.actor_id = actor_id
+    yield AstridClient(remote=RemoteAstridClient(transport))
