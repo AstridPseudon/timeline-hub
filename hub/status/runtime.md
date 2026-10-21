@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T13:19:07Z | dispatcher heartbeat 2332s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 47m -->
+<!-- main | 2026-10-21T13:21:04Z | dispatcher heartbeat 2450s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 49m -->
 # runtime — 2026-10-21T12:31:20Z
 Milestone: M1 RECORDED. M2, M3 and M4 OPEN. No foundation, all-gates or final ZIP claim.
 Integrated: Runtime cc7410a1fa9bd5acc703abfd1b8fde0cf3d00365 / tree1c8473c9e73fde02f9943b975eac171ac2757069. New dormant source: authenticated materialization join (6a641145), raw custody (0906f72), unplaced reference projection (cc7410a1f), each independently approved with targeted tests. All76 published014 artifact bytes remain unchanged. Published producer95bd / ordinary6ba55-29 stays current; Agent091aa and App3be adopted it. App native initializer1557 has separate actual7782 proof.
