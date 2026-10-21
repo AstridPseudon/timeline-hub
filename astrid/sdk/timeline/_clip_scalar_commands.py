@@ -11,6 +11,52 @@ from ._materialization import capture_version
 from ._scalar_commands import _capture, _changes, _clip_basis, _selected_schema, _target
 from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occurrence_start, rate
 
+_GENERATED_IDENTITY = ('extensionId', 'contributionId')
+_GENERATED_FIXED_FIELDS = ('extensionId', 'contributionId', 'generatedAt', 'sourceMapEntryId')
+_TEXT_LEAVES = frozenset(('content', 'fontSize', 'color', 'bold', 'align'))
+
+
+def _producer_app(ctx, ref, incoming):
+    """Update only existing managed metadata; never adopt a raw/user clip."""
+    current = ctx.read(ref, ['app'])
+    if not isinstance(current, dict) or not isinstance(current.get('managedBy'), str):
+        raise CommandError('clip.set app leaves require an existing managed clip',
+                           kind='unsupported_ownership', ref=ref)
+    ctx.read(ref, ['app', 'managedBy'])
+    if 'managedBy' in incoming and incoming['managedBy'] != current['managedBy']:
+        raise CommandError('clip.set cannot change clip ownership', kind='unsupported_ownership', ref=ref)
+    if '__generated__' not in incoming:
+        return
+    metadata = incoming['__generated__']
+    previous = current.get('__generated__')
+    if not isinstance(metadata, dict) or not isinstance(previous, dict):
+        raise CommandError('clip.set generated metadata requires an existing identity',
+                           kind='unsupported_ownership', ref=ref)
+    ctx.read(ref, ['app', '__generated__'])
+    if metadata.get('extensionId') != current['managedBy']:
+        raise CommandError('clip.set generated metadata owner does not match managedBy',
+                           kind='unsupported_ownership', ref=ref)
+    for key in _GENERATED_IDENTITY:
+        if metadata.get(key) != previous.get(key):
+            raise CommandError('clip.set cannot adopt or change generated metadata identity',
+                               kind='unsupported_ownership', ref=ref)
+    for key in _GENERATED_FIXED_FIELDS:
+        if metadata.get(key) != previous.get(key):
+            raise CommandError('clip.set generated metadata identity changed',
+                               kind='unsupported_ownership', ref=ref)
+
+
+def _producer_text(ctx, ref, incoming):
+    if not _TEXT_LEAVES.issuperset(incoming):
+        raise CommandError('clip.set text contains an unsupported leaf', ref=ref)
+    current = ctx.read(ref, ['text'])
+    if current is not None and not isinstance(current, dict):
+        raise CommandError('clip.set text requires an object', ref=ref)
+    if current is None:
+        ctx.object(ref, ['text'])
+    for key in sorted(incoming):
+        ctx.write(ref, ['text', key], incoming[key])
+
 
 def _hold_extent(ctx, ref, values, clear):
     owner = ref.rsplit('/', 1)[0]
@@ -106,13 +152,20 @@ def clip_set(ctx, command):
         for path in duration_paths:
             ctx.write(ref, path, duration)
     for key in sorted(values):
-        ctx.write(ref, [key], values[key])
+        if key == 'app':
+            _producer_app(ctx, ref, values[key])
+            for leaf in sorted(values[key]):
+                ctx.write(ref, ['app', leaf], values[key][leaf])
+        elif key == 'text':
+            _producer_text(ctx, ref, values[key])
+        else:
+            ctx.write(ref, [key], values[key])
     for key in sorted(clear):
         ctx.clear(ref, [key])
 
 
 def capture_clip_set(bundle, select, *, values=None, clear=()):
-    """Capture bounded raw hold/opacity writes and explicit field removal."""
+    """Capture bounded raw clip leaves and explicit field removal."""
     return _capture(bundle, 'clip.set', select, values, clear)
 
 

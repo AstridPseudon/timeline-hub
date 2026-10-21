@@ -58,9 +58,47 @@ def without_opacity(schema):
     return schema
 
 
+def without_producer_clip_fields(schema):
+    """Strip the unfrozen producer leaves so historical schemas stay byte-identical."""
+    args = schema['$defs']['ClipSetArgs']
+    assert args['properties']['values']['properties'].pop('app') == {
+        'type': 'object',
+        'properties': {
+            'managedBy': {'type': 'string', 'minLength': 1},
+            '__generated__': {'$ref': '#/$defs/JSON'},
+        },
+        'additionalProperties': False,
+        'minProperties': 1,
+        'description': 'Existing-owner leaves only: managedBy and the complete generated metadata leaf.',
+    }
+    assert args['properties']['values']['properties'].pop('text') == {
+        'type': 'object',
+        'properties': {
+            'content': {'type': 'string'},
+            'fontSize': {'type': 'number'},
+            'color': {'type': 'string'},
+            'bold': {'type': 'boolean'},
+            'align': {'type': 'string'},
+        },
+        'additionalProperties': False,
+        'minProperties': 1,
+        'description': 'Known text leaves; unmentioned style leaves survive.',
+    }
+    assert args['properties']['values']['properties'].pop('label') == {
+        'type': 'string',
+        'description': 'Literal top-level clip label.',
+    }
+    args['description'] = (
+        'Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; '
+        'explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, '
+        'never sets null/empty. Asset assignment requires the scoped clip.swap-media or '
+        'occurrence.swap-media; transition authoring is outside v1.')
+    return schema
+
+
 def without_literal_fields(schema):
     """Remove only mute and opacity; all ordered-remove content remains."""
-    return without_opacity(without_mute(schema))
+    return without_opacity(without_mute(without_producer_clip_fields(schema)))
 
 
 def without_groups(schema):
@@ -211,9 +249,12 @@ def test_private_extent_floor_is_preserved_when_remove_is_stripped():
 
 def test_literal_three_union_reconstructs_each_reviewed_source_floor():
     candidates = {
-        'ordered-remove': without_opacity(without_mute(copy.deepcopy(_SCHEMA))),
-        'track-mute': without_opacity(without_remove(copy.deepcopy(_SCHEMA))),
-        'opacity': without_mute(without_remove(copy.deepcopy(_SCHEMA))),
+        'ordered-remove': without_opacity(without_mute(
+            without_producer_clip_fields(copy.deepcopy(_SCHEMA)))),
+        'track-mute': without_opacity(without_remove(
+            without_producer_clip_fields(copy.deepcopy(_SCHEMA)))),
+        'opacity': without_mute(without_remove(
+            without_producer_clip_fields(copy.deepcopy(_SCHEMA)))),
         'exact84fc': without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))),
     }
     expected = {
@@ -226,7 +267,7 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
         raw = (json.dumps(candidate, indent=2) + '\n').encode()
         assert hashlib.sha256(raw).hexdigest() == expected[name], name
     assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == \
-        'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc0f376987527ef068'
+        '0b747d87c763a8f0ba0dcc5027390ab04d6296cfddfffa8c049020334ca3ec92'
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
