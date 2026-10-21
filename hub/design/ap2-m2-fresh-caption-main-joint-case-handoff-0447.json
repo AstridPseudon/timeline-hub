@@ -1,0 +1,214 @@
+{
+  "kind": "app-m2-fresh-caption-joint-row-handoff",
+  "status": "observed-positive-no-activation",
+  "source_identity": {
+    "main_commit": "860d43b331fb4422b16bc0dbd7b08666a0c766a0",
+    "main_tree": "ea4eabb8eb469df63fd1d515f84982d85b2f14cc",
+    "builder": "src/tools/video-editor/dev/transcript-lane/extension.ts:288-476",
+    "normal_runner": "src/tools/video-editor/dev/transcript-lane/extension.ts:754-774",
+    "compiler": "src/tools/video-editor/lib/timeline-patch.ts:1012-1029,1098-1183,1207-1316,1936-1978"
+  },
+  "fixture": {
+    "test": "src/tools/video-editor/dev/transcript-lane/__tests__/transcriptLane.test.tsx:1017-1043",
+    "name": "stamps source, schema, generator, and output fingerprints through the host contract",
+    "source_items": [
+      {
+        "id": "source-1@clip-1",
+        "sourceItemId": "source-1",
+        "timelineStart": 1,
+        "timelineEnd": 2,
+        "clipId": "clip-1",
+        "payload": { "text": "Zażółć 🌍" }
+      }
+    ],
+    "caller_context": {
+      "extensionId": "haus.astrid.transcript-lane",
+      "contributionId": "transcript-caption-foundry",
+      "sourceSchemaRef": "astrid.transcript_segment/v1",
+      "extensionVersion": "1.3.0",
+      "roundTripPolicy": "preserve-output",
+      "hostProvenanceContract": 1
+    }
+  },
+  "before": {
+    "parent": {
+      "output": { "resolution": "1280x720", "fps": 30, "file": "demo.mp4" },
+      "tracks": [
+        { "id": "transcript-caption-foundry-track", "kind": "visual", "label": "Transcript Captions", "muted": false },
+        { "id": "V1", "kind": "visual", "label": "V1", "muted": false, "app": { "trackOpaque": "keep-track" } }
+      ],
+      "clips": [
+        {
+          "id": "clip-1",
+          "track": "V1",
+          "at": 0,
+          "from": 0,
+          "to": 4,
+          "asset": "asset-a",
+          "clipType": "media",
+          "volume": 0.8,
+          "text": { "customSibling": "keep-text" },
+          "app": { "opaqueSibling": "keep-app" },
+          "params": { "opaqueSibling": "keep-params" }
+        }
+      ],
+      "app": { "caller.ext": { "opaque": "keep-project" } },
+      "pinnedShotGroups": [],
+      "theme": "default",
+      "theme_overrides": {},
+      "generation_defaults": {}
+    },
+    "config": {
+      "output": { "resolution": "1280x720", "fps": 30, "file": "demo.mp4" },
+      "tracks": [
+        { "id": "transcript-caption-foundry-track", "kind": "visual", "label": "Transcript Captions", "muted": false },
+        { "id": "V1", "kind": "visual", "label": "V1", "muted": false, "app": { "trackOpaque": "keep-track" } }
+      ],
+      "clips": [
+        {
+          "id": "clip-1",
+          "track": "V1",
+          "at": 0,
+          "from": 0,
+          "to": 4,
+          "asset": "asset-a",
+          "clipType": "media",
+          "volume": 0.8,
+          "text": { "customSibling": "keep-text" },
+          "app": { "opaqueSibling": "keep-app" },
+          "params": { "opaqueSibling": "keep-params" }
+        }
+      ],
+      "app": { "caller.ext": { "opaque": "keep-project" } },
+      "pinnedShotGroups": [],
+      "theme": "default",
+      "theme_overrides": {},
+      "generation_defaults": {}
+    },
+    "source_items": "fixture.source_items"
+  },
+  "observed_builder_output": {
+    "patch": {
+      "version": 17,
+      "source": "haus.astrid.transcript-lane",
+      "meta": {
+        "kind": "transcript-caption-foundry/render-as-video-text",
+        "sourceSchemaRef": "astrid.transcript_segment/v1",
+        "roundTripPolicy": "preserve",
+        "hostProvenanceContract": 1
+      },
+      "operations": [
+        {
+          "op": "clip.add",
+          "target": "transcript-caption-ca055bff87805488",
+          "payload": { "track": "transcript-caption-foundry-track", "at": 1, "clipType": "text" },
+          "order": 0
+        },
+        {
+          "op": "clip.update",
+          "target": "transcript-caption-ca055bff87805488",
+          "payload": {
+            "track": "transcript-caption-foundry-track",
+            "at": 1,
+            "hold": 1,
+            "x": 128,
+            "y": 418,
+            "width": 1024,
+            "height": 101,
+            "text": { "content": "Zażółć 🌍", "fontSize": 48, "color": "#ffffff", "bold": true, "align": "center" },
+            "label": "Zażółć 🌍",
+            "app": {
+              "__generated__": {
+                "extensionId": "haus.astrid.transcript-lane",
+                "contributionId": "transcript-caption-foundry",
+                "provenance": {
+                  "contractVersion": 1,
+                  "sourceSchemaRef": "astrid.transcript_segment/v1",
+                  "sourceItemId": "source-1",
+                  "sourceFingerprint": "astrid-fnv1a64-v1:45455185c9f937d7",
+                  "sourceRevision": 17,
+                  "generatorVersion": "1.3.0",
+                  "outputFingerprint": "astrid-fnv1a64-v1:a3ab11fde87e6f3d",
+                  "conflictPolicy": "preserve-output"
+                }
+              }
+            },
+            "mode": "merge"
+          },
+          "order": 1
+        }
+      ]
+    },
+    "managedBy": "absent in both operations; observed and preserved as absent",
+    "lowering_context": "The caller's extension/contribution/schema/version/policy are existing builder context, not a new owner assignment."
+  },
+  "observed_compiled_persisted_shape": {
+    "raw_birth_row": {
+      "id": "transcript-caption-ca055bff87805488",
+      "at": 1,
+      "track": "transcript-caption-foundry-track",
+      "clipType": "text",
+      "hold": 1,
+      "x": 128,
+      "y": 418,
+      "width": 1024,
+      "height": 101,
+      "text": { "content": "Zażółć 🌍", "fontSize": 48, "color": "#ffffff", "bold": true, "align": "center" },
+      "app": {
+        "__generated__": {
+          "extensionId": "haus.astrid.transcript-lane",
+          "contributionId": "transcript-caption-foundry",
+          "provenance": {
+            "contractVersion": 1,
+            "sourceSchemaRef": "astrid.transcript_segment/v1",
+            "sourceItemId": "source-1",
+            "sourceFingerprint": "astrid-fnv1a64-v1:45455185c9f937d7",
+            "sourceRevision": 17,
+            "generatorVersion": "1.3.0",
+            "outputFingerprint": "astrid-fnv1a64-v1:a3ab11fde87e6f3d",
+            "conflictPolicy": "preserve-output"
+          }
+        }
+      },
+      "label": "Zażółć 🌍"
+    },
+    "wire_paths": [
+      "parent_composition.config.clips[0]",
+      "parent_composition.clips[0]"
+    ],
+    "wire_source": "src/integrations/runtime/dataProvider.ts:1072-1098,1131-1144",
+    "order": {
+      "transcript-caption-foundry-track": ["transcript-caption-ca055bff87805488"],
+      "V1": ["clip-1"]
+    },
+    "opaque_siblings_preserved": {
+      "source_clip": {
+        "id": "clip-1",
+        "at": 0,
+        "track": "V1",
+        "asset": "asset-a",
+        "clipType": "media",
+        "from": 0,
+        "to": 4,
+        "volume": 0.8,
+        "text": { "customSibling": "keep-text" },
+        "params": { "opaqueSibling": "keep-params" },
+        "app": { "opaqueSibling": "keep-app" }
+      },
+      "source_track_app": { "trackOpaque": "keep-track", "compiler_added": "scaleAppliesToPositionedClips=true" },
+      "project_app": { "caller.ext": { "opaque": "keep-project" } }
+    }
+  },
+  "native_gap_and_boundary": {
+    "current_integration": {
+      "dispatch": "src/tools/video-editor/hooks/useTimelineOps.ts:267-275",
+      "classification": "src/tools/video-editor/commands/genericPatchCapture.ts:109-162",
+      "refusal": "src/tools/video-editor/commands/genericPatchCapture.ts:517-545"
+    },
+    "exact_gap": "The two-operation batch is visibly classified mixed: clip.add is structural-supported, while the rich clip.update (hold + text + geometry + label + app.__generated__) is not a supported native member. captureGenericPatch refuses the whole batch before owner resolution or authored write.",
+    "not_authorization": "This refusal is not authorization to route the batch back through a snapshot writer. Keep the legacy behavior/draft while unqualified; no new activation.",
+    "ownership": "Agent owns the smallest native recipe using existing command carriers; Runtime owns custody. Do not invent managedBy, a new op, DTO, store, or public API.",
+    "proposed_native_lowering": "Not specified here. The observed add/update carrier and existing command-carrier boundary are the input to Agent's recipe; any lowering must preserve the caller context, opaque siblings, order, and absent managedBy."
+  },
+  "live_callers_changed": false
+}
