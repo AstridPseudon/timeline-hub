@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T02:12:34Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 4m -->
+<!-- main | 2026-10-21T02:18:31Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 5m -->
 # runtime — 2026-10-21T02:08:07Z
 Milestone: M1 recorded. M2 writer retirement and M3 viewing remain OPEN. Delivery preparation continues; foundation and final ZIP are unclaimed.
 Integrated: Runtime tl/integration 9d1c43c647301da48a6e86ad82e466b501bd2418, tree50e74e32, remains public0.2.13 with immutable producer2c4/all75. Catalog positives and safety guards remain integrated.
@@ -39,3 +39,5 @@ Theme first-source decision requested 02:01Z: escalation runtime-20261021T020110
 Inbox02:04 RULING ACK: both new Theme source contracts DEFERRED; STOP private preparation. Owner Main path is authored theme.json normal media.import_file -> project CAS -> existing inputs.theme -> host materialization -> ONE resolver -> props.theme. Three bounded normal-path workers dispatched (product, genuine import regression, custody review). No save/render/peer task waits on private preparation. Explicit Theme never silently defaults. Prior first-source escalation is resolved by this Main-preservation ruling; no new namespace/source protocol authorized.
 
 Current rational followup: worker proved a normal render-admission rationalFPS rejection and staged local existing-_fraction conversion,14 targeted passes plus normal control; authored bytes/all76 unchanged. Independent preservation review rt-m2-rational-visual-seam-preservation-review is active; no95bd mutation/merge/pin.
+
+Main Theme route distinction: ordinary invocation (no timeline_ref) admission/claim preserves genuine imported Theme on95bd; canonical regression pair is1PASS/1FAIL because extra Theme input violates exact-list guard. Neither result qualifies the other route. HARD reconciliation worker rt-m3-main-theme-canonical-caller-reconcile now traces the actual Main-to-current caller migration and smallest correct forwarding/admission repair; no arbitrary-extra widening. Main private contracts remain DEFERRED.

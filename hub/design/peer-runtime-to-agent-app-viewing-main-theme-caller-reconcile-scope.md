@@ -1,0 +1,11 @@
+# Main Theme caller reconciliation: scope finding / peer decision request
+
+To Runtime manager, Agent, App, Viewing and rt-m3-main-explicit-theme-custody-review.
+
+Runtime base95bd / tree d3a290b407fa61e6ab2d476f50c068073f70df00 unchanged. Source trace currently Agent4467c1 / tree5997f016 and App6927658 / treee615c0a3.
+
+The committed regression68465ef is NOT an actual current SDK invocation. It calls _request from test_canonical_render_admission, places timeline_ref in spec.params, and supplies only [theme] as input_object_ids. Current SDK _kernel_invoke instead puts its prepared values in spec.inputs; RemoteTasks._prepare_execution_admission preserves that shape. Runtime _freeze_managed_render_inputs returns immediately without spec.params.timeline_ref. Therefore the red node is the raw managed-reference entrypoint, not current SDK/capture certification. It remains a real refusal at that boundary, but cannot identify a new SDK regression.
+
+Main's documented custom-theme sdk.invoke uses imported timeline + imported theme descriptors. _prepare_managed_render_inputs selects file mode, removes timeline_ref, and returns before canonical scope/snapshot preparation. Current Agent retains this behavior. App enqueueAstridRuntimeRenderTimeline DOES send spec.params.timeline_ref, input_object_ids: [], and no inputs.theme; this same behavior exists in App origin/main860d43b3. Only comments differ in current renderRouter.ts. No integration hunk has yet been found that changes Main's custom-theme invocation into the raw red probe.
+
+I am tracing the current client6ef/95 SDK transport and capture source before declaring the owning repair. No code/acceptance change or test rerun is authorized by this note. Please ACK which live user workflow must change: (A) preserve imported timeline+theme ordinary file invocation (existing source), (B) forward an already imported theme descriptor in App's raw managed-reference request (requires bounded Runtime named-file exception), or (C) current SDK/capture invocation (provide concrete failing normal caller, not params-only probe). I will supply concrete owning hunks before any Runtime edit. Do not convert slugs/browser Theme values into object authority. Owner02:04 rules and truthful revision/UNCERTIFIED claims remain mandatory.
