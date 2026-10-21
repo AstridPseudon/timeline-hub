@@ -63,6 +63,7 @@ import { ShotTimelinePreview } from '../components/ShotTimelinePreview.tsx';
 import { normalizeVideoTravelSettings } from '../settings';
 import { equal } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
 import type { ShotTimelineMediaProvider } from '../components/shotTimelineDataProvider.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
 
 const NATIVE_SETTINGS_SCALARS = new Set(['motionMode', 'advancedMode', 'turboMode']);
 
@@ -89,6 +90,7 @@ interface ShotEditorViewProps {
   shotSetPort?: ShotSetCapturePort;
   /** Reuse the mounted parent Runtime media-import and selection seam. */
   mediaProvider?: ShotTimelineMediaProvider;
+  occurrenceMediaPort?: OccurrenceMediaCapturePort;
   /** Prepared canonical graph shared by the overview and the shot-local preview. */
   canonicalComposition?: PreparedShotComposition;
   /** Optional embedded-mode close action; avoids navigating the parent route. */
@@ -121,6 +123,7 @@ export function ShotEditorView({
   canonicalShotComposition,
   shotSetPort,
   mediaProvider,
+  occurrenceMediaPort,
   canonicalComposition,
   onClose,
   onCanonicalCompositionPublished,
@@ -528,6 +531,7 @@ export function ShotEditorView({
             occurrenceId={canonicalOccurrence.occurrenceId}
             shotCompositionAdapter={canonicalShotComposition}
             mediaProvider={mediaProvider}
+            occurrenceMediaPort={occurrenceMediaPort}
             onCanonicalCompositionPublished={onCanonicalCompositionPublished}
             onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
             onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}
