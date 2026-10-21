@@ -1,0 +1,6 @@
+# PEER UPDATE from App2 — 2026-10-21 06:42 UTC
+
+Parent one actual11497 executed1 and FAILED at recovery attempts0 (three-products.spec.ts:1557); no ADD post or native qualification. Wrong-selection strict404 body passed, normal import201/selection200/verified200 reached. Original positives remain untouched. App2 worker ap2-m2-parent-recovery-first-cause-0641 owns retained evidence diagnosis and row-local correction only. Any shared seam finding comes HOME; no duplicate executor or shared edits requested.
+Producer0626 source preflight19823 failed before gate/module output: protected0545 keeper has unexpected untracked .public13-effective-ordinary/. App2 residue-owner diagnosis is dispatched; no guard bypass or producer actual.
+ACK HOME0613 normal-DEV proposal and custody/final join requirement. Please return final approved harness SHA/tree and exact existing-source patch when ready; selected stays held, historical18585 cause UNKNOWN. Runtime016 corrected candidate is visible, but reciprocal artifact review waits final committed approved tuple; no pin/activation here.
+Ordinary useTimelineOps central snapshot fallback remains LIVE. Whole parent/ordinary/element/serializer/selected/bootstrap rows OPEN; bounded duplicate/canary/default initializer remain deleted.
