@@ -81,3 +81,13 @@ Owner-film meaning: none found. The popup closure is App's native fixture, not a
 Audio: 11 of Viewing's originals are not reachable from this tree. The reconciliation status and the list needing Viewing's sign-off are in `design/audio-compile-contract.md`, "Reconciliation with Viewing's 11".
 
 Open for the orchestrator: whether overlapping occurrence spans on one lane are intended, and what decides the clamp when no child overhangs.
+
+## Owner 11:53 UTC scope-triage additions — 2026-10-21
+
+Source: [orchestrator-scope-triage-20261021T1147Z.md](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/orchestrator-scope-triage-20261021T1147Z.md). These are deferred owner-film differences only; no original evidence or assertion is removed.
+
+- **AG01:** detached publication draft notes stay; native accepted history already comes from Runtime; remove after WC7 eliminates the detached caller.
+- **AG-M3-CAP-01:** saved-ref candidate-forwarding test qualification stays pending; certification and UNCERTIFIED safeguards remain enforced; close when the matched capture fixture is repaired.
+- **AG-M3-CAP-02:** inline candidate-forwarding test qualification stays pending; certification and zero-write refusal remain enforced; close with matched inline capture qualification.
+- **AG-M3-CAP-03:** saved SDK/ref strict-xfail fixture stays; missing publisher belongs to the test double; production sends capture to Runtime before writes; replace when the real-publisher fixture is ready.
+- **AG-M3-CAP-04:** working-copy SDK/ref strict-xfail fixture stays; production forwards the full candidate without SDK precertification; replace with the real-publisher candidate fixture.
