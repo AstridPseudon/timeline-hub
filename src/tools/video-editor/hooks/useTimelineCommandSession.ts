@@ -358,7 +358,7 @@ export function useTimelineCommandSession(options: {
         sessionRef.current = session;
         // Initial state can already own an accepted publication after reload.
         // Route it through the same ownership side effects as later updates.
-        changed(session.getState());
+        changed({ ...session.getState() });
       }
     })().catch((error) => {
       clearSelectedBasis();
