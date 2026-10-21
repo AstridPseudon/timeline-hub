@@ -141,6 +141,34 @@ def test_const_to_enum_widening_preserves_the_old_singleton_language():
     assert compatibility_errors(previous, current)
 
 
+def test_const_to_enum_uses_json_schema_value_equality():
+    operation = {'if': {'properties': {'op': {'const': 'x'}}, 'required': ['op']}, 'then': {}}
+    previous = {'$defs': {'Value': {'const': False}, 'EditCommand': {'allOf': [operation]}}}
+    current = copy.deepcopy(previous)
+    current['$defs']['Value'] = {'enum': [0]}
+    assert compatibility_errors(previous, current)
+
+    previous['$defs']['Value'] = {'const': True}
+    current['$defs']['Value'] = {'enum': [1]}
+    assert compatibility_errors(previous, current)
+
+    previous['$defs']['Value'] = {'const': {'nested': False}}
+    current['$defs']['Value'] = {'enum': [{'nested': 0}]}
+    assert compatibility_errors(previous, current)
+
+    previous['$defs']['Value'] = {'const': 1}
+    current['$defs']['Value'] = {'enum': [1.0]}
+    assert compatibility_errors(previous, current) == []
+
+
+def test_const_to_enum_cannot_ignore_a_conflicting_new_const():
+    operation = {'if': {'properties': {'op': {'const': 'x'}}, 'required': ['op']}, 'then': {}}
+    previous = {'$defs': {'Value': {'const': 'label'}, 'EditCommand': {'allOf': [operation]}}}
+    current = copy.deepcopy(previous)
+    current['$defs']['Value'] = {'const': 'muted', 'enum': ['label', 'muted']}
+    assert compatibility_errors(previous, current)
+
+
 def test_union_cannot_hide_sibling_constraints_and_unknown_changes_require_review():
     current = baseline()
     current['$defs']['ID'] = {'anyOf': [baseline()['$defs']['ID'], {'type': 'null'}],

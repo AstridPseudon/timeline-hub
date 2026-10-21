@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import copy
-import json
 
 from jsonschema import Draft202012Validator
+from runtime_protocol.timeline_commit_producer import value_equal
 
 
 def legacy_022_compatibility_errors(previous, current):
@@ -36,7 +36,7 @@ def compatibility_errors(previous, current):
         Draft202012Validator.check_schema(schema)
 
     def same(a, b):
-        return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+        return value_equal(a, b)
 
     def operations(conditions):
         result = {}
@@ -97,13 +97,17 @@ def compatibility_errors(previous, current):
                 errors += compare(old.get(key, True), new.get(key, True), at, seen)
             elif key in {'items', 'propertyNames'} and a is not None:
                 errors += compare(a, new.get(key, True), at, seen)
-            elif key == 'const' and a is not None and isinstance(new.get('enum'), list) and a in new['enum']:
+            elif (key == 'const' and 'const' in old and 'const' not in new
+                  and isinstance(new.get('enum'), list)
+                  and any(same(old['const'], value) for value in new['enum'])):
                 # JSON Schema's singleton const is exactly an enum with one
                 # value. Treating a retained const as a member of a widened
                 # enum preserves the old language without accepting an
                 # unrelated narrowing or silently ignoring other keywords.
                 continue
-            elif key == 'enum' and a is None and 'const' in old and isinstance(b, list) and old['const'] in b:
+            elif (key == 'enum' and 'enum' not in old and 'const' in old
+                  and 'const' not in new and isinstance(b, list)
+                  and any(same(old['const'], value) for value in b)):
                 continue
             elif key == 'required' and set(b or []) <= set(a or []):
                 continue
