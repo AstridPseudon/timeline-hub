@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T12:41:42Z | dispatcher heartbeat 1s | live 6 (sol 0, luna 6, other 0) | busy30 23 | status age 7m -->
+<!-- agent | 2026-10-21T12:43:20Z | dispatcher heartbeat 98s | live 0 (sol 0, luna 0, other 0) | busy30 23 | status age 9m -->
 # agent — 2026-10-21 12:34 UTC
 Milestone: M2 active; M1 recorded. Owner lighter interim proof and REQUIRED-only scope rules applied. Public Runtime014/95/all76 and Composition13/9412 remain current.
 Integrated: Agent c9ac7c7b0. Attached parent track creation ea373d passed independent review, 33 SDK tests and one new actual HTTP case. Null clip-mirror word inverse c9ac retains original null with 140 author and nine independent beat controls passing. Earlier media/outbox/transcript/label controls retained.
