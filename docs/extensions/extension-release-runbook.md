@@ -219,14 +219,13 @@ enabled explicitly by its owning test/dev launcher.
 reviewed release inventory. Production selection fails closed for
 any ID not in this list:
 
-- `haus.astrid.scene-phase-markers`
 - `haus.astrid.transcript-lane` (also gated by the Transcript child switch)
 - `haus.astrid-runaway-timeline` (also gated by the Runaway child switch)
 
 The ten Creative Lab extensions that once shared this list were removed (2026-10-19): the
-shipped catalog could not produce their IDs. Scene Markers does not have an
-independent production switch in this candidate. Enabling the parent enables
-it together with the others; emergency containment turns the parent off and safely
+shipped catalog could not produce their IDs. The DEV Scene Phase Markers extension was
+removed too (2026-10-21), together with its list entry. Enabling the parent enables
+the listed extensions together; emergency containment turns the parent off and safely
 reloads. That coarse rollback is an explicit release decision, not an implied
 per-extension control. The compatibility, composition, visual, persistence,
 render, and device evidence must therefore cover the complete enabled set.

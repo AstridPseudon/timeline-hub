@@ -30,12 +30,68 @@ import {
 } from './extensionLifecycle';
 import { HostContributionErrorBoundary } from './ContributionErrorBoundary';
 import { createCommandRegistry } from './commandRegistry';
-import { transcriptLaneExtension } from '@/tools/video-editor/dev/transcript-lane/extension';
-import { scenePhaseMarkersExtension } from '@/tools/video-editor/dev/scene-phase-markers/extension';
+
+const NOOP_RENDERER = () => null;
+
+/** Registers a command and a UI renderer, the two most common activation shapes. */
+const commandAndRendererExtension: AstridExtension = defineExtension({
+  manifest: {
+    id: 'haus.astrid.compat.command-renderer' as ExtensionId,
+    version: '1.0.0',
+    apiVersion: 1,
+    license: 'MIT',
+    label: 'Command and renderer probe',
+    contributions: [{
+      id: 'probe-command' as ContributionId,
+      kind: 'command',
+      command: 'haus.astrid.compat.command-renderer.run',
+      label: 'Run',
+    }],
+  },
+  activate(ctx) {
+    const handles = [
+      ctx.commands.registerCommand('haus.astrid.compat.command-renderer.run', () => {}),
+      ctx.ui.registerRenderer('haus.astrid.compat.command-renderer.panel', NOOP_RENDERER),
+    ];
+    return { dispose: () => { for (const handle of handles) handle.dispose(); } };
+  },
+});
+
+/** Registers a data kind (renderer plus inspector) and a command. */
+const dataKindExtension: AstridExtension = defineExtension({
+  manifest: {
+    id: 'haus.astrid.compat.data-kind' as ExtensionId,
+    version: '1.0.0',
+    apiVersion: 1,
+    license: 'MIT',
+    label: 'Data kind probe',
+    contributions: [{
+      id: 'probe-kind' as ContributionId,
+      kind: 'dataKind',
+      kindId: 'haus.astrid.compat.probe-kind',
+      schemaRef: 'haus.astrid.compat.probe/v1',
+      shape: 'interval',
+      domain: 'source_seconds',
+      label: 'Probe',
+    }, {
+      id: 'probe-command' as ContributionId,
+      kind: 'command',
+      command: 'haus.astrid.compat.data-kind.run',
+      label: 'Run',
+    }],
+  },
+  activate(ctx) {
+    const handles = [
+      ctx.dataKinds.register('haus.astrid.compat.probe-kind', NOOP_RENDERER, NOOP_RENDERER),
+      ctx.commands.registerCommand('haus.astrid.compat.data-kind.run', () => {}),
+    ];
+    return { dispose: () => { for (const handle of handles) handle.dispose(); } };
+  },
+});
 
 const compatibilityCatalog: readonly AstridExtension[] = Object.freeze([
-  scenePhaseMarkersExtension,
-  transcriptLaneExtension,
+  commandAndRendererExtension,
+  dataKindExtension,
 ]);
 
 /** One track and one clip, so command and renderer probes read a populated timeline. */
@@ -134,6 +190,7 @@ describe('bundled editor-extension compatibility matrix and host contract', () =
 
       expect(host.lifecycles.get(extension.manifest.id as string)?.state).toBe('active');
       expect(host.diagnostics.filter((diagnostic) => diagnostic.severity === 'error')).toEqual([]);
+      expect(harness.commands.size + harness.renderers.size + harness.dataKinds.size).toBeGreaterThan(0);
 
       host.disposeAll();
       expect(harness.commands.size).toBe(0);
@@ -154,6 +211,7 @@ describe('bundled editor-extension compatibility matrix and host contract', () =
         'active',
       ]);
       expect(host.diagnostics.filter((diagnostic) => diagnostic.severity === 'error')).toEqual([]);
+      expect(harness.commands.size + harness.renderers.size + harness.dataKinds.size).toBeGreaterThan(0);
 
       host.disposeAll();
       expect(harness.commands.size).toBe(0);

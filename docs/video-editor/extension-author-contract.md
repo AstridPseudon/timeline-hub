@@ -612,7 +612,7 @@ For the properties panel and the timeline canvas:
 }
 ```
 
-Example references: [inspector-example.ts](../../src/examples/inspector-example.ts) (docs-safe), [overlay-example.ts](../../src/examples/overlay-example.ts) (docs-safe, executable required-render + `ctx.ui` shape), and the live canary consumer `src/tools/video-editor/dev/scene-phase-markers/extension.ts` (required-render + `ctx.ui` + ruler markers; DEV-local).
+Example references: [inspector-example.ts](../../src/examples/inspector-example.ts) (docs-safe), [overlay-example.ts](../../src/examples/overlay-example.ts) (docs-safe, executable required-render + `ctx.ui` shape).
 
 ##### Timeline overlays: the required-render contract
 
@@ -832,7 +832,7 @@ const handle = ctx.ui.registerRenderer<TimelineOverlayRenderProps>(
 - The returned `DisposeHandle` unregisters the renderer and is idempotent; dispose it in your `activate()` disposal.
 - Renderer registration is **extension-scoped** — the host reconciles by `(extensionId, renderId)` and never lets one extension claim another's render id.
 
-Example reference: [overlay-example.ts](../../src/examples/overlay-example.ts) (docs-safe required-render + `ctx.ui` + non-null renderer); the DEV-local canary `src/tools/video-editor/dev/scene-phase-markers/extension.ts` registers both a status-bar slot renderer and a `timelineOverlay` renderer through `ctx.ui`.
+Example reference: [overlay-example.ts](../../src/examples/overlay-example.ts) (docs-safe required-render + `ctx.ui` + non-null renderer).
 
 ### 11.5 Timeline mutation (patches and proposals)
 
@@ -925,10 +925,12 @@ The following examples passed the M15 pre-doc readiness gate (§10) and are safe
 
 This guide documents the public video editor extension shape. It describes
 kinded manifest contributions declared through `defineExtension` and bound at
-activation through `ctx.*` services. The canonical working example lives in
-`src/tools/video-editor/dev/transcript-lane/extension.ts` (dataKind) and
-`src/tools/video-editor/dev/scene-phase-markers/extension.ts` (commands,
-slots, overlays).
+activation through `ctx.*` services. The shipped Transcript extension (a dataKind) comes from the Astrid rendering pack
+catalog loaded through `src/tools/video-editor/dev/localExtensions.ts`, and
+`src/tools/video-editor/data-kinds/dataKindLaneCanvas.integration.test.tsx` holds a
+minimal inline dataKind extension registered through the real gates and painted
+in the timeline canvas. Commands, slots and overlays have docs-safe examples in
+`src/examples/`.
 
 ### 12.1 Public Imports
 
@@ -1093,9 +1095,11 @@ Contract details:
   provenance, and truncated payload.
 - **Duplicate registration replaces** the previous record with a
   `data-kind-registry/duplicate-kind` warning.
-- A complete runnable example lives at
-  `src/tools/video-editor/dev/transcript-lane/extension.ts` (registered
-  DEV-only through `dev/localExtensions.ts`).
+- A minimal runnable example lives in
+  `src/tools/video-editor/data-kinds/dataKindLaneCanvas.integration.test.tsx`
+  (an inline extension registered through the real manifest and registration
+  gates); the shipped Transcript extension comes from the Astrid rendering
+  pack catalog (`dev/localExtensions.ts`).
 
 #### Seeing a lane
 

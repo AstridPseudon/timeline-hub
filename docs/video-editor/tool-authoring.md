@@ -59,21 +59,20 @@ project data; deletion belongs to an explicit user action.
 
 ## One real slot, command, and cleanup path
 
-The [scene-phase-markers extension](../../src/tools/video-editor/dev/scene-phase-markers/extension.ts)
-is a real, development-local authoring example. Its manifest declares the
-`statusBar` slot as `scene-markers-footer` with renderer ID
-`scene-phase-markers/footer`, plus a `timelineOverlay`. It declares the
-semantic command `haus.astrid.scene-phase-markers.markPhase`; activation binds
-that ID with `ctx.commands.registerCommand()` and registers both renderers
-through `ctx.ui.registerRenderer()`.
+The docs-safe [command example](../../src/examples/command-extension.ts) and
+[overlay example](../../src/examples/overlay-example.ts) show the pattern. A
+manifest declares a slot (for example `statusBar`) or a `timelineOverlay` with
+a renderer ID, and a semantic command ID in the extension's own namespace;
+activation binds the command with `ctx.commands.registerCommand()` and the
+renderers through `ctx.ui.registerRenderer()`.
 
-The command reads the owning context's playhead and timeline snapshot, then
-uses `ctx.creative.timeline.apply()` with the public `project-data.write`
-operation. The context captures its editor authority; it does not read global
+A command that persists data reads the owning context's playhead and timeline
+snapshot, then uses `ctx.creative.timeline.apply()` with the public
+`project-data.write` operation. The context captures its editor authority; it does not read global
 project selection. Activation keeps each returned command/renderer handle and
-the returned `DisposeHandle` disposes those handles. Its explicit
+the returned `DisposeHandle` disposes those handles. An explicit
 “Clear/Delete Data” action writes an empty value; generic disposal does not
-clear markers. This is the cleanup pattern to follow for commands, renderers,
+clear project data. This is the cleanup pattern to follow for commands, renderers,
 and owner-scoped registrations.
 
 ## Source, catalog, build, and reopen

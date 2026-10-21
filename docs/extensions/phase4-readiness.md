@@ -343,7 +343,6 @@ lifecycle exists.
   flag, which defaults to `false`. The DEV-only `?timelineOverlayCanary=1`
   query parameter is planned (B9) and not yet implemented — the overlay host
   stays default-off until it lands (production must not honor the query
-  parameter). The phase-marker canary
-  (`src/tools/video-editor/dev/scene-phase-markers/`)
-  is the living consumer (800-marker ceiling, measured below the 64 KB hard
-  entry limit for project-data values).
+  parameter). The phase-marker canary extension was deleted (2026-10-21); overlay and
+  marker-layer coverage lives in `TimelineExtensionOverlayHost.integration.test.tsx`
+  and `TimelineMarkerLayer.test.tsx` against inline test extensions.

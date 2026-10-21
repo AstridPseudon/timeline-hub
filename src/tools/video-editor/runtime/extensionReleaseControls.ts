@@ -4,7 +4,6 @@ import type { VideoEditorTelemetryHost } from './ports';
 /** Frozen production admission allowlist; unreviewed extension IDs fail closed. */
 export const REVIEWED_PRODUCTION_EXTENSION_IDS = Object.freeze([
   'haus.astrid.live-scenes',
-  'haus.astrid.scene-phase-markers',
   'haus.astrid.transcript-lane',
 ] as const);
 const REVIEWED_PRODUCTION_EXTENSION_ID_SET = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);

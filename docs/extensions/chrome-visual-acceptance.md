@@ -15,7 +15,7 @@ Installed-Chrome follow-up URL: `http://127.0.0.1:2222/tools/video-editor?localP
 
 > **Amendment 2026-10-20 — what is still current.** This ledger records the 2026-08-23 session and is kept as
 > history. Since then: the ten Creative Lab extensions were deleted and there is no fixture catalog any more
-> (the browser specs run the production extensions plus the scene-phase-markers fixture, so "13 extensions"
+> (the browser specs run only the production extensions, so "13 extensions"
 > and "11 marker layers" below describe the old catalog); the Runaway typed timeline, its DEV bridge loader
 > and its fixtures were deleted, so every Runaway row, the 566-item lane and captures 17–21 are historical;
 > the `runawayTimelineProject` and `timelineOverlayCanary` URL parameters named below are no longer read;
@@ -24,7 +24,10 @@ Installed-Chrome follow-up URL: `http://127.0.0.1:2222/tools/video-editor?localP
 > `transcript-chip-hit-target.spec.ts`, `extension-performance-budget.spec.ts`, `data-lane-viewport.spec.ts`);
 > and the marker-pagination browser cases were folded into `shell-responsive-overflow.spec.ts` (captures
 > 25–27 are now the shell captures). `caption-render-export.spec.ts` still exists as the caption MP4 export
-> proof; it is renderer-owned, so no Playwright project in this repo collects it.
+> proof; it is renderer-owned, so no Playwright project in this repo collects it. The dev Scene Phase Markers
+> and Transcript Caption Foundry extensions (`dev/scene-phase-markers/`, `dev/transcript-lane/extension.ts`) were
+> deleted on 2026-10-21 (unit tests only); test paths in the commands below that name them are historical, and the
+> lane-registration coverage now lives in `data-kinds/dataKindLaneCanvas.integration.test.tsx`.
 
 ## Disposition
 
