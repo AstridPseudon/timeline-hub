@@ -167,10 +167,19 @@ def _make_media(root: Path) -> tuple[Path, Path]:
 def _prepare_remotion_fixture(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[Path, Path, Path, Path]:
-    node = shutil.which("node")
-    if node is None or shutil.which("ffmpeg") is None:
+    configured_node = os.environ.get("ASTRID_NODE_EXECUTABLE")
+    node = Path(configured_node).expanduser() if configured_node else None
+    if node is None:
+        discovered_node = shutil.which("node")
+        node = Path(discovered_node) if discovered_node else None
+    if (
+        node is None
+        or not node.is_file()
+        or not os.access(node, os.X_OK)
+        or shutil.which("ffmpeg") is None
+    ):
         pytest.skip("node and ffmpeg are required for the Remotion acceptance fixture")
-    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(node).resolve()))
+    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(node.resolve()))
     monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
     monkeypatch.setenv(
         "PYTHONPATH",
