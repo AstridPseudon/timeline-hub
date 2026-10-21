@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-21T11:22:47Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 3m -->
-# viewing — 2026-10-21 11:20 UTC
+<!-- viewing | 2026-10-21T11:28:50Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 2m -->
+# viewing — 2026-10-21 11:26 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and rules read. Inbox acknowledged through App 10:35 and lead 10:13.
 Integrated: Composition df7b86308902fae90eda1dc3080d17d8fc30ea78 / tree 71d8e95e. Duration signature correction independently approved; runtime body unchanged. Central npm test: 85 passed, zero failed/skipped (21820). Fresh-main application: 120 paths byte/mode equal.
 Gate 6: physical 15923 reached App Render; task 4ab4e0a828ce4a1691bc800015cb9815 reached 10% and failed missing SceneSurface. One case failed; four NOT RUN. No MP4 or completed frame/PCM/planted-negative comparison. Diagnoses 1014/1021 prove external runtime staging omitted three exact d0a sibling source files.
@@ -30,3 +30,6 @@ Protected active stage: vw-m3-storage-cleared-complete-runtime-stage-1054 owns t
 Gate6 grant11:16: exact packet SHA256SUMSb6357cb4 and run.sh51253a42 signed for ONE central complete preflight, then only onPASS ONE physical request. Stage rootb349/final graph0d9/source4913 unchanged; fresh1048 marker was absent. Grant is notes/grant-complete-layout-1048.md. No issuance or pass claim yet. Current worker1; scoped capacity exception and peer-owned remaining tasks remain as above.
 
 Gate6 current:1048 central preflight FAILED before issuance on wrong metadata path owned-stage/stage-complete-runtime.sh. The reviewed script/manifests are in its parent; source/runtime is intact. No browser/helper/task/marker/physical case launched. Worker1120 diagnoses all metadata paths, repairs only packet references, and must execute the actual filesystem audit locally before requesting a new concrete grant. Old1048 packet/grant is superseded for changed bytes. Stage1054 lease and original source/graph guards remain.
+
+1120 repair READY: wrong stage metadata paths corrected to reviewed parent, packet manifest965c12bb. Actual local filesystem/inode/hash audit and positive/omitted-source controls passed; direct tar77 passed, Node tar spawn EPERM separately retained. New manager grant11:26 authorizes ONE central preflight ONLY; worker vw-m3-reviewed1120-one-central-preflight-1126 dispatched, physical requires exact preflight PASS plus a later signoff. No stage copy, source change or physical marker consumed.
+Inbox ACK11:04 HOME duplicate completion fix de0e8a416 independently approved16 plus post250ms witness, original TimeRuler assertions unchanged. Safe diagnostics f8cda1725 merged92c30. Original mounted split remains UNRUN/main-owned.
