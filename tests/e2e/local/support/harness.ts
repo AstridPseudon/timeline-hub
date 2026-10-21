@@ -41,6 +41,21 @@ export function selectedParamCliEnv(base: NodeJS.ProcessEnv, credentialFile: str
   return { ...base, ASTRID_RUNTIME_CREDENTIAL: credentialFile };
 }
 
+/** Adds the selected child’s case-local Runtime context without changing its inherited process context. */
+export function selectedParamEvalEnv(
+  base: NodeJS.ProcessEnv,
+  credentialFile: string,
+  context: { endpoint: string; realmId: string; actorId: string },
+): NodeJS.ProcessEnv {
+  return {
+    ...selectedParamCliEnv(base, credentialFile),
+    ASTRID_TIMELINE_EVAL_ENDPOINT: context.endpoint,
+    ASTRID_TIMELINE_EVAL_CREDENTIAL: credentialFile,
+    ASTRID_TIMELINE_EVAL_REALM_ID: context.realmId,
+    ASTRID_TIMELINE_EVAL_ACTOR_ID: context.actorId,
+  };
+}
+
 export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT
   ?? [path.join(REPO_ROOT, '..', 'astrid-runtime'), path.join(REPO_ROOT, '../..', 'runtime')]
     .find((dir) => existsSync(path.join(dir, 'runtime_protocol', 'cli.py')))
@@ -635,11 +650,16 @@ export class DirectHarness {
     mkdirSync(sourceRoot, { recursive: true, mode: 0o700 });
     mkdirSync(artifactRoot, { recursive: true, mode: 0o700 });
     await this.provisionCredential('astrid-selected-param', path.basename(credentialFile));
+    const discovery = this.discovery();
     writeFileSync(verifier, "import hashlib,json,sys\nfrom pathlib import Path\np=Path(sys.argv[1])\nselection=json.loads(p.read_text())\nprint(json.dumps({'schema':'astrid.element-build/v1','selectionDigest':'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest(),'elements':[{'projectId':e['projectId'],**{k:e['descriptor'][k] for k in ('packId','id','kind','revision')}} for e in selection['elements']]}))\n");
     this.selectedParamPython = python;
     this.selectedParamVerifier = verifier;
     this.selectedParamEnv = {
-      ...selectedParamCliEnv(process.env, credentialFile),
+      ...selectedParamEvalEnv(process.env, credentialFile, {
+        endpoint: discovery.endpoint,
+        realmId: this.realmId,
+        actorId: 'astrid-selected-param',
+      }),
       ...this.runtimeEnv(),
       ASTRID_RUNTIME_ENDPOINT: this.runtimeUrl,
       ASTRID_PROJECT_PACKS_ROOT: sourceRoot,
