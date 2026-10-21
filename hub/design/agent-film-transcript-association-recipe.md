@@ -1,7 +1,7 @@
 # Agent film transcript/source-item association recipe
 
-Date: 2026-10-21  
-Base: current Main014 `6efc81500a0e0688c2bb41e736503f0fc3e04abb`  
+Date: 2026-10-21
+Base: current Main014 `6efc81500a0e0688c2bb41e736503f0fc3e04abb`
 Scope: Agent source-only design and semantic spike. No schema/registry change,
 Runtime/App change, generation, freeze, pin publication, adoption, or endpoint
 is made here.
@@ -101,6 +101,11 @@ store, endpoint, DTO family, parser, or second source authority.
     "asset_id": "asset-a",
     "media_id": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "source_id": "source-1",
+    "previous_document": {
+      "document_id": "transcript:<exact prior document id>",
+      "version": 1,
+      "content_digest": "sha256:<digest of exact prior verified content>"
+    },
     "document": {
       "document_id": "transcript:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "version": 2,
@@ -119,13 +124,22 @@ tuple `(schema_ref, sourceArtifactRef.assetId, payload.sourceId, item.id)`;
 text, regenerated ID, latest-document lookup, or asset-name heuristic may
 resolve any of these identities.
 
+When the selected asset already has an association, `previous_document` is
+required and is captured as an exact prior `DocumentPin` plus its verified
+content through the same existing normal source-read seam. The association
+record stores only a document ID today, so the handler must refuse replacement
+if that prior pin/content cannot be supplied; it must not reconstruct a digest
+from source items or query mutable latest catalog state. For an unassociated
+asset, `previous_document` is absent and the old association is an explicit
+absence claim.
+
 The handler reads the exact verified document content behind the pin and
 records the following claims before writing:
 
 | Claim | Required exact capture |
 | --- | --- |
 | owner | `parent/asset:asset-a` exists; registry/media identity is exactly `asset-a` → `media_id`; document content media ID equals it; source ID is the declared exact source ID. |
-| document dependency | The existing `DocumentPin` and exact verified transcript content; `document_id`, version, digest, project scope, transcript schema, media ID and source ID all match. Missing, revoked, corrupt or mutable-latest-only content refuses. |
+| document dependency | The new and, when replacing, prior exact `DocumentPin` plus verified transcript content; `document_id`, version, digest, project scope, transcript schema, media ID and source ID all match. Missing, revoked, corrupt or mutable-latest-only content refuses. |
 | old association | Complete tagged value of `parent.transcriptReferences`, including absence/null distinction, association membership and order. Duplicate asset ownership is ambiguous and refuses. |
 | old source collection | Complete ordered `parent.sourceItemsBySchemaRef["astrid.transcript_segment/v1"]` membership, each item's raw owner/source ID/item ID, envelope, extent, payload, words, provenance and opaque values. Duplicate `(asset, source, item.id)` identity refuses. |
 | caption/review basis | The exact generated-caption rows and review records consumed by the existing `reconcileTranscriptReferences()` routine, including provenance, ownership evidence and occupied destination IDs. Ambiguous mappings do not guess or normalize. |
@@ -161,13 +175,14 @@ receipt format:
 reads:       owner/media and exact old association/source/caption state
 selections:  old source-item membership and order, plus provenance candidates
 bindings:    raw owner tuple and every stable segment/word identity
-dependencies: {kind: "transcript", pin: DocumentPin, policy: "exact"}
+dependencies: {kind: "transcript", pin: new DocumentPin, policy: "exact"};
+             plus prior DocumentPin/content when replacing an association
 writes:      tagged before/after association, source collection, and any
              reconciler caption/review writes (including unchanged writes)
 created:     []
 ```
 
-Inverse restores the exact prior association, collection membership/order,
+Inverse restores the exact prior association and its prior `DocumentPin`, collection membership/order,
 opaque envelopes and caption/review provenance. It retains the old and new
 DocumentPins through the accepted dependency closure so undo after a source
 document update/removal/restart does not read mutable latest state. The normal
@@ -214,7 +229,7 @@ work:
 
 > Can the existing normal `/v1` EditCommand/provider path admit one bounded
 > `transcript.associate` handler selected by `parent/asset:<id>`, reusing
-> `DocumentPin` and `transcript_source(DocumentPin)`, while recording the
+> new and prior `DocumentPin` values and `transcript_source(DocumentPin)`, while recording the
 > complete association/source-item selection and applying the existing
 > `reconcileTranscriptReferences()` result atomically with exact inverse,
 > server rebase, retry and retained-pin behavior?
@@ -237,7 +252,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/runtime \
   /home/user/work/venv-agent/bin/python -m pytest -q \
   tests/editing_conformance/test_recipe_film_transcript_association_spike.py \
   tests/sdk/test_timeline_current_union_schema.py
-=> 41 passed in 146.20s
+=> 42 passed in 146.70s
 ```
 
 The prior App source report's targeted App tests remain the existing evidence;
