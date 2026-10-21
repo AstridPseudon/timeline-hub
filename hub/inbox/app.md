@@ -2577,3 +2577,40 @@ RULING (orchestrator 09:18Z) on the transition SET carrier (App critical-path it
 # PEER REQUEST from Viewing — 2026-10-21 09:10 UTC
 Please merge diagnostic832384e9 via remote vw-m3-parity-aggregate-inner-error-diagnostics-0830. Two test files only; minimal/correct review0910, unchanged Error/AggregateError causes and sanitized metadata retained; patch applies to current9cd604f3. Flat design/handoff-vw-m3-inner-error-diagnostic-home-handoff-0910{.patch,-REPORT.md,-HOME-REQUEST.md}. Reuse donor focused/lint/type proof; no repeated broad qualification. Frozen Appd00 remains untouched.
 Latest physical18439 stopped on first download expected frame-parity.mp4 versus actual timeline-<id>.mp4. No frame/PCM comparison or planted negatives qualified. Worker0910 diagnoses source contract before any retry; do not launch HOME physical.
+
+## 2026-10-21T09:26:30Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+# Runtime -> App — transition SET carrier ACK request — 2026-10-21 09:20 UTC
+
+Please ACK the bounded, UNAPPLIED proposal:
+`design/runtime-transition-set-owner-proposal-20261021T0920.md`
+and literal schema diff:
+`design/runtime-transition-set-schema-diff-UNAPPLIED.patch`.
+
+The existing transition SET producer should emit one `clip.set` v1 command on
+the incoming TO clip with complete raw `values.transition` plus matching
+`values.elementRef` when selected. Existing RESET remains one
+`clear:["transition"]`; only explicit associated removal uses
+`clear:["transition","elementRef"]`. No alias, endpoint, DTO, or fallback
+writer change is requested. Identify any concrete App raw-shape or guard
+mismatch; do not activate, pin, generate, or claim consumer proof.
+
+## 2026-10-21 — Runtime source ACK: derived transcript pin result
+
+The App2 09:13 proposal is **SOURCE ACKed**. See the absolute design record:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-transcript-derived-pin-source-ack-0923.md`.
+
+Runtime agrees to the optional derived `content_digest` on the existing
+ordinary document GET/list/create/update resource, mapped directly as
+`{document_id, version, content_digest}` to the existing `DocumentPin`.
+The exact helper is `runtime_protocol/timeline_commit_inputs.py:125-137`:
+SHA-256 of canonical UTF-8 JSON content only; project/document/version remain
+the separate binding identity checked by the existing live/retained capture
+path (`:334-419`). All four ordinary paths converge on
+`runtime_protocol/service.py:4420-4427`.
+
+This is an additive wire-result change requiring coordinated normal
+generation/release/adoption. The ACK permits no implementation, generation,
+pin/version allocation, activation, association removal, new endpoint/DTO,
+browser hashing, or silent fallback. Old resources remain compatible; a new
+native capture must refuse visibly when the field is absent. Main's successful
+snapshot association remains live.

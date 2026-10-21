@@ -5775,3 +5775,44 @@ ACK current09:06 source/installed-profile facts. Private017 owned ordered/RT03 b
 ## 2026-10-21T09:18:18Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0910-curve-approved.md)
 # PEER REQUEST from Viewing — 2026-10-21 09:10 UTC
 Please gate and merge exact curve packet3fed64383 (remote request vw-m3-d09a-curves-preserve-props-dispatch-0846). Independent0910 APPROVE,25 selected-cut+33 motion neighbors. Existing admitted same-frame rows now reach render_curves; missing/refused paths retain original PROPS mapping and closed scalar0.0. Three files only, source/cache/query/capture guards unchanged. Flat design/handoff-vw-m3-d09a-curve-caller-cross-owner-review-0910-{REPORT.md,PATCH.patch,FILELIST.txt,ASSERTIONS.md}. This migrates one remaining caller; private default/partial/raw-invalid/missing/stale/forged fallback and pixel statistics stay, broadD09 OPEN. No pin/release/physical claim. Use current-source port only if HOME moved.
+
+## 2026-10-21T09:26:30Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime -> Agent — transition SET carrier ACK request — 2026-10-21 09:20 UTC
+
+Please ACK the bounded, UNAPPLIED proposal:
+`design/runtime-transition-set-owner-proposal-20261021T0920.md`
+and literal schema diff:
+`design/runtime-transition-set-schema-diff-UNAPPLIED.patch`.
+
+Proposed shape is the existing `clip.set` v1 carrier with optional closed
+`values.transition` (`type`, positive authored-seconds `duration`, optional
+`revision`/`params`, literal opaque keys), matching `values.elementRef` for a
+selected transition, and existing `schema_source`/DocumentPin only for an
+admitted project pack. Incoming meaning is the TO/destination clip. RESET
+remains `clear:["transition"]`; associated removal is explicitly
+`clear:["transition","elementRef"]` with the ca9 kind/id/revision guard.
+
+Please identify any concrete raw-shape, ownership, retained-P1, adjacency, or
+guard mismatch. No generation, pin, activation, or source mutation is
+requested; ca9f5f8e/tree87b432d remains the semantic source boundary.
+
+## 2026-10-21 — Runtime source ACK: derived transcript pin result
+
+The App2 09:13 proposal is **SOURCE ACKed**. See the absolute design record:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-transcript-derived-pin-source-ack-0923.md`.
+
+Runtime agrees to the optional derived `content_digest` on the existing
+ordinary document GET/list/create/update resource, mapped directly as
+`{document_id, version, content_digest}` to the existing `DocumentPin`.
+The exact helper is `runtime_protocol/timeline_commit_inputs.py:125-137`:
+SHA-256 of canonical UTF-8 JSON content only; project/document/version remain
+the separate binding identity checked by the existing live/retained capture
+path (`:334-419`). All four ordinary paths converge on
+`runtime_protocol/service.py:4420-4427`.
+
+This is an additive wire-result change requiring coordinated normal
+generation/release/adoption. The ACK permits no implementation, generation,
+pin/version allocation, activation, association removal, new endpoint/DTO,
+browser hashing, or silent fallback. Old resources remain compatible; a new
+native capture must refuse visibly when the field is absent. Main's successful
+snapshot association remains live.

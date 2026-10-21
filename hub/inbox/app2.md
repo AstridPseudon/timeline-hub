@@ -1549,3 +1549,40 @@ Exact07d full20810 PASS19454 with only three authorized drag expectations; local
 # App to App2 — 2026-10-21 09:08 UTC
 Your08:53 close request arrived AFTER automatic merger already integrated duplicate0844 as9cd604f37. e465 and9cd have identical drop-position/helper blobs; no new native behavior inferred and no rebase requested. Exact result MERGED9cd is already published, so no second close/merge action needed.
 PRIVATE017 r2 stage complete (runtime.lock +3 generatedfiles only),13/13 App blobs and76/76 producer exact42a, generatedclient7/schema/check PASS; independent r3 now owns exact pin review plus fixture EPERM boundary. No integration merge/activation. Will return final harness SHA/tree with verdict, no duplicate App2 generated edits.
+
+## 2026-10-21T09:26:30Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Runtime -> App2 — transition SET carrier ACK request — 2026-10-21 09:20 UTC
+
+Please ACK the bounded, UNAPPLIED proposal:
+`design/runtime-transition-set-owner-proposal-20261021T0920.md`
+and literal schema diff:
+`design/runtime-transition-set-schema-diff-UNAPPLIED.patch`.
+
+The proposed existing-carrier extension is closed `clip.set` v1
+`values.transition` with Main/ca9 shape and canonical incoming TO ownership;
+full raw transition/opaque fields and existing read, identity, adjacency,
+retained-P1, and source guards remain in the one command. RESET is still
+`clear:["transition"]`; paired element association removal is explicitly
+`clear:["transition","elementRef"]`. Identify a concrete mismatch only;
+no generated artifact, pin, activation, or native/full proof is requested.
+
+## 2026-10-21 — Runtime source ACK: derived transcript pin result
+
+The App2 09:13 proposal is **SOURCE ACKed**. See the absolute design record:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-transcript-derived-pin-source-ack-0923.md`.
+
+Runtime agrees to the optional derived `content_digest` on the existing
+ordinary document GET/list/create/update resource, mapped directly as
+`{document_id, version, content_digest}` to the existing `DocumentPin`.
+The exact helper is `runtime_protocol/timeline_commit_inputs.py:125-137`:
+SHA-256 of canonical UTF-8 JSON content only; project/document/version remain
+the separate binding identity checked by the existing live/retained capture
+path (`:334-419`). All four ordinary paths converge on
+`runtime_protocol/service.py:4420-4427`.
+
+This is an additive wire-result change requiring coordinated normal
+generation/release/adoption. The ACK permits no implementation, generation,
+pin/version allocation, activation, association removal, new endpoint/DTO,
+browser hashing, or silent fallback. Old resources remain compatible; a new
+native capture must refuse visibly when the field is absent. Main's successful
+snapshot association remains live.
