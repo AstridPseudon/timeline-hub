@@ -1,0 +1,15 @@
+test vw-m4-smoke-trust-environment-diagnosis-1056-integration-public14-trust-prerequisite-1056-1021105527-6023: pass exit=0 in 7s — integration-public14-trust-prerequisite-1056 on vw-m4-smoke-trust-environment-diagnosis-1056 (composition tree c38450855972c8717f4633fa3e90635ba848af8e)
+cmd: bash "$PWD/PREREQUISITE-COMMAND"
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m4-smoke-trust-environment-diagnosis-1056-integration-public14-trust-prerequisite-1056-1021105527-6023/log.txt ---
+disk_available=11280015360 disk_floor=10737418240 measured_need=76239977 package_estimate=76167843 archive_bytes=72134
+metadata_ok=@remotion/layout-utils@4.0.509
+metadata_ok=@remotion/media@4.0.509
+metadata_ok=react@18.3.1
+metadata_ok=react-dom@18.3.1
+metadata_ok=remotion@4.0.509
+metadata_ok=typescript@5.9.3
+metadata_ok=@types/react@18.3.31
+metadata_ok=@types/react-dom@18.3.7
+metadata_entries=8 strict_ssl=true ca=verified proxy_carrier=npm_config_https_proxy
+prerequisite=pass

@@ -1,0 +1,37 @@
+test vw-m4-smoke-trust-environment-diagnosis-1056-integration-public14-exact-packed-package-smoke-1056-1021105601-32025: pass exit=0 in 6s — integration-public14-exact-packed-package-smoke-1056 on vw-m4-smoke-trust-environment-diagnosis-1056 (composition tree c38450855972c8717f4633fa3e90635ba848af8e)
+cmd: bash "$PWD/COMMAND"
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m4-smoke-trust-environment-diagnosis-1056-integration-public14-exact-packed-package-smoke-1056-1021105601-32025/log.txt ---
+
+> @banodoco/timeline-composition@0.0.14 test:package
+> node scripts/smoke-package.mjs /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-public14-diagnosed-runner-pack-1042/release-output/banodoco-timeline-composition-0.0.14-public14-qualified-1042.tgz
+
+
+added 18 packages in 4s
+Plain Node ESM, bundled render, scoped host capability/override and shared theme/peer identity passed
+composition-consumer-241d8e@ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-smoke-trust-environment-diagnosis-1056/package-smoke-stage/tmp/composition-consumer-241d8e
+├─┬ @banodoco/timeline-composition@0.0.14
+│ ├── @remotion/layout-utils@4.0.509 deduped
+│ ├── @remotion/media@4.0.509 deduped
+│ ├── react-dom@18.3.1 deduped
+│ ├── react@18.3.1 deduped
+│ └── remotion@4.0.509 deduped
+├── @remotion/layout-utils@4.0.509
+├─┬ @remotion/media@4.0.509
+│ ├── react-dom@18.3.1 deduped
+│ ├── react@18.3.1 deduped
+│ └── remotion@4.0.509 deduped
+├─┬ react-dom@18.3.1
+│ └── react@18.3.1 deduped
+├── react@18.3.1
+└─┬ remotion@4.0.509
+  ├── react-dom@18.3.1 deduped
+  └── react@18.3.1 deduped
+
+Installed integrity: sha512-Bgf9lHdk3CJCTsA3Jbd5WW9UYCHEZQTF3VFM1YO6dimZ+q8bQ8cX6CZ4FCfClBNgg10DQ1bozGMqFCpkGNXvvw==
+Package smoke passed; installed files unchanged.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
