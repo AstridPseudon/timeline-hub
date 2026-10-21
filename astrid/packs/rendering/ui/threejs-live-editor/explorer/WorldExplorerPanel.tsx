@@ -162,8 +162,6 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const [hintDismissed, setHintDismissed] = useState(() => readSetting<boolean>(ctx, HINT_DISMISSED_KEY) === true);
   const [hintFading, setHintFading] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
-  const [eventsOpen, setEventsOpen] = useState(false);
-  const eventsRoot = useRef<HTMLSpanElement>(null);
   const [touchSeen, setTouchSeen] = useState(false);
   const [shotIndex, setShotIndex] = useState(0);
   const [stretch, setStretch] = useState<Stretch>({ from: 0, to: 1, speed: 1 });
@@ -1324,7 +1322,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     else setControlsAwake(true);
     return () => clearTimeout(fadeTimer.current);
   }, [playingNow]);
-  const controlsShown = controlsAwake || !playingNow || keysOpen || eventsOpen;
+  const controlsShown = controlsAwake || !playingNow || keysOpen;
   const barButton = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
   const overlayFade = `transition-opacity duration-300 ${controlsShown ? 'opacity-100' : 'opacity-0 focus-within:opacity-100'}`;
   const barTime = mode === 'explore' ? worldTime : shownTime;
@@ -1341,67 +1339,6 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     : shotEvents.map(({ event, from, to }) => ({ name: event.name, from, to: event.end === undefined ? from : to }));
   const nowEvent = selected ? nowEvents.find((event) => barTime >= event.from - 0.25 && barTime <= event.to + 0.25) : undefined;
   const keyRows = mode === 'explore' ? KEY_MAP : SHOT_KEY_MAP;
-  // Shots: this shot's events, picked from the transport bar. It reads the current event, else the next one, else the count.
-  const nextEvent = nowEvents.find((event) => event.from > barTime);
-  const pickerLabel = nowEvent?.name ?? nextEvent?.name ?? `${nowEvents.length} event${nowEvents.length === 1 ? '' : 's'}`;
-  const closeEvents = (refocus: boolean) => {
-    setEventsOpen(false);
-    if (refocus) eventsRoot.current?.querySelector<HTMLButtonElement>('[data-event-picker]')?.focus();
-  };
-  const onEventsKey = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key === 'Escape') { event.stopPropagation(); event.preventDefault(); closeEvents(true); return; }
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-    const items = Array.from(eventsRoot.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? []);
-    if (!items.length) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const at = items.indexOf(document.activeElement as HTMLButtonElement);
-    const next = event.key === 'ArrowDown' ? (at + 1) % items.length : (at <= 0 ? items.length - 1 : at - 1);
-    items[next]?.focus();
-  };
-  const eventPicker = (
-    <span
-      ref={eventsRoot}
-      className="relative flex min-w-0 shrink items-center"
-      onKeyDown={onEventsKey}
-      onBlur={(event) => { if (eventsOpen && !event.currentTarget.contains(event.relatedTarget as Node | null)) setEventsOpen(false); }}
-    >
-      <button
-        type="button"
-        data-event-picker
-        aria-haspopup="menu"
-        aria-expanded={eventsOpen}
-        aria-label={`Events: ${pickerLabel}`}
-        title="Jump to an event in this shot"
-        className="flex h-6 min-w-0 items-center gap-1 rounded-full px-2 text-[11px] hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        style={{ background: eventsOpen ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.1)' }}
-        onClick={() => {
-          setEventsOpen((open) => !open);
-          setTimeout(() => eventsRoot.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus(), 0);
-        }}
-      >
-        <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M5 3v18M5 4h13l-3 4.5 3 4.5H5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>
-        <span className="min-w-0 truncate">{pickerLabel}</span>
-        <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 transition-transform ${eventsOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
-      </button>
-      {eventsOpen ? (
-        <div role="menu" aria-label="Shot events" className="absolute bottom-full left-0 z-20 mb-1 max-h-40 min-w-[11rem] max-w-[16rem] overflow-y-auto rounded-md p-1 shadow-lg" style={{ background: 'rgba(5, 6, 15, 0.94)' }}>
-          {nowEvents.map((event, i) => (
-            <button
-              key={`${i}:${event.from}:${event.name}`}
-              type="button"
-              role="menuitem"
-              className="flex h-7 w-full items-center justify-between gap-3 rounded px-2 text-left text-[11px] hover:bg-white/15 focus-visible:bg-white/15 focus-visible:outline-none"
-              onClick={() => { seekTravel(event.from); closeEvents(true); }}
-            >
-              <span className="min-w-0 truncate">{event.name}</span>
-              <span className="shrink-0 tabular-nums" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{rangeClock(event.from)}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </span>
-  );
   const overlayBar = (
     <div
       data-viewer-control
@@ -1421,8 +1358,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       <span className="shrink-0 text-[11px] tabular-nums" aria-label="Time">
         {clockText(barTime)} / {clockText(barEnd)}
       </span>
-      {mode === 'explore' && nowEvent ? <span className="min-w-0 truncate text-[11px]" style={{ color: 'rgba(255, 255, 255, 0.72)' }}>· {nowEvent.name}</span> : null}
-      {mode === 'shots' && selected && nowEvents.length > 0 ? eventPicker : null}
+      {nowEvent ? <span className="min-w-0 truncate text-[11px]" style={{ color: 'rgba(255, 255, 255, 0.72)' }}>· {nowEvent.name}</span> : null}
       {mode === 'shots' && selected && trimmed ? (
         <span className="ml-1 flex h-6 shrink-0 items-center gap-0.5 rounded-full pl-2 pr-0.5 text-[11px] tabular-nums" style={{ background: 'rgba(255, 255, 255, 0.12)' }} title={`Using ${rangeClock(stretch.from)}–${rangeClock(stretch.to)} of this shot`}>
           {rangeClock(stretch.from)}–{rangeClock(stretch.to)}

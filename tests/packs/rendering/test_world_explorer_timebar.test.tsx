@@ -171,22 +171,37 @@ describe('TimeBar', () => {
     expect(view.onSeek).not.toHaveBeenCalled();
   });
 
-  it('the bar is 18 px tall with or without markers: there is no label lane', () => {
-    for (const markers of [[], [{ key: 'dawn', from: 2, to: 2, title: 'Dawn' }]]) {
-      const view = bar({ markers });
-      const root = view.container.querySelector('[data-time-bar]') as HTMLElement;
-      expect(root.className).toContain('h-[18px]');
-      expect(root.className).not.toContain('h-11');
-      view.unmount();
-    }
+  it('with no events the bar is 18 px and has no label lane; with events it grows by the 26 px lane', () => {
+    const none = bar();
+    expect((none.container.querySelector('[data-time-bar]') as HTMLElement).className).toContain('h-[18px]');
+    expect(none.container.querySelector('[data-event-label]')).toBeNull();
+    none.unmount();
+    const some = bar({ markers: [{ key: 'dawn', from: 2, to: 2, title: 'Dawn' }] });
+    expect((some.container.querySelector('[data-time-bar]') as HTMLElement).className).toContain('h-11');
+    expect(some.getByRole('slider', { name: 'Travel position' }).className).toContain('top-[26px]');
   });
 
-  it('a marker name is a tooltip shown only on hover or focus, never a label on the bar', () => {
-    const view = bar({ markers: [{ key: 'star', from: 1, to: 1, title: 'Shooting star' }, { key: 'band', from: 2, to: 3, title: 'Late' }] });
-    for (const tip of view.container.querySelectorAll('[role="tooltip"]')) {
-      expect(tip.className).toContain('hidden');
-      expect(tip.className).toContain('group-hover:block');
-    }
+  it('a label is drawn only when its whole title fits, never truncated; otherwise its mark shows a tooltip', () => {
+    // 5 px a character. At 320 px: Dawn (20 px) has 26 px before the next mark, Shooting star (65 px) has 26 px, Late has the rest.
+    const view = bar({
+      markers: [
+        { key: 'dawn', from: 0, to: 0, title: 'Dawn' },
+        { key: 'star', from: 1, to: 1, title: 'Shooting star' },
+        { key: 'late', from: 2, to: 2, title: 'Late' },
+      ],
+    });
+    const labels = Array.from(view.container.querySelectorAll('[data-event-label]')).map((l) => l.textContent);
+    expect(labels).toEqual(['Dawn', 'Late']);
+    const tips = Array.from(view.container.querySelectorAll('[role="tooltip"]')).map((t) => t.textContent);
+    expect(tips).toEqual(['Shooting star']);
+    for (const l of view.container.querySelectorAll('[data-event-label]')) expect(l.textContent).not.toContain('…');
+  });
+
+  it('clicking a label jumps to its event', () => {
+    const onJump = vi.fn();
+    const view = bar({ markers: [{ key: 'dawn', from: 2, to: 2, title: 'Dawn' }], onJump });
+    fireEvent.click(view.container.querySelector('[data-event-label]') as HTMLElement);
+    expect(onJump).toHaveBeenCalledWith(2);
   });
 
   it('a point marker has a 16 px hit area centred on its tick', () => {

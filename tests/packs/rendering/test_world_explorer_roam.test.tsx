@@ -757,27 +757,6 @@ describe('World Explorer free roam', () => {
     expect(chips()).toEqual(['Lanterns, 0:04.0']);
   });
 
-  it('the transport bar offers this shot\'s events in a picker that jumps, and hides it when the shot has none', async () => {
-    const harness = makeHarness({ clips: [liveClip()] });
-    const view = mount(harness);
-    await openReady(EXPLORE, { events: EVENTS, shots: CAMERAS });
-    fireEvent.click(view.getByRole('button', { name: 'Shots' }));
-
-    const picker = view.getByRole('button', { name: /^Events:/ });
-    expect(picker).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(picker);
-    expect(picker).toHaveAttribute('aria-expanded', 'true');
-    const items = within(view.getByRole('menu', { name: 'Shot events' })).getAllByRole('menuitem');
-    expect(items.map((b) => b.textContent)).toEqual(['Dawn0:01']);
-    fireEvent.keyDown(items[0], { key: 'Escape' });
-    expect(view.queryByRole('menu', { name: 'Shot events' })).toBeNull();
-
-    fireEvent.click(picker);
-    fireEvent.click(within(view.getByRole('menu', { name: 'Shot events' })).getByRole('menuitem'));
-    expect(view.queryByRole('menu', { name: 'Shot events' })).toBeNull();
-    expect(view.getByLabelText('Time')).toHaveTextContent('0:01');
-  });
-
   it('selecting a live-scene clip opens its world in Shots mode on the shot holding its start, with its stretch', async () => {
     const harness = makeHarness({ clips: [liveClip()] });
     const view = mount(harness);
