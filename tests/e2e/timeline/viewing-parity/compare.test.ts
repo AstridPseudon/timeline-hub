@@ -1,11 +1,49 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assertFrameWithinBound, compareRgbFrames, type RgbFrame } from './compare';
+import { assertFrameWithinBound, compareRgbFrames, formatTerminalTaskFailure, type RgbFrame } from './compare';
 import { PARITY_HEIGHT, PARITY_WIDTH } from './media';
 
 function image(): RgbFrame {
   return { width: PARITY_WIDTH, height: PARITY_HEIGHT, bytes: Buffer.alloc(PARITY_WIDTH * PARITY_HEIGHT * 3, 64) };
 }
+
+function task(overrides: Record<string, unknown> = {}) {
+  return {
+    task_id: 'task-render-1', attempt_id: 'attempt-render-1', state: 'running', result: null,
+    ...overrides,
+  } as Parameters<typeof formatTerminalTaskFailure>[0];
+}
+
+test('planted terminal task failure fails with bounded fields and no executor message', () => {
+  const diagnostic = formatTerminalTaskFailure(task({
+    state: 'failed',
+    result: {
+      error: {
+        type: 'BundleError', location: 'render.bundle', code: 'module_not_found',
+        message: 'secret /home/user/project and raw stderr must never be shown',
+        stderr: 'secret stderr /var/lib/renderer',
+        path: '/var/lib/renderer/bundle.js',
+      },
+      input_body: { token: 'secret', inputs: ['/var/lib/renderer/input.json'] },
+    },
+  }));
+  assert.equal(diagnostic, 'Render task terminal failure: task_id=task-render-1 attempt_id=attempt-render-1 error_type=BundleError error_location=render.bundle code=module_not_found');
+  assert.doesNotMatch(diagnostic ?? '', /secret|home|stderr|token|message|renderer|var|input/);
+  assert.equal(formatTerminalTaskFailure(task({
+    task_id: '/tmp/task', attempt_id: 'attempt\n', state: 'failed', result: {
+      error: { code: 'C:/secret', location: '/home/user/project', message: 'Module not found' },
+    },
+  })), 'Render task terminal failure: task_id=unknown attempt_id=unknown error_type=unknown error_location=unknown code=task_failed');
+});
+
+test('successful task remains on the existing completion path', () => {
+  assert.equal(formatTerminalTaskFailure(task({ state: 'succeeded', result: { outputs: [] } })), null);
+});
+
+test('cancelled task fails with the bounded cancellation code', () => {
+  assert.equal(formatTerminalTaskFailure(task({ state: 'cancelled', result: { error: { message: 'cancelled by secret input' } } })),
+    'Render task terminal failure: task_id=task-render-1 attempt_id=attempt-render-1 error_type=unknown error_location=unknown code=task_cancelled');
+});
 
 test('same comparator accepts baseline then rejects an opaque one-host patch with pixel metric', () => {
   const reference = image();
