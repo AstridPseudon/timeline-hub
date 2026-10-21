@@ -577,7 +577,7 @@ describe('AgentChat', () => {
     const view = renderAgentChat();
 
     expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid');
-    expect(view.container.querySelector('img[src="/astrid-avatar.png"]')).toBeNull();
+    expect(screen.getByTestId('agent-chat-header').querySelector('img')).toBeNull();
 
     expect(screen.queryByText('Select a project to start chatting.')).not.toBeInTheDocument();
     await waitFor(() => expect(state.createSession.mutate).toHaveBeenCalledTimes(1));

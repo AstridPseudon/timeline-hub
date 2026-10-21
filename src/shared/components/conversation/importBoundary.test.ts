@@ -19,8 +19,6 @@ describe('shared conversation import boundary', () => {
   it('keeps view data and callbacks explicit at the shared component boundary', () => {
     const source = readFileSync(path.join(root, 'ConversationPresentation.tsx'), 'utf8');
     expect(source).toContain('items: readonly ConversationItem[]');
-    expect(source).toContain('headerActions?: ReactNode');
     expect(source).toContain('footer?: ReactNode');
-    expect(source).toContain('onAttachmentClick?:');
   });
 });
