@@ -3,6 +3,7 @@ import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  CONNECTED_HOLD_MS,
   RuntimeConnectionGate,
   RuntimeConnectionProvider,
   useRuntimeConnection,
@@ -612,6 +613,41 @@ describe('gate', () => {
     await waitFor(() => expect(screen.getByTestId('custom-pill')).toHaveTextContent('Direct Journey'));
     expect(screen.getByTestId('app')).toBeInTheDocument();
     expect(screen.queryByTestId('custom-panel')).toBeNull();
+  });
+});
+
+describe('gate: the connected moment', () => {
+  const gate = (gateway: ReturnType<typeof fakeGateway>) => render(
+    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionGate
+        panel={({ state }) => <p data-testid="panel">{state.status}</p>}
+        connected={() => <p data-testid="moment">Connected</p>}
+      >
+        <div data-testid="app" />
+      </RuntimeConnectionGate>
+    </RuntimeConnectionProvider>,
+  );
+
+  it('holds "Connected" for 1.2 s after a setup screen, then opens the app', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    gate(gateway);
+    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('set_up'));
+
+    gateway.up();
+    await waitFor(() => expect(screen.getByTestId('moment')).toBeInTheDocument());
+    const shownAt = Date.now();
+    expect(screen.queryByTestId('app')).toBeNull();
+    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument(), { timeout: 3000 });
+    expect(Date.now() - shownAt).toBeGreaterThanOrEqual(CONNECTED_HOLD_MS - 100);
+    expect(screen.queryByTestId('moment')).toBeNull();
+  });
+
+  it('skips the moment for a Runtime that answers at once', async () => {
+    const gateway = fakeGateway();
+    gate(gateway);
+    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+    expect(screen.queryByTestId('moment')).toBeNull();
   });
 });
 

@@ -368,7 +368,15 @@ export interface RuntimeConnectionGateProps {
   panel?: (connection: RuntimeConnectionValue) => React.ReactNode;
   /** Rendered beside `children` once connected. Nothing until A2.P. */
   pill?: (connection: RuntimeConnectionValue) => React.ReactNode;
+  /**
+   * Shown for `CONNECTED_HOLD_MS` when the Runtime connects while a setup or reconnect screen was showing, so the person
+   * sees the moment it worked before the app opens. A Runtime that answers on the first probe never shows it.
+   */
+  connected?: () => React.ReactNode;
 }
+
+/** How long the connected moment stays up before the app opens. */
+export const CONNECTED_HOLD_MS = 1200;
 
 /**
  * Renders `children` once the Runtime is connected, and `panel` until then. A same-origin build renders `children`
@@ -378,8 +386,23 @@ export function RuntimeConnectionGate({
   children,
   panel = (connection) => <PlaceholderPanel {...connection} />,
   pill = () => null,
+  connected,
 }: RuntimeConnectionGateProps) {
   const connection = useRuntimeConnection();
+  // A screen that asks the person to do something (set up, allow, restart) has been shown: connecting now is news.
+  const askedRef = useRef(false);
+  const [holding, setHolding] = useState(false);
+  if (connection.gated && !connection.isConnected && !connection.isBooting) askedRef.current = true;
+  const justConnected = connection.gated && connection.isConnected && askedRef.current && Boolean(connected);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (holdTimer.current) clearTimeout(holdTimer.current); }, []);
+  useEffect(() => {
+    if (!justConnected) return;
+    // Clearing `askedRef` ends `justConnected` on the next render, so the timer outlives this effect on purpose.
+    askedRef.current = false;
+    setHolding(true);
+    holdTimer.current = setTimeout(() => setHolding(false), CONNECTED_HOLD_MS);
+  }, [justConnected]);
   // The landing page's "use it right here" click asked to go in (`autoConnectRequest.ts`): the flag is read once, in the
   // first render, so the explainer is never painted for the frame before the effect below asks Chrome.
   const [autoConnect, setAutoConnect] = useState(() => {
@@ -405,6 +428,7 @@ export function RuntimeConnectionGate({
     const shown = autoConnect && awaitingConnect ? { ...connection, isChecking: true } : connection;
     return <>{panel(shown)}</>;
   }
+  if (justConnected || holding) return <>{connected?.()}</>;
   return (
     <>
       {pill(connection)}
