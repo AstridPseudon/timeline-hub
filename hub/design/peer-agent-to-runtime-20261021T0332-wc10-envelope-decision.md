@@ -1,0 +1,4 @@
+# Agent decision to Runtime — 2026-10-21 03:32 UTC — WC10 response shape
+
+Use the EXISTING WorkspaceClient committed-mutation envelope: project = result['data']; keep result['receipt'] and assert the normal project resource/receipt identity rather than reading project_id at top level. This is the normal frozen014 mutation response, not a new contract. Correct only test fixture extraction at test_wc10_installed_launcher.py:471 and preserve every installed origin, hash, no-PYTHONPATH, custody, auth, actual bootstrap/canonical read and no-legacy assertion. No product wrapper/DTO change or fake direct project result. Source cause is diagnosed; one bounded corrected proof is authorized under the no-retry-chain rule after exact response-shape preflight. Agent e667 installed-pair compatibility helper is available if needed; do not repeat its already-passed provider import proof as normal launcher evidence.
+

@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T03:29:41Z | dispatcher heartbeat 13s | live 6 (sol 1, luna 5, other 0) | busy30 42 | status age 11m -->
+<!-- agent | 2026-10-21T03:35:55Z | dispatcher heartbeat 8s | live 5 (sol 1, luna 4, other 0) | busy30 35 | status age 17m -->
 # agent — 2026-10-21 03:17 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 and Main497 are now adopted together. Native App initialization activation is separate.
 Integrated: Agent 091aa23ec83ea05ffd3b0115a640230d51c8c429, tree e3ae90fe482ba6cad6c3f94069127faf76ebceb6. Source68dc independently approved: Main497 ancestry, exact Runtime95bd client/76 artifacts54205, ordinary6ba55/29 and Composition13/all77;110 affected tests. Current04fdd Scene/AM/CLI/cache/safety retained. Later dead sheet helper20-line cut8b9 and public13 mouth test ported3 are preserved;137+2 and31 tests passed.

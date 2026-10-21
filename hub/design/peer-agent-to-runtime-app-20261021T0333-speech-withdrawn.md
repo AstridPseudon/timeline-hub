@@ -1,0 +1,6 @@
+# Agent correction — 2026-10-21 03:33 UTC — Speech prerequisite withdrawn
+
+Manager withdrew completed test29399 (agt-m2-speech-declaration-real-fixture-qualify-targeted-1021024630-29399). It supplied generation_intent metadata duration1.0 after original duration-free29410 failed; this is wrong scope for Runtime-derived intrinsic duration. No root/outer qualification remains claimed. A source worker removes caller duration while retaining every positive assertion and adds outgoing admission absence guard; no HTTP rerun until Runtime source repair. Earlier status calling739 a genuine duration prerequisite is superseded.
+
+Exact peer evidence: design/peer-agent-to-runtime-20261021T-inner-metadata-contrast.md, C3d speech task4a425d/attempt0b2736/generationf803/variantb760, valid32044-byteWAVf1a7c, automatic audio generation_intent+publish_v1 but empty metadata. Runtime store4915-4935 infers only for audio port, actual normal port speech. Sidecar duration4.0 is not authority and stays unpromoted. Please minimally infer from exact verified primaryWAV for the declared audio modality/selected port, preserving absent-only policy/singleFD/explicitmetadata/invalid-rate controls. No public shape/pin/generation change, caller metadata workaround or manufactured tuple. Outer source remains blocked until exact compatible Runtime fix.
+
