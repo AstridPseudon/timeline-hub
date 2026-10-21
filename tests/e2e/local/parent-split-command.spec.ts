@@ -29,8 +29,11 @@ async function seedSplit(harness: DirectHarness): Promise<SplitSeed> {
   parent.registry = { assets: { 'split-video': { file: harness.seed.video.mediaType === 'video/webm' ? 'split-video.webm' : 'split-video.mp4', type: harness.seed.video.mediaType, duration: 12, media_id: harness.seed.video.objectId, content_sha256: harness.seed.video.digest } } };
   const result = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines/${timelineId}/composition-revisions`, publication);
   expect(result.status, JSON.stringify(result.body)).toBe(200);
-  const project = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}`);
-  return { projectSlug: project.body.data.slug, timelineId, clipId, neighborId, headRevisionId: result.body.data.new_head };
+  const project = await harness.runtimeJson<{ project_id: string; slug: string }>('GET', `/v1/projects/${harness.seed.projectId}`);
+  expect(project.status, JSON.stringify(project.body)).toBe(200);
+  expect(project.body.project_id).toBe(harness.seed.projectId);
+  expect(project.body.slug).toEqual(expect.any(String));
+  return { projectSlug: project.body.slug, timelineId, clipId, neighborId, headRevisionId: result.body.data.new_head };
 }
 async function history(harness: DirectHarness, seed: SplitSeed): Promise<HistoryPage> {
   const result = await harness.runtimeJson<HistoryPage>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
