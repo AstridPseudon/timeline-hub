@@ -287,7 +287,7 @@ def render_curves(ctx: LayerContext) -> LayerResult:
             public_scene = ctx.shared.get("public_scene")
             public_frames = sorted(public_scene) if isinstance(public_scene, Mapping) else ()
             if public_frames:
-                public = _public_mouth_facts(ctx, element, public_frames)
+                public = _public_mouth_facts(ctx, element, public_frames, allow_default_motion=True)
                 public_states = public["states"] if public else {}
         samples = []
         for frame in frames:
@@ -378,19 +378,22 @@ def render_curves(ctx: LayerContext) -> LayerResult:
 
 # ---------------------------------------------------------------- lipsync (data + pixels)
 
-def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]) -> dict[str, Any] | None:
-    """Adapt retained public presenter rows for this private layer only."""
+def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int], *,
+                        allow_default_motion: bool = False) -> dict[str, Any] | None:
+    """Adapt retained public presenter rows for the selected consumers."""
     if len(frames) < 3:
         return None
     # Partial or absent raw anchors are not equivalent to the private model's
-    # crop. Keep those inputs on the established fallback path.
+    # crop. Keep those inputs on the established fallback path for lipsync and
+    # curves; only the omitted default can use its independent motion state.
     params = presenter.params if isinstance(presenter.params, Mapping) else {}
     raw_mouth = params.get("mouth")
-    if (not isinstance(raw_mouth, Mapping)
+    if ((not allow_default_motion or raw_mouth is not None)
+            and (not isinstance(raw_mouth, Mapping)
             or any(type(raw_mouth.get(key)) is not int for key in ("x", "y", "w"))
             or not 0 <= raw_mouth["x"] < 320
             or not 0 <= raw_mouth["y"] < 180
-            or not 1 <= raw_mouth["w"] <= 40):
+            or not 1 <= raw_mouth["w"] <= 40)):
         return None
     public_scene = ctx.shared.get("public_scene")
     if (ctx.shared.get("public_scene_evidence_mode") not in {"fresh_capture", "cache"}
@@ -437,18 +440,21 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
             return None
         states[frame] = state
         rows.append(layer)
-    zero_rows = [layer for layer in rows if layer.get("contentFrame") == 0]
-    if len(zero_rows) != 1:
-        return None
-    mouth = ((zero_rows[0].get("diagnostics") or {}).get("mouth")
-             if isinstance(zero_rows[0].get("diagnostics"), Mapping) else None)
-    rect = mouth.get("rect") if isinstance(mouth, Mapping) and mouth.get("status") == "known" else None
-    if (not isinstance(rect, Mapping)
-            or any(type(rect.get(key)) not in (int, float) or isinstance(rect.get(key), bool)
-                   or not math.isfinite(rect[key]) for key in ("x", "y", "width", "height"))
-            or rect["width"] <= 0 or rect["height"] <= 0):
-        return None
-    return {"rect": tuple(float(rect[key]) for key in ("x", "y", "width", "height")),
+    rect = None
+    if not allow_default_motion:
+        zero_rows = [layer for layer in rows if layer.get("contentFrame") == 0]
+        if len(zero_rows) != 1:
+            return None
+        mouth = ((zero_rows[0].get("diagnostics") or {}).get("mouth")
+                 if isinstance(zero_rows[0].get("diagnostics"), Mapping) else None)
+        rect = mouth.get("rect") if isinstance(mouth, Mapping) and mouth.get("status") == "known" else None
+        if (not isinstance(rect, Mapping)
+                or any(type(rect.get(key)) not in (int, float) or isinstance(rect.get(key), bool)
+                       or not math.isfinite(rect[key]) for key in ("x", "y", "width", "height"))
+                or rect["width"] <= 0 or rect["height"] <= 0):
+            return None
+    return {"rect": (tuple(float(rect[key]) for key in ("x", "y", "width", "height"))
+                      if rect is not None else None),
             "basis": {"width": basis["width"], "height": basis["height"]},
             "states": states}
 

@@ -179,6 +179,43 @@ def test_public_mouth_rows_drive_curve_and_missing_row_keeps_private_fallback(
     assert samples[1] == {"closed": 0.0, "half": 0.5, "open": 1.0}[private_missing]
 
 
+def test_default_presenter_curve_uses_public_motion_without_legacy_roi(
+        public_capture_rows, retained, monkeypatch):
+    case = deepcopy(retained)
+    case["props"]["timeline"]["clips"][0]["params"].pop("mouth")
+    provider = _public_provider(retained, public_capture_rows, monkeypatch)
+    ctx = context(case, frame_provider=provider)
+    presenter = ctx.elements[0]
+    public_states = {row["frame"]: {0.0: "closed", 0.5: "half", 1.0: "open"}[
+        row["layers"][0]["diagnostics"]["motion"]["mouth"]]
+                     for row in public_capture_rows}
+    original_mouth_state = model.mouth_state
+    samples = {}
+
+    def private_state(element, frame, fps):
+        if element.id == presenter.id and frame in public_states:
+            pytest.fail("default presenter curve consulted private mouth_state")
+        return original_mouth_state(element, frame, fps)
+
+    original_props_at = model.props_at
+
+    def record_props(element, t, fps, **kwargs):
+        props = original_props_at(element, t, fps, **kwargs)
+        if element.id == presenter.id and "mouth" in props:
+            samples[int(math.floor(t * fps))] = props["mouth"]
+        return props
+
+    monkeypatch.setattr(model, "mouth_state", private_state)
+    monkeypatch.setattr(model, "props_at", record_props)
+    assert builtin._public_mouth_facts(ctx, presenter, [0, 3, 4, 5]) is None
+    builtin.render_curves(ctx)
+
+    assert {frame: samples[frame] for frame in public_states} == {
+        frame: {"closed": 0.0, "half": 0.5, "open": 1.0}[state]
+        for frame, state in public_states.items()
+    }
+
+
 def test_missing_presenter_override_preserves_props_dispatch(retained, monkeypatch):
     presenter = context(retained).elements[0]
     dispatched = {"custom": 1.0}
