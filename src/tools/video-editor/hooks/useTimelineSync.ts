@@ -21,6 +21,9 @@ export function useTimelineSync({
 
   const onPreviewTimeUpdate = useCallback((time: number) => {
     if (isSyncingFromTimeline.current) {
+      // The Player frameupdate is the completion signal for the latest
+      // timeline-origin seek, including a mailbox-coalesced target.
+      isSyncingFromTimeline.current = false;
       return;
     }
 
@@ -51,10 +54,11 @@ export function useTimelineSync({
   }, [isSyncingFromPreview, isSyncingFromTimeline, previewRef, setCurrentTime]);
 
   const onClickTimeArea = useCallback((time: number) => {
+    isSyncingFromTimeline.current = true;
     previewRef.current?.seek(time);
     setCurrentTime(time);
     return undefined;
-  }, [previewRef, setCurrentTime]);
+  }, [isSyncingFromTimeline, previewRef, setCurrentTime]);
 
   return { onPreviewTimeUpdate, onCursorDrag, onClickTimeArea };
 }
