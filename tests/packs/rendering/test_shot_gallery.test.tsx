@@ -87,10 +87,32 @@ describe('ShotGallery', () => {
     expect(within(cards(view)[2]).getByRole('button', { name: /^Shot 3,/ })).toHaveAttribute('aria-current', 'true');
     expect(within(cards(view)[1]).getByRole('button', { name: /^Shot 2,/ })).not.toHaveAttribute('aria-current');
   });
-  it('docked: every card has a drag handle and no Add button', () => {
+  it('docked: every card has one drag-or-add button, and Enter/click adds that shot at the playhead', () => {
+    const { view, props } = mount();
+    const handles = view.getAllByTestId('shot-drag-handle');
+    expect(handles).toHaveLength(9);
+    expect(handles[0].tagName).toBe('BUTTON');
+    expect(handles[0]).toHaveAttribute('aria-label', 'Add Bridge 1 to video, or drag it onto the timeline');
+    expect(view.queryByRole('button', { name: /^Add .* to video$/ })).toBeNull();
+    fireEvent.click(handles[2]);
+    expect(props.onAdd).toHaveBeenCalledWith(2);
+  });
+  it('the action sits beside the caption, never inside the still button', () => {
+    const { view } = mount({ fullscreen: true });
+    const card = cards(view)[0];
+    const face = within(card).getByRole('button', { name: /^Bridge 1,/ });
+    const action = within(card).getByRole('button', { name: 'Add Bridge 1 to video' });
+    expect(face.contains(action)).toBe(false);
+    expect(face.querySelector('img, [role="img"]')).not.toBeNull();
+    expect(face.querySelector('button')).toBeNull();
+  });
+  it('the pager is the last thing in the search row and keeps its width on every page', () => {
     const { view } = mount();
-    expect(view.getAllByTestId('shot-drag-handle')).toHaveLength(9);
-    expect(view.queryByRole('button', { name: /^Add / })).toBeNull();
+    const nav = view.getByRole('navigation', { name: 'Shots pages' });
+    expect(nav.parentElement?.lastElementChild).toBe(nav);
+    const width = (view.getByLabelText('Page 1 of 2') as HTMLElement).style.width;
+    fireEvent.click(view.getByRole('button', { name: 'Next page' }));
+    expect((view.getByLabelText('Page 2 of 2') as HTMLElement).style.width).toBe(width);
   });
   it('full screen: every card offers Add to video instead of a handle', () => {
     const { view, props } = mount({ fullscreen: true });
