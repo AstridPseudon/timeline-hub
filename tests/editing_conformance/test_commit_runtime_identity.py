@@ -10,6 +10,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.editing_conformance.fixture_loader import load_fixture
+from tests.editing_conformance.test_recipe_m2_placement import MATERIALIZATION_FIXTURE
 from tests.helpers.runtime import use_runtime
 from tests.helpers.trusted_seed import seed_trusted_parent
 
@@ -134,6 +136,25 @@ def move_body(case, on):
     return edit.body([edit.agent.move(edit.agent.bundle(edit.document()), REF, on)])
 
 
+def placement_body(case, on):
+    """Capture the approved occurrence placement shape through the current v2 builder."""
+    from astrid.sdk.timeline.native_placement_commands import capture_placement
+
+    edit = case.edit
+    materialization = load_fixture(MATERIALIZATION_FIXTURE)
+    request = next(row['request'] for row in materialization['cases']
+                   if row['request']['owner'] == 'occurrence:occ-a')
+    command = capture_placement(
+        edit.agent.bundle(edit.document()), 'occurrence:occurrence-1', 'clip-1', on,
+        ownership=request['ownership'])
+    return edit.body([command]), command
+
+
+def inverse(result):
+    return {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
+            'args': {'publications': [result['receipt']['receipt_id']]}}
+
+
 @pytest.mark.parametrize("identity", ["same-project", "other-project"], indirect=True)
 def test_occupied_shared_occurrence_destination_refuses_atomically(identity):
     from runtime_protocol.errors import RuntimeErrorBase
@@ -237,3 +258,78 @@ def test_fresh_shared_occurrence_retry_own_move_and_historical_restore(identity,
     assert {k: final[2][k] for k in baseline[2]} == baseline[2]
     assert {k: v for k, v in final[0].items() if k != (edit.project, edit.timeline)} == {
         k: v for k, v in baseline[0].items() if k != (edit.project, edit.timeline)}
+
+
+@pytest.mark.parametrize("identity", ["fresh"], indirect=True)
+def test_fresh_shared_placement_materializes_own_slot_reload_inverse_and_exact_retry(
+        identity, monkeypatch):
+    """The current v2 placement carrier survives real Runtime admission and restart."""
+    from runtime_protocol.service import RuntimeService
+
+    from astrid.sdk.timeline._materialization import id_map as allocation_map
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import document_from_bundle
+    from astrid.sdk.timeline.native_placement_commands import capture_placement
+
+    edit = identity.edit
+    source = edit.agent.bundle(edit.document())
+    body, command = placement_body(identity, 0.5)
+    expected = execute(source, [command])
+    destination = next(row['shot_id'] for row in source['placements']
+                       if row['occurrence_id'] == 'occurrence-1')
+    source_pin = source['source_mapping']['shots'][destination]
+    expected_map = allocation_map(expected.records)
+    assert command['op'] == 'placement.move' and command['version'] == '2'
+    assert expected_map == {
+        'shot:' + destination: destination,
+        'shot:' + destination + '/item:' + next(iter(source_pin['item_id_map'].values())):
+            next(iter(source_pin['item_id_map'].values())),
+    }
+
+    accepted = edit.commit(body, 'placement-materialization')
+    data = accepted['data']
+    assert data['status'] == 'accepted'
+    assert data['commands'] == [command]
+    assert data['canonical_document'] == document_from_bundle(expected.bundle)
+    assert data['id_map'] == expected_map
+    record = edit.history()[-1]['records']['commands'][0]
+    allocation = next(dep for dep in record['dependencies']
+                       if dep['key'] == 'materialization.source:shot:' + destination)
+    assert allocation['pin']['source']['shot_id'] == source_pin['shot_id']
+    assert allocation['pin']['source']['item_id_map'] == source_pin['item_id_map']
+    assert next(binding for binding in record['bindings']
+                if binding['key'] == 'materialization.owner:shot:' + destination) == {
+                    'key': 'materialization.owner:shot:' + destination,
+                    'ref': 'occurrence:occurrence-1', 'policy': 'fixed',
+                    'dependencies': [allocation['key']],
+                }
+    moved = occurrence_image(data['canonical_document'], 'occurrence-1')
+    assert moved[0]['shot_id'] == destination
+    assert moved[2]['payload']['clips'][0]['at'] == 0.5
+    edit.assert_readback(accepted)
+
+    edit.service.close()
+    edit.service = RuntimeService(edit.film.fixture.duplicate_root)
+    edit.service.register_timeline_commit_provider(identity.provider('astrid'))
+    reloaded = edit.agent.bundle(edit.document())
+    assert next(row['shot_id'] for row in reloaded['placements']
+                if row['occurrence_id'] == 'occurrence-1') == destination
+    assert reloaded['source_mapping']['shots'][destination]['shot_id'] == source_pin['shot_id']
+    assert reloaded['source_mapping']['shots'][destination]['item_id_map'] == source_pin['item_id_map']
+    assert occurrence_image(edit.document(), 'occurrence-1')[2]['payload']['clips'][0]['at'] == 0.5
+
+    own_command = capture_placement(reloaded, 'occurrence:occurrence-1', 'clip-1', 0.75,
+                                    ownership='occurrence')
+    own = edit.commit(edit.body([own_command]), 'placement-own-slot')
+    # The own-slot inverse must restore the accepted materialized image exactly.
+    undone = edit.commit(edit.body([inverse(own)]), 'placement-own-slot-undo')
+    assert undone['data']['canonical_document'] == data['canonical_document']
+    assert occurrence_image(undone['data']['canonical_document'], 'occurrence-1')[0]['shot_id'] == destination
+    assert occurrence_image(undone['data']['canonical_document'], 'occurrence-1')[2]['payload']['clips'][0]['at'] == 0.5
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError('exact retry executed the Agent provider')
+
+    with monkeypatch.context() as retry:
+        retry.setattr(type(edit.service._timeline_commit_provider), 'commit', forbidden)
+        assert edit.commit(body, 'placement-materialization') == accepted
