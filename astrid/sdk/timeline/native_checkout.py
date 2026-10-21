@@ -36,6 +36,21 @@ def _publishable_parent_command(command):
         return False
     if (command.get('op') == 'track.set'
             and re.fullmatch(r'parent/track:[^/]+', command['select']) is not None):
+        target = command['select']
+        captured = ({'intent', 'resolved', 'reads', 'selections', 'bindings',
+                     'created', 'expect', 'authorship'} <= set(command)
+                    and command['resolved'] == [target]
+                    and isinstance(command['reads'], list)
+                    and any(read.get('ref') == target and read.get('path') == ['id']
+                            for read in command['reads'] if isinstance(read, dict))
+                    and isinstance(command['bindings'], dict)
+                    and command['bindings'].get('scalar.target') == target
+                    and isinstance(command['expect'], dict)
+                    and target + '::label' in command['expect']
+                    and isinstance(command['authorship'], dict)
+                    and command['authorship'].get(target + '::label') == 'direct')
+        if not captured:
+            return False
         args = command.get('args')
         values = args.get('values') if isinstance(args, dict) else None
         clear = args.get('clear') if isinstance(args, dict) else None

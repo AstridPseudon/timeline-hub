@@ -185,6 +185,25 @@ def test_parent_track_label_publish_keeps_original_capture_on_conflict(connected
     assert generated.head == {'revision_id': 'peer', 'publication_id': 'peer-publication'}
 
 
+def test_parent_track_label_publish_rejects_uncaptured_label_shaped_record(connected):
+    _, generated, _ = connected
+    session = open_session(connected)
+    raw = {'schema_version': 1, 'op': 'track.set', 'version': '1',
+           'select': 'parent/track:picture',
+           'args': {'values': {'label': 'forged'}, 'clear': []}}
+    with session.outbox.locked():
+        state = session._state()
+        state['pending'] = [raw]
+        session.outbox.write(state)
+
+    with pytest.raises(TimelineEditError, match='held'):
+        Checkout.attach(session).publish('forged rationale', idempotency_key='forged')
+    state = pending(connected)
+    assert state['pending'] == [raw]
+    assert state['flight'] is None
+    assert generated.calls == []
+
+
 def test_move_then_trim_then_reload_preserves_source_hold_and_opaque_fields(connected):
     tl = attached(connected, bundle_from_document(media_document()))
     clip = tl.clip('parent/clip:clip-a')
