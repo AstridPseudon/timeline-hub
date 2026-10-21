@@ -24,6 +24,10 @@ class Operation:
     handler: Callable[[Recording, dict], None]
     intent: dict
     singleton: bool = False
+    versioned_parameters: dict[str, dict] = dataclass_field(default_factory=dict)
+
+    def parameters_for(self, version):
+        return self.versioned_parameters.get(version, self.parameters)
 
 
 def operations():
@@ -72,7 +76,9 @@ def operations():
             'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
             'transcript.associate': Operation(_SCHEMA['$defs']['TranscriptAssociateArgs'], transcript_associate,
                                               {'ownership': 'parent'}, True),
-            'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
+            'timeline.init': Operation(
+                _SCHEMA['$defs']['TimelineInitArgs'], initialize, {},
+                versioned_parameters={'2': _SCHEMA['$defs']['TimelineInitRawArgs']}),
             'clip.anchor': Operation(_SCHEMA['$defs']['ClipAnchorArgs'], declare, {'anchor': 'follow'}, True),
             'occurrence.create': Operation(_SCHEMA['$defs']['OccurrenceCreateArgs'], occurrence_create,
                                           OCCURRENCE_INTENT),
@@ -137,14 +143,15 @@ def validate_command(command):
     source_bound = command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS
     raw_old_swap = ((command['op'], command['version']) in {
         ('clip.swap-media', '2'), ('occurrence.swap-media', '3')})
-    if command['version'] != '1' and not (source_bound or raw_old_swap):
+    raw_initialize = command['op'] == 'timeline.init' and command['version'] == '2'
+    if command['version'] != '1' and not (source_bound or raw_old_swap or raw_initialize):
         raise CommandError("unsupported operation version", kind='unsupported_version')
     if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
         parameters = (_SCHEMA['$defs']['RawOldSwapMediaArgs']
-                      if raw_old_swap else operation.parameters)
+                      if raw_old_swap else operation.parameters_for(command['version']))
         errors = list(_VALIDATOR.evolve(schema=parameters).iter_errors(command['args']))
         if errors:
             raise CommandError(errors[0].message)

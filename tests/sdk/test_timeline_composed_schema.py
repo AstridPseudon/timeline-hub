@@ -78,7 +78,14 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
             },
         },
     })
-    conditions = {condition['if']['properties']['op']['const']: condition['then']
+    def condition_properties(condition):
+        then = condition['then']
+        if 'anyOf' in then:
+            then = next(branch for branch in then['anyOf']
+                        if branch['properties']['version'].get('const') == '1')
+        return then
+
+    conditions = {condition['if']['properties']['op']['const']: condition_properties(condition)
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     for op, operation in operations().items():
         branches = conditions[op].get('anyOf', [conditions[op]])

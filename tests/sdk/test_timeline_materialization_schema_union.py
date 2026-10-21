@@ -27,7 +27,7 @@ PRIVATE_FULL_MOVE_SET_SHA256 = 'ba0c42d6a9359c32d89d8088416f7bc9092481dbd05f236e
 PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc0f376987527ef068'
 PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
 RAW_OLD_CANONICAL_SHA256 = 'd3274d7ed2d4bd80691472dd94daf8f4b8041fc184f39f1dd562d5de5d6a15c2'
-SCALAR_SOURCE_UNION_SHA256 = '67444ca7a638e52d556cc1884ceaf582cdbce996614ae197207bca26334986c0'
+SCALAR_SOURCE_UNION_SHA256 = '83c32d0d574f89b620a84c7ddad93a5aa162d7d2d80b05505ade4d9562729035'
 
 
 def without_move_set(schema):
@@ -85,14 +85,28 @@ def without_transcript(schema):
     return schema
 
 
+def without_raw_initialize(schema):
+    """Reconstruct the pre-WC10 schema by retaining only init v1."""
+    if 'TimelineInitRawArgs' not in schema['$defs']:
+        return schema
+    for clause in schema['$defs']['EditCommand']['allOf']:
+        if clause['if']['properties']['op']['const'] == 'timeline.init':
+            clause['then'] = next(branch for branch in clause['then']['anyOf']
+                                  if branch['properties']['version'].get('const') == '1')
+    del schema['$defs']['TimelineInitRawArgs']
+    return schema
+
+
 def without_new_sources(schema):
     """Reconstruct the pre-movement/reference/order schema without fixtures."""
+    schema = without_raw_initialize(schema)
     schema = without_future_scalar_sources(schema)
     return without_track_reorder(without_reference(without_move_set(
         without_raw_old_swap(without_transcript(schema)))))
 
 
 def without_reference_and_order(schema):
+    schema = without_raw_initialize(schema)
     schema = without_future_scalar_sources(schema)
     return without_track_reorder(without_reference(without_raw_old_swap(
         without_transcript(schema))))
@@ -100,6 +114,7 @@ def without_reference_and_order(schema):
 
 def without_future_scalar_sources(schema):
     """Remove only the reviewed scalar successors from the complete 10226 source."""
+    schema = without_raw_initialize(schema)
     args = schema['$defs']['ClipSetArgs']
     value_schema = args['properties']['values']
     values = value_schema['properties']
@@ -262,7 +277,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
     assert len(ordinary['$defs']) == 55
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
-    assert len(_SCHEMA['$defs']) == 65
+    assert len(_SCHEMA['$defs']) == 66
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 37
     assert compatibility_errors(ordinary, without_new_sources(without_literal_fields(copy.deepcopy(_SCHEMA)))) == []
 

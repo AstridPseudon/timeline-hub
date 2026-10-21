@@ -133,7 +133,7 @@ def s2_slice():
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
-    assert len(_SCHEMA['$defs']) == 65
+    assert len(_SCHEMA['$defs']) == 66
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 37
 
 
