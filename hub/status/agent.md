@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T06:18:55Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 44 | status age 0m -->
+<!-- agent | 2026-10-21T06:25:13Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 38 | status age 6m -->
 # agent — 2026-10-21 06:18 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 and Composition 0.0.13 remain current. Future operations stay dormant.
 Integrated: Agent de36e302e. WC8 detached duration merged a08a50007 after the owner preservation gate; 142 direct and three HTTP cases passed. RLE fixture repair merged 6accf0f7b with one pinned C13 pass. Timeout fixture repair merged de36e302e with six passes. Producer 95bd, client 014, all 76 artifacts, artifact version 54205, ordinary schema 6ba (55 definitions/29 clauses), Main 497 ancestry and C13 archive 9412/all 77 remain unchanged.
