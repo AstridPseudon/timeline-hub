@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T02:57:42Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 8m -->
+<!-- agent | 2026-10-21T02:58:48Z | dispatcher heartbeat 6s | live 6 (sol 0, luna 6, other 0) | busy30 13 | status age 9m -->
 # agent — 2026-10-21 02:48:46 UTC
 Milestone: M1 recorded; M2 active. Public integration remains Runtime 0.2.13 / Composition 0.0.13.
 Integrated: Agent 04fdd64205b4a2365e50455bd3ac81b027c617f3, tree 88eb6b87. This round's public repairs are merged: occurrence CLI dispatch, neutral Scene Root lifetime, doctor JSON outcome, public registry assertion, static-role extraction and duplicate-body cut, generator typing, artifact refresh, frozen-span warning summary (88c9aac50), and AM-footage source/resources (04fdd6420). Summary tests 42 + four real public-host cases; footage 25 + five scene/five volume and normal Root typecheck. No private geometry deletion or physical-parity claim.
