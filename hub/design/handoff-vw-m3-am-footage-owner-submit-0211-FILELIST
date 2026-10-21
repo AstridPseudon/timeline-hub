@@ -1,0 +1,8 @@
+M	astrid/packs/astrid_motion/pack.yaml
+M	astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx
+A	astrid/packs/astrid_motion/rendering/elements/effects/am-footage/helper.ts
+A	astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.test.mjs
+A	astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.ts
+M	astrid/packs/rendering/elements/catalog.ts
+M	tests/packs/rendering/test_remotion_element_generation.py
+M	tests/packs/rendering/test_scene_host.py

@@ -1,0 +1,419 @@
+diff --git a/astrid/packs/astrid_motion/pack.yaml b/astrid/packs/astrid_motion/pack.yaml
+index e49928401..c2b6017c5 100644
+--- a/astrid/packs/astrid_motion/pack.yaml
++++ b/astrid/packs/astrid_motion/pack.yaml
+@@ -195,6 +195,14 @@
+           "kind": "implementation",
+           "path": "rendering/elements/effects/am-footage/component.tsx"
+         },
++        {
++          "kind": "implementation",
++          "path": "rendering/elements/effects/am-footage/helper.ts"
++        },
++        {
++          "kind": "implementation",
++          "path": "rendering/elements/effects/am-footage/scene.ts"
++        },
+         {
+           "kind": "implementation",
+           "path": "rendering/elements/effects/am-footage/element.yaml"
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx
+index 1e8e685bc..1e82236a9 100644
+--- a/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx
+@@ -12,6 +12,8 @@ import {
+   type ElementComponentProps,
+ } from '../../_shared/am';
+ import {footageVolume} from './volume';
++import {footageField, insetOf, type Inset} from './helper';
++import {prepareFootageScene} from './scene';
+ import {MosaicImage, mosaicBlockAt, paintMosaic, type MosaicRamp, type Rect} from '../../_shared/mosaic';
+ 
+ // am-footage: a REAL-FOOTAGE SLOT. It shows a filmed shot (video or still on
+@@ -34,7 +36,6 @@ import {MosaicImage, mosaicBlockAt, paintMosaic, type MosaicRamp, type Rect} fro
+ // inside the rect; the label sits under it.
+ 
+ type Zone = {x: number; y: number; w: number; h: number};
+-type Inset = {x: number; y: number; w: number; h: number; radius?: number; shadow?: boolean | string; border?: string};
+ type Params = {
+   src?: string;
+   slot?: string;
+@@ -67,28 +68,7 @@ type Params = {
+   inset?: Inset | null;
+ };
+ 
+-const SOFT_SHADOW = '0 28px 64px rgba(21, 19, 17, 0.18), 0 3px 8px rgba(21, 19, 17, 0.10)';
+-
+-const insetOf = (value: unknown, width: number, height: number): (Required<Pick<Inset, 'x' | 'y' | 'w' | 'h' | 'radius'>> & {shadow: string; border: string | null}) | null => {
+-  if (!value || typeof value !== 'object') return null;
+-  const v = value as Inset;
+-  const w = Math.round(clamp(finiteNumber(v.w, 0), 0, width));
+-  const h = Math.round(clamp(finiteNumber(v.h, 0), 0, height));
+-  if (w < 2 || h < 2) return null;
+-  const shadow = v.shadow === false ? 'none' : typeof v.shadow === 'string' ? v.shadow : SOFT_SHADOW;
+-  return {
+-    x: Math.round(finiteNumber(v.x, (width - w) / 2)),
+-    y: Math.round(finiteNumber(v.y, (height - h) / 2)),
+-    w,
+-    h,
+-    radius: Math.max(0, finiteNumber(v.radius, 12)),
+-    shadow,
+-    border: typeof v.border === 'string' ? v.border : null,
+-  };
+-};
+-
+ const MONO = `'${FAMILY.label}', monospace`;
+-const CARD_BG = '#1F1F1F';
+ const GUIDE = '#FFFEFA';
+ 
+ const parseSize = (value: unknown): {w: number; h: number} | null => {
+@@ -182,7 +162,7 @@ const labelStyle: CSSProperties = {
+   opacity: 0.9,
+ };
+ 
+-export default function AmFootage(props: ElementComponentProps): ReactElement | null {
++function AmFootage(props: ElementComponentProps): ReactElement | null {
+   const frame = useCurrentFrame();
+   const {width, height, fps: compositionFps} = useVideoConfig();
+   const p = narrowParams<Params>(props.params);
+@@ -194,7 +174,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement |
+   const hand = p.handMark && typeof p.handMark === 'object' ? p.handMark : null;
+   const placeholder = p.placeholder === true || !url;
+   const label = typeof p.label === 'string' ? p.label : `PLACEHOLDER · REAL FOOTAGE${slot ? ` · ${slot}` : ''}`;
+-  const background = p.background ?? CARD_BG;
++  const {background, style: field} = footageField(p.background);
+   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 
+   const block = mosaicBlockAt(frame, total, p.mosaicIn, p.mosaicOut);
+@@ -210,7 +190,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement |
+       }
+     }
+     return (
+-      <AbsoluteFill style={{background, overflow: 'hidden'}}>
++      <AbsoluteFill style={field}>
+         {dots}
+         <Guides face={face} hand={hand} />
+         <div style={{position: 'absolute', left: 96, top: 84, fontFamily: MONO, fontSize: 30, lineHeight: '36px', letterSpacing: '0.12em', color: GUIDE}}>
+@@ -282,7 +262,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement |
+       : {...labelStyle, left: inset.x + 16, top: inset.y + inset.h - 46, bottom: undefined};
+     const ring = inset.border ? `0 0 0 1px ${inset.border}` : null;
+     return (
+-      <AbsoluteFill style={{background, overflow: 'hidden'}}>
++      <AbsoluteFill style={field}>
+         <div
+           style={{
+             position: 'absolute',
+@@ -306,7 +286,7 @@ export default function AmFootage(props: ElementComponentProps): ReactElement |
+   }
+ 
+   return (
+-    <AbsoluteFill style={{background, overflow: 'hidden'}}>
++    <AbsoluteFill style={field}>
+       {picture}
+       {tintLayer}
+       {p.guides ? <Guides face={face} hand={hand} /> : null}
+@@ -314,3 +294,5 @@ export default function AmFootage(props: ElementComponentProps): ReactElement |
+     </AbsoluteFill>
+   );
+ }
++
++export default Object.assign(AmFootage, {prepareSceneCapability: prepareFootageScene});
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/helper.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/helper.ts
+new file mode 100644
+index 000000000..3e46a50fd
+--- /dev/null
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/helper.ts
+@@ -0,0 +1,39 @@
++import type {CSSProperties} from 'react';
++import {clamp, finiteNumber} from '../../_shared/am';
++
++export type Inset = {
++  x: number;
++  y: number;
++  w: number;
++  h: number;
++  radius?: number;
++  shadow?: boolean | string;
++  border?: string;
++};
++
++export const FOOTAGE_CARD_BACKGROUND = '#1F1F1F';
++
++// Keep the declared inset in one place for the renderer and its scene answer.
++// The scene contract must describe the same clipped box the component draws.
++export const insetOf = (value: unknown, width: number, height: number): (Required<Pick<Inset, 'x' | 'y' | 'w' | 'h' | 'radius'>> & {shadow: string; border: string | null}) | null => {
++  if (!value || typeof value !== 'object') return null;
++  const v = value as Inset;
++  const w = Math.round(clamp(finiteNumber(v.w, 0), 0, width));
++  const h = Math.round(clamp(finiteNumber(v.h, 0), 0, height));
++  if (w < 2 || h < 2) return null;
++  const shadow = v.shadow === false ? 'none' : typeof v.shadow === 'string' ? v.shadow : '0 28px 64px rgba(21, 19, 17, 0.18), 0 3px 8px rgba(21, 19, 17, 0.10)';
++  return {
++    x: Math.round(finiteNumber(v.x, (width - w) / 2)),
++    y: Math.round(finiteNumber(v.y, (height - h) / 2)),
++    w,
++    h,
++    radius: Math.max(0, finiteNumber(v.radius, 12)),
++    shadow,
++    border: typeof v.border === 'string' ? v.border : null,
++  };
++};
++
++export const footageField = (background?: string): {background: string; style: CSSProperties} => {
++  const value = background ?? FOOTAGE_CARD_BACKGROUND;
++  return {background: value, style: {background: value, overflow: 'hidden'}};
++};
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.test.mjs b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.test.mjs
+new file mode 100644
+index 000000000..f466cbb6d
+--- /dev/null
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.test.mjs
+@@ -0,0 +1,93 @@
++import assert from 'node:assert/strict';
++import {test} from 'node:test';
++import {createRequire} from 'node:module';
++import path from 'node:path';
++
++const [project, root] = process.argv.slice(2);
++assert(project && root, 'usage: node scene.test.mjs <private-project> <repo-root>');
++const {build} = createRequire(path.join(project, 'package.json'))('esbuild');
++
++const source = `export {default as Footage} from ${JSON.stringify(
++  path.join(root, 'astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx'),
++)};`;
++const bundle = await build({
++  stdin: {contents: source, resolveDir: root},
++  bundle: true,
++  write: false,
++  platform: 'node',
++  format: 'esm',
++  jsx: 'automatic',
++  nodePaths: [path.join(project, 'node_modules')],
++  logLevel: 'silent',
++});
++const {Footage} = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`);
++
++const basis = {width: 1920, height: 1080, fps: 30, rendererIdentity: 'registered-ssr', fontDigests: {}};
++const admitted = {
++  file: 'http://127.0.0.1:4321/footage.mp4',
++  type: 'video/mp4',
++  resolution: '1920x1080',
++  fps: 30,
++  content_sha256: 'sha256:admitted-footage',
++};
++const clip = (params = {}, extra = {}) => ({
++  id: 'footage',
++  track: 'picture',
++  clipType: 'am-footage',
++  at: 0,
++  hold: 1,
++  params,
++  ...extra,
++});
++const support = (c, extra = {}) => Footage.prepareSceneCapability({
++  clip: c,
++  ...basis,
++  ...extra,
++}).frame(0);
++
++test('registered footage reports real full-frame support from admitted media facts', () => {
++  const result = support(clip({}, {asset: 'P'}), {assetEntry: admitted});
++  assert.equal(typeof Footage.prepareSceneCapability, 'function');
++  assert.deepEqual(result.bounds, {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}});
++  assert.equal(result.presence, 'present');
++  assert.equal(result.opaqueSupport, 'rect');
++});
++
++test('declared transparent inset keeps actual layout bounds and unknown media alpha', () => {
++  const result = support(clip({background: 'transparent', inset: {
++    x: 1200, y: 600, w: 576, h: 324, shadow: false,
++  }}, {asset: 'P'}), {assetEntry: admitted});
++  assert.deepEqual(result.bounds, {status: 'known', rect: {x: 1200, y: 600, width: 576, height: 324}});
++  assert.equal(result.presence, 'present');
++  assert.equal(result.opaqueSupport, 'unknown');
++});
++
++test('own-entry-undefined media draws the slot field and invalid legacy layout is not geometry proof', () => {
++  const missing = support(clip({}, {asset: 'missing'}), {assetEntry: undefined});
++  assert.deepEqual(missing, {
++    presence: 'present',
++    opaqueSupport: 'rect',
++    bounds: {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}},
++  });
++
++  const legacy = support(clip({x: 1200, y: 600, scale: 0.3}, {asset: 'P'}), {assetEntry: admitted});
++  assert.deepEqual(legacy.bounds, {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}});
++});
++
++test('blank slot uses full-field support', () => {
++  const result = support(clip());
++  assert.deepEqual(result, {
++    presence: 'present',
++    opaqueSupport: 'rect',
++    bounds: {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}},
++  });
++});
++
++test('unresolved transparent inset remains unknown rather than guessing alpha', () => {
++  const result = support(clip({background: 'transparent', inset: {
++    x: 1200, y: 600, w: 576, h: 324, shadow: false,
++  }}, {asset: 'P'}), {assetEntry: {file: admitted.file, type: admitted.type}});
++  assert.deepEqual(result.bounds, {status: 'known', rect: {x: 1200, y: 600, width: 576, height: 324}});
++  assert.equal(result.presence, 'present');
++  assert.equal(result.opaqueSupport, 'unknown');
++});
+diff --git a/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.ts b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.ts
+new file mode 100644
+index 000000000..0a048c2b9
+--- /dev/null
++++ b/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.ts
+@@ -0,0 +1,43 @@
++import type {ComponentCapabilityContext, ComponentFrameSupport, PreparedComponentCapability} from '@banodoco/timeline-composition/evaluation';
++import {elementSource, narrowParams} from '../../_shared/am';
++import {footageField, insetOf} from './helper';
++
++type Params = {
++  src?: string;
++  background?: string;
++  inset?: unknown;
++  guides?: boolean;
++  placeholder?: boolean;
++};
++
++const fieldSupport = (background: string, width: number, height: number): ComponentFrameSupport => ({
++  presence: 'present',
++  opaqueSupport: /^#(?:[\da-f]{3}|[\da-f]{6}|[\da-f]{3}f|[\da-f]{6}ff)$/i.test(background) ? 'rect' : 'unknown',
++  bounds: {status: 'known', rect: {x: 0, y: 0, width, height}},
++});
++
++export const prepareFootageScene = (context: ComponentCapabilityContext): PreparedComponentCapability => {
++  const {clip, width, height, assetEntry} = context;
++  const params = narrowParams<Params>(clip.params);
++  const {background} = footageField(params.background);
++  const inset = insetOf(params.inset, width, height);
++  const selectedAsset = typeof clip.asset === 'string' && clip.asset.length > 0;
++  const selectedEntryKnown = !selectedAsset || Object.prototype.hasOwnProperty.call(context, 'assetEntry');
++  const source = elementSource(assetEntry, params.src);
++  const isolatedInset = background === 'transparent' && selectedEntryKnown && Boolean(source) && inset
++    && inset.shadow === 'none' && !inset.border && params.guides !== true && params.placeholder !== true;
++
++  return {
++    identity: JSON.stringify([clip.params, clip.asset, assetEntry, width, height]),
++    frame: () => {
++      if (isolatedInset) {
++        return {
++          presence: 'present',
++          opaqueSupport: 'unknown',
++          bounds: {status: 'known', rect: {x: inset.x, y: inset.y, width: inset.w, height: inset.h}},
++        };
++      }
++      return fieldSupport(background, width, height);
++    },
++  };
++};
+diff --git a/astrid/packs/rendering/elements/catalog.ts b/astrid/packs/rendering/elements/catalog.ts
+index 05707e0bf..0db685fcc 100644
+--- a/astrid/packs/rendering/elements/catalog.ts
++++ b/astrid/packs/rendering/elements/catalog.ts
+@@ -1920,7 +1920,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
+       "preview": "unknown",
+       "workerExport": "unknown"
+     },
+-    "revision": "sha256:c603e6b9dffdbd776dc382c31df17539ff9067a060f94c69554dbf9cfde40d18",
++    "revision": "sha256:4ed648625d0d37b6a98e0978613a9f9ee0213461c2eadfb46564685448809d41",
+     "runtime": {},
+     "schema": {
+       "additionalProperties": true,
+diff --git a/tests/packs/rendering/test_remotion_element_generation.py b/tests/packs/rendering/test_remotion_element_generation.py
+index e91d028b8..a9c88f550 100644
+--- a/tests/packs/rendering/test_remotion_element_generation.py
++++ b/tests/packs/rendering/test_remotion_element_generation.py
+@@ -83,9 +83,9 @@ class RemotionElementGenerationTest(unittest.TestCase):
+         self.assertIn("text-card", public_ids["effects"])
+         generated = gen_effect_registry.generate_element_registry("effects")
+         self.assertIn("'text-card': selectOwnedEffect(", generated)
+-        self.assertIn("PUBLIC_EFFECT_REGISTRY['text-card']", generated)
++        self.assertIn("PUBLIC_EFFECT_REGISTRY['text-card'] as EffectComponent", generated)
+         self.assertIn("'local': OwnerElement", generated)
+-        self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card']", generated)
++        self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card'] as EffectComponent", generated)
+         self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
+ 
+     def test_source_less_transition_keeps_catalog_defaults_and_precedence(self) -> None:
+diff --git a/tests/packs/rendering/test_scene_host.py b/tests/packs/rendering/test_scene_host.py
+index 630815e49..69eed2905 100644
+--- a/tests/packs/rendering/test_scene_host.py
++++ b/tests/packs/rendering/test_scene_host.py
+@@ -1,4 +1,4 @@
+-"""Public10 host transport with current generated maps and renderer aliases.
++"""Public13 host transport with current generated maps and renderer aliases.
+ 
+ Status is replaced here; supplied props are not source-admission or pixel proof.
+ """
+@@ -33,7 +33,7 @@ def host_project(tmp_path_factory):
+     project = project_root / "remotion"
+     (project / "src").mkdir(parents=True)
+     (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
+-    # Reuse a coherent peer graph read-only, with the actual pinned public12
++    # Reuse a coherent peer graph read-only, with the actual pinned public13
+     # extracted into this test's private project. No install or shared mutation.
+     peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
+     assert (peers / "esbuild").is_dir(), "requires provisioned renderer peers"
+@@ -48,9 +48,9 @@ def host_project(tmp_path_factory):
+         target = modules / peer
+         target.parent.mkdir(parents=True, exist_ok=True)
+         target.symlink_to(source.resolve(), target_is_directory=True)
+-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
+     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
+-        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
++        "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738")
+     with tarfile.open(artifact) as archive:
+         archive.extractall(project, filter="data")
+     package = modules / "@banodoco/timeline-composition"
+@@ -87,7 +87,7 @@ def host_project(tmp_path_factory):
+         patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
+         for kind in ("effects", "animations", "transitions"):
+             (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
+-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.12"
++    assert json.loads((package / "package.json").read_text())["version"] == "0.0.13"
+     def hashes():
+         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
+                 for p in package.rglob("*") if p.is_file()}
+@@ -134,6 +134,36 @@ def test_native_host_default_custom_alias_capability_and_immutable_props(native_
+         scene_answers.host_frames_at(p, BASIS, [0])
+ 
+ 
++def test_native_host_am_footage_declared_inset_and_slot_support(native_host):
++    asset = {"file": "http://127.0.0.1:4321/footage.mp4", "type": "video/mp4",
++             "resolution": "1920x1080", "fps": 30, "content_sha256": "sha256:admitted-footage"}
++    inset = {"x": 1200, "y": 600, "w": 576, "h": 324, "shadow": False}
++    p = props([
++        {"id": "am-full", "track": "plate", "clipType": "am-footage", "asset": "P", "at": 0,
++         "hold": 1, "params": {}},
++        {"id": "am-inset", "track": "plate", "clipType": "am-footage", "asset": "P", "at": 0,
++         "hold": 1, "params": {"background": "transparent", "inset": inset}},
++        {"id": "am-legacy", "track": "plate", "clipType": "am-footage", "asset": "P", "at": 0,
++         "hold": 1, "params": {"x": 1200, "y": 600, "scale": 0.3}},
++        {"id": "am-slot", "track": "plate", "clipType": "am-footage", "asset": "missing", "at": 0,
++         "hold": 1, "params": {}},
++    ], assets={"assets": {"P": asset}})
++
++    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
++    layers = {layer["clipId"]: layer for layer in answer["layers"]}
++
++    assert layers["am-full"]["bounds"] == {
++        "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080}}
++    assert layers["am-inset"]["bounds"] == {
++        "status": "known", "rect": {"x": 1200, "y": 600, "width": 576, "height": 324}}
++    assert layers["am-inset"]["opaqueSupport"] == "unknown"
++    assert layers["am-legacy"]["bounds"] == {
++        "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080}}
++    assert layers["am-slot"]["bounds"] == {
++        "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080}}
++    assert layers["am-slot"]["opaqueSupport"] == "rect"
++
++
+ def test_native_host_uses_exact_assets_and_runtime_theme(native_host):
+     clip = {"id": "media", "track": "plate", "clipType": "image", "asset": "P", "at": 0, "hold": 1}
+     basis = {"width": 200, "height": 100, "fps": 30000 / 1001}
