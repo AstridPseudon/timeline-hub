@@ -396,13 +396,13 @@ def _validate_assets(assets: Any, *, element_root: Path, path: str, files=None) 
 
 def _normalize_asset_path(value: str | Path, *, element_root: Path, path: str, files=None) -> Path:
     if files is not None:
-        candidate = PurePosixPath(value)
-        normalized = PurePosixPath(posixpath.normpath(candidate.as_posix()))
-        if candidate.is_absolute() or normalized.parts[:1] == ('..',):
+        portable_candidate = PurePosixPath(value)
+        normalized = PurePosixPath(posixpath.normpath(portable_candidate.as_posix()))
+        if portable_candidate.is_absolute() or normalized.parts[:1] == ('..',):
             raise ElementValidationError(f"{path} must stay inside the element root")
         if (element_root / normalized).as_posix() not in files:
             raise ElementValidationError(f"{path} file does not exist: {normalized}")
-        return normalized
+        return Path(normalized)
     candidate = Path(value)
     if candidate.is_absolute():
         raise ElementValidationError(f"{path} must be relative to the element root")
@@ -411,12 +411,12 @@ def _normalize_asset_path(value: str | Path, *, element_root: Path, path: str, f
     root = element_root.resolve()
     resolved = (root / candidate).resolve()
     try:
-        normalized = resolved.relative_to(root)
+        normalized_path = resolved.relative_to(root)
     except ValueError as exc:
         raise ElementValidationError(f"{path} must stay inside the element root") from exc
     if not resolved.is_file():
-        raise ElementValidationError(f"{path} file does not exist: {normalized.as_posix()}")
-    return normalized
+        raise ElementValidationError(f"{path} file does not exist: {normalized_path.as_posix()}")
+    return normalized_path
 
 
 def _string_list(raw: Any, *, path: str) -> list[str]:
