@@ -96,6 +96,18 @@ def publish_source_items(service, film):
         for occurrence in parent["occurrences"]:
             if occurrence["shot_id"] == shot_id:
                 occurrence["shot_revision_id"] = shot_revision_id
+    for source_occurrence_id, occurrence_id, start_ms in (
+        ("occurrence-2", "rt08-repeated-second", 6000),
+        ("occurrence-3", "repeated-third", 9000),
+    ):
+        repeated = copy.deepcopy(next(
+            occurrence for occurrence in parent["occurrences"]
+            if occurrence["occurrence_id"] == source_occurrence_id
+        ))
+        repeated["occurrence_id"] = occurrence_id
+        repeated["placement"] = copy.deepcopy(repeated["placement"])
+        repeated["placement"]["start_ms"] = start_ms
+        parent["occurrences"].append(repeated)
     return service.publish_parent_composition(
         project, timeline,
         {"project_id": project, "timeline_id": timeline, "expected_head": head,
@@ -443,22 +455,48 @@ def test_startup_provider_materializes_source_items_and_refuses_global_item_occu
             item for shot in original["shot_revisions"] if shot["shot_id"] == "shot-3"
             for item in shot["payload"]["items"]
         )
-        first_command = editing.agent.move(editing.agent.bundle(original), owner, 3.5)
+        original_bundle = editing.agent.bundle(original)
+        destination = next(row["shot_id"] for row in original_bundle["placements"]
+                           if row["occurrence_id"] == "occurrence-3")
+        first_command = editing.agent.move(original_bundle, owner, 3.5)
         first = editing.commit(editing.body([first_command]), "rt08-item-first")
         record = editing.history()[-1]["records"]["commands"][0]
-        source_pin = next(dep["pin"] for dep in record["dependencies"]
-                          if dep["key"].startswith("materialization.source:"))
-        owner_binding = next(binding for binding in record["bindings"]
-                             if binding["key"].startswith("materialization.owner:"))
-        physical_items = source_pin["source"]["item_id_map"]
-        assert source_pin["source"]["shot_id"] == "shot-3"
-        assert owner_binding["ref"] == "occurrence:occurrence-3"
-        assert set(physical_items) == {source_item["item_id"]}
         physical_shot = next(
             occurrence["shot_id"]
             for occurrence in first["data"]["canonical_document"]["parent_revision"]["payload"]["occurrences"]
             if occurrence["occurrence_id"] == "occurrence-3"
         )
+        assert physical_shot == destination
+        source_key = "materialization.source:shot:" + destination
+        source_dependency = next(dep for dep in record["dependencies"] if dep["key"] == source_key)
+        source_pin = source_dependency["pin"]
+        owner_key = "materialization.owner:shot:" + destination
+        owner_binding = next(binding for binding in record["bindings"] if binding["key"] == owner_key)
+        assert record["command"]["version"] == "2"
+        assert source_dependency["kind"] == "entity"
+        assert source_dependency["policy"] == "exact"
+        assert set(source_pin) == {"parent", "source"}
+        physical_items = source_pin["source"]["item_id_map"]
+        assert source_pin["source"]["shot_id"] == "shot-3"
+        assert source_pin["source"]["revision_id"] == "rt08-source-revision-3"
+        assert set(physical_items) == {source_item["item_id"]}
+        raw_item, physical_item = next(iter(physical_items.items()))
+        assert raw_item == "rt08-source-item-3"
+        assert owner_binding == {
+            "key": owner_key, "ref": "occurrence:occurrence-3", "policy": "fixed",
+            "dependencies": [source_key],
+        }
+        assert next(binding for binding in record["bindings"]
+                   if binding["key"] == "shot:" + destination) == {
+                       "key": "shot:" + destination, "ref": "shot:shot-3", "policy": "fixed",
+                       "dependencies": [source_key],
+                   }
+        assert next(binding for binding in record["bindings"]
+                   if binding["key"] == "shot:" + destination + "/item:" + physical_item) == {
+                       "key": "shot:" + destination + "/item:" + physical_item,
+                       "ref": "shot:shot-3/item:" + raw_item, "policy": "fixed",
+                       "dependencies": [source_key],
+                   }
         physical = next(shot for shot in first["data"]["canonical_document"]["shot_revisions"]
                         if shot["shot_id"] == physical_shot)
         assert physical_shot != source_pin["source"]["shot_id"]
@@ -482,14 +520,45 @@ def test_startup_provider_materializes_source_items_and_refuses_global_item_occu
 
         candidate_bundle = editing.agent.bundle(editing.document())
         candidate_command = editing.agent.move(
-            candidate_bundle, "occurrence:occurrence-2/clip:clip-2", 2.5,
+            candidate_bundle, "occurrence:rt08-repeated-second/clip:clip-2", 6.2,
         )
         from astrid.sdk.timeline.commands import execute
 
         candidate = execute(candidate_bundle, [candidate_command])
-        occupied_item = next(ref.rsplit("/item:", 1)[1] for ref in candidate.id_map
-                             if "/item:" in ref)
+        candidate_destination = next(row["shot_id"] for row in candidate_bundle["placements"]
+                                    if row["occurrence_id"] == "rt08-repeated-second")
+        candidate_source_key = "materialization.source:shot:" + candidate_destination
+        candidate_record = candidate.records[0]
+        candidate_dependency = next(dep for dep in candidate_record["dependencies"]
+                                    if dep["key"] == candidate_source_key)
+        candidate_source = candidate_dependency["pin"]["source"]
+        assert candidate_command["version"] == "2"
+        assert candidate_source["shot_id"] == "shot-2"
+        assert candidate_source["revision_id"] == "rt08-source-revision-2"
+        assert set(candidate_source["item_id_map"]) == {"rt08-source-item-2"}
+        raw_item, occupied_item = next(iter(candidate_source["item_id_map"].items()))
+        assert raw_item == "rt08-source-item-2"
+        candidate_owner_key = "materialization.owner:shot:" + candidate_destination
+        assert next(binding for binding in candidate_record["bindings"]
+                   if binding["key"] == candidate_owner_key) == {
+                       "key": candidate_owner_key, "ref": "occurrence:rt08-repeated-second", "policy": "fixed",
+                       "dependencies": [candidate_source_key],
+                   }
+        assert next(binding for binding in candidate_record["bindings"]
+                   if binding["key"] == "shot:" + candidate_destination + "/item:" + occupied_item) == {
+                       "key": "shot:" + candidate_destination + "/item:" + occupied_item,
+                       "ref": "shot:shot-2/item:" + raw_item, "policy": "fixed",
+                       "dependencies": [candidate_source_key],
+                   }
+        assert candidate.id_map == {
+            "shot:" + candidate_destination: candidate_destination,
+            "shot:" + candidate_destination + "/item:" + occupied_item: occupied_item,
+        }
         project, occupier = film.fixture.project_id, "rt08-unrelated-item-occupier"
+        assert candidate_destination != occupier
+        assert world.daemon.service.store.conn.execute(
+            "SELECT 1 FROM project_shots WHERE project_id=? AND id=?", (project, candidate_destination),
+        ).fetchone() is None
         world.daemon.service.create_project_shot(
             project, {"shot_id": occupier, "name": "Unrelated item owner"},
             idempotency_key="rt08-occupier-shot",
