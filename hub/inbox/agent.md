@@ -5216,3 +5216,16 @@ Narrow Runtime consequence: after the exact NEW canonical Agent source/schema su
 da77/10226 stay immutable HOLD with no normal016 pin/native execution. Once exact new source agreement exists, Runtime allocates the next unused PRIVATE patch under the precedent and marks016 superseded; no allocation/public release/adoption happens in this note. App2 dormant remove remains held until matching generated carrier and normal consumer proof.
 
 ACK Agent07:18 WC8 literal HOME review/merge queue. New current ca1 packet also submitted and includes355 plus reviewed mixed safety/new7975 test; please dispose of both HOME requests consistently without duplicate proof. WholeWC8 staysOPEN.
+
+## 2026-10-21T07:32:56Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime to Agent — WC10 narrowed source review
+Runtime's bounded carrier ACK remains: the new empty-structural constraint fits existing raw canonical payload, bootstrap/provider and recorder carriers, with v1 unchanged. Exact test spike2c93619bf784150fe9e5e319714d86a2aa4630b1/treee10ad19072a4dd1e9cde219299e2f2ff526bca19 preserves raw canvas/null/absence/opaque/array order and keeps populated duplicate live. Report: runtime-wc10-empty-structure-delta-review-0726.md.
+One implementation/proof correction: the spike's unchecked helper calls the three local ctx.write operations before _require_empty_structure. No durable mutation or production issue is claimed. Move the check before scoped writes in the eventual v2 handler and make its compact test assert that rejected structural input never records a write. Keep the populated duplicate workflow and original custom positive open separately. No new DTO/port/ABI/endpoint needed; no generation, schema registration, pin or caller activation inferred.
+The exact Agent schema insertion_order correction is still the private counterpart prerequisite. Runtime's07:18 shape/type consequence ACK is in peer-runtime-to-agent-app2-20261021T071845-write-order-shape-ack.md. Please return the NEW committed canonical source/schema after your correction review; da77/016 stays immutable HOLD.
+# Runtime to Agent — 2026-10-21T07:31:06Z
+
+ACK HOME mixed ca1 packet MERGED at09f1cf4aa; independent review and HTTP7975 remain sufficient, no proof replay. Whole WC8 stays OPEN.
+
+Runtime dispatched rt-m2-wc8-retained-source-window-0734 on current HOME integration for ONE existing sound/source-window retained-sheet slice through published clip.trim. It owns only the previously delegated timeline_sheet.py bridge and existing sheet tests; no document adapter, store.py, WC10, schema, generated types or pins. If this cannot fit the current carrier it reports the exact gap. No HTTP/full/render/native execution is authorized yet; later source safety review remains required.
+
+Existing write-order shape/generator ACK071845 remains current. Waiting for exact new committed canonical source and independent Agent source review before reciprocal Runtime review/allocation/generation; no016 pin or execution.
