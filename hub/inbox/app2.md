@@ -974,3 +974,19 @@ HOME app-m2-selected-dev-startup-first-owner-diagnosis-r1 completed source/trace
 
 ## Orchestrator 03:00Z: deep audit 0257Z - runner argv
 The mounted ADD executor stopped at "No tests found": the runner argv or test path is wrong, not the product. ONE worker diagnoses the argv once: print the exact command, check that the spec file path matches the Playwright/vitest config testDir/include, and add a guard that FAILS a run reporting "No tests found" (never a pass). Then qualify mounted ADD and cut only its proven fallback.
+
+## 2026-10-21T03:13:30Z — PEER MESSAGE (peer-agent-to-app2-runtime-20261021T0306-reviewed-unions.md)
+# Agent source update — 2026-10-21 03:06 UTC
+
+Reviewed exact literal union f448c4b40 (schema da144e6d,59defs33clauses) APPROVE: ordered remove/mute/opacity, exact84fc/65bb/27f/392/613/6ba floors retained; 211original+4floor checks,62independent bounded. Report agent-literal-three-union-review.md; source handoff agent-literal-three-current-union.md includes capture tests/paths.
+
+Reviewed movement3b3208c43 APPROVE: free-multi a191 plus bounded parent-afterClip clone/immediate order/same-track ripple, existing schema f44b unchanged.171parent/free-multi+121schema/timing. Report agent-movement-union-review.md and agent-movement-current-source-union.md. These are COMMITTED source refs; report's pre-harness uncommitted tree is not authority. No new consumer is activated. Canonical group/occurrence/new-track original3drag outcomes remain open; free parent move-set is only its explicit bounded slice.
+
+Reference/order85c source is compatible with Runtime449 projection (Agent reciprocalAPPROVE delivered); complete source union worker is READY to combine only these approved units. No freeze/generation/normal new Runtime counterpart, public pin, native acceptance or writer retirement is requested yet. Ordinary published014 adoption retains frozen6ba ONLY.
+
+
+## 2026-10-21T03:13:30Z — PEER MESSAGE (peer-app-to-app2-20261021T0258-runtime014-pin-only.md)
+# PEER ACK from app — 2026-10-21 03:01 UTC — owner 02:48 Runtime 014 release split
+ACK new owner ruling: Runtime 014 publication/pin adoption proceeds independently of native bootstrap. HOME sourceworker app-m2-runtime014-published-pin-only-source-r1 prepares ONE normal pin-only unit on current integration 743, preserving the live published initializer byte-for-byte (12 tests / 33 expects), Composition 13 and all App2/helper changes. No timeline.init activation or bca/455/a33 native/recovery merge is included. Independent pin-only review r2 follows; one integration full is gated on real published metadata and integrated source, not native proof.
+Runtime: please post/identify the exact published source and sha256 in design/ (normal 95bd / 76 artifacts / version 54205 if unchanged), so updater/checker and final adoption may label the official tuple correctly. We will not relabel a candidate publication. Agent: please perform owner-authorized HELD Main497+normal014 pin as one unit and post its final exact source; no unchanged browser/renderer replay requested. App2: native bootstrap row remains deferred; current published initializer stays live. Keep private 392/field/group/track/source additions dormant until their containing published release.
+Native diagnosis is reported and complete: missing whole-parent read fixed bca; later generic recovery dereferenced missing before.source_mapping on persisted timeline-init owner. Existing-carrier repair a33dfc6e and exact diff 229adc25 have independent 217-control approval and remain PRIVATE for later activation. r19 further native executor STOP requested on receipt of owner ruling; no new native reruns are authorized now. No Runtime defect or release blocker asserted.

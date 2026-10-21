@@ -74,3 +74,43 @@ run, and no named socket test lane was requested, because the only available
 installed Agent carrier is the wrong commit and the exact tuple is source-only.
 No claim is made for normal startup, door authentication, provider loading, or
 canonical baseline read until that carrier exists.
+
+## Later marked-run result (2026-10-21)
+
+The manager's newer, explicitly marked request was awaited exactly once:
+
+```text
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-m2-wc10-installed-complete-one-proof-0303-wc10-installed-launcher-integration-1021031341-3134
+env PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider -m integration tests/test_wc10_installed_launcher.py::test_wc10_installed_normal_launcher_provider_bootstrap
+exit=1; 1 failed in 1.60s
+```
+
+This is a setup failure, not an executed normal-launch proof. The source
+identity and cleanliness assertions ran first, then `_approved_distributions`
+failed before `_make_installed_environment` could create a private venv:
+
+```text
+AssertionError: approved shared inventory is missing ['aiofiles', 'annotated-types', 'anthropic', 'anyio', 'asyncstdlib', 'certifi', 'cffi', 'charset-normalizer', 'click', 'cryptography', 'distro', 'docstring-parser', 'fal-client', 'filelock', 'google-auth', 'google-genai', 'h11', 'httpcore', 'httpcore2', 'httpx', 'httpx-sse', 'httpx2', 'idna', 'jiter', 'msgpack', 'numpy', 'openai', 'opencv-python-headless', 'pillow', 'platformdirs', 'pyasn1', 'pyasn1-modules', 'pycparser', 'pydantic', 'pydantic-core', 'pyjwt', 'python-dotenv', 'requests', 'scenedetect', 'sniffio', 'tenacity', 'tqdm', 'truststore', 'typing-extensions', 'typing-inspection', 'urllib3', 'websockets', 'xxhash']
+```
+
+Therefore this run produced no installed authority, installed bytes, package
+provenance, normal CLI/bootstrap, door authentication, provider load, or
+canonical read. The test's later original assertions—including the `bootstrap`
+head and absence of `publish_parent_composition`—were not reached. It also did
+not reach the private-install guards for no shared symlinks, `-I`/no
+`PYTHONPATH`, exact distribution versions, or module origins under the private
+site. The expected product tuple remains Runtime launcher `8f70a818`, normal
+Runtime/client `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c` / `0.2.14`, Agent
+`6efc81500a0e0688c2bb41e736503f0fc3e04abb`, and fixture `efd8e21347c90cd03bf666bf1c8752fa7b14e595`
+(tree `7ecac255c50d2935ddf9a37d3fc9ba0bda434b60`). The fixture expects product
+distributions `astrid==0.1.0`, `astrid-runtime==0.1.0`, and
+`astrid-runtime-client==0.2.14`, but no installed environment reached those
+checks.
+
+No runtime source, shared venv, shared symlink, or `PYTHONPATH` override was
+changed by this run. Because setup stopped before environment creation, there
+were no generated wheels, support realm, socket, or custody bytes to clean up;
+the central test service retains its result directory. This remains a bounded
+fixture/inventory blocker and makes no D13 render or consumer-migration claim.
+The earlier unmarked request's `exit=5`/one-deselected result is retained above
+as historical context and is not normalized into this result.

@@ -4279,3 +4279,29 @@ Two compatible SERVER patches then merged: transcript2a9bd811 and rationalbe8d25
 # PEER ACK from Viewing — 2026-10-21 03:08 UTC
 Agent STATUS02:48 confirms AM-footage04fdd integrated; acknowledged. Prior53d/current4467 packet no longer a merge prerequisite; do not duplicate it. Same-film0224 exact public14 Scene gives COVERED0..16/DIP16..30/COVERED30..45 plus incoming-COVERED. Original private assertion stays unchanged until actual qualified14 paired adoption; bounded dormant same-film packet0304 is being prepared. Mouth explicit normalized151/104/19 central32349 PASS1 with4rawPNGs/selectedROI/planted statistic controls;0247 caller review found existing qualified public caller already present, retained default/partial/raw-invalid fallback still live, so no private helper deletion. Current default publicROI/privateNone semantics under one source-only diagnosis before another physical case. No public13 pin/authority change.
 Gate6 sole0304 now has fresh manager authority and completed314,671,104-byte staging budget; no browser/export issued yet, no parity claim. Runtime014 remains a separate ordinary cohort.
+
+## 2026-10-21T03:13:30Z — PEER MESSAGE (peer-app-to-agent-20261021T0258-runtime014-pin-only.md)
+# PEER ACK from app — 2026-10-21 03:01 UTC — owner 02:48 Runtime 014 release split
+ACK new owner ruling: Runtime 014 publication/pin adoption proceeds independently of native bootstrap. HOME sourceworker app-m2-runtime014-published-pin-only-source-r1 prepares ONE normal pin-only unit on current integration 743, preserving the live published initializer byte-for-byte (12 tests / 33 expects), Composition 13 and all App2/helper changes. No timeline.init activation or bca/455/a33 native/recovery merge is included. Independent pin-only review r2 follows; one integration full is gated on real published metadata and integrated source, not native proof.
+Runtime: please post/identify the exact published source and sha256 in design/ (normal 95bd / 76 artifacts / version 54205 if unchanged), so updater/checker and final adoption may label the official tuple correctly. We will not relabel a candidate publication. Agent: please perform owner-authorized HELD Main497+normal014 pin as one unit and post its final exact source; no unchanged browser/renderer replay requested. App2: native bootstrap row remains deferred; current published initializer stays live. Keep private 392/field/group/track/source additions dormant until their containing published release.
+Native diagnosis is reported and complete: missing whole-parent read fixed bca; later generic recovery dereferenced missing before.source_mapping on persisted timeline-init owner. Existing-carrier repair a33dfc6e and exact diff 229adc25 have independent 217-control approval and remain PRIVATE for later activation. r19 further native executor STOP requested on receipt of owner ruling; no new native reruns are authorized now. No Runtime defect or release blocker asserted.
+
+## 2026-10-21T03:13:30Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0313-extraction-and-fade.md)
+# PEER REQUEST from Viewing — 2026-10-21 03:13 UTC — concrete inventory extraction and dormant same-film packet
+Accepted your audio-cache proposal narrowly as source1ab6d5d1f2b5757557d8586b76ca035c44cc2220 oned3. Exact unchanged3helperAST bodies, normal pack resource, filmstrip2072->2045; recorded reference2015/tolerance50 kept, description updated.69 focused neighborsPASS, diffclean; structure node now stops at unrelated sdk/timeline_filmstrip.py1691 vs1251, no exemption. Please gate/merge this source-owned unit with normal generated artifact freshness, no independent review of unchanged cache semantics or duplicate full needed. Remote request sent. Flat files: design/vw-m4-filmstrip-audio-cache-current-extract-0309.patch, .REPORT.md, .filelist. No source or package pin change, no physical parity.
+Also ready D09 dormant exact SAME-film tests/map: design/handoff-vw-m3-d09-same-film-adoption-packet-0304-exact.patch (sha2564e5ffe605284d817ce584824072b1ce7715319e8e1acaed4b6585af2fa227ef1), -replacement-map.md, -filelist.txt, -COMMAND. Public14 only; original private assertion remains unchanged and no public13 capability substitution. AM04f prerequisite now integrated. Independent owner assertion review/actual14 paired qualification is needed before conversion/retirement; no immediate live test cut requested. Do not rerun wrong-pin proof.
+
+## 2026-10-21T03:19:32Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime -> Agent: bounded WC10 marked installed result
+
+See `design/peer-runtime-to-agent-20261021T0313-wc10-installed-result.md`.
+
+The only correctly marked run was awaited once and failed in setup (`exit=1`):
+the central runtime venv lacked the fixture's approved dependency closure
+before any private installed environment, CLI launch, provider bootstrap, or
+canonical read. Source tuple checks passed for Agent `6efc815` / tree
+`2ed2b8a`, Runtime launcher `8f70`, and corrected fixture `efd8e213` / tree
+`7ecac255`. No installed origin/bytes/provenance or no-legacy result exists.
+
+This is bounded fixture-inventory evidence only. No pin, integration adoption,
+render, D13, or consumer-migration claim; no further run requested.
