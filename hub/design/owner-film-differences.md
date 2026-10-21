@@ -52,7 +52,7 @@ Agent integration has published the compile contracts and fixtures (38e427e3 aud
 ## Agent — temporarily missing on integration (2026-10-20T11:49:30.766902+00:00)
 The registered rendering.assemble_timeline publication/settlement chain is temporarily missing on integration for normally created canonical timelines: its old pre-settlement publisher requires a legacy project_documents row whose creation writer is retired, so the task fails before artifact upload. Exact normal-create/registered-host distinct and duplicate-CAS traces: design/m2-producer-registered-real-seam.md. Owner11:47 directs the native requester -> registered assembler -> settled proposal -> requester outbox -> commit replacement. No owner-film dataset is available here, so affected film counts are unknown. Keep this on the hard-stop viewing list until the actual native chain qualifies.
 
-## Orchestrator deferrals, scope triage 2026-10-21 (owner decision; analysis design/orchestrator-scope-triage-20261021T1147Z.md)
+## Orchestrator deferrals, scope triage 2026-10-21 11:53 UTC (owner decision; analysis `design/orchestrator-scope-triage-20261021T1147Z.md`)
 These stay in the code for now. None of them is a film-data writer, and none blocks a gate:
 - AG01: detached publication draft notes stay - native accepted history already comes from Runtime - remove after WC7 eliminates the detached caller.
 - AG-M3-CAP-01: saved-ref candidate-forwarding test qualification stays pending - certification and UNCERTIFIED safeguards remain enforced - close when the matched capture fixture is repaired.
@@ -60,5 +60,9 @@ These stay in the code for now. None of them is a film-data writer, and none blo
 - AG-M3-CAP-03: saved SDK/ref strict-xfail fixture stays - the missing publisher belongs to the test double; production sends capture to Runtime before writes - replace when the real-publisher fixture is ready.
 - AG-M3-CAP-04: working-copy SDK/ref strict-xfail fixture stays - production forwards the full candidate without SDK precertification - replace with the real-publisher candidate fixture.
 - D01-app-resolved-edit-serializer: root-preserving serializer stays - the mandatory D01 cuts remove its writer callers, and the helper cannot commit by itself - delete after its last caller migrates.
-- VW-D09b: model.mouth_box inspection fallback stays - it selects diagnostic PNG regions and never renders film pixels - remove when a compatible public inspection region preserves the fallback semantics.
-- VW-D09c: legacy pixel crop selection stays - retained verification keeps its established regions, statistics and thresholds - remove after exact default/partial crop equivalence is available.
+- VW-D09b: model.mouth_box inspection fallback stays - it selects diagnostic PNG regions and never renders film pixels - **DEFERRED solely for heavy proof**; remove when a compatible public inspection region preserves the fallback semantics.
+- VW-D09c: legacy pixel crop selection stays - retained verification keeps its established regions, statistics and thresholds - **DEFERRED solely for heavy proof**; remove after exact default/partial crop equivalence is available.
+
+### Deferred-crop owner disclosure
+
+The owner hard-stop run must treat presenter/lipsync results that depend on the deferred crop as unqualified until exact default/partial crop equivalence is proven. The retained partial697 result is an explicit **NON-EQUIVALENCE** (private 697 vs public 799, padding 16/697 vs 16/799, strict crossings 15 vs 16); the explicit-799 tuple proof does not generalize to the default or partial crop. This is a disclosure of the deferred proof obligation, not a film-data finding or a claim that the source deletion is complete.
