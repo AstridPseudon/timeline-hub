@@ -907,8 +907,35 @@ describe('world name spelling and collisions', () => {
   it('rows that still share a name carry a qualifier, others none', () => {
     const lib = [entry('L', 'r2', 'Lantern Valley'), entry('M', 'r3', 'Meadow')];
     const { timeline, library } = rows({}, { entry: 'lantern-valley.html' }, lib);
-    expect(timeline[0]).toMatchObject({ name: 'Lantern Valley', qualifier: 'in video' });
+    expect(timeline[0].name).toBe('Lantern Valley');
+    expect(timeline[0].qualifier).toBeUndefined();
     expect(library.find((r) => r.objectId === 'L')?.qualifier).toBe('library');
     expect(library.find((r) => r.objectId === 'M')?.qualifier).toBeUndefined();
+  });
+  const twoVersions = (library: LibraryEntry[], tracksB = 'V6') => buildRows(snap({
+    tracks: [{ id: 'V1', kind: 'visual', label: 'V1', muted: false }],
+    clips: [
+      worldClip('a', 'V3', 0, { objectId: 'W', revision: 'r1', body: body({ entry: 'lantern-valley.html' }) }),
+      worldClip('b', tracksB, 2, { objectId: 'W', revision: 'r2', body: body({ name: 'Lantern Valley' }) }),
+    ],
+  }), library);
+  it('two versions both in the video share one spelling and are told apart by their tracks, never "in video"', () => {
+    const { timeline } = twoVersions([]);
+    expect(timeline.map((r) => r.name)).toEqual(['Lantern Valley', 'Lantern Valley']);
+    expect(timeline.map((r) => r.qualifier)).toEqual(['on V3', 'on V6']);
+    expect(JSON.stringify(timeline)).not.toContain('in video');
+  });
+  it('a declared name outranks a filename spelling, and a library spelling outranks both', () => {
+    expect(twoVersions([]).timeline[0].name).toBe('Lantern Valley');
+    expect(twoVersions([entry('Z', 'r9', 'LANTERN valley')]).timeline.map((r) => r.name)).toEqual(['LANTERN valley', 'LANTERN valley']);
+  });
+  it('versions on the same tracks fall back to a short revision', () => {
+    const { timeline } = twoVersions([], 'V3');
+    expect(timeline.map((r) => r.qualifier)).toEqual(['rev r1', 'rev r2']);
+  });
+  it('a timeline row beside a library copy keeps no qualifier; only the library row says "library"', () => {
+    const { timeline, library } = twoVersions([entry('L', 'r5', 'Lantern Valley')]);
+    expect(timeline.map((r) => r.qualifier)).toEqual(['on V3', 'on V6']);
+    expect(library[0].qualifier).toBe('library');
   });
 });

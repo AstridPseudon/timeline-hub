@@ -1287,7 +1287,6 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             onClick={() => setListOpen((open) => !open)}
           >
             <span className="min-w-0 truncate">{selected?.name ?? 'Choose a world'}</span>
-            {selected?.qualifier ? <span className="shrink-0 text-muted-foreground">· {selected.qualifier}</span> : null}
             {selectedIndex >= 0 ? <span className="shrink-0 tabular-nums text-muted-foreground">{selectedIndex + 1} / {allRows.length}</span> : null}
             <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`ml-auto shrink-0 text-muted-foreground transition-transform ${listOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6" /></svg>
           </button>

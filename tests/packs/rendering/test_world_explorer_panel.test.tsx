@@ -450,6 +450,20 @@ describe('World Explorer panel', () => {
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('2 / 2');
   });
 
+  it('the docked picker shows the name and n / m only; the qualifier stays in the list', async () => {
+    const a = { objectId: 'sha256:a', revision: 'sha256:a', name: 'Lantern Valley', duration: 6, authoredFps: 30, events: [], shots: [] };
+    const b = { ...a, objectId: 'sha256:b', revision: 'sha256:b' };
+    const settings = makeSettings(new Map<string, unknown>([['lastWorld:p1', 'sha256:a@sha256:a']]));
+    const view = mount(makeHarness({ settings, documents: fakeDocuments({ library: [a, b] }) }));
+    await waitFor(() => expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley'));
+    const trigger = view.getByRole('button', { name: 'Choose world' });
+    expect(trigger.textContent).not.toContain('library');
+    expect(trigger.textContent).toMatch(/1 \/ 2/);
+    expect(trigger.querySelectorAll('.truncate')).toHaveLength(1);
+    fireEvent.click(trigger);
+    expect(view.getAllByText(/· library/).length).toBe(2);
+  });
+
   it('pauses playback when the panel is hidden', async () => {
     const harness = makeHarness();
     const view = mount(harness);

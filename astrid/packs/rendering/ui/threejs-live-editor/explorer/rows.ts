@@ -15,8 +15,8 @@ export type Row = {
   readonly shots: readonly ShotMove[];
   /** Present for timeline worlds, whose package already rides on their clips. */
   readonly liveScene?: Record<string, unknown>;
-  /** Set only when another row has the same name: which side this one is on, so the picker can tell them apart. */
-  readonly qualifier?: 'in video' | 'library';
+  /** Set only when another row has the same name, to tell them apart: "library" for the library copy, else the tracks the clips sit on ("on V3, V6"), else a short revision. Never "in video". */
+  readonly qualifier?: string;
 };
 
 export function rowFromEntry(entry: LibraryEntry): Row {
@@ -66,8 +66,29 @@ export function buildRows(snapshot: TimelineSnapshot | undefined, library: reado
     };
   });
   const libraryRows = library.filter((entry) => !onTimeline.has(worldKey(entry))).map(rowFromEntry);
-  const counts = new Map<string, number>();
-  for (const row of [...timeline, ...libraryRows]) counts.set(row.name.toLowerCase(), (counts.get(row.name.toLowerCase()) ?? 0) + 1);
-  const qualify = (row: Row, qualifier: 'in video' | 'library'): Row => ((counts.get(row.name.toLowerCase()) ?? 0) > 1 ? { ...row, qualifier } : row);
-  return { timeline: timeline.map((row) => qualify(row, 'in video')), library: libraryRows.map((row) => qualify(row, 'library')) };
+  // One spelling per name: a library or saved spelling first, then a declared one, else the one with more capitals.
+  const spellings = new Map<string, { name: string; rank: number; caps: number }>();
+  const caps = (name: string) => (name.match(/\p{Lu}/gu) ?? []).length;
+  const offer = (name: string, rank: number) => {
+    const key = name.toLowerCase();
+    const best = spellings.get(key);
+    if (!best || rank > best.rank || (rank === best.rank && caps(name) > best.caps)) spellings.set(key, { name, rank, caps: caps(name) });
+  };
+  for (const entry of library) offer(entry.name, 2);
+  worlds.forEach((world, index) => { if (world.nameHints.declared && timeline[index].name === world.nameHints.declared) offer(timeline[index].name, 1); });
+  for (const row of timeline) offer(row.name, 0);
+  const respell = (row: Row): Row => ({ ...row, name: spellings.get(row.name.toLowerCase())?.name ?? row.name });
+  const timelineRows = timeline.map(respell);
+  const all = [...timelineRows, ...libraryRows.map(respell)];
+  const group = (row: Row) => all.filter((other) => other.name.toLowerCase() === row.name.toLowerCase());
+  const tracks = (row: Row) => `on ${[...new Set(row.uses.map((use) => use.track))].sort().join(', ')}`;
+  const shortRevision = (row: Row) => `rev ${row.revision.replace(/^sha256:/, '').slice(0, 6)}`;
+  const qualifyTimeline = (row: Row): Row => {
+    const rivals = group(row).filter((other) => other.uses.length > 0);
+    if (rivals.length < 2) return row;
+    const label = row.uses.length ? tracks(row) : shortRevision(row);
+    return { ...row, qualifier: rivals.filter((other) => tracks(other) === label).length > 1 ? shortRevision(row) : label };
+  };
+  const qualifyLibrary = (row: Row): Row => (group(row).length > 1 ? { ...row, qualifier: 'library' } : row);
+  return { timeline: timelineRows.map(qualifyTimeline), library: libraryRows.map(respell).map(qualifyLibrary) };
 }
