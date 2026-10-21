@@ -42,6 +42,11 @@ def _publishable_parent_command(command):
         return True
     if command.get('op') == 'clip.delete' and args == {}:
         return True
+    if (command.get('op') == 'clip.anchor' and isinstance(args, dict)
+            and set(args) == {'field', 'declaration', 'choice'}
+            and args.get('field') in {'on', 'until'}
+            and (args.get('choice') is None or isinstance(args.get('choice'), dict))):
+        return True
     if (command.get('op') == 'clip.split' and isinstance(args, dict)
             and set(args) == {'on', 'right_id'}):
         return True
@@ -89,14 +94,18 @@ class AttachedCheckout(Checkout):
         self.fps = float(rate(self.bundle['parent'].get('config', {}).get('output', {}).get('fps')))
         self._mcache = None
 
-    def _bundle(self, state):
+    def _bundle(self, state, extra_commands=()):
         """Materialize pending selected PARAM commands from their exact pins."""
+        from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
         from astrid.sdk.timeline_elements import _read_selected_param_inputs
 
         from .store import fetch_bundle
 
         bundle = fetch_bundle(self.session.project_id, self.session.timeline_id,
                               revision_id=state['base']['revision_id'], client=self.session.client)
+        materialize_transcript_inputs(
+            bundle, [*state['pending'], *extra_commands], client=self.session.client.timelines._client,
+            project=self.session.project_id)
         if not state['pending']:
             return bundle
         inputs = []
@@ -120,7 +129,7 @@ class AttachedCheckout(Checkout):
             )
             inputs.extend(captured)
         if not inputs:
-            return self.session._bundle(state)
+            return execute(bundle, state['pending']).bundle
         return execute(bundle, state['pending'], schema_inputs=inputs,
                        realm_id=self.session.identity['realm_id']).bundle
 
@@ -140,8 +149,8 @@ class AttachedCheckout(Checkout):
 
         def capture(state):
             self._unchanged_basis(state)
-            bundle = self._bundle(state)
-            if not equal(bundle, self._preview):
+            bundle = self._bundle(state, [command])
+            if not self._same_preview(bundle):
                 raise TimelineEditError('attached checkout basis changed; reattach before editing')
             plan = execute(bundle, [command], schema_inputs=schema_inputs, realm_id=realm_id)
             plans.append(plan)
@@ -153,6 +162,16 @@ class AttachedCheckout(Checkout):
         self.bundle = plans[0].bundle
         self._preview = copy.deepcopy(self.bundle)
         self._mcache = None
+
+    def _same_preview(self, bundle):
+        """Compare authored preview state; retained source hydration is read-only."""
+        def authored(value):
+            value = copy.deepcopy(value)
+            mapping = value.get('source_mapping')
+            if isinstance(mapping, dict):
+                mapping['pinned_documents'] = []
+            return value
+        return equal(authored(bundle), authored(self._preview))
 
     @property
     def clips(self):
@@ -267,6 +286,38 @@ class AttachedClip(Clip):
         self._tl._queue(command)
         return self
 
+    def _anchor_command(self, value):
+        """Queue the existing ``clip.anchor`` carrier, when already captured.
+
+        Attached ``set`` is intentionally narrower than the legacy moment
+        parser here. The value is the registered operation's own arguments,
+        so a stable ``word_ids`` + ``DocumentPin`` choice remains the source
+        of meaning and the local command engine can verify its existing
+        ``source_mapping.pinned_documents`` capture before staging anything.
+        """
+        if self.shot_id != 'parent':
+            _held()
+        if value is None:
+            args = {'field': 'on', 'declaration': None, 'choice': None}
+        elif isinstance(value, dict) and set(value) == {'field', 'declaration', 'choice'}:
+            if value['field'] != 'on':
+                raise TimelineEditError(f'{self.address}: attached .set(on=...) only accepts field="on"')
+            args = copy.deepcopy(value)
+        else:
+            raise TimelineEditError(
+                f'{self.address}: attached word anchors require the existing '
+                'clip.anchor carrier {field, declaration, choice}; text-only or mixed values are unsupported')
+        command = {
+            'schema_version': 1,
+            'op': 'clip.anchor',
+            'version': '1',
+            'select': self._ref,
+            'args': args,
+            'intent': {'anchor': 'follow'},
+        }
+        self._tl._queue(command)
+        return self
+
     def on(self, moment):
         if intent.cut_of(self.data):
             _held()
@@ -325,6 +376,10 @@ class AttachedClip(Clip):
 
     def set(self, **params):
         allow_new = params.pop('_allow_new', False)
+        if 'on' in params:
+            if len(params) != 1:
+                raise TimelineEditError(f'{self.address}: attached word anchors cannot be mixed with other .set fields')
+            return self._anchor_command(params['on'])
         if not allow_new and params == {'transition': None}:
             if self.shot_id != 'parent':
                 _held()
