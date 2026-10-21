@@ -110,6 +110,22 @@ const transformBounds = (bounds: ModifierBounds, style: Extract<ClipLookEntrance
   return {status: 'known', rect: computeRenderBounds(rect, width, height)};
 };
 
+// ClipLook applies element crop to its full-canvas outer AbsoluteFill. The
+// entrance wrapper is inside that crop, so transform first and intersect with
+// the canvas crop region afterwards.
+const applyElementCrop = (bounds: ModifierBounds, clip: TimelineClip,
+  width: number, height: number): ModifierBounds => {
+  if (bounds.status !== 'known') return bounds;
+  const crop = getVisibleBoundsFromCrop({x: 0, y: 0, width, height}, clip);
+  const rect = bounds.rect;
+  return {status: 'known', rect: computeRenderBounds({
+    x: Math.max(rect.x, crop.x),
+    y: Math.max(rect.y, crop.y),
+    width: Math.max(0, Math.min(rect.x + rect.width, crop.x + crop.width) - Math.max(rect.x, crop.x)),
+    height: Math.max(0, Math.min(rect.y + rect.height, crop.y + crop.height) - Math.max(rect.y, crop.y)),
+  }, width, height)};
+};
+
 // Shared by visibility and the public threshold query. Upper layers are front first.
 const occlusionForLayer = (target: SceneLayer | undefined, upper: readonly SceneLayer[],
   width: number, height: number, minimumFraction: number): SceneOcclusion => {
@@ -225,11 +241,7 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
       if (element && !absent && (!support || support.presence === 'unknown' || support.opaqueSupport === 'unknown')) unknown('unknown-component-internals', 'Final component alpha and support are undeclared');
       const hasCrop = [clip.cropTop, clip.cropBottom, clip.cropLeft, clip.cropRight]
         .some(value => value !== undefined && value !== 0);
-      if (element && hasCrop && !instances.length && bounds.status === 'known') {
-        const visible = getVisibleBoundsFromCrop(bounds.rect, clip);
-        bounds = {status: 'known', rect: computeRenderBounds(visible, scene.width, scene.height)};
-        clipLookChanged = true;
-      } else if (element && hasCrop && instances.length) {
+      if (element && hasCrop && instances.length) {
         unknown('unknown-animation-geometry', 'Element crop inside a custom modifier is undeclared');
         bounds = {status: 'unknown', reason: 'Element crop inside a custom modifier is undeclared'};
       }
@@ -240,6 +252,10 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
       } else if (entrance.status === 'active') {
         opacity = opacity === null ? null : Math.min(1, Math.max(0, opacity * entrance.opacity));
         bounds = transformBounds(bounds, entrance, scene.width, scene.height);
+        clipLookChanged = true;
+      }
+      if (element && hasCrop && !instances.length) {
+        bounds = applyElementCrop(bounds, clip, scene.width, scene.height);
         clipLookChanged = true;
       }
       if (clip.exit !== undefined) {
