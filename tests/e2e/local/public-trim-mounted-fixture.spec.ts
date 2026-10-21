@@ -1,78 +1,20 @@
-import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { readFileSync, realpathSync } from 'node:fs';
-import path from 'node:path';
 import { expect, type Page, type Route } from '@playwright/test';
 import { commandOutboxes, revisionBody, test as appTest } from './support/app.ts';
-import { ASTRID_CHECKOUT, ASTRID_PYTHON } from './support/astrid.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, HistoryPage, Manifest } from '../../../src/integrations/runtime/timeline-commit-types.ts';
-import { PRODUCT_ACTOR, REPO_ROOT, RUNTIME_CHECKOUT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { PRODUCT_ACTOR, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { verifyPublicTrimSourceTuple } from './support/public-trim-preflight.ts';
 
 const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 const LEGACY_WRITES = /(?:\/composition-revisions(?:\/|$)|\/timelines\/[^/]+\/revisions(?:\/|$)|\/timeline\/save(?:\/|$)|\/(?:restore|restore-history)(?:\/|$)|\/(?:supabase|rest\/v1|astrid\/v1)(?:\/|$))/i;
 const LEGACY_MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-const EXACT_AGENT_COMMIT = '6efc81500a0e0688c2bb41e736503f0fc3e04abb';
-const EXACT_AGENT_TREE = '2ed2b8a12b5b3391ca221ba6ff05390f71a73556';
-const EXACT_RUNTIME_COMMIT = '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c';
-const EXACT_RUNTIME_TREE = 'd3a290b407fa61e6ab2d476f50c068073f70df00';
-const EXACT_VENDOR_AGENT_COMMIT = '091aa23ec83ea05ffd3b0115a640230d51c8c429';
-const EXACT_VENDOR_AGENT_TREE = 'e3ae90fe482ba6cad6c3f94069127faf76ebceb6';
-const EXACT_RUNTIME_ARTIFACT_VERSION = 'sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac';
-const EXACT_PUBLIC_COMPOSITION_SHA256 = '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738';
-const IMMUTABLE_AGENT_CHECKOUT = '/home/user/work/wt/agt-pin-6efc8150';
-const IMMUTABLE_RUNTIME_CHECKOUT = '/home/user/work/wt/rt-pin-95bd3c5f';
 
 type CommitPost = { body: CommitRequest; rawBody: string; key: string; status: number | null; response: CommitAcceptedMutation | null; readError?: string };
 const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
   seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
 });
 
-function git(checkout: string, ...args: string[]) {
-  return execFileSync('git', ['-C', checkout, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-}
-
-function requireCleanPin(checkout: string, commit: string, tree: string, label: string) {
-  expect(realpathSync(checkout), `${label} checkout`).toBe(realpathSync(label === 'Agent' ? IMMUTABLE_AGENT_CHECKOUT : IMMUTABLE_RUNTIME_CHECKOUT));
-  expect(git(checkout, 'rev-parse', 'HEAD'), `${label} commit`).toBe(commit);
-  expect(git(checkout, 'rev-parse', 'HEAD^{tree}'), `${label} tree`).toBe(tree);
-  expect(git(checkout, 'status', '--porcelain', '--untracked-files=normal'), `${label} checkout must be clean`).toBe('');
-}
-
-function verifySourceTuple() {
-  expect(process.env.TIMELINE_BUNDLE_AGENT_HEAD).toBe(EXACT_AGENT_COMMIT);
-  if (ASTRID_CHECKOUT !== IMMUTABLE_AGENT_CHECKOUT || RUNTIME_CHECKOUT !== IMMUTABLE_RUNTIME_CHECKOUT) throw new Error('public-trim requires the dedicated immutable Agent/Runtime checkouts');
-  requireCleanPin(ASTRID_CHECKOUT, EXACT_AGENT_COMMIT, EXACT_AGENT_TREE, 'Agent');
-  const provenance = JSON.parse(readFileSync(path.join(REPO_ROOT, 'vendor/astrid-browser/provenance.json'), 'utf8')) as { astrid_commit: string; astrid_tree: string };
-  expect(provenance).toMatchObject({ astrid_commit: EXACT_VENDOR_AGENT_COMMIT, astrid_tree: EXACT_VENDOR_AGENT_TREE });
-  expect(provenance.astrid_commit).not.toBe(EXACT_AGENT_COMMIT);
-  const runtimeLock = JSON.parse(readFileSync(path.join(REPO_ROOT, 'runtime.lock.json'), 'utf8')) as { source_commit: string; producer_version: string };
-  expect(runtimeLock).toEqual({ source_commit: EXACT_RUNTIME_COMMIT, producer_version: EXACT_RUNTIME_ARTIFACT_VERSION });
-  expect(process.env.TIMELINE_BUNDLE_RUNTIME_HEAD).toBe(runtimeLock.source_commit);
-  requireCleanPin(RUNTIME_CHECKOUT, runtimeLock.source_commit, EXACT_RUNTIME_TREE, 'Runtime');
-  expect(readFileSync(path.join(REPO_ROOT, 'src/integrations/runtime/generated-contract-metadata.ts'), 'utf8')).toContain('CONTRACT_VERSION = "0.2.14"');
-  const vendorCheck = execFileSync(process.execPath, [path.join(REPO_ROOT, 'scripts/vendor-lock.mjs'), 'check', path.join(REPO_ROOT, 'runtime.lock.json'), '--producer', RUNTIME_CHECKOUT], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-  expect(vendorCheck).toContain('ok runtime.lock.json (matches pinned producer commit)');
-  const vendorSourcesCheck = execFileSync(process.execPath, [path.join(REPO_ROOT, 'scripts/build/verify-astrid-vendor-sources.mjs')], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-  expect(vendorSourcesCheck).toContain('Verified');
-  const artifacts = JSON.parse(readFileSync(path.join(RUNTIME_CHECKOUT, 'contract/artifacts.json'), 'utf8')) as { artifacts: Record<string, unknown>; producer: string; version: string };
-  expect(Object.keys(artifacts).sort()).toEqual(['artifacts', 'producer', 'version']);
-  expect(Object.keys(artifacts.artifacts)).toHaveLength(76);
-  expect(artifacts).toMatchObject({ producer: 'astrid-runtime', version: runtimeLock.producer_version });
-  const archive = path.join(REPO_ROOT, 'vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz');
-  expect(createHash('sha256').update(readFileSync(archive)).digest('hex')).toBe(EXACT_PUBLIC_COMPOSITION_SHA256);
-  const members = execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' }).split('\n').filter((member) => member && !member.endsWith('/'));
-  expect(members).toHaveLength(77);
-  expect(members.every((member) => member.startsWith('package/'))).toBe(true);
-  const modules = JSON.parse(execFileSync(ASTRID_PYTHON, ['-c', 'import astrid, runtime_protocol, json; print(json.dumps({"astrid": astrid.__file__, "runtime": runtime_protocol.__file__}))'], {
-    encoding: 'utf8',
-    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHONPATH: [ASTRID_CHECKOUT, RUNTIME_CHECKOUT].join(path.delimiter) },
-  })) as { astrid: string; runtime: string };
-  expect(realpathSync(modules.astrid)).toContain(`${realpathSync(ASTRID_CHECKOUT)}${path.sep}`);
-  expect(realpathSync(modules.runtime)).toContain(`${realpathSync(RUNTIME_CHECKOUT)}${path.sep}`);
-}
-
-test.beforeAll(() => verifySourceTuple());
+test.beforeAll(() => verifyPublicTrimSourceTuple());
 
 async function history(harness: DirectHarness, seed: ThreeProductsSeed): Promise<HistoryPage> {
   const result = await harness.runtimeJson<HistoryPage>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
