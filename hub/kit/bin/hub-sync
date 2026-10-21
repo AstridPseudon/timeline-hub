@@ -38,6 +38,7 @@ if [ ! -d $H/.git ]; then
   git -C $H fetch -q origin main 2>/dev/null && git -C $H checkout -q -B main origin/main || git -C $H checkout -q -B main
 fi
 cd $H
+git config rebase.autoStash true   # uncommitted hub edits (lead lines, a killed sync's files) never block the pull
 # self-heal: a sync killed mid-rebase leaves the clone stuck and every later files push rejected
 if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ]; then git rebase --abort 2>/dev/null || rm -rf .git/rebase-merge .git/rebase-apply; echo "$(date -u +%FT%TZ) hub-sync: aborted stuck rebase" >&2; fi
 git pull -q --rebase origin main 2>/dev/null || { git rebase --abort 2>/dev/null; git pull -q --no-rebase -X theirs origin main 2>/dev/null; }

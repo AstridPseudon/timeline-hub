@@ -1,6 +1,48 @@
 # Runtime M2 Gate 2 and Gate 4 proof
 
-Date: 2026-10-20
+Date: 2026-10-21 UTC (restart reconciliation)
+
+## Current boundary and final6ef affected proof
+
+The public Runtime integration remains `9d1c43c647301da48a6e86ad82e466b501bd2418`, tree `50e74e3243c5da4cf77b6e6cc76605fae8aeb649` (0.2.13). The qualified ordinary014 candidate is **not integrated**: Runtime `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree `d3a290b407fa61e6ab2d476f50c068073f70df00`; Agent `6efc81500a0e0688c2bb41e736503f0fc3e04abb`, tree `2ed2b8a12b5b3391ca221ba6ff05390f71a73556`. App pin approval is independent and adoption remains outstanding.
+
+The initial final6ef affected run was **not green**:
+
+```text
+rt-m2-gate2-final6ef-affected-http-crash-gate2-final6ef-affected-http-crash-1021004534-27309
+Runtime tree d3a290b407fa61e6ab2d476f50c068073f70df00; 7 collected: 5 passed, 2 failed.
+```
+
+Its exact command was:
+
+```sh
+env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-6efc8150 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-6efc8150 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider -m "not darwin_native and not live" tests/test_timeline_commit_integration.py::test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip tests/test_timeline_commit_integration.py::test_real_door_concurrent_disjoint_moves_accept_and_rebase tests/test_timeline_commit_integration.py::test_real_door_lost_ack_restart_exact_retry_never_executes_provider tests/test_timeline_commit_crash.py::test_real_process_death_at_acceptance_boundary
+```
+
+The five passing cases were the concurrent disjoint real-door move and the four parametrized crash cases (commit/restore before/after acceptance), including rollback/no-partial-write assertions. The rebase/conflict and lost-ack selectors failed only at their final baseline assertion because the copied legacy `parent_composition.publish` receipt had expired and compacted to `__runtime_idempotency_result_expired_v1`; this was not a `timeline.commit` expiry or history failure.
+
+The approved successor `da022f252a0f11537e1391f30bb402aeec9349c7`, tree `c3c1e0ddb8efe4a236d9744e8bcdea9220894a4c`, changed only test files and kept all product, generated-client, schema, lock and 76-artifact bytes equal to 95bd. Its named run reran only the two failed selectors:
+
+```text
+rt-m2-gate2-final6ef-two-aged-fixtures-gate2-final6ef-two-aged-fixtures-1021005203-2115
+env ASTRID_RUNTIME_CHECKOUT=$PWD ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-6efc8150 PYTHONPATH=$PWD:/home/user/work/wt/agt-pin-6efc8150 PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider -m "not darwin_native and not live" tests/test_timeline_commit_integration.py::test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip tests/test_timeline_commit_integration.py::test_real_door_lost_ack_restart_exact_retry_never_executes_provider
+```
+
+Preflight passed and the result was **2 passed in 3.67s**. The fixture helper refreshes only copied legacy receipt timestamps before startup; receipt bodies, accepted rows, history/events, and production expiry guards remain untouched. Thus final6ef Gate2 is green for these **seven affected cases across 27309 + 2115**, not a blanket final6ef 51-case result.
+
+The retained normal Agent `e35ad5e72ed9acc61d659a6b4b9c32d69208ab8d`, tree `a2454c2cb472fa5404289c9f48bb7779d330879e`, against Runtime95 passed **51 in 25.12s** in `rt-m2-gate2-final-main014-current-proof-gate2-final-main014-normal-agent-e35ad5e7-proof-1021002537-14311` (central snapshot tree `e0cb9b7a56b88e0ed6555d930793eaa0f963a34b`). That is historical/parent-source evidence, not final6ef evidence. No full51 or previously passing final6ef node was rerun after restart.
+
+## Current Gate 4 disposition
+
+Named door result `rt-m2-gates2-and4-parallel-proof-track-gate4-door-integration-1020213206-10752` passed **29 Python in 16.01s and 61 TypeScript generated-client tests**, exit 0, on central Runtime snapshot tree `183dbcf45a6b3a25f7437415df10100101ef8bbd`. The exact command is the `gate4-door-integration` line in `ORCH/tests/suites.conf`; it covers the commit-route and response-lock files, door origin/auth/preflight nodes, real commit admission/project-scope and lost-ack nodes, two-project isolation, Python generated-client/parity nodes, and `cd packages/typescript && PATH=/home/user/work/app/node_modules/typescript/bin:$PATH npm test`.
+
+This proves `/v1` route/door admission, origin and browser-credential refusal, project route/body scope, two-project isolation, response-lock behavior, exact retry, and generated Python/TypeScript client contracts within that named scope. Source-diff audit against candidate95bd found only an unselected door-audit assertion change and the added Gate2 concurrency test in the relevant files; selected Gate4 node bodies are unchanged. The result therefore transfers to the candidate transport surface within scope, but not to public013 integration or App adoption. Candidate qualification separately records full `31902` (**5,988 passed, 26 skipped, 15 xfailed**) and scoped `5889` (**6 passed in 2.75s**) on the 95bd contract tuple.
+
+## Remaining requirement
+
+No additional Runtime Gate2/4 run is justified. The genuine remaining boundary is downstream: integrate/adopt the 95bd/6ef/App tuple, then run the authorized current integration full. App's native bootstrap/restart/lost-response proof remains outstanding. No full, browser, render, macOS, owner-film, final ZIP, or coordinated four-product result is claimed here.
+
+The original sections below retain the historical proof snapshot and exact commands for audit; their 2026-10-20 source labels must not be read as public013 or final6ef adoption.
 
 ## Source
 
