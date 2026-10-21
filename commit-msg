@@ -1,0 +1,5 @@
+docs(runtime): refresh current gate 2 and gate 4 evidence
+
+Replace stale public013 integration wording with the published 0.2.14 tuple,
+current b92 source bindings, historical Gate 2 repair semantics, and the
+explicit current TypeScript generated-client evidence gap.
