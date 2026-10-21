@@ -8,7 +8,7 @@ set -eu
 worker_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source_runner=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-app-central.sh
 source_common=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-source-common.sh
-expected_app_tree=78f3784287d78fc92677ebe5eb710d162b0f50ae
+expected_app_tree=972d2ed2e4f85f334eb9f2e6ca40d9bfbce9eac7
 
 usage() {
   echo "usage: $0 run APP_ROOT | $0 probe" >&2
@@ -36,9 +36,11 @@ write_source_identity() {
     printf 'tree=%s\n' "$(git -C "$app_root" rev-parse 'HEAD^{tree}' 2>/dev/null || printf unavailable)"
     printf 'status=%s\n' "$(git -C "$app_root" status --porcelain=v1 --untracked-files=all 2>/dev/null | tr '\n' ' ' || printf unavailable)"
     printf 'expected_tree=%s\n' "$expected_app_tree"
-    printf 'agent_pin=3c4f6de4fa777323b3386c01c7266b619b86af6d\n'
-    printf 'runtime_pin=202074110717146fc7f08af2306a8dd7f695b0b1\n'
-    printf 'producer_pin=a0dca16975dfe8f5e762703b99d9791a16cf7fd7\n'
+    printf 'app_pin=10fa2ff9a8216604aa39e3584f89dc9e7a09080a\n'
+    printf 'agent_pin=6efc81500a0e0688c2bb41e736503f0fc3e04abb\n'
+    printf 'runtime_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
+    printf 'producer_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
+    printf 'public13_archive_sha=sha256:895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30\n'
   } >"$evidence_dir/source-identity.txt"
 }
 
