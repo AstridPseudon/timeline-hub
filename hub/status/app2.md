@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T06:34:27Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 6m -->
+<!-- app2 | 2026-10-21T06:35:31Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 7m -->
 # app2 — 2026-10-21 06:28 UTC
 Milestone: M2 OPEN. Bounded duplicate, canary and default initializer DELETED; broad rows OPEN.
 Integrated: App canonical hub/tl/integration e75a96c69. Dormant after-anchor correction merged1a54d3052; transcript typing/refusal-preservation packet mergede75a96c69. After-anchor18 focused + six accepted/four refused complete-record matches; transcript52→0 own-file diagnostics,157 focused/strict-islands, final7 tests/3 exact invalid_source probes. No activation or whole-project type claim.
