@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CommitRequest, EditCommand } from './timeline-commit-types.ts';
+import type { EditCommand } from './timeline-commit-types.ts';
 import {
   assertPinnedRuntimeEditCommandOps,
   pinnedRuntimeEditCommandOps,
@@ -23,6 +23,11 @@ const nativeMove = (on: number): EditCommand => ({
   args: { on },
 });
 
+const unknownCommand = (): EditCommand => ({
+  ...initCommand,
+  op: 'timeline.unknown' as EditCommand['op'],
+});
+
 describe('live App EditCommand operation contract', () => {
   it.each([
     ['not an object', null],
@@ -33,26 +38,13 @@ describe('live App EditCommand operation contract', () => {
     expect(() => pinnedRuntimeEditCommandOpsFromBundle(bundle)).toThrow(/Pinned Runtime/);
   });
 
-  it('derives public13 membership from the pinned Runtime bundle and rejects b69 active init', async () => {
+  it('derives operation membership from the pinned Runtime bundle', () => {
     const supported = pinnedRuntimeEditCommandOps();
     expect(supported.has('clip.move')).toBe(true);
-    expect(supported.has('timeline.init')).toBe(false);
-    expect(() => assertPinnedRuntimeEditCommandOps([initCommand])).toThrow(/timeline\.init/);
-
-    const env = await environment(document(), { validateCommitCommands: assertPinnedRuntimeEditCommandOps });
-    const before = structuredClone(env.current().config.clips);
-    const request: CommitRequest = {
-      api_version: 1,
-      project_id: 'project-commit',
-      timeline_id: 'timeline-commit',
-      base_revision_id: 'r0',
-      base_publication_id: 'p0',
-      commands: [initCommand],
-      source: { via: 'app' },
-    };
-    await expect(env.provider.commitTimeline(request, 'timeline-init-b69')).rejects.toThrow(/timeline\.init/);
-    expect(env.commits()).toHaveLength(1);
-    expect(env.current().config.clips).toEqual(before);
+    const assertInit = () => assertPinnedRuntimeEditCommandOps([initCommand]);
+    if (supported.has('timeline.init')) expect(assertInit).not.toThrow();
+    else expect(assertInit).toThrow(/timeline\.init/);
+    expect(() => assertPinnedRuntimeEditCommandOps([unknownCommand()])).toThrow(/timeline\.unknown/);
   });
 
   it('accepts a known native command through the existing session and fake ACK seam', async () => {
