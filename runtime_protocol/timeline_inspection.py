@@ -40,6 +40,8 @@ def _fraction(value, label, *, milliseconds=False, nonnegative=True):
     try:
         if isinstance(value, bool) or value is None:
             raise ValueError
+        if isinstance(value, dict) and set(value) == {"numerator", "denominator"}:
+            value = (value["numerator"], value["denominator"])
         if isinstance(value, (list, tuple)) and len(value) == 2 and all(isinstance(item, int) and not isinstance(item, bool) for item in value):
             result = Fraction(*value)
         else:

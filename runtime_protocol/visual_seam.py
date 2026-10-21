@@ -123,6 +123,19 @@ def load_closure(conn, project_id, timeline_id, parent_row):
     return parent, shots, internal
 
 
+def _fps(value):
+    """Read raw authored FPS locally without changing the stored payload."""
+    if isinstance(value, (dict, list)):
+        from .timeline_inspection import _fraction
+
+        try:
+            result = float(_fraction(value, "fps", nonnegative=False))
+        except (OverflowError, ValidationError):
+            return None
+        return result if math.isfinite(result) else None
+    return finite(value, None)
+
+
 def _strip_derived(value):
     if isinstance(value, dict):
         # Most authored clips have no app/report/intent. Keep their immutable
@@ -138,7 +151,7 @@ def _strip_derived(value):
 def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False):
     """Authored geometry plus effective spans. No mutable heads or clipping loss."""
     config = parent.get("config", {})
-    fps = finite((config.get("output") or {}).get("fps", config.get("fps", 30)), None)
+    fps = _fps((config.get("output") or {}).get("fps", config.get("fps", 30)))
     if fps is None or fps <= 0:
         raise ValidationError("visual timing fps must be finite and positive")
     policy = (config.get("app") or {}).get("visualSeamContract") or {}
