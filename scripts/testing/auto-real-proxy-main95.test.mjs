@@ -5,7 +5,7 @@ import path from 'node:path';
 import { PassThrough, Readable } from 'node:stream';
 import { after, test } from 'node:test';
 import { createRuntimeProxyServer, readWorkspaceRuntimeConfig } from '../runtime-discovery-proxy.mjs';
-import { normalAcpEnvironment, REAL_PROXY_RUNTIME, prepareNodeModulesOverlay, readRealProxyInputs } from './auto-real-proxy-main95.mjs';
+import { normalAcpEnvironment, REAL_PROXY_RUNTIME, prepareNodeModulesOverlay, readRealProxyInputs, resolveFailureRecordRoot } from './auto-real-proxy-main95.mjs';
 
 const scratch = mkdtempSync(path.join(os.tmpdir(), 'auto-real-proxy-current-root-'));
 after(() => rmSync(scratch, { recursive: true, force: true }));
@@ -47,6 +47,15 @@ test('pins Runtime95 and rejects stale public/direct overrides', () => {
   assert.throws(() => readRealProxyInputs({ ...values(), TIMELINE_AUTO_REAL_PROXY_RUNTIME_SHA: 'f'.repeat(40) }, roots.app), /published Main95/);
   assert.throws(() => readRealProxyInputs({ ...values(), ASTRID_PUBLIC_CHECKOUT: roots.agent }, roots.app), /overrides are forbidden/);
   assert.throws(() => readRealProxyInputs({ ...values(), ASTRID_APP_DIRECT_DIST: path.join(scratch, 'dist') }, roots.app), /overrides are forbidden/);
+});
+
+test('runner always resolves an absolute worker-owned failure record directory', () => {
+  const privateRoot = path.join(scratch, 'private-record-owner');
+  const runRoot = path.join(privateRoot, 'real-proxy-123');
+  assert.equal(resolveFailureRecordRoot({}, privateRoot, runRoot), path.join(privateRoot, 'recorded-evidence'));
+  assert.equal(resolveFailureRecordRoot({ TIMELINE_AUTO_REAL_PROXY_RECORD_DIR: path.join(scratch, 'worker-record') }, privateRoot, runRoot), path.join(scratch, 'worker-record'));
+  assert.throws(() => resolveFailureRecordRoot({ TIMELINE_AUTO_REAL_PROXY_RECORD_DIR: 'relative-record' }, privateRoot, runRoot), /absolute path/);
+  assert.throws(() => resolveFailureRecordRoot({ TIMELINE_AUTO_REAL_PROXY_RECORD_DIR: runRoot }, privateRoot, runRoot), /outside the disposable run root/);
 });
 
 function normalParserFixture(overrides = {}) {

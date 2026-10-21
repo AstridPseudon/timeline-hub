@@ -145,6 +145,14 @@ function safeHttpPath(value) {
   return pathname.startsWith('/') && pathname.length <= 320 && !/[\u0000-\u001f\u007f]/.test(pathname) ? pathname : undefined;
 }
 
+export function resolveFailureRecordRoot(env, privateRoot, runRoot) {
+  const recordRoot = env.TIMELINE_AUTO_REAL_PROXY_RECORD_DIR ?? path.join(privateRoot, 'recorded-evidence');
+  if (!path.isAbsolute(recordRoot) || recordRoot === runRoot || recordRoot.startsWith(`${runRoot}${path.sep}`)) {
+    fail('TIMELINE_AUTO_REAL_PROXY_RECORD_DIR must be an absolute path outside the disposable run root');
+  }
+  return recordRoot;
+}
+
 export function sanitizeHttpFailureFacts(value) {
   if (!Array.isArray(value)) return [];
   return value.slice(0, 80).flatMap((candidate) => {
@@ -397,6 +405,7 @@ function privateEnvironment(input, env, runRoot) {
     npm_config_offline: 'true',
     PWTEST_CACHE_DIR: path.join(runRoot, 'playwright-cache'),
     PLAYWRIGHT_OUTPUT_DIR: path.join(runRoot, 'browser-artifacts'),
+    TIMELINE_AUTO_REAL_PROXY_RECORD_DIR: resolveFailureRecordRoot(env, input.privateRoot, runRoot),
     VITE_CACHE_DIR: path.join(runRoot, 'vite-cache'),
     XDG_CACHE_HOME: path.join(runRoot, 'xdg-cache'),
     TSX_DISABLE_CACHE: '1',
@@ -437,14 +446,44 @@ export function prepareNodeModulesOverlay(appRoot, dependencyRoot, privateRoot) 
   };
 }
 
+export function runRealProxyStartupOnly(env = process.env, appRoot = process.cwd()) {
+  if (env.TIMELINE_AUTO_REAL_PROXY_RUN !== '1') fail('set TIMELINE_AUTO_REAL_PROXY_RUN=1 only for manager-authorized central execution');
+  const input = readRealProxyInputs(env, appRoot);
+  const runRoot = path.join(input.privateRoot, `real-proxy-startup-${process.pid}`);
+  const recordRoot = resolveFailureRecordRoot(env, input.privateRoot, runRoot);
+  mkdirSync(recordRoot, { recursive: true, mode: 0o700 });
+  const result = checkRealProxySources(input);
+  writeFileSync(path.join(recordRoot, 'runner-result.json'), JSON.stringify({
+    mode: 'startup-only',
+    status: 0,
+    source_identity: {
+      app: { head: input.appSha, tree: input.appTree },
+      agent: { head: input.agentSha, tree: input.agentTree },
+      runtime: { head: input.runtimeSha, tree: input.runtimeTree },
+      runner: input.runnerSha,
+    },
+    record_directory: recordRoot,
+    argv: ['npm', 'exec', '--', 'playwright', 'test', '--config', 'playwright.auto-real-proxy.config.ts'],
+    test_path: 'tests/e2e/local/auto-real-proxy.spec.ts',
+    browser_or_task_started: false,
+  }, null, 2) + '\n', { mode: 0o600 });
+  process.stdout.write(JSON.stringify({
+    mode: 'startup-only',
+    status: 0,
+    source_identity: result,
+    record_directory: recordRoot,
+    argv: ['npm', 'exec', '--', 'playwright', 'test', '--config', 'playwright.auto-real-proxy.config.ts'],
+    test_path: 'tests/e2e/local/auto-real-proxy.spec.ts',
+    browser_or_task_started: false,
+  }) + '\n');
+  return result;
+}
+
 export function runRealProxyGate(env = process.env, appRoot = process.cwd()) {
   if (env.TIMELINE_AUTO_REAL_PROXY_RUN !== '1') fail('set TIMELINE_AUTO_REAL_PROXY_RUN=1 only for manager-authorized central execution');
   const input = readRealProxyInputs(env, appRoot);
   const runRoot = path.join(input.privateRoot, `real-proxy-${process.pid}`);
-  const recordRoot = env.TIMELINE_AUTO_REAL_PROXY_RECORD_DIR;
-  if (recordRoot !== undefined && (!path.isAbsolute(recordRoot) || recordRoot === runRoot || recordRoot.startsWith(`${runRoot}${path.sep}`))) {
-    fail('TIMELINE_AUTO_REAL_PROXY_RECORD_DIR must be an absolute path outside the disposable run root');
-  }
+  const recordRoot = resolveFailureRecordRoot(env, input.privateRoot, runRoot);
   mkdirSync(runRoot, { recursive: true });
   const before = checkRealProxySources(input);
   const childEnv = privateEnvironment(input, env, runRoot);
@@ -480,5 +519,8 @@ export function runRealProxyGate(env = process.env, appRoot = process.cwd()) {
   process.exitCode = status;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) runRealProxyGate();
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  if (process.env.TIMELINE_AUTO_REAL_PROXY_STARTUP_ONLY === '1') runRealProxyStartupOnly();
+  else runRealProxyGate();
+}
 
