@@ -355,7 +355,7 @@ function validatePrivate13Ready(file) {
   validatePrivate13ReadyRecord(readFileSync(file, 'utf8'));
 }
 
-function checkPrivateGraph(input, archive) {
+export function checkPrivateGraph(input, archive) {
   const graph = input.privateGraph;
   if (graph !== MAIN95_PRIVATE13.graph) fail(`private graph is not the protected r6 graph: ${graph}`);
   for (const shared of SHARED_ROOTS) {
@@ -366,8 +366,8 @@ function checkPrivateGraph(input, archive) {
   validatePrivate13Ready(input.privateReady);
   if (sha256File(input.privateLease) !== MAIN95_PRIVATE13.leaseSha256) fail('private graph LEASE record bytes changed');
   validatePrivate13Lease(readFileSync(input.privateLease, 'utf8'));
-  if (sha256File(path.join(input.app, 'package.json')) !== MAIN95_PRIVATE13.packageSha256) fail('private graph source package bytes changed');
-  if (sha256File(path.join(input.app, 'package-lock.json')) !== MAIN95_PRIVATE13.lockSha256) fail('private graph source lock bytes changed');
+  if (sha256File(path.join(input.app, 'package.json')) !== `sha256:${MAIN95_PRIVATE13.packageSha256}`) fail('private graph source package bytes changed');
+  if (sha256File(path.join(input.app, 'package-lock.json')) !== `sha256:${MAIN95_PRIVATE13.lockSha256}`) fail('private graph source lock bytes changed');
   const composition = path.join(graph, '@banodoco/timeline-composition');
   const compositionPackage = jsonFile(path.join(composition, 'package.json'));
   if (compositionPackage.version !== MAIN95_COMPOSITION.version) fail(`private Composition version is ${compositionPackage.version}`);

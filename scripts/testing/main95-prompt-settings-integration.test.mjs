@@ -5,6 +5,7 @@ import {
   MAIN95_AGENT,
   MAIN95_PRIVATE13,
   MAIN95_VENDOR,
+  checkPrivateGraph,
   compareInstalledComposition,
   resolverTestCount,
   validateMain95Vendor,
@@ -43,6 +44,18 @@ describe('Main95 prompt/settings source roles', () => {
 });
 
 describe('Main95 prompt/settings private13 custody', () => {
+  it('accepts protected package and lock bytes through the production digest boundary', () => {
+    checkPrivateGraph(
+      {
+        app: process.cwd(),
+        privateGraph: MAIN95_PRIVATE13.graph,
+        privateReady: MAIN95_PRIVATE13.ready,
+        privateLease: MAIN95_PRIVATE13.lease,
+      },
+      'vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz',
+    );
+  });
+
   it('accepts the protected r6 lease and byte-identical installed Composition', () => {
     assert.equal(validatePrivate13ReadyRecord(readFileSync(MAIN95_PRIVATE13.ready, 'utf8')), readFileSync(MAIN95_PRIVATE13.ready, 'utf8'));
     const lease = readFileSync(MAIN95_PRIVATE13.lease, 'utf8');
