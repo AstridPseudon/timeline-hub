@@ -13,4 +13,6 @@ for d in $O/workers/*/; do w=$(basename $d)
   for s in $(find $d -mindepth 1 -maxdepth 2 -type d 2>/dev/null); do [ -d "$s" ] || continue
     [ $(du -sm "$s" | cut -f1) -gt $MIN ] || continue
     tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && rm -rf "$s" && n=$((n+1)); done; done
+# lossless (2026-10-21): gzip Codex session transcripts untouched for 2 h (gunzip restores them); they reached 1.8 GB on main
+find /root/.codex/sessions -type f -name '*.jsonl' -mmin +120 -print0 2>/dev/null | xargs -0 -r gzip -q 2>/dev/null
 echo "packed $n scratch dirs; free ${B}M -> $(df -BM --output=avail /home/user | tail -1 | tr -d ' ')"
