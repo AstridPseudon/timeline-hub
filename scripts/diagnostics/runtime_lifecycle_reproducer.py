@@ -114,6 +114,7 @@ def _run(
     callers: int,
     launcher_mode: str = "fixture",
     source_manifest: Path | None = None,
+    pinned_launcher: Path | None = None,
 ) -> dict[str, Any]:
     temporary_context = tempfile.TemporaryDirectory(
         prefix="astrid-runtime-reproducer-",
@@ -128,9 +129,7 @@ def _run(
             launcher.write_text(_LAUNCHER, encoding="utf-8")
             launcher.chmod(0o700)
         else:
-            launcher = Path("/Users/peteromalley/.pyenv/shims/astrid-runtime")
-            if not launcher.is_file():
-                raise RuntimeError(f"pinned launcher not found: {launcher}")
+            launcher = _require_pinned_launcher(pinned_launcher)
         state = data_root / "fixture-state"
         if launcher_mode == "fixture":
             state.mkdir()
@@ -365,13 +364,18 @@ def _terminate_pid(pid: int) -> None:
         pass
 
 
-def _run_recovery_case(case: str, source_manifest: Path | None = None) -> dict[str, Any]:
+def _require_pinned_launcher(launcher: Path | None) -> Path:
+    """The caller resolves the installed pinned astrid-runtime and passes it in; the harness never guesses a path."""
+    if launcher is None or not launcher.is_file():
+        raise RuntimeError(f"pinned launcher not found: {launcher}")
+    return launcher
+
+
+def _run_recovery_case(case: str, source_manifest: Path | None = None, pinned_launcher: Path | None = None) -> dict[str, Any]:
     """Exercise pinned launcher repair against a disposable support root."""
     if case not in {"stale", "interrupted"}:
         raise ValueError(f"unsupported recovery case: {case}")
-    launcher = Path("/Users/peteromalley/.pyenv/shims/astrid-runtime")
-    if not launcher.is_file():
-        raise RuntimeError(f"pinned launcher not found: {launcher}")
+    launcher = _require_pinned_launcher(pinned_launcher)
     repo = Path(__file__).resolve().parents[2]
     manifest = source_manifest or repo / ".astrid-data/runtime/source-profiles/astrid.json"
     temporary_context = tempfile.TemporaryDirectory(prefix="astrid-runtime-recovery-", dir="/private/tmp")
@@ -475,14 +479,21 @@ def main() -> int:
     parser.add_argument("--launcher", choices=("fixture", "pinned"), default="fixture")
     parser.add_argument("--recovery-case", choices=("stale", "interrupted"))
     parser.add_argument("--source-manifest", type=Path)
+    parser.add_argument(
+        "--pinned-launcher",
+        type=Path,
+        help="path to the installed astrid-runtime; required for --launcher pinned and --recovery-case",
+    )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if not 2 <= args.callers <= 10:
         parser.error("--callers must be between 2 and 10")
+    if (args.recovery_case or args.launcher == "pinned") and args.pinned_launcher is None:
+        parser.error("--pinned-launcher is required for --launcher pinned and --recovery-case")
     report = (
-        _run_recovery_case(args.recovery_case, args.source_manifest)
+        _run_recovery_case(args.recovery_case, args.source_manifest, args.pinned_launcher)
         if args.recovery_case
-        else _run(args.mode, args.callers, args.launcher, args.source_manifest)
+        else _run(args.mode, args.callers, args.launcher, args.source_manifest, args.pinned_launcher)
     )
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output:
