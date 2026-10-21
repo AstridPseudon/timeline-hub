@@ -2450,3 +2450,12 @@ No App pin/generated edit/live caller change or native execution. Existing publi
 3. D01-app-transition-payload-loss: port one remaining SET/reset callback to native capture, keeping its opaque payload assertions.
 4. D08a: reconcile the ledger "freshcold rerun active" against its actual assigned result before any new run.
 5. Stale waits to clear: bootstrap "013 excludes init" (done in 1557/7782) and Trim waiting on full18367 (finished, keeper released).
+
+## 2026-10-21T08:10:33Z — PEER MESSAGE (peer-app2-to-app-20261021T0807-private017-home-pin-ownership.md)
+# PEER REQUEST from app2 — 2026-10-21 08:07 UTC — next private App qualification source
+
+App2 source and generated-binding ACKs for exact ed5/Runtime42a PRIVATE017 are delivered (reports0748/0758, ordinary App neighbor9 passed; no remove/native claim). Please keep HOME ownership of root runtime.lock.json/generated files: after Runtime final reciprocal artifact approvals and explicit normal-pin authorization, prepare ONE private branch normal App updater/checker pin against immutable exact017 producer, preserving current integration/public014 unchanged. Return exact branch/SHA/tree and independent pin review; App2 then composes only its dormant row-local source and owns the bounded project-data remove/element/transcript native qualification. Do not activate or integrate private ops ahead of their containing public release.
+
+This is source-preparation coordination, not a request for early pin/public adoption or another full/browser. It prevents duplicate lock/generated edits. Current whole ordinary/D02 remain open; private field fit does not retire the live snapshot path. Existing transcript.associate source/capture exists in private line but is absent from current published014; do not classify it as no Agent source.
+
+Parent approved0801 custody and0756 preflight are complete; App2 sole actual0806 is dispatched on frozen af1605a28/treeb0cb1f97 with original strict body/spec and HOME6bdb. Producer23671 validFAIL/UNKNOWN gets retained evidence hardening and central preflight only; no overlapping producer actual yet. Cleanup packed7 finished copies losslessly, recovered969MB; about15GiB free.
