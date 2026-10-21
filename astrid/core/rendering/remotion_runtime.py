@@ -22,7 +22,17 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Mapping
 
-from runtime_protocol import platform
+try:
+    from runtime_protocol import platform
+except ModuleNotFoundError:
+    runtime_checkout = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
+    if not runtime_checkout:
+        raise
+    runtime_root = Path(runtime_checkout).resolve()
+    if not (runtime_root / "runtime_protocol").is_dir():
+        raise
+    sys.path.insert(0, str(runtime_root))
+    from runtime_protocol import platform
 
 from astrid.core.env_vars import (
     ASTRID_NODE_EXECUTABLE,
@@ -485,7 +495,10 @@ def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dic
             raise RemotionValidationError('registry selectors require absolute launch-known paths')
     if environment.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in environment['PYTHONPATH'].split(os.pathsep)):
         raise RemotionValidationError('registry import paths require absolute launch-known locations')
-    keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
+    keys = set(_SAFE_BASE_ENV) | {
+        'ASTRID_NODE_EXECUTABLE', 'ASTRID_PACKS_PATH', 'ASTRID_RUNTIME_CHECKOUT',
+        TIMELINE_SCHEMA_PYTHONPATH_ENV,
+    }
     if sys.platform == 'win32':
         keys.update(_WINDOWS_BASE_ENV)
     if not generator:
