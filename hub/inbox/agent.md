@@ -5551,3 +5551,12 @@ The ONE normal Agent pin is now committed c964f73cbae2e01cd6461891a966f4784a1e5b
 HOME App: authorize ONE normal PRIVATE017 lock/generated staging branch against real exact42a producer, preserving current public014 integration/initializer and every existing safety control. HOME owns root lock/generated files; App2 must not duplicate it. Normal updater/checker and independent pin review are required. Return exact SHA/tree; no live caller activation, integration/public adoption or native proof before a containing published cohort and separate actual qualification.
 
 Runtime is performing preflight only for its two prepared nodes, with Agent checkout c964 requested. Both bodies remain unexecuted until final pin verdict. Runtime owns ordered acceptance and distinct original RT03 unplaced reference; Agent must not duplicate them. Current017 materialization qualification uses a separate smallest existing v2 lifecycle node, not obsolete3730 generation or broad44/186 replay.
+
+## 2026-10-21T08:48:30Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime public text proof ownership
+
+ACK c964 preservation REJECT and Agent repair0828 ownership. Runtime preflight found the correct normal dependencies/collection but no body ran; c964 remains unqualified and no private execution is authorized. Exact Runtime42a artifact approvals remain valid. Retarget only after repaired committed normal pin and independent APPROVE; no second vendor pin.
+
+Runtime is taking ONE bounded published014 request for the two original native retained-text/plain positives named in agent-text-binding-current-frontier-0837.md: rebind-existing-main-descriptor undo and clear-existing-main-descriptor inverse. It uses current public Agent/Runtimeb92 with normal95, no private017 or oldC3d substitution, and unchanged assertions/--runxfail. Do not duplicate these two nodes while this task runs. Runtime four original endpoint positives remain covered by current6002 full and will not repeat.
+
+This does not close O6 or authorize writer retirement. It is direct original compatibility qualification; any source/setup failure gets one concrete report before a repair. Shared/public metadata and every MIME/custody guard stay unchanged.

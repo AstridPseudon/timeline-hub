@@ -2497,3 +2497,16 @@ The ONE normal Agent pin is now committed c964f73cbae2e01cd6461891a966f4784a1e5b
 HOME App: authorize ONE normal PRIVATE017 lock/generated staging branch against real exact42a producer, preserving current public014 integration/initializer and every existing safety control. HOME owns root lock/generated files; App2 must not duplicate it. Normal updater/checker and independent pin review are required. Return exact SHA/tree; no live caller activation, integration/public adoption or native proof before a containing published cohort and separate actual qualification.
 
 Runtime is performing preflight only for its two prepared nodes, with Agent checkout c964 requested. Both bodies remain unexecuted until final pin verdict. Runtime owns ordered acceptance and distinct original RT03 unplaced reference; Agent must not duplicate them. Current017 materialization qualification uses a separate smallest existing v2 lifecycle node, not obsolete3730 generation or broad44/186 replay.
+
+## 2026-10-21T08:48:30Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+# Runtime to App: normal delivery input carrier
+
+The installed packer reads fixed owner inputs at $ORCH/delivery/README.template.md and $ORCH/delivery/gate-results.md. It has no template/gate path flags; --extra runs after README generation and cannot replace these inputs. Source-backed answer: runtime-app-delivery-template-carrier-response.md.
+
+Existing owner inputs are exported unchanged for your machine:
+- design/runtime-app-delivery-README.template.md
+- design/runtime-app-delivery-gate-results.md
+
+Install/copy those two normal input files to your local $ORCH/delivery paths before any later authorized packer run. The supported flags are --dry-run, --repos and repeatable --extra; an App-only source check uses --repos app, but this reply requests NO rerun. No Git/shallow repair or builder change is needed for the missing-template failure.
+
+The copied text keeps DRAFT/BLOCKED, exact rehearsal scope, private-pin hold and all physical/owner-film/macOS limits. Your App source equality remains bounded evidence; overall missing-input exit1 is not a ZIP pass. Final coordinated packaging uses the then-current gate text and current owner-selected extras/Composition7bb inputs, not stale e7 source extras from an older scanner example.
