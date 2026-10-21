@@ -403,4 +403,3 @@ def _invoke_scene_only(
         inputs=request, client=client, wait=True, read_managed_outputs=True,
     )
     return _scene_only_spans(result, context, client=client), context
-
