@@ -4,6 +4,7 @@ import {
   captureOccurrenceAddMedia, executeOccurrenceAddMedia, finishOccurrenceAddMedia,
 } from './occurrenceMediaCapture.ts';
 import { AuthoredState, copy, type AuthoredBundle } from './clipMovePrimitives.ts';
+import { adaptNewbornOccurrenceMediaRow } from './newbornMediaRow.ts';
 
 const owner = 'occurrence:occ-a';
 const sourceShot = 'shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f';
@@ -133,6 +134,53 @@ const agentRecord = {
 };
 
 describe('dormant native occurrence.add-media capture', () => {
+  it('keeps the complete Agent6ef command and record witness for adapted image and video rows', () => {
+    const cases: Array<{
+      kind: 'image' | 'video';
+      planned: Record<string, JSON>;
+      verified: VerifiedMedia;
+    }> = [
+      {
+        kind: 'image',
+        planned: { ...row, clipType: 'hold', hold: 5, speed: 1 },
+        verified: { ...verified, media_type: 'image/fixture' },
+      },
+      {
+        kind: 'video',
+        planned: { ...row, clipType: 'media', from: 0, to: 6, speed: 1 },
+        verified,
+      },
+    ];
+
+    for (const { kind, planned, verified: verifiedInput } of cases) {
+      delete planned.from;
+      delete planned.to;
+      if (kind === 'video') {
+        planned.from = 0;
+        planned.to = 6;
+        delete planned.hold;
+      }
+      const source = copy(planned);
+      const adapted = adaptNewbornOccurrenceMediaRow(source, kind);
+      expect(adapted).not.toBeNull();
+      expect(source).toEqual(planned);
+
+      const basis = captureOccurrenceAddMedia(bundle(), owner, adapted!, media, [verifiedInput]);
+      const result = finishOccurrenceAddMedia(basis);
+      const expectedCommand = copy(agentCommand);
+      expectedCommand.args.row = adapted!;
+      const expectedRecord = copy(agentRecord);
+      expectedRecord.command = expectedCommand;
+      expectedRecord.reads = expectedCommand.reads;
+      expectedRecord.selections = expectedCommand.selections;
+      (expectedRecord.writes[0].after as { value: Record<string, JSON> }).value.type = kind;
+      (expectedRecord.writes[1].after as { value: Record<string, JSON> }).value = adapted!;
+
+      expect(result.command).toEqual(expectedCommand);
+      expect(result.record).toEqual(expectedRecord);
+    }
+  });
+
   it('matches frozen Agent6ef command and complete record on a compact source fixture', () => {
     const input = bundle();
     const basis = captureOccurrenceAddMedia(input, owner, row, media, [verified]);

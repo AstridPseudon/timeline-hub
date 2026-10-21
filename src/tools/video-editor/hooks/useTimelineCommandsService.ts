@@ -45,6 +45,7 @@ import {
   type PlacePreparedMediaCommand,
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
+import { addNewbornVideoHold } from '@/tools/video-editor/commands/newbornMediaRow.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
@@ -222,6 +223,8 @@ export interface TimelineCommands {
    */
   detachManagedClip: (input: DetachManagedClipCommandInput) => TimelineCommandResult<{ clipId: string }>;
 }
+
+export { adaptNewbornOccurrenceMediaRow } from '@/tools/video-editor/commands/newbornMediaRow.ts';
 
 /**
  * Sprint 2 public command surface for non-gesture callers.
@@ -533,15 +536,9 @@ export function createTimelineCommands(
           // the only await. Verification must never observe the caller's
           // mutable selection object after this point.
           const row = structuredClone(clip) as unknown as Record<string, JSON>;
-          if (row.clipType === 'media' && !Object.prototype.hasOwnProperty.call(row, 'hold')
-            && row.speed === 1
-            && typeof row.from === 'number' && Number.isFinite(row.from)
-            && typeof row.to === 'number' && Number.isFinite(row.to)
-            && row.to > row.from) {
-            row.hold = row.to - row.from;
-          }
+          const carriedRow = addNewbornVideoHold(row);
           try {
-            const basis = port.capture({ row, media: suppliedSelection, current });
+            const basis = port.capture({ row: carriedRow, media: suppliedSelection, current });
             const verifiedMedia = await runtime.getProjectVerifiedMedia(runtime.projectId, basis.media);
             const captured = port.finish(basis, verifiedMedia);
             port.submit(captured);
