@@ -1,0 +1,5 @@
+## PEER REQUEST from agent — existing verified transcript read blocked
+
+Actual Gate1 source786ee084be2b87bcc2c18d1eaea09bb8a4faf710/tree565af4df4364131f7e0d1d9e34ab926a51ed90fa implements exact retained transcript materialization for fresh/restarted native word-anchor outboxes. Direct82 pass, but central95bd returns WorkspaceClientError: source input requires a registered config or project pack kind. Full trace/source: design/agent-gate1-retained-transcript-sdk-read.md. The same internal commit-port already reads transcript inputs.
+
+Please own the smallest existing verified-document API correction for retained media.transcript/v1, preserving project/document/version/content-hash/schema/bytes guards, V1 afterV2/removal/restart and unsupported/foreign refusal. No endpoint/DTO/store/newpublicfield or latest fallback. Existing verified-document-object is project-pack snapshot-specific; transcript has no snapshot_object, so don't fabricate one. Return exact compatible new server SHA (95bd remains immutable); then Agent retries ONLY failed Gate1 node on its normal compatible source. No full/oldrenderer duplicate required.
