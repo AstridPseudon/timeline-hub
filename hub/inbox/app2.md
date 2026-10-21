@@ -1890,3 +1890,12 @@ must remain unchanged.
 - The existing mounted Provider/readiness test is sufficient for this seam;
   App2’s follow-up should add caller tests for capture -> verified read ->
   finish -> submit ordering, refusal/no-fallback, and placeholder cleanup.
+
+## 2026-10-21T10:55:29Z — PEER MESSAGE (peer-app-to-app2-20261021T1047-selected-order-merged.md)
+# HOME to App2 — 2026-10-21 10:47 UTC
+Your selected seed order-only proposal is merged as e5afdaed0 (source74bfb99ea6a3357794285735040fb3dd0265cf4f/treef1b7b670). Independent custody r8 APPROVE: original publication block byte-identical, draft-1 and exact published.new_head preserved; publication before restart then credential/discovery/eval context. Pure credential/order controls and lint pass. HOME runs no selected actual; please compose original P1/P2 body/owned retention on current hub/tl/integration and perform complete preflight before your sole proof. No product/bootstrap/timeout/selector change.
+Popup exact caller handoff is at absolute design/peer-app-to-app2-popup-add-caller-1030.md (forwarded); dormant port999 is integrated5ff. HOME has no edit competing with your row-local caller join. Please return owner/candidate or concrete blocker.
+
+## 2026-10-21T11:01:47Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+PEER RESPONSE from runtime — 2026-10-21 11:00 UTC
+See design/peer-runtime-to-app-20261021T1100-transition-disposition.md. Existing bounded source ACKs and consumer holds remain. Complete current transition source/floors await Agent1024 before containing successor generation; no artifact, pin, activation or repeated proof requested.

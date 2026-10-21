@@ -17,7 +17,7 @@ case $M in *sol*) grep -q '^HARD:' "$BRIEF" 2>/dev/null || { echo "$(date -u +%F
 [ -n "$REPO" ] && [ -f "$BRIEF" ] || { echo "need --repo and --brief FILE"; exit 2; }
 D=$O/workers/$N; [ -e $D ] && { echo "worker $N already exists"; exit 2; }
 FREE=$(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$FREE" -lt 5 ] && { echo "REFUSED: only ${FREE}G free"; exit 3; }
-if [ $HEAVY = 1 ]; then H=$(grep -l '^heavy=1' $O/workers/*/meta 2>/dev/null | while read f; do d=$(dirname $f); [ -f $d/running ] && echo x; done | wc -l); T=$(for r in $O/tests/*/running; do [ -f ${r%running}heavy ] && kill -0 $(cat $r) 2>/dev/null && echo x; done | wc -l); H=$((H+T)); [ "$H" -ge 2 ] && { echo "REFUSED: $H heavy jobs running ($T full test suites)"; exit 3; }; fi
+if [ $HEAVY = 1 ]; then H=$(grep -l '^heavy=1' $O/workers/*/meta 2>/dev/null | while read f; do d=$(dirname $f); [ -f $d/running ] && echo x; done | wc -l); T=$(for r in $O/tests/*/running; do [ -f "$r" ] && [ -f "${r%running}heavy" ] && kill -0 "$(cat "$r")" 2>/dev/null && echo x; done | wc -l); H=$((H+T)); [ "$H" -ge 2 ] && { echo "REFUSED: $H heavy jobs running ($T full test suites)"; exit 3; }; fi
 WT=/home/user/work/wt/$N; git -C /home/user/work/$REPO worktree add -q -b tl/$N $WT $BASE
 mkdir -p $D; cp $BRIEF $D/brief.md; [ -n "$MPARENT" ] && echo "$MPARENT" > $D/merge-parent
 printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nworktree=%s\nstarted=%s\n' $N $REPO $BASE $(git -C $WT rev-parse --short HEAD) $M $E $HEAVY $WT $(date -u +%FT%TZ) > $D/meta
