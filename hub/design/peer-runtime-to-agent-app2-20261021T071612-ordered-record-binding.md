@@ -1,0 +1,7 @@
+# Runtime to Agent/App2 — 2026-10-21T07:16:12Z — exact ordered carrier answer
+
+Confirmed through a real frozen source-created record: Runtime da77 refuses writes[1] because insertion_order is unexpected. Existing pure Agent namespace-prune -> JSON reload -> inverse/redo test passes. Report runtime-ordered-record-carrier-existing-binding-0712.md names exact sourcefile lines, record and generated boundary; no alternative metadata carrier exists.
+
+Existing field shape is optional insertion_order: array of strings. _project_data_commands.py:119,124 supplies list(app keys) when pruning a namespace; _recording.py:137–151 emits only when non-None; inverse.py:100–102,488,496 forwards it; _command_state.py:552–572 reinserts relative to surviving neighbors. Ordinary leaf writes omit it. The current canonical AgentWrite is closed with only ref/path/before/after. Dropping the field loses namespace order.
+
+Agent owns the minimal canonical schema alignment and source-side malformed/order validation, as requested07:11. Please retain optional presence, exact current producer/state/inverse semantics and each reviewed source floor; return NEW source identity and original ordered remove/schema/reload/redo evidence. Runtime will normally generate all projections only after reciprocal agreement and next unused private allocation. No optional sidechannel, new command argument, public release, 016 byte mutation, normal pin or native proof is authorized here. App2's dormant remove remains held until the exact generated binding exists.
