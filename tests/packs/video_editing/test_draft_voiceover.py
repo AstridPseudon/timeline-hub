@@ -303,6 +303,60 @@ def test_forged_settled_selection_is_rejected():
         }})
 
 
+def test_authoritative_media_read_uses_runtime_selection_info_and_bytes():
+    payload = b'authoritative-wav'
+    object_id = 'sha256:' + hashlib.sha256(payload).hexdigest()
+    selection = {**NEW_SELECTION, 'object_id': object_id}
+    calls = []
+
+    class Client:
+        media = SimpleNamespace(read_bytes=lambda value: payload)
+
+        @staticmethod
+        def get_project_media_selection(project, selector):
+            calls.append(('selection', project, selector))
+            assert selector == {'association_id': 'association', 'object_id': object_id, 'version': 2}
+            return selection
+
+        @staticmethod
+        def get_project_verified_media(project, selected):
+            calls.append(('media_info', project, selected))
+            return {'selection': selected, 'media_type': 'audio/wav', 'size': len(payload),
+                    'duration_seconds': 1.25}
+
+    selected, info = vo._read_authoritative_media_info(Client(), 'project', {
+        'association_id': 'association', 'object_id': object_id,
+        'lifecycle': {'version': 2}, 'selection': {'object_id': OLD},
+    })
+    assert selected == selection
+    assert info['duration_seconds'] == 1.25
+    assert [call[0] for call in calls] == ['selection', 'media_info']
+
+
+def test_authoritative_media_read_rejects_forged_runtime_bytes():
+    payload = b'actual-wav'
+    object_id = 'sha256:' + hashlib.sha256(b'claimed-wav').hexdigest()
+    selection = {**NEW_SELECTION, 'object_id': object_id}
+
+    class Client:
+        media = SimpleNamespace(read_bytes=lambda value: payload)
+
+        @staticmethod
+        def get_project_media_selection(project, selector):
+            return selection
+
+        @staticmethod
+        def get_project_verified_media(project, selected):
+            return {'selection': selected, 'media_type': 'audio/wav', 'size': len(payload),
+                    'duration_seconds': 1.25}
+
+    with pytest.raises(vo.VoiceoverSyncError, match='byte hash'):
+        vo._read_authoritative_media_info(Client(), 'project', {
+            'asset': 'draft-voiceover-vo', 'generation_id': 'generation-new',
+            'variant_id': 'original',
+        })
+
+
 def test_synthesizer_verifies_managed_provenance_and_fresh_request_context(monkeypatch):
     import hashlib,json
     import astrid.sdk as sdk

@@ -430,7 +430,83 @@ def _speech_runtime_context(result: Any, audio_row: Mapping[str, Any]) -> dict[s
     }
 
 
-def runtime_synthesizer(client, project, *, generation_intent: Mapping[str, Any] | None = None):
+def _runtime_method(client: Any, name: str) -> Callable:
+    """Find one existing generated Runtime read without inventing a client API."""
+    owners = [client]
+    remote = getattr(client, "_remote", None)
+    if remote is not None:
+        owners.append(remote)
+        transport = getattr(remote, "_transport", None)
+        if transport is not None:
+            owners.extend((transport, getattr(transport, "_generated", None)))
+    for owner in owners:
+        method = getattr(owner, name, None) if owner is not None else None
+        if callable(method):
+            return method
+    raise VoiceoverSyncError(
+        f"Runtime authoritative media read is unavailable ({name}); "
+        "managed voiceover proposal cannot use synthesizer claims"
+    )
+
+
+def _media_selector(output: Mapping[str, Any]) -> dict[str, Any]:
+    """Build only an existing Runtime selector from a settled output binding."""
+    association_id = output.get("association_id")
+    object_id = output.get("object_id") or output.get("digest")
+    lifecycle = output.get("lifecycle")
+    version = output.get("version")
+    if version is None and isinstance(lifecycle, Mapping):
+        version = lifecycle.get("version")
+    if (isinstance(association_id, str) and association_id
+            and isinstance(object_id, str) and object_id
+            and type(version) is int and version >= 1):
+        return {"association_id": association_id, "object_id": object_id, "version": version}
+    legacy = {key: output.get(key) for key in ("asset", "generation_id", "variant_id")}
+    if all(isinstance(value, str) and value.strip() for value in legacy.values()):
+        return legacy
+    raise VoiceoverSyncError(
+        "Settled managed output lacks an exact Runtime media selector"
+    )
+
+
+def _read_authoritative_media_info(client: Any, project: str,
+                                   output: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Resolve selection and intrinsic metadata through Runtime, then verify bytes.
+
+    The output row is used only as the existing association/legacy selector. The
+    five-field selection, MIME, size, and duration all come from Runtime reads;
+    the bytes are read again through the managed object surface and hashed.
+    """
+    select = _runtime_method(client, "get_project_media_selection")
+    verify = _runtime_method(client, "get_project_verified_media")
+    selected = _data(select(project, _media_selector(output)))
+    selection = _exact_media_selection(selected, label="Runtime media selection")
+    if selection is None or selected != selection:
+        raise VoiceoverSyncError("Runtime media selection is not the exact five-field selection")
+    verified = _data(verify(project, selection))
+    if not isinstance(verified, Mapping) or verified.get("selection") != selection:
+        raise VoiceoverSyncError("Runtime verified media selection changed")
+    media_type = verified.get("media_type")
+    size = verified.get("size")
+    duration = verified.get("duration_seconds")
+    if media_type != "audio/wav":
+        raise VoiceoverSyncError("Runtime settled voiceover media is not audio/wav")
+    if type(size) is not int or size <= 0:
+        raise VoiceoverSyncError("Runtime settled media lacks a verified byte size")
+    if (isinstance(duration, bool) or not isinstance(duration, (int, float))
+            or not math.isfinite(float(duration)) or duration <= 0):
+        raise VoiceoverSyncError("Runtime settled media lacks a positive intrinsic duration")
+    payload = client.media.read_bytes(selection["object_id"])
+    if (not isinstance(payload, bytes)
+            or len(payload) != size
+            or "sha256:" + hashlib.sha256(payload).hexdigest() != selection["object_id"]):
+        raise VoiceoverSyncError("Runtime settled media failed byte hash or size verification")
+    return selection, {"selection": selection, "media_type": media_type,
+                       "size": size, "duration_seconds": float(duration)}
+
+
+def runtime_synthesizer(client, project, *, generation_intent: Mapping[str, Any] | None = None,
+                        authoritative_media: bool = False):
     """Invoke speech through SDK; verify provenance bytes from managed outputs."""
     # A deliberate regeneration must not replay a failed or missing old output.
     # Share one identity within this batch; a later explicit sync gets a new one.
@@ -460,10 +536,18 @@ def runtime_synthesizer(client, project, *, generation_intent: Mapping[str, Any]
                 or manifest.get("audio_sha256") != audio_id.removeprefix("sha256:")
                 or manifest.get("text_sha256") != digest(text).removeprefix("sha256:")):
             raise VoiceoverSyncError("Managed speech provenance failed hash verification")
+        settled = None
+        duration = manifest["duration_seconds"]
+        if authoritative_media:
+            settled, info = _read_authoritative_media_info(client, project, audio_row)
+            if settled["object_id"] != audio_id:
+                raise VoiceoverSyncError("Runtime settled media differs from generated object")
+            duration = info["duration_seconds"]
         return {"text": manifest["text"], "settings": manifest["settings"],
-                "audio_media_id": audio_id, "duration_seconds": manifest["duration_seconds"],
+                "audio_media_id": audio_id, "duration_seconds": duration,
                 "run_id": result.run_id, "task_id": result.kernel_task_id,
-                "runtime_context": _speech_runtime_context(result, audio_row)}
+                "runtime_context": _speech_runtime_context(result, audio_row),
+                **({"media_selection": settled} if settled is not None else {})}
     return synthesize
 
 
@@ -610,15 +694,6 @@ def _build_voiceover_proposal(*, producer: Mapping[str, Any], candidate: Mapping
     return proposal
 
 
-def _require_authoritative_media_boundary(client: Any) -> None:
-    """Keep managed proposals closed until Runtime exposes the required read."""
-    del client
-    raise VoiceoverSyncError(
-        "Managed voiceover proposal requires the existing Runtime authoritative "
-        "media-selection read boundary; synthesizer output claims are not sufficient"
-    )
-
-
 def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
                          settings=None, occurrence_ids=None, adopt_clip_ids=None,
                          padding_seconds=0.15, plan_only=False,
@@ -633,8 +708,6 @@ def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy:
     if not math.isfinite(padding_seconds) or padding_seconds < 0:
         raise VoiceoverSyncError("padding_seconds must be finite and nonnegative")
     outer = _trusted_outer_context() if managed_proposal else None
-    if managed_proposal:
-        _require_authoritative_media_boundary(client)
     shown = _data(client.timelines.open_composition(project, timeline))
     head = shown["summary"]["head_revision_id"]
     base_publication_id = shown["summary"].get("head_publication_id") if managed_proposal else None
@@ -676,8 +749,11 @@ def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy:
         **options, available_media_ids=available_media_ids)
     if plan_only or not plan["jobs"]:
         return {"status": "planned" if plan_only else "unchanged", "plan": plan, "published": False}
+    synthesizer = (runtime_synthesizer(client, project_id, authoritative_media=True)
+                   if managed_proposal else runtime_synthesizer(client, project_id))
     prepared = prepare_draft_voiceover(candidate, scripts,
-        synthesize=runtime_synthesizer(client, project_id), timing_policy=timing_policy,
+        synthesize=synthesizer,
+        timing_policy=timing_policy,
         padding_seconds=padding_seconds, available_media_ids=available_media_ids, **options)
     # Detect edits made while generation was in flight. Publication repeats the
     # check and Runtime CAS closes the final race. Never rebase stale speech.
@@ -701,24 +777,30 @@ def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy:
 
     media_by_occurrence, verified_media, old_media_by_occurrence = {}, [], {}
     for result in prepared["generated"]:
-        selection, intrinsic_duration, size = _settled_media(result)
+        context = result.get("runtime_context")
+        output = context.get("managed_output") if isinstance(context, Mapping) else None
+        if not isinstance(output, Mapping):
+            raise VoiceoverSyncError(
+                "Managed voiceover proposal lacks the settled Runtime output binding"
+            )
+        selection, info = _read_authoritative_media_info(client, project_id, output)
         occurrence_id = result["occurrence_id"]
         media_by_occurrence[occurrence_id] = selection
         if not any(row["selection"] == selection for row in verified_media):
-            verified_media.append({"selection": selection, "media_type": "audio/wav", "size": size,
-                                   "duration_seconds": intrinsic_duration})
+            verified_media.append(info)
         job = next(job for job in prepared["plan"]["jobs"]
                    if job["occurrence_id"] == occurrence_id)
         old = _candidate_media_selection(candidate, job)
         if old is not None:
             old_media_by_occurrence[occurrence_id] = old
-            old_shot = candidate["shots"][job["shot_id"]]
-            old_clip = next(row for row in old_shot["internal_timeline"]["clips"]
-                            if row.get("id") == job["clip_id"])
-            if not any(row["selection"] == old for row in verified_media):
-                verified_media.append({"selection": old, "media_type": "audio/wav",
-                                       "size": _candidate_media_size(candidate, job, old),
-                                       "duration_seconds": _duration(old_clip)})
+            old_info_output = {"asset": old["asset"], "generation_id": old["generation_id"],
+                               "variant_id": old["variant_id"]}
+            old_selection, old_info = _read_authoritative_media_info(
+                client, project_id, old_info_output)
+            if old_selection != old:
+                raise VoiceoverSyncError("Runtime old media selection differs from the authored source")
+            if not any(row["selection"] == old_selection for row in verified_media):
+                verified_media.append(old_info)
     captured = capture_draft_voiceover(
         candidate, prepared, media_by_occurrence=media_by_occurrence,
         verified_media=verified_media, old_media_by_occurrence=old_media_by_occurrence,
