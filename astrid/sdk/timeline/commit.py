@@ -509,7 +509,23 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
         authority = None
         if command['op'] in ('clip.set-params', 'clip.set'):
             row = ctx.state.entity(command['select'])
-            selected = row.get('elementRef') or row.get('element_ref')
+            strict_transition = (command['op'] == 'clip.set'
+                                 and 'transition' in command['args']['values'])
+            if strict_transition:
+                from ._command_state import ABSENT
+                from ._selected_param_authority import _INVALID, _selected_reference
+
+                selected = _selected_reference(row)
+                if selected is _INVALID or (
+                        selected is not ABSENT
+                        and (not isinstance(selected, dict)
+                             or any(not isinstance(selected.get(key), str)
+                                    or not selected[key]
+                                    for key in ('id', 'kind', 'revision')))):
+                    raise CommandError('selected transition reference is malformed',
+                                       ref=command['select'])
+            else:
+                selected = row.get('elementRef') or row.get('element_ref')
             requested = (command['args']['values'].get('elementRef')
                          if command['op'] == 'clip.set' else selected)
             same_reference = (isinstance(selected, dict) and isinstance(requested, dict)
@@ -521,7 +537,7 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
 
                 authority = resolve_selected_param_source(
                     port, context=context, through=through, select=command['select'],
-                    staged=ctx.prior_records)
+                    staged=ctx.prior_records, strict_reference=strict_transition)
                 if 'schema_source' not in command['args']:
                     raise CommandError('selected project pack requires exact schema_source',
                                        ref=command['select'])

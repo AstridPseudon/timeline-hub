@@ -579,6 +579,6 @@ class State:
                     index = current.index(previous) + 1 if previous is not None else 0
                 current.insert(index, target)
                 values = {key: value[key] for key in current if key != target}
-                values[target] = state["value"]
+                values[target] = copy.deepcopy(state["value"])
                 value.clear()
                 value.update((key, values[key]) for key in current)
