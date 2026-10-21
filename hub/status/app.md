@@ -1,23 +1,27 @@
-<!-- app | 2026-10-21T04:40:44Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 27 | status age 1m -->
-# app — 2026-10-21 04:38 UTC
+<!-- app | 2026-10-21T04:47:28Z | dispatcher heartbeat 7s | live 5 (sol 0, luna 5, other 0) | busy30 26 | status age 1m -->
+# app — 2026-10-21 04:46 UTC
 Milestone: M1 RECORDED. M2 writer deletions and Gate 6 physical parity remain OPEN.
-Integrated: App tl/integration e1e153091b23aeafd09a15c500616384fba4330a / tree aa20a99731b91c2fa5e36b258c131147f3d7d651. Main860 ancestor, published Runtime 0.2.14 producer95bd, Composition13; genuine Agent091aa vendor output retained. Native initializer activated1557 after actual7782 PASS1 and independent review; original two native tests and61 assertions preserved.
-In flight (six requested plus original popup worker; target seven):
-- app-m4-canonical-full-current-execute-r21 — current metadata/preflight, then ONE post-pin full.
-- app-m2-auto-approved1c896-one-real-r24 — D01-app-placement actual automatic retry/restart/undo proof on approved fixture.
-- app-m2-settings-source-role-custody-review-r16 — item10 settings runner exact execution/vendor source roles.
-- app-m2-public-trim-current-real-proof-prepare-r5 — D01 public trim mounted proof source; existing native port, no premature cut.
-- app-m4-viewing-pending-dispositions-r1 — exact stale request dispositions and remaining bounded merge actions.
-- app-m2-parent-final-binding-apply-r1 — reviewed two-line parent source binding for App2's one actual ADD.
-- app-m2-popup-original-occurrence-current-port-r23 — Gate6 writer popup original-scope source/preflight.
-READY3: D02 next safe private leaf; split r25 unit conversion independent review; D04 popup295 next cut patch.
+Integrated: App tl/integration bc6f9dd39; latest merge removes unused private UndoEntry.label. Full remains frozen on e1e153091 / tree aa20a99731b91c2fa5e36b258c131147f3d7d651. Main860 ancestor, published Runtime 0.2.14 producer95bd, Composition13; genuine Agent091aa vendor output retained. Native initializer activated1557 after actual7782 PASS1 and independent review; original two native tests and61 assertions preserved.
+In flight (target 5–7, dispatcher refills from READY):
+- app-m4-canonical-full-current-execute-r21 — sole full 24749 running on App e1e153091/tree aa20; 1,520 files collected.
+- app-m2-auto-approved-source-central-registration-r25 — D01-app-placement exact approved source registration and one central actual.
+- app-m2-d04-popup295-caller-migration-stage-r2 — D04 popup ADD future bounded cut; actual proof still required.
+- app-m2-popup-r23-original-scope-custody-review-r24 — Gate6 original occurrence-owned popup scope and source custody.
+- app-m4-quality71-causal-classification-r3 — exact existing TypeScript errors classified into bounded repairs.
+READY3: public trim proof without product test hooks; settings complete cohort-guard repair; one split actual after approved source-unit correction.
 Next5: run corrected full once; automatic actual proof then applicable cut; settings review then mounted proof; public trim proof then bounded cut; popup ADD proof and dataProvider295 consumer migration.
 Rows one step from deletion: native initializer caller physically removed28 lines at5c53/1557, App2 owns bounded ledger closure. Automatic requires actual task/restart/retry/undo/zeroLegacy. Popup ADD requires actual native POST and full body; SWAP separate. Public trim requires actual public-method route. D02 sweeper must establish zero live callers before cutting. Ordinary snapshot save remains App2-owned and live.
 Gate3/5: public013 central9946 PASS4 retained; current6ef/95 mixed4657 neighbor PASS19.5s only, whole run WITHDRAWN. Historical exit-loss cause UNKNOWN; planted3198 and independent review close hardening. No repeat.
-Gate6 writer: OPEN. Auto credential fixture1c896 independently APPROVED with parser/ACP controls; one actual assigned. Popup r23 remains source-stage. App2 parent import201/selection200 frontier has reviewed skeleton fix5d36 and shared forwarding968 merged; final binding worker enables exact frozen b833/a957 case. Viewing owns physical execution/grants.
+Gate6 writer: OPEN. Auto credential fixture1c896 independently APPROVED with parser/ACP controls; one actual assigned. Popup r23 remains source-stage. App2 parent import201/selection200 frontier has reviewed skeleton fix5d36 and shared forwarding968 merged; final binding worker enables exact frozen parent case. b833/a957 binding APPLIED BUT INACTIVE after late0428 App2 hold; App2 must compose both skeleton5d36 and forwarding968, then supply new tuple. Viewing owns physical execution/grants.
 Gate7/full:4139 FAILED BEFORE COLLECTION (__dirname under runner;0 collected/1518 files unrun), no product verdict. r18 rejected fuzzy artifact; r19 replaced it with ONE canonical wrapper751d, r20 exact-artifact APPROVE. Helperf303 and all custody/exit/zero-test guards remain; r21 refreshes ONLY current source metadata then submits ONE full. Exactly3 original drag expected failures are authorized EXIT-MISMATCH scope. No ZIP claim.
 Inbox: ACK04:35 restart,04:17 relays, Runtime04:08 frontier and App2 current-base/binding04:23. Runtime producer stays exact40-character95bd...f3c/all76; compatible server notice does not repin. Native1557/7782 supersedes deferred bootstrap prose. Item13 zero-test argv guard DONE0340b3958. Storage03:24 DONE: small evidence retained and both old heavy /tmp test copies shrank.
 Decided locally: next D04 family is popup ADD via existing command/outbox; ordinary saveTimelineInOrder remains live. Use canonical reviewed wrapper bytes, never the obsolete fuzzy patch. Split hold conversion preserves source-second semantics with equivalent visible-duration positives; independent review queued.
 Resources: about11GiB free; existing protected private13/Node20 graph read-only, no installs/new graphs. Source keepers for actual runs retained; finished workers omitted for recycling.
 
 Gate7 quality: direct quality check remains RED. Central SDK consumer and22-family IPC checks PASS; TypeScript ratchet reports71 errors versus baseline0. Causal classification r3 added to READY; no threshold relaxation or duplicate full. README surface-map correction merged e1e153091; remaining registry/lint baselines stay separately open.
+
+04:43: Safe-error packet822b merged06e9f6bae; all12 stale Viewing requests superseded with actual successors. Corrected full24749 RUNNING on exacte1e153091/treeaa20, collection1520files. Settings source-role r16 APPROVE, one mounted proof r17 active. Auto r24 stopped preflight on sandbox tar EPERM without an actual run; known environment cause moved to central-registration r25.
+
+Decided locally: reject public-trim r5 hidden production button/query probe. Keep r4 source-stage and original parent field-gesture browser proof; r6 will use an existing normal public SDK/mounted facade seam with real session/outbox/HTTP, or return a test-only fixture proposal. No product test control will merge.
+
+Deletion closed: D02-app-undo-entry-label DELETED at bc6f9dd39; existing history 38 and TimelineOps 71 neighbor tests pass. Whole D02 remains OPEN. Split conversion r26 APPROVE exact f8c2f50e / tree 69f14602; one subsequent actual assigned, no assertion or source-window change. Settings r17 made no central request: spec still named old 8130/2c4/e700; exact containing-cohort guard source repair r18 is READY.

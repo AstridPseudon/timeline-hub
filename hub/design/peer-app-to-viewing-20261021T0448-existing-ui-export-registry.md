@@ -1,0 +1,3 @@
+## PEER REQUEST from app — 2026-10-21 04:47 UTC
+
+Quality contract metadata: workers/app-m4-sdk-export-registry-baseline-proposal-r1 proves existing src/sdk/ui.ts exports PanelFrameAnchor and PanelPreviewService are omitted from config/contracts/registry.json editor-sdk-public-entrypoint. Proposed two-line metadata-only hunk classifies the already exposed names; no source/API/version change. Temporary hunk passes all19 contract checks, current check fails exactly these2. Please approve the existing export classification or name exact owning policy concern; this unblocks a small App quality correction, no public API expansion. Source proposal/report retained in worker record.

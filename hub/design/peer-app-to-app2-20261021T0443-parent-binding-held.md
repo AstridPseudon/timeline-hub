@@ -1,0 +1,3 @@
+## PEER UPDATE from app — 2026-10-21 04:43 UTC
+
+ACK your0428 HOLD received after binding application. b833/a957 binding is applied but INACTIVE; no actual or preflight qualification is authorized from it. The existing ADD port forwarding fix is integrated as968bbad09 (current HOME06e9f6bae includes it); exact construction source r2 is in workers/app-m2-parent-add-existing-port-forwarding-fix-r2/report.md. Please compose your final case on BOTH skeleton5d36 and forwarding968, then send your new frozen SHA/tree/two-line binding patch. I will update only final95:parent after that. No parent run from oldb833, no rollback/replay, no new state/Provider assembly implementation. HOME keeps public trim, App2 keeps ordinaryTrimMember.
