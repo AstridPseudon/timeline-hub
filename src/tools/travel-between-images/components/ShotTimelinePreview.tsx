@@ -25,6 +25,7 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import { hardDurationMs } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { ShotTimelineMediaProvider } from './shotTimelineDataProvider.ts';
 import {
   createShotTimelineDataProvider,
   createShotTimelineInitialData,
@@ -39,6 +40,8 @@ type ShotTimelinePreviewProps = {
   composition: PreparedShotComposition;
   occurrenceId: string;
   shotCompositionAdapter?: ShotCompositionAdapter;
+  /** Reuse the parent Runtime media-import and managed-selection seam. */
+  mediaProvider?: ShotTimelineMediaProvider;
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
     publication?: CanonicalShotTimelinePublication,
@@ -386,6 +389,7 @@ export function ShotTimelinePreview({
   composition,
   occurrenceId,
   shotCompositionAdapter,
+  mediaProvider,
   onCanonicalCompositionPublished,
   onCanonicalDraftStateChange,
   onCanonicalDraftSessionChange,
@@ -521,6 +525,8 @@ export function ShotTimelinePreview({
           shotCompositionAdapter,
           handleCanonicalCompositionPublished,
           editorHeadStateRef,
+          0,
+          mediaProvider,
         )
       : null,
     // Keep one provider/editor session. Its query identity advances with the
@@ -530,7 +536,7 @@ export function ShotTimelinePreview({
     // recreating it for either would reset query/editor/recovery identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [hasProjectionConfig, currentComposition.parentDocumentId,
-      currentComposition.projectId, occurrenceId, shotCompositionAdapter],
+      currentComposition.projectId, occurrenceId, shotCompositionAdapter, mediaProvider],
   );
   const initialTimelineData = useMemo(
     () => projectionConfig ? createShotTimelineInitialData(projectionConfig) : undefined,

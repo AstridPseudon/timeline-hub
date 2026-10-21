@@ -5,6 +5,11 @@ import {
 } from '@/tools/video-editor/lib/serialize.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { LoadedTimeline } from '@/tools/video-editor/data/DataProvider.ts';
+import type {
+  MediaSelection,
+  MediaSelectionQuery,
+  VerifiedMedia,
+} from '@/integrations/runtime/generated.ts';
 import {
   advanceTimelineDraftBaseAfterAcknowledgement,
   clearTimelineDraftIfMatches,
@@ -37,6 +42,14 @@ import { assembleTimelineData, type TimelineData } from '@/tools/video-editor/li
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
 
 type JsonObject = Record<string, unknown>;
+
+export type ShotTimelineMediaProvider = Pick<DataProvider,
+  'supportsDirectAssetUpload'
+  | 'prepareMediaImport'
+> & {
+  getProjectMediaSelection?(query: MediaSelectionQuery): Promise<MediaSelection>;
+  getProjectVerifiedMedia?(selection: MediaSelection): Promise<VerifiedMedia>;
+};
 
 export function shotTimelineSessionId(
   parentDocumentId: string,
@@ -233,6 +246,8 @@ type PendingCanonicalPublication = {
 };
 
 type ShotTimelineDataProvider = DataProvider & {
+  getProjectMediaSelection?: (query: MediaSelectionQuery) => Promise<MediaSelection>;
+  getProjectVerifiedMedia?: (selection: MediaSelection) => Promise<VerifiedMedia>;
   timelineQueryIdentity: string;
   setPublishCallback: (callback?: (
     composition: PreparedShotComposition,
@@ -290,6 +305,7 @@ export function createShotTimelineDataProvider(
   ) => void,
   editorHeadState?: { current: ShotTimelineEditorHeadState },
   initialDraftGeneration = 0,
+  mediaProvider?: ShotTimelineMediaProvider,
 ): ShotTimelineDataProvider {
   let registry: { assets: Record<string, ResolvedAssetRegistryEntry> } = {
     assets: Object.fromEntries(Object.entries(config.registry).map(([assetId, entry]) => ([assetId, {
@@ -355,6 +371,18 @@ export function createShotTimelineDataProvider(
       return timelineQueryIdentity;
     },
     persistenceEnabled: Boolean(shotCompositionAdapter?.publish),
+    ...(mediaProvider?.supportsDirectAssetUpload !== undefined
+      ? { supportsDirectAssetUpload: mediaProvider.supportsDirectAssetUpload }
+      : {}),
+    ...(mediaProvider?.prepareMediaImport
+      ? { prepareMediaImport: mediaProvider.prepareMediaImport.bind(mediaProvider) }
+      : {}),
+    ...(mediaProvider?.getProjectMediaSelection
+      ? { getProjectMediaSelection: mediaProvider.getProjectMediaSelection.bind(mediaProvider) }
+      : {}),
+    ...(mediaProvider?.getProjectVerifiedMedia
+      ? { getProjectVerifiedMedia: mediaProvider.getProjectVerifiedMedia.bind(mediaProvider) }
+      : {}),
     setShotTimelineTraceId: (traceId) => { activeTimingTraceId = traceId; },
     getTimelineDraftRecoveryMetadata: (rememberRaw): TimelineDraftRecoveryMetadata => {
       rememberRaw?.(composition);
