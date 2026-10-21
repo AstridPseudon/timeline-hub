@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -57,8 +58,41 @@ def ordinary_move_requested(parsed):
     return store.find_draft(parsed.project, parsed.ref, client=parsed.client) is None
 
 
+def _plain_word_moment(value):
+    from astrid.core.timeline import moments
+
+    try:
+        moment = moments.parse(value)
+    except (TypeError, moments.MomentError):
+        return None
+    if (moment.kind != 'word' or moment.n is not None or moment.edge != 'start'
+            or moment.offset_s != 0 or moment.offset_frames != 0):
+        return None
+    return moment
+
+
+def ordinary_word_anchor_requested(parsed):
+    from astrid.sdk.timeline import store
+
+    if (parsed.client is None or parsed.file or parsed.draft or parsed.on is None
+            or not isinstance(parsed.clip, str)
+            or re.fullmatch(r'parent/clip:(?!.*::)[^/]+', parsed.clip) is None
+            or _plain_word_moment(parsed.on) is None):
+        return False
+    accepted = {'project', 'ref', 'clip', 'on', 'dry_run', 'idempotency_key', 'json', 'no_sweep'}
+    if not all(name in accepted or getattr(parsed, name) == default
+               for name, default in parsed.native_trim_defaults.items() if name != 'help'):
+        return False
+    return store.find_draft(parsed.project, parsed.ref, client=parsed.client) is None
+
+
 def dispatch_ordinary_edit(parsed):
     """Dispatch the supported ordinary native edit, or leave legacy edits alone."""
+    if ordinary_word_anchor_requested(parsed):
+        result = commit_edit(parsed, edit=commit_word_anchor)
+        if result is not NotImplemented:
+            return result
+
     if ordinary_move_requested(parsed):
         result = commit_edit(parsed, edit=commit_move)
         if result is not NotImplemented:
@@ -166,6 +200,38 @@ def commit_move(session, parsed, options):
         if select.startswith('occurrence:') and exc.kind == 'unsupported_map':
             return NotImplemented
         raise
+
+
+def commit_word_anchor(session, parsed, options):
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline.native_word_anchor import capture_anchor, legacy_binding
+
+    with session.outbox.locked():
+        state = session._state()
+    bundle = session._bundle({**state, 'pending': []})
+    select = parsed.clip
+    if (not isinstance(select, str)
+            or re.fullmatch(r'parent/clip:(?!.*::)[^/]+', select) is None):
+        return NotImplemented
+    moment = _plain_word_moment(parsed.on)
+    if moment is None:
+        return NotImplemented
+    sources = bundle.get('source_mapping', {}).get('pinned_documents', [])
+    try:
+        binding = legacy_binding(bundle, select, 'on', parsed.on, sources)
+    except TimelineEditError:
+        return NotImplemented
+    choice = {
+        'source': f'occurrence:{binding.source[0]}/clip:{binding.source[2]}',
+        'document': {
+            'document_id': binding.document_id,
+            'version': binding.version,
+            'content_digest': binding.content_digest,
+        },
+        'word_ids': list(binding.word_ids),
+    }
+    command = capture_anchor(bundle, select, 'on', binding.declaration, choice)
+    return session.commit(command, **options)
 
 
 def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=None):
