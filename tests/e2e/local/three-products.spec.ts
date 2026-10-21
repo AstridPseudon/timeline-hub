@@ -1501,7 +1501,12 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
   await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 20);
   await wrongImportResponse;
   const wrongVerified = await wrongVerifiedResponse;
-  expect([404, 409]).toContain(wrongVerified.status());
+  expect(wrongVerified.status()).toBe(404);
+  await expect(wrongVerified.json()).resolves.toEqual({
+    code: 'not_found',
+    message: 'selected media is not a managed project generation/variant/object',
+    request_id: expect.stringMatching(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$/),
+  });
   await page.unroute(wrongSelectionRoute);
   await expect(page.locator('.clip-action')).toHaveCount(baselineClipCount, CEILING);
   expect(await currentHead(harness)).toBe(original.head.revision_id);
