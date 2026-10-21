@@ -5,7 +5,7 @@ import path from 'node:path';
 import { expect, type Page, type Route } from '@playwright/test';
 import { commandOutboxes, revisionBody, test as appTest } from './support/app.ts';
 import { ASTRID_CHECKOUT, ASTRID_PYTHON } from './support/astrid.ts';
-import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
+import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, HistoryPage, Manifest } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { PRODUCT_ACTOR, REPO_ROOT, RUNTIME_CHECKOUT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 
 const CEILING = { timeout: 90_000 };
@@ -53,6 +53,8 @@ function verifySourceTuple() {
   expect(readFileSync(path.join(REPO_ROOT, 'src/integrations/runtime/generated-contract-metadata.ts'), 'utf8')).toContain('CONTRACT_VERSION = "0.2.14"');
   const vendorCheck = execFileSync(process.execPath, [path.join(REPO_ROOT, 'scripts/vendor-lock.mjs'), 'check', path.join(REPO_ROOT, 'runtime.lock.json'), '--producer', RUNTIME_CHECKOUT], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   expect(vendorCheck).toContain('ok runtime.lock.json (matches pinned producer commit)');
+  const vendorSourcesCheck = execFileSync(process.execPath, [path.join(REPO_ROOT, 'scripts/build/verify-astrid-vendor-sources.mjs')], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  expect(vendorSourcesCheck).toContain('Verified');
   const artifacts = JSON.parse(readFileSync(path.join(RUNTIME_CHECKOUT, 'contract/artifacts.json'), 'utf8')) as { artifacts: Record<string, unknown>; producer: string; version: string };
   expect(Object.keys(artifacts).sort()).toEqual(['artifacts', 'producer', 'version']);
   expect(Object.keys(artifacts.artifacts)).toHaveLength(76);
@@ -86,16 +88,18 @@ async function revision(harness: DirectHarness, seed: ThreeProductsSeed, id: str
 
 async function canonicalDocumentAt(harness: DirectHarness, seed: ThreeProductsSeed, revisionId: string): Promise<CanonicalDocument> {
   const parent = await revisionBody(harness, revisionId);
-  const manifest = parent.dependency_manifest as Record<string, any>;
+  const manifest = parent.dependency_manifest as Manifest;
   expect(manifest).toBeTruthy();
-  const shotRevisions = await Promise.all((manifest.shots as Array<Record<string, any>>).map(async (pin) => {
+  const shotRevisions = await Promise.all(manifest.shots.map(async (pin) => {
     const result = await harness.runtimeJson<Record<string, any>>('GET', `/v1/projects/${harness.seed.projectId}/shots/${pin.shot_id}/revisions/${pin.revision_id}`);
     expect(result.status, JSON.stringify(result.body)).toBe(200);
+    expect(result.body).toMatchObject(pin);
     return { ...pin, payload: result.body.payload };
   }));
-  const internalTimelineRevisions = await Promise.all((manifest.internal_timelines as Array<Record<string, any>>).map(async (pin) => {
+  const internalTimelineRevisions = await Promise.all(manifest.internal_timelines.map(async (pin) => {
     const result = await harness.runtimeJson<Record<string, any>>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${pin.timeline_id}/revisions/${pin.revision_id}`);
     expect(result.status, JSON.stringify(result.body)).toBe(200);
+    expect(result.body).toMatchObject(pin);
     return { ...pin, payload: result.body.payload };
   }));
   return {
@@ -119,6 +123,11 @@ async function expectImmutableClosure(harness: DirectHarness, seed: ThreeProduct
     receipt: result.receipt,
   });
   expect(entry?.receipt).toEqual(result.receipt);
+}
+
+function expectAcceptedReceipt(result: CommitAcceptedMutation) {
+  expect(result.receipt.result).toEqual(result.data);
+  return result;
 }
 
 function parentClip(parent: Record<string, any>, clipId: string) {
@@ -191,7 +200,7 @@ test('M2 public trim fixture: source window, exact retry/reload, guarded undo an
   expect(posts[0].body).toMatchObject({ project_id: harness.seed.projectId, timeline_id: seed3.timelineId, base_revision_id: before.head.revision_id, base_publication_id: before.head.publication_id });
   expect(posts[0].body.commands).toEqual([expect.objectContaining({ op: 'clip.trim', select: `parent/clip:${seed3.transitionClipId}`, args: { in_s: null, out_s: 2.5 } })]);
   expect(posts[0].status).toBe(200);
-  const first = posts[0].response!;
+  const first = expectAcceptedReceipt(posts[0].response!);
   const firstParent = first.data.canonical_document.parent_revision.payload as Record<string, any>;
   expect(parentClip(firstParent, seed3.transitionClipId)).toMatchObject({ from: 0, to: 2.5, hold: 2.5 });
   expect(parentClip(firstParent, seed3.appClipId)).toEqual(originalAppClip);
@@ -202,7 +211,8 @@ test('M2 public trim fixture: source window, exact retry/reload, guarded undo an
   await page.getByTestId('public-trim-undo').click();
   await waitForPost(posts, 1);
   expect(posts[1].body.commands).toEqual([{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [firstPublication] } }]);
-  expect(posts[1].response!.data.canonical_document.parent_revision.payload).toEqual(original);
+  const undone = expectAcceptedReceipt(posts[1].response!);
+  expect(undone.data.canonical_document.parent_revision.payload).toEqual(original);
 
   let heldRoute: Route | undefined;
   let holdAck = true;
@@ -248,7 +258,7 @@ test('M2 public trim fixture: source window, exact retry/reload, guarded undo an
   expect(response.status()).toBe(200);
   expect(response.request().postData()).toBe(originalRetry.rawBody);
   expect(response.request().headers()['idempotency-key']).toBe(originalRetry.key);
-  const retried = await response.json() as CommitAcceptedMutation;
+  const retried = expectAcceptedReceipt(await response.json() as CommitAcceptedMutation);
   const retriedParent = retried.data.canonical_document.parent_revision.payload as Record<string, any>;
   expect(parentClip(retriedParent, seed3.transitionClipId)).toMatchObject({ from: 0, to: 2.5, hold: 2.5 });
   expect(parentClip(retriedParent, seed3.appClipId)).toEqual(originalAppClip);
