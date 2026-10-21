@@ -1,4 +1,4 @@
-"""Private candidate contract for authored extension project-data replacement."""
+"""Private candidate contract for authored extension project-data writes/removals."""
 
 from __future__ import annotations
 
@@ -26,8 +26,22 @@ def command(key, value, *, target=TARGET, select="parent"):
     }
 
 
+def remove(key, *, target=TARGET, select="parent"):
+    return {
+        "schema_version": 1,
+        "op": "project-data.write",
+        "version": "1",
+        "select": select,
+        "args": {"target": target, "key": key, "mode": "remove"},
+    }
+
+
 def project_data(value):
     return State(value).config("parent").get("app", {})
+
+
+def reload_bundle(value):
+    return json.loads(json.dumps(value))
 
 
 def test_compiler_canary_source_and_source_map_are_one_ordered_native_batch():
@@ -107,6 +121,93 @@ def test_null_prior_value_is_distinct_from_absence():
         "value": None,
     }
     assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_remove_deletes_one_key_preserves_order_and_roundtrips_exactly():
+    original = bundle()
+    original["parent"]["config"]["app"] = {
+        TARGET: {"keep": {"opaque": [None, False, 0]}, "gone": None, "last": 0},
+        "sibling": {"leave": True},
+    }
+    before = copy.deepcopy(original)
+
+    plan = execute(original, [remove("gone")])
+
+    assert list(project_data(plan.bundle)[TARGET]) == ["keep", "last"]
+    assert list(project_data(plan.bundle)) == [TARGET, "sibling"]
+    assert plan.records[0]["writes"] == [{
+        "ref": "parent",
+        "path": ["config", "app", TARGET, "gone"],
+        "before": {"state": "present", "value": None},
+        "after": {"state": "absent"},
+    }]
+    assert inverse(plan.bundle, plan.records).bundle == before
+    undone = inverse(plan.bundle, plan.records)
+    assert inverse(undone.bundle, undone.records).bundle == plan.bundle
+
+
+def test_remove_last_key_prunes_only_empty_namespace_and_app():
+    original = bundle()
+    original["parent"]["config"]["app"] = {TARGET: {"gone": False}, "sibling": {"keep": 1}}
+    before = copy.deepcopy(original)
+
+    plan = execute(original, [remove("gone")])
+
+    assert project_data(plan.bundle) == {"sibling": {"keep": 1}}
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
+def test_remove_distinguishes_absent_target_from_null_namespace():
+    absent = bundle()
+    absent["parent"]["config"]["app"] = {"sibling": {"keep": True}}
+    absent_before = copy.deepcopy(absent)
+    assert execute(absent, [remove("gone")]).bundle == absent_before
+
+    null = bundle()
+    null["parent"]["config"]["app"] = {TARGET: None, "sibling": {"keep": True}}
+    null_before = copy.deepcopy(null)
+    plan = execute(null, [remove("gone")])
+    assert project_data(plan.bundle) == {"sibling": {"keep": True}}
+    assert inverse(plan.bundle, plan.records).bundle == null_before
+
+
+def test_remove_rebases_disjoint_key_and_refuses_same_key_aba():
+    original = bundle()
+    original["parent"]["config"]["app"] = {TARGET: {"gone": "A", "keep": True}}
+    deletion = execute(original, [remove("gone")])
+    disjoint = execute(original, [command("other", {"id": "B"})])
+
+    rebased = replay(deletion, disjoint.bundle, intervening_records=disjoint.records)
+    assert project_data(rebased.bundle)[TARGET] == {"keep": True, "other": {"id": "B"}}
+
+    away = execute(original, [command("gone", "B")])
+    back = execute(away.bundle, [command("gone", "A")])
+    with pytest.raises(CommandError) as error:
+        inverse(deletion.bundle, deletion.records, [*away.records, *back.records])
+    assert error.value.kind == "intervening_write"
+
+
+def test_remove_pruned_namespace_restores_exact_order_after_reload_and_redo():
+    original = bundle()
+    original["parent"]["config"]["app"] = {
+        "before": {"keep": True},
+        TARGET: {"gone": False},
+        "after": {"opaque": [None, 0]},
+    }
+    before = copy.deepcopy(original)
+
+    plan = execute(original, [remove("gone")])
+    removed = reload_bundle(plan.bundle)
+    records = json.loads(json.dumps(plan.records))
+    assert list(project_data(removed)) == ["before", "after"]
+
+    undone = inverse(removed, records)
+    assert list(project_data(undone.bundle)) == ["before", TARGET, "after"]
+    assert undone.bundle == before
+
+    redone = inverse(reload_bundle(undone.bundle), json.loads(json.dumps(undone.records)))
+    assert list(project_data(redone.bundle)) == ["before", "after"]
+    assert redone.bundle == removed
 
 
 def test_disjoint_keys_rebase_and_same_key_aba_refuses():
@@ -243,3 +344,10 @@ def test_private_schema_and_registry_are_closed():
             {**command("source", 1), "args": {**command("source", 1)["args"], "extra": True}}
         )
     assert json.loads(json.dumps(command("source", {"__proto__": 1}), allow_nan=False))
+    validator.validate(remove("source"))
+    with pytest.raises(Exception):
+        validator.validate({**remove("source"), "args": {**remove("source")["args"], "value": 1}})
+    with pytest.raises(Exception):
+        invalid_replace = command("source", 1)
+        del invalid_replace["args"]["value"]
+        validator.validate(invalid_replace)

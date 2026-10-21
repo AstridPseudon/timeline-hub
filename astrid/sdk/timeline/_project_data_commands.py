@@ -1,4 +1,4 @@
-"""Bounded replacement of one extension-owned project-data entry."""
+"""Bounded replacement/removal of one extension-owned project-data entry."""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ def _validate_limits(ctx, target, key, value):
 
 
 def project_data_write(ctx, command):
-    """Replace exactly one key in the parent timeline's ``config.app`` map.
+    """Replace or remove exactly one key in the parent timeline's ``config.app`` map.
 
     The project catalog is deliberately outside the authoring bundle and is
     not reachable from this command.  Opaque JSON, including object keys that
@@ -78,22 +78,54 @@ def project_data_write(ctx, command):
     if command.get("select") != "parent":
         raise CommandError("project-data.write requires the parent timeline scope")
     args = command["args"]
-    target, key, value = args["target"], args["key"], args["value"]
+    target, key, mode = args["target"], args["key"], args["mode"]
     _validate_target(target)
     _validate_key(key)
-    if args.get("mode") != "replace":
-        raise CommandError('project-data.write only supports mode "replace"')
-    _json_bytes(value)
-    _validate_limits(ctx, target, key, value)
+    ref, target_path = "parent", ["config", "app", target]
 
-    ref, path = "parent", ["config", "app", target, key]
-    # Containers are part of the authored scope.  Recording them when they
-    # are first created lets inverse restore absent/null target containers
-    # exactly; existing namespaces are touched only at the requested key.
-    ctx.object(ref, ["config"])
-    ctx.object(ref, ["config", "app"])
-    ctx.object(ref, ["config", "app", target])
-    ctx.write(ref, path, value)
+    if mode == "replace":
+        value = args["value"]
+        _json_bytes(value)
+        _validate_limits(ctx, target, key, value)
+        # Containers are part of the authored scope. Recording them when they
+        # are first created lets inverse restore absent/null target containers
+        # exactly; existing namespaces are touched only at the requested key.
+        ctx.object(ref, ["config"])
+        ctx.object(ref, ["config", "app"])
+        ctx.object(ref, target_path)
+        ctx.write(ref, [*target_path, key], value)
+        return
+
+    if mode != "remove":
+        raise CommandError('project-data.write only supports mode "replace" or "remove"')
+
+    namespace = ctx.state.get(ref, target_path)
+    if namespace["state"] == "absent":
+        # Keep a missing target as a guarded no-op. The project-data container
+        # claim permits a disjoint namespace birth to replay.
+        ctx.read(ref, target_path)
+        return
+    if namespace["value"] is not None and not isinstance(namespace["value"], dict):
+        raise CommandError("intent container must be object or null", ref=ref, path=target_path)
+
+    # Null/empty namespaces are empty for removal and are pruned. A non-empty
+    # namespace removes only the declared leaf; clear records an absent leaf,
+    # retaining the same-key guard for a no-op delete.
+    app_path = ["config", "app"]
+    app = ctx.state.get(ref, app_path)
+    app_order = (list(app["value"])
+                 if app["state"] == "present" and isinstance(app["value"], dict) else None)
+    if namespace["value"] is None or not namespace["value"]:
+        ctx.clear(ref, target_path, insertion_order=app_order)
+    else:
+        ctx.clear(ref, [*target_path, key])
+        current = ctx.state.get(ref, target_path)
+        if current["state"] == "present" and not current["value"]:
+            ctx.clear(ref, target_path, insertion_order=app_order)
+
+    app = ctx.state.get(ref, app_path)
+    if app["state"] == "present" and isinstance(app["value"], dict) and not app["value"]:
+        ctx.clear(ref, app_path)
 
 
 PROJECT_DATA_INTENT = {}

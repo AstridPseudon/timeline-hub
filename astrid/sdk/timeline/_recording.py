@@ -130,7 +130,7 @@ class Recording:
         self.record['dependencies'].append({"key": key, "kind": kind,
                                             "pin": copy.deepcopy(pin), "policy": "exact"})
 
-    def assign(self, ref, path, after):
+    def assign(self, ref, path, after, *, insertion_order=None):
         if after['state'] == 'absent':
             for end in range(1, len(path)):
                 ancestor = self.state.get(ref, path[:end])
@@ -139,15 +139,18 @@ class Recording:
                     self.read(ref, path[:end])
                     break
         before = self.state.get(ref, path)
-        self.record['writes'].append({"ref": ref, "path": list(path),
-                                       "before": before, "after": copy.deepcopy(after)})
-        self.state.set(ref, path, after)
+        write = {"ref": ref, "path": list(path), "before": before,
+                 "after": copy.deepcopy(after)}
+        if insertion_order is not None:
+            write["insertion_order"] = list(insertion_order)
+        self.record['writes'].append(write)
+        self.state.set(ref, path, after, insertion_order=insertion_order)
 
     def write(self, ref, path, value):
         self.assign(ref, path, present(value))
 
-    def clear(self, ref, path):
-        self.assign(ref, path, ABSENT)
+    def clear(self, ref, path, *, insertion_order=None):
+        self.assign(ref, path, ABSENT, insertion_order=insertion_order)
 
     def object(self, ref, path):
         value = self.state.get(ref, path)
