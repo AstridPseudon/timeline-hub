@@ -11,6 +11,7 @@ import pytest
 
 from astrid.core.timeline.authoring_bundle import _digest
 from astrid.sdk.media_transcript import build_transcript, transcript_document_id
+from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.compiler import (
     TimingCompileError,
     TimingInputs,
@@ -235,7 +236,6 @@ def test_missing_anchors_and_unmigrated_evaluators_refuse_honestly(declaration):
     [
         ('beat 1 after "again" in line #1', {"beats": [0, .5, 1, 1.5, 2]}, Fraction(7, 2)),
         ('downbeat 1 after "again" in line #1', {"downbeats": [0, 1, 2]}, Fraction(4)),
-        ('downbeat 1 after "again" in line #1', {"bars": [0, 1, 2]}, Fraction(4)),
     ],
 )
 def test_main_numeric_beat_carrier_resolves_legacy_moment_without_mutating_neighbor(
@@ -259,6 +259,19 @@ def test_main_numeric_beat_carrier_resolves_legacy_moment_without_mutating_neigh
     assert result.timings[CARD]["start"] == expected
     assert result.bundle["parent"]["clips"][-1] == before_neighbor
     assert encoded(bundle) == encoded(project(bundle, document).bundle)
+
+
+def test_numeric_beat_carrier_refuses_unsupported_bars_alias():
+    bundle, document, _pin = captured()
+    internal = bundle["shots"]["shot"]["internal_timeline"]
+    internal["tracks"].append({"id": "music", "kind": "audio"})
+    internal["clips"].append({
+        "id": "music", "clipType": "media", "track": "music", "asset": "music",
+        "at": 0, "from": 0, "to": 4, "app": {"astrid": {"beats": {"bars": [0, 1, 2]}}},
+    })
+    card(bundle)["app"]["astrid"] = {"on": 'downbeat 1 after "again" in line #1', "for": .5}
+    with pytest.raises(TimingCompileError, match="no downbeat"):
+        project(bundle, document)
 
 
 def test_main_numeric_beat_carrier_uses_child_speed_and_half_open_window():
@@ -341,21 +354,49 @@ def test_native_unrelated_move_recompiles_legacy_beat_and_guards_carrier_table()
         commands.execute(changed, [move])
 
 
-def test_main_context_beats_matches_native_compiler_on_real_fixture():
+@pytest.mark.parametrize(
+    ("declaration", "carrier", "expected"),
+    [
+        ("beat 1 after c1", {"beats": [0, .5, 1, 1.5, 2]}, Fraction(1, 2)),
+        ("downbeat 1 after c1", {"downbeats": [0, 1, 2]}, Fraction(1)),
+    ],
+)
+def test_main_context_beats_matches_native_compiler_on_real_fixture(
+        declaration, carrier, expected):
     from astrid.sdk.timeline.checkout import Checkout
 
     bundle = json.loads((Path(__file__).parents[1] /
                          "fixtures/timeline_editing/tiny_publishable.json").read_text())
     target = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
                   if row["id"] == "a-rocket")
-    target["app"]["astrid"] = {"on": "beat 1 after c1", "for": .5}
+    target["app"]["astrid"] = {"on": declaration, "for": .5}
     music = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
                  if row["id"] == "a-music")
-    music["app"] = {"astrid": {"beats": {"beats": [0, .5, 1, 1.5, 2]}}}
+    music["app"] = {"astrid": {"beats": carrier}}
 
-    main_time = Checkout(copy.deepcopy(bundle)).time("beat 1 after c1")
+    main_time = Checkout(copy.deepcopy(bundle)).time(declaration)
     native_time = project(bundle).timings[("occ-A", "A", "a-rocket")]["start"]
-    assert native_time == Fraction(str(main_time))
+    assert main_time == float(expected)
+    assert native_time == expected
+
+
+def test_main_context_and_native_compiler_both_refuse_bars_alias_on_real_fixture():
+    from astrid.sdk.timeline.checkout import Checkout
+
+    bundle = json.loads((Path(__file__).parents[1] /
+                         "fixtures/timeline_editing/tiny_publishable.json").read_text())
+    declaration = "downbeat 1 after c1"
+    target = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
+                  if row["id"] == "a-rocket")
+    target["app"]["astrid"] = {"on": declaration, "for": .5}
+    music = next(row for row in bundle["shots"]["A"]["internal_timeline"]["clips"]
+                 if row["id"] == "a-music")
+    music["app"] = {"astrid": {"beats": {"bars": [0, 1, 2]}}}
+
+    with pytest.raises(TimelineEditError):
+        Checkout(copy.deepcopy(bundle)).time(declaration)
+    with pytest.raises(TimingCompileError, match="no downbeat"):
+        project(bundle)
 
 
 def test_second_occurrence_and_parent_clips_keep_their_own_identity_and_metadata():

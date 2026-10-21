@@ -147,8 +147,6 @@ def _beat_values(clip, kind):
         rows = value
     elif isinstance(value, dict):
         key = "downbeats" if kind == "downbeat" else "beats"
-        if kind == "downbeat" and key not in value and "bars" in value:
-            key = "bars"
         if key not in value:
             return []
         rows = value[key]

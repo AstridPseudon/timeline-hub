@@ -19,10 +19,11 @@ inputs, not a new stored authoring format.
 Inputs snapshot their JSON at construction, including captured documents.
 
 Supported: fixed clips (including fixed_start), on/until/for, main word/cut/end/offset
-Moments, linear source windows/rates, occurrence isolation and rational fps. Explicit
-time maps, sequence fits, formulas, orphan caches, until_film_end bases, beats/markers
-and authored reflow operations are refused. Nontrivial placement source maps and
-clip millisecond codecs require an explicit main authoring adapter first.
+Moments, the existing numeric Main beat/downbeat grids, linear source windows/rates,
+occurrence isolation and rational fps. Explicit time maps, sequence fits, formulas,
+orphan caches, until_film_end bases, generic markers and authored reflow operations
+are refused. Nontrivial placement source maps and clip millisecond codecs require an
+explicit main authoring adapter first.
 The graph walk comes from R4's compiler; Moment/cut rules and exact-time arithmetic
 come from main. This bounded slice targets <=600 product lines across two modules.
 
