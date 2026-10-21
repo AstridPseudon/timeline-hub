@@ -8,6 +8,7 @@ import pytest
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._scalar_commands import capture_track_set
 from astrid.sdk.timeline.commit import _manifest, bundle_from_document
+from astrid.sdk.timeline.commands import execute
 from tests.editing_conformance.test_recipe_clip_scalar_fields import (
     CHILD,
     CLEAR,
@@ -39,6 +40,30 @@ def app_document():
 
 def current(realm):
     return bundle_from_document(realm.documents[realm.head['revision_id']])
+
+
+def test_provider_position_route_accepts_parent_and_occurrence_leaves_with_inverse_redo():
+    realm = DetachedRealm(app_document())
+    original = current(realm)
+    parent = 'parent/clip:f2-app-clip'
+    occurrence = 'occurrence:f2-occurrence/clip:f2-agent-clip'
+    box = capture_clip_set(original, parent,
+                          values={'x': -120.5, 'y': 64, 'width': 1280, 'height': 720})
+    positioned = execute(original, [box]).bundle
+    crop = capture_clip_set(positioned, occurrence, values={'cropTop': .125, 'cropRight': .25})
+    accepted = realm.call([box, crop])
+    after = current(realm)
+    assert accepted['data']['commands'] == [box, crop]
+    assert {key: clip(after, parent)[key] for key in ('x', 'y', 'width', 'height')} == {
+        'x': -120.5, 'y': 64, 'width': 1280, 'height': 720}
+    assert {key: clip(after, occurrence)[key] for key in ('cropTop', 'cropRight')} == {
+        'cropTop': .125, 'cropRight': .25}
+    assert clip(after, occurrence)['hold'] == 3
+    assert clip(after, 'occurrence:shared-sibling/clip:f2-agent-clip') == clip(original, 'occurrence:shared-sibling/clip:f2-agent-clip')
+    undone = realm.call([inverse([accepted['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == realm.documents[realm.head['revision_id']]
+    redone = realm.call([inverse([undone['receipt']['receipt_id']])])
+    assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
 
 
 def test_original_app_fields_provider_reload_exact_inverse_redo_and_disjoint_rebase():

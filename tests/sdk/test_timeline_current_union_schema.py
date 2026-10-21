@@ -123,7 +123,9 @@ def s2_slice():
          'occurrence.create', 'clip.swap-media')]
     previous = baseline('agent-frozen-s2-26ef2bbb')
     assert candidate['$defs']['Intent']['properties']['ownership']['enum'].pop() == 'parent'
-    candidate['$defs']['ClipSetArgs']['description'] = previous['$defs']['ClipSetArgs']['description']
+    # Position leaves are the separately reviewed current extension of the
+    # existing clip.set carrier, not part of the frozen S2 slice.
+    candidate['$defs']['ClipSetArgs'] = previous['$defs']['ClipSetArgs']
     return candidate
 
 
