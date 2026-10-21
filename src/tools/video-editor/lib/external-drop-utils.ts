@@ -290,6 +290,7 @@ export async function handleFileDrop({
   dropAsset,
   directAssetUploadAllFiles = false,
   mediaImportForImageVideo = false,
+  occurrenceId,
   onAssetDropError,
 }: {
   files: File[];
@@ -309,6 +310,7 @@ export async function handleFileDrop({
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
   directAssetUploadAllFiles?: boolean;
   mediaImportForImageVideo?: boolean;
+  occurrenceId?: string;
   onAssetDropError?: (error: unknown) => void;
 }): Promise<boolean> {
   if (!files.length || !dataRef.current) {
@@ -399,6 +401,26 @@ export async function handleFileDrop({
       } catch (error) {
         console.error('[drop] Upload failed:', error);
         onAssetDropError?.(error);
+      }
+      continue;
+    }
+
+    // An occurrence ADD is captured by the mounted parent session. A local
+    // uploading row would dirty that basis and turn placement into replacement.
+    if (occurrenceId && isImageVideo && mediaImportForImageVideo) {
+      pendingOpsRef.current += 1;
+      try {
+        const generation = await (isImageFile(file) ? uploadImageGeneration(file) : uploadVideoGeneration(file));
+        const prepared = prepareGenerationAsset?.(generation);
+        if (!prepared || !dropAsset(prepared.assetKey, compatibleTrackId ?? targetTrackId,
+          dropPosition.time + timeOffset, forceNewTrack, insertAtTop, prepared)) {
+          throw new Error('The occurrence media drop could not be placed; the imported media is kept');
+        }
+        timeOffset += estimateAssetDuration(prepared.entry, kind);
+      } catch (error) {
+        onAssetDropError?.(error);
+      } finally {
+        pendingOpsRef.current -= 1;
       }
       continue;
     }

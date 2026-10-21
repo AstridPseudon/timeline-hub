@@ -174,7 +174,7 @@ test('M2 real popup media ADD: raw preservation, occurrence ownership, reload re
   expect(addRow).toMatchObject({ clipType: 'image', track: 'V2', asset: (addCommand.args.media as any).asset });
   expect(addRow.id).toMatch(/^popup-child-/);
   const addResult = accepted(addPost);
-  const addedState = await rawShotState(harness, addResult.data.accepted_revision_id);
+  const addedState = await rawShotState(harness, seed3, addResult.data.accepted_revision_id);
   expect(addedState.parent).toEqual(beforeParent);
   expect(addedState.occurrence).toEqual(beforeOccurrence);
   expect(addedState.clips.find((clip) => clip.id === seed3.agentClipId)).toEqual(beforeOpaqueChild);

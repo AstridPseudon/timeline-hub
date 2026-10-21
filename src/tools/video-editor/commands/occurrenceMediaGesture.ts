@@ -21,6 +21,39 @@ export interface OccurrenceMediaCapturePort {
   finish(basis: JsonObject): Promise<{ command: EditCommand; preview: TimelinePatch }>;
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
 }
+/** Bind a shot-local display to its explicit owner in the mounted parent session. */
+export function bindPopupOccurrenceMediaPort(
+  port: OccurrenceMediaCapturePort,
+  occurrenceId: string,
+  getParent: () => TimelineData | null,
+): OccurrenceMediaCapturePort {
+  return {
+    capture({ request, current }) {
+      const parent = getParent();
+      const projection = current.config.app?.canonicalComposition;
+      if (!parent?.head || !object(projection)
+        || projection.projectId !== parent.head.projectId
+        || projection.parentDocumentId !== parent.head.timelineId
+        || projection.headRevisionId !== parent.head.headRevisionId
+        || !equal(projection.occurrenceIds, [occurrenceId])
+        || request.ownerRef !== `occurrence:${occurrenceId}`) {
+        throw new Error('The popup media owner or displayed head changed; keep the imported media');
+      }
+      return port.capture({ request, current: parent });
+    },
+    async finish(basis) {
+      if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
+      const result = await port.finish(basis);
+      if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
+      return result;
+    },
+    submit(input) {
+      if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
+      port.submit(input);
+    },
+  };
+}
+
 export type VerifiedMediaRead = (selection: MediaSelection) => Promise<VerifiedMedia>;
 
 export function captureOccurrenceMediaEdit(port: OccurrenceMediaCapturePort | undefined, current: TimelineData, request: OccurrenceMediaRequest) {

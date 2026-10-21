@@ -977,6 +977,7 @@ export function useTimelineState(
   });
 
   const externalDrop = useExternalDrop({
+    occurrenceId: occurrenceMediaContext?.occurrenceId,
     store,
     dataRef,
     pendingOpsRef,

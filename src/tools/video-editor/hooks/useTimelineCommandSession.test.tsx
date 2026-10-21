@@ -1,15 +1,16 @@
 import { captureClipScalarEdit, submitClipScalarEdit, submitClipTransitionClears } from '../commands/clipScalarGesture.ts';
 // @vitest-environment jsdom
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createElement, useEffect, type ReactNode } from 'react';
+import React, { createElement, useEffect, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { createInteractionState } from '../lib/interaction-state.ts';
 import { buildPendingDragSession, commitDraggingSession } from './useClipDrag.helpers.ts';
 import { document as commandDocument, environment, scope } from '../commands/__tests__/commitSessionEnvironment.ts';
 import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
-import { createTimelineStore } from './timelineStore.ts';
+import { createTimelineStore, TimelineStoreProvider } from './timelineStore.ts';
+import { TimelineEditorCore } from '../components/TimelineEditor/TimelineEditorCore.tsx';
 import { useTimelineSave } from './useTimelineSave.ts';
 import { loadTimelineDraft } from '../data/timelineDraftIndexedDb.ts';
 import { createTimelineCommands } from './useTimelineCommandsService.ts';
@@ -24,6 +25,24 @@ import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timel
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
+
+import { useAssetManagement } from './useAssetManagement.ts';
+import { useExternalDrop } from './useExternalDrop.ts';
+import { useDragCoordinator } from './useDragCoordinator.ts';
+import { bindPopupOccurrenceMediaPort } from '../commands/occurrenceMediaGesture.ts';
+import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
+import { createShotTimelineInitialData } from '@/tools/travel-between-images/components/shotTimelineDataProvider.ts';
+import duplicateFixture from '../commands/fixtures/recipe_m2_app_occurrence_duplicate.json';
+import type { PreparedMediaImport } from '../data/AssetResolver.ts';
+import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
+
+// These gallery observers do not participate in the file-drop command route.
+vi.mock('./useStaleVariants.ts', () => ({ useStaleVariants: () => ({
+  staleAssetKeys: new Set(), dismissedAssetKeys: new Set(), generationAssetKeys: new Set(),
+}) }));
+vi.mock('./useActiveTaskClips.ts', () => ({ useActiveTaskClips: () => ({ activeTaskAssetKeys: new Set() }) }));
+vi.mock('./useAddVariantAsGeneration.ts', () => ({ useAddVariantAsGeneration: () => ({}) }));
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
@@ -108,6 +127,127 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it.each(['open', 'closed during import', 'closed during verification', 'changed during verification'] as const)(
+    'routes a mounted Runtime file drop through the live occurrence session: %s', async (lifetime) => {
+      const selection = { asset: 'sha256:asset', generation_id: 'generation-1', variant_id: 'variant-1',
+        object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
+      let completeImport!: (value: PreparedMediaImport) => void;
+      const prepareMediaImport = vi.fn(() => new Promise<PreparedMediaImport>(resolve => { completeImport = resolve; }));
+      const raw = structuredClone(duplicateFixture.bundle.source_mapping._runtime_document) as unknown as CanonicalDocument;
+      raw.project_id = scope.projectId;
+      raw.timeline_id = scope.timelineId;
+      raw.parent_revision.revision_id = 'r0';
+      const internal = raw.internal_timeline_revisions[0];
+      delete internal.payload.source_window; // Media ADD uses the literal child timeline, without a source window.
+      internal.payload.tracks = [{ id: 'V1', kind: 'visual' }, { id: 'V2', kind: 'visual' }];
+      for (const clip of internal.payload.clips as Array<Record<string, string>>) clip.track = 'V1';
+      internal.content_digest = fixtureDigest(internal.payload);
+      raw.dependency_manifest.internal_timelines[0].content_digest = internal.content_digest;
+      const env = await environment(raw);
+      let finishVerification!: () => void;
+      const verification = new Promise<void>(resolve => { finishVerification = resolve; });
+      const verifiedRead = vi.spyOn(env.provider, 'getProjectVerifiedMedia').mockImplementation(async () => {
+        await verification;
+        return { selection, media_type: 'image/png', size: 5 };
+      });
+      env.setFault('unavailable');
+      const runtime = { provider: env.provider, project: { projectId: scope.projectId }, toast: { error: vi.fn() } } as unknown as VideoEditorRuntimeContextValue;
+      const preparedComposition = createShotCompositionAdapter(env.provider.shotComposition).prepare(env.initial.graph);
+      const projected = projectCanonicalComposition({ ...preparedComposition,
+        occurrences: preparedComposition.occurrences.filter(occurrence => occurrence.occurrenceId === 'occ-0') }).config;
+      const initial = createShotTimelineInitialData(projected);
+      vi.spyOn(env.provider, 'prepareMediaImport').mockImplementation(prepareMediaImport);
+      const dataRef = { current: initial };
+      const pendingOpsRef = { current: 0 };
+      const applyEdit = vi.fn();
+      const patchRegistry = vi.fn();
+      const { hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted(env);
+      const parent = hook.result.current.commit.dataRef.current!;
+      const native = hook.result.current.commands.occurrenceMediaPort!;
+      const capture = vi.spyOn(native, 'capture');
+      let popupOpen = true;
+      const port = bindPopupOccurrenceMediaPort(native, 'occ-0', () => popupOpen ? hook.result.current.commit.dataRef.current : null);
+      const childStore = createTimelineStore();
+      function MountedDrop() {
+        const assets = useAssetManagement({ dataRef, selectedTrackId: 'V2', selectedProjectId: scope.projectId, applyEdit,
+          selectClip: vi.fn(), setSelectedTrackId: vi.fn(), patchRegistry,
+          invalidateAssetRegistry: vi.fn(), resolveAssetUrl: async file => file,
+          occurrenceId: 'occ-0', occurrenceMediaPort: port });
+        const { coordinator, editAreaRef, indicatorRef } = useDragCoordinator({ dataRef, scale: 5, scaleWidth: 100,
+          startLeft: 0, rowHeight: 36 });
+        const handlers = useExternalDrop({ occurrenceId: 'occ-0', dataRef, pendingOpsRef, selectedTrackId: 'V2', applyEdit,
+          scale: 5, scaleWidth: 100,
+          invalidateAssetRegistry: vi.fn(), resolveAssetUrl: async file => file,
+          coordinator, ...assets, finalVideoMap: new Map() });
+        const state = childStore.getState();
+        state.syncSlices({ data: { ...state.data, data: initial, resolvedConfig: initial.resolvedConfig,
+          dataRef, pendingOpsRef, coordinator, editAreaRef, indicatorRef, selectedTrackId: 'V2', scale: 5, scaleWidth: 100 },
+        ops: { ...state.ops, ...handlers, applyEdit, isClipSelected: () => false } });
+        return <TimelineStoreProvider store={childStore}><TimelineEditorCore /></TimelineStoreProvider>;
+      }
+      const view = render(<VideoEditorRuntimeProvider value={runtime}><MountedDrop /></VideoEditorRuntimeProvider>);
+      const wrapper = view.container.querySelector('.timeline-wrapper')!;
+      const file = new File(['image'], 'popup-add.png', { type: 'image/png' });
+      const dataTransfer = { types: ['Files'], files: [file], items: [{ type: 'image/png' }], getData: () => '' };
+      for (const type of ['dragover', 'drop']) {
+        fireEvent(wrapper, Object.assign(new Event(type, { bubbles: true, cancelable: true }),
+          { dataTransfer, clientX: 50, clientY: 54 }));
+      }
+      await waitFor(() => expect(prepareMediaImport).toHaveBeenCalledTimes(1));
+      if (lifetime === 'closed during import') popupOpen = false;
+      await act(async () => completeImport({ provider: 'runtime', project: scope.projectId,
+        importOperationId: 'operation-1', generationId: selection.generation_id, variantId: selection.variant_id,
+        assetId: selection.asset, entry: { file: 'https://runtime.test/image', type: 'image/png' }, mediaSelection: selection }));
+      if (lifetime !== 'closed during import') {
+        expect(runtime.toast.error).not.toHaveBeenCalled();
+        await waitFor(() => expect(verifiedRead).toHaveBeenCalledTimes(1));
+        if (lifetime === 'closed during verification') popupOpen = false;
+        if (lifetime === 'changed during verification') {
+          act(() => hook.result.current.commit.commitData({ ...parent }, { save: false }));
+        }
+      }
+      await act(async () => finishVerification());
+      if (lifetime !== 'open') {
+        await waitFor(() => expect(runtime.toast.error).toHaveBeenCalledWith(expect.stringMatching(/popup media|Displayed timeline changed/)));
+        expect(env.commits()).toEqual([]);
+        expect((await env.outboxes.list(scope))[0].intents).toEqual([]);
+        expect(applyEdit).not.toHaveBeenCalled();
+        expect(patchRegistry).not.toHaveBeenCalled();
+        expect(dataRef.current).toBe(initial);
+        expect(snapshotSaves).not.toHaveBeenCalled();
+        expect(saveTimeline).not.toHaveBeenCalled();
+        expect(saveTimelineAtHead).not.toHaveBeenCalled();
+        view.unmount();
+        hook.unmount();
+        return;
+      }
+      expect(runtime.toast.error).not.toHaveBeenCalled();
+      await waitFor(() => expect(env.commits()).toHaveLength(1));
+      expect(capture).toHaveBeenCalledWith({ current: parent, request: {
+        kind: 'add', ownerRef: 'occurrence:occ-0', trackRef: 'occurrence:occ-0/track:V2', media: selection,
+        row: { id: expect.stringMatching(/^popup-child-/), clipType: 'image', track: 'V2', at: expect.any(Number),
+          asset: selection.asset, hold: 5 },
+      } });
+      expect(verifiedRead).toHaveBeenCalledExactlyOnceWith(scope.projectId, selection);
+      const post = env.commits()[0];
+      expect(post.body!.commands).toMatchObject([{ op: 'occurrence.add-media', select: 'occurrence:occ-0',
+        intent: { ownership: 'occurrence' }, args: { media: selection, row: { track: 'V2', asset: selection.asset } } }]);
+      expect(post.body).not.toHaveProperty('parent_composition');
+      await waitFor(() => expect(hook.result.current.commands.state.status).toBe('retry'));
+      const [owner] = await env.outboxes.list(scope);
+      expect(owner.pending!.request.body).toBe(post.bodyText);
+      expect(owner.pending!.request.key).toBe(post.key);
+      expect(snapshotSaves).not.toHaveBeenCalled();
+      expect(saveTimeline).not.toHaveBeenCalled();
+      expect(saveTimelineAtHead).not.toHaveBeenCalled();
+      expect(applyEdit).not.toHaveBeenCalled();
+      expect(patchRegistry).not.toHaveBeenCalled();
+      expect(dataRef.current).toBe(initial);
+      expect(runtime.toast.error).not.toHaveBeenCalled();
+      view.unmount();
+      hook.unmount();
+    });
+
   it('initializes a clean mounted save hook with a verified accepted projection', async () => {
     const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
     expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: env.initial.head });

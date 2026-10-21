@@ -76,6 +76,7 @@ async function dispatchTimelineDrop({
   dropAsset,
   directAssetUploadAllFiles,
   mediaImportForImageVideo,
+  occurrenceId,
   onAssetDropError,
   handleAddTextAt,
   shots,
@@ -97,6 +98,7 @@ async function dispatchTimelineDrop({
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
   directAssetUploadAllFiles: boolean;
   mediaImportForImageVideo: boolean;
+  occurrenceId?: string;
   onAssetDropError?: (error: unknown) => void;
   handleAddTextAt?: (trackId: string, time: number) => void;
   shots: Shot[] | undefined;
@@ -132,6 +134,7 @@ async function dispatchTimelineDrop({
     dropAsset,
     directAssetUploadAllFiles,
     mediaImportForImageVideo,
+    occurrenceId,
     onAssetDropError,
   })) {
     return;
@@ -456,6 +459,7 @@ async function dispatchTimelineDrop({
 
 export interface UseExternalDropArgs {
   store?: TimelineStoreApi;
+  occurrenceId?: string;
   dataRef: React.MutableRefObject<TimelineData | null>;
   pendingOpsRef: React.MutableRefObject<number>;
   scale: number;
@@ -485,6 +489,7 @@ export interface UseExternalDropResult {
 
 export function useExternalDrop({
   store,
+  occurrenceId,
   dataRef,
   pendingOpsRef,
   selectedTrackId,
@@ -648,6 +653,7 @@ export function useExternalDrop({
       dropAsset,
       directAssetUploadAllFiles,
       mediaImportForImageVideo,
+      occurrenceId,
       onAssetDropError: (error) => {
         runtime.toast.error('Failed to save asset', {
           ...(error instanceof Error && error.message ? { description: error.message } : {}),
@@ -673,6 +679,7 @@ export function useExternalDrop({
     resolveAssetUrl,
     directAssetUploadAllFiles,
     mediaImportForImageVideo,
+    occurrenceId,
     runtime.timelineEditability,
     runtime.toast,
     shots,

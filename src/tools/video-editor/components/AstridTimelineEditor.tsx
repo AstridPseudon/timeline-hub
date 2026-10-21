@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { shallow } from 'zustand/shallow';
 import type { Shot } from '@/domains/generation/types/index.ts';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog.tsx';
@@ -31,6 +31,7 @@ import { useShotGroups } from '@/tools/video-editor/hooks/useShotGroups.ts';
 import { shotGroupVideoKey } from '@/tools/video-editor/hooks/useShotGroups.ts';
 import { useSwitchToFinalVideo } from '@/tools/video-editor/hooks/useSwitchToFinalVideo.ts';
 import { useTimelineCommandsService } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
+import { bindPopupOccurrenceMediaPort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
 import { captureOccurrenceDuplicateEdit, submitOccurrenceDuplicateEdit } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
 import {
   useTimelineDataSelector,
@@ -159,6 +160,8 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     });
     runtime.shots?.adoptCanonicalComposition?.(composition, publication);
   }, [runtime.shots]);
+  const popupOwnerRef = useRef(canonicalShotEditor);
+  popupOwnerRef.current = canonicalShotEditor;
   const configVersion = useTimelineConfigVersion();
   const reloadFromServer = useTimelineChromeSelector((chrome) => chrome.reloadFromServer);
   const {
@@ -192,6 +195,10 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     occurrenceMedia: ops.occurrenceMedia,
     occurrenceDuplicate: ops.occurrenceDuplicate,
   }), shallow);
+  const popupOccurrenceMediaPort = useMemo(() => occurrenceMediaPort && canonicalShotEditor
+    ? bindPopupOccurrenceMediaPort(occurrenceMediaPort, canonicalShotEditor.occurrenceId,
+      () => popupOwnerRef.current === canonicalShotEditor ? dataRef.current : null)
+    : undefined, [canonicalShotEditor, dataRef, occurrenceMediaPort]);
 
   const assetGenerationMap = useMemo<Record<string, string>>(() => {
     const assets = data?.registry?.assets;
@@ -714,7 +721,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
                 initialComposition={publishedCanonicalComposition?.composition ?? runtime.shots.canonicalComposition ?? undefined}
                 onClose={() => setCanonicalShotEditor(null)}
                 shotSetPort={shotSet}
-                occurrenceMediaPort={occurrenceMediaPort}
+                occurrenceMediaPort={popupOccurrenceMediaPort}
                 mediaProvider={runtime.provider}
                 onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
                 onCanonicalDraftSessionChange={(scope, active) => {

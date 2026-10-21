@@ -20,6 +20,7 @@ import { VideoEditorRuntimeProvider } from '@/tools/video-editor/contexts/VideoE
 
 const mocks = vi.hoisted(() => ({
   createShot: vi.fn(),
+  popup: vi.fn(),
   navigateToShot: vi.fn(),
   pinGroup: vi.fn(),
   shots: [] as Shot[],
@@ -150,7 +151,7 @@ vi.mock('@/tools/travel-between-images/components/VideoGenerationModal', () => (
 }));
 
 vi.mock('@/tools/travel-between-images/pages/LocalTimelineShotBrowser', () => ({
-  LocalTimelineShotBrowser: () => null,
+  LocalTimelineShotBrowser: (props: unknown) => { mocks.popup(props); return null; },
 }));
 
 // ---------------------------------------------------------------------------
@@ -414,7 +415,7 @@ describe('AstridTimelineEditor canonical shot opening', () => {
       rows: [{ id: 'V1', actions: [{ id: clipId, start: 0, end: 2 }] }],
       meta: { [clipId]: { asset: 'asset-1', track: 'V1', clipType: 'shot' } },
     };
-    const { container } = renderEditor({
+    const { container, store } = renderEditor({
       data,
       runtime: {
         userId: 'user-1',
@@ -424,11 +425,16 @@ describe('AstridTimelineEditor canonical shot opening', () => {
     const clip = container.querySelector(`[data-clip-id="${clipId}"]`);
     expect(clip).toBeTruthy();
 
+    const native = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
+    act(() => store.getState().syncSlices({ ops: { ...store.getState().ops, occurrenceMedia: native } }));
     fireEvent.doubleClick(clip!);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Edit shot-ordinary')).toBeInTheDocument();
     expect(container.querySelector('[data-action-id="shot-group-label"]')).toBeNull();
+    const popup = mocks.popup.mock.calls.at(-1)![0];
+    expect(popup.occurrenceMediaPort).toMatchObject({ capture: expect.any(Function), finish: expect.any(Function), submit: expect.any(Function) });
+    expect(popup.occurrenceMediaPort).not.toBe(native);
   });
 });
 

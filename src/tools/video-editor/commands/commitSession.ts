@@ -513,13 +513,14 @@ export async function createTimelineCommandSession(options: Options) {
       enqueue(entry.payload, preview, entry.basis);
     },
   };
+  const mediaCaptures = new WeakSet<JsonObject>();
   const occurrenceMediaPort: OccurrenceMediaCapturePort = {
     capture({ request, current }) {
       assertReady();
       if (!options.getProjectVerifiedMedia) throw new Error('Runtime verified-media read is unavailable');
-      if (!displayBasis.graph) throw new Error('Occurrence media requires the original canonical graph');
+      if (!acceptedBasis.graph) throw new Error('Occurrence media requires the original canonical graph');
       if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
-        || current.head.headRevisionId !== displayBasis.head.revisionId || current.head.headPublicationId !== displayBasis.head.publicationId) {
+        || current.head.headRevisionId !== acceptedBasis.head.revisionId || current.head.headPublicationId !== acceptedBasis.head.publicationId) {
         throw new Error('Displayed timeline does not match the raw authoring basis');
       }
       if (!/^occurrence:[^/]+$/.test(request.ownerRef) || !rawIdentity(request.ownerRef.slice(11))
@@ -555,7 +556,7 @@ export async function createTimelineCommandSession(options: Options) {
           throw new Error('Media swap requires an explicit matching projected owner');
         }
       } else throw new Error('Unsupported occurrence media request');
-      const basis = freezeJson(json({ request, bundle, graph: displayBasis.graph, localGeneration,
+      const basis = freezeJson(json({ request, bundle, graph: acceptedBasis.graph, localGeneration,
         localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as JsonObject;
       mediaCaptures.add(basis);
       return basis;
@@ -577,7 +578,7 @@ export async function createTimelineCommandSession(options: Options) {
         const result = executeOccurrenceMedia(bundle, captured.command, inputs);
         const preview = occurrenceMediaPreview(result.bundle as AuthoredBundle, basis.graph as Record<string, unknown>);
         prepared.set(JSON.stringify(result.command), { payload: {
-          commands: [result.command], before: bundle, after: result.bundle, preview, displayBasis,
+          commands: [result.command], before: bundle, after: result.bundle, preview, displayBasis: acceptedBasis,
         }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
         return { command: result.command, preview };
       } catch (error) {
