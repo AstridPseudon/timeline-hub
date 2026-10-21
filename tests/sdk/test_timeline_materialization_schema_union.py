@@ -57,13 +57,29 @@ def without_track_reorder(schema):
     return schema
 
 
+def without_raw_old_swap(schema):
+    """Remove the additive raw-OLD successor from an earlier schema floor."""
+    for clause in schema['$defs']['EditCommand']['allOf']:
+        op = clause['if']['properties']['op']['const']
+        if op not in {'clip.swap-media', 'occurrence.swap-media'}:
+            continue
+        branches = clause['then'].get('anyOf', [clause['then']])
+        branches[:] = [branch for branch in branches
+                       if branch['properties']['args'].get('$ref') != '#/$defs/RawOldSwapMediaArgs']
+        if op == 'clip.swap-media':
+            clause['then'] = branches[0]
+    for name in ('RawOldSwapMediaArgs', 'MediaManifestEntry'):
+        schema['$defs'].pop(name, None)
+    return schema
+
+
 def without_new_sources(schema):
     """Reconstruct the pre-movement/reference/order schema without fixtures."""
-    return without_track_reorder(without_reference(without_move_set(schema)))
+    return without_track_reorder(without_reference(without_move_set(without_raw_old_swap(schema))))
 
 
 def without_reference_and_order(schema):
-    return without_track_reorder(without_reference(schema))
+    return without_track_reorder(without_reference(without_raw_old_swap(schema)))
 
 
 def without_mute(schema):
@@ -201,7 +217,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
     assert len(ordinary['$defs']) == 55
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
-    assert len(_SCHEMA['$defs']) == 62
+    assert len(_SCHEMA['$defs']) == 64
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 36
     assert compatibility_errors(ordinary, without_new_sources(without_literal_fields(copy.deepcopy(_SCHEMA)))) == []
 
@@ -263,8 +279,8 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
         'literal-union-f448': without_new_sources(copy.deepcopy(_SCHEMA)),
         'movement3b320': without_reference_and_order(
             without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
-        'reference-order-85c': without_move_set(
-            without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
+        'reference-order-85c': without_raw_old_swap(without_move_set(
+            without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))))),
         'ordered-remove': without_new_sources(without_opacity(without_mute(copy.deepcopy(_SCHEMA)))),
         'track-mute': without_new_sources(without_opacity(without_remove(copy.deepcopy(_SCHEMA)))),
         'opacity': without_new_sources(without_mute(without_remove(copy.deepcopy(_SCHEMA)))),
@@ -283,7 +299,7 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
         raw = (json.dumps(candidate, indent=2) + '\n').encode()
         assert hashlib.sha256(raw).hexdigest() == expected[name], name
     assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == \
-        '9c05ec496e957548fe4656ca655a67a7b936ff4f220bdedae474a680e6d32eb9'
+        'd3274d7ed2d4bd80691472dd94daf8f4b8041fc184f39f1dd562d5de5d6a15c2'
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():

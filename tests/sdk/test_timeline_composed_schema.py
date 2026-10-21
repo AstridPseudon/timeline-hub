@@ -69,10 +69,22 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     for op, operation in operations().items():
         branches = conditions[op].get('anyOf', [conditions[op]])
         for branch in branches:
-            assert branch['properties']['args'] == branches[0]['properties']['args']
+            if op in {'clip.swap-media', 'occurrence.swap-media'}:
+                assert branch['properties']['args'] in (
+                    {'$ref': '#/$defs/OccurrenceSwapMediaArgs'},
+                    {'$ref': '#/$defs/RawOldSwapMediaArgs'},
+                )
+            else:
+                assert branch['properties']['args'] == branches[0]['properties']['args']
             version = branch['properties'].get('version', {}).get('const', '1')
-            validator.validate({**commands[op], 'version': version})
-            unknown = copy.deepcopy(commands[op])
+            sample = copy.deepcopy(commands[op])
+            if branch['properties']['args'].get('$ref') == '#/$defs/RawOldSwapMediaArgs':
+                sample['args']['old_media'] = {
+                    'media_id': 'sha256:' + 'a' * 64,
+                    'content_digest': 'sha256:' + 'a' * 64,
+                }
+            validator.validate({**sample, 'version': version})
+            unknown = copy.deepcopy(sample)
             unknown['version'] = version
             unknown['args']['unsupported_argument'] = None
             with pytest.raises(ValidationError):
