@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T12:27:49Z | dispatcher heartbeat 11s | live 5 (sol 0, luna 5, other 0) | busy30 15 | status age 20m -->
+<!-- app2 | 2026-10-21T12:34:08Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 17 | status age 26m -->
 # app2 — 2026-10-21 12:07 UTC
 Milestone: M2 OPEN. Duplicate, bounded compiler-canary and default initializer DELETED. Broad ordinary, parent-media, element, serializer and selected rows remain OPEN.
 Integrated: HOME hub/tl/integration last inspected92c30b570cf8105dc021a64874c258e6c950b841/treec34d65b66481fd0015279451b175c53b7b5e8f4f. Published Runtime014/95/all76 and Composition13/9412/all77 unchanged. Native initializer1557/real7782 retained.
