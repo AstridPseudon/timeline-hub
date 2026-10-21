@@ -175,6 +175,28 @@ describe('dormant native occurrence.add-media capture', () => {
     }
   });
 
+  it('matches frozen occurrence-start and boolean map refusals', () => {
+    const nullPlacement = bundle();
+    nullPlacement.placements[0].placement = null;
+    expect(() => captureOccurrenceAddMedia(nullPlacement, owner, row, media, [verified])).toThrow(
+      'occurrence placement must be an object',
+    );
+
+    const contradictoryStart = bundle();
+    contradictoryStart.placements[0].at_ms = 9000;
+    expect(() => captureOccurrenceAddMedia(contradictoryStart, owner, row, media, [verified])).toThrow(
+      'contradictory occurrence start codecs',
+    );
+
+    const booleanSpeed = bundle();
+    booleanSpeed.placements[0].speed = true;
+    expect(() => captureOccurrenceAddMedia(booleanSpeed, owner, row, media, [verified])).toThrow();
+
+    const booleanSourceOffset = bundle();
+    booleanSourceOffset.placements[0].source_offset = false;
+    expect(() => captureOccurrenceAddMedia(booleanSourceOffset, owner, row, media, [verified])).toThrow();
+  });
+
   it('does not infer owner from a display child identity', () => {
     expect(() => captureOccurrenceAddMedia(bundle(), `${owner}/clip:occ-a:clip-a`, row, media, [verified])).toThrow(
       'explicit occurrence/raw child ownership',

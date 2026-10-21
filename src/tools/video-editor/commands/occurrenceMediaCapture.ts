@@ -69,6 +69,21 @@ function present(value: JSON): AgentState {
   return { state: 'present', value: copy(value) };
 }
 
+function occurrenceStart(row: Row): number {
+  const placement = has(row, 'placement') ? row.placement : undefined;
+  if (placement !== undefined && !object(placement)) {
+    throw new ClipMoveError('occurrence placement must be an object', 'unsupported_map');
+  }
+  const start = object(placement) && has(placement, 'start_ms') ? placement.start_ms : undefined;
+  const fallback = has(row, 'at_ms') ? row.at_ms : undefined;
+  if (start != null && fallback != null && Math.abs(
+    number(start, 'placement.start_ms') - number(fallback, 'at_ms'),
+  ) > 1e-9) {
+    throw new ClipMoveError('contradictory occurrence start codecs', 'unsupported_timing');
+  }
+  return number(start != null ? start : (fallback != null ? fallback : 0), 'occurrence start') / 1000;
+}
+
 function collectionShape(ctx: MoveRecording, owner: string, kind: 'clip' | 'track'): AgentState {
   const config = ctx.state.config(owner);
   const key = `${kind}s`;
@@ -173,7 +188,9 @@ function owner(ctx: MoveRecording, ref: string): { owner: string; limit: number 
   ctx.read(`${ref}/shot`, ['shot_id']);
   for (const path of MAP_FIELDS) ctx.read(ref, path);
   const row = ctx.state.occurrence(ref);
-  if (!active(row) || (row.source_offset != null && row.source_offset !== 0)
+  occurrenceStart(row);
+  if (!active(row) || typeof row.source_offset === 'boolean' || typeof row.speed === 'boolean'
+    || (row.source_offset != null && row.source_offset !== 0)
     || (row.speed != null && row.speed !== 1) || row.time_map != null || row.timeMap != null) {
     throw new ClipMoveError('media edit requires an active translation-only occurrence', 'unsupported_map');
   }
