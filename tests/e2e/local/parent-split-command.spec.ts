@@ -23,8 +23,8 @@ async function seedSplit(harness: DirectHarness): Promise<SplitSeed> {
   const clip = { id: clipId, at: 0, track: 'V1', clipType: 'media', asset: 'split-video', from: 0, to: 4, speed, hold: 4 / speed,
     app: { opaque: { root: 'keep', child: [null, false, 0] }, astrid: { for: 4 / speed } } };
   const neighbor = { id: neighborId, at: 5, track: 'V1', clipType: 'media', asset: 'split-video', from: 4, to: 8, speed: 1, hold: 4 };
-  const publication = compositionPublication({ projectId: harness.seed.projectId, timelineId }, null, 'Native parent split', 30);
-  const parent = publication.parent_composition as Record<string, any>; parent.config.output.fps = { numerator: 30000, denominator: 1001 };
+  const publication = compositionPublication({ projectId: harness.seed.projectId, timelineId }, null, 'Native parent split', 30000 / 1001);
+  const parent = publication.parent_composition as Record<string, any>;
   parent.config.clips = [clip, neighbor]; parent.clips = [clip, neighbor]; parent.config.opaque = { root: 'preserve', child: [null, false, 0] };
   parent.registry = { assets: { 'split-video': { file: harness.seed.video.mediaType === 'video/webm' ? 'split-video.webm' : 'split-video.mp4', type: harness.seed.video.mediaType, duration: 12, media_id: harness.seed.video.objectId, content_sha256: harness.seed.video.digest } } };
   const result = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines/${timelineId}/composition-revisions`, publication);
