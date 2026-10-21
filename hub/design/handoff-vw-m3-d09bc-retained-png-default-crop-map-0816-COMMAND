@@ -1,0 +1,46 @@
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python - <<'PY'
+import hashlib
+from pathlib import Path
+from PIL import Image, ImageChops
+
+root = Path('/tmp/vw-m3-mouth-public13-0223-WpDP5W/pytest/test_actual_registered_present0/capture')
+expected = {
+    'frame-0.png': 'fa68d076a79c9c553fc79fc83128c55da7ed542aed47640f6e571598b2e3b2f6',
+    'frame-3.png': 'ddea7b2cb0e89d3cca6df0bd7b70e160338122d5a72d4ad12bed1ebf14e08886',
+    'frame-4.png': 'fa68d076a79c9c553fc79fc83128c55da7ed542aed47640f6e571598b2e3b2f6',
+    'frame-5.png': '79ef9e2d8d7c5456f463bd32e9432c0f9a47a60ccbc7601638f63822f1b425e7',
+}
+paths = [root / name for name in expected]
+assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == expected
+images = [Image.open(p).convert('RGB') for p in paths]
+assert all(image.size == (640, 360) for image in images)
+old = compat = (298, 202, 345, 219)
+erase = (300, 206, 343, 215)
+def diff_fraction(a, b):
+    diff = ImageChops.difference(a, b).convert('L')
+    mask = diff.point(lambda value: 255 if value > 18 else 0)
+    return mask.histogram()[255] / float(a.size[0] * a.size[1])
+def planted(points):
+    copy = images[0].copy()
+    for point in points:
+        original = images[0].getpixel(point)
+        copy.putpixel(point, (255,255,255) if sum(original) < 384 else (0,0,0))
+    return {label: diff_fraction(images[0].crop(crop), copy.crop(crop))
+            for label, crop in [('old', old), ('compat', compat), ('erase', erase)]}
+natural = {label: [diff_fraction(a.crop(crop), b.crop(crop))
+                   for a, b in zip(images, images[1:])]
+           for label, crop in [('old', old), ('compat', compat), ('erase', erase)]}
+controls = {str(n): planted([(erase[0] + 2 + i, erase[1] + 2) for i in range(n)])
+            for n in (8, 15, 16, 20)}
+controls['padding16'] = planted([(compat[0] + i, compat[1]) for i in range(16)])
+assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == expected
+assert natural['old'] == natural['compat'] == [0.42052565707133915] * 3
+assert natural['erase'] == [0.8682170542635659] * 3
+assert controls['8']['old'] <= .02 < controls['8']['erase']
+assert controls['15']['old'] <= .02 < controls['16']['old']
+assert controls['padding16'] == {'old': 16 / 799, 'compat': 16 / 799, 'erase': 0.0}
+print('PASS: retained hashes, natural pairs, strict >0.02 boundary, planted mismatch, padding16; PNG bytes unchanged')
+PY
+
+git status --short --untracked-files=all
+git diff --check
