@@ -1,3 +1,5 @@
+Superseding final review: see [the final0528 report](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-producer-run-mode-final-delta-review-0528-REPORT.md>). The HOLD below is historical missing-artifact status only, not a current code rejection.
+
 # AP2 M2 producer run-mode delta review — 0524
 
 ## Decision
