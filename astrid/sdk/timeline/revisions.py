@@ -39,6 +39,9 @@ class Revision:
     previous_publication_id: str | None = None
 
 
+RevisionList = list[Revision] | None
+
+
 def revision_source(revision_id: str, source: Any = None) -> str:
     """Classify a revision, preferring the accepted source label when present."""
     if isinstance(source, Mapping) and _text(source.get("via")):
@@ -95,6 +98,7 @@ class RuntimeRevisions(RevisionStore):
 
     def head(self, project: str, timeline: str) -> str:
         commits = self._commit_reader(project, timeline)
+        head: str | None = None
         if commits is not None:
             page = self._result_data(commits(project, timeline, cursor=None, limit=1),
                                      timeline=timeline, operation="read")
@@ -251,7 +255,7 @@ class RuntimeRevisions(RevisionStore):
         )
 
     @classmethod
-    def _list_commits(cls, project: str, timeline: str, *, limit: int, reader: Any) -> list[Revision] | None:
+    def _list_commits(cls, project: str, timeline: str, *, limit: int, reader: Any) -> RevisionList:
         """Read all pages to reconstruct newest-first publication ancestry.
 
         The frozen history route is bounded by a fixed head and returns items
@@ -368,12 +372,12 @@ def resolve_revision_record(project: str, timeline: str, ref: str | None, *, sto
             node = revisions[0]
             seen = {node.publication_id}
             for _ in range(steps):
-                previous = by_publication.get(node.previous_publication_id)
+                previous = by_publication.get(node.previous_publication_id or "")
                 if previous is None or previous.publication_id in seen:
                     raise TimelineEditError(
                         f"{timeline}@{ref}: publication ancestry is unavailable; use an explicit revision id"
                     )
-                seen.add(previous.publication_id)
+                seen.add(previous.publication_id or "")
                 node = previous
             return node
         return revisions[steps]

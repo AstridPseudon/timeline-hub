@@ -439,9 +439,9 @@ class Clip(_Suggest):
         source_out = self.data.get("to") if out_s is None else out_s
         # Preserve raw numbers for range checks, especially integers above 2**53.
         if not isinstance(source_in, int):
-            source_in = _num(source_in) if in_s is None else float(source_in)
+            source_in = _num(source_in) if in_s is None else in_s
         if not isinstance(source_out, int):
-            source_out = _num(source_out, limit) if out_s is None else float(source_out)
+            source_out = _num(source_out, limit) if out_s is None else out_s
         if not math.isfinite(source_in) or not math.isfinite(source_out) or source_in < 0 or source_out > limit or source_out <= source_in:
             raise TimelineEditError(f"{self.address}: source range {source_in:g}–{source_out:g} s must fit inside the file (0–{limit:g} s)")
         try:
