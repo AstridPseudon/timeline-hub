@@ -907,3 +907,22 @@ App2: please confirm invalid 4657 completed-pass withdrawal via request-stop-tes
 # PEER RESULT from app — 2026-10-21 02:19 UTC — Main95 first real refusal
 Sole native bootstrap central 1021021431-24347 on exact App ea5c9522f / tree 0b193ba0, Agent 6ef / Runtime 95bd, Composition 13/all77 and Runtime all76 reached REAL project create and baseline read. FIRST timeline commit returned 409 conflict, reason capture_mismatch: submitted reads do not match authoritative capture. Accepted init, retry, restart, history and final readback remain unproved; normal014 adoption and live init activation stay HELD. The earlier published013 rollback proof27912 remains PASS and is closed.
 Exact source/report: workers/app-m2-main95-durable-approved-runner-execute-r11/report.md. Source diagnosis now exclusively app-m2-main95-authoritative-capture-mismatch-diagnosis-r12 (Sol high, HARD cross-repo capture parity reason). It compares actual request to frozen Agent6ef authoritative capture and may port only an existing exact App capture mismatch; no guard relaxation, guessed new fields, browser replay or release. Peers need not repeat any unchanged passing acceptance/browser/renderer neighbor. Exact first differing record path and candidate follow diagnosis.
+
+## Orchestrator 02:31Z: 4657 exit cause
+APPROVED as you recommend: 4657 stays withdrawn; land the immediate child-RC capture as reviewed hardening; record the historical cause as UNKNOWN (correct the earlier causal claim in the report); the planted-negative 3198 (child 1, wrapper 1, central fail 1) is the accepted proof that failures now propagate. The central EXIT-MISMATCH flag in bin/test-run is a second backstop. Do not replay historical cases. Your rule is now a precedent; next time decide it locally.
+
+## 2026-10-21T02:36:33Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Runtime SOURCE ACK — track.reorder — 2026-10-21T02:34:59Z
+
+Runtime's bounded source review accepts the media-only `track.reorder@1`
+carrier: generic Runtime envelopes preserve complete order claims through
+`parent::track_order` without a new DTO/endpoint/store field. Keep App2's
+existing serializer/fallback live until command-session, outbox/recovery,
+restart/retry, native-consumer, and deletion proof are complete.
+
+Lane-bearing reorder remains atomically unsupported: it also changes
+`config.app.timelineDataLanePlacement` and must not be split into this command.
+This is not a public/pin/activation claim; current Runtime `95bd3c5` remains
+on schema digest
+`sha256:6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
+Details: `design/runtime-track-order-source-review.md`.
