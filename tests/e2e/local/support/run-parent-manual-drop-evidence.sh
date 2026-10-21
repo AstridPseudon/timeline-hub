@@ -104,6 +104,29 @@ writeFileSync(process.env.OUTPUT, JSON.stringify(redact({
 JS
 }
 
+write_driver_context() {
+  status=$1
+  run_root_env=unset
+  tmpdir_env=unset
+  record_dir_env=unset
+  if [ -n "${NORMAL014_RUN_ROOT:-}" ]; then run_root_env=supplied; fi
+  if [ -n "${TMPDIR:-}" ]; then tmpdir_env=supplied; fi
+  if [ -n "${NORMAL014_RECORD_DIR:-}" ]; then record_dir_env=supplied; fi
+  {
+    printf 'driver_status=%s\n' "$status"
+    printf 'failure_stage=%s\n' "${failure_stage:-unknown}"
+    printf 'failure_command=%s\n' "${failure_command:-unknown}"
+    printf 'child_status=%s\n' "${child_status:-unset}"
+    printf 'argv_mode=%s\n' "${mode:-unknown}"
+    printf 'argv_app_root=%s\n' "${app_root:-unknown}"
+    printf 'env_profile=%s\n' "${NORMAL014_PROFILE:-unset}"
+    printf 'env_app_source=%s\n' "${NORMAL014_APP_SOURCE:-unset}"
+    printf 'env_run_root=%s\n' "$run_root_env"
+    printf 'env_tmpdir=%s\n' "$tmpdir_env"
+    printf 'env_record_dir=%s\n' "$record_dir_env"
+  } >"$evidence_dir/driver-context.txt"
+}
+
 record_evidence() {
   run_root=$1
   app_root=$2
@@ -139,6 +162,7 @@ record_evidence() {
   else
     printf '%s\n' 'runner.log was not retained by the runner' >"$evidence_dir/runner-tail.log"
   fi
+  write_driver_context "$status"
   cat >"$evidence_dir/evidence-presence.json" <<EOF
 {"trace":$( [ -n "$trace" ] && printf true || printf false ),"error_context":$( [ -n "$context" ] && printf true || printf false ),"request_response_console_summary":$( [ -n "$summary" ] && printf true || printf false ),"source_identity":true,"sanitized_summary":"bounded-browser-evidence.json"}
 EOF
@@ -170,24 +194,52 @@ run_gate() {
   cleanup_runner=0
   evidence_recorded=0
   evidence_dir=${NORMAL014_RECORD_DIR:-$worker_root/recorded-evidence}
+  failure_stage=driver-entry
+  failure_command=run_gate
   # Install the evidence-first trap before any preflight or runner operation.
   trap 'exit_handler' EXIT HUP INT TERM
 
+  failure_stage=app-package-guard
+  failure_command='test -f "$app_root/package.json"'
   test -f "$app_root/package.json"
+  failure_stage=source-runner-guard
+  failure_command='test -f "$source_runner"'
   test -f "$source_runner"
+  failure_stage=source-common-guard
+  failure_command='test -f "$source_common"'
   test -f "$source_common"
+  failure_stage=app-head-read
+  failure_command='git -C "$app_root" rev-parse HEAD'
   observed_app_head=$(git -C "$app_root" rev-parse HEAD)
+  failure_stage=app-tree-read
+  failure_command='git -C "$app_root" rev-parse HEAD^{tree}'
   observed_app_tree=$(git -C "$app_root" rev-parse 'HEAD^{tree}')
+  failure_stage=app-status-read
+  failure_command='git -C "$app_root" status --porcelain=v1 --untracked-files=all'
   observed_app_status=$(git -C "$app_root" status --porcelain=v1 --untracked-files=all)
+  failure_stage=app-ancestry-guard
+  failure_command='git -C "$app_root" merge-base --is-ancestor "$app_ancestry_anchor" "$observed_app_head"'
   git -C "$app_root" merge-base --is-ancestor "$app_ancestry_anchor" "$observed_app_head"
+  failure_stage=app-clean-guard
+  failure_command='test -z "$observed_app_status"'
   test -z "$observed_app_status"
+  failure_stage=app-head-shape-guard
+  failure_command='test "${#observed_app_head}" -eq 40'
   test "${#observed_app_head}" -eq 40
+  failure_stage=app-head-hex-guard
+  failure_command='case "$observed_app_head" in *[!0123456789abcdef]*) exit 1;; esac'
   case "$observed_app_head" in *[!0123456789abcdef]*) exit 1;; esac
 
+  failure_stage=run-root-create
+  failure_command='mktemp -d /tmp/timeline-parent-negative-evidence.XXXXXX'
   run_root=$(mktemp -d /tmp/timeline-parent-negative-evidence.XXXXXX)
+  failure_stage=runner-copy-create
+  failure_command='mktemp /tmp/timeline-parent-negative-runner.XXXXXX'
   run_copy=$(mktemp /tmp/timeline-parent-negative-runner.XXXXXX)
   cleanup_run_root=1
   cleanup_runner=1
+  failure_stage=runner-copy-transform
+  failure_command='sed source runner into disposable runner copy'
   sed \
     -e "s|^\. \"\$HERE/normal014-source-common.sh\"$|. \"$source_common\"|" \
     -e "s|^normal014_required_case='M2 real gate 5 bootstrap actual consumer: production initializer uses native create/init, exact retry, restart and guarded undo'$|normal014_required_case='M2 real mounted manual video drop: Runtime selection refusal is closed, native ADD recovers exactly, and undo preserves opaque data'|" \
@@ -196,13 +248,28 @@ run_gate() {
 node node_modules/playwright/cli.js test --config playwright.three-products.config.ts --grep 'M2 real mounted manual video drop' --list\\
 " \
     "$source_runner" >"$run_copy"
+  failure_stage=runner-copy-permission
+  failure_command='chmod 700 "$run_copy"'
   chmod 700 "$run_copy"
 
   status=0
-  NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent NORMAL014_RUN_ROOT="$run_root" \
+  failure_stage=child-runner-dispatch
+  failure_command='sh "$run_copy" "$mode" "$app_root"'
+  NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent NORMAL014_USE_BASE_PYTHON=1 NORMAL014_RUN_ROOT="$run_root" \
     sh "$run_copy" "$mode" "$app_root" >"$run_root/runner.log" 2>&1 || status=$?
+  failure_stage=runner-log-retention
+  failure_command='cat "$run_root/runner.log"'
   guard_test_run "$status" "$run_root/runner.log" || status=$?
   cat "$run_root/runner.log"
+  child_status=$status
+  if [ "$status" -ne 0 ]; then
+    failure_stage=child-runner-exit
+    failure_command='sh "$run_copy" "$mode" "$app_root" (child exit retained)'
+  fi
+  if [ "$status" -eq 0 ]; then
+    failure_stage=evidence-retention
+    failure_command='record_evidence "$run_root" "$app_root" "$status"'
+  fi
   record_evidence "$run_root" "$app_root" "$status"
   evidence_recorded=1
   printf 'retained evidence: %s\n' "$evidence_dir" >&2
@@ -246,7 +313,36 @@ failuretrap_probe() {
   test -s "$probe_evidence/source-identity.txt"
   test ! -e "$probe_root"
   rm -rf -- "$probe_evidence"
-  printf '%s\n' 'failuretrap probe passed: evidence copied before disposable-root cleanup'
+
+  (
+    probe_root=$(mktemp -d /tmp/timeline-parent-child-failure-probe.XXXXXX)
+    probe_evidence=$(mktemp -d /tmp/timeline-parent-child-failure-record.XXXXXX)
+    probe_child=$(mktemp /tmp/timeline-parent-child-failure.XXXXXX)
+    trap 'rm -rf -- "$probe_root" "$probe_evidence" "$probe_child"' EXIT
+    printf '%s\n' '#!/bin/sh' "printf '%s\\n' 'diagnostic child stderr' >&2" 'exit 73' >"$probe_child"
+    chmod 700 "$probe_child"
+    mkdir -p "$probe_root"
+    probe_status=0
+    failure_stage=probe-child-dispatch
+    failure_command='private failing child stub'
+    mode=probe
+    app_root=$worker_root
+    NORMAL014_RECORD_DIR=$probe_evidence
+    evidence_dir=$probe_evidence
+    if "$probe_child" >"$probe_root/runner.log" 2>&1; then
+      probe_status=0
+    else
+      probe_status=$?
+    fi
+    record_evidence "$probe_root" "$worker_root" "$probe_status"
+    test "$probe_status" -eq 73
+    test "$(cat "$probe_evidence/result.txt")" = runner_status=73
+    grep -F 'diagnostic child stderr' "$probe_evidence/runner-tail.log" >/dev/null
+    grep -F 'failure_command=private failing child stub' "$probe_evidence/driver-context.txt" >/dev/null
+    grep -F 'driver_status=73' "$probe_evidence/driver-context.txt" >/dev/null
+    test -s "$probe_evidence/source-identity.txt"
+  )
+  printf '%s\n' 'failuretrap probe passed: evidence copied before disposable-root cleanup and failing child status retained'
 }
 
 case "${1:-}" in
