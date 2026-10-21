@@ -266,6 +266,23 @@ def test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames(source_
     p.close()
 
 
+def test_motion_scene_rows_join_exact_missing_frames_once(source_query, tmp_path, monkeypatch):
+    snapshot, _ = saved(monkeypatch)
+    p, calls = provider(tmp_path, monkeypatch, snapshot)
+
+    info = p.capture(cards(0, 24), tmp_path / "motion", scene_frames=(29,))
+
+    assert info["evidence_source"] == "fresh_capture"
+    assert [call[0] for call in calls] == [(0, 24, 29)]
+    assert p.fresh_scene_frames == {0, 24, 29}
+    row = p.scene_for_frame(29).frame(29, source_identity=p.source_identity)
+    assert row["frame"] == 29
+    assert row["layers"][0]["clipId"] == "opaque:occ:A:opaque:source:title"
+    with pytest.raises(scene_answers.SceneQueryUnavailable, match="capture source/frame"):
+        p.scene_for_frame(29).frame(29, source_identity="sha256:" + "f" * 64)
+    p.close()
+
+
 @pytest.mark.parametrize("failure", ["capture", "missing", "copy", "query", "frames", "no_callback", "extra"])
 def test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files(source_query, tmp_path, monkeypatch, failure):
     snapshot, _ = saved(monkeypatch)

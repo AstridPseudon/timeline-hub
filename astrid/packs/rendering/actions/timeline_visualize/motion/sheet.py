@@ -29,6 +29,13 @@ PAD_SECONDS = 0.25
 SHEET_WIDTH = 1600
 
 
+def scene_frames_for_motion_window(start: float, end: float, fps: float, total: int) -> tuple[int, ...]:
+    """Return the exact frame clock sampled by the motion data layers."""
+    first = max(0, int(math.floor((start - PAD_SECONDS) * fps)))
+    stop = min(total, int(math.ceil((end + PAD_SECONDS) * fps)))
+    return tuple(range(first, max(first, stop)))
+
+
 def snapshot_elements(snapshot: Mapping[str, Any]) -> tuple[list[dict[str, Any]], list[model.Element]]:
     occurrences = occurrences_from_snapshot(snapshot)
     registry = (snapshot.get("registry") or {}).get("assets") if isinstance(snapshot.get("registry"), Mapping) else {}
@@ -163,8 +170,9 @@ def build_context(
         if source_identity and callable(scene_for_frame):
             fresh_frames = getattr(frame_provider, "fresh_scene_frames", ())
             cached_scenes = getattr(frame_provider, "_cached_scenes", {})
+            requested_frames = set(frames) | set(fresh_frames) | set(cached_scenes)
             modes = set()
-            for frame in sorted(frames):
+            for frame in sorted(requested_frames):
                 capture = scene_for_frame(frame)
                 facts = getattr(capture, "_frame_facts", None) if capture is not None else None
                 if not callable(facts):
@@ -180,7 +188,7 @@ def build_context(
                     modes.add(mode)
                 except Exception:  # noqa: BLE001 - public facts are optional
                     public_scene.pop(frame, None)
-            if len(modes) == 1 and len(public_scene) == len(frames):
+            if len(modes) == 1 and len(public_scene) == len(requested_frames):
                 public_scene_evidence_mode = modes.pop()
             else:
                 public_scene.clear()

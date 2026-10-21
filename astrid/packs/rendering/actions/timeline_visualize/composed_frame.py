@@ -884,6 +884,8 @@ class RemotionFrameProvider:
         cards: Sequence[Mapping[str, Any]],
         out_root: Path,
         resolution: Sequence[int] | None = None,
+        *,
+        scene_frames: Sequence[int] = (),
     ) -> dict[str, Any]:
         self.scene_capture = self._pending_scene = None
         self.fresh_scene_frames.clear()
@@ -891,6 +893,9 @@ class RemotionFrameProvider:
         out_root = Path(out_root)
         frames_dir = out_root / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
+        semantic_frames = tuple(sorted({int(frame) for frame in scene_frames}))
+        if any(frame < 0 for frame in semantic_frames):
+            raise ValueError("scene frame must be non-negative")
         misses: list[tuple[int, str, Path]] = []
         cached = 0
         for card in cards:
@@ -912,15 +917,30 @@ class RemotionFrameProvider:
                 cached += 1
             else:
                 misses.append((frame, key, destination))
+        # Semantic motion rows share the same prepared Root callback as the
+        # cards.  Keep one evidence mode by refreshing all cards whenever the
+        # source owner asks for additional rows; otherwise a cached-card/fresh-
+        # semantic mixture would be rejected by build_context.
+        if semantic_frames and self._scene_clips is not None:
+            card_frames = tuple(sorted({int(card["frame"]) for card in cards}))
+            requested = tuple(sorted(set(card_frames) | set(semantic_frames)))
+            misses = [
+                (int(card["frame"]), frame_cache_key(self.snapshot, int(card["frame"]), resolution),
+                 out_root / str(card["image"]))
+                for card in cards
+            ]
+            cached = 0
+        else:
+            requested = tuple(sorted({frame for frame, _key, _destination in misses}))
         fresh = 0
         notes: list[str] = []
         temporary = None
         try:
             if misses:
                 temporary = Path(tempfile.mkdtemp(prefix="astrid-frame-capture-", dir=out_root.parent))
-                self._fresh_requested = tuple(sorted({frame for frame, _key, _destination in misses}))
+                self._fresh_requested = requested
                 produced = self.worker.capture(
-                    [frame for frame, _key, _destination in misses], temporary, resolution
+                    requested, temporary, resolution
                 )
                 notes = _renderer_notes(self.worker.renderer)
                 if self._scene_clips is not None and self._pending_scene is None:

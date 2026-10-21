@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import textwrap
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
@@ -1726,6 +1726,16 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         json.dumps(snapshot, indent=2, ensure_ascii=False), encoding='utf-8')
     cards = index['cards']
     capture_info = None
+    scene_frames: tuple[int, ...] = ()
+    if options.get('view') == 'motion' and isinstance(index.get('motion'), Mapping):
+        from .motion.sheet import scene_frames_for_motion_window
+
+        motion_window = index['motion'].get('window')
+        if isinstance(motion_window, Sequence) and len(motion_window) == 2:
+            scene_frames = scene_frames_for_motion_window(
+                float(motion_window[0]), float(motion_window[1]),
+                float(Fraction(*snapshot['fps_rational'])), int(snapshot['duration_frames']),
+            )
     # Frame acquisition is the expensive step (Remotion capture or ffmpeg
     # extraction).  Its wall-clock window is reported as timing so an agent can
     # tell a slow capture from a slow composition or a queued task.
@@ -1735,7 +1745,11 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
             raise ValueError('filmstrip requires either an admitted video or a frame provider')
         _extract(video_path, cards, out_root, options.get('resolution'))
     else:
-        capture_info = frame_provider.capture(cards, out_root, options.get('resolution'))
+        capture_args = (cards, out_root, options.get('resolution'))
+        if scene_frames and getattr(frame_provider, '_scene_clips', None) is not None:
+            capture_info = frame_provider.capture(*capture_args, scene_frames=scene_frames)
+        else:
+            capture_info = frame_provider.capture(*capture_args)
         index['frame_capture'] = capture_info
         index['provenance']['frame_capture'] = capture_info
     capture_ended_at = time.time()
