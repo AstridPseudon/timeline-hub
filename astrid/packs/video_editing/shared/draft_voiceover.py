@@ -736,7 +736,8 @@ def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy:
                          settings=None, occurrence_ids=None, adopt_clip_ids=None,
                          padding_seconds=0.15, plan_only=False,
                          managed_proposal=False, settled_speech_input=None,
-                         attempt_root=None) -> dict:
+                         attempt_root=None, requester_entry=False,
+                         outbox_path=None) -> dict:
     """Run the shared preparation, with publication mode selected privately.
 
     No render is requested. Protected/empty/missing-script rows are reported.
@@ -770,6 +771,31 @@ def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy:
     scripts = _data(client.timelines.script(project_id, timeline_id, revision_id=head))
     options = dict(settings=settings, occurrence_ids=occurrence_ids, adopt_clip_ids=adopt_clip_ids)
     plan = plan_draft_voiceover(candidate, scripts, **options)
+    if requester_entry and not plan_only and plan["jobs"]:
+        base_publication_id = shown["summary"].get("head_publication_id")
+        if not isinstance(base_publication_id, str) or not base_publication_id:
+            raise VoiceoverSyncError("Timeline head lacks its settled publication identity")
+        from .voiceover_requester import _requester_sync_draft_voiceover
+
+        return _requester_sync_draft_voiceover(
+            client,
+            project,
+            timeline,
+            candidate=candidate,
+            scripts=scripts,
+            admitted_target={
+                "project_id": project_id,
+                "timeline_id": timeline_id,
+                "base_revision_id": head,
+                "base_publication_id": base_publication_id,
+            },
+            timing_policy=timing_policy,
+            settings=settings,
+            occurrence_ids=occurrence_ids,
+            adopt_clip_ids=adopt_clip_ids,
+            padding_seconds=padding_seconds,
+            outbox_path=outbox_path,
+        )
     # Fresh provenance is reusable only while its managed audio bytes remain
     # readable and match the selected immutable identity. A missing object is
     # regenerated; authorization, integrity, and protocol errors stay visible.
