@@ -15,6 +15,7 @@ import sys
 import pytest
 
 from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
 from astrid.sdk.timeline.commit import _json, bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_sheet import NativeSheet
@@ -408,3 +409,58 @@ def test_detached_duration_author_time_basis_through_original_save_and_runtime(
     with pytest.raises(CommitConflict):
         session.undo([accepted['publication_id']])
     assert path.read_text() == edited
+
+
+@pytest.mark.parametrize('runtime', ['historical'], indirect=True)
+@pytest.mark.parametrize('historical_sheet_film', ['detached'], indirect=True)
+def test_current014_detached_text_literal_uses_native_http_and_guarded_inverse(
+        runtime, historical_sheet_film):
+    from astrid.sdk.timeline.checkout import _sheet_session
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_sheet import apply_sheet, render_sheet
+
+    client = runtime.client()
+    assert historical_sheet_film[1] == runtime.project
+    tl = Checkout.draft(runtime.project, 'film', client=client)
+    original_text = render_sheet(tl, cuts=['c1'])
+    value = 'line\nnext C:\\tmp\\file \\1 — café "quoted"'
+    edited = original_text.replace('"Before"', json.dumps(value, ensure_ascii=False), 1)
+    assert edited != original_text and edited.count(json.dumps(value, ensure_ascii=False)) == 1
+
+    session = _sheet_session(tl)
+    artifact = json.loads(session.outbox.path.read_bytes())['sheet']
+    bundle = artifact['bundle']
+    ref = artifact['detached']['bindings']['c1.card']
+    sibling = 'occurrence:occ/clip:video'
+    before = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=runtime.history()['head']['revision_id']).data['bundle']
+    expected = [capture_clip_set_params(bundle, ref, values={'text': value})]
+    assert apply_sheet(tl, edited, client=client)
+    pending = json.loads(session.outbox.path.read_bytes())['pending']
+    assert pending == expected
+
+    tl.save(quiet=True)
+    request = json.loads(runtime.calls[-1][0])
+    assert request['base_revision_id'] == artifact['basis']['revision_id']
+    assert request['base_publication_id'] == artifact['basis']['publication_id']
+    assert request['commands'] == expected and request['source'] == {'via': 'sheet'}
+    accepted = copy.deepcopy(runtime.history()['head'])
+    after = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=accepted['revision_id']).data['bundle']
+    after_state = State(after)
+    assert after_state.entity(ref)['params']['text'] == value
+    assert after_state.entity(ref)['params']['opaque'] == {'keep': [None, False, 1, 1.0]}
+    assert after_state.entity(sibling) == State(before).entity(sibling)
+
+    runtime.restart()
+    reloaded = runtime.session(name='current014-text-reloaded')
+    reloaded_bundle = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=accepted['revision_id']).data['bundle']
+    assert State(reloaded_bundle).entity(ref)['params']['text'] == value
+    undone = reloaded.undo([accepted['publication_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert _json(State(restored).entity(ref)) == _json(State(before).entity(ref))
+    assert State(restored).entity(sibling) == State(before).entity(sibling)
+    redone = reloaded.undo([undone['receipt']['receipt_id']])
+    redone_bundle = bundle_from_document(redone['data']['canonical_document'])
+    assert _json(State(redone_bundle).entity(ref)) == _json(State(after).entity(ref))

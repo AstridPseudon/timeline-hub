@@ -56,6 +56,11 @@ def duration_edit(text, value):
                      for line in text.splitlines()) + "\n"
 
 
+def text_edit(text, value):
+    return "\n".join(line.replace('"LIVE"', json.dumps(value), 1)
+                     if "  card  " in line else line for line in text.splitlines()) + "\n"
+
+
 def test_detached_static_duration_keeps_the_original_local_grammar(tmp_path):
     tl = Checkout(detached_duration_bundle())
     tl.save(tmp_path / "local.json", quiet=True)
@@ -64,6 +69,24 @@ def test_detached_static_duration_keeps_the_original_local_grammar(tmp_path):
     assert tl.clip("c1.card").duration == 2
     assert tl.clip("c2.card").duration == 1
     assert not list(tmp_path.glob("*.outbox.json"))
+
+
+@pytest.mark.parametrize("value", ["CHANGED", "", "line\nnext C:\\tmp\\file \\1"])
+def test_detached_static_text_uses_retained_native_params_command(connected, tmp_path, value):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    edited = text_edit(original_text, value)
+    expected = execute(original, [capture_clip_set_params(original, ref, values={"text": value})])
+
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, edited, client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert generated.calls == []
+    assert state["pending"] == expected.commands
+    assert State(tl.bundle).entity(ref)["params"]["text"] == value
+    assert State(tl.bundle).entity("occurrence:occ-2/clip:card")["params"]["text"] == "LIVE"
 
 
 @pytest.mark.parametrize("peer", ["none", "disjoint", "same"])

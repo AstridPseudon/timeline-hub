@@ -860,7 +860,7 @@ def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
 
 
 def _duration_sheet(sheet, artifact, parsed):
-    """Translate only existing static layer durations, using the export's bindings."""
+    """Translate existing static layer durations and literal type text."""
     from astrid.sdk.timeline._command_state import State, equal
 
     original = parse_sheet(artifact["text"])
@@ -872,19 +872,44 @@ def _duration_sheet(sheet, artifact, parsed):
     text = sheet.text
     for key, row in right.items():
         before = left[key]
-        if equal(before["for"], row["for"]):
+        if equal(before["for"], row["for"]) and equal(before["text"], row["text"]):
             continue
         ref = artifact["bindings"].get(".".join(key))
-        if ref is None or before["for"] is None or row["for"] is None:
+        if ref is None:
             return None
         clip = State(sheet._bundle).entity(ref)
-        if clip.get("clipType") != "am-type" or type(clip.get("hold")) not in (int, float) or row["until"] or row["on"]:
-            return None
-        value = row["for"] * (clip.get("speed") or 1)
-        suffix = " # ref " + json.dumps(ref)
-        text = "\n".join(re.sub(r"(?<!\S)hold=\S+", "hold=" + repr(value), line)
-                         if line.endswith(suffix) else line for line in text.splitlines()) + "\n"
-        row["for"] = before["for"]
+        if not equal(before["for"], row["for"]):
+            if before["for"] is None or row["for"] is None:
+                return None
+            if clip.get("clipType") != "am-type" or type(clip.get("hold")) not in (int, float) or row["until"] or row["on"]:
+                return None
+            value = row["for"] * (clip.get("speed") or 1)
+            suffix = " # ref " + json.dumps(ref)
+            text = "\n".join(re.sub(r"(?<!\S)hold=\S+", "hold=" + repr(value), line)
+                             if line.endswith(suffix) else line for line in text.splitlines()) + "\n"
+            row["for"] = before["for"]
+        if not equal(before["text"], row["text"]):
+            if (before["text"] is None or not isinstance(row["text"], str)
+                    or clip.get("clipType") != "am-type" or row["until"] or row["on"]):
+                return None
+            old_token = "text=" + json.dumps(before["text"], ensure_ascii=False)
+            new_token = "text=" + json.dumps(row["text"], ensure_ascii=False)
+            suffix = " # ref " + json.dumps(ref)
+            replaced = []
+            for line in text.splitlines():
+                if not line.endswith(suffix):
+                    replaced.append(line)
+                    continue
+                body = line[:-len(suffix)]
+                if _tokens(body.strip()).count(old_token) != 1:
+                    return None
+                body, count = re.subn(rf"(?<!\S){re.escape(old_token)}(?=\s|$)",
+                                      lambda _: new_token, body, count=1)
+                if count != 1:
+                    return None
+                replaced.append(body + suffix)
+            text = "\n".join(replaced) + "\n"
+            row["text"] = before["text"]
     def semantic(value):
         if isinstance(value, dict):
             return {k: semantic(v) for k, v in value.items() if k not in {"line", "text_line"}}
