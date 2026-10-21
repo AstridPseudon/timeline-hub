@@ -75,7 +75,7 @@ import {
 import { listAllRuntimeVariants } from './generationAccess.ts';
 import { recordShotTimelinePhase } from '@/tools/video-editor/lib/shot-timeline-timing.ts';
 import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
-import { initializeBootstrapTimeline as initializeNativeBootstrapTimeline } from './bootstrapInitialization.ts';
+import { initializeBootstrapTimeline as initializeNativeBootstrapTimeline, recoverBootstrapInitialization } from './bootstrapInitialization.ts';
 import { createCommitOutbox } from '@/tools/video-editor/commands/commitOutbox.ts';
 
 type RuntimeRecord = Record<string, unknown>;
@@ -512,6 +512,22 @@ export class RuntimeDataProvider implements DataProvider {
           loadLatest: (id) => this.loadTimelineCommandBasis(id),
           commitTimeline: (request, key) => this.commitTimeline(request, key),
         },
+      },
+    );
+  }
+
+  async recoverNativeBootstrapTimeline(timelineId: string, ownerId: string): Promise<TimelineCommandBasis> {
+    const identity = await this.client.getRecoverableIdentity();
+    return recoverBootstrapInitialization(
+      { ...identity, projectId: this.projectId, timelineId },
+      ownerId,
+      {
+        createTimeline: (project, timeline, key, name) => this.client.createTimeline(project, timeline, key, name),
+        listTimelineCommits: (project, timeline, cursor, limit) => this.client.listTimelineCommits(project, timeline, cursor, limit),
+        getProjectParentCompositionRevision: (project, timeline, revision) =>
+          this.client.getProjectParentCompositionRevision(project, timeline, revision),
+        loadLatest: (id) => this.loadTimelineCommandBasis(id),
+        commitTimeline: (request, key) => this.commitTimeline(request, key),
       },
     );
   }
