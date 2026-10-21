@@ -104,3 +104,48 @@ and occurrence selected-swap acceptance/restart/exact-retry case with the
 published-014 Runtime. Recheck that the digest-only path remains reachable only
 for its explicit legacy input shape and that all original positive/refusal
 assertions remain present.
+
+## Independent corrected-source review — 2026-10-21 UTC
+
+The corrected source is commit `d161b4a44adf90330df8227beb63acd8cefb9140`,
+tree `3ff62be3ac74b814c321bf12182d28063098f0f3`, directly on proposal
+`2aa627af2`. Verdict: **HOLD / do not promote**.
+
+The source-object retry mismatch is fixed: `media.object_id` must equal the
+caller `source_object_id`, the native operation/select/args/ownership intent
+are checked, the draft is not rewritten, and a persisted flight retries with
+its stored key. The focused changed-source/no-flush and exact-retry controls
+pass.
+
+### Remaining exact counterexample
+
+`astrid/sdk/timeline_media_replacement.py` `_pending_matches` requires
+`reads` and `selections` to be lists but does not compare their contents. A
+real captured occurrence swap has 26 `reads` and 3 `selections`; changing the
+first read's `ref` to `occurrence:foreign`, or the first selection's `owner` to
+`parent`, still makes `_pending_matches(...)` return `True`. The pending path
+then reaches `session.flush()` before any authoritative recapture or full
+identity comparison. This violates the requirement that complete native
+command identity, including metadata, be compared before any flush. The new
+regression covers changed `source_object_id`, but not changed read/selection
+metadata.
+
+The restored commit-door assertion test uses a fake `commit_timeline`
+transport; it is useful for field coverage but is not genuine client/health
+acceptance. The changed provider test contains a real `AstridClient.open`
+handshake tail for a parent call, but the normal published-014 parent and
+occurrence HTTP acceptance proof has not been run and remains required.
+
+Evidence from the corrected source:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" \
+  /home/user/work/venv-agent/bin/python -B -m pytest -q -p no:cacheprovider \
+  tests/test_timeline_clip_replacement.py::test_selected_media_commit_door_preserves_original_identity \
+  tests/test_timeline_clip_replacement.py::test_native_media_retry_keeps_original_command_and_key_after_lost_ack
+2 passed in 1.22s
+```
+
+The direct metadata probe returned `True` for both mutated `reads` and
+`selections`. `git diff --check` passed. No full suite, HTTP acceptance, or
+the repeated broader test was run.
