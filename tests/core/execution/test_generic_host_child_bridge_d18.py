@@ -31,6 +31,10 @@ from astrid.core.execution.generic_host import GenericPackHost, HostError, Runti
 from astrid.sdk._child_bridge import ChildBridge, _BridgeRejected
 from astrid.sdk.execution_request import normalize_execution_request
 from astrid_runtime_client import ApiError, WorkspaceClient
+from tests.lanes import unavailable
+
+# The Runtime realm these proofs run against is a second checkout (tests/lanes.py).
+INTEGRATION_FIXTURES = ("world",)
 
 PARENT = "bridge.parent"
 CHILD = "bridge.child"
@@ -962,7 +966,7 @@ def test_discovery_selected_association_filter_acquires_only_selected_object(dis
 def world(tmp_path, monkeypatch):
     source = os.environ.get("ASTRID_D18_RUNTIME_SOURCE")
     if not source:
-        pytest.skip("requires explicitly selected audited D18 Runtime source")
+        unavailable("set ASTRID_D18_RUNTIME_SOURCE to the audited Runtime worktree")
     source = Path(source)
     monkeypatch.syspath_prepend(str(source))
     monkeypatch.setenv("ASTRID_SOURCE_STATE", str(tmp_path / "absent.json"))

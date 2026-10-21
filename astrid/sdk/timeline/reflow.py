@@ -63,6 +63,7 @@ class _ReflowMixin:
     """Checkout: the voice track and re-flow, moments (resolve, retime, place), and time shifts inside shots."""
 
     _scope: list | None = None  # the changes of the open re-time scope (keep_end only): (film second, seconds, skip ids)
+    _orphan_reason: str  # set by Checkout.__init__; declared so this mixin's readers are typed
 
     @property
     def music(self) -> str:

@@ -25,6 +25,7 @@ from astrid.core.rendering.contracts import (
     SupportReport,
 )
 from astrid.core.rendering.profile import _mp4_time_base
+from astrid.core.theme import ThemeValidationError, builtin_theme, load_runtime_theme
 from astrid.packs.rendering.rendering.renderers.ffmpeg import audio_reactive_colour
 from astrid.packs.rendering.rendering.renderers.ffmpeg.text import (
     _finite_number,
@@ -349,6 +350,32 @@ def _validate_text_semantics(
     return reasons
 
 
+def _unapplied_timeline_reasons(timeline_data: Mapping[str, Any]) -> list[str]:
+    """Timeline-level fields the Remotion renderer honours and this one never reads.
+
+    A host may choose ``rendering.ffmpeg`` for a task that names no renderer, so
+    this renderer must refuse what it would silently drop rather than render a
+    different film.
+    """
+
+    reasons: list[str] = []
+    app = timeline_data.get("app")
+    if isinstance(app, Mapping) and app.get("astrid_render_clock") is not None:
+        reasons.append(
+            "rendering.ffmpeg does not render the render-only tail declared by "
+            "app.astrid_render_clock; the film would end at the authored extent"
+        )
+    metadata = timeline_data.get("metadata")
+    if isinstance(metadata, Mapping):
+        windowed = sorted(key for key in metadata if str(key).startswith("source_window_"))
+        if windowed:
+            reasons.append(
+                "rendering.ffmpeg does not apply the source window declared by "
+                f"metadata.{', metadata.'.join(windowed)}"
+            )
+    return reasons
+
+
 def structural_reasons(
     timeline_data: Mapping[str, Any],
     *,
@@ -356,7 +383,7 @@ def structural_reasons(
 ) -> list[str]:
     """Return semantic rejections that do not require filesystem probing."""
 
-    reasons: list[str] = []
+    reasons: list[str] = _unapplied_timeline_reasons(timeline_data)
     raw_tracks = timeline_data.get("tracks")
     raw_clips = timeline_data.get("clips")
     if not isinstance(raw_tracks, list):
@@ -485,9 +512,9 @@ def structural_reasons(
             reasons.append(
                 "rendering.ffmpeg requires exactly one visual track carrying media clips"
             )
-        for track_id in visual_track_ids:
-            if not any(str(clip.get("track")) == track_id for clip in clips):
-                reasons.append(f"Visual track {track_id!r} has no clips")
+        # A visual track with no clips and default semantics draws nothing:
+        # _validate_track_semantics already refuses any opacity or transform
+        # that could make an empty track visible, so it is absent here.
         for track_clips in visual_clips_by_track.values():
             for clip in track_clips:
                 try:
@@ -853,6 +880,43 @@ def _canvas(timeline_data: Mapping[str, Any]) -> tuple[int, int, int]:
     return values[0], values[1], values[2]
 
 
+def _has_canvas_override(timeline_data: Mapping[str, Any]) -> bool:
+    overrides = timeline_data.get("theme_overrides")
+    visual = overrides.get("visual") if isinstance(overrides, Mapping) else None
+    return isinstance(visual, Mapping) and visual.get("canvas") is not None
+
+
+def _theme_canvas_reasons(
+    request: RenderRequest, timeline_data: Mapping[str, Any]
+) -> list[str]:
+    """Refuse a canvas this renderer would not draw on.
+
+    Remotion takes the canvas from ``theme_overrides.visual.canvas`` and, when
+    the timeline has none, from the resolved theme (the pinned ``theme.json``
+    the request names, else the built-in default). This renderer reads only the
+    timeline's override and then 1920x1080 at 30 fps, so a resolved theme with
+    another canvas would be rendered on the wrong one.
+    """
+
+    if _has_canvas_override(timeline_data):
+        return []
+    remotion_config = request.backend_config.get("rendering.remotion", {})
+    theme_path = remotion_config.get("theme_path") if isinstance(remotion_config, Mapping) else None
+    try:
+        theme = load_runtime_theme(theme_path) if theme_path else builtin_theme()
+    except ThemeValidationError as exc:
+        return [f"rendering.ffmpeg cannot resolve the theme canvas: {exc}"]
+    canvas = theme["visual"]["canvas"]
+    resolved = (canvas["width"], canvas["height"], canvas["fps"])
+    if resolved != _canvas(timeline_data):
+        width, height, fps = resolved
+        return [
+            f"rendering.ffmpeg draws the timeline's canvas, but the resolved theme {theme.get('id')!r} "
+            f"declares {width}x{height} at {fps:g} fps"
+        ]
+    return []
+
+
 def support(
     request: RenderRequest,
     timeline_data: Mapping[str, Any],
@@ -888,6 +952,8 @@ def support(
         _canvas(timeline_data)
     except ValueError as exc:
         reasons.append(str(exc))
+    else:
+        reasons.extend(_theme_canvas_reasons(request, timeline_data))
     reasons.extend(structural_reasons(timeline_data))
 
     table = _assets_table(assets)

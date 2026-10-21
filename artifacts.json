@@ -143,7 +143,7 @@
     "astrid/packs/rendering/ui/threejs-live-editor/shotStillRenderer.tsx": "sha256:12f10827613b561f25ca27b7aca0de7afa0d7c8b14e4da7a53087e0117942bea",
     "astrid/packs/rendering/ui/threejs-live-editor/shotStills.ts": "sha256:147d7965ec7aed6a232dcb3405a2168565c3d15525beee1ceb351016f8852b83",
     "astrid/packs/rendering/ui/threejs-live-editor/useShotStill.ts": "sha256:7bd997ed889e63172019dcbe418a77a9af9e0de1f993a9cff8bd2d786186ce03",
-    "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "sha256:d92ea46a3d25f3d5e952db9d3b3c41401da2f82d49a58ca60a0f1fefb22f5c9b",
+    "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "sha256:9eb80ec0f6cd9249a6af618cddf284c2e411bf8ff8a4475d2a87b5ab25a19555",
     "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "sha256:2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
     "astrid/packs/rendering/ui/transcript/extension.tsx": "sha256:870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
     "astrid/packs/video_editing/pack.yaml": "sha256:53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
@@ -171,5 +171,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:1902f857d7325fce7e1b84036a6c3a8dba1b87ddcb60c9bdd0e175495db9c0db"
+  "version": "sha256:eabd40d8367b0e4f8285949b6a724839475c846653868d3b550c8ee70f53e375"
 }

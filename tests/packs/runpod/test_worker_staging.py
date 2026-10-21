@@ -16,6 +16,7 @@ from typing import Any, Mapping
 import pytest
 
 from astrid.core.generation.model_root import canonical_model_inventory_digest
+from astrid.core.generation.vibecomfy_dependency import VIBECOMFY_CHECKOUT_ENV
 from astrid.packs.runpod.worker_staging import (
     _CHILD_CHECK_PROGRAM,
     _REMOTE_PROBE_PROGRAM,
@@ -27,6 +28,7 @@ from astrid.packs.runpod.worker_staging import (
     prepare_worker,
 )
 from tests.helpers.runtime import use_runtime
+from tests.lanes import unavailable
 
 
 def test_child_readiness_contract_does_not_probe_cuda_or_gpu() -> None:
@@ -37,7 +39,9 @@ def test_child_readiness_contract_does_not_probe_cuda_or_gpu() -> None:
     assert "nvidia-smi" not in _CHILD_CHECK_PROGRAM.casefold()
 
 ROOT = Path(__file__).resolve().parents[3]
-VIBECOMFY = Path(os.environ.get("ASTRID_VIBECOMFY_CHECKOUT") or ROOT.parent / "vibecomfy")
+# The checkout comes from the environment, else the sibling of this checkout; a missing one is the
+# second-checkout case of tests/lanes.py (fail in the integration lane, skip elsewhere).
+VIBECOMFY = Path(os.environ.get(VIBECOMFY_CHECKOUT_ENV, "").strip() or ROOT.parent / "vibecomfy").expanduser().resolve()
 ACCOUNT_REF = "runpod-test-account"
 
 
@@ -81,6 +85,9 @@ def source_fixture(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     astrid.mkdir()
     shutil.copytree(ROOT / "astrid", astrid / "astrid", copy_function=_copy_link_or_copy, ignore=_ignore)
     shutil.copy2(ROOT / "pyproject.toml", astrid / "pyproject.toml")
+
+    if not (VIBECOMFY / "vibecomfy").is_dir():
+        unavailable(f"no VibeComfy checkout at {VIBECOMFY}: set {VIBECOMFY_CHECKOUT_ENV} to one")
 
     vibe = base / "vibecomfy-source"
     vibe.mkdir()
@@ -407,6 +414,7 @@ def _run(setup: Mapping[str, Any], transport: LocalPreparationTransport, **extra
     return asyncio.run(prepare_worker(**args))
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_preparation_runs_real_child_probe_and_reuses_verified_content(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -443,6 +451,7 @@ def test_preparation_runs_real_child_probe_and_reuses_verified_content(
     assert Path(result["journal_path"]).stat().st_mode & 0o777 == 0o600
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_materialized_h3_bundle_stages_as_an_owned_workflow_root(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -488,6 +497,7 @@ def test_materialized_h3_bundle_stages_as_an_owned_workflow_root(
         )
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_interrupted_upload_reconciles_remote_bytes_without_reupload(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -509,6 +519,7 @@ def test_interrupted_upload_reconciles_remote_bytes_without_reupload(
     assert transport.uploads[str(source_fixture["vibecomfy"])] == 1
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_remote_drift_fails_closed_then_explicit_refresh_repairs_owned_source(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -532,6 +543,7 @@ def test_remote_drift_fails_closed_then_explicit_refresh_repairs_owned_source(
         _run(setup, transport)
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_workflow_pack_requires_its_unique_lock_pin_and_exact_checkout(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -568,6 +580,7 @@ def test_workflow_pack_requires_its_unique_lock_pin_and_exact_checkout(
         _run(setup, LocalPreparationTransport())
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_manifest_pinned_workflow_pack_cannot_omit_its_checkout_root(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -582,6 +595,7 @@ def test_manifest_pinned_workflow_pack_cannot_omit_its_checkout_root(
     assert transport.uploads == {}
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 @pytest.mark.parametrize("alias_kind", ["lock_leaf", "lock_parent", "node_leaf", "node_parent"])
 def test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse(
     tmp_path: Path, source_fixture: Mapping[str, Any], alias_kind: str
@@ -630,6 +644,7 @@ def test_same_byte_custom_node_release_aliases_fail_before_resolved_reuse(
         _run(setup, transport)
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_changed_config_corrupt_journal_and_account_or_volume_mismatch_refuse_reuse(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -672,6 +687,7 @@ def test_changed_config_corrupt_journal_and_account_or_volume_mismatch_refuse_re
         _run(setup, transport)
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_empty_remote_observation_and_model_shadow_remain_unresolved(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -695,6 +711,7 @@ def test_empty_remote_observation_and_model_shadow_remain_unresolved(
         _run(setup, LocalPreparationTransport())
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_release_manifest_datacenter_and_account_reference_are_mandatory(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -706,6 +723,7 @@ def test_release_manifest_datacenter_and_account_reference_are_mandatory(
         _run(setup, LocalPreparationTransport())
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_manifest_volume_alias_is_optional_but_mismatch_and_effective_path_drift_fail_closed(
     tmp_path: Path, source_fixture: Mapping[str, Any]
 ) -> None:
@@ -737,6 +755,7 @@ def test_manifest_volume_alias_is_optional_but_mismatch_and_effective_path_drift
     assert transport.uploads == {}
 
 
+@pytest.mark.integration  # needs VibeComfy (ASTRID_VIBECOMFY_CHECKOUT) and Runtime (ASTRID_RUNTIME_CHECKOUT) checkouts
 def test_json_selection_uses_production_composition_and_real_cpu_staging(
     tmp_path: Path,
     source_fixture: Mapping[str, Any],
@@ -744,6 +763,8 @@ def test_json_selection_uses_production_composition_and_real_cpu_staging(
 ) -> None:
     """Exercise file decoding -> production owners -> real P2 with fake I/O."""
     import runpod_lifecycle
+
+    use_runtime()
     from runtime_protocol.remote_worker_deployment import deployment_binding_from_task
 
     import astrid.packs.runpod.worker_session as worker_session

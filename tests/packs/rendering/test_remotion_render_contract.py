@@ -499,6 +499,18 @@ def test_frame_worker_real_esm_spawn_capture_preserves_cold_failure(
     import hashlib
     import json
     import os
+    import shutil
+    import sys
+
+    # On Linux the pinned renderer (wrap-with-setpriv in 4.0.509) launches the
+    # browser as `setpriv --pdeathsig SIGKILL <browser> ...` whenever setpriv is
+    # on PATH. setpriv execs the browser, so it is one child process and one
+    # spawn, not an extra helper; only the spawn identity differs by platform.
+    # The fake therefore accepts exactly this one expected launch prefix and
+    # rejects every other executable or wrapper.
+    browser = '/usr/bin/true'
+    setpriv = shutil.which('setpriv') if sys.platform == 'linux' else None
+    launch_prefix = [setpriv, '--pdeathsig', 'SIGKILL', browser] if setpriv else [browser]
 
     node = _node_executable()
     renderer = REMOTION / 'node_modules/@remotion/renderer/dist/esm/index.mjs'
@@ -529,6 +541,8 @@ let calls = 0;
 const fakeSignals = [];
 const syntheticChildren = [];
 const spawnEnvironments = [];
+const spawnLaunches = [];
+const expectedLaunch = JSON.parse(process.env.EXPECTED_LAUNCH_PREFIX);
 const bundleEnvironments = [];
 const psCalls = [];
 const originalProcessKill = process.kill;
@@ -536,7 +550,9 @@ process.kill = () => {throw new Error('native process signaling is forbidden by 
 const fakeSpawn = (file, args) => {
   calls++;
   spawnEnvironments.push({tmpdir: process.env.TMPDIR, profile: args.find(arg => arg.startsWith('--user-data-dir=')), diagnosticFlags: args.filter(arg => arg === '--enable-logging=stderr' || arg === '--v=1')});
-  if (file !== '/usr/bin/true') throw new Error('unexpected browser executable');
+  const launch = [file, ...args.slice(0, expectedLaunch.length - 1)];
+  spawnLaunches.push(launch);
+  if (JSON.stringify(launch) !== JSON.stringify(expectedLaunch)) throw new Error('unexpected browser executable');
   if (process.env.FAILURE_STAGE === 'before-allocation') {
     throw new Error('ECONNREFUSED before synthetic allocation');
   }
@@ -575,7 +591,7 @@ syncBuiltinESMExports();
 const real = await import(pathToFileURL(process.env.REAL_RENDERER).href);
 process.on('exit', () => {
   writeFileSync(process.env.SPAWN_SUMMARY, JSON.stringify({
-    calls, fakeSignals, spawnEnvironments, bundleEnvironments, psCalls,
+    calls, fakeSignals, spawnEnvironments, spawnLaunches, bundleEnvironments, psCalls,
     listenerCounts: syntheticChildren.map(child => ({
       error: child.listenerCount('error'), spawn: child.listenerCount('spawn'),
       exit: child.listenerCount('exit'), close: child.listenerCount('close'),
@@ -613,6 +629,7 @@ export async function renderFrames() {throw new Error('startup must fail before 
         [node, str(worker)], input=''.join(json.dumps(row) + '\n' for row in requests),
         capture_output=True, text=True, timeout=20,
         env={**os.environ, 'REAL_RENDERER': str(renderer),
+             'EXPECTED_LAUNCH_PREFIX': json.dumps(launch_prefix),
              'FAILURE_STAGE': failure_stage, 'SPAWN_SUMMARY': str(summary_path),
              'ASTRID_FRAME_WORKER_ROOT': str(tmp_path / 'scratch'), 'TMPDIR': str(inherited_tmp),
              'ASTRID_FRAME_WORKER_CHROME_DIAGNOSTICS': '1', 'SENTINEL_SECRET': 'DO_NOT_RETAIN_THIS_VALUE'},
@@ -626,6 +643,7 @@ export async function renderFrames() {throw new Error('startup must fail before 
     summary = json.loads(summary_path.read_text())
     assert summary['cjsRestored'] and summary['esmRestored']
     assert summary['noNativeProcessSpawned'] is True
+    assert summary['spawnLaunches'] == [launch_prefix] * summary['calls']
     expected_temps = [str(inherited_tmp)] * (1 if failure_stage == 'allocated' else 4)
     assert [row['tmpdir'] for row in summary['spawnEnvironments']] == expected_temps
     for actual, expected in zip(summary['spawnEnvironments'], expected_temps, strict=True):
@@ -661,8 +679,8 @@ export async function renderFrames() {throw new Error('startup must fail before 
         else:
             assert 'diagnostics' not in launch and summary['psCalls'] == []
         assert launch['ownerPid'] > 0 and launch['ownerParentPid'] > 0
-        assert launch['executable'] == '/usr/bin/true'
-        assert launch['argv'][0] == '/usr/bin/true'
+        assert launch['executable'] == launch_prefix[0]
+        assert launch['argv'][:len(launch_prefix)] == launch_prefix
         assert any(arg.startswith('--user-data-dir=') for arg in launch['argv'])
         assert launch['stderr']['bytes'] > 9000
         assert len(launch['stderr']['tail'].encode()) <= 8192

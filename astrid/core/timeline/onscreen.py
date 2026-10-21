@@ -84,6 +84,10 @@ _COVERAGE_CACHE: dict[str, dict] = {}
 # Keep this narrow semantic projection here until those unowned declarations
 # are joined; a declaration present in the V3 manifest always takes priority.
 _COVERAGE_COMPAT = {
+    # The generic media clip (a video or image from the project's media) is the picture wherever it sits: its track
+    # is the author's choice (`plate` is only the convention of Astrid's own cuts), and with no layout fields it fills
+    # the canvas. Without an asset it shows nothing: covered, but empty.
+    "media": {"coverage": "picture", "background_unless": ["asset"]},
     "am-snap-plate": {"coverage": "picture", "background_unless": ["asset", "params.src"]},
     "am-footage": {"coverage": "picture"},
     "am-presenter": {"coverage": "picture"},

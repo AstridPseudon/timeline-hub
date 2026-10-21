@@ -352,16 +352,19 @@ def find_ready_capability(items: Iterable[Mapping[str, Any]], capability_id: str
 
 
 def build_app_render_admission(*, project: str, timeline_id: str, output_name: str, capability: Mapping[str, Any],
-                               token: str, backend: str = REMOTION_BACKEND, expected_version: int | None = None,
+                               token: str, backend: str | None = None, expected_version: int | None = None,
                                destination: str = "download") -> dict[str, Any]:
     """The request the App sends to render a timeline (astrid-app ``enqueueAstridRuntimeRenderTimeline``).
+
+    An ordinary timeline names no renderer: the host chooses one (``backend=None``).  ``backend`` is the
+    live-scene or explicit choice and is sent as the ``selector``.
 
     ``capability`` is the ``rendering.render`` row from ``GET /v1/capabilities``: the App takes both the
     digest and the storage estimate from it and invents neither.
     """
     version = "head" if expected_version is None else expected_version
     params = {"timeline_ref": timeline_id, **({} if expected_version is None else {"expected_version": expected_version}),
-              "selector": backend, "output_name": output_name}
+              **({} if backend is None else {"selector": backend}), "output_name": output_name}
     return {
         "method": "POST", "path": "/v1/tasks",
         "headers": {"Content-Type": "application/json",
@@ -669,10 +672,11 @@ class Journey:
 
     def __init__(self, *, runner: Runner, root: Path, env: dict[str, str], project: str, timeline: str,
                  start: float, end: float, kill_start: float, checkout: Path, backend: str = REMOTION_BACKEND,
-                 restart_argv: list[str] | None = None, app_render: bool = True) -> None:
+                 restart_argv: list[str] | None = None, app_render: bool = True, app_selector: str | None = None) -> None:
         self.r, self.root, self.env, self.project, self.timeline = runner, root, env, project, timeline
         self.start, self.end, self.kill_start, self.checkout = start, end, kill_start, checkout
         self.backend, self.restart_argv, self.app_render = backend, restart_argv or [], app_render
+        self.app_selector = app_selector  # None: the App's request leaves the renderer to the host
         self.astrid = [sys.executable, "-m", "astrid"]
 
     # -- helpers --------------------------------------------------------------------------
@@ -844,7 +848,7 @@ class Journey:
             raise JourneyFailure("runtime_restart", "rendering.render is not ready 120s after the Runtime restart")
         name = f"v6-app-{uuid.uuid4().hex[:8]}.mp4"
         admission = build_app_render_admission(project=self.project, timeline_id=self.timeline, output_name=name,
-                                               capability=capability, token=token, backend=self.backend)
+                                               capability=capability, token=token, backend=self.app_selector)
         admitted = runtime_request(endpoint, admission["method"], admission["path"], headers=admission["headers"], body=admission["body"])
         task_id = (admitted.get("data") or {}).get("task_id")
         if not task_id:
@@ -907,11 +911,17 @@ class Journey:
 
 @_journey_signals()
 def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "smoke", start: float = 144.0, end: float = 152.0,
-        replace_slot: str = "BUGNET", expect_duration: float | None = None, backend: str = REMOTION_BACKEND,
+        replace_slot: str = "BUGNET", expect_duration: float | None = None, backend: str | None = None,
         app_checkout: Path | None = None, app_render: bool = True) -> int:
-    """Run the journey; ``reference=None`` generates a small reference (``--reference generated``)."""
-    if backend not in BACKENDS:
+    """Run the journey; ``reference=None`` generates a small reference (``--reference generated``).
+
+    ``backend=None`` renders the CLI renders with Remotion and sends the App-shaped render without a
+    selector, so the host chooses; an explicit ``backend`` is used for both.
+    """
+    if backend is not None and backend not in BACKENDS:
         raise JourneyFailure("preflight", f"backend must be one of {', '.join(BACKENDS)}")
+    app_selector = backend
+    backend = backend or REMOTION_BACKEND
     if reference is not None:
         reference = reference.resolve(strict=True)
     summary = summary.resolve()
@@ -948,7 +958,7 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
     # macOS temp dirs live under /var -> /private/var; the Runtime refuses symlinked support paths.
     root = Path(tempfile.mkdtemp(prefix="astrid-v6-")).resolve()
     runner = Runner(root, summary, tier)
-    runner.details.update({"backend": backend, "disk_preflight": disk})
+    runner.details.update({"backend": backend, "app_selector": app_selector, "disk_preflight": disk})
     env = scrub_child_env(os.environ)
     env["ASTRID_RUNTIME_DATA_ROOT"] = str(root / "data")
     env["TMPDIR"] = str(root / "tmp")
@@ -981,7 +991,8 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
         runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + common, env))
         j = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
                     start=start, end=end, kill_start=max(0.0, end - 32), checkout=checkout, backend=backend,
-                    restart_argv=local + ["restart", "--source-manifest", str(manifest_path)] + common, app_render=app_render)
+                    restart_argv=local + ["restart", "--source-manifest", str(manifest_path)] + common, app_render=app_render,
+                    app_selector=app_selector)
         # The render killed mid-way is a 32 s window ending where the excerpt ends: long enough to be
         # caught running, and inside the film (a window past the end is refused, as it should be).
         # The first client open starts the pack host, which resolves the renderer (no separate setup step).
@@ -1078,8 +1089,10 @@ def main(args: list[str] | None = None) -> int:
     parser.add_argument("--summary", type=Path, required=True, help="JSON summary path; adjacent .txt is also written")
     parser.add_argument("--range", nargs=2, type=float, metavar=("START", "END"), default=None,
                         help=f"excerpt window in seconds (default 144 152; {GENERATED_RANGE[0]:g} {GENERATED_RANGE[1]:g} for '{GENERATED}')")
-    parser.add_argument("--backend", choices=BACKENDS, default=REMOTION_BACKEND,
-                        help="renderer for every render; rendering.ffmpeg handles media-only timelines and skips the Node pin check and --review")
+    parser.add_argument("--backend", choices=BACKENDS, default=None,
+                        help="renderer for every render, including the App-shaped one (default: rendering.remotion for the CLI "
+                             "renders, no selector for the App-shaped render, so the host chooses); rendering.ffmpeg handles "
+                             "media-only timelines and skips the Node pin check and --review")
     parser.add_argument("--app-checkout", type=Path, default=None, help="astrid-app checkout whose HEAD is recorded in the summary")
     parser.add_argument("--skip-app-render", action="store_true",
                         help="runtime_restart restarts the Runtime but does not admit the App-shaped render (a full-film render on a real film)")

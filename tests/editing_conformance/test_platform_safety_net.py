@@ -9,8 +9,8 @@ weaken the assertions to make them pass.
     `ALLOWED_TOP_LEVEL_KEYS` (timeline-domain.ts:217-226), `withCanonicalClips` (timeline-domain.ts:1241-1250)
     and the `app` replace on save (timeline-patch.ts:1261-1266), as the platform doc describes them.
 (b) A track with role "source" is excluded from render (today the Astrid validator rejects `role`).
-(c) A preview-vs-render parity harness: structure only, skipped until the F2 journey wires the App preview
-    (testing plan, F2 step 4).
+(c) Preview-vs-render parity is not asserted here: it needs the App preview in a browser, so it lives in the
+    F2 journey (step 4) in the App's `tests/e2e/local/three-products.spec.ts`; see tests/removed.yaml.
 
 Run: python -m pytest -q tests/editing_conformance/test_platform_safety_net.py
 """
@@ -140,16 +140,3 @@ def test_source_role_track_is_excluded_from_render():
     assert "reference" not in track_ids, "the Source track is in the render payload"
     assert "ref" not in clip_ids, "a clip on the Source track is in the render payload"
     assert "keep" in clip_ids
-
-
-@pytest.mark.skip(reason=(
-    "F2 step 4 (testing plan): needs the App preview (timeline-composition) and a frame capture of `tiny` "
-    "through the Astrid render; fill in when the journey wires both"
-))
-@pytest.mark.parametrize("frame_ms", [0, 1000, 2000, 3500])
-def test_preview_matches_render_frame(frame_ms):
-    """Parity: the App preview and the Astrid render agree on `tiny` at each sampled frame."""
-    preview = None  # TODO: App preview frame at frame_ms (composition evaluator)
-    render = None  # TODO: Astrid render frame at frame_ms (same timeline, Remotion)
-    assert preview is not None and render is not None
-    assert preview == render

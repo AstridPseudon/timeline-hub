@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import os
@@ -1517,6 +1518,18 @@ def test_vendored_runtime_client_timeout_is_bounded_and_request_correlated(monke
     assert failure.value.details == {}
 
 
+def test_vendored_runtime_client_sends_its_credential_to_loopback_only(monkeypatch):
+    from astrid_runtime_client import WorkspaceClient
+
+    sent = []
+    monkeypatch.setattr("urllib.request.OpenerDirector.open", lambda opener, request, data=None, timeout=None: sent.append(request))
+
+    with pytest.raises(ValueError, match="refusing to send a runtime credential to non-loopback host 'runtime.example'"):
+        WorkspaceClient("http://runtime.example:8765", token="secret").health()
+
+    assert sent == []
+
+
 @pytest.mark.parametrize("timeout", [0, -1, float("nan"), float("inf")])
 def test_vendored_runtime_client_rejects_unbounded_timeout(timeout):
     from astrid_runtime_client import WorkspaceClient
@@ -2520,7 +2533,7 @@ def test_adapter_registry_classifies_provider_local_generation_and_render():
     assert render.capabilities["rendering.render"].estimated_output_bytes == 0
 
 
-def test_render_preflight_requires_the_explicit_execution_runtime(monkeypatch):
+def test_render_is_ready_without_remotion_and_reports_remotion_separately(monkeypatch):
     monkeypatch.delenv("ASTRID_REMOTION_PROJECT_DIR", raising=False)
     monkeypatch.delenv("ASTRID_NODE_EXECUTABLE", raising=False)
     monkeypatch.delenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", raising=False)
@@ -2529,14 +2542,17 @@ def test_render_preflight_requires_the_explicit_execution_runtime(monkeypatch):
     host = GenericPackHost(pack_roots=[pack_root])
     host.discover()
     assert host.capabilities["rendering.render"].manifest_path == pack_root / "pack.yaml"
-    assert host.capabilities["rendering.render"].adapter.requires_remotion
+    assert host.capabilities["rendering.render"].adapter.remotion == "selected"
 
     host.preflight("rendering.render")
 
     record = host.capabilities["rendering.render"]
-    assert not record.ready
-    assert not record.preflight["remotion"]["ok"]
+    # Remotion gates only the tasks that render with it; media-only renders go on.
+    assert record.ready is True
+    assert record.preflight["remotion"]["ok"] is False
     assert "ASTRID_REMOTION_PROJECT_DIR" in record.preflight["remotion"]["reason"]
+    assert record.preflight["remotion"]["gates"] == "tasks that render with rendering.remotion"
+    assert generic_host._gated_remotion_faults([record]) == {"rendering.render": record.preflight["remotion"]["reason"]}
 
 
 def test_missing_source_remotion_install_registers_actionable_reasons(tmp_path, monkeypatch):
@@ -2554,7 +2570,7 @@ def test_missing_source_remotion_install_registers_actionable_reasons(tmp_path, 
     monkeypatch.delenv(remotion_runtime.REMOTION_PROJECT_DIR_ENV, raising=False)
     packs = tmp_path / "packs"
     for capability_id, requires_remotion in (
-        ("rendering.render", True), ("test.preview", True), ("test.offline", False)
+        ("test.selected", "selected"), ("test.always", True), ("test.offline", False)
     ):
         path = _write_manifest(packs / capability_id, capability_id=capability_id)
         manifest = json.loads(path.read_text())
@@ -2566,14 +2582,185 @@ def test_missing_source_remotion_install_registers_actionable_reasons(tmp_path, 
     host.register()
 
     registered = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
-    for capability_id in ("rendering.render", "test.preview"):
-        row = registered[capability_id]
-        assert row["status"] == "unavailable"
-        assert row["unavailable_reason"].startswith("remotion:reason=")
-        assert str(project / "node_modules") in row["unavailable_reason"]
-        assert f"run `npm ci` in {project} with Node v20.19.4 on PATH" in row["unavailable_reason"]
-    assert registered["test.offline"]["status"] == "ready"
-    assert registered["test.offline"]["unavailable_reason"] is None
+    row = registered["test.always"]
+    assert row["status"] == "unavailable"
+    assert row["unavailable_reason"].startswith("remotion:reason=")
+    assert str(project / "node_modules") in row["unavailable_reason"]
+    assert f"run `npm ci` in {project} with Node v20.19.4 on PATH" in row["unavailable_reason"]
+    # A capability whose Remotion requirement follows the task's renderer is
+    # advertised ready; the actionable reason is still reported, per task.
+    for capability_id in ("test.selected", "test.offline"):
+        assert registered[capability_id]["status"] == "ready"
+        assert registered[capability_id]["unavailable_reason"] is None
+    check = host.capabilities["test.selected"].preflight["remotion"]
+    assert check["ok"] is False and check["gates"] == "tasks that render with rendering.remotion"
+    assert str(project / "node_modules") in check["reason"]
+    assert generic_host._gated_remotion_faults(host.capabilities.values()) == {"test.selected": check["reason"]}
+
+
+def test_unavailable_reason_reports_the_gpu_gate_not_the_task_gated_remotion_check():
+    """A failed GPU gate unreadies a capability; a gated Remotion failure alone never does."""
+    gated = {"ok": False, "reason": "remotion is broken", "gates": "tasks that render with rendering.remotion"}
+    gpu_gate = {"ok": False, "qualified": False, "reason": "no qualified NVIDIA GPU"}
+    both = SimpleNamespace(id="test.render", ready=False, preflight={"remotion": gated, "gpu": gpu_gate}, matrix={})
+    assert generic_host._preflight_unavailable_reason(both) == "no qualified NVIDIA GPU"
+    only_remotion = SimpleNamespace(id="test.render", ready=True, preflight={"remotion": gated}, matrix={})
+    assert generic_host._preflight_unavailable_reason(only_remotion) == "capability preflight is not ready"
+    assert generic_host._gated_remotion_faults([only_remotion, both]) == {"test.render": "remotion is broken"}
+
+
+REMOTION_FAULT = "fixture Remotion install is broken"
+
+
+def _selected_render_host(tmp_path, monkeypatch, *, remotion_ok: bool, argv_exit: int = 0, stderr: str = "") -> SimpleNamespace:
+    """A leased ``remotion == 'selected'`` render fake whose child records its argv."""
+    from astrid.core.rendering import remotion_runtime
+
+    argv_file = tmp_path / "child-argv.json"
+    code = (
+        "import json, sys; from pathlib import Path; "
+        f"Path({str(argv_file)!r}).write_text(json.dumps(sys.argv[1:])); "
+        f"sys.stderr.write({stderr!r}); "
+        "Path('{out}/answer.txt').write_text('ok'); "
+        f"sys.exit({argv_exit})"
+    )
+    root = tmp_path / "packs" / "render"
+    root.mkdir(parents=True)
+    (root / "executor.yaml").write_text(json.dumps({
+        "schema_version": 1, "id": "test.render", "name": "Render", "kind": "external", "version": "1.0",
+        "inputs": [{"name": "selector", "type": "string", "required": False}],
+        "command": {
+            "argv": ["{python_exec}", "-c", code],
+            "input_args": [{"input": "selector", "flag": "--selector", "optional": True}],
+        },
+        "outputs": [{"name": "answer", "type": "file", "path_template": "{out}/answer.txt", "artifact_type": "text/plain"}],
+        "metadata": {"resource_keys": ["cpu"], "estimated_scratch_bytes": 1,
+                     "adapter_family": "cpu", "requires_remotion": "selected"},
+    }), encoding="utf-8")
+
+    def status(*, require_explicit_project=False):
+        return remotion_runtime.RemotionRuntimeStatus(
+            remotion_ok, tmp_path, reason=None if remotion_ok else REMOTION_FAULT)
+
+    monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", status)
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path / "packs"], client=runtime)
+    host.register()
+
+    def run(selector=None, *, name="task-1"):
+        inputs = {} if selector is None else {"selector": selector}
+        task = {"task": {"id": name, "capability": "test.render", "project_id": "demo",
+                         "attempt_id": f"attempt-{name}", "fence": 1, "spec": {"spec": {"inputs": inputs}}}}
+        runtime.tasks[name] = task
+        return host.run_task(task, lease_token=f"lease-{name}")
+
+    def child_argv():
+        return json.loads(argv_file.read_text()) if argv_file.exists() else None
+
+    return SimpleNamespace(host=host, runtime=runtime, run=run, child_argv=child_argv)
+
+
+def test_a_task_selecting_remotion_fails_at_lease_with_the_remotion_reason(tmp_path, monkeypatch):
+    world = _selected_render_host(tmp_path, monkeypatch, remotion_ok=False)
+    # The capability is advertised ready, so the Runtime admits the task.
+    row = world.runtime.registrations[0][1]["capabilities"][0]
+    assert (row["status"], row["unavailable_reason"]) == ("ready", None)
+
+    with pytest.raises(HostError, match=r"rendering\.remotion, which this host cannot run: " + REMOTION_FAULT):
+        world.run("rendering.remotion")
+
+    assert world.child_argv() is None  # no child was launched
+    assert not world.runtime.settlements
+    task_id, _lease, error, details = world.runtime.failures[0]
+    assert task_id == "task-1" and details["retryable"] is False
+    assert "test.render: this task renders with rendering.remotion, which this host cannot run" in error
+    assert REMOTION_FAULT in error
+
+
+def test_an_omitted_selector_renders_with_ffmpeg_when_remotion_is_unavailable(tmp_path, monkeypatch):
+    world = _selected_render_host(tmp_path, monkeypatch, remotion_ok=False)
+
+    world.run()
+
+    assert world.child_argv() == ["--selector", "rendering.ffmpeg"]
+    result = world.runtime.settlements[0][2]["result"]
+    assert result["renderer_selection"] == {
+        "selector": "rendering.ffmpeg", "chosen_by": "host", "remotion_ok": False, "remotion_reason": REMOTION_FAULT,
+    }
+
+
+def test_an_omitted_selector_renders_with_remotion_when_available(tmp_path, monkeypatch):
+    world = _selected_render_host(tmp_path, monkeypatch, remotion_ok=True)
+
+    world.run()
+
+    assert world.child_argv() == ["--selector", "rendering.remotion"]
+    result = world.runtime.settlements[0][2]["result"]
+    assert result["renderer_selection"] == {
+        "selector": "rendering.remotion", "chosen_by": "host", "remotion_ok": True, "remotion_reason": None,
+    }
+
+
+@pytest.mark.parametrize("remotion_ok", [True, False])
+def test_an_explicit_ffmpeg_task_runs_whatever_the_remotion_state(tmp_path, monkeypatch, remotion_ok):
+    world = _selected_render_host(tmp_path, monkeypatch, remotion_ok=remotion_ok)
+
+    world.run("rendering.ffmpeg")
+
+    assert world.child_argv() == ["--selector", "rendering.ffmpeg"]
+    selection = world.runtime.settlements[0][2]["result"]["renderer_selection"]
+    assert (selection["selector"], selection["chosen_by"], selection["remotion_ok"]) == (
+        "rendering.ffmpeg", "task", remotion_ok)
+
+
+def test_a_timeline_ffmpeg_refuses_still_fails_with_both_reasons_when_the_host_chose_ffmpeg(tmp_path, monkeypatch):
+    # A timeline that needs Remotion (here: ffmpeg refuses it) still requires
+    # it: the host chose ffmpeg only because Remotion is unavailable, so the
+    # settled failure names ffmpeg's reasons and the Remotion fault.
+    refusal = "rendering.ffmpeg does not support this render request: transitions need rendering.remotion"
+    world = _selected_render_host(tmp_path, monkeypatch, remotion_ok=False, argv_exit=3, stderr=refusal)
+
+    with pytest.raises(HostError):
+        world.run()
+
+    error = world.runtime.failures[0][2]
+    assert refusal in error
+    assert "chose rendering.ffmpeg because rendering.remotion is unavailable on this host: " + REMOTION_FAULT in error
+    assert not world.runtime.settlements
+
+
+@pytest.mark.parametrize(("remotion_ok", "selector"), [(True, None), (False, "rendering.ffmpeg")])
+def test_a_failed_render_is_not_blamed_on_remotion_unless_the_host_chose_ffmpeg_for_it(
+    tmp_path, monkeypatch, remotion_ok, selector
+):
+    world = _selected_render_host(tmp_path, monkeypatch, remotion_ok=remotion_ok, argv_exit=3, stderr="render refused")
+
+    with pytest.raises(HostError):
+        world.run(selector)
+
+    error = world.runtime.failures[0][2]
+    assert "render refused" in error
+    assert "unavailable on this host" not in error
+
+
+@pytest.mark.parametrize(("declared", "expected"), [(True, "always"), (False, "never"), ("selected", "selected")])
+def test_requires_remotion_accepts_only_true_false_or_selected(tmp_path, declared, expected):
+    path = _write_manifest(tmp_path / "echo")
+    definition = GenericPackHost(pack_roots=[tmp_path]).discover()[0].definition
+    for value in (None, "true", "false", "always", "never", "Selected", 1, 0, [], {}):
+        with pytest.raises(HostError, match="requires_remotion must be true, false or 'selected'"):
+            AdapterRegistry.from_matrix(definition, {"requires_remotion": value})
+        bad = dataclasses.replace(definition, metadata={**definition.metadata, "requires_remotion": value})
+        with pytest.raises(HostError, match="requires_remotion must be true, false or 'selected'"):
+            AdapterRegistry.resolve(bad)
+    assert AdapterRegistry.from_matrix(definition, {"requires_remotion": declared}).remotion == expected
+    declared_in_pack = dataclasses.replace(definition, metadata={**definition.metadata, "requires_remotion": declared})
+    assert AdapterRegistry.resolve(declared_in_pack).remotion == expected
+    # Absent means never, and the pack's declaration survives a matrix that is silent about it.
+    assert AdapterRegistry.resolve(definition).remotion == "never"
+    assert AdapterRegistry.from_matrix(definition, {}).remotion == "never"
+    assert AdapterRegistry.from_matrix(declared_in_pack, {}).remotion == expected
+    assert path.is_file()
 
 
 def test_adapter_registry_preserves_explicit_empty_matrix_lists(tmp_path):
