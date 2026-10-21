@@ -4880,8 +4880,21 @@ ACK generic record-carrier fit on exact Agent5672d2b7deee2bfe2ab375fd6db5fc35a19
 The report attribution was corrected before delivery: required source-bound materialization support is RT08 materialization_join/_same_materialization_slot in the reviewed private f8da/C3d lineage. RT03 f53 raw read/449 unplaced reference projection is NOT a group-drag prerequisite. Current public95/ordinary6ba does not accept the group/multi operations; this ACK authorizes no new generated cohort, pin, registration, activation or native claim.
 
 WC8 author-time retained-basis implementation remains Runtime-owned and active. WC10 legacy-fake fixture adaptation is now separately assigned as test-only work while custom-canvas semantic source remains held; no fixture pass may substitute for the two real original installed/HTTP positives.
-# PEER RESPONSE from app2 — 2026-10-21 05:16 UTC
-Agent452eceb391408185bfcc0c9e029e271d0ae3a229/tree18fc7e0b1cde4df1a24637509fa14b2351340c9e after-anchor missing/null source has no new App contract counterexample. App2's existing dormant helper itself still rejects raw missing/null video holds; bounded helper/parity repair is now active and stays dormant. Runtime SOURCE ACK and Agent source controls retained. No afterClipId wire alias or native/pin/public claim.
-Producer c0fda/tree5bad SOURCE ACK is recorded as closing only the empty-owner finding. Main fresh-caption0447 still lacks invented managedBy and requires your assigned native recipe; existing placement at/track remains ignored on updates.
-Selected phase accounting produced a runner-only proposal at design/ap2-m2-selected-startup-phase-accounting-0512-REPORT.md. Existing evidence cannot isolate Promise.all subphase. HOME: please own/review the smallest shared test harness/spec diagnostic seam before any next selected diagnostic actual; no bootstrap/routes product change or timeout/selector change is proposed. Capture is diagnostic-only, not a success qualification.
-HOME full24749 is now FAIL with postflight custody warning, not qualifying. App2 acknowledges lock released; parent ONE actual still waits exact command APPROVE. Producer new command preflight14393 failed before child; printed expected wrapper digest is63 characters, so source-only first-cause repair0516 now fixes literal command/hash guarding, no retry until controls pass.
+
+## 2026-10-21T05:14:22Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T0513-three-drag-source-ack.md)
+# Runtime three-drag source ACK — 2026-10-21T05:12:41Z
+
+ACK generic record-carrier fit on exact Agent5672d2b7deee2bfe2ab375fd6db5fc35a192591d/tree6dd13b552c4f07fff5586b1fa772bdbdf64accba, rawdaec62definitions36clauses. The compact exact-record probe generated the original migration, grouped parent track.create+occurrence.move, and grouped parent track.create+clip.move-set batches. Typed births, refs/owners/member/order/source/timing bindings, reads/writes, dependencies and derived writes fit the existing generic DTO/recorder. Source review design/runtime-original-three-drag-carrier-0507.md; no broad/native group suite repeated. Live callers changed NONE.
+
+The report attribution was corrected before delivery: required source-bound materialization support is RT08 materialization_join/_same_materialization_slot in the reviewed private f8da/C3d lineage. RT03 f53 raw read/449 unplaced reference projection is NOT a group-drag prerequisite. Current public95/ordinary6ba does not accept the group/multi operations; this ACK authorizes no new generated cohort, pin, registration, activation or native claim.
+
+WC8 author-time retained-basis implementation remains Runtime-owned and active. WC10 legacy-fake fixture adaptation is now separately assigned as test-only work while custom-canvas semantic source remains held; no fixture pass may substitute for the two real original installed/HTTP positives.
+
+## 2026-10-21T05:20:28Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+
+# Runtime WC10 fixture preparation — 2026-10-21T05:16:43Z
+
+Tests-only source b3bc0f75f98352c209545d9621021b8867f21e0a on stagea9f adapts tests/v10/test_timelines_create.py to the frozen native history/session transport and removes ONLY the ULID/default positive's newly added xfail. Six direct tests pass. Independent assertion-conversion review APPROVE, original-vs-native mapping retained, one focused positive independently passes. Report design/runtime-wc10-fake-fixture-conversion-review.md.
+
+This removes the fake transport obstacle only. Original custom-canvas success still cannot be expressed through fixed ordinary6ba timeline.init; its stage xfail remains UNAPPROVED and prevents whole migration merge. No product merge, native/installed/socket proof, route cut or activation. Preserve this reviewed test delta for the later custom-capability composition; no repeated oldfake diagnosis is needed. WC8 actual retained-basis implementation remains Runtime-owned and in progress.
