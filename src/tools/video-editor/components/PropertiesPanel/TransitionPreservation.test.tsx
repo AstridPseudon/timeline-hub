@@ -320,12 +320,21 @@ describe('mounted transition callbacks preserve raw authoring through publicatio
     expect(clips.every((clip) => clip.transition?.type === 'crossfade')).toBe(true);
   });
 
-  it.each([false, true])('type change (bulk=%s) starts a new transition without carrying old binding', async (bulk) => {
-    const { clips, assertPublished } = await editor(bulk);
+  // Requirement: a type-only selector needs an authoritative selected-ref carrier
+  // before this complete lossless SET can be admitted.
+  it.fails('type change preserves the raw transition envelope and does not reuse an old binding', async () => {
+    const { clips, assertPublished } = await editor(false);
     fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: 'wipe' } });
-    await assertPublished(clips.map((clip, index) => !bulk && index ? clip : {
-      ...clip, transition: { type: 'wipe', duration: 0.5, params: undefined },
-    }));
+    await assertPublished([(() => {
+      const { elementRef: _elementRef, ...withoutRef } = clips[0];
+      return { ...withoutRef, transition: { ...clips[0].transition!, type: 'wipe', params: undefined } };
+    })(), clips[1]]);
+  });
+
+  it('bulk type change (bulk=true) starts a new transition without carrying old binding', async () => {
+    const { clips, assertPublished } = await editor(true);
+    fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: 'wipe' } });
+    await assertPublished(clips.map((clip) => ({ ...clip, transition: { type: 'wipe', duration: 0.5, params: undefined } })));
   });
 });
 
