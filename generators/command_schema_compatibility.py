@@ -97,6 +97,14 @@ def compatibility_errors(previous, current):
                 errors += compare(old.get(key, True), new.get(key, True), at, seen)
             elif key in {'items', 'propertyNames'} and a is not None:
                 errors += compare(a, new.get(key, True), at, seen)
+            elif key == 'const' and a is not None and isinstance(new.get('enum'), list) and a in new['enum']:
+                # JSON Schema's singleton const is exactly an enum with one
+                # value. Treating a retained const as a member of a widened
+                # enum preserves the old language without accepting an
+                # unrelated narrowing or silently ignoring other keywords.
+                continue
+            elif key == 'enum' and a is None and 'const' in old and isinstance(b, list) and old['const'] in b:
+                continue
             elif key == 'required' and set(b or []) <= set(a or []):
                 continue
             elif key in {'enum', 'type'} and a is not None and (

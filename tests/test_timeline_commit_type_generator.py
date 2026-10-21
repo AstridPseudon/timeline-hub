@@ -8,7 +8,7 @@ from typing import TypedDict, Union, get_args, get_origin, get_type_hints, is_ty
 
 import pytest
 
-from generators import timeline_commit_types
+from generators import generate, timeline_commit_types
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -102,3 +102,33 @@ def test_typescript_track_label_positive_and_negative_fixtures():
         "tsc", "--noEmit", "--strict", "--module", "NodeNext", "--target", "ES2022",
         str(ROOT / "tests/fixtures/timeline-commit-types.mts"),
     ], check=True)
+
+
+def test_python_package_root_discovers_new_canonical_args_without_variant_aliases():
+    template = (ROOT / "generators/python_client_init_template.py").read_text()
+    rendered = generate.render_python_package_init(
+        template,
+        {"$defs": {
+            "TranscriptAssociateArgs": {"type": "object"},
+            "NewArgs": {"type": "object"},
+            "TranscriptAssociateArgsVariant1": {"type": "object"},
+        }},
+    )
+
+    assert "    TranscriptAssociateArgs,\n" in rendered
+    assert "    NewArgs,\n" in rendered
+    assert "TranscriptAssociateArgsVariant1" not in rendered
+    assert "'TranscriptAssociateArgs'" in rendered
+    assert "'NewArgs'" in rendered
+
+
+def test_agent_command_source_rejects_malformed_and_unpinned_inputs(tmp_path):
+    malformed = tmp_path / "malformed.json"
+    malformed.write_bytes(b"{")
+    with pytest.raises(SystemExit, match="must be UTF-8 JSON"):
+        generate.command_source(malformed)
+
+    unpinned = tmp_path / "unpinned.json"
+    unpinned.write_text('{"$defs": {}}')
+    with pytest.raises(SystemExit, match="does not match the reviewed private freeze"):
+        generate.command_source(unpinned)

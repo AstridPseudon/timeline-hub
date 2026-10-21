@@ -25,6 +25,16 @@ PYTHON_CLIENT_OUTPUT = ROOT / "packages" / "python" / "astrid_runtime_client" / 
 TYPESCRIPT_CLIENT_OUTPUT = ROOT / "packages" / "typescript" / "src" / "generated.ts"
 RELEASE_METADATA = ROOT / "generators" / "release.json"
 
+# This source-only prerequisite keeps the reviewed Agent identity in code. A
+# later private candidate may move it to authorized source metadata alongside
+# the exact freeze/allocation; ordinary generation must not depend on it.
+AGENT_COMMAND_SOURCE_PIN = {
+    "commit": "10226a7f08a739ba3e41f8e91de6971eed63aa9d",
+    "tree": "e2c08fbe9b21a3082db7bcf62d9677babfc15e98",
+    "path": "astrid/core/timeline/schema/edit-command.schema.json",
+    "sha256": "9cb9597a618f51949fe9ec35686e544dca812b8b252a96a4cff1f686afdfb3ec",
+}
+
 
 def _regular(path: Path, label: str) -> bytes:
     if path.is_symlink() or not path.is_file():
@@ -92,7 +102,18 @@ def operation_index(manifest_path: Path = MANIFEST) -> list[str]:
     return [line.split(":", 1)[1].strip() for line in text.splitlines() if re.match(r"^\s+operationId:", line)]
 
 
-def validate_command_schema() -> None:
+def _command_schema(path: Path) -> Mapping[str, Any]:
+    raw = _regular(path, "candidate command schema")
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise SystemExit("candidate command schema must be UTF-8 JSON") from exc
+    if not isinstance(value, Mapping) or not isinstance(value.get("$defs"), Mapping):
+        raise SystemExit("candidate command schema must contain an object $defs")
+    return value
+
+
+def validate_command_schema(source_path: Path | None = None) -> None:
     """Require the candidate to contain published schemas and the Agent freeze.
 
     Keep older snapshots immutable; advance this floor only after an authorized
@@ -103,7 +124,7 @@ def validate_command_schema() -> None:
 
     fixtures = ROOT / "tests/fixtures/published-command-schemas"
     sources = json.loads(_regular(fixtures / "sources.json", "published schema sources"))
-    candidate = json.loads(_regular(ROOT / "contract/schemas/edit-command.json", "candidate command schema"))
+    candidate = _command_schema(source_path or ROOT / "contract/schemas/edit-command.json")
     # The Agent freeze is a staging floor, not a published Runtime release.
     floors = {
         "runtime-0.2.3.json": "472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9",
@@ -123,6 +144,40 @@ def validate_command_schema() -> None:
                 f"command schema compatibility failed against {filename}:\n  "
                 + "\n  ".join(errors)
             )
+
+
+def command_source(path: Path) -> bytes:
+    """Read only the reviewed private Agent schema freeze."""
+    raw = _regular(path, "Agent command source")
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise SystemExit("Agent command source must be UTF-8 JSON") from exc
+    if not isinstance(value, Mapping) or not isinstance(value.get("$defs"), Mapping):
+        raise SystemExit("Agent command source must contain an object $defs")
+    if hashlib.sha256(raw).hexdigest() != AGENT_COMMAND_SOURCE_PIN["sha256"]:
+        raise SystemExit("Agent command source does not match the reviewed private freeze")
+    return raw
+
+
+def render_python_package_init(template: str, command_schema: Mapping[str, Any]) -> str:
+    """Render the package root, appending newly generated canonical Args."""
+    definitions = command_schema.get("$defs", {})
+    if not isinstance(definitions, Mapping):
+        raise SystemExit("command schema definitions must be an object")
+    existing = set(re.findall(r"^    (\w+),$", template, flags=re.MULTILINE))
+    additions = [
+        name
+        for name in definitions
+        if isinstance(name, str) and name.endswith("Args") and name not in existing
+    ]
+    imports = "".join(f"    {name},\n" for name in additions)
+    all_exports = ", ".join(repr(name) for name in additions) + (", " if additions else "")
+    rendered = template.replace("    # __CANONICAL_ARGS_IMPORTS__\n", imports)
+    rendered = rendered.replace('"__CANONICAL_ARGS_ALL__", ', all_exports)
+    if "__CANONICAL_ARGS_IMPORTS__" in rendered or "__CANONICAL_ARGS_ALL__" in rendered:
+        raise SystemExit("Python package exports template is missing canonical Args markers")
+    return rendered
 
 
 def render_python_client(manifest_path: Path = MANIFEST) -> str:
@@ -271,20 +326,34 @@ def render(manifest_path: Path = MANIFEST, component_path: Path = COMPONENT_MANI
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail if generated metadata differs")
+    parser.add_argument("--agent-command-schema", type=Path, help="read-only schema from the reviewed private Agent freeze")
     parser.add_argument("--component-manifest", default=str(COMPONENT_MANIFEST))
     parser.add_argument("--python-output", default=str(PYTHON_CLIENT_OUTPUT), help="Python client output path (for isolated checks)")
     args = parser.parse_args()
     sys.path.insert(0, str(ROOT))
-    validate_command_schema()
+    validate_command_schema(args.agent_command_schema)
+    if args.agent_command_schema is not None:
+        raw = command_source(args.agent_command_schema)
+        output = ROOT / "contract/schemas/edit-command.json"
+        if args.check:
+            if _regular(output, "command schema") != raw:
+                print("stale generated file: contract/schemas/edit-command.json")
+                return 1
+        else:
+            output.write_bytes(raw)
+        command_source(output)
     sys.path.insert(0, str(ROOT / "generators"))
     from timeline_commit_types import render as render_commit_types
     generated = render_commit_types()
     generated.update(render(component_path=Path(args.component_manifest).expanduser()))
-    generated["packages/python/astrid_runtime_client/__init__.py"] = _regular(
-        ROOT / "generators/python_client_init_template.py", "Python package exports template"
-    ).decode("utf-8").replace(
-        "Authoritative Python package exports; rendered by generators/generate.py.",
-        "Generated, product-neutral client for the workspace.v1 protocol.",
+    generated["packages/python/astrid_runtime_client/__init__.py"] = render_python_package_init(
+        _regular(
+            ROOT / "generators/python_client_init_template.py", "Python package exports template"
+        ).decode("utf-8").replace(
+            "Authoritative Python package exports; rendered by generators/generate.py.",
+            "Generated, product-neutral client for the workspace.v1 protocol.",
+        ),
+        _command_schema(ROOT / "contract/schemas/edit-command.json"),
     )
     generated["packages/python/astrid_runtime_client/generated.py"] = render_python_client()
     generated["packages/typescript/src/generated.ts"] = render_typescript_client()

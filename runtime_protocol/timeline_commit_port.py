@@ -110,6 +110,7 @@ class RequestCommitPort:
         self.__closures = {}
         self.__shots = {}
         self.__media = {}
+        self.__raw_media = {}
         self.__takes = {}
         self.__texts = {}
         self.__documents = {}
@@ -273,6 +274,27 @@ class RequestCommitPort:
             return value
         return self._read(read)
 
+    def raw_media_info(self, pin):
+        """Capture one explicitly declared managed raw-media descriptor.
+
+        This is intentionally separate from both base-only media reads and the
+        managed five-field selection. The memo belongs to this request only.
+        """
+        def read():
+            if (not isinstance(pin, dict) or set(pin) != {"media_id", "content_digest"}
+                    or not isinstance(pin["media_id"], str) or not _OBJECT_ID.fullmatch(pin["media_id"])
+                    or pin["content_digest"] != pin["media_id"]):
+                raise ValidationError("raw media info requires one exact media pin")
+            if pin not in self.__declared:
+                raise refused("dependency_unavailable", "raw media info requires an exact declared pin")
+            key = canonical_json(pin)
+            if key in self.__raw_media:
+                return self.__raw_media[key][1]
+            value = MediaReads(self.__service).raw_media_info(self.__project, pin)
+            self.__raw_media[key] = (copy.deepcopy(pin), value)
+            return value
+        return self._read(read)
+
     def text_selection(self, selection):
         def read():
             if selection not in self.__declared:
@@ -386,6 +408,8 @@ class RequestCommitPort:
 
     def validate(self, prepared):
         from .timeline_commit_inputs import read_pack_snapshot_object, validate_captured_document_inputs
+        if self.__closed:
+            raise AuthorizationError("timeline commit port is closed")
         self.__authorize()
         self._validate_producer_consumption(prepared)
         for revision, captured in self.__closures.items():
@@ -398,17 +422,26 @@ class RequestCommitPort:
         for selection, captured in self.__media.values():
             if reads.selected(self.__project, selection) != captured:
                 raise refused("dependency_unavailable", "captured media changed")
+        manifest = prepared["canonical_document"]["dependency_manifest"]
+        raw_manifest = {canonical_json(item) for item in manifest["media"]}
+        for pin, captured in self.__raw_media.values():
+            if canonical_json(pin) not in raw_manifest:
+                raise refused("dependency_unavailable", "captured raw media pin is not in the candidate manifest")
+            if captured.get("object_id") != pin["media_id"]:
+                raise refused("dependency_unavailable", "captured raw media identity changed")
+            if reads.raw_media_info(self.__project, pin) != captured:
+                raise refused("dependency_unavailable", "captured raw media changed")
         for selection, captured in self.__texts.values():
             if reads.text(self.__project, selection) != captured:
                 raise refused("dependency_unavailable", "captured text changed")
         for refs, captured in self.__takes.values():
             if reads.narration(self.__project, refs) != captured:
                 raise refused("dependency_unavailable", "captured narration changed")
-        manifest = prepared["canonical_document"]["dependency_manifest"]
         authorized_media = {item["media_id"] for closure in self.__closures.values()
                             for item in closure["dependency_manifest"]["media"]}
         authorized_media.update(item["media_id"] for closure in self.__shots.values() for item in closure["media"])
         authorized_media.update(value["selection"]["object_id"] for _, value in self.__media.values())
+        authorized_media.update(value["object_id"] for _, value in self.__raw_media.values())
         authorized_media.update(value["object_id"] for _, value in self.__texts.values())
         authorized_media.update(item for _, value in self.__takes.values() for item in value["dependency_objects"])
         if any(item["media_id"] not in authorized_media for item in manifest["media"]):
@@ -429,6 +462,28 @@ class RequestCommitPort:
             )
             if current != (data, identity):
                 raise refused("dependency_unavailable", "captured project pack object changed")
+        return self._materializations(prepared)
+
+    def _materializations(self, prepared):
+        from .timeline_materialization import materialization_join
+
+        def captured(revision):
+            if revision not in self.__closures:
+                raise refused("dependency_unavailable", "materialization requires a private parent capture")
+            return self.__closures[revision]
+
+        allocations = materialization_join(prepared, self.__project, self.__timeline, captured)
+        if allocations:
+            for record in prepared["records"]["commands"]:
+                if record["command"]["op"] == "timeline.inverse" or not any(
+                        d["key"].startswith("materialization.source:") for d in record["dependencies"]):
+                    continue
+                ordinal = record["ordinal"]
+                commands = self.__request["commands"]
+                if (type(ordinal) is not int or not 0 <= ordinal < len(commands)
+                        or canonical_json(commands[ordinal].get("bindings")) != canonical_json(record["command"].get("bindings"))):
+                    raise ValidationError("materialization bindings differ from sealed request")
+        return allocations
 
     def _validate_producer_consumption(self, prepared):
         from .timeline_commit_producer_checkpoint import check_producer_consumption
@@ -453,8 +508,7 @@ class RequestCommitPort:
         if self.__closed:
             raise AuthorizationError("timeline commit port is closed")
         prepared = detached(prepared)
-        if any(key != value for key, value in prepared["id_map"].items()):
-            raise ValidationError("commit id_map must contain only identity pairs")
+        self._materializations(prepared)
         if prepared["expected_head"] not in self.__observed.values():
             raise refused("history_unavailable", "candidate head was not observed through this port")
         restore = any(item.get("op") == "timeline.restore" for item in self.__request["commands"])
@@ -840,6 +894,30 @@ class MediaReads:
         record = self._selected_project_media(project_id, selection)
         return {"selection": {key: record[key] for key in selection},
                 **{key: record["entry"][key] for key in ("media_type", "size", "duration_seconds", "width", "height") if key in record["entry"]}}
+
+    def raw_media_info(self, project_id, pin):
+        """Verify one managed raw object through one opened CAS descriptor."""
+        if (not isinstance(pin, dict) or set(pin) != {"media_id", "content_digest"}
+                or not isinstance(pin["media_id"], str) or not _OBJECT_ID.fullmatch(pin["media_id"])
+                or pin["content_digest"] != pin["media_id"]):
+            raise ValidationError("raw media info requires one exact media pin")
+        project = self.store.get_project(project_id)
+        if project["id"] != project_id or project["realm_id"] != self.realm["id"]:
+            raise AuthorizationError("raw media info project is outside the request realm")
+        bare = pin["media_id"][7:]
+        row = self.store.conn.execute(
+            "SELECT o.digest, o.size, o.media_type FROM objects o "
+            "JOIN project_objects p ON p.digest=o.digest "
+            "WHERE p.project_id=? AND p.relation='managed' AND o.digest=?",
+            (project_id, bare),
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("raw media is not a managed project object")
+        with self.cas.open(bare) as stream:
+            self.service._verify_open_file(
+                stream.fileno(), bare, row["size"], label="raw media CAS object",
+            )
+        return {"object_id": pin["media_id"], "media_type": row["media_type"], "size": row["size"]}
 
     def text(self, project_id, selection):
         """Exact UTF-8 text read; retention is the manifest media pin, as for selected media."""

@@ -130,6 +130,17 @@ def test_widening_required_enum_ranges_and_property_schemas_is_allowed():
     assert compatibility_errors(baseline(), current) == []
 
 
+def test_const_to_enum_widening_preserves_the_old_singleton_language():
+    previous = baseline()
+    current = copy.deepcopy(previous)
+    item = current['$defs']['TrackSetArgs']['properties']['clear']['items']
+    item.pop('const')
+    item['enum'] = ['label', 'muted']
+    assert compatibility_errors(previous, current) == []
+    item['enum'] = ['muted']
+    assert compatibility_errors(previous, current)
+
+
 def test_union_cannot_hide_sibling_constraints_and_unknown_changes_require_review():
     current = baseline()
     current['$defs']['ID'] = {'anyOf': [baseline()['$defs']['ID'], {'type': 'null'}],
