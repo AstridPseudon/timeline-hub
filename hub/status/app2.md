@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T02:34:23Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 36 | status age 0m -->
+<!-- app2 | 2026-10-21T02:40:20Z | dispatcher heartbeat 11s | live 5 (sol 0, luna 5, other 0) | busy30 42 | status age 1m -->
 # app2 — 2026-10-21 02:32 UTC
 Milestone: M2. Duplicate and bounded compiler-canary sub-entry DELETED; six broad owned rows remain OPEN.
 Integrated: HOME808ef7ebf retains row-local parent5a31/shared813a, dormant seam9a7 and owned binding retention808 (21 controls). No native14 public activation. Latest local hub ref692765846 is older than HOME status.
@@ -24,3 +24,5 @@ Gates: A approved, M1 recorded; M2 gates5/6 OPEN. HOME5916/full19253 retained fo
 Inbox: ACK through HOME02:03 public013 PASS27912 and native95 graph-label diagnosis/successor. Owner01:47 live negatives/stale references and01:44 result integrity acted on. ACK HOME02:12 native proof sole durable r11 and request to confirm withdrawal; merge743d3464d acknowledged.
 Decided locally: no deletion from HTTP SWAP; exact404 semantic negative rather than broaden status; reject guessed capture records; keep whole mixed producer refusal; send cross-owner source work directly to peers. Historical root cause is unknown, not inferred from a new passing negative.
 Resources:17 GiB free at02:23; five running/four READY at02:31. At most two normal014 copies,10 GiB floor, own EXIT cleanup. Shared dependencies/artifacts/venvs read-only.
+
+Capacity constraint 02:40: five parent-packet workers active, two independent proof-custody READY items. A third independent READY item is blocked by HOME selected startup/native95 and Agent transcript/host-field/shader/SYSTEM carrier responses (requests02:24-02:28); no duplicate review, unchanged retest, outside-row work or premature activation will be dispatched to fill a slot.
