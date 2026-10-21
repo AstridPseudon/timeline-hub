@@ -12,7 +12,6 @@ const KNOB = 12;
 const POINT_HIT = 16;
 /** Quiet colours only: foreground, muted and primary. */
 const TRACK = 'hsl(var(--muted-foreground) / 0.28)';
-const MARK = 'hsl(var(--foreground) / 0.72)';
 const USE = 'hsl(var(--muted-foreground) / 0.6)';
 const PRIMARY = 'hsl(var(--primary))';
 
@@ -109,7 +108,7 @@ export function TimeBar({ start, end, time, label, valueText, disabled, markers 
   const lane = 'absolute inset-y-0 left-2 right-2';
 
   return (
-    <div className="relative mx-1.5 h-[18px] select-none" ref={rail} data-time-bar>
+    <div className="relative mx-[7px] h-[18px] select-none" ref={rail} data-time-bar>
       <div
         role="slider"
         tabIndex={0}
@@ -170,9 +169,9 @@ export function TimeBar({ start, end, time, label, valueText, disabled, markers 
                   onClick={() => (onJump ?? onSeek)(marker.from)}
                 >
                   {isSpan ? (
-                    <span aria-hidden="true" className="absolute inset-x-0 top-[5px] h-2 rounded-[2px] border" style={{ borderColor: MARK, background: 'hsl(var(--foreground) / 0.16)' }} />
+                    <span aria-hidden="true" className="absolute inset-x-0 top-[7px] h-1 rounded-full" style={{ background: 'hsl(var(--foreground) / 0.24)' }} />
                   ) : (
-                    <span aria-hidden="true" className="absolute left-[7.25px] top-[2px] h-3.5 w-[1.5px] rounded-full" style={{ background: MARK }} />
+                    <span aria-hidden="true" className="absolute left-[7.25px] top-[4px] h-2.5 w-[1.5px] rounded-full" style={{ background: 'hsl(var(--foreground) / 0.6)' }} />
                   )}
                   {/* The name is a small tooltip above the mark, on hover or focus; the bar reserves no space for it. */}
                   <span
