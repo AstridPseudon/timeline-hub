@@ -31,6 +31,17 @@ function promptEvent(userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>)
   });
 }
 
+const BROWSER = { name: 'Use it in the browser' };
+
+function openDialog() {
+  fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+}
+
+function openComputerStep() {
+  openDialog();
+  fireEvent.click(screen.getByRole('button', BROWSER));
+}
+
 function Harness() {
   const [open, setOpen] = useState(false);
   return (
@@ -102,14 +113,14 @@ describe('PublicAstridInstallDialog', () => {
       'Win32',
     );
     render(<Harness />);
-    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+    openComputerStep();
 
     expect(screen.getByText('Or run this command yourself in PowerShell:')).toBeInTheDocument();
   });
 
   it.each([
-    ['chromium', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36', 'MacIntel', 'Give Astrid its own window, like any other app'],
-    ['safari', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', 'MacIntel', 'Give Astrid its own window in your Dock'],
+    ['chromium', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36', 'MacIntel', 'Astrid installs straight from your browser'],
+    ['safari', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15', 'MacIntel', 'Astrid installs straight from Safari'],
     ['mobile', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1', 'iPhone', 'Open this page there to copy the line'],
   ] as const)('renders the %s install variant', (scenario, userAgent, platform, copy) => {
     setNavigator(userAgent, platform);
@@ -117,36 +128,98 @@ describe('PublicAstridInstallDialog', () => {
     screen.getByRole('button', { name: 'Open install' }).focus();
     fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
     expect(screen.getByRole('dialog')).toHaveAttribute('data-scenario', scenario);
-    if (scenario === 'mobile') expect(screen.getByText(new RegExp(copy))).toBeInTheDocument();
+    // Step 1 first: the app, with the platform's install instructions (no prompt in jsdom).
+    expect(screen.getByRole('heading', { name: 'Get the Astrid app' })).toBeInTheDocument();
+    if (scenario === 'mobile') expect(screen.getByText('Choose Add to Home Screen.')).toBeInTheDocument();
+    else expect(screen.getByText(new RegExp(copy))).toBeInTheDocument();
+    if (scenario === 'safari') expect(screen.getByText('Choose Add to Dock.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', BROWSER));
+    expect(screen.getByRole('heading', { name: 'Connect your computer' })).toBeInTheDocument();
+    if (scenario === 'mobile') expect(screen.getByText(/Open this page there to copy the line/)).toBeInTheDocument();
     else {
-      expect(screen.getByRole('heading', { name: 'Set up Astrid' })).toBeInTheDocument();
-      if (scenario === 'chromium') expect(screen.getByText('Give these instructions to your coding agent to set up Astrid on your computer.')).toBeInTheDocument();
+      expect(screen.getByText('Give these instructions to your coding agent to set up Astrid on your computer.')).toBeInTheDocument();
       expect(screen.getByText(/https:\/\/astrid\.haus\/install/)).toBeInTheDocument();
-      expect(screen.getByText('Add a browser shortcut')).toBeInTheDocument();
     }
   });
 
-  it('shows the browser arrow only after the shortcut steps are expanded', () => {
+  it('shows the browser arrow on the app step only, and not once a prompt can be used', () => {
     render(<Harness />);
-    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
-
-    expect(document.querySelector('svg.astrid-toolbar-pointer')).toBeNull();
-    const guide = screen.getByText('Add a browser shortcut').closest('details')!;
-    guide.open = true;
-    fireEvent(guide, new Event('toggle'));
+    openDialog();
     expect(document.querySelector('svg.astrid-toolbar-pointer')).not.toBeNull();
-    guide.open = false;
-    fireEvent(guide, new Event('toggle'));
+    fireEvent.click(screen.getByRole('button', BROWSER));
     expect(document.querySelector('svg.astrid-toolbar-pointer')).toBeNull();
+  });
+
+  it('shows the app step first, with the browser choice beside it and no old shortcut details', () => {
+    render(<Harness />);
+    openDialog();
+    expect(screen.getByRole('heading', { name: 'Get the Astrid app' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Done — continue' })).toBeInTheDocument();
+    expect(screen.getByRole('button', BROWSER)).toBeInTheDocument();
+    expect(screen.queryByText('Add a browser shortcut')).not.toBeInTheDocument();
+    expect(document.querySelector('details')).toBeNull();
+    expect(screen.queryByText(/curl -fsSL/)).not.toBeInTheDocument();
+  });
+
+  it('offers Install when the browser can prompt, and an accepted prompt moves to the computer step', async () => {
+    vi.useRealTimers();
+    const event = promptEvent(Promise.resolve({ outcome: 'accepted' }));
+    act(() => window.dispatchEvent(event));
+    render(<Harness />);
+    openDialog();
+    expect(screen.queryByRole('button', { name: 'Done — continue' })).not.toBeInTheDocument();
+    window.localStorage.clear();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Install Astrid/ })); });
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(event.prompt).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('heading', { name: 'Connect your computer' })).toBeInTheDocument();
+    expect(window.localStorage.getItem('astrid:prefers-app')).toBe('1');
+  });
+
+  it('stays on the app step when the prompt is dismissed', async () => {
+    vi.useRealTimers();
+    const event = promptEvent(Promise.resolve({ outcome: 'dismissed' }));
+    act(() => window.dispatchEvent(event));
+    render(<Harness />);
+    openDialog();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Install Astrid/ })); });
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(screen.getByRole('heading', { name: 'Get the Astrid app' })).toBeInTheDocument();
+  });
+
+  it('"Use it in the browser" records the choice, moves to step 2 and does not navigate; Back returns', () => {
+    window.localStorage.clear();
+    const assign = vi.fn();
+    vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, assign } as unknown as Location);
+    render(<Harness />);
+    openDialog();
+    expect(window.localStorage.getItem('astrid:prefers-app')).toBeNull();
+    fireEvent.click(screen.getByRole('button', BROWSER));
+    expect(window.localStorage.getItem('astrid:prefers-app')).toBe('1');
+    expect(assign).not.toHaveBeenCalled();
+    expect(screen.getByRole('heading', { name: 'Connect your computer' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '← Back' }));
+    expect(screen.getByRole('heading', { name: 'Get the Astrid app' })).toBeInTheDocument();
+  });
+
+  it('skips the app step when running as a standalone app', () => {
+    window.matchMedia = vi.fn().mockImplementation((media: string) => ({
+      media, matches: media.includes('standalone'), addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(),
+    }));
+    render(<Harness />);
+    openDialog();
+    expect(screen.getByRole('heading', { name: 'Connect your computer' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '← Back' })).not.toBeInTheDocument();
   });
 
   it('renders the installed variant without an install prompt action', () => {
     act(() => window.dispatchEvent(new Event('appinstalled')));
     render(<Harness />);
     screen.getByRole('button', { name: 'Open install' }).focus();
-    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
-    expect(screen.getByRole('heading', { name: 'Set up Astrid' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Add the shortcut' })).not.toBeInTheDocument();
+    openDialog();
+    // Installed already: straight to the computer step.
+    expect(screen.getByRole('heading', { name: 'Connect your computer' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Install Astrid/ })).not.toBeInTheDocument();
   });
 
   it.each([
@@ -159,7 +232,8 @@ describe('PublicAstridInstallDialog', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     render(<Harness />);
     screen.getByRole('button', { name: 'Open install' }).focus();
-    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+    openDialog();
+    if (!installed) fireEvent.click(screen.getByRole('button', BROWSER));
     expect(window.sessionStorage.getItem('astrid.runtime.autoConnect')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: label }));
@@ -171,7 +245,7 @@ describe('PublicAstridInstallDialog', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
     render(<Harness />);
     screen.getByRole('button', { name: 'Open install' }).focus();
-    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+    openComputerStep();
     expect(() => fireEvent.click(screen.getByRole('button', { name: 'Already set up? Open Astrid' }))).not.toThrow();
   });
 
@@ -180,8 +254,8 @@ describe('PublicAstridInstallDialog', () => {
     const event = promptEvent(choice.promise);
     act(() => window.dispatchEvent(event));
     render(<Harness />);
-    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Add the shortcut' }));
+    openDialog();
+    fireEvent.click(screen.getByRole('button', { name: /Install Astrid/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     choice.resolve({ outcome: 'accepted' });
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
@@ -199,7 +273,7 @@ describe('PublicAstridInstallDialog', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: vi.fn(() => write.promise) }, configurable: true });
     render(<Harness />);
     screen.getByRole('button', { name: 'Open install' }).focus();
-    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+    openComputerStep();
     fireEvent.click(screen.getByRole('button', { name: 'Send the link to your computer' }));
     fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
     write.resolve();
@@ -218,7 +292,7 @@ describe('PublicAstridInstallDialog', () => {
     const share = vi.fn(() => sharing.promise);
     Object.defineProperty(navigator, 'share', { value: share, configurable: true });
     render(<Harness />);
-    fireEvent.click(screen.getByRole('button', { name: 'Open install' }));
+    openComputerStep();
     fireEvent.click(screen.getByRole('button', { name: 'Send the link to your computer' }));
     fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
     sharing.resolve();

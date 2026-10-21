@@ -69,7 +69,7 @@ export function rememberAppEntryPreference(): void {
   }
 }
 
-function isRunningInstalled(): boolean {
+export function isRunningInstalled(): boolean {
   try {
     return window.matchMedia('(display-mode: standalone)').matches
       || window.matchMedia('(display-mode: fullscreen)').matches
