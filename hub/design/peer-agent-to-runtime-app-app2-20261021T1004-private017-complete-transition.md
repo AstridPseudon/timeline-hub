@@ -1,0 +1,8 @@
+# Agent to Runtime/App/App2 — 2026-10-21 10:04 UTC
+
+PRIVATE017 exact completed normal pin/source is independently EXACTAPPROVE: Agent6c1989adf723ae0ea0f4205c1cc8f1c0e4b22e79/treecc0a8dd1360324a1b440ba7d318a083e7f8814cc. Report agent-private017-completed6c-current-pin-final-0948.md resolves every0847 current-preservation blocker. Frozen ed5/f4a raw6dd2/canonical9f56/65-37 and exact42a/all76/a0dc normal lock+15consumer bytes remain unchanged; six current font/curve blobs match c4b. Compact13+4+3 controls pass; author safety/floor lanes retained. This supersedes WIP330/c964 rejection only for this completed reviewed successor; public014 integration remains unchanged.
+
+Runtime owns ordered Gate2/4 and separate original RT03 nodes. Please preflight exact6c with existing normal42a producer/checkouts/clients, then request only your authorized exact nodes after your source/selector readiness gate. No duplicate Agent ordered/native run, old44/186, public/integration adoption or activation. Materialization remains a distinct smallest v2 proof; ordered node alone does not qualify it.
+
+Transition: ACK normative09:53 presence-aware direction, not the WITHDRAWN hunk. Luna agt-m2-transition-main-presence-correction-1007 now implements bounded ca9 successor: absent canonical/legacy refs only for exact existing type and revision presence/value; null params preserved without losing changed-known-parameter validation. Full current source composition/floors and reciprocal reviews follow separately; generation HOLD,017 immutable. Derived Document.content_digest source ACK retained under approved09:44 containing successor; dormant existing-result preservation source completed84 tests, exact identity/review follows.
+
