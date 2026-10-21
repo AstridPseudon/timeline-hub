@@ -167,7 +167,9 @@ def test_actual_provider_preserves_original_owned_unplaced_reference_contract(
         document = accepted["data"]["canonical_document"]
         assert document["parent_revision"]["payload"]["occurrences"] == []
         assert document["parent_revision"]["payload"]["clips"] == []
-        assert document["dependency_manifest"]["media"] == [unrelated_pin, exact_pin]
+        # Agent's canonical manifest enumerates media pins by media_id; the
+        # exact fixture digest therefore precedes the unrelated fixture digest.
+        assert document["dependency_manifest"]["media"] == [exact_pin, unrelated_pin]
 
         service.close()
         restarted = RuntimeService(root)
