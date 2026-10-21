@@ -1,0 +1,13 @@
+diff --git a/contract/schemas/document.json b/contract/schemas/document.json
+--- a/contract/schemas/document.json
++++ b/contract/schemas/document.json
+@@ -9,6 +9,7 @@
+     "document_id": { "type": "string", "minLength": 1 },
+     "project_id": { "type": "string", "minLength": 1 },
+     "kind": { "type": "string", "minLength": 1 },
+     "content": {},
++    "content_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+     "version": { "type": "integer", "minimum": 1 },
+     "created_at": { "type": "string" },
+     "updated_at": { "type": "string" }
+   },
