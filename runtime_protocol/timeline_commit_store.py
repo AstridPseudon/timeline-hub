@@ -14,7 +14,12 @@ import re
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
 from .timeline_commit_validation import detached, digest
-from .timeline_materialization import has_materialization, item_identity, materialization_join, root_identity
+from .timeline_materialization import (
+    has_materialization,
+    item_identity,
+    materialization_join,
+    root_identity,
+)
 from .util import canonical_json, new_id, now
 
 _METADATA = ("source", "label", "rationale", "group_id")
@@ -758,10 +763,10 @@ class TimelineCommitStore:
                         if has_materialization(historical) else {})
                     for o, (shot, _) in after.items():
                         owner = "occurrence:" + o
-                        if shot in allocations or shot in prior_allocations:
-                            if not self._same_materialization_slot(shot, o, allocations.get(shot),
-                                    prior_allocations.get(shot), before, accepted_document):
-                                continue
+                        if ((shot in allocations or shot in prior_allocations)
+                                and not self._same_materialization_slot(shot, o, allocations.get(shot),
+                                        prior_allocations.get(shot), before, accepted_document)):
+                            continue
                         if (shot in occupied and unchanged(shot, after[o][1])
                                 and output.get(o, (None,))[0] == shot and o in prior
                                 and active.get(o) == prior[o]
