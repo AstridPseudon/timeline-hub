@@ -1,55 +1,60 @@
 # Timeline architecture
 
-**Status:** Agent-owned landing page for the approved canonical path and current
-M4 groundwork. M4 is not complete. The historical R4 control documents remain
-archived; this page does not delete or rewrite them.
+**Status:** Agent-owned landing page for the approved path and current M4
+groundwork. M4 is not complete; the historical R4 control documents remain
+archived. See the [editing guide](../timeline-editing-guide.md) and
+[authoring capabilities](../timeline-authoring-capabilities.md) for usage.
 
-Timeline has one accepted authored model and three surfaces. **Read** is a
+Timeline has one accepted authored film model and three surfaces. **Read** is a
 revision-pinned projection: Agent owns timeline meaning and text/CLI views,
-Runtime owns the accepted closure and history, and App owns presentation. A
-view never relabels old content with a newer head. **See** is also a projection:
-one Composition package/evaluator answers what is on screen; preview and export
-stay outside save. **Edit** is the single write path.
+Runtime owns the accepted closure and history, and App owns presentation. **See**
+is a projection through the published Composition package/evaluator; preview and
+export stay outside save. **Edit**, for migrated operations, is one path:
+registered `EditCommand`s from SDK/CLI, App gestures, and supported editable
+inputs are captured by the same session.
 
-Authors provide stable entity/anchor references and deterministic commands with
-declared intent. SDK/CLI, App gestures and editable inputs become the same
-command batch. The client persists the exact request, idempotency key, allocated
-IDs and newer commands in a crash-safe outbox. Runtime's normal `/v1` door
-loads the Agent provider before readiness. The provider works on a detached
-candidate; Runtime permits only exact declared reads of the head/history,
-revision closure, selected media and other pinned inputs. The recorder captures
-writes (including unchanged writes), reads, selections/order, bindings and
-created IDs; that record is accepted meaning, not merely a diff.
+The command registry is Agent's `astrid/sdk/timeline/commands.py`; its provider
+is `astrid/sdk/timeline/commit.py::RuntimeCommitService`. Runtime's ordinary
+`/v1/projects/{project}/timelines/{timeline}/commit` route loads that provider
+through `runtime_protocol/timeline_commit_provider.py` before readiness and
+stores the accepted closure/history in `timeline_commit_store.py`. The client
+outbox (`astrid/sdk/timeline/outbox.py`, App's `src/tools/video-editor/commands/commitOutbox.ts`) persists the
+exact request, retry identity, and newer local commands. Acceptance validates
+structure, timing, references, authority, and ancestry without importing a
+renderer; undo and restore are new guarded commits.
 
-Acceptance is ledger-first: exact scope, key and request-hash replay is resolved
-before provider work, then one transaction rechecks authority and ancestry and
-atomically stores the immutable closure, accepted history/head, input links and
-receipt. Undo is a new guarded inverse command; restore is a new sole-command
-commit naming an immutable historical revision while guarding the current head.
-Neither rewinds history nor invokes Composition.
+Supported derived timing goes through `astrid/sdk/timeline/compiler.py::compile_timing`
+and `_timing_evaluators.py`; old retime/reflow and other derived writers remain
+held below. See has one evaluator in Composition (`typescript/src/evaluation.ts`
+and `scene-evaluation.ts`). Managed Scene is an explicit diagnostic boundary:
+`astrid/packs/rendering/actions/timeline_visualize/scene_only.py` asks the pinned
+managed host for Scene answers and emits the filmstrip diagnostic artifact;
+unknown or unavailable stays explicit. It is not save authority and does not
+make save renderer-dependent.
 
-Slow producers store immutable artifacts and task proposals. They do not publish
-timeline edits: the requesting client supplies verified requester authority and
-submits commands through the same commit path. A dry run is a semantic plan,
-not a mutation receipt.
+Producers store immutable artifacts and submit a settled proposal. The requesting
+client preserves its requester/attempt pin and queues the original proposal via
+`astrid/sdk/timeline/producer.py` and the same outbox; producers do not publish
+film edits directly. Runtime's catalog/reference operations remain catalog
+metadata, while the film is the accepted canonical closure: its film pin may
+authorize its own projection, never a newer catalog head
+(`runtime_protocol/timeline_commit_store.py`).
 
-The current tuple is Runtime013's immutable `artifactproducer2c` client/artifact
-producer (`2c4ac180c2220bdad966bc01e95ad230e99ce26a`) with compatible Runtime
-server at `7f6dd89`; no second producer/client pin or delivery-completion claim
-is made. Agent public Composition `0.0.12` is integrated. App adoption and the
-final viewing/writer gates remain pending.
+The current tree includes published014/Main497 and the WC6 native document-script
+cut/dead-leaf deletion. It consumes the locked Runtime source `95bd3c5f` /
+producer `2c4ac180` and Composition `0.0.13`; this is not a delivery or M2
+completion claim.
 
-Open work is explicit: legacy/fallback writers and the cut-sheet migration are
-not fully retired; native capture authority and `RenderRequest` propagation are
-not fully qualified; frame/audio parity, final export and the owner-film viewing
-gate remain open. These gaps do not justify a second writer, evaluator or
-save-time renderer.
+Held legacy paths are visible: Agent's detached `Checkout.publish` /
+`publish_authoring_candidate`, remaining cut-sheet three-way publication, and
+whole-bundle mutations; timing `retime`/`resolve`/`reflow` plus narration,
+music, and sequence writers; App snapshot ingress
+(`useTimelineOps.ts:277-321`), parent publication and `saveTimeline`/
+`saveTimelineAtHead` (`dataProvider.ts:295,1000-1131`), popup add/swap, and
+local checkpoint restore. Private track/group/transcript/rawOLD operations are
+not public commands and are not claimed M2-complete.
 
-**Code anchors:** Runtime `runtime_protocol/daemon.py`,
-`runtime_protocol/timeline_commit_port.py`,
-`runtime_protocol/timeline_commit_store.py`,
-`runtime_protocol/timeline_commit_producer.py`; Agent
-`astrid/sdk/timeline/commit.py`, `astrid/sdk/timeline/outbox.py`,
-`astrid/sdk/timeline/sync.py`; App
-`src/integrations/runtime/dataProvider.ts`; Composition
-`typescript/src/scene-evaluation.ts`.
+**Code anchors:** Agent `astrid/sdk/timeline/{commands,commit,outbox,sync,compiler,producer}.py`;
+Runtime `runtime_protocol/{daemon,timeline_commit_provider,timeline_commit_port,timeline_commit_store}.py`;
+App `src/integrations/runtime/dataProvider.ts`; Composition
+`typescript/src/{evaluation,scene-evaluation}.ts`.
