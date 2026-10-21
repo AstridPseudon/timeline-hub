@@ -552,44 +552,57 @@ def _candidate_media_size(candidate: Mapping, job: Mapping[str, Any], selection:
     raise VoiceoverSyncError("Old media lacks verified byte size")
 
 
-def _trusted_outer_producer(client: Any) -> dict[str, Any]:
-    """Require the host's existing trusted execution context.
+_TARGET_FIELDS = ("project_id", "timeline_id", "base_revision_id", "base_publication_id")
 
-    The current normal Python action host does not expose this context yet;
-    accepting caller inputs or inner speech identity here would be unsafe.
-    """
-    context = getattr(client, "trusted_execution_context", None)
-    if not isinstance(context, Mapping):
+
+def _trusted_outer_context() -> tuple[dict[str, Any], dict[str, Any]]:
+    """Read the host-owned context; caller and speech identity are not carriers."""
+    try:
+        from astrid.core.execution.executor._action_context import _require_action_context
+    except (ImportError, AttributeError) as exc:
         raise VoiceoverSyncError(
-            "Outer authoring proposal requires the host trusted execution context "
-            "(task_id, attempt_id, executor_id, fence, runtime_epoch); "
-            "the normal Python action host does not expose it"
-        )
-    if set(context) != set(_PRODUCER_FIELDS):
+            "Outer authoring proposal requires the private trusted host context"
+        ) from exc
+    try:
+        context = _require_action_context()
+        producer = dict(context.producer)
+        admitted_target = dict(context.admitted_target)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise VoiceoverSyncError(
+            "Outer authoring proposal requires the private trusted host context"
+        ) from exc
+    if set(producer) != set(_PRODUCER_FIELDS):
         raise VoiceoverSyncError("Trusted outer execution context is incomplete")
-    producer = dict(context)
     if any(not isinstance(producer[key], str) or not producer[key].strip()
            for key in ("task_id", "attempt_id", "executor_id")):
         raise VoiceoverSyncError("Trusted outer producer identity is invalid")
     if any(type(producer[key]) is not int or producer[key] < 1
            for key in ("fence", "runtime_epoch")):
         raise VoiceoverSyncError("Trusted outer producer fence is invalid")
-    return producer
+    if set(admitted_target) != set(_TARGET_FIELDS) or any(
+            not isinstance(admitted_target[key], str) or not admitted_target[key].strip()
+            for key in _TARGET_FIELDS):
+        raise VoiceoverSyncError("Trusted outer admitted target is invalid")
+    return producer, admitted_target
 
 
 def _build_voiceover_proposal(*, producer: Mapping[str, Any], candidate: Mapping[str, Any],
-                              base_publication_id: str, commands: list[dict[str, Any]]) -> dict[str, Any]:
+                              base_publication_id: str, commands: list[dict[str, Any]],
+                              admitted_target: Mapping[str, Any]) -> dict[str, Any]:
     from astrid.sdk.timeline.commit import _digest
 
+    target = {
+        "project_id": candidate["project_id"],
+        "timeline_id": candidate["timeline_id"],
+        "base_revision_id": candidate["base_parent"]["revision_id"],
+        "base_publication_id": base_publication_id,
+    }
+    if dict(admitted_target) != target:
+        raise VoiceoverSyncError("Prepared proposal does not match the admitted target")
     proposal = {
         "schema_version": 1,
         "producer": dict(producer),
-        "admitted_target": {
-            "project_id": candidate["project_id"],
-            "timeline_id": candidate["timeline_id"],
-            "base_revision_id": candidate["base_parent"]["revision_id"],
-            "base_publication_id": base_publication_id,
-        },
+        "admitted_target": target,
         "commands": copy.deepcopy(commands),
         "rationale": "Insert settled managed voiceover WAV and preserve its frozen script binding",
     }
@@ -597,10 +610,20 @@ def _build_voiceover_proposal(*, producer: Mapping[str, Any], candidate: Mapping
     return proposal
 
 
-def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
+def _require_authoritative_media_boundary(client: Any) -> None:
+    """Keep managed proposals closed until Runtime exposes the required read."""
+    del client
+    raise VoiceoverSyncError(
+        "Managed voiceover proposal requires the existing Runtime authoritative "
+        "media-selection read boundary; synthesizer output claims are not sufficient"
+    )
+
+
+def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
                          settings=None, occurrence_ids=None, adopt_clip_ids=None,
-                         padding_seconds=0.15, plan_only=False) -> dict:
-    """Prepare one settled authoring proposal; publication belongs to requester.
+                         padding_seconds=0.15, plan_only=False,
+                         managed_proposal=False) -> dict:
+    """Run the shared preparation, with publication mode selected privately.
 
     No render is requested. Protected/empty/missing-script rows are reported.
     The source script is read from pinned runtime text; callers cannot inject it.
@@ -609,10 +632,13 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
         raise VoiceoverSyncError("timing_policy must be preserve or ripple")
     if not math.isfinite(padding_seconds) or padding_seconds < 0:
         raise VoiceoverSyncError("padding_seconds must be finite and nonnegative")
+    outer = _trusted_outer_context() if managed_proposal else None
+    if managed_proposal:
+        _require_authoritative_media_boundary(client)
     shown = _data(client.timelines.open_composition(project, timeline))
     head = shown["summary"]["head_revision_id"]
-    base_publication_id = shown["summary"].get("head_publication_id")
-    if not isinstance(base_publication_id, str) or not base_publication_id:
+    base_publication_id = shown["summary"].get("head_publication_id") if managed_proposal else None
+    if managed_proposal and (not isinstance(base_publication_id, str) or not base_publication_id):
         raise VoiceoverSyncError("Timeline head lacks its settled publication identity")
     scope = _data(client.timelines.resolve_scope(project, timeline))
     project_row = _data(client.projects.show(project))
@@ -656,10 +682,18 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
     # Detect edits made while generation was in flight. Publication repeats the
     # check and Runtime CAS closes the final race. Never rebase stale speech.
     current = _data(client.timelines.open_composition(project_id, timeline_id))
-    if current["summary"]["head_revision_id"] != head:
+    if (current["summary"]["head_revision_id"] != head
+            or (managed_proposal
+                and current["summary"].get("head_publication_id") != base_publication_id)):
         raise VoiceoverSyncError("Timeline changed during synthesis; rerun sync from its new head")
     bound.validate(prepared["candidate"])
     diff = bound.diff(prepared["candidate"])
+    if not managed_proposal:
+        frozen = bound.preview(prepared["candidate"])
+        receipt = bound.publish(prepared["candidate"], idempotency_key=frozen["candidate_digest"])
+        return {"status": "published", "published": True, "plan": plan, "diff": diff,
+                "generated": prepared["generated"], "receipt": receipt}
+
     bound.preview(prepared["candidate"])
 
     from astrid.sdk.timeline.native_voiceover import capture_draft_voiceover
@@ -690,10 +724,32 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
         verified_media=verified_media, old_media_by_occurrence=old_media_by_occurrence,
         timing_policy=timing_policy)
     proposal = _build_voiceover_proposal(
-        producer=_trusted_outer_producer(client), candidate=candidate,
-        base_publication_id=base_publication_id, commands=captured["commands"])
+        producer=outer[0], candidate=candidate, base_publication_id=base_publication_id,
+        commands=captured["commands"], admitted_target=outer[1])
     # Validate the exact existing six-key proposal and its single guard. The
     # requester later queues this original proposal through its outbox.
     build_producer_batch(proposal)
     return {"status": "proposal_ready", "published": False, "plan": plan, "diff": diff,
             "generated": prepared["generated"], "authoring_proposal": proposal}
+
+
+def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
+                         settings=None, occurrence_ids=None, adopt_clip_ids=None,
+                         padding_seconds=0.15, plan_only=False) -> dict:
+    """Preserve the existing public preparation, validation, and publication path."""
+    return _sync_draft_voiceover(
+        client, project, timeline, timing_policy=timing_policy, settings=settings,
+        occurrence_ids=occurrence_ids, adopt_clip_ids=adopt_clip_ids,
+        padding_seconds=padding_seconds, plan_only=plan_only,
+    )
+
+
+def _sync_draft_voiceover_proposal(client, project: str, timeline: str, *, timing_policy: str,
+                                   settings=None, occurrence_ids=None, adopt_clip_ids=None,
+                                   padding_seconds=0.15, plan_only=False) -> dict:
+    """Private managed-producer entry; the requester owns proposal submission."""
+    return _sync_draft_voiceover(
+        client, project, timeline, timing_policy=timing_policy, settings=settings,
+        occurrence_ids=occurrence_ids, adopt_clip_ids=adopt_clip_ids,
+        padding_seconds=padding_seconds, plan_only=plan_only, managed_proposal=True,
+    )

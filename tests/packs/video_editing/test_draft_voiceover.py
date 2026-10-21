@@ -246,42 +246,34 @@ def test_coordinator_noop_and_plan_do_not_synthesize_or_publish(monkeypatch):
     assert not bound.published
 
 
-def test_coordinator_detects_concurrent_head_and_stops_before_publication(monkeypatch):
+def test_coordinator_detects_concurrent_head_and_cas_failure(monkeypatch):
     c,s=fixture();s['occurrences'][0]['text']='New'
     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:coordinator_synthesis)
     client,bound=coordinator_client(c,s,current='new-head')
     with pytest.raises(vo.VoiceoverSyncError,match='changed during synthesis'):
-        vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
+        vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert not bound.published
     client,bound=coordinator_client(c,s,fail_publish=True)
-    result = vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
-    # The old CAS publish assertion maps to the new requester seam: shared
-    # preparation returns a proposal and never invokes bound.publish.
-    assert result['status'] == 'proposal_ready'
+    with pytest.raises(RuntimeError, match='CAS conflict'):
+        vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert not bound.published
 
 
-def test_coordinator_returns_outer_proposal_without_publishing(monkeypatch):
+def test_coordinator_publishes_once_with_provenance(monkeypatch):
     c,s=fixture();s['occurrences'][0]['text']='New'
     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:coordinator_synthesis)
     client,bound=coordinator_client(c,s)
-    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
-    assert not result['published'] and not bound.published
+    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+    assert result['published'] and bound.published
     assert result['generated'][0]['text']=='New'
-    proposal = result['authoring_proposal']
-    assert set(proposal) == {'schema_version', 'producer', 'admitted_target',
-                             'commands', 'rationale', 'proposal_digest'}
-    assert proposal['producer']['task_id'] == 'outer-task'
-    assert proposal['producer']['task_id'] != result['generated'][0]['task_id']
 
 
-def test_coordinator_refuses_without_trusted_outer_identity(monkeypatch):
+def test_managed_proposal_refuses_without_private_host_context(monkeypatch):
     c,s=fixture();s['occurrences'][0]['text']='New'
     monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:coordinator_synthesis)
     client,bound=coordinator_client(c,s)
-    del client.trusted_execution_context
-    with pytest.raises(vo.VoiceoverSyncError, match='trusted execution context'):
-        vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
+    with pytest.raises(vo.VoiceoverSyncError, match='private trusted host context'):
+        vo._sync_draft_voiceover_proposal(client,'p','t',timing_policy='preserve')
     assert not bound.published
 
 
@@ -291,8 +283,8 @@ def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_err
     def missing(_object_id):
         error=RuntimeError('missing');error.code='not_found';raise error
     client.media.read_bytes=missing
-    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
-    assert not result['published'] and len(result['generated'])==2
+    result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
+    assert result['published'] and len(result['generated'])==2
 
     c,s=fixture();client,bound=coordinator_client(c,s)
     def forbidden(_object_id):
@@ -301,6 +293,14 @@ def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_err
     with pytest.raises(RuntimeError,match='forbidden'):
         vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
     assert not bound.published
+
+
+def test_forged_settled_selection_is_rejected():
+    with pytest.raises(vo.VoiceoverSyncError, match='differs from synthesized audio'):
+        vo._settled_media({'audio_media_id': NEW, 'output': {
+            'selection': {**NEW_SELECTION, 'object_id': OLD},
+            'size': 1, 'duration_seconds': 2,
+        }})
 
 
 def test_synthesizer_verifies_managed_provenance_and_fresh_request_context(monkeypatch):
