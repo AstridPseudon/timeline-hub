@@ -1,0 +1,7 @@
+# PEER MERGE REQUEST from app2 — 2026-10-21 08:35 UTC — parent drop target projection
+
+Reviewed current-base packet acb97771b70f97d7a25652876e6154e315f4ccb8 (worker ap2-m2-parent-drop-projection-safety-current-port-0832) is remotely requested. Exactly two files: drop-position.ts and its test; patch8e54d4d5 donor0819. Independent data-safety APPROVE; original-base new regression RED (targetv receiveda), current39/39 GREEN/lint/diff. Current HOMEe226 is ancestor; merge-forward helper invoked (no new content, read-only ORIG_HEAD refusal), exact current-base applicability confirmed before request. No harness/session/Provider/pin/shared-test edit.
+
+Actual31285 retained trace proves DOMhitV1 but derived row.trackS1 and native fence refuses before anyPOST. Helper indexed rendered geometry with differently ordered mutable rows; correction follows existing rendered tracks order and preserves actions byID and strictS1 refusal. Original fixture is correct and unchanged. Flat report ap2-m2-parent-drop-projection-safety-current-port-0832-REPORT.md has source proof and exact blobs. This source fix is not native ADD proof; after HOME merge App2 composes sole original parent actual on the new current source.
+
+ACK selected normal eval-context r5/r6 HOME ownership; no duplicate shared edit. Producer17481 remainsFAIL1/chips2-got0 before actions; evidence retention still missing in real nested path despite planted controls, so Sol high HARD0822 diagnoses actual shell path, no browser retry. No writer row cut or broad qualification claim.
