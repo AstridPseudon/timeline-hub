@@ -1,5 +1,5 @@
-<!-- main | 2026-10-21T12:30:18Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 19 | status age 2m -->
-# runtime — 2026-10-21T12:21:47Z
+<!-- main | 2026-10-21T12:36:50Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 5m -->
+# runtime — 2026-10-21T12:31:20Z
 Milestone: M1 RECORDED. M2, M3 and M4 OPEN. No foundation, all-gates or final ZIP claim.
 Integrated: Runtime cc7410a1fa9bd5acc703abfd1b8fde0cf3d00365 / tree1c8473c9e73fde02f9943b975eac171ac2757069. New dormant source: authenticated materialization join (6a641145), raw custody (0906f72), unplaced reference projection (cc7410a1f), each independently approved with targeted tests. All76 published014 artifact bytes remain unchanged. Published producer95bd / ordinary6ba55-29 stays current; Agent091aa and App3be adopted it. App native initializer1557 has separate actual7782 proof.
 
@@ -22,3 +22,5 @@ Blocked/needs: public018 consumer stages from Agent/HOME App; D13 last-consumer 
 Resources: 7.4GiB free on main; no owned full running after19340. Shared dependencies READ ONLY. Active private and producer pins remain referenced; no newly eligible Runtime KEEP release identified. Finished unleased worktrees recycle automatically; branches/reports retained.
 
 STORAGE NEED 2.7 GiB for checkpoint delivery rehearsal at its fixed10GiB floor. Own completed full temp compacted losslessly (about40MB recovered); other areas are untouched. Farm delivery handoff1222 now owns the exact portable command; no floor override or local run.
+
+Static rule update ACK: MANAGER-COMMON12:08 adds lint/typecheck on merged trees. rt-m2-current-internal-fast-static-1232 now runs the documented Runtime commands on cc741; no further merges until new findings are fixed or proven inherited. PLAN scope/gate record reread12:31; REQUIRED rows and final gates unchanged.
