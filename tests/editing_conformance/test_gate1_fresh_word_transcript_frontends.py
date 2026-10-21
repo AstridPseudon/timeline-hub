@@ -118,6 +118,7 @@ def fresh_realm(tmp_path, monkeypatch):
     daemon = new_runtime_daemon(root, support_root=tmp_path / "support",
                                 authoring_profile="astrid").start()
     world = SimpleNamespace(project=project["id"], root=root, daemon=daemon, calls=[],
+                            legacy_publications=[],
                             pin=transcript_pin, media_pin=pin, verified_media=verified_media,
                             words=content["segments"][0]["words"], target=TARGET, source=SOURCE)
 
@@ -133,6 +134,8 @@ def fresh_realm(tmp_path, monkeypatch):
         response = HTTPResponse(MemorySocket(bytes(sock.output)))
         response.begin()
         data = response.read()
+        if "/publish" in path:
+            world.legacy_publications.append(path)
         if path.endswith("/commit"):
             world.calls.append((body, response.status, json.loads(data)))
         return response.status, dict(response.headers), data
@@ -224,14 +227,17 @@ def _raw_commit(world, commands, key, *, via):
         world.project, TIMELINE, body, idempotency_key=key)
 
 
-def _cli(world, path, capsys, *, pins):
+def _cli(world, path, capsys, *, pins, idempotency_key=None):
     from astrid.packs.timeline.cli import build_parser
 
-    parsed = build_parser(world.client()).parse_args([
+    args = [
         "edit", "commands-file", TIMELINE, str(path), "--project", world.project, "--json",
         "--base-revision-id", pins["base_revision_id"],
         "--base-publication-id", pins["base_publication_id"],
-    ])
+    ]
+    if idempotency_key is not None:
+        args.extend(["--idempotency-key", idempotency_key])
+    parsed = build_parser(world.client()).parse_args(args)
     assert parsed.handler(parsed) == 0
     return json.loads(capsys.readouterr().out)
 
@@ -293,7 +299,17 @@ def test_fresh_word_transcript_frontends_exact_pin_roundtrip(fresh_realm, tmp_pa
         command = capture_anchor(before, TARGET, "on", carrier["declaration"], carrier["choice"])
         path = tmp_path / "anchor.json"
         path.write_text(json.dumps([command]))
-        accepted = _cli(world, path, capsys, pins=_pins(world))
+        pins = _pins(world)
+        accepted = _cli(world, path, capsys, pins=pins, idempotency_key="cli-word-anchor")
+        # A new dispatcher/client after restart must replay the exact original
+        # captured command. Runtime idempotency returns the same accepted
+        # response; no legacy publication endpoint is involved.
+        world.restart()
+        retried = _cli(world, path, capsys, pins=pins, idempotency_key="cli-word-anchor")
+        assert retried == accepted
+        assert world.calls[-1][0] == world.calls[-2][0]
+        assert world.calls[-1][1] == world.calls[-2][1] == 200
+        assert world.legacy_publications == []
     else:
         sheet = NativeSheet.export(session)
         encoded = json.dumps(carrier, separators=(",", ":"))
