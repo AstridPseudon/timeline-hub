@@ -249,7 +249,12 @@ def _speech_result(client, project: str, text: str, key: str):
     )
     assert result.ok, result.error
     outputs = result.outputs.get("managed_outputs") or result.outputs.get("artifacts") or []
-    audio = next(row for row in outputs if row.get("name") == "speech")
+    audio = next(
+        row for row in outputs
+        if row.get("name") in {"speech", "generated_audio"}
+        or row.get("output_port") in {"speech", "generated_audio"}
+        or str(row.get("path", "")).endswith("speech.wav")
+    )
     from astrid.packs.video_editing.shared.draft_voiceover import _read_authoritative_media_info
 
     selection, verified = _read_authoritative_media_info(client, project, audio)
