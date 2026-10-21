@@ -1,4 +1,10 @@
-"""One installed-host proof for the normal Astrid launcher profile."""
+"""One installed-host proof for the normal Astrid launcher profile.
+
+This builds a private, non-editable carrier with the approved 54-distribution
+dependency closure so normal profile, custody, authentication, and provider-
+backed empty-timeline behavior are tested without checkout imports or shared
+environment writes.
+"""
 
 from __future__ import annotations
 
