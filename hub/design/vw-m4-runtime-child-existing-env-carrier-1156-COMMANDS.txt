@@ -1,0 +1,41 @@
+Base/read-only inspection:
+  sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md
+  sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime
+  sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv
+  sed -n '1,360p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-layout-1144-custody-review-1149-REPORT.md
+  sed -n '1,220p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+  sed -n '1,120p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-viewing13-d0a5072b.env
+
+Fixture syntax and execution:
+  NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+  F=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156-source-fixture.mjs
+  "$NODE" --check "$F"
+  "$NODE" "$F"
+  RESULT: PASS; exact fixture mkdtemp root was removed in finally.
+
+Private patch validation (no install/build):
+  CHECK=$(mktemp -d /tmp/vw-m4-runtime-child-existing-env-carrier-1156-patch.XXXXXX)
+  realpath "$CHECK" > /tmp/vw-m4-runtime-child-existing-env-carrier-1156-patch.path
+  mkdir -p "$CHECK/bin"
+  cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime "$CHECK/bin/make-runtime"
+  cp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv "$CHECK/bin/make-child-venv"
+  patch --dry-run -p1 -d "$CHECK" < /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156.patch
+  patch -p1 -d "$CHECK" < /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-child-existing-env-carrier-1156.patch
+  bash -n "$CHECK/bin/make-runtime"
+  bash -n "$CHECK/bin/make-child-venv"
+  RESULT: PASS; patched files byte-match the prepared private copies.
+
+Early prerequisite refusal probes (no allocation/install):
+  S=$(git -C /home/user/work/agent rev-parse HEAD)
+  "$CHECK/bin/make-runtime" agent-remotion-child-carrier-1156 "$S"
+  RESULT: exit 2; lists missing agent-remotion-0012.env and remotion-0012-nodes row.
+  "$CHECK/bin/make-child-venv" venv-agent-child-carrier-1156 "$S" remotion-0012-nodes agent-remotion-0012
+  RESULT: exit 2; lists missing agent-remotion-0012.env and remotion-0012-nodes row.
+
+Final repository check:
+  git status --short --branch
+  git diff --check
+  RESULT: PASS; no Composition product file changed.
+
+Not run: test service, npm/PyPI install, venv/runtime creation, build, source or
+graph copy, browser/helper, Runtime/server/socket, render, full, or physical proof.

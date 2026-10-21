@@ -1,0 +1,115 @@
+--- a/bin/make-runtime
++++ b/bin/make-runtime
+@@ -1,17 +1,55 @@
+ #!/bin/bash
+ # make-runtime NAME AGENT_SHA [LOCK_SHA256] — run by the dispatcher (outside the sandbox; uses the network for npm ci).
+ # Builds a NEW read-only Remotion runtime /home/user/work/runtimes/<NAME> from the Agent repo's remotion/ directory at
+-# AGENT_SHA (exact package-lock bytes, verified against LOCK_SHA256 when given), with Node 20 and `npm ci`. Writes
++# AGENT_SHA, plus the rendering-pack source closure used by Root's relative imports (exact package-lock bytes,
++# verified against LOCK_SHA256 when given), with Node 20 and `npm ci`. Writes
+ # $ORCH/tests/<NAME>.env and a "<NAME>-nodes" suite (cloned from the remotion-0012-nodes line). Never touches an existing runtime.
+-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent
++O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent; W=/home/user/work
+ N=$1; S=$2; L=$3; case "$N" in agent-remotion-[0-9a-z]*) ;; *) echo "REFUSED: name must be agent-remotion-<version>"; exit 2;; esac
+ D=/home/user/work/runtimes/$N; [ -e $D ] && { echo "exists: $D (runtimes are immutable; pick a new name)"; exit 0; }
+ git -C $A cat-file -e "$S^{commit}" 2>/dev/null || git -C $A fetch -q hub 2>/dev/null; git -C $A cat-file -e "$S^{commit}" || { echo "unknown agent commit $S"; exit 1; }
+-NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin; T=$D.partial; rm -rf $T; mkdir -p $T
+-git -C $A archive "$S" remotion | tar -x -C $T --strip-components=1 || { echo "archive failed"; exit 1; }
+-got=$(sha256sum $T/package-lock.json | cut -d' ' -f1); [ -z "$L" ] || [ "$got" = "$L" ] || { echo "REFUSED: lock sha256 $got != $L"; rm -rf $T; exit 1; }
+-( cd $T && PATH=$NODE:$PATH npm ci --no-audit --no-fund --loglevel=error ) || { echo "npm ci failed"; rm -rf $T; exit 1; }
++ENV=$O/tests/agent-remotion-0012.env; SUITES=$O/tests/suites.conf; MISSING=
++[ -s "$ENV" ] || MISSING="$MISSING $ENV"
++[ -f "$SUITES" ] || MISSING="$MISSING $SUITES"
++[ ! -f "$SUITES" ] || grep -q '^agent remotion-0012-nodes ' "$SUITES" || MISSING="$MISSING agent remotion-0012-nodes row in $SUITES"
++[ -z "$MISSING" ] || { echo "REFUSED: missing authoritative legacy prerequisites:$MISSING" >&2; exit 2; }
++ENV_COUNT=$(grep -c '^ASTRID_REMOTION_PROJECT_DIR=' "$ENV" 2>/dev/null || true)
++[ "$ENV_COUNT" = 1 ] || { echo "REFUSED: $ENV must contain exactly one ASTRID_REMOTION_PROJECT_DIR" >&2; exit 2; }
++LEGACY_PROJECT=$(sed -n 's/^ASTRID_REMOTION_PROJECT_DIR=//p' "$ENV")
++case "$LEGACY_PROJECT" in
++  "$W/runtimes/agent-remotion-0012"|"$W/runtimes/agent-remotion-0012/remotion") ;;
++  *) echo "REFUSED: foreign or broken ASTRID_REMOTION_PROJECT_DIR in $ENV" >&2; exit 2;;
++esac
++NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin; T=$D.partial; rm -rf $T; mkdir -p $T/remotion
++git -C $A archive "$S" remotion | tar -x -C $T/remotion --strip-components=1 || { echo "archive failed"; exit 1; }
++git -C $A archive "$S" astrid/packs/rendering | tar -x -C $T || { echo "rendering source archive failed"; rm -rf $T; exit 1; }
++scene_dir=
++if grep -Fq '../../astrid/packs/rendering/editor/live-scenes/SceneSurface' "$T/remotion/src/LiveSceneClip.tsx" &&
++   grep -Fq '../../astrid/packs/rendering/editor/live-scenes/runtime' "$T/remotion/src/LiveSceneClip.tsx"; then
++  scene_dir=astrid/packs/rendering/editor/live-scenes
++elif grep -Fq '../../astrid/packs/rendering/ui/threejs-live-editor/SceneSurface' "$T/remotion/src/LiveSceneClip.tsx" &&
++     grep -Fq '../../astrid/packs/rendering/ui/threejs-live-editor/runtime' "$T/remotion/src/LiveSceneClip.tsx"; then
++  scene_dir=astrid/packs/rendering/ui/threejs-live-editor
++else
++  echo "unsupported Root source closure in $T/remotion/src/LiveSceneClip.tsx" >&2; rm -rf $T; exit 1
++fi
++grep -Fq "from './runtime'" "$T/$scene_dir/SceneSurface.tsx" &&
++grep -Fq "from './diagnostics'" "$T/$scene_dir/SceneSurface.tsx" || {
++  echo "incomplete Root source closure under $T/$scene_dir" >&2; rm -rf $T; exit 1;
++}
++for name in SceneSurface.tsx runtime.ts diagnostics.ts; do
++  [ -f "$T/$scene_dir/$name" ] || { echo "missing Root source closure file: $T/$scene_dir/$name" >&2; rm -rf $T; exit 1; }
++done
++got=$(sha256sum $T/remotion/package-lock.json | cut -d' ' -f1); [ -z "$L" ] || [ "$got" = "$L" ] || { echo "REFUSED: lock sha256 $got != $L"; rm -rf $T; exit 1; }
++( cd $T/remotion && PATH=$NODE:$PATH npm ci --no-audit --no-fund --loglevel=error ) || { echo "npm ci failed"; rm -rf $T; exit 1; }
+ mv $T $D; find $D -path '*/node_modules/.cache' -prune -o -path '*/node_modules/.vite*' -prune -o -type f -exec chmod a-w {} +
+-sed "s#agent-remotion-0012#$N#g" $O/tests/agent-remotion-0012.env > $O/tests/$N.env
+-grep -q "^agent $N-nodes " $O/tests/suites.conf || grep '^agent remotion-0012-nodes ' $O/tests/suites.conf | sed "s#remotion-0012-nodes#$N-nodes#; s#agent-remotion-0012#$N#g" >> $O/tests/suites.conf
+-echo "created $D from agent ${S:0:12} (lock $got), read-only; env tests/$N.env; suite '$N-nodes'; remotion $(PATH=$NODE:$PATH node -e "console.log(require('$D/node_modules/remotion/package.json').version)" 2>/dev/null)"
++sed -e "s#agent-remotion-0012#$N#g" \
++    -e "s#/home/user/work/runtimes/$N/remotion#@@ASTRID_REMOTION_PROJECT_DIR@@#g" \
++    -e "s#/home/user/work/runtimes/$N#@@ASTRID_REMOTION_PROJECT_DIR@@#g" \
++    -e "s#@@ASTRID_REMOTION_PROJECT_DIR@@#$D/remotion#g" "$ENV" > "$O/tests/$N.env"
++grep -q "^agent $N-nodes " "$SUITES" || grep '^agent remotion-0012-nodes ' "$SUITES" | \
++  sed -e "s#remotion-0012-nodes#$N-nodes#; s#agent-remotion-0012#$N#g" \
++      -e "s#/home/user/work/runtimes/$N/remotion#@@ASTRID_REMOTION_PROJECT_DIR@@#g" \
++      -e "s#/home/user/work/runtimes/$N#@@ASTRID_REMOTION_PROJECT_DIR@@#g" \
++      -e "s#@@ASTRID_REMOTION_PROJECT_DIR@@#$D/remotion#g" >> "$SUITES"
++echo "created $D from agent ${S:0:12} (lock $got), read-only; env tests/$N.env; suite '$N-nodes'; remotion $(PATH=$NODE:$PATH node -e "console.log(require('$D/remotion/node_modules/remotion/package.json').version)" 2>/dev/null)"
+--- a/bin/make-child-venv
++++ b/bin/make-child-venv
+@@ -3,10 +3,37 @@
+ # child venv /home/user/work/<NAME> (NAME = venv-agent-child-<suffix>): Python 3.13, the exact pinned set from
+ # tests/provision/venv-agent-child-s2.txt (--no-deps), plus astrid installed NON-editably from `git archive` of AGENT_SHA.
+ # With BASE_SUITE and RUNTIME: adds suite "<NAME>-full" = BASE_SUITE's line with venv-agent-child-s2 -> NAME and
+-# agent-remotion-0012 -> RUNTIME. Never touches an existing venv.
++# its existing ASTRID_REMOTION_PROJECT_DIR replaced by the selected runtime's generated env value. Never touches an existing venv.
+ O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent; W=/home/user/work
+ N=$1; S=$2; BS=$3; RT=$4; case "$N" in venv-agent-child-[a-z0-9-]*) ;; *) echo "REFUSED: name must be venv-agent-child-<suffix>"; exit 2;; esac
+ D=$W/$N; [ -e $D ] && { echo "exists: $D (child venvs are immutable; pick a new name)"; exit 0; }
++if [ -n "$BS" ] || [ -n "$RT" ]; then
++  [ -n "$BS" ] && [ -n "$RT" ] || { echo "REFUSED: BASE_SUITE and RUNTIME are required together" >&2; exit 2; }
++  case "$RT" in agent-remotion-[0-9a-z]*) ;; *) echo "REFUSED: RUNTIME must be an agent-remotion name" >&2; exit 2;; esac
++  SUITES=$O/tests/suites.conf; ENV=$O/tests/$RT.env; MISSING=
++  [ -f "$SUITES" ] || MISSING="$MISSING $SUITES"
++  [ -f "$ENV" ] || MISSING="$MISSING $ENV"
++  [ ! -f "$SUITES" ] || grep -q "^agent $BS " "$SUITES" || MISSING="$MISSING agent $BS row in $SUITES"
++  [ -z "$MISSING" ] || { echo "REFUSED: missing authoritative child prerequisites:$MISSING" >&2; exit 2; }
++  ENV_COUNT=$(grep -c '^ASTRID_REMOTION_PROJECT_DIR=' "$ENV" 2>/dev/null || true)
++  [ "$ENV_COUNT" = 1 ] || { echo "REFUSED: $ENV must contain exactly one ASTRID_REMOTION_PROJECT_DIR" >&2; exit 2; }
++  PROJECT_DIR=$(sed -n 's/^ASTRID_REMOTION_PROJECT_DIR=//p' "$ENV")
++  case "$PROJECT_DIR" in
++    "$W/runtimes/$RT"|"$W/runtimes/$RT/remotion") ;;
++    *) echo "REFUSED: foreign or broken ASTRID_REMOTION_PROJECT_DIR in $ENV" >&2; exit 2;;
++  esac
++  BASE_LINE=$(grep "^agent $BS " "$SUITES" | head -n 1)
++  case " $BASE_LINE " in *" ASTRID_REMOTION_PROJECT_DIR="*) ;; *) echo "REFUSED: suite agent $BS does not carry ASTRID_REMOTION_PROJECT_DIR" >&2; exit 2;; esac
++  CHILD_LINE=$(printf '%s\n' "$BASE_LINE" | awk -v name="$N" -v project="ASTRID_REMOTION_PROJECT_DIR=$PROJECT_DIR" '{
++    $1="agent"; $2=name "-full"
++    for (i=3; i<=NF; i++) {
++      if ($i == "venv-agent-child-s2") $i=name
++      if ($i ~ /^ASTRID_REMOTION_PROJECT_DIR=/) $i=project
++    }
++    print
++  }')
++  [ -n "$CHILD_LINE" ] || { echo "REFUSED: could not carry child suite from agent $BS" >&2; exit 2; }
++fi
+ git -C $A cat-file -e "$S^{commit}" 2>/dev/null || git -C $A fetch -q hub 2>/dev/null; git -C $A cat-file -e "$S^{commit}" || { echo "unknown agent commit $S"; exit 1; }
+ F=$O/tests/provision/venv-agent-child-s2.txt; T=$D.partial; SRC=$(mktemp -d)
+ rm -rf $T; python3.13 -m venv $T && P=$T/bin/python && $P -m pip install -q --no-cache-dir 'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3' \
+@@ -17,5 +44,5 @@
+ # venvs record their own path in scripts: rebuild in place is not possible, so fix shebangs/activate for the final path
+ grep -rl "$T" $T/bin 2>/dev/null | xargs -r sed -i "s#$T#$D#g"; mv $T $D
+ $D/bin/python -m pip freeze --all > $O/tests/provision/$N.txt; chmod -R a-w $D
+-if [ -n "$BS" ] && [ -n "$RT" ]; then grep -q "^agent $N-full " $O/tests/suites.conf || { L=$(grep "^agent $BS " $O/tests/suites.conf) && [ -n "$L" ] && echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-s2#$N#g; s#agent-remotion-0012#$RT#g" >> $O/tests/suites.conf; }; fi
++if [ -n "$BS" ] && [ -n "$RT" ]; then grep -q "^agent $N-full " "$SUITES" || echo "$CHILD_LINE" >> "$SUITES"; fi
+ echo "created $D (astrid from ${S:0:12}, $(wc -l < $O/tests/provision/$N.txt) pins, read-only)$( [ -n "$BS" ] && echo "; suite $N-full")"; $D/bin/python -c 'import astrid; print("astrid import ok")'
