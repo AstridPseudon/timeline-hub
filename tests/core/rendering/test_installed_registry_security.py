@@ -278,19 +278,28 @@ def test_installed_render_worker_foreign_roots_refuse_before_publication(tmp_pat
         host_module._launch_worker_probe_environments((tmp_path,), {'HOME': str(tmp_path)}, remotion_only=True)
 
 
-def test_installed_worker_startup_hooks_refuse_before_publication(tmp_path, monkeypatch):
+@pytest.mark.parametrize('pack,capability', [
+    ('capture', 'capture.web_page'), ('rendering', 'rendering.sprite_sheet'),
+])
+def test_installed_product_network_workers_remain_projectable(tmp_path, monkeypatch, pack, capability):
     from astrid.core.execution import generic_host as host_module
-    from tests.test_generic_host import _write_manifest
+    from astrid.core.foundation.paths import REPO_ROOT
 
     monkeypatch.setenv('ASTRID_HOST_EXECUTION_PROFILE', 'installed')
-    packs = tmp_path / 'astrid/packs'
-    manifest = _write_manifest(packs / 'worker')
-    data = json.loads(manifest.read_text())
-    data['metadata'].update(requires_remotion=True, network_policy={'mode': 'deny'})
-    manifest.write_text(json.dumps(data))
-    with pytest.raises(host_module.HostError, match='startup import hooks'):
-        host_module._launch_worker_probe_environments((packs,), {'HOME': str(tmp_path)},
-            remotion_only=True, installed_root=tmp_path)
+    environment = {'HOME': str(tmp_path), 'LANG': 'C', 'PATH': '/usr/bin'}
+    matrix_path = REPO_ROOT / 'config/astrid-beta-capabilities.json'
+    owner = host_module.GenericPackHost(
+        pack_roots=[REPO_ROOT / 'astrid/packs' / pack], capability_matrix=matrix_path,
+    )
+    record = next(record for record in owner.discover() if record.id == capability)
+    assert host_module._network_policy(record) is not None
+    assert record.matrix['disposition'] not in {'retired', 'unsupported'}
+    assert host_module._record_may_render(record)
+    projected = host_module._launch_worker_probe_environments(
+        (REPO_ROOT / 'astrid/packs' / pack,), environment, matrix_path,
+        remotion_only=True, installed_root=REPO_ROOT,
+    )
+    assert projected
 
 
 @pytest.mark.parametrize('name', ['PYTHONPATH', 'ASTRID_PACKS_PATH'])

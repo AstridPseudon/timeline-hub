@@ -1787,8 +1787,6 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
         if installed and remotion_only and not record.source_root.is_relative_to(
                 (installed_root or Path(__file__).absolute().parents[3]) / 'astrid/packs'):
             raise HostError('installed Remotion workers require product-owned pack roots')
-        if installed and remotion_only and _network_policy(record) is not None:
-            raise HostError('installed Remotion workers cannot project attempt-specific startup import hooks')
         # Startup validation has no task credential channel. Legacy manifests
         # can still list credentials in passthrough: omit those names entirely,
         # while retaining their syntax checks without declaring any authority.
