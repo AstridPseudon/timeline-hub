@@ -101,15 +101,7 @@ _INVERSE_DIAGNOSTIC_REPORT = (
 
 
 def _diagnostic_snapshot(value):
-    try:
-        value = copy.deepcopy(value)
-        if isinstance(value, Mapping):
-            return {key: _diagnostic_snapshot(item) for key, item in value.items()}
-        if isinstance(value, (list, tuple)):
-            return [_diagnostic_snapshot(item) for item in value]
-        return value
-    except Exception as error:  # pragma: no cover - diagnostic fallback only
-        return {"<snapshot-error>": f"{type(error).__name__}: {error}"}
+    return copy.deepcopy(value)
 
 
 def _diagnostic_json(value):
@@ -221,10 +213,8 @@ def _install_inverse_diagnostic(monkeypatch):
             ],
             "records_argument": {
                 "type": type(records).__name__,
-                "value": _diagnostic_snapshot(records),
                 "entries": entries,
             },
-            "bundle_argument": _diagnostic_snapshot(bundle),
             "compared_command_lists": {
                 "accepted_records": flattened,
                 "history_records": accepted,
@@ -233,9 +223,7 @@ def _install_inverse_diagnostic(monkeypatch):
             "source_hashes": {
                 "records_argument": _diagnostic_hash(flattened),
                 "records_entries": _diagnostic_hash(entries),
-                "bundle_argument": _diagnostic_hash(_diagnostic_snapshot(bundle)),
                 "records_fields": _diagnostic_hashes(entries),
-                "bundle_fields": _diagnostic_hashes(_diagnostic_snapshot(bundle)),
             },
         }
         try:
