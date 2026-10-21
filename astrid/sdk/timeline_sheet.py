@@ -860,11 +860,12 @@ def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
 
 
 def _duration_sheet(sheet, artifact, parsed):
-    """Translate existing static layer durations and literal type text."""
+    """Translate existing static layer durations, literal type text, and size."""
     from astrid.sdk.timeline._command_state import State, equal
+    from astrid.sdk.timeline_address import element_schema
 
     def refuse():
-        raise SheetError("unsupported retained sheet edit; supported fields are am-type text and static duration")
+        raise SheetError("unsupported retained sheet edit; supported fields are am-type text, size, and static duration")
 
     original = parse_sheet(artifact["text"])
     edited = copy.deepcopy(parsed, {id(ELIDED): ELIDED})
@@ -875,7 +876,16 @@ def _duration_sheet(sheet, artifact, parsed):
     text = sheet.text
     for key, row in right.items():
         before = left[key]
-        if equal(before["for"], row["for"]) and equal(before["text"], row["text"]):
+        before_params = before.get("params") or {}
+        after_params = row.get("params") or {}
+        # Presence is part of the edit. In particular, an explicit size=clear
+        # must not be confused with an absent size cell.
+        before_has_size = "size" in before_params
+        after_has_size = "size" in after_params
+        size_changed = before_has_size != after_has_size or (
+            before_has_size and after_has_size and not equal(before_params["size"], after_params["size"])
+        )
+        if equal(before["for"], row["for"]) and equal(before["text"], row["text"]) and not size_changed:
             continue
         ref = artifact["bindings"].get(".".join(key))
         if ref is None:
@@ -913,6 +923,36 @@ def _duration_sheet(sheet, artifact, parsed):
                 replaced.append(body + suffix)
             text = "\n".join(replaced) + "\n"
             row["text"] = before["text"]
+        if size_changed:
+            if (not before_has_size or not after_has_size or clip.get("clipType") != "am-type"
+                    or "size" not in (element_schema("am-type").get("properties") or {})):
+                refuse()
+            value = after_params["size"]
+            if value is ELIDED:
+                refuse()
+            raw_size = next((token for token in _tokens(row.get("text_line", ""))
+                             if token.startswith("size=")), None)
+            if raw_size is None:
+                refuse()
+            old_token = "size=" + json.dumps(before_params["size"], ensure_ascii=False, separators=(",", ":"))
+            new_token = ("size=clear" if raw_size == "size=clear" else
+                         "size=" + json.dumps(value, ensure_ascii=False, separators=(",", ":")))
+            suffix = " # ref " + json.dumps(ref)
+            replaced = []
+            for line in text.splitlines():
+                if not line.endswith(suffix):
+                    replaced.append(line)
+                    continue
+                body = line[:-len(suffix)]
+                if _tokens(body.strip()).count(old_token) != 1:
+                    refuse()
+                body, count = re.subn(rf"(?<!\S){re.escape(old_token)}(?=\s|$)",
+                                      lambda _: new_token, body, count=1)
+                if count != 1:
+                    refuse()
+                replaced.append(body + suffix)
+            text = "\n".join(replaced) + "\n"
+            row["params"]["size"] = before_params["size"]
     def semantic(value):
         if isinstance(value, dict):
             return {k: semantic(v) for k, v in value.items() if k not in {"line", "text_line"}}
