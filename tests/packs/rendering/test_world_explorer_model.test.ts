@@ -1,13 +1,13 @@
-import { describe, expect, it, vi } from 'vitest';
-import type { ExtensionSettingsService, TimelineSnapshot } from '@astrid/editor-sdk';
+import { describe, expect, it } from 'vitest';
+import type { TimelineSnapshot } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../../../astrid/packs/rendering/ui/threejs-live-editor/identity';
 import {
   TravelClock,
-  addToLibrary,
   cameraIndexAt,
   camerasOrImplicit,
   chooseDefaultWorld,
   clampStretch,
+  clipName,
   eventsInCamera,
   exploreKey,
   fitToBox,
@@ -19,14 +19,18 @@ import {
   libraryKey,
   moveRangeHandle,
   newClipId,
-  readLibrary,
-  removeFromLibrary,
-  saveInfo,
+  libraryContent,
+  parseLibrary,
+  removeEntry,
+  renameEntry,
+  upsertEntry,
+  withInfo,
   setStretchEnd,
   setStretchStart,
   sliderKeyTime,
   speedScaleLabel,
   stretchMatches,
+  worldTitleFromFilename,
   stretchDuration,
   wheelSpeedScale,
   worldKey,
@@ -54,18 +58,6 @@ function snap(partial: Record<string, unknown>): TimelineSnapshot {
     projectId: 'p1', baseVersion: 1, currentVersion: 1, extensionRequirements: [], assetKeys: [], app: {},
     clips: [], tracks: [{ id: 'V1', kind: 'visual', label: 'V1', muted: false }], ...partial,
   } as unknown as TimelineSnapshot;
-}
-
-function fakeSettings(): ExtensionSettingsService & { map: Map<string, unknown> } {
-  const map = new Map<string, unknown>();
-  return {
-    map,
-    get: (k: string) => map.get(k) as never,
-    set: (k: string, v: unknown) => { map.set(k, v); },
-    delete: (k: string) => { map.delete(k); },
-    keys: () => [...map.keys()],
-    subscribe: () => ({ dispose: () => {} }) as never,
-  } as ExtensionSettingsService & { map: Map<string, unknown> };
 }
 
 function entry(objectId: string, revision = 'r1', name = objectId): LibraryEntry {
@@ -123,92 +115,89 @@ describe('worldsFromSnapshot', () => {
   });
 });
 
-describe('library persistence', () => {
-  it('keys by project and keeps projects isolated', () => {
-    expect(libraryKey('p1')).toBe('worldLibrary:p1');
-    expect(libraryKey(null)).toBe('worldLibrary:none');
-    const settings = fakeSettings();
-    addToLibrary(settings, 'p1', entry('A'));
-    expect(readLibrary(settings, 'p2')).toEqual([]);
-    expect(readLibrary(settings, 'p1').map((e) => e.objectId)).toEqual(['A']);
+describe('library document model', () => {
+  it('parseLibrary gives an empty list for non-document content', () => {
+    expect(parseLibrary(undefined)).toEqual([]);
+    expect(parseLibrary('nope')).toEqual([]);
+    expect(parseLibrary([entry('A')])).toEqual([]);
+    expect(parseLibrary({ version: 1 })).toEqual([]);
+    expect(parseLibrary({ version: 1, worlds: 'nope' })).toEqual([]);
   });
 
-  it('upserts by worldKey and removes', () => {
-    const settings = fakeSettings();
-    addToLibrary(settings, 'p1', entry('A', 'r1', 'first'));
-    addToLibrary(settings, 'p1', entry('B'));
-    const list = addToLibrary(settings, 'p1', entry('A', 'r1', 'renamed'));
-    expect(list.map((e) => e.name)).toEqual(['renamed', 'B']);
-    expect(addToLibrary(settings, 'p1', entry('A', 'r2')).map(worldKey)).toEqual(['A@r1', 'B@r1', 'A@r2']);
-    expect(removeFromLibrary(settings, 'p1', 'A@r2').map(worldKey)).toEqual(['A@r1', 'B@r1']);
-    expect(readLibrary(settings, 'p1').map(worldKey)).toEqual(['A@r1', 'B@r1']);
+  it('parseLibrary drops invalid entries and keeps the valid ones', () => {
+    expect(parseLibrary({ version: 1, worlds: [entry('ok'), { objectId: 'bad' }, null, { ...entry('neg'), duration: -1 }, { ...entry('fps'), authoredFps: 0 }] }).map((e) => e.objectId)).toEqual(['ok']);
   });
 
-  it('tolerates garbage and drops invalid entries', () => {
-    const settings = fakeSettings();
-    settings.set(libraryKey('p1'), 'nope');
-    expect(readLibrary(settings, 'p1')).toEqual([]);
-    settings.set(libraryKey('p1'), [entry('ok'), { objectId: 'bad' }, null, { ...entry('neg'), duration: -1 }]);
-    expect(readLibrary(settings, 'p1').map((e) => e.objectId)).toEqual(['ok']);
-    expect(readLibrary(settings, undefined).map((e) => e.objectId)).toEqual([]);
-  });
-
-  it('drops invalid events and cameras, keeping the valid ones', () => {
-    const settings = fakeSettings();
-    settings.set(libraryKey('p1'), [{
-      ...entry('A'),
-      events: [{ name: 'ok', start: 1 }, { name: 'span', start: 2, end: 3 }, { name: 'bad' }, { name: 'nan', start: 2, end: 'x' }],
-      cameras: [{ name: 'cam', start: 0, end: 4 }, { name: 'backwards', start: 5, end: 2 }, { name: 'nan', start: 0, end: 1, worldStart: NaN }],
-    }]);
-    const [read] = readLibrary(settings, 'p1');
+  it('parseLibrary drops invalid events and cameras, keeping the valid ones', () => {
+    const [read] = parseLibrary({
+      version: 1,
+      worlds: [{
+        ...entry('A'),
+        events: [{ name: 'ok', start: 1 }, { name: 'span', start: 2, end: 3 }, { name: 'bad' }, { name: 'nan', start: 2, end: 'x' }],
+        cameras: [{ name: 'cam', start: 0, end: 4 }, { name: 'backwards', start: 5, end: 2 }, { name: 'nan', start: 0, end: 1, worldStart: NaN }],
+      }],
+    });
     expect(read.events).toEqual([{ name: 'ok', start: 1 }, { name: 'span', start: 2, end: 3 }]);
     expect(read.cameras).toEqual([{ name: 'cam', start: 0, end: 4 }]);
   });
 
   it('reads an entry saved with only the old stops field as having no events or cameras', () => {
-    const settings = fakeSettings();
-    settings.set(libraryKey('p1'), [{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, stops: [{ time: 1, name: 'hit' }] }]);
-    expect(readLibrary(settings, 'p1')).toEqual([{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, events: [], cameras: [] }]);
-  });
-});
-
-describe('saveInfo', () => {
-  const hit: WorldEvent[] = [{ name: 'hit', start: 1 }];
-  const bridge: WorldEvent[] = [{ name: 'Bridge', start: 2 }];
-  const cam: CameraMove[] = [{ name: 'Wide', start: 0, end: 4 }];
-
-  it('writes reported events and cameras only when they differ from the library entry', () => {
-    const settings = fakeSettings();
-    addToLibrary(settings, 'p1', entry('A'));
-    const set = vi.spyOn(settings, 'set');
-
-    expect(saveInfo(settings, 'p1', 'A@r1', { events: hit, cameras: [] })).toBe(false);
-    expect(set).not.toHaveBeenCalled();
-
-    expect(saveInfo(settings, 'p1', 'A@r1', { events: bridge, cameras: [] })).toBe(true);
-    expect(set).toHaveBeenCalledTimes(1);
-    expect(readLibrary(settings, 'p1')).toEqual([{ ...entry('A'), events: bridge, cameras: [] }]);
-
-    expect(saveInfo(settings, 'p1', 'A@r1', { events: bridge, cameras: [] })).toBe(false);
-    expect(set).toHaveBeenCalledTimes(1);
-
-    expect(saveInfo(settings, 'p1', 'A@r1', { events: bridge, cameras: cam })).toBe(true);
-    expect(set).toHaveBeenCalledTimes(2);
-    expect(readLibrary(settings, 'p1')[0].cameras).toEqual(cam);
-
-    expect(saveInfo(settings, 'p1', 'A@r1', { events: [], cameras: [] })).toBe(true);
-    expect(readLibrary(settings, 'p1')[0]).toMatchObject({ events: [], cameras: [] });
+    const list = parseLibrary({ version: 1, worlds: [{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, stops: [{ time: 1, name: 'hit' }] }] });
+    expect(list).toEqual([{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, events: [], cameras: [] }]);
   });
 
-  it('ignores worlds that are not in this project library', () => {
-    const settings = fakeSettings();
-    addToLibrary(settings, 'p1', entry('A'));
-    const set = vi.spyOn(settings, 'set');
+  it('keeps the sample flag only when it is true', () => {
+    const [sample] = parseLibrary({ version: 1, worlds: [{ ...entry('S'), sample: true }] });
+    expect(sample.sample).toBe(true);
+    const [notSample] = parseLibrary({ version: 1, worlds: [{ ...entry('N'), sample: 'yes' }] });
+    expect(notSample).not.toHaveProperty('sample');
+  });
 
-    expect(saveInfo(settings, 'p1', 'B@r1', { events: bridge, cameras: [] })).toBe(false);
-    expect(saveInfo(settings, 'p2', 'A@r1', { events: bridge, cameras: [] })).toBe(false);
-    expect(set).not.toHaveBeenCalled();
-    expect(readLibrary(settings, 'p1')[0].events).toEqual(hit);
+  it('libraryContent round-trips through parseLibrary', () => {
+    const list = [{ ...entry('A'), sample: true as const }, entry('B', 'r2')];
+    expect(libraryContent(list)).toEqual({ version: 1, worlds: list });
+    expect(parseLibrary(libraryContent(list))).toEqual(list);
+  });
+
+  it('upsertEntry replaces in place by worldKey and appends new worlds', () => {
+    const list = [entry('A', 'r1', 'first'), entry('B')];
+    const replaced = upsertEntry(list, entry('A', 'r1', 'renamed'));
+    expect(replaced.map((e) => e.name)).toEqual(['renamed', 'B']);
+    expect(upsertEntry(replaced, entry('A', 'r2')).map(worldKey)).toEqual(['A@r1', 'B@r1', 'A@r2']);
+    expect(list[0].name).toBe('first');
+  });
+
+  it('removeEntry removes by key and leaves the rest in order', () => {
+    const list = [entry('A'), entry('B'), entry('A', 'r2')];
+    expect(removeEntry(list, 'A@r2').map(worldKey)).toEqual(['A@r1', 'B@r1']);
+    expect(removeEntry(list, 'C@r1')).toEqual(list);
+  });
+
+  it('renameEntry trims the new name, ignores a blank one, and touches only the keyed entry', () => {
+    const list = [entry('A'), entry('B')];
+    expect(renameEntry(list, 'A@r1', '  Lantern Valley  ').map((e) => e.name)).toEqual(['Lantern Valley', 'B']);
+    expect(renameEntry(list, 'A@r1', '   ')).toEqual(list);
+    expect(renameEntry(list, 'C@r1', 'Other')).toEqual(list);
+  });
+
+  it('withInfo returns the same content when nothing changed', () => {
+    const list = [{ ...entry('A'), events: [{ name: 'hit', start: 1 }], cameras: [{ name: 'Wide', start: 0, end: 4 }] }];
+    expect(withInfo(list, 'A@r1', { events: [{ name: 'hit', start: 1 }], cameras: [{ name: 'Wide', start: 0, end: 4 }] })).toEqual(list);
+    expect(withInfo(list, 'B@r1', { events: [{ name: 'x', start: 0 }], cameras: [] })).toEqual(list);
+  });
+
+  it('withInfo updates events and cameras of the keyed entry and keeps its other fields', () => {
+    const list = [entry('A'), entry('B')];
+    const bridge: WorldEvent[] = [{ name: 'Bridge', start: 2 }];
+    const cam: CameraMove[] = [{ name: 'Wide', start: 0, end: 4 }];
+    const next = withInfo(list, 'A@r1', { events: bridge, cameras: cam });
+    expect(next).toEqual([{ ...entry('A'), events: bridge, cameras: cam }, entry('B')]);
+    expect(withInfo(next, 'A@r1', { events: [], cameras: [] })[0]).toMatchObject({ events: [], cameras: [], name: 'A' });
+  });
+
+  it('withInfo ignores a world that is not in the library', () => {
+    const list = [entry('A')];
+    expect(withInfo(list, 'B@r1', { events: [{ name: 'Bridge', start: 2 }], cameras: [] })).toEqual(list);
   });
 });
 
@@ -845,5 +834,37 @@ describe('KEY_MAP', () => {
     expect(keys).toMatch(/\bScroll\b/);
     expect(keys).toMatch(/\bR\b/);
     expect(keys).toMatch(/\bSpace\b/);
+  });
+});
+
+describe('worldTitleFromFilename, clipName and renameEntry', () => {
+  it('turns a file name into a sentence-case world title', () => {
+    expect(worldTitleFromFilename('world-template.scene.json')).toBe('World template');
+    expect(worldTitleFromFilename('broken.scene')).toBe('Broken');
+    expect(worldTitleFromFilename('Lantern_Valley.json')).toBe('Lantern valley');
+    expect(worldTitleFromFilename('My.World--v2.SCENE.JSON')).toBe('My world v2');
+    expect(worldTitleFromFilename('nested.scene.json.json')).toBe('Nested');
+  });
+
+  it('falls back to Imported world when nothing is left of the name', () => {
+    expect(worldTitleFromFilename('.scene.json')).toBe('Imported world');
+    expect(worldTitleFromFilename('___.json')).toBe('Imported world');
+    expect(worldTitleFromFilename('')).toBe('Imported world');
+  });
+
+  it('names a clip by its world, with the camera after a middle dot when one is shown', () => {
+    expect(clipName('Lantern valley', 'Dawn push')).toBe('Lantern valley · Dawn push');
+    expect(clipName('Lantern valley')).toBe('Lantern valley');
+    expect(clipName('Lantern valley', '')).toBe('Lantern valley');
+  });
+
+  it('renames one entry and leaves the others alone; a blank name changes nothing', () => {
+    const list = [
+      { objectId: 'o1', revision: 'r1', name: 'First', duration: 10, authoredFps: 24, events: [], cameras: [] },
+      { objectId: 'o2', revision: 'r1', name: 'Second', duration: 12, authoredFps: 24, events: [], cameras: [] },
+    ];
+    expect(renameEntry(list, 'o2@r1', '  Renamed  ').map((e) => e.name)).toEqual(['First', 'Renamed']);
+    expect(renameEntry(list, 'o2@r1', '   ').map((e) => e.name)).toEqual(['First', 'Second']);
+    expect(renameEntry(list, 'o2@r1', '')).toEqual(list);
   });
 });

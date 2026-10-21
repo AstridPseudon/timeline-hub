@@ -1,5 +1,5 @@
 // Pure world-explorer model: worlds, uses, library, stretches, keys, travel clock.
-import type { TimelineSnapshot, ExtensionSettingsService } from '@astrid/editor-sdk';
+import type { TimelineSnapshot } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../identity';
 
 /** Something that happens in the world, in world seconds; `end` is absent for a point event. */
@@ -8,7 +8,7 @@ export type WorldEvent = { readonly name: string; readonly start: number; readon
 export type CameraMove = { readonly name: string; readonly start: number; readonly end: number; readonly worldStart?: number };
 export type Stretch = { readonly from: number; readonly to: number; readonly speed: number };
 export type WorldUse = { clipId: string; track: string; at: number; from: number; to: number; speed: number };
-export type LibraryEntry = { objectId: string; revision: string; name: string; duration: number; authoredFps: number; events: WorldEvent[]; cameras: CameraMove[] };
+export type LibraryEntry = { objectId: string; revision: string; name: string; duration: number; authoredFps: number; events: WorldEvent[]; cameras: CameraMove[]; sample?: true };
 export type TimelineWorld = { objectId: string; revision: string; duration: number; authoredFps: number; uses: WorldUse[]; liveScene: Record<string, unknown> };
 
 export const worldKey = (w: { objectId: string; revision: string }) => `${w.objectId}@${w.revision}`;
@@ -50,8 +50,6 @@ export function worldsFromSnapshot(snapshot: TimelineSnapshot): TimelineWorld[] 
   return ordered;
 }
 
-export const libraryKey = (projectId: string | null | undefined) => `worldLibrary:${projectId ? projectId : 'none'}`;
-
 function validEvent(v: unknown): v is WorldEvent {
   return isRecord(v) && typeof v.name === 'string' && typeof v.start === 'number' && Number.isFinite(v.start)
     && (v.end === undefined || (typeof v.end === 'number' && Number.isFinite(v.end)));
@@ -73,11 +71,10 @@ function validEntry(v: unknown): boolean {
     && isPositive(v.authoredFps);
 }
 
-/** Library for one project; invalid stored entries are dropped, and so are invalid events and cameras
+/** Library entries from a stored document body; invalid entries are dropped, and so are invalid events and cameras
  * (an entry saved with the old `stops` simply loses them). Never throws. */
-export function readLibrary(settings: ExtensionSettingsService, projectId: string | null | undefined): LibraryEntry[] {
-  let raw: unknown;
-  try { raw = settings.get(libraryKey(projectId)); } catch { return []; }
+export function parseLibrary(content: unknown): LibraryEntry[] {
+  const raw = isRecord(content) ? content.worlds : undefined;
   if (!Array.isArray(raw)) return [];
   return raw.filter(validEntry).map((entry): LibraryEntry => {
     const e = entry as Record<string, unknown>;
@@ -89,42 +86,57 @@ export function readLibrary(settings: ExtensionSettingsService, projectId: strin
       authoredFps: e.authoredFps as number,
       events: Array.isArray(e.events) ? e.events.filter(validEvent) : [],
       cameras: Array.isArray(e.cameras) ? e.cameras.filter(validCamera) : [],
+      ...(e.sample === true ? { sample: true as const } : {}),
     };
   });
 }
 
-function writeLibrary(settings: ExtensionSettingsService, projectId: string | null | undefined, list: LibraryEntry[]): LibraryEntry[] {
-  settings.set(libraryKey(projectId), list);
-  return list;
-}
+/** The stored document body for a library. */
+export const libraryContent = (list: readonly LibraryEntry[]) => ({ version: 1, worlds: list });
 
 /** Upserts by worldKey: replaces in place, or appends. */
-export function addToLibrary(settings: ExtensionSettingsService, projectId: string | null | undefined, entry: LibraryEntry): LibraryEntry[] {
-  const list = readLibrary(settings, projectId);
+export function upsertEntry(list: readonly LibraryEntry[], entry: LibraryEntry): LibraryEntry[] {
   const key = worldKey(entry);
   const i = list.findIndex((e) => worldKey(e) === key);
-  if (i >= 0) list[i] = entry;
-  else list.push(entry);
-  return writeLibrary(settings, projectId, list);
+  return i >= 0 ? list.map((e, j) => (j === i ? entry : e)) : [...list, entry];
 }
 
-export function removeFromLibrary(settings: ExtensionSettingsService, projectId: string | null | undefined, key: string): LibraryEntry[] {
-  return writeLibrary(settings, projectId, readLibrary(settings, projectId).filter((e) => worldKey(e) !== key));
+export const removeEntry = (list: readonly LibraryEntry[], key: string): LibraryEntry[] => list.filter((e) => worldKey(e) !== key);
+
+/** Renames one entry; a blank name is ignored. */
+export function renameEntry(list: readonly LibraryEntry[], key: string, name: string): LibraryEntry[] {
+  const trimmed = name.trim();
+  if (!trimmed) return [...list];
+  return list.map((e) => (worldKey(e) === key ? { ...e, name: trimmed } : e));
+}
+
+const SCENE_SUFFIX = /(\.scene\.json|\.scene|\.json)$/i;
+
+/** A world's name from its file name: scene and JSON extensions dropped, separators read as spaces, first letter capitalised. */
+export function worldTitleFromFilename(filename: string): string {
+  let stem = filename;
+  while (SCENE_SUFFIX.test(stem)) stem = stem.replace(SCENE_SUFFIX, '');
+  const words = stem.replace(/[-_.]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!words) return 'Imported world';
+  return words[0].toUpperCase() + words.slice(1).toLowerCase();
+}
+
+/** The name of a timeline clip showing a world: the world, then the camera when one is shown. */
+export function clipName(world: string, camera?: string): string {
+  return camera ? `${world} · ${camera}` : world;
 }
 
 const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
-/** Keeps the events and cameras a library world's scene reported. Writes only when the entry exists and they differ; returns whether it wrote. */
-export function saveInfo(
-  settings: ExtensionSettingsService,
-  projectId: string | null | undefined,
+/** Keeps the events and cameras a library world's scene reported; the same list when the entry is missing or already has them. */
+export function withInfo(
+  list: readonly LibraryEntry[],
   key: string,
   info: { events: readonly WorldEvent[]; cameras: readonly CameraMove[] },
-): boolean {
-  const entry = readLibrary(settings, projectId).find((e) => worldKey(e) === key);
-  if (!entry || (sameJson(entry.events, info.events) && sameJson(entry.cameras, info.cameras))) return false;
-  addToLibrary(settings, projectId, { ...entry, events: [...info.events], cameras: [...info.cameras] });
-  return true;
+): LibraryEntry[] {
+  const entry = list.find((e) => worldKey(e) === key);
+  if (!entry || (sameJson(entry.events, info.events) && sameJson(entry.cameras, info.cameras))) return [...list];
+  return upsertEntry(list, { ...entry, events: [...info.events], cameras: [...info.cameras] });
 }
 
 export const stretchDuration = (s: Stretch) => (s.to - s.from) / s.speed;

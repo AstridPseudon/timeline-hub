@@ -7,6 +7,7 @@ export type Row = {
   readonly key: string;
   readonly name: string;
   readonly duration: number;
+  readonly authoredFps: number;
   readonly objectId: string;
   readonly revision: string;
   readonly uses: readonly WorldUse[];
@@ -21,6 +22,7 @@ export function rowFromEntry(entry: LibraryEntry): Row {
     key: worldKey(entry),
     name: entry.name,
     duration: entry.duration,
+    authoredFps: entry.authoredFps,
     objectId: entry.objectId,
     revision: entry.revision,
     uses: [],
@@ -29,7 +31,7 @@ export function rowFromEntry(entry: LibraryEntry): Row {
   };
 }
 
-/** Timeline worlds first (named from the library when saved, else "Scene N"), then library-only worlds. */
+/** Timeline worlds first (named from the library when saved, else "Untitled world"), then library-only worlds. */
 export function buildRows(snapshot: TimelineSnapshot | undefined, library: readonly LibraryEntry[]): { timeline: Row[]; library: Row[] } {
   const worlds = snapshot ? worldsFromSnapshot(snapshot) : [];
   const saved = new Map(library.map((entry) => [worldKey(entry), entry] as const));
@@ -38,8 +40,9 @@ export function buildRows(snapshot: TimelineSnapshot | undefined, library: reado
     const entry = saved.get(worldKey(world));
     return {
       key: worldKey(world),
-      name: entry?.name ?? `Scene ${index + 1}`,
+      name: entry?.name ?? (index === 0 ? 'Untitled world' : `Untitled world ${index + 1}`),
       duration: world.duration,
+      authoredFps: world.authoredFps,
       objectId: world.objectId,
       revision: world.revision,
       uses: world.uses,

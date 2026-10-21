@@ -1,14 +1,15 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
-import type { ExtensionContext, PanelRenderProps, TimelineSnapshot } from '@astrid/editor-sdk';
+import type { ExtensionContext, PanelRenderProps, ProjectDocumentSurface, TimelineSnapshot } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../identity';
 import type { SceneExplore, SceneInfo, SceneStatus } from '../runtime';
+import { loadLibrary, updateLibrary } from './library';
 import { defaultExploreSpeed, FreeCamera, type ViewPose } from './camera';
 import {
-  addToLibrary,
   camerasOrImplicit,
   cameraIndexAt,
   chooseDefaultWorld,
   clampStretch,
+  clipName,
   eventsInCamera,
   exploreKey,
   fitToBox,
@@ -18,19 +19,21 @@ import {
   KEY_MAP,
   lastWorldKey,
   newClipId,
-  readLibrary,
-  removeFromLibrary,
-  saveInfo,
+  removeEntry,
+  renameEntry,
   setStretchEnd,
   setStretchStart,
   SHIFT_BOOST,
   speedScaleLabel,
   stretchDuration,
   stretchMatches,
+  upsertEntry,
+  withInfo,
   TravelClock,
   wheelSpeedScale,
   worldKey,
   worldsFromSnapshot,
+  worldTitleFromFilename,
   type CameraMove,
   type LibraryEntry,
   type Stretch,
@@ -87,6 +90,15 @@ function aspectOf(resolution: string | undefined): number {
   return width > 0 && height > 0 ? width / height : FALLBACK_ASPECT;
 }
 
+/** The project's document store; undefined when the host has none. */
+function projectDocuments(ctx: ExtensionContext): ProjectDocumentSurface | undefined {
+  try {
+    return ctx.creative.documents;
+  } catch {
+    return undefined;
+  }
+}
+
 function readSnapshot(ctx: ExtensionContext): TimelineSnapshot | undefined {
   try {
     return ctx.creative.reader.snapshot();
@@ -125,7 +137,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   const [snap, setSnap] = useState<TimelineSnapshot | undefined>(() => readSnapshot(ctx));
   const projectId = snap?.projectId ?? null;
-  const [library, setLibrary] = useState<LibraryEntry[]>(() => readLibrary(ctx.services.settings, snap?.projectId ?? null));
+  const [library, setLibrary] = useState<LibraryEntry[]>([]);
+  const [libraryReady, setLibraryReady] = useState(false);
   const [selected, setSelected] = useState<Row | null>(null);
   const [loaded, setLoaded] = useState<{ key: string; liveScene: Record<string, unknown> } | null>(null);
   const [loadError, setLoadError] = useState<{ key: string; message: string } | null>(null);
@@ -152,7 +165,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const [rootWidth, setRootWidth] = useState(0);
   const [listOpen, setListOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ tone: 'error' | 'info'; text: string } | null>(null);
+  const [notice, setNotice] = useState<{ tone: 'error' | 'info'; text: string; details?: string } | null>(null);
 
   // World time (Explore) and travel time (Cameras) are separate clocks over the same world.
   const worldClock = useRef<TravelClock | null>(null);
@@ -189,6 +202,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const movedRef = useRef(false);
   const dragPixels = useRef(0);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const libraryRef = useRef<LibraryEntry[]>([]);
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     mounted.current = true;
@@ -200,11 +215,44 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     };
   }, []);
 
-  const settings = ctx.services.settings;
-  // The library is per project; read it again when the project changes.
+  const documents = projectDocuments(ctx);
+  libraryRef.current = library;
+  // The library is a project document: read it when the project changes and whenever the panel is shown,
+  // so worlds added from another timeline or by a collaborator appear.
   useEffect(() => {
-    setLibrary(readLibrary(ctx.services.settings, projectId));
-  }, [projectId]);
+    if (!visible || !projectId || !documents) return;
+    let current = true;
+    loadLibrary(documents, projectId).then(
+      (list) => { if (current && mounted.current) { setLibrary(list); setLibraryReady(true); } },
+      (cause) => {
+        if (!current || !mounted.current) return;
+        setLibraryReady(true);
+        setNotice({ tone: 'error', text: `Could not load this project's worlds: ${errorMessage(cause)}` });
+        reportError(ctx, 'world-explorer/library-load-failed', `World library load failed: ${errorMessage(cause)}`);
+      },
+    );
+    return () => { current = false; };
+  }, [visible, projectId, documents]);
+
+  /** Shows a library change at once, then saves it to the project; saves run one after another. */
+  function commitLibrary(change: (list: LibraryEntry[]) => LibraryEntry[], quiet = false): Promise<void> {
+    if (!documents || !projectId) return Promise.resolve();
+    const scope = projectId;
+    libraryRef.current = change(libraryRef.current);
+    setLibrary(libraryRef.current);
+    const run = saveChain.current.then(async () => {
+      const saved = await updateLibrary(documents, scope, change);
+      if (mounted.current && projectRef.current === scope) { libraryRef.current = saved; setLibrary(saved); }
+    });
+    saveChain.current = run.catch(() => undefined);
+    return run.catch((cause) => {
+      // Registering worlds the timeline already uses is best effort: a read-only project still lists them.
+      if (quiet) return;
+      const message = errorMessage(cause);
+      if (mounted.current) setNotice({ tone: 'error', text: `Could not save the world library: ${message}` });
+      reportError(ctx, 'world-explorer/library-save-failed', `World library save failed: ${message}`);
+    });
+  }
 
   // Observe only while visible. The reader drives the worlds list; the view store only moves the follow state.
   useEffect(() => {
@@ -259,6 +307,23 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   }, [visible]);
 
   const rows = useMemo(() => buildRows(snap, library), [snap, library]);
+  // A world used on this timeline that the project does not list yet joins the library, so every timeline of the project lists it.
+  useEffect(() => {
+    if (!libraryReady || !documents || !projectId) return;
+    const missing = rows.timeline.filter((row) => row.liveScene && !library.some((entry) => worldKey(entry) === row.key));
+    if (missing.length === 0) return;
+    // Batched, and idempotent against a newer list, so two tabs registering the same worlds converge.
+    const timer = setTimeout(() => {
+      void commitLibrary((list) => missing.reduce(
+        (next, row) => (next.some((entry) => worldKey(entry) === row.key) ? next : upsertEntry(next, {
+          objectId: row.objectId, revision: row.revision, name: row.name, duration: row.duration, authoredFps: row.authoredFps,
+          events: [...row.events], cameras: [...row.cameras],
+        })),
+        list,
+      ), true);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [libraryReady, rows, library, projectId, documents]);
   const allRows = useMemo(() => [...rows.timeline, ...rows.library], [rows]);
   const duration = selected?.duration ?? 0;
   const aspect = aspectOf(snap?.outputMetadata?.resolution);
@@ -275,7 +340,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const explore = info ? info.explore : undefined;
   const mode: Mode = explore === null ? 'cameras' : modeChoice;
   const ready = Boolean(liveScene) && revealed && !sceneError;
-  const sampleSaved = library.some((entry) => entry.name === SAMPLE_LABEL);
+  const sampleSaved = library.some((entry) => entry.sample);
   const projectReady = Boolean(snap?.projectId && snap?.timelineId);
   const followedUse = followedClipId ? rows.timeline.flatMap((row) => row.uses).find((use) => use.clipId === followedClipId) : undefined;
   const followedDiffers = Boolean(followedUse) && !stretchMatches(followedUse!, stretch, snap?.outputMetadata?.fps ?? 30);
@@ -393,10 +458,11 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     projectRef.current = projectId;
   }, [projectId]);
   useEffect(() => {
-    if (!visible || selected || liveClipId || allRows.length === 0) return;
+    // Wait for the project's library, so the last world viewed can be chosen over a timeline world.
+    if (!visible || selected || liveClipId || allRows.length === 0 || (documents && projectId && !libraryReady)) return;
     const row = chooseDefaultWorld(rows.timeline, rows.library, readSetting<string>(ctx, lastWorldKey(projectId)));
     if (row) openWorld(row);
-  }, [visible, selected, liveClipId, allRows.length, projectId]);
+  }, [visible, selected, liveClipId, allRows.length, projectId, libraryReady]);
 
   // Follow the single selected live-scene clip: open its world in Cameras mode with its stretch.
   useEffect(() => {
@@ -405,7 +471,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     if (!snapshot) return;
     const world = worldsFromSnapshot(snapshot).find((candidate) => candidate.uses.some((use) => use.clipId === liveClipId));
     const use = world?.uses.find((candidate) => candidate.clipId === liveClipId);
-    const row = world ? buildRows(snapshot, readLibrary(settings, snapshot.projectId)).timeline.find((candidate) => candidate.key === worldKey(world)) : undefined;
+    const row = world ? buildRows(snapshot, libraryRef.current).timeline.find((candidate) => candidate.key === worldKey(world)) : undefined;
     if (!row || !use) return;
     if (selected?.key === row.key && readyRef.current) {
       // The world is already open (say, the clip was just added from it): follow the clip without reloading the scene.
@@ -462,7 +528,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   function toggleWorldPause() {
     const clock = worldClock.current;
-    if (!clock) return;
+    if (!clock || !readyRef.current) return;
     if (clock.playing) {
       clock.pause();
       setWorldPaused(true);
@@ -542,6 +608,15 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       setShownTime(travel?.time ?? 0);
     }
     pump();
+  }
+
+  function dismissNotice() {
+    setNotice(null);
+  }
+
+  // Try again reopens the same world, keeping its mode and stretch.
+  function retryWorld() {
+    if (selected) openWorld(selected, { stretch, clipId: followedClipId, mode: modeChoice });
   }
 
   function openWorld(row: Row, options: { stretch?: Stretch; clipId?: string | null; mode?: Mode } = {}) {
@@ -628,6 +703,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       readyRef.current = false;
       inFlight.current = false;
       setSceneError(status.error ?? 'The scene could not start.');
+      worldClock.current?.fail();
       travelClock.current?.fail();
       setPlaying(false);
     }
@@ -639,7 +715,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     const reportedCameras = reported.cameras.map((move) => ({ ...move }));
     setDeclared({ key: selected.key, events, cameras: reportedCameras, explore: reported.explore });
     // A library world keeps what its scene reported, so the next visit shows it before the scene loads.
-    if (saveInfo(settings, projectId, selected.key, { events, cameras: reportedCameras })) setLibrary(readLibrary(settings, projectId));
+    if (withInfo(libraryRef.current, selected.key, { events, cameras: reportedCameras }).length) {
+      void commitLibrary((list) => withInfo(list, selected.key, { events, cameras: reportedCameras }));
+    }
     exploreRef.current = reported.explore;
     if (reported.explore) {
       roam.current = new FreeCamera(reported.explore.start, reported.explore.bounds);
@@ -668,7 +746,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   function pick(key: string) {
     const row = allRows.find((candidate) => candidate.key === key);
-    if (row) openWorld(row);
+    // Picking the open world again (a double-click to rename) must not restart it.
+    if (row && row.key !== selected?.key) openWorld(row);
+    else setListOpen(false);
   }
 
   function stepWorld(direction: 1 | -1) {
@@ -704,12 +784,22 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   function removeWorld(row: Row) {
     const index = allRows.findIndex((candidate) => candidate.key === row.key);
     const remaining = allRows.filter((candidate) => candidate.key !== row.key);
-    setLibrary(removeFromLibrary(settings, projectId, row.key));
+    void commitLibrary((list) => removeEntry(list, row.key));
     if (selected?.key !== row.key) return;
     // The next world takes its place, or the one before it when it was last.
     const next = remaining[Math.min(index, remaining.length - 1)];
     if (next) openWorld(next);
     else clearWorld();
+  }
+
+  /** Renames a world in the library (adding it there first when only the timeline lists it) and in the header when it is selected. */
+  function renameWorld(row: Row, name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    void commitLibrary((list) => (list.some((e) => worldKey(e) === row.key)
+      ? renameEntry(list, row.key, trimmed)
+      : upsertEntry(list, { objectId: row.objectId, revision: row.revision, name: trimmed, duration: row.duration, authoredFps: row.authoredFps, events: [...row.events], cameras: [...row.cameras] })));
+    setSelected((current) => (current?.key === row.key ? { ...current, name: trimmed } : current));
   }
 
   function changeSpeed(speed: number) {
@@ -859,7 +949,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       const parsed = await authoring.parsePreparedScenePackage(bytes);
       const ingested = await authoring.ingestPreparedPackage(storage, parsed);
       if (!mounted.current) return;
-      const name = file.name.replace(/\.[^.]*$/, '') || 'Imported world';
+      const name = worldTitleFromFilename(file.name);
       const entry: LibraryEntry = {
         objectId: ingested.package.object_id,
         revision: ingested.package.digest,
@@ -869,13 +959,13 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         events: [],
         cameras: [],
       };
-      setLibrary(addToLibrary(settings, projectId, entry));
+      await commitLibrary((list) => upsertEntry(list, entry));
       openWorld(rowFromEntry(entry));
       ctx.chrome.toast(`Imported ${name}`, 'info');
     } catch (cause) {
       if (!mounted.current) return;
       const message = errorMessage(cause);
-      setNotice({ tone: 'error', text: `Could not import this world: ${message}` });
+      setNotice({ tone: 'error', text: "This file isn't an Astrid world. Choose a .scene.json file.", details: message });
       ctx.chrome.toast(`World import failed: ${message}`, 'error');
       reportError(ctx, 'world-explorer/import-failed', `World import failed: ${message}`);
     } finally {
@@ -903,13 +993,14 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         authoredFps: parsed.manifest.authoredFps,
         events: sample.events.map((event) => ({ ...event })),
         cameras: sample.cameras.map((move) => ({ ...move })),
+        sample: true,
       };
       // The same package already in the library is just selected, not saved twice.
-      const existing = readLibrary(settings, projectId).find((candidate) => worldKey(candidate) === worldKey(entry));
+      const existing = libraryRef.current.find((candidate) => worldKey(candidate) === worldKey(entry));
       if (existing) {
         openWorld(rowFromEntry(existing));
       } else {
-        setLibrary(addToLibrary(settings, projectId, entry));
+        await commitLibrary((list) => upsertEntry(list, entry));
         openWorld(rowFromEntry(entry));
         ctx.chrome.toast(`Added ${sample.name} to the library`, 'info');
       }
@@ -937,7 +1028,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       const id = newClipId(snapshot);
       const authoring = await loadAuthoring();
       await authoring.placeLiveScene(ctx, liveScene, selected.duration, [
-        { id, track, at, from: stretch.from, to: stretch.to, rate: stretch.speed },
+        { id, track, at, from: stretch.from, to: stretch.to, rate: stretch.speed, label: clipName(selected.name, mode === 'cameras' ? camera?.name : undefined) },
       ]);
       if (!mounted.current) return;
       // Select the new clip so the explorer follows it; a host without `select` just moves the playhead to it.
@@ -984,9 +1075,11 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     viewerRef.current?.focus({ preventScroll: true });
   }
 
-  const overlayText = sceneError ?? loadError?.message ?? (selected ? 'Opening world…' : 'Choose a world to explore.');
+  // Nothing in the project yet: only the welcome card shows. Waits for the library so the card does not flash.
+  const showEmpty = (libraryReady || !documents) && allRows.length === 0;
+  const overlayText = sceneError ?? loadError?.message ?? (allRows.length ? 'Opening world…' : 'Loading worlds…');
   const overlayIsError = Boolean(sceneError || (loadError && loadError.key === selected?.key));
-  const showOverlay = !ready;
+  const showOverlay = !ready && !showEmpty;
   const selectedIndex = allRows.findIndex((candidate) => candidate.key === selected?.key);
   const exploring = mode === 'explore' && ready && Boolean(explore);
   const showHint = exploring && !hintDismissed;
@@ -1014,6 +1107,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       busy={busy}
       onPick={pick}
       onRemove={removeWorld}
+      onRename={renameWorld}
       onAddSample={() => { void addSample(); }}
       onImport={() => importInput.current?.click()}
     />
@@ -1042,7 +1136,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     </div>
   );
   const notExplorable = explore === null ? (
-    <p className="text-[11px] text-muted-foreground">This world isn&apos;t explorable yet: it was made before worlds were required to be.</p>
+    <p className="text-[11px] text-muted-foreground">This world has no free view yet, so only its cameras can be shown.</p>
   ) : null;
 
   const eventButtons = (
@@ -1158,28 +1252,48 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       data-layout={wide ? 'side' : 'docked'}
       onClick={refocusViewer}
     >
-      {wide ? sideColumn : null}
+      {wide && !showEmpty ? sideColumn : null}
       <div className={`flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-3 ${wide ? '' : 'overflow-y-auto'}`}>
         {!wide && allRows.length > 0 ? header : null}
-        {!wide && allRows.length === 0 ? (
+        {showEmpty ? (
           <div className="flex flex-col gap-3 rounded-md border border-border/70 p-3">
-            <p className="text-sm text-muted-foreground">A world is a live 3D scene you can explore freely. Find a view or a camera you like, then add it to your video.</p>
+            <p className="text-sm text-muted-foreground">A world is a live 3D place. Look around freely, then add one of its cameras to your video.</p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className={`${button} bg-primary/10 text-primary`} disabled={busy} onClick={() => { void addSample(); }}>Add {SAMPLE_LABEL}</button>
+              <button type="button" className={`${button} bg-primary/10 text-primary`} disabled={busy} onClick={() => { void addSample(); }}>Add {SAMPLE_LABEL} (sample)</button>
               <button type="button" className={`${button} border border-border`} disabled={busy} onClick={() => importInput.current?.click()}>Import world…</button>
             </div>
           </div>
         ) : null}
-        {!wide ? <div className="flex flex-wrap items-center gap-2">{modeToggle}{notExplorable}</div> : null}
+        {!wide && !showEmpty ? <div className="flex flex-wrap items-center gap-2">{modeToggle}{notExplorable}</div> : null}
         {importControl}
 
         {notice ? (
-          <p role="status" className="text-[11px] text-muted-foreground" style={notice.tone === 'error' ? ERROR_STYLE : undefined}>{notice.text}</p>
+          <div role="status" className="flex items-start gap-2 text-[11px] text-muted-foreground" style={notice.tone === 'error' ? ERROR_STYLE : undefined}>
+            <div className="min-w-0 flex-1">
+              <p>{notice.text}</p>
+              {notice.details ? (
+                <details className="mt-1">
+                  <summary className="cursor-pointer">Details</summary>
+                  <p className="mt-1 break-words">{notice.details}</p>
+                </details>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              title="Dismiss"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={dismissNotice}
+            >
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+          </div>
         ) : null}
 
         <div
           ref={stageRef}
           className={wide ? 'flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden' : 'w-full'}
+          style={showEmpty ? { display: 'none' } : undefined}
         >
           <div
             ref={viewerRef}
@@ -1215,11 +1329,14 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
               </Suspense>
             ) : null}
             {showOverlay ? (
-              <div
-                className="absolute inset-0 grid place-items-center p-4 text-center text-xs"
-                style={{ ...OVERLAY_STYLE, ...(overlayIsError ? ERROR_STYLE : null) }}
-              >
-                {overlayText}
+              <div className="absolute inset-0 grid place-items-center p-4 text-center text-xs" style={OVERLAY_STYLE}>
+                {overlayIsError ? (
+                  <div className="flex max-w-xs flex-col items-center gap-2">
+                    <p>This world couldn&apos;t start</p>
+                    <p className="text-[11px] opacity-70">{overlayText}</p>
+                    <button type="button" className={`${button} border border-white/20`} onClick={retryWorld}>Try again</button>
+                  </div>
+                ) : overlayText}
               </div>
             ) : null}
             {exploring ? (
@@ -1293,7 +1410,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
           </div>
         </div>
 
-        {mode === 'explore' ? (
+        {showEmpty ? null : mode === 'explore' ? (
           <div className="flex shrink-0 flex-col gap-2" data-refocus style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}>
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={toggleWorldPause}>
@@ -1317,6 +1434,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
               onSeek={seekWorld}
             />
             {!wide && events.length ? eventButtons : null}
+            {ready && selected ? (
+              <p className="truncate text-[11px] text-muted-foreground">To add this world to your video, <button type="button" className="underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm" onClick={() => switchMode('cameras')}>pick a camera →</button></p>
+            ) : null}
           </div>
         ) : (
           <div

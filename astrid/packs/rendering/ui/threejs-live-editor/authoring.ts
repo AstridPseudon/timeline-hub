@@ -54,6 +54,8 @@ export type PreparedScenePlacement = {
   readonly from: number;
   readonly to: number;
   readonly rate: number;
+  /** The clip's visible name; left unset when absent. */
+  readonly label?: string;
 };
 
 /** Compatibility type for the existing Maple acceptance caller. */
@@ -667,7 +669,10 @@ export function placementOperations(
     operations.push({
       op: 'clip.update',
       target: placement.id,
-      payload: { mode: 'merge', from: placement.from, to: placement.to, speed: placement.rate, app: { liveScene } },
+      payload: {
+        mode: 'merge', from: placement.from, to: placement.to, speed: placement.rate, app: { liveScene },
+        ...(placement.label ? { label: placement.label } : {}),
+      },
       order: order++,
     });
   }

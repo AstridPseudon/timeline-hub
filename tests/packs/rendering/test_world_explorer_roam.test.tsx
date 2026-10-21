@@ -4,6 +4,7 @@ import { createElement } from 'react';
 import { act, cleanup, createEvent, fireEvent, render, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorldExplorerPanel } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel';
+import { fakeDocuments, storedWorlds, type FakeDocuments } from './world_explorer_documents';
 import { quatRotate, type ViewPose } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/camera';
 import { KEY_MAP } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/model';
 import { ingestPreparedPackage, parsePreparedScenePackage } from '../../../astrid/packs/rendering/ui/threejs-live-editor/authoring';
@@ -188,12 +189,16 @@ type HarnessOptions = {
   clips?: unknown[];
   settings?: ReturnType<typeof makeSettings>;
   storage?: ReturnType<typeof makeStorage>;
+  /** Seeds the project's library document. */
+  library?: unknown[];
+  documents?: FakeDocuments;
 };
 
 function makeHarness(options: HarnessOptions = {}) {
   const projectId = options.projectId === undefined ? 'p1' : options.projectId;
   const settings = options.settings ?? makeSettings();
   const storage = options.storage ?? makeStorage();
+  const documents = options.documents ?? fakeDocuments({ projectId: projectId ?? 'none', library: options.library });
   const snapshot = {
     projectId,
     timelineId: 't1',
@@ -214,6 +219,7 @@ function makeHarness(options: HarnessOptions = {}) {
   const report = vi.fn();
   const ctx = {
     creative: {
+      documents,
       reader: {
         snapshot: () => snapshot,
         subscribe: (listener: () => void) => {
@@ -250,6 +256,7 @@ function makeHarness(options: HarnessOptions = {}) {
     raw: ctx,
     settings,
     storage,
+    documents,
     timeline,
     toast,
     report,
@@ -693,7 +700,7 @@ describe('World Explorer free roam', () => {
     await openReady(null);
 
     expect(view.getByRole('button', { name: 'Explore' })).toBeDisabled();
-    expect(view.getByText(/isn't explorable yet/)).toBeTruthy();
+    expect(view.getByText(/has no free view yet/)).toBeTruthy();
     expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy();
     advance(5);
     ack();
@@ -764,8 +771,8 @@ describe('World Explorer free roam', () => {
     const storage = makeStorage();
     const lantern = await libraryEntry(storage, 'lantern', 'Lantern Valley');
     const spare = await libraryEntry(storage, 'spare', 'Spare');
-    const settings = makeSettings(new Map<string, unknown>([['worldLibrary:p1', [lantern, spare]]]));
-    const harness = makeHarness({ clips: [liveClip()], storage, settings });
+    const documents = fakeDocuments({ library: [lantern, spare] });
+    const harness = makeHarness({ clips: [liveClip()], storage, documents });
     const view = mount(harness);
     await openReady(EXPLORE);
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('1 / 3');
@@ -782,8 +789,8 @@ describe('World Explorer free roam', () => {
     const storage = makeStorage();
     const lantern = await libraryEntry(storage, 'lantern', 'Lantern Valley');
     const spare = await libraryEntry(storage, 'spare', 'Spare');
-    const settings = makeSettings(new Map<string, unknown>([['worldLibrary:p1', [lantern, spare]]]));
-    const harness = makeHarness({ clips: [liveClip()], storage, settings });
+    const documents = fakeDocuments({ library: [lantern, spare] });
+    const harness = makeHarness({ clips: [liveClip()], storage, documents });
     const view = mount(harness);
     await openReady(EXPLORE);
 
@@ -802,11 +809,11 @@ describe('World Explorer free roam', () => {
     const storage = makeStorage();
     const lantern = await libraryEntry(storage, 'lantern', 'Lantern Valley');
     const spare = await libraryEntry(storage, 'spare', 'Spare');
+    const documents = fakeDocuments({ library: [lantern, spare] });
     const settings = makeSettings(new Map<string, unknown>([
-      ['worldLibrary:p1', [lantern, spare]],
       ['lastWorld:p1', `${lantern.objectId}@${lantern.revision}`],
     ]));
-    const view = mount(makeHarness({ clips: [liveClip()], storage, settings }));
+    const view = mount(makeHarness({ clips: [liveClip()], storage, settings, documents }));
     await openReady(EXPLORE);
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
   });
@@ -814,13 +821,13 @@ describe('World Explorer free roam', () => {
   it('a stale last world falls back to the first world in the video', async () => {
     const storage = makeStorage();
     const lantern = await libraryEntry(storage, 'lantern', 'Lantern Valley');
+    const documents = fakeDocuments({ library: [lantern] });
     const settings = makeSettings(new Map<string, unknown>([
-      ['worldLibrary:p1', [lantern]],
       ['lastWorld:p1', 'sha256:gone@sha256:gone'],
     ]));
-    const view = mount(makeHarness({ clips: [liveClip()], storage, settings }));
+    const view = mount(makeHarness({ clips: [liveClip()], storage, settings, documents }));
     await openReady(EXPLORE);
-    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Scene 1');
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Untitled world');
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('1 / 2');
   });
 
@@ -828,8 +835,8 @@ describe('World Explorer free roam', () => {
     const storage = makeStorage();
     const lantern = await libraryEntry(storage, 'lantern', 'Lantern Valley');
     const spare = await libraryEntry(storage, 'spare', 'Spare');
-    const settings = makeSettings(new Map<string, unknown>([['worldLibrary:p1', [lantern, spare]]]));
-    const view = mount(makeHarness({ clips: [], storage, settings }));
+    const documents = fakeDocuments({ library: [lantern, spare] });
+    const view = mount(makeHarness({ clips: [], storage, documents }));
     await openReady(EXPLORE);
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('1 / 2');
@@ -839,8 +846,8 @@ describe('World Explorer free roam', () => {
     const storage = makeStorage();
     const lantern = await libraryEntry(storage, 'lantern', 'Lantern Valley');
     const spare = await libraryEntry(storage, 'spare', 'Spare');
-    const settings = makeSettings(new Map<string, unknown>([['worldLibrary:p1', [lantern, spare]]]));
-    const harness = makeHarness({ clips: [liveClip()], storage, settings });
+    const documents = fakeDocuments({ library: [lantern, spare] });
+    const harness = makeHarness({ clips: [liveClip()], storage, documents });
     const view = mount(harness);
     await openReady(EXPLORE);
     const viewer = viewerOf(view);
@@ -860,15 +867,15 @@ describe('World Explorer free roam', () => {
     const storage = makeStorage();
     const lantern = await libraryEntry(storage, 'lantern', 'Lantern Valley');
     const spare = await libraryEntry(storage, 'spare', 'Spare');
-    const settings = makeSettings(new Map<string, unknown>([['worldLibrary:p1', [lantern, spare]]]));
-    const view = mount(makeHarness({ clips: [], storage, settings }));
+    const documents = fakeDocuments({ library: [lantern, spare] });
+    const view = mount(makeHarness({ clips: [], storage, documents }));
     await openReady(EXPLORE);
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
 
     fireEvent.click(view.getByRole('button', { name: 'Choose world' }));
     fireEvent.click(view.getByRole('button', { name: 'Remove Spare from library' }));
 
-    expect(settings.store.get('worldLibrary:p1')).toEqual([lantern]);
+    await waitFor(() => expect(storedWorlds(documents)).toEqual([lantern]));
     expect(view.queryByRole('button', { name: /^Spare/ })).toBeNull();
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
   });
@@ -1003,6 +1010,20 @@ describe('World Explorer free roam', () => {
 
     fireEvent.click(chip);
     expect(document.activeElement).toBe(viewer);
+  });
+
+  it('offers a pick-a-camera row in Explore that switches to Cameras, and hides it there', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const view = mount(harness);
+    await openReady(EXPLORE, { events: EVENTS, cameras: CAMERAS });
+
+    const pick = view.getByRole('button', { name: 'pick a camera →' });
+    expect(pick.parentElement).toHaveTextContent('To add this world to your video, pick a camera →');
+    fireEvent.click(pick);
+
+    expect(view.getByRole('button', { name: 'Cameras' })).toHaveAttribute('aria-pressed', 'true');
+    expect(view.getByRole('group', { name: 'Camera travel' })).toBeTruthy();
+    expect(view.queryByRole('button', { name: 'pick a camera →' })).toBeNull();
   });
 });
 
