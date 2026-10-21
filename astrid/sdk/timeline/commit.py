@@ -933,11 +933,26 @@ class RuntimeCommitService:
                         'raw_pin': pin,
                         'media_info': copy.deepcopy(raw_reader(pin)),
                     })
+                if ((call['op'] == 'clip.swap-media' and call['version'] == '2')
+                        or (call['op'] == 'occurrence.swap-media' and call['version'] == '3')):
+                    raw_reader = getattr(port, 'raw_media_info', None)
+                    if not callable(raw_reader):
+                        raise CommandError(
+                            'raw OLD media swap requires the optional raw media port',
+                            kind='dependency_unavailable',
+                        )
+                    pin = copy.deepcopy(call['args']['old_media'])
+                    verified_media.append({
+                        'raw_pin': pin,
+                        'media_info': copy.deepcopy(raw_reader(pin)),
+                    })
                 if call['op'] == 'text-binding.set' and 'text' in call['args']:
                     verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
                 if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
                                 'shot.pool'):
-                    for key in ('old_media', 'media'):
+                    raw_old = ((call['op'] == 'clip.swap-media' and call['version'] == '2')
+                               or (call['op'] == 'occurrence.swap-media' and call['version'] == '3'))
+                    for key in ('media',) if raw_old else ('old_media', 'media'):
                         if key in call['args']:
                             verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
             migration_inverse = False

@@ -32,11 +32,11 @@ def operations():
     from ._clip_scalar_commands import clip_set, clip_set_element
     from ._delete_commands import delete
     from ._move_set import move_set
-    from ._track_commands import track_reorder
     from ._project_data_commands import PROJECT_DATA_INTENT, project_data_write
     from ._scalar_commands import clip_set_params, track_set
     from ._shot_commands import SHOT_INTENT, shot_set
     from ._split_commands import clip_split
+    from ._track_commands import track_reorder
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
     from .native_initialize import initialize
@@ -131,14 +131,18 @@ def validate_command(command):
         raise CommandError(errors[0].message)
     from ._materialization import SOURCE_BOUND_OPERATIONS
 
-    if command['version'] != '1' and not (
-            command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS):
+    source_bound = command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS
+    raw_old_swap = ((command['op'], command['version']) in {
+        ('clip.swap-media', '2'), ('occurrence.swap-media', '3')})
+    if command['version'] != '1' and not (source_bound or raw_old_swap):
         raise CommandError("unsupported operation version", kind='unsupported_version')
     if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
-        errors = list(_VALIDATOR.evolve(schema=operation.parameters).iter_errors(command['args']))
+        parameters = (_SCHEMA['$defs']['RawOldSwapMediaArgs']
+                      if raw_old_swap else operation.parameters)
+        errors = list(_VALIDATOR.evolve(schema=parameters).iter_errors(command['args']))
         if errors:
             raise CommandError(errors[0].message)
     if command['op'] == 'track.create':
@@ -238,6 +242,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     history. Incoming recorder fields are checked claims; generated records are
     the authority. No persistence, mutable reads or renderer lives here.
     """
+    from ._materialization import SOURCE_BOUND_OPERATIONS
     from .inverse import apply_inverse
 
     if not commands:
@@ -258,7 +263,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
-        if command['version'] == '2':
+        if command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS:
             if '_source_closure' not in candidate['source_mapping']:
                 raise CommandError('source-bound v2 requires the verified original closure', kind='capture_mismatch')
             fields = {'resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'}
@@ -310,7 +315,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         from ._materialization import capture, verify_sources
         # Complete public S2 v1 captures retain their original record format.
         # Inverses carry original facts from authenticated accepted history.
-        if command['version'] == '2' or command['op'] == 'timeline.inverse':
+        if (command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS
+                or command['op'] == 'timeline.inverse'):
             capture(ctx, inverse_records if command['op'] == 'timeline.inverse' else materializations)
         verify_sources(ctx.state, [ctx.record])
         record = ctx.finish(capture=True)

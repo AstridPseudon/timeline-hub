@@ -9,6 +9,7 @@ from ._materialization import capture_version
 from ._media_inputs import _verified
 from ._recording import active
 from .capture import MAP_FIELDS, RELATIONS, number, occurrence_start, rate
+from .native_parent_reference_commands import _raw_verified, _validate_pin
 
 MEDIA_INTENT = {'ownership': 'occurrence'}
 
@@ -63,7 +64,7 @@ def _binding(pin, kind):
             'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
 
 
-def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
+def _registry(ctx, owner, pin, kind, *, create=False, alias=None, raw=False):
     identity = pin['asset'] if alias is None else alias
     if not isinstance(identity, str) or not re.fullmatch(r'(?!.*::)[^/]+', identity):
         raise CommandError('media requires a reserved raw asset alias')
@@ -84,18 +85,20 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     if not isinstance(registry, dict) or not isinstance(registry.get('assets'), dict):
         raise CommandError('media edit requires an authored asset registry')
     ref = owner + '/asset:' + identity
-    expected = _binding(pin, kind)
+    expected = copy.deepcopy(pin) if raw else _binding(pin, kind)
     entry = ctx.read(ref)
     if ctx.state.get(ref, []) == ABSENT and create:
         ctx.create_asset(owner, identity, expected)
     elif create:
         if not equal(entry, expected):
             raise CommandError('existing registry binding differs from exact selection', kind='dependency_changed')
-    elif (not isinstance(entry, dict) or entry.get('media_id') != pin['object_id']
+    elif raw and (not isinstance(entry, dict) or not equal(entry, expected)):
+        raise CommandError('old registry binding differs from raw media manifest', kind='dependency_changed')
+    elif (not raw and (not isinstance(entry, dict) or entry.get('media_id') != pin['object_id']
           or entry.get('type') != kind
-          or any(key in entry and entry[key] != value for key, value in expected.items())):
+          or any(key in entry and entry[key] != value for key, value in expected.items()))):
         raise CommandError('old registry binding differs from selection', kind='dependency_changed')
-    if not create and any(key in entry for key in ('object_id', 'digest', 'content_digest', 'content_sha256',
+    if not raw and not create and any(key in entry for key in ('object_id', 'digest', 'content_digest', 'content_sha256',
                                                   'file', 'path', 'local_path', 'src', 'source', 'format')):
         raise CommandError('unsupported old registry identity codec', kind='unsupported_media')
     ctx.dependency('media.new' if create else 'media.old', 'media', pin)
@@ -190,12 +193,22 @@ def _swap(ctx, command, owner, limit):
     if not isinstance(row, dict):
         raise CommandError('missing raw child identity', kind='identity_conflict')
     old, pin = command['args']['old_media'], command['args']['media']
-    previous, old_kind = _verified(ctx, old)
+    raw_old = ((command['op'] == 'clip.swap-media' and command['version'] == '2')
+               or (command['op'] == 'occurrence.swap-media' and command['version'] == '3'))
+    if raw_old:
+        _validate_pin(old)
+    previous = _raw_verified(ctx, old) if raw_old else None
+    old_kind = (previous['media_type'].split('/', 1)[0] if raw_old else None)
     value, kind = _verified(ctx, pin)
+    if raw_old and old_kind not in ('image', 'video', 'audio'):
+        raise CommandError('raw media swap requires a supported media kind', kind='unsupported_media')
+    if not raw_old:
+        previous, old_kind = _verified(ctx, old)
     if old_kind != kind:
         raise CommandError('media swap preserves media kind', kind='unsupported_media')
-    _clip(ctx, owner, row, limit, kind, [previous, value], raw_window=owner == 'parent')
-    _registry(ctx, owner, old, kind, alias=row['asset'])
+    _clip(ctx, owner, row, limit, kind, [value] if raw_old else [previous, value],
+          raw_window=owner == 'parent')
+    _registry(ctx, owner, old, kind, alias=row['asset'], raw=raw_old)
     _registry(ctx, owner, pin, kind, create=True)
     ctx.bind('media.target', ref, dependencies=['media.old', 'media.new'])
     ctx.write(ref, ['asset'], pin['asset'])
@@ -214,7 +227,9 @@ def capture_occurrence_add_media(bundle, owner, row, media, *, verified_media, c
 def capture_occurrence_swap_media(bundle, select, old_media, media, *, verified_media):
     """Select an unprojected child; display occurrence:clip IDs are not raw IDs."""
     from .commands import execute
-    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.swap-media', 'version': capture_version(bundle, select),
+    version = ('3' if isinstance(old_media, dict) and set(old_media) == {'media_id', 'content_digest'}
+               else capture_version(bundle, select))
+    return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.swap-media', 'version': version,
                              'select': select, 'args': {'old_media': copy.deepcopy(old_media),
                                                        'media': copy.deepcopy(media)},
                              'intent': MEDIA_INTENT}], verified_media=verified_media).commands[0]
@@ -223,7 +238,8 @@ def capture_occurrence_swap_media(bundle, select, old_media, media, *, verified_
 def capture_parent_swap_media(bundle, select, old_media, media, *, verified_media):
     """Change only a raw parent clip's asset; clearing remains clip.set."""
     from .commands import execute
-    return execute(bundle, [{'schema_version': 1, 'op': 'clip.swap-media', 'version': '1',
+    version = ('2' if isinstance(old_media, dict) and set(old_media) == {'media_id', 'content_digest'} else '1')
+    return execute(bundle, [{'schema_version': 1, 'op': 'clip.swap-media', 'version': version,
                              'select': select, 'args': {'old_media': copy.deepcopy(old_media),
                                                        'media': copy.deepcopy(media)},
                              'intent': {'ownership': 'parent'}}], verified_media=verified_media).commands[0]

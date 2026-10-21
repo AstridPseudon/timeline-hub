@@ -1580,6 +1580,29 @@
                     "additionalProperties": false
                   }
                 }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "3"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/RawOldSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "occurrence"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
             ]
           }
@@ -2254,27 +2277,54 @@
             ]
           },
           "then": {
-            "properties": {
-              "version": {
-                "const": "1"
-              },
-              "select": {
-                "type": "string",
-                "pattern": "^parent/clip:(?!.*::)[^/]+$"
-              },
-              "args": {
-                "$ref": "#/$defs/OccurrenceSwapMediaArgs"
-              },
-              "intent": {
-                "type": "object",
+            "anyOf": [
+              {
                 "properties": {
-                  "ownership": {
-                    "const": "parent"
+                  "version": {
+                    "const": "1"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^parent/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/OccurrenceSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "parent"
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                }
+              },
+              {
+                "properties": {
+                  "version": {
+                    "const": "2"
+                  },
+                  "select": {
+                    "type": "string",
+                    "pattern": "^parent/clip:(?!.*::)[^/]+$"
+                  },
+                  "args": {
+                    "$ref": "#/$defs/RawOldSwapMediaArgs"
+                  },
+                  "intent": {
+                    "type": "object",
+                    "properties": {
+                      "ownership": {
+                        "const": "parent"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
               }
-            }
+            ]
           }
         },
         {
@@ -2593,6 +2643,40 @@
         }
       },
       "additionalProperties": false
+    },
+    "MediaManifestEntry": {
+      "type": "object",
+      "required": [
+        "media_id",
+        "content_digest"
+      ],
+      "properties": {
+        "media_id": {
+          "$ref": "#/$defs/Digest"
+        },
+        "content_digest": {
+          "$ref": "#/$defs/Digest"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Existing two-field raw media manifest entry; it carries no managed-generation or intrinsic metadata authority."
+    },
+    "RawOldSwapMediaArgs": {
+      "type": "object",
+      "required": [
+        "old_media",
+        "media"
+      ],
+      "properties": {
+        "old_media": {
+          "$ref": "#/$defs/MediaManifestEntry"
+        },
+        "media": {
+          "$ref": "#/$defs/MediaSelection"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Closed raw OLD alternative for the private swap successor; NEW remains the exact selected-media envelope."
     },
     "PlacementCreateArgs": {
       "type": "object",
