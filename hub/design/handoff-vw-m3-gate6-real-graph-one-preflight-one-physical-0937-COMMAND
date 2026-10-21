@@ -1,0 +1,9 @@
+Read the settled plan and the 09:34 FINAL report/manifest.
+Do not request central preflight or physical execution unless readiness is READY.
+The 09:34 result is HELD: no private destination graph; final free space
+10926952448 < required 11876144076 by 949191628 bytes.
+Exact packet, if later authorized after fresh readiness, is:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-gate6-pinned0d43-preflight-and-one-actual-0923/packet/run.sh
+Run --preflight first, then the same command without a flag; this worker ran
+neither. No retry, alternate, install, copy, link, marker, grant, browser,
+helper, Runtime, socket, render, full suite, or physical phase was started.

@@ -10,6 +10,8 @@ Worker report: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e6143
 - Base source: `4db86a76acd505dd1c7dc798695e2b7a9c932170`, tree `461fa0cddd67f4eb574563b38407733bd50afa7c`
 - Current producer blob: `df6bf5740412f92b6f00e2f81841fb3236c799c2`
 - Current direct-test blob: `ca5238598ccde30b5a786fc9124e40949ac69a5a`
+- Current producer SHA-256: `3cb8f65809bf45560dbea2971783b7b4047bc0978d43c6605f4b8a1c2e5f3a02`
+- Current direct-test SHA-256: `b13cbab8a5f2c75ffaa2b696f71e96d0b2b98e5cf791fa8a10473e98f89c6806`
 - Current-only `git diff --binary` SHA-256: `426efc6110a4b9fca75c703f1b6fc989bfd2e914822d389ffb890b0ddc92ad9f`
 - Exact patch source is the uncommitted diff in the worktree above; no unrelated
   files are included. Harness commit/tree is intentionally unavailable until

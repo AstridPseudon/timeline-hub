@@ -1,0 +1,13 @@
+Read PLAN and Agent guidance; inspect current am-presenter motion/scene,
+direct pure-scene tests, Composition diagnostics declarations, and retained
+0937/32349 evidence. No source edit or test patch was applied because the
+compatibility carrier is not available within the granted scope.
+
+Read-only commands used:
+
+    git status --short --untracked-files=all
+    git diff --check
+    git show --stat --oneline 56723187f
+    sed -n '28,68p' astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts
+    sed -n '1,45p' astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts
+    sed -n '15,35p' /home/user/work/app/node_modules/@banodoco/timeline-composition/dist/scene-capabilities.d.ts

@@ -1,0 +1,337 @@
+diff --git a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx
+index d90477a92..ca5238598 100644
+--- a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx
+@@ -15,6 +15,9 @@ const boundary = vi.hoisted(() => ({
+   props: null as any,
+   applied: [] as ResolvedTimelineConfig[],
+   events: [] as Array<{ frame: number; fps: number; config: string }>,
++  order: [] as string[],
++  frameSchedulers: [] as Array<() => void>,
++  commitFrame: null as ((frame: number) => void) | null,
+   listeners: new Map<string, Set<(event: any) => void>>(),
+ }));
+ vi.mock('@remotion/player', async () => {
+@@ -23,19 +26,32 @@ vi.mock('@remotion/player', async () => {
+     Player: React.forwardRef(function Player(props: any, ref: any) {
+       boundary.props = props;
+       boundary.applied.push(props.inputProps.config);
++      const [frame, setFrame] = React.useState(props.initialFrame);
++      const frameRef = React.useRef(frame);
++      frameRef.current = frame;
++      const hasCommittedFrame = React.useRef(false);
++      React.useEffect(() => {
++        if (!hasCommittedFrame.current) {
++          hasCommittedFrame.current = true;
++          return;
++        }
++        boundary.order.push(`frameupdate:${frame}`);
++        for (const listener of boundary.listeners.get('frameupdate') ?? []) listener({ detail: { frame } });
++      }, [frame]);
++      boundary.commitFrame = setFrame;
+       const handle = React.useRef<any>(null);
+       if (!handle.current) {
+-        let frame = props.initialFrame;
+         let playing = false;
+         const emit = (name: string) => {
+           for (const listener of boundary.listeners.get(name) ?? []) listener({});
+         };
+         handle.current = {
+           seekTo: vi.fn((next: number) => {
+-            frame = next;
+-            boundary.events.push({ frame, fps: boundary.props.fps, config: boundary.props.inputProps.config.output.file });
++            boundary.order.push(`seek:${next}`);
++            boundary.frameSchedulers.push(() => setFrame(next));
++            boundary.events.push({ frame: next, fps: boundary.props.fps, config: boundary.props.inputProps.config.output.file });
+           }),
+-          getCurrentFrame: vi.fn(() => frame),
++          getCurrentFrame: vi.fn(() => frameRef.current),
+           isPlaying: vi.fn(() => playing),
+           play: vi.fn(() => { playing = true; emit('play'); }),
+           pause: vi.fn(() => { playing = false; emit('pause'); }),
+@@ -97,6 +113,7 @@ function preview(initial: ResolvedTimelineConfig, initialRevision?: PreviewRevis
+   return {
+     ref,
+     view,
++    onTimeUpdate,
+     replace: (c: ResolvedTimelineConfig, revision?: PreviewRevision) => view.rerender(draw(c, revision)),
+   };
+ }
+@@ -106,6 +123,9 @@ beforeEach(() => {
+   boundary.props = null;
+   boundary.applied = [];
+   boundary.events = [];
++  boundary.order = [];
++  boundary.frameSchedulers = [];
++  boundary.commitFrame = null;
+   boundary.listeners.clear();
+   raf = new Map();
+   nextRaf = 0;
+@@ -114,6 +134,12 @@ beforeEach(() => {
+ });
+ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); });
+ 
++function commitScheduledFrame() {
++  const commit = boundary.frameSchedulers.shift();
++  expect(commit, 'Player frame scheduler has a pending frame').toBeDefined();
++  act(() => commit?.());
++}
++
+ it('H3 newest C beats queued playing B on explicit pause and subsequent one-second seek', () => {
+   const a = config('h3-a', 30), b = config('h3-b', 60), c = config('h3-c', 90);
+   const h = preview(a);
+@@ -136,6 +162,98 @@ it('H3 newest C beats queued playing B on explicit pause and subsequent one-seco
+   expect.soft(vi.getTimerCount()).toBe(0);
+ });
+ 
++it('marks only the surviving queued seek complete after the real Player frame effects', () => {
++  const fps = 30000 / 1001;
++  const h = preview(config('queued-order', fps));
++  settle();
++
++  act(() => {
++    h.ref.current!.seek(0.5);
++    h.ref.current!.seek(1);
++  });
++
++  expect(boundary.order).toEqual(['seek:15']);
++  expect(h.onTimeUpdate).not.toHaveBeenCalled();
++
++  // The Player's React frame effect for A can run before the preview mailbox
++  // RAF dispatches B. Its feedback remains ordinary because B is pending.
++  commitScheduledFrame();
++  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15']);
++  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / fps);
++
++  flushFrame();
++  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:30']);
++  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / fps);
++
++  // B's frame effect is the completion point. The callback retains the
++  // existing frame/fps feedback value and adds only the completion bit.
++  commitScheduledFrame();
++  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:30', 'frameupdate:30']);
++  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(30 / fps, true);
++
++  act(() => boundary.commitFrame?.(45));
++  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(45 / fps);
++});
++
++it('completes a same-frame seek without waiting for a Player frame effect', () => {
++  const h = preview(config('same-frame'));
++  settle();
++
++  act(() => h.ref.current!.seek(0));
++
++  expect(boundary.events).toHaveLength(1);
++  expect(boundary.frameSchedulers).toHaveLength(1);
++  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(0, true);
++  expect(boundary.order).toEqual(['seek:0']);
++});
++
++it('coalesces queued seeks and completes only the surviving target', () => {
++  const h = preview(config('coalesced-completion'));
++  settle();
++
++  act(() => {
++    h.ref.current!.seek(0.5);
++    h.ref.current!.seek(1);
++    h.ref.current!.seek(1.5);
++  });
++  commitScheduledFrame();
++  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / 30);
++
++  flushFrame();
++  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:45']);
++  commitScheduledFrame();
++  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(45 / 30, true);
++  expect(boundary.events.map((event) => event.frame)).toEqual([15, 45]);
++});
++
++it('keeps a config-deferred seek held until the matching Player delivery', () => {
++  const h = preview(config('deferred-a'));
++  settle();
++  h.replace(config('deferred-b', 60));
++
++  act(() => h.ref.current!.seek(1));
++  advance(149);
++  expect(boundary.events).toHaveLength(0);
++  expect(h.onTimeUpdate).not.toHaveBeenCalled();
++
++  advance(1);
++  expect(boundary.events.map((event) => event.frame)).toEqual([60]);
++  expect(h.onTimeUpdate).not.toHaveBeenCalled();
++  commitScheduledFrame();
++  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(60 / 60, true);
++});
++
++it('cancels outstanding completion state on unmount', () => {
++  const h = preview(config('unmount-completion'));
++  settle();
++  act(() => h.ref.current!.seek(0.5));
++
++  h.view.unmount();
++
++  expect(raf.size).toBe(0);
++  expect(h.onTimeUpdate).not.toHaveBeenCalled();
++});
++
+ it('flushes pending B immediately when pausing without a newer config', () => {
+   const a = config('pending-a'), b = config('pending-b', 60);
+   const h = preview(a);
+diff --git a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+index 557003fca..df6bf5740 100644
+--- a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+@@ -106,7 +106,9 @@ interface PendingSeek {
+ interface RemotionPreviewProps {
+   compiledTransitions?: CompiledCanonicalTransitions;
+   config: ResolvedTimelineConfig;
+-  onTimeUpdate: (time: number) => void;
++  // True only after the latest mailbox seek's frame feedback is consumed,
++  // or that request completes without a frame change. RAF dispatch is not completion.
++  onTimeUpdate: (time: number, seekComplete?: boolean) => void;
+   playerContainerRef: RefObject<HTMLDivElement>;
+   compact?: boolean;
+   /** Phone/tablet chrome: transport controls grow to touch-sized hit targets. */
+@@ -138,12 +140,18 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+   const activeSeekFrameRef = useRef<number | null>(null);
+   const pendingSeekRef = useRef<PendingSeek | null>(null);
+   const seekFlushRafRef = useRef<number | null>(null);
++  const onTimeUpdateRef = useRef(onTimeUpdate);
++  onTimeUpdateRef.current = onTimeUpdate;
+   const appliedConfigGenerationRef = useRef(0);
+   const configIdentityRef = useRef({ config, compiledTransitions });
+   const configGenerationRef = useRef(0);
+   if (configIdentityRef.current.config !== config || configIdentityRef.current.compiledTransitions !== compiledTransitions) {
+     configIdentityRef.current = { config, compiledTransitions };
+     configGenerationRef.current += 1;
++    // A config replacement invalidates a seek against the old delivered
++    // composition. A replacement seek will be held in the existing mailbox
++    // until this generation reaches the Player.
++    activeSeekFrameRef.current = null;
+   }
+   useRenderDiagnostic('RemotionPreview');
+   const markEventsEffect = useEffectDiagnostic('remotionPreview:events');
+@@ -300,7 +308,17 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+     }
+ 
+     const onFrameUpdate = (event: { detail: { frame: number } }) => {
+-      onTimeUpdate(event.detail.frame / metadata.fps);
++      const frame = event.detail.frame;
++      const seekComplete = activeSeekFrameRef.current === frame && pendingSeekRef.current === null;
++      if (seekComplete) {
++        activeSeekFrameRef.current = null;
++      }
++      const time = frame / metadata.fps;
++      if (seekComplete) {
++        onTimeUpdateRef.current(time, true);
++      } else {
++        onTimeUpdateRef.current(time);
++      }
+     };
+     const onPlay = () => setIsPlaying(true);
+     const onPause = () => setIsPlaying(false);
+@@ -321,22 +339,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+     // command window keeps one active command plus one replaceable latest
+     // target; it does not attempt to predict browser decode completion.
+     const configGeneration = configGenerationRef.current;
+-    // A prop update is debounced before it reaches Remotion. Keep imperative
+-    // seeks queued until the Player is rendering that same config generation;
+-    // otherwise a seek expressed in the new fps/extent is sent to stale media.
+-    if (configGeneration !== appliedConfigGenerationRef.current) {
+-      pendingSeekRef.current = { frame: targetFrame, configGeneration };
+-      return;
+-    }
+-    if (activeSeekFrameRef.current !== null) {
+-      if (activeSeekFrameRef.current === targetFrame) {
+-        pendingSeekRef.current = null;
+-      } else {
+-        pendingSeekRef.current = { frame: targetFrame, configGeneration };
+-      }
+-      return;
+-    }
+-
+     const dispatchSeek = ({ frame: requestedFrame, configGeneration: requestedGeneration }: PendingSeek) => {
+       if (requestedGeneration !== configGenerationRef.current) {
+         return;
+@@ -354,6 +356,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+       const frame = Math.min(Math.max(0, requestedFrame), Math.max(0, currentMetadata.durationInFrames - 1));
+       activeSeekFrameRef.current = frame;
+       const lastFrame = currentMetadata.durationInFrames - 1;
++      const frameBeforeSeek = player.getCurrentFrame();
+       const wasPlaying = player.isPlaying() && playbackIntentRef.current !== 'paused';
+       if (wasPlaying) {
+         player.pause();
+@@ -363,10 +366,17 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+         player.play();
+       }
+ 
++      // Remotion may keep the same frame state for a same-frame or clamped
++      // seek, so no frameupdate effect is guaranteed. Complete that request
++      // explicitly while preserving the ordinary frame-time value.
++      if (activeSeekFrameRef.current === frame && frameBeforeSeek === frame) {
++        activeSeekFrameRef.current = null;
++        onTimeUpdateRef.current(frame / currentMetadata.fps, true);
++      }
++
+       if (seekFlushRafRef.current === null) {
+         seekFlushRafRef.current = requestAnimationFrame(() => {
+           seekFlushRafRef.current = null;
+-          activeSeekFrameRef.current = null;
+           const pendingSeek = pendingSeekRef.current;
+           pendingSeekRef.current = null;
+           if (pendingSeek !== null) {
+@@ -375,6 +385,31 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+         });
+       }
+     };
++    // A prop update is debounced before it reaches Remotion. Keep imperative
++    // seeks queued until the Player is rendering that same config generation;
++    // otherwise a seek expressed in the new fps/extent is sent to stale media.
++    if (configGeneration !== appliedConfigGenerationRef.current) {
++      pendingSeekRef.current = { frame: targetFrame, configGeneration };
++      return;
++    }
++    if (activeSeekFrameRef.current !== null) {
++      if (activeSeekFrameRef.current === targetFrame) {
++        pendingSeekRef.current = null;
++      } else {
++        pendingSeekRef.current = { frame: targetFrame, configGeneration };
++      }
++      if (seekFlushRafRef.current === null) {
++        seekFlushRafRef.current = requestAnimationFrame(() => {
++          seekFlushRafRef.current = null;
++          const pendingSeek = pendingSeekRef.current;
++          pendingSeekRef.current = null;
++          if (pendingSeek !== null) {
++            dispatchSeek(pendingSeek);
++          }
++        });
++      }
++      return;
++    }
+ 
+     dispatchSeek({ frame: targetFrame, configGeneration });
+   }, []);
+@@ -382,8 +417,10 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+   useEffect(() => {
+     appliedConfigGenerationRef.current = delivery.generation;
+     const pendingSeek = pendingSeekRef.current;
+-    if (pendingSeek?.configGeneration === appliedConfigGenerationRef.current) {
++    if (pendingSeek !== null) {
+       pendingSeekRef.current = null;
++    }
++    if (pendingSeek?.configGeneration === appliedConfigGenerationRef.current) {
+       const frame = pendingSeek.time === undefined
+         ? pendingSeek.frame
+         : Math.max(0, Math.round(pendingSeek.time * metadataRef.current.fps));
+@@ -437,6 +474,8 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
+       cancelAnimationFrame(seekFlushRafRef.current);
+       seekFlushRafRef.current = null;
+     }
++    activeSeekFrameRef.current = null;
++    pendingSeekRef.current = null;
+   }, []);
+ 
+   useEffect(() => {

@@ -1,0 +1,28 @@
+# Flat handoff SHA-256/file list; all paths are absolute.
+# Report copies are byte-identical to their worker sources.
+9572f3fff9c794dc8de60065304094401853b43082a5e464fe293bf9db3a4f73  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-queued-seek-producer-independent-review-0937/REPORT.md
+9572f3fff9c794dc8de60065304094401853b43082a5e464fe293bf9db3a4f73  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-queued-seek-producer-independent-review-0937-REPORT.md
+3df521b524a202d51e5c848b769f5fea9f318d5f1b43b3d67444c100d6acbd5d  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-partial697-normal-attachment-one-proof-0937/REPORT.md
+3df521b524a202d51e5c848b769f5fea9f318d5f1b43b3d67444c100d6acbd5d  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-partial697-normal-attachment-one-proof-0937-REPORT.md
+
+# Theme fixture source identity and bounded current-only patch.
+# recorded base: tl/integration
+base_commit c4b964f6a050edf63a4278d35717e46a88a80386
+base_tree d7796be264c341adbcb9765aae374b832dede144
+branch_commit 2ff901ebe16666bbd4c1667da40c8f859b01acd7
+branch_tree 610096b9b685af9d8539fc0af070e0cdbdc5aa03
+base_file_blob b0bd25092a608f16fae7d7f2fdf698334f037a70
+branch_file_blob d2a996a2541a24ae206b44f65d6434af535ff1c2
+branch_file_sha256 39c4260d2868df9781b1a543fb5d8c1a1721264e37e1ee8fab820ee5a6c6772f
+patch_path_set M tests/integrations/test_generic_host_remotion_render.py
+3645be3532cba93997b83c01d26e3fd5b2ee88cd58b3d7f379b8aaa7d9f44d5d  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-normal-theme-qualified-fixture-home-port-0924-PATCH.patch
+bcd5b3127049644e0d50c97368ff58c78771a04d88846d9f83d5bca15781fde2  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-normal-theme-qualified-fixture-home-port-0924-REPORT.md
+
+# Partial697 retained manifest and six already-retained result files; no media copy.
+c05a4891a55f7d55aed62bf8db26dd0557ebf239a029c3ef482e6a4d7fc13027  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-partial697-retained-one-physical-0923-result/results/sha256sums.txt
+fa68d076a79c9c553fc79fc83128c55da7ed542aed47640f6e571598b2e3b2f6  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-partial697-retained-one-physical-0923-result/results/frame-0.png
+ddea7b2cb0e89d3cca6df0bd7b70e160338122d5a72d4ad12bed1ebf14e08886  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-partial697-retained-one-physical-0923-result/results/frame-3.png
+fa68d076a79c9c553fc79fc83128c55da7ed542aed47640f6e571598b2e3b2f6  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-partial697-retained-one-physical-0923-result/results/frame-4.png
+79ef9e2d8d7c5456f463bd32e9432c0f9a47a60ccbc7601638f63822f1b425e7  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-partial697-retained-one-physical-0923-result/results/frame-5.png
+ea3f33f31542264526fa211e9b45efe7229639c3f1f712536fb4ac961e72454c  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-partial697-retained-one-physical-0923-result/results/inspection.json
+02643d6ce5130875bed9e022f99fd2697864cd6a111a526d7edc0820a893a3a4  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-partial697-retained-one-physical-0923-result/results/partial-comparisons.json
