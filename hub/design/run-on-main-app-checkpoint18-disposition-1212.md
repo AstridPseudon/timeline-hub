@@ -1,0 +1,3 @@
+# App queued proof disposition under owner12:01
+
+All existing run-on-main-app automatic, public Trim, original split and distinct prompt packets are RETAINED for the18:00Z checkpoint/test farm. They are not prerequisites for interim source merges or qualified bounded writer deletions. Do not start a new per-change browser run from these packets in the interim. Earlier refusal/failure evidence and exact source tuples stay unchanged. Main may finish a body already running, but do not launch duplicate work. HOME local Trim/split actual allocation is likewise held for checkpoint; nonbrowser planted propagation30391 remains valid intentionalFAIL7 evidence. Required targeted tests and proportionate independent reviews continue.
