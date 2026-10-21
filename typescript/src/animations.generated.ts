@@ -7,6 +7,7 @@ import Component3 from './builtins/animations/slide-left/component';
 import Component4 from './builtins/animations/slide-up/component';
 import Component5 from './builtins/animations/type-on/component';
 
+import {ANIMATION_DEFAULTS as GENERATED_ANIMATION_DEFAULTS, ANIMATION_META as GENERATED_ANIMATION_META} from './animation-metadata.generated';
 export const ACTIVE_THEME_ID = null;
 export const ANIMATION_IDS = ["fade","fade-up","scale-in","slide-left","slide-up","type-on"] as const;
 export type AnimationId = typeof ANIMATION_IDS[number];
@@ -18,85 +19,5 @@ export const ANIMATION_REGISTRY: Readonly<Record<string, AnimationComponent>> = 
   'slide-up': Component4,
   'type-on': Component5,
 };
-export const ANIMATION_DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
-  "fade": {
-    "durationFrames": 12,
-    "phase": "exit"
-  },
-  "fade-up": {
-    "durationFrames": 18,
-    "phase": "entrance"
-  },
-  "scale-in": {
-    "durationFrames": 18,
-    "phase": "entrance"
-  },
-  "slide-left": {
-    "durationFrames": 18,
-    "phase": "entrance"
-  },
-  "slide-up": {
-    "durationFrames": 12,
-    "phase": "exit"
-  },
-  "type-on": {
-    "durationFrames": 120,
-    "durationFraction": 0.55,
-    "startFrame": 18,
-    "showCaret": true,
-    "phase": "entrance"
-  }
-};
-export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = {
-  "fade": {
-    "id": "fade",
-    "name": "Fade",
-    "kind": "wrapper",
-    "phase": [
-      "entrance",
-      "exit"
-    ],
-    "defaultDurationFrames": 12,
-    "supportsEasing": true
-  },
-  "fade-up": {
-    "id": "fade-up",
-    "name": "Fade Up",
-    "kind": "wrapper",
-    "phase": "entrance",
-    "defaultDurationFrames": 18,
-    "supportsEasing": true
-  },
-  "scale-in": {
-    "id": "scale-in",
-    "name": "Scale In",
-    "kind": "wrapper",
-    "phase": "entrance",
-    "defaultDurationFrames": 18,
-    "supportsEasing": true
-  },
-  "slide-left": {
-    "id": "slide-left",
-    "name": "Slide Left",
-    "kind": "wrapper",
-    "phase": "entrance",
-    "defaultDurationFrames": 18,
-    "supportsEasing": true
-  },
-  "slide-up": {
-    "id": "slide-up",
-    "name": "Slide Up",
-    "kind": "wrapper",
-    "phase": "exit",
-    "defaultDurationFrames": 12,
-    "supportsEasing": true
-  },
-  "type-on": {
-    "id": "type-on",
-    "name": "Type On",
-    "kind": "hook",
-    "phase": "entrance",
-    "defaultDurationFrames": 120,
-    "supportsEasing": true
-  }
-};
+export const ANIMATION_DEFAULTS = GENERATED_ANIMATION_DEFAULTS;
+export const ANIMATION_META = GENERATED_ANIMATION_META;

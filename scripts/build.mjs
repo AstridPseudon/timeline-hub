@@ -1,10 +1,9 @@
-import {rmSync, readdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {readdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {build} from 'esbuild';
 
-rmSync('dist', {recursive: true, force: true});
-execFileSync(process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'typescript/tsconfig.json'], {stdio: 'inherit'});
+execFileSync(process.execPath, ['scripts/build-typescript.mjs'], {stdio: 'inherit'});
 // NodeNext consumers need explicit ESM extensions in declarations as well.
 const fixDeclarations = directory => {
   for (const entry of readdirSync(directory, {withFileTypes: true})) {

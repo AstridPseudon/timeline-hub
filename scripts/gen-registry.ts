@@ -23,14 +23,25 @@ for (const category of ['effects', 'animations', 'transitions'] as const) {
   const imports = ids.map((id, index) => `import Component${index} from './builtins/${category}/${id}/component';`).join('\n');
   const metadata = Object.fromEntries(ids.map(id => [id, json(`builtins/${category}/${id}/meta.json`)]));
   const defaults = Object.fromEntries(ids.map(id => [id, json(`builtins/${category}/${id}/defaults.json`)]));
+  if (category === 'animations') {
+    outputs['animation-metadata.generated.ts'] = header
+      + `import type {AnimationMeta} from './effects-types';\n`
+      + `export const ANIMATION_DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = ${JSON.stringify(defaults, null, 2)};\n`
+      + `export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = ${JSON.stringify(metadata, null, 2)};\n`;
+  }
   outputs[`${category}.generated.ts`] = header
     + `import type {${baseContract}${category === 'animations' ? ', AnimationMeta' : ''}} from './effects-types';\n${imports}\n\n`
+    + (category === 'animations'
+      ? `import {ANIMATION_DEFAULTS as GENERATED_ANIMATION_DEFAULTS, ANIMATION_META as GENERATED_ANIMATION_META} from './animation-metadata.generated';\n`
+      : '')
     + `export const ACTIVE_THEME_ID = null;\nexport const ${upper}_IDS = ${JSON.stringify(ids)} as const;\n`
     + `export type ${baseContract.replace('Component', '')}Id = typeof ${upper}_IDS[number];\n`
     + `export const ${upper}_REGISTRY: Readonly<Record<string, ${contract}>> = {\n`
     + ids.map((id, index) => `  '${id}': Component${index},`).join('\n') + '\n};\n'
-    + `export const ${upper}_DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = ${JSON.stringify(defaults, null, 2)};\n`
-    + `export const ${upper}_META: Readonly<Record<string, ${category === 'animations' ? 'AnimationMeta' : 'Record<string, unknown>'}>> = ${JSON.stringify(metadata, null, 2)};\n`
+    + (category === 'animations'
+      ? `export const ANIMATION_DEFAULTS = GENERATED_ANIMATION_DEFAULTS;\nexport const ANIMATION_META = GENERATED_ANIMATION_META;\n`
+      : `export const ${upper}_DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = ${JSON.stringify(defaults, null, 2)};\n`
+        + `export const ${upper}_META: Readonly<Record<string, Record<string, unknown>>> = ${JSON.stringify(metadata, null, 2)};\n`)
     + (category === 'effects' ? `export const CLIP_TYPE_ALIASES: Readonly<Record<string, string>> = ${JSON.stringify(inputs.clipTypeAliases, null, 2)};\n` : '');
 }
 const themes = inputs.themes.flatMap(theme => theme.effects.map(id => ({...theme, clipType: id})));

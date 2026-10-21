@@ -12,4 +12,5 @@ test:
 	npm test
 
 clean:
-	rm -rf typescript/dist node_modules
+	rm -rf dist typescript/dist typescript/test-dist node_modules
+	rm -f typescript/src/lib/remotion-primitives.generated.js
