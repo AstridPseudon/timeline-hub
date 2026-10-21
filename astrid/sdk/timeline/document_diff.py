@@ -24,6 +24,13 @@ class DocumentDiffError(ValueError):
     """The detached document contains an edit outside the native view slice."""
 
 
+MISSING = object()
+
+
+def _field(row, key):
+    return row[key] if key in row else MISSING
+
+
 def _rows(value, key, path):
     if isinstance(value, Mapping):
         value = list(value.values())
@@ -51,7 +58,8 @@ def _require_explicit_rows(candidate_rows, result_rows, message):
     if list(candidate_map) != list(result_map):
         raise DocumentDiffError(message + " changed row membership/order")
     for identity, row in candidate_map.items():
-        if any(not equal(result_map[identity].get(field), value) for field, value in row.items()):
+        if any(not equal(_field(result_map[identity], field), value)
+               for field, value in row.items()):
             raise DocumentDiffError(f"{message} differs at row {identity!r}")
 
 
@@ -76,7 +84,8 @@ def _capture(factory, ref, *args, **kwargs):
 
 
 def _changed_keys(before, after):
-    return {key for key in set(before) | set(after) if not equal(before.get(key), after.get(key))}
+    return {key for key in set(before) | set(after)
+            if not equal(_field(before, key), _field(after, key))}
 
 
 def _asset_rows(timeline):
@@ -202,7 +211,7 @@ def _emit_clip_commands(working, owner, before, after):
         emit(_capture(capture_clip_trim, ref, working, ref,
                       in_s=after.get("from"), out_s=after.get("to")))
 
-    if not equal(before.get("hold"), after.get("hold")):
+    if not equal(_field(before, "hold"), _field(after, "hold")):
         if "hold" in after:
             emit(_capture(capture_clip_set, ref, working, ref,
                           values={"hold": after["hold"]}, clear=[]))
@@ -412,9 +421,12 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
         working, emitted = _emit_clip_commands(working, "parent", before, parent_clips[clip_id])
         commands.extend(emitted)
     for key in set(parent.get("config", {})) | set(base_parent.get("config", {})):
-        if key != "clips":
+        if key not in {"clips", "tracks"}:
             _require_same(parent.get("config", {}).get(key), base_parent.get("config", {}).get(key),
                           f"parent.config field {key!r} is held by the document view")
+    _require_explicit_rows(parent.get("config", {}).get("tracks", []),
+                           working.get("parent", {}).get("config", {}).get("tracks", []),
+                           "parent.config.tracks differs from the native command result")
     _require_explicit_rows(parent.get("config", {}).get("clips", []),
                            working.get("parent", {}).get("config", {}).get("clips", []),
                            "parent.config.clips differs from the native command result")

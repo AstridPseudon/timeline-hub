@@ -157,6 +157,103 @@ def test_document_view_adapter_emits_native_command_for_explicit_parent_timing()
     assert native["commands"][0]["select"] == "parent/clip:direct"
 
 
+def test_document_view_adapter_refuses_an_undeclared_null_param_without_dropping_draft():
+    work = bundle()
+    base = copy.deepcopy(work)
+    shot = next(iter(work["shots"].values()))
+    base_shot = next(iter(base["shots"].values()))
+    for timeline in (base_shot["internal_timeline"], shot["base_internal_timeline"],
+                     shot["internal_timeline"]):
+        timeline["clips"][0]["clipType"] = "am-type"
+    shot["internal_timeline"]["clips"][0]["params"] = {"null": None}
+
+    before = copy.deepcopy(work)
+    with pytest.raises(DocumentDiffError, match="undeclared params"):
+        document_diff_to_commands(work, base)
+    assert work == before
+
+
+def test_document_view_adapter_refuses_setting_an_absent_field_to_null_without_dropping_draft():
+    work = bundle()
+    base = copy.deepcopy(work)
+    for parent in (base["parent"], work["base_parent_payload"], work["parent"]):
+        for rows in (parent["clips"], parent["config"]["clips"]):
+            rows[0].pop("hold", None)
+    work["parent"]["clips"][0]["hold"] = None
+    work["parent"]["config"]["clips"][0]["hold"] = None
+
+    before = copy.deepcopy(work)
+    with pytest.raises(DocumentDiffError, match="native command is held"):
+        document_diff_to_commands(work, base)
+    assert work == before
+
+
+@pytest.mark.parametrize("scope", ["parent", "child"])
+def test_document_view_adapter_clears_present_null_hold_without_zero_command(scope):
+    work = bundle()
+    base = copy.deepcopy(work)
+    if scope == "parent":
+        for parent in (base["parent"], work["base_parent_payload"], work["parent"]):
+            for rows in (parent["clips"], parent["config"]["clips"]):
+                rows[0].update({"from": 0, "to": 1, "hold": None})
+        for rows in (work["parent"]["clips"], work["parent"]["config"]["clips"]):
+            rows[0].pop("hold")
+    else:
+        shot_id = next(iter(work["shots"]))
+        base_shot = base["shots"][shot_id]
+        shot = work["shots"][shot_id]
+        for timeline in (base_shot["internal_timeline"], shot["base_internal_timeline"],
+                         shot["internal_timeline"]):
+            timeline["clips"][0].update({"from": 0, "to": 1, "hold": None})
+        shot["internal_timeline"]["clips"][0].pop("hold")
+        # The native child-hold command is intentionally limited to a simple
+        # translation-only occurrence; keep this fixture inside that contract.
+        for bundle_value in (base, work):
+            bundle_value["placements"][0].update(source_offset=0, speed=1)
+            bundle_value["base_placements"]["occ-1"].update(source_offset=0, speed=1)
+
+    native = document_diff_to_commands(work, base)
+
+    assert [command["op"] for command in native["commands"]] == ["clip.set"]
+    assert native["commands"][0]["args"] == {"values": {}, "clear": ["hold"]}
+    if scope == "parent":
+        assert "hold" not in native["bundle"]["parent"]["clips"][0]
+        assert "hold" not in native["bundle"]["parent"]["config"]["clips"][0]
+    else:
+        assert "hold" not in native["bundle"]["shots"][shot_id]["internal_timeline"]["clips"][0]
+
+
+def test_document_view_adapter_clears_a_present_nonnull_param():
+    work = bundle()
+    base = copy.deepcopy(work)
+    shot = next(iter(work["shots"].values()))
+    base_shot = next(iter(base["shots"].values()))
+    for timeline in (base_shot["internal_timeline"], shot["base_internal_timeline"],
+                     shot["internal_timeline"]):
+        timeline["clips"][0]["clipType"] = "am-type"
+        timeline["clips"][0]["params"] = {"text": "hello"}
+    shot["internal_timeline"]["clips"][0]["params"] = {}
+
+    native = document_diff_to_commands(work, base)
+
+    assert [command["op"] for command in native["commands"]] == ["clip.set-params"]
+    assert native["commands"][0]["args"] == {"values": {}, "clear": ["text"]}
+    assert native["bundle"]["shots"][shot["shot_id"]]["internal_timeline"]["clips"][0][
+        "params"] == {}
+
+
+def test_document_view_adapter_validates_parent_track_rename_against_captured_result():
+    work = bundle()
+    base = copy.deepcopy(work)
+    work["parent"]["config"]["tracks"][0]["label"] = "Renamed"
+
+    native = document_diff_to_commands(work, base)
+
+    assert [command["op"] for command in native["commands"]] == ["track.set"]
+    assert native["commands"][0]["args"] == {"values": {"label": "Renamed"}, "clear": []}
+    assert native["bundle"]["parent"]["config"]["tracks"][0]["label"] == "Renamed"
+
+
 def test_document_view_adapter_holds_narration_and_same_alias_media_changes():
     work = bundle()
     base = copy.deepcopy(work)
