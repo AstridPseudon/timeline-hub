@@ -10,6 +10,7 @@ from astrid.packs.timeline import cli
 from astrid.sdk import storage_root
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.outbox import request_bytes
+from tests.editing_conformance.test_native_word_anchor_vectors import fixture as word_anchor_fixture
 from tests.sdk.test_timeline_sync import connected as sync_connection  # noqa: F401
 from tests.sdk.test_timeline_sync import initial_bundle
 
@@ -64,6 +65,38 @@ def test_ordinary_edit_literal_move_retries_the_persisted_flight(command, capsys
     assert generated.calls[0] == generated.calls[1]
 
 
+def test_ordinary_edit_parent_word_anchor_uses_existing_clip_anchor_outbox(command, capsys, monkeypatch):
+    from astrid.sdk.timeline import native_source_inputs
+
+    monkeypatch.setattr(native_source_inputs, 'materialize_transcript_inputs',
+                        lambda bundle, *args, **kwargs: bundle)
+    bundle, pin, content = word_anchor_fixture()
+    word = content['segments'][0]['words'][2]
+    carrier = {
+        'field': 'on',
+        'declaration': f'"{word["text"]}"',
+        'choice': {'source': 'occurrence:occ-a/clip:voice', 'document': pin,
+                   'word_ids': [word['id']]},
+    }
+    run, generated = command
+    generated.bundles['r0'] = bundle
+
+    assert run('edit', 't', '--clip', 'parent/clip:clip-a', '--on', '"stop"', '--json') == 0
+
+    body = json.loads(generated.calls[0][0])
+    [command] = body['commands']
+    assert command['op'] == 'clip.anchor'
+    assert command['select'] == 'parent/clip:clip-a'
+    assert command['args'] == carrier
+    assert command['intent'] == {'anchor': 'follow'}
+    assert command['bindings']['anchor.source'] == 'occurrence:occ-a/clip:voice'
+    assert any(read['ref'] == 'parent/clip:clip-a' and read['path'] == ['id']
+               for read in command['reads'])
+    assert any(read['ref'] == 'occurrence:occ-a/clip:voice' and read['path'] == ['id']
+               for read in command['reads'])
+    assert json.loads(capsys.readouterr().out)['data']['accepted_publication_id'] == 'pub1'
+
+
 def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
     run, generated = command
 
@@ -73,6 +106,31 @@ def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, mon
     monkeypatch.setattr(cli, "_edit_checkout", legacy)
     with pytest.raises(RuntimeError, match="legacy moment resolution"):
         run("edit", "t", "--clip", "a", "--on", 'after "Astrid"')
+    assert generated.calls == []
+
+
+def test_ordinary_edit_occurrence_word_anchor_keeps_legacy_owner_resolution(command, monkeypatch):
+    run, generated = command
+
+    def legacy(*args, **kwargs):
+        raise RuntimeError('legacy occurrence word resolution')
+
+    monkeypatch.setattr(cli, '_edit_checkout', legacy)
+    with pytest.raises(RuntimeError, match='legacy occurrence word resolution'):
+        run('edit', 't', '--clip', 'occurrence:occ-a/clip:clip-a', '--on', '"stop"')
+    assert generated.calls == []
+
+
+@pytest.mark.parametrize("extra", [("--trim-out", "4"), ("--set", "x=2"), ("--verify",)])
+def test_ordinary_edit_word_anchor_with_mixed_flags_keeps_legacy_before_capture(command, monkeypatch, extra):
+    run, generated = command
+
+    def legacy(*args, **kwargs):
+        raise RuntimeError('legacy mixed word anchor')
+
+    monkeypatch.setattr(cli, '_edit_checkout', legacy)
+    with pytest.raises(RuntimeError, match='legacy mixed word anchor'):
+        run('edit', 't', '--clip', 'parent/clip:a', '--on', '"stop"', *extra)
     assert generated.calls == []
 
 
