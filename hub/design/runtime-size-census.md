@@ -72,12 +72,49 @@ Speech duration change is in an unselected `RealmStore` method, so the shared
 and `c3d2656` sources are not ancestors of `b92d3e7` and are excluded from the
 current source count.
 
+### Excluded surfaces, counted separately for context
+
+These whole-blob counts are not added to the Timeline-core total or treated as
+an M4 gate. They make the boundary visible: contracts and generated artifacts,
+client package source, generator source, tests/fixtures/conformance, and
+execution infrastructure are separate from authored Timeline product code.
+Physical/nonblank means committed UTF-8 text lines; binary test archives are
+retained in the file set but contribute zero source lines.
+
+| excluded surface | baseline P/N | current `b92d3e7` P/N | delta P/N |
+|---|---:|---:|---:|
+| contracts and generated contract artifacts (`contract/`, Runtime schema/metadata/type artifacts) | 4,140 / 4,126 | 14,063 / 14,042 | +9,923 / +9,916 |
+| client package source (`packages/python/astrid_runtime_client/`, `packages/typescript/src/`) | 1,787 / 1,516 | 2,246 / 1,960 | +459 / +444 |
+| generation source (`generators/`) | 1,712 / 1,415 | 2,263 / 1,928 | +551 / +513 |
+| tests, fixtures, and conformance (`tests/`, `packages/typescript/test/`, `conformance/`) | 50,928 / 45,261 | 89,505 / 80,523 | +38,577 / +35,262 |
+| untouched execution infrastructure (39 identical Runtime/`astrid_runtime` paths) | 18,290 / 16,597 | 18,290 / 16,597 | 0 / 0 |
+| changed but still excluded execution infrastructure (7 paths) | 6,815 / 6,240 | 6,924 / 6,343 | +109 / +103 |
+
+The contract/artifact set is `contract/**`,
+`runtime_protocol/schemas/**`, `runtime_protocol/contract_metadata.py`, and
+`runtime_protocol/timeline_commit_types.py`. The client set is the two package
+source directories above; it includes thin hand-written wrappers alongside
+generated client files. The seven changed but excluded infrastructure paths are
+`astrid_runtime/runtime_boundary.py`, `runtime_protocol/{cas,daemon,door,
+idempotency,platform,upgrade}.py`; none is promoted into the Timeline product
+count. The 39 untouched paths are the exact remaining Runtime/`astrid_runtime`
+paths whose blobs are identical between `origin/main` and `b92d3e7`.
+
+This comparison is why newly added dedicated Timeline modules are counted in
+full, while shared files are counted only by the selected AST methods/ranges:
+unchanged Main execution code is not reclassified as Timeline product merely
+because the current tree also contains the Timeline commit path. The approved
+`c81c0eb` catalog guard remains the sole separately admitted `6/5` add-on; its
+catalog call sites and restored Main infrastructure remain excluded.
+
 ## Exact manifest
 
 The full-blob paths are exactly the 21 dedicated paths in the first 21 rows
 above. `runtime_protocol/timeline_commit_types.py`, contracts, generated
 clients/metadata, tests, fixtures, package data, `astrid_runtime/`, and
-untouched Main worker/execution infrastructure are excluded.
+untouched Main worker/execution infrastructure are excluded from the product
+total. Their separate context counts are recorded above; the selected ranges
+also intentionally leave the unselected portions of mixed files unallocated.
 
 Mixed-file AST fragments:
 

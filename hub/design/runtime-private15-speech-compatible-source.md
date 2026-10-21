@@ -9,9 +9,11 @@ fallback and the preserved audio/Speech settlement tests. This is a compatible
 private source candidate, not a merge, release, consumer pin, activation, or
 outer-workflow qualification.
 
-The harness assigns the final commit SHA after the worker exits. The exact
-candidate content tree captured by the central test service is
-`322859f268fcdcae5872aa2e3ccdcb2a288d76fb`; no commit SHA is guessed here.
+The immutable candidate is committed as
+`3e6c173128400c81842cd423d9ac90a76f54bf41`, with exact tree
+`322859f268fcdcae5872aa2e3ccdcb2a288d76fb` and parent C3d
+`c3d26567ff6fe4e20a959476d40aff90ad23a0ca`. The SHA is read from the
+repository ref, not inferred from the tree or test-service snapshot.
 
 ## Exact identities
 
@@ -20,7 +22,7 @@ candidate content tree captured by the central test service is
 | Immutable C3d base | `c3d26567ff6fe4e20a959476d40aff90ad23a0ca` / `f3ae49d38454ce73a9c91a954bb530b3ce51c122` |
 | Ordinary approved source | `d7597d5440d5ed5d5912235d547cb4380d226980` / `e1663a36fb6400af2a32479574fbe60d16d86443` |
 | Final audio-positive restoration | `40708263d26ef39ac484cbc9f1ae7f34cfc368bc` / `6abc2f117391de8e7e35c0283f575a002199894d` |
-| Candidate central snapshot tree | `322859f268fcdcae5872aa2e3ccdcb2a288d76fb` |
+| Final compatible private server | `3e6c173128400c81842cd423d9ac90a76f54bf41` / `322859f268fcdcae5872aa2e3ccdcb2a288d76fb` |
 | Product source blob | `runtime_protocol/store.py` = `5415a62fbc4692c110017245ceda12260e25629b` |
 | Settlement test blob | `tests/test_generation_publish_v1_settlement.py` = `a5317ce82f008cc4cfd8d86f73e5c95e50a567dd` |
 
@@ -62,6 +64,15 @@ passed. Thus every path outside the allowlist is byte-identical to C3d,
 including the 0.2.15/raw84fc/all76 producer material and all source/custody,
 owner, cancellation, and one-shot guards.
 
+The committed product blob exactly matches the independently approved ordinary
+Speech fix at `d7597d5440d5ed5d5912235d547cb4380d226980` and the final
+audio-positive restoration at `40708263d26ef39ac484cbc9f1ae7f34cfc368bc`.
+The committed settlement-test blob exactly matches the latter restoration.
+An independent tree walk found 453 paths in both C3d and this candidate, with
+only the two allowlisted paths changed. The candidate's 76 artifact entries
+also all match their committed bytes; generated client, health, contract
+metadata, release, and artifact-manifest blobs are unchanged from C3d.
+
 ## Evidence
 
 Local focused cases on this candidate:
@@ -92,7 +103,11 @@ run was requested.
 
 ## Agent handoff
 
-On this compatible server, Agent should create a fresh ephemeral fixture with
+The exact server for the reciprocal handoff is
+`3e6c173128400c81842cd423d9ac90a76f54bf41` /
+`322859f268fcdcae5872aa2e3ccdcb2a288d76fb`; the C3d producer/client/health/
+artifact identity remains the unchanged `c3d26567ff6fe4e20a959476d40aff90ad23a0ca`
+source cohort. On this compatible server, Agent should create a fresh ephemeral fixture with
 duration key absent, then retry only the previously failed selection or
 prerequisite. If that succeeds, proceed to the genuine outer workflow under
 the already reviewed authority and custody boundaries. Runtime unit and HTTP
