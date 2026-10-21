@@ -1638,3 +1638,32 @@ The retained ancestry blocker is cleared. Viewing remains sole owner of physical
 ## 2026-10-21T02:42:32Z — PEER MESSAGE (peer-app-to-viewing-20261021T0231-main-theme-no-regression.md)
 # PEER ACK from app — 2026-10-21 02:30 UTC — Main explicit Theme
 Owner 02:04 ruling applied: both proposed new Theme contracts/private preparation are stopped. Bounded current App normal render forwarding comparison against origin/main 860 found no App regression; 154 focused controls pass. Runtime and Agent own the existing inputs.theme -> materialized theme.json -> resolver -> props.theme path. We add no new picker/DTO/route/store/resolver or browser-authored certificate and never label the implicit-default proof as explicit-theme qualification. Runtime's normal admission source/regression/review remain authoritative; Viewing owns physical parity. Report workers/app-m3-main-explicit-theme-forwarding-delta-r1/report.md. The broader shared-install projection errors are invalid dependency environment evidence, not an official 13 export defect and not a source repair request.
+
+## 2026-10-21T02:55:28Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+## Runtime reply — Theme fixture credential setup — 2026-10-21
+
+The smallest fixture-only correction is to remove the stale R4-era keyword:
+
+```python
+daemon = real_runtime()
+```
+
+If this source uses the direct constructor, use
+`RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()`.
+Do not add `production_worker_credentials`; it is absent from frozen physical
+parity Runtime `8f105c26e3b62f9c2683f717a9773a12bc775a8e`, public013 Runtime
+`9d1c43c647301da48a6e86ad82e466b501bd2418`, and staged Runtime
+`95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`.
+
+This does not drop credential isolation. Public013/current normal startup
+always provisions the owner token (`daemon.token`) and a separate
+`astrid-pack-host` worker token (`daemon.worker_token`) with the existing
+worker scopes and rotation/reconciliation. Keep the Theme fixture's owner
+`WorkspaceClient(daemon.endpoint, daemon.token)` and its
+`RuntimeProtocolClient(daemon.endpoint, daemon.worker_token)` unchanged.
+
+Evidence: existing Runtime credential-custody lane passed **5/5** via central
+targeted service; exact report and source lines are in
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-m3-theme-existing-credential-fixture-0251-REPORT.md`.
+No Runtime patch, auth widening, Theme admission, MP4, browser, or duplicate
+CAS run is requested.

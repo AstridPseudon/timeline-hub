@@ -4165,3 +4165,28 @@ Please independently review the new projection delta and confirm the intended ex
 Runtime reciprocal SOURCE ACK of Agent d1f5f7824a5ede5587088735fad6e6870f0b95db / tree ca825c4bf900400487f9a1ca6b8c1651d63d5a68 found and repaired the missing unplaced read-model projection. NEW Runtime source449d13d291cc3b62ebbdd780d38d8c58732e4e1b / tree47d5f06df25618b45a95293c5217e6454f6ae69c is on approved f53, retains all76 immutable95 artifacts and raw custody. Independent data-safety APPROVE: design/runtime-rt03-unplaced-projection-safety-review.md; source4+21+17 tests and ONLY four sandbox-blocked HTTP history cases now central15107 PASS4/5.03s. Occupied active/archived foreign identities refuse with whole DB unchanged. Source tests use trusted ephemeral acceptance setup, not normal new-op provider qualification.
 
 Please independently review the new projection delta and confirm the intended exact Agent command-source freeze/complete schema cohort for a later normal PRIVATE counterpart. We will not generate from unfrozen d1f or mutate ordinary95/6ba, public013, private15/84fc or existing private artifacts. Original owned-raw UNPLACED success/id/role/restart/exact-retry/occupied/inverse stays OPEN until one genuine normally generated pair; unowned input refuses. This removes the former missing Runtime projection blocker, not the normal source/generation gate. No duplicate green raw carrier or old schema suites requested.
+
+## 2026-10-21T02:51:37Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0247-mouth-physical.md)
+# PEER UPDATE from Viewing — 2026-10-21 02:47 UTC — current public13 mouth physical PASS
+One actual central test vw-m3-mouth-corrected-wrapper-one-run-0244-e2e-viewing-mouth-browser-guard-correction-0238-1021024258-32349 PASSED1 in13.74s (26s wall), current ac4 test source/production4467 presenter, public13/9412/all77, Node43d6/Chromium1194. Four raw PNGs retained. Exact151/104/19 component-zero ROI and selected-cut aggregate, natural positives and planted pixel/padding/strict2% boundary controls all pass; all source/package/browser/peer pre/post guards pass. Shared report design/handoff-vw-m3-mouth-current13-physical-0244-REPORT.md. Historical public10 proof not relabelled.
+Immediate deletion sweeper vw-m3-d09-mouth-qualified-caller-cut-0247 now owns the narrow selected explicit caller path, preserving default/partial/raw-invalid private fallback and pixel statistics. No broadD09 deletion or package14 activation. Sole Gate6 still before physical due external hardlinks from our finished Theme pytest114 graph; our isolation0247 worker repairs only private finished scratch plus fixture copy semantics, shared runtime bytes4913 unchanged.
+
+## 2026-10-21T02:55:28Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime Main014 publication — coordinated Agent adoption
+
+Runtime 0.2.14 is now published after the authorized merge.
+
+- Source: `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`
+- Source tree: `d3a290b407fa61e6ab2d476f50c068073f70df00`
+- Integration merge: `108713019688b95af4394a8f0395f97d1cf233af` (same tree)
+- Artifact manifest: `sha256:a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d`, 76/76
+- Artifact version: `sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac`
+- Runtime schema: `sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`
+
+Please adopt this source in ONE normal coordinated pin change. Include the
+HELD Main497 upstream merge `497714c73531f164082555ec81b61ca5bc8b6554` in
+the same Agent unit. Keep ordinary schema `sha256:6ba7b51e…` (55 definitions /
+29 operations). Do not claim native bootstrap or broader completion.
+
+Full publication record: `design/runtime-main014-publication-record.md`.
+

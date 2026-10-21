@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T02:51:37Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 0m -->
+<!-- main | 2026-10-21T02:55:28Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 4m -->
 # runtime — 2026-10-21T02:51:11Z
 Milestone: M1 RECORDED. M2 and M3 OPEN. Runtime ordinary014 merge AUTHORIZED by owner02:48 and MERGED; exact publication record and coordinated consumer pins in progress. App dormant init is a separate activation gate. No foundation or final ZIP claim.
 Integrated: Runtime tl/integration 108713019688b95af4394a8f0395f97d1cf233af, tree d3a290b407fa61e6ab2d476f50c068073f70df00, merged qualified95bd through merge queue. Exact source/artifact tree equals candidate. Contract/client 0.2.14 now on integration; public013 producer2c4 remains immutable history. No staged reference/launcher/transcript/rational followup merged.
