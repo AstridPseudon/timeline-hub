@@ -18,6 +18,99 @@ def _key(env):
     return runtime._registry_context(env, generator=False)
 
 
+def _installed_observation(tmp_path, python):
+    root = tmp_path / 'site-packages'
+    astrid = root / 'astrid'
+    runtime_origin = astrid / 'core/rendering/remotion_runtime.py'
+    astrid_origin = astrid / '__init__.py'
+    generator = root / 'scripts/gen_effect_registry.py'
+    for path in (astrid_origin, runtime_origin, generator):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('# installed fixture\n', encoding='utf-8')
+    return {
+        'state': {'hash': 'a' * 64,
+                  'content_hashes': {kind: 'b' * 64 for kind in runtime._REGISTRY_KINDS}},
+        'astrid_origin': str(astrid_origin),
+        'runtime_origin': str(runtime_origin),
+        'generator_origin': str(generator),
+        'probe_cwd': str(tmp_path.resolve()),
+        'startup': {'executable': python},
+    }
+
+
+def _completed_probe_receipt():
+    return {
+        'original_wait_exit_code': 0,
+        'retained_set_final_census_complete': True,
+        'custody_admitted': True,
+    }
+
+
+def test_installed_registry_probe_uses_selected_interpreter_and_neutral_context(tmp_path, monkeypatch):
+    python = '/selected/venv/bin/python'
+    environment = _env(tmp_path, ASTRID_HOST_EXECUTION_PROFILE='installed')
+    captured = {}
+    observation = _installed_observation(tmp_path, python)
+
+    def owned(argv, **kwargs):
+        captured.update(argv=argv, kwargs=kwargs)
+        return type('Result', (), {'returncode': 0, 'stdout': json.dumps(observation), 'stderr': ''})(), _completed_probe_receipt()
+
+    monkeypatch.setattr(runtime, '_owned_registry_probe', owned)
+    monkeypatch.setattr(runtime.tempfile, 'gettempdir', lambda: str(tmp_path))
+    result, _ = runtime._registry_probe(environment, python)
+
+    assert result == observation
+    assert captured['argv'][:2] == [python, '-I']
+    assert REPO_ROOT.as_posix() not in captured['argv']
+    assert captured['kwargs']['cwd'] == tmp_path
+    assert 'PYTHONPATH' not in captured['kwargs']['env']
+    assert 'ASTRID_PACKS_PATH' not in captured['kwargs']['env']
+
+
+@pytest.mark.parametrize('field', ['executable', 'cwd'])
+def test_installed_registry_probe_refuses_wrong_interpreter_or_foreign_cwd(tmp_path, monkeypatch, field):
+    python = '/selected/venv/bin/python'
+    environment = _env(tmp_path, ASTRID_HOST_EXECUTION_PROFILE='installed')
+    observation = _installed_observation(tmp_path, python)
+    if field == 'executable':
+        observation['startup']['executable'] = '/foreign/python'
+    else:
+        observation['probe_cwd'] = str(tmp_path / 'foreign-cwd')
+
+    monkeypatch.setattr(
+        runtime, '_owned_registry_probe',
+        lambda *_args, **_kwargs: (
+            type('Result', (), {'returncode': 0, 'stdout': json.dumps(observation), 'stderr': ''})(),
+            _completed_probe_receipt(),
+        ),
+    )
+    monkeypatch.setattr(runtime.tempfile, 'gettempdir', lambda: str(tmp_path))
+    with pytest.raises(runtime.RemotionValidationError, match='owned registry discovery failed'):
+        runtime._registry_probe(environment, python)
+
+
+@pytest.mark.parametrize('name', ['PYTHONPATH', 'ASTRID_PACKS_PATH'])
+def test_installed_registry_probe_refuses_foreign_import_or_pack_roots(tmp_path, monkeypatch, name):
+    environment = _env(tmp_path, ASTRID_HOST_EXECUTION_PROFILE='installed',
+                        **{name: str(tmp_path / 'foreign')})
+    monkeypatch.setattr(
+        runtime, '_owned_registry_probe',
+        lambda *_args, **_kwargs: pytest.fail('unsupported installed context was launched'),
+    )
+
+    with pytest.raises(runtime.RemotionValidationError, match='installed registry discovery refuses'):
+        runtime._registry_probe(environment, '/selected/venv/bin/python')
+
+
+def test_installed_registry_observation_reports_missing_packaged_generator(monkeypatch):
+    from astrid.packs.rendering.rendering.renderers.remotion import run
+
+    monkeypatch.setattr(run, 'gen_effect_registry', None)
+    with pytest.raises(runtime.RemotionValidationError, match='generator carrier is unavailable'):
+        runtime._registry_observation()
+
+
 def test_pythonpath_naming_the_checkout_collapses_with_its_absence(tmp_path):
     base = _env(tmp_path)
     assert _key(_env(tmp_path, PYTHONPATH=str(REPO_ROOT))) == _key(base)

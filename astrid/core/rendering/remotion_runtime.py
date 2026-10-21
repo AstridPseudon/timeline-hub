@@ -508,15 +508,20 @@ def _registry_observation() -> dict[str, Any]:
     from astrid.core.element.registry import clear_default_registry_cache
     from astrid.core.pack.source_setup import active_source_inventory, source_state_path
     from astrid.core.pack.discovery import discover_pack_metadata
-    from astrid.packs.rendering.rendering.renderers.remotion import lock
+    from astrid.packs.rendering.rendering.renderers.remotion import lock, run
+    # run is imported from the same selected product tree as this probe.
+    # Its existing carrier is the only installed generator authority; never
+    # recover a generator from the launch checkout.
+    generator = run.gen_effect_registry
+    if generator is None:
+        raise RemotionValidationError(
+            'installed registry generator carrier is unavailable: '
+            'the selected Astrid package does not carry gen_effect_registry'
+        )
     config_files = _registry_config_files(os.environ)
     _refuse_git_config_indirection(config_files)
     managed_git_roots, managed_config_files = _managed_registry_configuration()
     clear_default_registry_cache()
-    from astrid.core.foundation.paths import load_checkout_script
-    generator = load_checkout_script('gen_effect_registry')
-    if generator is None:
-        raise RemotionValidationError('registry generator script is unavailable in this checkout')
     state = generator.compute_generated_registry_state()  # include_local=True
     inventory = active_source_inventory(verify=True)
     packs = discover_pack_metadata(project_root=generator.TOOLS_DIR)
@@ -671,18 +676,36 @@ def _owned_registry_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
         raise error from primary
 
 
+def _installed_registry_profile(environment: Mapping[str, str]) -> bool:
+    """Use the existing installed/source discriminator for registry children."""
+    return (environment.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed'
+            or os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed')
+
+
 def _registry_probe(environment: Mapping[str, str], python: str, *, generator: bool = False) -> tuple[dict[str, Any], dict[str, Any]]:
     from astrid.packs.rendering.rendering.renderers.remotion import run
-    script_directory = REPO_ROOT / 'scripts' if generator else Path(run.__file__).resolve().parents[2]
-    # Match both real script launchers: replace -c's cwd search entry with
-    # the script directory, and insert checkout only when not already present.
-    source = ('import sys,json; sys.path[0]=sys.argv[2]; '
-              'sys.path.insert(0,sys.argv[1]) if sys.argv[1] not in sys.path else None; '
-              'from astrid.core.rendering.remotion_runtime import _registry_observation; '
-              'print(json.dumps(_registry_observation(),sort_keys=True))')
-    cwd = REPO_ROOT if generator else script_directory
-    result, receipt = _owned_registry_probe([python, '-c', source, str(REPO_ROOT), str(script_directory)], cwd=cwd,
-                                           env=environment, phase='registry_discovery')
+    installed = _installed_registry_profile(environment)
+    if installed and environment.get('PYTHONPATH'):
+        raise RemotionValidationError('installed registry discovery refuses PYTHONPATH')
+    if installed and environment.get(ASTRID_PACKS_PATH):
+        raise RemotionValidationError('installed registry discovery refuses explicit pack roots')
+    if installed:
+        source = ('import json; '
+                  'from astrid.core.rendering.remotion_runtime import _registry_observation; '
+                  'print(json.dumps(_registry_observation(),sort_keys=True))')
+        cwd = Path(tempfile.gettempdir()).resolve()
+        argv = [python, '-I', '-c', source]
+    else:
+        script_directory = REPO_ROOT / 'scripts' if generator else Path(run.__file__).resolve().parents[2]
+        # Match both real script launchers: replace -c's cwd search entry with
+        # the script directory, and insert checkout only when not already present.
+        source = ('import sys,json; sys.path[0]=sys.argv[2]; '
+                  'sys.path.insert(0,sys.argv[1]) if sys.argv[1] not in sys.path else None; '
+                  'from astrid.core.rendering.remotion_runtime import _registry_observation; '
+                  'print(json.dumps(_registry_observation(),sort_keys=True))')
+        cwd = REPO_ROOT if generator else script_directory
+        argv = [python, '-c', source, str(REPO_ROOT), str(script_directory)]
+    result, receipt = _owned_registry_probe(argv, cwd=cwd, env=environment, phase='registry_discovery')
     try:
         _require_completed_probe(receipt, phase='registry_discovery')
     except RemotionValidationError as error:
@@ -690,14 +713,27 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
         raise
     try:
         observation = json.loads(result.stdout)
-        if (result.returncode or observation['runtime_origin'] != str(Path(__file__).resolve())
-                or observation['startup']['executable'] != python):
+        if result.returncode or observation['startup']['executable'] != python:
+            raise ValueError('registry source/interpreter differs')
+        if installed:
+            astrid_origin = Path(observation['astrid_origin']).resolve(strict=True)
+            installed_root = astrid_origin.parent.parent
+            expected_runtime = installed_root / 'astrid/core/rendering/remotion_runtime.py'
+            runtime_origin = Path(observation['runtime_origin']).resolve(strict=True)
+            generator_origin = Path(observation['generator_origin']).resolve(strict=True)
+            if (astrid_origin != installed_root / 'astrid/__init__.py'
+                    or runtime_origin != expected_runtime
+                    or not generator_origin.is_relative_to(installed_root)
+                    or any(path.is_symlink() for path in (astrid_origin, runtime_origin, generator_origin))
+                    or observation['probe_cwd'] != str(Path(tempfile.gettempdir()).resolve())):
+                raise ValueError('installed registry source/cwd differs')
+        elif observation['runtime_origin'] != str(Path(__file__).resolve()):
             raise ValueError('registry source/interpreter differs')
         hashes = observation['state']['content_hashes']
         if (set(hashes) != set(_REGISTRY_KINDS) or not observation['state'].get('hash')
                 or any(not re.fullmatch('[0-9a-f]{64}', value) for value in hashes.values())):
             raise ValueError('registry state is incomplete')
-    except (ValueError, KeyError, TypeError) as exc:
+    except (OSError, ValueError, KeyError, TypeError) as exc:
         error = RemotionValidationError('owned registry discovery failed')
         error.probe_receipt = receipt
         raise error from exc
@@ -706,7 +742,7 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
 
 @_validation_timing("registry_settle")
 def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, *, expected_state: Any = None) -> dict[bytes, Any]:
-    from astrid.packs.rendering.rendering.renderers.remotion import run, lock
+    from astrid.packs.rendering.rendering.renderers.remotion import lock, run
     if not lock.remotion_render_lock_held():
         raise RemotionValidationError('registry settling requires the original held Remotion lock')
     output_paths = run._registry_output_paths(project)
@@ -725,6 +761,8 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     probes: dict[bytes, Any] = {}
     expected = expected_state
     generator_env = None
+    generator_origin = None
+    installed = _installed_registry_profile(os.environ)
     digest_memo: dict = {}  # One launch only; never persisted or shared.
     for paths in contexts.values():
         for environment in ([paths] if isinstance(paths, Mapping) else paths):
@@ -742,6 +780,7 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
                 bound = _registry_inputs(observation, digest_memo=digest_memo, changed_after_ns=started_ns)
                 if observation['lock_path'] != str(lock._resolved_lock_path()):
                     raise RemotionValidationError('registry generator selected another Remotion lock')
+                generator_origin = observation.get('generator_origin')
                 probes[key] = {'observation': observation, 'inputs': bound,
                                'original_waits': {'discovery': discovery_wait}}
             state = probes[key]['observation']['state']
@@ -755,8 +794,20 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     generator_wait = None
     if cached != expected or current_hashes != expected['content_hashes']:
         generator_env = {**generator_env, **lock.remotion_render_lock_child_env()}
-        result, generator_wait = _owned_registry_probe([python, str(REPO_ROOT / 'scripts/gen_effect_registry.py')],
-                                                      cwd=REPO_ROOT, env=generator_env, phase='registry_generator')
+        if installed:
+            if not generator_origin:
+                raise RemotionValidationError(
+                    'installed registry generator carrier is unavailable: '
+                    'registry discovery returned no generator origin'
+                )
+            generator_argv = [python, str(Path(generator_origin).resolve(strict=True))]
+            generator_cwd = Path(tempfile.gettempdir()).resolve()
+        else:
+            generator_argv = [python, str(REPO_ROOT / 'scripts/gen_effect_registry.py')]
+            generator_cwd = REPO_ROOT
+        result, generator_wait = _owned_registry_probe(generator_argv,
+                                                       cwd=generator_cwd, env=generator_env,
+                                                       phase='registry_generator')
         _require_completed_probe(generator_wait, phase='registry_generator')
         if result.returncode:
             error = RemotionValidationError('owned registry generator failed')

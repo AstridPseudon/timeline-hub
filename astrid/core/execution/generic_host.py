@@ -1770,6 +1770,13 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
     # launch. Qualify the explicit host mapping, not that caller's ambient env.
     dependencies = dependency_pythonpath(environment)
     baseline = build_child_subprocess_env(base=environment, parent=environment)
+    installed = (environment.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed'
+                 or os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed')
+    if installed:
+        # The installed host already discovers its selected package tree.
+        # Do not make a worker's pack root or source path a second authority.
+        baseline.pop(ASTRID_PACKS_PATH, None)
+        baseline.pop('PYTHONPATH', None)
     variants = [baseline]
     for record in records.values():
         if remotion_only and not _record_may_render(record):
@@ -1795,22 +1802,35 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
             passthrough=public_passthrough,
             declared_passthrough=public_passthrough)
         native = dict(projected)
-        native[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in pack_roots)
-        native['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
-            str(Path(__file__).resolve().parents[3]), *dependencies,
-            *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
+        if installed:
+            if ASTRID_PACKS_PATH not in fixed:
+                native.pop(ASTRID_PACKS_PATH, None)
+            if 'PYTHONPATH' not in fixed:
+                native.pop('PYTHONPATH', None)
+        else:
+            native[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in pack_roots)
+            native['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
+                str(Path(__file__).resolve().parents[3]), *dependencies,
+                *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
         variants.append(native)
         # The command builder supplies a canonical default, then command/env
         # and required nonsecret configuration override it, in the real order.
-        command_fixed = _fixed_worker_environment(record, {
+        command_defaults = {} if installed else {
             'PYTHONPATH': os.pathsep.join((str(Path(__file__).resolve().parents[3]), *dependencies)),
-            **fixed}, environment)
-        command_relevant = {**relevant, 'PYTHONPATH': command_fixed['PYTHONPATH']}
+        }
+        command_fixed = _fixed_worker_environment(record, {
+            **command_defaults, **fixed}, environment)
+        command_relevant = dict(relevant)
+        if 'PYTHONPATH' in command_fixed:
+            command_relevant['PYTHONPATH'] = command_fixed['PYTHONPATH']
         command_variant = build_child_subprocess_env(
             base=environment, parent=environment, explicit_env=command_relevant,
             passthrough=public_passthrough,
             declared_passthrough=public_passthrough)
-        command_variant['PYTHONPATH'] = _command_worker_pythonpath(record, command_variant['PYTHONPATH'])
+        if not installed:
+            command_variant['PYTHONPATH'] = _command_worker_pythonpath(record, command_variant['PYTHONPATH'])
+        elif ASTRID_PACKS_PATH not in fixed:
+            command_variant.pop(ASTRID_PACKS_PATH, None)
         variants.append(command_variant)
     return variants
 
