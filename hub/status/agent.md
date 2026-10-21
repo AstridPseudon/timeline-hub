@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T08:45:52Z | dispatcher heartbeat 11s | live 5 (sol 0, luna 5, other 0) | busy30 38 | status age 7m -->
+<!-- agent | 2026-10-21T08:50:39Z | dispatcher heartbeat 10s | live 3 (sol 0, luna 3, other 0) | busy30 36 | status age 12m -->
 # agent — 2026-10-21 08:38 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 / 95 / all 76 and Composition 0.0.13 / 9412 / all 77 remain current. Future callers stay dormant.
 Integrated: Agent a9f4cfdae / tree 93862f0a. Complete document presence/rename repair b4762b7c4 merged with independent data-safety approval and actual HTTP10363 PASS1, retaining exact three qualified blobs and all outside paths. Core types a9f4: 91 targeted passes, zero limited-mypy errors and six independent containment negatives. Transcript d0cb HTTP26071 PASS3 and WC8 size f777 HTTP46 PASS1 retained without replay.
