@@ -4,7 +4,7 @@ import { ClipMoveError, MoveRecording, assertFiniteJson, copy, equal, object, ty
 
 const EMPTY = { config: { clips: [], tracks: [] }, registry: {}, clips: [] };
 
-// Agent 4296a709 native_initialize.py and _recording.py::create, bounded to App defaults.
+// Agent 6efc8150 native_initialize.py and _recording.py::create, bounded to App defaults.
 export function captureBootstrap(bundle: AuthoredBundle, input: { name: string; slug: string; output: JSON; tracks: JSON }) {
   assertFiniteJson(bundle);
   assertFiniteJson(input);
@@ -19,6 +19,7 @@ export function captureBootstrap(bundle: AuthoredBundle, input: { name: string; 
   const init = new MoveRecording(bundle, { schema_version: 1, op: 'timeline.init', version: '1', select: 'parent',
     args: { name: input.name, slug: input.slug, output: copy(input.output) }, intent: {} });
   init.command.resolved = [];
+  init.read('parent', []);
   for (const path of [['config', 'output'], ['name'], ['slug'], ['registry', 'assets']]) init.read('parent', path);
   init.write('parent', ['config', 'output'], input.output);
   init.write('parent', ['name'], input.name);

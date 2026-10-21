@@ -66,7 +66,7 @@ const defaultConfig = {
   ],
   output: { resolution: '1280x720', fps: 30, file: 'output.mp4', background: null, background_scale: null },
 };
-const initializedPayload = { config: defaultConfig, registry: { assets: {} }, clips: [], name: 'Main', slug: 'main' };
+const initializedPayload = { config: defaultConfig, registry: { assets: {} }, clips: [], occurrences: [], name: 'Main', slug: 'main' };
 
 test('Main95 real native bootstrap: create/init, lost ACK retry, daemon restart, and raw readback', async ({ page, harness }) => {
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
