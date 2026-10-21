@@ -204,18 +204,6 @@ class _CheckMixin:
                        + (f": {', '.join(span.findings)}" if span.findings else ""))
         return out
 
-    def _scene_only_problems(self, result: Any, context: Mapping[str, Any]) -> list[str]:
-        """Format a bound managed Scene result with the established advisory reader.
-
-        The explicit-check caller may use this after Viewing supplies the
-        managed invocation result. Save/core paths do not call it.
-        """
-        from astrid.sdk.timeline_filmstrip import _scene_only_spans
-
-        return self._scene_problems(_scene_only_spans(
-            result, context, duration_frames=int(round(self.duration * self.fps)),
-        ))
-
     def _managed_scene_spans(self) -> list | None:
         """Read Scene advice through an explicitly connected checkout, if bound.
 
