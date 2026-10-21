@@ -192,3 +192,6 @@ def test_actual_registered_presenter_partial_crop_pixels(presenter_query, tmp_pa
     assert padding == {"private": 16 / 697, "compat": 16 / 799, "erase": 0}
     assert padding["private"] > .02 and padding["compat"] > .02
     assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == before
+    print(json.dumps({"png_sha256": before, "crop": crops,
+                      "natural_pairs": fractions, "planted_controls": controls},
+                     sort_keys=True, separators=(",", ":")))
