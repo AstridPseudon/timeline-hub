@@ -1,0 +1,1 @@
+No archive review command was run because the producer terminal handoff was BLOCKED before npm pack. Independent absence check and raw-evidence hashes are recorded in the worker REPORT.md and COMMAND.
