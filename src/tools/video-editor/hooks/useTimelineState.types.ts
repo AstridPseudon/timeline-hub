@@ -7,6 +7,7 @@ import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semantic
 import type { ElementCapturePort } from '@/tools/video-editor/commands/elementGesture.ts';
 import type { ParentClipAddMediaCapturePort, ParentClipSwapMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import type { OccurrenceDuplicateCapturePort } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
 import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
@@ -153,6 +154,7 @@ export interface TimelineEditorOpsContextValue {
   shotSet?: ShotSetCapturePort;
   parentClipAddMedia?: ParentClipAddMediaCapturePort;
   parentClipSwapMedia?: ParentClipSwapMediaCapturePort;
+  occurrenceMedia?: OccurrenceMediaCapturePort;
   occurrenceDuplicate?: OccurrenceDuplicateCapturePort;
   setInputModality: (inputModality: TimelineInputModality) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;

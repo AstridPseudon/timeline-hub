@@ -48,6 +48,7 @@ import { useTimelineClipsForAttachments } from '@/tools/video-editor/hooks/useTi
 import type {
   TimelineEditorOpsContextValue,
 } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
 import { useVideoEditorLightboxNavigation } from '@/tools/video-editor/hooks/useVideoEditorLightboxNavigation.ts';
 import { buildVideoEditorLightboxMedia } from '@/tools/video-editor/lib/video-editor-lightbox-media.ts';
 import { getAssetResolvedSource } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -377,6 +378,7 @@ function InnerProvider({
   operationalEmitter,
   assembly,
   initialTimelineData,
+  occurrenceMediaContext,
 }: {
   children: React.ReactNode;
   effectCatalog?: VideoEditorEffectCatalog | null;
@@ -386,6 +388,7 @@ function InnerProvider({
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
   assembly: EditorRuntimeAssembly;
   initialTimelineData?: TimelineData;
+  occurrenceMediaContext?: { occurrenceId: string; port: OccurrenceMediaCapturePort };
 }) {
   useRenderDiagnostic('VideoEditorProvider');
   const runtime = useVideoEditorRuntime();
@@ -426,6 +429,7 @@ function InnerProvider({
     eagerProposalRetry: true,
     initialTimelineData,
     shotComposition: readPlayedComposition,
+    occurrenceMediaContext,
   });
   return (
     <VideoEditorRuntimeContent assembly={assembly} sync={sync}
@@ -809,6 +813,7 @@ export interface VideoEditorProviderProps {
   timelineEditability?: TimelineEditability;
   /** Optional synchronous data seed for hosts with an already-resolved projection. */
   initialTimelineData?: TimelineData;
+  occurrenceMediaContext?: { occurrenceId: string; port: OccurrenceMediaCapturePort };
   /** Whether this editor hosts extensions for lifecycle telemetry. */
   extensionHostEnabled?: boolean;
   /** Host revision attached to privacy-safe operational events. */
@@ -845,6 +850,7 @@ function VideoEditorProviderInstance({
   timelineOverlaysEnabled = false,
   timelineEditability,
   initialTimelineData,
+  occurrenceMediaContext,
   extensionHostEnabled = false,
   extensionReleaseRevision = 'unset',
   extensionOperationalEventSink = dispatchExtensionOperationalEvent,
@@ -1092,6 +1098,7 @@ function VideoEditorProviderInstance({
         operationalEmitter={extensionHostEnabled ? operationalEmitter : undefined}
         assembly={assembly}
         initialTimelineData={initialTimelineData}
+        occurrenceMediaContext={occurrenceMediaContext}
       >
         {children}
       </InnerProvider>

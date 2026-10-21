@@ -45,6 +45,16 @@ import type { ShotSetCapturePort } from './shotSetGesture.ts';
 import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
 import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { captureParentClipSwapMedia, finishParentClipSwapMedia } from './parentClipSwapCapture.ts';
+import { captureOccurrenceAddMedia, executeOccurrenceMedia } from './occurrenceMediaCapture.ts';
+import {
+  logPopupPostSelectionDiagnostic,
+  occurrenceMediaPreview,
+  type OccurrenceMediaCapturePort,
+  type OccurrenceMediaRequest,
+  type VerifiedMediaRead,
+} from './occurrenceMediaGesture.ts';
+import { OccurrenceMediaState, rawIdentity } from './occurrenceMediaPrimitives.ts';
+import type { JsonObject } from './types.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
@@ -112,6 +122,7 @@ type Options = {
   initial: TimelineCommandBasis;
   outboxes?: ReturnType<typeof createCommitOutbox>;
   loadLatest?(): Promise<TimelineCommandBasis>;
+  getProjectVerifiedMedia?: VerifiedMediaRead;
   recoverBootstrap?(ownerId: string): Promise<TimelineCommandBasis>;
   send(request: CommitRequest, key: string): Promise<TimelineCommitResult>;
   preview(patch: TimelinePatch): void;
@@ -507,6 +518,125 @@ export async function createTimelineCommandSession(options: Options) {
       }
       prepared.delete(key);
       enqueue(entry.payload, preview, entry.basis);
+    },
+  };
+  const mediaCaptures = new WeakSet<JsonObject>();
+  const occurrenceMediaPort: OccurrenceMediaCapturePort = {
+    capture({ request, current }) {
+      logPopupPostSelectionDiagnostic('native.capture', 'enter', {
+        occurrenceId: request.ownerRef.slice('occurrence:'.length),
+        ownerRef: request.ownerRef,
+        trackRef: request.trackRef,
+        hasSession: true,
+      });
+      try {
+        assertReady();
+        if (!options.getProjectVerifiedMedia) throw new Error('Runtime verified-media read is unavailable');
+        if (!acceptedBasis.graph) throw new Error('Occurrence media requires the original canonical graph');
+        if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+          || current.head.headRevisionId !== acceptedBasis.head.revisionId || current.head.headPublicationId !== acceptedBasis.head.publicationId) {
+          throw new Error('Displayed timeline does not match the raw authoring basis');
+        }
+        if (!/^occurrence:[^/]+$/.test(request.ownerRef) || !rawIdentity(request.ownerRef.slice(11))
+          || request.trackRef !== `${request.ownerRef}/track:${request.trackRef.slice(`${request.ownerRef}/track:`.length)}`
+          || !rawIdentity(request.trackRef.slice(`${request.ownerRef}/track:`.length))) {
+          throw new Error('Media edit requires explicit matching occurrence and raw track refs');
+        }
+        assertFiniteJson(request);
+        const raw = new OccurrenceMediaState(bundle);
+        raw.occurrence(request.ownerRef);
+        raw.entity(request.trackRef);
+        if (!rawIdentity(request.row.id) || request.row.track !== request.trackRef.slice(`${request.ownerRef}/track:`.length)) {
+          throw new Error('Media add requires caller-reserved child and matching raw track');
+        }
+        const basis = freezeJson(json({ request, bundle, graph: acceptedBasis.graph, localGeneration,
+          localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as JsonObject;
+        mediaCaptures.add(basis);
+        logPopupPostSelectionDiagnostic('native.capture', 'return', {
+          occurrenceId: request.ownerRef.slice('occurrence:'.length),
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          hasSession: true,
+        });
+        return basis;
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('native.capture', 'throw', {
+          occurrenceId: request.ownerRef.slice('occurrence:'.length),
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          hasSession: true,
+        }, error);
+        throw error;
+      }
+    },
+    async finish(basis) {
+      logPopupPostSelectionDiagnostic('native.finish', 'enter', { hasSession: true });
+      assertReady();
+      if (!mediaCaptures.has(basis) || basis.localGeneration !== localGeneration) throw new Error('Media edit was not captured by this session or the timeline changed');
+      const before = bundle;
+      const request = basis.request as unknown as OccurrenceMediaRequest;
+      logPopupPostSelectionDiagnostic('native.finish.request', 'enter', {
+        occurrenceId: request.ownerRef.slice('occurrence:'.length),
+        ownerRef: request.ownerRef,
+        trackRef: request.trackRef,
+        hasSession: true,
+      });
+      const pins = [request.media];
+      try {
+        const inputs = await Promise.all(pins.map((pin) => options.getProjectVerifiedMedia!(copy(pin))));
+        assertReady();
+        if (basis.localGeneration !== localGeneration || before !== bundle) throw new Error('Timeline changed during the media read');
+        if (inputs.some((input, index) => !equal(input.selection, pins[index]))) throw new Error('Runtime verified-media selection differs from the original immutable pin');
+        const captured = captureOccurrenceAddMedia(basis.bundle as AuthoredBundle, request.ownerRef, request.row, request.media, inputs);
+        const result = executeOccurrenceMedia(bundle, captured.command, inputs);
+        const preview = occurrenceMediaPreview(result.bundle as AuthoredBundle, basis.graph as Record<string, unknown>);
+        prepared.set(JSON.stringify(result.command), { payload: {
+          commands: [result.command], before: bundle, after: result.bundle, preview, displayBasis: acceptedBasis,
+        }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+        logPopupPostSelectionDiagnostic('native.finish', 'return', {
+          occurrenceId: request.ownerRef.slice('occurrence:'.length),
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          commandOp: result.command.op,
+          hasSession: true,
+        });
+        return { command: result.command, preview };
+      } catch (error) {
+        if (!stopped) publish('error', message(error));
+        logPopupPostSelectionDiagnostic('native.finish', 'throw', {
+          occurrenceId: request.ownerRef.slice('occurrence:'.length),
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          hasSession: true,
+        }, error);
+        throw error;
+      }
+    },
+    submit({ command, preview }) {
+      logPopupPostSelectionDiagnostic('native.submit', 'enter', {
+        commandOp: command.op,
+        hasSession: true,
+      });
+      try {
+        assertReady();
+        const entry = prepared.get(JSON.stringify(command));
+        if (command.op !== 'occurrence.add-media' || !entry
+          || entry.generation !== localGeneration || entry.payload.before !== bundle || !equal(preview, entry.payload.preview)) {
+          throw new Error('Media edit requires this session’s prepared command and complete closure preview');
+        }
+        enqueue(entry.payload, preview, entry.basis);
+        prepared.delete(JSON.stringify(command));
+        logPopupPostSelectionDiagnostic('native.submit', 'return', {
+          commandOp: command.op,
+          hasSession: true,
+        });
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('native.submit', 'throw', {
+          commandOp: command.op,
+          hasSession: true,
+        }, error);
+        throw error;
+      }
     },
   };
   const occurrenceDuplicatePort: OccurrenceDuplicateCapturePort = {
@@ -1173,6 +1303,7 @@ export async function createTimelineCommandSession(options: Options) {
     shotSetPort,
     parentClipAddMediaPort,
     parentClipSwapMediaPort,
+    occurrenceMediaPort,
     occurrenceDuplicatePort,
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
