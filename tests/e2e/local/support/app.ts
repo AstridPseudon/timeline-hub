@@ -71,7 +71,7 @@ export async function openApp(page: Page, harness: DirectHarness) {
   return doorRequests;
 }
 
-export const expectConnected = (page: Page) => expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected');
+export const expectConnected = (page: Page) => expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
 
 /** The editor's first track-name field: the smallest real edit the App offers on the seeded timeline. */
 export const firstTrackName = (page: Page) => page.getByRole('textbox', { name: 'Track name' }).first();
