@@ -161,7 +161,13 @@ def _set_clip_interval(clip: MutableMapping[str, Any], start: Any, end: Any) -> 
 def add_track(container: MutableMapping[str, Any], *, kind: str = "video", name: str | None = None, track_id: str | None = None) -> MutableMapping[str, Any]:
     """Add and return a valid empty track in a main timeline or shot."""
 
-    timeline = _timeline(container)
+    from astrid.sdk.timeline.native_checkout import AttachedCheckout
+
+    attached = container if isinstance(container, AttachedCheckout) else None
+    if attached is not None:
+        timeline = _timeline(container.bundle["parent"])
+    else:
+        timeline = _timeline(container)
     tracks = _tracks(timeline)
     new_id = track_id or _next_id("track")
     if any(track.get("id") == new_id for track in tracks):
@@ -176,6 +182,17 @@ def add_track(container: MutableMapping[str, Any], *, kind: str = "video", name:
     }
     if name is not None:
         track["name"] = name
+    if attached is not None:
+        from astrid.sdk.timeline._command_state import State
+
+        attached._unchanged_preview()
+        with attached.session.outbox.locked():
+            state = attached.session._state()
+            if state['pending'] or state['flight'] is not None:
+                raise TimelineEditError('attached track creation cannot be mixed with another draft')
+        attached._queue({'schema_version': 1, 'op': 'track.create', 'version': '1',
+                         'select': 'parent', 'args': {'row': copy.deepcopy(track)}})
+        return State(attached.bundle).entity("parent/track:" + new_id)
     tracks.append(track)
     return track
 
