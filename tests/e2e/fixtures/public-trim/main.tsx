@@ -32,10 +32,10 @@ function FixtureControls() {
     const endTime = roundTimelineValue(getClipEndSeconds(clip) - 0.5);
     setResult(JSON.stringify(commands.trimClip({ clipId: clip.id, endTime })));
   };
-  const recoveryOwner = chrome.commandSession?.state.recoverableOwners[0];
+  const recoveryOwners = chrome.commandSession?.state.recoverableOwners ?? [];
   return <main>
     <button type="button" data-testid="public-trim-trigger" disabled={!clip} onClick={trim}>Run public trim</button>
-    <button type="button" data-testid="public-trim-recover" disabled={!recoveryOwner} onClick={() => void chrome.commandSession?.recover(recoveryOwner!)}>Recover saved edits</button>
+    {recoveryOwners.map((ownerId) => <button key={ownerId} type="button" data-testid="public-trim-recover" data-owner-id={ownerId} onClick={() => void chrome.commandSession?.recover(ownerId)}>Recover saved edits</button>)}
     <button type="button" data-testid="public-trim-undo" disabled={!chrome.canUndo} onClick={chrome.undo}>Undo</button>
     <output data-testid="public-trim-result">{result}</output>
     <output data-testid="public-trim-status">{chrome.commandSession?.state.status ?? chrome.saveStatus}</output>
