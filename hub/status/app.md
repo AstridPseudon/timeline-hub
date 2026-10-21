@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T00:07:03Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 22 | status age 5m -->
+<!-- app | 2026-10-21T00:13:09Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 11m -->
 # app — 2026-10-21 00:01 UTC
 Milestone: M1 RECORDED. M2 all-writer deletion and M3 viewing remain OPEN.
 Integrated: App41bf86102 after3ee190062/tree38d6f715 physical-controller source. Main860 ancestry08dd retained; lead assertion check PASS (42files/461 removed lines equal upstream). Current native trim, settings scalar157eef8cf, parent Deletec0adfd0e9, owner-five5af, full audio480, physicalPCM callera6fa and approved controller tuple3ee are integrated. App2 ordinary b188→b4e, bootstrapf487→b69, trim79f→e4ee, parentc0b→f7c and selected8bae→db8 integrated. Approved pre-edit closure oracle current port41bf86102 is integrated (23+2controls/discovery1); App2 owns next actual ordinary run.
