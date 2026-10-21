@@ -26,6 +26,7 @@ import { createInteractionState, type InteractionStateRef } from '@/tools/video-
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { ROW_HEIGHT, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { useAssetOperations } from '@/tools/video-editor/hooks/useAssetOperations.ts';
 import { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
 import { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
@@ -73,6 +74,7 @@ import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timeline
 import type { ResolvedTimelineConfig, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import { useTimelineOps } from '@/tools/video-editor/hooks/useTimelineOps';
+import { createTimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 import type { TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 
 export type { EditorPreferences } from '@/tools/video-editor/hooks/useEditorPreferences.ts';
@@ -90,6 +92,10 @@ type ClipEditingHook = ReturnType<typeof useClipEditing>;
 type ExternalDropHook = ReturnType<typeof useExternalDrop>;
 type TimelineHistoryHook = ReturnType<typeof useTimelineHistory>;
 type RenderStateHook = ReturnType<typeof useRenderState>;
+
+type VerifiedMediaProvider = {
+  getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
+};
 
 function visualSeamContractWithoutReport(value: unknown): Record<string, unknown> | undefined {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -933,7 +939,28 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     editability: runtime.timelineEditability,
   });
 
-  const assetManagement = services.useAssetManagement({
+  // Construct the provider-bound native facade before host asset services run.
+  // The row-local media consumer receives this existing service; it must not
+  // fall back to the snapshot writer when the native port is unavailable.
+  const parentMediaProvider = runtime.provider as typeof runtime.provider & VerifiedMediaProvider;
+  const parentMediaProjectId = runtime.project.projectId;
+  const parentMediaEditability = runtime.timelineEditability;
+  const parentMediaCommands = useMemo(() => {
+    const getProjectVerifiedMedia = parentMediaProvider.getProjectVerifiedMedia;
+    const parentMediaRuntime = typeof getProjectVerifiedMedia === 'function'
+      && typeof parentMediaProjectId === 'string'
+      ? {
+          projectId: parentMediaProjectId,
+          getProjectVerifiedMedia: getProjectVerifiedMedia.bind(parentMediaProvider),
+        }
+      : undefined;
+    return createTimelineCommands(store, {
+      timelineEditability: parentMediaEditability,
+      parentMediaRuntime,
+    });
+  }, [parentMediaEditability, parentMediaProjectId, parentMediaProvider, store]);
+
+  const assetManagementArgs = {
     store,
     dataRef,
     selectedTrackId,
@@ -944,7 +971,9 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry,
     invalidateAssetRegistry,
     resolveAssetUrl,
-  });
+    commands: parentMediaCommands,
+  };
+  const assetManagement = services.useAssetManagement(assetManagementArgs);
 
   const clipResize = useClipResize({
     dataRef,

@@ -256,6 +256,37 @@ describe('shot timeline popup persistence', () => {
       .resolves.toBe('/api/astrid/v1/objects/already-resolved');
   });
 
+  it('keeps the parent Runtime media seam on the nested popup provider', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+    const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === 'occ-1')!;
+    const popupConfig = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
+    const prepareMediaImport = vi.fn().mockResolvedValue({} as never);
+    const mediaProvider = {
+      supportsDirectAssetUpload: true,
+      prepareMediaImport,
+      getProjectMediaSelection: vi.fn(),
+      getProjectVerifiedMedia: vi.fn(),
+    };
+
+    const provider = createShotTimelineDataProvider(
+      popupConfig,
+      composition,
+      occurrence.occurrenceId,
+      undefined,
+      undefined,
+      undefined,
+      0,
+      mediaProvider,
+    );
+    const file = new File(['popup'], 'popup.png', { type: 'image/png' });
+
+    expect(provider.supportsDirectAssetUpload).toBe(true);
+    await provider.prepareMediaImport?.(file);
+    expect(prepareMediaImport).toHaveBeenCalledWith(file);
+    expect(provider.getProjectMediaSelection).toBeDefined();
+    expect(provider.getProjectVerifiedMedia).toBeDefined();
+  });
+
   it('keeps the mounted editor and undo history across its own publication acknowledgement', async () => {
     const adapter = createShotCompositionAdapter({ load: vi.fn().mockResolvedValue(fixture), publish: vi.fn() });
     const composition = adapter.prepare(fixture);

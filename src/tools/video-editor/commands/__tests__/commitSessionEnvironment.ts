@@ -21,6 +21,9 @@ import { executeParentClipAddMedia } from '../parentClipAddCapture.ts';
 const projectId = 'project-commit', timelineId = 'timeline-commit';
 export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'actor-1' };
 const h0 = { revisionId: 'r0', publicationId: 'p0' };
+type EnvironmentOptions = {
+  validateCommitCommands?: (commands: readonly EditCommand[]) => void;
+};
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
 const deferred = () => {
   let resolve!: () => void;
@@ -46,7 +49,7 @@ function storage() {
   } });
   return { outbox, factory };
 }
-export async function environment(initialDocument = document()) {
+export async function environment(initialDocument = document(), options: EnvironmentOptions = {}) {
   let serverDocument = structuredClone(initialDocument);
   let serverHead = h0;
   let fault: 'lost' | 'busy' | 'conflict' | 'unavailable' | 'refused' | 'validation' | 'authorization' | null = null;
@@ -76,6 +79,7 @@ export async function environment(initialDocument = document()) {
       return ok({ project_id: projectId, ...internal });
     }
     if (!path.endsWith('/commit') || !request || !key) throw new Error(`Unexpected HTTP ${method} ${path}`);
+    options.validateCommitCommands?.(request.commands);
     if (pause) await pause.promise;
     if (fault === 'busy' || fault === 'conflict' || fault === 'unavailable') return {
       status: fault === 'unavailable' ? 503 : 409, headers: {}, body: bytes({

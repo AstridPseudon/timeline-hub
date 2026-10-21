@@ -137,13 +137,15 @@ describe('Runtime media import adapter', () => {
         generationId: 'generation-import',
         variantId: 'variant-import',
       },
-      mediaSelection: {
-        asset: ASSET_ID,
-        generation_id: 'generation-import',
-        variant_id: 'variant-import',
-        object_id: ASSET_ID,
-        catalog_digest: 'sha256:catalog-import',
-      },
+    });
+    // The import response carries object metadata; the immutable five-field
+    // selection is the authority used by verified media reads.
+    expect(prepared.mediaSelection).toEqual({
+      asset: ASSET_ID,
+      generation_id: 'generation-import',
+      variant_id: 'variant-import',
+      object_id: ASSET_ID,
+      catalog_digest: 'sha256:catalog-import',
     });
     expect(JSON.parse(JSON.stringify(prepared.entry))).toEqual({
       file: `http://runtime.test/v1/objects/${encodeURIComponent(ASSET_ID)}`,

@@ -1,6 +1,7 @@
 import type { CommitRequest, DocumentPin, EditCommand, JSON, MediaSelection, VerifiedDocument, VerifiedDocumentObject, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
+import { validateAcceptedCanonicalDocument } from '@/integrations/runtime/dataProvider.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { clipScalarPreview, type ClipScalarArgs, type ClipScalarCapturePort } from './clipScalarGesture.ts';
@@ -1122,10 +1123,17 @@ export async function createTimelineCommandSession(options: Options) {
           || displayBasis.canonicalDocument?.parent_revision?.revision_id !== displayBasis.head.revisionId) {
           throw new Error('Recovered move has no verified original display basis');
         }
+        const originalDocument = validateAcceptedCanonicalDocument(
+          displayBasis.canonicalDocument,
+          options.scope.projectId,
+          options.scope.timelineId,
+          displayBasis.head.revisionId,
+        );
+        const verifiedDisplayBasis = { ...displayBasis, canonicalDocument: originalDocument };
         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
-          : displayBasis;
+          : verifiedDisplayBasis;
         // Submission advances with A's ACK; B's display retains its original closure.
-        await project(displayBasis,
+        await project(verifiedDisplayBasis,
           record.intents.map((intent) => (intent.payload as unknown as Payload).preview).filter((patch): patch is TimelinePatch => patch !== null));
       }
       if (!publishRefusal()) publish(record.intents.length ? 'dirty' : 'saved');
