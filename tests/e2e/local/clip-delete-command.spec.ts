@@ -221,7 +221,7 @@ test('M2 current013 real parent DELETE: lost ACK, reload, Runtime restart, exact
   const finishKeyboardTrace = await traceDeleteKeyboard(page, testInfo);
   try {
     await page.keyboard.press('Delete');
-    // Missing nativeDelete composition must fail here; a legacy save cannot satisfy this.
+    // The current native parent-delete route must produce the command; a legacy save cannot satisfy this.
     await expect.poll(() => wire.posts.length, CEILING).toBe(1);
   } finally {
     await finishKeyboardTrace?.();

@@ -15,19 +15,19 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 export const CURRENT013_RUNTIME = Object.freeze({
-  serverCommit: '8f105c26e3b62f9c2683f717a9773a12bc775a8e',
-  producerCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
-  version: '0.2.13',
-  producerVersion: 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56',
-  schemaDigest: 'sha256:8de823011a121359b9ad021e283b45afb6baeabc8a154a02bd086d1260a8b8f4',
+  serverCommit: '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c',
+  producerCommit: '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c',
+  version: '0.2.14',
+  producerVersion: 'sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac',
+  schemaDigest: 'sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816',
   componentManifest: 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5',
-  artifactCount: 75,
+  artifactCount: 76,
 });
 
 export const CURRENT013_AGENT = Object.freeze({
-  commit: 'd0a5072bbe7b7ce9489f43aa0a81027ec400343b',
-  tree: '6adb4a1190dfb2874e101565f37eccd392b1ae2f',
-  lock: 'sha256:c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24',
+  commit: '6efc81500a0e0688c2bb41e736503f0fc3e04abb',
+  tree: '2ed2b8a12b5b3391ca221ba6ff05390f71a73556',
+  lock: 'sha256:920f4a3edf3d0e5ce9df5a0b2749f7b02bc2ea7db6fef2ec70db8d02b65be8e7',
 });
 
 export const CURRENT013_COMPOSITION = Object.freeze({
