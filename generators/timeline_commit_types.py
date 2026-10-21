@@ -10,8 +10,14 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _refine(base: dict, branch: dict) -> dict:
+def _refine(base: dict | bool, branch: dict | bool) -> dict | bool:
     """Keep shared object fields when a union branch narrows their constraints."""
+    if base is False or branch is False:
+        return False
+    if base is True:
+        return branch
+    if branch is True:
+        return base
     result = {**base, **branch}
     if "properties" in base or "properties" in branch:
         properties = base.get("properties", {})
@@ -48,7 +54,7 @@ def render() -> dict[str, str]:
         for keyword in ("oneOf", "anyOf"):
             base = {key: value for key, value in schema.items() if key != keyword}
             for index, variant in enumerate(schema.get(keyword, [])):
-                if "properties" in variant:
+                if isinstance(variant, dict) and "properties" in variant:
                     variant = _refine({"type": "object", **base}, variant)
                     variant_name = f"{name}Variant{index + 1}"
                     definitions[variant_name] = variant
@@ -66,14 +72,18 @@ def render() -> dict[str, str]:
         ):
             schema["required"] = list(properties)
         for key, value in properties.items():
-            if value.get("type") == "object" and "properties" in value:
+            if isinstance(value, dict) and value.get("type") == "object" and "properties" in value:
                 nested_name = f"{name}{key[0].upper()}{key[1:]}"
                 definitions[nested_name] = value
                 pending.append(nested_name)
                 properties[key] = {"$ref": "#/$defs/" + nested_name}
 
-    def expression(schema: dict, language: str) -> str:
+    def expression(schema: dict | bool, language: str) -> str:
         py = language == "python"
+        if schema is True:
+            return "Any" if py else "unknown"
+        if schema is False:
+            return "Never" if py else "never"
         if "$ref" in schema:
             target = schema["$ref"]
             if target.startswith(("#/$defs/", "edit-command.json#/$defs/")):
@@ -103,7 +113,7 @@ def render() -> dict[str, str]:
             )
         kind = schema.get("type")
         if isinstance(kind, list):
-            parts = [expression({"type": t}, language) for t in kind]
+            parts = [expression({**schema, "type": t}, language) for t in kind]
             return (
                 "Union[" + ", ".join(parts) + "]"
                 if py
@@ -138,7 +148,8 @@ def render() -> dict[str, str]:
                 if not py and schema.get("additionalProperties", True) is not False:
                     additional = schema.get("additionalProperties", {})
                     item = expression(additional, language) if isinstance(additional, dict) else "unknown"
-                    fields.append(f"[key: string]: {item}")
+                    index_item = item if item == "unknown" else f"{item} | undefined"
+                    fields.append(f"[key: string]: {index_item}")
                 elif not py and not fields:
                     fields.append("[key: string]: never")
                 return (
@@ -174,7 +185,7 @@ def render() -> dict[str, str]:
     python = [
         '"""Generated timeline commit DTOs; do not edit by hand."""',
         "",
-        "from typing import Any, Literal, NotRequired, TypedDict, Union",
+        "from typing import Any, Literal, Never, NotRequired, TypedDict, Union",
         "",
     ]
     typescript = ["/** Generated timeline commit DTOs; do not edit by hand. */", ""]

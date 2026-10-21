@@ -4,7 +4,7 @@ import importlib
 import json
 import subprocess
 from pathlib import Path
-from typing import TypedDict, Union, get_args, get_origin, get_type_hints, is_typeddict
+from typing import Any, Never, TypedDict, Union, get_args, get_origin, get_type_hints, is_typeddict
 
 import pytest
 
@@ -95,6 +95,38 @@ const missingBranch: ChangeArgs = { target: "t", note: "optional" };
 const unknownField: ChangeArgs = { target: "t", value: "x", extra: true };
 """)
     subprocess.run(["tsc", "--noEmit", "--strict", "--target", "ES2022", str(source)], check=True)
+
+
+def test_boolean_subschemas_render_as_impossible_or_unconstrained(tmp_path, monkeypatch):
+    schemas = tmp_path / "contract/schemas"
+    schemas.mkdir(parents=True)
+    (schemas / "timeline-commit.json").write_text(json.dumps({"$defs": {}}))
+    (schemas / "edit-command.json").write_text(json.dumps({"$defs": {
+        "BooleanFields": {
+            "type": "object",
+            "properties": {"impossible": False, "anything": True},
+            "required": ["impossible", "anything"],
+            "oneOf": [{"properties": {"impossible": False, "anything": True}}],
+        },
+    }}))
+    openapi = tmp_path / "contract/openapi"
+    openapi.mkdir()
+    (openapi / "workspace-v1.yaml").write_text(json.dumps({"components": {"schemas": {
+        "CommittedMutation": {"properties": {"receipt": {"type": "object"}}},
+    }}}))
+    monkeypatch.setattr(timeline_commit_types, "ROOT", tmp_path)
+    outputs = timeline_commit_types.render()
+
+    namespace = {}
+    exec(outputs["runtime_protocol/timeline_commit_types.py"], namespace)
+    variant = namespace["BooleanFieldsVariant1"]
+    assert get_type_hints(variant, namespace) == {
+        "impossible": Never,
+        "anything": Any,
+    }
+    typescript = outputs["packages/typescript/src/timeline-commit-types.ts"]
+    assert "impossible: never" in typescript
+    assert "anything: unknown" in typescript
 
 
 def test_typescript_track_label_positive_and_negative_fixtures():
