@@ -105,10 +105,15 @@ def test_scene_only_queries_full_extent_and_uses_existing_bundle(tmp_path, monke
         "astrid.core.rendering.verified_source.inherited_source",
         lambda timeline, assets: source,
     )
+    monkeypatch.setattr(
+        "astrid.core.rendering.remotion_runtime.default_composition_id",
+        lambda: "neutral-composition",
+    )
 
     def query(timeline, assets, frames, **kwargs):
         calls.append((timeline, assets, tuple(frames), kwargs))
         assert kwargs["frame_output_dir"].is_dir()
+        assert kwargs["composition_id"] == "neutral-composition"
         return [{"frame": frame, "width": 1920, "height": 1080, "layers": []} for frame in frames]
 
     monkeypatch.setattr(scene_answers, "_prepared_host_frames_at", query)
@@ -292,15 +297,16 @@ def test_prepared_scene_query_keeps_root_alive_and_validates_source(monkeypatch,
         yield (props, tmp_path / ".props.json")
         events.append("prepare-exit")
 
+    @contextmanager
+    def prepared_scene_root(*args, **kwargs):
+        with lock(), prepare(*args, **kwargs) as prepared:
+            yield prepared
+
     monkeypatch.setattr(scene_answers, "remotion_runtime_status", lambda **kwargs: SimpleNamespace(
         available=True, project_dir=tmp_path / "remotion", node_executable=tmp_path / "node",
     ))
     monkeypatch.setattr(
-        "astrid.packs.rendering.rendering.renderers.remotion.lock.remotion_render_lock", lock,
-    )
-    monkeypatch.setattr(
-        "astrid.packs.rendering.rendering.renderers.remotion.root_preparation._prepared_remotion_root",
-        prepare,
+        "astrid.core.rendering.remotion_runtime.prepared_scene_root", prepared_scene_root,
     )
     monkeypatch.setattr(
         "astrid.core.rendering.verified_source.inherited_source",
@@ -332,3 +338,41 @@ def test_prepared_scene_query_keeps_root_alive_and_validates_source(monkeypatch,
     )
     assert [row["frame"] for row in result] == [3, 0, 3]
     assert events == ["lock-enter", "prepare-enter", "prepare-exit", "lock-exit"]
+
+
+def test_prepared_scene_root_preserves_backend_lifetime_on_body_failure(monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+    from astrid.packs.rendering.rendering.renderers.remotion import lock, root_preparation
+
+    events = []
+
+    @contextmanager
+    def backend_lock():
+        events.append("lock-enter")
+        try:
+            yield
+        finally:
+            events.append("lock-exit")
+
+    @contextmanager
+    def backend_prepare(*args, **kwargs):
+        events.append("prepare-enter")
+        try:
+            yield "prepared-root"
+        finally:
+            events.append("prepare-exit")
+
+    monkeypatch.setattr(lock, "remotion_render_lock", backend_lock)
+    monkeypatch.setattr(root_preparation, "_prepared_remotion_root", backend_prepare)
+
+    with remotion_runtime.prepared_scene_root("timeline", "assets", "video") as prepared:
+        assert prepared == "prepared-root"
+        events.append("body")
+    assert events == ["lock-enter", "prepare-enter", "body", "prepare-exit", "lock-exit"]
+
+    events.clear()
+    with pytest.raises(RuntimeError, match="body failed"):
+        with remotion_runtime.prepared_scene_root("timeline", "assets", "video"):
+            events.append("body")
+            raise RuntimeError("body failed")
+    assert events == ["lock-enter", "prepare-enter", "body", "prepare-exit", "lock-exit"]

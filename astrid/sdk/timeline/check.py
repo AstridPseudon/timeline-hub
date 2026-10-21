@@ -44,13 +44,13 @@ def _cut_in(table: list[tuple[float, float, str]], t: float) -> str | None:
 
 
 def element_coverage_cached(element_ids: Iterable[str]) -> dict[str, dict]:
-    """``onscreen.element_coverage`` read once per process per element (the registry load is the cost)."""
-    from astrid.core.timeline import onscreen
+    """``scene_roles.element_coverage`` read once per process per element (the registry load is the cost)."""
+    from astrid.core.timeline import scene_roles
 
     ids = list(element_ids)
     missing = sorted({i for i in ids if i not in _ELEMENT_COVERAGE})
     if missing:
-        _ELEMENT_COVERAGE.update(onscreen.element_coverage(missing))
+        _ELEMENT_COVERAGE.update(scene_roles.element_coverage(missing))
     return {i: _ELEMENT_COVERAGE[i] for i in ids}
 
 
@@ -203,18 +203,6 @@ class _CheckMixin:
             out.append(f"scene   {kind} {span.start_frame / self.fps:.3f}–{span.end_frame / self.fps:.3f} s"
                        + (f": {', '.join(span.findings)}" if span.findings else ""))
         return out
-
-    def _scene_only_problems(self, result: Any, context: Mapping[str, Any]) -> list[str]:
-        """Format a bound managed Scene result with the established advisory reader.
-
-        The explicit-check caller may use this after Viewing supplies the
-        managed invocation result. Save/core paths do not call it.
-        """
-        from astrid.sdk.timeline_filmstrip import _scene_only_spans
-
-        return self._scene_problems(_scene_only_spans(
-            result, context, duration_frames=int(round(self.duration * self.fps)),
-        ))
 
     def _managed_scene_spans(self) -> list | None:
         """Read Scene advice through an explicitly connected checkout, if bound.

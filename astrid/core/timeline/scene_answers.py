@@ -27,6 +27,13 @@ def probe_context(*args, **kwargs):
     return _probe(*args, **kwargs)
 
 
+def prepared_scene_root(*args, **kwargs):
+    """Use the neutral runtime seam for the existing prepared Root lifetime."""
+    from astrid.core.rendering.remotion_runtime import prepared_scene_root as _prepare
+
+    return _prepare(*args, **kwargs)
+
+
 class SceneQueryUnavailable(RuntimeError):
     """No scene answer was obtained; this is different from an empty scene."""
 
@@ -98,7 +105,7 @@ def host_frames_at(props: Mapping[str, Any], basis: Mapping[str, Any],
     using these answers in a check or capture. No production caller is activated
     here. Missing inputs are unavailable, never a guessed registry or theme.
     """
-    from astrid.core.timeline.onscreen import element_coverage, role_of
+    from astrid.core.timeline.scene_roles import element_coverage, role_of
 
     timeline = props.get("timeline")
     if (not isinstance(timeline, Mapping) or not isinstance(timeline.get("tracks"), list)
@@ -148,10 +155,6 @@ def _prepared_host_frames_at(
     try:
         from astrid.core.rendering.profile import resolve_render_profile
         from astrid.core.rendering.verified_source import inherited_source
-        from astrid.packs.rendering.rendering.renderers.remotion import lock
-        from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (
-            _prepared_remotion_root,
-        )
 
         runtime = remotion_runtime_status(require_explicit_project=True)
         if (not runtime.available or runtime.project_dir is None
@@ -160,7 +163,7 @@ def _prepared_host_frames_at(
         source = inherited_source(timeline_path, assets_path)
         if source is None:
             raise SceneQueryUnavailable("exact retained Runtime source required")
-        with lock.remotion_render_lock(), _prepared_remotion_root(
+        with prepared_scene_root(
             timeline_path,
             assets_path,
             staged_video,
