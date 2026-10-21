@@ -106,7 +106,7 @@ def _replace_payload_media(ctx, owner, old_object_id, new_object_id):
                     ctx.write(owner + '/shot', ['payload', 'audio_bindings', str(index), key], new_object_id)
 
 
-def _registry(ctx, owner, pin, kind, *, create=False, alias=None, raw=False):
+def _registry(ctx, owner, pin, kind, *, create=False, alias=None, raw=False, duration=None):
     identity = pin['asset'] if alias is None else alias
     if not isinstance(identity, str) or not re.fullmatch(r'(?!.*::)[^/]+', identity):
         raise CommandError('media requires a reserved raw asset alias')
@@ -143,6 +143,8 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None, raw=False):
     if not raw and not create and any(key in entry for key in ('object_id', 'digest', 'content_digest', 'content_sha256',
                                                   'file', 'path', 'local_path', 'src', 'source', 'format')):
         raise CommandError('unsupported old registry identity codec', kind='unsupported_media')
+    if duration is not None and isinstance(entry, dict) and 'duration' in entry:
+        ctx.write(ref, ['duration'], number(duration, 'intrinsic duration', positive=True))
     ctx.dependency('media.new' if create else 'media.old', 'media', pin)
     return ref
 
@@ -262,7 +264,7 @@ def _swap(ctx, command, owner, limit):
                 affected.append(member)
         if not affected:
             raise CommandError('media alias has no affected consumers', kind='identity_conflict')
-        _registry(ctx, owner, old, kind, alias=alias)
+        _registry(ctx, owner, old, kind, alias=alias, duration=value.get('duration_seconds'))
         for key, replacement in _binding(pin, kind).items():
             ctx.write(owner + '/asset:' + alias, [key], replacement)
         _replace_payload_media(ctx, owner, old['object_id'], pin['object_id'])

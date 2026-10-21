@@ -153,9 +153,10 @@ def _source_row(clip, duration, label):
     speed = number(clip.get("speed", 1), f"{label}.speed", positive=True)
     hold = number(clip.get("hold", right - left), f"{label}.hold", positive=True)
     duration = number(duration, f"{label}.duration", positive=True)
-    if speed != 1 or not math.isclose(right - left, duration, abs_tol=1e-9) \
-            or not math.isclose(hold, duration, abs_tol=1e-9):
-        raise CommandError(f"{label} source-unit hold/extents differ from settled audio",
+    if (left < 0 or right > duration or speed != 1
+            or not math.isclose(right - left, duration, abs_tol=1e-9) \
+            or not math.isclose(hold, duration, abs_tol=1e-9)):
+        raise CommandError(f"{label} source window has no literal command carrier",
                            kind="unsupported_timing")
     return left, right, hold
 

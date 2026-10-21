@@ -81,6 +81,40 @@ def test_original_voiceover_outcome_lowers_to_audio_and_metadata_commands_with_i
     assert inverse(plan.bundle, plan.records).bundle == before
 
 
+def test_voiceover_same_alias_swap_updates_duration_mirrors_and_inverse():
+    authored, prepared = _voiceover_bundle_and_outcome()
+    shot = authored["shots"]["shot-shared"]
+    shot["internal_timeline"]["registry"]["assets"]["voice"]["duration"] = 2
+    shot["payload"]["assets"] = [{
+        "asset_id": "voice", "object_id": OLD, "digest": OLD,
+        "source": {"media_id": OLD, "content_sha256": OLD[7:], "duration": 2},
+    }]
+    shot["payload"]["items"] = [{"item_id": "voice-item", "media_id": OLD,
+                                  "metadata": {"keep": True}}]
+    old = {"asset": "voice", "generation_id": "generation-old", "variant_id": "variant-old",
+           "object_id": OLD, "catalog_digest": "sha256:" + "a" * 64}
+    new = {"asset": "voice", "generation_id": "generation-new", "variant_id": "variant-new",
+           "object_id": NEW, "catalog_digest": "sha256:" + "b" * 64}
+    verified = [{"selection": copy.deepcopy(media), "media_type": "audio/wav", "size": 4,
+                 "duration_seconds": 4} for media in (old, new)]
+
+    lowered = capture_draft_voiceover(
+        authored, prepared, media_by_occurrence={"occ-1": new},
+        old_media_by_occurrence={"occ-1": old}, verified_media=verified)
+    before = copy.deepcopy(authored)
+    plan = execute(authored, lowered["commands"], verified_media=verified)
+    updated = plan.bundle["shots"]["shot-shared"]
+    assert updated["internal_timeline"]["registry"]["assets"]["voice"]["duration"] == 4
+    assert updated["payload"]["assets"] == [{
+        "asset_id": "voice", "object_id": NEW, "digest": NEW,
+        "source": {"media_id": NEW, "content_sha256": NEW[7:], "duration": 2},
+    }]
+    assert updated["payload"]["items"] == [{"item_id": "voice-item", "media_id": NEW,
+                                               "metadata": {"keep": True}}]
+    assert replay(plan, authored, verified_media=verified).records == plan.records
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
 @pytest.mark.parametrize("source_bound", [False, True])
 @pytest.mark.usefixtures("runtime_abi")
 def test_prepared_ripple_timing_and_padding_survive_lowering_inverse_and_redo(source_bound):
