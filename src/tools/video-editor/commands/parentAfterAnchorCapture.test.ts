@@ -205,20 +205,32 @@ describe('dormant parent after-anchor media capture', () => {
     parity.push({ original: input, requested: { id: 'born' }, ...result });
   });
 
-  // Requirement: from/to-derived after-anchor hold needs the Agent birth schema
-  // to admit missing/null hold. Exact 3b3208c43 requires a positive numeric hold
-  // before its raw-window validator can derive one; keep the intended behavior.
-  it.fails.each(['missing', 'null'])('preserves a transition with %s video hold', (hold) => {
+  // Exact Agent 3b3208c43 requires a positive numeric hold before raw-window
+  // validation; keep the Main-compatible missing/null-hold requirement open.
+  it.each(['missing', 'null'])('refuses a %s video hold atomically and accepts the equivalent positive window', (hold) => {
     const input = bundle();
     const source = (input.parent.clips as Record<string, JSON>[])[1];
     if (hold === 'missing') delete source.hold;
     else source.hold = null;
     source.transition = { type: 'crossfade', duration: .5, opaque: [false, null] };
     (input.parent.config as Record<string, JSON>).clips = copy(input.parent.clips);
+    const before = copy(input);
+    expect(() => captureParentClipAddMediaAfterAnchor(
+      input, 'parent/clip:anchor', { id: 'born' }, media, [verified],
+    )).toThrow('clip.hold must be a finite positive number');
+    expect(input).toEqual(before);
     parity.push({ original: input, requested: { id: 'born' }, refused: true });
+
+    const validInput = bundle();
+    const validSource = (validInput.parent.clips as Record<string, JSON>[])[1];
+    validSource.transition = copy(source.transition);
+    (validInput.parent.config as Record<string, JSON>).clips = copy(validInput.parent.clips);
     const result = finishParentClipAddMediaAfterAnchor(
-      captureParentClipAddMediaAfterAnchor(input, 'parent/clip:anchor', { id: 'born' }, media, [verified]));
-    expect(result.command.args.row).toEqual({ ...source, id: 'born', asset: media.asset, at: 3.003, effectId: 'effect-born' });
+      captureParentClipAddMediaAfterAnchor(validInput, 'parent/clip:anchor', { id: 'born' }, media, [verified]));
+    expect(result.command.args.row).toEqual({
+      ...validSource, id: 'born', asset: media.asset, at: 3.003, effectId: 'effect-born',
+    });
+    expect(result.command.args.row).toMatchObject({ hold: 4, from: 2, to: 6, transition: source.transition });
   });
 
   it('preserves explicit null effects but refuses explicit null track/asset overrides', () => {
