@@ -251,6 +251,122 @@ describe('dormant transcript.associate capture', () => {
     expect(result.bundle.parent.config.bundle.itemsBySchemaRef[TRANSCRIPT_SCHEMA_REF][0].id).toBe(canonicalId);
   });
 
+  it('refuses a command whose new pin differs from its supplied source atomically', async () => {
+    const input = bundle();
+    const before = copy(input);
+    const captured = await source(canonicalId, 1);
+    const basis = await captureTranscriptAssociation(input, assetId, captured);
+    const swapped = await source(canonicalId, 2);
+
+    await expect(executeTranscriptAssociation(input, basis.command, swapped))
+      .rejects.toMatchObject({
+        message: 'submitted new transcript source does not match its exact pin',
+        kind: 'capture_mismatch',
+      });
+    expect(input).toEqual(before);
+  });
+
+  it('uses a populated config clip mirror when the primary parent collection is empty', async () => {
+    const input = bundle();
+    input.parent.clips = [];
+    const before = copy(input);
+    const document = await source();
+    const result = await finishTranscriptAssociation(
+      await captureTranscriptAssociation(input, assetId, document),
+    );
+    const beforeConfig = before.parent.config as Record<string, JSON>;
+    const beforeBundle = beforeConfig.bundle as Record<string, JSON>;
+    const config = result.bundle.parent.config as Record<string, JSON>;
+    const nested = config.bundle as Record<string, JSON>;
+    const refs = nested.transcriptReferences as Record<string, JSON>;
+    const extension = (config.app as Record<string, JSON>)['haus.astrid.transcript-lane'];
+
+    expect(result.command).toMatchObject({
+      resolved: ['parent/asset:asset-a'],
+      args: {
+        asset_id: assetId,
+        media_id: MEDIA,
+        source_id: sourceId,
+        document: document.pin,
+        previous_document: null,
+        source_schema_ref: TRANSCRIPT_SCHEMA_REF,
+      },
+      reads: expect.arrayContaining([
+        expect.objectContaining({ ref: 'parent', path: ['config'] }),
+        expect.objectContaining({ ref: 'parent', path: ['config', 'bundle', 'transcriptReferences'] }),
+        expect.objectContaining({ ref: 'parent', path: ['config', 'bundle', 'itemsBySchemaRef'] }),
+      ]),
+      selections: [{
+        key: 'transcript.source-items',
+        query_version: 1,
+        owner: 'parent',
+        members: [`["asset-a","source-1","${legacyId}"]`],
+        order: [`["asset-a","source-1","${legacyId}"]`],
+        boundaries: [`["asset-a","source-1","${legacyId}"]`],
+        policy: 'guard-membership',
+      }],
+      bindings: {},
+      created: [],
+    });
+    expect(result.command.reads).toEqual([
+      { ref: 'parent', path: ['config'], state: { state: 'present', value: beforeConfig } },
+      { ref: 'parent', path: ['config', 'bundle', 'transcriptReferences'],
+        state: { state: 'present', value: beforeBundle.transcriptReferences } },
+      { ref: 'parent', path: ['config', 'bundle', 'itemsBySchemaRef'],
+        state: { state: 'present', value: beforeBundle.itemsBySchemaRef } },
+    ]);
+    expect(result.command.expect).toEqual({
+      'parent::config.bundle.transcriptReferences': {
+        state: 'present', value: beforeBundle.transcriptReferences,
+      },
+      'parent::config.bundle.itemsBySchemaRef': {
+        state: 'present', value: beforeBundle.itemsBySchemaRef,
+      },
+      'parent::config.clips': { state: 'present', value: beforeConfig.clips },
+      'parent::config.app.haus.astrid.transcript-lane': {
+        state: 'present', value: beforeConfig.app?.['haus.astrid.transcript-lane'],
+      },
+    });
+    expect(result.command.authorship).toEqual({
+      'parent::config.bundle.transcriptReferences': 'direct',
+      'parent::config.bundle.itemsBySchemaRef': 'direct',
+      'parent::config.clips': 'direct',
+      'parent::config.app.haus.astrid.transcript-lane': 'direct',
+    });
+    expect(result.record.dependencies).toEqual([
+      { key: 'transcript.document', kind: 'transcript', pin: document.pin, policy: 'exact' },
+    ]);
+    expect(result.record.writes).toEqual([
+      {
+        ref: 'parent', path: ['config', 'bundle', 'transcriptReferences'],
+        before: { state: 'present', value: beforeBundle.transcriptReferences },
+        after: { state: 'present', value: refs },
+      },
+      {
+        ref: 'parent', path: ['config', 'bundle', 'itemsBySchemaRef'],
+        before: { state: 'present', value: beforeBundle.itemsBySchemaRef },
+        after: { state: 'present', value: nested.itemsBySchemaRef },
+      },
+      {
+        ref: 'parent', path: ['config', 'clips'],
+        before: { state: 'present', value: beforeConfig.clips },
+        after: { state: 'present', value: config.clips },
+      },
+      {
+        ref: 'parent', path: ['config', 'app', 'haus.astrid.transcript-lane'],
+        before: { state: 'present', value: beforeConfig.app?.['haus.astrid.transcript-lane'] },
+        after: { state: 'present', value: extension },
+      },
+    ]);
+    expect(result.record.derived_writes).toEqual([]);
+    expect(result.bundle.parent.clips).toEqual([]);
+    expect((config.clips as JSON[])[1]).toMatchObject({
+      id: `transcript-caption-${computeHostFingerprint(`${canonicalId}@media-a`).split(':')[1]}`,
+    });
+    expect(refs.associations).toEqual([{ assetId, documentId: document.pin.document_id }]);
+    expect(input).toEqual(before);
+  });
+
   it.each([
     ['caption destination collision', () => bundle({ collision: true }), 'caption destination'],
     ['shared review ownership', () => bundle({ sharedReview: true }), 'review ownership'],

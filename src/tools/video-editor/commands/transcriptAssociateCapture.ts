@@ -419,6 +419,10 @@ function applyTranscriptAssociation(
   if (args.media_id !== mediaId || sourceMedia !== mediaId || args.source_id !== sourceId) {
     fail('transcript source owner differs from command', 'invalid_source');
   }
+  const newPin = exactPin(args.document, 'new');
+  if (!equal(newPin, source.pin)) {
+    fail('submitted new transcript source does not match its exact pin', 'capture_mismatch');
+  }
   const previousPin = args.previous_document === null ? undefined : exactPin(args.previous_document, 'prior');
   if (!equal(previousPin, previousSource?.pin)) fail('prior transcript source does not match its exact pin', 'history_unavailable');
 
@@ -486,7 +490,9 @@ function applyTranscriptAssociation(
   ctx.write('parent', ['config', 'bundle', 'transcriptReferences'], nextRefs);
   ctx.write('parent', ['config', 'bundle', 'itemsBySchemaRef'], nextMap);
   if (!equal(config.clips, reconciled.clips)) {
-    const path = Array.isArray(ctx.state.bundle.parent.clips) ? ['clips'] : ['config', 'clips'];
+    const primary = ctx.state.bundle.parent.clips;
+    const path = Array.isArray(primary) && (primary.length > 0 || !Array.isArray(config.clips) || config.clips.length === 0)
+      ? ['clips'] : ['config', 'clips'];
     ctx.write('parent', path, reconciled.clips ?? []);
   }
   const oldExtension = object(config.app) ? config.app[EXTENSION_ID] : undefined;
