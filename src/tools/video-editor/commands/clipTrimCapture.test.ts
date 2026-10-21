@@ -48,6 +48,24 @@ describe('Agent built-in clip.trim capture parity', () => {
     expect(result.bundle.placements).toEqual(input.placements);
   });
 
+  it('keeps the complete native record aligned with the source-window after state', async () => {
+    const input = await bundle();
+    const result = executeClipTrim(input, {
+      ...detached(golden.commands[0]),
+      args: { in_s: null, out_s: 5 },
+    });
+
+    expect(result.record).toMatchObject({
+      command: expect.objectContaining({ args: { in_s: null, out_s: 5 } }),
+      writes: expect.arrayContaining([
+        expect.objectContaining({ path: ['from'], after: { state: 'present', value: 2 } }),
+        expect.objectContaining({ path: ['to'], after: { state: 'present', value: 5 } }),
+        expect.objectContaining({ path: ['hold'], after: { state: 'present', value: 3 } }),
+      ]),
+    });
+    expect(clip(result.bundle)).toMatchObject({ from: 2, to: 5, hold: 3, speed: 2 });
+  });
+
   it('captures the original basis and preserves opaque fields while applying source-time hold', async () => {
     const input = await bundle();
     const original = detached(input);
