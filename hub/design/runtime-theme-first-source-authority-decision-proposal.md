@@ -1,10 +1,21 @@
 # Theme first source: project-authored Document, explicitly selected by the film
 
-Status: **PROPOSAL FOR AGREEMENT, not implementation authorization**. 2026-10-21.
+> **DEFERRED — owner ruling 2026-10-21 02:04 UTC.** This Runtime proposal is
+> historical design evidence, not an M0–M4 requirement. It must not hold
+> current save, render, or peer work. M0–M4 uses the ordinary Main path:
+> `media.import_file -> project CAS -> inputs.theme -> theme.json -> ONE resolver -> props.theme`. Ordinary proof is green; canonical positive proof
+> remains red pending `rt-m3-main-theme-canonical-caller-reconcile`, and this
+> does not claim physical parity or current canonical positive green. Preserve
+> the constraints and evidence below; do not implement this first-source,
+> private, provenance-only contract. See [the ordinary-versus-canonical proof
+> distinction](handoff-rt-m3-main-theme-canonical-caller-reconcile.md).
+
+Status: **DEFERRED historical proposal; not implementation authorization**.
+2026-10-21.
 Supersedes the source/delegation assumptions in
 `runtime-theme-private-mode-concrete-proposal.md`; leaves PLAN decisions intact.
 
-## Decision requested
+## Historical decision request (deferred; no response needed)
 
 Approve one bounded semantic change: a project writer may define the original
 Theme through existing project Document CRUD, and a guarded film EditCommand

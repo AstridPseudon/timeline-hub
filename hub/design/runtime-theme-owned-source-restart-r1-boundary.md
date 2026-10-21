@@ -1,5 +1,14 @@
 # Runtime Theme private preparation: restart source boundary
 
+> **DEFERRED — owner ruling 2026-10-21 02:04 UTC.** This Runtime source review
+> is historical design evidence, not an M0–M4 requirement. It must not hold
+> current save, render, or peer work. M0–M4 uses the ordinary Main path:
+> `media.import_file -> project CAS -> inputs.theme -> theme.json -> ONE resolver -> props.theme`. Ordinary proof is green; canonical positive proof
+> remains red pending `rt-m3-main-theme-canonical-caller-reconcile`, and this
+> does not claim physical parity or current canonical positive green. Preserve
+> the exact validator findings and constraints below; do not implement the
+> deferred private/provenance-only preparation path. See [the ordinary-versus-canonical proof distinction](handoff-rt-m3-main-theme-canonical-caller-reconcile.md).
+
 Worker: rt-m3-theme-owned-source-restart-r1. Source reviewed on 2026-10-21.
 Runtime: `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree
 `d3a290b407fa61e6ab2d476f50c068073f70df00`.
@@ -7,11 +16,11 @@ Agent: `57d6635616f2982b814cfcc059b670ea1a7c9f2c`, tree
 `0174fd49bd175a726a44542d1d6e31bca13c0f02`.
 These are the reviewed sources, not a qualified implementation pair.
 
-## Finding requiring a concrete Agent/Runtime agreement
+## Historical finding requiring a concrete Agent/Runtime agreement
 
-There is no existing source-to-result flow satisfying the brief. Two joins
-are missing, not just admission of an extra digest. No product change is
-safe until both are agreed.
+At the time of this review there was no existing source-to-result flow
+satisfying the brief. Two joins were missing, not just admission of an extra
+digest. The owner ruling closes this historical agreement request.
 
 1. **First source selection:** The normal render preparation returns only
    `timeline_snapshot={config,registry}` and `timeline_authority`
@@ -100,10 +109,12 @@ Viewing consumes the existing materialized named input. No public API,
 provider, store, resolver, certificate, worker write credential or
 capture_validation.py expansion is proposed.
 
-Implementation is blocked on Agent managed invocation/source contract,
-with Runtime manager/orchestrator owning cross-area agreement. The precise
-question has been sent through `hub/inbox/agent-rt-theme-owned-source-restart-r1.md`.
-A private mode name and a result port are deliberately not invented here.
+At the time of this historical review, implementation was blocked on the
+Agent managed invocation/source contract, with Runtime manager/orchestrator
+owning cross-area agreement. That question was sent through
+`hub/inbox/agent-rt-theme-owned-source-restart-r1.md`; the owner ruling now
+closes this deferred preparation track. A private mode name and a result port
+remain deliberately uninvented here.
 
 ## Verification limits
 

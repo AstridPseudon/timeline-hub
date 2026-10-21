@@ -1,10 +1,20 @@
 # Runtime M3 Theme preparation: first source boundary
 
-Status: source-review handoff; the concrete-carrier note is not present in
-the shared design directory. The previously described step that requires an
-already Runtime-authorized `theme.json` before the private preparation is
-circular and is not a solution. This note records the existing source/read
-surfaces and the exact unresolved private boundary for peer agreement.
+> **DEFERRED — owner ruling 2026-10-21 02:04 UTC.** This Runtime source review
+> is historical design evidence, not an M0–M4 requirement. It must not hold
+> current save, render, or peer work. M0–M4 uses the ordinary Main path:
+> `media.import_file -> project CAS -> inputs.theme -> theme.json -> ONE resolver -> props.theme`. Ordinary proof is green; canonical positive proof
+> remains red pending `rt-m3-main-theme-canonical-caller-reconcile`, and this
+> does not claim physical parity or current canonical positive green. Preserve
+> the exact source findings and constraints below; do not implement the
+> deferred private/provenance-only preparation path. See [the ordinary-versus-canonical proof distinction](handoff-rt-m3-main-theme-canonical-caller-reconcile.md).
+
+Status: **DEFERRED historical source-review handoff**; the concrete-carrier
+note was not present in the shared design directory at review time. The
+previously described step that required an already Runtime-authorized
+`theme.json` before the private preparation was circular and was not a
+solution. This note records the existing source/read surfaces and the exact
+unresolved private boundary; it is not a current peer-agreement wait.
 
 ## Existing normal source/read path
 
@@ -123,10 +133,12 @@ before this step. A slug/browser hash and the existing post-admission
   `materialized_objects["theme"]` path and does not add a resolver or source
   lookup.
 
-Until the first bullet's private source-binding continuation is explicitly
-identified and peer-agreed, explicit-theme completion is **UNCERTIFIED**. The
-default fallback and its existing behavior remain unchanged; source review is
-not explicit-theme completion.
+At the time of this historical review, the first bullet's private
+source-binding continuation was not identified or peer-agreed, so
+explicit-theme completion was **UNCERTIFIED**. The default fallback and its
+existing behavior remain unchanged; source review is not explicit-theme
+completion. The owner ruling closes this deferred continuation rather than
+leaving it as a current wait.
 
 ## Evidence boundary
 

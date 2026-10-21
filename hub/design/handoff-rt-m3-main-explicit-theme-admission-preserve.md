@@ -1,5 +1,16 @@
 # Runtime Main explicit-theme admission preservation
 
+## Corrected current disposition
+
+This remains an ordinary-carrier proof only. Runtime `95bd3c5` is unchanged;
+Main infrastructure touched for this investigation: **NONE**. The proof does
+not qualify the raw `params.timeline_ref` probe, canonical Theme acceptance, or
+physical parity. The old custody REQUEST CHANGES report is superseded because
+its positive fixture was misidentified as a current SDK caller. Preserve the
+historical red positive and passing foreign/tamper negative; do not merge or
+xfail the invalid fixture. See the canonical-caller reconciliation for the
+exact source names and abandoned branch dispositions.
+
 ## Result
 
 No Runtime product change is required. Runtime `95bd3c5` already preserves the

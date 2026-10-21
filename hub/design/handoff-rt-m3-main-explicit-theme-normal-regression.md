@@ -1,5 +1,20 @@
 # Runtime M3 normal explicit Theme regression
 
+## Corrected disposition
+
+This is retained as historical red evidence, not a current SDK qualification.
+The test-only branch `68465ef` is **ABANDONED**, along with its four stopped
+dependents: `tl/rt-m3-main-theme-final-source-consumer-handoff`,
+`tl/rt-m3-main-theme-final-source-custody-r2`,
+`tl/rt-m3-main-theme-one-failed-positive-final`, and
+`tl/rt-m3-main-theme-retry-atomic-gate2`. They are not integrated branches,
+public test deletions, or gate passes. Preserve the one passing
+foreign/tamper negative and the one red positive; do not merge or xfail the
+fixture. The old custody REQUEST CHANGES is superseded because this raw
+`params.timeline_ref` fixture was mistaken for a current SDK caller. No test
+rerun or reviewer re-review is authorized; physical parity remains
+Viewing-owned.
+
 ## Scope and source identities
 
 This worker owns only `tests/test_timeline_explicit_theme_main_preservation.py`.

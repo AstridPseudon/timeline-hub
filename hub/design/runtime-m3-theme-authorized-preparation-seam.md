@@ -1,7 +1,17 @@
 # Runtime M3 authorized Theme preparation seam
 
-Status: proposal only; no Runtime product change is authorized until Agent,
-App, and Viewing directly ACK the carrier and its authority boundary.
+> **DEFERRED — owner ruling 2026-10-21 02:04 UTC.** This Runtime proposal is
+> historical design evidence, not an M0–M4 requirement. It must not hold
+> current save, render, or peer work. M0–M4 uses the ordinary Main path:
+> `media.import_file -> project CAS -> inputs.theme -> theme.json -> ONE resolver -> props.theme`. Ordinary proof is green; canonical positive proof
+> remains red pending `rt-m3-main-theme-canonical-caller-reconcile`, and this
+> does not claim physical parity or current canonical positive green. Preserve
+> the constraints and evidence below; do not implement this private,
+> provenance-only preparation contract. See [the ordinary-versus-canonical
+> proof distinction](handoff-rt-m3-main-theme-canonical-caller-reconcile.md).
+
+Status: **DEFERRED historical proposal**; no Runtime product change is
+authorized by this document.
 
 ## Finding
 
@@ -41,7 +51,7 @@ the existing normal project-object API, but the renderer/requester credential
 cannot be granted `projects:write`; using it from the renderer would violate
 the custody boundary. Therefore no existing flow suffices by itself.
 
-## Smallest extension proposal
+## Historical smallest extension proposal (deferred)
 
 Extend the existing managed render invocation with a **private internal
 preparation mode**, reusing the current managed invocation custody and result
@@ -82,7 +92,7 @@ named descriptor without adding a second Theme resolver or a new authority
 record. The precise existing producer/source lookup is the remaining cross-area
 decision; it must be explicit before Runtime code is written.
 
-## Agreement requested and ownership
+## Historical agreement request and ownership (closed)
 
 - **Agent:** confirm that the only accepted source is the Runtime-authorized
   materialized `theme.json`, that Agent performs exactly one resolver call, and

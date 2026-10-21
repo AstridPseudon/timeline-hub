@@ -1,6 +1,29 @@
 # Runtime M3 Main explicit Theme custody review
 
-## Verdict
+## CORRECTED disposition — supersedes the REQUEST CHANGES verdict
+
+The REQUEST CHANGES conclusion below presumed that the 68465ef raw
+`params.timeline_ref` fixture was a current SDK normal caller. The caller
+reconciliation corrected that premise: current SDK6ef builds `spec.inputs`
+for the ordinary imported `media.import_file` -> `inputs.theme` path, while
+App Main and integration both use a separate raw params caller that omits
+Theme. Therefore this review is historical source evidence, not a current
+Runtime defect or authorization to widen `_freeze_managed_render_inputs`.
+
+Runtime `95bd3c5` remains unchanged; Main infrastructure touched: **NONE**.
+The ordinary named-CAS custody proof and the existing foreign/tamper negative
+remain valid within their scope. The raw positive remains preserved red
+evidence, but is not a current SDK qualification. No reviewer re-review or
+test rerun is authorized. Peers must provide an actual normal caller and
+complete descriptor/order evidence before proposing a canonical Theme
+exception. No private preparation, ThemeDocument, namespace pin, new
+protocol, arbitrary-extra widening, alias/default substitution, or
+source-certification fallback is authorized.
+
+The following verdict and evidence are retained unchanged as historical
+record; they do not request a product patch, merge, xfail, or gate pass.
+
+## Historical verdict (superseded)
 
 **REQUEST CHANGES — do not approve the current source.** The independent
 custody review found no corruption in the existing ordinary named-CAS carrier,

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T02:18:31Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 5m -->
+<!-- main | 2026-10-21T02:24:36Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 14 | status age 3m -->
 # runtime — 2026-10-21T02:08:07Z
 Milestone: M1 recorded. M2 writer retirement and M3 viewing remain OPEN. Delivery preparation continues; foundation and final ZIP are unclaimed.
 Integrated: Runtime tl/integration 9d1c43c647301da48a6e86ad82e466b501bd2418, tree50e74e32, remains public0.2.13 with immutable producer2c4/all75. Catalog positives and safety guards remain integrated.
@@ -41,3 +41,5 @@ Inbox02:04 RULING ACK: both new Theme source contracts DEFERRED; STOP private pr
 Current rational followup: worker proved a normal render-admission rationalFPS rejection and staged local existing-_fraction conversion,14 targeted passes plus normal control; authored bytes/all76 unchanged. Independent preservation review rt-m2-rational-visual-seam-preservation-review is active; no95bd mutation/merge/pin.
 
 Main Theme route distinction: ordinary invocation (no timeline_ref) admission/claim preserves genuine imported Theme on95bd; canonical regression pair is1PASS/1FAIL because extra Theme input violates exact-list guard. Neither result qualifies the other route. HARD reconciliation worker rt-m3-main-theme-canonical-caller-reconcile now traces the actual Main-to-current caller migration and smallest correct forwarding/admission repair; no arbitrary-extra widening. Main private contracts remain DEFERRED.
+
+Main Theme final reconciliation02:18: ordinary Main SDK file mode is retained, removes timeline_ref and prepares full file manifest. New unmerged68465ef red probe instead uses params.timeline_ref, supplies onlyTheme, omits required media, and expects package/entry/audio rather than actual audio/package/entry. It does not prove a currentSDK/integration regression. No Runtime repair or new canonical named-file exception is authorized. Stopped dependent final-review/failed-positive/handoff/Gate2 workers immediately; preserve WIP unmerged, no run. Corrected caller disposition/peer handoff is assigned. Existing ordinary proof remains scoped; actual physical parity stays Viewing-owned.

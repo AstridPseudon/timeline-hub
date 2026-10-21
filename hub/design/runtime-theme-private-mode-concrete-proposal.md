@@ -1,7 +1,16 @@
 # Runtime M3 private Theme preparation — concrete proposal
 
-Status: **proposal; no product code changed.** This is the exact shape to ACK
-before Runtime coordinates implementation.
+> **DEFERRED — owner ruling 2026-10-21 02:04 UTC.** This Runtime proposal is
+> historical design evidence, not an M0–M4 requirement. It must not hold
+> current save, render, or peer work. M0–M4 uses the ordinary Main path:
+> `media.import_file -> project CAS -> inputs.theme -> theme.json -> ONE resolver -> props.theme`. Ordinary proof is green; canonical positive proof
+> remains red pending `rt-m3-main-theme-canonical-caller-reconcile`, and this
+> does not claim physical parity or current canonical positive green. Preserve
+> the exact private-mode constraints and evidence below; do not implement the
+> deferred provenance-only preparation contract. See [the ordinary-versus-canonical proof distinction](handoff-rt-m3-main-theme-canonical-caller-reconcile.md).
+
+Status: **DEFERRED historical proposal; no product code changed.** The exact
+shape below is retained as evidence and needs no ACK or implementation.
 
 ## Decision
 
@@ -140,9 +149,10 @@ refuses at the private result check; (2) an ordinary `rendering.render` with no
 `video` still refuses at the unchanged media check. Also refuse a foreign or
 changed captured `D` before child admission.
 
-## ACK requested from Agent
+## Historical ACK request from Agent (closed)
 
-Please ACK this exact internal contract in the Agent design/inbox: delegated
+The original request was to ACK this exact internal contract in the Agent
+design/inbox: delegated
 stage `theme_prepare`; existing named input `theme` bound by Runtime to the
 captured `D`; one `_resolved_theme_for_render()` call; canonical `{id,visual}`
 bytes through the existing declared `provenance` result; and private-only

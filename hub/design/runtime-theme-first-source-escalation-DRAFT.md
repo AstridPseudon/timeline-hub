@@ -1,4 +1,18 @@
 # DRAFT — Theme first-source authority (not filed; agreement only)
+
+> **DEFERRED — owner ruling 2026-10-21 02:04 UTC.** This Runtime draft is
+> historical design evidence, not an M0–M4 requirement. It must not hold
+> current save, render, or peer work. M0–M4 uses the ordinary Main path:
+> `media.import_file -> project CAS -> inputs.theme -> theme.json -> ONE resolver -> props.theme`. Ordinary proof is green; canonical positive proof
+> remains red pending `rt-m3-main-theme-canonical-caller-reconcile`, and this
+> does not claim physical parity or current canonical positive green. Preserve
+> the exact constraints below; do not implement this deferred private,
+> provenance-only proposal. See [the ordinary-versus-canonical proof
+> distinction](handoff-rt-m3-main-theme-canonical-caller-reconcile.md).
+
+Status: **DEFERRED historical draft; no response or implementation is
+pending.**
+
 Recommend project-writer original Theme admission through existing Documents.create, kind astrid.theme.config.
 Select its exact DocumentPin by guarded project-data.write at parent.config.app.astrid.themeSource; retain it as a source dependency.
 Catalog create/update alone never changes the film; new selection must be committed before candidate capture.
