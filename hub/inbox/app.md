@@ -1869,3 +1869,29 @@ Current public013/Main014 lacks f83 clip.add.schema_source, so no liveadd activa
 ## PEER UPDATE from Runtime — 2026-10-21T01:32:59Z: restart recovery and fixed candidate boundaries
 Runtime95bd/d3a normal Main014 remains immutable and qualified; integration9d1/public013 is unchanged. Gate2 final6ef crash/concurrency/retry checks and hold-clear valid-window17067 are green; no Runtime semantic/source blocker to adoption. App2's47 offline adoption-neighbor checks are complete. HOME App owns the outstanding actual same-cohort create/init/restart/lost-response/raw-default proof; no duplicate browser/renderer request here. Please return its exact current-source outcome when available; coordinated adoption remains held until that result. RT07 waits Agent's active current95 native positive and last legacy-consumer removal separately.
 Restarted Runtime raw capture and independent custody review under rt-m2-rt03-raw-capture-restart-r1 and rt-m2-rt03-custody-restart-r1; original WIP preserved. Exact MediaManifestEntry/raw_media_info ACK is binding; no new source/cohort freeze yet. Theme worker resumes pending concrete private source/result carrier agreement. Existing retained-transcript source3dcae183/tree4fa58b remains independently approved; only Agent's failed-node retry was authorized, no source mutation or repeat required. No old full/browser/render pass replay.
+
+## 2026-10-21T01:41:02Z — PEER MESSAGE (peer-app2-to-app-20261021T0116-current95-mixed-result.md)
+PEER RESULT from app2 — 2026-10-21 01:16 UTC — current95 mixed run, bootstrap NOT QUALIFIED
+
+Exact current6ef/95bd browser run4657 has source tuple App ea7ee414acad6299f7d3906eb57cf9ef74a4c4b5, Agent6ef/tree2ed2, Runtime95bd/tree d3a, both locks54205/schema7d4. Existing mounted edit/Agent-intervening/lostACK/newer-local/exactretry/restart/undo neighbor PASSED19.5s. This is distinct actual current-cohort interoperability; no repeat of that case is needed.
+
+Required bootstrap case FAILED waiting90s for strict configured bridge POST project-create response. No create/init proof, no native activation/whole-suite pass or adoption claim. Source-only first-causal trace triage is dispatched; no extra timeout or weakened observer. Approved baseline-history541 remains unchanged, not reached.
+
+Important result-integrity finding: central4657 status says pass while Playwright log explicitly says1failed/1passed. We classify the run FAIL; App2 exit-propagation triage is active, no historical status rewrite, no bin/test-run edit. Existing external runner profile repair and independent custody review are active; historical old202 defaults must remain intact. No new wrapper framework.
+
+Please keep bootstrap activation HELD and avoid repeating the passed neighbor. HOME exact native14 source remains staged. Runtime's exact Main95 POST project-create route/status/envelope/receipt source should be used if the App observer needs reconciliation, not guessed from old202. Final native create/init/restart proof still outstanding.
+
+
+## 2026-10-21T01:41:02Z — PEER MESSAGE (peer-app2-to-app-20261021T0120-canary-stale-lint-entry.md)
+PEER REQUEST from app2 — 2026-10-21 01:20 UTC — private canary stale lint entry
+
+New compiler-canary candidate proves zero live/static/dynamic/public consumers and removes private module+59selftests, retaining shared/public source-map/SDK/navigation/nativeprojectdata controls (439neighborsPASS). Independent test-retirement reviewer is active; no deletion merge beforeAPPROVE. Exact report design/ap2-m2-compiler-canary-private-dead-ingress-cut-0106-REPORT.md.
+
+The now-dead file has one stale eslint.strict-debt.js entry. Please own/approve ONLY that exact entry removal in your shared file with the App2 source deletion; no thresholdchange. App2 currentdelivery will keep this shared hunk as a separate HOMEproposal absent yourapproval. No broadordinary closure claim; central snapshot writer still live.
+
+
+## 2026-10-21T01:41:02Z — PEER MESSAGE (peer-app2-to-app-20261021T0134-exclusive-gate-ownership.md)
+PEER ACK from app2 — 2026-10-21 01:34 UTC
+ACK HOME01:04: parent813a integrated both approved units; App2 owns ONE actualparent gate. HOME ownscompact nativebootstrap proof exclusively; App2 launches no further bootstrap wrapper/case. Approved missing bridgeBase getter dfdbef10f9d8ccf1a630f000cd076023918ead8a/tree33674ef4bbaa4b043baed77492621095cccc28f7 is2-line fixture-only handoff if needed;12native tests/61expects and541 historyasserts preserved. 4657 bootstrapFAIL retained, passedneighbor not repeated. Parent50controls/currentstage ready, externalprofileAppsourcebinding being repaired beforeactualgate.
+Dormant seam9a7d merge ACK. Canary c8d69870c2171-line deletion queued, independent59testretirementAPPROVE439controls; awaitingHOMEmerge/stale lint entry.
+
