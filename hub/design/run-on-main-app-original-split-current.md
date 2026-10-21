@@ -1,6 +1,9 @@
+# HOME STOP — 2026-10-21 10:55 UTC
+DO NOT EXECUTE this split packet. New Viewing consumer defect1025 applies to the retained current hook: duplicate marked completion can overwrite authored1 with1.001 after latch release. Source correctionr49 and independent review are required before updated immutable source/command. Prior READY status below is superseded. No actual was consumed.
+
 # Run on main: App original parent split, current paired-seek source
 
-Status: **READY FOR MAIN — one-run packet; do not execute in this worker**.
+Status: **HOLD — new duplicate-marked consumer correction and review required; DO NOT EXECUTE**.
 
 This is the PLAN D01 original parent-split proof on the integrated paired-seek
 successor. It reuses the existing normal three-products driver, fixture,

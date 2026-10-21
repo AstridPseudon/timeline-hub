@@ -1,6 +1,6 @@
 # Run on main: App automatic placement, current source
 
-Status: **READY FOR MAIN — one-run packet.** This packet clears the r55 command
+Status: **APPROVE — ONE main execution after every preflight check passes.** This packet clears the r55 command
 custody HOLD. It does not authorize an actual in this worker.
 
 ## Authority and exact source

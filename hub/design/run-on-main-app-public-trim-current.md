@@ -1,6 +1,6 @@
 # Run on main: App public Trim, corrected current source
 
-Status: **READY FOR MAIN EXECUTION — source and existing-fixture readiness resolved; actual/browser not authorized here.**
+Status: **APPROVE — ONE main execution after every preflight check passes; source and existing-fixture readiness resolved.**
 
 This packet composes one original public Trim case on the current App source.
 It does not run a browser, build, install, full suite, or new graph. The r41

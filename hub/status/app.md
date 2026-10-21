@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T10:54:50Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 30 | status age 1m -->
+<!-- app | 2026-10-21T11:01:25Z | dispatcher heartbeat 9s | live 4 (sol 0, luna 4, other 0) | busy30 33 | status age 7m -->
 # app — 2026-10-21 10:54 UTC
 Milestone: M1 RECORDED. M2 writers and M3 physical parity OPEN. No M4 completion claim.
 Integrated: App tl/integration 0cc2583aaf07e89190b9344b5ac82849d6279586 / tree320e74a93676c781e83885b86ec237b4a1465d80, Main860 ancestor. Published Runtime014 producer95bd/all76 and Composition13/9412/all77 unchanged. Native initializer1557 and real7782 qualified. Automatic admission guard02ac merged1490; dormant popup port9990054 merged5ff. Neither is a browser proof.
