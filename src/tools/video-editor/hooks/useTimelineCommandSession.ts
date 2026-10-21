@@ -302,6 +302,18 @@ export function useTimelineCommandSession(options: {
           },
           submit(input) { requireCleanParentClipSwapMedia(); parentClipSwapMediaPort.submit(input); },
         };
+        const occurrenceAddMediaPort = session.occurrenceAddMediaPort;
+        const requireCleanOccurrenceAddMedia = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before adding occurrence media');
+        };
+        session.occurrenceAddMediaPort = {
+          capture(input) { requireCleanOccurrenceAddMedia(); return occurrenceAddMediaPort.capture(input); },
+          finish(basis, verifiedMedia) {
+            requireCleanOccurrenceAddMedia();
+            return occurrenceAddMediaPort.finish(basis, verifiedMedia);
+          },
+          submit(input) { requireCleanOccurrenceAddMedia(); occurrenceAddMediaPort.submit(input); },
+        };
         const occurrenceDuplicatePort = session.occurrenceDuplicatePort;
         const requireCleanDuplicate = () => {
           if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before duplicating a shot');
@@ -453,6 +465,7 @@ export function useTimelineCommandSession(options: {
     selectedParamPort, resolveSelectedParamAuthority, resolveSelectedParamAuthorityAsync,
     parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
     parentClipSwapMediaPort: sessionRef.current?.parentClipSwapMediaPort,
+    occurrenceAddMediaPort: sessionRef.current?.occurrenceAddMediaPort,
     occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }

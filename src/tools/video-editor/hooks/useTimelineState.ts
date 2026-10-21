@@ -3,6 +3,7 @@ import type { ClipTrimCapturePort } from '../commands/clipTrimGesture.ts';
 import type { ClipParamsCapturePort } from '../commands/clipParamsGesture.ts';
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
+import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
@@ -188,6 +189,7 @@ function useTimelineEditorContextValue({
   selectedParamPort,
   elementPort,
   shotSetPort,
+  occurrenceAddMediaPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -236,6 +238,7 @@ function useTimelineEditorContextValue({
   selectedParamPort?: ClipParamsCapturePort;
   elementPort?: import('@/tools/video-editor/commands/elementGesture.ts').ElementCapturePort;
   shotSetPort?: ShotSetCapturePort;
+  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -266,6 +269,7 @@ function useTimelineEditorContextValue({
     element: elementPort,
     trackLabel: trackLabelPort,
     shotSet: shotSetPort,
+    occurrenceAddMedia: occurrenceAddMediaPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -449,6 +453,7 @@ function useTimelineEditorContextValue({
     clipScalarPort,
     clipTrimPort,
     shotSetPort,
+    occurrenceAddMediaPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -1168,6 +1173,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     selectedParamPort: save.commands.clipParamsPort,
     elementPort: save.commands.elementPort,
     shotSetPort: save.commands.shotSetPort,
+    occurrenceAddMediaPort: save.commands.occurrenceAddMediaPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1260,6 +1266,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     element: save.commands.elementPort,
     trackLabel: save.commands.trackLabelPort,
     shotSet: save.commands.shotSetPort,
+    occurrenceAddMedia: save.commands.occurrenceAddMediaPort,
     parentClipAddMedia: save.commands.parentClipAddMediaPort,
     parentClipSwapMedia: save.commands.parentClipSwapMediaPort,
     occurrenceDuplicate: save.commands.occurrenceDuplicatePort,
@@ -1323,7 +1330,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     registerAsset: editor.registerAsset,
   }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
     save.commands.port, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipParamsPort,
-    save.commands.elementPort, save.commands.trackLabelPort, save.commands.shotSetPort,
+    save.commands.elementPort, save.commands.trackLabelPort, save.commands.shotSetPort, save.commands.occurrenceAddMediaPort,
     save.commands.parentClipAddMediaPort, save.commands.parentClipSwapMediaPort, save.commands.occurrenceDuplicatePort]);
 
   const renderRequest = useTimelineRenderRequest(
