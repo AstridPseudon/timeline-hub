@@ -1,0 +1,7 @@
+NO PRODUCT PATCH.
+
+`model._presenter_props` is a live no-Node fallback for the normal curves
+consumer. The exact replacement source exists (`am-presenter.motionAt` and
+public `scene.ts` diagnostics.motion), but wiring normal curves to the public
+query would be a separate consumer migration and would remove the required
+fallback. No deletion or delegation is safe in this task.

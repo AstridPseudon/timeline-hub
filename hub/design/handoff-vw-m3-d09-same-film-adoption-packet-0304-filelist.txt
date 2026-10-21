@@ -1,0 +1,2 @@
+tests/packs/rendering/d09_same_film_public.mjs
+tests/packs/rendering/test_d09_same_film_public.py

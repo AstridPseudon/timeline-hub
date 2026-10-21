@@ -1,0 +1,4 @@
+astrid/packs/rendering/actions/timeline_visualize/_audio_cache.py (new; 34 lines)
+astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py (import cache callers; remove unchanged helper definitions; 2,045 lines)
+astrid/packs/rendering/pack.yaml (declare _audio_cache.py implementation resource)
+docs/giant-file-rationale.md (retain historical 2,015 reference; update extraction description)

@@ -1,0 +1,11 @@
+COMMAND: sed/rg source trace for render_curves -> model.props_at -> own_motion -> ElementMaths.at -> PROPS["am-presenter"] -> _presenter_props -> mouth_state; public carrier trace through am-presenter motion.ts, scene.ts, scene-query.mjs, and motion/sheet.py.
+RESULT: live fallback confirmed; no product patch.
+
+COMMAND: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short -m 'not integration' tests/packs/rendering/test_timeline_visualize_motion_views.py tests/packs/rendering/test_timeline_visualize_motion.py tests/packs/rendering/test_timeline_visualize_motion_discovery.py
+RESULT: 39 passed, 2 skipped, 1 deselected in 10.18s.
+
+COMMAND: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --tb=short tests/packs/rendering/test_timeline_visualize_motion_views.py tests/packs/rendering/test_timeline_visualize_motion.py tests/packs/rendering/test_timeline_visualize_motion_discovery.py
+RESULT: 39 passed, 2 skipped, 1 failed in 10.45s; integration transform adapter failed because pinned Node v20.19.4 was unavailable (only Node v22.22.0 present).
+
+COMMAND: git diff --check
+RESULT: PASS.

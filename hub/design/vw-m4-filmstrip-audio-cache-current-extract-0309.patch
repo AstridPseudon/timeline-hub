@@ -1,0 +1,103 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/_audio_cache.py b/astrid/packs/rendering/actions/timeline_visualize/_audio_cache.py
+new file mode 100644
+--- /dev/null
++++ b/astrid/packs/rendering/actions/timeline_visualize/_audio_cache.py
+@@ -0,0 +1,34 @@
++"""Attempt-local cache for measured filmstrip audio analysis."""
++from __future__ import annotations
++
++import hashlib
++import json
++from pathlib import Path
++
++
++def _audio_cache_path(parent: Path, render_digest: str, settings: object) -> Path:
++    key = hashlib.sha256(json.dumps(
++        {"render_digest": render_digest, "settings": settings},
++        sort_keys=True, separators=(",", ":"), default=str,
++    ).encode("utf-8")).hexdigest()
++    return parent / ".audio-analysis-cache" / f"{key}.json"
++
++
++def _cached_audio(parent: Path, render_digest: str, settings: object) -> dict | None:
++    path = _audio_cache_path(parent, render_digest, settings)
++    try:
++        value = json.loads(path.read_text(encoding="utf-8"))
++    except (OSError, UnicodeError, json.JSONDecodeError):
++        return None
++    if not isinstance(value, dict) or value.get("render_digest") != render_digest:
++        return None
++    return value
++
++
++def _store_audio_cache(parent: Path, render_digest: str, settings: object, value: dict) -> None:
++    path = _audio_cache_path(parent, render_digest, settings)
++    path.parent.mkdir(parents=True, exist_ok=True)
++    path.write_text(json.dumps(value, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
++    entries = sorted(path.parent.glob("*.json"), key=lambda item: item.stat().st_mtime, reverse=True)
++    for stale in entries[256:]:
++        stale.unlink(missing_ok=True)
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+--- a/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py
+@@ -16,6 +16,7 @@ from pathlib import Path
+ 
+ from astrid.core._shared.result_manifest import build_manifest, write_manifest
+ 
++from ._audio_cache import _cached_audio, _store_audio_cache
+ from .audio_analysis import AudioAnalysisError, analyze_audio, audio_analysis_identity
+@@ -942,34 +943,6 @@ def _align_snapshot_to_render(snapshot: dict, video: Path) -> None:
+     snapshot["metadata"]["rendered_tail"] = tail
+ 
+ 
+-def _audio_cache_path(parent: Path, render_digest: str, settings: object) -> Path:
+-    key = hashlib.sha256(json.dumps(
+-        {"render_digest": render_digest, "settings": settings},
+-        sort_keys=True, separators=(",", ":"), default=str,
+-    ).encode("utf-8")).hexdigest()
+-    return parent / ".audio-analysis-cache" / f"{key}.json"
+-
+-
+-def _cached_audio(parent: Path, render_digest: str, settings: object) -> dict | None:
+-    path = _audio_cache_path(parent, render_digest, settings)
+-    try:
+-        value = json.loads(path.read_text(encoding="utf-8"))
+-    except (OSError, UnicodeError, json.JSONDecodeError):
+-        return None
+-    if not isinstance(value, dict) or value.get("render_digest") != render_digest:
+-        return None
+-    return value
+-
+-
+-def _store_audio_cache(parent: Path, render_digest: str, settings: object, value: dict) -> None:
+-    path = _audio_cache_path(parent, render_digest, settings)
+-    path.parent.mkdir(parents=True, exist_ok=True)
+-    path.write_text(json.dumps(value, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+-    entries = sorted(path.parent.glob("*.json"), key=lambda item: item.stat().st_mtime, reverse=True)
+-    for stale in entries[256:]:
+-        stale.unlink(missing_ok=True)
+-
+-
+ def _render_time_anchored_output(
+     frame_index: Mapping[str, object], pack_root: Path, *, options: Mapping[str, object],
+ ) -> list[Path]:
+diff --git a/astrid/packs/rendering/pack.yaml b/astrid/packs/rendering/pack.yaml
+--- a/astrid/packs/rendering/pack.yaml
++++ b/astrid/packs/rendering/pack.yaml
+@@ -565,6 +565,8 @@ actions:
+       path: actions/timeline_visualize/STAGE.md
+     - kind: implementation
+       path: actions/timeline_visualize/__init__.py
++    - kind: implementation
++      path: actions/timeline_visualize/_audio_cache.py
+     - kind: implementation
+       path: actions/timeline_visualize/_filmstrip_cache.py
+diff --git a/docs/giant-file-rationale.md b/docs/giant-file-rationale.md
+--- a/docs/giant-file-rationale.md
++++ b/docs/giant-file-rationale.md
+@@ -27,7 +27,7 @@ or below the threshold.
+ | 10 | `astrid/packs/rendering/rendering/renderers/remotion/run.py` | 1,797 | Remotion renderer and raw rendering-protocol v1 command adapter: effect-registry regeneration, element and asset staging, and the persistent frame session. Timeline Root preparation and its asset/server/PCM lifetime are extracted to `root_preparation.py`. No single-file reason: candidate split into registry regeneration (`_regenerate_element_registries*`, `_read_registry_state`, `_write_registry_state`) and `PersistentRemotionFrameSession`, with `_execute_remotion` as the protocol entry. |
+ | 11 | `astrid/packs/rendering/actions/timeline_visualize/layout.py` | 2,132 | Visualization layout calculations share frozen metric and ordering rules. Split metric computation, pagination, and SVG/HTML layout helpers with fixture parity tests. |
+ | 12 | `astrid/packs/rendering/actions/timeline_visualize/frozen.py` | 2,118 | Hash-first loader and verifier for frozen visualization packs, the R16 security boundary: pack-file integrity, schema and ref checks, run ownership, runtime output binding, and managed-pack rehydration. No single-file reason: candidate split into verification (`_verify_*`, `_load_json_*`) and rehydration (`_rehydrate_managed_pack`, `discard_rehydrated_pack`) along the existing function groups; keep the frozen hashes unchanged across any split. |
+-| 13 | `astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py` | 2,015 | Attempt-local rendering of an SDK-admitted filmstrip snapshot: audio cache, input previews, time-anchored output, paired and synchronized panel composition, and `execute_filmstrip`. No single-file reason: candidate split into the audio cache (`_cached_audio`, `_store_audio_cache`) and panel composition (`_render_paired_rows`, `_compose_synchronized_surface`). A duplicate `_materialize_input_previews` also lives in `filmstrip_cards.py`. |
++| 13 | `astrid/packs/rendering/actions/timeline_visualize/filmstrip_execution.py` | 2,015 | Attempt-local rendering of an SDK-admitted filmstrip snapshot: input previews, time-anchored output, paired and synchronized panel composition, and `execute_filmstrip`. The audio cache (`_audio_cache_path`, `_cached_audio`, `_store_audio_cache`) is extracted to `_audio_cache.py`; the remaining panel composition (`_render_paired_rows`, `_compose_synchronized_surface`) remains a future seam. A duplicate `_materialize_input_previews` also lives in `filmstrip_cards.py`. |

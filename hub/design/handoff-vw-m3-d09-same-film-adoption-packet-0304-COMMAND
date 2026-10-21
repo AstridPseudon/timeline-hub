@@ -1,0 +1,19 @@
+# Run only after independent Agent owner review and both prerequisites land:
+#   (1) Composition 0.0.14 is packed/qualified; and
+#   (2) Agent AM-footage source/resources are reviewed and integrated.
+#
+# The archive and peer graph are caller-supplied paths; this packet does not
+# invent a pin or alter shared installs.
+set -eu
+: "${COMPOSITION14_ARCHIVE:?path to the qualified Composition 0.0.14 .tgz}"
+: "${COMPOSITION14_PEERS:?path to the read-only peer graph}"
+test -f "$COMPOSITION14_ARCHIVE"
+test -d "$COMPOSITION14_PEERS"
+test "$(tar -xOf "$COMPOSITION14_ARCHIVE" package/package.json | /home/user/work/venv-agent/bin/python -c 'import json,sys; print(json.load(sys.stdin)["version"])')" = 0.0.14
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" \
+ASTRID_COMPOSITION_TEST_ARTIFACT="$COMPOSITION14_ARCHIVE" \
+ASTRID_COMPOSITION_TEST_NODE_MODULES="$COMPOSITION14_PEERS" \
+ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node \
+/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -o addopts= \
+tests/packs/rendering/test_d09_same_film_public.py
+
