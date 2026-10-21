@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useTimelineEditorData } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
-import type { SelectedMediaClip } from '@/tools/video-editor/hooks/useSelectedMediaClips.ts';
+import { isAttachableMediaClip, type SelectedMediaClip } from '@/tools/video-editor/hooks/useSelectedMediaClips.ts';
 
 export function useTimelineClipsForAttachments(): SelectedMediaClip[] {
   const { data, resolvedConfig } = useTimelineEditorData();
@@ -32,7 +32,8 @@ export function useTimelineClipsForAttachments(): SelectedMediaClip[] {
         }
         : {};
 
-      if (!assetKey || !assetEntry?.src || !assetEntry.type) {
+      if (!isAttachableMediaClip(clip) || !assetKey || !assetEntry?.src || !assetEntry.type) {
+        acc.push({ clipId: clip.id, assetKey: '', url: '', mediaType: 'image', isTimelineBacked: true, isNonMedia: true });
         return acc;
       }
 
@@ -64,6 +65,8 @@ export function useTimelineClipsForAttachments(): SelectedMediaClip[] {
           duration: getClipTimelineDuration(clip),
           ...shotFields,
         });
+      } else {
+        acc.push({ clipId: clip.id, assetKey: '', url: '', mediaType: 'image', isTimelineBacked: true, isNonMedia: true });
       }
 
       return acc;

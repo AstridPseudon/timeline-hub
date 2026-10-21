@@ -67,15 +67,20 @@ export function useCurrentAttachmentSet(): { clips: SelectedMediaClip[]; summary
 
   return useMemo(() => {
     let placeholderCount = 0;
-    const timelineClips = Array.from(selectedClipIds, (clipId) => {
+    const timelineClips: SelectedMediaClip[] = [];
+    for (const clipId of selectedClipIds) {
       const clip = clipDataById.get(clipId);
+      if (clip?.isNonMedia) {
+        continue;
+      }
       if (clip) {
-        return clip;
+        timelineClips.push(clip);
+        continue;
       }
 
       placeholderCount += 1;
-      return makePlaceholderClip(clipId);
-    });
+      timelineClips.push(makePlaceholderClip(clipId));
+    }
     const clips = mergeSelectedClips(timelineClips, selectedGalleryClips);
 
     if (placeholderCount > 0 && import.meta.env.DEV) {
