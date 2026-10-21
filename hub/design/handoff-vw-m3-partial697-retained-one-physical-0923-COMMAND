@@ -1,0 +1,172 @@
+# MANAGER-ONLY FUTURE COMMAND — no physical launch is performed by this worker.
+#
+# This command collects both existing presenter-crop nodes (2 total), then
+# executes exactly one physical node: the partial 697 px case.  The explicit
+# 799 px node is retained and is not re-run.  Run only with the normal central
+# grant and shared browser lock.  The --retention-control branch is pure and
+# performs the direct foreign/symlink destination check without a browser.
+
+set -euo pipefail
+
+worker=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m3-partial697-retained-one-physical-0923-result
+retained="$worker/results"
+
+retention_guard() {
+  local candidate=$1 expected=$2 parent
+  [[ "$candidate" = "$expected" ]] || return 1
+  [[ ! -L "$candidate" ]] || return 1
+  parent=$(dirname -- "$candidate")
+  [[ -d "$parent" ]] || return 1
+  [[ "$(realpath -- "$parent")" = "$parent" ]] || return 1
+  [[ ! -e "$candidate" && ! -L "$candidate" ]] || return 1
+}
+
+if [[ "${1:-}" == --retention-control ]]; then
+  control=$(mktemp -d -p /tmp vw-m3-partial-retention-control-XXXXXX)
+  trap 'find "$control" -depth -delete 2>/dev/null || true' EXIT
+  mkdir "$control/foreign" "$control/target"
+  if retention_guard "$control/foreign" "$control/expected"; then
+    echo 'foreign destination was accepted' >&2
+    exit 1
+  fi
+  ln -s "$control/target" "$control/symlink"
+  if retention_guard "$control/symlink" "$control/symlink"; then
+    echo 'symlink destination was accepted' >&2
+    exit 1
+  fi
+  ln -s "$control/target" "$control/linked-parent"
+  if retention_guard "$control/linked-parent/result" "$control/linked-parent/result"; then
+    echo 'symlink ancestor was accepted' >&2
+    exit 1
+  fi
+  echo 'retention destination control: PASS'
+  exit 0
+fi
+
+root=$(realpath -- "${ASTRID_CHECKOUT:?manager must supply a clean Agent checkout}")
+expected_revision="${ASTRID_EXPECTED_REVISION:-}"
+expected_tree="${ASTRID_EXPECTED_TREE:-}"
+runtime=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b
+peers="$runtime/node_modules"
+artifact="$runtime/artifacts/banodoco-timeline-composition-0.0.13.tgz"
+node=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+python=/home/user/work/venv-agent/bin/python
+browser=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
+lock=/tmp/timeline-viewing-browser.lock
+
+test -d "$root" && test "$(realpath -- "$root")" = "$root"
+if [[ -n "$expected_revision" ]]; then
+  test "$(git -C "$root" rev-parse HEAD)" = "$expected_revision"
+fi
+if [[ -n "$expected_tree" ]]; then
+  test "$(git -C "$root" rev-parse HEAD^{tree})" = "$expected_tree"
+fi
+test -z "$(git -C "$root" status --porcelain --untracked-files=all)"
+test -d "$runtime" && test "$(realpath -- "$runtime")" = "$runtime"
+test -d "$peers" && test "$(realpath -- "$peers")" = "$peers"
+test -f "$artifact" && test -x "$node" && test -x "$python" && test -x "$browser"
+
+sha() { sha256sum -- "$1" | awk '{print $1}'; }
+test "$(sha "$artifact")" = 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+test "$(sha "$node")" = 43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490
+test "$("$node" --version)" = v20.19.4
+test "$(sha "$browser")" = 63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4
+test "$(realpath -- "$browser")" = /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
+test "$(tar -tzf "$artifact" | awk '$0 ~ /^package\/[^/]+/ {n++} END {print n+0}')" = 77
+test "$(tar -tvzf "$artifact" | awk 'substr($1,1,1) ~ /[slh]/ {n++} END {print n+0}')" = 0
+
+declare -A source_sha=(
+  [tests/packs/rendering/presenter_crop_capture.mjs]=38abb1a8854a97473f01dd2886bf805945200f9cc45bd6c61d2e17233c2be49f
+  [tests/packs/rendering/presenter_crop_capture.py]=791bad8f50398c32e4f81798afa40b1f356db3cd61ac134b882294fcfdffd653
+  [tests/packs/rendering/presenter_crop_entry.mjs]=5223ef4ecf007124920773bef10a9f543749cd07c943e5143720837f18e29947
+  [tests/packs/rendering/test_presenter_crop_equivalence.py]=2419620a92c9972c1a7e4bd5a3b79790631ced2661227cc9420b6977946957b1
+)
+for file in "${!source_sha[@]}"; do
+  test "$(sha "$root/$file")" = "${source_sha[$file]}"
+done
+
+test -d "$worker" && test "$(realpath -- "$worker")" = "$worker"
+retention_guard "$retained" "$retained"
+test "$(realpath -- "$peers")" = "$peers"
+test "$(realpath -- "$artifact")" = "$artifact"
+test "$(df -B1 --output=avail "$root" | tail -1)" -ge 10737418240
+test "${VIEWING_BROWSER_FLOCK_HELD:-}" = 1
+test "${VIEWING_CROP_CENTRAL:-}" = 1
+if flock -n "$lock" true; then
+  echo 'shared browser lock is not held by the manager' >&2
+  exit 1
+fi
+
+scratch=$(mktemp -d -p /tmp vw-m3-partial-crop-retained-XXXXXX)
+chmod 700 "$scratch"
+trap 'find "$scratch" -depth -delete 2>/dev/null || true' EXIT
+
+env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 \
+  PATH="$(dirname "$node"):$peers/.bin:/usr/local/bin:/usr/bin:/bin" \
+  PYTHONPATH="$root:/home/user/work/runtime" \
+  ASTRID_CHECKOUT="$root" \
+  ASTRID_NODE_EXECUTABLE="$node" \
+  ASTRID_COMPOSITION_TEST_NODE_MODULES="$peers" \
+  ASTRID_COMPOSITION_TEST_ARTIFACT="$artifact" \
+  VIEWING_BROWSER_FLOCK_HELD=1 VIEWING_CROP_CENTRAL=1 TMPDIR="$scratch" \
+  "$python" -m pytest --collect-only -q -o addopts= -p no:cacheprovider \
+  "$root/tests/packs/rendering/presenter_crop_capture.py"
+
+# Exactly one physical node is authorized; the explicit 799 px node is not run.
+pytest_log="$scratch/partial-pytest.log"
+if ! env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 \
+  PATH="$(dirname "$node"):$peers/.bin:/usr/local/bin:/usr/bin:/bin" \
+  PYTHONPATH="$root:/home/user/work/runtime" \
+  ASTRID_CHECKOUT="$root" \
+  ASTRID_NODE_EXECUTABLE="$node" \
+  ASTRID_COMPOSITION_TEST_NODE_MODULES="$peers" \
+  ASTRID_COMPOSITION_TEST_ARTIFACT="$artifact" \
+  VIEWING_BROWSER_FLOCK_HELD=1 VIEWING_CROP_CENTRAL=1 TMPDIR="$scratch" \
+  "$python" -m pytest -q -s -o addopts= -o tmp_path_retention_policy=all \
+  -p no:cacheprovider --tb=short \
+  "$root/tests/packs/rendering/presenter_crop_capture.py::test_actual_registered_presenter_partial_crop_pixels" \
+  --basetemp="$scratch/pytest" >"$pytest_log" 2>&1; then
+  cat "$pytest_log"
+  exit 1
+fi
+cat "$pytest_log"
+
+mapfile -t captures < <(find "$scratch/pytest" -mindepth 1 -type d -name partial-capture -print)
+test "${#captures[@]}" -eq 1
+capture=${captures[0]}
+test "$(realpath -- "$capture")" = "$capture"
+case "$capture" in
+  "$scratch/pytest/"*) ;;
+  *) echo 'capture escaped pytest scratch' >&2; exit 1 ;;
+esac
+
+raw_names=(frame-0.png frame-3.png frame-4.png frame-5.png inspection.json)
+for name in "${raw_names[@]}"; do
+  test -f "$capture/$name" && test ! -L "$capture/$name"
+  test "$(stat -c %h "$capture/$name")" = 1
+done
+test "$(find "$capture" -maxdepth 1 -type f -name 'frame-*.png' | wc -l)" = 4
+
+mapfile -t comparator_lines < <(awk '/^\{.*\}$/ {print}' "$pytest_log")
+test "${#comparator_lines[@]}" -eq 1
+mkdir "$retained"
+test "$(realpath -- "$retained")" = "$retained"
+printf '%s\n' "${comparator_lines[0]}" > "$retained/partial-comparisons.json"
+"$python" -c 'import json, sys; json.load(open(sys.argv[1]))' "$retained/partial-comparisons.json"
+
+for name in "${raw_names[@]}"; do
+  cp -- "$capture/$name" "$retained/$name"
+  test -f "$retained/$name" && test ! -L "$retained/$name"
+  test "$(realpath -- "$retained/$name")" = "$retained/$name"
+  test "$(stat -c %h "$retained/$name")" = 1
+  test "$(sha "$capture/$name")" = "$(sha "$retained/$name")"
+  test "$(stat -c '%d:%i' "$capture/$name")" != "$(stat -c '%d:%i' "$retained/$name")"
+  cmp -s "$capture/$name" "$retained/$name"
+done
+
+(cd "$retained" && sha256sum -- "${raw_names[@]}" partial-comparisons.json > sha256sums.txt)
+test "$(realpath -- "$retained/sha256sums.txt")" = "$retained/sha256sums.txt"
+test ! -L "$retained/sha256sums.txt"
+test "$(stat -c %h "$retained/sha256sums.txt")" = 1
+echo "retained partial evidence: $retained"
+
