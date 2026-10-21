@@ -55,7 +55,9 @@ async function openSplit(page: Page, harness: DirectHarness, seed: SplitSeed) {
 }
 
 test('M2 native parent split preserves raw closure through lost ACK, restart, retry and Runtime inverse', async ({ page, harness, seed3 }) => {
-  expect(seed3.transitionClipId).toBeTruthy(); await harness.enableTimelineAuthoring(ASTRID_PYTHON); const seed = await seedSplit(harness);
+  expect(seed3.transitionClipId).toBeTruthy();
+  // The authoring profile admits the publications that already exist when it starts.
+  const seed = await seedSplit(harness); await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   await openApp(page, harness); await openSplit(page, harness, seed); const traffic = observe(page); const before = await history(harness, seed);
   const original = (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${before.head.revision_id}`)).body.payload;
   const originalClip = original.clips.find((clip: any) => clip.id === seed.clipId); expect(originalClip).toMatchObject({ from: 0, to: 4, speed: 1.3, app: { opaque: { root: 'keep' } } });
