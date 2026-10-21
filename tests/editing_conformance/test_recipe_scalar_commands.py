@@ -14,10 +14,11 @@ import yaml
 from jsonschema import Draft202012Validator
 
 from astrid.core.element import project_packs
-from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
+from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, equal, present
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute, operations
+from astrid.sdk.timeline.commit import _digest, _json
 from astrid.sdk.timeline.rebase import replay
 from tests.core import test_project_packs
 from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse, later
@@ -261,6 +262,37 @@ def test_param_set_clear_null_and_opaque_literal_keys_roundtrip(container):
     assert execute(original, [plan.commands[0]]).records == plan.records
     assert 'params' not in clip(plan.bundle, 'occurrence:occ-2/clip:picture-1')
     assert 'params' not in clip(plan.bundle)
+
+
+def test_authored_json_own_keys_survive_state_canonical_reload_digest_and_inverse():
+    original = bundle()
+    value = {
+        '__proto__': {'kind': 'data', 'enabled': False},
+        'constructor': {'kind': 'data', 'enabled': True},
+        'prototype': {'kind': 'data', 'count': 0},
+        'boolean': False,
+        'number': 0,
+    }
+    command = capture_clip_set_params(original, REF, values=value)
+    plan = execute(original, [command])
+    params = State(plan.bundle).entity(REF)['params']
+    assert params == value and set(params) == set(value)
+    for key, expected in value.items():
+        assert State(plan.bundle).get(REF, ['params', key]) == present(expected)
+    assert not equal(State(plan.bundle).get(REF, ['params', 'boolean']),
+                     State(plan.bundle).get(REF, ['params', 'number']))
+    for key in ('__proto__', 'constructor', 'prototype'):
+        assert State(plan.bundle).entity('parent/clip:' + key, optional=True) is None
+
+    encoded = _json(plan.bundle)
+    assert json.loads(encoded) == plan.bundle
+    assert _digest(json.loads(encoded)) == _digest(plan.bundle)
+    reloaded = json.loads(encoded)
+    assert State(reloaded).entity(REF)['params'] == value
+    undone = inverse(reloaded, plan.records)
+    assert undone.bundle == json.loads(_json(original))
+    redone = inverse(undone.bundle, undone.records)
+    assert redone.bundle == reloaded
 
 
 def test_null_value_and_clear_have_distinct_leaf_claims():
