@@ -423,11 +423,17 @@ export function checkCurrent014Gate3Sources(input) {
 
 const ZERO_TEST_OUTPUT = /(?:No tests found|No test files found|collected\s+0 items|Running\s+0 tests|0 tests found|\b0 passed\b)/i;
 
-function listedFullTitles(output) {
+function listedEntries(output) {
   return output.split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.includes(' › '))
-    .map((line) => line.slice(line.indexOf(' › ') + 3));
+    .map((line) => {
+      const separator = line.indexOf(' › ');
+      return {
+        location: line.slice(0, separator),
+        title: line.slice(separator + 3),
+      };
+    });
 }
 
 function listedTitleLines(output) {
@@ -438,10 +444,11 @@ function listedTitleLines(output) {
 
 export function assertCurrent014Gate3Selection(status, output) {
   if (status !== 0 || ZERO_TEST_OUTPUT.test(output)) fail('Gate3 --list selection did not succeed');
-  const titles = listedFullTitles(output);
-  const selected = titles.filter((title) => title === CASE_FULL_TITLE);
-  if (selected.length !== 1 || titles.length !== 1) {
-    fail(`Gate3 --list selected ${titles.length} tests; expected exactly ${CASE_FULL_TITLE}`);
+  const entries = listedEntries(output);
+  const selected = entries.filter(({ location, title }) => location.startsWith(`${path.basename(TEST_SOURCE)}:`)
+    && title === CASE_FULL_TITLE);
+  if (selected.length !== 1 || entries.length !== 1) {
+    fail(`Gate3 --list selected ${entries.length} tests; expected exactly ${CASE_FULL_TITLE}`);
   }
 }
 

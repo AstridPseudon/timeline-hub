@@ -36,7 +36,7 @@ test('discovers exactly the existing native-None single case in source', () => {
   assert.match(testSource, /expectFreshPreviewUnavailable/);
 });
 
-test('the exact child argv accepts one full title, while the old anchored grep fails', () => {
+test('the exact child argv accepts one real listing and rejects zero, multiple, or wrong-file listings', () => {
   assert.deepEqual([...CURRENT014_GATE3_CASE.argv, '--list'], [
     'run', 'test:e2e:three-products', '--', '--grep', '^.*M2 native None single:', '--list',
   ]);
@@ -44,6 +44,10 @@ test('the exact child argv accepts one full title, while the old anchored grep f
   assert.doesNotThrow(() => assertCurrent014Gate3Selection(0, listed));
   const zero = 'Error: No tests found\nListing tests:\nTotal: 0 tests in 0 files';
   assert.throws(() => assertCurrent014Gate3Selection(1, zero), /--list selection/);
+  const multiple = `Listing tests:\n  three-products.spec.ts:2248:1 › ${CURRENT014_GATE3_CASE.fullTitle}\n  three-products.spec.ts:2250:1 › ${CURRENT014_GATE3_CASE.fullTitle}\nTotal: 2 tests in 1 file`;
+  assert.throws(() => assertCurrent014Gate3Selection(0, multiple), /--list selected 2 tests/);
+  const wrongFile = `Listing tests:\n  unrelated.spec.ts:1:1 › ${CURRENT014_GATE3_CASE.fullTitle}\nTotal: 1 test in 1 file`;
+  assert.throws(() => assertCurrent014Gate3Selection(0, wrongFile), /--list selected 1 tests/);
 });
 
 test('checks the real App and Agent locks through their normal producer checkers', () => {
