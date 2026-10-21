@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import type { DataProvider, TimelineCommandBasis } from '../data/DataProvider.ts';
 import { buildTimelineData } from '../lib/timeline-data.ts';
+import { getClipTimelineDuration } from '../lib/config-utils.ts';
 import { captureClipSplitEdit, submitClipSplitEdit } from '../commands/clipSplitGesture.ts';
 import fixture from '../commands/fixtures/recipe_m2_clip_split.json';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
@@ -166,6 +167,8 @@ describe('production single-parent split ingress', () => {
     expect(draft.config.clips[1].app?.astrid?.for).toBe(2.0769230769230766);
     expect(draft.config.clips[1].opaque).toEqual(draft.config.clips[0].opaque);
     expect(draft.config.clips[1].params).toEqual(draft.config.clips[0].params);
+    expect(getClipTimelineDuration(draft.resolvedConfig.clips[0])).toBe(1);
+    expect(getClipTimelineDuration(draft.resolvedConfig.clips[1])).toBe((4 - 1.3) / 1.3);
     expect(env.applyEdit).not.toHaveBeenCalled();
     expect(env.scheduled).not.toHaveBeenCalled();
     await act(async () => { await env.hook.result.current.commands.retry(); });

@@ -70,8 +70,8 @@ test('M2 native parent split preserves raw closure through lost ACK, restart, re
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((record) => record.pending?.request), CEILING).toBe(true); const owner = (await commandOutboxes(page, seed.timelineId)).find((record) => record.pending?.request)!;
   await expect.poll(() => !!held, CEILING).toBe(true); await held.abort('connectionreset'); await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).find((record) => record.ownerId === owner.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
   const splitParent = parentOf(accepted); expect(splitParent.clips.map((clip: any) => clip.id)).toEqual([seed.clipId, rightId, seed.neighborId]); expect(splitParent.config.clips).toEqual(splitParent.clips);
-  expect(splitParent.clips[0]).toMatchObject({ from: 0, to: 1.3, hold: 1, app: { astrid: { for: 1 / 1.3 }, opaque: originalClip.app.opaque } });
-  expect(splitParent.clips[1]).toMatchObject({ id: rightId, at: 1, from: 1.3, to: 4, hold: 3 / 1.3, app: { opaque: originalClip.app.opaque } });
+  expect(splitParent.clips[0]).toMatchObject({ from: 0, to: 1.3, hold: 1.3, app: { astrid: { for: 1 / 1.3 }, opaque: originalClip.app.opaque } });
+  expect(splitParent.clips[1]).toMatchObject({ id: rightId, at: 1, from: 1.3, to: 4, hold: 2.7, app: { opaque: originalClip.app.opaque } });
   expect(splitParent.config.opaque).toEqual(original.config.opaque); expect(splitParent.registry).toEqual(original.registry); expect(accepted.data.canonical_document.shot_revisions).toEqual([]); expect(accepted.data.canonical_document.internal_timeline_revisions).toEqual([]);
   await page.unroute(COMMITS); await page.reload(); await openSplit(page, harness, seed); const old = harness.runtimeInstanceId; await harness.restartRuntime(); expect(harness.runtimeInstanceId).not.toBe(old); await expectConnected(page); await openSplit(page, harness, seed);
   const persisted = (await commandOutboxes(page, seed.timelineId)).find((record) => record.ownerId === owner.ownerId)!; expect(persisted.pending?.request).toMatchObject({ body: first.raw, key: first.key });
