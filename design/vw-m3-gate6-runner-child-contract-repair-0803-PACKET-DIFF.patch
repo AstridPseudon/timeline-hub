@@ -1,0 +1,79 @@
+--- 0739/run.sh
++++ 0803/run.sh
+@@ -12,7 +12,7 @@
+ composition=/home/user/work/wt/vw-pin-5a4e9b72
+ remotion=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b
+ browser=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
+-physical_run_dir=$worker/gate6-20261021T0739
++physical_run_dir=$worker/gate6-20261021T0803
+ run_dir=$physical_run_dir
+ mode=${1:---run}
+ case "$mode" in --run|--preflight) ;; *) echo 'usage: run.sh [--preflight]' >&2; exit 2 ;; esac
+--- 0739/preflight.sh
++++ 0803/preflight.sh
+@@ -30,6 +30,7 @@
+ export ASTRID_RUNTIME_CHECKOUT=$runtime
+ export ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python
+ export ASTRID_PYTHON=/home/user/work/venv-agent/bin/python
++export ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.11/site-packages
+ export PYTHONPATH=$runtime:$agent
+ export ASTRID_APP_DIRECT_DIST=$app/dist
+ export ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b
+@@ -60,6 +61,7 @@
+   ASTRID_CHECKOUT="$agent" ASTRID_PACK_HOST_HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56 \
+   ASTRID_RUNTIME_CHECKOUT="$runtime" ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python \
+   ASTRID_PYTHON=/home/user/work/venv-agent/bin/python PYTHONPATH="$runtime:$agent" \
++  ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.11/site-packages \
+   ASTRID_APP_DIRECT_DIST="$app/dist" ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b \
+   ASTRID_REMOTION_BROWSER_EXECUTABLE=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell \
+   ASTRID_NODE_EXECUTABLE="$node" TIMELINE_COMPOSITION_CHECKOUT=/home/user/work/wt/vw-pin-5a4e9b72 \
+@@ -79,11 +81,13 @@
+   ASTRID_CHECKOUT="$agent" ASTRID_PACK_HOST_HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56 \
+   ASTRID_RUNTIME_CHECKOUT="$runtime" ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python \
+   ASTRID_PYTHON=/home/user/work/venv-agent/bin/python PYTHONPATH="$runtime:$agent" \
++  ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.11/site-packages \
+   ASTRID_APP_DIRECT_DIST="$app/dist" ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b \
+   ASTRID_REMOTION_BROWSER_EXECUTABLE=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell \
+   ASTRID_NODE_EXECUTABLE="$node" TIMELINE_COMPOSITION_CHECKOUT=/home/user/work/wt/vw-pin-5a4e9b72 \
+   TIMELINE_VIEWING_APP_SOURCE=d00a66134f330672ea7471dc69db38c1566d94cf \
+   TIMELINE_VIEWING_APP_TREE=a8bf53d5d5e865aa88825bbc20f6f530bfbaa7ba \
++  VIEWING_BROWSER_FLOCK_HELD=1 \
+   PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 TSX_DISABLE_CACHE=1 \
+   "$node" --import "$app/node_modules/tsx/dist/loader.mjs" "$worker/issue.mjs"
+ export VIEWING_FRAME_SOURCE_TUPLE=$run_dir/source-tuple.json
+@@ -94,6 +98,7 @@
+   HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$tmpdir" TMP="$tmpdir" TEMP="$tmpdir" \
+   APP_CHECKOUT="$app" ASTRID_CHECKOUT="$agent" ASTRID_RUNTIME_CHECKOUT="$runtime" \
+   ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python ASTRID_PYTHON=/home/user/work/venv-agent/bin/python \
++  ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.11/site-packages \
+   PYTHONPATH="$runtime:$agent" ASTRID_APP_DIRECT_DIST="$app/dist" \
+   ASTRID_PACK_HOST_HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56 \
+   ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b \
+@@ -109,6 +114,7 @@
+   HOME=/root LANG=C.UTF-8 PATH="$PATH" TMPDIR="$tmpdir" TMP="$tmpdir" TEMP="$tmpdir" \
+   APP_CHECKOUT="$app" ASTRID_CHECKOUT="$agent" ASTRID_RUNTIME_CHECKOUT="$runtime" \
+   ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python ASTRID_PYTHON=/home/user/work/venv-agent/bin/python \
++  ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.11/site-packages \
+   PYTHONPATH="$runtime:$agent" ASTRID_APP_DIRECT_DIST="$app/dist" \
+   ASTRID_PACK_HOST_HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56 \
+   ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b \
+--- 0739/issue.mjs
++++ 0803/issue.mjs
+@@ -6,7 +6,7 @@
+ const out=process.env.RUN_DIR;
+ assert(out);
+ assert.equal(process.env.RUN_DIR,out);
+-assert.equal(out,path.join(worker,'gate6-20261021T0739'));
++assert.equal(out,path.join(worker,'gate6-20261021T0803'));
+ assert.equal(path.dirname(realpathSync(out)),worker);
+ assert.equal(realpathSync(out),out);
+ assert.deepEqual(readdirSync(out),[],'physical run directory must be fresh; never reuse a partial issuance');
+@@ -36,7 +36,7 @@
+  writeFileSync(p,JSON.stringify(obj,null,2)+'\n',{flag:'wx',mode:0o600});return p;
+ }
+ const tuplePath=exclusive('source-tuple.json',tuple);
+-const approvalReference='successor packet after manager grant 2026-10-21T07:30Z; reviews 0619 source-binding custody, 0647 clean helper readiness, 0705 current budget, 0716 dispatch failure corrected by pre-materialization, 0723 service-cwd checksum failure corrected by scoped manifest cwd, 0730 diagnostic stale-namespace cause corrected by separate diagnostic scratch and physical namespace; exact tuple Appd00a66134f330672ea7471dc69db38c1566d94cf/treea8bf53d5d5e865aa88825bbc20f6f530bfbaa7ba, Agentd0a5072b, Runtime SERVER8f105 distinct PRODUCER2c4/client013, Composition SOURCE5a4e9b72/public13 archive9412/all77, immutable graphs App8bdc/32393 Runtime4913/21455, Node20.19.4 hash43d6, Chrome155, immutable helper b70b9d56/bc75';
++const approvalReference='successor packet after manager grant 2026-10-21T08:03Z; child lock-marker propagation corrected after historical 27036; predecessor manager grant 2026-10-21T07:30Z; reviews 0619 source-binding custody, 0647 clean helper readiness, 0705 current budget, 0716 dispatch failure corrected by pre-materialization, 0723 service-cwd checksum failure corrected by scoped manifest cwd, 0730 diagnostic stale-namespace cause corrected by separate diagnostic scratch and physical namespace; exact tuple Appd00a66134f330672ea7471dc69db38c1566d94cf/treea8bf53d5d5e865aa88825bbc20f6f530bfbaa7ba, Agentd0a5072b, Runtime SERVER8f105 distinct PRODUCER2c4/client013, Composition SOURCE5a4e9b72/public13 archive9412/all77, immutable graphs App8bdc/32393 Runtime4913/21455, Node20.19.4 hash43d6, Chrome155, immutable helper b70b9d56/bc75';
+ const grant={approved:true,approvalReference,approvedBy:'viewing manager',profile:'native-codec-chrome155',browserExecutable:c.CHROME155.executable,browserVersion:c.CHROME155.version,browserExecutableSha256:c.CHROME155.sha256,browserTreeSha256:c.CHROME155.treeSha256,nodeVersion:c.NODE20.version,nodeExecutableSha256:c.NODE20.sha256,sourceSha:appSha,sourceTree:appTree,issuedAt:new Date().toISOString(),maximumCentralRequests:1};
+ const grantPath=exclusive('manager-grant.json',grant);
+ const markerPath=exclusive('one-shot-marker.json',{sourceSha:appSha,sourceTree:appTree,profile:grant.profile,approvalReference,issuedAt:grant.issuedAt,exclusiveAllocation:true});
