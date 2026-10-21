@@ -67,7 +67,7 @@ _config = None
 
 
 def runs_integration(config) -> bool:
-    """True when the run selects the ``integration`` tests with a marker expression (the nightly lane)."""
+    """True when the run selects the ``integration`` tests with a marker expression (the heavy lane, run on request)."""
     expression = (config.getoption("markexpr", default="") or "").strip()
     return "integration" in expression and "not integration" not in expression
 

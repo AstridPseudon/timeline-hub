@@ -276,7 +276,7 @@ tmp_path_retention_policy = "failed"
 timeout = 600
 timeout_method = "signal"
 # Lanes (testing plan R-2): the default run leaves out tests that need another repo,
-# macOS, credentials or explicit opt-in; tests/lanes.py documents the nightly lane.
+# macOS, credentials or explicit opt-in; tests/lanes.py documents the heavy lane, which runs on request only.
 addopts = "-m 'not integration and not darwin_native and not live and not opt_in'"
 # Scope collection to Astrid's own tests; exclude vendored upstream test trees
 # (e.g. any pack's `ai_toolkit/upstream` submodule, which targets the upstream
