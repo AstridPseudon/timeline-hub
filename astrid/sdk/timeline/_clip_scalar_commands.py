@@ -14,27 +14,78 @@ from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occu
 _GENERATED_IDENTITY = ('extensionId', 'contributionId')
 _GENERATED_FIXED_FIELDS = ('extensionId', 'contributionId', 'generatedAt', 'sourceMapEntryId')
 _TEXT_LEAVES = frozenset(('content', 'fontSize', 'color', 'bold', 'align'))
+_HOST_CONFLICT_POLICIES = frozenset(
+    ('preserve-output', 'regenerate-output', 'propose-source-update'))
+
+
+def _generated_context(metadata):
+    """Return the accepted host carrier context, or refuse malformed provenance."""
+    if not isinstance(metadata, dict):
+        return None
+    extension_id = metadata.get('extensionId')
+    contribution_id = metadata.get('contributionId')
+    provenance = metadata.get('provenance')
+    if (not isinstance(extension_id, str) or not extension_id
+            or (contribution_id is not None
+                and (not isinstance(contribution_id, str) or not contribution_id))
+            or not isinstance(provenance, dict)
+            or provenance.get('contractVersion') != 1):
+        return None
+    for key in ('sourceSchemaRef', 'sourceItemId', 'sourceFingerprint',
+                'generatorVersion', 'outputFingerprint'):
+        if not isinstance(provenance.get(key), str) or not provenance[key]:
+            return None
+    source_revision = provenance.get('sourceRevision')
+    if (source_revision is not None
+            and (isinstance(source_revision, bool)
+                 or not isinstance(source_revision, (str, int, float))
+                 or (isinstance(source_revision, str) and not source_revision)
+                 or (isinstance(source_revision, float) and not math.isfinite(source_revision)))):
+        return None
+    if provenance.get('conflictPolicy') not in _HOST_CONFLICT_POLICIES:
+        return None
+    generated_at = metadata.get('generatedAt')
+    if (generated_at is not None
+            and (isinstance(generated_at, bool) or not isinstance(generated_at, (int, float))
+                 or isinstance(generated_at, float) and not math.isfinite(generated_at))):
+        return None
+    source_map_entry_id = metadata.get('sourceMapEntryId')
+    if (source_map_entry_id is not None
+            and (not isinstance(source_map_entry_id, str) or not source_map_entry_id)):
+        return None
+    return {'extensionId': extension_id, 'contributionId': contribution_id}
 
 
 def _producer_app(ctx, ref, incoming):
-    """Update only existing managed metadata; never adopt a raw/user clip."""
+    """Update an established generated carrier; never adopt a raw/user clip."""
     current = ctx.read(ref, ['app'])
-    managed_by = current.get('managedBy') if isinstance(current, dict) else None
-    if not isinstance(managed_by, str) or managed_by == '':
+    if not isinstance(current, dict):
+        raise CommandError('clip.set app leaves require an existing generated clip',
+                           kind='unsupported_ownership', ref=ref)
+    managed_by = current.get('managedBy')
+    has_managed_by = 'managedBy' in current
+    if has_managed_by and (not isinstance(managed_by, str) or managed_by == ''):
         raise CommandError('clip.set app leaves require an existing managed clip',
                            kind='unsupported_ownership', ref=ref)
     ctx.read(ref, ['app', 'managedBy'])
-    if 'managedBy' in incoming and incoming['managedBy'] != managed_by:
-        raise CommandError('clip.set cannot change clip ownership', kind='unsupported_ownership', ref=ref)
     if '__generated__' not in incoming:
+        if 'managedBy' in incoming and incoming['managedBy'] != managed_by:
+            raise CommandError('clip.set cannot change clip ownership', kind='unsupported_ownership', ref=ref)
         return
     metadata = incoming['__generated__']
     previous = current.get('__generated__')
-    if not isinstance(metadata, dict) or not isinstance(previous, dict):
-        raise CommandError('clip.set generated metadata requires an existing identity',
+    declared = _generated_context(metadata)
+    established = _generated_context(previous)
+    if declared is None or established is None:
+        raise CommandError('clip.set generated metadata has unknown or malformed provenance',
                            kind='unsupported_ownership', ref=ref)
     ctx.read(ref, ['app', '__generated__'])
-    if metadata.get('extensionId') != managed_by:
+    # Main's fresh birth carries the host-generated identity but no managedBy.
+    # The exact persisted extension/contribution pair is the only private
+    # source-only owner fallback; it is never materialized as managedBy.
+    if not has_managed_by:
+        managed_by = established['extensionId']
+    if declared['extensionId'] != managed_by:
         raise CommandError('clip.set generated metadata owner does not match managedBy',
                            kind='unsupported_ownership', ref=ref)
     for key in _GENERATED_IDENTITY:

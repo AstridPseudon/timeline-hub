@@ -5,6 +5,7 @@ import copy
 
 import pytest
 
+from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute
@@ -56,6 +57,23 @@ def update_values(source_revision='after'):
     }
 
 
+def main_generated(source_revision=17, *, extension=EXTENSION, contribution=CONTRIBUTION):
+    return {
+        'extensionId': extension,
+        'contributionId': contribution,
+        'provenance': {
+            'contractVersion': 1,
+            'sourceSchemaRef': 'astrid.transcript_segment/v1',
+            'sourceItemId': 'source-1',
+            'sourceFingerprint': 'astrid-fnv1a64-v1:45455185c9f937d7',
+            'sourceRevision': source_revision,
+            'generatorVersion': '1.3.0',
+            'outputFingerprint': 'astrid-fnv1a64-v1:a3ab11fde87e6f3d',
+            'conflictPolicy': 'preserve-output',
+        },
+    }
+
+
 def test_main_shaped_producer_capture_preserves_opaque_siblings_and_roundtrips():
     original = producer_bundle()
     before = copy.deepcopy(original)
@@ -84,6 +102,66 @@ def test_main_shaped_producer_capture_preserves_opaque_siblings_and_roundtrips()
     second_plan = execute(reloaded, [second])
     assert clip(second_plan.bundle, REF)['app']['__generated__'] == generated('second')
     assert inverse(second_plan.bundle, second_plan.records).bundle == plan.bundle
+
+
+def test_main_complete_birth_and_generated_only_refresh_preserve_row_and_owner_absence():
+    original = app_bundle()
+    track = {'id': 'transcript-caption-foundry-track', 'kind': 'visual',
+             'label': 'Transcript Captions', 'muted': False}
+    original['parent']['config']['tracks'].insert(0, copy.deepcopy(track))
+    row = {
+        'id': 'transcript-caption-ca055bff87805488',
+        'at': 1,
+        'track': track['id'],
+        'clipType': 'text',
+        'hold': 1,
+        'x': 128,
+        'y': 418,
+        'width': 1024,
+        'height': 101,
+        'text': {'content': 'Zażółć 🌍', 'fontSize': 48, 'color': '#ffffff',
+                 'bold': True, 'align': 'center'},
+        'app': {'__generated__': main_generated()},
+        'label': 'Zażółć 🌍',
+        'opaque': {'source': 'source-1', 'keep': [None, False]},
+    }
+    birth = execute(original, [capture_clip_add(original, 'parent', row)])
+    assert clip(birth.bundle, 'parent/clip:' + row['id']) == row
+    assert birth.bundle['parent']['clips'][-1]['id'] == row['id']
+    assert birth.bundle['parent']['config']['clips'][-1]['id'] == row['id']
+
+    refresh = capture_clip_set(
+        birth.bundle, 'parent/clip:' + row['id'],
+        values={'hold': 1.25, 'label': 'updated', 'text': {'content': 'updated'},
+                'app': {'__generated__': main_generated(18)}})
+    updated = clip(execute(birth.bundle, [refresh]).bundle, 'parent/clip:' + row['id'])
+    assert 'managedBy' not in updated['app']
+    assert updated['app']['__generated__'] == main_generated(18)
+    assert updated['opaque'] == row['opaque']
+
+
+def test_generated_refresh_refuses_without_established_exact_carrier():
+    original = producer_bundle()
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        next(item for item in rows if item['id'] == 'f2-app-clip')['app'] = {}
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError) as error:
+        capture_clip_set(original, REF, values={'app': {'__generated__': generated()}})
+    assert error.value.kind == 'unsupported_ownership'
+    assert original == before
+
+    original = producer_bundle()
+    malformed = generated()
+    malformed['provenance'] = {'sourceSchemaRef': 'astrid.transcript/v1'}
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        next(item for item in rows if item['id'] == 'f2-app-clip')['app'] = {
+            '__generated__': malformed,
+        }
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError) as error:
+        capture_clip_set(original, REF, values={'app': {'__generated__': malformed}})
+    assert error.value.kind == 'unsupported_ownership'
+    assert original == before
 
 
 def test_producer_metadata_refuses_user_foreign_and_identity_adoption_without_writes():
