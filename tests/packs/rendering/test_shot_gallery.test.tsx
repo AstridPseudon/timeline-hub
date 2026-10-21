@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ShotGallery, filterShots, pageCount, SHOTS_PER_PAGE } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery';
+import { ShotGallery, ShotsStrip, filterShots, pageCount, SHOTS_PER_PAGE } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery';
 import { shotStills } from '../../../astrid/packs/rendering/ui/threejs-live-editor/shotStills';
 
 afterEach(cleanup);
@@ -168,5 +168,43 @@ describe('ShotGallery', () => {
   it('says what an empty world gets', () => {
     const { view } = mount({ shots: [] });
     expect(view.getByText(/no shots yet/)).toBeTruthy();
+  });
+});
+
+describe('ShotsStrip', () => {
+  const strip = (shots: typeof SHOTS, over: Record<string, unknown> = {}) => {
+    const props = { shots, revision: 'gallery-test', fullscreen: false, addDisabled: false, dragPropsFor: vi.fn(() => handle()), onSelect: vi.fn(), onAdd: vi.fn(), onViewAll: vi.fn(), ...over };
+    return { props, view: render(<ShotsStrip {...props} />) };
+  };
+
+  it('shows the count, a View shots link, and every card when they fit', () => {
+    const { view, props } = strip(SHOTS.slice(0, 4));
+    expect(view.getByText('Shots · 4')).toBeTruthy();
+    fireEvent.click(view.getByRole('button', { name: 'View shots →' }));
+    expect(props.onViewAll).toHaveBeenCalled();
+    expect(within(view.getByRole('list', { name: 'Shots preview' })).getAllByRole('listitem')).toHaveLength(4);
+    expect(view.queryByRole('button', { name: /more shots/ })).toBeNull();
+  });
+
+  it('turns the last slot into a +N more tile when there are more shots than rows', () => {
+    const { view, props } = strip(SHOTS);
+    const items = within(view.getByRole('list', { name: 'Shots preview' })).getAllByRole('listitem');
+    expect(items).toHaveLength(6);
+    const more = view.getByRole('button', { name: `${SHOTS.length - 5} more shots, view shots` });
+    expect(more).toHaveTextContent(`+${SHOTS.length - 5} more`);
+    fireEvent.click(more);
+    expect(props.onViewAll).toHaveBeenCalled();
+  });
+
+  it('selecting a card reports its index', () => {
+    const { view, props } = strip(SHOTS);
+    fireEvent.click(view.getAllByRole('button', { name: /^Shot 2,/ })[0]);
+    expect(props.onSelect).toHaveBeenCalledWith(1);
+  });
+
+  it('says so, with no link, when the world has no shots', () => {
+    const { view } = strip([]);
+    expect(view.getByText('No shots in this world yet')).toBeTruthy();
+    expect(view.queryByRole('button', { name: 'View shots →' })).toBeNull();
   });
 });

@@ -44,7 +44,7 @@ import {
 import { buildRows, rowFromEntry, type Row } from './rows';
 import { TimeBar, type BarMarker } from './TimeBar';
 import { button, clockText, eventChip, eventRow, ERROR_STYLE, errorMessage, OVERLAY_STYLE, PILL_STYLE, speedLabel, VIEWER_STYLE } from './ui';
-import { ShotGallery } from './ShotGallery';
+import { ShotGallery, ShotsStrip } from './ShotGallery';
 import { WorldList } from './WorldList';
 
 type AuthoringModule = typeof import('../authoring');
@@ -1256,7 +1256,21 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       onAdd={addShot}
     />
   ) : null;
-  // The viewer's own handle drags (or, in full screen, adds) the range currently set in the controls.
+  // Explore shows the world's shots under its events: a card opens Shots and plays that shot.
+  const shotsStrip = selected && liveScene && !showEmpty ? (
+    <ShotsStrip
+      shots={shots}
+      revision={selected.key}
+      fullscreen={inFullscreen}
+      addDisabled={Boolean(addReason)}
+      addTitle={addReason ?? undefined}
+      dragPropsFor={(index) => (shots[index] ? specFor({ from: shots[index].start, to: shots[index].end, speed: 1, name: shots[index].name }) : null)}
+      onSelect={(index) => { switchMode('shots'); playShot(index); }}
+      onAdd={addShot}
+      onViewAll={() => switchMode('shots')}
+    />
+  ) : null;
+  // The viewer's own handle drags (or, in full screen, adds) the range currently set in the controls., adds) the range currently set in the controls.
   const viewerDrag = mode === 'shots' && ready && !inFullscreen && selected ? specFor({ ...stretch, name: shot?.name ?? '' }) : null;
 
   // Side column: what lives beside the viewer when there is room.
@@ -1271,12 +1285,15 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       {list}
       <div className="flex flex-col gap-2 border-t border-border/70 pt-3">
         {mode === 'explore' ? (
-          events.length ? (
-            <>
-              <p className="px-2 text-[10px] uppercase tracking-wide text-muted-foreground">Events</p>
-              {eventButtons}
-            </>
-          ) : null
+          <>
+            {events.length ? (
+              <>
+                <p className="px-2 text-[10px] uppercase tracking-wide text-muted-foreground">Events</p>
+                {eventButtons}
+              </>
+            ) : null}
+            {shotsStrip}
+          </>
         ) : (
           gallery
         )}
@@ -1425,7 +1442,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     </div>
   );
   // Under the bar sits only the events grid (Explore, docked) or the gallery (Shots): nothing here appears, disappears or is reserved.
-  const exploreExtras = !wide && events.length ? eventButtons : null;
+  const exploreExtras = !wide ? <>{events.length ? eventButtons : null}{shotsStrip}</> : null;
   const travelGroupProps = { role: 'group', 'aria-label': 'Shot travel', tabIndex: 0, onKeyDown: onTravelKeyDown } as const;
   const travelGroupClass = 'flex shrink-0 flex-col gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
   const exploreBar = (
@@ -1686,7 +1703,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             )}
           </div>
         )}
-        {selected && liveScene && mode === 'shots' ? (
+        {selected && liveScene && (mode === 'shots' || shots.length > 0) ? (
           <Suspense fallback={null}>
             <LazyShotStillRenderer source={liveScene} revision={selected.key} />
           </Suspense>
