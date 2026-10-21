@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 _COMPOSITION_PACKAGE_NAME = "@banodoco/timeline-composition"
-_COMPOSITION_PACKAGE_VERSION = "0.0.13"
+_COMPOSITION_PACKAGE_VERSION = "0.0.14"
 _REQUIRED_COMPOSITION_EXPORTS = (
     ".",
     "./evaluation",
