@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { after, test } from 'node:test';
-import { assertPinnedImportedModule } from './main95-prompt-settings-integration.mjs';
+import { assertOwnedReadyGraphRoot, assertPinnedImportedModule } from './main95-prompt-settings-integration.mjs';
 
 const scratch = mkdtempSync(path.join(os.tmpdir(), 'main95-module-guard-'));
 after(() => rmSync(scratch, { recursive: true, force: true }));
@@ -31,6 +31,19 @@ function digest(file) {
 }
 
 const expectedHash = digest(moduleFile);
+
+const ownedGraph = '/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules';
+const ownedReady = '/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/READY';
+
+test('accepts the owned normal-lock READY record and derives its root from graph realpath', () => {
+  assert.equal(assertOwnedReadyGraphRoot({ graph: ownedGraph, readyFile: ownedReady }), path.dirname(realpathSync(ownedGraph)));
+});
+
+test('refuses a READY record whose graph root is not the graph realpath', () => {
+  const wrongGraph = path.join(scratch, 'wrong-node_modules');
+  mkdirSync(wrongGraph);
+  assert.throws(() => assertOwnedReadyGraphRoot({ graph: wrongGraph, readyFile: ownedReady }), /missing the owned graph root/);
+});
 
 test('accepts a valid pinned imported module and its exact bytes', async () => {
   const probeFile = path.join(appRoot, 'esm-probe.mjs');
@@ -68,6 +81,27 @@ test('refuses a module resolved from the wrong package', () => {
     moduleFile,
     expectedHash,
   }), /resolved to the wrong package/);
+});
+
+test('refuses a package version outside the pinned lock identity', () => {
+  writeFileSync(packageFile, JSON.stringify({
+    name: '@remotion/media',
+    version: '4.0.508',
+  }));
+  assert.throws(() => assertPinnedImportedModule({
+    graph,
+    packageName: '@remotion/media',
+    packageFile,
+    expectedVersion: '4.0.509',
+    moduleFile,
+    expectedHash,
+  }), /resolved version 4\.0\.508, expected 4\.0\.509/);
+  writeFileSync(packageFile, JSON.stringify({
+    name: '@remotion/media',
+    version: '4.0.509',
+    type: 'module',
+    exports: { '.': { import: './dist/esm/index.mjs' } },
+  }));
 });
 
 test('refuses changed imported-module bytes', () => {
