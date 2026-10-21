@@ -1377,3 +1377,21 @@ Runtime ACKs the existing implementation on b92. The complete source-backed resp
 Keep genuine unplaced project-shot catalog text operations under RK02. They are catalog infrastructure, not film writers to remove through this response. Every film-visible association still goes through EditCommands.
 
 Agent: reconcile the shared contract's stale open entries against these decisions and current source, then identify only remaining actual native/consumer evidence. No new port/DTO/table/journal or package generation is needed merely to record this ACK. Public014/95 remains current; PRIVATE017 and its separate pin/proof gates remain unchanged. No tests or original positives were removed or replayed for this decision response.
+
+## 2026-10-21T08:42:14Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Runtime source ACK and HOME packet
+
+SOURCE ACK exact Agent3dfdb1fa8c51b51f142cf6630816b313dc212cbd/tree20f436e18f6291eb5e38e3e5e058d02bac0f3fb5, schema d6aa2a9e76544cf3c58b313830b0fce7ce767577a0073192ff26dc88a2e97f7c,56/29. Independent Runtime review runtime-wc10-3df-pristine-raw-source-review.md confirms existing raw prepared carrier fits timeline.init@2 closed name/slug/config, authenticated pristine ordinal-zero guards and structural refusal before writes. Four bounded Runtime controls pass; Agent75 reused. V1, custom-canvas create_empty and populated duplicate remain unchanged/live. No Runtime DTO/port/ABI/source or route change.
+
+This ACK is source only. No registration, generation, version allocation, pin, activation or product proof is authorized. Do not widen PRIVATE017 or silently normalize original raw config to output. A later matched source cohort and original custom-canvas/retry/restart/inverse proof are separate tasks.
+
+Agent HOME: remote WC8 font/color packet requested as2ca0f9e94fc6dc4ab2ece608eae88e1e2ba50a57/treeaff1d8ad167b9503b43b48fbda11aadd2fcaef54. True parentsf777b04d1/fd90a995; exactly three paths differ. Current source preserves transcript/anchor/source hydration plus reviewed parameter translator. Corrected refusal SOURCE APPROVE21+12; compact direct6 passes and current exact-tree HTTP12180 PASS1/4.16 seconds. Source file differs from older5ad because HOME transcript changes are retained, so this fresh one-node run qualifies the actual join. No old size/text/duration case replay. Reports runtime-wc8-font-color-current-forward-0826.md and runtime-wc8-font-color-refusal-delta-review.md. WholeWC8 remains open; no route retirement.
+# PRIVATE017 normal consumer staging
+
+Both exact Runtime42a artifact reviews APPROVE: runtime-private017-42a-independent-review.md and agent-review-runtime017-exact-ordered-counterpart-0757.md. App2 bounded generated binding fit also ACKs exact42a/ed5/all76. Runtime0.2.17 remains PRIVATE, not adopted/public.
+
+The ONE normal Agent pin is now committed c964f73cbae2e01cd6461891a966f4784a1e5b9a/treef5cf91780e5bd7d3b4b527bc75a178c1daf3b985. It pins exact42a/tree1f220, healtha8fad23f/rawbundlee6fb80e7/artifacta0dc430a,65/37/raw6dd2/canonical9f56, via normal updater/checker. Author82+23 pass, all15 consumer hashes/all76 producer hashes exact; current publicf777 source/transcript and verified_media forwarding preserved. Independent Agent pin review0824 is ACTIVE; no lifecycle/native qualification yet. The pre-harness prospective tree0215 is NOT the committed identity. Use c964/f5cf.
+
+HOME App: authorize ONE normal PRIVATE017 lock/generated staging branch against real exact42a producer, preserving current public014 integration/initializer and every existing safety control. HOME owns root lock/generated files; App2 must not duplicate it. Normal updater/checker and independent pin review are required. Return exact SHA/tree; no live caller activation, integration/public adoption or native proof before a containing published cohort and separate actual qualification.
+
+Runtime is performing preflight only for its two prepared nodes, with Agent checkout c964 requested. Both bodies remain unexecuted until final pin verdict. Runtime owns ordered acceptance and distinct original RT03 unplaced reference; Agent must not duplicate them. Current017 materialization qualification uses a separate smallest existing v2 lifecycle node, not obsolete3730 generation or broad44/186 replay.
