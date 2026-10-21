@@ -32,7 +32,34 @@ def _seconds(value):
 
 def _publishable_parent_command(command):
     if (not isinstance(command, dict) or not isinstance(command.get('select'), str)
-            or re.fullmatch(r'parent/clip:[^/]+', command['select']) is None):
+            or not isinstance(command.get('op'), str)):
+        return False
+    if (command.get('op') == 'track.set'
+            and re.fullmatch(r'parent/track:[^/]+', command['select']) is not None):
+        target = command['select']
+        captured = ({'intent', 'resolved', 'reads', 'selections', 'bindings',
+                     'created', 'expect', 'authorship'} <= set(command)
+                    and command['resolved'] == [target]
+                    and isinstance(command['reads'], list)
+                    and any(read.get('ref') == target and read.get('path') == ['id']
+                            for read in command['reads'] if isinstance(read, dict))
+                    and isinstance(command['bindings'], dict)
+                    and command['bindings'].get('scalar.target') == target
+                    and isinstance(command['expect'], dict)
+                    and target + '::label' in command['expect']
+                    and isinstance(command['authorship'], dict)
+                    and command['authorship'].get(target + '::label') == 'direct')
+        if not captured:
+            return False
+        args = command.get('args')
+        values = args.get('values') if isinstance(args, dict) else None
+        clear = args.get('clear') if isinstance(args, dict) else None
+        return (isinstance(args, dict) and set(args) == {'values', 'clear'}
+                and isinstance(values, dict) and set(values).issubset({'label'})
+                and isinstance(clear, list) and set(clear).issubset({'label'})
+                and not set(values).intersection(clear)
+                and (values or clear))
+    if re.fullmatch(r'parent/clip:[^/]+', command['select']) is None:
         return False
     if command.get('op') == 'clip.move':
         return True
@@ -203,7 +230,8 @@ class AttachedCheckout(Checkout):
         session after a restart; detached checkouts never discover its intent.
         Other attached verbs continue to use ``flush()``. Parent move, hold,
         trim, delete, split, asset clear, and selected PARAM commands retain
-        their original command reads and guards.
+        their original command reads and guards. Parent track labels use the
+        existing ``track.set`` command captured into the same outbox.
         """
         if (not getattr(self.session, '_explicit_outbox', False) or force or restructure
                 or (client is not None and client is not self.session.client)):
