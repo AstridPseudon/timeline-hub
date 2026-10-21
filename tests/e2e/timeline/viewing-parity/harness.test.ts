@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { test } from 'node:test';
-import { assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
+import { aggregateFixtureFailures, assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
 import { resolveReviewedPackHostHelper, startRealPackHost } from './bootstrap';
 import { mediaHash } from './media';
 import { playerBrowserProfile } from './browser-profile';
@@ -330,6 +330,20 @@ test('fails postflight when a declared dependency graph changes', () => {
     }),
     /source dependency graph changed during browser fixture: renderGraphHashes/,
   );
+});
+
+test('keeps both fixture failures visible without replacing their original errors', () => {
+  const cause = new Error('underlying source failure');
+  const first = new Error('Player launch failed');
+  const second = new Error('source postflight failed', { cause });
+  const aggregate = aggregateFixtureFailures('Player fixture failed', [first, second]);
+
+  assert.ok(aggregate instanceof AggregateError);
+  assert.match(aggregate.message, /1: Player launch failed/);
+  assert.match(aggregate.message, /2: source postflight failed/);
+  assert.doesNotMatch(aggregate.message, /underlying source failure/);
+  assert.deepEqual([...aggregate.errors], [first, second]);
+  assert.equal(second.cause, cause);
 });
 
 test('fails postflight when the selected browser profile or executable bytes change', () => {

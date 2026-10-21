@@ -228,6 +228,17 @@ export function assertSourceVersionsUnchanged(before: SourceVersionGraph, after:
   }
 }
 
+function safeFailureReason(failure: unknown): string {
+  if (!(failure instanceof Error)) return 'non-Error failure';
+  return failure.message || 'Error without a message';
+}
+
+/** Keep fixture diagnostics useful without serializing arbitrary error data. */
+export function aggregateFixtureFailures(message: string, failures: readonly unknown[]): AggregateError {
+  const reasons = failures.map((failure, index) => `${index + 1}: ${safeFailureReason(failure)}`).join('; ');
+  return new AggregateError(failures, reasons ? `${message}: ${reasons}` : message);
+}
+
 export async function readyRenderCapability(harness: DirectHarness): Promise<Capability> {
   let cursor: string | null = null;
   do {
@@ -270,7 +281,7 @@ export const test = base.extend<object, {
         assertSourceVersionsUnchanged(preflight, await sourceVersions(profile));
       } catch (error) { failures.push(error); }
     }
-    if (failures.length) throw new AggregateError(failures, 'Runtime fixture or final source postflight failed');
+    if (failures.length) throw aggregateFixtureFailures('Runtime fixture or final source postflight failed', failures);
   }, { scope: 'worker', timeout: 240_000 }],
   fixture: [async ({ harness, parityCanvas }, provide) => {
     await harness.enableTimelineAuthoring(requiredEnv('ASTRID_PYTHON'));
@@ -302,7 +313,7 @@ export const test = base.extend<object, {
         assertSourceVersionsUnchanged(preflight, await sourceVersions(profile));
       } catch (error) { failures.push(error); }
     }
-    if (failures.length) throw new AggregateError(failures, 'Player fixture or final source postflight failed');
+    if (failures.length) throw aggregateFixtureFailures('Player fixture or final source postflight failed', failures);
   }, { scope: 'worker' }],
   context: async ({ browser, harness, parityCanvas }, provide) => {
     const context = await browser.newContext({ ...harness.contextOptions,
