@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T02:47:56Z | dispatcher heartbeat 8s | live 5 (sol 0, luna 5, other 0) | busy30 41 | status age 13m -->
+<!-- app | 2026-10-21T02:54:13Z | dispatcher heartbeat 3s | live 4 (sol 0, luna 4, other 0) | busy30 37 | status age 19m -->
 # app — 2026-10-21 02:34 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 gates OPEN.
 Integrated: App tl/integration 743d3464d1ed548986f29249bd9b4215baccf9bb / tree 82a556ccb651d4a4c5ab4f1380394d0670f16568. Main 860, public Runtime 013 and Composition 13 retained. Viewing helper merged ce7152ee4 with both 909 and 692 ancestry; exact source sent to Viewing. App2 stale canary lint/inventory removal merged 743; ledger sub-entry DELETED. Whole ordinary writer remains OPEN.
