@@ -298,6 +298,8 @@ def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(r
     assert [command['op'] for command in native['commands']] == [
         'track.set', 'clip.set', 'clip.set-params', 'clip.set',
     ]
+    # Accepted responses carry commands; the recorder is published by history.
+    expected_records = execute(before, native['commands']).records
     result = session.commit_many(native['commands'], idempotency_key='document-diff-roundtrip')
     assert result['data']['commands'] == native['commands']
     body = json.loads(runtime.calls[-1][0])
@@ -347,7 +349,7 @@ def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(r
     assert history['head']['revision_id'] == result['data']['accepted_revision_id']
     entry = next(item for item in history['items']
                  if item['publication_id'] == result['receipt']['receipt_id'])
-    assert entry['records']['commands'] == result['data']['records']['commands']
+    assert entry['records']['commands'] == expected_records
 
     runtime.restart()
     reloaded = runtime.session(name='document-diff-reloaded')
