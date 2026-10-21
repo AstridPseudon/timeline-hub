@@ -14,6 +14,8 @@ EXPECTED_CLIENT_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
 EXPECTED_C13_SOURCE=30da0a5e05d4529a2b97b3c1818cf9e15842d628
 EXPECTED_C13_SHA256=9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
 EXPECTED_NODE=v20.19.4
+EXPECTED_CONSTRAINTS=164
+EXPECTED_CONSTRAINTS_SHA256=478af081b0f27c1e90dac1ab4b0b645583f34787ecfe7b8079d1bb88ca034761
 MIN_FREE_BYTES=$((13 * 1024 * 1024 * 1024))
 
 SOURCE_ROOT=${SOURCE_ROOT:-$PWD}
@@ -24,6 +26,7 @@ NODE=${ASTRID_NODE_EXECUTABLE:-/home/user/work/toolchain/node-v20.19.4-linux-x64
 VIBECOMFY=${ASTRID_VIBECOMFY_CHECKOUT:-/home/user/work/fixtures/vibecomfy}
 PROFILE_ROOT=${FULL_COHERENT_PUBLIC_PROFILE_ROOT:-}
 AGENT_WHEEL=${FULL_COHERENT_PUBLIC_AGENT_WHEEL:-}
+PINS_FILE=${FULL_COHERENT_PUBLIC_PINS:-}
 
 failures=()
 pass() { printf 'PASS %s\n' "$*"; }
@@ -61,12 +64,15 @@ if [ -n "$PROFILE_ROOT" ]; then
   PROFILE_PY="$PROFILE_ROOT/venv/bin/python"
   PROFILE_SITE="$PROFILE_ROOT/venv/lib/python3.13/site-packages"
   PROFILE_JSON="$PROFILE_ROOT/profile/astrid.json"
+  PINS_FILE=${PINS_FILE:-$PROFILE_ROOT/metadata/venv-agent-child-s2.txt}
   require_file "$PROFILE_PY"
   require_dir "$PROFILE_SITE"
   require_file "$PROFILE_JSON"
+  require_file "$PINS_FILE"
 else
   PROFILE_PY=
   PROFILE_SITE=
+  PINS_FILE=
   fail 'FULL_COHERENT_PUBLIC_PROFILE_ROOT is not set (current public profile not built)'
 fi
 
@@ -102,62 +108,117 @@ else
   fail "STORAGE NEED ${need_gib} GiB for full-coherent-public-current-integration (free ${free_bytes} bytes; requires >13 GiB before profile/full scratch)"
 fi
 
-if [ -n "$PROFILE_PY" ] && [ -x "$PROFILE_PY" ] && [ -d "$PROFILE_SITE" ]; then
-  PROFILE_ROOT="$PROFILE_ROOT" PROFILE_SITE="$PROFILE_SITE" AGENT_WHEEL="$AGENT_WHEEL" "$PROFILE_PY" -I -B - <<'PY' || fail "profile isolated origin/RECORD/source-byte preflight failed"
+if [ -n "$PROFILE_PY" ] && [ -x "$PROFILE_PY" ] && [ -d "$PROFILE_SITE" ] && [ -n "$AGENT_WHEEL" ] && [ -n "$PINS_FILE" ]; then
+  PROFILE_ROOT="$PROFILE_ROOT" PROFILE_SITE="$PROFILE_SITE" PINS_FILE="$PINS_FILE" AGENT_WHEEL="$AGENT_WHEEL" \
+    RUNTIME_CHECKOUT="$RUNTIME_CHECKOUT" CLIENT_CHECKOUT="$CLIENT_CHECKOUT" \
+    EXPECTED_AGENT_COMMIT="$EXPECTED_AGENT_COMMIT" EXPECTED_RUNTIME_COMMIT="$EXPECTED_RUNTIME_COMMIT" \
+    EXPECTED_CLIENT_COMMIT="$EXPECTED_CLIENT_COMMIT" EXPECTED_CONSTRAINTS="$EXPECTED_CONSTRAINTS" \
+    EXPECTED_CONSTRAINTS_SHA256="$EXPECTED_CONSTRAINTS_SHA256" "$PROFILE_PY" -I -B - <<'PY' || fail "profile isolated origin/RECORD/source-byte preflight failed"
+import base64
 import csv
 import hashlib
 import importlib.metadata
-import importlib.util
 import json
 import os
+import re
+import subprocess
+import tarfile
+from io import BytesIO
 from pathlib import Path
+from pathlib import PurePosixPath
 from zipfile import ZipFile
 
 site = Path(os.environ["PROFILE_SITE"]).resolve()
 root = Path(os.environ["PROFILE_ROOT"]).resolve()
-if any(path.is_symlink() for path in root.rglob("*")):
-    raise SystemExit("profile contains symlinks")
-origins = {
-    "action": "astrid.packs.rendering.actions.render.run",
-    "astrid_runtime": "astrid_runtime",
-    "child": "astrid.core.execution.generic_host_worker",
-    "client": "astrid_runtime_client",
-    "host": "astrid.core.execution.generic_host",
-    "runtime_protocol": "runtime_protocol",
-    "runtime_protocol.platform": "runtime_protocol.platform",
-    "sdk": "astrid.sdk.invocation",
-}
-found = {}
-for label, name in origins.items():
-    spec = importlib.util.find_spec(name)
-    if spec is None or not spec.origin:
-        raise SystemExit(f"missing origin {label}: {name}")
-    origin = Path(spec.origin).resolve()
-    if site not in origin.parents:
-        raise SystemExit(f"origin {label} escaped private site: {origin}")
-    found[label] = str(origin)
+if not site.is_dir() or site.is_symlink() or any(path.is_symlink() for path in root.rglob("*")):
+    raise SystemExit("profile contains missing roots or symlinks")
 
-records = sorted(site.glob("*.dist-info/RECORD"))
-if len(records) != 166:
-    raise SystemExit(f"expected 166 RECORD files, found {len(records)}")
-for record in records:
+def rel_target(raw: str, owner: Path) -> Path:
+    parsed = PurePosixPath(raw)
+    if parsed.is_absolute() or ".." in parsed.parts or "" in raw.split("/") or "\\" in raw:
+        raise SystemExit(f"unsafe RECORD target: {owner}: {raw}")
+    target = (site / Path(*parsed.parts)).resolve()
+    if site not in target.parents or not target.is_file() or (site / Path(*parsed.parts)).is_symlink():
+        raise SystemExit(f"invalid RECORD target: {owner}: {raw}")
+    return target
+
+def record_rows(record: Path) -> dict[str, tuple[str, str]]:
+    rows: dict[str, tuple[str, str]] = {}
     with record.open(newline="") as stream:
         for row in csv.reader(stream):
-            if not row:
-                continue
-            raw_target = site / row[0]
-            target = raw_target.resolve()
-            if raw_target.is_symlink() or site not in target.parents or not target.is_file():
-                raise SystemExit(f"invalid RECORD target: {record}: {row[0]}")
-            if len(row) > 2 and row[1]:
+            if len(row) != 3 or not row[0] or row[0] in rows:
+                raise SystemExit(f"malformed or duplicate RECORD row: {record}")
+            target = rel_target(row[0], record)
+            if row[1]:
                 algorithm, expected = row[1].split("=", 1)
                 if algorithm != "sha256":
                     raise SystemExit(f"unexpected RECORD hash algorithm: {record}: {algorithm}")
-                digest = hashlib.sha256(target.read_bytes()).digest()
-                import base64
-                actual = base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
+                actual = base64.urlsafe_b64encode(hashlib.sha256(target.read_bytes()).digest()).rstrip(b"=").decode()
                 if actual != expected or str(target.stat().st_size) != row[2]:
                     raise SystemExit(f"RECORD mismatch: {record}: {row[0]}")
+            elif row[2]:
+                raise SystemExit(f"unhashed RECORD row has a size: {record}: {row[0]}")
+            rows[row[0]] = (row[1], row[2])
+    return rows
+
+records = sorted(site.rglob("*.dist-info/RECORD"))
+if len(records) != 166:
+    raise SystemExit(f"expected 166 RECORD files, found {len(records)}")
+record_targets: set[str] = set()
+for record in records:
+    record_targets.update(record_rows(record))
+actual_files = {
+    path.relative_to(site).as_posix()
+    for path in site.rglob("*")
+    if path.is_file() and not path.is_symlink()
+}
+if actual_files != record_targets:
+    raise SystemExit(
+        "RECORD closure differs from installed files: "
+        f"missing={sorted(actual_files - record_targets)[:3]} "
+        f"extra={sorted(record_targets - actual_files)[:3]}"
+    )
+
+constraint_file = Path(os.environ["PINS_FILE"])
+if not constraint_file.is_file() or constraint_file.is_symlink():
+    raise SystemExit(f"constraint carrier is not a regular file: {constraint_file}")
+if hashlib.sha256(constraint_file.read_bytes()).hexdigest() != os.environ["EXPECTED_CONSTRAINTS_SHA256"]:
+    raise SystemExit("164-pin constraint carrier hash differs from the settled 0908 carrier")
+constraints = [line.split(";", 1)[0].strip() for line in constraint_file.read_text().splitlines() if line.strip() and not line.lstrip().startswith("#")]
+if len(constraints) != int(os.environ["EXPECTED_CONSTRAINTS"]) or len(set(constraints)) != len(constraints):
+    raise SystemExit(f"expected {os.environ['EXPECTED_CONSTRAINTS']} unique constraints, found {len(constraints)}")
+
+def normalized(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+dists = list(importlib.metadata.distributions(path=[str(site)]))
+if len(dists) != 166:
+    raise SystemExit(f"expected 166 installed distributions, found {len(dists)}")
+by_name = {normalized(str(dist.metadata.get("Name", ""))): dist for dist in dists}
+if len(by_name) != len(dists):
+    raise SystemExit("installed distribution names are not unique")
+constraint_names = set()
+for constraint in constraints:
+    match = re.match(r"^([A-Za-z0-9][A-Za-z0-9_.-]*)(?:==([^ ]+)|\s*@\s*(.+))?$", constraint)
+    if not match:
+        raise SystemExit(f"unparseable constraint: {constraint}")
+    name, version, source = match.groups()
+    key = normalized(name)
+    constraint_names.add(key)
+    dist = by_name.get(key)
+    if dist is None:
+        raise SystemExit(f"constraint distribution is absent: {name}")
+    if version and dist.version != version:
+        raise SystemExit(f"constraint version differs: {name} expected {version}, got {dist.version}")
+    if source and "@" in source:
+        commit = source.rsplit("@", 1)[-1].split("#", 1)[0]
+        if re.fullmatch(r"[0-9a-f]{40}", commit):
+            direct = dist.read_text("direct_url.json")
+            if not direct or json.loads(direct).get("vcs_info", {}).get("commit_id") != commit:
+                raise SystemExit(f"VCS constraint source differs: {name} expected {commit}")
+expected_product_names = {"astrid-runtime", "astrid-runtime-client"}
+if set(by_name) != constraint_names | expected_product_names:
+    raise SystemExit("installed distributions are not exactly the 164-pin closure plus Runtime/client")
 
 expected_versions = {
     "astrid": "0.1.0",
@@ -170,7 +231,7 @@ expected_versions = {
     "pyyaml": "6.0.3",
 }
 for name, version in expected_versions.items():
-    dist = importlib.metadata.distribution(name)
+    dist = by_name.get(normalized(name))
     if not dist or not dist.files or dist.version != version:
         raise SystemExit(f"distribution {name} expected {version}, got {getattr(dist, 'version', None)}")
 
@@ -184,25 +245,127 @@ expected_profile = {
 if profile != expected_profile:
     raise SystemExit(f"profile shape mismatch: {profile!r}")
 
+def wheel_rows(wheel: Path) -> tuple[str, dict[str, tuple[str, str]], dict[str, bytes]]:
+    with ZipFile(wheel) as archive:
+        record_names = [name for name in archive.namelist() if name.endswith(".dist-info/RECORD")]
+        if len(record_names) != 1:
+            raise SystemExit(f"wheel must contain exactly one RECORD: {wheel}")
+        record_name = record_names[0]
+        rows = {}
+        for row in csv.reader(archive.read(record_name).decode("utf-8").splitlines()):
+            if len(row) != 3 or not row[0] or row[0] in rows:
+                raise SystemExit(f"malformed wheel RECORD: {wheel}")
+            rows[row[0]] = (row[1], row[2])
+        members = {name for name in archive.namelist() if not name.endswith("/")}
+        if set(rows) != members:
+            raise SystemExit(f"wheel RECORD does not enumerate exactly its members: {wheel}")
+        for name in members:
+            parsed = PurePosixPath(name)
+            if parsed.is_absolute() or ".." in parsed.parts or "" in name.split("/") or "\\" in name:
+                raise SystemExit(f"unsafe wheel member path: {wheel}: {name}")
+        return record_name, rows, {name: archive.read(name) for name in members}
+
+def installed_wheel_bytes(wheel: Path) -> None:
+    record_name, rows, members = wheel_rows(wheel)
+    installed_record = site / Path(*PurePosixPath(record_name).parts)
+    if not installed_record.is_file() or installed_record.is_symlink():
+        raise SystemExit(f"installed wheel RECORD is missing: {installed_record}")
+    installed = record_rows(installed_record)
+    for name, (expected_hash, expected_size) in rows.items():
+        if name == record_name:
+            if expected_hash or expected_size:
+                raise SystemExit(f"wheel RECORD must leave its own row unhashed: {wheel}")
+            continue
+        target = rel_target(name, wheel)
+        data = target.read_bytes()
+        if data != members[name] or installed.get(name) != (expected_hash, expected_size):
+            raise SystemExit(f"wheel/install source-byte or RECORD mismatch: {wheel}: {name}")
+
 wheelhouse = root / "wheelhouse"
-wheel_paths = [Path(os.environ["AGENT_WHEEL"]), wheelhouse / "astrid_runtime-0.1.0-py3-none-any.whl", wheelhouse / "astrid_runtime_client-0.2.14-py3-none-any.whl"]
-for wheel in wheel_paths:
+wheel_paths = [
+    (Path(os.environ["AGENT_WHEEL"]), ("astrid/", "astrid_runtime_client/"), Path(os.environ["EXPECTED_AGENT_COMMIT"]), Path(os.environ["RUNTIME_CHECKOUT"]), ("astrid", "astrid_runtime_client")),
+    (wheelhouse / "astrid_runtime-0.1.0-py3-none-any.whl", ("astrid_runtime/", "runtime_protocol/"), Path(os.environ["EXPECTED_RUNTIME_COMMIT"]), Path(os.environ["RUNTIME_CHECKOUT"]), ("astrid_runtime", "runtime_protocol")),
+    (wheelhouse / "astrid_runtime_client-0.2.14-py3-none-any.whl", ("astrid_runtime_client/",), Path(os.environ["EXPECTED_CLIENT_COMMIT"]), Path(os.environ["CLIENT_CHECKOUT"]), ("packages/python/astrid_runtime_client",)),
+]
+for wheel, prefixes, commit, checkout, source_prefixes in wheel_paths:
     if not wheel.is_file():
         raise SystemExit(f"missing product wheel: {wheel}")
+    installed_wheel_bytes(wheel)
+    if hashlib.sha256(wheel.read_bytes()).hexdigest() == "":
+        raise SystemExit(f"unreadable wheel hash: {wheel}")
     with ZipFile(wheel) as archive:
-        for member in archive.infolist():
-            if member.is_dir() or member.filename.endswith(".dist-info/RECORD"):
+        wheel_source = {
+            name: archive.read(name)
+            for name in archive.namelist()
+            if any(name.startswith(prefix) for prefix in prefixes) and not name.endswith("/")
+        }
+    command = ["git", "-C", str(checkout), "archive", "--format=tar", commit.as_posix(), "--", *source_prefixes]
+    result = subprocess.run(command, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode:
+        raise SystemExit(f"could not archive exact product source for {wheel}: {result.stderr.decode(errors='replace')}")
+    source_bytes = {}
+    with tarfile.open(fileobj=BytesIO(result.stdout), mode="r:") as archive:
+        for item in archive.getmembers():
+            if not item.isfile():
                 continue
-            raw_target = site / member.filename
-            target = raw_target.resolve()
-            if raw_target.is_symlink() or site not in target.parents or not target.is_file():
-                raise SystemExit(f"wheel target escaped or is not a regular file: {wheel}: {member.filename}")
-            if target.read_bytes() != archive.read(member):
-                raise SystemExit(f"wheel/install source-byte mismatch: {wheel}: {member.filename}")
+            name = item.name.removeprefix("./")
+            for prefix in source_prefixes:
+                source_name = prefix.rstrip("/") + "/"
+                if name.startswith(source_name):
+                    source_bytes[name] = archive.extractfile(item).read()
+                    break
+    wheel_bytes = wheel_source
+    if wheel_bytes != source_bytes:
+        raise SystemExit(f"wheel payload differs from exact source commit: {wheel}")
+
+agent_wheel = Path(os.environ["AGENT_WHEEL"])
+with ZipFile(agent_wheel) as archive:
+    agent_client = {
+        name.removeprefix("astrid_runtime_client/"): archive.read(name)
+        for name in archive.namelist()
+        if name.startswith("astrid_runtime_client/") and not name.endswith("/")
+    }
+client_wheel = wheelhouse / "astrid_runtime_client-0.2.14-py3-none-any.whl"
+with ZipFile(client_wheel) as archive:
+    public_client = {
+        name.removeprefix("astrid_runtime_client/"): archive.read(name)
+        for name in archive.namelist()
+        if name.startswith("astrid_runtime_client/") and not name.endswith("/")
+    }
+if agent_client != public_client:
+    raise SystemExit("c4b Agent wheel does not carry the exact public95 client payload")
+
+schema = __import__("banodoco_timeline_schema")
+schema_origin = Path(schema.__file__).resolve()
+if site not in schema_origin.parents or any(part.is_symlink() for part in (schema_origin, *schema_origin.parents)):
+    raise SystemExit(f"timeline schema escaped private site: {schema_origin}")
+from astrid.sdk.host_bootstrap import _installed_execution_origins
+origins = {
+    "action": "astrid.packs.rendering.actions.render.run",
+    "astrid_runtime": "astrid_runtime",
+    "child": "astrid.core.execution.generic_host_worker",
+    "client": "astrid_runtime_client",
+    "host": "astrid.core.execution.generic_host",
+    "runtime_protocol": "runtime_protocol",
+    "runtime_protocol.platform": "runtime_protocol.platform",
+    "sdk": "astrid.sdk.invocation",
+}
+found = _installed_execution_origins(site, str(Path(os.sys.executable)))
+if set(found) != set(origins):
+    raise SystemExit(f"installed origin probe returned the wrong keys: {found}")
+for label, name in origins.items():
+    module = __import__(name, fromlist=["*"])
+    origin = Path(module.__file__).resolve()
+    if site not in origin.parents or any(part.is_symlink() for part in (origin, *origin.parents)):
+        raise SystemExit(f"post-schema origin {label} escaped private site: {origin}")
+    if Path(found[label]).resolve() != origin:
+        raise SystemExit(f"post-schema origin changed for {label}: {found[label]} != {origin}")
 
 print("PASS profile eight origins=" + repr(found))
-print("PASS profile RECORD=166 hash-valid")
-print("PASS profile exact product versions and wheel/install source bytes")
+print("PASS profile schema and eight origins are private after schema import")
+print("PASS profile RECORD=166 closure and installed files are exact")
+print("PASS profile 164 constraints=" + os.environ["EXPECTED_CONSTRAINTS_SHA256"] + " exact")
+print("PASS profile exact product source/wheel/install bytes")
 PY
 fi
 
@@ -212,9 +375,10 @@ if [ "${#failures[@]}" -ne 0 ]; then
   exit 2
 fi
 
-# Keep the original full lane: no integration marker, no cache-provider
-# override, no --basetemp override, and no cleanup wrapper.  The central test
-# service supplies PYTHONPATH=$PWD for the source snapshot.
+# Keep the original full lane: no integration marker, no cache-provider or
+# --basetemp override, and no change to pytest's normal temporary-directory
+# behavior.  The central test service supplies PYTHONPATH=$PWD for the source
+# snapshot; the final child receives an explicit sanitized replacement below.
 export ASTRID_REMOTION_PROJECT_DIR="$COMPOSITION_ROOT"
 export ASTRID_NODE_EXECUTABLE="$NODE"
 export ASTRID_TIMELINE_SCHEMA_PYTHONPATH="$PROFILE_SITE"
@@ -222,4 +386,52 @@ export ASTRID_RUNTIME_CHECKOUT="$RUNTIME_CHECKOUT"
 export ASTRID_TEST_NODE_MODULES="$COMPOSITION_ROOT/node_modules"
 export ASTRID_VIBECOMFY_CHECKOUT="$VIBECOMFY"
 export PYTHONDONTWRITEBYTECODE=1
+
+# The central service deliberately supplies PYTHONPATH=$PWD.  Keep the source
+# Agent package for public source tests, but bootstrap the private Runtime,
+# client, and schema packages before pytest (and every xdist child) can see
+# that checkout path.  The temporary sitecustomize is outside the worktree;
+# it also re-raises SIGTERM so pytest's status remains 143.
+PREFLIGHT_BOOTSTRAP=$(mktemp -d "${TMPDIR:-/tmp}/astrid-full-preflight.XXXXXX")
+cat >"$PREFLIGHT_BOOTSTRAP/sitecustomize.py" <<'PY'
+import atexit
+import importlib
+import os
+from pathlib import Path
+import shutil
+import signal
+import sys
+
+site = Path(os.environ["ASTRID_FULL_PRIVATE_SITE"]).resolve()
+source = Path(os.environ["ASTRID_FULL_SOURCE_ROOT"]).resolve()
+original = list(sys.path)
+sys.path[:] = [str(site)] + [entry for entry in original if entry and Path(entry).resolve() != source]
+for name in ("banodoco_timeline_schema", "astrid_runtime_client", "astrid_runtime", "runtime_protocol"):
+    module = importlib.import_module(name)
+    origin = Path(module.__file__).resolve()
+    if site not in origin.parents or any(part.is_symlink() for part in (origin, *origin.parents)):
+        raise ImportError(f"private {name} import escaped profile: {origin}")
+sys.path[:] = original
+astrid = importlib.import_module("astrid")
+astrid_origin = Path(astrid.__file__).resolve()
+if source not in astrid_origin.parents or site in astrid_origin.parents:
+    raise ImportError(f"source Agent import escaped checkout: {astrid_origin}")
+
+def _cleanup() -> None:
+    shutil.rmtree(os.environ.get("ASTRID_FULL_PREFLIGHT_BOOTSTRAP", ""), ignore_errors=True)
+
+if "-m" in sys.argv and "pytest" in sys.argv:
+    atexit.register(_cleanup)
+    def _term(signum, _frame):
+        _cleanup()
+        signal.signal(signum, signal.SIG_DFL)
+        os.kill(os.getpid(), signum)
+    signal.signal(signal.SIGTERM, _term)
+PY
+export ASTRID_FULL_PRIVATE_SITE="$PROFILE_SITE"
+export ASTRID_FULL_SOURCE_ROOT="$SOURCE_ROOT"
+export ASTRID_FULL_PREFLIGHT_BOOTSTRAP="$PREFLIGHT_BOOTSTRAP"
+export PYTHONPATH="$PREFLIGHT_BOOTSTRAP:$SOURCE_ROOT:$PROFILE_SITE"
+export PYTHONNOUSERSITE=1
+export PYTHONSAFEPATH=1
 exec "$PROFILE_PY" -m pytest -q -n 3 "$@"
