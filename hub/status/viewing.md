@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T09:57:45Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 6m -->
+<!-- viewing | 2026-10-21T10:03:49Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 12m -->
 # viewing — 2026-10-21 09:51 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3 and M4 OPEN. PLAN and current manager rules read; inbox checked through lead 09:38 and App completion proposal 09:13.
 Integrated: Composition df7b86308902 / tree 71d8e95e. Duration input correction independently approved, runtime body unchanged. Integration full composition-full-1021073946-21820: npm test, 85 passed, zero failed/skipped. Source-to-fresh-main apply proof passed for all 120 paths, hashes and modes. Public Composition 0.0.13 / archive 9412 / all 77 members stays immutable. No public14 archive or consumer pin.

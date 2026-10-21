@@ -63,5 +63,7 @@ The unapplied proposal is in
 - Focused Vitest: **19 passed, 1 expected fail** in one mailbox test file.
 - Scoped ESLint on the touched test: **passed**.
 - `git diff --check`: **passed**.
+- `git apply --check` on the unapplied proposal: **passed** (the proposal was
+  not applied).
 - No full, browser, native/physical, Runtime, socket/helper, install, or graph
   qualification was run.
