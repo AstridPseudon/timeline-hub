@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Central current013 M1/Gate-5 launcher.
+ * Central current013 real-HTTP initializer launcher.
  *
- * This is deliberately a preflight around the existing three-products suite;
- * it does not add a second journey or a second source-evidence system.
+ * This is deliberately a source-guarded launcher around the one focused
+ * initializer journey; it does not broaden the browser gate to another suite.
  */
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -15,7 +15,7 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 export const CURRENT013_RUNTIME = Object.freeze({
-  serverCommit: '8f105c26e3b62f9c2683f717a9773a12bc775a8e',
+  serverCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   producerCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   version: '0.2.13',
   producerVersion: 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56',
@@ -25,9 +25,9 @@ export const CURRENT013_RUNTIME = Object.freeze({
 });
 
 export const CURRENT013_AGENT = Object.freeze({
-  commit: 'd0a5072bbe7b7ce9489f43aa0a81027ec400343b',
-  tree: '6adb4a1190dfb2874e101565f37eccd392b1ae2f',
-  lock: 'sha256:c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24',
+  commit: '8130a401bf44a518d5a40ae274d398b8c560be55',
+  tree: '236c3e57e0265c52b81ba8085de3193026176bff',
+  lock: 'sha256:c2ed617f38bc53e4f90dc082f082d38828d8f68a93e61776300ec7082ef23311',
 });
 
 export const CURRENT013_COMPOSITION = Object.freeze({
@@ -40,6 +40,9 @@ const FULL_SHA = /^[a-f0-9]{40}$/;
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const APP_METADATA = 'src/integrations/runtime/generated-contract-metadata.ts';
 const AGENT_METADATA = 'astrid_runtime_client/contract_metadata.py';
+const REAL_HTTP_TEST = 'tests/e2e/local/bootstrap013-real-http.spec.ts';
+const PRIVATE13_NODE_MODULES = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-public13-full-environment-custody-repair/private13/node_modules';
+const PRIVATE13_READY = '/home/user/work/wt/app-m3-public13-full-environment-custody-repair/notes/public13-protected-env-READY';
 
 function fail(message) {
   throw new Error(`[current013] ${message}`);
@@ -132,7 +135,11 @@ function checkLock(root, label) {
   if (lock.producer !== 'astrid-runtime') fail(`${label} Runtime lock producer is ${lock.producer}, expected astrid-runtime`);
   if (lock.source_commit !== CURRENT013_RUNTIME.producerCommit) fail(`${label} Runtime artifact producer pin is ${lock.source_commit}, expected ${CURRENT013_RUNTIME.producerCommit}`);
   if (lock.producer_version !== CURRENT013_RUNTIME.producerVersion) fail(`${label} Runtime artifact pin is ${lock.producer_version}, expected ${CURRENT013_RUNTIME.producerVersion}`);
-  return { file: sha256File(file), sourceCommit: lock.source_commit, producerVersion: lock.producer_version };
+  const digest = sha256File(file);
+  if (label === 'Agent' && process.env.CURRENT013_LAUNCHER_TEST !== '1' && digest !== CURRENT013_AGENT.lock) {
+    fail(`${label} runtime.lock.json is ${digest}, expected ${CURRENT013_AGENT.lock}`);
+  }
+  return { file: digest, sourceCommit: lock.source_commit, producerVersion: lock.producer_version };
 }
 
 function checkMetadata(root, label, metadataFile) {
@@ -176,6 +183,33 @@ function checkCompositionArchive(root, label) {
     fail(`${label} Composition archive contains an unsafe member`);
   }
   return { file: digest, fileCount: members.length };
+}
+
+function checkPrivate13() {
+  if (!existsSync(PRIVATE13_NODE_MODULES) || !statSync(PRIVATE13_NODE_MODULES).isDirectory()) {
+    fail(`protected public13 node_modules leaf is missing: ${PRIVATE13_NODE_MODULES}`);
+  }
+  if (realpathSync(PRIVATE13_NODE_MODULES) !== PRIVATE13_NODE_MODULES) {
+    fail(`protected public13 node_modules leaf moved or became a symlink: ${PRIVATE13_NODE_MODULES}`);
+  }
+  const ready = readFileSync(PRIVATE13_READY, 'utf8');
+  if (!ready.includes(PRIVATE13_NODE_MODULES) || !ready.includes('all 77 archive files') || !ready.includes('Runtime source `2c4ac180')) {
+    fail(`protected public13 READY record is not the authoritative 77-file Runtime-2c4 environment: ${PRIVATE13_READY}`);
+  }
+  const composition = path.join(PRIVATE13_NODE_MODULES, '@banodoco/timeline-composition');
+  if (realpathSync(composition) === realpathSync(path.join(process.cwd(), 'node_modules/@banodoco/timeline-composition'))) {
+    fail('protected public13 Composition resolves to the App shared install');
+  }
+  const files = execFileSync('find', [composition, '-type', 'f', '-print'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+  if (files.length !== CURRENT013_COMPOSITION.fileCount) fail(`protected public13 Composition has ${files.length} files, expected ${CURRENT013_COMPOSITION.fileCount}`);
+  const packageJson = jsonFile(path.join(composition, 'package.json'));
+  if (packageJson.name !== '@banodoco/timeline-composition' || packageJson.version !== '0.0.13') fail('protected public13 Composition package is not 0.0.13');
+  if (!existsSync(path.join(composition, 'dist/animations.generated.js'))) fail('protected public13 generated animations are missing');
+  const vite = path.join(PRIVATE13_NODE_MODULES, '.bin/vite');
+  requiredExecutable({ VITE: vite }, 'VITE');
+  execFileSync(process.execPath, ['--version'], { stdio: ['ignore', 'pipe', 'pipe'] });
+  execFileSync(vite, ['--version'], { stdio: ['ignore', 'pipe', 'pipe'] });
+  return Object.freeze({ leaf: PRIVATE13_NODE_MODULES, compositionFiles: files.length, node: process.execPath, vite });
 }
 
 function runVendorCheck(input, root, command, label) {
@@ -224,8 +258,9 @@ export function runCurrent013Integration() {
     fail('set TIMELINE_CURRENT013_RUN=1 only when the manager has supplied the final exact pair');
   }
   const input = readCurrent013Inputs();
+  const private13 = process.env.CURRENT013_LAUNCHER_TEST === '1' ? null : checkPrivate13();
   const before = checkCurrent013Sources(input);
-  console.log('[current013] exact source preflight passed; running existing M1/Gate-5 three-products suite');
+  console.log(`[current013] exact source preflight passed; running ${REAL_HTTP_TEST}`);
   const childEnv = {
     ...process.env,
     ASTRID_CHECKOUT: input.agent,
@@ -234,13 +269,16 @@ export function runCurrent013Integration() {
     ASTRID_RUNTIME_PYTHON: input.runtimePython,
     TIMELINE_BUNDLE_AGENT_HEAD: input.agentSha,
     TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
+    PRIVATE13_NODE_MODULES,
+    VITE_TIMELINE_COMPOSITION_ROOT: path.join(PRIVATE13_NODE_MODULES, '@banodoco/timeline-composition'),
   };
   let status = 1;
   try {
-    status = spawnSync('npm', ['run', 'test:e2e:three-products'], { cwd: input.app, env: childEnv, stdio: 'inherit', shell: false }).status ?? 1;
+    status = spawnSync('npm', ['exec', '--', 'playwright', 'test', '--config', 'playwright.direct.config.ts', REAL_HTTP_TEST], { cwd: input.app, env: childEnv, stdio: 'inherit', shell: false }).status ?? 1;
   } finally {
     const after = checkCurrent013Sources(input);
     if (JSON.stringify(after) !== JSON.stringify(before)) fail('source checks changed between the start and end of the browser gate');
+    if (private13 && JSON.stringify(checkPrivate13()) !== JSON.stringify(private13)) fail('protected public13 environment changed during the browser gate');
     console.log('[current013] exact source postflight passed');
   }
   process.exitCode = status;

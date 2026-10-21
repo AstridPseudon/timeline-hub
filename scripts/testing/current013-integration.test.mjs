@@ -63,7 +63,7 @@ function controlled(fn, { dirty = '', childStatus = 0, mutate = () => {} } = {})
   const previousExit = process.exitCode;
   const calls = [];
   let appStatus = dirty;
-  Object.assign(process.env, env(), { TIMELINE_CURRENT013_RUN: '1' });
+  Object.assign(process.env, env(), { TIMELINE_CURRENT013_RUN: '1', CURRENT013_LAUNCHER_TEST: '1' });
   delete process.env.ASTRID_APP_DIRECT_DIST;
   mock.method(process, 'cwd', () => roots.app);
   mock.method(childProcess, 'execFileSync', (command, args, options) => {
@@ -166,12 +166,12 @@ test('Python inputs must be absolute executable files', () => {
   }
 });
 
-test('same-tree snapshot and ignored output pass both boundaries; original command and inputs are forwarded', () => {
+test('same-tree snapshot and ignored output pass both boundaries; focused real-HTTP command and inputs are forwarded', () => {
   controlled((calls) => {
     runCurrent013Integration();
     assert.equal(process.exitCode, 0);
     const child = calls.find(({ command }) => command === 'npm');
-    assert.deepEqual(child.args, ['run', 'test:e2e:three-products']);
+    assert.deepEqual(child.args, ['exec', '--', 'playwright', 'test', '--config', 'playwright.direct.config.ts', 'tests/e2e/local/bootstrap013-real-http.spec.ts']);
     assert.equal(child.options.cwd, roots.app);
     assert.equal(child.options.env.ASTRID_PYTHON, env().ASTRID_PYTHON);
     assert.equal(child.options.env.ASTRID_RUNTIME_PYTHON, env().ASTRID_RUNTIME_PYTHON);
