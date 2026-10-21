@@ -285,3 +285,72 @@ request remains HOLD until the source-coherence wrapper delta is independently
 APPROVED, the new runtime is present and verified, and MAIN has materialized
 the private profile. The exact final command above is the one allowed command;
 it is not a claim that the profile or runtime already exists.
+
+## Storage budget measurement (worker 1048, 2026-10-21T10:51:38Z)
+
+This is a retained-size measurement, not a transient-peak claim. Measurements
+use `du -sx -B1` (allocated bytes) and divide by 2^30. The exact current
+source checkouts are present and clean at the following identities:
+
+- Agent `/home/user/work/agent`: b3c96a758c1cfa2a609d1498e0e9ee401b32cc40,
+  tree 3467b7bffb0fe6edf9178c9a9de4d446c8ab8857 — 119,758,848 bytes,
+  0.111534 GiB.
+- Runtime `/home/user/work/runtime`: b92d3e7a05eec65c142294ef4873edd059e9b31d,
+  tree 6abc2f117391de8e7e35c0283f575a002199894d — 12,046,336 bytes,
+  0.011219 GiB.
+- Runtime client `/home/user/work/wt/rt-pin-95bd3c5f`:
+  95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3, tree
+  d3a290b407fa61e6ab2d476f50c068073f70df00 — 12,054,528 bytes,
+  0.011227 GiB.
+
+The separate source-checkout subtotal is therefore 143,859,712 bytes,
+0.133980 GiB. It is not added again through the profile measurement below.
+
+The existing coherent 164-pin/166-distribution reference profile was measured
+at
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m4-d13-private-entrypoint-custody-profile-repair-0908/private-profile-f4edcb4b`.
+Its `audit.txt` proves 166 RECORD files and the eight private origins, and its
+`preflight.txt` records the 164-entry carrier. This is a size reference only:
+its Agent is f4edcb4b, not the current b3c target. The profile components,
+excluding its embedded `source/agent` copy and the 4,096-byte pip cache, are:
+
+- venv: 658,956,288 bytes, 0.613701 GiB;
+- wheelhouse: 57,868,288 bytes, 0.053894 GiB;
+- profile and metadata: 28,672 bytes, 0.000027 GiB;
+- profile subtotal: 716,853,248 bytes, 0.667622 GiB.
+
+The existing immutable C13 reference runtime
+`/home/user/work/runtimes/agent-remotion-0013` measured 394,047,488 bytes,
+0.366985 GiB, including its 393,027,584-byte (0.366035 GiB) `node_modules`.
+Its marker is the old 30da source, and its graph contains 33 symlinks; it is
+not evidence for the absent b3c-source `agent-remotion-0014` symlink-free
+graph. The exact 0014 runtime is therefore UNKNOWN and is not silently
+substituted in this budget.
+
+Adding the separately measured profile reference, exact current source
+checkout analogues, and old C13 runtime gives a retained setup subtotal of
+1,254,760,448 bytes, 1.168587 GiB. The only retained pytest scratch found at
+`/tmp/pytest-of-root` was 9,211,904 bytes (0.008579 GiB), but it comes from
+unrelated prior targeted runs and is not a bound for this full run; it is not
+added to the setup subtotal. The historical profile tarball
+`.../agt-m4-d13-final-current-wheel-profile-build-0851/private-profile-f4edcb4b.tgz`
+was 413,593,693 bytes (0.385189 GiB), but it is a retained packaging artifact,
+not a MAIN setup requirement or a measured concurrent peak, so it is also not
+added.
+
+Run scratch and peak: UNKNOWN. There is no MAIN full result, no `-n 3` full
+run, and no real service peak log measuring pytest temporary files, worker
+scratch, or concurrent setup/build phases. The retained end-state sizes above
+must not be presented as a transient peak. Consequently there is no supported
+measured peak plus 2 GiB margin from which to lower the admission floor. A
+naive retained-subtotal-plus-2-GiB calculation would be 3.168587 GiB, but it
+is explicitly not an admissible threshold because the missing peak is
+UNKNOWN.
+
+At measurement time, `df -B1 /home/user/work` reported 12,480,892,928 bytes
+free, 11.623737 GiB. The existing >13 GiB requirement is 13,958,643,712
+bytes; the measured shortfall is 1,477,750,784 bytes, 1.376263 GiB. Storage
+need remains plainly: preserve the >13 GiB admission floor until MAIN has an
+actual source-coherent setup/full-run peak measurement with known `-n 3`
+concurrency and a 2 GiB margin. Do not change the wrapper threshold based on
+this report.
