@@ -81,8 +81,6 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
             pins.append(pin)
         by_name = {row['variant_key']: pin for row, pin in zip(associations, pins)}
         old, new = by_name['old'], by_name['new']
-        from timeline_commit_film_fixture import _binding_descriptor
-
         from tests.sdk.test_timeline_commit_provider_document import (
             MEDIA,
             document_fixture,
@@ -114,12 +112,20 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
         for row in parent['occurrences']:
             row.update(source_offset=0, speed=1)
         parent['occurrences'][0]['placement']['start_ms'] = 8000
-        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
-                                    idempotency_key='chapter-shot')
-        binding = service.set_project_shot_text_binding(project, {
-            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
-        }, idempotency_key='chapter-text')['data']
-        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
+        # The HTTP caller compares the authored clip identity with the exact
+        # public selection it flushes.  Carry the genuine old selection's
+        # alias and immutable generation/variant identity into the fixture's
+        # authored registry and every raw clip mirror.
+        for payload in (internal['payload'], parent):
+            assets = payload['registry']['assets']
+            binding = assets.pop('picture', assets.get(old['asset']))
+            binding.update(generationId=old['generation_id'], variantId=old['variant_id'])
+            assets[old['asset']] = binding
+        for rows in (internal['payload']['clips'], parent['clips'], parent['config']['clips']):
+            for row in rows:
+                if row.get('asset') == 'picture':
+                    row['asset'] = old['asset']
+        document['shot_revisions'][0]['payload']['text_bindings'] = []
         service.publish_parent_composition(project, 'film', {
             'project_id': project, 'timeline_id': 'film', 'expected_head': None,
             'parent_revision_id': 'popup-baseline', 'parent_composition': parent,
