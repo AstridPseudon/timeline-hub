@@ -1,0 +1,51 @@
+diff --git a/src/tools/video-editor/hooks/useTimelineState.ts b/src/tools/video-editor/hooks/useTimelineState.ts
+--- a/src/tools/video-editor/hooks/useTimelineState.ts
++++ b/src/tools/video-editor/hooks/useTimelineState.ts
+@@ -24,5 +24,6 @@
+ } from '@/shared/state/selectionStore.ts';
+ import { createInteractionState, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
+ import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
++import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+ import { ROW_HEIGHT, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
+ import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
+@@ -41,10 +41,11 @@
+ import { useTimelineSelection } from '@/tools/video-editor/hooks/useTimelineSelection.ts';
+ import {
+   createTimelineStore,
+   seedTimelineStoreBeforeRender,
+ } from '@/tools/video-editor/hooks/timelineStore.ts';
++import { createTimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
+ import {
+   createTimelineCommandRunner,
+   MEDIA_COMMAND_DESCRIPTORS,
+   provisionRegisteredTimelineMedia,
+ } from '@/tools/video-editor/commands/index.ts';
+@@ -934,3 +934,22 @@
+   });
+ 
++  const runtimeProvider = runtime.provider;
++  const runtimeProjectId = runtime.project.projectId;
++  const parentMediaRuntime = useMemo(() => {
++    const provider = runtimeProvider as typeof runtimeProvider & {
++      getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
++    };
++    const getProjectVerifiedMedia = provider.getProjectVerifiedMedia;
++    return typeof getProjectVerifiedMedia === 'function' && typeof runtimeProjectId === 'string'
++      ? { projectId: runtimeProjectId, getProjectVerifiedMedia: getProjectVerifiedMedia.bind(provider) }
++      : undefined;
++  }, [runtimeProjectId, runtimeProvider]);
++  const parentMediaCommands = useMemo(
++    () => createTimelineCommands(store, {
++      timelineEditability: runtime.timelineEditability,
++      parentMediaRuntime,
++    }),
++    [parentMediaRuntime, runtime.timelineEditability, store],
++  );
++
+   const assetManagement = services.useAssetManagement({
+@@ -944,4 +963,5 @@
+     patchRegistry,
+     invalidateAssetRegistry,
+     resolveAssetUrl,
++    commands: parentMediaCommands,
+   });
