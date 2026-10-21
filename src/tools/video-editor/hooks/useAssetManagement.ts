@@ -35,6 +35,7 @@ import type {
   TimelinePatchRegistry,
 } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
+import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 
 type UploadedGenerationData = GenerationDropData & {
   assetId?: string;
@@ -57,6 +58,8 @@ type UploadedGenerationResult = {
   mediaImport?: PreparedMediaImport;
 };
 
+const NATIVE_REFUSAL_MESSAGE_LIMIT = 240;
+
 export interface UseAssetManagementArgs {
   store?: TimelineStoreApi;
   dataRef: MutableRefObject<TimelineData | null>;
@@ -68,6 +71,7 @@ export interface UseAssetManagementArgs {
   patchRegistry: TimelinePatchRegistry;
   invalidateAssetRegistry: TimelineInvalidateAssetRegistry;
   resolveAssetUrl: (file: string) => Promise<string>;
+  commands?: Pick<TimelineCommands, 'addClip'>;
 }
 
 export interface UseAssetManagementResult {
@@ -83,7 +87,7 @@ export interface UseAssetManagementResult {
     insertAtTop?: boolean,
     preparedAsset?: TimelineProvisionedAsset,
     removeClipId?: string,
-  ) => boolean;
+  ) => boolean | Promise<boolean>;
 }
 
 export interface AssetDropTargetResolution {
@@ -176,6 +180,7 @@ export function useAssetManagement({
   setSelectedTrackId,
   applyEdit,
   patchRegistry,
+  commands,
 }: UseAssetManagementArgs): UseAssetManagementResult {
   const runtime = useVideoEditorRuntime();
   const getDataRef = useCallback(() => {
@@ -273,7 +278,37 @@ export function useAssetManagement({
     forceNewTrack: boolean,
     insertAtTop: boolean,
     removeClipId?: string,
-  ) => {
+  ): boolean | Promise<boolean> => {
+    if (prepared.mediaType === 'video') {
+      if (!prepared.mediaSelection) {
+        runtime.toast.error('Failed to save asset', {
+          description: 'Runtime prepared video is missing its original media selection.',
+        });
+        return false;
+      }
+      if (!commands) {
+        runtime.toast.error('Failed to save asset', {
+          description: 'Runtime prepared video placement is unavailable.',
+        });
+        return false;
+      }
+      return Promise.resolve(commands.addClip({
+        preparedAsset: prepared,
+        ...(trackId !== undefined ? { trackId } : {}),
+        time,
+        forceNewTrack,
+        insertAtTop,
+        ...(removeClipId !== undefined ? { removeClipId } : {}),
+      })).then((result) => {
+        if (!result.ok) {
+          const description = result.error.message.trim().slice(0, NATIVE_REFUSAL_MESSAGE_LIMIT)
+            || 'Native prepared video placement was refused.';
+          runtime.toast.error('Failed to save asset', { description });
+        }
+        return result.ok;
+      });
+    }
+
     const latestDataRef = getDataRef();
     const current = latestDataRef.current;
     if (!current) {
@@ -309,7 +344,7 @@ export function useAssetManagement({
       semantic: true,
     });
     return true;
-  }, [getApplyEdit, getDataRef, getSelectedTrackId]);
+  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId, runtime.toast]);
 
   const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string) => {
     if (preparedAsset) {
