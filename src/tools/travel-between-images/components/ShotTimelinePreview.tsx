@@ -25,6 +25,7 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import { hardDurationMs } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
 import type { ShotTimelineMediaProvider } from './shotTimelineDataProvider.ts';
 import {
   createShotTimelineDataProvider,
@@ -42,6 +43,8 @@ type ShotTimelinePreviewProps = {
   shotCompositionAdapter?: ShotCompositionAdapter;
   /** Reuse the parent Runtime media-import and managed-selection seam. */
   mediaProvider?: ShotTimelineMediaProvider;
+  /** Mounted parent command-session authority for occurrence media edits. */
+  occurrenceMediaPort?: OccurrenceMediaCapturePort;
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
     publication?: CanonicalShotTimelinePublication,
@@ -390,6 +393,7 @@ export function ShotTimelinePreview({
   occurrenceId,
   shotCompositionAdapter,
   mediaProvider,
+  occurrenceMediaPort,
   onCanonicalCompositionPublished,
   onCanonicalDraftStateChange,
   onCanonicalDraftSessionChange,
@@ -645,6 +649,7 @@ export function ShotTimelinePreview({
         timelineEditability={timelineEditability}
         extensionHostEnabled={false}
         onSaveStatusChange={handleSaveStatusChange}
+        occurrenceMediaContext={occurrenceMediaPort ? { occurrenceId, port: occurrenceMediaPort } : undefined}
         initialTimelineData={initialTimelineData}
       >
         <ShotTimelineEditorSurface

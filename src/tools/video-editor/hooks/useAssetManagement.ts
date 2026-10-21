@@ -8,7 +8,7 @@ import { extractVideoMetadata } from '@/shared/lib/media/videoMetadata.ts';
 import { extractVideoPosterFrame } from '@/shared/lib/media/videoPosterExtractor.ts';
 import { generateClientThumbnail, uploadImageWithThumbnail } from '@/shared/media/clientThumbnailGenerator.ts';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
-import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { JSON, MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { createExternalUploadGeneration } from '@/integrations/supabase/repositories/generationMutationsRepository.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
@@ -20,6 +20,12 @@ import {
   type PreparedMediaImport,
 } from '@/tools/video-editor/data/AssetResolver.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
+import {
+  captureOccurrenceMediaEdit,
+  logPopupPostSelectionDiagnostic,
+  submitOccurrenceMediaEdit,
+  type OccurrenceMediaCapturePort,
+} from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
 import {
   type TimelineData,
 } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -75,6 +81,8 @@ export interface UseAssetManagementArgs {
   patchRegistry: TimelinePatchRegistry;
   invalidateAssetRegistry: TimelineInvalidateAssetRegistry;
   resolveAssetUrl: (file: string) => Promise<string>;
+  occurrenceMediaPort?: OccurrenceMediaCapturePort;
+  occurrenceId?: string;
   commands?: Pick<TimelineCommands, 'addClip'>;
 }
 
@@ -108,6 +116,7 @@ export function buildPlacePreparedMediaCommand({
   forceNewTrack,
   insertAtTop,
   removeClipId,
+  clipId,
 }: {
   prepared: TimelineProvisionedAsset;
   trackId?: string;
@@ -116,6 +125,7 @@ export function buildPlacePreparedMediaCommand({
   forceNewTrack: boolean;
   insertAtTop: boolean;
   removeClipId?: string;
+  clipId?: string;
 }): PlacePreparedMediaCommand {
   return {
     type: 'place-prepared-media',
@@ -127,8 +137,45 @@ export function buildPlacePreparedMediaCommand({
       forceNewTrack,
       insertAtTop,
       ...(removeClipId !== undefined ? { removeClipId } : {}),
+      ...(clipId !== undefined ? { clipId } : {}),
     },
   };
+}
+
+function reservedOccurrenceChildId(): string {
+  const random = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `popup-child-${random}`;
+}
+
+export function buildOccurrenceMediaAddRow({
+  clipId,
+  media,
+  mediaType,
+  track,
+  at,
+  duration,
+}: {
+  clipId: string;
+  media: MediaSelection;
+  mediaType: 'image' | 'video';
+  track: string;
+  at: number;
+  duration: number;
+}): Record<string, JSON> {
+  const row: Record<string, JSON> = {
+    id: clipId,
+    clipType: mediaType,
+    track,
+    at,
+    asset: media.asset,
+    hold: duration,
+  };
+  if (mediaType === 'video') {
+    row.from = 0;
+    row.to = duration;
+    row.speed = 1;
+  }
+  return row;
 }
 
 export { buildAssetDropEdit };
@@ -184,6 +231,8 @@ export function useAssetManagement({
   setSelectedTrackId,
   applyEdit,
   patchRegistry,
+  occurrenceMediaPort,
+  occurrenceId,
   commands,
 }: UseAssetManagementArgs): UseAssetManagementResult {
   const runtime = useVideoEditorRuntime();
@@ -283,6 +332,117 @@ export function useAssetManagement({
     insertAtTop: boolean,
     removeClipId?: string,
   ): boolean | Promise<boolean> => {
+    const latestDataRef = getDataRef();
+    const current = latestDataRef.current;
+    if (!current) {
+      return false;
+    }
+
+    // Popup media is authored by the mounted parent occurrence session. The
+    // parent prepared-video facade below remains the separate parent proof.
+    const canReadOccurrenceSelection = Boolean(
+      prepared.mediaSelection
+      || (runtime.provider.getProjectMediaSelection && prepared.entry.generationId && prepared.entry.variantId),
+    );
+    if (occurrenceId && !removeClipId && ['image', 'video'].includes(prepared.mediaType)) {
+      logPopupPostSelectionDiagnostic('target', 'enter', {
+        occurrenceId,
+        hasPort: Boolean(occurrenceMediaPort),
+        hasSelection: canReadOccurrenceSelection,
+      });
+      if (!occurrenceMediaPort || !canReadOccurrenceSelection) {
+        logPopupPostSelectionDiagnostic('target', 'refused', {
+          occurrenceId,
+          hasPort: Boolean(occurrenceMediaPort),
+          hasSelection: canReadOccurrenceSelection,
+        });
+        runtime.toast.error('Occurrence media placement requires the mounted command session and original Runtime selection.');
+        return false;
+      }
+      const occurrenceChildId = reservedOccurrenceChildId();
+      const preview = previewPreparedMediaCommand(current, buildPlacePreparedMediaCommand({
+        prepared,
+        trackId,
+        selectedTrackId: getSelectedTrackId(),
+        time,
+        forceNewTrack,
+        insertAtTop,
+        removeClipId,
+        clipId: occurrenceChildId,
+      }));
+      const detail = preview?.commandResult?.detail;
+      const clipId = typeof detail?.clipId === 'string' ? detail.clipId : null;
+      const resolvedTrackId = typeof detail?.trackId === 'string' ? detail.trackId : null;
+      const clip = clipId ? preview?.nextData.config.clips.find((candidate) => candidate.id === clipId) : undefined;
+      if (!clip || !resolvedTrackId) {
+        logPopupPostSelectionDiagnostic('target.preview', 'refused', {
+          occurrenceId,
+          hasPort: true,
+          hasSelection: canReadOccurrenceSelection,
+          hasTarget: Boolean(clip && resolvedTrackId),
+        });
+        runtime.toast.error('The timeline drop target changed before the occurrence media edit was captured.');
+        return false;
+      }
+      const selectionPromise = prepared.mediaSelection
+        ? Promise.resolve(prepared.mediaSelection)
+        : (async () => {
+            const generationId = prepared.entry.generationId;
+            const variantId = prepared.entry.variantId;
+            if (!runtime.provider.getProjectMediaSelection || !generationId || !variantId) {
+              throw new Error('Occurrence media placement requires the original five-field Runtime selection.');
+            }
+            return runtime.provider.getProjectMediaSelection({
+              asset: prepared.assetKey,
+              generation_id: generationId,
+              variant_id: variantId,
+            });
+          })();
+      void selectionPromise.then(async (media) => {
+        logPopupPostSelectionDiagnostic('selection.continuation', 'enter', {
+          occurrenceId,
+          hasPort: true,
+          hasSelection: true,
+          hasTarget: true,
+        });
+        const ownerRef = `occurrence:${occurrenceId}` as `occurrence:${string}`;
+        const trackRef = `${ownerRef}/track:${resolvedTrackId}` as `occurrence:${string}/track:${string}`;
+        const duration = clip?.clipType === 'hold'
+          ? clip.hold ?? 5
+          : Math.max(0.001, (clip?.to ?? time + 5) - (clip?.from ?? time));
+        const captured = captureOccurrenceMediaEdit(occurrenceMediaPort, current, {
+          kind: 'add',
+          ownerRef,
+          trackRef,
+          media,
+          row: buildOccurrenceMediaAddRow({
+            clipId: occurrenceChildId,
+            media,
+            mediaType: prepared.mediaType,
+            track: resolvedTrackId,
+            at: time,
+            duration,
+          }),
+        });
+        await submitOccurrenceMediaEdit(captured);
+        logPopupPostSelectionDiagnostic('selection.continuation.submit', 'return', {
+          occurrenceId,
+          ownerRef,
+          trackRef,
+          hasSession: true,
+        });
+      }).catch((cause) => {
+        logPopupPostSelectionDiagnostic('selection.continuation', 'throw', {
+          occurrenceId,
+          hasPort: true,
+          hasSelection: true,
+          hasTarget: true,
+        }, cause);
+        runtime.toast.error(cause instanceof Error ? cause.message : 'The occurrence media edit was refused.');
+      });
+      return true;
+    }
+
     if (prepared.mediaType === 'video') {
       if (!prepared.mediaSelection) {
         runtime.toast.error('Failed to save asset', {
@@ -296,7 +456,6 @@ export function useAssetManagement({
         });
         return false;
       }
-      const current = getDataRef().current;
       const nativeRemoveClipId = removeClipId && (!current || !isTransientUploadPlaceholder(current, removeClipId))
         ? removeClipId
         : undefined;
@@ -315,12 +474,6 @@ export function useAssetManagement({
         }
         return result.ok;
       });
-    }
-
-    const latestDataRef = getDataRef();
-    const current = latestDataRef.current;
-    if (!current) {
-      return false;
     }
 
     const command = buildPlacePreparedMediaCommand({
@@ -352,7 +505,7 @@ export function useAssetManagement({
       semantic: true,
     });
     return true;
-  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId, runtime.toast]);
+  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId, occurrenceId, occurrenceMediaPort, runtime.provider, runtime.toast]);
 
   const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string) => {
     if (preparedAsset) {

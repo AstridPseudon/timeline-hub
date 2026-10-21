@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type { DataProvider, TimelineCommandBasis, TimelineHeadRevision } from '../data/DataProvider.ts';
+import { logPopupPostSelectionDiagnostic, projectOccurrenceMediaPreview } from '../commands/occurrenceMediaGesture.ts';
 import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
@@ -14,7 +15,7 @@ import type { UseTimelineCommitResult } from './useTimelineCommit.ts';
 import type { TimelineStoreApi } from './timelineStore.ts';
 import type { VideoEditorShotsHost } from '../runtime/ports.ts';
 import { createSelectedParamPort, type SelectedParamCapture, type SelectedParamLiveBasis } from '../commands/selectedParamPort.ts';
-import type { DocumentPin } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { DocumentPin, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 
 export function useTimelineCommandSession(options: {
   legacyClean: () => boolean;
@@ -120,7 +121,8 @@ export function useTimelineCommandSession(options: {
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
           const trimmed = projectClipTrimPreview(preview, data);
-          const native = trimmed ?? projectGenericPatchPreview(preview, data);
+          const occurrenceMedia = projectOccurrenceMediaPreview(preview, data, provider.shotComposition);
+          const native = trimmed ?? occurrenceMedia ?? projectGenericPatchPreview(preview, data);
           const compiled = trimmed ? { valid: true, nextData: trimmed }
             : native ? { valid: true, nextData: native } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
@@ -158,6 +160,13 @@ export function useTimelineCommandSession(options: {
           return fresh;
         },
         send: (request, key) => provider.commitTimeline!(request, key),
+        getProjectVerifiedMedia: provider.getProjectVerifiedMedia
+          ? (selection) => {
+              const reader = provider.getProjectVerifiedMedia!;
+              return reader.length >= 2
+                ? (reader as unknown as (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>)(basis.canonicalDocument.project_id, selection)
+                : reader(selection);
+            } : undefined,
         recoverBootstrap: provider.recoverNativeBootstrapTimeline
           ? (ownerId) => provider.recoverNativeBootstrapTimeline!(timelineId, ownerId)
           : undefined,
@@ -167,7 +176,8 @@ export function useTimelineCommandSession(options: {
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
           const trimmed = projectClipTrimPreview(patch, commit.dataRef.current);
-          const native = trimmed ?? projectGenericPatchPreview(patch, commit.dataRef.current);
+          const occurrenceMedia = projectOccurrenceMediaPreview(patch, commit.dataRef.current, provider.shotComposition);
+          const native = trimmed ?? occurrenceMedia ?? projectGenericPatchPreview(patch, commit.dataRef.current);
           const compiled = trimmed ? { valid: true, nextData: trimmed }
             : native ? { valid: true, nextData: native } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
@@ -301,6 +311,83 @@ export function useTimelineCommandSession(options: {
             return parentClipSwapMediaPort.finish(basis, verifiedMedia);
           },
           submit(input) { requireCleanParentClipSwapMedia(); parentClipSwapMediaPort.submit(input); },
+        };
+        const occurrenceMediaPort = session.occurrenceMediaPort;
+        const mediaDisplays = new WeakMap<object, TimelineData>();
+        const mediaCommands = new WeakMap<object, TimelineData>();
+        const requireCurrentMedia = (basis?: object) => {
+          if (disposed || sessionRef.current !== session || latest.current.provider !== provider
+            || latest.current.timelineId !== timelineId) throw new Error('Timeline media session is closed');
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before editing occurrence media');
+          const current = latest.current.commit.dataRef.current;
+          if (!current || (basis && mediaDisplays.get(basis) !== current)) throw new Error('Displayed timeline changed during the media read');
+          return current;
+        };
+        session.occurrenceMediaPort = {
+          capture(input) {
+            logPopupPostSelectionDiagnostic('session.capture', 'enter', {
+              occurrenceId: input.request.ownerRef.slice('occurrence:'.length),
+              ownerRef: input.request.ownerRef,
+              trackRef: input.request.trackRef,
+              hasSession: true,
+            });
+            try {
+              if (input.current !== requireCurrentMedia()) throw new Error('Media capture requires the current displayed timeline');
+              const basis = occurrenceMediaPort.capture(input);
+              mediaDisplays.set(basis, input.current);
+              logPopupPostSelectionDiagnostic('session.capture', 'return', {
+                occurrenceId: input.request.ownerRef.slice('occurrence:'.length),
+                ownerRef: input.request.ownerRef,
+                trackRef: input.request.trackRef,
+                hasSession: true,
+              });
+              return basis;
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.capture', 'throw', {
+                occurrenceId: input.request.ownerRef.slice('occurrence:'.length),
+                ownerRef: input.request.ownerRef,
+                trackRef: input.request.trackRef,
+                hasSession: true,
+              }, error);
+              throw error;
+            }
+          },
+          async finish(basis) {
+            logPopupPostSelectionDiagnostic('session.finish', 'enter', { hasSession: true });
+            try {
+              requireCurrentMedia(basis);
+              const result = await occurrenceMediaPort.finish(basis);
+              mediaCommands.set(result.command, requireCurrentMedia(basis));
+              logPopupPostSelectionDiagnostic('session.finish', 'return', {
+                commandOp: result.command.op,
+                hasSession: true,
+              });
+              return result;
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.finish', 'throw', { hasSession: true }, error);
+              throw error;
+            }
+          },
+          submit(input) {
+            logPopupPostSelectionDiagnostic('session.submit', 'enter', {
+              commandOp: input.command.op,
+              hasSession: true,
+            });
+            try {
+              if (mediaCommands.get(input.command) !== requireCurrentMedia()) throw new Error('Displayed timeline changed before the media preview');
+              occurrenceMediaPort.submit(input);
+              logPopupPostSelectionDiagnostic('session.submit', 'return', {
+                commandOp: input.command.op,
+                hasSession: true,
+              });
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.submit', 'throw', {
+                commandOp: input.command.op,
+                hasSession: true,
+              }, error);
+              throw error;
+            }
+          },
         };
         const occurrenceDuplicatePort = session.occurrenceDuplicatePort;
         const requireCleanDuplicate = () => {
@@ -453,6 +540,7 @@ export function useTimelineCommandSession(options: {
     selectedParamPort, resolveSelectedParamAuthority, resolveSelectedParamAuthorityAsync,
     parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
     parentClipSwapMediaPort: sessionRef.current?.parentClipSwapMediaPort,
+    occurrenceMediaPort: sessionRef.current?.occurrenceMediaPort,
     occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
