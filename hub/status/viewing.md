@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T08:20:46Z | dispatcher heartbeat 1s | live 4 (sol 1, luna 3, other 0) | busy30 13 | status age 1m -->
+<!-- viewing | 2026-10-21T08:26:47Z | dispatcher heartbeat 2s | live 4 (sol 0, luna 4, other 0) | busy30 15 | status age 8m -->
 # viewing — 2026-10-21 08:18 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. Current PLAN/MANAGER-COMMON retained; ACK orchestrator08:07 critical-path direction, four separate Luna workers dispatched immediately when delivered08:15. No capacity exception now.
 Integrated: Composition tl/integration df7b86308 / tree71d8e95edb1bb2d187c3193ef3462d4cfde277fa. Duration source b344 independent APPROVE, unchanged runtime body; ONE integration full composition-full-1021073946-21820, npm test85 passed/0 failed/0 skipped. Public13/archive9412ae25/all77 immutable. No public14 archive/pin.
