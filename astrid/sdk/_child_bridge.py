@@ -5,7 +5,6 @@ no environment discovery, credential access, generic RPC, or admission fallback.
 """
 from __future__ import annotations
 
-import fcntl
 import hashlib
 import json
 import math
@@ -90,28 +89,27 @@ def _write_bridge_io_failure(frame: bytes | None) -> None:
     Pipe backpressure must not hold cleanup. The brief O_NONBLOCK change is
     shared with concurrent writers; they may observe EAGAIN, and restoration
     can overwrite a concurrent flag change. No exclusive-FD claim is made.
-    F_SETFL restores the saved caller flags; kernel-written status such as
-    Darwin FWASWRITTEN is not caller-settable and may change on a write.
+    Only the blocking flag is restored; other descriptor flags are preserved.
     Regular-file writes occur after cleanup; filesystem latency is not bounded.
     Never close fd2, retry, create a sink or leave a diagnostic thread behind.
     """
     if type(frame) is not bytes or not frame or len(frame) > 512:
         return
-    saved_flags = None
+    was_blocking = None
     try:
         mode = os.fstat(2).st_mode
         if stat.S_ISFIFO(mode) or stat.S_ISSOCK(mode):
-            saved_flags = fcntl.fcntl(2, fcntl.F_GETFL)
-            fcntl.fcntl(2, fcntl.F_SETFL, saved_flags | os.O_NONBLOCK)
+            was_blocking = os.get_blocking(2)
+            os.set_blocking(2, False)
             os.write(2, frame)
         elif stat.S_ISREG(mode):
             os.write(2, frame)
     except Exception:
         pass
     finally:
-        if saved_flags is not None:
+        if was_blocking is not None:
             try:
-                fcntl.fcntl(2, fcntl.F_SETFL, saved_flags)
+                os.set_blocking(2, was_blocking)
             except Exception:
                 pass
 
@@ -296,6 +294,23 @@ def _validate_child_policy(value: Mapping[str, Any] | None) -> dict[str, Any] | 
     return json.loads(_strict_json(copied))
 
 
+class _BridgeTimeout(CapabilityInvocationError):
+    """An I/O budget expired, observed before cleanup or diagnostic work."""
+
+    def __init__(self, message: str, *, observed_at: float):
+        super().__init__(message)
+        self.observed_at = observed_at
+
+
+class _BridgeReplyTimeout(TimeoutError):
+    """A complete validated reply arrived too late for this exchange."""
+
+    def __init__(self, data: Any, *, observed_at: float):
+        super().__init__("child bridge reply arrived after its deadline")
+        self.data = data
+        self.observed_at = observed_at
+
+
 class ChildBridge:
     """Five fixed operations over an inherited private stream socket.
 
@@ -327,7 +342,8 @@ class ChildBridge:
         started = time.monotonic()
         deadline = started + budget
         if budget <= 0 or not self._lock.acquire(timeout=budget):
-            raise CapabilityInvocationError("child bridge request timed out")
+            raise _BridgeTimeout("child bridge request timed out", observed_at=time.monotonic()) from TimeoutError(
+                "child bridge lock acquisition timed out")
         phase = "send"
         frame = bytearray()
         try:
@@ -342,11 +358,14 @@ class ChildBridge:
             while not frame.endswith(b"\n"):
                 self._channel.settimeout(max(0.000001, deadline - time.monotonic()))
                 chunk = self._channel.recv(min(65536, _MAX_FRAME + 1 - len(frame)))
-                if not chunk or len(frame) >= _MAX_FRAME or time.monotonic() >= deadline:
-                    raise ValueError("closed, oversized or timed out reply")
+                received_at = time.monotonic()
+                if not chunk or len(frame) >= _MAX_FRAME:
+                    raise ValueError("closed or oversized reply")
                 frame.extend(chunk)
                 if b"\n" in frame[:-1] or len(frame) > _MAX_FRAME:
                     raise ValueError("invalid frame boundary")
+                if not frame.endswith(b"\n") and received_at >= deadline:
+                    raise TimeoutError("child bridge reply timed out")
             phase = "decode"
             reply = json.loads(frame, object_pairs_hook=_unique_json_object)
             try:
@@ -389,17 +408,25 @@ class ChildBridge:
                         or type(data["size"]) is not int or data["size"] < 0
                         or data["durability"] != "durable"):
                     raise ValueError("invalid durable snapshot receipt")
+            if received_at >= deadline:
+                # Validate complete replies before classifying lateness; a
+                # caller must still reject malformed or foreign resources.
+                raise _BridgeReplyTimeout(data, observed_at=received_at)
             return data
         except CapabilityValidationError:
             raise
         except CapabilityInvocationError:
             raise
         except (OSError, ValueError, TypeError) as exc:
+            observed_at = exc.observed_at if isinstance(exc, _BridgeReplyTimeout) else time.monotonic()
             self.close()
             _emit_bridge_io_failure(endpoint="sdk", phase=phase, operation=op,
                                     exception=exc, request_sequence=self._sequence,
                                     frame_bytes=len(frame), elapsed_seconds=time.monotonic() - started,
                                     budget_seconds=budget)
+            if isinstance(exc, TimeoutError):
+                raise _BridgeTimeout("child bridge is unavailable or returned an invalid reply",
+                                     observed_at=observed_at) from exc
             raise CapabilityInvocationError("child bridge is unavailable or returned an invalid reply") from exc
         finally:
             self._lock.release()

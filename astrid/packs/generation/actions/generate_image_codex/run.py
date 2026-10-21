@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import os
 import shutil
-import signal
 import sys
 from pathlib import Path
+
+from runtime_protocol import platform
 
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
@@ -13,7 +14,8 @@ guard_canonical_entrypoint("generation.generate_image_codex")
 
 
 def main() -> int:
-    from astrid.packs.generation.actions.generate_image.run import build_parser, main as generate
+    from astrid.packs.generation.actions.generate_image.run import build_parser
+    from astrid.packs.generation.actions.generate_image.run import main as generate
 
     args = build_parser().parse_args()
     if args.execution != "codex" or not 1 <= args.count <= 4:
@@ -31,15 +33,14 @@ def main() -> int:
     def interrupted(signum, _frame):
         private_auth.unlink(missing_ok=True)
         raise SystemExit(128 + signum)
-    previous_handlers = {sig: signal.signal(sig, interrupted) for sig in (signal.SIGTERM, signal.SIGINT)}
+    restore = platform.install_stop_handlers(interrupted)
     try:
         # In-process, never os.environ: the host's command custody binds the launch environment.
         with managed_attempt_home(attempt_home):
             return generate(sys.argv[1:])
     finally:
         private_auth.unlink(missing_ok=True)
-        for sig, previous in previous_handlers.items():
-            signal.signal(sig, previous)
+        restore()
 
 
 if __name__ == "__main__":

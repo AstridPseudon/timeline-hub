@@ -437,7 +437,7 @@ def test_provision_writes_pod_handle_and_cost(
     with patch("runpod_lifecycle.launch", mock_launch), \
          patch("runpod_lifecycle.RunPodConfig", MagicMock()):
         # Import under patches so they take effect
-        from astrid.packs.runpod.shared.common import cmd_provision
+        from astrid.packs.runpod.actions.provision.run import cmd_provision
 
         class Args:
             gpu_type = "NVIDIA GeForce RTX 4090"
@@ -525,7 +525,7 @@ def test_provision_persists_allocation_before_readiness_and_marks_cleanup_pendin
          patch("runpod_lifecycle.RunPodConfig", MagicMock()), \
          patch("astrid.packs.runpod.shared.common._get_hourly_rate", return_value=0.5):
         with pytest.raises(AstridError, match=str(failure)) as raised:
-            from astrid.packs.runpod.shared.common import cmd_provision
+            from astrid.packs.runpod.actions.provision.run import cmd_provision
 
             cmd_provision(Args(), produces_dir)
 
@@ -551,7 +551,7 @@ def test_provision_persists_allocation_before_readiness_and_marks_cleanup_pendin
         pod_handle = None
         produces_dir = produces_dir
 
-    from astrid.packs.runpod.shared.common import cmd_teardown
+    from astrid.packs.runpod.actions.provision.run import cmd_teardown
 
     with patch("runpod_lifecycle.get_pod", mock_get_pod), \
          patch("runpod_lifecycle.RunPodConfig", MagicMock()):
@@ -593,7 +593,7 @@ def test_provisional_handle_retains_cleanup_pending_until_reconciliation(
          patch("runpod_lifecycle.get_pod", mock_get_pod), \
          patch("runpod_lifecycle.RunPodConfig", MagicMock()), \
          patch("astrid.packs.runpod.shared.common._get_hourly_rate", return_value=0.5):
-        from astrid.packs.runpod.shared.common import cmd_provision, cmd_teardown
+        from astrid.packs.runpod.actions.provision.run import cmd_provision, cmd_teardown
 
         with pytest.raises(AstridError, match="readiness timeout"):
             cmd_provision(ProvisionArgs(), produces_dir)
@@ -621,7 +621,7 @@ def test_provisional_handle_retains_cleanup_pending_until_reconciliation(
 def test_provision_forwards_and_persists_allowed_cuda_versions(
     produces_dir: Path, mock_launch: MagicMock, mock_pod: MagicMock, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from astrid.packs.runpod.shared.common import cmd_provision
+    from astrid.packs.runpod.actions.provision.run import cmd_provision
 
     class Args:
         gpu_type = "NVIDIA GeForce RTX 4090"
@@ -673,7 +673,7 @@ def test_provision_storage_required_fails_before_launch_with_ensure_storage_hint
 ) -> None:
     """Storage-required provision fails before launch when no storage name is configured."""
     from astrid.core.integrations.runpod.storage import ENSURE_STORAGE_HINT
-    from astrid.packs.runpod.shared.common import cmd_provision
+    from astrid.packs.runpod.actions.provision.run import cmd_provision
 
     class Args:
         gpu_type = "NVIDIA GeForce RTX 4090"
@@ -707,7 +707,7 @@ def test_provision_named_storage_missing_fails_before_launch_without_creation(
 ) -> None:
     """A provided storage_name must already exist; provision never creates it implicitly."""
     from astrid.core.integrations.runpod.storage import ENSURE_STORAGE_HINT
-    from astrid.packs.runpod.shared.common import cmd_provision
+    from astrid.packs.runpod.actions.provision.run import cmd_provision
 
     class Args:
         gpu_type = "NVIDIA GeForce RTX 4090"
@@ -742,7 +742,7 @@ def test_provision_configured_storage_name_is_recorded_in_canonical_handle(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Provision persists the configured storage name, not only the volume id."""
-    from astrid.packs.runpod.shared.common import cmd_provision
+    from astrid.packs.runpod.actions.provision.run import cmd_provision
 
     class Args:
         gpu_type = "NVIDIA GeForce RTX 4090"
@@ -782,7 +782,7 @@ def test_session_storage_required_fails_before_launch_with_ensure_storage_hint(
 ) -> None:
     """Storage-required session fails before launch when no storage name is configured."""
     from astrid.core.integrations.runpod.storage import ENSURE_STORAGE_HINT
-    from astrid.packs.runpod.shared.common import cmd_session
+    from astrid.packs.runpod.actions.provision.run import cmd_session
 
     class Args:
         gpu_type = "NVIDIA GeForce RTX 4090"
@@ -856,7 +856,7 @@ def test_exec_reads_handle_and_writes_result(
         with patch("runpod_lifecycle.get_pod", mock_get_pod), \
              patch("runpod_lifecycle.ship_and_run_detached", mock_ship_and_run_detached), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_exec
+            from astrid.packs.runpod.actions.provision.run import cmd_exec
 
             class Args:
                 pod_handle = str(handle_path)
@@ -941,7 +941,7 @@ def test_exec_nonzero_remote_exit_keeps_artifacts_diagnostics_result_and_cost(
         with patch("runpod_lifecycle.get_pod", mock_get_pod), \
              patch("runpod_lifecycle.ship_and_run_detached", ship), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_exec
+            from astrid.packs.runpod.actions.provision.run import cmd_exec
 
             class Args:
                 pod_handle = str(handle_path)
@@ -1027,7 +1027,7 @@ def test_exec_success_copies_only_substrate_returned_artifact_root(
         with patch("runpod_lifecycle.get_pod", mock_get_pod), \
              patch("runpod_lifecycle.ship_and_run_detached", ship), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_exec
+            from astrid.packs.runpod.actions.provision.run import cmd_exec
 
             args = MagicMock()
             args.pod_handle = str(handle_path)
@@ -1098,7 +1098,7 @@ def test_teardown_terminates_and_writes_receipt(
     try:
         with patch("runpod_lifecycle.get_pod", mock_get_pod), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_teardown
+            from astrid.packs.runpod.actions.provision.run import cmd_teardown
 
             class Args:
                 pod_handle = str(handle_path)
@@ -1162,7 +1162,7 @@ def test_teardown_idempotent_pod_not_found(
     try:
         with patch("runpod_lifecycle.get_pod", mock_get_pod_not_found), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_teardown
+            from astrid.packs.runpod.actions.provision.run import cmd_teardown
 
             class Args:
                 pod_handle = str(handle_path)
@@ -1200,7 +1200,7 @@ def test_session_writes_breadcrumb_and_deletes_on_teardown(
              patch("runpod_lifecycle.get_pod", AsyncMock(return_value=mock_pod)), \
              patch("runpod_lifecycle.ship_and_run_detached", mock_ship_and_run_detached), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_session
+            from astrid.packs.runpod.actions.provision.run import cmd_session
 
             class Args:
                 gpu_type = None
@@ -1277,7 +1277,7 @@ def test_session_transient_handle_exists_during_detached_exec_and_is_removed_aft
              patch("runpod_lifecycle.api.get_network_volumes", return_value=[{"id": "vol-astrid-storage", "name": "astrid-storage"}]), \
              patch("runpod_lifecycle.ship_and_run_detached", ship), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_session
+            from astrid.packs.runpod.actions.provision.run import cmd_session
 
             class Args:
                 gpu_type = None
@@ -1323,7 +1323,7 @@ def test_session_captures_pod_id_before_readiness_failure_and_terminates(
              patch("runpod_lifecycle.get_pod", AsyncMock(return_value=mock_pod)), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()), \
              patch("astrid.packs.runpod.shared.common._terminate_pod_id", AsyncMock(return_value=False)) as cleanup:
-            from astrid.packs.runpod.shared.common import cmd_session
+            from astrid.packs.runpod.actions.provision.run import cmd_session
 
             class Args:
                 gpu_type = None
@@ -1396,7 +1396,7 @@ def test_session_mocked_artifact_smoke_uses_substrate_output_directory(
              patch("runpod_lifecycle.get_pod", AsyncMock(return_value=mock_pod)), \
              patch("runpod_lifecycle.ship_and_run_detached", ship), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_session
+            from astrid.packs.runpod.actions.provision.run import cmd_session
 
             args = MagicMock()
             args.gpu_type = None
@@ -1457,7 +1457,7 @@ def test_session_breadcrumb_survives_on_crash(
              patch("runpod_lifecycle.get_pod", AsyncMock(return_value=mock_pod)), \
              patch("runpod_lifecycle.ship_and_run_detached", crash_mock), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_session
+            from astrid.packs.runpod.actions.provision.run import cmd_session
 
             class Args:
                 gpu_type = None
@@ -1509,7 +1509,7 @@ def test_session_keeps_breadcrumb_when_teardown_fails(
              patch("runpod_lifecycle.get_pod", AsyncMock(return_value=mock_pod)), \
              patch("runpod_lifecycle.ship_and_run_detached", mock_ship_and_run_detached), \
              patch("runpod_lifecycle.RunPodConfig", MagicMock()):
-            from astrid.packs.runpod.shared.common import cmd_session
+            from astrid.packs.runpod.actions.provision.run import cmd_session
 
             class Args:
                 gpu_type = None

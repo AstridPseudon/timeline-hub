@@ -2,7 +2,7 @@
   "$provenance": "shape from authoring.ts publishLiveSceneEdit (clip.update only); values illustrative, NOT a recorded run; scope proposed",
   "instance": {
     "version": 8,
-    "source": "haus.astrid.live-scenes",
+    "source": "haus.astrid.threejs-live-editor",
     "scope": {
       "projectId": "p",
       "timelineId": "t",

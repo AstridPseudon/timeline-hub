@@ -174,9 +174,15 @@ detached lifecycle jobs on one pod until their shared temporary paths are fixed.
 ## Requirements
 
 `runpod-lifecycle>=0.3.1.dev0,<0.4` is an optional dependency gated behind the
-project's `[runpod]` extra. A default `pip install astrid` does not install it;
-use `pip install 'astrid[runpod]'` with the configured private index or local
-wheelhouse described in `pyproject.toml`. The shared dependency resource pins
-this range because Astrid targets the v0.3 `ship_and_run_detached` signature
-and artifact contract. Pack discovery and offline validation remain usable
-without resolving the optional dependency; action execution requires it.
+project's `[runpod]` extra. This extra is for developers and operators
+assembling a custom RunPod-capable worker environment from source or release
+artifacts; do not add it to Astrid's managed installed environment. The
+optional dependency is available through the configured private index or
+local wheelhouse described in `pyproject.toml`. The shared dependency resource
+pins this range because Astrid targets the v0.3 `ship_and_run_detached`
+signature and artifact contract. Pack discovery and offline validation remain
+usable without resolving the optional dependency; action execution requires
+it. For normal Astrid setup, follow the OS-specific installer instructions in
+the [packaged Astrid skill](../../_core/docs/SKILL.md), then use
+[astrid.haus](https://astrid.haus). The installer does not provision this
+private dependency, RunPod credentials, or provider-side resources.

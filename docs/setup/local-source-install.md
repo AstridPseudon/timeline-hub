@@ -1,50 +1,139 @@
 # Install Astrid
 
-Astrid runs on your own computer, and https://astrid.haus connects to it.
+Astrid Runtime and the agent run on your computer. Open the app at
+https://astrid.haus.
 
-On macOS, first install CPython 3.11 or 3.12, Node 20.19 or newer, npm, Git,
-Bun, FFmpeg (`brew install ffmpeg`) and OMP, the coding agent Astrid chats
-through (`bun install -g @oh-my-pi/pi-coding-agent`, which provides `omp`).
-Chat also needs your existing provider authentication.
-
-Then, in the folder where you keep source code, run:
+On macOS or Linux:
 
 ```sh
-git clone https://github.com/banodoco/astrid-agent.git
-git clone https://github.com/banodoco/astrid-runtime.git
-git clone https://github.com/banodoco/astrid-app.git
-python3 astrid-agent/scripts/local_install.py --root ~/Astrid \
-  --runtime-root astrid-runtime --app-root astrid-app
+curl -fsSL https://astrid.haus/install | sh
 ```
 
-The installer builds Astrid into `~/Astrid` with a fresh workspace, then starts
-it in this terminal. When it prints `Open https://astrid.haus`, open that page;
-it connects by itself. Keep the terminal open while you work; Ctrl-C stops
-Astrid. The first run needs network access to download dependencies.
+On Windows, open PowerShell and run:
 
-To start Astrid again later, run:
+```powershell
+irm https://astrid.haus/install.ps1 | iex
+```
+
+Run the same line to repair or restart an existing installation. It keeps the
+installed version and your workspace. To update, pass `--update` to the script
+(`sh -s -- --update` after the pipe on macOS/Linux). Updates back up the selected
+workspace and keep the previous program version until the new door is verified.
+
+The scripts get pinned uv and Python, then invoke the shared `astrid install`
+core. It installs user-local tools and registers a login service. No administrator
+access is needed. Without a systemd user service on Linux, run the line to get
+Astrid running again or to apply changed service settings.
+Installation ends with `Open https://astrid.haus` and opens the connection page.
+On failure, report the sentence and the `Details:` path to `install.log`. The
+Runtime writes `runtime.log` and the login service writes `runtime-service.log`
+in the same log folder. A doctor bundle includes redacted tails of all three logs.
+
+The installer reuses FFmpeg and FFprobe from `PATH` when both run and FFmpeg has
+all required encoders and filters. Otherwise it downloads the pinned build.
+The installed version records the selected executable paths, actual versions,
+and whether they came from `PATH` or a download; doctor bundles include those
+fields. Tools inside an older managed version are downloaded again so updates
+can remove that older version safely.
+
+To remove an installed copy, run the same install line with `--uninstall`. It
+keeps data unless you explicitly add `--delete-data`.
+
+Run the line with `--doctor` to write a redacted support bundle using the installed
+version and its recorded workspace. An optional path after `--doctor` selects the
+ZIP destination. You can reinstall onto a kept workspace with the ordinary line;
+it reattaches the existing realm. Repeating uninstall is safe, including adding
+`--delete-data` after an earlier uninstall kept the workspace.
+
+Linux uses `${XDG_DATA_HOME:-$HOME/.local/share}/astrid` for program files.
+Windows GPU environments live separately at `%LOCALAPPDATA%\Astrid GPU` and
+survive uninstall. On Windows, the line removes its installer files after the
+shared installer finishes. If another program keeps those files open, the output
+gives their path so you can remove them after closing the window.
+
+To configure the background pack host, edit `service-env.json` in the program
+directory, then run the ordinary line to restart. This JSON file supports these
+string settings and is preserved during repair and updates:
+
+```json
+{
+  "ASTRID_WARM_IDLE_SECONDS": "600",
+  "ASTRID_ALLOW_UNQUALIFIED_GPU": "0"
+}
+```
+
+The login service reads the file before starting Runtime and its declared
+services. Unknown settings or non-string values fail with a logged error.
+`ASTRID_ALLOW_UNQUALIFIED_GPU` opts into unqualified GPU execution when set to
+`1`; keep `0` for the qualified path.
+
+The app is hosted; installation does not clone or build it. App developers use
+`npm run dev:local` in their app checkout. Creative providers still need their
+own credentials and qualified artifacts.
+
+## Developer qualification with local Git sources
+
+Installer developers can exercise unpublished agent or Runtime commits with the
+same installer transaction. Copy the release install manifest, keep its pinned
+tool versions and assets, and add an optional `repo` to either source entry:
+
+```json
+{
+  "agent": {
+    "sha": "0123456789abcdef0123456789abcdef01234567",
+    "repo": "/absolute/path/to/scratch/astrid-agent"
+  },
+  "runtime": {
+    "sha": "89abcdef0123456789abcdef0123456789abcdef",
+    "repo": "file:///absolute/path/to/scratch/astrid-runtime"
+  }
+}
+```
+
+This is an excerpt: preserve `schema_version` and the complete `tools` section
+from the release manifest. `repo` accepts an absolute local directory or a local
+`file://` URL, including URL-encoded spaces. It does not accept remote Git URLs.
+Each `sha` must be the full lowercase 40-character commit ID available in that
+repository; branch names, abbreviated IDs, tree IDs, and annotated tag IDs fail.
+Omitting `repo` keeps the pinned GitHub archive download for that source.
+
+Use scratch clones for candidate changes, commit those changes, and set each
+entry's `sha` from `git -C /absolute/path/to/scratch/repo rev-parse HEAD`. The
+installer reads the commit with `git archive`; it leaves the original repository
+untouched and ignores worktree edits and untracked files. Git archive attributes
+apply. Source trees containing tracked symlinks or submodules are rejected.
+Git must be on `PATH` for local source overrides; hosted installs do not need it.
+
+With a disposable test home and separate empty program and data directories,
+serve the directory containing the local manifest on localhost. In that
+directory, start:
 
 ```sh
-~/Astrid/start
+python -m http.server 17605 --bind 127.0.0.1
 ```
 
-The installer never replaces anything: `--root` must be a new or empty folder
-outside the three checkouts, and it refuses checkouts with uncommitted changes.
-Runtime data and caches stay in that folder; your existing workspace and global
-agent settings are left alone. Checkouts you already have work too, if they
-are on matching commits.
+In another terminal, set the manifest URL in the install process and run the
+normal install line:
 
-Options:
+```sh
+curl -fsSL https://astrid.haus/install | ASTRID_INSTALL_MANIFEST_URL=http://127.0.0.1:17605/local-install-manifest.json sh -s -- \
+  --root /absolute/path/to/test/program \
+  --data-root /absolute/path/to/test/data
+```
 
-- `--ffmpeg /path/to/ffmpeg --ffprobe /path/to/ffprobe` and
-  `--bun /path/to/bun --omp /path/to/omp`: tools that are not on `PATH`.
-- `--port`, `--proxy-port`, `--acp-port`: other ports, when another local
-  installation is running.
-- `--wheelhouse /path/to/dependency-cache`: reuse hash-verified dependency
-  wheels offline.
-- `--check-only`: install, check startup, workspace access, image import and
-  one chat reply with your configured model, then stop, leaving no servers
-  running.
+On Windows, pass the same arguments in PowerShell:
 
-Rendering and creative providers need their own artifacts and credentials;
-this install does not set them up.
+```powershell
+$env:ASTRID_INSTALL_MANIFEST_URL = 'http://127.0.0.1:17605/local-install-manifest.json'
+& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) `
+  --root C:\path\to\test\program `
+  --data-root C:\path\to\test\data
+```
+
+Stop the local HTTP server after installation with Ctrl+C.
+
+This still downloads and installs the manifest's real tools and Python packages,
+registers the platform service, and verifies the installed Runtime. The selected
+manifest is recorded in the managed version directory. For an existing
+installation, add `--update` to qualify new source pins against an existing
+workspace, including the normal backup and rollback.

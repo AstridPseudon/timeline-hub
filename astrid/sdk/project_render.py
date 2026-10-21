@@ -19,6 +19,8 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
+from runtime_protocol.platform import durable_replace
+
 from .contracts import DomainResult, ErrorObject
 from .pagination import paged_rows
 from .workspace_client import WorkspaceClientError
@@ -512,16 +514,7 @@ def _materialize(
             os.fsync(stream.fileno())
         if temporary.stat().st_size != size or hashlib.sha256(temporary.read_bytes()).hexdigest() != digest:
             raise ValueError("staged render failed digest or size verification")
-        os.replace(temporary, destination)
-        try:
-            directory_fd = os.open(destination.parent, os.O_RDONLY)
-            try:
-                os.fsync(directory_fd)
-            finally:
-                os.close(directory_fd)
-        except OSError:
-            # The rename is still atomic on filesystems without directory fsync.
-            pass
+        durable_replace(temporary, destination)
         if not valid(destination):
             raise ValueError("materialized render failed post-publication verification")
         return destination

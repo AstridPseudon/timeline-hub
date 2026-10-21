@@ -1,21 +1,22 @@
 """Working-copy paths and conflict-aware JSON merge helpers."""
 from __future__ import annotations
 
-import copy
 import contextlib
+import copy
 import json
 import os
 import re
-from pathlib import Path
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Mapping
+
+from runtime_protocol import platform
 
 from astrid.core.timeline import astrid_ns as _ns
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.doc import _serialize
-
 
 LOCK_WAIT_ENV = "ASTRID_TIMELINE_LOCK_TIMEOUT"
 LOCK_WAIT_SECONDS = 30.0
@@ -130,11 +131,6 @@ def _reconcile_restore(target: Path) -> None:
 @contextlib.contextmanager
 def _file_lock(target: Path):
     """Serialize compare-and-write saves; the kernel releases the lock if its writer exits."""
-    try:
-        import fcntl
-    except ImportError:
-        yield
-        return
     lock = Path(target).with_name(f".{Path(target).name}.lock")
     lock.parent.mkdir(parents=True, exist_ok=True)
     with open(lock, "a+", encoding="utf-8") as handle:
@@ -145,7 +141,7 @@ def _file_lock(target: Path):
         deadline = time.monotonic() + wait
         while True:
             try:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(handle.fileno(), blocking=False)
                 break
             except BlockingIOError:
                 if time.monotonic() >= deadline:
@@ -163,7 +159,7 @@ def _file_lock(target: Path):
         try:
             yield
         finally:
-            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            platform.unlock_file(handle.fileno())
 
 
 def _journaled(function, kind):
@@ -526,10 +522,17 @@ def media_seconds(project: str, media: Any, *, client: Any = None) -> float | No
                     return w.getnframes() / float(w.getframerate())
             except (wave.Error, EOFError):
                 pass
-        with tempfile.NamedTemporaryFile(suffix=Path(kind.replace("/", ".")).suffix or ".bin") as tmp:
-            tmp.write(data)
-            tmp.flush()
-            return float(ffprobe_duration_seconds(tmp.name))
+        tmp_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                suffix=Path(kind.replace("/", ".")).suffix or ".bin", delete=False
+            ) as tmp:
+                tmp.write(data)
+                tmp_path = Path(tmp.name)
+            return float(ffprobe_duration_seconds(tmp_path))
+        finally:
+            if tmp_path is not None:
+                tmp_path.unlink(missing_ok=True)
 
     try:
         return _with_client(client, run)
@@ -557,14 +560,14 @@ def _lock_holder(lock: Path) -> int | None:
         return None
 
 
-def _acquire_lock(handle: Any, fcntl: Any, lock: Path) -> None:
+def _acquire_lock(handle: Any, lock: Path) -> None:
     import time as _time
 
     wait = _lock_wait()
     deadline = _time.monotonic() + wait
     while True:
         try:
-            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            platform.lock_file(handle.fileno(), blocking=False)
             return
         except BlockingIOError:
             if _time.monotonic() >= deadline:
@@ -681,7 +684,7 @@ def import_media(path: Path, project: Any) -> dict[str, Any]:
     import sys
 
     out = subprocess.run([sys.executable, "-m", "astrid", "media", "import", str(path), "--project", str(project), "--json"],
-                         capture_output=True, text=True)
+                         capture_output=True, text=True, encoding="utf-8", errors="replace")
     try:
         data = json.loads(out.stdout)["data"]
     except Exception as exc:

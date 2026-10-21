@@ -136,7 +136,7 @@ Re-measured 16 Oct 2026 in a clean Linux container (4 cores, Python 3.11, Node 2
 - The TS "generator" patches its own committed output.
 - The conformance YAML says PATCH 1→2, while the actor publishes a composition revision.
 - Timeline-schema exists in three versions:
-  - Astrid's Python pin (ArtAgents `242f9c43`, which is Astrid's own history under its old name);
+  - Astrid's Python pin (`banodoco/astrid-agent` at `242f9c43`);
   - **0.0.1**, transitively, in Astrid's Remotion lock;
   - the App's vendored 0.0.2.
 
@@ -197,7 +197,7 @@ Sizes are rough focused days, for ordering only. **In** names the cards whose ou
 `4 d · normal · in: — · out: U#green-astrid, CI#astrid`
 **Done when:**
 1. **CI that can pass.** The frozen m4/m7/m8 jobs, the Runtime pin `a278cd46` and the duplicate suite run are gone. One unit job runs the default run, with the cheap static gates (`make structure ruff mypy cycles`) as steps. (r4 GREEN's `make doc-refs` does not exist; its documentation checks join those gates when written.) `scripts/check-before-push` exists.
-2. **Dependencies resolve.** `pip install -e '.[dev]'` works in a clean environment. The timeline-schema pin points at a reachable source (today it names `banodoco/ArtAgents@242f9c43`, which `uv` cannot fetch).
+2. **Dependencies resolve.** `pip install -e '.[dev]'` works in a clean environment. The timeline-schema pin points at a reachable source (today it names `banodoco/astrid-agent@242f9c43`, which `uv` cannot fetch).
 3. **Collection is honest.** Collection-time side effects move into fixtures. One `runtime_checkout` fixture replaces the five locators and the `afccb430` / `70e269bc` pins. Collection has zero errors: each erroring file is deleted (with a `removed.yaml` line) or repaired. No test listed by r4 GREEN item 6 as "never obsolete" is deleted.
 4. **Lanes are complete.** The union of the default, nightly and journey lanes equals the collected suite, checked by a test.
 5. **Green.** Every failure is fixed or its test corrected to the current behaviour; every required lane passes. No test is weakened to get green, and corrections explain their reason in the commit.
@@ -325,7 +325,7 @@ Phase outcomes follow R-10.
   - Not ported: tests that use `runtime_protocol` in-process without a daemon (`RuntimeService` and `RealmStore` in `tests/timeline`, `tests/v10` and `tests/core/execution`) still import it directly.
   - Integration failures recorded during the zip port, requiring verification and fixes under R-6: 24 tests in `test_generation_runtime_composition.py`, 14 in `test_generic_host_activation_acceptance.py`, 17 in `test_generic_host_external_provider.py`, one in `test_generic_host_runtime_control2.py`, `test_media_handoff_render_boundary`, the capability parity proof run, `test_e2_publication_contract_roundtrip`, both `test_runtime_publication_chain` daemon tests and `test_import_edit_capture_history_runs_as_runtime_tasks_and_settles_lineage` (stale pack paths and product drift, not the fixture; UA stays open on them).
 - **Four packs have no egress policy (discord_local, h3_av, seedance_local, foley).** An enforcing policy needs each pack's real destinations from a live run, plus an allowance for the native children and loopback Runtime connections the hook refuses today (`generic_host.py:7413`, `network_policy._patch_native_descendants`).
-- **Open after B8 (ask-owner):** `scripts/diagnostics/runtime_lifecycle_reproducer.py`; the runpod and H3 operator scripts; and the `docs/` and `docs/plans/` files that have no code reference. The `dev` extra still installs `banodoco-timeline-schema` from a GitHub archive (ArtAgents), so a clean install still needs GitHub.
+- **Open after B8 (ask-owner):** `scripts/diagnostics/runtime_lifecycle_reproducer.py`; the runpod and H3 operator scripts; and the `docs/` and `docs/plans/` files that have no code reference. The `dev` extra still installs `banodoco-timeline-schema` from a GitHub archive in `banodoco/astrid-agent`, so a clean developer install still needs GitHub.
 - **App `config/contracts/astrid-plan-a-c2.json`** still carries stale hand-pinned client digests (`generatedClientCompatibility`). Removing them changes a frozen contract digest, so it needs a coordinated bump. The vendor locks are now the real check.
 - **Linux custody issues recorded during the port (product, PROCLIFE):**
   - a short-lived SDK-render descendant reaped between the census and `register()` raises at `custody_broker.py:3051`; Linux has no unadmitted-absent handling like Darwin's (`:2909`). The six render-parity tests in `test_conformance.py` cover this path;

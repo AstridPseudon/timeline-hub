@@ -15,7 +15,16 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 from ..discovery import SkillDescriptor
-from .base import Action, HarnessAdapter, InstallRecord, PlannedStep, ensure_symlink, remove_symlink
+from .base import (
+    Action,
+    HarnessAdapter,
+    InstallRecord,
+    PlannedStep,
+    ensure_symlink,
+    managed_target_matches,
+    remove_symlink,
+    target_mechanism,
+)
 
 BEGIN_MARKER = "<!-- astrid:begin -->"
 END_MARKER = "<!-- astrid:end -->"
@@ -45,7 +54,7 @@ class CodexAdapter(HarnessAdapter):
         for descriptor in descriptors:
             target = self.target_for(descriptor)
             if action == "install":
-                steps.append(PlannedStep(description=f"symlink {target} -> {descriptor.skill_dir}", target=target))
+                steps.append(PlannedStep(description=f"install {target} from {descriptor.skill_dir}", target=target))
             else:
                 steps.append(PlannedStep(description=f"remove {target}", target=target))
         steps.append(PlannedStep(description=f"rewrite fenced block in {self.agents_md}", target=self.agents_md))
@@ -88,14 +97,8 @@ class CodexAdapter(HarnessAdapter):
 
     def verify(self, descriptor: SkillDescriptor) -> tuple[bool, str]:
         target = self.target_for(descriptor)
-        if not target.is_symlink():
-            return False, f"{target} is not a symlink"
-        try:
-            resolved = target.resolve(strict=True)
-        except OSError as exc:
-            return False, f"{target} resolves to a missing path ({exc})"
-        if resolved != descriptor.skill_dir.resolve():
-            return False, f"{target} resolves to {resolved}, expected {descriptor.skill_dir}"
+        if not managed_target_matches(target, descriptor.skill_dir):
+            return False, f"{target} does not match {descriptor.skill_dir}"
         # Block presence check.
         if not self.agents_md.exists():
             return False, f"{self.agents_md} missing"
@@ -106,17 +109,15 @@ class CodexAdapter(HarnessAdapter):
 
     def discover_installed(self, descriptor: SkillDescriptor) -> Optional[InstallRecord]:
         target = self.target_for(descriptor)
-        if not target.is_symlink():
-            return None
-        try:
-            resolved = target.resolve(strict=True)
-        except OSError:
-            return None
-        if resolved != descriptor.skill_dir.resolve():
+        if not managed_target_matches(target, descriptor.skill_dir):
             return None
         # Symlink points at the right pack dir — treat as installed even if
         # the AGENTS.md fenced block is stale; doctor's verify() catches that.
-        return InstallRecord(pack_id=descriptor.pack_id, target=target, mechanism="symlink")
+        return InstallRecord(
+            pack_id=descriptor.pack_id,
+            target=target,
+            mechanism=target_mechanism(target),
+        )
 
     def _rewrite_agents_md(self, descriptors: list[SkillDescriptor]) -> bool:
         block = self._render_block(descriptors)

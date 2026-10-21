@@ -3,13 +3,15 @@
 Astrid is a Python SDK and harness toolkit for building and running agentic UXes —
 pipelines where agents and humans collaborate to make art.
 
-**Where to start:** agents begin at [AGENTS.md](../AGENTS.md) +
-[`astrid/packs/_core/docs/SKILL.md`](../astrid/packs/_core/docs/SKILL.md);
-humans begin at [Getting Started](getting-started.md).
+**Where to start:** use Astrid at [astrid.haus](https://astrid.haus). Install
+this computer with the OS command in [Getting Started](getting-started.md).
+Do not install `astrid-app` to use Astrid. Developers can start with
+[AGENTS.md](../AGENTS.md) and the
+[`astrid/packs/_core/docs/SKILL.md`](../astrid/packs/_core/docs/SKILL.md).
 
 ## Essentials
 
-- [Set up Astrid](setup/README.md)
+- [Set up Astrid](getting-started.md)
 - [Agent setup checklist](setup/SKILL.md)
 - [How Astrid works](guides/how-it-works.md)
 - [When and how to create a pack](guides/create-a-pack.md)
@@ -21,8 +23,8 @@ humans begin at [Getting Started](getting-started.md).
 
 ### I'm new here
 
-Start with **[Getting Started](getting-started.md)** to install, run your first
-command, and get oriented.  Then follow
+Start with **[Getting Started](getting-started.md)** to install Astrid and use
+it at astrid.haus. Developers can then follow
 **[Build Your First Agentic UX](guides/build-your-first-agentic-ux.md)** — a
 step-by-step tutorial through discover → inspect → invoke → read-events via the
 public SDK.

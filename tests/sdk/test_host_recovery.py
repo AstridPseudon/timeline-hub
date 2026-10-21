@@ -404,11 +404,12 @@ def test_stop_group_signals_only_the_registered_anchored_group(monkeypatch):
     monkeypatch.setattr(host_bootstrap, "_process_snapshot", lambda: census)
     monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _pid: True)
     monkeypatch.setattr(host_bootstrap.os, "getpid", lambda: 9999)
-    monkeypatch.setattr(host_bootstrap.os, "getpgrp", lambda: 8765)
-    def killpg(*args):
-        calls.append(args)
+    monkeypatch.setattr(host_bootstrap.platform, "process_group", lambda _pid: 8765)
+    def signal_group(pgid, signum, *, leader_birth):
+        assert leader_birth == "birth-current"
+        calls.append((pgid, signum))
         census.clear()
-    monkeypatch.setattr(host_bootstrap.os, "killpg", killpg)
+    monkeypatch.setattr(host_bootstrap, "signal_observed_group", signal_group)
 
     host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current")
     assert calls == [(4321, signal.SIGTERM)]
@@ -435,11 +436,12 @@ def test_stop_group_rechecks_leader_birth_before_escalation(monkeypatch):
     monkeypatch.setattr(host_bootstrap, "_process_snapshot", lambda: {4321: leader})
     monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _pid: True)
     monkeypatch.setattr(host_bootstrap.os, "getpid", lambda: 9999)
-    monkeypatch.setattr(host_bootstrap.os, "getpgrp", lambda: 8765)
-    def killpg(pgid, signum):
+    monkeypatch.setattr(host_bootstrap.platform, "process_group", lambda _pid: 8765)
+    def signal_group(pgid, signum, *, leader_birth):
+        assert leader_birth == "registered-birth"
         calls.append((pgid, signum))
         leader.birth = "replacement-birth"
-    monkeypatch.setattr(host_bootstrap.os, "killpg", killpg)
+    monkeypatch.setattr(host_bootstrap, "signal_observed_group", signal_group)
 
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="reused"):
         host_bootstrap._stop_group(4321, grace=0, leader_birth="registered-birth")

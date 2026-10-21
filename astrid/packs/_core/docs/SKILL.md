@@ -30,7 +30,54 @@ Choose the route by the requested result. Read only that route's guidance:
 Using an existing workflow and building a reusable extension are different
 requests: pack builder handles the latter, including deciding what to reuse.
 
-On a new machine, complete the [setup checklist](../../../../docs/setup/SKILL.md) before beginning project work.
+On a new machine, open Terminal on macOS or Linux, or PowerShell on Windows,
+then run the install line for its OS. Running the line again repairs or restarts
+Astrid and keeps existing work.
+On macOS or Linux, run:
+
+```sh
+curl -fsSL https://astrid.haus/install | sh
+```
+
+On Windows, run in PowerShell:
+
+```powershell
+irm https://astrid.haus/install.ps1 | iex
+```
+
+Then open [astrid.haus](https://astrid.haus) and follow its setup steps. Do not
+install or clone `astrid-app`; it is for app developers.
+
+## Commands for outside agents
+
+Use the installed stable launcher by its absolute path from the outside
+agent's terminal. Linux honors `XDG_DATA_HOME`; macOS uses
+`~/.local/share/astrid`. In Windows PowerShell, use the call operator `&` so
+the quoted path executes correctly.
+
+Linux:
+
+```sh
+"${XDG_DATA_HOME:-$HOME/.local/share}/astrid/run-astrid" projects list
+```
+
+macOS:
+
+```sh
+"$HOME/.local/share/astrid/run-astrid" projects list
+```
+
+Windows PowerShell:
+
+```powershell
+& "$env:LOCALAPPDATA\Astrid\run-astrid.cmd" projects list
+```
+
+The CLI examples below use `python3 -m astrid` as shorthand for commands
+inside Astrid's managed environment. For outside-agent use, replace the
+`python3 -m astrid` prefix with the stable launcher path for that OS, keeping
+the subcommand and its arguments. In Windows PowerShell, invoke the quoted
+launcher path with `&`.
 
 ## Start here
 
@@ -78,19 +125,14 @@ python3 -m astrid runs open
 payload. Use it when structured results help; ordinary commands and examples
 for users can omit it.
 
-On a new machine, follow the brief [getting started guide](../../../../docs/getting-started.md)
-for Python, the runtime package, and the source manifest. Then check the
-runtime:
+After installation, the commands below work with the installed Runtime. For a
+new machine, follow the setup path above and open astrid.haus.
 
 ```bash
 python3 -m astrid doctor --json
 ```
 
-If the runtime is not already configured, the explicit operator command is:
-
-```bash
-astrid-runtime up --profile astrid
-```
+If Astrid isn't running, run the install line again.
 
 The gateway is the stable command surface. Begin with its census, then inspect
 one family when needed:

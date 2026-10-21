@@ -13,6 +13,7 @@ from .generated import (
     GenerationVariant,
     Handshake,
     Health,
+    ServiceStatus,
     IntegrityCheck,
     IntegrityReport,
     ManagedObject,
@@ -34,12 +35,16 @@ from .generated import (
     WorkspaceClient,
 )
 from .timeline_commit_types import (
+    AssembledTargetArgs,
     ClipAddArgs,
+    ClipAddMediaArgs,
+    ClipAnchorArgs,
     ClipDeleteArgs,
     ClipMoveArgs,
     ClipSetArgs,
     ClipSetElementArgs,
     ElementRef,
+    OccurrenceCreateArgs,
     OccurrenceDeleteArgs,
     OccurrenceDuplicateArgs,
     PlacementCreateArgs,
@@ -51,6 +56,8 @@ from .timeline_commit_types import (
     SettledProducerProposal,
     ShotPoolArgs,
     ShotSetArgs,
+    TimelineInitArgs,
+    TextBindingSetArgs,
     ClipSetParamsArgs,
     ClipSplitArgs,
     ClipTrimArgs,
@@ -65,6 +72,7 @@ from .timeline_commit_types import (
     VerifiedDocument,
     VerifiedDocumentObject,
     VerifiedMedia,
+    WordAnchor,
 )
 
-__all__ = ['ClipSetElementArgs', 'ElementRef', 'OccurrenceDeleteArgs', 'OccurrenceDuplicateArgs', 'PlacementCreateArgs', 'PlacementUnplaceArgs', 'ProducerAdmittedTarget', 'ProducerAttemptPin', 'ProducerGuardArgs', 'ProducerIdentity', 'SettledProducerProposal', 'ShotPoolArgs', 'ShotSetArgs', "CONTRACT_VERSION", "ApiError", "AttemptFence", "ByteResponse", "Capability", "ClaimWaiting", 'ClipAddArgs', 'ClipDeleteArgs', 'ClipMoveArgs', 'ClipSetArgs', 'ClipSetParamsArgs', 'ClipSplitArgs', 'ClipTrimArgs', 'DocumentPin', "Event", "Executor", "Generation", "GenerationVariant", "Handshake", "Health", "IntegrityCheck", "IntegrityReport", 'InverseArgs', "ManagedObject", "ManagedOutput", 'MediaSelection', "MutationResult", "ObjectLocation", 'OccurrenceAddMediaArgs', 'OccurrenceSwapMediaArgs', "PreferenceMutationResult", "PreferenceResource", "Project", "ProjectDocument", "Realm", "RealmLifecycle", "RecoveryAuthorization", "RecoveryCheckpointReceipt", "RecoveryReceipt", "RecoveryResumeReceipt", 'RestoreArgs', "ShotTextBinding", "Task", 'TrackCreateArgs', 'TrackSetArgs', 'VerifiedDocument', 'VerifiedDocumentObject', 'VerifiedMedia', "WorkspaceClient"]
+__all__ = ['AssembledTargetArgs', 'ClipSetElementArgs', 'ClipAddArgs', 'ClipAddMediaArgs', 'ClipAnchorArgs', 'ElementRef', 'OccurrenceCreateArgs', 'OccurrenceDeleteArgs', 'OccurrenceDuplicateArgs', 'PlacementCreateArgs', 'PlacementUnplaceArgs', 'ProducerAdmittedTarget', 'ProducerAttemptPin', 'ProducerGuardArgs', 'ProducerIdentity', 'SettledProducerProposal', 'ShotPoolArgs', 'ShotSetArgs', 'TimelineInitArgs', 'TextBindingSetArgs', 'WordAnchor', "CONTRACT_VERSION", "ApiError", "AttemptFence", "ByteResponse", "Capability", "ClaimWaiting", 'ClipDeleteArgs', 'ClipMoveArgs', 'ClipSetArgs', 'ClipSetParamsArgs', 'ClipSplitArgs', 'ClipTrimArgs', 'DocumentPin', "Event", "Executor", "Generation", "GenerationVariant", "Handshake", "Health", "ServiceStatus", "IntegrityCheck", "IntegrityReport", 'InverseArgs', "ManagedObject", "ManagedOutput", 'MediaSelection', "MutationResult", "ObjectLocation", 'OccurrenceAddMediaArgs', 'OccurrenceSwapMediaArgs', "PreferenceMutationResult", "PreferenceResource", "Project", "ProjectDocument", "Realm", "RealmLifecycle", "RecoveryAuthorization", "RecoveryCheckpointReceipt", "RecoveryReceipt", "RecoveryResumeReceipt", 'RestoreArgs', "ShotTextBinding", "Task", 'TrackCreateArgs', 'TrackSetArgs', 'VerifiedDocument', 'VerifiedDocumentObject', 'VerifiedMedia', "WorkspaceClient"]

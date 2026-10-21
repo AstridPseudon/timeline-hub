@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import shutil
 import socket
 import subprocess
@@ -100,15 +101,23 @@ def _resolve_auth_cli(*, provision_if_missing: bool) -> list[str]:
         except Exception as exc:
             raise AuthCommandError(
                 "Astrid could not install the Hivemind authentication helper. "
-                "Run `python3 -m astrid.setup` and retry."
+                "Run the Astrid install line again, then retry."
             ) from exc
         for candidate in _auth_cli_candidates():
             if _supports_auth(candidate):
                 return candidate
 
+    from astrid.installer.service import default_program_root
+
+    root = Path(os.environ.get("ASTRID_INSTALL_PROGRAM_ROOT") or default_program_root(Path.home(), sys.platform))
+    if sys.platform == "win32":
+        launcher = root / "run-astrid.cmd"
+        login = f"& '{str(launcher).replace(chr(39), chr(39) * 2)}' login"
+    else:
+        login = f"{shlex.quote(str(root / 'run-astrid'))} login"
     raise AuthCommandError(
         "Astrid's Hivemind authentication helper is unavailable. "
-        "Run `python3 -m astrid.setup` once, then retry `astrid login`."
+        f"Run the Astrid install line again, then retry `{login}`."
     )
 
 

@@ -12,7 +12,6 @@ import ipaddress
 import json
 import os
 import stat
-import sys
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -35,7 +34,7 @@ __all__ = [
 
 _DOCUMENT_CONTENT_UNSET = object()
 
-RECONFIGURE_ACTION = "reconfigure the Astrid runtime with `astrid-runtime up --profile astrid`"
+RECONFIGURE_ACTION = "run the Astrid install line again"
 
 
 def _reconfigure(field: str, message: str) -> "WorkspaceClientError":
@@ -124,9 +123,9 @@ class WorkspaceClientError(RuntimeError):
 def _read_credential(path: Path) -> str:
     # A target-bound worker may be allowed to open only this exact token file;
     # its parent directory is intentionally denied. Inspecting every parent
-    # with lstat makes that narrow grant unusable. Compare the opened file's
-    # kernel-resolved path with the lexical path instead: this also rejects a
-    # symlink in any parent, without probing or opening those directories.
+    # with lstat makes that narrow grant unusable. Linux can compare the
+    # kernel-resolved descriptor path without inspecting those directories.
+    # Other systems compare the canonical path and retained file identity.
     path = Path(path).expanduser()
     if not path.is_absolute():
         path = Path.cwd() / path
@@ -142,18 +141,12 @@ def _read_credential(path: Path) -> str:
         with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
             if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
                 raise _reconfigure("credential", f"runtime credential is not a regular file; {RECONFIGURE_ACTION}")
-            if sys.platform == "darwin":
-                import fcntl
-
-                raw_path = fcntl.fcntl(handle.fileno(), fcntl.F_GETPATH, bytes(1024))
-                opened_path = os.fsdecode(raw_path.split(b"\0", 1)[0])
-            elif sys.platform.startswith("linux"):
+            if os.name == "posix" and Path("/proc/self/fd").is_dir():
                 opened_path = os.readlink(f"/proc/self/fd/{handle.fileno()}")
             else:
-                # The fallback checks each parent where descriptor-path
-                # inspection is unavailable; it never silently accepts one.
-                path = _safe_local_path(path, field="credential")
-                opened_path = str(path)
+                opened_path = str(path.resolve(strict=True))
+                if not os.path.samestat(os.fstat(handle.fileno()), path.stat()):
+                    opened_path = ""
             if not opened_path or opened_path != str(path):
                 raise _reconfigure("credential", f"credential path must not contain a symlink; {RECONFIGURE_ACTION}")
             raw = handle.read().strip()

@@ -4,7 +4,7 @@
 // declared browser entries and is consumed by Astrid's trusted extension loader.
 
 import type { AstridExtension } from '@astrid/editor-sdk';
-import editorExtension0 from '../ui/live-scenes/extension';
+import editorExtension0 from '../ui/threejs-live-editor/extension';
 import editorExtension1 from '../ui/transcript/extension';
 
 export type AstridEditorExtensionDescriptor = {
@@ -14,7 +14,7 @@ export type AstridEditorExtensionDescriptor = {
 };
 
 export const ASTRID_EDITOR_EXTENSION_CATALOG: readonly AstridEditorExtensionDescriptor[] = Object.freeze([
-  { packId: 'rendering', entryPath: 'ui/live-scenes/extension.tsx', extension: editorExtension0 },
+  { packId: 'rendering', entryPath: 'ui/threejs-live-editor/extension.tsx', extension: editorExtension0 },
   { packId: 'rendering', entryPath: 'ui/transcript/extension.tsx', extension: editorExtension1 },
 ]);
 

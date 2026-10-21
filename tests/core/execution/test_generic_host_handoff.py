@@ -592,7 +592,7 @@ def _resumed_fixture(tmp_path, *, resume=True):
     host.capabilities = {"ready": SimpleNamespace(
         id="ready", capability_digest="sha256:" + "d" * 64,
         source_digest="e" * 64, dependency_digest="f" * 64,
-        matrix={}, ready=True, resource_keys=(), estimated_scratch_bytes=0,
+        matrix={}, ready=True, preflight={}, resource_keys=(), estimated_scratch_bytes=0,
         estimated_output_bytes=0, manifest=lambda: {"id": "ready", "ready": True},
     )}
     live = host.client.health()
@@ -708,7 +708,7 @@ def test_rebind_registers_once_while_claim_gate_remains_closed(tmp_path, monkeyp
     host.client.wrapped = Runtime()
     record = SimpleNamespace(id="ready", capability_digest="sha256:" + "d" * 64,
                              source_digest="e" * 64, dependency_digest="f" * 64,
-                             matrix={}, ready=True, resource_keys=(), estimated_scratch_bytes=0,
+                             matrix={}, ready=True, preflight={}, resource_keys=(), estimated_scratch_bytes=0,
                              estimated_output_bytes=0, manifest=lambda: {"id": "ready", "ready": True})
     host.capabilities = {"ready": record}
     monkeypatch.setattr(generic_host, "_registration_verified_facts", lambda: [])
@@ -1078,7 +1078,7 @@ def test_adopt_sealed_registration_after_health_moves_to_successor(tmp_path):
     host.capabilities = {"ready": SimpleNamespace(
         id="ready", capability_digest="sha256:" + "d" * 64,
         source_digest="e" * 64, dependency_digest="f" * 64,
-        matrix={}, ready=True, resource_keys=(), estimated_scratch_bytes=0,
+        matrix={}, ready=True, preflight={}, resource_keys=(), estimated_scratch_bytes=0,
         estimated_output_bytes=0, manifest=lambda: {"id": "ready", "ready": True})}
     adopted = prep.dispatch(fixture["adopt_request"])
     assert adopted["status"] == "ok" and adopted["phase"] == "adopt_prepared"

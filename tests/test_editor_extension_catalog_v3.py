@@ -13,7 +13,7 @@ def _fixture_repo(tmp_path: Path) -> Path:
     repo = tmp_path / "source"
     root = repo / "astrid/packs/rendering"
     files = {
-        "ui/live-scenes/extension.tsx": "export default { activate() {} };\n",
+        "ui/threejs-live-editor/extension.tsx": "export default { activate() {} };\n",
         "ui/video-editor/entry.json": '{"schema_version":1,"tool_id":"video-editor","host_entry":"video-editor"}\n',
     }
     for name, content in files.items():
@@ -28,9 +28,9 @@ def _fixture_repo(tmp_path: Path) -> Path:
                 "name": "Rendering",
                 "version": "1.0.0",
                 "ui": {
-                    "live-scenes": {
+                    "threejs-live-editor": {
                         "type": "editor",
-                        "entry": "ui/live-scenes/extension.tsx",
+                        "entry": "ui/threejs-live-editor/extension.tsx",
                     },
                     "video-editor": {
                         "type": "tool",
@@ -59,6 +59,6 @@ def test_v3_editor_projection_excludes_whole_tool_declarations(
     generated = generator.generate(repo / "astrid/packs/rendering/editor/catalog.ts")
 
     assert generated.count("import editorExtension") == 1
-    assert "ui/live-scenes/extension" in generated
+    assert "ui/threejs-live-editor/extension" in generated
     assert "video-editor" not in generated
     assert "ui/video-editor/entry.json" not in generated

@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
+from runtime_protocol import platform
+
 from astrid.sdk.timeline.doc import _strip_derived
 
 VERSION = 1
@@ -170,22 +172,17 @@ def _last_record(path: Path) -> Mapping[str, Any] | None:
 
 
 def _locked(path: Path):
-    """Lock appends on POSIX so two working copies cannot share a sequence number."""
-    import contextlib
-    try:
-        import fcntl
-    except ImportError:
-        return contextlib.nullcontext()
+    """Lock appends so two working copies cannot share a sequence number."""
 
     class Lock:
         def __enter__(self):
             path.parent.mkdir(parents=True, exist_ok=True)
             self.handle = open(path.with_name(f".{path.name}.lock"), "a+", encoding="utf-8")
-            fcntl.flock(self.handle.fileno(), fcntl.LOCK_EX)
+            platform.lock_file(self.handle.fileno())
             return self
 
         def __exit__(self, *_):
-            fcntl.flock(self.handle.fileno(), fcntl.LOCK_UN)
+            platform.unlock_file(self.handle.fileno())
             self.handle.close()
     return Lock()
 

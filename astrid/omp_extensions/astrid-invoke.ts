@@ -1,6 +1,12 @@
 /** Packaged Astrid admission boundary; OMP owns persistence and ACP transport. */
 export default function (pi: any) {
   const z = pi.zod;
+  // OMP's Zod-compatible record accepts JavaScript arrays structurally. The
+  // admission API requires JSON objects for both payload maps.
+  const jsonObject = z.record(z.string(), z.unknown()).refine(
+    (value: unknown) => typeof value === "object" && value !== null && !Array.isArray(value),
+    "Expected a JSON object",
+  );
   pi.registerTool({
     name: "astrid_invoke",
     label: "Astrid task",
@@ -10,8 +16,8 @@ export default function (pi: any) {
       capability_id: z.string().min(1),
       kind: z.enum(["executor", "orchestrator"]),
       project: z.string().min(1),
-      inputs: z.record(z.string(), z.unknown()),
-      execution_request: z.record(z.string(), z.unknown()).optional(),
+      inputs: jsonObject,
+      execution_request: jsonObject.optional(),
     }),
     async execute(_toolCallId: string, params: unknown, signal: AbortSignal | undefined, _onUpdate: unknown, ctx: any) {
       const python = process.env.ASTRID_OMP_PYTHON;

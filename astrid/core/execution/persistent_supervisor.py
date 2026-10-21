@@ -12,13 +12,9 @@ import os
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, IO, Mapping
+from typing import IO, Any, Callable, Mapping
 
-try:  # pragma: no cover - the test host is POSIX, but import stays portable.
-    import fcntl
-except ImportError:  # pragma: no cover
-    fcntl = None  # type: ignore[assignment]
-
+from runtime_protocol import platform
 
 SCHEMA_VERSION = "astrid.supervisor.v1"
 DEFAULT_MAX_FRAME_BYTES = 1024 * 1024
@@ -264,14 +260,12 @@ class PersistentJsonlSupervisor:
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             with self.lock_path.open("a+b") as lock:
-                if fcntl is not None:
-                    fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+                platform.lock_file(lock.fileno())
                 with self.state_path.open("ab") as stream:
                     stream.write(encoded)
                     stream.flush()
                     os.fsync(stream.fileno())
-                if fcntl is not None:
-                    fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+                platform.unlock_file(lock.fileno())
         except OSError as exc:
             raise SupervisorError(f"cannot append supervisor state: {self.state_path}") from exc
 

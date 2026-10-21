@@ -176,6 +176,11 @@ def test_generic_host_materializes_named_sibling_inputs_and_settles_four_outputs
         "source.json": b'{"origin":"fixture"}\n',
     }
     input_digests = {name: _sha256(data) for name, data in input_bytes.items()}
+    input_ports = dict(zip(input_bytes, ("workflow", "companion", "source")))
+    staged_names = {
+        name: f"managed-{_sha256(port.encode())[:16]}-{input_digests[name]}{Path(name).suffix}"
+        for name, port in input_ports.items()
+    }
     outputs = {
         "python": ("workflow.py", "text/x-python", input_bytes["workflow.py"]),
         "companion": (
@@ -188,7 +193,7 @@ def test_generic_host_materializes_named_sibling_inputs_and_settles_four_outputs
     report = {
         "inputs": {
             name: {
-                "basename": name,
+                "basename": staged_names[name],
                 "sha256": input_digests[name],
                 "text": data.decode("utf-8"),
             }
@@ -201,18 +206,19 @@ def test_generic_host_materializes_named_sibling_inputs_and_settles_four_outputs
         json.dumps(report, sort_keys=True).encode("utf-8"),
     )
 
-    # This command uses only the host-provided attempt/output directories and
-    # canonical sibling basenames. It has no VibeComfy import or runtime need.
+    # Bind the host-staged inputs explicitly and preserve canonical output
+    # basenames. This child has no VibeComfy import or runtime need.
     command = (
-        "from pathlib import Path; import hashlib, json; "
-        "out=Path('{out}'); root=out.parent/'inputs'; "
+        "from pathlib import Path; import hashlib, json, sys; "
+        "out=Path('{out}'); "
         "names=['workflow.py','workflow.vibe.json','source.json']; "
-        "data=dict((name,(root/name).read_bytes()) for name in names); "
+        "paths=dict(zip(names,map(Path,sys.argv[1:]))); "
+        "data=dict((name,paths[name].read_bytes()) for name in names); "
         "out.mkdir(parents=True,exist_ok=True); "
         "(out/'workflow.py').write_bytes(data['workflow.py']); "
         "(out/'workflow.vibe.json').write_bytes(data['workflow.vibe.json']); "
         "(out/'source.json').write_bytes(data['source.json']); "
-        "receipt=dict(inputs=dict((name,dict(basename=(root/name).name,sha256="
+        "receipt=dict(inputs=dict((name,dict(basename=paths[name].name,sha256="
         "hashlib.sha256(data[name]).hexdigest(),text=data[name].decode('utf-8'))) "
         "for name in names)); "
         "(out/'edit-report.json').write_text(json.dumps(receipt,sort_keys=True),encoding='utf-8')"
@@ -225,7 +231,8 @@ def test_generic_host_materializes_named_sibling_inputs_and_settles_four_outputs
         "name": "Canonical Bundle Fixture",
         "kind": "external",
         "version": "1.0",
-        "command": {"argv": ["{python_exec}", "-c", command]},
+        "command": {"argv": ["{python_exec}", "-c", command, "{workflow}", "{companion}", "{source}"]},
+        "inputs": [{"name": port, "type": "file"} for port in input_ports.values()],
         "outputs": [
             {
                 "name": name,
@@ -265,11 +272,10 @@ def test_generic_host_materializes_named_sibling_inputs_and_settles_four_outputs
             "input_object_ids": list(input_digests.values()),
             "spec": {
                 "spec": {
-                    "inputs": {},
-                    "input_digests": [
-                        {"name": name, "digest": input_digests[name]}
-                        for name in input_bytes
-                    ],
+                    "inputs": {
+                        port: {"digest": input_digests[name], "filename": name}
+                        for name, port in input_ports.items()
+                    },
                 }
             },
         }
@@ -280,13 +286,13 @@ def test_generic_host_materializes_named_sibling_inputs_and_settles_four_outputs
 
     assert settled["task"]["status"] == "completed"
     assert runtime.fetched_inputs == [input_digests[name] for name in input_bytes]
-    staged = [attempt_root / "inputs" / name for name in input_bytes]
+    staged = [attempt_root / "inputs" / staged_names[name] for name in input_bytes]
     assert all(path.is_file() for path in staged)
     assert len({path.parent for path in staged}) == 1
-    assert [path.name for path in staged] == list(input_bytes)
+    assert [path.name for path in staged] == list(staged_names.values())
     assert [path.read_bytes() for path in staged] == list(input_bytes.values())
 
-    # The report is produced by the child from those exact basenames and bytes.
+    # The report is produced by the child from those exact staged paths and bytes.
     assert (attempt_root / "outputs" / "edit-report.json").read_bytes() == outputs[
         "report"
     ][2]

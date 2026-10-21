@@ -8,7 +8,6 @@ import pytest
 from astrid import omp_agent
 from astrid.omp_invoke import invoke_tool
 
-
 REF = {"project_id": "canonical-project", "run_id": "real-run", "task_id": "real-task",
        "capability_id": "media.clip_extract"}
 REQUEST = {"project": "supplied-slug", "capability_id": "media.clip_extract",
@@ -68,7 +67,7 @@ def test_both_launcher_routes_load_packaged_admission_extension(monkeypatch, ins
     monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/fake/omp")
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
     captured = {}
-    monkeypatch.setattr(omp_agent.os, "execvp", lambda file, argv: captured.update(argv=argv))
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.update(argv=argv))
     omp_agent.main(["--mode=acp"])
     extension_arg = next(arg for arg in captured["argv"] if arg.startswith("--extension="))
     extension = Path(extension_arg.split("=", 1)[1])

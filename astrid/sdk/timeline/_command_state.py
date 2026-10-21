@@ -108,6 +108,13 @@ def address(key, resolved):
 
 def logical_address(ref, path):
     path = tuple(path)
+    if '/text-binding:' in ref:
+        owner, identity = ref.rsplit('/text-binding:', 1)
+        return owner, ('payload', 'text_bindings', ('text-binding', identity), *path)
+    if ref == 'parent/registry':
+        ref, path = 'parent', ('registry', *path)
+    if ref == 'parent' and path[:1] == ('registry',):
+        path = ('config', *path)
     if '/asset:' in ref:
         owner, identity = ref.rsplit('/asset:', 1)
         return owner, ('config' if owner == 'parent' else 'source', 'registry', 'assets', identity, *path)
@@ -183,14 +190,36 @@ class State:
                     else config.get('clips', []))
         return config.get(kind + "s", [])
 
+    def registry(self, owner):
+        if owner != 'parent':
+            return self.config(owner).get('registry', {})
+        from astrid.core.timeline.parent_registry import (
+            ParentRegistryError,
+            effective_parent_registry,
+        )
+        parent = self.bundle['parent']
+        try:
+            registry = effective_parent_registry(parent)
+        except ParentRegistryError as exc:
+            raise CommandError(str(exc)) from exc
+        if any(isinstance(obj, dict) and 'registry' in obj and not isinstance(obj['registry'], dict)
+               for obj in (parent, parent.get('config', {}))):
+            raise CommandError('media edit requires an authored asset registry')
+        return registry
+
     def entity(self, ref, *, optional=False):
         if optional and ref.startswith('occurrence:') and '/' in ref:
             owner = ref.split('/', 1)[0]
             if self.entity(owner, optional=True) is None:
                 return None
+        if '/text-binding:' in ref:
+            from .native_text_binding import binding_key, binding_rows
+            owner, identity = ref.rsplit('/text-binding:', 1)
+            rows = binding_rows(self, owner)
+            return next((row for row in rows if binding_key(row) == identity), None)
         if '/asset:' in ref:
             owner, identity = ref.rsplit('/asset:', 1)
-            assets = self.config(owner).get('registry', {}).get('assets', {})
+            assets = self.registry(owner).get('assets', {})
             if not isinstance(assets, dict):
                 raise CommandError('asset collection must be an object', ref=ref)
             if identity not in assets and not optional:
@@ -217,10 +246,7 @@ class State:
             return {key: copy.deepcopy(shot[key]) for key in ('payload', 'internal_timeline')}
         if ref.endswith('/registry'):
             owner = ref.removesuffix('/registry')
-            if owner == "parent":
-                from astrid.core.timeline.parent_registry import effective_parent_registry
-                return effective_parent_registry(self.bundle["parent"])
-            return self.config(owner).get("registry", {})
+            return self.registry(owner)
         if ref.endswith('/source'):
             return self.config(ref.removesuffix('/source'))
         if ref.endswith('/shot'):
@@ -339,15 +365,53 @@ class State:
         return False
 
     def set(self, ref, path, state):
-        if '/asset:' in ref and not path:
+        if '/text-binding:' in ref:
+            from .native_text_binding import binding_key, binding_rows
+            if path:
+                raise CommandError('text bindings are written whole', ref=ref)
+            owner, identity = ref.rsplit('/text-binding:', 1)
+            rows = binding_rows(self, owner)
+            existing = self.entity(ref, optional=True)
+            if state['state'] == 'present' and (not isinstance(state['value'], dict)
+                                               or binding_key(state['value']) != identity):
+                raise CommandError('text binding row differs from its key', ref=ref)
+            if existing is not None:
+                index = rows.index(existing)
+                if state['state'] == 'absent':
+                    rows.pop(index)
+                else:
+                    rows[index] = copy.deepcopy(state['value'])
+            elif state['state'] == 'present':
+                shot = self.occurrence(owner)['shot_id']
+                self.bundle['shots'][shot]['payload'].setdefault('text_bindings', rows)
+                rows.append(copy.deepcopy(state['value']))
+            return
+        if ref == 'parent' and tuple(path) in (('registry', 'assets'), ('config', 'registry', 'assets')):
+            parent = self.bundle['parent']
+            config = self.config('parent')
+            if 'registry' in parent and 'registry' in config:
+                self.registry('parent')
+                # These are aliases of one guarded container, just like asset
+                # leaves. One recorded creation/removal must reach both mirrors.
+                for registry in (parent['registry'], config['registry']):
+                    if state['state'] == 'absent':
+                        registry.pop('assets', None)
+                    else:
+                        registry['assets'] = copy.deepcopy(state['value'])
+                return
+        if '/asset:' in ref:
             owner, identity = ref.rsplit('/asset:', 1)
-            assets = self.config(owner)['registry']['assets']
-            if state['state'] == 'absent':
-                assets.pop(identity, None)
-            elif isinstance(state['value'], dict):
-                assets[identity] = copy.deepcopy(state['value'])
-            else:
+            self.registry(owner)
+            if not path and state['state'] == 'present' and not isinstance(state['value'], dict):
                 raise CommandError('asset binding must be an object', ref=ref)
+            prefixes = ([['registry']] if 'registry' in self.bundle['parent'] else []) if owner == 'parent' else []
+            if owner != 'parent' or 'registry' in self.config(owner):
+                prefixes.append(['config', 'registry'] if owner == 'parent' else ['registry'])
+            if not prefixes:
+                raise CommandError('asset write requires an authored registry', ref=ref)
+            for prefix in prefixes:
+                self.set('parent' if owner == 'parent' else owner + '/source',
+                         [*prefix, 'assets', identity, *path], state)
             return
         if ref == "timeline":
             pin = state.get('value', {})

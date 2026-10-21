@@ -15,11 +15,12 @@ product state.
 from __future__ import annotations
 
 import hashlib
-import os
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
+
+from runtime_protocol.platform import durable_replace
 
 from astrid.core.model_setup.manifest import (
     DistributionManifest,
@@ -93,20 +94,6 @@ def _assert_host_tree_is_owned(root: Path) -> None:
             raise AcquisitionError(f"executor {label} must not be a symlink: {path}")
 
 
-def _fsync_directory(path: Path) -> None:
-    """Durably record a directory entry where the platform supports it."""
-    try:
-        fd = os.open(path, os.O_RDONLY)
-    except OSError:
-        return
-    try:
-        os.fsync(fd)
-    except OSError:
-        pass
-    finally:
-        os.close(fd)
-
-
 def acquire_artifact(
     manifest: DistributionManifest,
     executor_root: str | Path,
@@ -172,10 +159,8 @@ def acquire_artifact(
             f"{artifact_id}: downloaded size {size} does not match manifest size {manifest.size}"
         )
 
-    os.replace(part, staged)
-    _fsync_directory(staged.parent)
-    os.replace(staged, final)
-    _fsync_directory(final.parent)
+    durable_replace(part, staged)
+    durable_replace(staged, final)
     return AcquisitionResult(artifact_id, final, digest, size)
 
 

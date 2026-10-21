@@ -64,9 +64,6 @@ _SAFE_BASE_ENV = frozenset(
         "PATH",
         "PWD",
         "SHELL",
-        "SYSTEMROOT",
-        "TEMP",
-        "TMP",
         "TMPDIR",
         "USER",
         "USERNAME",
@@ -75,10 +72,26 @@ _SAFE_BASE_ENV = frozenset(
     }
 )
 
+_WINDOWS_BASE_ENV = frozenset(
+    {
+        "USERPROFILE",
+        "HOMEDRIVE",
+        "HOMEPATH",
+        "APPDATA",
+        "LOCALAPPDATA",
+        "SYSTEMROOT",
+        "TEMP",
+        "TMP",
+        "PATHEXT",
+        "COMSPEC",
+    }
+)
+
 _ASTRID_PROPAGATED_ENV = frozenset(
     {
         ASTRID_HOME_ENV,
         ASTRID_ENV_FILE,
+        "ASTRID_INSTALL_PROGRAM_ROOT",
         TIMELINE_SCHEMA_PYTHONPATH_ENV,
         ASTRID_VIBECOMFY_CHECKOUT,
         PROJECTS_ROOT_ENV,
@@ -153,7 +166,7 @@ def build_child_subprocess_env(
 
     env: dict[str, str] = {}
     for key, value in base_env.items():
-        if key in _SAFE_BASE_ENV or key in requested:
+        if key in _SAFE_BASE_ENV or (sys.platform == "win32" and key in _WINDOWS_BASE_ENV) or key in requested:
             if not _is_secret_name(key):
                 env[key] = str(value)
 

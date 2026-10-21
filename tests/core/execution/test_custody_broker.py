@@ -166,7 +166,8 @@ def test_isolated_wrapper_target_restores_network_hook_and_original_environment(
     target = [sys.executable, "-c", target_source]
     env = _wrapper_environment(tmp_path, broker, role=role, target=target, port=port)
     shim = (
-        "import runpy,os,json; from pathlib import Path; "
+        "import runpy,os,json,sys; from pathlib import Path; "
+        f"sys.path[:0]={[str(Path(custody.__file__).resolve().parents[3]), str(Path(custody.platform.__file__).resolve().parent.parent)]!r}; "
         f"m=runpy.run_path({custody.__file__!r},run_name='wrapper_fixture'); "
         "g=m['child_exec_from_environment'].__globals__\n"
         "def spawn(argv,environment):\n"
@@ -1524,7 +1525,7 @@ def test_observed_census_does_not_change_linux_pidfd_admission(observed_descenda
     owner, _, census = _ordinary_census_fixture(observed_descendant)
     monkeypatch.setattr(custody.sys, "platform", "linux")
     monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "birth-103")
-    monkeypatch.setattr(custody.os, "pidfd_open", lambda *_: 77, raising=False)
+    monkeypatch.setattr(custody.platform, "pidfd_open", lambda *_: 77, raising=False)
     inherited = []
     monkeypatch.setattr(custody.os, "set_inheritable", lambda *args: inherited.append(args))
     assert owner.observe_census({103: "birth-103"}, census=census,
@@ -2768,7 +2769,9 @@ def test_command_inventory_execute_retains_original_helper_on_each_failure(tmp_p
         clock=iter([0,121]);monkeypatch.setattr(cb.time,"monotonic",lambda:next(clock,121))
     elif fault in {"overflow","cleanup"}:
         owner.cancelled.set() if fault=="cleanup" else None
-        if fault=="overflow":monkeypatch.setattr(cb.os,"read",lambda fd,n:b"x"*(16*1024*1024+1))
+        if fault=="overflow":
+            from astrid.core.execution.pipe_io import PipeReader
+            monkeypatch.setattr(PipeReader,"receive",lambda *a,**kw:("stdout",b"x"*(16*1024*1024+1)))
     frame={"version":cb._COMMAND_INVENTORY_VERSION,"command":"inventory_git","binding":binding,
         "operation_id":1,"operation":"revision","checkout":str(checkout),"cwd":str(tmp_path),"environment":environment}
     try:
@@ -4096,10 +4099,11 @@ def test_retained_reference_deadline_bounds_a_held_cleanup_guard(tmp_path, monke
     clock = [10.0]
     monkeypatch.setattr(custody.time, "monotonic", lambda: clock[0])
     monkeypatch.setattr(custody.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0]+seconds))
-    def held(_fd, operation):
-        if operation != custody.fcntl.LOCK_UN:
-            raise BlockingIOError("held by another cleanup owner")
-    monkeypatch.setattr(custody.fcntl, "flock", held)
+    def held(_fd, **kwargs):
+        assert kwargs == {"exclusive": False, "blocking": False}
+        raise BlockingIOError("held by another cleanup owner")
+    monkeypatch.setattr(custody.platform, "lock_file", held)
+    monkeypatch.setattr(custody.platform, "unlock_file", lambda _fd: None)
     monkeypatch.setattr(authority, "_read", lambda: pytest.fail("held reference guard read a designation"))
     with pytest.raises(custody.CustodyError, match="timed out"):
         authority.reference(cleanup_deadline=10.02)
@@ -4838,7 +4842,7 @@ def test_linux_descendant_gone_before_registration_is_absent_not_a_violation(obs
     owner, _, census = _ordinary_census_fixture(observed_descendant)
     monkeypatch.setattr(custody.sys, "platform", "linux")
     monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "")  # reaped or zombie
-    monkeypatch.setattr(custody.os, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a gone process"), raising=False)
+    monkeypatch.setattr(custody.platform, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a gone process"), raising=False)
     assert owner.observe_census({103: "birth-103"}, census=census,
                                 fresh_census=lambda: pytest.fail("no reconciliation on Linux")) == {103: "birth-103"}
     assert 103 not in owner._handles and owner._uncertain is None
@@ -4849,7 +4853,7 @@ def test_linux_descendant_pid_reused_before_registration_is_absent(observed_desc
     owner, _, census = _ordinary_census_fixture(observed_descendant)
     monkeypatch.setattr(custody.sys, "platform", "linux")
     monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "another-incarnation")
-    monkeypatch.setattr(custody.os, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a reused pid"), raising=False)
+    monkeypatch.setattr(custody.platform, "pidfd_open", lambda *_: pytest.fail("bound a pidfd to a reused pid"), raising=False)
     owner.observe_census({103: "birth-103"}, census=census, fresh_census=lambda: pytest.fail("unexpected"))
     assert 103 not in owner._handles and owner._uncertain is None
 
@@ -4861,6 +4865,6 @@ def test_linux_descendant_exiting_during_pidfd_bind_is_absent(observed_descendan
     monkeypatch.setattr(groups, "process_birth_identity", lambda *_: "birth-103")
     def gone(*_):
         raise ProcessLookupError
-    monkeypatch.setattr(custody.os, "pidfd_open", gone, raising=False)
+    monkeypatch.setattr(custody.platform, "pidfd_open", gone, raising=False)
     owner.observe_census({103: "birth-103"}, census=census, fresh_census=lambda: pytest.fail("unexpected"))
     assert 103 not in owner._handles and owner._uncertain is None

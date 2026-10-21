@@ -596,8 +596,8 @@ Run the runtime health check before changing a project:
 python3 -m astrid doctor --json
 ```
 
-If it reports `state: "unavailable"`, start the runtime with
-`astrid-runtime up --profile astrid` and retry. Do not create a local database,
+If it reports `state: "unavailable"`, run the Astrid install line again and
+retry. Do not create a local database,
 tail local event files, or edit runtime state by hand. An unexpected command
 failure is returned as a typed error; preserve the idempotency key and retry
 only when the error's recovery guidance permits it.

@@ -1,17 +1,17 @@
 """Read-only dev identity and clean, owner-bound source promotion."""
 from __future__ import annotations
 
-import fcntl
 import hashlib
 import json
 import os
 import re
-import signal
 import subprocess
 import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping
+
+from runtime_protocol import platform
 
 PROFILE_NAME = "astrid"
 TERMINAL_TASK_STATES = frozenset({"completed", "succeeded", "cancelled", "canceled", "expired", "failed"})
@@ -496,7 +496,7 @@ def reap_orphan_render_processes(
     *,
     checkouts: list[str],
     list_fn: Callable[[], str] = _ps_listing,
-    kill_fn: Callable[[int, int], None] = os.kill,
+    kill_fn: Callable[[int, int], None] | None = None,
 ) -> list[dict[str, Any]]:
     """Kill the orphans ``find_orphan_render_processes`` reports, by exact pid.
 
@@ -509,7 +509,10 @@ def reap_orphan_render_processes(
         if current is None or current != (1, command):
             continue
         try:
-            kill_fn(pid, signal.SIGKILL)
+            if kill_fn is None:
+                platform.signal_process(platform.process_identity(pid), platform.KILL)
+            else:
+                kill_fn(pid, platform.KILL)
         except ProcessLookupError:
             continue
         reaped.append({"pid": pid, "command": command})
@@ -557,8 +560,8 @@ def run_promote(*, data_root: Path, ref: str | None = None, force: bool = False,
     if before is None:
         raise DevOperatorError("resident host custody is unavailable; use the supported owner stop/relaunch", state="unavailable")
     with (runtime_dir / "generic-host.lock").open("a+") as lock:
-        os.fchmod(lock.fileno(), 0o600)
-        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        platform.owner_only(lock.fileno())
+        platform.lock_file(lock.fileno())
         if _read_json(state_path) != before or served_profile(data_root) != profile:
             raise DevOperatorError("service/profile identity changed before promotion")
         if _git(serve, "rev-parse", "HEAD") != old or _git(serve, "status", "--porcelain", "--untracked-files=all"):

@@ -15,6 +15,8 @@ import threading
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Mapping, Sequence
 
+from runtime_protocol import platform
+
 
 class EngineAdapterError(RuntimeError):
     """A selected engine launch or custody interface cannot be proved."""
@@ -554,12 +556,10 @@ class CustodyProcessProxy:
         self._signal_owner(self.pid, signum)
 
     def terminate(self) -> None:
-        import signal
-        self.send_signal(signal.SIGTERM)
+        self.send_signal(platform.TERM)
 
     def kill(self) -> None:
-        import signal
-        self.send_signal(signal.SIGKILL)
+        self.send_signal(platform.KILL)
 
 
 class SelectedListenerLauncher:

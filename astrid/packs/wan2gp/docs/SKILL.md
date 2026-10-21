@@ -60,3 +60,37 @@ sdk.invoke("wan2gp.validate_settings", kind="executor", inputs={"prompt": "a cat
 # Host-mediated generation (requires explicit Wan source/config/interpreter admission)
 sdk.invoke("wan2gp.generate_video", kind="executor", inputs={"prompt": "a cat", "model": "wan-2.2", "resolution": "1280x720"})
 ```
+
+## Windows with NVIDIA
+
+Wan2GP on Windows with NVIDIA is **not qualified yet**. Without an NVIDIA
+GPU and working driver it is unavailable. To test an unqualified combination,
+set `$env:ASTRID_ALLOW_UNQUALIFIED_GPU = "1"` in the environment that starts
+the pack host. The capability label and the host's settled result retain the
+unqualified status even when this opt-in permits a run.
+
+The candidate Python/CUDA pins are in `environment.windows-nvidia.json` and
+`requirements.windows-nvidia.txt`. Provision the environment from the clean,
+already admitted upstream checkout with the shared pack provisioner:
+
+```powershell
+python -m astrid.core.generation.gpu_environment wan2gp --checkout C:\Astrid\Wan2GP --plan
+python -m astrid.core.generation.gpu_environment wan2gp --checkout C:\Astrid\Wan2GP
+```
+
+This needs user-local uv 0.11.32 and a network connection on the tester's
+computer. It creates a uv-managed Python 3.12.10 environment under
+`%LOCALAPPDATA%\Astrid GPU\wan2gp\<identity>`, without administrator access or a system
+CUDA toolkit. It combines the CUDA wheel pins with the checkout's own
+`requirements.txt`, resolves with the recorded upload cutoff, writes a fully
+versioned, hash-bound `requirements.lock`, syncs that lock, checks dependencies
+and probes `torch.cuda`. Keep the lock and `astrid-gpu-environment.json` with
+test evidence; replay that lock with `uv pip sync --require-hashes` to
+reproduce the resolved environment, including its exact PyTorch wheel URLs. Resolution or CUDA
+probe failures leave no success receipt and do not qualify the installation.
+
+Use the printed `python` path in the existing `wan_session` admission, alongside
+the source/config digests and owner directory. Provisioning does not create a
+config, download models, start the engine, or replace session admission. Use a
+new `--destination` for repairs so a warm interpreter is never overwritten.
+macOS and Linux retain their existing environment/admission path.

@@ -7,7 +7,6 @@ considered a committed render result.
 
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import re
@@ -15,6 +14,8 @@ import time
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
+
+from runtime_protocol import platform
 
 from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.foundation.hash import sha256_file
@@ -48,7 +49,7 @@ class _FcntlLock:
         deadline = None if timeout is None or timeout < 0 else time.monotonic() + timeout
         while True:
             try:
-                fcntl.flock(self._handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                platform.lock_file(self._handle.fileno(), blocking=False)
                 return self
             except BlockingIOError as exc:
                 if timeout == 0 or (deadline is not None and time.monotonic() >= deadline):
@@ -60,7 +61,7 @@ class _FcntlLock:
     def release(self) -> None:
         if self._handle is None:
             return
-        fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)
+        platform.unlock_file(self._handle.fileno())
         self._handle.close()
         self._handle = None
 

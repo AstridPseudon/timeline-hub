@@ -154,6 +154,45 @@ def test_startup_kills_recorded_live_group_from_a_crashed_host(tmp_path):
                 pass
 
 
+def test_managed_stdin_eof_waits_for_host_task_tree_cleanup(tmp_path):
+    from astrid.core.execution.generic_host import _ManagedStdinShutdown
+
+    journal = tmp_path / "scopes.json"
+    read_fd, write_fd = os.pipe()
+    stream = os.fdopen(read_fd, "r", encoding="utf-8")
+    host = generic_host.GenericPackHost(pack_roots=[], client=None)
+    process = None
+    task_scope.set_orphan_journal(journal)
+    try:
+        process = spawn(
+            [PY, "-c", GRANDCHILDREN], cwd=str(tmp_path), stdout=subprocess.PIPE, text=True
+        )
+        assert process.stdout is not None
+        grandchild = int(process.stdout.readline())
+        host._track_process(process)
+        lifecycle = _ManagedStdinShutdown(host, stream)
+        lifecycle.start()
+        os.close(write_fd)
+        write_fd = -1
+
+        assert lifecycle.run_loop(lambda: host._shutdown.wait(timeout=5))
+        assert process.wait(timeout=5) is not None
+        deadline = time.monotonic() + 5
+        while not _gone(grandchild) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert _gone(grandchild)
+        assert journal.read_text() == "[]"
+    finally:
+        if write_fd >= 0:
+            os.close(write_fd)
+        stream.close()
+        if process is not None and process.poll() is None:
+            task_scope.stop(process, 0.5)
+        if process is not None and process.stdout is not None:
+            process.stdout.close()
+        task_scope.set_orphan_journal(None)
+
+
 def test_startup_never_signals_a_recorded_pid_now_owned_by_an_unrelated_process(tmp_path):
     import json
     bystander = subprocess.Popen([PY, "-c", "import time;time.sleep(60)"], start_new_session=True)

@@ -13,7 +13,6 @@ import hashlib
 import hmac
 import json
 import math
-import os
 import shutil
 import stat
 import tempfile
@@ -26,10 +25,10 @@ from typing import Any, Mapping
 
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
+from runtime_protocol.dirfd import filesystem as os
 
 from astrid.core.timeline.resolution import AssetIntegrity
 from astrid.core.timeline.snapshot import TimelineSnapshot
-from astrid.sdk.pagination import paged_rows
 from astrid.packs.rendering.actions.timeline_visualize.evidence_pack import (
     ACTION_INDEX_NAME,
     ASSET_INDEX_NAME,
@@ -69,6 +68,7 @@ from astrid.packs.rendering.actions.timeline_visualize.transcripts import (
     SpeechOccurrence,
     TranscriptSegment,
 )
+from astrid.sdk.pagination import paged_rows
 
 
 class FrozenViewError(ValueError):
@@ -111,7 +111,7 @@ def _paged_rows(reader: Any, *args: Any) -> list[Any] | None:
 def _register_rehydrated_pack(root: Path) -> None:
     """Record one exact temp root created by this process."""
 
-    stat = root.lstat()
+    stat = os.lstat(root)
     with _REHYDRATED_PACKS_LOCK:
         _REHYDRATED_PACKS[root] = (
             os.getpid(),
@@ -152,8 +152,8 @@ def _remove_owned_directory(
     deleted; the original may be left empty at its moved location instead.
     """
 
-    open_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
-    open_flags |= getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    open_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    open_flags |= getattr(os, "O_CLOEXEC", 0)
     parent_fd: int | None = None
     root_fd: int | None = None
 

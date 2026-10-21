@@ -1,12 +1,11 @@
 """Shared atomic I/O helpers for text, bytes, and JSON writes.
 
-All writers use sibling temporary files and ``os.replace()`` so that
+All writers use sibling temporary files and Runtime's durable replacement so that
 readers never observe a partially-written file.
 """
 
 from __future__ import annotations
 
-import errno
 import importlib
 import json
 import os
@@ -14,28 +13,15 @@ import tempfile
 from pathlib import Path
 from typing import Any, Callable
 
+from runtime_protocol import platform
+
 
 class AtomicWriteError(OSError):
     """Raised when an atomic write cannot be completed."""
 
 
-def _fsync_dir(path: Path) -> None:
-    """Best-effort directory fsync to durably record the rename."""
-    flags: int = getattr(os, "O_DIRECTORY", 0) | os.O_RDONLY
-    fd: int | None = None
-    try:
-        fd = os.open(path, flags)
-        os.fsync(fd)
-    except OSError as exc:
-        if exc.errno not in {errno.EINVAL, errno.ENOTSUP, errno.EBADF}:
-            raise
-    finally:
-        if fd is not None:
-            os.close(fd)
-
-
 def _write_atomic(path: Path, write_func: Callable[[Path], None]) -> None:
-    """Core atomic write: write to a sibling temp file, then ``os.replace``.
+    """Core atomic write: stage a sibling temp file, then durably publish it.
 
     ``write_func`` receives the temporary ``Path`` and should write
     the complete content there.  After ``write_func`` returns, the
@@ -55,8 +41,7 @@ def _write_atomic(path: Path, write_func: Callable[[Path], None]) -> None:
             write_func(tmp_path)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp_path, path)
-        _fsync_dir(path.parent)
+        platform.durable_replace(tmp_path, path)
     finally:
         tmp_path.unlink(missing_ok=True)
 
@@ -74,8 +59,7 @@ def _write_atomic_binary(path: Path, write_func: Callable[[Path], None]) -> None
             write_func(tmp_path)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp_path, path)
-        _fsync_dir(path.parent)
+        platform.durable_replace(tmp_path, path)
     finally:
         tmp_path.unlink(missing_ok=True)
 
@@ -122,8 +106,7 @@ def write_json_atomic(path: str | Path, payload: Any) -> None:
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp_path, json_path)
-        _fsync_dir(json_path.parent)
+        platform.durable_replace(tmp_path, json_path)
     except OSError as exc:
         raise AtomicWriteError(str(exc)) from exc
     finally:

@@ -2,8 +2,8 @@
 import {StrictMode} from 'react';
 import {render,cleanup,fireEvent,act,waitFor} from '@testing-library/react';
 import {afterEach,describe,expect,it,vi} from 'vitest';
-import {SceneSurface} from '../../../astrid/packs/rendering/ui/live-scenes/SceneSurface';
-import * as sceneRuntime from '../../../astrid/packs/rendering/ui/live-scenes/runtime';
+import {SceneSurface} from '../../../astrid/packs/rendering/ui/threejs-live-editor/SceneSurface';
+import * as sceneRuntime from '../../../astrid/packs/rendering/ui/threejs-live-editor/runtime';
 
 async function sha256(bytes: Uint8Array): Promise<string> {
   const hash = await globalThis.crypto.subtle.digest('SHA-256', new Uint8Array(bytes));

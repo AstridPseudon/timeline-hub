@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import sys
+
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint, run_pack_main
 
 guard_canonical_entrypoint("capture.web_page")
@@ -13,7 +15,6 @@ import hashlib
 import json
 import os
 import re
-import select
 import shutil
 import subprocess
 import tempfile
@@ -26,6 +27,7 @@ from urllib.parse import urlsplit
 from astrid.core._shared.result_manifest import build_manifest, write_manifest
 from astrid.core.contracts.errors import AstridError
 from astrid.core.env_vars import ASTRID_REMOTION_PROJECT_DIR
+from astrid.core.execution.pipe_io import PipeReader, PipeWriter, close_pipe_workers
 from astrid.core.execution.process_group import (
     popen_owned_group,
     terminate_group,
@@ -240,28 +242,28 @@ class _Cdp:
         self._buf = b""
         self._next_id = 0
         self.events: list[dict[str, Any]] = []
+        self._reader = PipeReader(read_fd)
+        self._writer = PipeWriter(write_fd)
 
-    def send(self, method: str, params: dict[str, Any] | None = None, session_id: str | None = None) -> int:
+    def send(self, method: str, params: dict[str, Any] | None = None, session_id: str | None = None,
+             *, deadline: float = float("inf")) -> int:
         self._next_id += 1
         message: dict[str, Any] = {"id": self._next_id, "method": method, "params": params or {}}
         if session_id:
             message["sessionId"] = session_id
         data = json.dumps(message).encode("utf-8") + b"\0"
-        view = memoryview(data)
-        while view:
-            written = os.write(self._w, view)
-            view = view[written:]
+        try:
+            self._writer.write(data, deadline=deadline)
+        except TimeoutError as error:
+            raise AstridError("timed out waiting for the browser") from error
         return self._next_id
 
     def _read_one(self, deadline: float) -> dict[str, Any]:
         while b"\0" not in self._buf:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise AstridError("timed out waiting for the browser")
-            ready, _, _ = select.select([self._r], [], [], remaining)
-            if not ready:
-                continue
-            chunk = os.read(self._r, 1 << 16)
+            try:
+                chunk = self._reader.read(deadline=deadline)
+            except TimeoutError as error:
+                raise AstridError("timed out waiting for the browser") from error
             if not chunk:
                 raise AstridError("the browser closed its debugging pipe unexpectedly")
             self._buf += chunk
@@ -276,7 +278,7 @@ class _Cdp:
         timeout: float = 30.0,
     ) -> dict[str, Any]:
         deadline = time.monotonic() + timeout
-        msg_id = self.send(method, params, session_id)
+        msg_id = self.send(method, params, session_id, deadline=deadline)
         while True:
             message = self._read_one(deadline)
             if message.get("id") == msg_id:
@@ -316,6 +318,16 @@ class _Cdp:
             self.events.append(message)
             if len(self.events) > 5000:
                 del self.events[:1000]
+
+    def close(self) -> None:
+        try:
+            close_pipe_workers(self._reader, self._writer)
+        finally:
+            for fd in (self._r, self._w):
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
 
 
 def _chrome_args(chrome: str, profile: Path, proxy: str) -> list[str]:
@@ -381,12 +393,10 @@ def _shutdown(proc: subprocess.Popen, cdp: _Cdp) -> None:
     except subprocess.TimeoutExpired:
         terminate_group(proc, grace_seconds=1.0)
         proc.wait(timeout=5)
-    verify_tree_absent(proc)
-    for fd in (cdp._r, cdp._w):
-        try:
-            os.close(fd)
-        except OSError:
-            pass
+    try:
+        verify_tree_absent(proc)
+    finally:
+        cdp.close()
 
 
 def _png_size(data: bytes) -> tuple[int, int]:
@@ -408,6 +418,8 @@ def capture(
     chrome: str | None = None,
 ) -> dict[str, Any]:
     """Capture one admitted page, writing managed outputs into ``out_dir``."""
+    if sys.platform == "win32":
+        raise AstridError("Browser capture is not available on Windows yet.")
     url = validate_url(url)
     admission = _require_host_admission(url)
     if not (1 <= int(device_scale) <= 3):

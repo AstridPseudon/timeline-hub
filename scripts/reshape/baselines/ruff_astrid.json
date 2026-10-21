@@ -4,7 +4,7 @@
     "pyproject.toml [tool.ruff].include"
   ],
   "command": [
-    "/Users/hannahomalley/Developer/tp-merge-20261018/wt/land/.venv/bin/python",
+    "/tmp/lead-fixwin/astrid-agent/.venv/bin/python",
     "-m",
     "ruff",
     "check",
@@ -12,17 +12,17 @@
     "--output-format",
     "json"
   ],
-  "finding_count": 2220,
+  "finding_count": 2203,
   "code_counts": {
-    "F401": 152,
-    "BLE001": 212,
-    "I001": 237,
+    "F401": 148,
+    "BLE001": 214,
+    "I001": 220,
     "E701": 463,
     "E702": 229,
     "E731": 11,
     "F821": 13,
     "F841": 62,
-    "E402": 823,
+    "E402": 825,
     "F402": 2,
     "F822": 7,
     "F541": 3,

@@ -13,6 +13,7 @@ edge topology.
 
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +54,7 @@ _PRODUCES = {
 def build_workflow(
     *,
     python_exec: str = "python3",
-    run_root: str | Path = "/tmp/event-talks-run",
+    run_root: str | Path | None = None,
     source: str | Path | None = None,
     transcript: str | Path | None = None,
     run_id: str | None = None,
@@ -79,7 +80,7 @@ def build_workflow(
     """
     import shlex
 
-    run_root_path = Path(run_root)
+    run_root_path = Path(run_root) if run_root is not None else Path(tempfile.gettempdir()) / "event-talks-run"
     resolved_source = Path(source).resolve() if source else None
     resolved_transcript = Path(transcript).resolve() if transcript else None
 

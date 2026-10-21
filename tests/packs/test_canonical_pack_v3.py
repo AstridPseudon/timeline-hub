@@ -86,12 +86,12 @@ def test_structured_command_retains_existing_controls_without_extra_path(tmp_pat
 
 
 def test_ui_only_uses_the_existing_editor_host(tmp_path: Path) -> None:
-    root = _pack(tmp_path, files={"ui/live-scenes/extension.tsx": "export default extension;\n"},
-                 ui={"live-scenes": {"type": "editor", "entry": "ui/live-scenes/extension.tsx"}})
+    root = _pack(tmp_path, files={"ui/threejs-live-editor/extension.tsx": "export default extension;\n"},
+                 ui={"threejs-live-editor": {"type": "editor", "entry": "ui/threejs-live-editor/extension.tsx"}})
     entry = validate_canonical_pack(root)
-    assert entry.definition.declaration_id("ui", "live-scenes") == "demo.live-scenes"
+    assert entry.definition.declaration_id("ui", "threejs-live-editor") == "demo.threejs-live-editor"
     assert not entry.definition.actions
-    assert {h.path for h in entry.resources} == {"ui/live-scenes/extension.tsx"}
+    assert {h.path for h in entry.resources} == {"ui/threejs-live-editor/extension.tsx"}
     assert not (root / "actions").exists()
 
 
@@ -113,7 +113,7 @@ def test_tool_ui_projection_keeps_whole_tool_distinct_from_editor_extensions(tmp
                 "compatibility": {"host": "1"},
                 "resources": [{"kind": "support", "path": resource_path}],
             },
-            "live-scenes": {"type": "editor", "entry": "ui/extension.tsx"},
+            "threejs-live-editor": {"type": "editor", "entry": "ui/extension.tsx"},
         },
     )
 
@@ -122,7 +122,7 @@ def test_tool_ui_projection_keeps_whole_tool_distinct_from_editor_extensions(tmp
     handles = {handle.path: handle for handle in canonical.resource_handles}
 
     assert canonical.definition.declaration_id("ui", "video-editor") == "demo.video-editor"
-    assert canonical.definition.ui["live-scenes"]["type"] == "editor"
+    assert canonical.definition.ui["threejs-live-editor"]["type"] == "editor"
     assert projection.canonical_id == "demo.video-editor"
     assert projection.declaration_key == "video-editor"
     assert projection.entry is handles[entry_path]
@@ -134,10 +134,10 @@ def test_tool_ui_projection_keeps_whole_tool_distinct_from_editor_extensions(tmp
 def test_mixed_maps_and_authored_skill_have_one_manifest_authority(tmp_path: Path) -> None:
     skill = "---\nname: authored-name\ndescription: Authored instructions.\n---\n# Use both surfaces\n"
     root = _pack(tmp_path, files={"actions/echo.py": "def echo(): pass\n",
-                                 "ui/live-scenes/extension.tsx": "export default extension;\n",
+                                 "ui/threejs-live-editor/extension.tsx": "export default extension;\n",
                                  "docs/SKILL.md": skill},
                  actions={"echo": _action()},
-                 ui={"live-scenes": {"type": "editor", "entry": "ui/live-scenes/extension.tsx",
+                 ui={"threejs-live-editor": {"type": "editor", "entry": "ui/threejs-live-editor/extension.tsx",
                                      "target": "video-editor", "compatibility": {"sdk": "1"}}},
                  documentation={"kind": "skill", "path": "docs/SKILL.md"})
     entry = validate_canonical_pack(root)

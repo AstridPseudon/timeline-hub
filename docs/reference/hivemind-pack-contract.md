@@ -20,18 +20,12 @@ branch; remote publication is intentionally outside this task. Until that
 commit (or a later full SHA) is published to the upstream repository, remote
 installation must use an explicit local source declaration or remain pending.
 
-When the v2 commit exists, configure its complete 40- or 64-character Git
-object id:
-
-```bash
-export ASTRID_HIVEMIND_REVISION=a4c6610cba1032adb3b4bec541ccf821afba6ba8
-python3 -m astrid.setup --check
-```
-
-Astrid never follows a branch and never turns a short or invented SHA into a
-managed source pin. For local rehearsal, set
-`ASTRID_HIVEMIND_REPOSITORY=file:///absolute/path/to/hivemind` alongside the
-delivery revision.
+This commit is source-selection metadata; it does not install or activate the
+external pack. Astrid never follows a branch or turns a short or invented SHA
+into a managed source pin. For a local Hivemind rehearsal, set
+`ASTRID_HIVEMIND_REPOSITORY=file:///absolute/path/to/hivemind` in the Astrid
+development environment alongside the full `ASTRID_HIVEMIND_REVISION` SHA.
+This source selection is separate from the public Astrid install line.
 
 ## Capability coverage
 

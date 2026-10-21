@@ -26,7 +26,7 @@ bundle a React page or create a new route.
 
 Use the V3 family that matches the contribution. `type: tool` is the whole
 host-mounted Tool. `type: editor` is an editor-only contribution, such as the
-existing [`live-scenes` entry](../../astrid/packs/rendering/ui/live-scenes/extension.tsx)
+existing [`threejs-live-editor` entry](../../astrid/packs/rendering/ui/threejs-live-editor/extension.tsx)
 in the `rendering` pack. The Tool catalog and
 editor-extension catalog intentionally select different declaration types.
 Changing visibility of other Tools does not remove editor effects,

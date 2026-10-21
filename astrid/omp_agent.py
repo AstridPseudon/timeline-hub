@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from .core.auth import AUTH_COMMANDS, contributor_auth_system_notice, run_auth
+from .core.util.process import replace_process
 from .version import ASTRID_VERSION
 
 DEFAULT_AGENT = "astrid"
@@ -32,7 +33,7 @@ _PRODUCT_TOOLKIT_FAMILIES = frozenset(
     {"projects", "timelines", "media", "tasks", "runs", "documents", "preferences", "doctor", "backup"}
 )
 _PACK_ROUTE_BLOCKLIST = frozenset(
-    {"agent", "auth", "help", "login", "status", "logout", "revoke"}
+    {"agent", "auth", "help", "install", "login", "setup", "status", "logout", "revoke"}
 )
 
 
@@ -262,7 +263,7 @@ def _omp_model_snapshot(omp_bin: str) -> dict[str, Any]:
         env["ASTRID_OMP_MODELS_RESULT"] = str(result_file)
         result = subprocess.run(
             [omp_bin, "models", "ls", "--json", "-e", str(extension)],
-            capture_output=True, text=True, env=env, check=False,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, check=False,
         )
         if not result_file.is_file():
             raise ValueError("OMP could not report its providers; run `omp models ls --json` for details")
@@ -301,7 +302,7 @@ def _save_default_model(omp_bin: str, selector: str) -> None:
         # isolates the profile's global roles from project-specific overrides.
         result = subprocess.run(
             [omp_bin, "config", "get", "modelRoles", "--json"], cwd=directory,
-            capture_output=True, text=True, check=False,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         if result.returncode:
             raise ValueError("OMP could not read modelRoles; run `omp config get modelRoles` for details")
@@ -311,7 +312,7 @@ def _save_default_model(omp_bin: str, selector: str) -> None:
             raise ValueError("OMP returned invalid modelRoles")
         result = subprocess.run(
             [omp_bin, "config", "set", "modelRoles", json.dumps({**roles, "default": selector}), "--json"],
-            cwd=directory, capture_output=True, text=True, check=False,
+            cwd=directory, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
         )
         payload = json.loads(result.stdout) if not result.returncode else None
         saved = payload.get("value") if isinstance(payload, dict) else None
@@ -331,7 +332,7 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
         command += ["--model", catalog_model]
     result = subprocess.run(
         command, input='{"id":"astrid-login-providers","type":"get_login_providers"}\n',
-        capture_output=True, text=True, check=False,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     )
     if result.returncode:
         raise ValueError("OMP could not list sign-in providers; run `omp` for details")
@@ -370,7 +371,8 @@ def _add_model_usage(omp_bin: str, snapshot: dict[str, Any]) -> None:
     """Attach OMP's optional quota reports, retaining only non-identity fields."""
     try:
         result = subprocess.run(
-            [omp_bin, "usage", "--json", "--redact"], capture_output=True, text=True, check=False,
+            [omp_bin, "usage", "--json", "--redact"], capture_output=True, text=True,
+            encoding="utf-8", errors="replace", check=False,
         )
         if result.returncode:
             return
@@ -553,12 +555,15 @@ def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: lis
     if message:
         exec_argv += ["--print", *message]
         _print_one_shot_header(DEFAULT_AGENT)
-    os.execvp(omp_bin, exec_argv)
-    return 1  # pragma: no cover - execvp replaces the process
+    replace_process(exec_argv)
+    return 1  # pragma: no cover - hand-off exits or replaces the process
 
 
 def main(argv: list[str] | None = None) -> int:
     rest = list(sys.argv[1:] if argv is None else argv)
+
+    if rest and rest[0] == "install":
+        return _dispatch_toolkit(rest)
 
     # The console script is now the unified Astrid surface.  ``--help`` is
     # intentionally launcher help (not OMP help), while ``help`` remains the
@@ -622,8 +627,8 @@ def main(argv: list[str] | None = None) -> int:
         if omp_bin is None or not _omp_supports_onboard(omp_bin):
             print("astrid: this OMP build does not support native onboarding", file=sys.stderr)
             return 1
-        os.execvp(omp_bin, [omp_bin, "onboard"])
-        return 1  # pragma: no cover - execvp replaces the process
+        replace_process([omp_bin, "onboard"])
+        return 1  # pragma: no cover - hand-off exits or replaces the process
 
     flags, message = _split_flags(rest)
     if not message and _HELP_FLAGS.intersection(flags):
@@ -662,8 +667,8 @@ def main(argv: list[str] | None = None) -> int:
     if message:
         exec_argv += ["--print", *message]
         _print_one_shot_header(agent)
-    os.execvp(str(launcher), exec_argv)
-    return 1  # pragma: no cover - execvp replaces the process
+    replace_process(exec_argv)
+    return 1  # pragma: no cover - hand-off exits or replaces the process
 
 
 if __name__ == "__main__":  # pragma: no cover

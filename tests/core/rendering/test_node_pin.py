@@ -62,6 +62,23 @@ def test_an_unpinned_project_takes_the_first_node_on_path(tmp_path):
     assert found.ok and found.path == path_node.resolve() and found.pin is None
 
 
+def test_windows_node_pin_searches_tools_archive_layout(tmp_path):
+    project = _project(tmp_path)
+    pinned = _node(tmp_path / "tools" / "node-v20.19.4-win-x64" / "node.exe", "v20.19.4")
+    # The platform choice is normally supplied by os.name; exercise the pure
+    # candidate layout on Linux so the Windows path remains covered in CI.
+    assert any(candidate == pinned for candidate, _source in node_pin.candidates(
+        project, "v20.19.4", search_path="", home=tmp_path / "home"
+    ))
+
+
+def test_node_path_search_uses_which(monkeypatch, tmp_path):
+    project = _project(tmp_path)
+    executable = tmp_path / "bin" / "node.exe"
+    monkeypatch.setattr(node_pin.shutil, "which", lambda name, path=None: str(executable) if name == "node" else None)
+    assert node_pin.candidates(project, "v20.19.4", search_path="", home=tmp_path / "home")[0] == (executable, "PATH")
+
+
 def test_the_host_launch_refuses_a_mismatched_node_and_resolves_the_pinned_one(tmp_path):
     from astrid.sdk.host_bootstrap import PackHostBootstrapError, _provision_render_runtime_env
 
