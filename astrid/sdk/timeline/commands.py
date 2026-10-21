@@ -291,6 +291,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             guard_basis(ctx, command)
             from .capture import move_intent
             intent = move_intent(command['select']) if command['op'] in ('clip.move', 'placement.move') else operation.intent
+            if command['op'] == 'clip.delete' and command['version'] == '2':
+                intent = {'ownership': 'occurrence'}
             supplied_intent = {**intent, **command.get('intent', {})}
             if supplied_intent != intent:
                 raise CommandError("unsupported operation intention policy")

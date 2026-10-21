@@ -9,7 +9,7 @@ SOURCE_BOUND_OPERATIONS = frozenset({
     'clip.move', 'placement.move', 'track.create', 'clip.set',
     'clip.set-element', 'track.set',
     'shot.set', 'clip.set-params', 'occurrence.add-media', 'occurrence.swap-media',
-    'placement.create', 'placement.unplace', 'shot.pool',
+    'placement.create', 'placement.unplace', 'shot.pool', 'clip.delete',
 })
 
 

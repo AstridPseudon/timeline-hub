@@ -1,4 +1,4 @@
-"""Bounded parent clip removal; semantic dependency resolution is a later slice."""
+"""Bounded clip removal for parent rows and one occurrence-owned child."""
 from __future__ import annotations
 
 import re
@@ -6,6 +6,7 @@ import re
 from astrid.core.timeline.validators.timeline import _transition_reference
 
 from ._command_state import CommandError
+from .native_occurrence_media_commands import _exclusive
 
 # Declared main intent only (astrid_ns / timeline_intent / reflow); never scan
 # arbitrary strings or opaque extension JSON for possible references.
@@ -51,8 +52,40 @@ def _unreferenced(ctx):
             _unrelated(ctx, member, [['app'], ['app', 'astrid']], RELATIONS)
 
 
+def _occurrence_child_delete(ctx, ref):
+    """Remove one raw child while retaining its occurrence and source closure."""
+    match = re.fullmatch(r'(occurrence:(?!.*::)[^/]+)/clip:(?!.*::)[^/]+', ref)
+    if match is None:
+        raise CommandError('clip.delete v2 requires one occurrence-owned raw child identity',
+                           kind='unsupported_ownership')
+    owner = match[1]
+
+    # This is deliberately the first state observation: a shared shot cannot
+    # be safely mutated in one occurrence, even if the requested child exists.
+    _exclusive(ctx, owner)
+    source_id = ctx.state.entity(owner + '/shot')['shot_id']
+    if sum(
+        ctx.state.entity('occurrence:' + row['occurrence_id'] + '/shot')['shot_id'] == source_id
+        for row in ctx.state.bundle['placements']
+    ) != 1:
+        raise CommandError('shared authored source is unsupported', kind='unsupported_ownership', ref=owner)
+    ctx.read(owner)
+    ctx.read(owner + '/shot', ['shot_id'])
+    members = ctx.select('collection.clips', owner)
+    if ref not in members:
+        raise CommandError('delete target disappeared', kind='identity_conflict', ref=ref)
+    ctx.read(ref)
+    ctx.read(owner + '/source')
+    ctx.bind('delete.owner', owner)
+    ctx.bind('delete.target', ref)
+    ctx.clear(ref, [])
+
+
 def delete(ctx, command):
     ref = command['select']
+    if command['version'] == '2':
+        _occurrence_child_delete(ctx, ref)
+        return
     if not isinstance(ref, str) or re.fullmatch(r'parent/clip:(?!.*::)[^/]+', ref) is None:
         raise CommandError('clip.delete v1 requires one parent clip identity', kind='unsupported_ownership')
     members = ctx.select('collection.clips', 'parent')
