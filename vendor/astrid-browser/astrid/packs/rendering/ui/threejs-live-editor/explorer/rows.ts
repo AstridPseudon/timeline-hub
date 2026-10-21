@@ -1,6 +1,6 @@
 // The one world list: worlds in the video, then library worlds.
 import type { TimelineSnapshot } from '@astrid/editor-sdk';
-import { UNTITLED_WORLD, worldKey, worldsFromSnapshot, type CameraMove, type TimelineWorld, type LibraryEntry, type WorldEvent, type WorldUse } from './model';
+import { UNTITLED_WORLD, worldKey, worldsFromSnapshot, type ShotMove, type TimelineWorld, type LibraryEntry, type WorldEvent, type WorldUse } from './model';
 
 /** One world the explorer can open: from the timeline, or from the project library. */
 export type Row = {
@@ -12,7 +12,7 @@ export type Row = {
   readonly revision: string;
   readonly uses: readonly WorldUse[];
   readonly events: readonly WorldEvent[];
-  readonly cameras: readonly CameraMove[];
+  readonly shots: readonly ShotMove[];
   /** Present for timeline worlds, whose package already rides on their clips. */
   readonly liveScene?: Record<string, unknown>;
 };
@@ -27,7 +27,7 @@ export function rowFromEntry(entry: LibraryEntry): Row {
     revision: entry.revision,
     uses: [],
     events: entry.events,
-    cameras: entry.cameras,
+    shots: entry.shots,
   };
 }
 
@@ -56,7 +56,7 @@ export function buildRows(snapshot: TimelineSnapshot | undefined, library: reado
       revision: world.revision,
       uses: world.uses,
       events: entry?.events ?? [],
-      cameras: entry?.cameras ?? [],
+      shots: entry?.shots ?? [],
       liveScene: world.liveScene,
     };
   });
