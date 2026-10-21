@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Protocol, TypedDict
+from typing import NotRequired, Protocol, TypedDict
 
 from . import timeline_commit_types as dto
 from .timeline_commit_producer import ProducerAttemptPin, VerifiedProducerAttempt
@@ -26,6 +26,9 @@ class StaleHead(Exception):
 TextSelection = TypedDict("TextSelection", {"object_id": dto.Digest, "digest": dto.Digest, "size": int, "media_type": str})
 VerifiedText = TypedDict("VerifiedText", {"object_id": dto.Digest, "digest": dto.Digest, "size": int,
                                           "media_type": str, "utf8": bool})
+MediaInfo = TypedDict("MediaInfo", {"object_id": dto.Digest, "media_type": str, "size": int,
+                                     "duration_seconds": NotRequired[float], "width": NotRequired[int],
+                                     "height": NotRequired[int]})
 
 
 class RuntimeCommitPort(Protocol):
@@ -41,6 +44,7 @@ class RuntimeCommitPort(Protocol):
     ) -> dto.HistoryPage: ...
     def history_entry(self, publication_id: str) -> dto.HistoryEntry: ...
     def selected_media(self, selection: dto.MediaSelection) -> dto.VerifiedMedia: ...
+    def raw_media_info(self, pin: dto.MediaManifestEntry) -> MediaInfo: ...
     def producer_attempt(self, pin: ProducerAttemptPin) -> VerifiedProducerAttempt: ...
     def text_selection(self, selection: TextSelection) -> VerifiedText: ...
     def transcript_source(self, pin: dto.DocumentPin) -> dto.VerifiedDocument: ...
