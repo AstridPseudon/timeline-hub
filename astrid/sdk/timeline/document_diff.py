@@ -64,9 +64,9 @@ def _require_explicit_rows(candidate_rows, result_rows, message):
 
 
 def _params(row):
-    value = row.get("params")
-    if value is None:
-        return {}
+    value = _field(row, "params")
+    if value is MISSING or value is None:
+        return value
     if not isinstance(value, Mapping):
         raise DocumentDiffError("clip.params must remain an object or null")
     return dict(value)
@@ -193,19 +193,26 @@ def _emit_clip_commands(working, owner, before, after):
         commands.append(command)
         working = result.bundle
 
-    if not equal(before.get("at"), after.get("at")):
-        if (not isinstance(after.get("at"), (int, float))
-                or isinstance(after.get("at"), bool)
-                or not math.isfinite(after["at"])):
+    before_at, after_at = _field(before, "at"), _field(after, "at")
+    if not equal(before_at, after_at):
+        if after_at is MISSING or after_at is None:
+            raise DocumentDiffError(f"{ref}.at null/absence changes have no lossless native command")
+        if (not isinstance(after_at, (int, float))
+                or isinstance(after_at, bool)
+                or not math.isfinite(after_at)):
             raise DocumentDiffError(f"{ref}.at must be a finite literal number")
-        on = after["at"]
+        on = after_at
         if owner != "parent":
             occurrence = next(row for row in working["placements"]
                               if "occurrence:" + row["occurrence_id"] == owner)
             on += occurrence_start(occurrence)
         emit(_capture(capture_move, ref, working, ref, on))
 
-    if any(not equal(before.get(key), after.get(key)) for key in ("from", "to")):
+    trim_fields = ("from", "to")
+    if any(not equal(_field(before, key), _field(after, key)) for key in trim_fields):
+        if any(_field(after, key) is MISSING or _field(after, key) is None for key in trim_fields
+               if not equal(_field(before, key), _field(after, key))):
+            raise DocumentDiffError(f"{ref} source trim null/absence changes have no lossless native command")
         if owner != "parent":
             raise DocumentDiffError(f"{ref} child source trim is held by the document view")
         emit(_capture(capture_clip_trim, ref, working, ref,
@@ -219,9 +226,14 @@ def _emit_clip_commands(working, owner, before, after):
             emit(_capture(capture_clip_set, ref, working, ref, values={}, clear=["hold"]))
 
     old_params, new_params = _params(before), _params(after)
-    values = {key: new_params[key] for key in new_params
-              if key not in old_params or not equal(old_params[key], new_params[key])}
-    clear = sorted(set(old_params) - set(new_params))
+    if not equal(_field(before, "params"), _field(after, "params")):
+        if new_params is MISSING or new_params is None:
+            raise DocumentDiffError(f"{ref}.params null/absence changes have no lossless native command")
+    old_values = {} if old_params is MISSING or old_params is None else old_params
+    new_values = {} if new_params is MISSING or new_params is None else new_params
+    values = {key: new_values[key] for key in new_values
+              if key not in old_values or not equal(old_values[key], new_values[key])}
+    clear = sorted(set(old_values) - set(new_values))
     if values or clear:
         element = after.get("clipType") or after.get("clip_type") or "media"
         selected = after.get("elementRef") or after.get("element_ref")
@@ -366,8 +378,8 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
             working["shots"][shot_id]["internal_timeline"].get("clips", []),
             f"{owner} clips differ from the native command result",
         )
-        _require_same(shot["internal_timeline"].get("tracks"),
-                      shot["base_internal_timeline"].get("tracks"),
+        _require_same(_field(shot["internal_timeline"], "tracks"),
+                      _field(shot["base_internal_timeline"], "tracks"),
                       f"{owner} track edits are held by the document view")
         if not media_changes:
             _require_same(shot["internal_timeline"].get("registry"),
@@ -398,8 +410,10 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
             else:
                 _require_same(shot.get("payload"), working["shots"][shot_id]["payload"],
                               f"{owner} payload differs from the native command result")
-        for key in set(shot["internal_timeline"]) - {"clips", "tracks", "registry"}:
-            _require_same(shot["internal_timeline"].get(key), shot["base_internal_timeline"].get(key),
+        for key in (set(shot["internal_timeline"]) | set(shot["base_internal_timeline"])) - {
+                "clips", "tracks", "registry"}:
+            _require_same(_field(shot["internal_timeline"], key),
+                          _field(shot["base_internal_timeline"], key),
                           f"{owner} internal field {key!r} is held by the document view")
 
     parent = candidate.get("parent")

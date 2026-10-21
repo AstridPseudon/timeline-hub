@@ -157,6 +157,36 @@ def test_document_view_adapter_emits_native_command_for_explicit_parent_timing()
     assert native["commands"][0]["select"] == "parent/clip:direct"
 
 
+@pytest.mark.parametrize("field", ["params", "at", "from", "to"])
+def test_document_view_adapter_refuses_null_to_absent_clip_fields_without_dropping_draft(field):
+    work = bundle(shared=False)
+    base = copy.deepcopy(work)
+    shot = next(iter(work["shots"].values()))
+    base_shot = next(iter(base["shots"].values()))
+    for timeline in (base_shot["internal_timeline"], shot["base_internal_timeline"],
+                     shot["internal_timeline"]):
+        timeline["clips"][0][field] = None
+    shot["internal_timeline"]["clips"][0].pop(field)
+
+    before = copy.deepcopy(work)
+    with pytest.raises(DocumentDiffError, match="null/absence"):
+        document_diff_to_commands(work, base)
+    assert work == before
+
+
+@pytest.mark.parametrize("field", ["layout", "effects", "audio", "opaque_timeline"])
+def test_document_view_adapter_refuses_deleting_held_internal_fields_without_dropping_draft(field):
+    work = bundle(shared=False)
+    base = copy.deepcopy(work)
+    shot = next(iter(work["shots"].values()))
+    shot["internal_timeline"].pop(field)
+
+    before = copy.deepcopy(work)
+    with pytest.raises(DocumentDiffError, match=f"internal field {field!r}"):
+        document_diff_to_commands(work, base)
+    assert work == before
+
+
 def test_document_view_adapter_refuses_an_undeclared_null_param_without_dropping_draft():
     work = bundle()
     base = copy.deepcopy(work)
