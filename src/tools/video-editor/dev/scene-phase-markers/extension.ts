@@ -574,6 +574,9 @@ export function buildCreateEmptyShotsPatch(
         payload: {
           hold: duration,
           label: `Shot ${createdCount}`,
+          // clip.add metadata is not retained by the compiler. Carry the
+          // ownership marker through the compiler-preserved update instead.
+          app: { managedBy: extensionId },
           mode: 'merge',
         },
         order: baseOrder + 1,
@@ -612,9 +615,9 @@ function shotDurationAt(
  * markers are transition points, so each shot plays BETWEEN transitions:
  * shot i starts at marker i and holds until the next marker (the tail after
  * the last marker takes `options.durationSeconds`, default 2s). Each clip is
- * added, then updated with its duration and label (clip.add only carries
- * track/at/clipType through the compiler; clip.update merges the remaining
- * fields).
+ * added, then updated with its duration, label, and ownership (clip.add only
+ * carries track/at/clipType through the compiler; clip.update merges the
+ * remaining fields).
  */
 export function buildCreateShotsPatch(
   snapshot: TimelineSnapshot,
@@ -653,6 +656,9 @@ export function buildCreateShotsPatch(
         payload: {
           hold: duration,
           label: `Shot ${createdCount}`,
+          // clip.add metadata is not retained by the compiler. Carry the
+          // ownership marker through the compiler-preserved update instead.
+          app: { managedBy: extensionId },
           mode: 'merge',
         },
         order: baseOrder + 1,

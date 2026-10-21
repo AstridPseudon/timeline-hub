@@ -450,7 +450,13 @@ export function buildTranscriptCaptionPatch(
         ...itemCaptionBox,
         text: textStyle,
         label,
-        app: { __generated__: generatedMeta },
+        // clip.add only carries structural fields through the patch compiler.
+        // Keep ownership beside provenance on the compiler-preserved update so
+        // a reloaded reader can authorize the next regeneration.
+        app: {
+          managedBy: extensionId,
+          __generated__: generatedMeta,
+        },
         mode: 'merge',
       },
       order: order++,

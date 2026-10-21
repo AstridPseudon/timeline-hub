@@ -19,7 +19,9 @@ import type {
   TimelineSnapshot,
 } from '@astrid/editor-sdk';
 import { createExtensionContext } from '@/tools/video-editor/runtime/extensionContextFactory';
-import { validateTimelinePatch } from '@/tools/video-editor/lib/timeline-patch';
+import { compileTimelinePatch, validateTimelinePatch } from '@/tools/video-editor/lib/timeline-patch';
+import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data';
+import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader';
 import { createTimelineViewStore } from '@/tools/video-editor/lib/timeline-view-store.ts';
 import { classifyGenericPatch } from '@/tools/video-editor/commands/genericPatchCapture.ts';
 import {
@@ -551,7 +553,7 @@ describe('buildCreateShotsPatch', () => {
       },
       {
         op: 'clip.update', target: 'scene-phase-shot-m1',
-        payload: { hold: 5, label: 'Shot 1', mode: 'merge' }, order: 1,
+        payload: { hold: 5, label: 'Shot 1', app: { managedBy: SCENE_PHASE_EXTENSION_ID }, mode: 'merge' }, order: 1,
       },
       {
         op: 'clip.add', target: 'scene-phase-shot-m2',
@@ -559,7 +561,7 @@ describe('buildCreateShotsPatch', () => {
       },
       {
         op: 'clip.update', target: 'scene-phase-shot-m2',
-        payload: { hold: 3, label: 'Shot 2', mode: 'merge' }, order: 3,
+        payload: { hold: 3, label: 'Shot 2', app: { managedBy: SCENE_PHASE_EXTENSION_ID }, mode: 'merge' }, order: 3,
       },
       {
         op: 'clip.add', target: 'scene-phase-shot-m3',
@@ -567,7 +569,7 @@ describe('buildCreateShotsPatch', () => {
       },
       {
         op: 'clip.update', target: 'scene-phase-shot-m3',
-        payload: { hold: 2, label: 'Shot 3', mode: 'merge' }, order: 5,
+        payload: { hold: 2, label: 'Shot 3', app: { managedBy: SCENE_PHASE_EXTENSION_ID }, mode: 'merge' }, order: 5,
       },
     ]);
   });
@@ -754,6 +756,77 @@ describe('buildCreateShotsPatch idempotency', () => {
       .filter((op) => op.op === 'clip.update')
       .map((op) => (op.payload as Record<string, unknown>).label);
     expect(labels).toEqual(['Shot 1']);
+  });
+});
+
+describe('producer ownership survives the compiler and reader route', () => {
+  it('keeps fresh ownership through compile, reload, and a second alignment', async () => {
+    const protectedClips = [
+      {
+        id: 'foreign-shot',
+        at: 6,
+        track: 'V1',
+        hold: 2,
+        clipType: 'hold',
+        app: { managedBy: 'com.other.extension', opaque: { keep: true } },
+      },
+      {
+        id: 'user-shot',
+        at: 9,
+        track: 'V1',
+        hold: 2,
+        clipType: 'hold',
+        app: { userField: ['keep', null, false] },
+      },
+    ];
+    const initialData = await buildTimelineData({
+      output: { resolution: '1280x720', fps: 30, file: 'route.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+      clips: protectedClips,
+      app: {},
+    }, { assets: {} });
+    const initialReader = createTimelineReader({ data: initialData });
+    const firstPatch = buildCreateShotsPatch(
+      initialReader.snapshot(),
+      [{ id: 'fresh-marker', time: 1 }],
+      SCENE_PHASE_EXTENSION_ID,
+      { trackId: 'V1', durationSeconds: 2 },
+    );
+    // The active generic capture port still refuses the app-bearing update
+    // atomically; this test proves the compiler-preserved fallback carrier
+    // without bypassing that native prerequisite.
+    expect(classifyGenericPatch(firstPatch)).toBe('mixed');
+    const firstCompile = compileTimelinePatch(firstPatch, initialData);
+    expect(firstCompile.valid).toBe(true);
+    expect(firstCompile.nextData).not.toBeNull();
+
+    const reloadedData = await buildTimelineData(firstCompile.nextData!.config, { assets: {} }, undefined, 2);
+    const reloadedReader = createTimelineReader({ data: reloadedData });
+    const freshId = 'scene-phase-shot-fresh-marker';
+    expect(reloadedReader.snapshot().clips.find((clip) => clip.id === freshId)).toMatchObject({
+      managed: true,
+      managedBy: SCENE_PHASE_EXTENSION_ID,
+    });
+
+    const secondPatch = buildAlignShotsPatch(
+      reloadedReader.snapshot(),
+      [{ clipId: freshId, trackId: 'V1', time: 2, hold: 3 }],
+      SCENE_PHASE_EXTENSION_ID,
+    );
+    expect(secondPatch.operations).toEqual([
+      { op: 'clip.move', target: freshId, payload: { at: 2 } },
+      { op: 'clip.update', target: freshId, payload: { hold: 3 } },
+    ]);
+    const secondCompile = compileTimelinePatch(secondPatch, reloadedData);
+    expect(secondCompile.valid).toBe(true);
+    const protectedBefore = initialData.config.clips.filter((clip) => clip.id.startsWith('foreign-') || clip.id.startsWith('user-'));
+    const protectedAfter = secondCompile.nextData!.config.clips.filter((clip) => clip.id.startsWith('foreign-') || clip.id.startsWith('user-'));
+    expect(protectedAfter).toEqual(protectedBefore);
+    const afterSecondReload = await buildTimelineData(secondCompile.nextData!.config, { assets: {} }, undefined, 3);
+    expect(createTimelineReader({ data: afterSecondReload }).snapshot().clips.find((clip) => clip.id === freshId)).toMatchObject({
+      managed: true,
+      managedBy: SCENE_PHASE_EXTENSION_ID,
+    });
   });
 });
 

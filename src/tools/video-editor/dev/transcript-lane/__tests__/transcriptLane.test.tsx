@@ -30,6 +30,9 @@ import {
 import { createDataKindRegistry } from '@/tools/video-editor/data-kinds/DataKindRegistry';
 import type { DataKindRegistry } from '@/tools/video-editor/data-kinds/DataKindRegistry';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data';
+import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data';
+import { compileTimelinePatch } from '@/tools/video-editor/lib/timeline-patch';
+import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader';
 import type { TrackDefinition } from '@/tools/video-editor/types';
 import type { TimelineAction, TimelineRow } from '@/tools/video-editor/types/timeline-canvas';
 import type { ReactElement } from 'react';
@@ -1040,6 +1043,78 @@ describe('transcript lane chips (rework round-2 F3)', () => {
       conflictPolicy: 'preserve-output',
     });
     expect(update?.payload?.text).toMatchObject({ content: 'Zażółć 🌍' });
+    expect(update?.payload?.app).toMatchObject({ managedBy: TRANSCRIPT_LANE_EXTENSION_ID });
+  });
+
+  it('keeps fresh ownership and provenance through compile, reload, and a second regeneration', async () => {
+    const item = {
+      id: 'fresh-source@clip-1',
+      sourceItemId: 'fresh-source',
+      timelineStart: 1,
+      timelineEnd: 2,
+      payload: { text: 'Fresh caption' },
+    };
+    const protectedClips = [
+      {
+        id: 'foreign-caption',
+        track: TRANSCRIPT_CAPTION_TRACK_ID,
+        at: 5,
+        hold: 2,
+        clipType: 'text',
+        text: { content: 'Foreign', color: '#f00' },
+        app: { managedBy: 'com.other.extension', opaque: { keep: true } },
+      },
+      {
+        id: 'user-caption',
+        track: TRANSCRIPT_CAPTION_TRACK_ID,
+        at: 8,
+        hold: 2,
+        clipType: 'text',
+        text: { content: 'User', color: '#0f0' },
+        app: { userField: ['keep', null, false] },
+      },
+    ];
+    const initialData = await buildTimelineData({
+      output: { resolution: '1280x720', fps: 30, file: 'route.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+      clips: protectedClips,
+      app: {},
+    }, { assets: {} });
+    const firstPatch = buildTranscriptCaptionPatch(
+      createTimelineReader({ data: initialData }).snapshot(),
+      [item],
+      TRANSCRIPT_LANE_EXTENSION_ID,
+      { mode: 'regenerate' },
+    );
+    const firstCompile = compileTimelinePatch(firstPatch, initialData);
+    expect(firstCompile.valid).toBe(true);
+    expect(firstCompile.nextData).not.toBeNull();
+
+    const reloadedData = await buildTimelineData(firstCompile.nextData!.config, { assets: {} }, undefined, 2);
+    const reloadedReader = createTimelineReader({ data: reloadedData });
+    const fresh = reloadedReader.snapshot().clips.find(
+      (clip) => clip.id === transcriptCaptionClipId(item.id),
+    );
+    expect(fresh).toMatchObject({ managed: true, managedBy: TRANSCRIPT_LANE_EXTENSION_ID });
+    expect(readHostGenerationProvenance(fresh?.generatedMeta)).toMatchObject({
+      sourceItemId: 'fresh-source',
+      sourceSchemaRef: TRANSCRIPT_SCHEMA_REF,
+    });
+
+    const secondPatch = buildTranscriptCaptionPatch(
+      reloadedReader.snapshot(),
+      [{ ...item, payload: { text: 'Fresh caption, revised' } }],
+      TRANSCRIPT_LANE_EXTENSION_ID,
+      { mode: 'regenerate' },
+    );
+    expect(secondPatch.operations).toEqual(expect.arrayContaining([
+      expect.objectContaining({ op: 'clip.update', target: transcriptCaptionClipId(item.id) }),
+    ]));
+    const secondCompile = compileTimelinePatch(secondPatch, reloadedData);
+    expect(secondCompile.valid).toBe(true);
+    const protectedBefore = initialData.config.clips.filter((clip) => clip.id.startsWith('foreign-') || clip.id.startsWith('user-'));
+    const protectedAfter = secondCompile.nextData!.config.clips.filter((clip) => clip.id.startsWith('foreign-') || clip.id.startsWith('user-'));
+    expect(protectedAfter).toEqual(protectedBefore);
   });
 
   it('filters empty text but preserves overlapping and Unicode intervals', () => {
