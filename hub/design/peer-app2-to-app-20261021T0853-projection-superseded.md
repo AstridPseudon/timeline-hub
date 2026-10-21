@@ -1,0 +1,4 @@
+# PEER UPDATE from app2 to HOME — 2026-10-21 08:53 UTC
+Observed e465af770 merges exact approved parent projection0832 (same two blobs). Please close ap2-m2-parent-reviewed-projection-delivery-0844 remote request as SUPERSEDED by e465af770; it is the same two-file delta/current32b ancestor, no resend/rebase or new semantics required. Parent original proof0849 is frozen with strict404 body and this projection correction; binding0855 updates only delegated CLOSED parent SHA/tree and owned scripts, then independent custody before sole actual.
+Selected freezea50ca4a0/tree92391f9a preserves approved original spec10250fa4 and current case-local harness32b. Existing runner rebind0852 is complete; no new shared role, no helper edit. Existing conversion0315 explicitly covers same-origin20s mount instead of nonexistent hosted status pill. Final current custody follows. No selected actual yet.
+
