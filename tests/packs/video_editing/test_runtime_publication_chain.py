@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import tarfile
+import tempfile
 import time
 import zipfile
 from collections.abc import Mapping
@@ -38,6 +39,7 @@ _D13_REQUIRED_ORIGINS = (
     "host", "child", "action", "client", "sdk", "runtime_protocol",
     "runtime_protocol.platform", "astrid_runtime",
 )
+_D13_CONTROLLER_DIRS = ("runtime-support", "realm", "home", "tmp")
 
 
 @dataclass(frozen=True)
@@ -344,6 +346,37 @@ def _d13_resource_locks(profile: Mapping[str, str], inputs: _D13Inputs) -> dict[
     return resources
 
 
+def _d13_controller_paths(root: Path) -> tuple[Path, ...]:
+    """Return the private Runtime controller roots, separate from pytest state."""
+    return tuple(root / name for name in _D13_CONTROLLER_DIRS)
+
+
+def _d13_controller_prerequisite_failures(tmp_path: Path) -> list[str]:
+    """Exercise the same private controller directory setup used by the native fixture."""
+    failures: list[str] = []
+    try:
+        root = Path(tempfile.mkdtemp(prefix="d13-ctrl-"))
+    except OSError as exc:
+        return [f"private D13 controller root could not be created: {exc}"]
+    try:
+        paths = _d13_controller_paths(root)
+        if len(set(paths)) != len(paths):
+            failures.append("D13 controller directory names are not distinct")
+        if root == tmp_path or root.is_relative_to(tmp_path):
+            failures.append("D13 controller root is inside pytest-owned fixture state")
+        if any(path.parent != root for path in paths):
+            failures.append("D13 controller directory escaped its private root")
+        for path in paths:
+            path.mkdir()
+            if not path.is_dir() or path.is_symlink():
+                failures.append(f"D13 controller prerequisite is not a private directory: {path}")
+    except OSError as exc:
+        failures.append(f"D13 controller prerequisites could not be created: {exc}")
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+    return failures
+
+
 def _d13_binding_failures(profile: Mapping[str, str], inputs: _D13Inputs) -> list[str]:
     """Compare selected profile/resources with manager-supplied expectations."""
     failures: list[str] = []
@@ -493,6 +526,7 @@ def _d13_installed_profile(tmp_path: Path) -> tuple[dict[str, str], dict[str, st
         probe.write_text("d13", encoding="utf-8")
         if probe.read_text(encoding="utf-8") != "d13" or probe.is_symlink():
             failures.append("private attempt root is not writable and isolated")
+    failures.extend(_d13_controller_prerequisite_failures(tmp_path))
     usage = shutil.disk_usage(tmp_path)
     if usage.free < 5 * 1024**3:
         failures.append(f"free disk below 5 GiB: {usage.free}")
@@ -588,10 +622,8 @@ def installed_runtime(tmp_path, monkeypatch):
     source = Path(profile["source_checkout"]).resolve()
     environment = Path(profile["runtime_environment"]).resolve()
     runtime_cli = environment / "bin" / "astrid-runtime"
-    support = tmp_path / "runtime-support"
-    realm_root = tmp_path / "realm"
-    home = tmp_path / "home"
-    temp_root = tmp_path / "tmp"
+    controller_root = Path(tempfile.mkdtemp(prefix="d13-ctrl-"))
+    support, realm_root, home, temp_root = _d13_controller_paths(controller_root)
     for path in (support, realm_root, home, temp_root):
         path.mkdir()
     runtime_env = {
@@ -601,6 +633,7 @@ def installed_runtime(tmp_path, monkeypatch):
         "PATH": f"{inputs.node.parent}:{environment / 'bin'}:/usr/bin:/bin",
         "PYTHONDONTWRITEBYTECODE": "1",
         "TMPDIR": str(temp_root),
+        "XDG_RUNTIME_DIR": str(temp_root),
         "ASTRID_HOST_EXECUTION_PROFILE": "installed",
         "ASTRID_PACK_HOST_PYTHON": str(environment / "bin" / "python"),
         "ASTRID_PACKS_PATH": str(source / "astrid" / "packs" / "rendering"),
@@ -615,7 +648,7 @@ def installed_runtime(tmp_path, monkeypatch):
     }
     def run_runtime(*args):
         completed = subprocess.run(
-            [str(runtime_cli), *args, "--json"], env=runtime_env, cwd=tmp_path,
+            [str(runtime_cli), *args, "--json"], env=runtime_env, cwd=controller_root,
             check=False, text=True, capture_output=True,
         )
         assert completed.returncode == 0, completed.stdout + completed.stderr
@@ -648,16 +681,37 @@ def installed_runtime(tmp_path, monkeypatch):
             resource_locks=preflight,
         )
     finally:
-        from astrid.sdk.upgrade import stop_pack_host
+        cleanup_ok = False
+        try:
+            from astrid.sdk.upgrade import stop_pack_host
 
-        if bootstrap is not None:
-            stop_pack_host(support)
-            completed = subprocess.run(
-                [str(runtime_cli), "down", "--profile", "astrid", "--data-root", str(support), "--json"],
-                env=runtime_env, cwd=tmp_path, check=False, text=True, capture_output=True,
-            )
-            assert completed.returncode == 0, completed.stdout + completed.stderr
-            assert _d13_resource_locks(profile, inputs) == preflight
+            if bootstrap is not None:
+                stop_pack_host(support)
+                completed = subprocess.run(
+                    [str(runtime_cli), "down", "--profile", "astrid", "--data-root", str(support), "--json"],
+                    env=runtime_env, cwd=controller_root, check=False, text=True, capture_output=True,
+                )
+                assert completed.returncode == 0, completed.stdout + completed.stderr
+                assert _d13_resource_locks(profile, inputs) == preflight
+            cleanup_ok = True
+        finally:
+            if cleanup_ok:
+                shutil.rmtree(controller_root, ignore_errors=True)
+
+
+def test_d13_controller_paths_do_not_reuse_pytest_fixture_roots(tmp_path):
+    """Keep Runtime controller state out of the autouse pytest sandbox roots."""
+    root = Path(tempfile.mkdtemp(prefix="d13-ctrl-"))
+    try:
+        paths = _d13_controller_paths(root)
+        assert root != tmp_path and not root.is_relative_to(tmp_path)
+        assert len(set(paths)) == len(paths)
+        assert paths[2] != tmp_path / "home"
+        assert paths[3] != tmp_path / "tmp"
+        for path in paths:
+            path.mkdir()
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def test_d13_installed_native_preflight(tmp_path):
