@@ -71,6 +71,7 @@ const __editorOps = {
   setInspectorTarget: vi.fn(),
   setContextTarget: vi.fn(),
   setInteractionMode: vi.fn(),
+  onClickTimeArea: vi.fn(),
   setSelectedRightPanelId: vi.fn(),
   setRightPanelLayoutSlot: vi.fn(),
   setShowDataLanes: vi.fn(),
@@ -407,7 +408,7 @@ describe('TimelineEditorShellCore surface slots', () => {
 
     const options = vi.mocked(useKeyboardShortcuts).mock.calls.at(-1)![0];
     options.seekRelative(1);
-    expect(__seek).toHaveBeenCalledWith(3.5);
+    expect(__editorOps.onClickTimeArea).toHaveBeenCalledWith(3.5);
   });
 
   // ---- Shell grid row alignment ---------------------------------------------

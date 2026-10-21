@@ -51,10 +51,14 @@ export function useTimelineSync({
   }, [isSyncingFromPreview, isSyncingFromTimeline, previewRef, setCurrentTime]);
 
   const onClickTimeArea = useCallback((time: number) => {
+    isSyncingFromTimeline.current = true;
     previewRef.current?.seek(time);
     setCurrentTime(time);
+    requestAnimationFrame(() => {
+      isSyncingFromTimeline.current = false;
+    });
     return undefined;
-  }, [previewRef, setCurrentTime]);
+  }, [isSyncingFromTimeline, previewRef, setCurrentTime]);
 
   return { onPreviewTimeUpdate, onCursorDrag, onClickTimeArea };
 }
