@@ -10,7 +10,7 @@ export const CURRENT013_PARENT_DELETE_AGENT = '8130a401bf44a518d5a40ae274d398b8c
 
 export function parentDeleteCacheIdentity(input) {
   const hash = (url) => createHash('sha256').update(readFileSync(url)).digest('hex');
-  return `parent-delete-tree${input.appTree}-agent${input.agentSha}-runtime${input.runtimeSha}-client13-public12-${CURRENT013_COMPOSITION.sha256.slice(7)}-runner${hash(new URL(import.meta.url))}-helper${hash(new URL('./current013-integration.mjs', import.meta.url))}`;
+  return `parent-delete-tree${input.appTree}-agent${input.agentSha}-runtime${input.runtimeSha}-client13-public13-${CURRENT013_COMPOSITION.sha256.slice(7)}-runner${hash(new URL(import.meta.url))}-helper${hash(new URL('./current013-integration.mjs', import.meta.url))}`;
 }
 
 export function runCurrent013ParentDelete() {
@@ -24,7 +24,7 @@ export function runCurrent013ParentDelete() {
   }
   const before = checkCurrent013Sources(input);
   try {
-    process.exitCode = spawnSync('npm', ['run', 'test:e2e:three-products', '--', '--config', 'playwright.clip-delete.config.ts'], {
+    process.exitCode = spawnSync('npm', ['run', 'test:e2e:three-products', '--', '--config', 'playwright.clip-delete.config.ts', '--grep', '^M2 current013 real parent DELETE:'], {
       cwd: input.app,
       env: {
         ...process.env,

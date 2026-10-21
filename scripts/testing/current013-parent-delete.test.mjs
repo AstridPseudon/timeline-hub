@@ -11,7 +11,7 @@ const launcher = new URL('./current013-parent-delete.mjs', import.meta.url);
 const source = readFileSync(launcher, 'utf8');
 const input = { app: '/snapshot', appTree: 'a'.repeat(40), agent: '/retained/agent', runtime: '/retained/runtime',
   agentPython: '/venv-agent/bin/python', runtimePython: '/venv-runtime/bin/python',
-  agentSha: '8130a401bf44a518d5a40ae274d398b8c560be55', runtimeSha: CURRENT013_RUNTIME.commit };
+  agentSha: '8130a401bf44a518d5a40ae274d398b8c560be55', runtimeSha: CURRENT013_RUNTIME.serverCommit };
 
 async function load({ enabled = true, status = 0, moved = false, preflightFailure = false,
   launchFailure = false, agentSha = input.agentSha, cacheId } = {}) {
@@ -66,7 +66,7 @@ test('cache identity binds the App tree, pair, client/public archive and launche
   assert.equal(probe.calls.length, 0);
   const expected = probe.cacheIdentity(input);
   const hash = (url) => createHash('sha256').update(readFileSync(url)).digest('hex');
-  assert.equal(expected, `parent-delete-tree${input.appTree}-agent${input.agentSha}-runtime${input.runtimeSha}-client13-public12-${CURRENT013_COMPOSITION.sha256.slice(7)}-runner${hash(launcher)}-helper${hash(new URL('./current013-integration.mjs', import.meta.url))}`);
+  assert.equal(expected, `parent-delete-tree${input.appTree}-agent${input.agentSha}-runtime${input.runtimeSha}-client13-public13-${CURRENT013_COMPOSITION.sha256.slice(7)}-runner${hash(launcher)}-helper${hash(new URL('./current013-integration.mjs', import.meta.url))}`);
   assert.notEqual(probe.cacheIdentity({ ...input, appTree: 'c'.repeat(40) }), expected);
 });
 
@@ -83,7 +83,7 @@ test('delegates only parent-delete config with validated inputs and checks both 
   assert.equal(probe.calls.length, 1);
   const [command, args, options] = probe.calls[0];
   assert.equal(command, 'npm');
-  assert.equal(JSON.stringify(args), JSON.stringify(['run', 'test:e2e:three-products', '--', '--config', 'playwright.clip-delete.config.ts']));
+  assert.equal(JSON.stringify(args), JSON.stringify(['run', 'test:e2e:three-products', '--', '--config', 'playwright.clip-delete.config.ts', '--grep', '^M2 current013 real parent DELETE:']));
   assert.equal(options.cwd, input.app);
   assert.equal(options.shell, false);
   assert.equal(options.env.TIMELINE_BUNDLE_AGENT_HEAD, input.agentSha);

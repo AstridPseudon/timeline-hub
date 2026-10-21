@@ -15,7 +15,7 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 export const CURRENT013_RUNTIME = Object.freeze({
-  serverCommit: '8f105c26e3b62f9c2683f717a9773a12bc775a8e',
+  serverCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   producerCommit: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
   version: '0.2.13',
   producerVersion: 'sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56',
@@ -25,9 +25,9 @@ export const CURRENT013_RUNTIME = Object.freeze({
 });
 
 export const CURRENT013_AGENT = Object.freeze({
-  commit: 'd0a5072bbe7b7ce9489f43aa0a81027ec400343b',
-  tree: '6adb4a1190dfb2874e101565f37eccd392b1ae2f',
-  lock: 'sha256:c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24',
+  commit: '8130a401bf44a518d5a40ae274d398b8c560be55',
+  tree: '236c3e57e0265c52b81ba8085de3193026176bff',
+  lock: 'sha256:c2ed617f38bc53e4f90dc082f082d38828d8f68a93e61776300ec7082ef23311',
 });
 
 export const CURRENT013_COMPOSITION = Object.freeze({
