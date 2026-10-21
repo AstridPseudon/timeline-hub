@@ -1,6 +1,6 @@
 // @vitest-environment node
 import fs from 'node:fs';
-import {execFileSync} from 'node:child_process';
+import {execFile, execFileSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -10,8 +10,16 @@ const roots: string[] = [];
 afterEach(() => roots.splice(0).forEach(root => fs.rmSync(root, { recursive: true, force: true })));
 function runVerifier(file: string, options: {stdio?: 'pipe'} = {}) {
   const childTempRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'admitted-element-child-'))); roots.push(childTempRoot);
-  const args = [path.resolve('node_modules/tsx/dist/cli.mjs'), path.resolve('scripts/verify-element-admission.ts'), file];
+  const args = ['--import', 'tsx', path.resolve('scripts/verify-element-admission.ts'), file];
   return execFileSync(process.execPath, args, {encoding: 'utf8', env: {...process.env, TMPDIR: childTempRoot}, ...options});
+}
+function runVerifierAsync(file: string) {
+  const childTempRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'admitted-element-child-'))); roots.push(childTempRoot);
+  const args = ['--import', 'tsx', path.resolve('scripts/verify-element-admission.ts'), file];
+  return new Promise<{stdout: string}>((resolve, reject) => execFile(process.execPath, args, {encoding: 'utf8', env: {...process.env, TMPDIR: childTempRoot}}, (error, stdout) => {
+    if (error) reject(error);
+    else resolve({stdout});
+  }));
 }
 function fixture() {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'admitted-element-'))); roots.push(root);
@@ -56,6 +64,14 @@ describe('external admitted element build input',()=>{
     // The verifier never publishes/writes a selection; the caller's candidate remains unchanged.
     expect(fs.readFileSync(f.file,'utf8')).not.toBe(validBytes);
     f.manifest.elements=[];f.write();expect(JSON.parse(runVerifier(f.file)).elements).toEqual([]);
+  });
+  it('runs concurrent verifier children with the same script argv and isolated cleanup roots', async()=>{
+    const f=fixture();
+    const receipts=await Promise.all([runVerifierAsync(f.file),runVerifierAsync(f.file)]);
+    expect(receipts.map(({stdout})=>JSON.parse(stdout).elements)).toEqual([
+      [{projectId:'project',packId:'project_pack',kind:'effect',id:'blocks',revision:'sha256:old'}],
+      [{projectId:'project',packId:'project_pack',kind:'effect',id:'blocks',revision:'sha256:old'}],
+    ]);
   });
   it('keeps snapshot playback valid if canonical source is missing, and lazy discovery creates nothing',()=>{
     const f=fixture();expect(fs.existsSync(f.project.packRoot)).toBe(false);expect(verifyElementAdmissions(f.file).elements).toHaveLength(1);
