@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createServer, request } from 'node:http';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
   OPERATION_PREFIX as O, createRuntimeOperationRegistry, createRuntimeProxyServer,
-  operationRequestAllowed, operationTarget,
+  currentRuntime, operationRequestAllowed, operationTarget, readWorkspaceRuntimeConfig,
 } from './runtime-discovery-proxy.mjs';
 import {
   createRuntimeOperationAdmissionPlugin, createRuntimeOperationProxyOptions,
@@ -29,7 +29,7 @@ function files(t, endpoint = 'http://127.0.0.1:17778') {
   writeFileSync(join(directory, 'catalog.json'), JSON.stringify({ selected_realm_id: 'realm',
     realms: [{ realm_id: 'realm', source_profile: 'astrid', data_root: realm }] }));
   const rotate = (newEndpoint, token = 'first-token') => {
-    writeFileSync(credential, JSON.stringify({ version: 1, scope: 'astrid', actor_id: 'app', token }));
+    writeFileSync(credential, JSON.stringify({ version: 1, scope: 'astrid', actor_id: 'app', token }), { mode: 0o600 });
     writeFileSync(discoveryPath, JSON.stringify({ endpoint: newEndpoint, credential_file: credential,
       active_realm: 'realm', runtime_instance_id: 'instance', realm_root: realm }));
   };
@@ -56,6 +56,37 @@ test('pure: exact origin/Host and browser safe-read metadata admission', () => {
     ['POST', { Host: 'proxy:17336', Origin: ORIGIN, 'Sec-Fetch-Site': 'cross-site' }],
   ]) assert.equal(operationRequestAllowed(shaped(method, headers), ORIGIN, 'proxy:17336'), false);
   assert.equal(operationRequestAllowed(shaped('POST', { Host: 'proxy:17336', Origin: ORIGIN }), `${ORIGIN}/`, 'proxy:17336'), false);
+});
+
+test('pure: product credential override matches the Runtime door contract and stays separate from direct discovery auth', (t) => {
+  const fixture = files(t);
+  const ownerCredential = join(fixture.directory, 'owner.token');
+  writeFileSync(ownerCredential, 'owner-token', { mode: 0o600 });
+  const discovery = JSON.parse(readFileSync(fixture.discoveryPath, 'utf8'));
+  discovery.credential_file = ownerCredential;
+  writeFileSync(fixture.discoveryPath, JSON.stringify(discovery));
+
+  const previous = process.env.WORKSPACE_RUNTIME_TOKEN_FILE;
+  t.after(() => {
+    if (previous === undefined) delete process.env.WORKSPACE_RUNTIME_TOKEN_FILE;
+    else process.env.WORKSPACE_RUNTIME_TOKEN_FILE = previous;
+  });
+  process.env.WORKSPACE_RUNTIME_TOKEN_FILE = fixture.credential;
+
+  assert.equal(statSync(fixture.credential).mode & 0o777, 0o600);
+  assert.deepEqual(readWorkspaceRuntimeConfig(fixture.discoveryPath), {
+    schemaVersion: 1, endpoint: 'http://127.0.0.1:17778', actorId: 'app', realmId: 'realm', runtimeInstanceId: 'instance',
+  });
+  assert.equal(currentRuntime(fixture.discoveryPath).token, 'owner-token');
+  const registry = createRuntimeOperationRegistry(fixture);
+  t.after(() => registry.dispose());
+  const entry = registry.acquire();
+  assert.equal(entry.connection.token, 'first-token');
+
+  writeFileSync(fixture.credential, 'owner-token', { mode: 0o600 });
+  assert.throws(() => readWorkspaceRuntimeConfig(fixture.discoveryPath));
+  writeFileSync(fixture.credential, JSON.stringify({ version: 1, scope: 'astrid', actor_id: 'owner', token: 'owner-token' }), { mode: 0o600 });
+  assert.throws(() => readWorkspaceRuntimeConfig(fixture.discoveryPath));
 });
 
 test('pure: only exact controls and origin-form v1 suffixes are routed', () => {

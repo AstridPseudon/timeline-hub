@@ -83,7 +83,8 @@ export function readWorkspaceRuntimeConfig(discoveryPath) {
   if (endpoint.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname) || !endpoint.port) {
     throw new Error('runtime discovery endpoint must be an explicit HTTP loopback URL');
   }
-  const credential = readJson(String(discovery.credential_file ?? ''), 'runtime product credential');
+  const credentialFile = process.env.WORKSPACE_RUNTIME_TOKEN_FILE?.trim() || String(discovery.credential_file ?? '');
+  const credential = readJson(credentialFile, 'runtime product credential');
   const actorId = typeof credential.actor_id === 'string' ? credential.actor_id.trim() : '';
   const realmId = typeof discovery.active_realm === 'string' ? discovery.active_realm.trim() : '';
   const runtimeInstanceId = typeof discovery.runtime_instance_id === 'string' ? discovery.runtime_instance_id.trim() : '';
@@ -97,7 +98,7 @@ export function readWorkspaceRuntimeConfig(discoveryPath) {
   const matches = Array.isArray(catalog.realms)
     ? catalog.realms.filter((row) => row?.realm_id === realmId) : [];
   if (catalog.selected_realm_id !== realmId || matches.length !== 1
-    || matches[0].source_profile !== 'astrid'
+    || (matches[0].source_profile !== undefined && matches[0].source_profile !== 'astrid')
     || realpathSync(discovery.realm_root) !== realpathSync(matches[0].data_root)) {
     throw new Error('runtime discovery does not match the selected Astrid realm');
   }
@@ -113,7 +114,7 @@ const HOP_HEADERS = ['connection', 'keep-alive', 'proxy-authenticate', 'proxy-au
   'te', 'trailer', 'transfer-encoding', 'upgrade'];
 
 function readRuntimeSnapshot(discoveryPath) {
-  const runtime = currentRuntime(discoveryPath);
+  const runtime = currentRuntime(discoveryPath, { credentialFile: process.env.WORKSPACE_RUNTIME_TOKEN_FILE?.trim() });
   const config = readWorkspaceRuntimeConfig(discoveryPath);
   return { endpoint: runtime.endpoint, token: runtime.token,
     identity: { actorId: config.actorId, realmId: config.realmId, runtimeInstanceId: config.runtimeInstanceId } };
