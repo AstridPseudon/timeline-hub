@@ -21,6 +21,7 @@ from astrid.sdk.timeline._command_state import (
     overlaps,
     present,
 )
+from astrid.sdk.timeline import capture as capture_module
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.rebase import replay
@@ -128,6 +129,48 @@ def test_quantization_once_with_rational_fps_and_ms_codec():
     pin = next(d['pin'] for d in plan.records[0]['dependencies'] if d['key'] == 'move.quantization')
     assert pin['numerator'] == 30000 and pin['denominator'] == 1001
     assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_obsolete_direct_rational_capture_refuses_and_current_capture_guards_rate_change(monkeypatch):
+    original = bundle()
+    original['parent']['config']['output'] = {'numerator': 30000, 'denominator': 1001}
+    original_before = copy.deepcopy(original)
+
+    def pre_b96_output_rate(ctx):
+        return capture_module.rate(ctx.read('parent', ['config', 'output', 'fps']))
+
+    with monkeypatch.context() as old_reader:
+        old_reader.setattr(capture_module, '_output_rate', pre_b96_output_rate)
+        old_command = capture_move(original, 'parent/clip:direct', 1001 / 60000)
+
+    old_command_before = copy.deepcopy(old_command)
+    old_rate_reads = [read for read in old_command['reads']
+                      if read['ref'] == 'parent' and read['path'][:2] == ['config', 'output']]
+    assert old_rate_reads == [{
+        'ref': 'parent', 'path': ['config', 'output', 'fps'], 'state': {'state': 'absent'}}]
+
+    with pytest.raises(CommandError) as unchanged_error:
+        execute(original, [old_command])
+    assert unchanged_error.value.kind == 'capture_mismatch'
+    assert original == original_before
+    assert old_command == old_command_before
+
+    changed = copy.deepcopy(original)
+    changed['parent']['config']['output'] = {'numerator': 60, 'denominator': 1}
+    changed_before = copy.deepcopy(changed)
+    with pytest.raises(CommandError) as stale_old_error:
+        execute(changed, [old_command])
+    assert stale_old_error.value.kind == 'capture_mismatch'
+    assert changed == changed_before
+    assert old_command == old_command_before
+
+    current_command = capture_move(original, 'parent/clip:direct', 1001 / 60000)
+    current_plan = execute(original, [current_command])
+    assert current_plan.commands == [current_command]
+    with pytest.raises(CommandError) as stale_current_error:
+        execute(changed, [current_command])
+    assert stale_current_error.value.kind == 'dependency_changed'
+    assert original == original_before
 
 
 @pytest.mark.parametrize('field,value,kind', [('speed', 0, 'unsupported_timing'),
