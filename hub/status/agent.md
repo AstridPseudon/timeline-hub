@@ -1,12 +1,12 @@
-<!-- agent | 2026-10-21T00:21:55Z | dispatcher heartbeat 5s | live 4 (sol 0, luna 4, other 0) | busy30 23 | status age 2m -->
+<!-- agent | 2026-10-21T00:23:17Z | dispatcher heartbeat 10s | live 5 (sol 1, luna 4, other 0) | busy30 24 | status age 0m -->
 # agent — 2026-10-21 00:19:14 UTC
 Milestone: M1 recorded. M2 active. Foundation, physical parity and delivery remain open.
 Integrated: Agent 5c5173dcb / tree8626f868. Public Runtime0.2.13 producer2c4 and Composition0.0.13 unchanged. Public Scene caller merged488e3ee46 (43 direct, one actual public-entry pass); rational capture/refusal merged1acfa42dc (three connected frontend timing cases, seven direct, original-guard review); retained PARAM merged5c5173dcb (eight direct,28 central with P1 afterV2/removal/restart). Complete Scene SDK/executor/resource closure6383cb525 has33 direct and two managed saved/candidate passes with committed import provenance. All remain bounded behavior, not whole-writer deletion.
-In flight: six Luna high workers requested/running:
+In flight: Five Luna high workers and one narrowly bounded Sol high host-custody worker requested/running:
 - agt-m2-gate1-connected-occurrence-source — new actual connected occurrence/source proof on staged Main014.
 - agt-m2-private15-outer-native-proposal — replace outer direct publish boundary with existing native proposal capture.
-- agt-m2-private15-managed-action-output — trusted existing outer context and managed authoring-proposal result.
-- agt-m2-private84-union-count-preservation — retain all inventory assertions, include already-frozen occurrence.resize.
+- agt-m2-private15-trusted-python-host-context — Luna found no trusted context carrier exposed to Python actions; HARD bounded host/runner adaptation, independent custody review required.
+Private union test repair947b1df7 is ready:34 current-union and22 floor cases passed, no schema change; no integration merge of private branch.
 - agt-m2-free-multi-full-source-compose — compose reviewed clip.move-set into a NEW full source, no mutation of frozen84fc.
 - agt-m4-full5664-exact-classification — monitor one exact current full and classify actual final causes.
 Next 5: Runtime/App2 qualify final Main0146ef; coordinate adoption and immediately dispatch WC3/WC6/D13 cuts; complete private outer source and independent custody review; qualify occurrence/source Gate1; act on exact full5664 failures without duplicate full.
@@ -21,5 +21,5 @@ Deletion frontier: WC2, recover, D05/D06/D07/WC4/WC9 and D10 source deleted. WC7
 RT03: original unplaced/raw reference positive OPEN. Placed occurrence carrier cannot preserve it; source-only timeline.reference proposal sent to Runtime, requiring accepted registry/closure media custody without new placement or managed-generation tuple. No schema freeze/generation or positive claim.
 Theme dependency: Agent ACKs existing named materialized source and ONE resolver. Runtime next owns authorized private pre-admission preparation/source carrier. Agent adapter cannot mint authority from caller descriptor/slug/hash or renderer projects:write.
 Inbox: ACK through00:16: private392 App HTTP result, normal14 pin ownership, popup old-media source constraint, private15 readiness and upcoming Composition14. Source handoffs copied into shared ORCH/design; documentation-only worker branches are abandoned and must not merge.
-Decided locally: use real Runtime daemon/status lifecycle, keep old captures visibly refused, retain raw unplaced-reference behavior separately from placement, and preserve all source authority boundaries. No area-wide blocker.
+Decided locally: use real Runtime daemon/status lifecycle, keep old captures visibly refused, retain raw unplaced-reference behavior separately from placement, and preserve all source authority boundaries. No area-wide blocker. Unowned opaque Main reference input is unsafe: require owned raw-CAS success plus explicit unowned refusal, one-to-one assertion mapping and independent review; no managed tuple or placement substitution.
 Resources: last19 GiB free; six requested/running workers and one full. Shared dependencies read-only. No extra full/browser/render or old-pair repetition.
