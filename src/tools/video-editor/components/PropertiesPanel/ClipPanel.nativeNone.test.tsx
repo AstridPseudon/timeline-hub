@@ -226,7 +226,7 @@ describe('mounted native transition clear controls (unit transport)', () => {
     const host = await mounted();
     const before = host.latest().dataRef.current;
     expect(() => submitClipScalarEdit(host.capture(), { values: { hold: 8, speed: 3 }, clear: ['transition'] }))
-      .toThrow('clip.set only supports hold values');
+      .toThrow('clip.set only supports hold, transition, and elementRef values');
     expect(host.latest().dataRef.current).toBe(before);
     expect((await host.records())[0].intents).toHaveLength(0);
     expect(host.env.commits()).toHaveLength(0);
