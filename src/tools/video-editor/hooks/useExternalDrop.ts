@@ -105,13 +105,11 @@ async function dispatchTimelineDrop({
   const insertAtTop = Boolean(dropPosition.isNewTrackTop);
 
   if (event.dataTransfer.types.includes('text-tool')) {
-    handleTextToolDrop({ dataRef, dropPosition, insertAtTop, handleAddTextAt });
-    return;
+    return handleTextToolDrop({ dataRef, dropPosition, insertAtTop, handleAddTextAt });
   }
 
   if (event.dataTransfer.types.includes('effect-layer')) {
-    handleEffectLayerDrop({ dataRef, dropPosition, insertAtTop, selectedTrackId, applyEdit });
-    return;
+    return handleEffectLayerDrop({ dataRef, dropPosition, insertAtTop, selectedTrackId, applyEdit });
   }
 
   if (await handleFileDrop({
@@ -134,7 +132,7 @@ async function dispatchTimelineDrop({
     mediaImportForImageVideo,
     onAssetDropError,
   })) {
-    return;
+    return true;
   }
 
   const shotData = getShotDropData(event);
@@ -150,7 +148,7 @@ async function dispatchTimelineDrop({
         assetDurationSeconds: durationContract.assetDurationSeconds,
       });
       if (!registrationPlan.ok) {
-        return;
+        return false;
       }
 
       const resolvedTarget = planAssetDropTarget({
@@ -164,7 +162,7 @@ async function dispatchTimelineDrop({
         duration: durationContract.clipSpanSeconds ?? EXTERNAL_DROP_VISIBLE_VIDEO_FALLBACK_SECONDS,
       });
       if (!resolvedTarget.ok) {
-        return;
+        return false;
       }
 
       const nextEdit = buildAssetDropEdit({
@@ -176,7 +174,7 @@ async function dispatchTimelineDrop({
         clipSpanSeconds: durationContract.clipSpanSeconds,
       });
       if (!nextEdit) {
-        return;
+        return false;
       }
 
       const generationData = {
@@ -200,7 +198,7 @@ async function dispatchTimelineDrop({
         const entry = assetKey ? dataRef.current?.registry.assets[assetKey] : undefined;
         dataRef.current = priorDataRef;
         if (!assetKey || !entry) {
-          return;
+          return false;
         }
         asset = {
           assetKey,
@@ -212,7 +210,7 @@ async function dispatchTimelineDrop({
       }
       const assetKey = asset.assetKey;
       if (!assetKey) {
-        return;
+        return false;
       }
       const preparedEdit = buildAssetDropEdit({
         current: resolvedTarget.preparedCurrent,
@@ -223,7 +221,7 @@ async function dispatchTimelineDrop({
         clipSpanSeconds: durationContract.clipSpanSeconds,
       });
       if (!preparedEdit) {
-        return;
+        return false;
       }
       dataRef.current = resolvedTarget.preparedCurrent;
       const nextData: TimelineData = {
@@ -260,7 +258,7 @@ async function dispatchTimelineDrop({
         selectedClipId: preparedEdit.clipId,
         selectedTrackId: resolvedTarget.trackId,
       });
-      return;
+      return true;
     }
 
     const shot = shots?.find((candidate) => candidate.id === shotData.shotId);
@@ -282,7 +280,7 @@ async function dispatchTimelineDrop({
     });
 
     if (!shot || !resolvedTarget.ok || shotImages.length === 0) {
-      return;
+      return false;
     }
     const priorDataRef = dataRef.current;
     let workingData = resolvedTarget.preparedCurrent;
@@ -389,7 +387,7 @@ async function dispatchTimelineDrop({
 
     if (createdClipIds.length === 0) {
       dataRef.current = priorDataRef;
-      return;
+      return false;
     }
     const nextPinnedShotGroups = buildPinnedShotGroupsOverride(workingData, {
       shotId: shot.id,
@@ -410,12 +408,12 @@ async function dispatchTimelineDrop({
       selectedClipId: createdClipIds[0] ?? null,
       selectedTrackId: resolvedTarget.trackId,
     });
-    return;
+    return true;
   }
 
   const multiGenerationData = getMultiGenerationDropData(event);
   if (multiGenerationData?.length) {
-    handleMultiGenerationDrop({
+    return handleMultiGenerationDrop({
       generationItems: multiGenerationData,
       dataRef,
       dropPosition,
@@ -425,12 +423,11 @@ async function dispatchTimelineDrop({
       selectedTrackId,
       dropAsset,
     });
-    return;
   }
 
   const generationData = getGenerationDropData(event);
   if (generationData) {
-    handleSingleGenerationDrop({
+    return handleSingleGenerationDrop({
       generationData,
       dataRef,
       dropPosition,
@@ -440,10 +437,9 @@ async function dispatchTimelineDrop({
       selectedTrackId,
       dropAsset,
     });
-    return;
   }
 
-  handleAssetDrop({
+  return handleAssetDrop({
     assetKey: event.dataTransfer.getData('asset-key'),
     assetKind: event.dataTransfer.getData('asset-kind') as TrackKind,
     dataRef,
@@ -631,7 +627,7 @@ export function useExternalDrop({
       latestExternalPositionRef,
     });
     if (isInvalidTimelineRowTarget(dropPosition.plan?.rejectReason)) return;
-    await dispatchTimelineDrop({
+    const accepted = await dispatchTimelineDrop({
       event,
       dataRef: getDataRef(),
       pendingOpsRef: getPendingOpsRef(),
@@ -657,7 +653,9 @@ export function useExternalDrop({
       shots,
       finalVideoMap,
     });
-    onSeekToTime?.(dropPosition.time);
+    if (accepted) {
+      onSeekToTime?.(dropPosition.time);
+    }
   }, [
     coordinator,
     clearExternalDragState,
