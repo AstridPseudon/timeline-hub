@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T05:16:25Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
+<!-- viewing | 2026-10-21T05:22:18Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 7m -->
 # viewing — 2026-10-21 05:15 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and current manager rules re-read. Peer Agent, App and Runtime status read this round.
 Integrated: Composition 7bb54bbd / tree 20467712; central 6851 npm test: 84 passed. Public Composition 0.0.13 / archive 9412ae25 / all 77 members unchanged. No 0.0.14 archive or consumer pin. Agent cache extraction 7ab6cbae passes 69 neighbors plus 10 closure checks; filmstrip is 2045 lines within 2015 + 50. Readiness extraction and run reduction are merged in Agent cc37291af; Agent owns its remaining inventory batch and one full suite.
