@@ -107,6 +107,41 @@ def test_literal_params_clear_and_opaque_values_use_one_captured_command(connect
     assert loaded.clip('a').params == {'text': 'café'}
 
 
+def test_dormant_opacity_look_intent_uses_owned_outbox_without_public_activation(connected):
+    original = bundle_from_document(media_document())
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        rows[0].update(params={'opacity': 0.8, 'opaque': [None, False]},
+                       app={'opaque': {'keep': [None, False]}})
+    tl = attached(connected, original)
+    clip = tl.clip('parent/clip:clip-a')
+    before_params = copy.deepcopy(clip.params)
+    before_app = copy.deepcopy(clip.data['app'])
+
+    # This private adapter is deliberately dormant: it queues the existing
+    # look intent, while public look routing and acceptance remain held until
+    # the matching private schema/provider pin is adopted atomically.
+    clip._queue_opacity(0.4)
+    set_command = pending(connected)['pending'][0]
+    assert set_command['op'] == 'clip.set'
+    assert set_command['select'] == 'parent/clip:clip-a'
+    assert set_command['args'] == {'values': {'opacity': 0.4}, 'clear': []}
+    assert set_command['expect']['parent/clip:clip-a::opacity'] == {'state': 'absent'}
+    assert clip.data['opacity'] == 0.4
+    assert clip.params == before_params
+    assert clip.data['app'] == before_app
+
+    clip._queue_opacity(None)
+    clear_command = pending(connected)['pending'][1]
+    assert clear_command['args'] == {'values': {}, 'clear': ['opacity']}
+    assert clear_command['expect']['parent/clip:clip-a::opacity'] == {'state': 'present', 'value': 0.4}
+    assert 'opacity' not in clip.data
+    assert clip.params == before_params
+    assert clip.data['app'] == before_app
+    with pytest.raises(TimelineEditError, match='held'):
+        clip.look.set(opacity=0.5)
+    assert connected[1].calls == []
+
+
 def test_move_then_trim_then_reload_preserves_source_hold_and_opaque_fields(connected):
     tl = attached(connected, bundle_from_document(media_document()))
     clip = tl.clip('parent/clip:clip-a')

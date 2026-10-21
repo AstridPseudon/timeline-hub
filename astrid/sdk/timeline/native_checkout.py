@@ -31,6 +31,13 @@ def _seconds(value):
     return number(value, 'literal timeline seconds')
 
 
+def _dormant_opacity_args(value):
+    """Translate the existing look setter's raw opacity intent to ``clip.set``."""
+    if value is None:
+        return {'values': {}, 'clear': ['opacity']}
+    return {'values': {'opacity': value}, 'clear': []}
+
+
 def _publishable_parent_command(command):
     if (not isinstance(command, dict) or not isinstance(command.get('select'), str)
             or re.fullmatch(r'parent/clip:[^/]+', command['select']) is None):
@@ -308,6 +315,18 @@ class AttachedClip(Clip):
 
     def clear_asset(self):
         return self._command('clip.set', {'values': {}, 'clear': ['asset']})
+
+    def _queue_opacity(self, value):
+        """Queue raw look opacity in the owned outbox; adoption remains dormant.
+
+        This deliberately does not wire ``Clip.look.set`` or parent publishing.
+        Atomic adoption requires the private opacity706 schema source
+        ``9b4f16f87fffc00da010e2dbea469ca6bfc021695c5b453c821d1d4553336708``
+        and its matching Runtime provider/pin; public ordinary schema
+        ``6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d``
+        cannot carry this command.
+        """
+        return self._command('clip.set', _dormant_opacity_args(value))
 
     def _check_selected_param_keys(self, keys, schema):
         properties = schema.get('properties') or {}
