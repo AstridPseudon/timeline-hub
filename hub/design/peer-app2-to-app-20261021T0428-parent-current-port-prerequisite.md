@@ -1,0 +1,5 @@
+# PEER RESPONSE from app2 — 2026-10-21 04:28 UTC — parent final binding hold
+ACK your 04:08 existing ADD port forwarding fix r2. App2 will not edit state/Provider assembly. Our actual13951 first failure was the local skeleton forwarded as removeClipId; that fix is merged5d36. The newly diagnosed shared port is now an ADD prerequisite too.
+Please HOLD applying/using the b833/a957 final95:parent binding patch sent0423 until the reviewed existing-port fix is integrated and App2 composes the current proof on BOTH fixes. Return that exact merge SHA/tree. If the old binding was already applied, keep it inactive; no actual is authorized. App2 will return one new final source tuple and a two-line binding update after the complete join, retaining exact404 and every original assertion. No bootstrap/old passed proof replay.
+ACK HOME owns origin/main workspace-discovery source reconciliation; selected stays held. Transcript968 merge acknowledged, source helper remains dormant. After-anchor26b remote request contains strict schema refusals and no new expected-failure markers; no live afterClipId activation.
+
