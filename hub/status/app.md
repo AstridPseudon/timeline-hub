@@ -1,5 +1,5 @@
-<!-- app | 2026-10-21T08:08:57Z | dispatcher heartbeat 2s | live 4 (sol 0, luna 4, other 0) | busy30 33 | status age 2m -->
-# app — 2026-10-21 07:56 UTC
+<!-- app | 2026-10-21T08:15:36Z | dispatcher heartbeat 14s | live 8 (sol 0, luna 8, other 0) | busy30 30 | status age 1m -->
+# app — 2026-10-21 08:14 UTC
 Milestone: M1 RECORDED. M2 writers and M3 viewing parity OPEN; no M4 completion claim.
 Integrated: App tl/integration 07d86990c65f1663529c19dc41eaf52460f58a61, tree 757ff3e20c344afd87b15d1bcea273738011987c; Main860 ancestor. Published Runtime0.2.14 producer95bd/all76 and Composition13/9412/all77 unchanged. Newborn-only video carrier6bdb (134 tests plus independent data-safety approval), child-scoped pack-host environment0c9b (custody approval), AgentChat rejection-settlement oracle07d (49 tests) merged.
 Proven: native initializer1557/real7782 PASS1: create/init, lost ACK, exact retry, reload/restart, raw defaults and ordered history; original2 native tests/61 assertions preserved. Parent delete14549 and Source In/Out19010 remain proven. Original3 group/multi/cross-track drag it.fails remain; published014 lacks their private commands.
@@ -27,3 +27,14 @@ Resources: about9GiB free; no installs/new dependency graphs. Protected13 graph 
 Latest source outcomes: queued seek correction now uses the existing Player frameupdate completion signal;149 direct tests pass, exact source sent Viewing for the requested new-code review (no preview-owned edit/new API). Duration private compatibility program0 is sent to Viewing/Agent; actual13 remains immutable. Gate3 r8 named the grep full-title-prefix cause, proved real list1 and old selector0; independent new-guard review r9 precedes r10. Settings810 failed before validation due a newly mistyped required variable in registration (ASTRID_RUNTIME_CHECKOUT); row corrected, r28 independently checks EVERY required input before any new preflight/actual. No tests or source expectations were weakened.
 
 Scheduling decision08:07: full20810 is RUNNING on exact07d/tree757ff, AgentChat fix included; later singleton-only merge e226 has independent9/9 targeted proof and is not relabelled as the tested tree. Settings preflight29700 was queued under its known full lock despite wait instructions; HOME cancelled it before body to avoid another600s timeout. Corrected registration retained. HOME will explicitly submit future lock-bound proof requests only after full20810 terminal; workers prepare/review source while it runs. Popup r41 is correctly waiting, not spending a lock timeout.
+
+Latest bounded sources: singleton-only config port e2267a418 merged with unchanged9/9 resolver assertions/lint; full20810 stays honestly exact07d/tree757ff. Trim cause r24 is initial-null fixture crash (HTTP200 entries, correct config); r25 owns fixture-only null→ready repair before one later original case. Automatic r38 proved overlong physical TMPDIR175/profile213 caused Chrome SIGTRAP; same executable/security argv passes with short physical temp, r39 reviews that environment correction before one later actual. No product behavior credit from these startup controls.
+Gate3 r9 REJECTED r8 because parser discarded the spec prefix; r11 corrects only exact spec/title/count binding with wrong-file negative. r12 reviews changed hunk before HOME submits any actual after full. r10 is stopped by its approval prerequisite, never allowed to execute rejected source.
+
+Item14 ACK08:09 lead/owner08:07. FIVE distinct Luna high workers dispatched immediately ahead of any new proof retries:
+- app-m2-selected-case-local-eval-context-fix-r5 — D01 selected: exact normal case-local eval context in HOME harness, pure regression; independent custody before App2 actual.
+- app-m2-split-original-current-source-packet-r34 — D01 split: original body/current freeze, no unapproved seek activation/actual.
+- app-m2-transition-one-native-reset-callback-r6 — D01 transition payload: one existing SET/reset native capture route, opaque assertions and containing pin required.
+- app-m3-d08a-actual-result-ledger-reconcile-r7 — D08a exact actual result, no new run.
+- app-m2-bootstrap-trim-stale-waits-close-r26 — remove superseded current waits, retain historical013 and live dataProvider/real current full blockers.
+Full20810/r36 remains untouched and RUNNING. Critical-path design document has not yet synced locally; explicit lead item14 and App2 source request07:48 are sufficient concrete direction, so no permission delay.
