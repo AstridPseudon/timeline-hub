@@ -6,16 +6,55 @@ set -eu
 
 AGENT_REPO=${AGENT_REPO:-/home/user/peteromallet/astrid-agent}
 RUNTIME_REPO=${RUNTIME_REPO:-/home/user/banodoco/banodoco-workspace-runtime}
-AGENT_SHA=6efc81500a0e0688c2bb41e736503f0fc3e04abb
-AGENT_TREE=2ed2b8a12b5b3391ca221ba6ff05390f71a73556
-RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
-RUNTIME_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
-PRODUCER_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
-PRODUCER_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
-ARTIFACT_SHA=sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac
-MANIFEST_SHA=a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d
-SCHEMA_SHA=6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
-WIRE_SHA=sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816
+
+# Keep the historical private qualification as the default.  The current95
+# central lanes opt into final95 explicitly; both profiles use the same normal
+# checkout, updater, and checker paths below.
+NORMAL014_PROFILE=${NORMAL014_PROFILE:-old202}
+case "$NORMAL014_PROFILE" in
+  old202)
+    AGENT_SHA=3c4f6de4fa777323b3386c01c7266b619b86af6d
+    AGENT_TREE=aaf49eca6c2b119b21df1d89b0e56df5d1c60f9c
+    RUNTIME_SHA=202074110717146fc7f08af2306a8dd7f695b0b1
+    RUNTIME_TREE=ee39286bd0eb27d4075074cc4785d6d15e33f243
+    PRODUCER_SHA=a0dca16975dfe8f5e762703b99d9791a16cf7fd7
+    PRODUCER_TREE=4b7dd0fe44be973c344bab3de568eaf0bdd28476
+    ARTIFACT_SHA=sha256:f021e7714c1b40011b69ba624d288c217749d58013b8adf0352d283854f20fa
+    MANIFEST_SHA=ecda762ebe682f266395161af055921c3db33ee9914fb00860626e7e4852d815
+    MANIFEST_COUNT=75
+    SCHEMA_SHA=6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
+    WIRE_SHA=sha256:ce3781c282564b650890456f6c257f3faabe2de3898a84363fecd47e48b30d59
+    APP_METADATA_SHA=9b3b8723a8d86a78d57bf83f43eb82914d1d0cd81ae89ebdf993b1560ddc57dd
+    APP_GENERATED_SHA=c422ce38279e6df9eb93c5b53993d57e68339b0807d34ed69d85b2408ed98be2
+    APP_TYPES_SHA=f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
+    APP_SCHEMA_SHA=f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1
+    ;;
+  final95)
+    AGENT_SHA=6efc81500a0e0688c2bb41e736503f0fc3e04abb
+    AGENT_TREE=2ed2b8a12b5b3391ca221ba6ff05390f71a73556
+    RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
+    RUNTIME_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
+    PRODUCER_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
+    PRODUCER_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
+    ARTIFACT_SHA=sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac
+    MANIFEST_SHA=a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d
+    MANIFEST_COUNT=76
+    SCHEMA_SHA=6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
+    WIRE_SHA=sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816
+    APP_METADATA_SHA=4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044
+    APP_GENERATED_SHA=c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d
+    APP_TYPES_SHA=f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
+    APP_SCHEMA_SHA=f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1
+    ;;
+  *)
+    echo "unsupported NORMAL014_PROFILE: $NORMAL014_PROFILE (expected old202 or final95)" >&2
+    exit 2
+    ;;
+esac
+
+# Both private candidates start from the checked-in public013 App lock.  The
+# selected profile is applied only by the normal updater below.
+APP_BASE_RUNTIME_SHA=2c4ac180c2220bdad966bc01e95ad230e99ce26a
 MARKER_SHA=150a7abb340040e45c34742bc871ef83caab0575
 D05E_SHA=d05e6383f4ccaf7541698a65b2737fbc5f3f0fbb
 LOCKED_GRAPH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph
@@ -77,7 +116,8 @@ verify_artifacts() {
   runtime=$1
   producer=$2
   RUNTIME="$runtime" PRODUCER="$producer" EXPECTED_MANIFEST="$MANIFEST_SHA" \
-    EXPECTED_ARTIFACT="$ARTIFACT_SHA" EXPECTED_SCHEMA="$SCHEMA_SHA" python3 - <<'PY'
+    EXPECTED_ARTIFACT="$ARTIFACT_SHA" EXPECTED_SCHEMA="$SCHEMA_SHA" \
+    EXPECTED_MANIFEST_COUNT="$MANIFEST_COUNT" python3 - <<'PY'
 import hashlib, json, os, subprocess
 from pathlib import Path
 
@@ -92,7 +132,7 @@ manifest_bytes = git_show(runtime, "HEAD:contract/artifacts.json")
 manifest = json.loads(manifest_bytes)
 assert manifest["producer"] == "astrid-runtime"
 assert manifest["version"] == os.environ["EXPECTED_ARTIFACT"]
-assert len(manifest["artifacts"]) == 76
+assert len(manifest["artifacts"]) == int(os.environ["EXPECTED_MANIFEST_COUNT"])
 assert digest(manifest_bytes) == os.environ["EXPECTED_MANIFEST"]
 for relative, expected in manifest["artifacts"].items():
     candidate = git_show(runtime, f"HEAD:{relative}")
@@ -104,7 +144,7 @@ runtime_schema = git_show(runtime, "HEAD:contract/schemas/edit-command.json")
 agent_schema = git_show(Path(os.environ["AGENT"]), "HEAD:astrid/core/timeline/schema/edit-command.schema.json")
 assert digest(runtime_schema) == os.environ["EXPECTED_SCHEMA"]
 assert agent_schema == runtime_schema
-print(f"verified artifacts=76 manifest={digest(manifest_bytes)} schema={digest(runtime_schema)}")
+print(f"verified artifacts={len(manifest['artifacts'])} manifest={digest(manifest_bytes)} schema={digest(runtime_schema)}")
 PY
 }
 

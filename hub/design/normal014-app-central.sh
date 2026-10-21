@@ -36,11 +36,11 @@ test -x "$private_node_modules/.bin/vite"
 test "$(realpath "$private_node_modules")" = "$private_node_modules"
 ln -s "$private_node_modules" "$overlay/node_modules"
 
-OVERLAY="$overlay" RUNTIME_SHA="$RUNTIME_SHA" node --input-type=module - <<'JS'
+OVERLAY="$overlay" APP_BASE_RUNTIME_SHA="$APP_BASE_RUNTIME_SHA" RUNTIME_SHA="$RUNTIME_SHA" node --input-type=module - <<'JS'
 import { readFileSync, writeFileSync } from 'node:fs';
 const file = `${process.env.OVERLAY}/runtime.lock.json`;
 const lock = JSON.parse(readFileSync(file, 'utf8'));
-if (lock.source_commit !== '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c') throw new Error(`unexpected App base lock: ${lock.source_commit}`);
+if (lock.source_commit !== process.env.APP_BASE_RUNTIME_SHA) throw new Error(`unexpected App base lock: ${lock.source_commit}`);
 lock.source_commit = process.env.RUNTIME_SHA;
 writeFileSync(file, `${JSON.stringify(lock, null, 2)}\n`);
 JS
@@ -51,10 +51,10 @@ node scripts/vendor-lock.mjs check runtime.lock.json --producer "$runtime"
 node scripts/vendor-lock.mjs check runtime.lock.json
 AGENT="$agent" verify_artifacts "$runtime" "$producer"
 test "$(node -e 'console.log(require("./runtime.lock.json").source_commit)')" = "$RUNTIME_SHA"
-test "$(sha256sum src/integrations/runtime/generated-contract-metadata.ts | cut -d' ' -f1)" = 4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044
-test "$(sha256sum src/integrations/runtime/generated.ts | cut -d' ' -f1)" = c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d
-test "$(sha256sum src/integrations/runtime/timeline-commit-types.ts | cut -d' ' -f1)" = f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
-test "$(sha256sum vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json | cut -d' ' -f1)" = f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1
+test "$(sha256sum src/integrations/runtime/generated-contract-metadata.ts | cut -d' ' -f1)" = "$APP_METADATA_SHA"
+test "$(sha256sum src/integrations/runtime/generated.ts | cut -d' ' -f1)" = "$APP_GENERATED_SHA"
+test "$(sha256sum src/integrations/runtime/timeline-commit-types.ts | cut -d' ' -f1)" = "$APP_TYPES_SHA"
+test "$(sha256sum vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json | cut -d' ' -f1)" = "$APP_SCHEMA_SHA"
 
 mkdir -p "$run_root/npm-cache" "$run_root/pw-cache" "$run_root/browser-output" "$run_root/vite-cache"
 export ASTRID_CHECKOUT="$agent"
