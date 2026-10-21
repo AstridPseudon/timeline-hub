@@ -17,6 +17,7 @@ import { createSelectedParamPort, type SelectedParamCapture, type SelectedParamL
 import type { DocumentPin } from '@/integrations/runtime/timeline-commit-types.ts';
 
 export function useTimelineCommandSession(options: {
+  imagePlacementHost?: import('../commands/editorImagePlacement.ts').EditorImagePlacementHost;
   legacyClean: () => boolean;
   initialReadReady?: boolean;
   snapshotWriteBlockedRef: MutableRefObject<boolean>;
@@ -143,6 +144,7 @@ export function useTimelineCommandSession(options: {
         if (composition && !previews.length) context.shots.adoptCanonicalComposition?.(composition);
       };
       session = await createTimelineCommandSession({
+        imagePlacementHost: latest.current.imagePlacementHost,
         scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId }, initial: basis,
         paramReadClient: latest.current.paramReadClient,
         loadLatest: async () => {
@@ -374,7 +376,7 @@ export function useTimelineCommandSession(options: {
       snapshotWriteBlockedRef.current = false;
       disposeSession();
     };
-  }, [clearSelectedBasis, initialReadReady, publishSelectedBasis, provider, selectedParamPort, timelineId, enabled, attempt, snapshotWriteBlockedRef]);
+  }, [clearSelectedBasis, initialReadReady, publishSelectedBasis, provider, selectedParamPort, timelineId, enabled, attempt, snapshotWriteBlockedRef, options.imagePlacementHost]);
   useEffect(() => {
     if (!enabled || !options.loaded?.head || !sessionRef.current) return;
     clearSelectedBasis();
@@ -451,7 +453,8 @@ export function useTimelineCommandSession(options: {
     parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
     parentClipSwapMediaPort: sessionRef.current?.parentClipSwapMediaPort,
     occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
+    imageGeneration: sessionRef.current?.imageGeneration,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
-  & Partial<Pick<ReturnType<typeof useTimelineCommandSession>, 'useLatest' | 'keepLabelChanges' | 'elementOverlay'>>;
+  & Partial<Pick<ReturnType<typeof useTimelineCommandSession>, 'useLatest' | 'keepLabelChanges' | 'elementOverlay' | 'imageGeneration'>>;

@@ -57,6 +57,7 @@ import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/vide
 import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx';
 import { TimelineEditorShellToolbar, TimelineUndoRedo } from './TimelineEditorShellToolbar.tsx';
 import { TimelineCommandRecovery } from './TimelineCommandRecovery.tsx';
+import { EditorImageGeneration } from './EditorImageGeneration.tsx';
 import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
@@ -848,6 +849,7 @@ function TimelineEditorShellCoreComponent({
       {watchdogBanner}
       {recoveryBanner}
       <TimelineCommandRecovery commandSession={chrome.commandSession} />
+      {chrome.commandSession?.imageGeneration && <EditorImageGeneration placement={chrome.commandSession.imageGeneration} />}
       {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
         // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />

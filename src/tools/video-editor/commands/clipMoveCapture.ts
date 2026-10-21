@@ -19,7 +19,7 @@ const MAP_FIELDS = [['placement', 'start_ms'], ['at_ms'], ['duration_ms'], ['sou
   ['speed'], ['track'], ['placement', 'track'], ['time_map'], ['timeMap'],
   ['enabled'], ['active'], ['disabled'], ['hidden'], ['deleted']];
 
-function number(value: unknown, label: string, positive = false): number {
+export function number(value: unknown, label: string, positive = false): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || (positive && value <= 0)) {
     throw new ClipMoveError(`${label} must be a finite ${positive ? 'positive ' : ''}number`, 'unsupported_timing');
   }
@@ -33,7 +33,7 @@ function decimal(value: number): [bigint, bigint] {
   return scale >= 0 ? [BigInt(digits), 10n ** BigInt(scale)] : [BigInt(digits) * 10n ** BigInt(-scale), 1n];
 }
 
-function rate(value: JSON | undefined): [bigint, bigint] {
+export function rate(value: JSON | undefined): [bigint, bigint] {
   let n: bigint, d: bigint;
   if (value == null) return [30n, 1n];
   if (object(value) && equal(Object.keys(value).sort(), ['denominator', 'numerator'])) {
@@ -53,7 +53,7 @@ function rate(value: JSON | undefined): [bigint, bigint] {
 
 // Convert the exact quantized Fraction to binary64 with one nearest-even rounding,
 // including rates whose decimal denominator exceeds the exact Number integer range.
-function fractionNumber(n: bigint, d: bigint): number {
+export function fractionNumber(n: bigint, d: bigint): number {
   if (n === 0n) return 0;
   let exponent = n.toString(2).length - d.toString(2).length;
   if (exponent >= 0 ? n < (d << BigInt(exponent)) : (n << BigInt(-exponent)) < d) exponent--;
@@ -86,7 +86,7 @@ function duration(clip: Record<string, JSON>): number {
   return lengths[0];
 }
 
-function occurrenceStart(row: Record<string, JSON>): number {
+export function occurrenceStart(row: Record<string, JSON>): number {
   if (row.placement != null && !object(row.placement)) throw new ClipMoveError('occurrence placement must be an object', 'unsupported_map');
   const placement = row.placement as Record<string, JSON> | undefined;
   const start = placement?.start_ms;

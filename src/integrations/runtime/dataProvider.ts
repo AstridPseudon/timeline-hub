@@ -1697,6 +1697,30 @@ async function toPreparedMediaImport(
 
 export type { RuntimeUnavailableError };
 
+/** Shared acceptance decoder; it neither constructs a client nor updates provider state. */
+export function decodeAcceptedTimelineCommit(
+  response: CommitAcceptedMutation,
+  projectId: string,
+  timelineId: string,
+): TimelineCommitResult {
+  const data = response.data;
+  const receipt = response.receipt;
+  if ((data.status !== 'accepted' && data.status !== 'rebased')
+    || receipt.project_id !== projectId || receipt.command_kind !== 'timeline.commit') {
+    throw new TimelineSchemaIncompatibleError('Workspace Runtime returned an invalid timeline acceptance envelope');
+  }
+  acceptedDigest(data.document_digest, 'document_digest');
+  const publicationId = requiredString(receipt.receipt_id, 'timeline commit receipt.receipt_id');
+  const canonicalDocument = validateAcceptedCanonicalDocument(data.canonical_document, projectId, timelineId, data.accepted_revision_id);
+  assertIdentityMap(data.id_map);
+  const graph = runtimeGraphToContractFromCanonicalDocument(projectId, timelineId, canonicalDocument, publicationId);
+  const accepted: TimelineAcceptedIdentity = {
+    revisionId: data.accepted_revision_id,
+    publicationId,
+  };
+  return { response, accepted, canonicalDocument, graph, receipt };
+}
+
 function requiredRecord(value: unknown, label: string): RuntimeRecord {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error(`Workspace Runtime ${label} must be an object`);
@@ -2284,7 +2308,7 @@ function runtimeGraphToContract(
   };
 }
 
-function runtimeGraphToContractFromCanonicalDocument(
+export function runtimeGraphToContractFromCanonicalDocument(
   projectId: string,
   timelineId: string,
   document: CanonicalDocument,

@@ -1,7 +1,10 @@
+import { createEditorImagePlacement, type EditorImagePlacementHost } from './editorImagePlacement.ts';
+import { createSessionPlacementRequester } from './sessionPlacement.ts';
+import type { PlacementProgress } from './placementRequester.ts';
 import type { CommitRequest, DocumentPin, EditCommand, JSON, MediaSelection, VerifiedDocument, VerifiedDocumentObject, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
-import { validateAcceptedCanonicalDocument } from '@/integrations/runtime/dataProvider.ts';
+import { runtimeGraphToContractFromCanonicalDocument, validateAcceptedCanonicalDocument } from '@/integrations/runtime/dataProvider.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { clipScalarPreview, type ClipScalarArgs, type ClipScalarCapturePort } from './clipScalarGesture.ts';
@@ -42,7 +45,7 @@ import {
 } from './genericPatchCapture.ts';
 import { captureShotSet, finishShotSet } from './shotSetCapture.ts';
 import type { ShotSetCapturePort } from './shotSetGesture.ts';
-import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope } from './commitOutbox.ts';
+import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHead, type OutboxRecord, type OutboxScope, type OutboxRequest, type OutboxOutcome, type OutboxRequestBuilder } from './commitOutbox.ts';
 import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { captureParentClipSwapMedia, finishParentClipSwapMedia } from './parentClipSwapCapture.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
@@ -108,6 +111,7 @@ export type CommandSessionState = {
   canReapplyLabel?: boolean;
 };
 type Options = {
+  imagePlacementHost?: EditorImagePlacementHost;
   scope: OutboxScope;
   initial: TimelineCommandBasis;
   outboxes?: ReturnType<typeof createCommitOutbox>;
@@ -147,6 +151,9 @@ export async function createTimelineCommandSession(options: Options) {
   let lifetime: Promise<unknown> | undefined;
   let chain = Promise.resolve();
   let sending: Promise<void> | undefined;
+  let retryPending = false;
+  let placementWake = 0;
+  let placementProgress: PlacementProgress[] = [];
   let lastIntent: string | undefined;
   let localGeneration = 0;
   let appendedGeneration = 0;
@@ -162,6 +169,37 @@ export async function createTimelineCommandSession(options: Options) {
   const intentLocalIds = new Map<string, string>();
   const completions = new Map<string, { resolve: () => void; reject: (error: unknown) => void }>();
   let state: CommandSessionState = { status: 'loading', error: null, ownerId: null, recoverableOwners: [], canUndo: false };
+  const operation = options.imagePlacementHost?.operation;
+  function assertPlacementCurrent() {
+    box?.assertActive();
+    if (stopped || !box || !operation?.isCurrentIdentity(options.scope)) throw new Error('Original placement operation/session is retired');
+  }
+  const buildRequest: OutboxRequestBuilder = (intent, head) => {
+    const commands = (intent.payload as unknown as Payload).commands;
+    if (!Array.isArray(commands) || commands.length === 0) throw new Error('Timeline commit requires commands');
+    return { method: 'POST',
+      path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
+      body: json({ api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
+        base_revision_id: head.revisionId, base_publication_id: head.publicationId,
+        commands: [commands[0], ...commands.slice(1)], source: { via: 'app' } } satisfies CommitRequest) };
+  };
+  async function transmit(request: OutboxRequest): Promise<OutboxOutcome> {
+    const placement = record?.placementContinuations?.some((item) => item.placement?.intentId === record?.intents[0]?.id);
+    try {
+      if (stopped) throw new Error('Timeline command session is closed');
+      if (placement) assertPlacementCurrent();
+      const result = placement ? await operation!.transmit(options.scope, request)
+        : await options.send(JSON.parse(request.body) as CommitRequest, request.key);
+      if (placement) assertPlacementCurrent();
+      return { kind: 'accepted', head: result.accepted, value: json(result) };
+    } catch (error) {
+      const kind = error instanceof ApiError && error.status >= 500 ? 'unknown' : classifyRuntimeCommitFailure(error);
+      return { kind: kind === 'unknown' || kind === 'storage' ? 'retry' : 'rejected', error: { kind, message: message(error) } };
+    }
+  }
+  const requester = operation ? createSessionPlacementRequester({ client: operation, outboxes: storage,
+    getRecoverableIdentity: operation.getRecoverableIdentity, build: buildRequest, transmit }) : undefined;
+  const unfinishedPlacement = () => record?.placementContinuations?.some((item) => !item.placement?.accepted && !item.placement?.cancelled);
   function settleLocal(localId: string, error?: unknown) {
     if (!localId) return;
     const completion = completions.get(localId);
@@ -212,16 +250,18 @@ export async function createTimelineCommandSession(options: Options) {
     options.changed(state);
   }
   function publishRefusal() {
+    const placementFailure = record?.placementContinuations?.find((item) => !item.placement?.cancelled && item.conflict !== undefined)?.conflict;
     const failure = record?.pending?.outcome?.kind === 'rejected'
-      ? record.pending.outcome.error : record?.intents[0]?.conflict;
+      ? record.pending.outcome.error : record?.intents[0]?.conflict ?? placementFailure;
     if (failure === undefined) return false;
     const error = failure as { kind?: string; message?: string } | null;
     if (record) settleRefused(record);
-    publish(error?.kind === 'conflict' ? 'conflict' : 'error', error?.message ?? 'Timeline command was refused');
+    publish(error?.kind === 'conflict' || placementFailure !== undefined ? 'conflict' : 'error', error?.message ?? 'Timeline command was refused');
     return true;
   }
-  function assertReady() {
-    if (stopped || !box || resolving || projecting || projectionPending || persistenceFailed || record?.intents[0]?.conflict !== undefined) {
+  function assertReady(placementAdmission = false) {
+    if (stopped || !box || resolving || projecting || projectionPending || persistenceFailed
+      || (!placementAdmission && requester && unfinishedPlacement()) || record?.intents[0]?.conflict !== undefined) {
       throw new Error(state.error ?? 'Timeline command session is unavailable');
     }
   }
@@ -237,8 +277,10 @@ export async function createTimelineCommandSession(options: Options) {
       if (projectionPending === basis) projectionPending = undefined;
     } finally { projecting = false; }
   }
-  async function pump(retryPending = true) {
+  async function pump(allowRetry = true) {
+    retryPending ||= allowRetry;
     if (sending) return sending;
+    const wake = placementWake;
     sending = (async () => {
       await chain;
       if (stopped || resolving || persistenceFailed || !box) return;
@@ -251,6 +293,13 @@ export async function createTimelineCommandSession(options: Options) {
         acceptedBasis = target;
       }
       if (publishRefusal()) return;
+      if (requester && unfinishedPlacement()) {
+        assertPlacementCurrent();
+        placementProgress = await requester.resume(box);
+        if (stopped) return;
+        record = await box.read();
+        if (publishRefusal()) return;
+      }
       while (!stopped && record.intents.length && record.intents[0].conflict === undefined) {
         if (record.pending && !retryPending) {
           const outcome = record.pending.outcome;
@@ -260,27 +309,8 @@ export async function createTimelineCommandSession(options: Options) {
         }
         publish('saving');
         const priorAccepted = record.accepted?.intentId;
-        record = await box.dispatch((intent, head) => {
-          const commands = (intent.payload as unknown as Payload).commands;
-          if (!Array.isArray(commands) || commands.length === 0) throw new Error('Timeline commit requires commands');
-          return {
-            method: 'POST',
-            path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
-            body: json({ api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
-              base_revision_id: head.revisionId, base_publication_id: head.publicationId,
-              commands: [commands[0], ...commands.slice(1)], source: { via: 'app' } } satisfies CommitRequest),
-          };
-        }, async (request) => {
-          try {
-            if (stopped) throw new Error('Timeline command session is closed');
-            const result = await options.send(JSON.parse(request.body) as CommitRequest, request.key);
-            return { kind: 'accepted', head: result.accepted, value: json(result) };
-          } catch (error) {
-            const kind = error instanceof ApiError && error.status >= 500 ? 'unknown' : classifyRuntimeCommitFailure(error);
-            return { kind: kind === 'unknown' || kind === 'storage' ? 'retry' : 'rejected',
-              error: { kind, message: message(error) } };
-          }
-        });
+        const placement = record.placementContinuations?.some((item) => item.placement?.intentId === record!.intents[0]?.id);
+        record = await box.dispatch(buildRequest, transmit, placement ? assertPlacementCurrent : undefined);
         if (stopped) return;
         if (record.accepted && record.accepted.intentId !== priorAccepted) {
           settleIntent(record.accepted.intentId);
@@ -290,7 +320,7 @@ export async function createTimelineCommandSession(options: Options) {
           const followsKnown = sameHead(known.head, result.accepted) || sameHead(known.head, {
             revisionId: previous.previous_revision_id, publicationId: previous.previous_publication_id,
           }) || sameHead(known.head, { revisionId: previous.base_revision_id, publicationId: previous.base_publication_id });
-          if (followsKnown) known = acceptedBasis;
+          if (followsKnown || placement) known = acceptedBasis;
           const commands = result.response.data.commands;
           if (commands.some((command) => command.op === 'timeline.inverse')) undos.pop();
           else if (undos[undos.length - 1] !== result.accepted.publicationId) undos.push(result.accepted.publicationId);
@@ -316,8 +346,17 @@ export async function createTimelineCommandSession(options: Options) {
         await chain;
         record = await box.read();
       }
-      if (!publishRefusal()) publish(record.intents.length || appendedGeneration !== localGeneration ? 'dirty' : 'saved');
-    })().catch((error) => { publish('error', message(error)); }).finally(() => { sending = undefined; });
+      if (!publishRefusal()) {
+        const interrupted = placementProgress.find((item) => item.status === 'retry' || item.status === 'manual');
+        const waiting = requester && unfinishedPlacement();
+        publish(waiting ? interrupted ? 'retry' : 'saving'
+          : record.intents.length || appendedGeneration !== localGeneration ? 'dirty' : 'saved', waiting ? interrupted?.message ?? null : null);
+      }
+    })().catch((error) => { publish('error', message(error)); }).finally(() => {
+      sending = undefined;
+      retryPending = false;
+      if (!stopped && wake !== placementWake) void pump(false);
+    });
     return sending;
   }
   const pendingAppends: Array<{ localId: string; predecessor?: string; head: OutboxHead; payload: Payload; generation: number }> = [];
@@ -1129,7 +1168,11 @@ export async function createTimelineCommandSession(options: Options) {
           options.scope.timelineId,
           displayBasis.head.revisionId,
         );
-        const verifiedDisplayBasis = { ...displayBasis, canonicalDocument: originalDocument };
+        const verifiedDisplayBasis = { ...displayBasis, canonicalDocument: originalDocument,
+          ...(originalDocument.parent_revision.payload.occurrences.length
+            ? { graph: runtimeGraphToContractFromCanonicalDocument(
+              options.scope.projectId, options.scope.timelineId, originalDocument, displayBasis.head.publicationId) }
+            : {}) };
         acceptedBasis = savedAcceptance ? { head: savedAcceptance.accepted, canonicalDocument: savedAcceptance.canonicalDocument, graph: savedAcceptance.graph }
           : verifiedDisplayBasis;
         // Submission advances with A's ACK; B's display retains its original closure.
@@ -1150,12 +1193,40 @@ export async function createTimelineCommandSession(options: Options) {
       throw error;
     }
   }
-  const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending);
+  const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending
+    || owner.placementContinuations?.some((item) => !item.placement?.accepted && !item.placement?.cancelled));
   if (owners.length) {
     state = { ...state, recoverableOwners: owners.map((owner) => owner.ownerId) };
     publish('recovery', 'Choose the persisted editor owner to recover its exact pending request');
   } else await claim();
+  const imageGeneration = createEditorImagePlacement({ scope: options.scope, host: options.imagePlacementHost,
+    ready() {
+      assertReady(true);
+      if ((state.status !== 'saved' && !(requester && unfinishedPlacement() && ['saving', 'retry'].includes(state.status)))
+        || pendingAppends.length || prepared.size || record?.intents.length || record?.pending
+        || !sameHead(displayHead, acceptedBasis.head) || !sameHead(known.head, acceptedBasis.head)) {
+        throw new Error('Acknowledge earlier timeline work before preparing placement');
+      }
+    },
+    current() {
+      if (stopped || !box || resolving) throw new Error('Timeline command session is unavailable');
+      return { box: box!, basis: acceptedBasis, bundle };
+    },
+    async reserved() {
+      record = await box!.read();
+      if (stopped || !requester) return;
+      publish('saving');
+      void resumePlacements();
+    },
+  });
+  async function resumePlacements() {
+    if (stopped || !box || !requester || !unfinishedPlacement()) return;
+    placementWake++;
+    await pump(false);
+  }
+  const unsubscribePlacement = options.imagePlacementHost?.subscribe?.(() => { void resumePlacements(); });
   return {
+    imageGeneration,
     port,
     clipParamsPort,
     clipScalarPort,
@@ -1171,6 +1242,8 @@ export async function createTimelineCommandSession(options: Options) {
     useLatest: () => resolveRejected(false),
     keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
+    // Existing task events and canonical reconnect reads wake this same pump.
+    resumePlacements,
     async recover(ownerId: string) {
       if (!state.recoverableOwners.includes(ownerId)) throw new Error('Unknown persisted outbox owner');
       await claim(ownerId);
@@ -1218,6 +1291,7 @@ export async function createTimelineCommandSession(options: Options) {
     observe(remote: TimelineCommandBasis) {
       if (stopped || resolving || remote.canonicalDocument.project_id !== options.scope.projectId
         || remote.canonicalDocument.timeline_id !== options.scope.timelineId) return;
+      if (requester) void resumePlacements();
       if (sameHead(remote.head, known.head)) return;
       known = remote;
       if (!record?.intents.length && localGeneration === appendedGeneration && !sending) {
@@ -1235,6 +1309,7 @@ export async function createTimelineCommandSession(options: Options) {
     },
     dispose() {
       stopped = true;
+      unsubscribePlacement?.();
       closing ??= (async () => {
         try {
           // Drain accepted gestures, never wait for an unknown network outcome.
