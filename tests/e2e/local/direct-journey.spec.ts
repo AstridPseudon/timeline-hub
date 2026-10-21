@@ -211,14 +211,14 @@ test.describe('the bare domain (App)', () => {
 });
 
 test.describe('first time and returning panels (App)', () => {
-  test('a fresh profile shows "Set up Astrid on this computer", and after one connection the same profile shows "Astrid isn\'t running"', async ({ page, harness }) => {
+  test('a fresh profile shows "Connect Astrid on this computer", and after one connection the same profile shows "Astrid isn\'t running"', async ({ page, harness }) => {
     // Same context for both phases, so localStorage carries over; the fixture context is fresh, so nothing is remembered at the start.
     await harness.stopRuntime();
     try {
       await openApp(page, harness);
       const panel = page.locator(UI.panel);
       await expect(panel).toBeVisible();
-      await expect(panel.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeVisible();
+      await expect(panel.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeVisible();
       await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
       await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
 
@@ -230,7 +230,7 @@ test.describe('first time and returning panels (App)', () => {
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
       await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
       await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
-      await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
+      await expect(panel.getByText('Connect Astrid on this computer')).toHaveCount(0);
     } finally {
       await harness.resetToHealthy();
     }
@@ -276,7 +276,7 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByRole('heading', { name: 'Allow Astrid in Chrome' })).toBeVisible();
       await expect(panel.getByText('Local network access')).toBeVisible();
       await expect(panel.getByText('Come back here and it opens by itself.')).toBeVisible();
-      await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
+      await expect(panel.getByText('Connect Astrid on this computer')).toHaveCount(0);
       expect(doorRequests, 'a denied permission is not retried as if nothing were listening').toEqual([]);
       // Phone width (CP3): the steps wrap inside the card instead of scrolling the page sideways.
       await page.setViewportSize({ width: 360, height: 740 });
@@ -298,7 +298,7 @@ test.describe('permission gate and readiness (App)', () => {
       const panel = page.locator(UI.panel);
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
       await expect(panel.getByText('Run this line in a terminal to start it again. It keeps your work as it is. This page opens by itself.')).toBeVisible();
-      await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
+      await expect(panel.getByText('Connect Astrid on this computer')).toHaveCount(0);
       await expect(panel).not.toContainText(/Runtime|workspace|realm|gateway|door|reload/i);
       const notReadyReadings = harness.audit().filter((entry) => entry.path === '/v1/health' && entry.status === 503).length;
       expect(notReadyReadings, 'the listening door answered the health checks it could not serve yet').toBeGreaterThan(0);

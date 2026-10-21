@@ -89,6 +89,8 @@ export interface RuntimeConnectionCopy {
   readonly commands: typeof ASTRID_COMMANDS;
   /** Accessible name for the panel region. */
   readonly panelLabel: string;
+  /** The live line above a card that waits for the person to set Astrid up elsewhere. */
+  readonly waiting: string;
   /** While the first probe is in flight (and while Astrid is still starting): the one line under the mark. */
   readonly connecting: { readonly sentence: string };
   /** Permission `prompt`: shown before anything is sent, with the Connect button. */
@@ -142,6 +144,8 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   panelLabel: 'Connect to Astrid',
 
+  waiting: 'Waiting for Astrid on this computer…',
+
   connecting: {
     sentence: 'Looking for Astrid on this computer…',
   },
@@ -169,7 +173,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   },
 
   setUp: {
-    title: 'Set up Astrid on this computer',
+    title: 'Connect Astrid on this computer',
     sentence: "This browser hasn't found Astrid here yet. Give these instructions to your coding agent to set it up or reconnect your existing installation.",
   },
 

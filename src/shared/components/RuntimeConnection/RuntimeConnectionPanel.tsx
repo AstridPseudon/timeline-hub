@@ -8,6 +8,7 @@ import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyInstallCommand } from './CopyInstallCommand.tsx';
+import { EmptyEditorShell } from './EmptyEditorShell.tsx';
 import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withCommandShell } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
@@ -36,6 +37,8 @@ interface PanelFrameProps {
   readonly showHelp?: boolean;
   /** Content between the sentence and the action (the blocked state's steps). */
   readonly children?: ReactNode;
+  /** Shows the live "waiting" line: the screen is asking for something the person does elsewhere, then it opens by itself. */
+  readonly waiting?: boolean;
   /** The word on a hand-drawn arrow, outside the card, aimed at the top left of the window: the browser's prompt is there. */
   readonly pointer?: string;
 }
@@ -45,15 +48,22 @@ interface PanelFrameProps {
  * sentence (two only on set up), at most one primary button and at most one quiet line. Everything is centred, and
  * balanced so no line ends on a lone word at phone width.
  */
-function PanelFrame({ dataState, title, sentence, detail, action, footer, children, pointer, showHelp = false }: PanelFrameProps) {
+function PanelFrame({ dataState, title, sentence, detail, action, footer, children, pointer, waiting = false, showHelp = false }: PanelFrameProps) {
   return (
     <section
       aria-label={COPY.panelLabel}
       data-testid="runtime-not-connected"
       data-state={dataState}
-      className="flex min-h-screen items-center justify-center bg-background p-4 text-foreground"
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4 text-foreground"
     >
-      <div className="w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 text-center sm:p-8">
+      <EmptyEditorShell />
+      <div className="relative z-10 w-full max-w-lg space-y-5 rounded-2xl border border-border bg-card p-6 text-center shadow-xl sm:p-8">
+        {waiting && (
+          <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <span aria-hidden="true" className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+            {COPY.waiting}
+          </p>
+        )}
         {/* The icon file carries its own rounded tile and shadow, as the install dialog shows it at this size. */}
         <img src={AVATAR_SRC} alt="" className="mx-auto h-[76px] w-[76px]" />
         <div className="space-y-3">
@@ -167,6 +177,7 @@ function SetUpPanel() {
       title={setUp.title}
       sentence={withCommandShell(setUp.sentence)}
       action={<CopyInstallCommand mode="install" />}
+      waiting
     />
   );
 }
@@ -180,6 +191,7 @@ function NotRunningPanel() {
       title={notRunning.title}
       sentence={withCommandShell(notRunning.sentence)}
       action={<CopyInstallCommand mode="install" />}
+      waiting
       showHelp
     />
   );
@@ -193,6 +205,7 @@ function UpdateNeededPanel() {
       title={updateNeeded.title}
       sentence={withCommandShell(updateNeeded.sentence)}
       action={<CopyInstallCommand mode="update" />}
+      waiting
       showHelp
     />
   );

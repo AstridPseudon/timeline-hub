@@ -79,10 +79,10 @@ describe('RuntimeConnectionPanel', () => {
     const view = panel(connectionFor({ status: 'not_running' }));
     const section = screen.getByTestId('runtime-not-connected');
     expect(section).toHaveClass('min-h-screen', 'bg-background', 'p-4');
-    const card = section.firstElementChild as HTMLElement;
-    expect(card).toHaveClass('w-full', 'max-w-md', 'rounded-2xl', 'border-border', 'bg-card', 'p-6', 'sm:p-8', 'text-center');
+    const card = section.querySelector('.rounded-2xl') as HTMLElement;
+    expect(card).toHaveClass('w-full', 'max-w-lg', 'rounded-2xl', 'border-border', 'bg-card', 'p-6', 'sm:p-8', 'text-center');
     expect(screen.getByRole('heading', { level: 1 })).toHaveClass('font-theme-heading', 'text-2xl', 'text-foreground');
-    expect(view.container.querySelector('.border-t')).toBeNull();
+    expect(card.querySelector('.border-t')).toBeNull();
     expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByRole('button', { name: COPY.agent.copy })).toHaveClass('w-full', 'sm:w-auto');
   });
@@ -166,7 +166,7 @@ describe('RuntimeConnectionPanel', () => {
     expect(arrow).toHaveAttribute('data-tone', 'page');
     expect(arrow).toHaveAttribute('aria-hidden', 'true');
     // It hangs off the card (its parent is the card it leaves) and says "Up here" like the dialog's.
-    expect(arrow.parentElement).toBe(screen.getByTestId('runtime-not-connected').firstElementChild);
+    expect(arrow.parentElement).toBe(screen.getByTestId('runtime-not-connected').querySelector('.rounded-2xl'));
     expect(arrow.querySelector('text')?.textContent).toBe('UP HERE');
     expect(arrow.querySelector('path.astrid-toolbar-pointer-line')).not.toBeNull();
     expect(shownText()).not.toContain('just below the address bar');
@@ -216,7 +216,7 @@ describe('RuntimeConnectionPanel', () => {
     panel(connectionFor({ status: 'set_up' }));
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
-    expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeInTheDocument();
     const sentence = screen.getByText("This browser hasn't found Astrid here yet. Give these instructions to your coding agent to set it up or reconnect your existing installation.");
     expect(sentence).toHaveClass('text-base', 'leading-7', 'text-muted-foreground');
     expect(screen.getAllByRole('button')).toHaveLength(2);
@@ -252,7 +252,7 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByRole('button', { name: COPY.agent.commandCopy })).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
     expect(shownText()).not.toMatch(/reload/i);
-    expect(screen.queryByText('Set up Astrid on this computer')).not.toBeInTheDocument();
+    expect(screen.queryByText('Connect Astrid on this computer')).not.toBeInTheDocument();
   });
 
   describe('on a phone', () => {
