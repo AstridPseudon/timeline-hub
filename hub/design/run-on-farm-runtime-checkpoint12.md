@@ -1,4 +1,4 @@
-Status: READY
+Status: WITHDRAWN
 
 # Runtime 12:00 checkpoint full — test farm request
 
@@ -132,3 +132,5 @@ selection; this worker does not submit or execute it.
 
 
 Manager checkpoint selection: 2026-10-21 12:00 UTC — Runtime b92d3e7a05eec65c142294ef4873edd059e9b31d / tree6abc2f117391de8e7e35c0283f575a002199894d, normal Agent1a50cf3f30398500e9f1ccf0b94d59fe7a8bdb3f / treeb286a34197313b552132b442915b8f318b7bb062. This is the owner-authorized12:00 checkpoint; no candidate018 or unmerged RT08 source is substituted. Run once on FARM, report counts/log and exact source. A red checkpoint blocks further Runtime merges until fixed or reverted.
+
+WITHDRAWN by owner12:01: Runtime checkpoint ran locally as runtime-full-retained-owned-temp-integration-1021120516-19340 and PASSED6002/26skip/15xfail. Do not run this full on farm. The separate delivery rehearsal farm request remains READY.
