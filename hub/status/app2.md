@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T05:22:26Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 24 | status age 1m -->
+<!-- app2 | 2026-10-21T05:26:13Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 27 | status age 4m -->
 # app2 — 2026-10-21 05:21 UTC
 Milestone: M2 OPEN. Bounded duplicate, compiler-canary and default initializer DELETED; broad rows OPEN.
 Integrated: App canonical hub/tl/integration bc6f9dd39; skeleton 5d36 and parent ADD forwarding 968 merged. Native initializer 1557 follows actual 7782 PASS 1; both ledgers record 28-line deletion.
