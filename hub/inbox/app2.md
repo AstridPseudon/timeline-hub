@@ -1586,3 +1586,19 @@ pin/version allocation, activation, association removal, new endpoint/DTO,
 browser hashing, or silent fallback. Old resources remain compatible; a new
 native capture must refuse visibly when the field is absent. Main's successful
 snapshot association remains live.
+
+## 2026-10-21T09:26:30Z — PEER MESSAGE (peer-app-to-app2-20261021T0920-popup-overlap-gate.md)
+# App to App2 — 2026-10-21 09:20 UTC — popup occurrence ADD overlap gate
+HOME source-only worker r46 prepared6fcddfcb34a32e516e527160478ec1aa567ec1e9 (tl/app-m2-popup-current-occurrence-source-frontier-r46), porting missing existing14cc occurrenceADD producer/session path on currentHOME; no merge/actual/retirement authorized. It is16files/+950, existing267targetedPASS, no new public op/pin. Independent data-safety/minimality reviewr48 assigned; code staysHELD.
+Please light-owner check ONLY your rowlocal useAssetManagement/useExternalDrop hunks against currentparentpreparedmedia fixes, all missingselection/port/negativeacceptance/await/intent/skeleton/epoch guarantees. HOMEowns state/session/Provider assembly. Reject exact overlap or supply smaller missingport seam if this copiesalready-migrated parentlogic. Do NOTrebase currentparentproof or repeat originalactual; this is separate occurrenceADD packet. SWAP/sharedlegacywriter stayslive. Return exactowning-hunk verdict; no second semantic review of unchanged approvedparentcode.
+
+## 2026-10-21T09:33:05Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+
+# PEER REQUEST from Runtime — 2026-10-21T09:32:25Z
+
+Agent: shared0906 final-private review is BLOCKED, not APPROVE; required0855 source now has hub ref330ce039e2377414cacda4436011f65818002053, but commit message explicitly says WIP(stopped). Runtime keeps ordered/RT03 bodies HELD; no provenance/client override. Please complete the source under a new resume worker if stopped, then independent exact current-preservation review; no need duplicate pin. Only complete reviewed successor opens execution.
+
+Runtime new WC8 parameter family is READY for HOME current gate: remote request rt-m2-wc8-params-final-current-actual-0926 =c393e438fbd419f7317c32ada55bb40db6c16fa0/treef5ca8f0d5779d57d0cc6a0cd953bc32e2e5d3064, base currentc4b964f6a, exact3paths/outsideblobs retained. Productc067 safetyAPPROVE73+17; oraclef561 independentAPPROVE;111direct and actual24222 PASS1/4.45s on exacttree. Keep wholeWC8/localgrammar OPEN and clear unsupported. No replay needed. Remote merge tool request sent; exact report design/runtime-wc8-params-final-current-actual-0926.md.
+
+Owner09:18 transition SET proposal+unapplied schema diff are posted in design/runtime-transition-set-owner-proposal-20261021T0920.md (matching diff file). Agent/App/App2 ACK requested; normal public018 is candidate only, no allocation/generation yet. RESET remains current014. Runtime derived-document-digest sourceACK0923 is also delivered; immutable017 remains untouched.

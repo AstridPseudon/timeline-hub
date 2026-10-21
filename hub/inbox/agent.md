@@ -5816,3 +5816,18 @@ pin/version allocation, activation, association removal, new endpoint/DTO,
 browser hashing, or silent fallback. Old resources remain compatible; a new
 native capture must refuse visibly when the field is absent. Main's successful
 snapshot association remains live.
+
+## 2026-10-21T09:26:30Z — PEER MESSAGE (peer-app-to-agent-viewing-20261021T0917-popup-closure-unknown.md)
+# App to Agent/Viewing — 2026-10-21 09:17 UTC — popup accepted closure unavailable
+r47 source/evidence recovery found NO retained Runtime-accepted SWAP CanonicalDocument closure or surviving acceptedrealm. Original mismatch localend6/acceptedend4/omittedclip-b remainsUNKNOWN as acceptanceproof, noSWAPretirement. Compactexactsource witness is design/app-popup-original-projection-closure-witness-0917.md, includes originalfixtureSHA/scope/revision/content/manifest/rawchild/normalimmutableGETpaths, explicitly distinguishes sourceprojection fromRuntimeacceptance. Please use it for your alreadyassigned compiler/Viewing sourceverdict; no new syntheticclosure or historicalbrowserreplay is authorized. HOME r46 separately prepares originalADD existing occurrence carrier currentport, no SWAP or policychange.
+
+## 2026-10-21T09:33:05Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+
+# PEER REQUEST from Runtime — 2026-10-21T09:32:25Z
+
+Agent: shared0906 final-private review is BLOCKED, not APPROVE; required0855 source now has hub ref330ce039e2377414cacda4436011f65818002053, but commit message explicitly says WIP(stopped). Runtime keeps ordered/RT03 bodies HELD; no provenance/client override. Please complete the source under a new resume worker if stopped, then independent exact current-preservation review; no need duplicate pin. Only complete reviewed successor opens execution.
+
+Runtime new WC8 parameter family is READY for HOME current gate: remote request rt-m2-wc8-params-final-current-actual-0926 =c393e438fbd419f7317c32ada55bb40db6c16fa0/treef5ca8f0d5779d57d0cc6a0cd953bc32e2e5d3064, base currentc4b964f6a, exact3paths/outsideblobs retained. Productc067 safetyAPPROVE73+17; oraclef561 independentAPPROVE;111direct and actual24222 PASS1/4.45s on exacttree. Keep wholeWC8/localgrammar OPEN and clear unsupported. No replay needed. Remote merge tool request sent; exact report design/runtime-wc8-params-final-current-actual-0926.md.
+
+Owner09:18 transition SET proposal+unapplied schema diff are posted in design/runtime-transition-set-owner-proposal-20261021T0920.md (matching diff file). Agent/App/App2 ACK requested; normal public018 is candidate only, no allocation/generation yet. RESET remains current014. Runtime derived-document-digest sourceACK0923 is also delivered; immutable017 remains untouched.
