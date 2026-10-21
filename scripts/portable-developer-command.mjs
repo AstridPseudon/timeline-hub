@@ -7,12 +7,15 @@ const [command, ...forwarded] = process.argv.slice(2);
 export function resolveDeveloperCommand(command, forwarded, parentEnv = process.env) {
   const env = { ...parentEnv };
 
-  if (command === 'timeline') {
+  // `timeline` runs the bundled-Chromium device project; `timeline-chrome-export` runs only the
+  // installed-Chrome H.264 project. Same env for both; the second never adds `timeline-devices`.
+  const timelineProject = { timeline: 'timeline-devices', 'timeline-chrome-export': 'timeline-chrome-export' }[command];
+  if (timelineProject) {
     env.PLAYWRIGHT_TIMELINE_DEVICES = '1';
     env.PLAYWRIGHT_PORT = env.PLAYWRIGHT_PORT || '';
     env.FAKE_RUNTIME_PORT = env.FAKE_RUNTIME_PORT || '';
     const invocation = packageManagerInvocation('npx', [
-      'playwright', 'test', '--config', 'playwright.config.ts', '--project=timeline-devices', '--workers=1',
+      'playwright', 'test', '--config', 'playwright.config.ts', `--project=${timelineProject}`, '--workers=1',
       ...forwarded,
     ], { env });
     return { invocation, env };

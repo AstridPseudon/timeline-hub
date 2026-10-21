@@ -543,8 +543,8 @@ under `import.meta.env.DEV`. Refresh the browser and your contributions appear.
 **Keep the array empty on `main`** — entries there are a local scratchpad, not
 something to commit.
 
-Boot the editor with `npm run dev:editor` (demo timeline, no
-sign-in) and open the URL it prints.
+Use the deterministic editor preview described in the [repository README](../../README.md),
+then open the URL it prints.
 
 **Scaffold.** Copy `src/examples/hello-world-extension.ts` and rename the
 manifest id — that is the whole scaffold; there is no generator.

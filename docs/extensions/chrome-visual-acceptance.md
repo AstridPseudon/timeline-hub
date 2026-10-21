@@ -6,15 +6,18 @@ Development URL: `http://127.0.0.1:2222/tools/video-editor?localProject=demo-pro
 
 Installed-Chrome follow-up URL: `http://127.0.0.1:2222/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=render-matrix&runawayTimelineProject=runaway-8085`
 
-> **Amendment 2026-10-19 — what is still current.** This ledger records the 2026-08-23 session and is kept as
-> history. Since then: the ten Creative Lab extensions were deleted (the browser fixture catalog is now scene
-> phase markers, the transcript lane, the Runaway lane and a test-only overlay-layers extension, so "13
-> extensions" and "11 marker layers" below describe the old catalog); the DEV Runaway bridge loader and its
-> loading/empty/error/offline/retry states, with browser cases and captures 17–21, were removed (the Runaway
-> lane now reads persisted bundle source items); the `transcriptLaneFixture`, `runawayTimelineProject` and
-> `timelineOverlayCanary` URL parameters named below are no longer read; and the marker-pagination and
-> caption-render-export browser cases were folded into `shell-responsive-overflow.spec.ts` (captures 25–27 are now
-> the shell captures) and `caption-render-matrix.spec.ts`.
+> **Amendment 2026-10-20 — what is still current.** This ledger records the 2026-08-23 session and is kept as
+> history. Since then: the ten Creative Lab extensions were deleted and there is no fixture catalog any more
+> (the browser specs run the production extensions plus the scene-phase-markers fixture, so "13 extensions"
+> and "11 marker layers" below describe the old catalog); the Runaway typed timeline, its DEV bridge loader
+> and its fixtures were deleted, so every Runaway row, the 566-item lane and captures 17–21 are historical;
+> the `runawayTimelineProject` and `timelineOverlayCanary` URL parameters named below are no longer read;
+> `transcriptLaneFixture` is still read (`VideoEditorPage.tsx`, only in `--mode test`, the mode Playwright
+> starts the dev server in) and drives the transcript-lane specs (`caption-render-export.spec.ts`,
+> `transcript-chip-hit-target.spec.ts`, `extension-performance-budget.spec.ts`, `data-lane-viewport.spec.ts`);
+> and the marker-pagination browser cases were folded into `shell-responsive-overflow.spec.ts` (captures
+> 25–27 are now the shell captures). `caption-render-export.spec.ts` still exists as the caption MP4 export
+> proof; it is renderer-owned, so no Playwright project in this repo collects it.
 
 ## Disposition
 
@@ -126,10 +129,10 @@ The accepted shell baseline changes are intentional layout corrections rather th
 
 Commands run against the reconciled release tree. The final focused source rerun used the pinned runtime (`node --version` → `v20.19.4`; `npm --version` → `10.8.2`):
 
-> **Historical, specs removed.** These are the commands as run on 2026-08-23. They name specs that no longer
-> exist (`runaway-degraded-states.spec.ts`, `marker-layer-pagination.spec.ts`, `caption-render-export.spec.ts`)
-> and URL parameters that are no longer read, so they are a record and will not run as written. The current
-> homes are listed in the amendment at the top of this file.
+> **Historical, specs removed.** These are the commands as run on 2026-08-23. They name specs and a Runaway
+> parser that no longer exist (`runaway-degraded-states.spec.ts`, `marker-layer-pagination.spec.ts`,
+> `runawayTimelineData.test.ts`) and URL parameters that are no longer read, so they are a record and will not
+> run as written. The current homes are listed in the amendment at the top of this file.
 
 ```text
 npx vitest run src/tools/video-editor/runtime/extensionReleaseControls.test.ts src/tools/video-editor/pages/VideoEditorPage.test.tsx

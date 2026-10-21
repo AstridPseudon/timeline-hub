@@ -22,12 +22,12 @@ The gate covers:
 
 - Extension Manager inventory, activity, diagnostic and trust-state rendering
   through the real browser DOM, including keyboard disclosure.
-- The combined editor with the fixture catalog's marker-overlay layers (more than
-  one page of them), Transcript and Runaway data-kind lanes mounted together.
-- Keyboard navigation and accessible roles/labels for marker pagination and
-  host-owned lane actions.
-- Phone-width overflow, the three-layer marker budget, and the portaled lane
-  action menu staying inside the viewport.
+- The combined editor with the production extensions and the Transcript data-kind
+  lane (render-matrix fixture) mounted together.
+- Keyboard navigation and pressed state on Transcript lane chips (at most 128
+  mounted).
+- Phone-width document and body overflow (marker pagination and the lane action
+  menu are held by `shell-responsive-overflow.spec.ts` and `DataLaneList.test.tsx`).
 - Browser/page errors collected as release failures.
 
 Each run allocates its editor and bridge ports at runtime, passes the selected

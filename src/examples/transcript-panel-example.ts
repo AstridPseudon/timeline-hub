@@ -4,7 +4,6 @@
  * typed against the versioned SDK surface.
  */
 import type {
-  DisposeHandle,
   ImmutableProjectPackageDescriptor,
   PanelFrameAnchor,
   PanelPreviewService,
@@ -171,19 +170,4 @@ export async function ingestTranscriptPackage(
     entry,
     assets: [],
   };
-}
-
-/**
- * Preview the composed film at a word's timeline position while the pointer rests on it. The host owns the
- * card; the panel supplies the word's viewport rectangle and disposes the handle on leave, scroll or hide.
- * Returns undefined when the host has no preview service or the word has no timeline position.
- */
-export function previewTranscriptWordFrame(
-  props: PanelRenderProps,
-  word: TranscriptWordProjection,
-  anchor: PanelFrameAnchor,
-): DisposeHandle | undefined {
-  const preview: PanelPreviewService | undefined = props.video?.preview;
-  if (!preview || word.timelineStart === null) return undefined;
-  return preview.showFrame({ seconds: word.timelineStart, anchor });
 }

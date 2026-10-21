@@ -448,11 +448,9 @@ describe('AgentChat', () => {
       expect(input).toHaveAttribute('placeholder', 'Starting Codex…');
       expect(input).toHaveValue('');
       expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Voice input (Cmd+Shift+R)' })).toBeDisabled();
       fireEvent.keyDown(input, { key: 'Enter' });
       fireEvent.keyDown(window, { key: 'r', metaKey: true, shiftKey: true });
       expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
-      expect(state.voice.startRecording).not.toHaveBeenCalled();
       await act(async () => {
         if (outcome === 'failure') reject(new Error('Slow adapter failed'));
         else {

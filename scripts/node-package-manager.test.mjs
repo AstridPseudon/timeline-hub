@@ -55,6 +55,13 @@ test('documented developer launchers set portable environment values and pass ca
   assert.deepEqual(allTimelineSpecs.invocation.args.slice(1), [
     'playwright', 'test', '--config', 'playwright.config.ts', '--project=timeline-devices', '--workers=1',
   ]);
+  const chromeExport = resolveDeveloperCommand('timeline-chrome-export', [], env);
+  assert.equal(chromeExport.env.PLAYWRIGHT_TIMELINE_DEVICES, '1');
+  assert.equal(chromeExport.env.PLAYWRIGHT_PORT, '');
+  assert.equal(chromeExport.env.FAKE_RUNTIME_PORT, '');
+  assert.deepEqual(chromeExport.invocation.args.slice(1), [
+    'playwright', 'test', '--config', 'playwright.config.ts', '--project=timeline-chrome-export', '--workers=1',
+  ]);
   const matrix = resolveDeveloperCommand('acceptance-matrix', [], { ASTRID_APP_ACCEPTANCE_MATRIX: '0' });
   assert.equal(matrix.env.ASTRID_APP_ACCEPTANCE_MATRIX, '1');
 });
