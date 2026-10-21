@@ -7,14 +7,17 @@ from __future__ import annotations
 
 import copy
 import json
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
 
+from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 from astrid.packs.timeline.cli import build_parser
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._track_commands import capture_track_set
+from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
@@ -29,6 +32,10 @@ from tests.sdk.test_timeline_sheet_native import edit_cell, remove_row
 pytestmark = pytest.mark.integration
 runtime = test_native_batch_ingress.runtime
 REF = 'parent/clip:title'
+RATIONAL_FPS = {'numerator': 30000, 'denominator': 1001}
+RATIONAL_FPS_VALUE = Fraction(30000, 1001)
+RATIONAL_LATTICE_SECONDS = 1.001
+RATIONAL_TARGET = 'parent/clip:b-plate'
 
 
 def run(runtime, *args):
@@ -126,6 +133,26 @@ def seed_labeled_tiny_cut_parent(runtime):
     payload['config']['clips'] = copy.deepcopy(payload['clips'])
     receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-label-parent')
     return document, receipt
+
+
+def seed_rational_tiny_cut_parent(runtime):
+    """Create a retained media-bearing closure whose move is exactly frame-aligned."""
+    document = tiny_cut_parent(runtime.service(), runtime.project)
+    payload = document['parent_composition']
+    payload['config']['output'] = copy.deepcopy(RATIONAL_FPS)
+    target = next(row for row in payload['clips'] if row['id'] == 'b-plate')
+    target['hold'] = RATIONAL_LATTICE_SECONDS
+    target['opaque'] = {'retained_source': ['fixture', None, False, 7]}
+    payload['config']['clips'] = copy.deepcopy(payload['clips'])
+    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-rational-parent')
+    return document, receipt
+
+
+def persisted_bundle(bundle):
+    """Drop the in-memory Runtime document hint before comparing persisted closure state."""
+    value = copy.deepcopy(bundle)
+    value.get('source_mapping', {}).pop('_runtime_document', None)
+    return value
 
 
 def test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed_selection(
@@ -317,6 +344,84 @@ def test_http_connected_label_clear_is_lossless_across_native_frontends(
     assert State(restored).entity(clip_ref) == original_clip
     assert restored['parent']['registry'] == original_registry
     assert len(runtime.calls) == 2
+
+
+@pytest.mark.parametrize('entry', ['python', 'cli', 'sheet'])
+def test_http_connected_rational_move_is_lossless_across_native_frontends(
+        runtime, capsys, entry, monkeypatch):
+    _document, setup = seed_rational_tiny_cut_parent(runtime)
+    runtime.restart()
+    session = runtime.session(name=entry)
+    loaded = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert loaded.ok
+    before = loaded.data['bundle']
+    target = State(before).entity(RATIONAL_TARGET)
+    original_target = copy.deepcopy(target)
+    original_registry = copy.deepcopy(before['parent']['registry'])
+    expected = capture_move(before, RATIONAL_TARGET, RATIONAL_LATTICE_SECONDS)
+    assert before['parent']['config']['output'] == RATIONAL_FPS
+    assert setup['data']['accepted_revision_id'] == runtime.history()['head']['revision_id']
+    assert target['asset'] == 'Q'
+    assert target['opaque'] == {'retained_source': ['fixture', None, False, 7]}
+
+    def forbidden_legacy_publish(*args, **kwargs):
+        pytest.fail('connected frontend used retired publish_parent_composition')
+
+    monkeypatch.setattr(type(runtime.service()), 'publish_parent_composition', forbidden_legacy_publish)
+
+    if entry == 'python':
+        result = session.move(RATIONAL_TARGET, RATIONAL_LATTICE_SECONDS)
+    elif entry == 'cli':
+        assert run(runtime, 'edit', 'film', '--clip', RATIONAL_TARGET,
+                   '--on', str(RATIONAL_LATTICE_SECONDS)) == 0
+        result = json.loads(capsys.readouterr().out)
+    else:
+        sheet = NativeSheet.export(session)
+        edited = edit_cell(sheet.text, RATIONAL_TARGET, str(RATIONAL_LATTICE_SECONDS))
+        assert sheet.preview(edited).commands == [expected]
+        result = sheet.apply(edited, session=session, dry_run=False)
+
+    body = json.loads(runtime.calls[-1][0])
+    assert body['commands'] == [expected]
+    assert result['data']['commands'] == [expected]
+    assert body['source'] == {'via': entry}
+    assert len(runtime.calls) == 1
+
+    accepted = bundle_from_document(result['data']['canonical_document'])
+    moved = State(accepted).entity(RATIONAL_TARGET)
+    assert moved['at'] == pytest.approx(RATIONAL_LATTICE_SECONDS)
+    assert moved['hold'] == pytest.approx(RATIONAL_LATTICE_SECONDS)
+    assert moved['asset'] == original_target['asset']
+    assert moved['opaque'] == original_target['opaque']
+    assert moved['app']['cut'] == original_target['app']['cut']
+    assert moved['app']['layer'] == original_target['app']['layer']
+    assert moved['app']['why'] == original_target['app']['why']
+    assert accepted['parent']['config']['output'] == RATIONAL_FPS
+    assert accepted['parent']['registry'] == original_registry
+
+    start_frame = clip_start_frame(moved, float(RATIONAL_FPS_VALUE))
+    end_frame = clip_end_frame(moved, float(RATIONAL_FPS_VALUE))
+    assert (start_frame, end_frame) == (30, 60)
+    assert list(range(start_frame, end_frame))[-1] == 59
+    assert end_frame not in range(start_frame, end_frame)
+
+    history_entry = next(item for item in runtime.history()['items']
+                         if item['publication_id'] == result['receipt']['receipt_id'])
+    assert [row['command'] for row in history_entry['records']['commands']] == [expected]
+
+    runtime.restart()
+    reloaded = runtime.session(name=f'{entry}-reloaded')
+    stored = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=result['data']['accepted_revision_id'])
+    assert stored.ok
+    assert persisted_bundle(stored.data['bundle']) == persisted_bundle(accepted)
+
+    undone = reloaded.undo([result['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert persisted_bundle(restored) == persisted_bundle(before)
+    redone = reloaded.undo([undone['receipt']['receipt_id']])
+    assert redone['data']['canonical_document'] == result['data']['canonical_document']
+    assert len(runtime.calls) == 3
 
 
 @pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli'])
