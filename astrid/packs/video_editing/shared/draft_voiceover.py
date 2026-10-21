@@ -315,7 +315,8 @@ def retime_candidate(candidate: dict, durations: Mapping[str, float], *, policy:
     config = candidate["parent"].get("config", {})
     if "clips" in config:
         config["clips"] = copy.deepcopy(candidate["parent"].get("clips", []))
-    if "duration" in config:
+    if ("duration" in config and isinstance(config["duration"], (int, float))
+            and not isinstance(config["duration"], bool) and math.isfinite(config["duration"])):
         config["duration"] = warp(float(config["duration"]))
 
 

@@ -7,6 +7,7 @@ from collections.abc import Mapping
 
 from ._clip_scalar_commands import capture_clip_set
 from ._command_state import CommandError, State, equal
+from ._recording import parent_duration_mirror
 from ._shot_commands import capture_shot_set
 from .capture import capture_track_create, number
 from .commands import execute
@@ -81,8 +82,11 @@ def _capture_timing(bundle, candidate, jobs):
     placements = candidate.get("placements", [])
     if [p.get("occurrence_id") for p in placements] != [p.get("occurrence_id") for p in bundle["placements"]]:
         raise CommandError("voiceover changed occurrence membership/order", kind="identity_conflict")
-    if not equal(bundle["parent"].get("config", {}).get("duration"),
-                 candidate["parent"].get("config", {}).get("duration")):
+    parent_duration_changed = not equal(bundle["parent"].get("config", {}).get("duration"),
+                                        candidate["parent"].get("config", {}).get("duration"))
+    if parent_duration_changed and not (
+            parent_duration_mirror(bundle["parent"])
+            and parent_duration_mirror(candidate["parent"])):
         raise CommandError("voiceover parent duration has no literal command carrier", kind="unsupported_timing")
     # Free shrinking spans first; move later spans outwards before extending.
     for before, after in zip(bundle["placements"], placements):

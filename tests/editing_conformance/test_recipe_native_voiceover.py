@@ -7,6 +7,7 @@ import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.compiler import TimingInputs, compile_timing
 from astrid.sdk.timeline.commit import (
     _digest,
     _manifest,
@@ -46,6 +47,34 @@ def _voiceover_bundle_and_outcome():
         {"occurrence_id": "occ-1", "status": "present", "text": "Long new narration"}]}
     prepared = vo.prepare_draft_voiceover(
         authored, scripts, synthesize=synthesis, timing_policy="ripple", padding_seconds=.15)
+    return authored, prepared
+
+
+def _parent_duration_mirror_bundle_and_outcome(duration=6, *, duration_present=True):
+    authored = bundle(shared=False)
+    parent_clip = authored["parent"]["clips"][0]
+    parent_clip.update({"at": 0, "hold": 6})
+    authored["parent"]["config"]["clips"] = copy.deepcopy(authored["parent"]["clips"])
+    if duration_present:
+        authored["parent"]["config"]["duration"] = duration
+    placement = authored["placements"][0]
+    placement["placement"]["start_ms"] = 0
+    placement["duration_ms"] = 3000
+    shot = authored["shots"][placement["shot_id"]]
+    shot["payload"]["metadata"][vo.KEY] = copy.deepcopy(
+        fixture()[0]["shots"]["s1"]["payload"]["metadata"][vo.KEY]
+    )
+    shot["payload"]["metadata"][vo.KEY]["clip_id"] = "voice-1"
+    audio = next(row for row in shot["internal_timeline"]["clips"] if row["id"] == "voice-1")
+    audio.update({"from": 0, "to": 4, "hold": 4})
+    shot["internal_timeline"]["registry"]["assets"]["voice"]["media_id"] = OLD
+    scripts = {"revision_id": authored["base_parent"]["revision_id"], "occurrences": [
+        {"occurrence_id": placement["occurrence_id"], "status": "present",
+         "text": "Long new narration"}]}
+    prepared = vo.prepare_draft_voiceover(
+        authored, scripts, synthesize=synthesis, timing_policy="ripple", padding_seconds=.15,
+        occurrence_ids=[placement["occurrence_id"]]
+    )
     return authored, prepared
 
 
@@ -113,6 +142,71 @@ def test_voiceover_same_alias_swap_updates_duration_mirrors_and_inverse():
                                                "metadata": {"keep": True}}]
     assert replay(plan, authored, verified_media=verified).records == plan.records
     assert inverse(plan.bundle, plan.records).bundle == before
+
+
+def test_parent_duration_mirror_follows_parent_hold_through_compile_and_inverse():
+    authored, prepared = _parent_duration_mirror_bundle_and_outcome()
+    occurrence_id = authored["placements"][0]["occurrence_id"]
+    old = {"asset": "voice", "generation_id": "generation-old", "variant_id": "variant-old",
+           "object_id": OLD, "catalog_digest": "sha256:" + "a" * 64}
+    new = {"asset": "draft-voiceover-vo", "generation_id": "generation-new",
+           "variant_id": "variant-new", "object_id": NEW,
+           "catalog_digest": "sha256:" + "b" * 64}
+    verified = [{"selection": copy.deepcopy(media), "media_type": "audio/wav", "size": 4,
+                 "duration_seconds": 4} for media in (old, new)]
+    before = copy.deepcopy(authored)
+    before_timing = compile_timing(TimingInputs(authored)).timings[('parent', '', 'direct')]
+
+    lowered = capture_draft_voiceover(
+        authored, prepared, media_by_occurrence={occurrence_id: new},
+        old_media_by_occurrence={occurrence_id: old}, verified_media=verified)
+    plan = execute(authored, lowered["commands"], verified_media=verified)
+    after_timing = compile_timing(TimingInputs(plan.bundle)).timings[('parent', '', 'direct')]
+
+    assert plan.bundle["parent"]["clips"][0]["hold"] == 7.15
+    assert plan.bundle["parent"]["config"]["duration"] == 7.15
+    duration_record = next(record for record in plan.records
+                           if record["command"]["op"] == "clip.set"
+                           and record["command"]["select"] == "parent/clip:direct")
+    assert [write["path"] for write in duration_record["derived_writes"]] == [
+        ["config", "clips"], ["config", "duration"]]
+    assert before_timing["end"] == 6
+    assert float(after_timing["end"]) == pytest.approx(7.15)
+    config_only = copy.deepcopy(plan.bundle)
+    config_only["parent"]["config"]["duration"] = 999
+    assert compile_timing(TimingInputs(config_only)).timings[('parent', '', 'direct')] == after_timing
+    undone = inverse(plan.bundle, plan.records)
+    assert undone.bundle == before
+    assert compile_timing(TimingInputs(undone.bundle)).timings[('parent', '', 'direct')] == before_timing
+    assert replay(plan, before, verified_media=verified).records == plan.records
+
+
+@pytest.mark.parametrize("shape", ["absent", "null", "opaque"])
+def test_parent_duration_absent_null_or_opaque_value_remains_untouched(shape):
+    value = None if shape == "null" else {"future": True}
+    authored, prepared = _parent_duration_mirror_bundle_and_outcome(
+        duration=value, duration_present=shape != "absent")
+    occurrence_id = authored["placements"][0]["occurrence_id"]
+    old = {"asset": "voice", "generation_id": "generation-old", "variant_id": "variant-old",
+           "object_id": OLD, "catalog_digest": "sha256:" + "a" * 64}
+    new = {"asset": "draft-voiceover-vo", "generation_id": "generation-new",
+           "variant_id": "variant-new", "object_id": NEW,
+           "catalog_digest": "sha256:" + "b" * 64}
+    verified = [{"selection": copy.deepcopy(media), "media_type": "audio/wav", "size": 4,
+                 "duration_seconds": 4} for media in (old, new)]
+    lowered = capture_draft_voiceover(
+        authored, prepared, media_by_occurrence={occurrence_id: new},
+        old_media_by_occurrence={occurrence_id: old}, verified_media=verified)
+    plan = execute(authored, lowered["commands"], verified_media=verified)
+
+    assert plan.bundle["parent"]["clips"][0]["hold"] == 7.15
+    if shape == "absent":
+        assert "duration" not in plan.bundle["parent"]["config"]
+    else:
+        assert plan.bundle["parent"]["config"]["duration"] == value
+    assert all(write["path"] != ["config", "duration"]
+               for record in plan.records for write in record["derived_writes"])
+    assert inverse(plan.bundle, plan.records).bundle == authored
 
 
 @pytest.mark.parametrize("source_bound", [False, True])

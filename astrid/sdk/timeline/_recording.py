@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import copy
 
+from astrid.core.timeline.duration import clip_timeline_duration
+
 from ._collections import KINDS, arrange, insertion_boundary, order, rows
 from ._command_state import ABSENT, CommandError, State, equal, item_identity, present, spelling
 from ._common import AUDIO_KINDS
@@ -84,6 +86,26 @@ def selection_matches(expected, actual):
                     if key not in ("members", "order", "boundaries")))
 
 
+def _parent_clip_extent(parent):
+    clips = parent.get('clips')
+    if not isinstance(clips, list):
+        return None
+    try:
+        return max((float(clip.get('at', 0)) + clip_timeline_duration(clip) for clip in clips), default=0.0)
+    except (TypeError, ValueError):
+        return None
+
+
+def parent_duration_mirror(parent):
+    """Return whether config.duration is a numeric mirror of parent clip extent."""
+    config = parent.get('config')
+    value = config.get('duration') if isinstance(config, dict) else None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    extent = _parent_clip_extent(parent)
+    return extent is not None and equal(value, extent)
+
+
 class Recording:
     def __init__(self, bundle, command, ordinal, *, closures=None, verified_media=(),
                  schema_inputs=(), realm_id=None, verified_producer=None):
@@ -98,6 +120,7 @@ class Recording:
         self.mirrored_clips = (isinstance(parent.get('clips'), list)
                                and isinstance(config, dict) and isinstance(config.get('clips'), list)
                                and equal(parent['clips'], config['clips']))
+        self.mirrored_duration = self.mirrored_clips and parent_duration_mirror(parent)
         self.record = {"ordinal": ordinal, "command": copy.deepcopy(command), "writes": [],
                        "reads": [], "selections": [], "bindings": [], "created": [],
                        "dependencies": [], "derived_writes": []}
@@ -280,6 +303,14 @@ class Recording:
                     "ref": "parent", "path": ['config', 'clips'], "before": before,
                     "after": after, "cause": self.record['ordinal']})
                 self.state.set('parent', ['config', 'clips'], after)
+        if self.mirrored_duration:
+            before = self.state.get('parent', ['config', 'duration'])
+            after = present(_parent_clip_extent(parent))
+            if after['state'] == 'present' and not equal(before, after):
+                self.record['derived_writes'].append({
+                    "ref": "parent", "path": ['config', 'duration'], "before": before,
+                    "after": after, "cause": self.record['ordinal']})
+                self.state.set('parent', ['config', 'duration'], after)
 
     def finish(self, *, capture=False):
         # A raw aggregate replacement cannot smuggle an unrecorded item birth.
