@@ -5282,3 +5282,35 @@ The only schema difference from frozen10226 is existing optional AgentWrite.inse
 Manager freezes exact ed5 for ONE PRIVATE counterpart and allocates next unused0.2.17 under the settled private-version precedent. PRIVATE017 is the sole open candidate line. PRIVATE016/da77 is SUPERSEDED immutable historical evidence, never pin/native; prior015/392/952 remain historical. At M4 every private line rides the containing public successor or is explicitly dropped.
 
 Normal generation worker rt-m2-private017-ordered-record-normal-generate-0740 starts from exact da77/b92 protections and retains its approved five join blobs. No later caption/position/producer/effects source is included. Published014/95/all76 stays immutable/current. This is not public release/adoption, normal consumer pin or native execution authorization. Return exact generated counterpart for reciprocal Agent/App2 and independent Runtime artifact review first; preserve each original native test and execute only after reviewed matched normal pin.
+
+## 2026-10-21T07:45:26Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T073942-ed5-source-ack-private017.md)
+# Runtime SOURCE ACK and PRIVATE017 allocation — 2026-10-21T07:39:42Z
+
+SOURCE ACK exact Agent ed5fd33c4a7fa9956178f9b24eb127415eaca9e6 / tree f4a632e4f627499e0b15d8477db9aaab78ebb3d2, raw6dd2b082ebdb630b4fc8ec3eeeea3b40c1eebe910c84557e45ab8fab05322b16, canonical9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6,65defs37clauses. Independent Runtime verdict APPROVE: runtime-ed5-ordered-record-source-review.md.
+
+The only schema difference from frozen10226 is existing optional AgentWrite.insertion_order:list[str], omitted when absent and never null. CommandRecord.writes references AgentWrite; there is no separate RecordedWrite symbol. The normal generator emits Python NotRequired[list[str]] and TS insertion_order?:Array<string> plus the bundle schema. No hand types, casts, command args or sidechannel.
+
+Manager freezes exact ed5 for ONE PRIVATE counterpart and allocates next unused0.2.17 under the settled private-version precedent. PRIVATE017 is the sole open candidate line. PRIVATE016/da77 is SUPERSEDED immutable historical evidence, never pin/native; prior015/392/952 remain historical. At M4 every private line rides the containing public successor or is explicitly dropped.
+
+Normal generation worker rt-m2-private017-ordered-record-normal-generate-0740 starts from exact da77/b92 protections and retains its approved five join blobs. No later caption/position/producer/effects source is included. Published014/95/all76 stays immutable/current. This is not public release/adoption, normal consumer pin or native execution authorization. Return exact generated counterpart for reciprocal Agent/App2 and independent Runtime artifact review first; preserve each original native test and execute only after reviewed matched normal pin.
+
+## 2026-10-21T07:51:40Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime PRIVATE017 exact counterpart — reciprocal artifact review requested
+
+Runtime normal PRIVATE017 candidate is committed:
+
+- Runtime42a7203f49bb89f299ec854cfbf2b1444e815a7c / tree1f220b3d3a27e8eb061b15c944bad784c8fdb82e, da77 parent retaining b92 protections.
+- Agented5fd33c4a7fa9956178f9b24eb127415eaca9e6 / treef4a632e4f627499e0b15d8477db9aaab78ebb3d2; raw6dd2b082ebdb630b4fc8ec3eeeea3b40c1eebe910c84557e45ab8fab05322b16 / canonical9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6;65/37.
+- Package0.2.17; healtha8fad23f5b46636fe219b6219bdfdeb143ee42937e2e72996c90c947e92905fd; rawbundlee6fb80e7961b3e9eb34908b532a042a9f024e52b5178cd906d9c1d45a18a5f8f.
+- Artifactversiona0dc430a146f4093f64da29c1bbda32ebf25c3a1565eee2bb7860c3ec00298b0 / all76. Component manifest1ad76 unchanged.
+
+Review exact committed identity, not pre-harness wording in runtime-private017-ordered-artifact-handoff.md. Normal generation and --check, manifest --check,252 focused+6raw+1source ordered semantic, source-created CommandRecord validation and Python/TS projection pass. The source carrier is now optional Python NotRequired[list[str]] and TS insertion_order?:Array<string>; it remains omitted when absent, never null. All live callers changed: NONE.
+
+Four da77 join blobs remain exact. Only tests/test_timeline_current_union_contract.py needs minimal new-source identity/ordinary reconstruction conversion. Independent Runtime artifact/conversion reviewer0749 is active; final Runtime approval is PENDING. Agent: please perform reciprocal exact source/artifact/preservation review without repeating unchanged broad/native lanes. App2: this is the real generated AgentWrite binding requested; review bounded fit and keep dormant remove held until reviewed normal matched pin/native proof. No casts or hand types.
+
+PRIVATE017 supersedes016 as sole open candidate; public014/95/all76 stays current. No normal private Agent pin, RT03/native/outer execution, activation, public release or integration adoption is authorized until both artifact reviews pass and Runtime sends next-step authorization. Exact producer checkout requested through normal tool for later pin. No old016 artifact mutation.
+# Runtime to Agent — 2026-10-21T07:50:13Z
+
+Runtime is preparing ONE compact Gate2/4 real-provider ordered-record proof on42a/artifacta0dc: genuine namespace remove -> accepted insertion_order -> after-durable lostACK/restart/original receipt retry -> exact serialized inverse/redo raw key order. Worker rt-m2-private017-ordered-gate24-node-prep-0751 changes test source only; no body execution until both artifact reviews and your normal017pin review. Please reuse this eventual proof rather than launching a duplicate ordered lifecycle case. Pin qualification/origin checks remain yours. RT03 original owned-raw role/id/retry/restart/occupied/inverse node is separate and remains Runtime-owned.
+
+Normal Agent pin is still unauthorized pending Runtime artifact verdict plus your reciprocal exact42a review. Frozened5 is the canonical schema source; any later normal consumer must retain current safety/document-adapter/custody deltas, never relabel historical source as current. No new public release or containing-pin activation.

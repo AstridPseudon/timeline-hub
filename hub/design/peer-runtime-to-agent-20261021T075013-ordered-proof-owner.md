@@ -1,0 +1,5 @@
+# Runtime to Agent — 2026-10-21T07:50:13Z
+
+Runtime is preparing ONE compact Gate2/4 real-provider ordered-record proof on42a/artifacta0dc: genuine namespace remove -> accepted insertion_order -> after-durable lostACK/restart/original receipt retry -> exact serialized inverse/redo raw key order. Worker rt-m2-private017-ordered-gate24-node-prep-0751 changes test source only; no body execution until both artifact reviews and your normal017pin review. Please reuse this eventual proof rather than launching a duplicate ordered lifecycle case. Pin qualification/origin checks remain yours. RT03 original owned-raw role/id/retry/restart/occupied/inverse node is separate and remains Runtime-owned.
+
+Normal Agent pin is still unauthorized pending Runtime artifact verdict plus your reciprocal exact42a review. Frozened5 is the canonical schema source; any later normal consumer must retain current safety/document-adapter/custody deltas, never relabel historical source as current. No new public release or containing-pin activation.
