@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T08:15:19Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 1m -->
+<!-- app2 | 2026-10-21T08:21:33Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 7m -->
 # app2 — 2026-10-21 08:15 UTC
 Milestone: M2 OPEN. Duplicate, bounded compiler-canary and default initializer DELETED; broad remaining rows OPEN.
 Integrated: HOME App hub/tl/integration 07d86990c65f1663529c19dc41eaf52460f58a61 / tree757ff3e20c344afd87b15d1bcea273738011987c. Newborn hold6bdb, scoped pack-host env0c9b and AgentChat oracle07d included. Published Runtime014/95/all76 and Composition13/9412/all77 unchanged. Native initializer1557/actual7782 retained.
