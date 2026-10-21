@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import json
 import shutil
+import sys
 import wave
 from pathlib import Path
 
@@ -235,13 +237,57 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     spec.loader.exec_module(helper)
     path = picture(tmp_path)
     work = bundle()
+    work["base_parent"]["publication_id"] = "publication-1"
+    work["placements"][0].update(source_offset=0, speed=1)
+    work["base_placements"]["occ-1"].update(source_offset=0, speed=1)
+    old_entry = next(iter(work["shots"].values()))["base_internal_timeline"]["registry"]["assets"]["old-picture"]
+    old_entry.update(generationId="generation-old", variantId="variant-old")
+    next(iter(work["shots"].values()))["internal_timeline"]["registry"]["assets"]["old-picture"].update(
+        generationId="generation-old", variantId="variant-old"
+    )
     edit(work, path.name)
     document = tmp_path / "timeline.json"
     document.write_text(json.dumps(work))
     shown = SimpleNamespace(ok=True, data={"summary": {"head_revision_id": "advanced-head"}})
     client = SimpleNamespace(timelines=SimpleNamespace(open_composition=lambda *args: shown))
     class StaleWorkspace(Catalog):
-        def publish_parent_composition(self, *args, **kwargs):
+        def get_project_media_selection(self, _project_id, selection):
+            if selection["generation_id"] == "generation-old":
+                object_id = OLD
+            else:
+                object_id = self.calls[0][1] and self.calls[0][2]["expected_digest"]
+            return {
+                "asset": selection["asset"], "generation_id": selection["generation_id"],
+                "variant_id": selection["variant_id"], "object_id": object_id,
+                "catalog_digest": "sha256:" + "c" * 64,
+            }
+
+        def get_project_verified_media(self, _project_id, selection):
+            return {"selection": selection, "media_type": "image/png", "size": 78,
+                    "width": 16, "height": 12}
+
+    class Session:
+        def _state(self):
+            return {"base": {"revision_id": "parent-1", "publication_id": "publication-1"},
+                    "pending": [], "flight": None}
+
+        def _bundle(self, _state):
+            original = bundle()
+            original["base_parent"]["publication_id"] = "publication-1"
+            original["placements"][0].update(source_offset=0, speed=1)
+            original["base_placements"]["occ-1"].update(source_offset=0, speed=1)
+            original_shot = next(iter(original["shots"].values()))
+            original_shot["base_internal_timeline"]["registry"]["assets"]["old-picture"].update(
+                generationId="generation-old", variantId="variant-old"
+            )
+            original_shot["internal_timeline"]["registry"]["assets"]["old-picture"].update(
+                generationId="generation-old", variantId="variant-old"
+            )
+            return original
+
+        def commit_many(self, commands, **kwargs):
+            assert [command["op"] for command in commands] == ["occurrence.swap-media"]
+            assert kwargs["base"] == {"revision_id": "parent-1", "publication_id": "publication-1"}
             raise RuntimeError("parent composition head is stale")
 
     stale_workspace = StaleWorkspace()
@@ -251,6 +297,7 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     monkeypatch.setattr(
         helper, "workspace", lambda: stale_workspace
     )
+    monkeypatch.setattr(helper.TimelineSession, "open", lambda *args, **kwargs: Session())
     monkeypatch.setattr(
         sys,
         "argv",
@@ -392,6 +439,351 @@ def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
         assert diff_authoring_candidate(reopened)["change_count"] == 0
     finally:
         service.close()
+
+
+@pytest.mark.integration
+def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba(
+    tmp_path, monkeypatch, real_runtime, capsys,
+):
+    """Publish one native same-alias rebind through the real Runtime door.
+
+    The source closure is read from the exact ordinary014 Runtime fixture, while all
+    mutable setup lives in a fresh realm and crosses ``trusted_seed``. The
+    document script then owns checkout, import, native capture and commit.
+    """
+    from contextlib import nullcontext
+
+    from astrid.sdk import AstridClient
+    from astrid.sdk.timeline.capture import capture_move
+    from astrid.sdk.timeline.store import fetch_bundle
+    from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+    from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
+    from tests.helpers.runtime import use_runtime
+    from tests.helpers.trusted_seed import seed_trusted_parent
+
+    monkeypatch.setenv('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/runtime')
+    runtime = use_runtime(commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7')
+    sys.path.insert(0, str(runtime / 'tests'))
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from timeline_commit_film_fixture import build_film_fixture, read_object_from_realm
+
+    source_root = tmp_path / 'source'
+    source_root.mkdir()
+    source_fixture = build_film_fixture(source_root)
+    source = RuntimeService(source_fixture.duplicate_root)
+    try:
+        source_document = source._timeline_commits()[0].revision_closure(
+            source_fixture.project_id, source_fixture.timeline_id,
+            source_fixture.parent_revision_id,
+        )
+        source_objects = [
+            (row['digest'], row['media_type'], row['original_name'])
+            for row in source.store.conn.execute(
+                'SELECT digest, media_type, original_name FROM objects'
+            )
+        ]
+    finally:
+        source.close()
+
+    realm = tmp_path / 'realm'
+    RealmStore.initialize(realm).close()
+    service = RuntimeService(realm)
+    project = service.create_project(
+        {'slug': 'wc6-native', 'name': 'WC6 native'}, idempotency_key='wc6-project'
+    )['id']
+    service.create_timeline(project, 'film', idempotency_key='wc6-timeline')
+
+    for digest, media_type, original_name in source_objects:
+        service.ingest(
+            project,
+            read_object_from_realm(source_fixture.duplicate_root, 'sha256:' + digest),
+            media_type=media_type,
+            original_name=original_name,
+            idempotency_key='wc6-source-' + digest,
+        )
+
+    old_path = picture(tmp_path, 'old.png', 'red')
+    new_path = picture(tmp_path, 'new.png', 'blue')
+    old_bytes = old_path.read_bytes()
+    old_digest = 'sha256:' + hashlib.sha256(old_bytes).hexdigest()
+    old_import = service.import_media(
+        project, old_bytes, media_type='image/png', original_name='old.png',
+        expected_digest=old_digest, actor_id='trusted-test-setup', width=16,
+        height=12, idempotency_key='wc6-old',
+    )['data']
+    old_media = service.get_project_media_selection(
+        project,
+        {'asset': 'picture-1', 'generation_id': old_import['generation_id'],
+         'variant_id': old_import['variant_id']},
+        authorize=lambda: None,
+    )
+
+    parent = copy.deepcopy(source_document['parent_revision']['payload'])
+    shots = copy.deepcopy(source_document['shot_revisions'])
+    internals = copy.deepcopy(source_document['internal_timeline_revisions'])
+    first_shot = next(row for row in shots if row['shot_id'] == 'shot-1')
+    old_internal_id = first_shot['internal_timeline_revision_id']
+    first_internal = next(row for row in internals if row['revision_id'] == old_internal_id)
+    registry = first_internal['payload']['registry']['assets']
+    original_alias_order = list(registry)
+    original_opaque = {'keep': True}
+    registry['picture-1'].update(
+        media_id=old_media['object_id'], type='image',
+        generationId=old_media['generation_id'], variantId=old_media['variant_id'],
+        opaque={'keep': True},
+    )
+    registry['picture-1'].pop('object_id', None)
+    first_internal['payload']['output'] = {'fps': 24}
+    first_internal['payload']['clips'][0]['hold'] = 0.9
+    first_internal['payload']['clips'].append({
+        'asset': 'picture-1', 'at': 0.9, 'clipType': 'media', 'hold': 0.9,
+        'id': 'clip-1b', 'track': 'picture',
+    })
+    first_shot['payload']['items'] = [
+        {'item_id': 'picture-item', 'media_id': old_media['object_id'], 'opaque': {'keep': True}}
+    ]
+    first_shot['payload']['assets'] = [{
+        'asset_id': 'picture-1', 'object_id': old_media['object_id'], 'opaque': {'keep': True},
+        'type': 'image', 'media_type': 'image/png',
+        'source': {
+            'media_id': old_media['object_id'],
+            'content_sha256': old_digest.removeprefix('sha256:'),
+            'type': 'image/png',
+        },
+    }]
+    first_shot['payload']['opaque_namespace'] = {'media': old_media['object_id']}
+    first_shot['payload']['internal_timeline_revision_id'] = old_internal_id
+    baseline_head = service.get_project_timeline(project, 'film')['head_revision_id']
+    seeded = seed_trusted_parent(
+        service,
+        {
+            'project_id': project, 'timeline_id': 'film', 'expected_head': baseline_head,
+            'parent_revision_id': 'wc6-baseline', 'parent_composition': parent,
+            'shot_revisions': shots, 'internal_timeline_revisions': internals,
+        },
+        idempotency_key='wc6-baseline',
+    )
+    baseline_publication = seeded['receipt']['receipt_id']
+    commits, _ = service._timeline_commits()
+    baseline = commits.revision_closure(project, 'film', 'wc6-baseline')
+    service.close()
+
+    daemon = real_runtime(
+        realm, commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7',
+        authoring_profile='astrid',
+    )
+
+    def open_client(endpoint_daemon):
+        return AstridClient.open(
+            endpoint=endpoint_daemon.endpoint,
+            credential=endpoint_daemon.credential_path,
+            realm_id=endpoint_daemon.service.realm['id'],
+            actor_id='owner', client_name='wc6-native-proof', client_version='1',
+            protocol_version='workspace.v1',
+        )
+
+    client = open_client(daemon)
+    transport = WorkspaceClient(daemon.endpoint, daemon.credential_path)
+    script = Path(__file__).parents[2] / 'astrid/packs/rendering/docs/scripts/timeline_document.py'
+    spec = importlib.util.spec_from_file_location('timeline_document_wc6_native_test', script)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    monkeypatch.setattr(helper.AstridClient, 'open_from_launcher', lambda **_: nullcontext(client))
+    monkeypatch.setattr(helper, 'workspace', lambda: transport)
+
+    def run_script(*args):
+        monkeypatch.setattr(sys, 'argv', [str(script), *args])
+        helper.main()
+        capsys.readouterr()
+
+    document = tmp_path / 'timeline.json'
+    run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(document))
+    checkout = json.loads(document.read_text())
+    first_id = first_shot['shot_id']
+    checkout_shot = checkout['shots'][first_id]
+    checkout_timeline = checkout_shot['internal_timeline']
+    checkout_clip = next(row for row in checkout_timeline['clips'] if row['id'] == 'clip-1')
+    original_narration = copy.deepcopy(checkout_shot['payload'].get('text_bindings'))
+    original_metadata = copy.deepcopy(checkout_shot['payload'].get('metadata'))
+    original_source_window = {
+        key: checkout_clip.get(key) for key in ('from', 'to', 'source_window')
+    }
+    checkout_clip.update(at=0.125, hold=0.75)
+    checkout_timeline['registry']['assets']['picture-1']['local_path'] = new_path.name
+    document.write_text(json.dumps(checkout))
+
+    base_bundle = fetch_bundle(project, 'film', revision_id='wc6-baseline', client=client)
+    disjoint_session = TimelineSession.open(
+        project, 'film', client=client, outbox_path=tmp_path / 'disjoint.outbox.json',
+        base_revision_id='wc6-baseline', base_publication_id=baseline_publication,
+    )
+    run_script('publish', '--file', str(document), '--idempotency-key', 'wc6-publish')
+    publication_file = document.with_suffix('.publication.json')
+    publication_receipt = json.loads(publication_file.read_text())
+    publication = publication_receipt['publication']
+    assert publication['data']['status'] == 'accepted'
+    assert [command['op'] for command in publication['data']['commands']] == [
+        'occurrence.swap-media', 'clip.move', 'clip.set',
+    ]
+    published_document = publication['data']['canonical_document']
+    new_digest = 'sha256:' + hashlib.sha256(new_path.read_bytes()).hexdigest()
+    published_internal = next(
+        row for row in published_document['internal_timeline_revisions']
+        if row['revision_id'] == published_document['shot_revisions'][0]['internal_timeline_revision_id']
+    )
+    published_clip = next(row for row in published_internal['payload']['clips'] if row['id'] == 'clip-1')
+    assert published_clip['at'] == 0.125
+    assert published_clip['hold'] == 0.75
+    assert {key: published_clip.get(key) for key in ('from', 'to', 'source_window')} == original_source_window
+    published_entry = published_internal['payload']['registry']['assets']['picture-1']
+    assert published_entry['media_id'] == new_digest
+    assert list(published_internal['payload']['registry']['assets']) == original_alias_order
+    assert published_entry['opaque'] == original_opaque
+    assert [row['id'] for row in published_internal['payload']['clips']] == ['clip-1', 'clip-1b']
+    published_shot = next(row for row in published_document['shot_revisions'] if row['shot_id'] == first_id)
+    assert published_shot['payload']['items'][0]['media_id'] == new_digest
+    assert published_shot['payload']['assets'][0]['source']['media_id'] == new_digest
+    assert published_shot['payload']['opaque_namespace']['media'] == old_media['object_id']
+    assert published_shot['payload']['text_bindings'] == original_narration
+    assert published_shot['payload']['metadata'] == original_metadata
+    second_shot = next(row for row in published_document['shot_revisions'] if row['shot_id'] == 'shot-2')
+    baseline_second = next(row for row in baseline['shot_revisions'] if row['shot_id'] == 'shot-2')
+    assert second_shot == baseline_second
+    records = publication['data']['commands']
+    media_record = next(record for record in records if record['op'] == 'occurrence.swap-media')
+    assert media_record['args']['old_media']['object_id'] == old_media['object_id']
+    assert media_record['args']['media']['object_id'] == new_digest
+    history = client.timelines.history(project, 'film', limit=100).data
+    assert any(row['receipt']['receipt_id'] == publication['receipt']['receipt_id'] for row in history['items'])
+
+    reloaded = tmp_path / 'reloaded.json'
+    run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(reloaded))
+    reloaded_document = json.loads(reloaded.read_text())
+    assert reloaded_document['base_parent']['revision_id'] == published_document['parent_revision']['revision_id']
+    assert reloaded_document['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['media_id'] == new_digest
+
+    from runtime_protocol.server import RuntimeHandler
+
+    original_send = RuntimeHandler._send
+    lost = {'done': False}
+    undo_wire = []
+
+    def lose_undo_ack(handler, status, payload=None, **kwargs):
+        if (status == 200 and handler.command == 'POST' and handler.path.endswith('/commit')
+                and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+                and getattr(handler, '_defer_response', False) and not lost['done']):
+            undo_wire.append({
+                'key': handler.headers['Idempotency-Key'],
+                'body': handler._prefetched_body,
+            })
+            lost['done'] = True
+            # Match the M1 real-HTTP seam: commit_timeline has durably
+            # accepted the edit, but no response bytes have been sent.
+            raise ConnectionError('WC6 proof dropped undo response after durable acceptance')
+        if (handler.command == 'POST' and handler.path.endswith('/commit')
+                and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+                and getattr(handler, '_defer_response', False)):
+            undo_wire.append({
+                'key': handler.headers['Idempotency-Key'],
+                'body': handler._prefetched_body,
+            })
+        return original_send(handler, status, payload, **kwargs)
+
+    monkeypatch.setattr(RuntimeHandler, '_send', lose_undo_ack)
+    undo_outbox = tmp_path / 'undo.outbox.json'
+    undo_session = TimelineSession.open(
+        project, 'film', client=client, outbox_path=undo_outbox,
+    )
+    with pytest.raises(WorkspaceClientError) as transport_error:
+        undo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-undo')
+    assert transport_error.value.status == 0
+    assert transport_error.value.code == 'transport_error'
+    flight = json.loads(undo_outbox.read_text())['flight']
+    assert flight['key'] == 'wc6-undo'
+    assert flight['body'].encode() == undo_wire[0]['body']
+    restart_port = daemon.httpd.server_port
+    daemon.stop()
+    # Keep the stale disjoint session on the same HTTP endpoint across the
+    # restart; the M1 real-HTTP proof uses this convention as well.
+    restarted = real_runtime(
+        realm, port=restart_port,
+        commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7',
+        authoring_profile='astrid',
+    )
+    client2 = open_client(restarted)
+    retry_session = TimelineSession.open(
+        project, 'film', client=client2, outbox_path=undo_outbox,
+    )
+    undone = retry_session.flush(idempotency_key='wc6-undo')
+    assert undone['data']['canonical_document'] == baseline
+    assert lost['done'] is True
+    assert len(undo_wire) == 2
+    assert undo_wire[1] == undo_wire[0]
+    undo_receipt = undone['receipt']
+    assert undo_receipt['receipt_id'] == undone['data']['accepted_publication_id']
+    undo_history = client2.timelines.history(project, 'film', limit=100).data
+    assert undo_history['head']['revision_id'] == undone['data']['accepted_revision_id']
+    assert undo_history['head']['publication_id'] == undo_receipt['receipt_id']
+    assert any(
+        row['publication_id'] == undo_receipt['receipt_id']
+        and row['receipt']['receipt_id'] == undo_receipt['receipt_id']
+        for row in undo_history['items']
+    )
+
+    # This stale session is intentionally committed after undo.  It is
+    # unrelated to the media occurrence and must rebase without changing the
+    # exact undo result.
+    disjoint = disjoint_session.commit_many(
+        [capture_move(base_bundle, 'parent/clip:music-bed', 1)],
+        idempotency_key='wc6-disjoint', via='python',
+    )
+    assert disjoint['data']['status'] == 'rebased'
+    disjoint_document = disjoint['data']['canonical_document']
+    assert disjoint_document['parent_revision']['payload']['clips'][0]['at'] == 1
+
+    bad = tmp_path / 'bad.json'
+    run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(bad))
+    bad_document = json.loads(bad.read_text())
+    bad_document['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['local_path'] = new_path.name
+    bad_document['shots'][first_id]['payload']['opaque_namespace']['media'] = 'changed-opaque-value'
+    bad.write_text(json.dumps(bad_document))
+    before_bad = client2.timelines.history(project, 'film', limit=100).data
+    monkeypatch.setattr(helper.AstridClient, 'open_from_launcher', lambda **_: nullcontext(client2))
+    monkeypatch.setattr(helper, 'workspace', lambda: WorkspaceClient(restarted.endpoint, restarted.credential_path))
+    with pytest.raises(RuntimeError, match='document publish is held'):
+        run_script('publish', '--file', str(bad), '--idempotency-key', 'wc6-bad')
+    assert client2.timelines.history(project, 'film', limit=100).data == before_bad
+
+    # A→B→A remains an intervening write: the original publication cannot be
+    # undone just because the visible media selection returned to A.
+    redo_session = TimelineSession.open(
+        project, 'film', client=client2, outbox_path=tmp_path / 'redo.outbox.json',
+    )
+    # Re-read the exact Runtime-verified inputs after restart; this preserves
+    # the F1 media guard while replaying the unchanged command record.
+    redo_verified_media = [
+        transport.get_project_verified_media(project, media_record['args'][key])
+        for key in ('old_media', 'media')
+    ]
+    redone = redo_session.commit_many(
+        records, idempotency_key='wc6-aba-rebind', via='python',
+        verified_media=redo_verified_media,
+    )
+    redone_document = redone['data']['canonical_document']
+    assert redone_document['shot_revisions'][0]['payload']['items'][0]['media_id'] == new_digest
+    redone_internal = next(
+        row for row in redone_document['internal_timeline_revisions']
+        if row['revision_id'] == redone_document['shot_revisions'][0]['internal_timeline_revision_id']
+    )
+    redone_clip = next(row for row in redone_internal['payload']['clips'] if row['id'] == 'clip-1')
+    assert (redone_clip['at'], redone_clip['hold']) == (0.125, 0.75)
+    aba_before = client2.timelines.history(project, 'film', limit=100).data
+    with pytest.raises(CommitConflict) as conflict:
+        redo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-aba-undo')
+    assert conflict.value.failure['details']['status'] == 'conflict'
+    assert client2.timelines.history(project, 'film', limit=100).data == aba_before
+
 
 
 def test_inherited_explicit_local_path_remains_an_active_request(tmp_path):

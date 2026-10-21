@@ -225,17 +225,23 @@ class TimelineSession:
         commands = [_native_command(command) for command in commands]
         return self._stage(lambda state: execute(self._bundle(state), commands).commands)
 
-    def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
+    def commit(self, command, *, idempotency_key=None, dry_run=False, via="python", verified_media=()):
         """Capture and flush one native command, or retry its original flight."""
-        return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+        return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run,
+                                via=via, verified_media=verified_media)
 
-    def commit_many(self, commands, *, idempotency_key=None, dry_run=False, via="python", base=None):
+    def commit_many(
+        self, commands, *, idempotency_key=None, dry_run=False, via="python", base=None,
+        verified_media=(),
+    ):
         """Capture and flush a batch, or retry its exact flight before a suffix."""
         from astrid.sdk.timeline._command_state import equal
         from astrid.sdk.timeline.commands import execute
 
         commands = [_native_command(command) for command in commands]
-        self._stage(lambda state: execute(self._bundle(state), commands).commands,
+        self._stage(lambda state: execute(
+                        self._bundle(state), commands, verified_media=verified_media
+                    ).commands,
                     lambda pending: len(pending) == len(commands) and all(
                         all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
                         and all(equal(saved["intent"].get(key), value)
