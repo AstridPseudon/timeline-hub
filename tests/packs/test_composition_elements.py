@@ -104,7 +104,10 @@ class CompositionElementTest(unittest.TestCase):
             animations = gen_effect_registry.generate_element_registry("animations", include_local=False)
             transitions = gen_effect_registry.generate_element_registry("transitions", include_local=False)
 
-        self.assertNotIn("'text-card'", effects)
+        self.assertIn(
+            "'text-card': selectOwnedEffect('text-card', TextCard, {'rendering': TextCard}),",
+            effects,
+        )
         self.assertNotIn("@pack-rendering-elements-effects/text-card/component", effects)
         self.assertNotIn("@pack-rendering-elements-animations/fade-up/component", animations)
         self.assertNotIn("@pack-rendering-elements-transitions/cross-fade/component", transitions)
