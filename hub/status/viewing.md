@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T12:17:17Z | dispatcher heartbeat 11s | live 5 (sol 0, luna 5, other 0) | busy30 25 | status age 0m -->
+<!-- viewing | 2026-10-21T12:23:29Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 29 | status age 6m -->
 # viewing — 2026-10-21 12:07 UTC
 This round: 1 source-deletion row closed (VW-AUDIO-STEP, existing integrated code); 0 new product merges; 2 rows DEFERRED and D08/adapter rows KEEP.
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and rules rev 2026-10-21 read. ACK inbox through owner11:53 scope triage and Agent/App source ACK11:53. Heavy full/browser/physical proofs now go to the test farm.

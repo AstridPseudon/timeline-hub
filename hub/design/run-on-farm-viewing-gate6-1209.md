@@ -1,6 +1,6 @@
 # Viewing Gate6 farm request — executable publication
 
-Status: HOLD.
+Status: READY.
 
 This is one farm request for the already reviewed native-codec Gate6 packet.
 Do not run it, request a local test, create a token/grant/marker, start a
@@ -51,8 +51,8 @@ copies of the committed `tl/vw-m3-gate6-farm-transport-1210` export at
 reviewed packet manifest digest is
 `0ee53582e55a4f9eb8464a2d7581924cf42bb5a56f3d75de362991f3e196299e`.
 
-The source packet contains exactly eleven regular files: the ten files listed
-in `SHA256SUMS` plus `issue.mjs` as the unexecuted issuance source. No token,
+The source packet contains exactly eleven regular files: the ten scripts listed
+in `SHA256SUMS` (including `issue.mjs`) plus the checksum manifest. No token,
 grant, marker, generated operational JSON, source graph, node_modules, media,
 archive, or build output is published here.
 
@@ -158,3 +158,5 @@ is FAIL. The farm result belongs at
 3. Central preflight and the one authorized physical five-case run are
    unverified. This HOLD request makes no readiness, parity, qualification, or
    M4 claim.
+
+Manager authorization 2026-10-21 12:19 UTC: READY for farm preparation and ONE existing preflight/physical comparison after all prerequisites pass. Fresh authority note is design/viewing-farm-gate6-authority-1153.md; materialize the identical note at its named managers/viewing/notes path. This clears authorization blocker1 only; farm materialization/provisioning must still pass comprehensive preflight. No local physical run.
