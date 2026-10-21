@@ -3,7 +3,13 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, wri
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { DirectHarness, selectedParamCliEnv } from './harness.ts';
+import { DirectHarness, selectedParamCliEnv, selectedParamElementResolveCommand } from './harness.ts';
+
+test('selected DEV resolver invokes the canonical project-pack command before the ref flags', () => {
+  assert.deepEqual(selectedParamElementResolveCommand('/tmp/selected-agent-python'), [
+    '/tmp/selected-agent-python', '-m', 'astrid.core.element.cli', 'project-pack', 'resolve',
+  ]);
+});
 
 test('selected Agent child env carries the credential file path, not its token', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'astrid-selected-credential-'));

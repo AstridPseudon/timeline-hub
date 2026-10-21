@@ -52,6 +52,11 @@ export function selectedParamCliEnv(base: NodeJS.ProcessEnv, credentialFile: str
   };
 }
 
+/** The Vite admission host appends the exact selected project-pack ref flags to this argv. */
+export function selectedParamElementResolveCommand(python: string): string[] {
+  return [python, '-m', 'astrid.core.element.cli', 'project-pack', 'resolve'];
+}
+
 export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT
   ?? [path.join(REPO_ROOT, '..', 'astrid-runtime'), path.join(REPO_ROOT, '../..', 'runtime')]
     .find((dir) => existsSync(path.join(dir, 'runtime_protocol', 'cli.py')))
@@ -743,7 +748,7 @@ export class DirectHarness {
       ASTRID_RUNTIME_CHECKOUT: RUNTIME_CHECKOUT,
       ASTRID_PROJECT_PACKS_ROOT: seed.sourceRoot,
       ASTRID_ELEMENT_ARTIFACT_ROOT: this.selectedParamEnv.ASTRID_ELEMENT_ARTIFACT_ROOT,
-      ASTRID_ELEMENT_RESOLVE_COMMAND: JSON.stringify([this.selectedParamPython, '-m', 'astrid.core.element.cli']),
+      ASTRID_ELEMENT_RESOLVE_COMMAND: JSON.stringify(selectedParamElementResolveCommand(this.selectedParamPython)),
       VITE_DISABLE_REMOTE_FONTS: '1',
     };
     this.devServer = spawnGroup(process.execPath, [path.join(REPO_ROOT, 'node_modules/vite/bin/vite.js'), '--config', path.join(REPO_ROOT, 'config/vite/vite.config.ts'), '--host', '127.0.0.1', '--port', String(this.devPort)], { cwd: REPO_ROOT, env });
