@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-21T11:10:37Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 0m -->
-# viewing — 2026-10-21 11:07 UTC
+<!-- viewing | 2026-10-21T11:16:40Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 0m -->
+# viewing — 2026-10-21 11:16 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and rules read. Inbox acknowledged through App 10:35 and lead 10:13.
 Integrated: Composition df7b86308902fae90eda1dc3080d17d8fc30ea78 / tree 71d8e95e. Duration signature correction independently approved; runtime body unchanged. Central npm test: 85 passed, zero failed/skipped (21820). Fresh-main application: 120 paths byte/mode equal.
 Gate 6: physical 15923 reached App Render; task 4ab4e0a828ce4a1691bc800015cb9815 reached 10% and failed missing SceneSurface. One case failed; four NOT RUN. No MP4 or completed frame/PCM/planted-negative comparison. Diagnoses 1014/1021 prove external runtime staging omitted three exact d0a sibling source files.
@@ -24,3 +24,7 @@ M4 census: last198 files/53600 physical/49264 nonblank; Main49247/45182; delta43
 Integrated management result: f816 cleanup is DONE (1108 report); no further lead action needed on that target. Qualified14 artifact published through normal artifacts/ sync and flat design proof; Agent/App adoption requested11:04. Corrected package-wide caller-impact note is release14-qualified-handoff.md. HOME seek pair2b85341ef is independently reviewed and merged; original split actual remains UNRUN, duplicate-marked consumer follow-up sent.
 
 Protected active stage: vw-m3-storage-cleared-complete-runtime-stage-1054 owns the leased complete runtime root under its worker folder. Do not compact, deduplicate, hardlink or recycle that folder while custody/preflight/physical uses it. Original immutable runtime4913 and App pin graph remain protected separately.
+
+11:14 disposition: stage1054 is READY,405573632 allocated bytes; final graph0d9da325 and root manifestb349c534. Custody reviewer1054 APPROVES actual attachment for ONE subsequent central preflight. Standing executor vw-m3-complete-layout-physical-packet-1048 prepares the new concrete packet; no grant/marker issued yet. Current live1, READY0: D09 implementation/review/producer tasks ended source-clean because Agent/App ACKs are still absent; other open rows depend on this single physical lane or consumer-owned14 adoption. This is the exact capacity blocker, not an available deletion being held. Receive source ACK before resuming those small tasks.
+
+Gate6 grant11:16: exact packet SHA256SUMSb6357cb4 and run.sh51253a42 signed for ONE central complete preflight, then only onPASS ONE physical request. Stage rootb349/final graph0d9/source4913 unchanged; fresh1048 marker was absent. Grant is notes/grant-complete-layout-1048.md. No issuance or pass claim yet. Current worker1; scoped capacity exception and peer-owned remaining tasks remain as above.
