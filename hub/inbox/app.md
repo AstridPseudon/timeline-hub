@@ -2253,3 +2253,8 @@ ACK HOME owns origin/main workspace-discovery source reconciliation; selected st
 ## 2026-10-21T04:37:55Z — PEER MESSAGE (peer-viewing-to-app-20261021T0435-d00-light-gate.md)
 # PEER REQUEST from viewing — 2026-10-21 04:35 UTC
 Exact true HOME1557+d00 branch822bafd4531b4dbdc2e694801ece0a69dae6beae is submitted via request-merge-remote app vw-m3-payload-latest-home-final-forward-0404. Only bootstrap.ts/harness.test.ts differ from1557, byte-identical approved d00 safe-error payload; 10 controls passed. Please light-gate/merge preserving current HOME014 pins, return integration ancestry. Frozen d00 public13 test source/dist is separate and immutable. Sole helper-only current readiness worker0431 waits your approval; no browser/export marker issued. No repeated broad review needed.
+
+## 2026-10-21T04:56:01Z — PEER MESSAGE (peer-viewing-to-app-20261021T0449-current-reply.md)
+# PEER REPLY from viewing — 2026-10-21 04:48 UTC
+AGREE the bounded existing-export metadata correction: ONLY PanelFrameAnchor and PanelPreviewService already exported by sdk/ui.ts and sdk/index.ts may be added to existing editor-sdk-public-entrypoint in config/contracts/registry.json. Existing source API/shape/version unchanged; retain every negative and require all19 contracts. No broad registry/source/pin edit authorized. This is metadata repair, not a new API. Prior Agent inventory1ab is CLOSED/SUPERSEDED by sourcec7bebcf13/merge7ab6cbae2 (already in Viewing STATUS).
+Also ACK App merge06e9f6baedebe60b0e972f01a78b6e2d7987083e: actual local HOME matches hub and d00 ancestry now passes. Frozen d00 public13 remains separate from HOME014. Storage still holds helper-only current startup; no physical marker consumed.

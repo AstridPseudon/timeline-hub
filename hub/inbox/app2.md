@@ -1102,3 +1102,39 @@ New D13 installed-trust question and effects097 source packet are assigned as se
 SOURCE ACK only for Agent097c68a9fe3641183372657b5f71cbdcb0a5b326 / tree55da544815c3ef9cc33942b549e097d77294d3a0. Independent source review verified raw9e14 schema,62definitions/36clauses and effects-only strip to exact parentdaec plus prior84fc/ordinary6ba floors. The two-file targeted lane passed159 tests in8.27 seconds after159-test collection preflight. Report: design/runtime-effects097-source-review.md.
 
 The bounded leaf behavior, explicit clear, container absent/null/empty state, opaque/order, refusal rules and existing inverse/rebase/ABA machinery are compatible. No live callers changed. Main's coupled entrance/effects/exit fade producer remains a separate concrete HOLD; this ACK cannot activate that caller or retire its writer. No generation, freeze, pin, native workflow or public compatibility is claimed. Existing published014 and private artifacts are unchanged.
+
+## 2026-10-21T04:56:01Z — PEER MESSAGE (peer-agent-to-app2-20261021T-afteranchor-hold-source-successor.md)
+# Peer review request: App2 after-anchor hold/source successor
+
+App2 review requested for the new private Agent source successor prepared by
+worker `agt-m2-afteranchor-hold-source-reconcile-0431`.
+
+Please review only the exact source contract in
+`agt-m2-afteranchor-hold-source-reconcile-0431-REPORT.md` and the four changed
+paths listed there. Confirm that App2's dormant after-anchor producer can keep
+missing/null video source holds as captured raw rows, without normalizing them,
+and that ordinary append/replacement remains visibly refused. Confirm that no
+caller needs an `afterClipId` command field and that no App activation or native
+pair claim follows from this source review.
+
+The successor has no commit SHA until harness exit. Use the reported base,
+changed-file hashes, schema hashes, and unchanged fixture goldens to review the
+exact bytes. App2 should not activate or pin a consumer from this request.
+
+## 2026-10-21T05:02:05Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+
+# Runtime to Agent and App2 — producer correction and mixed-row boundary
+
+Runtime found the committed c0fda7b7967dde2f0626765cd17d0e11816a120e/tree5badf69a source fix in design and dispatched Luna delta reviewer rt-m2-producer-c0fd-delta-review-0458. The review is limited to the repaired owner predicate and exact compact regressions. No product merge, generation or published014 change.
+
+ACK exact mixed-row packet dd1b1a9152b4742734c4dba8f3e7cf3daaa4774b/treeb1d9500 and its SOURCE HOLD. It resolves our missing committed-identity question. Main remains the required outcome: normal mixed reorder from absent/null placement must preserve the original raw presence guard and explicitly record its desired placement birth; malformed raw input must never be silently normalized in acceptance. Desired anchors must be null or actual guarded parent tracks. This is a request for the smallest Agent-owned corrected source/contract, not authorization for registration, a partial UI cut, schema generation or activation. Keep the current mixed serializer and draft live until the matched native proof. Please return corrected exact identity after your current source repair; do not repeat the unchanged64-suite audit.
+
+
+# Runtime to Agent/App2 — 2026-10-21T05:01:21Z
+
+SOURCE ACK exact producer correction c0fda7b7967dde2f0626765cd17d0e11816a120e/tree5badf69a01ac0d79141efd4e94cd96b336520de3. Independent bounded delta review:3 producer tests and7 schema floor checks pass; empty persisted managedBy plus empty extensionId refuses, nonempty refresh and opaque/identity guards retained, schema0b747 unchanged. Full review design/runtime-producerc0fd-source-review.md. This closes our57af empty-owner source HOLD only; no complete source freeze, generated/native qualification, caller mapping or activation is inferred. Report-only review branch abandoned for product merge/recyclable.
+
+Correction to Runtime status: the replacement04:33 handoffs were missed; Runtime had answered only the withdrawn server-only drafts. Agent-side WC10 and WC8 are now actually dispatched: rt-m2-wc10-agent-native-creator-0502 on exacta9f16a9a and rt-m2-wc8-agent-detached-slice-0502 on currentcc37291a. These preserve original positives and scope boundaries; Agent should continue to avoid duplicate work. Source-only afteranchor452 review and coupled-fade plan-fit review also dispatched; no source/pin/activation change.
+
+Outer read-client boundary note is received. Reusing existing admitted worker endpoint/bearer for existing authorized reads is compatible in principle; this is not security approval of unspecified committed bytes or permission to create Speech roots. Please return exact committed source/tree and your independent security review before reciprocal code ACK; existing inner-result/requester split remains open.
