@@ -1,0 +1,54 @@
+--- existing-harness-retarget-0223/run.sh
++++ browser-guard-correction-0238/run.sh
+@@ -1,7 +1,6 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+ 
+-own=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-mouth-existing-harness-retarget-0223
+ root=${ASTRID_CHECKOUT:?central runner must select the committed Agent snapshot}
+ root=$(realpath -- "$root")
+ runtime=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b
+@@ -30,6 +29,10 @@
+ }
+ 
+ sha() { sha256sum -- "$1" | awk '{print $1}'; }
++browser_realpath=$(realpath -- "$browser")
++test "$browser_realpath" = "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
++browser_sha=$(sha "$browser")
++test "$browser_sha" = 63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4
+ artifact_sha=$(sha "$artifact")
+ test "$artifact_sha" = 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+ node_sha=$(sha "$node")
+@@ -56,6 +59,7 @@
+ before_source=$(source_hash)
+ before_artifact=$artifact_sha
+ before_node=$node_sha
++before_browser=$browser_sha
+ declare -A before_peer_sha=()
+ for name in "${!peer_sha[@]}"; do before_peer_sha[$name]=$(sha "$peers/$name"); done
+ 
+@@ -70,7 +74,8 @@
+ }
+ trap cleanup EXIT
+ printf '%s\n' "SOURCE_REVISION=$source_revision" "SOURCE_TREE=$source_tree" \
+-    "SOURCE_HASH=$before_source" "ARTIFACT_SHA=$before_artifact" "NODE_SHA=$before_node" > "$scratch/preflight.txt"
++    "SOURCE_HASH=$before_source" "BROWSER_REALPATH=$browser_realpath" \
++    "BROWSER_SHA=$before_browser" "ARTIFACT_SHA=$before_artifact" "NODE_SHA=$before_node" > "$scratch/preflight.txt"
+ 
+ set +e
+ env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 \
+@@ -88,10 +93,13 @@
+ set -e
+ keep=1
+ 
++test "$(realpath -- "$browser")" = "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
++test "$(sha "$browser")" = "$before_browser"
++test "$(sha "$browser")" = 63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4
+ test "$(source_hash)" = "$before_source"
+ test "$(sha "$artifact")" = "$before_artifact"
+ test "$(sha "$node")" = "$before_node"
+ for name in "${!peer_sha[@]}"; do test "$(sha "$peers/$name")" = "${before_peer_sha[$name]}"; done
+ if test "$status" != 0; then exit "$status"; fi
+ printf '%s\n' "RETAINED_SUCCESS_TEMP=$scratch"
+-printf '%s\n' "PASS: source revision/tree and package77/Node43d6/readonly-peer hashes unchanged"
++printf '%s\n' "PASS: source revision/tree, Chromium1194 path/hash, package77/Node43d6/readonly-peer hashes unchanged"
