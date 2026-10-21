@@ -5,8 +5,8 @@
 # cache behavior unchanged.
 set -euo pipefail
 
-EXPECTED_AGENT_COMMIT=c4b964f6a050edf63a4278d35717e46a88a80386
-EXPECTED_AGENT_TREE=d7796be264c341adbcb9765aae374b832dede144
+EXPECTED_AGENT_COMMIT=b3c96a758c1cfa2a609d1498e0e9ee401b32cc40
+EXPECTED_AGENT_TREE=3467b7bffb0fe6edf9178c9a9de4d446c8ab8857
 EXPECTED_RUNTIME_COMMIT=b92d3e7a05eec65c142294ef4873edd059e9b31d
 EXPECTED_RUNTIME_TREE=6abc2f117391de8e7e35c0283f575a002199894d
 EXPECTED_CLIENT_COMMIT=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
@@ -79,7 +79,7 @@ fi
 if [ -n "$AGENT_WHEEL" ]; then
   require_file "$AGENT_WHEEL"
 else
-  fail 'FULL_COHERENT_PUBLIC_AGENT_WHEEL is not set (current c4b Agent wheel not built)'
+  fail 'FULL_COHERENT_PUBLIC_AGENT_WHEEL is not set (current b3c Agent wheel not built)'
 fi
 
 if [ -x "$NODE" ]; then
@@ -401,7 +401,7 @@ with ZipFile(client_wheel) as archive:
         if name.startswith("astrid_runtime_client/") and not name.endswith("/")
     }
 if agent_client != public_client:
-    raise SystemExit("c4b Agent wheel does not carry the exact public95 client payload")
+    raise SystemExit("b3c Agent wheel does not carry the exact public95 client payload")
 
 schema = __import__("banodoco_timeline_schema")
 schema_origin = Path(schema.__file__).resolve()
