@@ -25,7 +25,7 @@ type CommitPost = {
 };
 
 const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
-  seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
+  seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts(undefined, 'ordinary', { managedOldMedia: true })); }, { scope: 'worker', timeout: 240_000 }],
 });
 test.beforeAll(() => {
   const reason = harnessUnavailableReason();
@@ -185,9 +185,9 @@ test('M2 real popup media ADD/SWAP: raw preservation, occurrence isolation, relo
   expect(traffic.mediaSelections.some((path) => path.includes('/media-selection/verified?'))).toBe(true);
   await page.unroute(COMMITS);
 
-  const addedClip = dialog.locator(`[data-clip-id="${seed3.occurrenceId}:${addRow.id}"]`);
-  await expect(addedClip).toBeVisible(CEILING);
-  await addedClip.click();
+  const oldClip = dialog.locator(`[data-clip-id="${seed3.occurrenceId}:${seed3.agentClipId}"]`);
+  await expect(oldClip).toBeVisible(CEILING);
+  await oldClip.click();
   await expect(dialog.getByRole('button', { name: 'Swap selected clip', exact: true })).toBeEnabled();
 
   heldRoute = undefined;
@@ -205,20 +205,21 @@ test('M2 real popup media ADD/SWAP: raw preservation, occurrence isolation, relo
   const swapPost = await waitForPost(traffic.posts, 1);
   expect(swapPost.body.commands[0]).toMatchObject({
     op: 'occurrence.swap-media',
-    select: `occurrence:${seed3.occurrenceId}/clip:${addRow.id}`,
+    select: `occurrence:${seed3.occurrenceId}/clip:${seed3.agentClipId}`,
     intent: { ownership: 'occurrence' },
   });
   const swapArgs = swapPost.body.commands[0].args as any;
   fiveFieldSelection(swapArgs.old_media);
   fiveFieldSelection(swapArgs.media);
-  expect(swapArgs.old_media).toEqual(addCommand.args.media);
+  expect(seed3.oldMediaSelection).toBeDefined();
+  expect(swapArgs.old_media).toEqual(seed3.oldMediaSelection);
   expect(swapArgs.media).not.toEqual(swapArgs.old_media);
   const swapResult = accepted(swapPost);
   const swappedState = await rawShotState(harness, seed3, swapResult.data.accepted_revision_id);
   expect(swappedState.parent).toEqual(beforeParent);
   expect(swappedState.occurrence).toEqual(beforeOccurrence);
-  expect(swappedState.clips.find((clip) => clip.id === seed3.agentClipId)).toEqual(beforeOpaqueChild);
-  expect(swappedState.clips.find((clip) => clip.id === addRow.id)).toEqual(expect.objectContaining({ ...addRow, asset: swapArgs.media.asset }));
+  expect(swappedState.clips.find((clip) => clip.id === seed3.agentClipId)).toEqual(expect.objectContaining({ ...beforeOpaqueChild, asset: swapArgs.media.asset }));
+  expect(swappedState.clips.find((clip) => clip.id === addRow.id)).toEqual(expect.objectContaining(addRow));
 
   const pendingOwner = (await commandOutboxes(page, seed3.timelineId)).find((owner) => owner.pending?.request.key === swapPost.key);
   expect(pendingOwner, 'the uncertain swap remains in the durable outbox').toBeTruthy();

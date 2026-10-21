@@ -329,6 +329,14 @@ export interface ThreeProductsSeed {
   occurrenceId: string;
   /** The key the agent names for a task output (`--swap-asset f2-marker=task:T/marker#0`). It is new: the CLI refuses a key that already names other media. */
   markerAssetKey: string;
+  /** The exact public five-field selection bound to the original popup SWAP clip. */
+  oldMediaSelection?: {
+    asset: string;
+    generation_id: string;
+    variant_id: string;
+    object_id: string;
+    catalog_digest: string;
+  };
   /** Opaque data neither client models; every later revision must carry it unchanged. */
   opaque: { config: Record<string, unknown>; clip: Record<string, unknown>; shot: Record<string, unknown> };
 }
@@ -883,7 +891,7 @@ export class DirectHarness {
    * the shot `f2-shot` (occurrence on parent track `S1`, 0 s to 12 s), which the App draws as one block, not as its clips. The shot
    * also holds a full-length `f2-plate` so the film stays covered when the agent clears an asset (Astrid refuses to publish a gap).
    */
-  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT, transitions: 'ordinary' | 'native-none' | 'parent-delete' = 'ordinary'): Promise<ThreeProductsSeed> {
+  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT, transitions: 'ordinary' | 'native-none' | 'parent-delete' = 'ordinary', options: { managedOldMedia?: boolean } = {}): Promise<ThreeProductsSeed> {
     if (this.threeProductsSeed) return this.threeProductsSeed;
     const { projectId, timelineId, image, video, headRevisionId } = this.seed;
     const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
@@ -892,6 +900,15 @@ export class DirectHarness {
     const markerAssetKey = 'f2-marker';
     const videoExtension = video.mediaType === 'video/webm' ? 'webm' : 'mp4';
     const imageAsset = (name: string) => ({ file: `${name}.png`, type: 'image/png', media_id: image.objectId, content_sha256: image.digest });
+    const oldMedia = options.managedOldMedia ? await this.seedManagedOldMedia(projectId) : undefined;
+    const placeholderAsset = oldMedia ? {
+      file: 'f2-placeholder.png',
+      type: oldMedia.verified.media_type,
+      media_id: oldMedia.selection.object_id,
+      content_sha256: oldMedia.selection.object_id,
+      generationId: oldMedia.selection.generation_id,
+      variantId: oldMedia.selection.variant_id,
+    } : imageAsset('f2-placeholder');
     const videoAsset = { file: `f2-video.${videoExtension}`, type: video.mediaType, duration: 12, media_id: video.objectId, content_sha256: video.digest };
     // The App's clips are the parent composition's own (the editor changes only the parent). The Astrid CLI reaches clips only
     // inside a placed shot's internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's two clips live in a shot
@@ -946,7 +963,7 @@ export class DirectHarness {
         payload: {
           tracks: [{ id: 'plate', kind: 'visual', label: 'plate' }, { id: 'V2', kind: 'visual', label: 'V2' }],
           clips: shotClips, effects: [], audio: [], layout: {},
-          registry: { assets: { 'f2-plate': imageAsset('f2-plate'), 'f2-placeholder': imageAsset('f2-placeholder'), 'f2-clear': imageAsset('f2-clear') } },
+          registry: { assets: { 'f2-plate': imageAsset('f2-plate'), 'f2-placeholder': placeholderAsset, 'f2-clear': imageAsset('f2-clear') } },
           assets: [],
         },
       }],
@@ -972,11 +989,78 @@ export class DirectHarness {
     if (published.status !== 200) throw new Error(`seed three products timeline: ${published.status} ${JSON.stringify(published.body)}`);
     this.threeProductsSeed = {
       projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId: published.body.data.new_head,
-      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: {
+      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, oldMediaSelection: oldMedia?.selection, opaque: {
         config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip }, shot: { ...THREE_PRODUCTS_OPAQUE.shot },
       },
     };
     return this.threeProductsSeed;
+  }
+
+  /** Import and settle the old popup media through the public Runtime path before authoring the timeline. */
+  private async seedManagedOldMedia(projectId: string): Promise<{
+    selection: NonNullable<ThreeProductsSeed['oldMediaSelection']>;
+    verified: { selection: NonNullable<ThreeProductsSeed['oldMediaSelection']>; media_type: string; size: number; width?: number; height?: number };
+  }> {
+    const data = makePng(16, 16);
+    const importKey = randomUUID();
+    const importedResponse = await this.runtimeFetch(`/v1/projects/${projectId}/media-imports`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'image/png',
+        'Idempotency-Key': importKey,
+        'X-Original-Name': 'f2-placeholder.png',
+        'X-Media-Width': '16',
+        'X-Media-Height': '16',
+      },
+      body: new Uint8Array(data),
+    });
+    if (importedResponse.status !== 201) throw new Error(`seed managed old media import: ${importedResponse.status} ${await importedResponse.text()}`);
+    const imported = (await importedResponse.json()).data as Record<string, any>;
+    if (imported?.status !== 'completed' || !imported.task_id || !imported.generation_id || !imported.variant_id || !imported.asset_id) {
+      throw new Error(`managed old media import did not settle: ${JSON.stringify(imported)}`);
+    }
+
+    const outputs = await this.runtimeJson<{ items?: Array<Record<string, any>> }>('GET', `/v1/tasks/${encodeURIComponent(imported.task_id)}/managed-outputs?limit=50`);
+    if (outputs.status !== 200 || !Array.isArray(outputs.body.items) || outputs.body.items.length !== 1) {
+      throw new Error(`managed old media output page was not bounded: ${outputs.status} ${JSON.stringify(outputs.body)}`);
+    }
+    const association = outputs.body.items[0];
+    if (association.output_port !== 'original' || association.durability !== 'durable'
+      || !['available', 'promoted'].includes(association.lifecycle?.state)
+      || association.object_id !== imported.asset_id
+      || association.generation_id !== imported.generation_id
+      || association.lifecycle?.version !== 1) {
+      throw new Error(`managed old media association is not the settled immutable output: ${JSON.stringify(association)}`);
+    }
+    const associationRead = await this.runtimeJson<Record<string, any>>('GET', `/v1/managed-outputs/${encodeURIComponent(association.association_id)}`);
+    if (associationRead.status !== 200 || associationRead.body.association_id !== association.association_id
+      || associationRead.body.object_id !== association.object_id
+      || associationRead.body.lifecycle?.version !== association.lifecycle.version) {
+      throw new Error(`managed old media association read changed identity: ${associationRead.status} ${JSON.stringify(associationRead.body)}`);
+    }
+
+    const outputRef = new URLSearchParams({
+      association_id: association.association_id,
+      object_id: association.object_id,
+      version: String(association.lifecycle.version),
+    });
+    const selectionRead = await this.runtimeJson<Record<string, string>>('GET', `/v1/projects/${projectId}/media-selection?${outputRef}`);
+    if (selectionRead.status !== 200) throw new Error(`managed old media selection read: ${selectionRead.status} ${JSON.stringify(selectionRead.body)}`);
+    const selection = selectionRead.body;
+    if (Object.keys(selection).sort().join(',') !== 'asset,catalog_digest,generation_id,object_id,variant_id'
+      || selection.asset !== imported.variant_id || selection.generation_id !== imported.generation_id
+      || selection.variant_id !== imported.variant_id || selection.object_id !== association.object_id
+      || !/^sha256:[0-9a-f]{64}$/.test(selection.catalog_digest)) {
+      throw new Error(`managed old media selection is not exact: ${JSON.stringify(selection)}`);
+    }
+    const verifiedQuery = new URLSearchParams(selection);
+    const verifiedRead = await this.runtimeJson<any>('GET', `/v1/projects/${projectId}/media-selection/verified?${verifiedQuery}`);
+    if (verifiedRead.status !== 200 || JSON.stringify(verifiedRead.body.selection) !== JSON.stringify(selection)
+      || verifiedRead.body.media_type !== 'image/png' || verifiedRead.body.size !== data.length
+      || verifiedRead.body.width !== 16 || verifiedRead.body.height !== 16) {
+      throw new Error(`managed old media verified read is not exact: ${verifiedRead.status} ${JSON.stringify(verifiedRead.body)}`);
+    }
+    return { selection, verified: verifiedRead.body };
   }
 
   /**
