@@ -1,0 +1,127 @@
+--- 1120/packet/stage-audit.mjs
++++ 1140/packet/stage-audit.mjs
+@@ -1,10 +1,14 @@
+ import assert from 'node:assert/strict';
+ import {createHash} from 'node:crypto';
+-import {execFileSync} from 'node:child_process';
+-import {existsSync, lstatSync, readFileSync, readdirSync, realpathSync} from 'node:fs';
++import {existsSync, lstatSync, readFileSync, readlinkSync, readdirSync, realpathSync} from 'node:fs';
+ import path from 'node:path';
++import {pathToFileURL} from 'node:url';
++import {gunzipSync} from 'node:zlib';
+ import {build} from '/home/user/work/app/node_modules/esbuild/lib/main.js';
+ 
++const FROZEN_CONTROLLER = '/home/user/work/wt/app-pin-0d432391/tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs';
++const {hashTree: controllerHashTree} = await import(pathToFileURL(FROZEN_CONTROLLER).href);
++
+ export const STAGE = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-storage-cleared-complete-runtime-stage-1054/owned-stage';
+ export const STAGE_METADATA_ROOT = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-storage-cleared-complete-runtime-stage-1054';
+ export const SOURCE = '/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b';
+@@ -21,32 +25,11 @@
+ const contained = (root, target) => target === root || target.startsWith(`${root}${path.sep}`);
+ 
+ function tree(root) {
+-  const entries = [];
+-  const walk = (directory, prefix = '') => {
+-    for (const name of readdirSync(directory).sort()) {
+-      const absolute = path.join(directory, name);
+-      const relative = `${prefix}${name}`;
+-      const stat = lstatSync(absolute);
+-      if (stat.isDirectory()) walk(absolute, `${relative}/`);
+-      else if (stat.isFile()) entries.push([relative, stat.mode & 0o111 ? 'executable' : 'file', digest(absolute)]);
+-      else if (stat.isSymbolicLink()) entries.push([relative, 'symlink', sha(Buffer.from(requireLink(absolute)))]);
+-      else throw new Error(`unsupported graph member: ${absolute}`);
+-    }
+-  };
+-  walk(root);
+-  return {sha256: sha(Buffer.from(JSON.stringify(entries))), fileCount: entries.length};
+-}
+-
+-function requireLink(file) {
+-  return readlink(file);
++  return controllerHashTree(root);
+ }
+ 
+ function readlink(file) {
+-  return (awaitlessReadlink(file));
+-}
+-
+-function awaitlessReadlink(file) {
+-  return execFileSync('readlink', [file], {encoding: 'utf8'}).trim();
++  return readlinkSync(file);
+ }
+ 
+ function assertRealRegular(file, label) {
+@@ -101,7 +84,19 @@
+ }
+ 
+ function tarRegularMembers(archive) {
+-  return execFileSync('tar', ['-tzf', archive], {encoding: 'utf8'}).trim().split('\n').filter(Boolean);
++  const bytes = gunzipSync(readFileSync(archive));
++  const members = [];
++  for (let offset = 0; offset + 512 <= bytes.length;) {
++    const header = bytes.subarray(offset, offset + 512);
++    if (header.every(byte => byte === 0)) break;
++    const name = header.subarray(0, 100).toString('utf8').replace(/\0.*$/, '');
++    const sizeText = header.subarray(124, 136).toString('ascii').replace(/\0.*$/, '').trim();
++    const size = sizeText ? Number.parseInt(sizeText, 8) : 0;
++    const type = header[156];
++    if (type === 0 || type === 48) members.push(name);
++    offset += 512 + Math.ceil(size / 512) * 512;
++  }
++  return members;
+ }
+ 
+ export async function assertCompleteStage(stage = STAGE) {
+--- 1120/packet/issue.mjs
++++ 1140/packet/issue.mjs
+@@ -6,10 +6,10 @@
+ const out=process.env.RUN_DIR;
+ const stage='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-storage-cleared-complete-runtime-stage-1054/owned-stage';
+ const remotion=path.join(stage,'remotion');
+-const grantNote='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/grant-final-stage-path-1120.md';
++const grantNote='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/grant-canonical-stage-sort-1140.md';
+ assert(out);
+ assert.equal(process.env.RUN_DIR,out);
+-assert.equal(out,path.join(worker,'gate6-20261021T1120'));
++assert.equal(out,path.join(worker,'gate6-20261021T1140'));
+ assert.equal(path.dirname(realpathSync(out)),worker);
+ assert.equal(realpathSync(out),out);
+ assert.deepEqual(readdirSync(out),[],'physical run directory must be fresh; never reuse a partial issuance');
+@@ -47,7 +47,7 @@
+  writeFileSync(p,JSON.stringify(obj,null,2)+'\n',{flag:'wx',mode:0o600});return p;
+ }
+ const tuplePath=exclusive('source-tuple.json',tuple);
+-const approvalReference='manager grant-final-stage-path-1120.md; fresh marker named exact stage, packet, and marker path after one central preflight';
++const approvalReference='manager grant-canonical-stage-sort-1140.md; fresh marker named exact stage, packet, and marker path after one central preflight';
+ const grant={approved:true,approvalReference,approvedBy:'viewing manager',profile:'native-codec-chrome155',browserExecutable:c.CHROME155.executable,browserVersion:c.CHROME155.version,browserExecutableSha256:c.CHROME155.sha256,browserTreeSha256:c.CHROME155.treeSha256,nodeVersion:c.NODE20.version,nodeExecutableSha256:c.NODE20.sha256,sourceSha:appSha,sourceTree:appTree,stage,packet:worker,marker:markerPath,issuedAt:new Date().toISOString(),maximumCentralRequests:1};
+ const grantPath=exclusive('manager-grant.json',grant);
+ exclusive('one-shot-marker.json',{sourceSha:appSha,sourceTree:appTree,profile:grant.profile,approvalReference,stage,packet:worker,marker:markerPath,issuedAt:grant.issuedAt,exclusiveAllocation:true});
+--- 1120/packet/run.sh
++++ 1140/packet/run.sh
+@@ -14,12 +14,12 @@
+ remotion=$stage_root/remotion
+ dist=/home/user/work/wt/app-pin-d00a6613/dist
+ browser=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
+-physical_run_dir=$worker/gate6-20261021T1120
++physical_run_dir=$worker/gate6-20261021T1140
+ run_dir=$physical_run_dir
+ mode=${1:---run}
+ case "$mode" in --run|--preflight) ;; *) echo 'usage: run.sh [--preflight]' >&2; exit 2 ;; esac
+ test "$#" -le 1
+-grant_note=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/grant-final-stage-path-1120.md
++grant_note=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/grant-canonical-stage-sort-1140.md
+ marker_path=$physical_run_dir/one-shot-marker.json
+ test -f "$grant_note"
+ grep -F "$stage_root" "$grant_note" >/dev/null
+ grep -F "$worker" "$grant_note" >/dev/null
+ grep -F "$marker_path" "$grant_note" >/dev/null
+--- 1120/packet/SHA256SUMS
++++ 1140/packet/SHA256SUMS
+@@
+-6bfd85b36ab0b7c6a9c9d32eef8ff5bdb9b5e8113bef90e0284124b98572a897  issue.mjs
++1e1ad3572e8c2d3c6d9a1464920bd86f4a24189c513a3fb29ea05d2c05b29509  issue.mjs
+-66884718a80bd613dd75a64d0ab746ceaced73824eb5f645e206518ffe50fd98  run.sh
++82a9171a93dbc2bed1cb7a58b287aa3aa1640380f24c95069355206a6715a9a9  run.sh
+-9d3b661a592f656189f5db2818a3edf64060be11428376f0b23ac14a9b2919f8  stage-audit.mjs
++70f2394e2fa174605f73f275d166bcb922955ff02004be115a744269b87c0a41  stage-audit.mjs
