@@ -1,0 +1,13 @@
+--- a/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
++++ b/src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx
+@@ -106,7 +106,9 @@
+ interface RemotionPreviewProps {
+   compiledTransitions?: CompiledCanonicalTransitions;
+   config: ResolvedTimelineConfig;
+-  onTimeUpdate: (time: number) => void;
++  // True only after the latest mailbox seek's frame feedback is consumed,
++  // or that request completes without a frame change. RAF dispatch is not completion.
++  onTimeUpdate: (time: number, seekComplete?: boolean) => void;
+   playerContainerRef: RefObject<HTMLDivElement>;
+   compact?: boolean;
+   /** Phone/tablet chrome: transport controls grow to touch-sized hit targets. */
