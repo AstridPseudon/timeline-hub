@@ -72,6 +72,7 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>, co
   }, { wrapper, initialProps: { loaded: cold ? undefined : initial } });
   if (cold) {
     expect(hook.result.current.commands.trackLabelPort).toBeUndefined();
+    expect(hook.result.current.commands.occurrenceAddMediaPort).toBeUndefined();
     expect(hook.result.current.commit.isLoading).toBe(true);
     act(() => hook.rerender({ loaded: initial }));
   }
@@ -355,6 +356,34 @@ describe('mounted timeline command session', () => {
     const captured = port.finish(basis, verified);
     setLegacyClean(false);
     expect(() => port.submit(captured)).toThrow('earlier timeline saves');
+    expect(env.commits()).toHaveLength(0);
+    hook.unmount();
+  });
+  it('fences occurrence add-media capture, completion and submission behind an intervening legacy save', async () => {
+    const { env, hook, setLegacyClean } = await scoped();
+    const port = hook.result.current.commands.occurrenceAddMediaPort!;
+    const current = hook.result.current.commit.data!;
+    const media: MediaSelection = {
+      asset: 'reserved-occurrence-media',
+      generation_id: 'generation-occurrence-media',
+      variant_id: 'variant-occurrence-media',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const row = { id: 'occurrence-clip', track: 'V1', at: 2, clipType: 'video', asset: media.asset,
+      from: 0, to: 1, hold: 1, speed: 1 };
+    const verified: VerifiedMedia = { selection: { ...media }, media_type: 'video/mp4', size: 1, duration_seconds: 1 };
+
+    setLegacyClean(false);
+    expect(() => port.capture({ ownerRef: 'occurrence:occurrence-1', row, media, current }))
+      .toThrow('earlier timeline saves');
+    setLegacyClean(true);
+    const basis = port.capture({ ownerRef: 'occurrence:occurrence-1', row, media, current });
+    setLegacyClean(false);
+    expect(() => port.finish(basis, verified)).toThrow('earlier timeline saves');
+    expect(() => port.submit({ command: { op: 'occurrence.add-media' } as never, preview: null }))
+      .toThrow('earlier timeline saves');
+    expect((await env.outboxes.list(scope))[0]?.intents).toEqual([]);
     expect(env.commits()).toHaveLength(0);
     hook.unmount();
   });

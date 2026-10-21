@@ -119,6 +119,12 @@ const parentClipAddMediaPort = {
   submit: vi.fn(),
 };
 
+const occurrenceAddMediaPort = {
+  capture: vi.fn(),
+  finish: vi.fn(),
+  submit: vi.fn(),
+};
+
 vi.mock('@/tools/video-editor/hooks/useEffects', () => ({
   useEffects: (...args: unknown[]) => useEffectsMock(...args),
 }));
@@ -327,7 +333,8 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       editor,
       chrome,
       playback,
-      editorOps: { ...editor, transcriptHost: undefined, parentClipAddMedia: parentClipAddMediaPort },
+      editorOps: { ...editor, transcriptHost: undefined, parentClipAddMedia: parentClipAddMediaPort,
+        occurrenceAddMedia: occurrenceAddMediaPort },
     };
   },
 }));
@@ -358,6 +365,7 @@ function Consumer() {
       <span data-testid="element-port-state">{editorOps.element ? 'mounted' : 'missing'}</span>
       <span data-testid="occurrence-duplicate-port-state">{editorOps.occurrenceDuplicate ? 'mounted' : 'missing'}</span>
       <span data-testid="parent-clip-add-media-port-state">{editorOps.parentClipAddMedia ? 'mounted' : 'missing'}</span>
+      <span data-testid="occurrence-add-media-port-state">{editorOps.occurrenceAddMedia ? 'mounted' : 'missing'}</span>
       <span>{chrome.saveStatus}</span>
       <span>{playback.currentTime}</span>
       <span data-testid="agent-chat-timeline-id">{agentChatBridge.timelineId}</span>
@@ -802,6 +810,7 @@ describe('VideoEditorProvider', () => {
     operationalChromeState.isConflictExhausted = false;
     operationalChromeState.renderStatus = 'idle';
     Object.values(parentClipAddMediaPort).forEach((mock) => mock.mockClear());
+    Object.values(occurrenceAddMediaPort).forEach((mock) => mock.mockClear());
   });
 
 
@@ -1471,6 +1480,7 @@ describe('VideoEditorProvider', () => {
     expect(screen.getByTestId('element-port-state')).toHaveTextContent('mounted');
     expect(screen.getByTestId('occurrence-duplicate-port-state')).toHaveTextContent('mounted');
     expect(screen.getByTestId('parent-clip-add-media-port-state')).toHaveTextContent('mounted');
+    expect(screen.getByTestId('occurrence-add-media-port-state')).toHaveTextContent('mounted');
     expect(screen.getAllByText('function')).toHaveLength(3);
     expect(screen.getByText('saved')).toBeInTheDocument();
     expect(screen.getByText('12.5')).toBeInTheDocument();
