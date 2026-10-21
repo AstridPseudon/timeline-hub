@@ -1,4 +1,4 @@
-import {motionCurveName, motionCurveProgress, type MotionCurveName} from './motion-curves.generated';
+import {motionCurveName, motionCurveProgress, type MotionCurveName} from './motion-curves.generated.js';
 
 export const normalizeAnimationEasing = motionCurveName;
 
