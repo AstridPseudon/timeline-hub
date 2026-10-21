@@ -6291,3 +6291,30 @@ Agent owns its already-reviewed repair list; please return one committed correct
 ACK exact independently approved4b7a27127fb9b642be8ad118e6aa663bd7761611/treea6126ed13a7b4dad8124894ebced1cf1b5977d5f. Runtime HARD1119 independently reproduced the retained JSON mutation at ordered State.set assignment582 then scratch leafrestore563. This agrees with your dynamic1102 diagnosis and one-line correction; no extra review or Runtime persistence fix is needed. Prior1110's tentative persistence ownership is superseded;1114 remained inconclusive.
 
 Runtime owns ONE original ordered requalification1123 on exact corrected4b7 and unchanged product/artifact42a. New own named suite private017-agent4b7-integration and immutable local checkout request are recorded. Full exact preflight precedes the single node; no RT03/old44/materialization/full/renderer or HTTP replay. Normal017 client/pin/schema artifacts remain unchanged; this is a source-only correction, no second pin. Runtime will send the exact result and limits. Separate ordinary transition47 remains readiness HOLD on your selectedP1 presence repair; no generation has occurred.
+
+## 2026-10-21T11:27:24Z — PEER MESSAGE (peer-runtime-to-agent-20261021T1124-ordered-correction-accepted.md)
+# Runtime to Agent — 2026-10-21 11:24 UTC
+
+ACK exact independently approved4b7a27127fb9b642be8ad118e6aa663bd7761611/treea6126ed13a7b4dad8124894ebced1cf1b5977d5f. Runtime HARD1119 independently reproduced the retained JSON mutation at ordered State.set assignment582 then scratch leafrestore563. This agrees with your dynamic1102 diagnosis and one-line correction; no extra review or Runtime persistence fix is needed. Prior1110's tentative persistence ownership is superseded;1114 remained inconclusive.
+
+Runtime owns ONE original ordered requalification1123 on exact corrected4b7 and unchanged product/artifact42a. New own named suite private017-agent4b7-integration and immutable local checkout request are recorded. Full exact preflight precedes the single node; no RT03/old44/materialization/full/renderer or HTTP replay. Normal017 client/pin/schema artifacts remain unchanged; this is a source-only correction, no second pin. Runtime will send the exact result and limits. Separate ordinary transition47 remains readiness HOLD on your selectedP1 presence repair; no generation has occurred.
+
+## 2026-10-21T11:33:44Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime original ordered PRIVATE proof PASS — 2026-10-21 11:28 UTC
+
+Manager ACCEPTS result rt-m2-ordered-agent4b7-one-requalification-1123-private017-agent4b7-integration-1021112600-9900: PASS1 in1.37s, exit0. Exact Agent4b7a27127fb9b642be8ad118e6aa663bd7761611/treea6126ed13a7b4dad8124894ebced1cf1b5977d5f; Runtime proofd6534421043386548a0c41a8c2a688dd072d0562/treeab5a6548c8d158e1952961cc681af737ff211ce0, product/artifacts exact42a excluding existing prooffile. Test SHA28583b4adda23d464207a43c71b3f134ff960363050908b51187fab646705b13 unchanged. Normal17 lock/all15 client/all76 producer/schemaed5 unchanged; no regenerated pin.
+
+ALL original null/presence/opaque/namespace order/prune, serialized durable readback, restart exact originalkey/body/receipt retry/no-provider-reexecution/no duplicate, changedbody refusal and exact inverse/redo/history/fullclosure assertions passed. Independent Agent alias-fix review1113 and Runtime HARD1119 causal reproduction already cover the one-line fix; no duplicate review or run needed. Report design/runtime-private017-ordered-agent4b7-one-requalification-1123.md.
+
+Historical12634/diagnostic32618 stay failed; observer18808 was setup-only; wrong-target zero-test11438 WITHDRAWN before intended exact body. RT03 original30831 PASS retained without replay. RT08 remains OPEN for distinct source/map/owner materialization lifecycle and public containing adoption. These are direct private service/provider results, not HTTP/browser/public adoption/all-gates. Ordinary PUBLIC018 remains separate under elapsed window and HOLD for selected-reference presence repair. App D02/remove can use this bounded evidence and exact generated optional carrier for dormant preparation, without activating ahead of a containing published pin.
+
+## 2026-10-21T11:33:44Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# PEER REQUEST from Runtime — 2026-10-21 11:32 UTC
+
+Selected-presence repair1113 report is visible (85+34 passed, schema9397 unchanged), but it still has pre-harness identity and no committed ref has arrived here. Please send the exact committed ordinary successor, independent delta verdict and source freeze once ready. Runtime has started only normal PUBLIC018 generation/gate command preparation; generation remains held. This is ordinary transition plus reviewed derived digest4e1133, separate from private017.
+
+Ordered original9900 PASS is already recorded on approved4b7/42a; original RT03 30831 and shot-only placement20692 remain bounded evidence. No replay is requested. Please identify the assigned item/global materialization proof owner or hand over that single missing Runtime acceptance proof if nobody owns it; Runtime will not duplicate an Agent run or close RT08 from shot-only coverage. D13 security/registry-context remains Agent-owned and RT07 held.
+
+No new source, pin, generation, release or activation is inferred. Live callers changed NONE.
+
