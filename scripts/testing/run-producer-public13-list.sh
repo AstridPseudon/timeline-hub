@@ -5,6 +5,10 @@ set -eu
 # caches, short TMPDIR, build, and cleanup. This file only forwards its final
 # ordinary child command to the already-approved producer selector.
 if test "${PRODUCER_PUBLIC13_NPM_FORWARDER:-0}" = 1; then
+  case "${PRODUCER_PUBLIC13_RUN_MODE:-}" in
+    list|run) ;;
+    *) echo 'PRODUCER_PUBLIC13_RUN_MODE must be list or run' >&2; exit 2 ;;
+  esac
   if test "${1:-}" = run && test "${2:-}" = build:hosted; then
     exec "$PRODUCER_PUBLIC13_REAL_NPM" "$@"
   fi
@@ -16,23 +20,49 @@ if test "${PRODUCER_PUBLIC13_NPM_FORWARDER:-0}" = 1; then
     && test "$#" = 5; then
     LIST_LOG=${PRODUCER_PUBLIC13_LIST_LOG:?missing list log}
     set +e
-    "$PRODUCER_PUBLIC13_APP_ROOT/node_modules/.bin/playwright" test \
-      --config playwright.producer-ownership-current-pin.config.ts \
-      tests/e2e/local/producer-ownership-current-pin.spec.ts --list \
-      >"$LIST_LOG" 2>&1
+    if test "$PRODUCER_PUBLIC13_RUN_MODE" = list; then
+      "$PRODUCER_PUBLIC13_APP_ROOT/node_modules/.bin/playwright" test \
+        --config playwright.producer-ownership-current-pin.config.ts \
+        tests/e2e/local/producer-ownership-current-pin.spec.ts --list \
+        >"$LIST_LOG" 2>&1
+    else
+      "$PRODUCER_PUBLIC13_APP_ROOT/node_modules/.bin/playwright" test \
+        --config playwright.producer-ownership-current-pin.config.ts \
+        tests/e2e/local/producer-ownership-current-pin.spec.ts \
+        >"$LIST_LOG" 2>&1
+    fi
     status=$?
     set -e
     cat "$LIST_LOG"
-    test "$status" = 0 || exit "$status"
-    ! grep -Eiq 'No tests found|No test files found|collected 0 items|Total: 0 test' "$LIST_LOG"
-    grep -Fq 'Total: 1 test in 1 file' "$LIST_LOG"
-    exit 0
+    if test "$PRODUCER_PUBLIC13_RUN_MODE" = list; then
+      test "$status" = 0 || exit "$status"
+      ! grep -Eiq 'No tests found|No test files found|collected 0 items|Total: 0 test' "$LIST_LOG"
+      grep -Fq 'Total: 1 test in 1 file' "$LIST_LOG"
+      exit 0
+    fi
+    passed_count=$(grep -Ec '^[[:space:]]*1[[:space:]]+passed([[:space:]]|$)' "$LIST_LOG" || true)
+    failed_count=$(grep -Ec '^[[:space:]]*1[[:space:]]+failed([[:space:]]|$)' "$LIST_LOG" || true)
+    if test "$passed_count" = 1 && test "$failed_count" = 0; then
+      test "$status" = 0 || { echo 'producer actual test reported pass with nonzero child status' >&2; exit 1; }
+    elif test "$passed_count" = 0 && test "$failed_count" = 1; then
+      test "$status" -ne 0 || { echo 'producer actual test reported failure with zero child status' >&2; exit 1; }
+    else
+      echo 'producer actual test did not report exactly one passed or failed test' >&2
+      exit 1
+    fi
+    exit "$status"
   fi
   echo "unexpected npm child command: $*" >&2
   exit 2
 fi
 
-APP_ROOT=${1:?usage: $0 APP_ROOT}
+APP_ROOT=${1:?usage: $0 APP_ROOT list|run}
+test "$#" = 2 || { echo "usage: $0 APP_ROOT list|run" >&2; exit 2; }
+RUN_MODE=$2
+case "$RUN_MODE" in
+  list|run) ;;
+  *) echo 'mode must be list or run' >&2; exit 2 ;;
+esac
 case "$APP_ROOT" in
   /*) ;;
   *) echo 'APP_ROOT must be absolute' >&2; exit 2 ;;
@@ -114,6 +144,7 @@ export PRODUCER_PUBLIC13_NPM_FORWARDER=1
 export PRODUCER_PUBLIC13_REAL_NPM=$REAL_NPM
 export PRODUCER_PUBLIC13_APP_ROOT=$APP_ROOT
 export PRODUCER_PUBLIC13_LIST_LOG=$LIST_LOG
+export PRODUCER_PUBLIC13_RUN_MODE=$RUN_MODE
 export PATH="$LIST_ROOT/bin:$PATH"
 
 exec sh "$PUBLIC13_RUNNER" "$APP_ROOT" ordinary
