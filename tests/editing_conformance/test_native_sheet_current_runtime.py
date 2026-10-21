@@ -703,6 +703,81 @@ def test_http_original_attached_add_track_publish_retries_exact_capture_and_guar
     assert len(runtime.calls) == 3
 
 
+def test_http_attached_parent_asset_clear_retries_exact_capture_and_guarded_inverse(
+        runtime, monkeypatch):
+    _document, setup = seed_rational_tiny_cut_parent(runtime)
+    runtime.restart()
+    session = runtime.session(name='attached-asset-clear')
+    loaded = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert loaded.ok
+    before = loaded.data['bundle']
+    target_ref = RATIONAL_TARGET
+    target_id = target_ref.rsplit(':', 1)[1]
+    original_target = copy.deepcopy(State(before).entity(target_ref))
+    original_registry = copy.deepcopy(before['parent']['registry'])
+    original_siblings = {
+        row['id']: copy.deepcopy(row)
+        for row in before['parent']['clips'] if row['id'] != target_id
+    }
+    assert setup['data']['accepted_revision_id'] == session._state()['base']['revision_id']
+    assert original_target['asset'] == 'Q'
+    assert original_target['opaque'] == {'retained_source': ['fixture', None, False, 7]}
+    assert original_registry['assets']['Q']['media_id'].startswith('sha256:')
+
+    attached = Checkout.attach(session)
+    attached.clip(target_ref).clear_asset()
+    command = json.loads(session.outbox.path.read_bytes())['pending'][0]
+    assert command['op'] == 'clip.set'
+    assert command['select'] == target_ref
+    assert command['args'] == {'values': {}, 'clear': ['asset']}
+
+    def forbidden_legacy_publish(*args, **kwargs):
+        pytest.fail('attached Checkout.publish used retired publish_parent_composition')
+
+    monkeypatch.setattr(type(runtime.service()), 'publish_parent_composition', forbidden_legacy_publish)
+    key = 'attached-asset-clear-lost-ack'
+    runtime.lost.add(key)
+    with pytest.raises(WorkspaceClientError):
+        attached.publish('Clear the retained source', idempotency_key=key)
+
+    first = copy.deepcopy(runtime.calls[-1])
+    state = json.loads(session.outbox.path.read_bytes())
+    assert state['pending'] == [command]
+    assert state['flight']['key'] == key
+    assert state['flight']['body'].encode() == first[0]
+    body = json.loads(first[0])
+    assert body['rationale'] == 'Clear the retained source'
+    assert body['commands'] == [command]
+
+    runtime.restart()
+    retry = Checkout.attach(runtime.session(name='attached-asset-clear'))
+    accepted = retry.publish()
+    assert runtime.calls[-1][:2] == first[:2]
+    assert accepted['receipt']['idempotency_key'] == key
+
+    runtime.restart()
+    reloaded = Checkout.attach(runtime.session(name='attached-asset-clear-after-reload'))
+    stored = reloaded.session.client.timelines.open_bundle(runtime.project, 'film')
+    assert stored.ok
+    stored_bundle = stored.data['bundle']
+    stored_target = State(stored_bundle).entity(target_ref)
+    expected_target = copy.deepcopy(original_target)
+    expected_target.pop('asset')
+    assert stored_target == expected_target
+    assert 'asset' not in stored_target
+    assert stored_bundle['parent']['registry'] == original_registry
+    assert {
+        row['id']: row for row in stored_bundle['parent']['clips'] if row['id'] != target_id
+    } == original_siblings
+
+    undone = reloaded.undo([accepted['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert persisted_bundle(restored) == persisted_bundle(before)
+    assert State(restored).entity(target_ref) == original_target
+    assert restored['parent']['registry'] == original_registry
+    assert len(runtime.calls) == 3
+
+
 @pytest.mark.parametrize('entry', ['python', 'cli', 'sheet'])
 def test_http_connected_rational_move_is_lossless_across_native_frontends(
         runtime, capsys, entry, monkeypatch):
