@@ -848,6 +848,9 @@
             }
           },
           "additionalProperties": true
+        },
+        "schema_source": {
+          "$ref": "#/$defs/DocumentPin"
         }
       }
     },

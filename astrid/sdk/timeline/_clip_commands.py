@@ -57,14 +57,35 @@ def clip_add(ctx, command):
         raise CommandError('clip.add requires an output track', ref=ref)
     if not active(track):
         raise CommandError('clip.add requires an active track', ref=ref)
+    if 'schema_source' in command['args']:
+        from ._scalar_commands import _selected_schema, _validate_param_values
+
+        selected = row.get('elementRef')
+        clip_ref = 'parent/clip:' + row['id']
+        if not isinstance(selected, dict) or not selected.get('packId'):
+            raise CommandError('schema_source requires an owner-pinned elementRef', ref=clip_ref)
+        if selected.get('kind') != 'effect' or selected.get('id') != row['clipType']:
+            raise CommandError('owned overlay clip must match its effect elementRef', ref=clip_ref)
+        if track.get('kind') != 'visual':
+            raise CommandError('owned overlay clip requires a visual output track', ref=ref)
+        schema = _selected_schema(ctx, command, clip_ref, selected)
+        params = row.get('params', {})
+        if params is not None:
+            if not isinstance(params, dict):
+                raise CommandError('owned overlay params must be an object', ref=clip_ref,
+                                   path=['params'])
+            _validate_param_values(clip_ref, params, schema)
     ctx.bind('add.track', ref)
     ctx.create('parent', 'clip', row)
 
 
-def capture_clip_add(bundle, owner, row):
+def capture_clip_add(bundle, owner, row, *, schema_source=None, schema_inputs=(), realm_id=None):
     """Capture through native execution; the caller allocates row.id beforehand."""
     from .commands import execute
 
+    args = {'row': copy.deepcopy(row)}
+    if schema_source is not None:
+        args['schema_source'] = copy.deepcopy(schema_source)
     return execute(bundle, [{'schema_version': 1, 'op': 'clip.add', 'version': '1',
-                             'select': owner, 'args': {'row': copy.deepcopy(row)},
-                             'intent': {}}]).commands[0]
+                             'select': owner, 'args': args, 'intent': {}}],
+                   schema_inputs=schema_inputs, realm_id=realm_id).commands[0]
