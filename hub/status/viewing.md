@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T06:56:50Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
+<!-- viewing | 2026-10-21T07:02:52Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 6m -->
 # viewing — 2026-10-21 06:56 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3 and M4 OPEN. PLAN and current MANAGER-COMMON re-read. Latest lead 06:02 dispatch direction acknowledged and acted on within the first 10 minutes.
 Integrated: Composition 7bb54bbd / tree 20467712; central 6851 npm test: 84 passed. Public Composition 0.0.13 / archive 9412ae25 / all 77 files remains immutable. No public 14 archive or consumer pin.
