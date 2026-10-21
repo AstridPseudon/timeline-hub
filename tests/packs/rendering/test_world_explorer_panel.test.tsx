@@ -341,7 +341,7 @@ describe('World Explorer panel', () => {
     expect(view.queryByRole('group', { name: 'Worlds' })).toBeNull();
 
     fireEvent.click(view.getByRole('button', { name: 'Shots' }));
-    expect(view.getByText(new RegExp(`${tenths(0)}–${tenths(SAMPLE_END)} · ${SAMPLE_END} s`))).toBeTruthy();
+    expect(view.queryByText(/^Using /)).toBeNull();
     expect(view.getByTitle('On V1 at 0:02')).toBeTruthy();
   });
 
@@ -376,20 +376,20 @@ describe('World Explorer panel', () => {
     fireEvent.click(view.getByRole('button', { name: 'Shots' }));
     const travel = view.getByRole('group', { name: 'Shot travel' });
 
-    expect(view.getByText(`${tenths(0)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
+    expect(view.getByLabelText('Time')).toHaveTextContent(`${mmss(0)} / ${mmss(SAMPLE_END)}`);
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
-    expect(view.getByText(`${tenths(1)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
+    expect(view.getByLabelText('Time')).toHaveTextContent(`${mmss(1)} / ${mmss(SAMPLE_END)}`);
     fireEvent.keyDown(travel, { key: 'ArrowRight', shiftKey: true });
-    expect(view.getByText(`${tenths(6)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
+    expect(view.getByLabelText('Time')).toHaveTextContent(`${mmss(6)} / ${mmss(SAMPLE_END)}`);
     fireEvent.keyDown(travel, { key: 'ArrowLeft', shiftKey: true });
-    expect(view.getByText(`${tenths(1)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
+    expect(view.getByLabelText('Time')).toHaveTextContent(`${mmss(1)} / ${mmss(SAMPLE_END)}`);
 
     fireEvent.keyDown(travel, { key: 'i' });
-    expect(view.getByText(new RegExp(`${tenths(1)}–${tenths(SAMPLE_END)} · ${SAMPLE_END - 1} s`))).toBeTruthy();
+    expect(view.getByText(new RegExp(`Using 0:01–${mmss(SAMPLE_END)}`))).toBeTruthy();
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'o' });
-    expect(view.getByText(/0:01\.0–0:03\.0 · 2 s/)).toBeTruthy();
+    expect(view.getByText(/Using 0:01–0:03/)).toBeTruthy();
 
     // Space toggles play and pause.
     fireEvent.keyDown(travel, { key: ' ' });
@@ -401,8 +401,8 @@ describe('World Explorer panel', () => {
     fireEvent.keyDown(view.getByRole('button', { name: 'Play' }), { key: ' ' });
     expect(view.getByRole('button', { name: 'Play' })).toBeTruthy();
     expect(view.queryByRole('button', { name: 'Pause' })).toBeNull();
-    fireEvent.keyDown(view.getByRole('combobox', { name: 'Speed' }), { key: 'ArrowRight' });
-    expect(view.getByText(`${tenths(3)} / ${mmss(SAMPLE_END)}`)).toBeTruthy();
+    fireEvent.keyDown(view.getByRole('button', { name: /^Speed/ }), { key: 'ArrowRight' });
+    expect(view.getByLabelText('Time')).toHaveTextContent(`${mmss(3)} / ${mmss(SAMPLE_END)}`);
   });
 
   it('moves the free camera with keys on the World viewer in Explore, and Space pauses the world', async () => {
@@ -534,16 +534,16 @@ describe('World Explorer panel', () => {
     const view = mount(harness);
     await addSampleWorld(view);
     await readyWorld();
-    const before = view.getByText(/^World /).textContent;
+    const before = view.getByRole('slider', { name: 'World time' }).getAttribute('aria-valuetext');
     frames(5);
-    expect(view.getByText(/^World /).textContent).not.toBe(before);
+    expect(view.getByRole('slider', { name: 'World time' }).getAttribute('aria-valuetext')).not.toBe(before);
 
     sceneStatus({ phase: 'error', error: 'Shader failed to compile' });
     expect(view.getByText("This world couldn't start")).toBeTruthy();
     expect(view.getByText('Shader failed to compile')).toBeTruthy();
-    const frozen = view.getByText(/^World /).textContent;
+    const frozen = view.getByRole('slider', { name: 'World time' }).getAttribute('aria-valuetext');
     frames(10);
-    expect(view.getByText(/^World /).textContent).toBe(frozen);
+    expect(view.getByRole('slider', { name: 'World time' }).getAttribute('aria-valuetext')).toBe(frozen);
 
     const renders = scene.renders.length;
     fireEvent.click(view.getByRole('button', { name: 'Try again' }));
@@ -559,7 +559,6 @@ describe('World Explorer panel', () => {
     const add = view.getByRole('button', { name: 'Add to video' });
     expect(add).toBeDisabled();
     expect(add).toHaveAttribute('title', 'Open a timeline to add worlds to a video.');
-    expect(view.getByText('Open a timeline to add worlds to a video.')).toBeTruthy();
   });
 
   it('follows the single selected live-scene clip in Shots, and updates it with a single clip.update', async () => {
@@ -567,7 +566,7 @@ describe('World Explorer panel', () => {
     const view = mount(harness);
     harness.selectClip(['c1']);
 
-    await waitFor(() => expect(view.getByText(/0:01\.0–0:04\.0 · 3 s/)).toBeTruthy());
+    await waitFor(() => expect(view.getByText(/Using 0:01–0:04/)).toBeTruthy());
     expect(view.getByRole('button', { name: 'Shots' })).toHaveAttribute('aria-pressed', 'true');
     expect(view.getByText(/Editing clip on V1 at 0:02/)).toBeTruthy();
     const update = view.getByRole('button', { name: 'Update clip' });
@@ -579,7 +578,7 @@ describe('World Explorer panel', () => {
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'ArrowRight' });
     fireEvent.keyDown(travel, { key: 'o' });
-    expect(view.getByText(/0:01\.0–0:03\.0 · 2 s/)).toBeTruthy();
+    expect(view.getByText(/Using 0:01–0:03/)).toBeTruthy();
     expect(view.getByRole('button', { name: 'Update clip' })).toBeEnabled();
 
     fireEvent.click(view.getByRole('button', { name: 'Update clip' }));
@@ -789,7 +788,7 @@ describe('World Explorer panel', () => {
     // The harness timeline does not write back, so the snapshot takes the clip as the timeline would store it: 1 s to 3 s.
     harness.setClips([{ ...liveClip(), sourceOffset: 1, sourceEnd: 3 }]);
     expect(view.getByRole('button', { name: 'Update clip' })).toBeDisabled();
-    expect(view.getByText(/0:01\.0–0:03\.0 · 2 s/)).toBeTruthy();
+    expect(view.getByText(/Using 0:01–0:03/)).toBeTruthy();
     expect(view.container.textContent).not.toMatch(/stretch/i);
   });
 
@@ -860,6 +859,27 @@ describe('World Explorer panel', () => {
       expect(slider).toHaveAttribute('aria-valuemax', String(second.end));
     });
 
+    it('clicking card B after card A moves the viewer to B\'s start, and stops following a clip', async () => {
+      const harness = makeHarness({ clips: [liveClip()] });
+      const view = mount(harness);
+      harness.selectClip(['c1']);
+      await waitFor(() => expect(view.getByText(/Editing clip on V1/)).toBeTruthy());
+      await readyWorld(true, SAMPLE_WORLD.shots);
+      ackLastFrame();
+      const [first, second] = SAMPLE_WORLD.shots;
+      fireEvent.click(await view.findByRole('button', { name: new RegExp(`^${first.name},`) }));
+      ackLastFrame();
+      expect(scene.renders.at(-1)!.sourceTime).toBe(first.start);
+      expect(view.queryByText(/Editing clip on/)).toBeNull();
+
+      fireEvent.click(view.getByRole('button', { name: new RegExp(`^${second.name},`) }));
+      ackLastFrame();
+      expect(scene.renders.at(-1)!.sourceTime).toBeGreaterThanOrEqual(second.start);
+      expect(scene.renders.at(-1)!.sourceTime).toBeLessThan(second.end);
+      expect(view.getByRole('button', { name: new RegExp(`^${second.name},`) })).toHaveAttribute('aria-current', 'true');
+      expect(view.getByRole('button', { name: new RegExp(`^${first.name},`) })).not.toHaveAttribute('aria-current', 'true');
+    });
+
     it('full screen: cards and the viewer say Add to video instead of offering a handle, and a card adds its shot', async () => {
       const harness = makeHarness();
       const view = mount(harness, true, { active: true, enter: vi.fn(), exit: vi.fn() });
@@ -869,7 +889,7 @@ describe('World Explorer panel', () => {
       await waitFor(() => expect(view.getAllByRole('button', { name: /^Add .* to video$/ }).length).toBeGreaterThan(SAMPLE_WORLD.shots.length - 1));
       expect(view.queryByTestId('shot-drag-handle')).toBeNull();
       expect(view.queryByTestId('viewer-drag-handle')).toBeNull();
-      expect(view.getByRole('button', { name: 'Add this shot to video' })).toBeTruthy();
+      expect(view.getByRole('button', { name: 'Add to video' })).toBeTruthy();
 
       const second = SAMPLE_WORLD.shots[1];
       await waitFor(() => expect(view.getByRole('button', { name: `Add ${second.name} to video` })).toBeEnabled());

@@ -729,7 +729,7 @@ describe('World Explorer free roam', () => {
     fireEvent.click(cards.getByRole('button', { name: 'B, 0:03 – 0:06' }));
     expect(slider).toHaveAttribute('aria-valuemin', '3');
     expect(slider).toHaveAttribute('aria-valuemax', '6');
-    expect(view.getByText(/0:03\.0–0:06\.0/)).toBeTruthy();
+    expect(view.queryByText(/^Using /)).toBeNull();
   });
 
   it('a world with no shots gets one implicit shot covering the whole world', async () => {
@@ -766,7 +766,7 @@ describe('World Explorer free roam', () => {
 
     await waitFor(() => expect(view.getByRole('group', { name: 'Shot travel' })).toBeTruthy());
     expect(within(view.getByRole('list', { name: 'Shots' })).getByRole('button', { name: /^A,/ })).toHaveAttribute('aria-current', 'true');
-    expect(view.getByText(/0:01\.0–0:04\.0 · 3 s/)).toBeTruthy();
+    expect(view.getByText(/Using 0:01–0:04/)).toBeTruthy();
     expect(view.getByText('Editing clip on V1 at 0:02')).toBeTruthy();
   });
 
@@ -929,7 +929,7 @@ describe('World Explorer free roam', () => {
 
     press(viewer, 'ArrowRight');
     press(viewer, 'o');
-    expect(view.getByText(/0:01\.0–0:02\.0 · 1 s/)).toBeTruthy();
+    expect(view.getByText(/Using 0:01–0:02/)).toBeTruthy();
   });
 
   it('in Shots mode, i starts the stretch at the travel position', async () => {
@@ -943,7 +943,7 @@ describe('World Explorer free roam', () => {
 
     press(viewer, 'ArrowRight');
     press(viewer, 'i');
-    expect(view.getByText(/0:02\.0–0:04\.0 · 2 s/)).toBeTruthy();
+    expect(view.getByText(/Using 0:02–0:04/)).toBeTruthy();
   });
 
   it('the hint survives a single drag of more than 12 px, and only fades once the user has also pressed W', async () => {

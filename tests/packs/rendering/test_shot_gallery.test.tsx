@@ -35,11 +35,11 @@ describe('ShotGallery', () => {
     const { view } = mount();
     expect(cards(view)).toHaveLength(9);
     expect(view.getByText('12 shots')).toBeTruthy();
-    expect(view.getByText('Page 1 of 2')).toBeTruthy();
+    expect(view.getByLabelText('Page 1 of 2')).toBeTruthy();
     expect(view.getByRole('button', { name: 'Previous page' })).toBeDisabled();
     fireEvent.click(view.getByRole('button', { name: 'Next page' }));
     expect(cards(view)).toHaveLength(3);
-    expect(view.getByText('Page 2 of 2')).toBeTruthy();
+    expect(view.getByLabelText('Page 2 of 2')).toBeTruthy();
     expect(view.getByRole('button', { name: 'Next page' })).toBeDisabled();
     expect(within(cards(view)[0]).getByText('Shot 10')).toBeTruthy();
   });
@@ -51,9 +51,9 @@ describe('ShotGallery', () => {
     const many = Array.from({ length: 25 }, (_, i) => ({ name: `Tower ${i + 1}`, start: i, end: i + 1 }));
     const { view } = mount({ shots: [...many, { name: 'Harbour', start: 30, end: 31 }] });
     fireEvent.click(view.getByRole('button', { name: 'Next page' }));
-    expect(view.getByText('Page 2 of 3')).toBeTruthy();
+    expect(view.getByLabelText('Page 2 of 3')).toBeTruthy();
     fireEvent.change(view.getByRole('searchbox', { name: 'Search shots' }), { target: { value: 'tower' } });
-    expect(view.getByText('Page 1 of 3')).toBeTruthy();
+    expect(view.getByLabelText('Page 1 of 3')).toBeTruthy();
     expect(view.getByText('25 of 26 shots')).toBeTruthy();
     fireEvent.change(view.getByRole('searchbox', { name: 'Search shots' }), { target: { value: 'harb' } });
     expect(cards(view)).toHaveLength(1);

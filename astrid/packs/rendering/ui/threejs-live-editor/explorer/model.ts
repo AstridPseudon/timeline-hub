@@ -449,6 +449,16 @@ export const KEY_MAP: readonly { readonly keys: string; readonly does: string }[
   { keys: '?', does: 'this list' },
 ];
 
+/** The shot viewer's key map, as shown by "?". I and O set the two ends of the part that Add to video uses. */
+export const SHOT_KEY_MAP: readonly { readonly keys: string; readonly does: string }[] = [
+  { keys: 'Space', does: 'play / pause' },
+  { keys: '←  →', does: '1 s back / forward' },
+  { keys: 'Shift  ← →', does: '5 s' },
+  { keys: 'I', does: 'start the part to add here' },
+  { keys: 'O', does: 'end the part to add here' },
+  { keys: '?', does: 'this list' },
+];
+
 export const SPEED_SCALE_MIN = SPEED_LADDER[0];
 export const SPEED_SCALE_MAX = SPEED_LADDER[SPEED_LADDER.length - 1];
 export const SHIFT_BOOST = 3;

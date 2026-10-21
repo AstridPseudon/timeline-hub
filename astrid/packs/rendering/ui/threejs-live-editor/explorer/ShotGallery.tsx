@@ -138,7 +138,8 @@ export function ShotGallery({ shots, currentIndex, revision, fullscreen, addDisa
 
   return (
     <section aria-label="Shots" className="flex min-w-0 flex-col gap-2" data-testid="shot-gallery">
-      <div className="flex items-center gap-2">
+      {/* The search row stays at the top of the scroller while the cards scroll under it; the pager keeps one width on every page. */}
+      <div className="sticky top-0 z-10 -mt-1 flex items-center gap-2 bg-background pb-1 pt-1">
         <label htmlFor={searchId} className="sr-only">Search shots</label>
         <input
           id={searchId}
@@ -151,6 +152,13 @@ export function ShotGallery({ shots, currentIndex, revision, fullscreen, addDisa
           onKeyDown={(event) => { if (event.key === 'Escape' && query) { event.stopPropagation(); setQuery(''); setRequestedPage(0); } }}
         />
         <span aria-live="polite" className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{countText}</span>
+        {pages > 1 ? (
+          <nav aria-label="Shots pages" className="flex shrink-0 items-center">
+            <button type="button" aria-label="Previous page" className="flex h-8 w-7 items-center justify-center rounded-md text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40" disabled={page === 0} onClick={() => setRequestedPage(page - 1)}>‹</button>
+            <span className="text-center text-[11px] tabular-nums text-muted-foreground" style={{ minWidth: `${String(pages).length * 2 + 3}ch` }} aria-live="polite" aria-label={`Page ${page + 1} of ${pages}`}>{page + 1} / {pages}</span>
+            <button type="button" aria-label="Next page" className="flex h-8 w-7 items-center justify-center rounded-md text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40" disabled={page >= pages - 1} onClick={() => setRequestedPage(page + 1)}>›</button>
+          </nav>
+        ) : null}
       </div>
 
       {matches.length === 0 ? (
@@ -184,13 +192,6 @@ export function ShotGallery({ shots, currentIndex, revision, fullscreen, addDisa
         </ul>
       )}
 
-      {pages > 1 ? (
-        <nav aria-label="Shots pages" className="flex items-center justify-center gap-2">
-          <button type="button" aria-label="Previous page" className="min-h-10 rounded-md px-3 text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 sm:min-h-8" disabled={page === 0} onClick={() => setRequestedPage(page - 1)}>‹ Prev</button>
-          <span className="text-[11px] tabular-nums text-muted-foreground" aria-live="polite">Page {page + 1} of {pages}</span>
-          <button type="button" aria-label="Next page" className="min-h-10 rounded-md px-3 text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 sm:min-h-8" disabled={page >= pages - 1} onClick={() => setRequestedPage(page + 1)}>Next ›</button>
-        </nav>
-      ) : null}
     </section>
   );
 }

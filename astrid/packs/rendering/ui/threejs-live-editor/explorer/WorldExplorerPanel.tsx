@@ -17,6 +17,7 @@ import {
   HINT_DISMISSED_KEY,
   keyAction,
   KEY_MAP,
+  SHOT_KEY_MAP,
   lastWorldKey,
   newClipId,
   removeEntry,
@@ -41,7 +42,6 @@ import {
   type WorldEvent,
 } from './model';
 import { buildRows, rowFromEntry, type Row } from './rows';
-import { Select } from './Select';
 import { TimeBar, type BarMarker } from './TimeBar';
 import { button, chip, clockText, ERROR_STYLE, errorMessage, OVERLAY_STYLE, PILL_STYLE, speedLabel, VIEWER_STYLE } from './ui';
 import { ShotGallery } from './ShotGallery';
@@ -68,10 +68,11 @@ const FALLBACK_ASPECT = 16 / 9;
 const WIDE_REM = 38;
 const SIDE_COLUMN = '22rem';
 /** Both modes' controls share this height in the side layout, so the viewer keeps its size when the mode changes. */
-const CONTROLS_MIN_HEIGHT = '10rem';
+const CONTROLS_MIN_HEIGHT = '6rem';
 /** Docked, the scrolling section below the pinned viewer always keeps at least this much height; the viewer shrinks first. */
 const SCROLL_MIN_HEIGHT = 160;
 const MIN_VIEW_HEIGHT = 90;
+const CONTROLS_FADE_MS = 2000;
 /** Wide enough to see the world, narrow enough that a big view does not stretch its edges. */
 const VIEW_FOV = 50;
 /** Radians of turn per dragged pixel. */
@@ -175,6 +176,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   // Docked: the panel height and the height of the pinned section apart from the viewer, so the viewer can shrink to leave the scroll section room.
   const [dock, setDock] = useState({ rootHeight: 0, extra: 0 });
   const [scrolled, setScrolled] = useState(false);
+  // The viewer's overlay controls fade after a moment of no pointer movement while something is playing.
+  const [controlsAwake, setControlsAwake] = useState(true);
+  const fadeTimer = useRef<ReturnType<typeof setTimeout>>();
   const pinnedRef = useRef<HTMLDivElement>(null);
   const [listOpen, setListOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -850,6 +854,24 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     setStretch((current) => ({ ...current, speed }));
   }
 
+  function wakeControls() {
+    setControlsAwake(true);
+    clearTimeout(fadeTimer.current);
+    fadeTimer.current = setTimeout(() => setControlsAwake(false), CONTROLS_FADE_MS);
+  }
+
+  /** The speed button steps through the speeds on offer and wraps. */
+  function cycleSpeed() {
+    const at = speedOptions.indexOf(stretch.speed);
+    changeSpeed(speedOptions[(at + 1) % speedOptions.length]);
+  }
+
+  /** Back to the whole shot. */
+  function resetRange() {
+    if (!shot) return;
+    setStretch((current) => ({ from: shot.start, to: shot.end, speed: current.speed }));
+  }
+
   function toggleLoop(next: boolean) {
     setLoop(next);
     travelClock.current?.setLoop(next);
@@ -877,17 +899,17 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   function onViewerKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     shiftRef.current = event.shiftKey;
     if (event.target !== event.currentTarget) return;
+    if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.altKey && (effectiveMode() === 'shots' || roam.current)) {
+      event.preventDefault();
+      setKeysOpen((open) => !open);
+      return;
+    }
     // In Shots mode the viewer owns the travel keys, so the film never sees them.
     if (effectiveMode() === 'shots') {
       travelKey(event);
       return;
     }
     if (!roam.current) return;
-    if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.altKey) {
-      event.preventDefault();
-      setKeysOpen((open) => !open);
-      return;
-    }
     const action = exploreKey(event);
     if (!action) return;
     event.preventDefault();
@@ -1286,126 +1308,169 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     </div>
   );
 
-  // Transport: what drives the viewer. Docked it is pinned under the viewer; the rest of each mode scrolls beneath.
-  const exploreTransport = (
-    <>
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={toggleWorldPause}>
-                {worldPaused ? 'Play' : 'Pause'}
-              </button>
-              <button type="button" className={`${button} border border-border`} disabled={!ready} title="Back to the start view (R)" onClick={resetView}>
-                Reset view
-              </button>
-              <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-                World {clockText(worldTime, 1)} / {clockText(duration)}
-              </span>
-            </div>
-            <TimeBar
-              start={0}
-              end={duration}
-              time={worldTime}
-              label="World time"
-              valueText={clockText(worldTime, 1)}
-              disabled={!selected}
-              markers={eventMarkers}
-              onSeek={seekWorld}
-            />
-    </>
+  // The transport is a bar laid over the viewer's bottom edge, like a video player's. Under the viewer sits the time bar;
+  // what the shot's range means, and the rest of each mode, scrolls beneath.
+  const rangeClock = (time: number) => clockText(time, Number.isInteger(time) ? 0 : 1);
+  const trimmed = Boolean(selected && shot && (Math.abs(stretch.from - shot.start) > 0.05 || Math.abs(stretch.to - shot.end) > 0.05));
+  const addLabel = trimmed ? `Add ${Number(stretchDuration(stretch).toFixed(1))} s to video` : 'Add to video';
+  const playingNow = mode === 'explore' ? !worldPaused : playing;
+  useEffect(() => {
+    if (playingNow) wakeControls();
+    else setControlsAwake(true);
+    return () => clearTimeout(fadeTimer.current);
+  }, [playingNow]);
+  const controlsShown = controlsAwake || !playingNow || keysOpen;
+  const barButton = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
+  const overlayFade = `transition-opacity duration-300 ${controlsShown ? 'opacity-100' : 'opacity-0 focus-within:opacity-100'}`;
+  const barTime = mode === 'explore' ? worldTime : shownTime;
+  const barEnd = mode === 'explore' ? duration : (shot?.end ?? duration);
+  const playIcon = (
+    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12-7.5z" /></svg>
+  );
+  const pauseIcon = (
+    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4.2" height="15" rx="1" /><rect x="13.8" y="4.5" width="4.2" height="15" rx="1" /></svg>
+  );
+  const keyRows = mode === 'explore' ? KEY_MAP : SHOT_KEY_MAP;
+  const overlayBar = (
+    <div
+      data-viewer-control
+      data-refocus
+      className={`absolute inset-x-0 bottom-0 flex items-center gap-1 px-1.5 pb-1 pt-5 ${overlayFade}`}
+      style={{ background: 'linear-gradient(to top, rgba(5, 6, 15, 0.72), rgba(5, 6, 15, 0))', color: 'rgba(255, 255, 255, 0.9)' }}
+    >
+      <button
+        type="button"
+        className={barButton}
+        aria-label={playingNow ? 'Pause' : 'Play'}
+        disabled={!ready}
+        onClick={mode === 'explore' ? toggleWorldPause : toggleTravel}
+      >
+        {playingNow ? pauseIcon : playIcon}
+      </button>
+      <span className="min-w-0 truncate text-[11px] tabular-nums" aria-label="Time">
+        {clockText(barTime)} / {clockText(barEnd)}
+      </span>
+      <span className="flex-1" />
+      {mode === 'explore' ? (
+        <button
+          type="button"
+          className={barButton}
+          aria-label="Reset view"
+          title="Back to the start view (R)"
+          disabled={!ready}
+          onClick={resetView}
+        >
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            className={`${barButton} w-auto px-2 text-[11px] tabular-nums`}
+            aria-label={`Speed ${speedLabel(stretch.speed)}`}
+            title="Playback speed (click to change)"
+            disabled={!selected}
+            onClick={cycleSpeed}
+          >
+            {speedLabel(stretch.speed)}
+          </button>
+          <button
+            type="button"
+            className={barButton}
+            aria-label="Loop"
+            aria-pressed={loop}
+            title={loop ? 'Loop on' : 'Loop off'}
+            disabled={!selected}
+            style={loop ? { background: 'hsl(var(--primary) / 0.55)' } : undefined}
+            onClick={() => toggleLoop(!loop)}
+          >
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" /></svg>
+          </button>
+        </>
+      )}
+      {exploring || mode === 'shots' ? (
+        <button
+          type="button"
+          className={barButton}
+          aria-label="Keys"
+          aria-expanded={keysOpen}
+          title="Show the key map (?)"
+          onClick={() => setKeysOpen((open) => !open)}
+        >
+          <span aria-hidden="true" className="text-xs">?</span>
+        </button>
+      ) : null}
+      {canExpand ? (
+        <button type="button" className={barButton} aria-label="Full screen World Explorer" title="Full screen" onClick={() => fullscreen!.enter()}>
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+        </button>
+      ) : null}
+    </div>
   );
   const exploreExtras = (
     <>
-            {!wide && events.length ? eventButtons : null}
-            {ready && selected ? (
-              <p className="truncate text-[11px] text-muted-foreground">To add this world to your video, <button type="button" className="underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm" onClick={() => switchMode('shots')}>pick a shot →</button></p>
-            ) : null}
-    </>
-  );
-  const shotTransport = (
-    <>
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={toggleTravel}>
-                {playing ? 'Pause' : 'Play'}
-              </button>
-              <Select label="Speed" value={String(stretch.speed)} disabled={!selected} onChange={(event) => changeSpeed(Number(event.target.value))}>
-                {speedOptions.map((speed) => <option key={speed} value={speed} className="bg-background text-foreground">{speedLabel(speed)}</option>)}
-              </Select>
-              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <input type="checkbox" checked={loop} disabled={!selected} onChange={(event) => toggleLoop(event.target.checked)} />
-                Loop
-              </label>
-              <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-                {clockText(shownTime, 1)} / {clockText(shot?.end ?? duration)}
-              </span>
-            </div>
-
-            <TimeBar
-              start={shot?.start ?? 0}
-              end={shot?.end ?? duration}
-              time={shownTime}
-              label="Travel position"
-              valueText={clockText(shownTime, 1)}
-              disabled={!selected}
-              markers={shotMarkers}
-              uses={(selected?.uses ?? []).map((use) => ({ key: use.clipId, from: use.from, to: use.to, title: `On ${use.track} at ${clockText(use.at)}` }))}
-              range={selected ? { from: stretch.from, to: stretch.to } : undefined}
-              onSeek={seekTravel}
-              onRange={(next) => setStretch((current) => clampStretch({ ...current, ...next }, duration))}
-            />
-
+      {!wide && events.length ? eventButtons : null}
+      {ready && selected ? (
+        <p className="truncate text-[11px] text-muted-foreground">To add this world to your video, <button type="button" className="underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm" onClick={() => switchMode('shots')}>pick a shot →</button></p>
+      ) : null}
     </>
   );
   const shotDetails = (
     <>
-            {shotEvents.length ? shotEventButtons : null}
-
-            {selected ? (
-              <div className="flex items-center gap-2">
-                <button type="button" className={`${button} border border-border`} title="Start the clip here (I)" onClick={setStartHere}>In (I)</button>
-                <button type="button" className={`${button} border border-border`} title="End the clip here (O)" onClick={setEndHere}>Out (O)</button>
-                <p className="min-w-0 flex-1 truncate text-[11px] tabular-nums text-muted-foreground">
-                  {clockText(stretch.from, 1)}–{clockText(stretch.to, 1)} · {Number(stretchDuration(stretch).toFixed(1))} s{stretch.speed === 1 ? '' : ` at ${speedLabel(stretch.speed)}`}
-                </p>
-                {followedUse ? (
-                  <>
-                    <button
-                      type="button"
-                      className={`${button} shrink-0 hover:text-foreground text-muted-foreground`}
-                      disabled={Boolean(addReason)}
-                      title={addReason ?? 'Add this range to the video as a new clip at the playhead'}
-                      onClick={() => { void addToVideo(); }}
-                    >
-                      Add as new
-                    </button>
-                    <button
-                      type="button"
-                      className={`${button} shrink-0 bg-primary/10 text-primary`}
-                      disabled={!followedDiffers || busy}
-                      title={followedDiffers ? 'Write this range back to the clip' : 'The clip already matches'}
-                      onClick={() => { void updateClip(); }}
-                    >
-                      Update clip
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className={`${button} shrink-0 bg-primary/10 text-primary`}
-                    disabled={Boolean(addReason)}
-                    title={addReason ?? 'Add this range to the video at the playhead'}
-                    onClick={() => { void addToVideo(); }}
-                  >
-                    Add to video
-                  </button>
-                )}
-              </div>
-            ) : null}
-            <p className="min-h-4 text-[11px] text-muted-foreground">
-              {followedUse ? `Editing clip on ${followedUse.track} at ${clockText(followedUse.at)}` : addReason}
-            </p>
+      {selected && trimmed ? (
+        <p className="flex items-center gap-2 text-[11px] tabular-nums text-muted-foreground">
+          <span className="min-w-0 truncate">Using {rangeClock(stretch.from)}–{rangeClock(stretch.to)}</span>
+          <button type="button" className="shrink-0 rounded-sm text-foreground underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={resetRange}>Reset</button>
+        </p>
+      ) : null}
+      {followedUse ? (
+        <div className="flex items-center gap-2">
+          <p className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">Editing clip on {followedUse.track} at {clockText(followedUse.at)}</p>
+          <button
+            type="button"
+            className={`${button} shrink-0 bg-primary/10 text-primary`}
+            disabled={!followedDiffers || busy}
+            title={followedDiffers ? 'Write this range back to the clip' : 'The clip already matches'}
+            onClick={() => { void updateClip(); }}
+          >
+            Update clip
+          </button>
+        </div>
+      ) : addReason && liveScene && !busy ? (
+        <p className="text-[11px] text-muted-foreground">{addReason}</p>
+      ) : null}
+      {shotEvents.length ? shotEventButtons : null}
     </>
   );
   const travelGroupProps = { role: 'group', 'aria-label': 'Shot travel', tabIndex: 0, onKeyDown: onTravelKeyDown } as const;
   const travelGroupClass = 'flex shrink-0 flex-col gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  const exploreBar = (
+    <TimeBar
+      start={0}
+      end={duration}
+      time={worldTime}
+      label="World time"
+      valueText={clockText(worldTime, 1)}
+      disabled={!selected}
+      markers={eventMarkers}
+      onSeek={seekWorld}
+    />
+  );
+  const shotBar = (
+    <TimeBar
+      start={shot?.start ?? 0}
+      end={shot?.end ?? duration}
+      time={shownTime}
+      label="Travel position"
+      valueText={clockText(shownTime, 1)}
+      disabled={!selected}
+      markers={shotMarkers}
+      uses={(selected?.uses ?? []).map((use) => ({ key: use.clipId, from: use.from, to: use.to, title: `On ${use.track} at ${clockText(use.at)}` }))}
+      range={selected ? { from: stretch.from, to: stretch.to } : undefined}
+      onSeek={seekTravel}
+      onRange={(next) => setStretch((current) => clampStretch({ ...current, ...next }, duration))}
+    />
+  );
 
   return (
     <section
@@ -1470,8 +1535,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             onKeyDown={onViewerKeyDown}
             onKeyUp={onViewerKeyUp}
             onBlur={onViewerBlur}
-            onPointerDown={onViewerPointerDown}
-            onPointerMove={onViewerPointerMove}
+            onPointerDown={(event) => { wakeControls(); onViewerPointerDown(event); }}
+            onPointerMove={(event) => { wakeControls(); onViewerPointerMove(event); }}
             onPointerUp={onViewerPointerUp}
             onPointerCancel={onViewerPointerUp}
           >
@@ -1506,34 +1571,20 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
               <span
                 aria-label="Camera speed"
                 title="Scroll to change speed"
-                className="absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[11px] tabular-nums"
+                className="absolute bottom-10 left-2 rounded-full px-2 py-0.5 text-[11px] tabular-nums"
                 style={PILL_STYLE}
               >
                 {speedScaleLabel(speedScale)}
               </span>
             ) : null}
-            {exploring ? (
-              <button
-                type="button"
-                data-viewer-control
-                aria-label="Keys"
-                aria-expanded={keysOpen}
-                title="Show the key map (?)"
-                className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                style={PILL_STYLE}
-                onClick={() => setKeysOpen((open) => !open)}
-              >
-                ?
-              </button>
-            ) : null}
-            {exploring && keysOpen ? (
+            {keysOpen && (exploring || mode === 'shots') ? (
               <dl
                 aria-label="Key map"
                 data-viewer-control
-                className="absolute left-2 top-11 m-0 grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 rounded-md px-3 py-2 text-[11px]"
+                className="absolute bottom-10 right-2 m-0 grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 rounded-md px-3 py-2 text-[11px]"
                 style={OVERLAY_STYLE}
               >
-                {KEY_MAP.map((entry) => (
+                {keyRows.map((entry) => (
                   <div key={entry.keys} className="contents">
                     <dt className="whitespace-pre font-medium text-white">{entry.keys}</dt>
                     <dd className="m-0">{entry.does}</dd>
@@ -1544,7 +1595,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             {showHint ? (
               <div
                 role="note"
-                className="absolute bottom-2 right-2 flex max-w-[calc(100%-5rem)] items-center gap-1 rounded-full py-0.5 pl-3 pr-1 text-[11px] transition-opacity duration-700"
+                className="absolute bottom-10 right-2 flex max-w-[calc(100%-5rem)] items-center gap-1 rounded-full py-0.5 pl-3 pr-1 text-[11px] transition-opacity duration-700"
                 style={{ ...PILL_STYLE, opacity: hintFading ? 0 : 1 }}
               >
                 <span className="truncate">{touch ? TOUCH_HINT_TEXT : HINT_TEXT}</span>
@@ -1558,21 +1609,6 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
                 </button>
               </div>
             ) : null}
-            {mode === 'shots' && ready && selected && inFullscreen ? (
-              <button
-                type="button"
-                data-viewer-control
-                aria-label="Add this shot to video"
-                title={addReason ?? 'Add the range set below to the video at the playhead'}
-                disabled={Boolean(addReason)}
-                className="absolute left-2 top-2 flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                style={PILL_STYLE}
-                onClick={() => { void addToVideo(); }}
-              >
-                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-                Add to video
-              </button>
-            ) : null}
             {viewerDrag ? (
               <span
                 {...viewerDrag}
@@ -1580,38 +1616,42 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
                 data-viewer-control
                 data-testid="viewer-drag-handle"
                 title="Drag this shot onto the timeline"
-                className="absolute left-2 top-2 flex h-7 cursor-grab items-center gap-1.5 rounded-full px-2.5 text-[11px] active:cursor-grabbing"
+                className={`absolute left-2 top-2 flex h-7 cursor-grab ${overlayFade} items-center gap-1.5 rounded-full px-2.5 text-[11px] active:cursor-grabbing`}
                 style={PILL_STYLE}
               >
                 <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8" /><circle cx="15" cy="6" r="1.8" /><circle cx="9" cy="12" r="1.8" /><circle cx="15" cy="12" r="1.8" /><circle cx="9" cy="18" r="1.8" /><circle cx="15" cy="18" r="1.8" /></svg>
                 Drag to timeline
               </span>
             ) : null}
-            {canExpand ? (
+            {mode === 'shots' && selected ? (
               <button
                 type="button"
-                aria-label="Full screen World Explorer"
-                title="Full screen"
-                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-md hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                data-viewer-control
+                data-refocus
+                title={addReason ?? 'Add the part set on the bar to the video at the playhead'}
+                disabled={Boolean(addReason)}
+                className={`absolute right-2 top-2 flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 ${overlayFade}`}
                 style={PILL_STYLE}
-                onClick={() => fullscreen!.enter()}
+                onClick={() => { void addToVideo(); }}
               >
-                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                {addLabel}
               </button>
             ) : null}
+            {showEmpty ? null : overlayBar}
           </div>
         </div>
 
-        {showEmpty ? null : wide ? (
-          mode === 'explore' ? (
-            <div className="flex shrink-0 flex-col gap-2" data-refocus style={{ minHeight: CONTROLS_MIN_HEIGHT }}>{exploreTransport}{exploreExtras}</div>
-          ) : (
-            <div {...travelGroupProps} className={travelGroupClass} style={{ minHeight: CONTROLS_MIN_HEIGHT }}>{shotTransport}{shotDetails}</div>
-          )
-        ) : mode === 'explore' ? (
-          <div className="flex shrink-0 flex-col gap-2" data-refocus>{exploreTransport}</div>
+        {showEmpty ? null : mode === 'explore' ? (
+          <div className="-mt-2 flex shrink-0 flex-col gap-2" data-refocus style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}>
+            {exploreBar}
+            {wide ? exploreExtras : null}
+          </div>
         ) : (
-          <div {...travelGroupProps} className={travelGroupClass}>{shotTransport}</div>
+          <div {...travelGroupProps} className={`${travelGroupClass} -mt-2`} style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}>
+            {shotBar}
+            {wide ? shotDetails : null}
+          </div>
         )}
         </div>
         {wide ? <div ref={spacerRef} data-stage-spacer className="min-h-0 flex-1" /> : (
