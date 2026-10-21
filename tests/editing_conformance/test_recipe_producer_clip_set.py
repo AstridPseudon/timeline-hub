@@ -104,6 +104,21 @@ def test_producer_metadata_refuses_user_foreign_and_identity_adoption_without_wr
         capture_clip_set(original, REF, values=changed)
     assert error.value.kind == 'unsupported_ownership'
 
+    original = producer_bundle()
+    empty_generated = generated()
+    empty_generated['extensionId'] = ''
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        next(item for item in rows if item['id'] == 'f2-app-clip')['app'] = {
+            'managedBy': '', '__generated__': empty_generated,
+        }
+    empty_owner = update_values()
+    empty_owner['app'] = {'__generated__': empty_generated}
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError) as error:
+        capture_clip_set(original, REF, values=empty_owner)
+    assert error.value.kind == 'unsupported_ownership'
+    assert original == before
+
 
 def test_producer_clip_shape_is_closed_and_geometry_stays_on_params_recipe():
     original = producer_bundle()

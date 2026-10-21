@@ -19,11 +19,12 @@ _TEXT_LEAVES = frozenset(('content', 'fontSize', 'color', 'bold', 'align'))
 def _producer_app(ctx, ref, incoming):
     """Update only existing managed metadata; never adopt a raw/user clip."""
     current = ctx.read(ref, ['app'])
-    if not isinstance(current, dict) or not isinstance(current.get('managedBy'), str):
+    managed_by = current.get('managedBy') if isinstance(current, dict) else None
+    if not isinstance(managed_by, str) or managed_by == '':
         raise CommandError('clip.set app leaves require an existing managed clip',
                            kind='unsupported_ownership', ref=ref)
     ctx.read(ref, ['app', 'managedBy'])
-    if 'managedBy' in incoming and incoming['managedBy'] != current['managedBy']:
+    if 'managedBy' in incoming and incoming['managedBy'] != managed_by:
         raise CommandError('clip.set cannot change clip ownership', kind='unsupported_ownership', ref=ref)
     if '__generated__' not in incoming:
         return
@@ -33,7 +34,7 @@ def _producer_app(ctx, ref, incoming):
         raise CommandError('clip.set generated metadata requires an existing identity',
                            kind='unsupported_ownership', ref=ref)
     ctx.read(ref, ['app', '__generated__'])
-    if metadata.get('extensionId') != current['managedBy']:
+    if metadata.get('extensionId') != managed_by:
         raise CommandError('clip.set generated metadata owner does not match managedBy',
                            kind='unsupported_ownership', ref=ref)
     for key in _GENERATED_IDENTITY:
