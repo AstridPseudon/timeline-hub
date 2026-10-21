@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
 import { canonicalJsonStringify, sha256Hex } from '../data/typed/timelineBundle.ts';
 import { transcriptDocumentId } from '../data/typed/projectTranscript.ts';
@@ -7,6 +7,7 @@ import {
   captureTranscriptAssociation,
   executeTranscriptAssociation,
   finishTranscriptAssociation,
+  readRetainedTranscriptSources,
   TRANSCRIPT_SCHEMA_REF,
 } from './transcriptAssociateCapture.ts';
 import { copy, type AuthoredBundle } from './clipMovePrimitives.ts';
@@ -159,6 +160,27 @@ function bundle({ sharedReview = false, collision = false, associated = false }:
 }
 
 describe('dormant transcript.associate capture', () => {
+  it('passes exact new/prior pins to the retained read and refuses a mismatched carrier', async () => {
+    const next = await source();
+    const prior = await source(legacyId);
+    const calls: typeof next.pin[] = [];
+    const client = {
+      getProjectVerifiedDocument: vi.fn(async (_projectId: string, pin: typeof next.pin) => {
+        calls.push(pin);
+        return pin.content_digest === next.pin.content_digest ? next : prior;
+      }),
+    };
+
+    const result = await readRetainedTranscriptSources(client, PROJECT, next.pin, prior.pin);
+    expect(calls).toEqual([next.pin, prior.pin]);
+    expect(result.document).toEqual(next);
+    expect(result.previousDocument).toEqual(prior);
+
+    await expect(readRetainedTranscriptSources({
+      getProjectVerifiedDocument: vi.fn(async () => ({ ...next, pin: prior.pin })),
+    }, PROJECT, next.pin)).rejects.toThrow('does not match its exact pin');
+  });
+
   it('matches the Agent record for nested source planes and no-asset caption/review reconciliation', async () => {
     const input = bundle();
     const before = copy(input);

@@ -41,6 +41,9 @@ const CLAIMS = ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bind
 
 type ObjectValue = { [key: string]: JSON };
 export type TranscriptAssociateSource = Pick<VerifiedDocument, 'pin' | 'document'>;
+export type TranscriptAssociateReadClient = {
+  getProjectVerifiedDocument(projectId: string, pin: DocumentPin): Promise<VerifiedDocument>;
+};
 
 type VerifiedTranscript = {
   readonly pin: DocumentPin;
@@ -88,6 +91,38 @@ function exactPin(value: unknown, label: string): DocumentPin {
     version: pin.version,
     content_digest: pin.content_digest,
   };
+}
+
+async function readRetainedTranscriptSource(
+  client: TranscriptAssociateReadClient,
+  projectId: string,
+  pin: DocumentPin,
+  label: string,
+): Promise<TranscriptAssociateSource> {
+  const exact = exactPin(pin, label);
+  const verified = await client.getProjectVerifiedDocument(projectId, exact);
+  if (!object(verified) || !equal(verified.pin, exact) || !object(verified.document)) {
+    fail(`retained transcript ${label} read does not match its exact pin`, 'capture_mismatch');
+  }
+  return { pin: copy(exact), document: copy(verified.document) };
+}
+
+/**
+ * Dormant adapter for the existing Runtime retained-read carrier. The caller
+ * must already own exact pins; this does not derive authority from a browser
+ * document or from the authored snapshot.
+ */
+export async function readRetainedTranscriptSources(
+  client: TranscriptAssociateReadClient,
+  projectId: string,
+  document: DocumentPin,
+  previousDocument?: DocumentPin | null,
+): Promise<{ document: TranscriptAssociateSource; previousDocument?: TranscriptAssociateSource }> {
+  const source = await readRetainedTranscriptSource(client, projectId, document, 'new');
+  const previous = previousDocument == null
+    ? undefined
+    : await readRetainedTranscriptSource(client, projectId, previousDocument, 'prior');
+  return { document: source, ...(previous ? { previousDocument: previous } : {}) };
 }
 
 function sourceDocument(value: unknown, label: string): ObjectValue {
