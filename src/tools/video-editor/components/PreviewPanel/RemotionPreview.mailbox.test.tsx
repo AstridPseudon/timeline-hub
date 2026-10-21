@@ -15,6 +15,9 @@ const boundary = vi.hoisted(() => ({
   props: null as any,
   applied: [] as ResolvedTimelineConfig[],
   events: [] as Array<{ frame: number; fps: number; config: string }>,
+  order: [] as string[],
+  frameSchedulers: [] as Array<() => void>,
+  commitFrame: null as ((frame: number) => void) | null,
   listeners: new Map<string, Set<(event: any) => void>>(),
 }));
 vi.mock('@remotion/player', async () => {
@@ -23,19 +26,32 @@ vi.mock('@remotion/player', async () => {
     Player: React.forwardRef(function Player(props: any, ref: any) {
       boundary.props = props;
       boundary.applied.push(props.inputProps.config);
+      const [frame, setFrame] = React.useState(props.initialFrame);
+      const frameRef = React.useRef(frame);
+      frameRef.current = frame;
+      const hasCommittedFrame = React.useRef(false);
+      React.useEffect(() => {
+        if (!hasCommittedFrame.current) {
+          hasCommittedFrame.current = true;
+          return;
+        }
+        boundary.order.push(`frameupdate:${frame}`);
+        for (const listener of boundary.listeners.get('frameupdate') ?? []) listener({ detail: { frame } });
+      }, [frame]);
+      boundary.commitFrame = setFrame;
       const handle = React.useRef<any>(null);
       if (!handle.current) {
-        let frame = props.initialFrame;
         let playing = false;
         const emit = (name: string) => {
           for (const listener of boundary.listeners.get(name) ?? []) listener({});
         };
         handle.current = {
           seekTo: vi.fn((next: number) => {
-            frame = next;
-            boundary.events.push({ frame, fps: boundary.props.fps, config: boundary.props.inputProps.config.output.file });
+            boundary.order.push(`seek:${next}`);
+            boundary.frameSchedulers.push(() => setFrame(next));
+            boundary.events.push({ frame: next, fps: boundary.props.fps, config: boundary.props.inputProps.config.output.file });
           }),
-          getCurrentFrame: vi.fn(() => frame),
+          getCurrentFrame: vi.fn(() => frameRef.current),
           isPlaying: vi.fn(() => playing),
           play: vi.fn(() => { playing = true; emit('play'); }),
           pause: vi.fn(() => { playing = false; emit('pause'); }),
@@ -97,6 +113,7 @@ function preview(initial: ResolvedTimelineConfig, initialRevision?: PreviewRevis
   return {
     ref,
     view,
+    onTimeUpdate,
     replace: (c: ResolvedTimelineConfig, revision?: PreviewRevision) => view.rerender(draw(c, revision)),
   };
 }
@@ -106,6 +123,9 @@ beforeEach(() => {
   boundary.props = null;
   boundary.applied = [];
   boundary.events = [];
+  boundary.order = [];
+  boundary.frameSchedulers = [];
+  boundary.commitFrame = null;
   boundary.listeners.clear();
   raf = new Map();
   nextRaf = 0;
@@ -113,6 +133,12 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', (id: number) => raf.delete(id));
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); });
+
+function commitScheduledFrame() {
+  const commit = boundary.frameSchedulers.shift();
+  expect(commit, 'Player frame scheduler has a pending frame').toBeDefined();
+  act(() => commit?.());
+}
 
 it('H3 newest C beats queued playing B on explicit pause and subsequent one-second seek', () => {
   const a = config('h3-a', 30), b = config('h3-b', 60), c = config('h3-c', 90);
@@ -134,6 +160,98 @@ it('H3 newest C beats queued playing B on explicit pause and subsequent one-seco
   expect.soft(boundary.applied).not.toContain(b);
   expect.soft(raf.size).toBe(0);
   expect.soft(vi.getTimerCount()).toBe(0);
+});
+
+it('marks only the surviving queued seek complete after the real Player frame effects', () => {
+  const fps = 30000 / 1001;
+  const h = preview(config('queued-order', fps));
+  settle();
+
+  act(() => {
+    h.ref.current!.seek(0.5);
+    h.ref.current!.seek(1);
+  });
+
+  expect(boundary.order).toEqual(['seek:15']);
+  expect(h.onTimeUpdate).not.toHaveBeenCalled();
+
+  // The Player's React frame effect for A can run before the preview mailbox
+  // RAF dispatches B. Its feedback remains ordinary because B is pending.
+  commitScheduledFrame();
+  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15']);
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / fps);
+
+  flushFrame();
+  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:30']);
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / fps);
+
+  // B's frame effect is the completion point. The callback retains the
+  // existing frame/fps feedback value and adds only the completion bit.
+  commitScheduledFrame();
+  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:30', 'frameupdate:30']);
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(30 / fps, true);
+
+  act(() => boundary.commitFrame?.(45));
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(45 / fps);
+});
+
+it('completes a same-frame seek without waiting for a Player frame effect', () => {
+  const h = preview(config('same-frame'));
+  settle();
+
+  act(() => h.ref.current!.seek(0));
+
+  expect(boundary.events).toHaveLength(1);
+  expect(boundary.frameSchedulers).toHaveLength(1);
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(0, true);
+  expect(boundary.order).toEqual(['seek:0']);
+});
+
+it('coalesces queued seeks and completes only the surviving target', () => {
+  const h = preview(config('coalesced-completion'));
+  settle();
+
+  act(() => {
+    h.ref.current!.seek(0.5);
+    h.ref.current!.seek(1);
+    h.ref.current!.seek(1.5);
+  });
+  commitScheduledFrame();
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / 30);
+
+  flushFrame();
+  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:45']);
+  commitScheduledFrame();
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(45 / 30, true);
+  expect(boundary.events.map((event) => event.frame)).toEqual([15, 45]);
+});
+
+it('keeps a config-deferred seek held until the matching Player delivery', () => {
+  const h = preview(config('deferred-a'));
+  settle();
+  h.replace(config('deferred-b', 60));
+
+  act(() => h.ref.current!.seek(1));
+  advance(149);
+  expect(boundary.events).toHaveLength(0);
+  expect(h.onTimeUpdate).not.toHaveBeenCalled();
+
+  advance(1);
+  expect(boundary.events.map((event) => event.frame)).toEqual([60]);
+  expect(h.onTimeUpdate).not.toHaveBeenCalled();
+  commitScheduledFrame();
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(60 / 60, true);
+});
+
+it('cancels outstanding completion state on unmount', () => {
+  const h = preview(config('unmount-completion'));
+  settle();
+  act(() => h.ref.current!.seek(0.5));
+
+  h.view.unmount();
+
+  expect(raf.size).toBe(0);
+  expect(h.onTimeUpdate).not.toHaveBeenCalled();
 });
 
 it('flushes pending B immediately when pausing without a newer config', () => {
