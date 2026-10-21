@@ -52,9 +52,9 @@ test.beforeAll(() => {
     }
   }
   const exactSources = {
-    TIMELINE_CURRENT013_AGENT_SHA: '8130a401bf44a518d5a40ae274d398b8c560be55',
-    TIMELINE_CURRENT013_RUNTIME_SHA: '2c4ac180c2220bdad966bc01e95ad230e99ce26a',
-    TIMELINE_CURRENT013_PUBLIC_SOURCE_SHA256: 'e700d23ef308f417bcaa7188c680444d90c1bae9e5f4d925e9b8676ca49c3ccc',
+    TIMELINE_CURRENT013_AGENT_SHA: '6efc81500a0e0688c2bb41e736503f0fc3e04abb',
+    TIMELINE_CURRENT013_RUNTIME_SHA: '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c',
+    TIMELINE_CURRENT013_PUBLIC_SOURCE_SHA256: '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738',
   } as const;
   for (const [name, value] of Object.entries(exactSources)) {
     if (process.env[name] !== value) throw new Error(`the shot-name cohort requires exact ${name}`);
