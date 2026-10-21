@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { MAX_TIMELINE_SCALE_WIDTH } from '../../../src/tools/video-editor/lib/timeline-scale.ts';
 import { collectNetworkIssues, collectPageLogs, editorUrl, resetFakeRuntimeBaseline } from './support';
 
 const EDITOR_URL = editorUrl({ params: { transcriptLaneFixture: 'dense' } });
@@ -21,13 +22,16 @@ test('dense data lane paints late viewport items with bounded DOM and real geome
   const logs = collectPageLogs(page);
   const networkIssues = collectNetworkIssues(page);
   await page.addInitScript(() => localStorage.removeItem('astrid.dev-extensions.disabled'));
+  // The touch shell has no zoom buttons (pinch zooms it, and this viewport is below the touch shell's
+  // breakpoint), so the timeline starts at the zoom ceiling through the editor's saved preference.
+  await page.addInitScript((zoomCeiling) => {
+    localStorage.setItem('video-editor:preferences:demo-timeline', JSON.stringify({ scaleWidth: zoomCeiling }));
+  }, MAX_TIMELINE_SCALE_WIDTH);
   await page.goto(EDITOR_URL, { waitUntil: 'domcontentloaded', timeout: 45_000 });
 
   const row = page.locator('[data-lane-kind="astrid.transcript"]');
   await expect(row).toBeVisible({ timeout: 30_000 });
   const scroller = page.locator('.timeline-canvas-edit-area');
-  const zoomIn = page.getByRole('button', { name: 'Zoom in timeline' }).first();
-  for (let index = 0; index < 30; index += 1) await zoomIn.click();
 
   await scroller.evaluate((element) => {
     element.scrollLeft = 0;

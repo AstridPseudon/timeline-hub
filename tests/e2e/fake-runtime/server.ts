@@ -240,6 +240,18 @@ export async function startFakeRuntimeServer(options: { token: string; port?: nu
       };
     }
 
+    // The Transcript panel lists the project's transcript documents when the Extensions tab opens. The seeded
+    // world holds no project documents, so every listing is an empty page; an unknown project is a 404.
+    const documentList = /^\/v1\/projects\/([^/]+)\/documents$/.exec(pathname);
+    if (documentList && method === 'GET') {
+      if (!canonicalProjectId(documentList[1]!)) return errorReply(404, 'not_found', `project ${decodeURIComponent(documentList[1]!)} was not found`);
+      return {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+        body: jsonBody({ items: [], next_cursor: null }),
+      };
+    }
+
     const timelineRoute = /^\/v1\/projects\/([^/]+)\/timelines\/([^/]+)(\/.*)?$/.exec(pathname);
     if (timelineRoute) {
       const projectId = canonicalProjectId(timelineRoute[1]!);

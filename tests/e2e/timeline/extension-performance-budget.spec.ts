@@ -105,17 +105,22 @@ test.describe('extension performance and resource budgets', () => {
       scroller.dispatchEvent(new Event('scroll'));
     });
 
+    // The Extension Manager is the dialog behind the Extensions tab's Manage control.
     await page.getByRole('tab', { name: 'Extensions' }).click();
-    await expect(page.getByRole('button', { name: /^(Disable|Enable) haus\.astrid\./ })).toHaveCount(2);
+    await page.getByRole('button', { name: 'Manage extensions' }).click();
+    const manager = page.getByRole('dialog', { name: 'Extensions' });
+    await expect(manager.getByRole('button', { name: /^(Disable|Enable) haus\.astrid\./ })).toHaveCount(2);
 
     // The manager's package-card data attribute is intentionally an internal
     // implementation hook; the rendered contribution badge is the stable
     // user-facing contract and remains present across manager layouts.
-    const contributionCount = (await page.getByText(/\b\d+ contributions?\b/).allTextContents())
+    const contributionCount = (await manager.getByText(/\b\d+ contributions?\b/).allTextContents())
       .reduce((total, text) => total + [...text.matchAll(/\b(\d+) contributions?\b/g)]
         .reduce((subtotal, match) => subtotal + Number(match[1]), 0), 0);
     expect(contributionCount).toBeGreaterThan(0);
     expect(contributionCount).toBeLessThanOrEqual(BUDGET.contributionCount);
+    await manager.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(manager).toBeHidden();
 
     const requestsBeforeBurst = dataRequests.length;
     await page.locator('.timeline-canvas-edit-area').evaluate((scroller) => {

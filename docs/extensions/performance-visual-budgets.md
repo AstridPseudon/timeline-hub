@@ -36,8 +36,7 @@ The other signals have their own owners:
 | --- | --- |
 | Mounted data-lane items stay at most 128 while the viewport moves (500-segment `transcriptLaneFixture=dense` lane; the window moves and early ids unmount) | `tests/e2e/timeline/data-lane-viewport.spec.ts` |
 | Mounted lane items and the sparse window stay bounded at 500, 5,000 and 50,000 source intervals; late-time ids mount and early ids unmount after a viewport move | `npm run test:extension-scale` (`DataLaneList.test.tsx`, the `it.each([500, 5_000, 50_000])` cases and the 50k full-lane action case) |
-| Extension command listed by label in the command palette | `tests/e2e/timeline/extension-overlays.spec.ts` (B key / palette case) |
-| Horizontal document overflow caused by extension chrome (status-bar slot, marker pager) | `tests/e2e/timeline/shell-responsive-overflow.spec.ts` at desktop, tablet-portrait and phone |
+| Horizontal document overflow of the composed editor shell | `tests/e2e/timeline/shell-responsive-overflow.spec.ts` at desktop, tablet-portrait and phone |
 
 The scale gate is deterministic and structural: it proves the rendered item count equals the DOM budget
 (`DATA_LANE_DOM_ITEM_BUDGET`, 128) at every size while `data-total-items` keeps the full count, with no

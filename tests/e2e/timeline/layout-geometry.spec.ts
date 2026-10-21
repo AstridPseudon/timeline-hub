@@ -113,7 +113,9 @@ async function collectGeometry(page: Page): Promise<GeometrySnapshot> {
     );
     const armedBar = document.querySelector('[data-armed-gesture]');
     const dock = document.querySelector('[data-testid="video-editor-right-panel-dock"]');
-    const rightPanelOpen = dock?.getAttribute('data-open') === 'true';
+    // The touch editor's dock is its picture box (Video | Inspector | Extensions, 8a8a3218): always mounted, always
+    // open on Video, and in the flow. The flag is about the desk dock, a sidebar that starts open or closed.
+    const rightPanelOpen = dock?.getAttribute('data-open') === 'true' && dock.getAttribute('data-placement') !== 'picture';
 
     // The app's pane tabs are `position: fixed` at the viewport edges. They must not sit on the
     // editor's panels: the timeline (ruler and lanes), the preview and the open Inspector dock. The

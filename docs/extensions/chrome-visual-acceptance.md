@@ -6,6 +6,13 @@ Development URL: `http://127.0.0.1:2222/tools/video-editor?localProject=demo-pro
 
 Installed-Chrome follow-up URL: `http://127.0.0.1:2222/tools/video-editor?localProject=demo-project&localTimeline=demo-timeline&localTest=1&timelineOverlayCanary=1&transcriptLaneFixture=render-matrix&runawayTimelineProject=runaway-8085`
 
+> **Amendment 2026-10-21 — no fixture extensions in the browser.** Upstream c447c6f8 deleted the legacy fixture
+> catalog alias, so the browser loads only the production catalog (rendering pack: live scenes and Transcript).
+> Nothing in it contributes a timeline overlay or a lane action, so `extension-overlays.spec.ts`,
+> `lane-action-responsive.spec.ts` and the scene-marker parts of `shell-responsive-overflow.spec.ts` are retired.
+> The overlay host, marker layer and lane-action menu stay covered in jsdom (`TimelineExtensionOverlayHost*.test.tsx`,
+> `TimelineMarkerLayer.test.tsx`, `DataLaneList.test.tsx`).
+
 > **Amendment 2026-10-20 — what is still current.** This ledger records the 2026-08-23 session and is kept as
 > history. Since then: the ten Creative Lab extensions were deleted and there is no fixture catalog any more
 > (the browser specs run the production extensions plus the scene-phase-markers fixture, so "13 extensions"

@@ -64,7 +64,14 @@ test.describe('transcript overlap hit targets', () => {
     }
 
     for (const { label } of chipData) {
-      await page.getByLabel(label!, { exact: true }).click();
+      // A chip shows its text in a hoverable tooltip while it is hovered or focused, and that tooltip can sit over
+      // the next chip. Dismiss it the way a reader does (Escape, pointer away) so the click lands on the chip itself.
+      await page.keyboard.press('Escape');
+      await page.mouse.move(0, 0);
+      await expect(page.getByRole('tooltip')).toHaveCount(0);
+      // A later chip can sit over the middle of an earlier one (the diagnostic chip lies under its neighbour), so each
+      // chip is clicked at its own left edge, which no later chip covers.
+      await page.getByLabel(label!, { exact: true }).click({ position: { x: 2, y: 8 } });
       await expect(page.getByLabel(label!, { exact: true })).toHaveAttribute('aria-pressed', 'true');
     }
     await testInfo.attach('transcript-overlap-hit-targets', {

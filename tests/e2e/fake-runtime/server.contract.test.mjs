@@ -214,6 +214,13 @@ describe('projects, timelines and the seed', () => {
     assert.equal((await call(`/v1/projects/${SLUG}/timelines/no-such-timeline/inspect`, { method: 'POST', body: '{}' })).status, 404);
   });
 
+  test('the project document list is an empty page by slug or id, and 404 for an unknown project', async () => {
+    for (const selector of [SLUG, PROJECT_ID]) {
+      assert.deepEqual(await json(`/v1/projects/${selector}/documents?limit=100&kind=media.transcript`), { items: [], next_cursor: null });
+    }
+    assert.equal((await call('/v1/projects/other-project/documents')).status, 404);
+  });
+
   test('history shows only revisions the instance holds: the seeded head', async () => {
     const page = await json(`/v1/projects/${SLUG}/timelines/${FIXTURE_TIMELINE_ID}/composition-revisions?limit=50`);
     assert.deepEqual(page.items.map((item) => [item.revision_id, item.is_current_head]), [[await head(), true]]);

@@ -5,8 +5,9 @@ import { openEditor, resetFakeRuntimeBaseline } from './support';
 /**
  * On a narrow window the right panel starts closed (the Inspector default is a viewport-width choice:
  * open from 1024px up), so the preview and the timeline are what a user sees first. The touch editor
- * (phone and tablet) mounts no dock at all. Either way nothing floats over the preview, the ruler or
- * the first clip: each is the topmost element at its own centre, so a tap there reaches it.
+ * (phone and tablet) shows its Video | Inspector | Extensions tabs in place of the picture, on Video. Either
+ * way nothing floats over the preview, the ruler or the first clip: each is the topmost element at its
+ * own centre, so a tap there reaches it.
  *
  * The desktop case sits at 900px, the narrowest band that is still the desktop editor with a mouse:
  * below 768px the app counts any window as a phone and mounts the touch shell instead.
@@ -30,8 +31,11 @@ for (const viewport of NARROW_VIEWPORTS) {
 
       const dock = page.getByTestId('video-editor-right-panel-dock');
       if (viewport.touch) {
-        // The touch editor leaves the Inspector to the clip sheet: there is no dock to open.
-        await expect(dock).toHaveCount(0);
+        // The touch editor puts Video | Inspector | Extensions in the picture's own box (8a8a3218) and opens on
+        // Video, so the Inspector and the extension panels are a tab away, never a layer over the editor.
+        await expect(dock).toHaveCount(1);
+        await expect(dock).toHaveAttribute('data-placement', 'picture');
+        await expect(dock.getByRole('tab', { name: 'Video' })).toHaveAttribute('aria-selected', 'true');
       } else {
         // The condensed desktop dock is a sidebar column of the grid, never a layer over the editor.
         await expect(dock).toHaveAttribute('data-responsive', 'false');
