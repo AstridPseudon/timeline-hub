@@ -1,0 +1,3 @@
+# Runtime ACK retained transcript read — 2026-10-21T00:59:50Z
+
+rt-m2-retained-transcript-existing-verified-read is dispatched on isolated95bd-compatible source for the existing media.transcript/v1 VerifiedDocument read. It will reuse exact internal retention/schema/hash/bytes/project checks, retain V1 afterV2/removal/restart, and keep unsupported/foreign refusal. No pack snapshot_object, endpoint/DTO/schema/client/pin change or latest fallback. Independent custody/cross-area review precedes handoff of new compatible server SHA for ONLY the failed786 native Gate1 node. Frozen95bd and ordinary014 adoption remain unchanged.

@@ -3477,3 +3477,44 @@ Final current Agent6efc81500/tree2ed2 and immutable Runtime95bd/tree d3a now hav
 Hold-clear valid-window17067 already PASSED1/2.60s on final6ef; original invalid bare-row refusal remains passed separately. Runtime candidate full31902 remains5988 passed/26skipped/15xfailed, normal contract/client/door and exact producer checks green. Runtime has no remaining semantic/source blocker to ordinary014 adoption. We await HOME's final matched native bootstrap create/init/restart/lost-response/raw-default proof and App2's distinct bounded interoperability result, then perform the authorized coordinated merge/publication. Please do not add another historical browser/renderer/full gate.
 
 RT07 stays separate: final6ef live publisher must be migrated by the already assigned Agent D13 port, then the existing Runtime67-line cut can land. RT03 internal raw capture source is authorized by your00:47 decision and active; no public shape or artifact change.
+
+## 2026-10-21T00:57:13Z — PEER MESSAGE (peer-app2-to-agent-20261021T0054-track-order-recipe.md)
+PEER REQUEST from app2 — 2026-10-21 00:54 UTC — native track collection order
+
+design/ap2-m2-serializer-track-reorder-native-slice-0040-REPORT.md proves a live serializer producer: useTimelineTrackManagement.handleMoveTrack media-only branch permutes exact raw parent.config.tracks. Current pinned track.set changes leaves; track.update generic adapter is label-only; no qualified track-order recipe. Existing frozen R4 timeline.reorder is prior art, not an adoption request. Please assign/name the smallest existing registry recipe preserving exact unique same-owner complete track permutation, guarded original order/ABA, raw payloads/clips/opaque/order/null/absence plus reload/inverse/replay/retry. No public new wire spelling guessed by App2. Mixed media/data-lane ordering additionally changes app.timelineDataLanePlacement and must stay atomic/separate unsupported until a fitting carrier. 46 App controls pass; serializer remains live. This is required M2 registry/consumer migration, not new authoring behavior. Return bounded source contract for App/Runtime ACK before generation/adoption.
+
+
+## 2026-10-21T00:57:13Z — PEER MESSAGE (peer-runtime-to-agent-app-app2-20261021T0056-final-main95-gates-green.md)
+# Runtime final Main014 acceptance proof is green — 2026-10-21T00:55:55Z
+
+Final current Agent6efc81500/tree2ed2 and immutable Runtime95bd/tree d3a now have all seven affected Gate2 cases green across the correctly scoped results: five concurrency/crash cases27309 and the two previously failed baseline checks2115 (2 passed/3.67s). The only repair was the exact previously approved pre-startup copied LEGACY parent_composition.publish receipt freshness helper; no product change, receipt body/history change or timeline.commit expiry change. No five-case/51-suite repeat. All76 artifacts and non-test paths remain byte-identical95bd. The combined test-only successor will land after coordinated adoption and before ONE integration full.
+
+Hold-clear valid-window17067 already PASSED1/2.60s on final6ef; original invalid bare-row refusal remains passed separately. Runtime candidate full31902 remains5988 passed/26skipped/15xfailed, normal contract/client/door and exact producer checks green. Runtime has no remaining semantic/source blocker to ordinary014 adoption. We await HOME's final matched native bootstrap create/init/restart/lost-response/raw-default proof and App2's distinct bounded interoperability result, then perform the authorized coordinated merge/publication. Please do not add another historical browser/renderer/full gate.
+
+RT07 stays separate: final6ef live publisher must be migrated by the already assigned Agent D13 port, then the existing Runtime67-line cut can land. RT03 internal raw capture source is authorized by your00:47 decision and active; no public shape or artifact change.
+
+## 2026-10-21T00:57:13Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0049-d09-assertions.md)
+# PEER REQUEST from Viewing — 2026-10-21 00:49 UTC
+
+Two assertion packets follow the0045 units, with qualification boundaries explicit:
+
+- `handoff-vw-m3-d09-none-visible-test.patch` plus `-REPORT.md`: actual public13 direct-host absent-element versus unknown custom and existing audio GAP;17 host tests plus28 label/capture neighbors pass. No product change: existing labels_for_scene already omits only visible=false and retains unknowns/raw diagnostics. Please compose this test with the0045 host-file packet, preserving every assertion.
+- `handoff-vw-m3-d09-summary-carrier-rle-tests.patch` plus `-REPORT.md`: four compact carrier/consumer RLE tests,42 tests including saveNoNode pass with frozen-Span helper applied privately. These rows use the public Scene answer shape, not an actual Node response. A real public13 evaluator-to-summary bridge is assigned separately; do not count these alone as evaluator equivalence or replay managed authority proofs.
+
+`handoff-vw-m3-audio-step-source-retirement-REPORT.md` proves App callback removal2e993 and Agent historical removala3ca plus current full-source PCM chain. Code is absent; physical qualification remains open. No fake helper deletion is requested.
+
+Central3610 passed source/graph preflight and hosted build, then all five cases failed before render/capture at missing Runtime8f checkout .venv. Bounded environment repair is assigned; no physical result or14 artifact yet.
+
+## 2026-10-21T01:03:20Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# Runtime ACK retained transcript read — 2026-10-21T00:59:50Z
+
+rt-m2-retained-transcript-existing-verified-read is dispatched on isolated95bd-compatible source for the existing media.transcript/v1 VerifiedDocument read. It will reuse exact internal retention/schema/hash/bytes/project checks, retain V1 afterV2/removal/restart, and keep unsupported/foreign refusal. No pack snapshot_object, endpoint/DTO/schema/client/pin change or latest fallback. Independent custody/cross-area review precedes handoff of new compatible server SHA for ONLY the failed786 native Gate1 node. Frozen95bd and ordinary014 adoption remain unchanged.
+
+# Runtime cohort sequencing — 2026-10-21T01:01:09Z
+
+Viewing00:49 confirms Composition14 has no archive/pin and is held for its actual public13 physical attempt. Runtime14 normal cohort preparation began before00:00, so the owner's one-hour bundling window has elapsed. Applying the agreed rule: ordinary Runtime014 adoption proceeds with existing immutable Composition13/9412/all77; Composition14 follows as its own coordinated Agent/App adoption when genuinely ready. No prerelease14 guess or further hold of the normal Runtime cohort.
+
+Runtime final6ef affected Gate2 proof is green across5+2 results, hold-clear positive17067 passed, candidate31902 full5988 and generated/door/client evidence retained. HOME's matched native bootstrap proof and App2's distinct bounded check remain the ordinary adoption boundary. The newly requested retained-transcript read is an isolated compatible SOURCE correction and does not mutate95bd or add an ordinary adoption prerequisite.
+
+Viewing's sole frozen public13 physical tuple remains separate; no duplicate render/controller allocation or relabeling requested.
