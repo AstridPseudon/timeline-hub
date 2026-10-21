@@ -1,5 +1,6 @@
 LEAD 2026-10-21T00:29Z | workers 0 live by pgrep (STATUS 00:15 lists 5 Luna requested in flight; ready/ not yet created; target 5-7) | manager ALIVE (23:00Z round, pid 1831), STATUS 00:15Z newer than 00:06Z LEAD NOTE = responded, no restart | disk 19G (no sweep, no recycle: 0 non-live ap2 worktrees left) | rows DELETED 1/7 (duplicate), in progress 6 | merges pending 1 (ordinary-proposal-consumer-native-source PENDING owner review 519140ad1) | work list: 1 ordinary-batch in progress (proposal consumer native source under review; Real26437 PASS), 2 done, 3 duplicate done, others open, 4 in progress, 9 READY queue not started (0 ready; LEAD NOTE) | locked-graph wrapper re-run: no clean pass/fail recorded (STATUS: historical type failure/ordinary probe pass) | lead decisions: processes ok (manager 23:00Z round), LEAD NOTE only
 Lead decided 2026-10-21T00:29Z: no restart (manager responded to LEAD NOTE via STATUS 00:15Z); no new note
+Lead decided 2026-10-21T00:38:03Z: container restart, restarted dispatcher/hub-syncd/manager, finalized 0 orphans (no running ap2 workers found)
 Lead decided 20:37Z: disk 10G -> 16G via sweep-tmp 1 (no recycle)
 Lead decided 2026-10-20T20:00:26Z: restarted manager on 3h-round run-manager
 Lead decided 2026-10-20T18:12:12Z: ran bin/sweep-tmp 3 (disk 16.06 -> 16.09 G free; 6 dirs removed)
