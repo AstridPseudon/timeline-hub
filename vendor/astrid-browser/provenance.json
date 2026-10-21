@@ -1,7 +1,7 @@
 {
-  "astrid_commit": "6844d4db0399748bab2314f88a4a24f0d850218d",
-  "astrid_tree": "e95a436f5bba90b93619c84b989dda0138c5eb8a",
-  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 6844d4db0399748bab2314f88a4a24f0d850218d",
+  "astrid_commit": "3080024bc406fa733e3eca0bcdc6788951cf63a7",
+  "astrid_tree": "46b3b02ecd6d67de042f0cb2ec2bd02b8f3fa2b6",
+  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 3080024bc406fa733e3eca0bcdc6788951cf63a7",
   "declared_files": "config/astrid-vendor-files.json",
   "verify_command": "node scripts/build/verify-astrid-vendor-sources.mjs",
   "files": {
@@ -133,9 +133,9 @@
     "astrid/packs/rendering/ui/threejs-live-editor/authoring.ts": "48e1603ce9a3b0ebebe8ef554d37834dc2e2f1b1dcb8b5d8a6b6f329d5d37264",
     "astrid/packs/rendering/ui/threejs-live-editor/diagnostics.ts": "012c8d739dfddf33742e0479a19a59d0a1f1b7e618e1e3948a049b962080a022",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/Select.tsx": "ff70d6fc0da09549a39412e89b03b1d7950e8a700ce5954f19395fccdfc22528",
-    "astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery.tsx": "2ce04c23dd78602b4d16072b2a419a1d22df34ab65bcc8c47f5aac4ca8c70538",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery.tsx": "4ec0bdc5812ef3c3d369b0e77a1f4d7b876827b94b96e60f99538195f657daf3",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/TimeBar.tsx": "581da5ac3f663c60a37d02204c72dd285ff88390bc1e7fa35b7ebd5eb68bda58",
-    "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx": "0d853cfed0b813a25e7e6855ff3c259c8e859ea2917c7b02c42d402e6158243e",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx": "01770ecde256668dd2258c7a7f2d866c741147e50ca8407e3afe0058b5dd64d8",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldList.tsx": "ab3b84403973b98e68f650e6e58fef0c6b958425291bf29cdea775ccd70be11a",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/camera.ts": "b54f7711cae25c3c63284ed6a5f20fba2af6c7758fdd5a104dc41b2aad85eefc",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/library.ts": "a2d670345a6977c3567ee5158bc53e6d365a325d82d7724d0853980d5c02d414",

@@ -47,7 +47,7 @@ const ACTION = 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full b
 /** The ring sits on the still, above the image, and never outside the card's box. */
 const RING = 'pointer-events-none absolute inset-0 rounded group-hover/card:shadow-[inset_0_0_0_1px_hsl(var(--border))] group-focus-visible/shot:shadow-[inset_0_0_0_2px_hsl(var(--ring))]';
 
-function ShotCard({ shot, index, current, revision, fullscreen, addDisabled, addTitle, dragProps, onSelect, onAdd }: {
+export function ShotCard({ shot, index, current, revision, fullscreen, addDisabled, addTitle, dragProps, onSelect, onAdd }: {
   shot: GalleryShot; index: number; current: boolean; revision: string; fullscreen: boolean;
   addDisabled: boolean; addTitle?: string;
   dragProps: PanelClipDragProps | null;
@@ -218,6 +218,71 @@ export function ShotGallery({ shots, currentIndex, revision, fullscreen, addDisa
         </ul>
       )}
 
+    </section>
+  );
+}
+
+/**
+ * Explore's preview of the world's shots: a header ("Shots · 12", "View shots →") over the first rows of cards, with a
+ * "+N more" tile in the last slot when there are more. No search and no pager; it scrolls with the rest of the panel.
+ */
+export function ShotsStrip({ shots, revision, fullscreen, addDisabled, addTitle, rows = 2, dragPropsFor, onSelect, onAdd, onViewAll }: {
+  shots: readonly GalleryShot[];
+  revision: string;
+  fullscreen: boolean;
+  addDisabled: boolean;
+  addTitle?: string;
+  rows?: number;
+  dragPropsFor: (index: number) => PanelClipDragProps | null;
+  onSelect: (index: number) => void;
+  onAdd: (index: number) => void;
+  onViewAll: () => void;
+}) {
+  const slots = rows * 3;
+  const overflow = shots.length > slots;
+  const shown = shots.slice(0, overflow ? slots - 1 : slots);
+  const more = shots.length - shown.length;
+  return (
+    <section aria-label="Shots" className="flex min-w-0 flex-col gap-2" data-testid="shots-strip">
+      <div className="flex items-center justify-between gap-2 px-2">
+        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Shots{shots.length ? ` · ${shots.length}` : ''}</p>
+        {shots.length ? (
+          <button type="button" className="rounded-sm text-[11px] text-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onViewAll}>View shots →</button>
+        ) : null}
+      </div>
+      {shots.length === 0 ? (
+        <p className="px-2 text-[11px] text-muted-foreground">No shots in this world yet</p>
+      ) : (
+        <ul aria-label="Shots preview" className="mb-0 mt-0 grid list-none grid-cols-3 gap-x-3 gap-y-3 p-0">
+          {shown.map((shot, index) => (
+            <ShotCard
+              key={`${index}:${shot.start}:${shot.name}`}
+              shot={shot}
+              index={index}
+              current={false}
+              revision={revision}
+              fullscreen={fullscreen}
+              addDisabled={addDisabled}
+              addTitle={addTitle}
+              dragProps={fullscreen ? null : dragPropsFor(index)}
+              onSelect={onSelect}
+              onAdd={onAdd}
+            />
+          ))}
+          {overflow ? (
+            <li className="flex min-w-0 flex-col">
+              <button
+                type="button"
+                aria-label={`${more} more shots, view shots`}
+                className="grid aspect-video w-full place-items-center rounded border border-dashed border-border/70 text-xs text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={onViewAll}
+              >
+                +{more} more
+              </button>
+            </li>
+          ) : null}
+        </ul>
+      )}
     </section>
   );
 }
