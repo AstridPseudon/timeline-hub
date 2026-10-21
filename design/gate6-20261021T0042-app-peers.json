@@ -1,0 +1,13 @@
+{
+  "source": "3ee1900621f5ae27450ce5b1b69a3b7987e4b8c8",
+  "tree": "38d6f715f05d0c00b89e131c3b8d4ae28a57fd44",
+  "authority": "vw-m3-gate6-app-peer-postinstall-authority",
+  "peers": {
+    "node_modules/remotion/dist/cjs/audio/shared-audio-tags.js": "sha256:949ccec3419398183e8e22f63820a4a57cb8379befb184fbac9a3acde040c5b8",
+    "node_modules/remotion/dist/esm/index.mjs": "sha256:5a1584f7660fa8fffa7eb8fe016b82a4d719e67d4b7904d4fa4f299eb1355f28",
+    "node_modules/@remotion/player/dist/cjs/use-player-methods.js": "sha256:ff50ab8b4ae86423fab18aa1ecf6c48c41501c4f7b527f05a55c2c36598def46",
+    "node_modules/@remotion/player/dist/esm/index.mjs": "sha256:d3ef9728584c78e0e01cdb71ad72e3c6ddb36f96bfef90a4231d8b795e906b12",
+    "node_modules/@remotion/player/dist/cjs/use-playback.js": "sha256:6c8369a19d7a29eab5dab4642799172d4f2a7e11dad39125edcb673ec5729fb0",
+    "node_modules/@remotion/player/dist/cjs/PlayerUI.js": "sha256:5dc9b4b89310609f57a718c641334d530b72ecf284fc1682610afcec208a4fbb"
+  }
+}
