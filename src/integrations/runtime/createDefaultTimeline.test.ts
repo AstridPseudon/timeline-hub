@@ -6,6 +6,8 @@ import { RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
 import fixture from '@/tools/video-editor/commands/fixtures/recipe_m2_app_bootstrap.json';
 import { fixtureDigest } from './__tests__/timelineCommitFixture.ts';
 import { createCanonicalTimeline, ensureProjectHasTimeline } from './createDefaultTimeline.ts';
+import type { EditCommand } from './timeline-commit-types.ts';
+import { assertPinnedRuntimeEditCommandOps } from './__tests__/pinnedRuntimeEditCommandContract.ts';
 
 function runtimeClient(timelines: Record<string, unknown>[]) {
   return {
@@ -23,6 +25,7 @@ type NativeTransportOptions = {
   lose?: 'create' | 'init';
   createKey?: string;
   initName?: string;
+  validateCommitCommands?: (commands: readonly EditCommand[]) => void;
 };
 
 const headerMap = (headers: Record<string, string>) => Object.fromEntries(
@@ -207,6 +210,7 @@ function nativeTransport(options: NativeTransportOptions) {
     }
     if (method === 'POST' && path === `${timelinePath()}/commit`) {
       expectedHeaders(headers, { accept: 'application/json', 'content-type': 'application/json', 'idempotency-key': expect.any(String) });
+      options.validateCommitCommands?.(parsed?.commands as EditCommand[]);
       const expectedRequest = {
         api_version: 1,
         project_id: options.projectId,
@@ -491,5 +495,23 @@ describe('ensureProjectHasTimeline', () => {
     expect(native.calls.some(({ path }) => path.includes('/timeline-documents'))).toBe(false);
     expect(native.calls.filter(({ method, path }) => method === 'POST' && path === '/v1/handshake')).not.toHaveLength(0);
     expect(client.publishParentComposition).not.toHaveBeenCalled();
+  });
+});
+
+describe('pinned operation guard at the bootstrap request seam', () => {
+  it('rejects the b69 native initializer before the fake Runtime ACKs timeline.init', async () => {
+    const projectId = 'project-native-b69-guard';
+    const { client, native } = nativeClient(projectId, [], {
+      projectId,
+      timelineId: 'timeline-native-b69-guard',
+      createKey: `astrid-first-timeline-${projectId}`,
+      initName: 'Main',
+      validateCommitCommands: assertPinnedRuntimeEditCommandOps,
+    });
+    installNativeOutboxHarness();
+
+    await expect(ensureProjectHasTimeline(projectId, client)).rejects.toThrow(/timeline\.init/);
+    expect(native.calls.filter(({ method, path }) => method === 'POST' && path.endsWith('/commit'))).toHaveLength(1);
+    expect(native.state().initialized).toBe(false);
   });
 });
