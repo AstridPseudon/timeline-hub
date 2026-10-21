@@ -388,7 +388,8 @@ Owner-film inspection remains deliberately bounded. `VW-D09b`/`VW-D09c` are
 deferred solely for heavy proof: the private `model.mouth_box` fallback and
 legacy PNG crop selection remain, along with their existing statistics and
 strict thresholds. The retained partial case is not equivalent to the
-explicit case (697 vs 799 pixels; 16/697 vs 16/799 threshold crossing), and the
+explicit case (697 vs 799 pixels; padding ratios 16/697 vs 16/799, both above
+0.02, with 15 vs 16 strict threshold crossings), and the
 387-pixel erase control remains separate. `InspectionMouth` is not in 0.0.14;
 no public geometry/crop field, fallback retirement, or statistic rewrite is
 implied by this package.
