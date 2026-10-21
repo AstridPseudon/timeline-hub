@@ -123,6 +123,48 @@ def test_timeline_cli_has_no_replace_clip_command() -> None:
     assert "retime-clip" not in choices
 
 
+def test_selected_media_commit_door_preserves_original_identity() -> None:
+    from tests.editing_conformance.test_recipe_occurrence_media import inputs
+
+    _, old, new, _ = inputs()
+
+    class Transport:
+        def __init__(self):
+            self.committed = []
+
+        def list_timelines(self, project, *, cursor=None, limit=50):
+            return ([{'project_id': project, 'timeline_id': 'main', 'slug': 'main'}], None)
+
+        def commit_timeline(self, project, timeline, body, *, idempotency_key):
+            self.committed.append((project, timeline, body, idempotency_key))
+            return {'data': {'accepted': True}, 'receipt': None}
+
+    transport = Transport()
+    timelines = RemoteTimelines(transport)
+    for occurrence in (None, 'occ-1'):
+        owner = 'parent' if occurrence is None else 'occurrence:occ-1'
+        call = {
+            'schema_version': 1, 'op': 'clip.swap-media' if occurrence is None else 'occurrence.swap-media',
+            'version': '1', 'select': owner + '/clip:picture-1',
+            'args': {'old_media': old, 'media': new},
+            'intent': {'ownership': 'parent' if occurrence is None else 'occurrence'},
+        }
+        body = {
+            'api_version': 1, 'project_id': 'project-1', 'timeline_id': 'main',
+            'base_revision_id': 'parent-1', 'base_publication_id': 'publication-1',
+            'commands': [call], 'source': {'via': 'python'},
+        }
+        result = timelines.commit('project-1', 'main', body,
+                                  idempotency_key='selected-' + str(occurrence))
+        assert result.ok, result.error
+        project, timeline, captured, key = transport.committed[-1]
+        assert (project, timeline, key) == ('project-1', 'main', 'selected-' + str(occurrence))
+        assert captured['base_revision_id'] == 'parent-1'
+        assert captured['base_publication_id'] == 'publication-1'
+        assert captured['commands'] == [call]
+    assert len(transport.committed) == 2
+
+
 def test_remote_parent_media_replacement_publishes_exact_closure_once() -> None:
     from tests.timeline.test_authoring_bundle import NEW, _closure, _digest
 
@@ -268,6 +310,15 @@ def test_native_media_retry_keeps_original_command_and_key_after_lost_ack(monkey
     pending = first.state['pending']
     restored = _native_session(monkeypatch, bundle, verified, pending=pending,
                                flight={'key': 'original-key'})
+    before = copy.deepcopy(restored.state)
+    changed_source = RemoteTimelines(transport).replace_parent_media(
+        'project-1', 'main', occurrence_id='occ-a', clip_id='clip-a',
+        source_object_id=old['object_id'], expected_head='parent-1',
+        expected_publication='publication-1', old_media=old, media=new,
+    )
+    assert not changed_source.ok
+    assert restored.flush_calls == []
+    assert restored.state == before
     retried = RemoteTimelines(transport).replace_parent_media(
         'project-1', 'main', occurrence_id='occ-a', clip_id='clip-a',
         source_object_id=new['object_id'], expected_head='parent-1',

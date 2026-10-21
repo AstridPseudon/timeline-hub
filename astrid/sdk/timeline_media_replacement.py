@@ -10,6 +10,11 @@ from .contracts import DomainResult, ErrorObject
 
 _SELECTION_KEYS = {"asset", "generation_id", "variant_id", "object_id", "catalog_digest"}
 _ID = re.compile(r"(?!.*::)[^/]+\Z")
+_NATIVE_COMMAND_KEYS = {
+    "schema_version", "op", "version", "select", "args", "intent",
+    "resolved", "reads", "selections", "bindings", "created", "expect",
+    "authorship",
+}
 
 
 def _failure(message, *, key, details=None, code="validation_error"):
@@ -60,15 +65,75 @@ def _target_pin(bundle, owner, clip_id):
     return values
 
 
-def _pending_matches(command, *, owner, clip_id, old_media, media):
+def _pending_matches(command, *, owner, clip_id, source_object_id, old_media, media):
     if not isinstance(command, Mapping):
         return False
+    select = owner + "/clip:" + clip_id
     expected = {
-        "select": owner + "/clip:" + clip_id,
+        "schema_version": 1,
+        "version": "1",
+        "select": select,
         "op": "clip.swap-media" if owner == "parent" else "occurrence.swap-media",
         "args": {"old_media": dict(old_media), "media": dict(media)},
+        "intent": {"ownership": "parent" if owner == "parent" else "occurrence"},
     }
-    return all(command.get(key) == value for key, value in expected.items())
+    if (set(command) != _NATIVE_COMMAND_KEYS
+            or any(command.get(key) != value for key, value in expected.items())):
+        return False
+    if media.get("object_id") != source_object_id:
+        return False
+
+    # These are recorder claims, but they are still part of the original
+    # command identity.  A caller retry must not turn a changed draft into a
+    # request for a different target or a different native operation.
+    if command.get("resolved") != [select]:
+        return False
+    bindings = command.get("bindings")
+    binding_keys = {"media.track", "media.target"}
+    if owner != "parent":
+        binding_keys |= {
+            "media.owner", "collection.owner:collection.clips",
+            "collection.owner:collection.tracks",
+        }
+    if not isinstance(bindings, Mapping) or set(bindings) != binding_keys:
+        return False
+    if bindings.get("media.target") != select:
+        return False
+    if (not isinstance(bindings.get("media.track"), str)
+            or not re.fullmatch(re.escape(owner) + r"/track:[^/]+", bindings["media.track"])):
+        # The exact track suffix is authored metadata and is checked by the
+        # persisted flight body.  Here, reject malformed or retargeted claims
+        # before a draft-only retry can flush anything.
+        return False
+    if owner != "parent" and any(
+        bindings.get(key) != owner for key in (
+            "media.owner", "collection.owner:collection.clips",
+            "collection.owner:collection.tracks",
+        )
+    ):
+        return False
+
+    created = command.get("created")
+    if not isinstance(created, list) or len(set(created)) != len(created):
+        return False
+    if any(not isinstance(ref, str) or not ref.startswith(owner + "/asset:") for ref in created):
+        return False
+    expect = command.get("expect")
+    authorship = command.get("authorship")
+    if not isinstance(expect, Mapping) or not isinstance(authorship, Mapping):
+        return False
+    target_expect = select + "::asset"
+    if (expect.get(target_expect) != {"state": "present", "value": old_media.get("asset")}
+            or authorship.get(target_expect) != "direct"):
+        return False
+    expected_expect_keys = {target_expect, *(created_ref + "::" for created_ref in created)}
+    if set(expect) != expected_expect_keys:
+        return False
+    if set(authorship) != set(expect) or any(value != "direct" for value in authorship.values()):
+        return False
+    if any(value != {"state": "absent"} for key, value in expect.items() if key != target_expect):
+        return False
+    return isinstance(command.get("reads"), list) and isinstance(command.get("selections"), list)
 
 
 def _domain(result, key):
@@ -155,10 +220,12 @@ def replace_selected_media(
             if (len(pending) != 1
                     or not _pending_matches(
                         pending[0], owner=owner, clip_id=clip_id,
+                        source_object_id=source_object_id,
                         old_media=old_media, media=media)):
                 raise ValueError("pending native replacement does not match this exact request")
             if state.get("flight") is not None:
-                return _domain(session.flush(), key)
+                flight_key = state["flight"].get("key")
+                return _domain(session.flush(), flight_key)
             return _domain(session.flush(idempotency_key=key), key)
 
         bundle = session._bundle(state)

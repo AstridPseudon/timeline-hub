@@ -142,14 +142,13 @@ def command(editing):
             'intent': {'ownership': 'parent'}}
 
 
-def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editing, monkeypatch):
+def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editing, monkeypatch, real_runtime):
     import runtime_protocol.service as service_module
     import runtime_protocol.visual_seam as visual_seam
     from runtime_protocol.errors import RuntimeErrorBase
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
 
-    from astrid.sdk.remote import RemoteTimelines
     from astrid.sdk.timeline import commands
     from astrid.sdk.timeline._command_state import State
     from astrid.sdk.timeline.commit import bundle_from_document
@@ -204,24 +203,33 @@ def test_selected_swap_capture_accepted_reload_restart_retry_undo_and_redo(editi
     assert redone['data']['canonical_document'] == output
     assert editing.service.store.integrity_report()['ok']
 
-    # The WC3 SDK adapter submits the original head pair and selected pins.
-    # Use an already existing alias after redo: no new allocation is needed.
-    class Transport:
-        def list_timelines(self, project, *, cursor=None, limit=50):
-            return ([{'project_id': project, 'timeline_id': 'film', 'slug': 'film'}], None)
+    # The SDK caller must use the normal supported client transport.  Opening
+    # AstridClient performs the real health/handshake exchange; no transport
+    # identity or health state is fabricated by this test.
+    from astrid.sdk.client import AstridClient
 
-        def publish_parent_composition(self, *args, **kwargs):
-            pytest.fail('selected SDK adapter published a whole closure')
-
-        def commit_timeline(self, project, timeline, request, *, idempotency_key):
-            assert (project, timeline) == (editing.project, 'film')
-            return commit(editing, request, idempotency_key)
-
-    head = body(editing)
-    result = RemoteTimelines(Transport()).replace_parent_media(
+    editing.service.close()
+    daemon = real_runtime(editing.root, support_root=editing.root.parent / 'http-support',
+                          commit='95bd3c5f', authoring_profile='astrid')
+    token, _ = daemon.credentials.provision(
+        'media-editor', [
+            'projects:read', 'projects:write', 'objects:read', 'objects:write',
+            'tasks:read', 'tasks:write',
+        ],
+    )
+    client = AstridClient.open(
+        endpoint=daemon.endpoint, credential=token,
+        realm_id=daemon.service.realm['id'], actor_id='media-editor',
+        client_name='timeline-selected-media-test', client_version='1',
+        protocol_version='workspace.v1',
+    )
+    head = client.timelines.history(editing.project, 'film', limit=1)
+    assert head.ok, head.as_dict()
+    head = head.data['head']
+    result = client.timelines.replace_parent_media(
         editing.project, 'film', occurrence_id=None, clip_id='clip-a',
-        source_object_id=editing.old['object_id'], expected_head=head['base_revision_id'],
-        expected_publication=head['base_publication_id'], old_media=editing.new,
+        source_object_id=editing.old['object_id'], expected_head=head['revision_id'],
+        expected_publication=head['publication_id'], old_media=editing.new,
         media=editing.old, idempotency_key='sdk-swap-back')
     assert result.ok, result.error
     assert State(bundle_from_document(result.data['canonical_document'])).entity(TARGET)['asset'] == editing.old['asset']
