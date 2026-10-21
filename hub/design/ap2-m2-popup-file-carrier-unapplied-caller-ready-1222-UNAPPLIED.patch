@@ -1,0 +1,357 @@
+diff --git a/src/tools/video-editor/hooks/useAssetManagement.mediaImport.test.tsx b/src/tools/video-editor/hooks/useAssetManagement.mediaImport.test.tsx
+index 6d0a579e8..95fc60c30 100644
+--- a/src/tools/video-editor/hooks/useAssetManagement.mediaImport.test.tsx
++++ b/src/tools/video-editor/hooks/useAssetManagement.mediaImport.test.tsx
+@@ -7,10 +7,12 @@ import {
+   VideoEditorRuntimeProvider,
+   type VideoEditorRuntimeContextValue,
+ } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+-import { useAssetManagement, type UseAssetManagementArgs } from './useAssetManagement';
++import { submitPreparedOccurrenceMedia, useAssetManagement, type UseAssetManagementArgs } from './useAssetManagement';
+ import { RUNTIME_MEDIA_IMPORT_MAX_BYTES } from '@/tools/video-editor/data/AssetResolver.ts';
+ import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+ import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
++import type { VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
+ 
+ const extractVideoMetadataMock = vi.fn();
+ 
+@@ -100,6 +102,57 @@ function renderAssetManagement(provider: Record<string, unknown>, args = buildAr
+ }
+ 
+ describe('useAssetManagement Runtime media imports', () => {
++  it('captures, verifies, finishes, then submits a File occurrence add without a fallback writer', async () => {
++    const mediaSelection = {
++      asset: 'sha256:asset',
++      generation_id: 'generation-1',
++      variant_id: 'variant-1',
++      object_id: 'sha256:object',
++      catalog_digest: 'sha256:catalog',
++    } as const;
++    const preparedAsset = {
++      assetKey: 'asset-1',
++      mediaType: 'image',
++      durationSeconds: null,
++      entry: { file: 'https://runtime.test/image', type: 'image/png' },
++      source: 'registered',
++      mediaSelection,
++    } satisfies TimelineProvisionedAsset;
++    const verifiedMedia = { selection: mediaSelection, media_type: 'image/png', size: 1 } satisfies VerifiedMedia;
++    const order: string[] = [];
++    const basis = { token: 'basis' } as never;
++    const finished = { command: { token: 'command' }, preview: null } as never;
++    const port = {
++      capture: vi.fn(() => { order.push('capture'); return basis; }),
++      finish: vi.fn(() => { order.push('finish'); return finished; }),
++      submit: vi.fn(() => { order.push('submit'); }),
++    };
++    const getProjectVerifiedMedia = vi.fn(async () => {
++      order.push('verified-read');
++      return verifiedMedia;
++    });
++
++    await expect(submitPreparedOccurrenceMedia({
++      ownerRef: 'occurrence:occ-1',
++      row: {
++        id: 'child-1',
++        track: 'V1',
++        clipType: 'image',
++        asset: 'sha256:asset',
++        at: 3,
++        hold: 5,
++      },
++      preparedAsset,
++      current: buildDropData(),
++      occurrenceAddMediaPort: port,
++      getProjectVerifiedMedia,
++    })).resolves.toBe(true);
++
++    expect(order).toEqual(['capture', 'verified-read', 'finish', 'submit']);
++    expect(getProjectVerifiedMedia).toHaveBeenCalledWith(mediaSelection);
++    expect(port.submit).toHaveBeenCalledWith(finished);
++  });
++
+   it('uses one Runtime import identity for image and video drops', async () => {
+     extractVideoMetadataMock.mockResolvedValue({ duration_seconds: 2.5 });
+     const prepareMediaImport = vi.fn()
+diff --git a/src/tools/video-editor/hooks/useAssetManagement.ts b/src/tools/video-editor/hooks/useAssetManagement.ts
+index 6ebc40706..88ea03a16 100644
+--- a/src/tools/video-editor/hooks/useAssetManagement.ts
++++ b/src/tools/video-editor/hooks/useAssetManagement.ts
+@@ -8,7 +8,7 @@ import { extractVideoMetadata } from '@/shared/lib/media/videoMetadata.ts';
+ import { extractVideoPosterFrame } from '@/shared/lib/media/videoPosterExtractor.ts';
+ import { generateClientThumbnail, uploadImageWithThumbnail } from '@/shared/media/clientThumbnailGenerator.ts';
+ import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
+-import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
++import type { JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+ import { createExternalUploadGeneration } from '@/integrations/supabase/repositories/generationMutationsRepository.ts';
+ import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+ import {
+@@ -38,6 +38,7 @@ import type {
+ } from '@/tools/video-editor/hooks/timeline-state-types.ts';
+ import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
+ import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
++import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
+ 
+ type UploadedGenerationData = GenerationDropData & {
+   assetId?: string;
+@@ -64,6 +65,48 @@ type UploadedGenerationResult = {
+ 
+ const NATIVE_REFUSAL_MESSAGE_LIMIT = 240;
+ 
++/** HOME supplies this carrier from its existing popup serializer. */
++export type OccurrenceMediaBirth = Readonly<{
++  ownerRef: `occurrence:${string}`;
++  row: Record<string, JSON>;
++}>;
++
++export type OccurrenceMediaBirthResolver = (input: {
++  current: TimelineData;
++  preparedAsset: TimelineProvisionedAsset;
++  trackId: string;
++  time: number;
++}) => OccurrenceMediaBirth | null;
++
++export async function submitPreparedOccurrenceMedia(input: {
++  ownerRef: `occurrence:${string}`;
++  row: Record<string, JSON>;
++  preparedAsset: TimelineProvisionedAsset;
++  current: TimelineData;
++  occurrenceAddMediaPort: OccurrenceAddMediaCapturePort;
++  getProjectVerifiedMedia: (selection: MediaSelection) => Promise<VerifiedMedia>;
++}): Promise<boolean> {
++  const media = input.preparedAsset.mediaSelection;
++  if (!media || (input.preparedAsset.mediaType !== 'image' && input.preparedAsset.mediaType !== 'video')) {
++    return false;
++  }
++
++  try {
++    const basis = input.occurrenceAddMediaPort.capture({
++      ownerRef: input.ownerRef,
++      row: input.row,
++      media,
++      current: input.current,
++    });
++    const verifiedMedia = await input.getProjectVerifiedMedia(media);
++    const finished = input.occurrenceAddMediaPort.finish(basis, verifiedMedia);
++    input.occurrenceAddMediaPort.submit(finished);
++    return true;
++  } catch {
++    return false;
++  }
++}
++
+ export interface UseAssetManagementArgs {
+   store?: TimelineStoreApi;
+   dataRef: MutableRefObject<TimelineData | null>;
+@@ -76,6 +119,9 @@ export interface UseAssetManagementArgs {
+   invalidateAssetRegistry: TimelineInvalidateAssetRegistry;
+   resolveAssetUrl: (file: string) => Promise<string>;
+   commands?: Pick<TimelineCommands, 'addClip'>;
++  /** Dormant until HOME wires the popup serializer's explicit birth carrier. */
++  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
++  getOccurrenceAddMediaBirth?: OccurrenceMediaBirthResolver;
+ }
+ 
+ export interface UseAssetManagementResult {
+@@ -92,6 +138,11 @@ export interface UseAssetManagementResult {
+     preparedAsset?: TimelineProvisionedAsset,
+     removeClipId?: string,
+   ) => boolean | Promise<boolean>;
++  handleOccurrenceMediaDrop?: (input: {
++    preparedAsset: TimelineProvisionedAsset;
++    trackId: string;
++    time: number;
++  }) => Promise<boolean>;
+ }
+ 
+ export interface AssetDropTargetResolution {
+@@ -185,8 +236,11 @@ export function useAssetManagement({
+   applyEdit,
+   patchRegistry,
+   commands,
++  occurrenceAddMediaPort,
++  getOccurrenceAddMediaBirth,
+ }: UseAssetManagementArgs): UseAssetManagementResult {
+   const runtime = useVideoEditorRuntime();
++  const runtimeProvider = runtime.provider;
+   const getDataRef = useCallback(() => {
+     const storeDataRef = store?.getState().data.dataRef;
+     return storeDataRef && storeDataRef.current !== null ? storeDataRef : dataRef;
+@@ -207,6 +261,46 @@ export function useAssetManagement({
+     return store?.getState().ops.setSelectedTrackId ?? setSelectedTrackId;
+   }, [setSelectedTrackId, store]);
+ 
++  const handleOccurrenceMediaDrop = useCallback(async (input: {
++    preparedAsset: TimelineProvisionedAsset;
++    trackId: string;
++    time: number;
++  }): Promise<boolean> => {
++    if (!occurrenceAddMediaPort || !getOccurrenceAddMediaBirth) {
++      return false;
++    }
++
++    const current = getDataRef().current;
++    if (!current) {
++      return false;
++    }
++    const birth = getOccurrenceAddMediaBirth({
++      current,
++      preparedAsset: input.preparedAsset,
++      trackId: input.trackId,
++      time: input.time,
++    });
++    if (!birth) {
++      return false;
++    }
++
++    const provider = runtimeProvider as typeof runtimeProvider & {
++      getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
++    };
++    if (!selectedProjectId || typeof provider.getProjectVerifiedMedia !== 'function') {
++      return false;
++    }
++
++    return submitPreparedOccurrenceMedia({
++      ownerRef: birth.ownerRef,
++      row: birth.row,
++      preparedAsset: input.preparedAsset,
++      current,
++      occurrenceAddMediaPort,
++      getProjectVerifiedMedia: (selection) => provider.getProjectVerifiedMedia!(selectedProjectId, selection),
++    });
++  }, [getDataRef, getOccurrenceAddMediaBirth, occurrenceAddMediaPort, runtimeProvider, selectedProjectId]);
++
+   const prepareGenerationAsset = useCallback((generationData: UploadedGenerationData | null): TimelineProvisionedAsset | null => {
+     if (!generationData) {
+       return null;
+@@ -579,5 +673,6 @@ export function useAssetManagement({
+     uploadImageGeneration,
+     uploadVideoGeneration,
+     handleAssetDrop,
++    handleOccurrenceMediaDrop,
+   };
+ }
+diff --git a/src/tools/video-editor/hooks/useExternalDrop.ts b/src/tools/video-editor/hooks/useExternalDrop.ts
+index 8aed34f2a..2631f4d29 100644
+--- a/src/tools/video-editor/hooks/useExternalDrop.ts
++++ b/src/tools/video-editor/hooks/useExternalDrop.ts
+@@ -74,6 +74,7 @@ async function dispatchTimelineDrop({
+   uploadImageGeneration,
+   uploadVideoGeneration,
+   dropAsset,
++  handleOccurrenceMediaDrop,
+   directAssetUploadAllFiles,
+   mediaImportForImageVideo,
+   onAssetDropError,
+@@ -95,6 +96,7 @@ async function dispatchTimelineDrop({
+   uploadImageGeneration: UseAssetManagementResult['uploadImageGeneration'];
+   uploadVideoGeneration: UseAssetManagementResult['uploadVideoGeneration'];
+   dropAsset: UseAssetManagementResult['handleAssetDrop'];
++  handleOccurrenceMediaDrop?: UseAssetManagementResult['handleOccurrenceMediaDrop'];
+   directAssetUploadAllFiles: boolean;
+   mediaImportForImageVideo: boolean;
+   onAssetDropError?: (error: unknown) => void;
+@@ -128,6 +130,7 @@ async function dispatchTimelineDrop({
+     uploadImageGeneration,
+     uploadVideoGeneration,
+     dropAsset,
++    handleOccurrenceMediaDrop,
+     directAssetUploadAllFiles,
+     mediaImportForImageVideo,
+     onAssetDropError,
+@@ -467,6 +470,7 @@ export interface UseExternalDropArgs {
+   uploadImageGeneration: UseAssetManagementResult['uploadImageGeneration'];
+   uploadVideoGeneration: UseAssetManagementResult['uploadVideoGeneration'];
+   handleAssetDrop: UseAssetManagementResult['handleAssetDrop'];
++  handleOccurrenceMediaDrop?: UseAssetManagementResult['handleOccurrenceMediaDrop'];
+   handleAddTextAt?: (trackId: string, time: number) => void;
+   onSeekToTime?: (time: number) => void;
+   shots?: Shot[] | undefined;
+@@ -494,6 +498,7 @@ export function useExternalDrop({
+   uploadImageGeneration,
+   uploadVideoGeneration,
+   handleAssetDrop: dropAsset,
++  handleOccurrenceMediaDrop,
+   handleAddTextAt,
+   onSeekToTime,
+   shots,
+@@ -642,6 +647,7 @@ export function useExternalDrop({
+       uploadImageGeneration,
+       uploadVideoGeneration,
+       dropAsset,
++      handleOccurrenceMediaDrop,
+       directAssetUploadAllFiles,
+       mediaImportForImageVideo,
+       onAssetDropError: (error) => {
+@@ -660,6 +666,7 @@ export function useExternalDrop({
+     coordinator,
+     clearExternalDragState,
+     dropAsset,
++    handleOccurrenceMediaDrop,
+     getApplyEdit,
+     getDataRef,
+     getPendingOpsRef,
+diff --git a/src/tools/video-editor/lib/external-drop-utils.ts b/src/tools/video-editor/lib/external-drop-utils.ts
+index 85cbf31fc..2011823ce 100644
+--- a/src/tools/video-editor/lib/external-drop-utils.ts
++++ b/src/tools/video-editor/lib/external-drop-utils.ts
+@@ -313,6 +313,7 @@ export async function handleFileDrop({
+   uploadImageGeneration,
+   uploadVideoGeneration,
+   dropAsset,
++  handleOccurrenceMediaDrop,
+   directAssetUploadAllFiles = false,
+   mediaImportForImageVideo = false,
+   onAssetDropError,
+@@ -332,6 +333,8 @@ export async function handleFileDrop({
+   uploadImageGeneration: UseAssetManagementResult['uploadImageGeneration'];
+   uploadVideoGeneration: UseAssetManagementResult['uploadVideoGeneration'];
+   dropAsset: UseAssetManagementResult['handleAssetDrop'];
++  /** Optional File-only native occurrence path; absent means ordinary drop. */
++  handleOccurrenceMediaDrop?: UseAssetManagementResult['handleOccurrenceMediaDrop'];
+   directAssetUploadAllFiles?: boolean;
+   mediaImportForImageVideo?: boolean;
+   onAssetDropError?: (error: unknown) => void;
+@@ -489,6 +492,21 @@ export async function handleFileDrop({
+       }, { save: false });
+     };
+ 
++    const settlePreparedMediaDrop = async (
++      preparedAsset: TimelineProvisionedAsset,
++    ): Promise<boolean> => {
++      try {
++        // A supplied occurrence caller is authoritative for this File drop:
++        // refusal preserves the draft and must not fall through to a second
++        // parent-media writer.
++        return handleOccurrenceMediaDrop
++          ? await handleOccurrenceMediaDrop({ preparedAsset, trackId: compatibleTrackId, time: clipTime })
++          : await dropAsset(preparedAsset.assetKey, compatibleTrackId, clipTime, false, false, preparedAsset, skeletonId);
++      } finally {
++        removeSkeleton();
++      }
++    };
++
+     pendingOpsRef.current += 1;
+     const placementPromise = (async (): Promise<boolean> => {
+       try {
+@@ -504,8 +522,7 @@ export async function handleFileDrop({
+             removeSkeleton();
+             return false;
+           }
+-          const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+-          removeSkeleton();
++          const placed = await settlePreparedMediaDrop(preparedAsset);
+           return placed;
+         }
+ 
+@@ -521,8 +538,7 @@ export async function handleFileDrop({
+             removeSkeleton();
+             return false;
+           }
+-          const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+-          removeSkeleton();
++          const placed = await settlePreparedMediaDrop(preparedAsset);
+           return placed;
+         }
+ 
