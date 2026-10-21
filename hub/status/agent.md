@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T02:14:42Z | dispatcher heartbeat 10s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 12m -->
+<!-- agent | 2026-10-21T02:20:46Z | dispatcher heartbeat 11s | live 5 (sol 0, luna 5, other 0) | busy30 26 | status age 18m -->
 # agent — 2026-10-21 02:02:22 UTC
 Milestone: M1 recorded. M2 active; restart recovered. Foundation and physical/delivery gates remain open.
 Integrated: Agent tl/integration 4467c1c1a9ed81fa7cd1b2d7687b8ada54dc216a/tree5997f016. Public Runtime0.2.13/producer2c4 and Composition0.0.13 unchanged. This round merged: CLI occurrence fallbackacc08 (1+3+40); neutral Scene lifetime28b047 (39, actual wrapper normal/exception cleanup); doctorc297 (2+3+6); independently approved public-registry expectation47a98 (19); static-role helper859d and duplicate metadata cut4bd (69 each, net58 fewer old implementation lines); generator typingd771 (11 plus normalRoot typecheck); artifact refresh4467 (21, nine stale wrapper entries gone). Original Scene public caller488, retainedPARAM5c and actual saved/candidate6383 remain.
