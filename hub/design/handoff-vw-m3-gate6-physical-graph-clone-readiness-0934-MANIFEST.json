@@ -1,0 +1,60 @@
+{
+  "status": "HELD",
+  "worker": "vw-m3-gate6-physical-graph-clone-readiness-0934",
+  "app": {
+    "root": "/home/user/work/wt/app-pin-0d432391",
+    "commit": "0d4323913b92c4e0e3830bf14ec7f35d981475ca",
+    "tree": "5a1e0e85d0f336f642426b91ccf3b3f1984ebd14",
+    "clean": true
+  },
+  "graph": {
+    "source": "/home/user/work/wt/app-pin-d00a6613/node_modules",
+    "destination": "/home/user/work/wt/app-pin-0d432391/node_modules",
+    "sourceSha256": "8bdc44e93ce6f712f2a26fc44f1f8e904215c1785f54ed97f826a98fe0145c5b",
+    "fileCount": 32393,
+    "sourceAllocatedBytes": 555896832,
+    "sourceRegularFiles": 32357,
+    "sourceRegularFilesWithNlinkOverOne": 0,
+    "destinationMaterialized": false,
+    "formerSymlinkRemoved": true,
+    "guardRefusal": "private dependency graph must be a real directory"
+  },
+  "storage": {
+    "stagingThresholdBytes": 11320247244,
+    "floorBytes": 10737418240,
+    "requiredBeforeCopyBytes": 11876144076,
+    "finalFreeBytes": 10926952448,
+    "predictedPostCopyFreeBytes": 10371055616,
+    "storageNeedBytes": 949191628,
+    "storageNeedGiB": 0.884003591
+  },
+  "composition": {
+    "public13Sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "regularMembers": 77,
+    "runtimeGraphSha256": "4913a37e5403c8372a283dcca8fd30c846b636abd88f59cfc572809d2fd0bd3c",
+    "runtimeGraphFileCount": 21455,
+    "react": "18.3.1",
+    "remotion": "4.0.509",
+    "tsx": "4.21.0"
+  },
+  "retainedDist": {
+    "root": "/home/user/work/wt/app-pin-d00a6613/dist",
+    "files": 339,
+    "indexSha256": "aeb5d83399b453b15a8cbc67b31260cf2820f8d65770ccd458986ddd551e257b"
+  },
+  "notRun": [
+    "copy",
+    "install",
+    "network",
+    "central-preflight",
+    "grant",
+    "marker",
+    "browser",
+    "helper",
+    "Runtime",
+    "socket",
+    "render",
+    "physical",
+    "full-suite"
+  ]
+}
