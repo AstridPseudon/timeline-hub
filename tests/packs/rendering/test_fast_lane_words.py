@@ -13,7 +13,12 @@ import pytest
 from PIL import Image, ImageDraw
 
 from astrid.packs.rendering.actions.timeline_visualize import fast_lane
-from astrid.packs.rendering.actions.timeline_visualize.fast_lane import FastLaneError, Moment, frame_of
+from astrid.packs.rendering.actions.timeline_visualize.composed_frame import CaptureSceneLabels
+from astrid.packs.rendering.actions.timeline_visualize.fast_lane import (
+    FastLaneError,
+    Moment,
+    frame_of,
+)
 
 FPS = 30.0
 
@@ -72,6 +77,60 @@ def test_regions_parse_and_a_zoom_fits_the_page_at_full_resolution():
     assert fast_lane.zoom_scale((100, 50)) == 6.0 and fast_lane.zoom_scale((1968, 400)) == 0.5
     with pytest.raises(FastLaneError, match="x,y,w,h"):
         fast_lane.parse_region("100,50")
+
+
+def test_labelled_tiles_use_fresh_source_bound_rows_and_reject_forged_rows(tmp_path, monkeypatch):
+    source = "sha256:" + "a" * 64
+    answer = {
+        "frame": 3, "width": 200, "height": 100,
+        "layers": [{
+            "clipId": "bottom", "role": "content", "visible": True, "opacity": 1,
+            "fullFrame": False, "bounds": {"status": "known",
+                                              "rect": {"x": 20, "y": 40, "width": 60, "height": 40}},
+        }],
+    }
+    capture = CaptureSceneLabels._from_cache(
+        {"source_identity": source, "basis": {"width": 200, "height": 100, "fps": 10.0},
+         "addresses": {"bottom": "c02.card"}, "root_source": "b" * 64, "answer": answer},
+        source_identity=source, basis={"width": 200, "height": 100, "fps": 10.0},
+        addresses={"bottom": "c02.card"}, frame=3,
+    )
+
+    class Provider:
+        source_identity = source
+        fresh_scene_frames = {3}
+
+        def scene_for_frame(self, frame):
+            return capture if frame == 3 else None
+
+    snapshot = {"config": {"theme_overrides": {"visual": {"canvas": {"width": 200, "height": 100}}}}}
+    frame = tmp_path / "frame.png"
+    Image.new("RGB", (200, 100)).save(frame)
+    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail(
+        "private visibility"))
+    labelled = fast_lane._labelled_tiles(
+        {"published": snapshot}, 3, 10.0, {"published": frame}, tmp_path, 0,
+        frame_providers={"published": Provider()},
+    )
+    assert set(labelled) == {"published"}
+    with Image.open(labelled["published"]) as image:
+        assert image.getpixel((20, 60)) == (250, 204, 21)
+
+    class ForgedProvider(Provider):
+        source_identity = "sha256:" + "f" * 64
+
+    assert fast_lane._labelled_tiles(
+        {"published": snapshot}, 3, 10.0, {"published": frame}, tmp_path, 1,
+        frame_providers={"published": ForgedProvider()},
+    ) == {}
+
+    class StaleProvider(Provider):
+        fresh_scene_frames = {4}
+
+    assert fast_lane._labelled_tiles(
+        {"published": snapshot}, 3, 10.0, {"published": frame}, tmp_path, 2,
+        frame_providers={"published": StaleProvider()},
+    ) == {}
 
 
 def _pair(tmp_path, published, working, paint):

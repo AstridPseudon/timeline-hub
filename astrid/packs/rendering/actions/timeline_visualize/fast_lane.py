@@ -722,9 +722,19 @@ def _compose_page(rows: Sequence[Mapping[str, Any]], path: Path, *, title: str,
 def _labelled_tiles(
     snapshots: Mapping[str, Mapping[str, Any]], frame: int, fps: float,
     paths: Mapping[str, str | Path | None], out_dir: Path, index: int,
+    *, frame_providers: Mapping[str, Any] | None = None,
 ) -> dict[str, str]:
-    """Create labeled display copies; retain the decoded files for pixel comparison."""
+    """Create labeled display copies; retain the decoded files for pixel comparison.
+
+    A provider is an existing composed-capture owner.  Its fresh scene rows are
+    the only source for this path when present; a missing or invalid row leaves
+    that display copy unlabelled rather than guessing from the PNG or authored
+    config.  Providers are optional so the legacy display-only positive remains
+    available to callers that have no scene callback.
+    """
     from PIL import Image
+
+    from astrid.core.rendering.scene_answers import SceneQueryUnavailable
 
     from .overlays.labels import overlay_labels_frame
 
@@ -739,7 +749,29 @@ def _labelled_tiles(
         with Image.open(path) as source:
             tile = source.convert("RGB")
         target = out_dir / f"labelled-{index}-{side}.png"
-        overlay_labels_frame(tile, config, frame, fps).save(target)
+        provider = (frame_providers or {}).get(side)
+        if provider is None:
+            overlay_labels_frame(tile, config, frame, fps).save(target)
+        else:
+            fresh_frames = getattr(provider, "fresh_scene_frames", ())
+            source_identity = getattr(provider, "source_identity", "")
+            scene_for_frame = getattr(provider, "scene_for_frame", None)
+            if (not source_identity or frame not in fresh_frames
+                    or not callable(scene_for_frame)):
+                continue
+            try:
+                capture = scene_for_frame(frame)
+                facts = getattr(capture, "_frame_facts", None) if capture is not None else None
+                if not callable(facts):
+                    raise SceneQueryUnavailable("fresh scene labels unavailable")
+                scene = facts(frame, source_identity=source_identity)
+                overlay_labels_frame(tile, config, frame, fps, scene=scene,
+                                     source_identity=source_identity).save(target)
+            except SceneQueryUnavailable:
+                # The frame provider owns retry/fresh-query policy.  A failed
+                # join is advisory-unavailable, never permission for fallback
+                # visibility math or PNG-derived labels.
+                continue
         labelled[side] = str(target)
     return labelled
 
@@ -864,6 +896,7 @@ def verify(
                 row["labelled"] = _labelled_tiles(
                     {"published": pair["base_snapshot"], "working": pair["working_snapshot"]},
                     frame, fps, {"published": pub_path, "working": work_path}, run_dir, index,
+                    frame_providers=pair.get("frame_providers"),
                 )
                 for side, labelled_path in row["labelled"].items():
                     row[f"{side}_display"] = labelled_path
