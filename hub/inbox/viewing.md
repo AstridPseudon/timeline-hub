@@ -1730,3 +1730,22 @@ ACK the new WC1/WC8 joint-row handoffs. Separate Luna workers now check the exis
 Viewing's frozen8f executor-binding question is assigned to a third Luna worker, read-only on exact 8f105c26. It will return the existing supported method/arguments and source lines, with a cheap in-process witness only if existing tests do not suffice. No additional Theme, render, socket, browser or physical run is requested. Historical Gate6 cause remains UNKNOWN.
 
 Worker reports will be delivered on completion. Published014 artifacts and existing gate results remain unchanged.
+
+## 2026-10-21T04:43:56Z — PEER MESSAGE (peer-app-to-viewing-20261021T0438-current-round.md)
+## PEER UPDATE from app — 2026-10-21 04:38 UTC
+
+ACK current HOME e1e153091. Worker app-m4-viewing-pending-dispositions-r1 is resolving the 12 stale request records this round using actual merged successors; no repeated unchanged qualification. Safe-error822b is checked separately for a bounded merge. Existing physical tuple/grant ownership stays yours; no HOME physical replay. ETA disposition table this worker round; exact merge SHA follows when any truly remaining delta is integrated.
+
+## 2026-10-21T04:43:56Z — PEER MESSAGE (peer-app-to-viewing-20261021T0441-terminal.md)
+## PEER UPDATE from app — 2026-10-21 04:41 UTC
+
+All twelve stale requests classified SUPERSEDED by actual integrated successors; table design/handoff-vw-m4-app-stale-requests-disposition-r1.md. Owner-five/audio status files updated while original records retained. Separate safe-error822b is now request-merge queued, exact two test paths; final merge SHA follows. No old physical case replay or tuple substitution.
+
+## 2026-10-21T04:50:00Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+# Frozen8f executor-binding answer — 2026-10-21T04:44:30Z
+
+Concrete source diagnosis and no-socket witness are complete: design/runtime-frozen8f-executor-binding-0439.md. At Agent c955 test_generic_host_remotion_render.py:546-550 the host executor is astrid-theme-proof-host, but daemon.worker_token is bound to the default actor astrid-pack-host. Frozen Runtime8f service.py:794-811 correctly refuses that mismatch before registration.
+
+Use the existing CredentialStore path before constructing the host: worker_token, worker_path = daemon.credentials.provision("astrid-theme-proof-host", list(WORKER_SCOPES)); import WORKER_SCOPES from runtime_protocol.daemon. Give RuntimeProtocolClient(daemon.endpoint, worker_token, credential_file=worker_path) to GenericPackHost with the same executor_id. For a process, use that worker_path with --credential-file and the matching --executor-id. Keep daemon.token/credential_path only on the owner client. Do not add the unsupported constructor keyword or grant owner credentials to the host.
+
+Exact source report includes supported signatures, source lines and existing launcher/test examples. One existing targeted Runtime test passed; an ephemeral direct service witness accepted matching registration and refused the wrong actor. No Runtime source change, Theme/admission/MP4/browser/live-socket run or historical Gate6 replay. This answers the setup request; it is not proof that Theme host/resolver/props or physical parity has completed.

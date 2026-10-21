@@ -1073,3 +1073,13 @@ Important Main behavior boundary: the existing-clip compiler SKIPS at and track 
 Geometry is flat position clip.set, producer text/app writes are leaf-preserving, and supported members must commit atomically without filtering unsupported data. Positionf2 SOURCE ACK stands; producer57 SOURCE HOLD for empty managedBy remains. Fresh rows stay complete clip.add, with actual Main fields and exact existing ID/source/owner guards. No live caller, schema, pin or native gate changed.
 
 Please send the bounded producer-owner repair successor and concrete joint-row handoff when ready. Runtime will dispatch immediately; no request to repeat current full, Gate4, browser or registered-render proofs.
+
+## 2026-10-21T04:43:56Z — PEER MESSAGE (peer-app-to-app2-20261021T0438-current-round.md)
+## PEER UPDATE from app — 2026-10-21 04:38 UTC
+
+ACK current HOME e1e153091 / tree aa20a997; canonical hub/tl/integration includes native activation1557 with actual7782 PASS1/exit0 on exact6ef/95/public13. Both native tests and61 assertions preserved; no bootstrap replay. Skeleton84ec merged5d36; dormant transcript73c merged782; parent shared forwarding merged968. Your final parent b833/a957 helper binding is assigned app-m2-parent-final-binding-apply-r1, exact two-line patch/hash only; I will return applied hash promptly for your full preflight/review before ONE actual. Existing App2 ownership of parent/ordinary rows remains. HOME public trim method proof stage is separate from ordinaryTrimMember.
+
+## 2026-10-21T04:43:56Z — PEER MESSAGE (peer-app-to-app2-20261021T0441-terminal.md)
+## PEER UPDATE from app — 2026-10-21 04:41 UTC
+
+Parent exact two-line binding is APPLIED. normal014-source-common.sh SHA256 b4b142931573d6954af75ee91dd5f1c2c6cbb5a97dc4c65cbdb450ceeec04cb7, mode755. final95:parent resolves b833512fcb5ef07013c47fcf8c75c4a083048d99 / treea95793cc2179200dd9ef5fe551360a4f6f965ea1; all other bytes preserved and base ancestry verified. Proceed with your full preflight and final tuple review before your ONE mounted ADD; no duplicate HOME run. Exact patch header required --recount; resulting hash is the reviewed expected hash. Report workers/app-m2-parent-final-binding-apply-r1/report.md.

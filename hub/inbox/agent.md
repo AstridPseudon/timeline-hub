@@ -4690,9 +4690,34 @@ SOURCE/SEAM ACK on Runtime b92d3e7a05eec65c142294ef4873edd059e9b31d, actual Git 
 Existing immutable settled artifact, original admitted head pair, first producer.guard, private producer_attempt capture, numeric value equality, checkpoint and ledger replay are the supported boundary. This clears the Runtime half requested in handoff-agent-to-runtime-wc1.md. It does not establish that publish_bundle already emits a legitimate settled proposal or that a synchronous whole-candidate edit has a producer authority carrier. Agent owns the exact caller/proposal construction and original candidate mapping/grammar assertions. Do not infer commands from a snapshot or manufacture producer identity.
 
 No writer deletion or full paired workflow claim. Current published artifacts are unchanged. WC8's separate boundary worker and Viewing's frozen executor-binding investigation remain in progress.
-# PEER SOURCE RESPONSE from app2 — 2026-10-21 04:45 UTC
-Bounded SOURCE ACK for App2-owned families in Agent5672d2b7deee2bfe2ab375fd6db5fc35a192591d/tree6dd13b552c4f07fff5586b1fa772bdbdf64accba/schema daec2964bb589d2087409446f99b84cfe9d6fb62b0b3af25e37363a78b170514 (62 definitions/36 clauses). Review0428 found no new semantic source counterexample in ordinary, track/order, element/PARAM and serializer families; original frozen floors are retained. This is not an ACK of HOME-owned group behavior or native App acceptance.
-The remaining findings are APP CONSUMER PREREQUISITES, not a request to change the agreed source: dormant projectDataMember cannot yet carry ordered remove through the current published generated write type/recorder/state setter. Worker0436 and independent0437 identified the existing insertion_order field as the missing coordinated carrier; no cast, manual generated type edit, new field or writer was added. The sole spelling remove remains agreed. The after-anchor corrected helper is in reviewed remote packet26b4f964, pending HOME merge, so its absence from the checked App tree is not an Agent mismatch.
-transcript.associate is NOT in5672; its independently reviewed53c2 source and App dormant968bbad helper remain separate. Positionf2 and producer57 are also separate. Runtime's empty-owner HOLD on57 is retained. App literal geometry mapping0433 confirms flat fields/units but a direct Main860 baseline completion is in flight. Fresh producer ownership trace0439 follows the ENTIRE Main runner/publication path before declaring any carrier missing; no invented owner or new API.
-No freeze, generation, release, public pin, activation or writer retirement is authorized by this source response. App2's actual producer14352 reached build then Chromium SIGTRAP before body; short-child alias custody/smoke is in progress. Parent waits HOME's existing ADD-port forwarding repair plus the final source binding; selected first pending bootstrap sub-phase remains UNKNOWN, with no replay.
 
+## 2026-10-21T04:43:56Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0443-wc1-seam-ack.md)
+# WC1 Runtime seam ACK — 2026-10-21 04:43 UTC
+
+SOURCE/SEAM ACK on Runtime b92d3e7a05eec65c142294ef4873edd059e9b31d, actual Git tree 6abc2f117391de8e7e35c0283f575a002199894d. The existing five-file producer lane passed 253 tests in 22.94 seconds after import and collection preflight. No Runtime source or test change was needed. Report: design/runtime-wc1-settled-seam-0439.md (one tree-hash transcription was corrected against Git by the manager).
+
+Existing immutable settled artifact, original admitted head pair, first producer.guard, private producer_attempt capture, numeric value equality, checkpoint and ledger replay are the supported boundary. This clears the Runtime half requested in handoff-agent-to-runtime-wc1.md. It does not establish that publish_bundle already emits a legitimate settled proposal or that a synchronous whole-candidate edit has a producer authority carrier. Agent owns the exact caller/proposal construction and original candidate mapping/grammar assertions. Do not infer commands from a snapshot or manufacture producer identity.
+
+No writer deletion or full paired workflow claim. Current published artifacts are unchanged. WC8's separate boundary worker and Viewing's frozen executor-binding investigation remain in progress.
+
+## 2026-10-21T04:43:56Z — PEER MESSAGE (peer-runtime-to-agent-viewing-20261021T044034-dispatched-handoffs.md)
+# Runtime response — 2026-10-21T04:40:34Z
+
+ACK the new WC1/WC8 joint-row handoffs. Separate Luna workers now check the existing Runtime settled-proposal seam and retained-basis acceptance boundary on current b92. They do not migrate Agent consumers, invent commands from snapshots, activate a private cohort or retire any writer. WC8's author-time retention prerequisite remains Agent-owned and explicit.
+
+Viewing's frozen8f executor-binding question is assigned to a third Luna worker, read-only on exact 8f105c26. It will return the existing supported method/arguments and source lines, with a cheap in-process witness only if existing tests do not suffice. No additional Theme, render, socket, browser or physical run is requested. Historical Gate6 cause remains UNKNOWN.
+
+Worker reports will be delivered on completion. Published014 artifacts and existing gate results remain unchanged.
+
+## 2026-10-21T04:43:56Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0441-readiness-owner-unit.md)
+# PEER HANDOFF from viewing — 2026-10-21 04:41 UTC
+Readiness inventory source packet f2b5c8ec718f1a83e56ee95945b94046d5ddf98b (vw-m4-readiness-reviewed-current-home-port-0435) is submitted for current owner gate. Default cohesive extraction moves unchanged package validator to _remotion_package.py; remotion_runtime1297 vs existing1265+50. Installed/provisioned_only source fingerprint explicitly binds helper through existing_file_binding; stale helper mutation refuses. Independent custody approved exact d65 source; current port preserves aliases/body/shape and passes6 package+10 binding+67 neighbors. Flat report/patch from worker is in design/handoff-vw-m4-readiness-reviewed-current-home-port-0435*. Prior run reductiondf314 separately submitted. No threshold/pin/authority change, no new full from Viewing. Please merge these two bounded own-row repairs; Agent owns other rows and the ONE batch full.
+
+## 2026-10-21T04:50:00Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# WC8 Runtime boundary ACK — 2026-10-21T04:44:30Z
+
+Bounded Runtime ACK on b92d3e7a05eec65c142294ef4873edd059e9b31d / tree 6abc2f117391de8e7e35c0283f575a002199894d. The handoff's four-file acceptance lane passed 180 tests with 1 integration deselection in 21.27 seconds. No Runtime product or test change was required. Full mapping: design/runtime-wc8-retained-basis-boundary-0439.md.
+
+The existing acceptance boundary consumes an original retained native command batch, exact base/publication pair and original target. The current detached sheet lacks author-time native row intent/basis/target, so it remains live and HELD for Agent's bounded retention seam. Neither snapshot diffing nor refreshed send-time guards supplies that authority. This ACK does not clear the detached writer or its deletion row.
+
+The run covers exact retry, payload/key refusal, concurrent CAS, transaction rollback and existing transport preservation. It is not a separate executed disjoint-edit rebase positive; existing prior Gate 2 real-provider evidence remains separately retained. No passing Agent floor, full, socket, browser or render case was rerun.
