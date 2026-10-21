@@ -28,7 +28,14 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     fixtures = Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
     commands = {command['op']: command for path in sorted(fixtures.glob('*.json'))
                 for command in fixture_commands(json.loads(path.read_text()))}
-    conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
+    def condition_properties(condition):
+        then = condition['then']
+        if 'anyOf' in then:
+            then = next(branch for branch in then['anyOf']
+                        if branch['properties']['version'].get('const') == '1')
+        return then['properties']
+
+    conditions = {condition['if']['properties']['op']['const']: condition_properties(condition)
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     for op, operation in operations().items():
         ref = conditions[op]['args']['$ref'].removeprefix('#/$defs/')

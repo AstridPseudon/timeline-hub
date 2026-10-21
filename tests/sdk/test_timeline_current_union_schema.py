@@ -113,7 +113,11 @@ def test_existing_argument_narrowing_still_fails(name):
 
 def s2_slice():
     candidate = without_text(_SCHEMA)
-    for definition in ('WordAnchor', 'ClipAnchorArgs', 'TimelineInitArgs',
+    init = next(item for item in candidate['$defs']['EditCommand']['allOf']
+                if item['if']['properties']['op']['const'] == 'timeline.init')
+    init['then'] = next(branch for branch in init['then']['anyOf']
+                        if branch['properties']['version'].get('const') == '1')
+    for definition in ('WordAnchor', 'ClipAnchorArgs', 'TimelineInitArgs', 'TimelineInitRawArgs',
                        'AssembledTargetArgs', 'ClipAddMediaArgs', 'OccurrenceCreateArgs'):
         del candidate['$defs'][definition]
     candidate['$defs']['EditCommand']['allOf'] = [
@@ -129,7 +133,7 @@ def s2_slice():
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
-    assert len(_SCHEMA['$defs']) == 55
+    assert len(_SCHEMA['$defs']) == 56
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 29
 
 
@@ -144,7 +148,11 @@ def test_each_added_definition_and_operation_matches_its_approved_source():
         for name, value in source.get('updates', {}).items():
             assert _SCHEMA['$defs'][name] == value
         for op, condition in source['operations'].items():
-            assert conditions[op] == condition
+            actual = conditions[op]
+            if op == 'timeline.init':
+                actual = {**actual, 'then': next(branch for branch in actual['then']['anyOf']
+                                                   if branch['properties']['version'].get('const') == '1')}
+            assert actual == condition
 
 
 def test_all_published_floors_preserve_every_field_with_only_historical_pattern_widening():

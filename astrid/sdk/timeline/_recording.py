@@ -228,7 +228,9 @@ class Recording:
 
     def compile_mirrors(self):
         parent = self.state.bundle['parent']
-        if self.mirrored_clips:
+        raw_initialize = (self.record['command'].get('op') == 'timeline.init'
+                          and self.record['command'].get('version') == '2')
+        if self.mirrored_clips and not raw_initialize:
             before = self.state.get('parent', ['config', 'clips'])
             after = present(parent['clips'])
             if not equal(before, after):

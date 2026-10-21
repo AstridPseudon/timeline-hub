@@ -150,12 +150,13 @@ def test_complete_s2_schema_is_retained_additively():
                          'astrid/core/timeline/schema/edit-command.schema.json').read_text())
     from tests.sdk.test_timeline_current_union_schema import without_text
 
-    assert len(schema['$defs']) == 55
+    assert len(schema['$defs']) == 56
     schema = without_text(schema)
     for name in ('AssembledTargetArgs', 'ClipAddMediaArgs', 'WordAnchor', 'ClipAnchorArgs',
                  'OccurrenceCreateArgs'):
         del schema['$defs'][name]
-    del schema['$defs']['TimelineInitArgs']
+    for name in ('TimelineInitArgs', 'TimelineInitRawArgs'):
+        del schema['$defs'][name]
     conditions = schema['$defs']['EditCommand']['allOf']
     added = {'timeline.init', 'timeline.assembled-target', 'clip.add-media', 'clip.anchor',
              'occurrence.create', 'clip.swap-media'}

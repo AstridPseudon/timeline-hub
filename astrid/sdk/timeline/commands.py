@@ -24,6 +24,10 @@ class Operation:
     handler: Callable[[Recording, dict], None]
     intent: dict
     singleton: bool = False
+    versioned_parameters: dict[str, dict] = dataclass_field(default_factory=dict)
+
+    def parameters_for(self, version):
+        return self.versioned_parameters.get(version, self.parameters)
 
 
 def operations():
@@ -59,7 +63,9 @@ def operations():
     from .native_word_anchor import declare
     from .producer import producer_guard
     return {'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
-            'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
+            'timeline.init': Operation(
+                _SCHEMA['$defs']['TimelineInitArgs'], initialize, {},
+                versioned_parameters={'2': _SCHEMA['$defs']['TimelineInitRawArgs']}),
             'clip.anchor': Operation(_SCHEMA['$defs']['ClipAnchorArgs'], declare, {'anchor': 'follow'}, True),
             'occurrence.create': Operation(_SCHEMA['$defs']['OccurrenceCreateArgs'], occurrence_create,
                                           OCCURRENCE_INTENT),
@@ -111,13 +117,13 @@ def validate_command(command):
     errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
     if errors:
         raise CommandError(errors[0].message)
-    if command['version'] != '1':
+    if command['version'] != '1' and not (command['op'] == 'timeline.init' and command['version'] == '2'):
         raise CommandError("unsupported operation version", kind='unsupported_version')
     if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
     if operation is not None:
-        errors = list(_VALIDATOR.evolve(schema=operation.parameters).iter_errors(command['args']))
+        errors = list(_VALIDATOR.evolve(schema=operation.parameters_for(command['version'])).iter_errors(command['args']))
         if errors:
             raise CommandError(errors[0].message)
     if command['op'] == 'track.create':

@@ -6,11 +6,13 @@ import copy
 import pytest
 
 from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.native_initialize import capture_initialize_raw
 from tests.editing_conformance.test_pristine_initialize import (
     GOLDEN,
     batch,
     empty_document,
 )
+from tests.editing_conformance.test_pristine_raw_initialize import RAW_CONFIG
 from tests.sdk import test_timeline_commit_provider as provider
 
 runtime_abi = provider.runtime_abi
@@ -68,3 +70,17 @@ def test_cas_retry_cannot_initialize_over_edit_then_undo_equal_bytes():
     assert error.value.failure['details']['reason'] == 'not_pristine'
     assert realm.documents[realm.head['revision_id']] == empty_document()
     assert len(realm.accepted) == 2
+
+
+def test_provider_carries_raw_config_and_keeps_init_history_boundary():
+    realm = provider.DetachedRealm(empty_document())
+    command = capture_initialize_raw(bundle_from_document(empty_document()),
+                                     name='Custom', slug='custom', config=RAW_CONFIG)
+    accepted = realm.call([command])
+    payload = accepted['data']['canonical_document']['parent_revision']['payload']
+    assert payload['config'] == RAW_CONFIG
+    undone = realm.call([inverse(accepted['receipt']['receipt_id'])])
+    assert undone['data']['canonical_document'] == empty_document()
+    with pytest.raises(provider.CommitRejected) as error:
+        realm.call([command])
+    assert error.value.failure['details']['reason'] == 'not_pristine'
