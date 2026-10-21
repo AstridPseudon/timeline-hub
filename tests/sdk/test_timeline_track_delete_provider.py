@@ -87,9 +87,6 @@ def test_created_then_deleted_track_id_is_retired_and_guarded_redo_keeps_same_id
     assert redone['data']['canonical_document'] == deleted['data']['canonical_document']
 
 
-# Requirement: reserve authenticated whole-row removals as well as recorded
-# allocations. The separate clip-delete slice owns this provider correction.
-@pytest.mark.xfail(strict=True, reason='Bootstrap track retirement needs provider removal reservations')
 def test_deleted_bootstrap_track_id_must_also_stay_retired():
     realm = DetachedRealm(deletion_document())
     realm.call([capture(realm)])

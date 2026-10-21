@@ -349,6 +349,8 @@ def _records(entries, rejected, base, current):
 
 
 def _check_reservations(port, plan, current, rejected, base):
+    from astrid.sdk.timeline._collections import member
+    from astrid.sdk.timeline._command_state import ABSENT
     from astrid.sdk.timeline.commands import CommandError
 
     from ._command_state import root_identity
@@ -368,6 +370,11 @@ def _check_reservations(port, plan, current, rejected, base):
         return (item['kind'] in ('track', 'clip')
                 and re.fullmatch(re.escape(owner + '/' + item['kind'] + ':') + r'(?!.*::)[^/]+',
                                  item['ref']) is not None)
+
+    def retired(record):
+        return {write['ref'] for write in record['writes'] if not write['path']
+                and write['before']['state'] == 'present' and write['after'] == ABSENT
+                and member(write['ref']) is not None}
 
     for record in plan.records:
         if (any(not valid(item) for item in record['created'])
@@ -399,10 +406,15 @@ def _check_reservations(port, plan, current, rejected, base):
                 raise rejected(_failure("history_unavailable", "created identity history is unavailable",
                                         base, current))
             reserved.update(item["ref"] for item in items)
-    for ref in created:
-        if ref in reserved:
-            raise CommandError("created identity was already reserved", kind="identity_collision", ref=ref)
-        reserved.add(ref)
+            reserved.update(retired(record))
+    for record in plan.records:
+        if record['command']['op'] != 'timeline.inverse':
+            for item in record['created']:
+                ref = item['ref']
+                if ref in reserved:
+                    raise CommandError("created identity was already reserved", kind="identity_collision", ref=ref)
+                reserved.add(ref)
+        reserved.update(retired(record))
 
 
 class RuntimeCommitService:
