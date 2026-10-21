@@ -595,3 +595,62 @@ evidence into a current-head pass.
   current full baseline remains red/unqualified (`cc372` / tree `0698`,
   15,840 passed, 138 failed, 4 errors, 456 skipped, 4 xfailed); no full suite
   was requested for this correction.
+
+## Current transcript proof and next bounded requirements (2026-10-21)
+
+The fresh retained-transcript proof is complete for its exact source snapshot,
+but this does not close Gate 1/3 as a whole and it was not replayed. The
+approved source `4a50ad896b17e28f939aa3b67b8bac0b121097c5` (tree
+`856769372ca7e850d3be5eb10cd069182ffc6f11`) is merged into current Agent
+integration through `d0cb9b56c`; current integration is `b81ff3804606`
+(tree `0ce002cd6d59c3f682e1ac6c9a7b91d29035fe81`). The proof itself ran on
+the exact source snapshot, not on the later integration head, so no repeated
+native/transcript run is claimed.
+
+Exact named-suite command (the `suites.conf` entry also guards the source,
+Runtime, lock, and schema identities):
+
+```sh
+test "$(git rev-parse HEAD^{tree})" = 856769372ca7e850d3be5eb10cd069182ffc6f11 && test "$(git -C /home/user/work/runtime rev-parse HEAD)" = b92d3e7a05eec65c142294ef4873edd059e9b31d && test "$(git -C /home/user/work/runtime rev-parse HEAD^{tree})" = 6abc2f117391de8e7e35c0283f575a002199894d && test -z "$(git -C /home/user/work/runtime status --porcelain)" && test "$(sed -n 's/.*\"source_commit\": \"\([^\"]*\)\".*/\1/p' runtime.lock.json)" = 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c && test "$(sha256sum astrid/core/timeline/schema/edit-command.schema.json | cut -d' ' -f1)" = 6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d && env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/runtime" PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -P -c 'from pathlib import Path; import astrid, runtime_protocol, pytest, sys; assert Path(astrid.__file__).resolve().is_relative_to(Path.cwd().resolve()); assert Path(runtime_protocol.__file__).resolve() == Path("/home/user/work/runtime/runtime_protocol/__init__.py"); raise SystemExit(pytest.main(sys.argv[1:]))' -q -o addopts= -p no:cacheprovider -m integration tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip
+```
+
+Result
+`agt-m2-gate1-fresh-transcript-b92-one-current-proof-0751-gate1-fresh-transcript-b92-current-source-integration-1021075556-26071`:
+**3 passed in 5.63s** (Python, CLI, NativeSheet). It reached exact source/pin
+guards, authenticated Door/health, reload, undo/redo, outbox/restart, and
+scope/lock checks. The earlier `3dcae183` result remains historical and is
+not substituted for this b92 proof. No Gate-complete claim follows.
+
+Remaining exit gaps and ownership:
+
+1. **Gate 1 document-presence/source closure — Agent manager, current
+   `astrid/sdk/timeline/document_diff.py` and its native document adapter.**
+   Current integration still has the `ac9a93579` stopgap; the reviewed repair
+   candidate is not integrated. The exact node
+   `tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated`
+   previously reached acceptance but failed at
+   `persisted_bundle(accepted) == persisted_bundle(native["bundle"])` because
+   the edited occurrence materialized a new shot/shot-revision while the
+   shared sibling retained the original. Finish the current-source repair and
+   then authorize one bounded HTTP proof; no retry/undo claim follows from
+   the withdrawn run.
+
+2. **Gate 1 rational and shared-occurrence current-source qualification —
+   Agent manager.** Run the exact current-source nodes
+   `tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_rational_move_is_lossless_across_native_frontends`
+   and
+   `tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends`
+   together once after the source frontier is fixed/selected. Earlier staged
+   rational/occurrence results are not relabeled as proof for `b81ff3804`.
+   Do not repeat the passed transcript node.
+
+3. **Gate 3 current-source Door qualification — Agent manager with Runtime
+   manager owning the b92 Door fixture.** The exact node
+   `tests/editing_conformance/test_commit_runtime_native_checkout.py::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable`
+   has prior bounded evidence on another source cohort, but no run on current
+   integration `b81ff3804`; therefore current-source Gate 3 remains
+   unqualified. This is a qualification gap, not a newly observed renderer
+   failure.
+
+No full, browser, native, render, or replay execution was performed for this
+update.
