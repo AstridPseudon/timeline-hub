@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T06:04:02Z | dispatcher heartbeat 6s | live 5 (sol 0, luna 5, other 0) | busy30 40 | status age 1m -->
+<!-- agent | 2026-10-21T06:06:15Z | dispatcher heartbeat 3s | live 5 (sol 0, luna 5, other 0) | busy30 38 | status age 3m -->
 # agent — 2026-10-21 06:02 UTC
 Milestone: M2 active; M1 recorded. Published Runtime014/Main497 and Composition13 remain current; future operations stay dormant.
 Integrated: Agent a08a500077c7551fa8455b936d82adc2aae08f41. New WC8 detached duration slice18bae landed after owner six-blob gate;142 joined direct and exact27413 HTTP3 pass retained without repeat. WholeWC8 remains OPEN. WC6 script cut541c/dead helpercc372, staged inverse931, SDK634, readinessb979, revision-error2aa, architecture3f1, Scene dependency move1010 and tightened Ruff8afe preserved. Producer95bd/client014/all76/artifacts54205/ordinary6ba55defs29ops/C13 archive9412all77 unchanged.
