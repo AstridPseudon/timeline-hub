@@ -1,8 +1,9 @@
-import { expect, type Request, type Route } from '@playwright/test';
+import { expect, type Page, type Request, type Route } from '@playwright/test';
 import { commandOutboxes, openSeededTimeline, test as appTest } from './support/app.ts';
 import type { DirectHarness, SelectedParamDevSeed } from './support/harness.ts';
 
 const CEILING = { timeout: 90_000 };
+const STARTUP = { timeout: 20_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 
 const test = appTest.extend<object, { selected: SelectedParamDevSeed }>({
@@ -20,6 +21,13 @@ interface CommitTraffic {
 function selectedCommand(traffic: CommitTraffic[], amount: number) {
   return traffic.find((post) => post.body?.commands?.[0]?.op === 'clip.set-params'
     && post.body.commands[0].args.values.amount === amount);
+}
+
+// Same-origin DEV omits the hosted RuntimeConnectionGate status pill. The App's existing
+// mount is still observable: main.tsx renders into #root only after startup, and bootLayer.ts
+// treats a non-empty #root as the first real page frame. Keep this separate from fixture data.
+function expectAppMounted(page: Page) {
+  return expect(page.locator('#root > *').first()).toBeAttached(STARTUP);
 }
 
 test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, retry, reload and undo', async ({ page, harness, selected }) => {
@@ -42,6 +50,7 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   });
 
   await page.goto(`${harness.devOrigin}/tools/video-editor`);
+  await expectAppMounted(page);
   await openSeededTimeline(page, harness);
   await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
   const clip = page.locator(`.clip-action[data-clip-id="${selected.clipId}"]`).first();
@@ -62,6 +71,7 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   const { p2 } = await harness.advanceSelectedParamAndRemoveSource(selected);
   expect(p2.revision).not.toBe(selected.p1.revision);
   await page.reload();
+  await expectAppMounted(page);
   await openSeededTimeline(page, harness);
   await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
   await expect(clip).toBeVisible(CEILING);
@@ -93,6 +103,7 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   await expect.poll(async () => (await commandOutboxes(page, selected.timelineId)).some((owner) => owner.pending?.outcome?.kind === 'retry'), CEILING).toBe(true);
 
   await page.reload();
+  await expectAppMounted(page);
   await openSeededTimeline(page, harness);
   await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
   await expect(clip).toBeVisible(CEILING);
