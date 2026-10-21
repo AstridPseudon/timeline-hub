@@ -189,9 +189,10 @@ def _clip_trim_v2(ctx, command):
     if not isinstance(ref, str) or not re.fullmatch(r'occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+', ref):
         raise CommandError('clip.trim v2 requires a literal occurrence raw child identity')
     owner = ref.rsplit('/', 1)[0]
-    from .native_occurrence_media_commands import _owner
+    from .native_occurrence_media_commands import _exclusive, _owner
 
     owner, limit = _owner(ctx, ref, child=True)
+    _exclusive(ctx, owner)
     if ref not in ctx.select('collection.clips', owner):
         raise CommandError('trim target disappeared', kind='identity_conflict', ref=ref)
     fields = (*CLIP_FIELDS, 'sourceURL', 'sourceUrl', 'source_url', 'src', 'source_uuid',

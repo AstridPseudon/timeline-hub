@@ -21,6 +21,20 @@ from tests.editing_conformance.test_recipe_m2_clip_trim import REF, media_docume
 from tests.editing_conformance.test_recipe_occurrence_media import OWNER, TARGET, inputs
 
 
+def _exclusive_bundle(kind='video'):
+    """Keep the source recipe positive on one occurrence of the shared fixture."""
+    bundle = bundle_from_document(inputs(kind)[0])
+    bundle['placements'] = bundle['placements'][:1]
+    return bundle
+
+
+def _shared_bundle(kind='video'):
+    """Make the canonical bundle's two occurrences share one shot identity."""
+    bundle = bundle_from_document(inputs(kind)[0])
+    bundle['placements'][1]['shot_id'] = bundle['placements'][0]['shot_id']
+    return bundle
+
+
 def _proposed_record(bundle, *, source_duration):
     """Record the proposed v2 writes without registering a production operation."""
     command = {
@@ -120,8 +134,8 @@ def test_dormant_v2_schema_keeps_v1_parent_boundary_and_is_not_registered():
 
 
 def test_dormant_occurrence_trim_writes_source_seconds_only_and_inverse_is_exact():
-    document, _old, _new, verified = inputs('video')
-    original = bundle_from_document(document)
+    _document, _old, _new, verified = inputs('video')
+    original = _exclusive_bundle()
     State(original).entity(TARGET)['app'] = None
     original = copy.deepcopy(original)
     sibling = next(OWNER + '/clip:' + row['id'] for row in State(original).collection(OWNER, 'clip')
@@ -144,10 +158,23 @@ def test_dormant_occurrence_trim_writes_source_seconds_only_and_inverse_is_exact
     assert record['command']['bindings']['trim.target'] == TARGET
 
 
+def test_dormant_occurrence_trim_refuses_shared_owner_atomically():
+    bundle = _shared_bundle()
+    _document, _old, _new, verified = inputs('video')
+    before = copy.deepcopy(bundle)
+
+    with pytest.raises(CommandError) as error:
+        _capture_clip_trim_v2(bundle, TARGET, in_s=3, out_s=5, verified_media=verified)
+
+    assert error.value.kind == 'unsupported_ownership'
+    assert error.value.ref == OWNER
+    assert bundle == before
+
+
 @pytest.mark.parametrize('damage', ['missing', 'wrong-object', 'wrong-type', 'source-map'])
 def test_dormant_occurrence_trim_refuses_unverified_or_mapped_source_without_mutation(damage):
-    document, _old, _new, verified = inputs('video')
-    bundle = bundle_from_document(document)
+    _document, _old, _new, verified = inputs('video')
+    bundle = _exclusive_bundle()
     if damage == 'missing':
         verified = []
     elif damage == 'wrong-object':
