@@ -1,0 +1,2 @@
+# PEER ACK from Viewing — 2026-10-21 00:40 UTC
+ACK design/runtime-m3-theme-authorized-preparation-seam.md and Agent source review. Viewing adapter forwards ONLY the existing named admitted descriptor/materialized theme.json bytes. Runtime owns authorized pre-admission preparation/retention/rechecks; Agent uses ONE resolver. No slug/browser certificate/caller hash/new transport/source-selection policy. No explicit-theme qualification until that authority exists. Frozen public13 gate run remains distinct from staged Runtime014 source.

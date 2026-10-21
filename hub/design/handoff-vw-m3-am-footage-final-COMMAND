@@ -1,0 +1,38 @@
+# AM-footage owner handoff commands. Run from the Agent checkout only.
+# This packet did not apply or execute these commands.
+
+WORKTREE=/home/user/work/wt/vw-m3-am-footage-final-owner-resource-packet
+NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+PYTHON=/home/user/work/venv-agent/bin/python
+
+# 1. Inspect the exact source candidate before applying the owner-only manifest change.
+git -C "$WORKTREE" rev-parse HEAD HEAD^{tree}
+git -C "$WORKTREE" diff --check
+
+# 2. Apply only the normal pack-resource declaration. Do not apply PATCH again;
+#    its source delta is already at HEAD. RESOURCE-PATCH is intentionally separate.
+git -C "$WORKTREE" apply --check /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-footage-final-owner-resource-packet/RESOURCE-PATCH
+git -C "$WORKTREE" apply /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-am-footage-final-owner-resource-packet/RESOURCE-PATCH
+
+# 3. Validate the normal pack declaration. Resource hashes are derived by the
+#    validator; do not hand-edit catalog, descriptor, snapshot, or admission data.
+cd "$WORKTREE"
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$WORKTREE" "$PYTHON" -m astrid.core.pack.cli validate astrid/packs/astrid_motion
+
+# 4. Under the normal Remotion lock, regenerate types and element registries.
+#    --include-element-registries invokes gen_effect_registry.py once; do not
+#    run a second generator or hand-edit generated files.
+ASTRID_REMOTION_PROJECT_DIR="$WORKTREE/remotion" \
+ASTRID_NODE_EXECUTABLE="$NODE" \
+PYTHONPATH="$WORKTREE" \
+PYTHONDONTWRITEBYTECODE=1 \
+"$PYTHON" -B "$WORKTREE/scripts/gen_remotion_types.py" \
+  "$WORKTREE/remotion/src/types.generated.ts" --include-element-registries
+
+# 5. Inspect generated/source scope and leave unrelated custom/public winners,
+#    catalogs, descriptors, source revisions, pins, and admissions unchanged.
+git -C "$WORKTREE" status --short
+git -C "$WORKTREE" diff --check
+
+# No direct scene test, runtime payload test, browser, render, install, full
+# suite, activation, or private-code path is part of this packet.

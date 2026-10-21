@@ -1,0 +1,20 @@
+diff --git a/astrid/packs/astrid_motion/pack.yaml b/astrid/packs/astrid_motion/pack.yaml
+--- a/astrid/packs/astrid_motion/pack.yaml
++++ b/astrid/packs/astrid_motion/pack.yaml
+@@ -194,6 +194,14 @@
+         {
+           "kind": "implementation",
+           "path": "rendering/elements/effects/am-footage/component.tsx"
+         },
++        {
++          "kind": "implementation",
++          "path": "rendering/elements/effects/am-footage/helper.ts"
++        },
++        {
++          "kind": "implementation",
++          "path": "rendering/elements/effects/am-footage/scene.ts"
++        },
+         {
+           "kind": "implementation",
+           "path": "rendering/elements/effects/am-footage/element.yaml"
+         }
