@@ -197,7 +197,8 @@ def test_transcript_association_normal_door_reload_restart_inverse_redo(tmp_path
     )["data"]["object_id"]
     client = open_client(daemon)
 
-    old_content = _content(media, "segment-a")
+    old_id = "transcript-source:source-1:segment:segment-a"
+    old_content = _content(media, old_id)
     document_id = transcript_document_id(project, media, "source-1")
     created = client.documents.create(
         kind="media.transcript", content=old_content, project=project,
@@ -206,7 +207,6 @@ def test_transcript_association_normal_door_reload_restart_inverse_redo(tmp_path
     assert created.ok, created.as_dict()
     old_document = created.data
     old_pin = _pin(project, media, old_content, 1)
-    old_id = "transcript-source:source-1:segment:segment-a"
     unrelated = [
         _source_item("transcript-source:other:segment:one", asset_id="asset-b",
                      source_id="other-source", document_id="other-document", version=4,
@@ -236,20 +236,6 @@ def test_transcript_association_normal_door_reload_restart_inverse_redo(tmp_path
     assert reloaded["parent"]["config"]["bundle"] == parent["config"]["bundle"]
     reloaded["source_mapping"]["pinned_documents"] = [{"pin": old_pin, "document": old_document}]
 
-    canonical_id = "transcript-source:asset-a:source:source-1:segment:segment-a"
-    new_content = _content(media, canonical_id)
-    updated = client.documents.update(
-        document_id, content=new_content, expected_version=1, project=project,
-        idempotency_key="transcript-door-v2",
-    )
-    assert updated.ok, updated.as_dict()
-    new_document = updated.data
-    new_pin = _pin(project, media, new_content, 2)
-    reloaded["source_mapping"]["pinned_documents"].append({"pin": new_pin, "document": new_document})
-    replacement = capture_transcript_association(
-        reloaded, "asset-a", document=new_pin, previous_document=old_pin,
-    )
-
     def submit(command: dict, key: str) -> dict:
         history = client.timelines.history(project, "film", limit=100)
         assert history.ok, history.as_dict()
@@ -266,6 +252,33 @@ def test_transcript_association_normal_door_reload_restart_inverse_redo(tmp_path
         )
         assert result.ok, result.as_dict()
         return result.as_dict()
+
+    # V1 is only in the trusted seed's authored carrier at this point; its
+    # empty manifest does not authorize retention. Accept it through the
+    # normal command path before replacing the live catalog row with V2.
+    initial = submit(
+        capture_transcript_association(
+            reloaded, "asset-a", document=old_pin, previous_document=old_pin,
+        ),
+        "transcript-door-associate-v1",
+    )
+    assert initial["data"]["canonical_document"]["dependency_manifest"]["documents"] == [old_pin]
+    reloaded = _wire_bundle(client, project, "film", initial["data"]["accepted_revision_id"])
+    reloaded["source_mapping"]["pinned_documents"] = [{"pin": old_pin, "document": old_document}]
+
+    canonical_id = "transcript-source:asset-a:source:source-1:segment:segment-a"
+    new_content = _content(media, canonical_id)
+    updated = client.documents.update(
+        document_id, content=new_content, expected_version=1, project=project,
+        idempotency_key="transcript-door-v2",
+    )
+    assert updated.ok, updated.as_dict()
+    new_document = updated.data
+    new_pin = _pin(project, media, new_content, 2)
+    reloaded["source_mapping"]["pinned_documents"].append({"pin": new_pin, "document": new_document})
+    replacement = capture_transcript_association(
+        reloaded, "asset-a", document=new_pin, previous_document=old_pin,
+    )
 
     accepted = submit(replacement, "transcript-door-associate-v2")
     accepted_data = accepted["data"]
