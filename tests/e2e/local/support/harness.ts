@@ -571,7 +571,7 @@ export class DirectHarness {
 
   /**
    * A credential for `actorId`, minted through the Runtime's own route with the owner credential and written to
-   * `<tmp>/<file>` as `{token, actor_id}`, mode 0600 (the shape the door's `--door-credential-file` and Astrid's reader accept).
+   * `<tmp>/<file>` as the Runtime door's version 1 scoped JSON product credential, mode 0600.
    * Returns the token; it never leaves Node memory and that file, and the hosted server serves neither.
    */
   async provisionCredential(actorId: string, file: string): Promise<string> {
@@ -583,7 +583,7 @@ export class DirectHarness {
       body: JSON.stringify({ actor_id: actorId, credential: token, scope: 'astrid' }),
     });
     if (response.status !== 201) throw new Error(`credential provisioning for ${actorId} failed: ${response.status} ${await response.text()}`);
-    writeFileSync(path.join(this.tmp, file), JSON.stringify({ token, actor_id: actorId }), { mode: 0o600 });
+    writeFileSync(path.join(this.tmp, file), JSON.stringify({ version: 1, scope: 'astrid', token, actor_id: actorId }), { mode: 0o600 });
     return token;
   }
 
