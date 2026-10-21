@@ -335,4 +335,3 @@ def test_missing_persisted_bundle_is_created_as_nested_recorded_container():
     assert nested["transcriptReferences"]["associations"]
     assert nested["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF]
     assert inverse(plan.bundle, plan.records).bundle["parent"]["config"].get("bundle") is None
-
