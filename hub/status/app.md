@@ -1,16 +1,18 @@
-<!-- app | 2026-10-21T02:16:33Z | dispatcher heartbeat 7s | live 5 (sol 0, luna 5, other 0) | busy30 20 | status age 3m -->
-# app — 2026-10-21 02:12 UTC
+<!-- app | 2026-10-21T02:22:47Z | dispatcher heartbeat 11s | live 4 (sol 1, luna 3, other 0) | busy30 24 | status age 4m -->
+# app — 2026-10-21 02:17 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 gates remain OPEN.
-Integrated: App tl/integration 692765846fef511047445fecef3e55ec8bb6a5bf, tree e615c0a3aafca34504ba3544560de3887e4de38d; Main860 retained. Public Runtime 0.2.13 and Composition 0.0.13 remain live. Parent approved pair 813a, binding retention 808 and compiler-canary deletion 692 are integrated.
+Integrated: App tl/integration ce7152ee4bd5c2dc07454d18200d3be8225ca391, tree b3a8ba54b0af213a7d6be075645e6718446f8fd5; Main860 retained. Public Runtime 0.2.13 and Composition 0.0.13 remain live. Parent approved pair 813a, binding retention 808 and compiler-canary deletion 692 are integrated.
 Published013 rollback proof CLOSED: canonical App 6615f1fd629c0ce5a45d790a26256f54894da024 / tree fd9610bb430aed7ba7178a70182dff94a6712143. Central 1021015715-27912 PASS: one real UI test, 16.6 seconds; build 55.84 seconds. Defaults, restart, readback, no timeline.init and no commit passed. Existing 12 tests / 33 expects remain intact. No repeat of this proof.
-Main014 adoption HELD: exact native bootstrap source ea5c9522f / tree 0b193ba0 retains original 61 expects, both native tests, approved op guard and exact two-entry raw history. Independent source approval retained. Last 19091 failed before execution because the suite referenced a recycled r9 wrapper; r10 READY-field diagnosis and five controls are complete. One worker now fixes durable runner custody and executes the exact corrected command once. No pin activation until the real create/init/lost-response/restart/raw-default proof passes. Agent6ef / Runtime95bd / 76 artifacts / Composition13 remain the private cohort.
-In flight (five running, verified 02:12 UTC):
-- app-m2-main95-durable-approved-runner-execute-r11 — native bootstrap proof, exact approved source and durable runner.
-- app-m2-popup-r8-first-wrapper-diagnosis-r9 — D01 popup / Gate6 writer: diagnosis only of missing run-root and malformed producer SHA in1202; no browser request.
-- app-m2-split-positive-fps-one-real-r7 — D01 split: one actual route after numeric FPS seed correction.
-- app-m2-auto-main95-committed-single-execute-r7 — D01 automatic placement: register exact committed d38 source and one real proof.
-- app-m3-gate6-helper-home-light-owner-gate-r1 — Viewing3f9 helper light overlap/ancestry gate; physical run remains Viewing-owned.
-READY: three fully briefed tasks: safe finished KEEP release inventory; existing Main95 prompt runner proof; current parent-delete candidate/proof preparation. No installs or shared dependency writes.
+Main014 adoption HELD: exact native bootstrap source ea5c9522f / tree 0b193ba0 retains original 61 expects, both native tests, approved op guard and exact two-entry raw history. Independent source approval retained. Central 24347 reached real creation/baseline, then FIRST init commit refused409 capture_mismatch on submitted reads. No accept/retry/restart proof. Sole HARD cross-repo worker r12 compares actual App request with frozen Agent6ef authoritative capture; no new browser executor until cause is resolved. No pin activation until the real create/init/lost-response/restart/raw-default proof passes. Agent6ef / Runtime95bd / 76 artifacts / Composition13 remain the private cohort.
+In flight (six running, verified 02:17 UTC):
+- app-m2-main95-authoritative-capture-mismatch-diagnosis-r12 — exact cross-repo recorder comparison and bounded existing-contract App mirror repair, no browser replay.
+- app-m2-popup-diagnosed-owned-command-one-actual-r10 — one actual ADD after r9 wrapper diagnosis and strict negative controls.
+- app-m2-auto-main95-exact-manifest-guard-source-r8 — D01 automatic: correct stale 75 count to immutable95 manifest76; no central request.
+- app-m2-split-synthetic-head-causal-diagnosis-r8 — D01 split: diagnose exact-tree/synthetic-HEAD custody, no central request after16980.
+- app-m2-prompt-main95-existing-runner-path-proof-r7 — existing settings proof after concrete producer-path correction.
+- app-m2-parent-delete-proof-frontier-ready-r1 — D01 parent-delete current-source preparation, no central request yet.
+- app-m4-release-finished-keep-custody-r1 — exact safe KEEP release inventory for lead recycling.
+READY: three fully briefed tasks: approved canary strict-debt leaf cut; private Main95 merge-forward preparation preserving current helper; Gate6 writer existing-suite frontier. No installs or shared dependency writes.
 Next 5: complete native95 proof and coordinate adoption; diagnose popup then one valid actual ADD proof and bounded cut; qualify split then cut its old writer; qualify automatic placement then cut applicable writer; merge Viewing helper and unblock its physical gate.
 Rows one step from deletion: D01 single-parent split needs real accepted route; D01 popup ADD needs actual native POST then full assertions; D01 automatic placement needs current95 actual route. D01 parent delete needs current-source candidate/proof; compiler-canary strict-debt entry needs exact approved one-line removal. No whole-row deletion claimed. D02/D08 have no new safe cut after existing sweeps; do not repeat unchanged investigations. D10 App copies and source deletion are already recorded.
 Gate3 App / Gate5: central1021015745-9946 PASS4, current public013 App692 / Agent8130 / Runtime2c4 / public13, 221 seconds. Original gesture, extended adversarial journey and None single/bulk assertions retained. App2 current6ef/95 mixed case4657 PASS19.5seconds is retained separately; overall4657 FAIL, not adoption proof. No repeat of passed neighbor.
@@ -19,3 +21,7 @@ Gate7: current integration full waits coordinated pin/provenance readiness; hist
 Inbox: ACK01:44 result-integrity rule,01:46 canonical proof/churn redirect,01:59 storage request,02:04 urgent Viewing helper. Public013 proof result is now sent to Agent/Runtime/App2. App2 owns actual parent gate and invalid4657 withdrawal on its machine. No duplicate bootstrap ledger work. Normal14 proceeds with Composition13; Composition14 follows a later coordinated pair.
 Decided locally: wrapper execution artifacts must live in durable worker records, never an auto-recycled worktree. Exact registered-command preflight must validate actual environment/40-hex pins before a central request. This is an owned test-environment correction; all product/source/authority guards stay.
 Resources: about11GiB free; no new installs or graph builds. Normal13 graph/Agent8130/Runtime2c4 and private6ef/95bd sources stay protected. Safe KEEP release inventory is READY; lead recycles only approved finished sources.
+
+02:17 Viewing helper MERGED ce7152ee4 / tree b3a8ba54. Both909 and692 ancestry verified; owner light gate APPROVE. Exact peer message sent, physical execution remains Viewing-owned.
+
+02:19 Main95 first real refusal recorded and sent to all three peers: 24347 returned409 capture_mismatch after create/baseline. No adoption. Popup r9 diagnosis corrected missing run-root and41-character Runtime SHA; one corrected actual is assigned.
