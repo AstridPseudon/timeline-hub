@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useRuntimeGateOpen } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
+import { useRuntimeGateOpen } from '@/integrations/runtime/runtimeGateOpen.tsx';
 import { useIsMobile, useIsTablet, useViewportWidth, isTabletHardware } from '@/shared/hooks/mobile';
 import { resolveTimelineDeviceClass } from '../../lib/mobile-interaction-model';
 import { startEditorTourIfFirstRun } from './tourFlag';
