@@ -8,7 +8,6 @@ import {
   appendAcpTextTurn,
   AstridAgentSessionStore,
   extractAstridElementOperations,
-  isTimelineAgentSessionsAvailable,
   projectChatQueryKey,
   stripAstridEditorContext,
   useCancelSession,
@@ -705,10 +704,6 @@ describe('timeline agent ACP chat', () => {
       hook.unmount();
       client.clear();
     }
-  });
-
-  it('advertises the local Astrid ACP implementation', () => {
-    expect(isTimelineAgentSessionsAvailable()).toBe(true);
   });
 
   it('keeps missing identifiers as input errors before contacting ACP', async () => {

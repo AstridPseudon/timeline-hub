@@ -22,7 +22,7 @@ vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
 
 import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat.tsx';
 import { RuntimeConnectionProvider } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
-import { isTimelineAgentSessionsAvailable, useProjectAgentTaskLinks } from '@/tools/video-editor/hooks/useAgentSession.ts';
+import { useProjectAgentTaskLinks } from '@/tools/video-editor/hooks/useAgentSession.ts';
 
 // The chat reads the runtime connection context; mount the real provider (ungated) around the real panel.
 function AgentChatPanel(props: React.ComponentProps<typeof AgentChatPanelWithoutProvider>) {
@@ -69,7 +69,6 @@ afterEach(() => {
 
   it('mounts the composer and reads project chat and signed-in models through the local gateway', async () => {
     origin = GATEWAY;
-    expect(isTimelineAgentSessionsAvailable()).toBe(true);
     render(<AgentChatPanel />, { wrapper: withQueryClient });
 
     expect(screen.getByRole('textbox')).toBeInTheDocument();
@@ -116,7 +115,6 @@ afterEach(() => {
   });
 
   it('keeps same-origin chat available', async () => {
-    expect(isTimelineAgentSessionsAvailable()).toBe(true);
     const { result } = renderHook(() => useProjectAgentTaskLinks('project-1'), { wrapper: withQueryClient });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fetchSpy).toHaveBeenCalledWith('/api/astrid/acp/projects/project-1/chat', expect.anything());

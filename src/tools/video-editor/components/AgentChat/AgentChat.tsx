@@ -12,7 +12,6 @@ import { composerClearAttachments, composerRemoveAttachment } from '@/shared/sta
 import { useCurrentAttachmentSet } from '@/shared/state/currentAttachmentSet.ts';
 import { usePanesStore } from '@/shared/state/panesStore.ts';
 import {
-  isTimelineAgentSessionsAvailable,
   useAgentSession,
   useAgentSessions,
   useProjectChat,
@@ -220,23 +219,6 @@ const CHAT_UNAVAILABLE = "Chat isn't running on this computer right now.";
 export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange }: AgentChatPanelProps) {
   useRenderDiagnostic('AgentChatPanel');
   const scope = useAgentChatBridge();
-
-  if (!isTimelineAgentSessionsAvailable()) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
-        <img
-          src="/astrid-avatar.png"
-          alt=""
-          aria-hidden="true"
-          className="h-8 w-8 rounded-full object-cover"
-        />
-        <p className="text-sm font-medium text-foreground">Timeline agent chat is managed in Astrid</p>
-        <p className="max-w-sm text-xs text-muted-foreground">
-          Run the agent workflow in Astrid, then refresh this editor to load the updated timeline.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <AvailableAgentChatPanel
