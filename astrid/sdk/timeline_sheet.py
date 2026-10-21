@@ -903,7 +903,8 @@ def _duration_sheet(sheet, artifact, parsed):
                 body = line[:-len(suffix)]
                 if _tokens(body.strip()).count(old_token) != 1:
                     return None
-                body, count = re.subn(rf"(?<!\S){re.escape(old_token)}(?=\s|$)", new_token, body, count=1)
+                body, count = re.subn(rf"(?<!\S){re.escape(old_token)}(?=\s|$)",
+                                      lambda _: new_token, body, count=1)
                 if count != 1:
                     return None
                 replaced.append(body + suffix)

@@ -71,7 +71,7 @@ def test_detached_static_duration_keeps_the_original_local_grammar(tmp_path):
     assert not list(tmp_path.glob("*.outbox.json"))
 
 
-@pytest.mark.parametrize("value", ["CHANGED", ""])
+@pytest.mark.parametrize("value", ["CHANGED", "", "line\nnext C:\\tmp\\file \\1"])
 def test_detached_static_text_uses_retained_native_params_command(connected, tmp_path, value):  # noqa: F811
     from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
 
