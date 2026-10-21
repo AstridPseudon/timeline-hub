@@ -1,0 +1,3 @@
+# Dependency retention correction — 2026-10-21 07:34 UTC
+
+Do not compact or recycle the two dependency bases yet. The active coherent-gate-environments.lease still binds the profile-staging tree under agt-m4-private-coherent-pair-staging and the private3.11 tree under agt-m4-gate7-private311-mypy-once. Current profile refresh preparation consumes them. The previous release wording was premature and is withdrawn. A read-only inventory will identify any separate unused scratch that can be packed without affecting these installed environments. No package directory or lease is released. Disk remains above the floor; no extra copy/full/profile is requested now.
