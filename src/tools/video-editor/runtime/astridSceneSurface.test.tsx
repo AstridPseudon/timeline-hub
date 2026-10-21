@@ -117,7 +117,7 @@ describe('actual SceneSurface document lifecycle',()=>{
     const source=await makeSource({html});
     const tampered={...source,html:html.replace('aaaa','bbbb')};
     const onStatus=vi.fn();
-    const view=render(<SceneSurface source={tampered} sourceTime={1} width={10} height={10} onStatus={onStatus}/>);
+    const view=render(<SceneSurface source={tampered} sourceTime={1} width={10} height={10} onStatus={onStatus} showStatus/>);
     await waitFor(()=>expect(view.container.firstChild).toHaveAttribute('data-phase','error'));
     expect(view.container.querySelector('iframe')).toBeNull();
     expect(view.container.firstChild).toHaveTextContent('Scene entry digest mismatch');
@@ -224,7 +224,7 @@ describe('last-good replacement ownership',()=>{
     const first=await makeSource(),broken=await makeSource({html:'<html><head></head><body>aaaa</body></html>'});
     const repaired=await makeSource({html:'<html><head></head><body>repaired</body></html>'});
     const t=ownedChildren(),onStatus=vi.fn();
-    const show=(source:unknown)=><SceneSurface source={source} sourceTime={3} width={10} height={10} onStatus={onStatus}/>;
+    const show=(source:unknown)=><SceneSurface source={source} sourceTime={3} width={10} height={10} onStatus={onStatus} showStatus/>;
     const view=render(show(first));
     const old=await t.mounted(view.container);t.initialize(old);t.ready(old);
     view.rerender(show({...broken,html:broken.html.replace('aaaa','bbbb')}));
