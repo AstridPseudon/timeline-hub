@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -16,8 +17,8 @@ from scripts import gen_effect_registry
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
-SHA256 = "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"
-INTEGRITY = "sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ=="
+SHA256 = "21fde4d2a5d62a83f97a85d4b8d9f9d3f707a6489c07eb421c6331eccf893e6e"
+INTEGRITY = "sha512-Bgf9lHdk3CJCTsA3Jbd5WW9UYCHEZQTF3VFM1YO6dimZ+q8bQ8cX6CZ4FCfClBNgg10DQ1bozGMqFCpkGNXvvw=="
 REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
                     "./animations.generated", "./transitions.generated", "./registry.generated")
 
@@ -28,19 +29,19 @@ def _stage_locked_package(project: Path) -> tuple[Path, dict]:
     cli.write_text("// CLI")
     package = project / "node_modules/@banodoco/timeline-composition"
     package.parent.mkdir(parents=True)
-    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz") as archive:
+    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.14.tgz") as archive:
         archive.extractall(project)
     (project / "package").rename(package)
     return package, json.loads((package / "package.json").read_text())
 
 
 def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
+    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.14.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
     lock = json.loads((REMOTION / "package-lock.json").read_text())
     package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    assert package["version"] == "0.0.13"
-    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.13.tgz"
+    assert package["version"] == "0.0.14"
+    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.14.tgz"
     assert package["integrity"] == INTEGRITY
     with tarfile.open(artifact) as archive:
         manifest_file = archive.extractfile("package/package.json")
@@ -48,7 +49,7 @@ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_pa
         manifest = json.load(manifest_file)
         members = archive.getmembers()
         files = {member.name for member in members}
-    assert len(members) == 77
+    assert len(members) == 80
     assert all(member.isfile() for member in members)
     assert not any(name.startswith("package/typescript/") for name in files)
     for export in REQUIRED_EXPORTS:
@@ -170,12 +171,19 @@ def test_generated_custom_elements_reach_shared_render_and_scene_unchanged(tmp_p
     for kind in ("effects", "animations", "transitions"):
         (tmp_path / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
     (tmp_path / "host-registries.ts").write_text((REMOTION / "src/host-registries.ts").read_text())
-    package = REMOTION / "node_modules/@banodoco/timeline-composition"
+    runtime_project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))).resolve()
+    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", str(runtime_project / "node_modules"))).resolve()
+    host = tmp_path / "module-host"
+    host.mkdir()
+    (host / "node_modules").symlink_to(peers, target_is_directory=True)
+    script = host / "composition-package.mjs"
+    shutil.copyfile(REMOTION / "tests/composition-package.mjs", script)
+    package = peers / "@banodoco/timeline-composition"
     before = {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
               for p in package.rglob("*") if p.is_file()}
     subprocess.run([os.environ.get("ASTRID_NODE_EXECUTABLE", "node"),
-                    str(REMOTION / "tests/composition-package.mjs"), str(tmp_path)],
-                   cwd=REMOTION, check=True, capture_output=True, text=True, timeout=60)
+                    str(script), str(tmp_path)],
+                   cwd=host, check=True, capture_output=True, text=True, timeout=60)
     after = {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
              for p in package.rglob("*") if p.is_file()}
     assert before == after
