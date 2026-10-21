@@ -9,12 +9,25 @@ export type CameraMove = { readonly name: string; readonly start: number; readon
 export type Stretch = { readonly from: number; readonly to: number; readonly speed: number };
 export type WorldUse = { clipId: string; track: string; at: number; from: number; to: number; speed: number };
 export type LibraryEntry = { objectId: string; revision: string; name: string; duration: number; authoredFps: number; events: WorldEvent[]; cameras: CameraMove[]; sample?: true };
-export type TimelineWorld = { objectId: string; revision: string; duration: number; authoredFps: number; uses: WorldUse[]; liveScene: Record<string, unknown> };
+/** Names a timeline world can be given, best first: the clip's label, a name its package declares, a name from its entry file. */
+export type NameHints = { label?: string; declared?: string; file?: string };
+export type TimelineWorld = { objectId: string; revision: string; duration: number; authoredFps: number; uses: WorldUse[]; liveScene: Record<string, unknown>; nameHints: NameHints };
 
 export const worldKey = (w: { objectId: string; revision: string }) => `${w.objectId}@${w.revision}`;
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isPositive = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
+
+function manifestNameHints(manifest: Record<string, unknown>): NameHints {
+  const hints: NameHints = {};
+  const declared = [manifest.name, manifest.title].find((v): v is string => typeof v === 'string' && v.trim().length > 0);
+  if (declared) hints.declared = declared.trim();
+  if (typeof manifest.entry === 'string') {
+    const base = manifest.entry.split('/').pop()?.replace(/\.html?$/i, '') ?? '';
+    if (base && !/^(index|scene|world|main|entry)$/i.test(base)) hints.file = worldTitleFromFilename(base);
+  }
+  return hints;
+}
 
 /** Worlds placed on the timeline, grouped by objectId@revision, ordered by first use. */
 export function worldsFromSnapshot(snapshot: TimelineSnapshot): TimelineWorld[] {
@@ -33,9 +46,12 @@ export function worldsFromSnapshot(snapshot: TimelineSnapshot): TimelineWorld[] 
       try { body = JSON.parse(ls.packageBody); } catch { continue; }
       const manifest = isRecord(body) ? body.manifest : undefined;
       if (!isRecord(manifest) || !isPositive(manifest.duration) || !isPositive(manifest.authoredFps)) continue;
-      world = { objectId, revision, duration: manifest.duration, authoredFps: manifest.authoredFps, uses: [], liveScene: ls };
+      world = { objectId, revision, duration: manifest.duration, authoredFps: manifest.authoredFps, uses: [], liveScene: ls, nameHints: manifestNameHints(manifest) };
       byKey.set(key, world);
     }
+    // The clip label reads "World" or "World · Camera"; the world is the part before the dot.
+    const worldLabel = typeof (clip as { label?: unknown }).label === 'string' ? (clip as { label: string }).label.split(' · ')[0].trim() : '';
+    if (worldLabel && !world.nameHints.label) world.nameHints.label = worldLabel;
     const rate = clip.rate ?? 1;
     const from = clip.sourceOffset ?? 0;
     const to = clip.sourceEnd ?? from + clip.duration * rate;
@@ -126,7 +142,19 @@ export function clipName(world: string, camera?: string): string {
   return camera ? `${world} · ${camera}` : world;
 }
 
-const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+/** JSON with object keys sorted, so equal content compares equal whatever order its keys were written in. */
+export function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  if (typeof value === 'object' && value !== null) {
+    return `{${Object.entries(value).filter(([, v]) => v !== undefined).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([k, v]) => `${JSON.stringify(k)}:${stableJson(v)}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+const sameJson = (a: unknown, b: unknown) => stableJson(a) === stableJson(b);
+
+export const UNTITLED_WORLD = /^Untitled world( \d+)?$/;
 
 /** Keeps the events and cameras a library world's scene reported; the same list when the entry is missing or already has them. */
 export function withInfo(

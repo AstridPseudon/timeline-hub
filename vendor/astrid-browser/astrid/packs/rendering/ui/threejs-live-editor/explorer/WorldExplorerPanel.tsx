@@ -29,6 +29,7 @@ import {
   stretchMatches,
   upsertEntry,
   withInfo,
+  UNTITLED_WORLD,
   TravelClock,
   wheelSpeedScale,
   worldKey,
@@ -310,14 +311,15 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   // A world used on this timeline that the project does not list yet joins the library, so every timeline of the project lists it.
   useEffect(() => {
     if (!libraryReady || !documents || !projectId) return;
-    const missing = rows.timeline.filter((row) => row.liveScene && !library.some((entry) => worldKey(entry) === row.key));
+    // Also a world saved as a placeholder name whose real name is now known.
+    const missing = rows.timeline.filter((row) => row.liveScene && !library.some((entry) => worldKey(entry) === row.key && (!UNTITLED_WORLD.test(entry.name) || UNTITLED_WORLD.test(row.name))));
     if (missing.length === 0) return;
     // Batched, and idempotent against a newer list, so two tabs registering the same worlds converge.
     const timer = setTimeout(() => {
       void commitLibrary((list) => missing.reduce(
-        (next, row) => (next.some((entry) => worldKey(entry) === row.key) ? next : upsertEntry(next, {
+        (next, row) => (next.some((entry) => worldKey(entry) === row.key && (!UNTITLED_WORLD.test(entry.name) || UNTITLED_WORLD.test(row.name))) ? next : upsertEntry(next, {
           objectId: row.objectId, revision: row.revision, name: row.name, duration: row.duration, authoredFps: row.authoredFps,
-          events: [...row.events], cameras: [...row.cameras],
+          events: [...row.events], cameras: [...row.cameras], ...(next.find((entry) => worldKey(entry) === row.key)?.sample ? { sample: true as const } : {}),
         })),
         list,
       ), true);
