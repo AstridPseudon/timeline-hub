@@ -422,8 +422,11 @@ def _run_python_action(executor: ExecutorDefinition, request: ExecutorRunRequest
         function = getattr(module, function_name, None)
         if not callable(function):
             raise ExecutorRunnerError(f"Python action function {function_name!r} is missing or not callable")
-        action_result = function(**dict(values))
-        validate_action_output_definition(executor, action_result)
+        from ._action_context import _action_context_scope
+
+        with _action_context_scope(request, _admission):
+            action_result = function(**dict(values))
+            validate_action_output_definition(executor, action_result)
     finally:
         sys.meta_path.remove(finder)
         for name in tuple(sys.modules):

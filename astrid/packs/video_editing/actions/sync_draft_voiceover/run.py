@@ -1,7 +1,8 @@
-"""Caller-authorized V3 action for complete draft narration synchronization."""
+"""Settle a draft narration proposal under the managed outer claim."""
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from typing import Any
 
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
@@ -36,7 +37,16 @@ def run(
     padding_seconds: float = 0.15,
     plan_only: bool = False,
 ) -> dict[str, Any]:
-    """Run the complete workflow in the caller-authorized Runtime context."""
+    """Prepare commands and settle the existing managed proposal; never publish."""
+    from astrid.core._shared.result_manifest import build_manifest, write_manifest
+    from astrid.core.execution.executor._action_context import (
+        _PreparationClient,
+        _require_action_context,
+    )
+    from astrid.core.foundation.atomic_io import write_json_atomic
+    from astrid.sdk.timeline.producer import build_producer_batch
+
+    context = _require_action_context()
     if not project:
         raise ValueError("project is required")
     if not timeline_ref:
@@ -49,13 +59,11 @@ def run(
     if adopt_value is None:
         adopt_value = []
 
-    # The caller-bound client retains canonical authoring and publication
-    # authority. The action itself adds no worker-owned publish step.
     from astrid.sdk import AstridClient
 
     with AstridClient.open_from_launcher() as client:
         result = sync_draft_voiceover(
-            client,
+            _PreparationClient(client, context),
             project,
             timeline_ref,
             settings=settings_value,
@@ -67,4 +75,21 @@ def run(
         )
     if not isinstance(result, dict):
         raise TypeError("draft voiceover synchronization must return a mapping")
-    return {"report": result, "receipt": result.get("receipt", {})}
+    proposal = result.get("authoring_proposal")
+    if not isinstance(proposal, dict):
+        raise ValueError("synchronization produced no authoring proposal to settle")
+    if (proposal.get("producer") != context.producer
+            or proposal.get("admitted_target") != context.admitted_target):
+        raise ValueError("authoring proposal does not match the trusted outer claim")
+    build_producer_batch(proposal)
+    proposal_path = context.out / "authoring-proposal.json"
+    write_json_atomic(proposal_path, proposal)
+    manifest = build_manifest(
+        kind="video_editing.sync_draft_voiceover",
+        inputs={},
+        outputs=[{"name": "authoring_proposal", "path": proposal_path.name, "type": "file",
+                  "artifact_type": "timeline/authoring-proposal", "role": "result", "is_primary": True}],
+        created=datetime.now(timezone.utc).isoformat(),
+    )
+    write_manifest(context.out / "manifest.json", manifest)
+    return {"authoring_proposal": proposal}
