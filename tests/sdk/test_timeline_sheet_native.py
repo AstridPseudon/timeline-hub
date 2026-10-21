@@ -61,6 +61,11 @@ def text_edit(text, value):
                      if "  card  " in line else line for line in text.splitlines()) + "\n"
 
 
+def size_edit(text, value):
+    return "\n".join(line.replace("size=32", f"size={value}", 1)
+                     if "  card  " in line else line for line in text.splitlines()) + "\n"
+
+
 def test_detached_static_duration_keeps_the_original_local_grammar(tmp_path):
     tl = Checkout(detached_duration_bundle())
     tl.save(tmp_path / "local.json", quiet=True)
@@ -87,6 +92,88 @@ def test_detached_static_text_uses_retained_native_params_command(connected, tmp
     assert state["pending"] == expected.commands
     assert State(tl.bundle).entity(ref)["params"]["text"] == value
     assert State(tl.bundle).entity("occurrence:occ-2/clip:card")["params"]["text"] == "LIVE"
+
+
+@pytest.mark.parametrize("value", [48, "clear"])
+def test_detached_static_size_uses_retained_native_params_command(connected, tmp_path, value):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    edited = size_edit(original_text, value)
+    expected = execute(original, [capture_clip_set_params(
+        original, ref, values={} if value == "clear" else {"size": value},
+        clear=["size"] if value == "clear" else [])])
+
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, edited, client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert generated.calls == []
+    assert state["sheet"]["bundle"] == original
+    assert state["pending"] == expected.commands
+    card = State(tl.bundle).entity(ref)
+    if value == "clear":
+        assert "size" not in card["params"]
+    else:
+        assert card["params"]["size"] == value
+    assert State(tl.bundle).entity("occurrence:occ-2/clip:card")["params"]["size"] == 32
+
+
+def test_detached_size_preserves_neighbor_presence_and_order(connected, tmp_path):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    client, generated, _ = connected
+    original = detached_duration_bundle()
+    ref = "occurrence:occ-1/clip:card"
+    card = State(original).entity(ref)
+    card["params"] = {"text": "LIVE", "opaque": {"keep": [None, False]}, "size": 32, "nullable": None}
+    generated.bundles["r0"] = copy.deepcopy(original)
+    path = tmp_path / "detached.json"
+    generated.path = path.with_name(path.name + ".outbox.json")
+    tl = Checkout(copy.deepcopy(original))
+    tl.save(path, quiet=True)
+    tl._scene_client = client
+    text = render_sheet(tl, cuts=["c1"])
+    assert "size=32" in text
+
+    expected = execute(original, [capture_clip_set_params(original, ref, values={"size": 48})])
+    draft = Checkout.load(path)
+    assert apply_sheet(draft, size_edit(text, 48), client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert state["pending"] == expected.commands
+    result = State(draft.bundle).entity(ref)
+    assert list(result["params"]) == ["text", "opaque", "size", "nullable"]
+    assert result["params"]["opaque"] == {"keep": [None, False]}
+    assert result["params"]["nullable"] is None
+    assert "absent" not in result["params"]
+    assert result["opaque"] == {"keep": [None, False, 1, 1.0]}
+
+
+def test_detached_size_reloads_rebases_and_undoes_through_native_session(connected, tmp_path, monkeypatch):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+    from astrid.sdk.timeline.checkout import _sheet_session
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    peer_ref = "occurrence:occ-2/clip:card"
+    peer = execute(original, [capture_clip_set_params(original, peer_ref, values={"size": 40})]).bundle
+    generated.bundles["peer"] = peer
+    generated.head = {"revision_id": "peer", "publication_id": "peer-pub"}
+    before = copy.deepcopy(peer)
+    edited = size_edit(original_text, 48)
+    expected = execute(original, [capture_clip_set_params(original, ref, values={"size": 48})])
+    monkeypatch.setattr("astrid.sdk.timeline_sheet.merge_sheet", lambda *a: pytest.fail("client rebase"))
+    monkeypatch.setattr("astrid.sdk.timeline_sheet._apply_parsed", lambda *a: pytest.fail("duplicate local consumer"))
+
+    draft = Checkout.load(tl.path)
+    assert apply_sheet(draft, edited, client=client)
+    assert json.loads(generated.path.read_bytes())["pending"] == expected.commands
+    draft.save(quiet=True)
+    accepted = generated.bundles["r1"]
+    assert State(accepted).entity(ref)["params"]["size"] == 48
+    assert State(accepted).entity(peer_ref)["params"]["size"] == 40
+    _sheet_session(draft).undo(["pub1"])
+    assert generated.bundles["r2"] == before
 
 
 def test_detached_mixed_text_and_duration_is_one_retained_native_batch(connected, tmp_path):  # noqa: F811
@@ -117,7 +204,7 @@ def test_detached_mixed_edit_with_unsupported_neighbor_is_not_staged(connected, 
     _, generated, _ = connected
     edited = text_edit(duration_edit(original_text, 2), "CHANGED")
     unsupported = edited.replace('type   card   type   "CHANGED"       for 2s  size=32',
-                                 'type   card   type   "CHANGED"       for 2s  size=33')
+                                 'type   card   type   "CHANGED"       for 2s  size=33 font=label')
     before_bundle = copy.deepcopy(tl.bundle)
     before_outbox = generated.path.read_bytes()
 
